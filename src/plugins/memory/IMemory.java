@@ -50,6 +50,12 @@ public interface IMemory extends IPlugin {
     public interface IMemListener extends EventListener {
         public void memChange(EventObject evt, int adr, int bank);
     }
-    public void addMemListener(IMemListener listener);
-    public void removeMemListener(IMemListener listener);
+    /**
+     * Method for registering device for memory change annoucement.
+     * @param listener a listener that device implements for getting
+     *        annoucements from memory
+     */
+    public void registerDeviceDMA(IMemory.IMemListener listener);
+    public void unregisterDeviceDMA(IMemory.IMemListener listener);
+    
 }

@@ -76,7 +76,7 @@ public class frmStudio extends javax.swing.JFrame {
         
         //emulator settings
         this.setStatusGUI();
-        emuConfig.cMemory.addMemListener(new IMemListener() {
+        emuConfig.cMemory.registerDeviceDMA(new IMemListener() {
             @Override
             public void memChange(EventObject evt, int adr, int bank) {
                 if (cpuPermanentRunning == true) return;

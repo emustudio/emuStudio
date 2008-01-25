@@ -198,8 +198,11 @@ public class emuConfiguration extends ClassLoader {
             while ((ze=zis.getNextJarEntry())!=null) {
                 if (ze.isDirectory()) continue;
                 if (!ze.getName().toLowerCase().endsWith(".class")) {
-                    //"jar:file:/D:/JavaApplicat%20ion12/dist/JavaApplication12.jar!/resources/Find%2024.gif";
-                    String URLstr = URLEncoder.encode("jar:file:/" + zf.getName().replaceAll("\\\\","/")
+                    //for windows: "jar:file:/D:/JavaApplicat%20ion12/dist/JavaApplication12.jar!/resources/Find%2024.gif";
+                    //for linux:   "jar:file:/home/vbmacher/dev/school%20projects/shit.jar!/resources/Find%2024.gif";
+                    String fN = zf.getName().replaceAll("\\\\","/");
+                    if (!fN.startsWith("/")) fN = "/" + fN;
+                    String URLstr = URLEncoder.encode("jar:file:" + fN
                             + "!/" + ze.getName().replaceAll("\\\\","/"),"UTF-8");
                     URLstr = URLstr.replaceAll("%3A",":").replaceAll("%2F","/").replaceAll("%21","!").replaceAll("\\+","%20");
                     resources.put("/" + ze.getName(), new URL(URLstr));
@@ -251,7 +254,6 @@ public class emuConfiguration extends ClassLoader {
         return null;
     }
 
-    @Override
     protected URL findResource(String name) {
         if (!name.startsWith("/")) name = "/" + name;
         if (resources.containsKey(name)) {
@@ -261,7 +263,6 @@ public class emuConfiguration extends ClassLoader {
         else return null;
     }
 
-    @Override
     public InputStream getResourceAsStream(String name) {
         if (!name.startsWith("/")) name = "/" + name;
         if (resources.containsKey(name)) {
