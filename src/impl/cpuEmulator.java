@@ -241,6 +241,7 @@ public class cpuEmulator implements ICPU, Runnable {
      * 
      */
     
+    @SuppressWarnings("static-access")
     public void run() {
         long startTime, endTime;
         int cycles_executed;
@@ -263,6 +264,7 @@ public class cpuEmulator implements ICPU, Runnable {
             try { 
                 while((cycles_executed < cycles_to_execute)
                         && (run_state == stateEnum.runned)) {
+                    Thread.yield();
                     cycles = evalStep();
                     cycles_executed += cycles;
                     long_cycles += cycles;
@@ -278,13 +280,13 @@ public class cpuEmulator implements ICPU, Runnable {
                 run_state = stateEnum.stoppedBreak;
                 break;
             }
+            Thread.yield();
             endTime = System.nanoTime() - startTime;
             if (endTime < 1000000000) {
                 // time correction
-                try { Thread.sleep((1000000000 - endTime)/1000000); }
+                try { cpuThread.sleep((1000000000 - endTime)/1000000); }
                 catch(java.lang.InterruptedException e) {}
             }
-            Thread.yield();
         }
         setRuntimeFreqCounter(false);
         fireCpuState(cpuEvt);
