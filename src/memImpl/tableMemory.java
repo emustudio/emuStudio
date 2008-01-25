@@ -48,7 +48,6 @@ public class tableMemory extends JTable {
             setFont(header.getFont());
         }
   
-        @Override
         public Component getListCellRendererComponent(JList list, Object value,
                 int index, boolean isSelected, boolean cellHasFocus) {
             setText((value == null) ? "" : value.toString());
@@ -76,10 +75,10 @@ public class tableMemory extends JTable {
             this.setFont(new Font("Monospaced",Font.PLAIN,12));
             
             FontMetrics fm = rowHeader.getFontMetrics(rowHeader.getFont());
-            int char_width = 12;
-            if (fm != null) char_width = fm.stringWidth("F");
+            int char_width = 14;
+            if (fm != null) char_width = fm.stringWidth("FF");
             
-            rowHeader.setFixedCellWidth(char_width * 5);
+            rowHeader.setFixedCellWidth(char_width * 3);
             rowHeader.setFixedCellHeight(getRowHeight());
             rowHeader.setCellRenderer(new MemRowHeaderRenderer(this.tm));
             setHorizontalAlignment(CENTER);
@@ -96,7 +95,6 @@ public class tableMemory extends JTable {
             rowHeader.setListData(adresses);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, 
                 boolean isSelected, boolean hasFocus, int row, int column) {
             if (isSelected) {

@@ -30,8 +30,8 @@ public class MemMain implements IMemory {
     // this table contains ROM parts of memory
     private Hashtable romBitmap; // keys: low boundary (limit); values: upper boundary
 
-    /* listeners zmeny */
-    protected EventListenerList listenerList = new EventListenerList();
+    /* list of devices that wants to get annoucement about memory changes */
+    private EventListenerList deviceList;
     private EventObject changeEvent;
 
     public static void showErrorMessage(String message) {
@@ -59,6 +59,7 @@ public class MemMain implements IMemory {
         sizeSet = false;
         romBitmap = new Hashtable();
         changeEvent = new EventObject(this);
+        deviceList = new EventListenerList(); //new DeviceList(changeEvent);
     }
 
     public boolean init(int count) {
@@ -314,19 +315,21 @@ public class MemMain implements IMemory {
         return (int)((high << 8)| low);
     }
 
-    public void addMemListener(IMemory.IMemListener listener) {
-        listenerList.add(IMemory.IMemListener.class, listener);        
+    public void registerDeviceDMA(IMemory.IMemListener listener) {
+        deviceList.add(IMemListener.class, listener);
     }
 
-    public void removeMemListener(IMemory.IMemListener listener) {
-        listenerList.remove(IMemory.IMemListener.class, listener);
+    public void unregisterDeviceDMA(IMemory.IMemListener listener) {
+        deviceList.remove(IMemListener.class, listener);
     }
-
+    
     private void fireChange(int adr) {
-        Object[] listeners = listenerList.getListenerList();
-        for (int i=0; i<listeners.length; i+=2)
-            if (listeners[i] == IMemListener.class)
-                ((IMemListener)listeners[i+1]).memChange(changeEvent,adr,0);
+        Object[] listeners = deviceList.getListenerList();
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==IMemListener.class) {
+                ((IMemListener)listeners[i+1]).memChange(changeEvent, adr, 0);
+            }
+        }
     }
 
     public void showGUI() {
