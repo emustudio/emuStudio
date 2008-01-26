@@ -22,7 +22,7 @@ public class frmGUI extends javax.swing.JFrame {
     private Object keyLock; // monitor for key pressing
     private int keyCode = 0;
     private Mits88SIO sio;
- //   private Font terminalFont;
+    private Font terminalFont;
     
     /** Creates new form frmGUI */
     public frmGUI(Mits88SIO sio) {
@@ -39,16 +39,15 @@ public class frmGUI extends javax.swing.JFrame {
     
     private void initTerminalLabel() {
         lblTerminal = new TerminalDisplay(80,25);
-//        try {
-  //          // load terminal font from resources
-    //        InputStream fin = this.getClass().getResourceAsStream("/resources/hvterml.ttf");
-      //      this.terminalFont = Font.createFont(Font.TRUETYPE_FONT,fin).deriveFont(13f);
-        //    fin.close();
-          //  lblTerminal.setFont(this.terminalFont);
-//        } catch (Exception e) {
-  //          e.printStackTrace();         
+        try {
+            // load terminal font from resources
+            InputStream fin = this.getClass().getResourceAsStream("/resources/terminal.ttf");
+            this.terminalFont = Font.createFont(Font.TRUETYPE_FONT,fin).deriveFont(12f);
+            fin.close();
+            lblTerminal.setFont(this.terminalFont);
+        } catch (Exception e) {
             lblTerminal.setFont(new java.awt.Font("Monospaced", 0, 12));
-    //    }
+        }
         lblTerminal.setForeground(new java.awt.Color(0, 255, 0));
         lblTerminal.setBackground(new Color(0,0,0));
         getContentPane().add(lblTerminal);
