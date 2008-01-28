@@ -41,7 +41,9 @@ public class frmStudio extends javax.swing.JFrame {
     public frmStudio(emuConfiguration emuConfig) {
         // create components
         this.emuConfig = emuConfig;
-        this.txtSource = new emuTextPane();
+        syntaxLexer = emuConfig.cCompiler.getLexer(
+                txtSource.getDocumentReader(),reporter);
+        this.txtSource = new emuTextPane(syntaxLexer);
         this.cpuPermanentRunning = false;
         
         debug_model = new debugTableModel(emuConfig.cCPU,
@@ -53,11 +55,9 @@ public class frmStudio extends javax.swing.JFrame {
         
         // set up message reporter for compiler messages
         this.reporter = new IMessageReporter() {
-            @Override
             public void reportMessage(String message) {
                 txtOutput.append(message+"\n");
             }
-            @Override
             public void reportMessage(String location, String message) {
                 Font f = txtOutput.getFont().deriveFont(Font.BOLD);
                 Font old = txtOutput.getFont();
@@ -67,17 +67,12 @@ public class frmStudio extends javax.swing.JFrame {
                 txtOutput.append(message+"\n");
             }
         };
-        // set up lexer for syntax highlighting 
-        syntaxLexer = emuConfig.cCompiler.getLexer(
-                txtSource.getDocumentReader(),reporter);
-        txtSource.setSyntaxLexer(syntaxLexer);
         setUndoListener();
         setClipboardListener();
         
         //emulator settings
         this.setStatusGUI();
         emuConfig.cMemory.registerDeviceDMA(new IMemListener() {
-            @Override
             public void memChange(EventObject evt, int adr, int bank) {
                 if (cpuPermanentRunning == true) return;
                 tblDebug.revalidate();
@@ -121,24 +116,17 @@ public class frmStudio extends javax.swing.JFrame {
     private class lstDevicesModel extends AbstractListModel {
         private emuConfiguration em;
         public lstDevicesModel(emuConfiguration em) { this.em = em; }
-        @Override
         public int getSize() { return em.cDevices.size(); }
-        @Override
         public Object getElementAt(int index) {
             IDevice dev = (IDevice)em.cDevices.get(index);
             return dev.getName();
         }
     }
-    
-  //  private boolean cpuIsBreakpoint() { 
-    //    return emuConfig.cCPU.isBreakpointStopped();
-    //}
-    
+        
     // get gui panel from CPU plugin and show in main window
     public void setStatusGUI() {
         JPanel statusPanel = emuConfig.cCPU.getStatusGUI();
         if (statusPanel == null) return;
-        
         GroupLayout layout = new GroupLayout(jPanel4);
         jPanel4.setLayout(layout);
         layout.setHorizontalGroup(
@@ -298,7 +286,7 @@ public class frmStudio extends javax.swing.JFrame {
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
 
-        btnNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/New24.gif"))); // NOI18N
+        btnNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/New24.gif"))); // NOI18N
         btnNew.setToolTipText("New file");
         btnNew.setFocusable(false);
         btnNew.addActionListener(new java.awt.event.ActionListener() {
@@ -308,7 +296,7 @@ public class frmStudio extends javax.swing.JFrame {
         });
         jToolBar1.add(btnNew);
 
-        btnOpen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Open24.gif"))); // NOI18N
+        btnOpen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Open24.gif"))); // NOI18N
         btnOpen.setToolTipText("Open file");
         btnOpen.setFocusable(false);
         btnOpen.addActionListener(new java.awt.event.ActionListener() {
@@ -318,7 +306,7 @@ public class frmStudio extends javax.swing.JFrame {
         });
         jToolBar1.add(btnOpen);
 
-        btnSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Save24.gif"))); // NOI18N
+        btnSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Save24.gif"))); // NOI18N
         btnSave.setToolTipText("Save file");
         btnSave.setFocusable(false);
         btnSave.addActionListener(new java.awt.event.ActionListener() {
@@ -333,7 +321,7 @@ public class frmStudio extends javax.swing.JFrame {
         jSeparator1.setPreferredSize(new java.awt.Dimension(10, 10));
         jToolBar1.add(jSeparator1);
 
-        btnCut.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Cut24.gif"))); // NOI18N
+        btnCut.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Cut24.gif"))); // NOI18N
         btnCut.setToolTipText("Cut selection");
         btnCut.setEnabled(false);
         btnCut.setFocusable(false);
@@ -344,7 +332,7 @@ public class frmStudio extends javax.swing.JFrame {
         });
         jToolBar1.add(btnCut);
 
-        btnCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Copy24.gif"))); // NOI18N
+        btnCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Copy24.gif"))); // NOI18N
         btnCopy.setToolTipText("Copy selection");
         btnCopy.setEnabled(false);
         btnCopy.setFocusable(false);
@@ -355,7 +343,7 @@ public class frmStudio extends javax.swing.JFrame {
         });
         jToolBar1.add(btnCopy);
 
-        btnPaste.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Paste24.gif"))); // NOI18N
+        btnPaste.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Paste24.gif"))); // NOI18N
         btnPaste.setToolTipText("Paste selection");
         btnPaste.setEnabled(false);
         btnPaste.setFocusable(false);
@@ -366,7 +354,7 @@ public class frmStudio extends javax.swing.JFrame {
         });
         jToolBar1.add(btnPaste);
 
-        btnUndo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Undo24.gif"))); // NOI18N
+        btnUndo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Undo24.gif"))); // NOI18N
         btnUndo.setToolTipText("Undo");
         btnUndo.setEnabled(false);
         btnUndo.setFocusable(false);
@@ -377,7 +365,7 @@ public class frmStudio extends javax.swing.JFrame {
         });
         jToolBar1.add(btnUndo);
 
-        btnRedo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Redo24.gif"))); // NOI18N
+        btnRedo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Redo24.gif"))); // NOI18N
         btnRedo.setToolTipText("Redo");
         btnRedo.setEnabled(false);
         btnRedo.setFocusable(false);
@@ -392,7 +380,7 @@ public class frmStudio extends javax.swing.JFrame {
         jSeparator2.setMaximumSize(new java.awt.Dimension(10, 32767));
         jToolBar1.add(jSeparator2);
 
-        btnCompile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/patch.gif"))); // NOI18N
+        btnCompile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/patch.gif"))); // NOI18N
         btnCompile.setToolTipText("Compile source...");
         btnCompile.setFocusable(false);
         btnCompile.addActionListener(new java.awt.event.ActionListener() {
@@ -446,7 +434,7 @@ public class frmStudio extends javax.swing.JFrame {
         jToolBar2.setFloatable(false);
         jToolBar2.setRollover(true);
 
-        btnReset.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Refresh24.gif"))); // NOI18N
+        btnReset.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Refresh24.gif"))); // NOI18N
         btnReset.setToolTipText("Reset");
         btnReset.setFocusable(false);
         btnReset.addActionListener(new java.awt.event.ActionListener() {
@@ -456,7 +444,7 @@ public class frmStudio extends javax.swing.JFrame {
         });
         jToolBar2.add(btnReset);
 
-        btnBeginning.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/StepBack24.gif"))); // NOI18N
+        btnBeginning.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/StepBack24.gif"))); // NOI18N
         btnBeginning.setToolTipText("Jump to beginning");
         btnBeginning.setFocusable(false);
         btnBeginning.addActionListener(new java.awt.event.ActionListener() {
@@ -466,7 +454,7 @@ public class frmStudio extends javax.swing.JFrame {
         });
         jToolBar2.add(btnBeginning);
 
-        btnBack.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Back24.gif"))); // NOI18N
+        btnBack.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Back24.gif"))); // NOI18N
         btnBack.setToolTipText("Step back");
         btnBack.setFocusable(false);
         btnBack.addActionListener(new java.awt.event.ActionListener() {
@@ -476,7 +464,7 @@ public class frmStudio extends javax.swing.JFrame {
         });
         jToolBar2.add(btnBack);
 
-        btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Stop24.gif"))); // NOI18N
+        btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Stop24.gif"))); // NOI18N
         btnStop.setToolTipText("Stop");
         btnStop.setFocusable(false);
         btnStop.addActionListener(new java.awt.event.ActionListener() {
@@ -486,7 +474,7 @@ public class frmStudio extends javax.swing.JFrame {
         });
         jToolBar2.add(btnStop);
 
-        btnPause.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Pause24.gif"))); // NOI18N
+        btnPause.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Pause24.gif"))); // NOI18N
         btnPause.setFocusable(false);
         btnPause.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -495,7 +483,7 @@ public class frmStudio extends javax.swing.JFrame {
         });
         jToolBar2.add(btnPause);
 
-        btnRun.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Run24.gif"))); // NOI18N
+        btnRun.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Run24.gif"))); // NOI18N
         btnRun.setToolTipText("Run");
         btnRun.setFocusable(false);
         btnRun.addActionListener(new java.awt.event.ActionListener() {
@@ -505,7 +493,7 @@ public class frmStudio extends javax.swing.JFrame {
         });
         jToolBar2.add(btnRun);
 
-        btnStep.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Play24.gif"))); // NOI18N
+        btnStep.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Play24.gif"))); // NOI18N
         btnStep.setToolTipText("Step forward");
         btnStep.setFocusable(false);
         btnStep.addActionListener(new java.awt.event.ActionListener() {
@@ -515,7 +503,7 @@ public class frmStudio extends javax.swing.JFrame {
         });
         jToolBar2.add(btnStep);
 
-        btnJump.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/jump24.GIF"))); // NOI18N
+        btnJump.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/jump24.GIF"))); // NOI18N
         btnJump.setToolTipText("Jump to address");
         btnJump.setFocusable(false);
         btnJump.addActionListener(new java.awt.event.ActionListener() {
@@ -525,7 +513,7 @@ public class frmStudio extends javax.swing.JFrame {
         });
         jToolBar2.add(btnJump);
 
-        btnMemory.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Memory24.gif"))); // NOI18N
+        btnMemory.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Memory24.gif"))); // NOI18N
         btnMemory.setToolTipText("Show operating memory");
         btnMemory.setFocusable(false);
         btnMemory.addActionListener(new java.awt.event.ActionListener() {
@@ -585,7 +573,7 @@ public class frmStudio extends javax.swing.JFrame {
                 .addComponent(paneDevices, javax.swing.GroupLayout.PREFERRED_SIZE, 326, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton1)
-                .addContainerGap(341, Short.MAX_VALUE))
+                .addContainerGap(345, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

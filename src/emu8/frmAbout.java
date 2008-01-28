@@ -42,7 +42,7 @@ public class frmAbout extends javax.swing.JFrame {
         setResizable(false);
 
         jLabel1.setBackground(new java.awt.Color(255, 255, 255));
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/altair.jpg"))); // NOI18N
+        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/altair.jpg"))); // NOI18N
 
         jLabel2.setFont(new java.awt.Font("Arial", 1, 24));
         jLabel2.setText("emu8 Studio");
@@ -112,7 +112,7 @@ public class frmAbout extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 201, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 150, Short.MAX_VALUE)
                 .addComponent(jLabel6)
                 .addContainerGap())
         );

@@ -294,7 +294,7 @@
                 <Component class="javax.swing.JButton" name="btnNew">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/resources/New24.gif"/>
+                      <Image iconType="3" name="/resources/emu8/New24.gif"/>
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" value="New file"/>
                     <Property name="focusable" type="boolean" value="false"/>
@@ -306,7 +306,7 @@
                 <Component class="javax.swing.JButton" name="btnOpen">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/resources/Open24.gif"/>
+                      <Image iconType="3" name="/resources/emu8/Open24.gif"/>
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" value="Open file"/>
                     <Property name="focusable" type="boolean" value="false"/>
@@ -318,7 +318,7 @@
                 <Component class="javax.swing.JButton" name="btnSave">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/resources/Save24.gif"/>
+                      <Image iconType="3" name="/resources/emu8/Save24.gif"/>
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" value="Save file"/>
                     <Property name="focusable" type="boolean" value="false"/>
@@ -341,7 +341,7 @@
                 <Component class="javax.swing.JButton" name="btnCut">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/resources/Cut24.gif"/>
+                      <Image iconType="3" name="/resources/emu8/Cut24.gif"/>
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" value="Cut selection"/>
                     <Property name="enabled" type="boolean" value="false"/>
@@ -357,7 +357,7 @@
                 <Component class="javax.swing.JButton" name="btnCopy">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/resources/Copy24.gif"/>
+                      <Image iconType="3" name="/resources/emu8/Copy24.gif"/>
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" value="Copy selection"/>
                     <Property name="enabled" type="boolean" value="false"/>
@@ -373,7 +373,7 @@
                 <Component class="javax.swing.JButton" name="btnPaste">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/resources/Paste24.gif"/>
+                      <Image iconType="3" name="/resources/emu8/Paste24.gif"/>
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" value="Paste selection"/>
                     <Property name="enabled" type="boolean" value="false"/>
@@ -389,7 +389,7 @@
                 <Component class="javax.swing.JButton" name="btnUndo">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/resources/Undo24.gif"/>
+                      <Image iconType="3" name="/resources/emu8/Undo24.gif"/>
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" value="Undo"/>
                     <Property name="enabled" type="boolean" value="false"/>
@@ -405,7 +405,7 @@
                 <Component class="javax.swing.JButton" name="btnRedo">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/resources/Redo24.gif"/>
+                      <Image iconType="3" name="/resources/emu8/Redo24.gif"/>
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" value="Redo"/>
                     <Property name="enabled" type="boolean" value="false"/>
@@ -429,7 +429,7 @@
                 <Component class="javax.swing.JButton" name="btnCompile">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/resources/patch.gif"/>
+                      <Image iconType="3" name="/resources/emu8/patch.gif"/>
                     </Property>
                     <Property name="toolTipText" type="java.lang.String" value="Compile source..."/>
                     <Property name="focusable" type="boolean" value="false"/>
@@ -575,7 +575,7 @@
                     <Component class="javax.swing.JButton" name="btnReset">
                       <Properties>
                         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                          <Image iconType="3" name="/resources/Refresh24.gif"/>
+                          <Image iconType="3" name="/resources/emu8/Refresh24.gif"/>
                         </Property>
                         <Property name="toolTipText" type="java.lang.String" value="Reset"/>
                         <Property name="focusable" type="boolean" value="false"/>
@@ -587,7 +587,7 @@
                     <Component class="javax.swing.JButton" name="btnBeginning">
                       <Properties>
                         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                          <Image iconType="3" name="/resources/StepBack24.gif"/>
+                          <Image iconType="3" name="/resources/emu8/StepBack24.gif"/>
                         </Property>
                         <Property name="toolTipText" type="java.lang.String" value="Jump to beginning"/>
                         <Property name="focusable" type="boolean" value="false"/>
@@ -602,7 +602,7 @@
                     <Component class="javax.swing.JButton" name="btnBack">
                       <Properties>
                         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                          <Image iconType="3" name="/resources/Back24.gif"/>
+                          <Image iconType="3" name="/resources/emu8/Back24.gif"/>
                         </Property>
                         <Property name="toolTipText" type="java.lang.String" value="Step back"/>
                         <Property name="focusable" type="boolean" value="false"/>
@@ -617,7 +617,7 @@
                     <Component class="javax.swing.JButton" name="btnStop">
                       <Properties>
                         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                          <Image iconType="3" name="/resources/Stop24.gif"/>
+                          <Image iconType="3" name="/resources/emu8/Stop24.gif"/>
                         </Property>
                         <Property name="toolTipText" type="java.lang.String" value="Stop"/>
                         <Property name="focusable" type="boolean" value="false"/>
@@ -632,7 +632,7 @@
                     <Component class="javax.swing.JButton" name="btnPause">
                       <Properties>
                         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                          <Image iconType="3" name="/resources/Pause24.gif"/>
+                          <Image iconType="3" name="/resources/emu8/Pause24.gif"/>
                         </Property>
                         <Property name="focusable" type="boolean" value="false"/>
                       </Properties>
@@ -646,7 +646,7 @@
                     <Component class="javax.swing.JButton" name="btnRun">
                       <Properties>
                         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                          <Image iconType="3" name="/resources/Run24.gif"/>
+                          <Image iconType="3" name="/resources/emu8/Run24.gif"/>
                         </Property>
                         <Property name="toolTipText" type="java.lang.String" value="Run"/>
                         <Property name="focusable" type="boolean" value="false"/>
@@ -661,7 +661,7 @@
                     <Component class="javax.swing.JButton" name="btnStep">
                       <Properties>
                         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                          <Image iconType="3" name="/resources/Play24.gif"/>
+                          <Image iconType="3" name="/resources/emu8/Play24.gif"/>
                         </Property>
                         <Property name="toolTipText" type="java.lang.String" value="Step forward"/>
                         <Property name="focusable" type="boolean" value="false"/>
@@ -676,7 +676,7 @@
                     <Component class="javax.swing.JButton" name="btnJump">
                       <Properties>
                         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                          <Image iconType="3" name="/resources/jump24.GIF"/>
+                          <Image iconType="3" name="/resources/emu8/jump24.GIF"/>
                         </Property>
                         <Property name="toolTipText" type="java.lang.String" value="Jump to address"/>
                         <Property name="focusable" type="boolean" value="false"/>
@@ -688,7 +688,7 @@
                     <Component class="javax.swing.JButton" name="btnMemory">
                       <Properties>
                         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                          <Image iconType="3" name="/resources/Memory24.gif"/>
+                          <Image iconType="3" name="/resources/emu8/Memory24.gif"/>
                         </Property>
                         <Property name="toolTipText" type="java.lang.String" value="Show operating memory"/>
                         <Property name="focusable" type="boolean" value="false"/>
@@ -750,7 +750,7 @@
                           <Component id="paneDevices" min="-2" pref="326" max="-2" attributes="1"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jButton1" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="341" max="32767" attributes="0"/>
+                          <EmptySpace pref="345" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>

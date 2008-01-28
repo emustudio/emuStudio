@@ -29,21 +29,23 @@ import javax.swing.undo.*;
  * @author vbmacher
  */
 public class emuTextPane extends JTextPane {
-    private boolean fileSaved; // if is document saved
-    private File fileSource;   // opened file
+    public static final short NUMBERS_WIDTH = 35;
+    public static final short NUMBERS_HEIGHT = 4;
+
     private ILexer syntaxLexer = null;
     private DocumentReader reader;
     private HighlightedDocument document;
     private Hashtable styles; // token styles
-    public static final short NUMBERS_WIDTH = 35;
-    public static final short NUMBERS_HEIGHT = 4;
+    private HighLightThread highlight;
+
+    private boolean fileSaved; // if is document saved
+    private File fileSource;   // opened file
     private UndoManager undo;
     private ActionListener undoStateListener;
 
     /** Creates a new instance of emuTextPane */
-    public emuTextPane() {
-        fileSaved = true;
-        fileSource = null;
+    public emuTextPane(ILexer sLexer) {
+        this.syntaxLexer = sLexer;
         styles = new Hashtable();
         initStyles();
         document = new HighlightedDocument();
@@ -52,118 +54,56 @@ public class emuTextPane extends JTextPane {
         this.setFont(new java.awt.Font("monospaced", 0, 12));
         this.setMargin(new Insets(NUMBERS_HEIGHT,NUMBERS_WIDTH,0,0));
         this.setBackground(Color.WHITE);
+
+        fileSaved = true;
+        fileSource = null;
         undo = new UndoManager();
-        document.addUndoableEditListener(new MyUndoListener());
+        document.addUndoableEditListener(new UndoableEditListener() {
+            public void undoableEditHappened(UndoableEditEvent e) {
+                undo.addEdit(e.getEdit());
+                if (undoStateListener != null)
+                    undoStateListener.actionPerformed(new ActionEvent(this,0,""));
+            }
+        });
         undoStateListener = null;
     }
+    
+    private class HighlightStyle extends SimpleAttributeSet {
+        public HighlightStyle(boolean italic, boolean bold, Color color) {
+            StyleConstants.setFontFamily(this, "Monospaced");
+            StyleConstants.setFontSize(this, 12);
+            StyleConstants.setBackground(this, Color.white);
+            StyleConstants.setItalic(this, italic);
+            StyleConstants.setForeground(this, color);
+            StyleConstants.setBold(this, bold);
+        }
+    }
+    private void initStyles() {
+        styles.clear();
+        styles.put(IToken.COMMENT, new HighlightStyle(true,false,ITokenColor.COMMENT));
+        styles.put(IToken.ERROR, new HighlightStyle(false,false,ITokenColor.ERROR));
+        styles.put(IToken.IDENTIFIER, new HighlightStyle(false,false,ITokenColor.IDENTIFIER));
+        styles.put(IToken.LABEL, new HighlightStyle(false,false,ITokenColor.LABEL));
+        styles.put(IToken.LITERAL, new HighlightStyle(false,false,ITokenColor.LITERAL));
+        styles.put(IToken.OPERATOR, new HighlightStyle(false,true,ITokenColor.OPERATOR));
+        styles.put(IToken.PREPROCESSOR, new HighlightStyle(false,true,ITokenColor.PREPROCESSOR));
+        styles.put(IToken.REGISTER, new HighlightStyle(false,false,ITokenColor.REGISTER));
+        styles.put(IToken.RESERVED, new HighlightStyle(false,true,ITokenColor.RESERVED));
+        styles.put(IToken.SEPARATOR, new HighlightStyle(false,false,ITokenColor.SEPARATOR));
+    }
+
 
     /*** UNDO/REDO IMPLEMENTATION ***/
-    private class MyUndoListener implements UndoableEditListener {
-        public void undoableEditHappened(UndoableEditEvent e) {
-            undo.addEdit(e.getEdit());
-            if (undoStateListener != null)
-                undoStateListener.actionPerformed(new ActionEvent(this,0,""));
-        }
-    }  
-    
     public void setUndoStateChangedAction(ActionListener l) {
         undoStateListener = l;
     }
-    
     public boolean canRedo() { return undo.canRedo(); }
     public boolean canUndo() { return undo.canUndo(); }
     public void undo() { undo.undo(); }
     public void redo() { undo.redo(); }
     
     /*** SYNTAX HIGHLIGHTING IMPLEMENTATION ***/
-    private void initStyles() {
-        styles.clear();
-        SimpleAttributeSet style = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(style, "Monospaced");
-        StyleConstants.setFontSize(style, 12);
-        StyleConstants.setBackground(style, Color.white);
-        StyleConstants.setItalic(style, true);
-        StyleConstants.setForeground(style, ITokenColor.COMMENT);
-        StyleConstants.setBold(style, false);
-        styles.put(IToken.COMMENT, style);
-        style = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(style, "Monospaced");
-        StyleConstants.setFontSize(style, 12);
-        StyleConstants.setBackground(style, Color.white);
-        StyleConstants.setItalic(style, false);
-        StyleConstants.setForeground(style, ITokenColor.ERROR);
-        StyleConstants.setBold(style, false);
-        styles.put(IToken.ERROR, style);
-        style = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(style, "Monospaced");
-        StyleConstants.setFontSize(style, 12);
-        StyleConstants.setBackground(style, Color.white);
-        StyleConstants.setItalic(style, false);
-        StyleConstants.setForeground(style, ITokenColor.IDENTIFIER);
-        StyleConstants.setBold(style, false);
-        styles.put(IToken.IDENTIFIER, style);
-        style = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(style, "Monospaced");
-        StyleConstants.setFontSize(style, 12);
-        StyleConstants.setBackground(style, Color.white);
-        StyleConstants.setItalic(style, false);
-        StyleConstants.setForeground(style, ITokenColor.LABEL);
-        StyleConstants.setBold(style, false);
-        styles.put(IToken.LABEL, style);
-        style = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(style, "Monospaced");
-        StyleConstants.setFontSize(style, 12);
-        StyleConstants.setBackground(style, Color.white);
-        StyleConstants.setItalic(style, false);
-        StyleConstants.setForeground(style, ITokenColor.LITERAL);
-        StyleConstants.setBold(style, false);
-        styles.put(IToken.LITERAL, style);
-        style = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(style, "Monospaced");
-        StyleConstants.setFontSize(style, 12);
-        StyleConstants.setBackground(style, Color.white);
-        StyleConstants.setItalic(style, false);
-        StyleConstants.setForeground(style, ITokenColor.OPERATOR);
-        StyleConstants.setBold(style, true);
-        styles.put(IToken.OPERATOR, style);
-        style = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(style, "Monospaced");
-        StyleConstants.setFontSize(style, 12);
-        StyleConstants.setBackground(style, Color.white);
-        StyleConstants.setItalic(style, false);
-        StyleConstants.setForeground(style, ITokenColor.PREPROCESSOR);
-        StyleConstants.setBold(style, true);
-        styles.put(IToken.PREPROCESSOR, style);
-        style = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(style, "Monospaced");
-        StyleConstants.setFontSize(style, 12);
-        StyleConstants.setBackground(style, Color.white);
-        StyleConstants.setItalic(style, false);
-        StyleConstants.setForeground(style, ITokenColor.REGISTER);
-        StyleConstants.setBold(style, false);
-        styles.put(IToken.REGISTER, style);
-        style = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(style, "Monospaced");
-        StyleConstants.setFontSize(style, 12);
-        StyleConstants.setBackground(style, Color.white);
-        StyleConstants.setItalic(style, false);
-        StyleConstants.setForeground(style, ITokenColor.RESERVED);
-        StyleConstants.setBold(style, true);
-        styles.put(IToken.RESERVED, style);
-        style = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(style, "Monospaced");
-        StyleConstants.setFontSize(style, 12);
-        StyleConstants.setBackground(style, Color.white);
-        StyleConstants.setItalic(style, false);
-        StyleConstants.setForeground(style, ITokenColor.SEPARATOR);
-        StyleConstants.setBold(style, false);
-        styles.put(IToken.SEPARATOR, style);
-    }
      
-    public void setSyntaxLexer(ILexer sLexer) {
-        this.syntaxLexer = sLexer;
-    }
-
     public Reader getDocumentReader() { return reader; }
     
     private class HighlightedDocument extends DefaultStyledDocument { 
@@ -180,29 +120,40 @@ public class emuTextPane extends JTextPane {
     }
     
     private void reHighlight() {
-        if (this.syntaxLexer == null ||
-                (this.syntaxLexer instanceof ILexer) == false) return;
-        reader.reset(); // from the beginning
-        // recolor all tokens
-        try {
-            // first reset lexer
-            syntaxLexer.reset(reader,0,0,0);
-            IToken t = syntaxLexer.getSymbol();
-            while (t.getType() != IToken.TEOF) {
-                reColor(t.getCharBegin(),t.getCharEnd()-t.getCharBegin(),t.getType());
-                t = syntaxLexer.getSymbol();
-            }
-        } catch (IOException e) {}
-        catch (Error y) { /* no match */ }
+        if (highlight != null && highlight.isAlive())
+            highlight.stopRun();
+        highlight = new HighLightThread();
     }
     
-    private void reColor(int position, int length, int tokenType) {
-        if ((position + length) <= document.getLength()){
-            SimpleAttributeSet style = (SimpleAttributeSet)styles.get(tokenType);
-            if (style == null)
-                style = (SimpleAttributeSet)styles.get(IToken.ERROR);
-            document.setCharacterAttributes(position,length,style,true);
-        }                                                                   
+    private class HighLightThread extends Thread {
+        private boolean running;
+        public HighLightThread() { running = true; start(); }
+        public void run() {
+            if (syntaxLexer == null ||
+                    (syntaxLexer instanceof ILexer) == false) return;
+            reader.reset(); // from the beginning
+            // recolor all tokens
+            try {
+                // first reset lexer
+                syntaxLexer.reset(reader,0,0,0);
+                IToken t = syntaxLexer.getSymbol();
+                while (running && t.getType() != IToken.TEOF) {
+                    reColor(t.getCharBegin(),t.getCharEnd()-t.getCharBegin(),t.getType());
+                    t = syntaxLexer.getSymbol();
+                    Thread.yield();
+                }
+            } catch (IOException e) {}
+            catch (Error y) { /* no match */ }
+        }
+        public void stopRun() { running = false; }
+        private void reColor(int position, int length, int tokenType) {
+            if ((position + length) <= document.getLength()){
+                SimpleAttributeSet style = (SimpleAttributeSet)styles.get(tokenType);
+                if (style == null)
+                    style = (SimpleAttributeSet)styles.get(IToken.ERROR);
+                document.setCharacterAttributes(position,length,style,true);
+            }                                                                   
+        }
     }
    
     /*** LINE NUMBERS PAINT IMPLEMENTATION ***/
@@ -260,7 +211,7 @@ public class emuTextPane extends JTextPane {
                     this.syntaxLexer = null;
                     getEditorKit().read(vstup, document,0);
                     this.syntaxLexer = l;
-                    this.reHighlight();
+                    reHighlight();
                     this.setCaretPosition(0);
                     vstup.close(); fileSaved = true;
                 }  catch (java.io.FileNotFoundException ex) {
@@ -347,7 +298,7 @@ public class emuTextPane extends JTextPane {
                 try {
                     emuFileFilter fil = (emuFileFilter)f.getFileFilter();
                     if (fil.getExtension(fileSource) == null && fil.getFirstExtension()!=null) {
-                        if (fil.getFirstExtension() != "*")
+                        if (!fil.getFirstExtension().equals("*"))
                             fn +="."+fil.getFirstExtension();
                     }
                     fileSource = new java.io.File(fn);
