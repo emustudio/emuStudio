@@ -1,7 +1,7 @@
 /*
  * frmStudio.java
  *
- * Created on Nede�a, 2007, august 5, 13:43
+ * Created on Nedeľa, 2007, august 5, 13:43
  */
 
 package emu8.gui;
@@ -28,7 +28,7 @@ import java.util.*;
  */
 public class frmStudio extends javax.swing.JFrame {
     private emuTextPane txtSource;
-    private ArchitectureLoader emuConfig;
+    private ArchitectureHandler arch; // current architecture
     private ActionListener undoStateListener;
     private Clipboard systemClipboard;
     private ILexer syntaxLexer;
@@ -41,16 +41,17 @@ public class frmStudio extends javax.swing.JFrame {
     
     /** Creates new form frmStudio */
     public frmStudio() {
-        // create components
-        this.emuConfig = Main.getInstance().emuConfig;
-        syntaxLexer = emuConfig.cCompiler.getLexer(
-                txtSource.getDocumentReader(),reporter);
-        this.txtSource = new emuTextPane(syntaxLexer);
-        this.cpuPermanentRunning = false;
+        // create models and components
+        arch = Main.getInstance().currentArch;
+        syntaxLexer = arch.getCompiler().getLexer(txtSource.getDocumentReader(),
+                reporter);
+        txtSource = new emuTextPane(syntaxLexer);
+        cpuPermanentRunning = false;
+        debug_model = new debugTableModel(arch.getCPU(),arch.getCompiler(),
+                arch.getMemory());
+        tblDebug = new debugTable(debug_model, arch.getCPU());
         
-        debug_model = new debugTableModel(emuConfig.cCPU,
-            emuConfig.cCompiler, emuConfig.cMemory);
-        tblDebug = new debugTable(debug_model, emuConfig);
+        // create other components
         initComponents();
         jScrollPane1.setViewportView(txtSource);
         paneDebug.setViewportView(tblDebug);
@@ -74,7 +75,7 @@ public class frmStudio extends javax.swing.JFrame {
         
         //emulator settings
         this.setStatusGUI();
-        emuConfig.cMemory.registerDeviceDMA(new IMemListener() {
+        arch.getMemory().registerDeviceDMA(new IMemListener() {
             public void memChange(EventObject evt, int adr, int bank) {
                 if (cpuPermanentRunning == true) return;
                 tblDebug.revalidate();
@@ -82,7 +83,7 @@ public class frmStudio extends javax.swing.JFrame {
             }
         });
         
-        emuConfig.cCPU.addCPUListener(new ICPUListener() {
+        arch.getCPU().addCPUListener(new ICPUListener() {
             public void cpuRunChanged(EventObject evt, stateEnum state) {
                 if (state == stateEnum.runned) {
                     btnStop.setEnabled(true); btnBack.setEnabled(false);
@@ -108,26 +109,20 @@ public class frmStudio extends javax.swing.JFrame {
             }
             public void frequencyChanged(EventObject evt, float frequency) {}
         });
-        emuConfig.cCPU.reset(emuConfig.cMemory.getLastImageStart());
-        lstDevices.setModel(new lstDevicesModel(emuConfig));
-        
+        arch.getCPU().reset(arch.getMemory().getLastImageStart());
+        lstDevices.setModel(new AbstractListModel() {
+            public int getSize() { return arch.getDevices().length; }
+            public Object getElementAt(int index) {
+                return arch.getDevices()[index].getName();
+            }
+        });
         this.setLocationRelativeTo(null);
-        this.setTitle("emu8 Studio - " + emuConfig.nowName);
-    }
-    
-    private class lstDevicesModel extends AbstractListModel {
-        private ArchitectureLoader em;
-        public lstDevicesModel(ArchitectureLoader em) { this.em = em; }
-        public int getSize() { return em.cDevices.size(); }
-        public Object getElementAt(int index) {
-            IDevice dev = (IDevice)em.cDevices.get(index);
-            return dev.getName();
-        }
+        this.setTitle("emu8 Studio - " + arch.getArchName());
     }
         
     // get gui panel from CPU plugin and show in main window
     public void setStatusGUI() {
-        JPanel statusPanel = emuConfig.cCPU.getStatusGUI();
+        JPanel statusPanel = arch.getCPU().getStatusGUI();
         if (statusPanel == null) return;
         GroupLayout layout = new GroupLayout(jPanel4);
         jPanel4.setLayout(layout);
@@ -247,7 +242,7 @@ public class frmStudio extends javax.swing.JFrame {
         javax.swing.JPanel jPanel5 = new javax.swing.JPanel();
         javax.swing.JScrollPane paneDevices = new javax.swing.JScrollPane();
         lstDevices = new javax.swing.JList();
-        javax.swing.JButton jButton1 = new javax.swing.JButton();
+        javax.swing.JButton showGUIButton = new javax.swing.JButton();
         javax.swing.JMenuBar jMenuBar2 = new javax.swing.JMenuBar();
         javax.swing.JMenu mnuFile = new javax.swing.JMenu();
         javax.swing.JMenuItem mnuFileNew = new javax.swing.JMenuItem();
@@ -559,10 +554,10 @@ public class frmStudio extends javax.swing.JFrame {
 
         paneDevices.setViewportView(lstDevices);
 
-        jButton1.setText("Show GUI");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        showGUIButton.setText("Show GUI");
+        showGUIButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                showGUIButtonActionPerformed(evt);
             }
         });
 
@@ -574,7 +569,7 @@ public class frmStudio extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(paneDevices, javax.swing.GroupLayout.PREFERRED_SIZE, 326, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton1)
+                .addComponent(showGUIButton)
                 .addContainerGap(345, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
@@ -584,7 +579,7 @@ public class frmStudio extends javax.swing.JFrame {
                     .addComponent(paneDevices, javax.swing.GroupLayout.DEFAULT_SIZE, 53, Short.MAX_VALUE)
                     .addGroup(jPanel5Layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(jButton1)))
+                        .addComponent(showGUIButton)))
                 .addContainerGap())
         );
 
@@ -772,44 +767,46 @@ public class frmStudio extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnPauseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPauseActionPerformed
-        emuConfig.cCPU.pause();
+        arch.getCPU().pause();
         tblDebug.setVisible(true);
         tblDebug.revalidate();
         tblDebug.repaint();        
     }//GEN-LAST:event_btnPauseActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void showGUIButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showGUIButtonActionPerformed
         try {
-            ((IDevice)emuConfig.cDevices.get(lstDevices.getMinSelectionIndex())).
+            ((IDevice)arch.getDevices()[lstDevices.getMinSelectionIndex()]).
                     showGUI();
-        } catch(Exception e) {}
-    }//GEN-LAST:event_jButton1ActionPerformed
+        } catch(Exception e) {
+            Main.showErrorMessage("Can't show GUI of a device: " + e.getMessage());
+        }
+}//GEN-LAST:event_showGUIButtonActionPerformed
 
     private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMemoryActionPerformed
-        this.emuConfig.cMemory.showGUI();
+        arch.getMemory().showGUI();
     }//GEN-LAST:event_btnMemoryActionPerformed
 
     private void btnStepActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnStepActionPerformed
-        emuConfig.cCPU.step();
+        arch.getCPU().step();
     }//GEN-LAST:event_btnStepActionPerformed
 
     private void btnRunActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRunActionPerformed
         tblDebug.setVisible(false);
-        emuConfig.cCPU.execute();
+        arch.getCPU().execute();
         cpuPermanentRunning = true;
     }//GEN-LAST:event_btnRunActionPerformed
 
     private void btnStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnStopActionPerformed
-        emuConfig.cCPU.stop();
+        arch.getCPU().stop();
         tblDebug.setVisible(true);
         tblDebug.revalidate();
         tblDebug.repaint();
     }//GEN-LAST:event_btnStopActionPerformed
 
     private void btnBackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBackActionPerformed
-        int pc = emuConfig.cCPU.getPC();
+        int pc = arch.getCPU().getPC();
         if (pc > 0) {
-            emuConfig.cCPU.setPC(pc-1);
+            arch.getCPU().setPC(pc-1);
             paneDebug.revalidate();
             tblDebug.revalidate();
             tblDebug.repaint();
@@ -817,14 +814,14 @@ public class frmStudio extends javax.swing.JFrame {
     }//GEN-LAST:event_btnBackActionPerformed
 
     private void btnBeginningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBeginningActionPerformed
-        this.emuConfig.cCPU.setPC(0);
+        arch.getCPU().setPC(0);
         paneDebug.revalidate();
         tblDebug.revalidate();
         tblDebug.repaint();
     }//GEN-LAST:event_btnBeginningActionPerformed
 
     private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResetActionPerformed
-        emuConfig.cCPU.reset(emuConfig.cMemory.getLastImageStart());
+        arch.getCPU().reset(arch.getMemory().getLastImageStart());
         paneDebug.revalidate();
         tblDebug.setVisible(true);
         tblDebug.revalidate();
@@ -838,10 +835,10 @@ public class frmStudio extends javax.swing.JFrame {
                     "Jump to address: ", "Jump",JOptionPane.QUESTION_MESSAGE,
                     null,null,0).toString()).intValue();
         } catch(Exception e) {return;}
-        if (emuConfig.cCPU.setPC(address) == false) {
+        if (arch.getCPU().setPC(address) == false) {
             JOptionPane.showMessageDialog(this,
                     "Typed address is incorrect ! (expected range from 0 to "
-                    + String.valueOf(emuConfig.cMemory.getSize())+")",
+                    + String.valueOf(arch.getMemory().getSize())+")",
                     "Jump",JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -869,7 +866,7 @@ public class frmStudio extends javax.swing.JFrame {
         fn = fn.substring(0,fn.lastIndexOf(".")) + ".hex";
         try {
             syntaxLexer.reset((java.io.Reader)new java.io.StringReader(txtSource.getText()),0,0,0);
-            emuConfig.cCompiler.compile(fn);
+            arch.getCompiler().compile(fn);
         }
         catch(Exception e) {
             txtOutput.append(e.toString()+"\n");
@@ -882,11 +879,11 @@ public class frmStudio extends javax.swing.JFrame {
                 "Do you want to load compiled file into operating memory ?", 
                 "Confirmation", JOptionPane.YES_NO_OPTION);
         if (res == JOptionPane.YES_OPTION)
-            emuConfig.cMemory.loadHex(fn);
+            arch.getMemory().loadHex(fn);
     }//GEN-LAST:event_btnCompileActionPerformed
 
     private void mnuProjectViewConfigActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuProjectViewConfigActionPerformed
-        new frmViewConfig(this.emuConfig).setVisible(true);
+        new frmViewConfig(arch).setVisible(true);
     }//GEN-LAST:event_mnuProjectViewConfigActionPerformed
 
     private void mnuEditPasteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditPasteActionPerformed
@@ -936,14 +933,12 @@ public class frmStudio extends javax.swing.JFrame {
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         if (txtSource.confirmSave() == true) return;
         // destroy all devices
-        emuConfig.cMemory.destroy();
         try {
-            for (int i = 0; i < emuConfig.cDevices.size(); i++) {
-                IDevice d = (IDevice)emuConfig.cDevices.get(i);
-                d.destroy();
-            }
+            for (int i = 0; i < arch.getDevices().length; i++)
+                arch.getDevices()[i].destroy();
+            arch.getCPU().destroy();
+            arch.getMemory().destroy();
         } catch (Exception e) {}
-        emuConfig.cCPU.destroy();
         dispose();
         System.exit(0); //calling the method is a must
     }//GEN-LAST:event_formWindowClosing

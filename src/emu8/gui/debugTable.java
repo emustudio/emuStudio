@@ -10,10 +10,10 @@
 package emu8.gui;
 
 import emu8.*;
-import emu8.gui.debugTableModel;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
+import plugins.cpu.ICPU;
 
 /**
  *
@@ -21,12 +21,12 @@ import java.awt.*;
  */
 public class debugTable extends JTable {
     private debugTableModel debug_model;
-    private ArchitectureLoader emuConfig;
+    private ICPU cpu;
     
     /** Creates a new instance of debugTable */
-    public debugTable(debugTableModel tblModel, ArchitectureLoader emuConfig) {
+    public debugTable(debugTableModel tblModel, ICPU cpu) {
         this.debug_model = tblModel;
-        this.emuConfig = emuConfig;
+        this.cpu = cpu;
         setModel(tblModel);
         setDefaultRenderer(Object.class, new DebugCellRenderer());
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -37,7 +37,7 @@ public class debugTable extends JTable {
         public DebugCellRenderer() {  super(); setOpaque(true); }
         public Component getTableCellRendererComponent(JTable table, Object value,
                 boolean isSelected, boolean hasFocus, int row, int column) {
-            if (debug_model.getRowAddress(row) == emuConfig.cCPU.getPC()) {
+            if (debug_model.getRowAddress(row) == cpu.getPC()) {
                 this.setBackground(Color.RED);
                 this.setForeground(Color.WHITE);
             } else { 

@@ -63,7 +63,6 @@ public class ArchitectureHandler {
         for (int i = 1; i <= 256; i++)
             if (settings.containsKey("device"+i))
                 devs.add(settings.getProperty("device"+i));
-            
         devNames = (String[])devs.toArray(new String[0]);
         
         // initialization

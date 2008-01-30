@@ -16,11 +16,11 @@ import plugins.device.IDevice;
  * @author  vbmacher
  */
 public class frmViewConfig extends javax.swing.JFrame {
-    private ArchitectureLoader emuConfig;
+    private ArchitectureHandler emuConfig;
 
     
     /** Creates new form frmViewConfig */
-    public frmViewConfig(ArchitectureLoader emuConfig) {
+    public frmViewConfig(ArchitectureHandler emuConfig) {
         this.emuConfig = emuConfig;
         initComponents();
         

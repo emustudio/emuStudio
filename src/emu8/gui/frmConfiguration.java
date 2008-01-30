@@ -359,7 +359,7 @@ public class frmConfiguration extends javax.swing.JFrame {
             updateSettings();
             aloader.writeConfig(this.configName, settings);
         }
-        aloader.load(configName, settings);
+        Main.getInstance().setCurrentArch(aloader.load(configName, settings)); 
         frmStudio stud = new frmStudio();
         this.dispose();
         stud.setVisible(true);

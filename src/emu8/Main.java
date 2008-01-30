@@ -17,6 +17,7 @@ import emu8.gui.frmConfiguration;
  */
 public class Main {
     public ArchitectureLoader emuConfig;
+    public ArchitectureHandler currentArch = null;
     public static Main thisInstance = null;
     
     public static Main getInstance() {
@@ -32,6 +33,10 @@ public class Main {
     public static void showErrorMessage(String message) {
         javax.swing.JOptionPane.showMessageDialog(null,
                 message,"Error",javax.swing.JOptionPane.ERROR_MESSAGE);
+    }
+    
+    public void setCurrentArch(ArchitectureHandler arch) {
+        this.currentArch = arch;
     }
     
     /**

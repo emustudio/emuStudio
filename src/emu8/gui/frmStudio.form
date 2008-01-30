@@ -749,7 +749,7 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="paneDevices" min="-2" pref="326" max="-2" attributes="1"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="jButton1" min="-2" max="-2" attributes="0"/>
+                          <Component id="showGUIButton" min="-2" max="-2" attributes="0"/>
                           <EmptySpace pref="345" max="32767" attributes="0"/>
                       </Group>
                   </Group>
@@ -761,7 +761,7 @@
                               <Component id="paneDevices" alignment="1" pref="53" max="32767" attributes="0"/>
                               <Group type="102" alignment="1" attributes="0">
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="jButton1" min="-2" max="-2" attributes="0"/>
+                                  <Component id="showGUIButton" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -789,12 +789,12 @@
                     </Component>
                   </SubComponents>
                 </Container>
-                <Component class="javax.swing.JButton" name="jButton1">
+                <Component class="javax.swing.JButton" name="showGUIButton">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Show GUI"/>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton1ActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="showGUIButtonActionPerformed"/>
                   </Events>
                 </Component>
               </SubComponents>
