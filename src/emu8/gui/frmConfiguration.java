@@ -21,6 +21,7 @@ public class frmConfiguration extends javax.swing.JFrame {
     private File selectedConfig;
     private ArchitectureLoader aloader;
     private Properties settings;
+    private String configName;
     
     /** Creates new form frmConfiguration */
     public frmConfiguration() {
@@ -69,6 +70,7 @@ public class frmConfiguration extends javax.swing.JFrame {
     
     // updates gui controls according to settings
     private void updateGUI(String name) {
+        this.configName = name;
         txtConfigName.setText(name);
         cmbCPUType.setSelectedItem(settings.getProperty("cpu"));
         cmbCompiler.setSelectedItem(settings.getProperty("compiler"));
@@ -84,6 +86,19 @@ public class frmConfiguration extends javax.swing.JFrame {
                     lstDevices.addSelectionInterval(j,j);
             }
         }
+    }
+    
+    private void updateSettings() {
+        this.configName = txtConfigName.getText();
+        settings.clear();
+        settings.setProperty("cpu", (String)cmbCPUType.getSelectedItem());
+        settings.setProperty("compiler", (String)cmbCompiler.getSelectedItem());
+        settings.setProperty("memory", (String)cmbMemoryType.getSelectedItem());
+        settings.setProperty("memorySize", txtMemorySize.getText());
+
+        for (int i = 0; i < lstDevices.getSelectedValues().length; i++)
+            settings.setProperty("device" + i, 
+                    (String)lstDevices.getSelectedValues()[i]);
     }
     
     /** This method is called from within the constructor to
@@ -111,13 +126,12 @@ public class frmConfiguration extends javax.swing.JFrame {
         javax.swing.JLabel jLabel9 = new javax.swing.JLabel();
         javax.swing.JLabel jLabel11 = new javax.swing.JLabel();
         txtConfigName = new javax.swing.JTextField();
-        javax.swing.JScrollPane jScrollPane3 = new javax.swing.JScrollPane();
-        lstDevices = new javax.swing.JList();
         javax.swing.JButton jButton3 = new javax.swing.JButton();
         javax.swing.JButton jButton4 = new javax.swing.JButton();
-        javax.swing.JButton jButton5 = new javax.swing.JButton();
         javax.swing.JLabel jLabel4 = new javax.swing.JLabel();
         cmbCompiler = new javax.swing.JComboBox();
+        javax.swing.JScrollPane jScrollPane2 = new javax.swing.JScrollPane();
+        lstDevices = new javax.swing.JList();
         javax.swing.JButton buttonOK = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -139,29 +153,26 @@ public class frmConfiguration extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                        .addGap(24, 24, 24)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 489, Short.MAX_VALUE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, 501, Short.MAX_VALUE)))
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(10, 10, 10)
+                .addGap(12, 12, 12)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 266, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(79, 79, 79))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 273, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         paneTab.addTab("Existing configuration", jPanel1);
 
-        jLabel1.setText("Create new or edit existing microcomputer architecture configuration.");
+        jLabel1.setText("<html>Create new or edit existing microcomputer architecture configuration.");
 
         jLabel2.setText("Select CPU type:");
 
@@ -181,9 +192,6 @@ public class frmConfiguration extends javax.swing.JFrame {
 
         jLabel11.setText("Enter config file name:");
 
-        lstDevices.setModel(new lstModel(1));
-        jScrollPane3.setViewportView(lstDevices);
-
         jButton3.setText("Clear selection");
         jButton3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -198,16 +206,12 @@ public class frmConfiguration extends javax.swing.JFrame {
             }
         });
 
-        jButton5.setText("Browse...");
-        jButton5.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton5ActionPerformed(evt);
-            }
-        });
-
         jLabel4.setText("Select compiler:");
 
         cmbCompiler.setModel(new cmbModel(2));
+
+        lstDevices.setModel(new lstModel(1));
+        jScrollPane2.setViewportView(lstDevices);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -215,53 +219,61 @@ public class frmConfiguration extends javax.swing.JFrame {
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jLabel1))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                         .addGap(30, 30, 30)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel11)
-                            .addComponent(jLabel4)
-                            .addComponent(jLabel5)
-                            .addComponent(jLabel2)
-                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(jButton4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jButton3, javax.swing.GroupLayout.Alignment.TRAILING))
-                            .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createSequentialGroup()
-                                        .addComponent(jLabel10)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(txtMemorySize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 47, Short.MAX_VALUE))
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                        .addComponent(cmbCompiler, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(cmbCPUType, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(txtConfigName, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 214, Short.MAX_VALUE))
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createSequentialGroup()
-                                        .addComponent(jLabel8)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(cmbMemoryType, 0, 165, Short.MAX_VALUE)))
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel11)
+                                    .addComponent(jLabel2)
+                                    .addComponent(jLabel4))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(jPanel2Layout.createSequentialGroup()
+                                    .addComponent(jLabel5)
+                                    .addGap(58, 58, 58))
+                                .addGroup(jPanel2Layout.createSequentialGroup()
+                                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                                .addComponent(jButton4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addComponent(jButton3, javax.swing.GroupLayout.Alignment.TRAILING))
+                                            .addGap(40, 40, 40))
+                                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                            .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, 150, Short.MAX_VALUE)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
+                                    .addGap(16, 16, 16))))
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jButton5))
-                            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 292, Short.MAX_VALUE))
-                        .addGap(31, 31, 31)))
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(cmbMemoryType, javax.swing.GroupLayout.Alignment.TRAILING, 0, 136, Short.MAX_VALUE)
+                                    .addGroup(jPanel2Layout.createSequentialGroup()
+                                        .addComponent(txtMemorySize, javax.swing.GroupLayout.DEFAULT_SIZE, 136, Short.MAX_VALUE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                                .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, 39, Short.MAX_VALUE)
+                                .addGap(211, 211, 211))
+                            .addComponent(cmbCompiler, 0, 250, Short.MAX_VALUE)
+                            .addComponent(cmbCPUType, 0, 250, Short.MAX_VALUE)
+                            .addComponent(txtConfigName, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(15, 15, 15)
-                .addComponent(jLabel1)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel11)
-                    .addComponent(txtConfigName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton5))
+                    .addComponent(txtConfigName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
@@ -273,21 +285,21 @@ public class frmConfiguration extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel5)
-                    .addComponent(jLabel8)
-                    .addComponent(cmbMemoryType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(cmbMemoryType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel8))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel10)
-                    .addComponent(txtMemorySize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtMemorySize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel10))
                 .addGap(10, 10, 10)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jLabel9)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 40, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jButton4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton3))
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 121, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 79, Short.MAX_VALUE))
                 .addGap(84, 84, 84))
         );
 
@@ -304,13 +316,13 @@ public class frmConfiguration extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(453, Short.MAX_VALUE)
-                .addComponent(buttonOK, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
             .addGroup(layout.createSequentialGroup()
-                .addComponent(paneTab, javax.swing.GroupLayout.PREFERRED_SIZE, 533, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap(386, Short.MAX_VALUE)
+                        .addComponent(buttonOK, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(paneTab, javax.swing.GroupLayout.DEFAULT_SIZE, 466, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -344,18 +356,11 @@ public class frmConfiguration extends javax.swing.JFrame {
                 Main.showErrorMessage("Error: Memory type have to be selected.");
                 return;
             }
-            cMain.emuConfig.nowName = txtConfigName.getText();
-            cMain.emuConfig.nowCPU = (String)cmbCPUType.getSelectedItem();
-            cMain.emuConfig.nowCompiler = (String)cmbCompiler.getSelectedItem();
-            cMain.emuConfig.nowMemory = (String)cmbMemoryType.getSelectedItem();
-            cMain.emuConfig.nowMemorySize = Integer.valueOf(txtMemorySize.getText());
-            cMain.emuConfig.nowDevices.clear();
-            for (int i = 0; i < lstDevices.getSelectedValues().length; i++)
-                cMain.emuConfig.nowDevices.add(lstDevices.getSelectedValues()[i]);
-            cMain.emuConfig.writeConfig(txtConfigName.getText());
+            updateSettings();
+            aloader.writeConfig(this.configName, settings);
         }
-        cMain.emuConfig.load();
-        frmStudio stud = new frmStudio(cMain.emuConfig);
+        aloader.load(configName, settings);
+        frmStudio stud = new frmStudio();
         this.dispose();
         stud.setVisible(true);
 }//GEN-LAST:event_buttonOKActionPerformed
@@ -371,45 +376,6 @@ public class frmConfiguration extends javax.swing.JFrame {
             updateGUI(name);
         } catch (Exception e) {}
     }//GEN-LAST:event_lstConfigsValueChanged
-
-    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        JFileChooser f = new JFileChooser();
-        emuFileFilter propsFilter = new emuFileFilter();
-
-        propsFilter.addExtension("props");
-        propsFilter.setDescription("Microcomputer configurations");
-        
-        f.setCurrentDirectory(new File(System.getProperty("user.dir")
-            + File.separator + cMain.emuConfig.configsDir));
-        f.setAcceptAllFileFilterUsed(false);
-        f.addChoosableFileFilter(propsFilter);
-        f.setFileFilter(propsFilter);
-
-        int returnVal = f.showSaveDialog(this);
-        if(returnVal == JFileChooser.APPROVE_OPTION) {
-            selectedConfig = f.getSelectedFile();
-            // if file extension is not null
-            txtConfigName.setText(selectedConfig.getName().
-                    substring(0,selectedConfig.getName().lastIndexOf(".")));
-            try {
-                cMain.emuConfig.readConfig(txtConfigName.getText());
-                cmbCPUType.setSelectedItem(cMain.emuConfig.nowCPU);
-                cmbMemoryType.setSelectedItem(cMain.emuConfig.nowMemory);
-                txtMemorySize.setText(String.valueOf(cMain.emuConfig.nowMemorySize));
-                int j;
-                for (int i = 0; i < cMain.emuConfig.nowDevices.size(); i++) {
-                    j = lstDevices.getNextMatch((String)cMain.emuConfig.nowDevices.get(i),
-                            0,Position.Bias.Forward);
-                    if (j != -1)
-                        if (lstDevices.getModel().
-                                getElementAt(j).equals(cMain.emuConfig.nowDevices.get(i))) {
-                            lstDevices.addSelectionInterval(j,j);
-                        }
-                }
-            } catch (Exception e) {}
-        }
-        f.setVisible(true);
-    }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         lstDevices.clearSelection();

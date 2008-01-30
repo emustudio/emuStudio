@@ -40,9 +40,9 @@ public class frmStudio extends javax.swing.JFrame {
     private debugTableModel debug_model;
     
     /** Creates new form frmStudio */
-    public frmStudio(ArchitectureLoader emuConfig) {
+    public frmStudio() {
         // create components
-        this.emuConfig = emuConfig;
+        this.emuConfig = Main.getInstance().emuConfig;
         syntaxLexer = emuConfig.cCompiler.getLexer(
                 txtSource.getDocumentReader(),reporter);
         this.txtSource = new emuTextPane(syntaxLexer);
