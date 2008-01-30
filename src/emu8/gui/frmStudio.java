@@ -711,10 +711,20 @@ public class frmStudio extends javax.swing.JFrame {
 
         mnuEditFind.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F, java.awt.event.InputEvent.CTRL_MASK));
         mnuEditFind.setText("Find text...");
+        mnuEditFind.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuEditFindActionPerformed(evt);
+            }
+        });
         mnuEdit.add(mnuEditFind);
 
         mnuEditFindNext.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F3, 0));
         mnuEditFindNext.setText("Find next");
+        mnuEditFindNext.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuEditFindNextActionPerformed(evt);
+            }
+        });
         mnuEdit.add(mnuEditFindNext);
 
         jMenuBar2.add(mnuEdit);
@@ -978,6 +988,14 @@ public class frmStudio extends javax.swing.JFrame {
         txtSource.undo();
         undoStateListener.actionPerformed(new ActionEvent(this,0,""));
     }//GEN-LAST:event_btnUndoActionPerformed
+
+    private void mnuEditFindActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditFindActionPerformed
+        Main.showErrorMessage("Not implemented yet");
+    }//GEN-LAST:event_mnuEditFindActionPerformed
+
+    private void mnuEditFindNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditFindNextActionPerformed
+        Main.showErrorMessage("Not implemented yet");
+    }//GEN-LAST:event_mnuEditFindNextActionPerformed
 
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
