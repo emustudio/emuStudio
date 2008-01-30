@@ -43,9 +43,7 @@ public class frmStudio extends javax.swing.JFrame {
     public frmStudio() {
         // create models and components
         arch = Main.getInstance().currentArch;
-        syntaxLexer = arch.getCompiler().getLexer(txtSource.getDocumentReader(),
-                reporter);
-        txtSource = new emuTextPane(syntaxLexer);
+        txtSource = new emuTextPane();
         cpuPermanentRunning = false;
         debug_model = new debugTableModel(arch.getCPU(),arch.getCompiler(),
                 arch.getMemory());
@@ -70,6 +68,9 @@ public class frmStudio extends javax.swing.JFrame {
                 txtOutput.append(message+"\n");
             }
         };
+        syntaxLexer = arch.getCompiler().getLexer(txtSource.getDocumentReader(),
+                reporter);
+        txtSource.setLexer(syntaxLexer);
         setUndoListener();
         setClipboardListener();
         

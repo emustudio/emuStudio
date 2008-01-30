@@ -45,7 +45,9 @@ public class frmViewConfig extends javax.swing.JFrame {
             for (int i = 0; i < arch.getDeviceNames().length; i++)
                 cmbDevice.addItem(arch.getDeviceNames()[i]);
         }
-        catch (NullPointerException e) {}
+        catch (NullPointerException e) {
+            Main.showErrorMessage("Can't get plugins info:" + e.getMessage());
+        }
         
         if (cmbDevice.getItemCount() > 0) showDevConfig(0);
         cmbDevice.addActionListener(new ActionListener() {
@@ -54,7 +56,6 @@ public class frmViewConfig extends javax.swing.JFrame {
                 try { showDevConfig(i); }
                 catch(Exception ex) {}
             }
-            
         });
         this.setLocationRelativeTo(null);
     }

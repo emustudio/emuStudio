@@ -51,6 +51,7 @@ public class ArchitectureHandler {
         if (memory == null)
             throw new IllegalArgumentException("Memory can't be null");
         if (name == null) name = "";
+        this.settings = settings;
         this.compiler = compiler;
         this.cpu = cpu;
         this.memory = memory;
@@ -60,7 +61,7 @@ public class ArchitectureHandler {
         this.name = name;
         Vector devs = new Vector();
         // max. 256 devices
-        for (int i = 1; i <= 256; i++)
+        for (int i = 0; i < 256; i++)
             if (settings.containsKey("device"+i))
                 devs.add(settings.getProperty("device"+i));
         devNames = (String[])devs.toArray(new String[0]);

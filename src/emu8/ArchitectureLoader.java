@@ -20,9 +20,9 @@
  * compiler = "compilerIntel8080"
  * memory = "nonbanked"
  * memorySize = 16384
- * device1 = "harddisk"
- * device2 = "keyboard"
- * device3 = "screen"
+ * device0 = "harddisk"
+ * device1 = "keyboard"
+ * device2 = "screen"
  * ...
  *
  */
@@ -139,7 +139,7 @@ public class ArchitectureLoader extends ClassLoader {
 
             // max. 256 devices
             Vector devs = new Vector();
-            for (int i = 1; i <= 256; i++)
+            for (int i = 0; i < 256; i++)
                 if (settings.containsKey("device"+i)) {
                     IDevice dev = (IDevice)loadPlugin(devicesDir,
                             settings.getProperty("device"+i),

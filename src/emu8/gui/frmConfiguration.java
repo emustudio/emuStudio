@@ -18,7 +18,6 @@ import javax.swing.text.*;
  * @author  vbmacher
  */
 public class frmConfiguration extends javax.swing.JFrame {
-    private File selectedConfig;
     private ArchitectureLoader aloader;
     private Properties settings;
     private String configName;

@@ -45,8 +45,7 @@ public class emuTextPane extends JTextPane {
     private ActionListener undoStateListener;
 
     /** Creates a new instance of emuTextPane */
-    public emuTextPane(ILexer sLexer) {
-        this.syntaxLexer = sLexer;
+    public emuTextPane() {
         styles = new Hashtable();
         initStyles();
         document = new HighlightedDocument();
@@ -68,7 +67,11 @@ public class emuTextPane extends JTextPane {
         });
         undoStateListener = null;
     }
-    
+
+    public void setLexer(ILexer sLexer) {
+        this.syntaxLexer = sLexer;
+    }
+
     private class HighlightStyle extends SimpleAttributeSet {
         public HighlightStyle(boolean italic, boolean bold, Color color) {
             StyleConstants.setFontFamily(this, "Monospaced");
