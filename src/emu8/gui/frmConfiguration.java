@@ -4,10 +4,13 @@
  * Created on Streda, 2007, august 8, 8:45
  */
 
-package emu8;
+package emu8.gui;
+import emu8.*;
+import emu8.gui.frmStudio;
 import javax.swing.*;
 import javax.swing.event.*;
 import java.io.*;
+import java.util.Properties;
 import javax.swing.text.*;
 
 /**
@@ -15,41 +18,45 @@ import javax.swing.text.*;
  * @author  vbmacher
  */
 public class frmConfiguration extends javax.swing.JFrame {
-    private Main cMain;
     private File selectedConfig;
+    private ArchitectureLoader aloader;
+    private Properties settings;
     
     /** Creates new form frmConfiguration */
-    public frmConfiguration(Main cMain) {
-        this.cMain = cMain;
+    public frmConfiguration() {
         initComponents();
+        aloader = Main.getInstance().emuConfig;
         this.setLocationRelativeTo(null);
     }
     
     // existing configurations list model
-    private class lstModel implements ListModel {
+    private class lstModel extends AbstractListModel {
         private String[] allModels;
         public lstModel(int index) {
-            emuConfiguration e = cMain.emuConfig;
-            if (index == 0) allModels = e.getAllNames(e.configsDir, ".props");
-            else allModels = e.getAllNames(e.devicesDir, ".jar");
+            if (index == 0)
+                allModels = aloader.getAllNames(aloader.configsDir, ".props");
+            else
+                allModels = aloader.getAllNames(aloader.devicesDir, ".jar");
         }
-        public void addListDataListener(ListDataListener l) {}
         public Object getElementAt(int index) {
-            return allModels[index].substring(0, allModels[index].lastIndexOf("."));
+            return allModels[index].substring(0,
+                    allModels[index].lastIndexOf("."));
         }
         public int getSize() {
             if (allModels != null) return allModels.length;
             else return 0;
         }
-        public void removeListDataListener(ListDataListener l) {}
     }
+    
     private class cmbModel extends DefaultComboBoxModel {
         private String[] allModels;
         public cmbModel(int index) {
-            emuConfiguration e = cMain.emuConfig;
-            if (index == 0) allModels = e.getAllNames(e.cpusDir, ".jar");
-            else if (index == 1) allModels = e.getAllNames(e.memoriesDir, ".jar");
-            else allModels = e.getAllNames(e.compilersDir, ".jar");
+            if (index == 0)
+                allModels = aloader.getAllNames(aloader.cpusDir, ".jar");
+            else if (index == 1)
+                allModels = aloader.getAllNames(aloader.memoriesDir, ".jar");
+            else
+                allModels = aloader.getAllNames(aloader.compilersDir, ".jar");
         }
         public int getSize() {
             if (allModels == null) return 0;
@@ -57,6 +64,25 @@ public class frmConfiguration extends javax.swing.JFrame {
         }
         public Object getElementAt(int index) {
             return allModels[index].substring(0, allModels[index].lastIndexOf("."));
+        }
+    }
+    
+    // updates gui controls according to settings
+    private void updateGUI(String name) {
+        txtConfigName.setText(name);
+        cmbCPUType.setSelectedItem(settings.getProperty("cpu"));
+        cmbCompiler.setSelectedItem(settings.getProperty("compiler"));
+        cmbMemoryType.setSelectedItem(settings.getProperty("memory"));
+        txtMemorySize.setText(String.valueOf(settings.getProperty("memorySize")));
+        int j;
+        for (int i = 0; i < 256; i++) {
+            if (settings.containsKey("device" + i)) {
+                String devName = settings.getProperty("device" + i);
+                j = lstDevices.getNextMatch(devName,0,Position.Bias.Forward);
+                if (j != -1 && 
+                        lstDevices.getModel().getElementAt(j).equals(devName))
+                    lstDevices.addSelectionInterval(j,j);
+            }
         }
     }
     
@@ -301,31 +327,21 @@ public class frmConfiguration extends javax.swing.JFrame {
     private void buttonOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOKActionPerformed
         if (paneTab.getSelectedIndex() == 0) {
             if (lstConfigs.getSelectedIndex() == -1) {
-                JOptionPane.showMessageDialog(null,
-                    "Error: No configuration is selected.","Chyba",
-                        JOptionPane.ERROR_MESSAGE);
+                Main.showErrorMessage("Error: No configuration is selected.");
                 return;
             }
         } else {
             if (txtConfigName.getText().equals("")) {
-                JOptionPane.showMessageDialog(null,
-                    "Error: Configuration name can't be empty.","Error",
-                    JOptionPane.ERROR_MESSAGE);
+                Main.showErrorMessage("Error: Configuration name can't be empty.");
                 return;
             } else if (cmbCPUType.getSelectedIndex() == -1) {
-                JOptionPane.showMessageDialog(null,
-                    "Error: CPU have to be selected.","Error",
-                    JOptionPane.ERROR_MESSAGE);
+                Main.showErrorMessage("Error: CPU have to be selected.");
                 return;
             } else if (cmbCompiler.getSelectedIndex() == -1) {
-                JOptionPane.showMessageDialog(null,
-                    "Error: Compiler have to be selected.","Error",
-                    JOptionPane.ERROR_MESSAGE);
+                Main.showErrorMessage("Error: Compiler have to be selected.");
                 return;
             } else if (cmbMemoryType.getSelectedIndex() == -1) {
-                JOptionPane.showMessageDialog(null,
-                    "Error: Memory type have to be selected.","Error",
-                    JOptionPane.ERROR_MESSAGE);
+                Main.showErrorMessage("Error: Memory type have to be selected.");
                 return;
             }
             cMain.emuConfig.nowName = txtConfigName.getText();
@@ -338,7 +354,7 @@ public class frmConfiguration extends javax.swing.JFrame {
                 cMain.emuConfig.nowDevices.add(lstDevices.getSelectedValues()[i]);
             cMain.emuConfig.writeConfig(txtConfigName.getText());
         }
-        cMain.emuConfig.loadConfig();
+        cMain.emuConfig.load();
         frmStudio stud = new frmStudio(cMain.emuConfig);
         this.dispose();
         stud.setVisible(true);
@@ -346,26 +362,13 @@ public class frmConfiguration extends javax.swing.JFrame {
 
     private void lstConfigsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstConfigsValueChanged
         try {
-            if (cMain.emuConfig.readConfig(
-                    (String)lstConfigs.getSelectedValue()) == false) {
+            String name = (String)lstConfigs.getSelectedValue();
+            if ((settings = aloader.
+                    readConfig(name)) == null) {
                 lstConfigs.clearSelection();
                 return;
             }
-            txtConfigName.setText(cMain.emuConfig.nowName);
-            cmbCPUType.setSelectedItem(cMain.emuConfig.nowCPU);
-            cmbCompiler.setSelectedItem(cMain.emuConfig.nowCompiler);
-            cmbMemoryType.setSelectedItem(cMain.emuConfig.nowMemory);
-            txtMemorySize.setText(String.valueOf(cMain.emuConfig.nowMemorySize));
-            int j;
-            for (int i = 0; i < cMain.emuConfig.nowDevices.size(); i++) {
-                j = lstDevices.getNextMatch((String)cMain.emuConfig.nowDevices.get(i),
-                        0,Position.Bias.Forward);
-                if (j != -1)
-                    if (lstDevices.getModel().
-                            getElementAt(j).equals(cMain.emuConfig.nowDevices.get(i))) {
-                        lstDevices.addSelectionInterval(j,j);
-                    }
-            }
+            updateGUI(name);
         } catch (Exception e) {}
     }//GEN-LAST:event_lstConfigsValueChanged
 

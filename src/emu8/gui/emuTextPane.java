@@ -11,8 +11,9 @@
  * TODO: add ability to set breakpoints
  */
 
-package emu8;
+package emu8.gui;
 
+import emu8.*;
 import plugins.compiler.*;
 
 import java.awt.event.*;

@@ -4,7 +4,7 @@
  * Created on Nede�a, 2007, okt�ber 21, 10:38
  */
 
-package emu8;
+package emu8.gui;
 
 /**
  *

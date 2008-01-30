@@ -7,8 +7,10 @@
  * some things just: YOU AREN'T GONNA NEED IT
  */
 
-package emu8;
+package emu8.gui;
 
+import emu8.*;
+import emu8.gui.debugTableModel;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
@@ -19,10 +21,10 @@ import java.awt.*;
  */
 public class debugTable extends JTable {
     private debugTableModel debug_model;
-    private emuConfiguration emuConfig;
+    private ArchitectureLoader emuConfig;
     
     /** Creates a new instance of debugTable */
-    public debugTable(debugTableModel tblModel, emuConfiguration emuConfig) {
+    public debugTable(debugTableModel tblModel, ArchitectureLoader emuConfig) {
         this.debug_model = tblModel;
         this.emuConfig = emuConfig;
         setModel(tblModel);

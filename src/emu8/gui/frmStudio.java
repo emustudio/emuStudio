@@ -4,8 +4,10 @@
  * Created on Nede�a, 2007, august 5, 13:43
  */
 
-package emu8;
+package emu8.gui;
 
+import emu8.*;
+import emu8.gui.frmViewConfig;
 import plugins.device.*;
 import plugins.compiler.*;
 import plugins.memory.IMemory.*;
@@ -26,7 +28,7 @@ import java.util.*;
  */
 public class frmStudio extends javax.swing.JFrame {
     private emuTextPane txtSource;
-    private emuConfiguration emuConfig;
+    private ArchitectureLoader emuConfig;
     private ActionListener undoStateListener;
     private Clipboard systemClipboard;
     private ILexer syntaxLexer;
@@ -38,7 +40,7 @@ public class frmStudio extends javax.swing.JFrame {
     private debugTableModel debug_model;
     
     /** Creates new form frmStudio */
-    public frmStudio(emuConfiguration emuConfig) {
+    public frmStudio(ArchitectureLoader emuConfig) {
         // create components
         this.emuConfig = emuConfig;
         syntaxLexer = emuConfig.cCompiler.getLexer(
@@ -114,8 +116,8 @@ public class frmStudio extends javax.swing.JFrame {
     }
     
     private class lstDevicesModel extends AbstractListModel {
-        private emuConfiguration em;
-        public lstDevicesModel(emuConfiguration em) { this.em = em; }
+        private ArchitectureLoader em;
+        public lstDevicesModel(ArchitectureLoader em) { this.em = em; }
         public int getSize() { return em.cDevices.size(); }
         public Object getElementAt(int index) {
             IDevice dev = (IDevice)em.cDevices.get(index);

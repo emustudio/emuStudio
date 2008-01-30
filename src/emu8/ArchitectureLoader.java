@@ -1,11 +1,10 @@
 /*
- * emuConfiguration.java
+ * ArchitectureLoader.java
  *
  * Created on Utorok, 2007, august 7, 11:11
  *
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
- * Needs reorganization
  *
  * This class deals with emulator configuration - loads classes, maps devices, etc.
  *
@@ -42,10 +41,10 @@ import plugins.cpu.ICPU;
 import plugins.device.IDevice;
 
 /**
- *
+ * Class loader for plugins and their resources
  * @author vbmacher
  */
-public class emuConfiguration extends ClassLoader {
+public class ArchitectureLoader extends ClassLoader {
     public final String configsDir = "config";
     public final String cpusDir = "cpu";
     public final String compilersDir = "compilers";
@@ -54,52 +53,37 @@ public class emuConfiguration extends ClassLoader {
     
     private Hashtable resources;
     
-    // actual configuration
-    public String nowName;
-    public String nowCPU;
-    public String nowCompiler;
-    public String nowMemory;
-    public int nowMemorySize;
-    public ArrayList nowDevices;
-    
-    // actual loaded classes
-    public ICompiler cCompiler;
-    public ICPU cCPU;
-    public ArrayList cDevices;
-    public IMemory cMemory;
-    
-    
-    /** Creates a new instance of emuConfiguration */
-    public emuConfiguration() {     
-        nowDevices = new ArrayList();
-        nowName = "";
-        nowCPU = "";
-        nowCompiler = "";
-        nowMemory = "";
-        nowMemorySize = 0;
-        cDevices = new ArrayList();
+    /** Creates a new instance of ArchitectureLoader */
+    public ArchitectureLoader() {     
         resources = new Hashtable();
     }
     
-    private class filFilter implements java.io.FilenameFilter {
-        String pf;
-        public filFilter(String p) { pf = p; }
-        public boolean accept(File dir, String name) {
-            if (name.toLowerCase().endsWith(pf.toLowerCase())) return true;
-            return false;
-        }
-    }
-    
-    public String[] getAllNames(String dirname, String postfix) {
+    /**
+     * Method determines all names from a dir that contains postfix.
+     * 
+     * @param dirname
+     * @param postfix
+     * @return String array of names
+     */
+    public String[] getAllNames(String dirname, final String postfix) {
         String[] allNames = null;
         File dir = new File(System.getProperty("user.dir") + File.separator + dirname);
         if (dir.exists() && dir.isDirectory())
-            allNames = dir.list(new filFilter(postfix));
+            allNames = dir.list(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(postfix);
+                }
+            });
         return allNames;
     }
     
-    // reads configuration into public variables prefixed with "now"
-    public boolean readConfig(String configName) {
+    /**
+     * Method reads configuration into properties
+     * 
+     * @param configName
+     * @return properties object (settings for actual architecture congiguration)
+     */
+    public Properties readConfig(String configName) {
         try{
             Properties p = new Properties();
             p.load(new FileInputStream(System.getProperty("user.dir") + 
@@ -108,73 +92,78 @@ public class emuConfiguration extends ClassLoader {
             if (!p.getProperty("emu8Version").equals("2")) {
                 Main.showErrorMessage("Error reading configuration: " +
                         "unsupported file version");
-                return false;
+                return null;
             }
-            nowName = configName;
-            nowCPU = p.getProperty("cpu");
-            nowCompiler = p.getProperty("compiler");
-            nowMemory = p.getProperty("memory");
-            nowMemorySize = Integer.valueOf(p.getProperty("memorySize"));
-            
-            // max. 256 devices at all
-            nowDevices.clear();
-            for (int i = 1; i <= 256; i++)
-                if (p.containsKey("device"+i))
-                    nowDevices.add(p.getProperty("device"+i));
+            return p;
         }
         catch (Exception e) {
             Main.showErrorMessage("Error reading configuration: " + e.toString());
-            return false;
+            return null;
         }
-        return true;
     }
     
-    // save configuration to file with name configName. Data take from public
-    // vars prefixed with "now"
-    public boolean writeConfig(String configName) {
+    /** 
+     * Method save configuration to file with name configName. 
+     *
+     * @param configName name of configuration
+     * @param settings data are taken from
+     */
+    public void writeConfig(String configName, Properties settings) {
         try {
-            Properties p = new Properties();
-            p.put("emu8Version", "2");
-            p.put("cpu",nowCPU);
-            p.put("compiler",nowCompiler);
-            p.put("memory",nowMemory);
-            p.put("memorySize", String.valueOf(nowMemorySize));
-            for (int i=0; i < nowDevices.size(); i++)
-                p.put("device"+String.valueOf(i+1),(String)nowDevices.get(i));
+            settings.put("emu8Version", "2");
             FileOutputStream out = new FileOutputStream(
                     System.getProperty("user.dir") + File.separator + configsDir
                     + File.separator + configName + ".props");
-            p.store(out, nowName + " configuration file");
+            settings.store(out, configName + " configuration file");
         }
         catch (Exception e) {
             Main.showErrorMessage("Error writing configuration: " + e.toString());
-            return false;
         }
-        return true;
     }
 
-    // loads configuration with parameters defined in variables starting with "now"
-    public void loadConfig() {
+    /**
+     * Method loads architecture configuration from current settings
+     * @param settings Properties object
+     * @return a handler of loaded architecture
+     */
+    public ArchitectureHandler load(String name, Properties settings) {
         try {
-            cCompiler = (ICompiler)loadPlugin(compilersDir, nowCompiler,
+            String comName = settings.getProperty("compiler");
+            ICompiler com = (ICompiler)loadPlugin(compilersDir, comName,
                     ICompiler.class.getName());
-            cCPU = (ICPU)loadPlugin(cpusDir, nowCPU, ICPU.class.getName());
-            cMemory = (IMemory)loadPlugin(memoriesDir, nowMemory,
+            String cpuName = settings.getProperty("cpu");
+            ICPU cpu = (ICPU)loadPlugin(cpusDir, cpuName, ICPU.class.getName());
+            String memName = settings.getProperty("memory");
+            IMemory mem = (IMemory)loadPlugin(memoriesDir, memName,
                     IMemory.class.getName());
-            cMemory.init(nowMemorySize);
-            cCPU.init(cMemory);
-            for (int i=0; i < nowDevices.size(); i++)
-                cDevices.add(loadPlugin(devicesDir,(String)nowDevices.get(i),
-                        IDevice.class.getName()));
-            for (int i=0;i < cDevices.size(); i++)
-                ((IDevice)cDevices.get(i)).init(cCPU, cMemory);
+
+            // max. 256 devices
+            Vector devs = new Vector();
+            for (int i = 1; i <= 256; i++)
+                if (settings.containsKey("device"+i)) {
+                    IDevice dev = (IDevice)loadPlugin(devicesDir,
+                            settings.getProperty("device"+i),
+                            IDevice.class.getName());
+                    devs.add(dev);
+                }
+            IDevice[] devices = (IDevice[])devs.toArray(new IDevice[0]);
+            return new ArchitectureHandler(name, com, cpu, mem, devices, settings);
         }
         catch (Exception e) {
             Main.showErrorMessage("Error reading plugins: " + e.toString());
+            return null;
         }
     }
     
-    // return new instance of a plugin from jar file
+    /**
+     * Method return new instance of a plugin from jar file
+     * 
+     * @param dirname type of a plugin (compiler, cpu, memory, devices)
+     * @param filename name of the plugin
+     * @param interfaceName name of a interface that some class in the plugin
+     *        has to implement
+     * @return instance object of loaded plugin
+     */
     private Object loadPlugin(String dirname, String filename, String interfaceName) {
         ArrayList classes = new ArrayList();
         Hashtable sizes = new Hashtable();
@@ -234,6 +223,10 @@ public class emuConfiguration extends ClassLoader {
                 boolean res = loadUndoneClasses(undone,classes,sizes,zf.getName());
                 while ((res == true) && (undone.size() > 0))
                     res = loadUndoneClasses(undone,classes,sizes,zf.getName());
+                if (undone.size() > 0) {
+                    // if a jar file contains some error
+                    throw new Exception();
+                }
             }
             // find a first class that implements wanted interface
             for (int i = 0; i < classes.size(); i++) {
@@ -249,7 +242,6 @@ public class emuConfiguration extends ClassLoader {
         catch (NullPointerException e) {}
         catch (Exception e) {
             Main.showErrorMessage("Error reading plugin: " + filename);
-           e.printStackTrace();
         }
         return null;
     }
@@ -273,11 +265,17 @@ public class emuConfiguration extends ClassLoader {
         return null;
     }
     
-    // this method tries to load all classes that couldnt be loaded
-    // before. For example we cant load a class that is extended from
-    // yet not loaded class. So this method tries to resolve this
-    // return true if at least 1 class was loaded successfully
-    // params: classes is where to put loaded classes
+    /**
+     * This method tries to load all classes that couldnt be loaded
+     * before. For example we cant load a class that is extended from
+     * yet not loaded class. So this method tries to resolve this
+     * 
+     * @param undone vector of not loaded classes
+     * @param classes where to put loaded classes
+     * @param sizes how much size has each class in bytes
+     * @param filename name of the plugin (jar file)
+     * @return true if at least 1 class was loaded successfully
+     */
     private boolean loadUndoneClasses(Vector undone, ArrayList classes,
             Hashtable sizes, String filename) {
         JarEntry ze = null;
@@ -309,9 +307,7 @@ public class emuConfiguration extends ClassLoader {
                     result = true;
                 } catch (ClassNotFoundException nf) {}
             }
-        } catch(Exception e) {
-            System.out.println(e.getMessage());
-        }
+        } catch(Exception e) {}
         return result;
     }
     

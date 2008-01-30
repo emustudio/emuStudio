@@ -4,8 +4,9 @@
  * Created on Utorok, 2007, september 11, 15:42
  */
 
-package emu8;
+package emu8.gui;
 
+import emu8.*;
 import java.awt.event.*;
 import java.util.*;
 
@@ -15,11 +16,11 @@ import plugins.device.IDevice;
  * @author  vbmacher
  */
 public class frmViewConfig extends javax.swing.JFrame {
-    private emuConfiguration emuConfig;
+    private ArchitectureLoader emuConfig;
 
     
     /** Creates new form frmViewConfig */
-    public frmViewConfig(emuConfiguration emuConfig) {
+    public frmViewConfig(ArchitectureLoader emuConfig) {
         this.emuConfig = emuConfig;
         initComponents();
         

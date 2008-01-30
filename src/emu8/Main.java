@@ -9,16 +9,24 @@
 
 package emu8;
 
+import emu8.gui.frmConfiguration;
+
 /**
  *
  * @author vbmacher
  */
 public class Main {
-    public emuConfiguration emuConfig;
+    public ArchitectureLoader emuConfig;
+    public static Main thisInstance = null;
+    
+    public static Main getInstance() {
+        return thisInstance;
+    }
     
     /** Creates a new instance of Main */
     public Main() {
-        emuConfig = new emuConfiguration();
+        emuConfig = new ArchitectureLoader();
+        Main.thisInstance = this;
     }
     
     public static void showErrorMessage(String message) {
@@ -30,17 +38,14 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try { javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName()); }
-                catch (javax.swing.UnsupportedLookAndFeelException e) {}
-                catch (ClassNotFoundException e) {}
-                catch (InstantiationException e) {}
-                catch (IllegalAccessException e) {}
-                
-                new frmConfiguration(new Main()).setVisible(true);
-            }
-        });
+        try { javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName()); }
+        catch (javax.swing.UnsupportedLookAndFeelException e) {}
+        catch (ClassNotFoundException e) {}
+        catch (InstantiationException e) {}
+        catch (IllegalAccessException e) {}
+
+        new Main();
+        new frmConfiguration().setVisible(true);
     }
     
 }
