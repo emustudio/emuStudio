@@ -25,8 +25,8 @@ public class frmConfiguration extends javax.swing.JFrame {
     
     /** Creates new form frmConfiguration */
     public frmConfiguration() {
-        initComponents();
         aloader = Main.getInstance().emuConfig;
+        initComponents();
         this.setLocationRelativeTo(null);
     }
     
