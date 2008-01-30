@@ -883,7 +883,7 @@ public class frmStudio extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCompileActionPerformed
 
     private void mnuProjectViewConfigActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuProjectViewConfigActionPerformed
-        new frmViewConfig(arch).setVisible(true);
+        new frmViewConfig().setVisible(true);
     }//GEN-LAST:event_mnuProjectViewConfigActionPerformed
 
     private void mnuEditPasteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditPasteActionPerformed

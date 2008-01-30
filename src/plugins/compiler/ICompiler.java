@@ -14,11 +14,6 @@ import plugins.IPlugin;
  * @author vbmacher
  */
 public interface ICompiler extends IPlugin {
-    public String getDescription();
-    public String getVersion();
-    public String getName();
-    public String getCopyright();
-
     public ILexer getLexer(java.io.Reader in, IMessageReporter reporter);
     public boolean compile(String filename);
 }

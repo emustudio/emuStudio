@@ -10,41 +10,42 @@ import emu8.*;
 import java.awt.event.*;
 import java.util.*;
 
-import plugins.device.IDevice;
 /**
  *
  * @author  vbmacher
  */
 public class frmViewConfig extends javax.swing.JFrame {
-    private ArchitectureHandler emuConfig;
+    private ArchitectureHandler arch;
 
-    
     /** Creates new form frmViewConfig */
-    public frmViewConfig(ArchitectureHandler emuConfig) {
-        this.emuConfig = emuConfig;
+    public frmViewConfig() {
+        arch = Main.getInstance().currentArch;
         initComponents();
         
         try {
-            lblName.setText(emuConfig.nowName);
-            lblCompilerFileName.setText(emuConfig.nowCompiler+".jar");
-            lblCompilerName.setText(emuConfig.cCompiler.getName());
-            lblCompilerVersion.setText(emuConfig.cCompiler.getVersion());
-            txtCompilerDescription.setText(emuConfig.cCompiler.getDescription());
+            lblName.setText(arch.getArchName());
+            lblCompilerFileName.setText(arch.getCompilerName()+".jar");
+            lblCompilerName.setText(arch.getCompiler().getName());
+            lblCompilerVersion.setText(arch.getCompiler().getVersion());
+            lblCompilerCopyright.setText(arch.getCompiler().getCopyright());
+            txtCompilerDescription.setText(arch.getCompiler().getDescription());
             
-            lblCPUFileName.setText(emuConfig.nowCPU+".jar");
-            lblCPUName.setText(emuConfig.cCPU.getName());
-            lblCPUVersion.setText(emuConfig.cCPU.getVersion());
-            txtCPUDescription.setText(emuConfig.cCPU.getDescription());
+            lblCPUFileName.setText(arch.getCPUName()+".jar");
+            lblCPUName.setText(arch.getCPU().getName());
+            lblCPUVersion.setText(arch.getCPU().getVersion());
+            lblCPUCopyright.setText(arch.getCPU().getCopyright());
+            txtCPUDescription.setText(arch.getCPU().getDescription());
             
-            lblMemoryFileName.setText(emuConfig.nowMemory+".jar");
-            lblMemoryName.setText(emuConfig.cMemory.getName());
-            lblMemoryVersion.setText(emuConfig.cMemory.getVersion());
-            txtMemoryDescription.setText(emuConfig.cMemory.getDescription());
+            lblMemoryFileName.setText(arch.getMemoryName()+".jar");
+            lblMemoryName.setText(arch.getMemory().getName());
+            lblMemoryVersion.setText(arch.getMemory().getVersion());
+            lblMemoryCopyright.setText(arch.getMemory().getCopyright());
+            txtMemoryDescription.setText(arch.getMemory().getDescription());
+
+            for (int i = 0; i < arch.getDeviceNames().length; i++)
+                cmbDevice.addItem(arch.getDeviceNames()[i]);
         }
         catch (NullPointerException e) {}
-        
-        for (int i = 0; i < emuConfig.nowDevices.size(); i++)
-            cmbDevice.addItem(emuConfig.nowDevices.get(i));
         
         if (cmbDevice.getItemCount() > 0) showDevConfig(0);
         cmbDevice.addActionListener(new ActionListener() {
@@ -59,13 +60,11 @@ public class frmViewConfig extends javax.swing.JFrame {
     }
     
     private void showDevConfig(int i) {
-        lblDeviceFileName.setText(emuConfig.nowDevices.get(i)+".jar");
-        lblDeviceName.setText(((IDevice)emuConfig.cDevices.get(i))
-            .getName());
-        lblDeviceVersion.setText(((IDevice)emuConfig.cDevices.get(i))
-            .getVersion());
-        txtDeviceDescription.setText(((IDevice)emuConfig.cDevices.get(i))
-            .getDescription());
+        lblDeviceFileName.setText(arch.getDeviceNames()[i]+".jar");
+        lblDeviceName.setText(arch.getDevices()[i].getName());
+        lblDeviceVersion.setText(arch.getDevices()[i].getVersion());
+        lblDeviceCopyright.setText(arch.getDevices()[i].getCopyright());
+        txtDeviceDescription.setText(arch.getDevices()[i].getDescription());
     }
     
     /** This method is called from within the constructor to
@@ -85,6 +84,8 @@ public class frmViewConfig extends javax.swing.JFrame {
         javax.swing.JLabel jLabel4 = new javax.swing.JLabel();
         lblCompilerVersion = new javax.swing.JLabel();
         lblCompilerName = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel18 = new javax.swing.JLabel();
+        lblCompilerCopyright = new javax.swing.JLabel();
         lblCompilerFileName = new javax.swing.JLabel();
         javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
         txtCompilerDescription = new javax.swing.JTextArea();
@@ -95,6 +96,8 @@ public class frmViewConfig extends javax.swing.JFrame {
         javax.swing.JLabel jLabel8 = new javax.swing.JLabel();
         lblCPUVersion = new javax.swing.JLabel();
         lblCPUName = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel19 = new javax.swing.JLabel();
+        lblCPUCopyright = new javax.swing.JLabel();
         lblCPUFileName = new javax.swing.JLabel();
         javax.swing.JScrollPane jScrollPane2 = new javax.swing.JScrollPane();
         txtCPUDescription = new javax.swing.JTextArea();
@@ -105,6 +108,8 @@ public class frmViewConfig extends javax.swing.JFrame {
         javax.swing.JLabel jLabel12 = new javax.swing.JLabel();
         lblMemoryFileName = new javax.swing.JLabel();
         lblMemoryName = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel20 = new javax.swing.JLabel();
+        lblMemoryCopyright = new javax.swing.JLabel();
         lblMemoryVersion = new javax.swing.JLabel();
         javax.swing.JScrollPane jScrollPane3 = new javax.swing.JScrollPane();
         txtMemoryDescription = new javax.swing.JTextArea();
@@ -115,6 +120,8 @@ public class frmViewConfig extends javax.swing.JFrame {
         javax.swing.JLabel jLabel16 = new javax.swing.JLabel();
         lblDeviceFileName = new javax.swing.JLabel();
         lblDeviceName = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel21 = new javax.swing.JLabel();
+        lblDeviceCopyright = new javax.swing.JLabel();
         lblDeviceVersion = new javax.swing.JLabel();
         javax.swing.JScrollPane jScrollPane4 = new javax.swing.JScrollPane();
         txtDeviceDescription = new javax.swing.JTextArea();
@@ -135,13 +142,17 @@ public class frmViewConfig extends javax.swing.JFrame {
 
         jLabel2.setText("Plugin name:");
 
-        jLabel3.setText("Plugin version:");
+        jLabel3.setText("Version:");
 
         jLabel4.setText("Description:");
 
         lblCompilerVersion.setFont(lblCompilerVersion.getFont().deriveFont(lblCompilerVersion.getFont().getStyle() | java.awt.Font.BOLD));
 
         lblCompilerName.setFont(lblCompilerName.getFont().deriveFont(lblCompilerName.getFont().getStyle() | java.awt.Font.BOLD));
+
+        jLabel18.setText("Copyright:");
+
+        lblCompilerCopyright.setFont(lblCompilerCopyright.getFont().deriveFont(lblCompilerCopyright.getFont().getStyle() | java.awt.Font.BOLD));
 
         lblCompilerFileName.setFont(lblCompilerFileName.getFont().deriveFont(lblCompilerFileName.getFont().getStyle() | java.awt.Font.BOLD));
 
@@ -157,19 +168,21 @@ public class frmViewConfig extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel3)
                     .addComponent(jLabel2)
                     .addComponent(jLabel1)
-                    .addComponent(jLabel4))
+                    .addComponent(jLabel4)
+                    .addComponent(jLabel18))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(lblCompilerFileName, javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblCompilerName, javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblCompilerVersion, javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblCompilerCopyright)
+                    .addComponent(lblCompilerFileName)
+                    .addComponent(lblCompilerName)
+                    .addComponent(lblCompilerVersion)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -188,8 +201,12 @@ public class frmViewConfig extends javax.swing.JFrame {
                     .addComponent(jLabel3)
                     .addComponent(lblCompilerVersion))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel18)
+                    .addComponent(lblCompilerCopyright))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE)
                     .addComponent(jLabel4))
                 .addContainerGap())
         );
@@ -200,13 +217,17 @@ public class frmViewConfig extends javax.swing.JFrame {
 
         jLabel6.setText("Plugin name:");
 
-        jLabel7.setText("Plugin version:");
+        jLabel7.setText("Version:");
 
         jLabel8.setText("Description:");
 
         lblCPUVersion.setFont(lblCPUVersion.getFont().deriveFont(lblCPUVersion.getFont().getStyle() | java.awt.Font.BOLD));
 
         lblCPUName.setFont(lblCPUName.getFont().deriveFont(lblCPUName.getFont().getStyle() | java.awt.Font.BOLD));
+
+        jLabel19.setText("Copyright:");
+
+        lblCPUCopyright.setFont(lblCPUCopyright.getFont().deriveFont(lblCPUCopyright.getFont().getStyle() | java.awt.Font.BOLD));
 
         lblCPUFileName.setFont(lblCPUFileName.getFont().deriveFont(lblCPUFileName.getFont().getStyle() | java.awt.Font.BOLD));
 
@@ -228,9 +249,11 @@ public class frmViewConfig extends javax.swing.JFrame {
                     .addComponent(jLabel7)
                     .addComponent(jLabel8)
                     .addComponent(jLabel6)
-                    .addComponent(jLabel5))
+                    .addComponent(jLabel5)
+                    .addComponent(jLabel19))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblCPUCopyright)
                     .addComponent(lblCPUFileName)
                     .addComponent(lblCPUName)
                     .addComponent(lblCPUVersion)
@@ -253,9 +276,13 @@ public class frmViewConfig extends javax.swing.JFrame {
                     .addComponent(jLabel7)
                     .addComponent(lblCPUVersion))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel19)
+                    .addComponent(lblCPUCopyright))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel8)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -265,13 +292,17 @@ public class frmViewConfig extends javax.swing.JFrame {
 
         jLabel10.setText("Plugin name:");
 
-        jLabel11.setText("Plugin version:");
+        jLabel11.setText("Version:");
 
         jLabel12.setText("Description:");
 
         lblMemoryFileName.setFont(lblMemoryFileName.getFont().deriveFont(lblMemoryFileName.getFont().getStyle() | java.awt.Font.BOLD));
 
         lblMemoryName.setFont(lblMemoryName.getFont().deriveFont(lblMemoryName.getFont().getStyle() | java.awt.Font.BOLD));
+
+        jLabel20.setText("Copyright:");
+
+        lblMemoryCopyright.setFont(lblMemoryCopyright.getFont().deriveFont(lblMemoryCopyright.getFont().getStyle() | java.awt.Font.BOLD));
 
         lblMemoryVersion.setFont(lblMemoryVersion.getFont().deriveFont(lblMemoryVersion.getFont().getStyle() | java.awt.Font.BOLD));
 
@@ -293,9 +324,11 @@ public class frmViewConfig extends javax.swing.JFrame {
                     .addComponent(jLabel10)
                     .addComponent(jLabel11)
                     .addComponent(jLabel12)
-                    .addComponent(jLabel9))
+                    .addComponent(jLabel9)
+                    .addComponent(jLabel20))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblMemoryCopyright)
                     .addComponent(lblMemoryFileName)
                     .addComponent(lblMemoryVersion)
                     .addComponent(lblMemoryName)
@@ -318,9 +351,13 @@ public class frmViewConfig extends javax.swing.JFrame {
                     .addComponent(jLabel11)
                     .addComponent(lblMemoryVersion))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel20)
+                    .addComponent(lblMemoryCopyright))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel12)
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE))
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -330,13 +367,17 @@ public class frmViewConfig extends javax.swing.JFrame {
 
         jLabel14.setText("Plugin name:");
 
-        jLabel15.setText("Plugin version:");
+        jLabel15.setText("Version:");
 
         jLabel16.setText("Description:");
 
         lblDeviceFileName.setFont(lblDeviceFileName.getFont().deriveFont(lblDeviceFileName.getFont().getStyle() | java.awt.Font.BOLD));
 
         lblDeviceName.setFont(lblDeviceName.getFont().deriveFont(lblDeviceName.getFont().getStyle() | java.awt.Font.BOLD));
+
+        jLabel21.setText("Copyright:");
+
+        lblDeviceCopyright.setFont(lblDeviceCopyright.getFont().deriveFont(lblDeviceCopyright.getFont().getStyle() | java.awt.Font.BOLD));
 
         lblDeviceVersion.setFont(lblDeviceVersion.getFont().deriveFont(lblDeviceVersion.getFont().getStyle() | java.awt.Font.BOLD));
 
@@ -361,14 +402,16 @@ public class frmViewConfig extends javax.swing.JFrame {
                     .addComponent(jLabel13)
                     .addComponent(jLabel14)
                     .addComponent(jLabel16)
-                    .addComponent(jLabel17))
+                    .addComponent(jLabel17)
+                    .addComponent(jLabel21))
                 .addGap(6, 6, 6)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblDeviceCopyright)
                     .addComponent(lblDeviceName)
                     .addComponent(lblDeviceFileName)
                     .addComponent(lblDeviceVersion)
                     .addComponent(jScrollPane4)
-                    .addComponent(cmbDevice, 0, 311, Short.MAX_VALUE))
+                    .addComponent(cmbDevice, 0, 322, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -391,9 +434,13 @@ public class frmViewConfig extends javax.swing.JFrame {
                     .addComponent(jLabel15)
                     .addComponent(lblDeviceVersion))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel21)
+                    .addComponent(lblDeviceCopyright))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel16)
-                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 123, Short.MAX_VALUE))
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -426,15 +473,19 @@ public class frmViewConfig extends javax.swing.JFrame {
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     javax.swing.JComboBox cmbDevice;
+    javax.swing.JLabel lblCPUCopyright;
     javax.swing.JLabel lblCPUFileName;
     javax.swing.JLabel lblCPUName;
     javax.swing.JLabel lblCPUVersion;
+    javax.swing.JLabel lblCompilerCopyright;
     javax.swing.JLabel lblCompilerFileName;
     javax.swing.JLabel lblCompilerName;
     javax.swing.JLabel lblCompilerVersion;
+    javax.swing.JLabel lblDeviceCopyright;
     javax.swing.JLabel lblDeviceFileName;
     javax.swing.JLabel lblDeviceName;
     javax.swing.JLabel lblDeviceVersion;
+    javax.swing.JLabel lblMemoryCopyright;
     javax.swing.JLabel lblMemoryFileName;
     javax.swing.JLabel lblMemoryName;
     javax.swing.JLabel lblMemoryVersion;
