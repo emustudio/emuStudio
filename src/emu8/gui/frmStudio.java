@@ -859,7 +859,7 @@ public class frmStudio extends javax.swing.JFrame {
     }//GEN-LAST:event_btnJumpActionPerformed
 
     private void mnuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuHelpAboutActionPerformed
-        (new frmAbout()).setVisible(true);
+        (new AboutDialog(this,true)).setVisible(true);
     }//GEN-LAST:event_mnuHelpAboutActionPerformed
 
     private void mnuProjectCompileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuProjectCompileActionPerformed

@@ -14,9 +14,6 @@ package plugins;
 import java.util.*;
 import javax.swing.*;
 
-import plugins.memory.*;
-import plugins.device.*;
-
 /**
  * Root interface for all plugins, defines
  * description, version, name and copyright information
