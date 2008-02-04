@@ -1,12 +1,12 @@
 /*
- * frmConfiguration.java
+ * ConfigurationFrame.java
  *
  * Created on Streda, 2007, august 8, 8:45
  */
 
 package emu8.gui;
 import emu8.*;
-import emu8.gui.frmStudio;
+import emu8.gui.StudioFrame;
 import javax.swing.*;
 import javax.swing.event.*;
 import java.io.*;
@@ -17,13 +17,13 @@ import javax.swing.text.*;
  *
  * @author  vbmacher
  */
-public class frmConfiguration extends javax.swing.JFrame {
+public class ConfigurationFrame extends javax.swing.JFrame {
     private ArchitectureLoader aloader;
     private Properties settings;
     private String configName;
     
-    /** Creates new form frmConfiguration */
-    public frmConfiguration() {
+    /** Creates new form ConfigurationFrame */
+    public ConfigurationFrame() {
         aloader = Main.getInstance().emuConfig;
         initComponents();
         this.setLocationRelativeTo(null);
@@ -165,7 +165,7 @@ public class frmConfiguration extends javax.swing.JFrame {
                 .addGap(12, 12, 12)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 273, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 271, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -359,7 +359,7 @@ public class frmConfiguration extends javax.swing.JFrame {
             aloader.writeConfig(this.configName, settings);
         }
         Main.getInstance().setCurrentArch(aloader.load(configName, settings)); 
-        frmStudio stud = new frmStudio();
+        StudioFrame stud = new StudioFrame();
         this.dispose();
         stud.setVisible(true);
 }//GEN-LAST:event_buttonOKActionPerformed

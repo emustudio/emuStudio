@@ -9,7 +9,7 @@
 
 package emu8;
 
-import emu8.gui.frmConfiguration;
+import emu8.gui.ConfigurationFrame;
 
 /**
  *
@@ -50,7 +50,7 @@ public class Main {
         catch (IllegalAccessException e) {}
 
         new Main();
-        new frmConfiguration().setVisible(true);
+        new ConfigurationFrame().setVisible(true);
     }
     
 }

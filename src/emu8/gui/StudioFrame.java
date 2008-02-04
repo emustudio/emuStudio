@@ -1,5 +1,5 @@
 /*
- * frmStudio.java
+ * StudioFrame.java
  *
  * Created on Nedeľa, 2007, august 5, 13:43
  */
@@ -7,7 +7,7 @@
 package emu8.gui;
 
 import emu8.*;
-import emu8.gui.frmViewConfig;
+import emu8.gui.ViewConfigFrame;
 import plugins.device.*;
 import plugins.compiler.*;
 import plugins.memory.IMemory.*;
@@ -26,28 +26,28 @@ import java.util.*;
  *
  * @author  vbmacher
  */
-public class frmStudio extends javax.swing.JFrame {
-    private emuTextPane txtSource;
+public class StudioFrame extends javax.swing.JFrame {
+    private EmuTextPane txtSource;
     private ArchitectureHandler arch; // current architecture
     private ActionListener undoStateListener;
     private Clipboard systemClipboard;
     private ILexer syntaxLexer;
     private IMessageReporter reporter;
-    private debugTable tblDebug;
+    private DebugTable tblDebug;
     private boolean cpuPermanentRunning;
     
     // emulator
-    private debugTableModel debug_model;
+    private DebugTableModel debug_model;
     
-    /** Creates new form frmStudio */
-    public frmStudio() {
+    /** Creates new form StudioFrame */
+    public StudioFrame() {
         // create models and components
         arch = Main.getInstance().currentArch;
-        txtSource = new emuTextPane();
+        txtSource = new EmuTextPane();
         cpuPermanentRunning = false;
-        debug_model = new debugTableModel(arch.getCPU(),arch.getCompiler(),
+        debug_model = new DebugTableModel(arch.getCPU(),arch.getCompiler(),
                 arch.getMemory());
-        tblDebug = new debugTable(debug_model, arch.getCPU());
+        tblDebug = new DebugTable(debug_model, arch.getCPU());
         
         // create other components
         initComponents();
@@ -894,7 +894,7 @@ public class frmStudio extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCompileActionPerformed
 
     private void mnuProjectViewConfigActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuProjectViewConfigActionPerformed
-        new frmViewConfig().setVisible(true);
+        new ViewConfigFrame().setVisible(true);
     }//GEN-LAST:event_mnuProjectViewConfigActionPerformed
 
     private void mnuEditPasteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditPasteActionPerformed

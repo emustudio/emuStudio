@@ -1,5 +1,5 @@
 /*
- * frmViewConfig.java
+ * ViewConfigFrame.java
  *
  * Created on Utorok, 2007, september 11, 15:42
  */
@@ -14,11 +14,11 @@ import java.util.*;
  *
  * @author  vbmacher
  */
-public class frmViewConfig extends javax.swing.JFrame {
+public class ViewConfigFrame extends javax.swing.JFrame {
     private ArchitectureHandler arch;
 
-    /** Creates new form frmViewConfig */
-    public frmViewConfig() {
+    /** Creates new form ViewConfigFrame */
+    public ViewConfigFrame() {
         arch = Main.getInstance().currentArch;
         initComponents();
         
