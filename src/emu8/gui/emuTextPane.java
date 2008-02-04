@@ -30,7 +30,7 @@ import javax.swing.undo.*;
  * @author vbmacher
  */
 public class emuTextPane extends JTextPane {
-    public static final short NUMBERS_WIDTH = 35;
+    public static final short NUMBERS_WIDTH = 40;
     public static final short NUMBERS_HEIGHT = 4;
 
     private ILexer syntaxLexer = null;
@@ -176,6 +176,11 @@ public class emuTextPane extends JTextPane {
         g.setColor(Color.RED);
         for (int line = startline, y = 0; line <= endline; line++, y += fontHeight)
             g.drawString(Integer.toString(line), 0, y);
+        
+        // paint blue thin lines
+        g.setColor(Color.BLUE);
+        g.drawLine(NUMBERS_WIDTH-5, g.getClipBounds().y, NUMBERS_WIDTH-5, 
+                g.getClipBounds().y+g.getClipBounds().height);
     }
 
     /*** OPENING/SAVING FILE ***/
