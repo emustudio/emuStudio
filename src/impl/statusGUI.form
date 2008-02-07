@@ -15,7 +15,7 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="paneInfoRegisters" alignment="0" max="32767" attributes="1"/>
+          <Component id="paneInfoRegisters" alignment="0" pref="295" max="32767" attributes="1"/>
           <Component id="jPanel2" alignment="0" max="32767" attributes="1"/>
       </Group>
     </DimensionLayout>
@@ -694,7 +694,7 @@
         <Component class="javax.swing.JSpinner" name="spnFrequency">
           <Properties>
             <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-              <Connection code="new SpinnerNumberModel(2000, 1, 5000, 100)" type="code"/>
+              <Connection code="new SpinnerNumberModel(2000, 1, 99999, 100)" type="code"/>
             </Property>
           </Properties>
           <Events>

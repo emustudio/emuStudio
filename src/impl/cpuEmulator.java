@@ -80,7 +80,7 @@ public class cpuEmulator implements ICPU, Runnable {
     public String getDescription() { return "Intel 8080 CPU VM,"
             + " modified for use as CPU for MITS Altair 8800 computer"; }
     public String getVersion() { return "0.11b"; }
-    public String getName() { return "Virtal i8080 CPU"; }
+    public String getName() { return "Virtual i8080 CPU"; }
     public String getCopyright() { return "\u00A9 Copyright 2006-2008, Peter Jakubčo"; }
 
     /**
@@ -264,7 +264,6 @@ public class cpuEmulator implements ICPU, Runnable {
             try { 
                 while((cycles_executed < cycles_to_execute)
                         && (run_state == stateEnum.runned)) {
-                    Thread.yield();
                     cycles = evalStep();
                     cycles_executed += cycles;
                     long_cycles += cycles;
@@ -280,7 +279,6 @@ public class cpuEmulator implements ICPU, Runnable {
                 run_state = stateEnum.stoppedBreak;
                 break;
             }
-            Thread.yield();
             endTime = System.nanoTime() - startTime;
             if (endTime < 1000000000) {
                 // time correction
