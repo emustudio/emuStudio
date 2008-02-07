@@ -990,7 +990,7 @@ public class StudioFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnUndoActionPerformed
 
     private void mnuEditFindActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditFindActionPerformed
-        Main.showErrorMessage("Not implemented yet");
+        new FindDialog(this,true).setVisible(true);
     }//GEN-LAST:event_mnuEditFindActionPerformed
 
     private void mnuEditFindNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditFindNextActionPerformed
