@@ -18,7 +18,8 @@ import plugins.cpu.ICPU;
 import plugins.device.IDevice;
 
 /**
- * Class holds actual computer configuration - plugins and settings
+ * Class holds actual computer configuration - plugins and settings.
+ *
  * @author vbmacher
  */
 public class ArchitectureHandler {
@@ -32,6 +33,7 @@ public class ArchitectureHandler {
     private Properties settings;
     private String name;
     private String[] devNames;
+
     /**
      * Constructor of new computer configuration and init all plugins.
      *
@@ -74,9 +76,32 @@ public class ArchitectureHandler {
             devices[i].init(cpu, memory);
     }
     
+    /**
+     * Gets actual compiler
+     *
+     * @return compiler interface object
+     */
     public ICompiler getCompiler() { return compiler; }
+
+    /**
+     * Gets actual operating memory
+     *
+     * @return memory interface object
+     */
     public IMemory getMemory() { return memory; }
+
+    /**
+     * Gets actual CPU
+     *
+     * @return CPU interface object
+     */
     public ICPU getCPU() { return cpu; }
+
+    /**
+     * Gets list of available devices
+     *
+     * @return array of device interface objects
+     */
     public IDevice[] getDevices() { return devices; }
 
     public String getArchName() { return name; }

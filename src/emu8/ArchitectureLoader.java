@@ -45,11 +45,11 @@ import plugins.device.IDevice;
  * @author vbmacher
  */
 public class ArchitectureLoader extends ClassLoader {
-    public final String configsDir = "config";
-    public final String cpusDir = "cpu";
-    public final String compilersDir = "compilers";
-    public final String memoriesDir = "mem";
-    public final String devicesDir = "devices";
+    public final static String configsDir = "config";
+    public final static String cpusDir = "cpu";
+    public final static String compilersDir = "compilers";
+    public final static String memoriesDir = "mem";
+    public final static String devicesDir = "devices";
     
     private Hashtable resources;
     
