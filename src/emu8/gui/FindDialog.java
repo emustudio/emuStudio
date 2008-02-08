@@ -8,16 +8,51 @@
 
 package emu8.gui;
 
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import javax.swing.ComboBoxModel;
+import javax.swing.event.ListDataListener;
+
 /**
  *
  * @author  vbmacher
  */
 public class FindDialog extends javax.swing.JDialog {
+    private static Matcher matcher = null;
+    private static int radioDirection = 0;
+    private static byte checks = 0;
+    private static ArrayList list = new ArrayList();
     
     /** Creates new form FindDialog */
     public FindDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        
+        switch(radioDirection) {
+            case 0: endRadio.setSelected(true); break;
+            case 1: startRadio.setSelected(true); break;
+            case 2: allRadio.setSelected(true); break;
+        }
+        if ((checks & 1) != 0) caseCheck.setSelected(true);
+        if ((checks & 2) != 0) wholeCheck.setSelected(true);
+        if ((checks & 4) != 0) regularCheck.setSelected(true);
+        
+        searchCombo.setModel(new ComboBoxModel() {
+            private int in = -1;
+            public void setSelectedItem(Object anItem) {
+                in = list.indexOf(anItem);
+            }
+            public Object getSelectedItem() {
+                if (in != -1) return list.get(in);
+                else return null;
+            }
+            public int getSize() { return list.size(); }
+            public Object getElementAt(int index) {
+                return list.get(index);
+            }
+            public void addListDataListener(ListDataListener l) {}
+            public void removeListDataListener(ListDataListener l) {}
+        });        
         this.setLocationRelativeTo(parent);
     }
     
@@ -31,17 +66,16 @@ public class FindDialog extends javax.swing.JDialog {
 
         javax.swing.ButtonGroup buttonGroup1 = new javax.swing.ButtonGroup();
         javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
-        javax.swing.JComboBox searchCombo = new javax.swing.JComboBox();
+        searchCombo = new javax.swing.JComboBox();
         javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
-        javax.swing.JCheckBox caseCheck = new javax.swing.JCheckBox();
-        javax.swing.JCheckBox wholeCheck = new javax.swing.JCheckBox();
-        javax.swing.JCheckBox regularCheck = new javax.swing.JCheckBox();
+        caseCheck = new javax.swing.JCheckBox();
+        wholeCheck = new javax.swing.JCheckBox();
+        regularCheck = new javax.swing.JCheckBox();
         javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
-        javax.swing.JRadioButton endRadio = new javax.swing.JRadioButton();
-        javax.swing.JRadioButton startRadio = new javax.swing.JRadioButton();
-        javax.swing.JRadioButton allRadio = new javax.swing.JRadioButton();
+        endRadio = new javax.swing.JRadioButton();
+        startRadio = new javax.swing.JRadioButton();
+        allRadio = new javax.swing.JRadioButton();
         javax.swing.JButton searchButton = new javax.swing.JButton();
-        javax.swing.JButton cancelButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Find text");
@@ -49,7 +83,7 @@ public class FindDialog extends javax.swing.JDialog {
 
         jLabel1.setText("Search:");
 
-        searchCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        searchCombo.setEditable(true);
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Options"));
 
@@ -85,6 +119,7 @@ public class FindDialog extends javax.swing.JDialog {
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Direction"));
 
         buttonGroup1.add(endRadio);
+        endRadio.setSelected(true);
         endRadio.setText("To end of document");
 
         buttonGroup1.add(startRadio);
@@ -117,8 +152,11 @@ public class FindDialog extends javax.swing.JDialog {
         );
 
         searchButton.setText("Search");
-
-        cancelButton.setText("Cancel");
+        searchButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                searchButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -137,9 +175,7 @@ public class FindDialog extends javax.swing.JDialog {
                         .addComponent(searchCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(293, Short.MAX_VALUE)
-                .addComponent(cancelButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addContainerGap(354, Short.MAX_VALUE)
                 .addComponent(searchButton)
                 .addContainerGap())
         );
@@ -154,34 +190,37 @@ public class FindDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(searchButton)
-                    .addComponent(cancelButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 14, Short.MAX_VALUE)
+                .addComponent(searchButton)
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-    
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                FindDialog dialog = new FindDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
-        });
-    }
+
+    private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
+        if (endRadio.isSelected()) radioDirection = 0;
+        else if (startRadio.isSelected()) radioDirection = 1;
+        else radioDirection = 2;
+        if (caseCheck.isSelected()) checks |= 1;
+        else checks &= 6;
+        if (wholeCheck.isSelected()) checks |= 2;
+        else checks &= 5;
+        if (regularCheck.isSelected()) checks |= 4;
+        else checks &= 3;
+        if (!list.contains((String)searchCombo.getEditor().getItem()))
+            list.add((String)searchCombo.getEditor().getItem());
+    }//GEN-LAST:event_searchButtonActionPerformed
+  
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    javax.swing.JRadioButton allRadio;
+    javax.swing.JCheckBox caseCheck;
+    javax.swing.JRadioButton endRadio;
+    javax.swing.JCheckBox regularCheck;
+    javax.swing.JComboBox searchCombo;
+    javax.swing.JRadioButton startRadio;
+    javax.swing.JCheckBox wholeCheck;
     // End of variables declaration//GEN-END:variables
     
 }

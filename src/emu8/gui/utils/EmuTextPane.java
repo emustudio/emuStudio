@@ -11,7 +11,7 @@
  * TODO: add ability to set breakpoints
  */
 
-package emu8.gui;
+package emu8.gui.utils;
 
 import emu8.*;
 import emu8.gui.syntaxHighlighting.DocumentReader;

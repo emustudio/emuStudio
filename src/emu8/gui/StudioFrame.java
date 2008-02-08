@@ -6,8 +6,8 @@
 
 package emu8.gui;
 
+import emu8.gui.utils.*;
 import emu8.*;
-import emu8.gui.ViewConfigFrame;
 import plugins.device.*;
 import plugins.compiler.*;
 import plugins.memory.IMemory.*;

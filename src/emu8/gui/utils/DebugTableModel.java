@@ -7,7 +7,7 @@
  * YOU AREN'T GONNA NEED IT
  */
 
-package emu8.gui;
+package emu8.gui.utils;
 
 import javax.swing.table.*;
 import javax.swing.*;

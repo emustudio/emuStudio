@@ -7,8 +7,9 @@
  * some things just: YOU AREN'T GONNA NEED IT
  */
 
-package emu8.gui;
+package emu8.gui.utils;
 
+import emu8.gui.utils.DebugTableModel;
 import emu8.*;
 import javax.swing.*;
 import javax.swing.table.*;
