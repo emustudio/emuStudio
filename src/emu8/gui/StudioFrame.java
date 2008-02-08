@@ -35,6 +35,7 @@ public class StudioFrame extends javax.swing.JFrame {
     private IMessageReporter reporter;
     private DebugTable tblDebug;
     private boolean cpuPermanentRunning;
+    private FindDialog findD;
     
     // emulator
     private DebugTableModel debug_model;
@@ -119,6 +120,7 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         this.setLocationRelativeTo(null);
         this.setTitle("emu8 Studio - " + arch.getArchName());
+        txtSource.grabFocus();
     }
         
     // get gui panel from CPU plugin and show in main window
@@ -263,6 +265,7 @@ public class StudioFrame extends javax.swing.JFrame {
         javax.swing.JSeparator jSeparator5 = new javax.swing.JSeparator();
         javax.swing.JMenuItem mnuEditFind = new javax.swing.JMenuItem();
         javax.swing.JMenuItem mnuEditFindNext = new javax.swing.JMenuItem();
+        javax.swing.JMenuItem mnuEditReplaceNext = new javax.swing.JMenuItem();
         javax.swing.JMenu mnuProject = new javax.swing.JMenu();
         javax.swing.JMenuItem mnuProjectCompile = new javax.swing.JMenuItem();
         javax.swing.JMenuItem mnuProjectViewConfig = new javax.swing.JMenuItem();
@@ -548,7 +551,7 @@ public class StudioFrame extends javax.swing.JFrame {
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 291, Short.MAX_VALUE)
+            .addGap(0, 293, Short.MAX_VALUE)
         );
 
         jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder("Additional peripheral devices"));
@@ -710,7 +713,7 @@ public class StudioFrame extends javax.swing.JFrame {
         mnuEdit.add(jSeparator5);
 
         mnuEditFind.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F, java.awt.event.InputEvent.CTRL_MASK));
-        mnuEditFind.setText("Find text...");
+        mnuEditFind.setText("Find/replace text...");
         mnuEditFind.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuEditFindActionPerformed(evt);
@@ -726,6 +729,10 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
         mnuEdit.add(mnuEditFindNext);
+
+        mnuEditReplaceNext.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4, 0));
+        mnuEditReplaceNext.setText("Replace next");
+        mnuEdit.add(mnuEditReplaceNext);
 
         jMenuBar2.add(mnuEdit);
 
@@ -990,11 +997,20 @@ public class StudioFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnUndoActionPerformed
 
     private void mnuEditFindActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditFindActionPerformed
-        new FindDialog(this,true).setVisible(true);
+        if (findD == null) findD = new FindDialog(this,false,txtSource);
+        findD.setVisible(true);
     }//GEN-LAST:event_mnuEditFindActionPerformed
 
     private void mnuEditFindNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditFindNextActionPerformed
-        Main.showErrorMessage("Not implemented yet");
+        if (findD == null) mnuEditFindActionPerformed(evt);
+        else {
+            try {
+                if (!findD.findForward())
+                    Main.showMessage("Expression was not found");
+            } catch (NullPointerException e) {
+                mnuEditFindActionPerformed(evt);
+            }
+        } 
     }//GEN-LAST:event_mnuEditFindNextActionPerformed
 
     

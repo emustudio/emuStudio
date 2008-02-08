@@ -33,7 +33,7 @@ public class HighlightThread extends Thread {
     private DocumentReader reader;
     private DefaultStyledDocument document;
     private Hashtable styles;
-    private Object doclock;
+  //  private Object doclock;
     
     /**
      * Keep a list of places in the file that it is safe to restart the
@@ -93,7 +93,7 @@ public class HighlightThread extends Thread {
     
     public HighlightThread(ILexer syntaxLexer, DocumentReader reader,
             DefaultStyledDocument document, Hashtable styles, Object doclock) {
-        this.doclock = doclock;
+     //   this.doclock = doclock;
         this.syntaxLexer = syntaxLexer;
         this.reader = reader;
         this.document = document;
@@ -201,7 +201,7 @@ public class HighlightThread extends Thread {
                     IToken t;
                     boolean done = false;
                     dpEnd = dpStart;
-                    synchronized (doclock){
+               //     synchronized (doclock){
                         // we are playing some games with the lexer for efficiency.
                         // we could just create a new lexer each time here, but instead,
                         // we will just reset it so that it thinks it is starting at the
@@ -218,13 +218,13 @@ public class HighlightThread extends Thread {
                         // the lexer will return null at the end of the document and wee
                         // need to stop there.
                         t = syntaxLexer.getSymbol();
-                    }
+                  //  }
                     newPositions.add(dpStart);
                     while (!done && t.getType() != IToken.TEOF){
                         // this is the actual command that colors the stuff.
                         // Color stuff with the description of the style matched
                         // to the hash table that has been set up ahead of time.
-                        synchronized (doclock){
+                      //  synchronized (doclock){
                             if (t.getCharEnd() <= document.getLength()) {
 //                                System.out.println("recoloring from: " 
   //                                      + String.valueOf(t.getCharBegin()+change)
@@ -241,7 +241,7 @@ public class HighlightThread extends Thread {
                                 dpEnd = new DocPosition(t.getCharEnd());
                             }
                             lastPosition = (t.getCharEnd() + change);
-                        }
+                     //   }
                         yield();
                         // The other more complicated reason for doing no more highlighting
                         // is that all the colors are the same from here on out anyway.
@@ -273,9 +273,9 @@ public class HighlightThread extends Thread {
                             // initial states from this time.
                             newPositions.add(dpEnd);
                        // }
-                        synchronized (doclock){
+                   //     synchronized (doclock){
                             t = syntaxLexer.getSymbol();
-                        }
+                      //  }
                     }
                     // remove all the old initial positions from the place where
                     // we started doing the highlighting right up through the last
@@ -298,10 +298,10 @@ public class HighlightThread extends Thread {
                     newPositions.clear();
                 } catch (IOException x){}
                 
-                synchronized (doclock){
+        //        synchronized (doclock){
                     lastPosition = -1;
                     change = 0;
-                }
+           //     }
                 // since we did something, we should check that there is
                 // nothing else to do before going back to sleep.
                 tryAgain = true;

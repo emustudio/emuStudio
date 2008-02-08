@@ -35,6 +35,11 @@ public class Main {
                 message,"Error",javax.swing.JOptionPane.ERROR_MESSAGE);
     }
     
+    public static void showMessage(String message) {
+        javax.swing.JOptionPane.showMessageDialog(null,
+                message,"Message",javax.swing.JOptionPane.INFORMATION_MESSAGE);        
+    }
+    
     public void setCurrentArch(ArchitectureHandler arch) {
         this.currentArch = arch;
     }

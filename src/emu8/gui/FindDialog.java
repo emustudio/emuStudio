@@ -8,9 +8,13 @@
 
 package emu8.gui;
 
+import emu8.Main;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import javax.swing.ComboBoxModel;
+import javax.swing.JTextPane;
 import javax.swing.event.ListDataListener;
 
 /**
@@ -18,14 +22,21 @@ import javax.swing.event.ListDataListener;
  * @author  vbmacher
  */
 public class FindDialog extends javax.swing.JDialog {
-    private static Matcher matcher = null;
+    private static Matcher matcher;
     private static int radioDirection = 0;
+    
+    private static final int cCASE = 1;
+    private static final int cWHOLE = 2;
+
     private static byte checks = 0;
+    
     private static ArrayList list = new ArrayList();
+    private JTextPane textPane;
     
     /** Creates new form FindDialog */
-    public FindDialog(java.awt.Frame parent, boolean modal) {
+    public FindDialog(StudioFrame parent, boolean modal, JTextPane pane) {
         super(parent, modal);
+        this.textPane = pane;
         initComponents();
         
         switch(radioDirection) {
@@ -33,9 +44,9 @@ public class FindDialog extends javax.swing.JDialog {
             case 1: startRadio.setSelected(true); break;
             case 2: allRadio.setSelected(true); break;
         }
-        if ((checks & 1) != 0) caseCheck.setSelected(true);
-        if ((checks & 2) != 0) wholeCheck.setSelected(true);
-        if ((checks & 4) != 0) regularCheck.setSelected(true);
+        if ((checks & cCASE) != 0) caseCheck.setSelected(true);
+        if ((checks & cWHOLE) != 0) wholeCheck.setSelected(true);
+//        if ((checks & 4) != 0) regularCheck.setSelected(true);
         
         searchCombo.setModel(new ComboBoxModel() {
             private int in = -1;
@@ -56,6 +67,66 @@ public class FindDialog extends javax.swing.JDialog {
         this.setLocationRelativeTo(parent);
     }
     
+    private String saveGUI() {
+        if (endRadio.isSelected()) radioDirection = 0;
+        else if (startRadio.isSelected()) radioDirection = 1;
+        else radioDirection = 2;
+        if (caseCheck.isSelected()) checks |= cCASE;
+        else checks &= (~cCASE);
+        if (wholeCheck.isSelected()) checks |= cWHOLE;
+        else checks &= (~cWHOLE);
+//        if (regularCheck.isSelected()) checks |= 4;
+  //      else checks &= 3;
+        String str = (String)searchCombo.getEditor().getItem();
+        if (!list.contains(str))
+            list.add(str);
+        return str;
+    }
+        
+    public boolean findForward() throws NullPointerException {
+        if (matcher == null)
+            throw new NullPointerException("matcher can't be null, use dialog");
+        int startM = -1;
+        int endM = -1;
+        boolean match = false;
+        
+        matcher.reset(textPane.getText());
+        int endPos = textPane.getDocument().getEndPosition().getOffset()-1;
+        int curPos = textPane.getCaretPosition();
+        matcher.useTransparentBounds(false);
+        if (radioDirection == 0) {
+            matcher.region(curPos, endPos);
+            match = matcher.find();
+            if (match) {
+                startM = matcher.start();
+                endM = matcher.end();
+            }
+        }
+        else if (radioDirection == 1) {
+            matcher.region(0, curPos);
+            endM = 0;
+            match = false;
+            while (matcher.find(endM)) {
+                if (matcher.end() >= curPos) break;
+                match = true;
+                startM = matcher.start();
+                endM = matcher.end();
+            }
+        }
+        else if (radioDirection == 2) {
+            matcher.region(0, endPos);
+            matcher.useTransparentBounds(true);
+            match = true;
+            if (!matcher.find(curPos)) match = matcher.find(0);
+            if (match) {
+                startM = matcher.start();
+                endM = matcher.end();
+            }
+        }
+        if (match) textPane.select(startM, endM);
+        return match;
+    }
+    
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -70,18 +141,21 @@ public class FindDialog extends javax.swing.JDialog {
         javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
         caseCheck = new javax.swing.JCheckBox();
         wholeCheck = new javax.swing.JCheckBox();
-        regularCheck = new javax.swing.JCheckBox();
         javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
         endRadio = new javax.swing.JRadioButton();
         startRadio = new javax.swing.JRadioButton();
         allRadio = new javax.swing.JRadioButton();
         javax.swing.JButton searchButton = new javax.swing.JButton();
+        javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
+        replaceCombo = new javax.swing.JComboBox();
+        javax.swing.JButton replaceButton = new javax.swing.JButton();
+        javax.swing.JButton replaceAllButton = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Find text");
+        setTitle("Find/replace text");
+        setAlwaysOnTop(true);
         setResizable(false);
 
-        jLabel1.setText("Search:");
+        jLabel1.setText("Search for:");
 
         searchCombo.setEditable(true);
 
@@ -89,9 +163,7 @@ public class FindDialog extends javax.swing.JDialog {
 
         caseCheck.setText("Case sensitive");
 
-        wholeCheck.setText("Only whole words");
-
-        regularCheck.setText("Regular expression");
+        wholeCheck.setText("Whole words");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -101,9 +173,8 @@ public class FindDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(caseCheck)
-                    .addComponent(wholeCheck)
-                    .addComponent(regularCheck))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(wholeCheck))
+                .addContainerGap(45, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -111,9 +182,7 @@ public class FindDialog extends javax.swing.JDialog {
                 .addComponent(caseCheck)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(wholeCheck)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(regularCheck)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(37, Short.MAX_VALUE))
         );
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Direction"));
@@ -148,7 +217,7 @@ public class FindDialog extends javax.swing.JDialog {
                 .addComponent(startRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(allRadio)
-                .addContainerGap(15, Short.MAX_VALUE))
+                .addContainerGap(14, Short.MAX_VALUE))
         );
 
         searchButton.setText("Search");
@@ -158,25 +227,50 @@ public class FindDialog extends javax.swing.JDialog {
             }
         });
 
+        jLabel2.setText("Replace with:");
+
+        replaceCombo.setEditable(true);
+
+        replaceButton.setText("Replace");
+        replaceButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                replaceButtonActionPerformed(evt);
+            }
+        });
+
+        replaceAllButton.setText("Replace all");
+        replaceAllButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                replaceAllButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(jLabel1)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(searchCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 293, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(replaceAllButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
+                        .addComponent(replaceButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(searchCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(354, Short.MAX_VALUE)
-                .addComponent(searchButton)
+                        .addComponent(searchButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(replaceCombo, 0, 293, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -187,11 +281,18 @@ public class FindDialog extends javax.swing.JDialog {
                     .addComponent(jLabel1)
                     .addComponent(searchCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(replaceCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 14, Short.MAX_VALUE)
-                .addComponent(searchButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 15, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(searchButton)
+                    .addComponent(replaceButton)
+                    .addComponent(replaceAllButton))
                 .addContainerGap())
         );
 
@@ -199,25 +300,42 @@ public class FindDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        if (endRadio.isSelected()) radioDirection = 0;
-        else if (startRadio.isSelected()) radioDirection = 1;
-        else radioDirection = 2;
-        if (caseCheck.isSelected()) checks |= 1;
-        else checks &= 6;
-        if (wholeCheck.isSelected()) checks |= 2;
-        else checks &= 5;
-        if (regularCheck.isSelected()) checks |= 4;
-        else checks &= 3;
-        if (!list.contains((String)searchCombo.getEditor().getItem()))
-            list.add((String)searchCombo.getEditor().getItem());
+        String str = saveGUI();
+        int flags = Pattern.MULTILINE;
+        if ((checks & cCASE) == 0) flags |= Pattern.CASE_INSENSITIVE;
+        
+        try {
+            if ((checks & cWHOLE) != 0) str = "\\b(" + str + ")\\b";
+            Pattern p = Pattern.compile(str, flags);
+            matcher = p.matcher(textPane.getText());
+            
+            if (findForward()) {
+                this.setVisible(false);
+                textPane.grabFocus();
+            } else {
+                Main.showMessage("Expression was not found");
+            }
+        } catch (PatternSyntaxException e) {
+            Main.showErrorMessage("Pattern syntax error");
+            searchCombo.grabFocus();
+            return;
+        }
     }//GEN-LAST:event_searchButtonActionPerformed
+
+    private void replaceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceButtonActionPerformed
+        String str = saveGUI();
+}//GEN-LAST:event_replaceButtonActionPerformed
+
+    private void replaceAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceAllButtonActionPerformed
+        String str = saveGUI();
+}//GEN-LAST:event_replaceAllButtonActionPerformed
   
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     javax.swing.JRadioButton allRadio;
     javax.swing.JCheckBox caseCheck;
     javax.swing.JRadioButton endRadio;
-    javax.swing.JCheckBox regularCheck;
+    javax.swing.JComboBox replaceCombo;
     javax.swing.JComboBox searchCombo;
     javax.swing.JRadioButton startRadio;
     javax.swing.JCheckBox wholeCheck;
