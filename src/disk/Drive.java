@@ -7,7 +7,7 @@
  * Performs disk operations
  */
 
-package impl;
+package disk;
 
 import java.io.*;
 
@@ -30,6 +30,7 @@ public class Drive {
     private int currentChar = 0xFF;
     
     private RandomAccessFile image;
+    private DiskImpl dimpl;
 
     /*
       7   6   5   4   3   2   1   0
@@ -47,6 +48,10 @@ public class Drive {
      */
     private short flags=0xE7; // 11100111b
 
+    public Drive(DiskImpl dimpl) {
+        this.dimpl = dimpl;
+    }
+    
     /**
      * select device
      */
@@ -56,6 +61,24 @@ public class Drive {
         currentChar = 0xFF;
         if (track == 0)
             flags &= 0xBF; // head is on track 0
+        dimpl.selectDrive(this, true);
+    }
+    
+    /**
+     * gets image File
+     */
+    public File getImageFile() {
+        return floppy;
+    }
+
+    /**
+     * Create new image
+     */
+    public static void createNewImage(String filename) throws IOException {
+        RandomAccessFile fout = new RandomAccessFile(filename,"ws");
+        for (int i = 0; i < tracksCount * sectorsCount * sectorLength; i++)
+            fout.writeByte(0);
+        fout.close();
     }
     
     /**
@@ -63,6 +86,7 @@ public class Drive {
      */
     public void deselect() {
         flags = 0xE7;
+        dimpl.selectDrive(this, false);
     }
 
     /**

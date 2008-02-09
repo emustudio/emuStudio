@@ -93,8 +93,9 @@
 
  */
 
-package impl;
+package disk;
 
+import disk.gui.DiskFrame;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EventObject;
@@ -112,14 +113,23 @@ public class DiskImpl implements IDevice {
     private IMemory mem;
     private ArrayList drives;
     private int current_drive;
+    private DiskFrame gui = null;
     
     public DiskImpl() {
         this.drives = new ArrayList();
         for (int i = 0; i < DRIVES_COUNT; i++)
-            drives.add(new Drive());
+            drives.add(new Drive(this));
         this.current_drive = 0xFF;
     }
 
+    /**
+     * Called from Drive.java if drive selection changes
+     */
+    public void selectDrive(Drive drive, boolean sel) {
+        int i = drives.indexOf(drive);
+        if (gui != null) gui.select(i, sel);
+    }
+    
     public static void showErrorMessage(String message) {
         javax.swing.JOptionPane.showMessageDialog(null,
                 message,"Error",javax.swing.JOptionPane.ERROR_MESSAGE);
@@ -185,7 +195,8 @@ public class DiskImpl implements IDevice {
     }
 
     public void showGUI() {
-        
+        if (gui == null) gui = new DiskFrame(drives);
+        gui.setVisible(true);
     }
 
     public String getDescription() {
@@ -199,7 +210,7 @@ public class DiskImpl implements IDevice {
                 + "I/O addresses were 10Q-12Q.";
     }
 
-    public String getVersion() { return "0.1a"; }
+    public String getVersion() { return "0.1b"; }
 
     public String getName() { return "MITS-88 DISK (floppy drive)"; }
 
@@ -207,6 +218,12 @@ public class DiskImpl implements IDevice {
         return "\u00A9 Copyright 2008, P. Jakubčo";
     }
 
-    public void destroy() {}
+    public void destroy() {
+        if (gui != null) gui.dispose();
+        cpu.disattachDevice(0x8);
+        cpu.disattachDevice(0x9);
+        cpu.disattachDevice(0xA);
+        drives.clear();
+    }
 
 }
