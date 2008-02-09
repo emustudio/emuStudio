@@ -7,7 +7,7 @@
  * some things just: YOU AREN'T GONNA NEED IT
  */
 
-package emu8;
+package emu8.gui.utils;
 
 /**
  *
@@ -16,11 +16,7 @@ package emu8;
 public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
     private String[] exts;
     private String desc;
-    
-    /** Creates a new instance of EmuFileFilter */
-    public EmuFileFilter() {
-    }
-    
+
     public void addExtension(String ext) {
         int l=0;
         String[] tmp;
@@ -41,10 +37,10 @@ public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
         String ext = this.getExtension(f);
         if (ext != null) {
             for (int i = 0; i < exts.length; i++)
-                if (exts[i].equals(ext) || exts[i] == "*") return true;
+                if (exts[i].equals(ext) || exts[i].equals("*")) return true;
         } else {
             for (int i = 0; i < exts.length; i++)
-                if (exts[i] == "*") return true;
+                if (exts[i].equals("*")) return true;
         }
         return false;
     }
