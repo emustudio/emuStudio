@@ -138,8 +138,10 @@ public class cpuEmulator implements ICPU, Runnable {
     public void step() {
         if (run_state == stateEnum.stoppedBreak) {
             try {
+                run_state = stateEnum.runned;
                 evalStep();
-                run_state = stateEnum.stoppedBreak;
+                if (run_state == stateEnum.runned)
+                    run_state = stateEnum.stoppedBreak;
             }
             catch (IndexOutOfBoundsException e) {
                 run_state = stateEnum.stoppedAdrFallout;
