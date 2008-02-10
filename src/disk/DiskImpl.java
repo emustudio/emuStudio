@@ -130,6 +130,13 @@ public class DiskImpl implements IDevice {
         if (gui != null) gui.select(i, sel);
     }
     
+    // called from Drive.java
+    public void driveParamsChanged(Drive drive, boolean headL, int sec,
+            int track, int off) {
+        int i = drives.indexOf(drive);
+        if (gui != null) gui.driveParamsChanged(i, headL, sec, track, off);        
+    }
+    
     public static void showErrorMessage(String message) {
         javax.swing.JOptionPane.showMessageDialog(null,
                 message,"Error",javax.swing.JOptionPane.ERROR_MESSAGE);
@@ -142,8 +149,6 @@ public class DiskImpl implements IDevice {
         // attach device to CPU
         if (cpu.attachDevice(new IDevListener() {
             public void devOUT(EventObject evt, int data) {
-                // if (dirty == 1)
-                //      writebuf();
                 // select device
                 current_drive = data & 0x0F;
                 if ((data & 0x80) != 0) {

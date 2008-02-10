@@ -24,13 +24,13 @@ public class Drive {
     private int sector = 0xFF;
     private File floppy = null;
     
-    private int rotateLatency = 100;
+ //   private int rotateLatency = 100;
     
-    private char[] buffer = new char[sectorLength];
     private int currentChar = 0xFF;
     
     private RandomAccessFile image;
     private DiskImpl dimpl;
+    private boolean selected = false;
 
     /*
       7   6   5   4   3   2   1   0
@@ -56,12 +56,15 @@ public class Drive {
      * select device
      */
     public void select() {
+        selected = true;
         flags = 0xE5; // 11100101b
         sector = 0xFF;
         currentChar = 0xFF;
         if (track == 0)
             flags &= 0xBF; // head is on track 0
         dimpl.selectDrive(this, true);
+        dimpl.driveParamsChanged(this, ((~flags) & 0x04) != 0, sector, track,
+                currentChar);
     }
     
     /**
@@ -75,7 +78,7 @@ public class Drive {
      * Create new image
      */
     public static void createNewImage(String filename) throws IOException {
-        RandomAccessFile fout = new RandomAccessFile(filename,"ws");
+        RandomAccessFile fout = new RandomAccessFile(filename,"rw");
         for (int i = 0; i < tracksCount * sectorsCount * sectorLength; i++)
             fout.writeByte(0);
         fout.close();
@@ -85,8 +88,13 @@ public class Drive {
      * disable device
      */
     public void deselect() {
+        selected = false;
         flags = 0xE7;
         dimpl.selectDrive(this, false);
+    }
+    
+    public boolean isSelected() {
+        return selected;
     }
 
     /**
@@ -100,7 +108,7 @@ public class Drive {
             throw new IOException("Image file has small size");
         umount();
         this.floppy = f;        
-        image = new RandomAccessFile(f, "rws");
+        image = new RandomAccessFile(f, "rwd");
     }
     
     /**
@@ -170,6 +178,8 @@ public class Drive {
             currentChar = 0;
             flags &= 0xFE; /* enter new write data on */
         }
+        dimpl.driveParamsChanged(this, ((~flags) & 0x04) != 0, sector, track,
+                currentChar);
     }
     
     /**
@@ -183,6 +193,8 @@ public class Drive {
             int stat = sector << 1;
             stat &= 0x3E;  /* 111110b, return 'sector true' bit = 0 (true) */
             stat |= 0xC0;  // set on 'unused' bits  ?? > in simh bit are gonna up
+            dimpl.driveParamsChanged(this, ((~flags) & 0x04) != 0, sector, track,
+                    currentChar);
             return stat;
         } else return 1;   /* head not loaded - sector true is 1 (false) */
     }
@@ -197,6 +209,8 @@ public class Drive {
         image.seek(pos);
         image.writeByte(data & 0xFF);
         flags |= 1; /* ENWD off */
+        dimpl.driveParamsChanged(this, ((~flags) & 0x04) != 0, sector, track,
+                currentChar);
     }
     
     public int readData() throws IOException {
@@ -207,7 +221,14 @@ public class Drive {
                 + sectorLength * sector
                 + currentChar;
         image.seek(pos);
+        dimpl.driveParamsChanged(this, ((~flags) & 0x04) != 0, sector, track,
+                currentChar);
         return image.readByte();
     }
 
+    // for gui calls (drive info)
+    public int getSector() { return sector; }
+    public int getTrack() { return track; }
+    public int getOffset() { return currentChar; }
+    public boolean getHeadLoaded() { return ((~flags) & 0x04) != 0; }
 }

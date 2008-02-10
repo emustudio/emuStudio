@@ -20,6 +20,7 @@ import javax.swing.JFileChooser;
  */
 public class DiskFrame extends javax.swing.JFrame {
     private ArrayList drives;
+    private int driveInfoIndex = -1; // drive that wants to show current params
     
     /** Creates new form DiskFrame */
     public DiskFrame(ArrayList drives) {
@@ -27,6 +28,26 @@ public class DiskFrame extends javax.swing.JFrame {
         this.drives = drives;
         driveCombo.setSelectedIndex(0);
         this.setLocationRelativeTo(null);
+        
+        for (int i = 0; i < drives.size(); i++)
+            updateSelGUI(i);
+    }
+
+    private void updateDriveInfo() {
+        Drive d = ((Drive)drives.get(driveInfoIndex));
+        lblHead.setText((d.getHeadLoaded())?"loaded":"unloaded");
+        lblSector.setText(String.valueOf(d.getSector()));
+        lblTrack.setText(String.valueOf(d.getTrack()));
+        lblOffset.setText(String.valueOf(d.getOffset()));
+    }
+    
+    // called from DiskImpl.java
+    public void driveParamsChanged(int drive, boolean headL, int sec, int track, int off) {
+        if (drive != driveInfoIndex) return;
+        lblHead.setText((headL)?"loaded":"unloaded");
+        lblSector.setText(String.valueOf(sec));
+        lblTrack.setText(String.valueOf(track));
+        lblOffset.setText(String.valueOf(off));
     }
     
     private void updateGUI(int drive) {
@@ -40,28 +61,34 @@ public class DiskFrame extends javax.swing.JFrame {
         }
     }
     
+    private void updateSelGUI(int drive) {
+        if (((Drive)drives.get(drive)).isSelected())
+            select(drive, true);
+        else select(drive,false);
+    }
+    
     // calling from DiskImpl
     public void select(int drive, boolean sel) {
         String fil;
         if (sel) fil = "/resources/on.gif";
         else fil = "/resources/off.gif";
         switch (drive) {
-            case 0: lbl0.setIcon(new ImageIcon(getClass().getResource(fil)));break;
-            case 1: lbl1.setIcon(new ImageIcon(getClass().getResource(fil)));break;
-            case 2: lbl2.setIcon(new ImageIcon(getClass().getResource(fil)));break;
-            case 3: lbl3.setIcon(new ImageIcon(getClass().getResource(fil)));break;
-            case 4: lbl4.setIcon(new ImageIcon(getClass().getResource(fil)));break;
-            case 5: lbl5.setIcon(new ImageIcon(getClass().getResource(fil)));break;
-            case 6: lbl6.setIcon(new ImageIcon(getClass().getResource(fil)));break;
-            case 7: lbl7.setIcon(new ImageIcon(getClass().getResource(fil)));break;
-            case 8: lbl8.setIcon(new ImageIcon(getClass().getResource(fil)));break;
-            case 9: lbl9.setIcon(new ImageIcon(getClass().getResource(fil)));break;
-            case 10: lbl10.setIcon(new ImageIcon(getClass().getResource(fil)));break;
-            case 11: lbl11.setIcon(new ImageIcon(getClass().getResource(fil)));break;
-            case 12: lbl12.setIcon(new ImageIcon(getClass().getResource(fil)));break;
-            case 13: lbl13.setIcon(new ImageIcon(getClass().getResource(fil)));break;
-            case 14: lbl14.setIcon(new ImageIcon(getClass().getResource(fil)));break;
-            case 15: lbl15.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 0: btn0.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 1: btn1.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 2: btn2.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 3: btn3.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 4: btn3.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 5: btn5.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 6: btn6.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 7: btn7.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 8: btn8.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 9: btn9.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 10: btn10.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 11: btn11.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 12: btn12.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 13: btn13.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 14: btn14.setIcon(new ImageIcon(getClass().getResource(fil)));break;
+            case 15: btn15.setIcon(new ImageIcon(getClass().getResource(fil)));break;
         }
     }
     
@@ -73,39 +100,9 @@ public class DiskFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
-        lbl0 = new javax.swing.JLabel();
-        lbl1 = new javax.swing.JLabel();
-        lbl2 = new javax.swing.JLabel();
-        lbl3 = new javax.swing.JLabel();
-        lbl4 = new javax.swing.JLabel();
-        lbl5 = new javax.swing.JLabel();
-        lbl6 = new javax.swing.JLabel();
-        lbl7 = new javax.swing.JLabel();
-        lbl8 = new javax.swing.JLabel();
-        lbl9 = new javax.swing.JLabel();
-        lbl10 = new javax.swing.JLabel();
-        lbl11 = new javax.swing.JLabel();
-        lbl12 = new javax.swing.JLabel();
-        lbl13 = new javax.swing.JLabel();
-        lbl14 = new javax.swing.JLabel();
-        lbl15 = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        jLabel7 = new javax.swing.JLabel();
-        jLabel8 = new javax.swing.JLabel();
-        jLabel9 = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
-        jLabel11 = new javax.swing.JLabel();
-        jLabel12 = new javax.swing.JLabel();
-        jLabel13 = new javax.swing.JLabel();
-        jLabel14 = new javax.swing.JLabel();
-        jLabel15 = new javax.swing.JLabel();
-        jLabel16 = new javax.swing.JLabel();
+        drivesGroup = new javax.swing.ButtonGroup();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        configPanel = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         driveCombo = new javax.swing.JComboBox();
         jLabel17 = new javax.swing.JLabel();
@@ -114,225 +111,45 @@ public class DiskFrame extends javax.swing.JFrame {
         mountButton = new javax.swing.JButton();
         umountButton = new javax.swing.JButton();
         createButton = new javax.swing.JButton();
+        jPanel3 = new javax.swing.JPanel();
+        alwaysCheck = new javax.swing.JCheckBox();
+        runtimePanel = new javax.swing.JPanel();
+        jPanel1 = new javax.swing.JPanel();
+        btn0 = new javax.swing.JToggleButton();
+        btn1 = new javax.swing.JToggleButton();
+        btn2 = new javax.swing.JToggleButton();
+        btn3 = new javax.swing.JToggleButton();
+        btn4 = new javax.swing.JToggleButton();
+        btn5 = new javax.swing.JToggleButton();
+        btn6 = new javax.swing.JToggleButton();
+        btn7 = new javax.swing.JToggleButton();
+        btn8 = new javax.swing.JToggleButton();
+        btn9 = new javax.swing.JToggleButton();
+        btn10 = new javax.swing.JToggleButton();
+        btn11 = new javax.swing.JToggleButton();
+        btn12 = new javax.swing.JToggleButton();
+        btn13 = new javax.swing.JToggleButton();
+        btn14 = new javax.swing.JToggleButton();
+        btn15 = new javax.swing.JToggleButton();
+        driveInfoPanel = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        lblSector = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+        lblTrack = new javax.swing.JLabel();
+        lblHead = new javax.swing.JLabel();
+        lblOffset = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("MITS 88-DISK (floppy)");
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Selected drives"));
-
-        lbl0.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        lbl1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        lbl2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        lbl3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        lbl4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        lbl5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        lbl6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        lbl7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        lbl8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        lbl9.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        lbl10.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        lbl11.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        lbl12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        lbl13.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        lbl14.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        lbl15.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
-
-        jLabel1.setText("A");
-
-        jLabel2.setText("B");
-
-        jLabel3.setText("C");
-
-        jLabel4.setText("D");
-
-        jLabel5.setText("E");
-
-        jLabel6.setText("F");
-
-        jLabel7.setText("G");
-
-        jLabel8.setText("H");
-
-        jLabel9.setText("I");
-
-        jLabel10.setText("J");
-
-        jLabel11.setText("K");
-
-        jLabel12.setText("L");
-
-        jLabel13.setText("M");
-
-        jLabel14.setText("N");
-
-        jLabel15.setText("O");
-
-        jLabel16.setText("P");
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl0)
-                    .addComponent(jLabel1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel2)
-                    .addComponent(lbl1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl2)
-                    .addComponent(jLabel3))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl3)
-                    .addComponent(jLabel4))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl4)
-                    .addComponent(jLabel5))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl5)
-                    .addComponent(jLabel6))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl6)
-                    .addComponent(jLabel7))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl7)
-                    .addComponent(jLabel8))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl8)
-                    .addComponent(jLabel9))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl9)
-                    .addComponent(jLabel10))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl10)
-                    .addComponent(jLabel11))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl11)
-                    .addComponent(jLabel12))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl12)
-                    .addComponent(jLabel13))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl13)
-                    .addComponent(jLabel14))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl14)
-                    .addComponent(jLabel15))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbl15)
-                    .addComponent(jLabel16))
-                .addContainerGap(26, Short.MAX_VALUE))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lbl15)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel16))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lbl11)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel12))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lbl4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel5))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lbl2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel3))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lbl1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel1)))
-                    .addComponent(lbl0)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lbl3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel4))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lbl5)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel6))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lbl6)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel7))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lbl7)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel8))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lbl8)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel9))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lbl9)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel10))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lbl10)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel11))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lbl12)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel13))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lbl13)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel14))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lbl14)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel15)
-                        .addGap(28, 28, 28)))
-                .addContainerGap())
-        );
-
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Mounted images"));
 
         driveCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Drive 0 (A)", "Drive 1 (B)", "Drive 2 (C)", "Drive 3 (D)", "Drive 4 (E)", "Drive 5 (F)", "Drive 6 (G)", "Drive 7 (H)", "Drive 8 (I)", "Drive 9 (J)", "Drive 10 (K)", "Drive 11 (L)", "Drive 12 (M)", "Drive 13 (N)", "Drive 14 (O)", "Drive 15 (P)" }));
-        driveCombo.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                driveComboActionPerformed(evt);
+        driveCombo.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                driveComboItemStateChanged(evt);
             }
         });
 
@@ -361,9 +178,17 @@ public class DiskFrame extends javax.swing.JFrame {
         });
 
         umountButton.setText("Un-mount");
+        umountButton.setEnabled(false);
         umountButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 umountButtonActionPerformed(evt);
+            }
+        });
+
+        createButton.setText("Create new image");
+        createButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                createButtonActionPerformed(evt);
             }
         });
 
@@ -377,7 +202,7 @@ public class DiskFrame extends javax.swing.JFrame {
                     .addComponent(driveCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel17)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addComponent(txtImage, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
+                        .addComponent(txtImage, javax.swing.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(browseButton)
                         .addContainerGap())
@@ -385,7 +210,10 @@ public class DiskFrame extends javax.swing.JFrame {
                         .addComponent(mountButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(umountButton)
-                        .addContainerGap(205, Short.MAX_VALUE))))
+                        .addContainerGap(214, Short.MAX_VALUE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(createButton)
+                        .addContainerGap(216, Short.MAX_VALUE))))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -401,43 +229,391 @@ public class DiskFrame extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(mountButton)
                     .addComponent(umountButton))
-                .addContainerGap(18, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(createButton)
+                .addContainerGap())
         );
 
-        createButton.setText("Create new image");
-        createButton.addActionListener(new java.awt.event.ActionListener() {
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Other"));
+
+        alwaysCheck.setText("Always on top");
+        alwaysCheck.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                createButtonActionPerformed(evt);
+                alwaysCheckActionPerformed(evt);
             }
         });
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(alwaysCheck)
+                .addContainerGap(232, Short.MAX_VALUE))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addComponent(alwaysCheck)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout configPanelLayout = new javax.swing.GroupLayout(configPanel);
+        configPanel.setLayout(configPanelLayout);
+        configPanelLayout.setHorizontalGroup(
+            configPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(configPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(configPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        configPanelLayout.setVerticalGroup(
+            configPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(configPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Configuration", configPanel);
+
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Selected drives"));
+
+        drivesGroup.add(btn0);
+        btn0.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn0.setText("A");
+        btn0.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn0ActionPerformed(evt);
+            }
+        });
+
+        drivesGroup.add(btn1);
+        btn1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn1.setText("B");
+        btn1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn1ActionPerformed(evt);
+            }
+        });
+
+        drivesGroup.add(btn2);
+        btn2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn2.setText("C");
+        btn2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn2ActionPerformed(evt);
+            }
+        });
+
+        drivesGroup.add(btn3);
+        btn3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn3.setText("D");
+        btn3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn3ActionPerformed(evt);
+            }
+        });
+
+        drivesGroup.add(btn4);
+        btn4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn4.setText("E");
+        btn4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn4ActionPerformed(evt);
+            }
+        });
+
+        drivesGroup.add(btn5);
+        btn5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn5.setText("F");
+        btn5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn5ActionPerformed(evt);
+            }
+        });
+
+        drivesGroup.add(btn6);
+        btn6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn6.setText("G");
+        btn6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn6ActionPerformed(evt);
+            }
+        });
+
+        drivesGroup.add(btn7);
+        btn7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn7.setText("H");
+        btn7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn7ActionPerformed(evt);
+            }
+        });
+
+        drivesGroup.add(btn8);
+        btn8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn8.setText("I");
+        btn8.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn8ActionPerformed(evt);
+            }
+        });
+
+        drivesGroup.add(btn9);
+        btn9.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn9.setText("J");
+        btn9.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn9ActionPerformed(evt);
+            }
+        });
+
+        drivesGroup.add(btn10);
+        btn10.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn10.setText("K");
+        btn10.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn10ActionPerformed(evt);
+            }
+        });
+
+        drivesGroup.add(btn11);
+        btn11.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn11.setText("L");
+        btn11.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn11ActionPerformed(evt);
+            }
+        });
+
+        drivesGroup.add(btn12);
+        btn12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn12.setText("M");
+        btn12.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn12ActionPerformed(evt);
+            }
+        });
+
+        drivesGroup.add(btn13);
+        btn13.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn13.setText("N");
+        btn13.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn13ActionPerformed(evt);
+            }
+        });
+
+        drivesGroup.add(btn14);
+        btn14.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn14.setText("O");
+        btn14.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn14ActionPerformed(evt);
+            }
+        });
+
+        drivesGroup.add(btn15);
+        btn15.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn15.setText("P");
+        btn15.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn15ActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(btn8, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btn0, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(btn9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btn1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(btn10, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btn2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(btn11, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btn3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(btn12, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btn4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(btn13, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btn5, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(btn6)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btn7))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(btn14)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btn15)))
+                .addContainerGap(16, Short.MAX_VALUE))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btn0)
+                    .addComponent(btn1)
+                    .addComponent(btn2)
+                    .addComponent(btn3)
+                    .addComponent(btn4)
+                    .addComponent(btn5)
+                    .addComponent(btn6)
+                    .addComponent(btn7))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btn8)
+                    .addComponent(btn9)
+                    .addComponent(btn10)
+                    .addComponent(btn11)
+                    .addComponent(btn12)
+                    .addComponent(btn13)
+                    .addComponent(btn14)
+                    .addComponent(btn15))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        driveInfoPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Drive info"));
+
+        jLabel1.setFont(jLabel1.getFont());
+        jLabel1.setText("Track:");
+
+        lblSector.setFont(lblSector.getFont().deriveFont(lblSector.getFont().getStyle() | java.awt.Font.BOLD));
+        lblSector.setText("0");
+
+        jLabel3.setFont(jLabel3.getFont());
+        jLabel3.setText("Sector:");
+
+        jLabel4.setFont(jLabel4.getFont());
+        jLabel4.setText("Head:");
+
+        jLabel5.setFont(jLabel5.getFont());
+        jLabel5.setText("Offset:");
+
+        lblTrack.setFont(lblTrack.getFont().deriveFont(lblTrack.getFont().getStyle() | java.awt.Font.BOLD));
+        lblTrack.setText("0");
+
+        lblHead.setFont(lblHead.getFont().deriveFont(lblHead.getFont().getStyle() | java.awt.Font.BOLD));
+        lblHead.setText("unloaded");
+
+        lblOffset.setFont(lblOffset.getFont().deriveFont(lblOffset.getFont().getStyle() | java.awt.Font.BOLD));
+        lblOffset.setText("0");
+
+        javax.swing.GroupLayout driveInfoPanelLayout = new javax.swing.GroupLayout(driveInfoPanel);
+        driveInfoPanel.setLayout(driveInfoPanelLayout);
+        driveInfoPanelLayout.setHorizontalGroup(
+            driveInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(driveInfoPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(driveInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1)
+                    .addComponent(jLabel4)
+                    .addComponent(jLabel3)
+                    .addComponent(jLabel5))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(driveInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(driveInfoPanelLayout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblOffset))
+                    .addComponent(lblSector)
+                    .addComponent(lblHead)
+                    .addComponent(lblTrack))
+                .addContainerGap(220, Short.MAX_VALUE))
+        );
+        driveInfoPanelLayout.setVerticalGroup(
+            driveInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(driveInfoPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(driveInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel4)
+                    .addComponent(lblHead))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(driveInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1)
+                    .addComponent(lblTrack))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(driveInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(lblSector))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(driveInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel5)
+                    .addComponent(lblOffset))
+                .addContainerGap(14, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout runtimePanelLayout = new javax.swing.GroupLayout(runtimePanel);
+        runtimePanel.setLayout(runtimePanelLayout);
+        runtimePanelLayout.setHorizontalGroup(
+            runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, runtimePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(driveInfoPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        runtimePanelLayout.setVerticalGroup(
+            runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(runtimePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(driveInfoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(21, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Run-time", runtimePanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(createButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 405, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(createButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void umountButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_umountButtonActionPerformed
+        int i = driveCombo.getSelectedIndex();
+        ((Drive)drives.get(i)).umount();
+        updateGUI(i);
+    }//GEN-LAST:event_umountButtonActionPerformed
+
+    private void mountButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mountButtonActionPerformed
+        int i = driveCombo.getSelectedIndex();
+        try { ((Drive) drives.get(i)).mount(txtImage.getText()); } catch (IOException ex) {
+            DiskImpl.showErrorMessage(ex.getMessage());
+            txtImage.grabFocus();
+        }
+        updateGUI(i);
+    }//GEN-LAST:event_mountButtonActionPerformed
 
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
         JFileChooser f = new JFileChooser();
@@ -463,33 +639,17 @@ public class DiskFrame extends javax.swing.JFrame {
         f.setVisible(true);
         if(returnVal == JFileChooser.APPROVE_OPTION)
             txtImage.setText(f.getSelectedFile().getAbsolutePath());
-}//GEN-LAST:event_browseButtonActionPerformed
-
-    private void umountButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_umountButtonActionPerformed
-        int i = driveCombo.getSelectedIndex();
-        ((Drive)drives.get(i)).umount();
-        updateGUI(i);
-}//GEN-LAST:event_umountButtonActionPerformed
+    }//GEN-LAST:event_browseButtonActionPerformed
 
     private void txtImageInputMethodTextChanged(java.awt.event.InputMethodEvent evt) {//GEN-FIRST:event_txtImageInputMethodTextChanged
         if (txtImage.getText().equals("")) mountButton.setEnabled(false);
         else mountButton.setEnabled(true);
     }//GEN-LAST:event_txtImageInputMethodTextChanged
 
-    private void mountButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mountButtonActionPerformed
-        int i = driveCombo.getSelectedIndex();
-        try { ((Drive) drives.get(i)).mount(txtImage.getText()); } 
-        catch (IOException ex) {
-            DiskImpl.showErrorMessage(ex.getMessage());
-            txtImage.grabFocus();
-        }
-        updateGUI(i);
-    }//GEN-LAST:event_mountButtonActionPerformed
-
-    private void driveComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_driveComboActionPerformed
+    private void driveComboItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_driveComboItemStateChanged
         int i = driveCombo.getSelectedIndex();
         updateGUI(i);
-    }//GEN-LAST:event_driveComboActionPerformed
+    }//GEN-LAST:event_driveComboItemStateChanged
 
     private void createButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createButtonActionPerformed
         JFileChooser f = new JFileChooser();
@@ -512,49 +672,136 @@ public class DiskFrame extends javax.swing.JFrame {
         int returnVal = f.showSaveDialog(this);
         f.setVisible(true);
         if(returnVal == JFileChooser.APPROVE_OPTION)
-            txtImage.setText(f.getSelectedFile().getAbsolutePath());
-}//GEN-LAST:event_createButtonActionPerformed
+            try {
+                Drive.createNewImage(f.getSelectedFile().getAbsolutePath());
+            } catch(IOException e) {
+                DiskImpl.showErrorMessage("Couldn't create an image file");
+            }
+    }//GEN-LAST:event_createButtonActionPerformed
+
+    private void btn0ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn0ActionPerformed
+        driveInfoIndex = 0;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn0ActionPerformed
+
+    private void btn1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn1ActionPerformed
+        driveInfoIndex = 1;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn1ActionPerformed
+
+    private void btn2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn2ActionPerformed
+        driveInfoIndex = 2;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn2ActionPerformed
+
+    private void btn3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn3ActionPerformed
+        driveInfoIndex = 3;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn3ActionPerformed
+
+    private void btn4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn4ActionPerformed
+        driveInfoIndex = 4;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn4ActionPerformed
+
+    private void btn5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn5ActionPerformed
+        driveInfoIndex = 5;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn5ActionPerformed
+
+    private void btn6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn6ActionPerformed
+        driveInfoIndex = 6;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn6ActionPerformed
+
+    private void btn7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn7ActionPerformed
+        driveInfoIndex = 7;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn7ActionPerformed
+
+    private void btn8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn8ActionPerformed
+        driveInfoIndex = 8;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn8ActionPerformed
+
+    private void btn9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn9ActionPerformed
+        driveInfoIndex = 9;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn9ActionPerformed
+
+    private void btn10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn10ActionPerformed
+        driveInfoIndex = 10;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn10ActionPerformed
+
+    private void btn11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn11ActionPerformed
+        driveInfoIndex = 11;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn11ActionPerformed
+
+    private void btn12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn12ActionPerformed
+        driveInfoIndex = 12;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn12ActionPerformed
+
+    private void btn13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn13ActionPerformed
+        driveInfoIndex = 13;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn13ActionPerformed
+
+    private void btn14ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn14ActionPerformed
+        driveInfoIndex = 14;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn14ActionPerformed
+
+    private void btn15ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn15ActionPerformed
+        driveInfoIndex = 15;
+        updateDriveInfo();
+    }//GEN-LAST:event_btn15ActionPerformed
+
+    private void alwaysCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_alwaysCheckActionPerformed
+        this.setAlwaysOnTop(alwaysCheck.isSelected());
+}//GEN-LAST:event_alwaysCheckActionPerformed
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox alwaysCheck;
     private javax.swing.JButton browseButton;
+    private javax.swing.JToggleButton btn0;
+    private javax.swing.JToggleButton btn1;
+    private javax.swing.JToggleButton btn10;
+    private javax.swing.JToggleButton btn11;
+    private javax.swing.JToggleButton btn12;
+    private javax.swing.JToggleButton btn13;
+    private javax.swing.JToggleButton btn14;
+    private javax.swing.JToggleButton btn15;
+    private javax.swing.JToggleButton btn2;
+    private javax.swing.JToggleButton btn3;
+    private javax.swing.JToggleButton btn4;
+    private javax.swing.JToggleButton btn5;
+    private javax.swing.JToggleButton btn6;
+    private javax.swing.JToggleButton btn7;
+    private javax.swing.JToggleButton btn8;
+    private javax.swing.JToggleButton btn9;
+    private javax.swing.JPanel configPanel;
     private javax.swing.JButton createButton;
     private javax.swing.JComboBox driveCombo;
+    private javax.swing.JPanel driveInfoPanel;
+    private javax.swing.ButtonGroup drivesGroup;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel11;
-    private javax.swing.JLabel jLabel12;
-    private javax.swing.JLabel jLabel13;
-    private javax.swing.JLabel jLabel14;
-    private javax.swing.JLabel jLabel15;
-    private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel17;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel8;
-    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JLabel lbl0;
-    private javax.swing.JLabel lbl1;
-    private javax.swing.JLabel lbl10;
-    private javax.swing.JLabel lbl11;
-    private javax.swing.JLabel lbl12;
-    private javax.swing.JLabel lbl13;
-    private javax.swing.JLabel lbl14;
-    private javax.swing.JLabel lbl15;
-    private javax.swing.JLabel lbl2;
-    private javax.swing.JLabel lbl3;
-    private javax.swing.JLabel lbl4;
-    private javax.swing.JLabel lbl5;
-    private javax.swing.JLabel lbl6;
-    private javax.swing.JLabel lbl7;
-    private javax.swing.JLabel lbl8;
-    private javax.swing.JLabel lbl9;
+    private javax.swing.JPanel jPanel3;
+    private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JLabel lblHead;
+    private javax.swing.JLabel lblOffset;
+    private javax.swing.JLabel lblSector;
+    private javax.swing.JLabel lblTrack;
     private javax.swing.JButton mountButton;
+    private javax.swing.JPanel runtimePanel;
     private javax.swing.JTextField txtImage;
     private javax.swing.JButton umountButton;
     // End of variables declaration//GEN-END:variables
