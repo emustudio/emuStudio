@@ -41,7 +41,8 @@ public class cpuEmulator implements ICPU, Runnable {
     private RuntimeFrequencyCalculator rfc;
 
     // registers are public meant for only statusGUI (didnt want make it thru get() methods)
-    public int PC=0, SP=0; // program counter, stack pointer
+    private int PC=0; // program counter
+    public int SP=0; // stack pointer
     public short B=0, C=0, D=0, E=0, H=0, L=0, Flags=2, A=0; // registre
     public final int flagS = 0x80, flagZ = 0x40, flagAC = 0x10, flagP = 0x4, flagC = 0x1;
     
@@ -138,10 +139,12 @@ public class cpuEmulator implements ICPU, Runnable {
     public void step() {
         if (run_state == stateEnum.stoppedBreak) {
             try {
-                run_state = stateEnum.runned;
-                evalStep();
-                if (run_state == stateEnum.runned)
-                    run_state = stateEnum.stoppedBreak;
+                synchronized(run_state) {
+                    run_state = stateEnum.runned;
+                    evalStep();
+                    if (run_state == stateEnum.runned)
+                        run_state = stateEnum.stoppedBreak;
+                }
             }
             catch (IndexOutOfBoundsException e) {
                 run_state = stateEnum.stoppedAdrFallout;
@@ -259,33 +262,35 @@ public class cpuEmulator implements ICPU, Runnable {
          */
         cycles_to_execute = 1000 * clockFrequency;
         long i = 0;
-        while(run_state == stateEnum.runned) {
-            i++;
-            startTime = System.nanoTime();
-            cycles_executed = 0;
-            try { 
-                while((cycles_executed < cycles_to_execute)
-                        && (run_state == stateEnum.runned)) {
-                    cycles = evalStep();
-                    cycles_executed += cycles;
-                    long_cycles += cycles;
-                    if (breaks.contains(PC) == true)
-                        throw new Error();
+        synchronized(run_state) {
+            while(run_state == stateEnum.runned) {
+                i++;
+                startTime = System.nanoTime();
+                cycles_executed = 0;
+                try { 
+                    while((cycles_executed < cycles_to_execute)
+                            && (run_state == stateEnum.runned)) {
+                        cycles = evalStep();
+                        cycles_executed += cycles;
+                        long_cycles += cycles;
+                        if (breaks.contains(PC) == true)
+                            throw new Error();
+                    }
                 }
-            }
-            catch (IndexOutOfBoundsException e) {
-                run_state = stateEnum.stoppedAdrFallout;
-                break;
-            }
-            catch (Error er) {
-                run_state = stateEnum.stoppedBreak;
-                break;
-            }
-            endTime = System.nanoTime() - startTime;
-            if (endTime < 1000000000) {
-                // time correction
-                try { cpuThread.sleep((1000000000 - endTime)/1000000); }
-                catch(java.lang.InterruptedException e) {}
+                catch (IndexOutOfBoundsException e) {
+                    run_state = stateEnum.stoppedAdrFallout;
+                    break;
+                }
+                catch (Error er) {
+                    run_state = stateEnum.stoppedBreak;
+                    break;
+                }
+                endTime = System.nanoTime() - startTime;
+                if (endTime < 1000000000) {
+                    // time correction
+                    try { cpuThread.sleep((1000000000 - endTime)/1000000); }
+                    catch(java.lang.InterruptedException e) {}
+                }
             }
         }
         setRuntimeFreqCounter(false);
@@ -309,7 +314,6 @@ public class cpuEmulator implements ICPU, Runnable {
      */
     private class RuntimeFrequencyCalculator extends TimerTask {
         private long startTimeSaved = 0;
-
         
         public void run() {
             double endTime = System.nanoTime();
@@ -472,7 +476,7 @@ public class cpuEmulator implements ICPU, Runnable {
             isINT = false;
         }        
         OP = mem.read8(PC++);
-        if (OP == 118) {
+        if (OP == 118) { // hlt?
             run_state = stateEnum.stoppedNormal;
             return 7;
         }
