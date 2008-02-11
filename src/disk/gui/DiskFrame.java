@@ -29,25 +29,27 @@ public class DiskFrame extends javax.swing.JFrame {
         driveCombo.setSelectedIndex(0);
         this.setLocationRelativeTo(null);
         
-        for (int i = 0; i < drives.size(); i++)
-            updateSelGUI(i);
+        Drive.DriveListener dl = new Drive.DriveListener() {
+            public void driveSelect(Drive drive, boolean sel) {
+                select(drive,sel);
+            }
+            public void driveParamsChanged(Drive drive) {
+                updateDriveInfo(drive);
+            }
+        };
+        for (int i = 0; i < drives.size(); i++) {
+            Drive d = ((Drive)drives.get(i));
+            d.removeAllListeners();
+            d.addDriveListener(dl);
+        }
     }
 
-    private void updateDriveInfo() {
-        Drive d = ((Drive)drives.get(driveInfoIndex));
-        lblHead.setText((d.getHeadLoaded())?"loaded":"unloaded");
+    private void updateDriveInfo(Drive d) {
+        if (drives.indexOf(d) != driveInfoIndex) return;
+        lblFlags.setText(Integer.toBinaryString(d.getFlags()) + "b");
         lblSector.setText(String.valueOf(d.getSector()));
         lblTrack.setText(String.valueOf(d.getTrack()));
         lblOffset.setText(String.valueOf(d.getOffset()));
-    }
-    
-    // called from DiskImpl.java
-    public void driveParamsChanged(int drive, boolean headL, int sec, int track, int off) {
-        if (drive != driveInfoIndex) return;
-        lblHead.setText((headL)?"loaded":"unloaded");
-        lblSector.setText(String.valueOf(sec));
-        lblTrack.setText(String.valueOf(track));
-        lblOffset.setText(String.valueOf(off));
     }
     
     private void updateGUI(int drive) {
@@ -61,15 +63,10 @@ public class DiskFrame extends javax.swing.JFrame {
         }
     }
     
-    private void updateSelGUI(int drive) {
-        if (((Drive)drives.get(drive)).isSelected())
-            select(drive, true);
-        else select(drive,false);
-    }
-    
     // calling from DiskImpl
-    public void select(int drive, boolean sel) {
+    public void select(Drive dr, boolean sel) {
         String fil;
+        int drive = drives.indexOf(dr);
         if (sel) fil = "/resources/on.gif";
         else fil = "/resources/off.gif";
         switch (drive) {
@@ -138,7 +135,7 @@ public class DiskFrame extends javax.swing.JFrame {
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         lblTrack = new javax.swing.JLabel();
-        lblHead = new javax.swing.JLabel();
+        lblFlags = new javax.swing.JLabel();
         lblOffset = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -277,7 +274,7 @@ public class DiskFrame extends javax.swing.JFrame {
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(14, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Configuration", configPanel);
@@ -506,7 +503,7 @@ public class DiskFrame extends javax.swing.JFrame {
         jLabel3.setText("Sector:");
 
         jLabel4.setFont(jLabel4.getFont());
-        jLabel4.setText("Head:");
+        jLabel4.setText("Flags:");
 
         jLabel5.setFont(jLabel5.getFont());
         jLabel5.setText("Offset:");
@@ -514,8 +511,8 @@ public class DiskFrame extends javax.swing.JFrame {
         lblTrack.setFont(lblTrack.getFont().deriveFont(lblTrack.getFont().getStyle() | java.awt.Font.BOLD));
         lblTrack.setText("0");
 
-        lblHead.setFont(lblHead.getFont().deriveFont(lblHead.getFont().getStyle() | java.awt.Font.BOLD));
-        lblHead.setText("unloaded");
+        lblFlags.setFont(lblFlags.getFont().deriveFont(lblFlags.getFont().getStyle() | java.awt.Font.BOLD));
+        lblFlags.setText("0");
 
         lblOffset.setFont(lblOffset.getFont().deriveFont(lblOffset.getFont().getStyle() | java.awt.Font.BOLD));
         lblOffset.setText("0");
@@ -537,17 +534,16 @@ public class DiskFrame extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblOffset))
                     .addComponent(lblSector)
-                    .addComponent(lblHead)
+                    .addComponent(lblFlags)
                     .addComponent(lblTrack))
-                .addContainerGap(220, Short.MAX_VALUE))
+                .addContainerGap(283, Short.MAX_VALUE))
         );
         driveInfoPanelLayout.setVerticalGroup(
             driveInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(driveInfoPanelLayout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(driveInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
-                    .addComponent(lblHead))
+                    .addComponent(lblFlags))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(driveInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1)
@@ -560,7 +556,7 @@ public class DiskFrame extends javax.swing.JFrame {
                 .addGroup(driveInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel5)
                     .addComponent(lblOffset))
-                .addContainerGap(14, Short.MAX_VALUE))
+                .addContainerGap(37, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout runtimePanelLayout = new javax.swing.GroupLayout(runtimePanel);
@@ -581,7 +577,7 @@ public class DiskFrame extends javax.swing.JFrame {
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(driveInfoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(21, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Run-time", runtimePanel);
@@ -594,7 +590,7 @@ public class DiskFrame extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 316, Short.MAX_VALUE)
         );
 
         pack();
@@ -681,82 +677,82 @@ public class DiskFrame extends javax.swing.JFrame {
 
     private void btn0ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn0ActionPerformed
         driveInfoIndex = 0;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(0));
     }//GEN-LAST:event_btn0ActionPerformed
 
     private void btn1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn1ActionPerformed
         driveInfoIndex = 1;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(1));
     }//GEN-LAST:event_btn1ActionPerformed
 
     private void btn2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn2ActionPerformed
         driveInfoIndex = 2;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(2));
     }//GEN-LAST:event_btn2ActionPerformed
 
     private void btn3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn3ActionPerformed
         driveInfoIndex = 3;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(3));
     }//GEN-LAST:event_btn3ActionPerformed
 
     private void btn4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn4ActionPerformed
         driveInfoIndex = 4;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(4));
     }//GEN-LAST:event_btn4ActionPerformed
 
     private void btn5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn5ActionPerformed
         driveInfoIndex = 5;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(5));
     }//GEN-LAST:event_btn5ActionPerformed
 
     private void btn6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn6ActionPerformed
         driveInfoIndex = 6;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(6));
     }//GEN-LAST:event_btn6ActionPerformed
 
     private void btn7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn7ActionPerformed
         driveInfoIndex = 7;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(7));
     }//GEN-LAST:event_btn7ActionPerformed
 
     private void btn8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn8ActionPerformed
         driveInfoIndex = 8;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(8));
     }//GEN-LAST:event_btn8ActionPerformed
 
     private void btn9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn9ActionPerformed
         driveInfoIndex = 9;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(9));
     }//GEN-LAST:event_btn9ActionPerformed
 
     private void btn10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn10ActionPerformed
         driveInfoIndex = 10;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(10));
     }//GEN-LAST:event_btn10ActionPerformed
 
     private void btn11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn11ActionPerformed
         driveInfoIndex = 11;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(11));
     }//GEN-LAST:event_btn11ActionPerformed
 
     private void btn12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn12ActionPerformed
         driveInfoIndex = 12;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(12));
     }//GEN-LAST:event_btn12ActionPerformed
 
     private void btn13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn13ActionPerformed
         driveInfoIndex = 13;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(13));
     }//GEN-LAST:event_btn13ActionPerformed
 
     private void btn14ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn14ActionPerformed
         driveInfoIndex = 14;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(14));
     }//GEN-LAST:event_btn14ActionPerformed
 
     private void btn15ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn15ActionPerformed
         driveInfoIndex = 15;
-        updateDriveInfo();
+        updateDriveInfo((Drive)drives.get(15));
     }//GEN-LAST:event_btn15ActionPerformed
 
     private void alwaysCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_alwaysCheckActionPerformed
@@ -796,7 +792,7 @@ public class DiskFrame extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JLabel lblHead;
+    private javax.swing.JLabel lblFlags;
     private javax.swing.JLabel lblOffset;
     private javax.swing.JLabel lblSector;
     private javax.swing.JLabel lblTrack;

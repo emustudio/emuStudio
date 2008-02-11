@@ -4,12 +4,15 @@
  * Created on 6.2.2008, 8:46:46
  * hold to: KISS, YAGNI
  *
- * Performs disk operations
+ * Performs disk operations on single drive
  */
 
 package disk;
 
 import java.io.*;
+import java.util.EventListener;
+import java.util.EventObject;
+import javax.swing.event.EventListenerList;
 
 /**
  *
@@ -20,17 +23,20 @@ public class Drive {
     public final static int sectorsCount = 32;
     public final static int sectorLength = 137;
     
-    private int track = 0xFF;
-    private int sector = 0xFF;
+    private int track;
+    private int sector;
+    private int sectorOffset;
+    
+    /** mounted image */
     private File floppy = null;
+    private RandomAccessFile image;
+    private boolean selected = false;
     
  //   private int rotateLatency = 100;
-    
-    private int currentChar = 0xFF;
-    
-    private RandomAccessFile image;
-    private DiskImpl dimpl;
-    private boolean selected = false;
+
+    /** gui interaction */
+    private EventListenerList listeners; // list of listeners
+    private EventObject evt; // event object
 
     /*
       7   6   5   4   3   2   1   0
@@ -46,10 +52,44 @@ public class Drive {
     Z - When 0, indicates head is on track 0
     R - When 0, indicates that read circuit has new byte to read
      */
-    private short flags=0xE7; // 11100111b
+    private short flags; 
 
-    public Drive(DiskImpl dimpl) {
-        this.dimpl = dimpl;
+    public interface DriveListener extends EventListener {
+        public void driveSelect(Drive drive, boolean sel);
+        public void driveParamsChanged(Drive drive);
+    }
+    
+    public Drive() {
+        track = 0xFF;
+        sector = 0xFF;
+        sectorOffset = 0xFF;
+        flags = 0xE7; // 11100111b
+        
+        listeners = new EventListenerList();
+        evt = new EventObject(this);
+    }
+    
+    public void addDriveListener(DriveListener l) {
+        listeners.add(DriveListener.class, l);
+    }
+    
+    public void removeDriveListener(DriveListener l) {
+        listeners.remove(DriveListener.class, l);
+    }
+    
+    private void fireListeners(boolean sel, boolean par) {
+        Object[] lis= listeners.getListenerList();
+        for (int i = 0; i < lis.length; i +=2)
+            if (lis[i] == DriveListener.class) {
+                if (sel) ((DriveListener)lis[i+1]).driveSelect(this, selected);
+                if (par) ((DriveListener)lis[i+1]).driveParamsChanged(this);
+            }
+    }
+    
+    public void removeAllListeners() {
+        Object[] lis= listeners.getListenerList();
+        for (int i = 0; i < lis.length; i +=2)
+            listeners.remove(DriveListener.class, (DriveListener)lis[i+1]);
     }
     
     /**
@@ -59,21 +99,25 @@ public class Drive {
         selected = true;
         flags = 0xE5; // 11100101b
         sector = 0xFF;
-        currentChar = 0xFF;
+        sectorOffset = 0xFF;
         if (track == 0)
             flags &= 0xBF; // head is on track 0
-        dimpl.selectDrive(this, true);
-        dimpl.driveParamsChanged(this, ((~flags) & 0x04) != 0, sector, track,
-                currentChar);
-    }
-    
-    /**
-     * gets image File
-     */
-    public File getImageFile() {
-        return floppy;
+        fireListeners(true, true);
     }
 
+    /**
+     * disable device
+     */
+    public void deselect() {
+        selected = false;
+        flags = 0xE7;
+        fireListeners(true,false);
+    }
+    
+    public boolean isSelected() {
+        return selected;
+    }
+    
     /**
      * Create new image
      */
@@ -82,20 +126,7 @@ public class Drive {
         for (int i = 0; i < tracksCount * sectorsCount * sectorLength; i++)
             fout.writeByte(0);
         fout.close();
-    }
-    
-    /**
-     * disable device
-     */
-    public void deselect() {
-        selected = false;
-        flags = 0xE7;
-        dimpl.selectDrive(this, false);
-    }
-    
-    public boolean isSelected() {
-        return selected;
-    }
+    }    
 
     /**
      * Mount an image file to drive (insert diskette)
@@ -120,6 +151,13 @@ public class Drive {
         catch (IOException e) {}
     }
     
+    /**
+     * gets image File
+     */
+    public File getImageFile() {
+        return floppy;
+    }
+
     public short getFlags() { return flags; }
     
     /**
@@ -151,7 +189,7 @@ public class Drive {
             track++;
             if (track > 76) track = 76;
             sector = 0xFF;
-            currentChar = 0xFF;
+            sectorOffset = 0xFF;
         }
         if ((val & 0x02) != 0) { /* Step head out */
             track--;
@@ -160,7 +198,7 @@ public class Drive {
                 flags &= 0xBF; // head is on track 0
             }
             sector = 0xFF;
-            currentChar = 0xFF;
+            sectorOffset = 0xFF;
         }
         if ((val & 0x04) != 0) { /* Head load */
             // 11111011
@@ -171,15 +209,14 @@ public class Drive {
             flags |= 0x04; /* turn off 'head loaded' */
             flags |= 0x80; /* turn off 'read data avail */
             sector = 0xFF;
-            currentChar = 0xFF;
+            sectorOffset = 0xFF;
         }
         /* Interrupts & head current are ignored */
         if ((val & 0x80) != 0) { /* write sequence start */
-            currentChar = 0;
+            sectorOffset = 0xFF; //0;
             flags &= 0xFE; /* enter new write data on */
         }
-        dimpl.driveParamsChanged(this, ((~flags) & 0x04) != 0, sector, track,
-                currentChar);
+        fireListeners(false,true);
     }
     
     /**
@@ -189,46 +226,43 @@ public class Drive {
         if (((~flags) & 0x04) != 0) { /* head loaded? */
             sector++;
             if (sector > 31) sector = 0;
-            currentChar = 0xFF;
+            sectorOffset = 0xFF;
             int stat = sector << 1;
             stat &= 0x3E;  /* 111110b, return 'sector true' bit = 0 (true) */
             stat |= 0xC0;  // set on 'unused' bits  ?? > in simh bit are gonna up
-            dimpl.driveParamsChanged(this, ((~flags) & 0x04) != 0, sector, track,
-                    currentChar);
+            fireListeners(false,true);
             return stat;
         } else return 1;   /* head not loaded - sector true is 1 (false) */
     }
     
     public void writeData(int data) throws IOException {
-        currentChar++;
+        sectorOffset++;
         // this is questionable... what to do if pos is on the end ?
-        if (currentChar >= sectorLength) currentChar = 0;
+        if (sectorOffset >= sectorLength) sectorOffset = 0;
         long pos = sectorsCount * sectorLength * track
                 + sectorLength * sector
-                + currentChar;
+                + sectorOffset;
         image.seek(pos);
         image.writeByte(data & 0xFF);
         flags |= 1; /* ENWD off */
-        dimpl.driveParamsChanged(this, ((~flags) & 0x04) != 0, sector, track,
-                currentChar);
+        fireListeners(false,true);
     }
     
     public int readData() throws IOException {
-        currentChar++;
+        sectorOffset++;
         // this is questionable... what to do if pos is on the end ?
-        if (currentChar >= sectorLength) currentChar = 0;
+        if (sectorOffset >= sectorLength) sectorOffset = 0;
         long pos = sectorsCount * sectorLength * track
                 + sectorLength * sector
-                + currentChar;
+                + sectorOffset;
         image.seek(pos);
-        dimpl.driveParamsChanged(this, ((~flags) & 0x04) != 0, sector, track,
-                currentChar);
+        fireListeners(false,true);
         return image.readByte();
     }
 
     // for gui calls (drive info)
     public int getSector() { return sector; }
     public int getTrack() { return track; }
-    public int getOffset() { return currentChar; }
+    public int getOffset() { return sectorOffset; }
     public boolean getHeadLoaded() { return ((~flags) & 0x04) != 0; }
 }

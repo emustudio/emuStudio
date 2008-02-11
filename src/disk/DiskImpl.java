@@ -118,23 +118,8 @@ public class DiskImpl implements IDevice {
     public DiskImpl() {
         this.drives = new ArrayList();
         for (int i = 0; i < DRIVES_COUNT; i++)
-            drives.add(new Drive(this));
+            drives.add(new Drive());
         this.current_drive = 0xFF;
-    }
-
-    /**
-     * Called from Drive.java if drive selection changes
-     */
-    public void selectDrive(Drive drive, boolean sel) {
-        int i = drives.indexOf(drive);
-        if (gui != null) gui.select(i, sel);
-    }
-    
-    // called from Drive.java
-    public void driveParamsChanged(Drive drive, boolean headL, int sec,
-            int track, int off) {
-        int i = drives.indexOf(drive);
-        if (gui != null) gui.driveParamsChanged(i, headL, sec, track, off);        
     }
     
     public static void showErrorMessage(String message) {
