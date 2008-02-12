@@ -81,10 +81,10 @@ public class compiler8080 implements ICompiler {
     
     public String getName() { return "Intel 8080 Compiler"; }
     public String getVersion() { return "0.1b"; }
-    public String getCopyright() { return "Copyright (c) 2007, Peter Jakubčo"; }
+    public String getCopyright() { return "\u00A9 Copyright 2007, Peter Jakubčo"; }
     public String getDescription() {
-        return "For assembler syntax look at original manual: "
-                + "http://www.tech-systems-labs.com/booksdata/8080-asbly-pro.pdf";
+        return "It is a clone of original Intel's assembler. For syntax look"
+                + " at users manual.";
     }
     
     public void destroy() {}
