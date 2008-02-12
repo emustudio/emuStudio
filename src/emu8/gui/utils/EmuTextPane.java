@@ -154,7 +154,7 @@ public class EmuTextPane extends JTextPane {
             g.drawString(Integer.toString(line), 0, y);
         
         // paint blue thin lines
-        g.setColor(Color.BLUE);
+        g.setColor(Color.PINK);
         g.drawLine(NUMBERS_WIDTH-5, g.getClipBounds().y, NUMBERS_WIDTH-5, 
                 g.getClipBounds().y+g.getClipBounds().height);
     }

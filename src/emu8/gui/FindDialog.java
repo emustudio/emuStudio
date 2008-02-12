@@ -90,7 +90,9 @@ public class FindDialog extends javax.swing.JDialog {
         int endM = -1;
         boolean match = false;
         
-        matcher.reset(textPane.getText());
+        String txt = textPane.getText().replaceAll("\n\r", "\n")
+                .replaceAll("\r\n", "\n");
+        matcher.reset(txt);
         int endPos = textPane.getDocument().getEndPosition().getOffset()-1;
         int curPos = textPane.getCaretPosition();
         matcher.useTransparentBounds(false);
@@ -301,13 +303,15 @@ public class FindDialog extends javax.swing.JDialog {
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         String str = saveGUI();
-        int flags = Pattern.MULTILINE;
+        int flags = 0;
         if ((checks & cCASE) == 0) flags |= Pattern.CASE_INSENSITIVE;
         
         try {
             if ((checks & cWHOLE) != 0) str = "\\b(" + str + ")\\b";
             Pattern p = Pattern.compile(str, flags);
-            matcher = p.matcher(textPane.getText());
+            String txt = textPane.getText().replaceAll("\n\r", "\n")
+                    .replaceAll("\r\n", "\n");
+            matcher = p.matcher(txt);
             
             if (findForward()) {
                 this.setVisible(false);
