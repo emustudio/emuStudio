@@ -103,6 +103,9 @@ public class StudioFrame extends javax.swing.JFrame {
                     }
                     btnBack.setEnabled(true); btnBeginning.setEnabled(true);
                     tblDebug.setEnabled(true);
+                    tblDebug.setVisible(true);
+                    tblDebug.revalidate();
+                    tblDebug.repaint();
                 }
             }
             public void cpuStateUpdated(EventObject evt) {
@@ -786,9 +789,9 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void btnPauseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPauseActionPerformed
         arch.getCPU().pause();
-        tblDebug.setVisible(true);
-        tblDebug.revalidate();
-        tblDebug.repaint();        
+//        tblDebug.setVisible(true);
+  //      tblDebug.revalidate();
+    //    tblDebug.repaint();        
     }//GEN-LAST:event_btnPauseActionPerformed
 
     private void showGUIButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showGUIButtonActionPerformed
@@ -816,9 +819,9 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void btnStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnStopActionPerformed
         arch.getCPU().stop();
-        tblDebug.setVisible(true);
-        tblDebug.revalidate();
-        tblDebug.repaint();
+//        tblDebug.setVisible(true);
+  //      tblDebug.revalidate();
+    //    tblDebug.repaint();
     }//GEN-LAST:event_btnStopActionPerformed
 
     private void btnBackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBackActionPerformed
@@ -826,24 +829,28 @@ public class StudioFrame extends javax.swing.JFrame {
         if (pc > 0) {
             arch.getCPU().setPC(pc-1);
             paneDebug.revalidate();
-            tblDebug.revalidate();
-            tblDebug.repaint();
+            if (tblDebug.isVisible()) {
+                tblDebug.revalidate();
+                tblDebug.repaint();
+            }
         }
     }//GEN-LAST:event_btnBackActionPerformed
 
     private void btnBeginningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBeginningActionPerformed
         arch.getCPU().setPC(0);
         paneDebug.revalidate();
-        tblDebug.revalidate();
-        tblDebug.repaint();
+        if (tblDebug.isVisible()) {
+            tblDebug.revalidate();
+            tblDebug.repaint();
+        }
     }//GEN-LAST:event_btnBeginningActionPerformed
 
     private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResetActionPerformed
         arch.getCPU().reset(arch.getMemory().getLastImageStart());
         paneDebug.revalidate();
-        tblDebug.setVisible(true);
-        tblDebug.revalidate();
-        tblDebug.repaint();
+//        tblDebug.setVisible(true);
+  //      tblDebug.revalidate();
+    //    tblDebug.repaint();
     }//GEN-LAST:event_btnResetActionPerformed
 
     private void btnJumpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnJumpActionPerformed
@@ -861,8 +868,10 @@ public class StudioFrame extends javax.swing.JFrame {
             return;
         }
         paneDebug.revalidate();
-        tblDebug.revalidate();
-        tblDebug.repaint();
+        if (tblDebug.isVisible()) {
+            tblDebug.revalidate();
+            tblDebug.repaint();
+        }
     }//GEN-LAST:event_btnJumpActionPerformed
 
     private void mnuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuHelpAboutActionPerformed
@@ -882,22 +891,23 @@ public class StudioFrame extends javax.swing.JFrame {
         txtOutput.setText("");
         String fn = txtSource.getFileName();
         fn = fn.substring(0,fn.lastIndexOf(".")) + ".hex";
+        boolean compileResult = false;
         try {
             syntaxLexer.reset((java.io.Reader)new java.io.StringReader(txtSource.getText()),0,0,0);
-            arch.getCompiler().compile(fn);
+            compileResult = arch.getCompiler().compile(fn);
         }
         catch(Exception e) {
             txtOutput.append(e.toString()+"\n");
-            e.printStackTrace();
             txtSource.setEditable(true);
             return;
-        }
+        } catch(Error ex) { return ;}
         txtSource.setEditable(true);
-        int res = JOptionPane.showConfirmDialog(null,
-                "Do you want to load compiled file into operating memory ?", 
-                "Confirmation", JOptionPane.YES_NO_OPTION);
-        if (res == JOptionPane.YES_OPTION)
-            arch.getMemory().loadHex(fn);
+        if (compileResult) {
+            int res = JOptionPane.showConfirmDialog(null,
+                    "Do you want to load compiled file into operating memory ?", 
+                    "Confirmation", JOptionPane.YES_NO_OPTION);
+            if (res == JOptionPane.YES_OPTION) arch.getMemory().loadHex(fn);
+        }
     }//GEN-LAST:event_btnCompileActionPerformed
 
     private void mnuProjectViewConfigActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuProjectViewConfigActionPerformed
