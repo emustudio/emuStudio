@@ -60,9 +60,9 @@ public class Drive {
     }
     
     public Drive() {
-        track = tracksCount-1; //0xFF;
-        sector = sectorsCount-1; //0xFF;
-        sectorOffset = sectorLength-1; //0xFF;
+        track = tracksCount-1;
+        sector = sectorsCount-1;
+        sectorOffset = sectorLength-1;
         flags = 0xE7; // 11100111b
         
         listeners = new EventListenerList();
@@ -98,8 +98,8 @@ public class Drive {
     public void select() {
         selected = true;
         flags = 0xE5; // 11100101b
-        sector = sectorsCount-1; //0xFF;
-        sectorOffset = sectorLength-1; //0xFF;
+        sector = sectorsCount-1;
+        sectorOffset = sectorLength-1;
         if (track == 0)
             flags &= 0xBF; // head is on track 0
         fireListeners(true, true);
@@ -188,8 +188,8 @@ public class Drive {
         if ((val & 0x01) != 0) { /* Step head in */
             track++;
             if (track > 76) track = 76;
-            sector = sectorsCount-1; //0xFF;
-            sectorOffset = sectorLength-1; //0xFF;
+            sector = sectorsCount-1;
+            sectorOffset = sectorLength-1;
         }
         if ((val & 0x02) != 0) { /* Step head out */
             track--;
@@ -197,8 +197,8 @@ public class Drive {
                 track = 0;
                 flags &= 0xBF; // head is on track 0
             }
-            sector = sectorsCount-1;//0xFF;
-            sectorOffset = sectorLength-1; //0xFF;
+            sector = sectorsCount-1;
+            sectorOffset = sectorLength-1;
         }
         if ((val & 0x04) != 0) { /* Head load */
             // 11111011
@@ -208,12 +208,12 @@ public class Drive {
         if ((val & 0x08) != 0) { /* Head Unload */
             flags |= 0x04; /* turn off 'head loaded' */
             flags |= 0x80; /* turn off 'read data avail */
-            sector = sectorsCount-1; //0xFF;
-            sectorOffset = sectorLength-1; //0xFF;
+            sector = sectorsCount-1;
+            sectorOffset = sectorLength-1;
         }
         /* Interrupts & head current are ignored */
         if ((val & 0x80) != 0) { /* write sequence start */
-            sectorOffset = sectorLength-1; //0xFF; //0;
+            sectorOffset = sectorLength-1;
             flags &= 0xFE; /* enter new write data on */
         }
         fireListeners(false,true);
@@ -226,7 +226,7 @@ public class Drive {
         if (((~flags) & 0x04) != 0) { /* head loaded? */
             sector++;
             if (sector > 31) sector = 0;
-            sectorOffset = sectorLength-1; //0xFF;
+            sectorOffset = sectorLength-1;
             int stat = sector << 1;
             stat &= 0x3E;  /* 111110b, return 'sector true' bit = 0 (true) */
             stat |= 0xC0;  // set on 'unused' bits  ?? > in simh bit are gonna up
