@@ -333,7 +333,11 @@ public class frmMemory extends javax.swing.JFrame {
                     mem.loadHex(fileSource.getAbsolutePath());
                 else {
                     // ask for address where to load image
-                    mem.loadBin(fileSource.getAbsolutePath(),0);
+                    int adr = 0;
+                    String sadr = JOptionPane.showInputDialog("Enter starting address:", 0);
+                    try { adr = Integer.decode(sadr); }
+                    catch(NumberFormatException e) {}
+                    mem.loadBin(fileSource.getAbsolutePath(),adr);
                 }
                 this.tblMemory.revalidate();
                 this.tblMemory.repaint();

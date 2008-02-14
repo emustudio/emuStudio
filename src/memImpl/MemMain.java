@@ -47,11 +47,11 @@ public class MemMain implements IMemory {
     public String getVersion() { return "0.1b"; }
 
     public String getName() {
-        return "Simple non-banked operating memory";
+        return "Standard non-banked operating memory";
     }
 
     public String getCopyright() {
-        return "� Copyright 2006-2007, Peter Jakub�o";
+        return "\u00A9 Copyright 2006-2007, Peter Jakubčo";
     }
 
     /** Creates a new instance of MemMain */
