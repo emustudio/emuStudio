@@ -8,6 +8,7 @@ package emu8.gui;
 
 import emu8.gui.utils.*;
 import emu8.*;
+import emu8.gui.syntaxHighlighting.StyledDocumentReader;
 import plugins.device.*;
 import plugins.compiler.*;
 import plugins.memory.IMemory.*;
@@ -31,6 +32,8 @@ public class StudioFrame extends javax.swing.JFrame {
     private ArchitectureHandler arch; // current architecture
     private ActionListener undoStateListener;
     private Clipboard systemClipboard;
+    
+    /* for compiling, not for syntax highlighting */
     private ILexer syntaxLexer;
     private IMessageReporter reporter;
     private DebugTable tblDebug;
@@ -69,9 +72,10 @@ public class StudioFrame extends javax.swing.JFrame {
                 txtOutput.append(message+"\n");
             }
         };
-        syntaxLexer = arch.getCompiler().getLexer(txtSource.getDocumentReader(),
+        txtSource.setLexer(arch.getCompiler().getLexer(txtSource.getDocumentReader(),
+                reporter));
+        syntaxLexer = arch.getCompiler().getLexer(new DocumentReader(txtSource.getDocument()),
                 reporter);
-        txtSource.setLexer(syntaxLexer);
         setUndoListener();
         setClipboardListener();
         
@@ -242,6 +246,7 @@ public class StudioFrame extends javax.swing.JFrame {
         btnRun = new javax.swing.JButton();
         btnStep = new javax.swing.JButton();
         javax.swing.JButton btnJump = new javax.swing.JButton();
+        javax.swing.JButton btnBreakpoint = new javax.swing.JButton();
         javax.swing.JButton btnMemory = new javax.swing.JButton();
         paneDebug = new javax.swing.JScrollPane();
         jPanel4 = new javax.swing.JPanel();
@@ -517,6 +522,13 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         jToolBar2.add(btnJump);
 
+        btnBreakpoint.setText("jButton1");
+        btnBreakpoint.setToolTipText("Set breakpoint to address...");
+        btnBreakpoint.setFocusable(false);
+        btnBreakpoint.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnBreakpoint.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar2.add(btnBreakpoint);
+
         btnMemory.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Memory24.gif"))); // NOI18N
         btnMemory.setToolTipText("Show operating memory");
         btnMemory.setFocusable(false);
@@ -554,7 +566,7 @@ public class StudioFrame extends javax.swing.JFrame {
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 293, Short.MAX_VALUE)
+            .addGap(0, 291, Short.MAX_VALUE)
         );
 
         jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder("Additional peripheral devices"));
@@ -789,9 +801,6 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void btnPauseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPauseActionPerformed
         arch.getCPU().pause();
-//        tblDebug.setVisible(true);
-  //      tblDebug.revalidate();
-    //    tblDebug.repaint();        
     }//GEN-LAST:event_btnPauseActionPerformed
 
     private void showGUIButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showGUIButtonActionPerformed
@@ -819,9 +828,6 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void btnStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnStopActionPerformed
         arch.getCPU().stop();
-//        tblDebug.setVisible(true);
-  //      tblDebug.revalidate();
-    //    tblDebug.repaint();
     }//GEN-LAST:event_btnStopActionPerformed
 
     private void btnBackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBackActionPerformed
@@ -848,9 +854,6 @@ public class StudioFrame extends javax.swing.JFrame {
     private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResetActionPerformed
         arch.getCPU().reset(arch.getMemory().getLastImageStart());
         paneDebug.revalidate();
-//        tblDebug.setVisible(true);
-  //      tblDebug.revalidate();
-    //    tblDebug.repaint();
     }//GEN-LAST:event_btnResetActionPerformed
 
     private void btnJumpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnJumpActionPerformed
@@ -893,7 +896,7 @@ public class StudioFrame extends javax.swing.JFrame {
         fn = fn.substring(0,fn.lastIndexOf(".")) + ".hex";
         boolean compileResult = false;
         try {
-            syntaxLexer.reset((java.io.Reader)new java.io.StringReader(txtSource.getText()),0,0,0);
+            syntaxLexer.reset();
             compileResult = arch.getCompiler().compile(fn);
         }
         catch(Exception e) {

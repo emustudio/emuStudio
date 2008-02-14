@@ -14,9 +14,7 @@
 package emu8.gui.utils;
 
 import emu8.*;
-import emu8.gui.syntaxHighlighting.DocumentReader;
-import emu8.gui.syntaxHighlighting.HighlightStyle;
-import emu8.gui.syntaxHighlighting.HighlightThread;
+import emu8.gui.syntaxHighlighting.*;
 import plugins.compiler.*;
 
 import java.awt.event.*;
@@ -37,7 +35,7 @@ public class EmuTextPane extends JTextPane {
     public static final short NUMBERS_HEIGHT = 4;
 
     private ILexer syntaxLexer = null;
-    private DocumentReader reader;
+    private StyledDocumentReader reader;
     private HighlightedDocument document;
     private Hashtable styles; // token styles
     private HighlightThread highlight;
@@ -52,7 +50,7 @@ public class EmuTextPane extends JTextPane {
      * actions that depend on the document not being
      * modified.
      */
-    private Object doclock = new Object();
+    public volatile Object doclock = new Object();
     
     
     /** Creates a new instance of EmuTextPane */
@@ -60,7 +58,7 @@ public class EmuTextPane extends JTextPane {
         styles = new Hashtable();
         initStyles();
         document = new HighlightedDocument();
-        reader = new DocumentReader(document);
+        reader = new StyledDocumentReader(document);
         this.setStyledDocument(document);
         this.setFont(new java.awt.Font("monospaced", 0, 12));
         this.setMargin(new Insets(NUMBERS_HEIGHT,NUMBERS_WIDTH,0,0));
@@ -84,7 +82,7 @@ public class EmuTextPane extends JTextPane {
         if (highlight != null) highlight.stopRun();
         else {
             highlight = new HighlightThread(syntaxLexer, reader,
-                    document, styles, doclock);
+                    document, styles,doclock);
             highlight.start();
         }
     }
@@ -119,16 +117,16 @@ public class EmuTextPane extends JTextPane {
     
     public class HighlightedDocument extends DefaultStyledDocument { 
         public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
-            fileSaved = false;
             synchronized (doclock){
+                fileSaved = false;
                 super.insertString(offs, str, a);
                 highlight.color(offs, str.length());
                 reader.update(offs, str.length());
             }
         }
         public void remove(int offs, int len) throws BadLocationException {
-            fileSaved = false;
             synchronized (doclock){
+                fileSaved = false;
                 super.remove(offs, len);
                 highlight.color(offs, -len);
                 reader.update(offs, -len);
@@ -196,7 +194,6 @@ public class EmuTextPane extends JTextPane {
                     this.syntaxLexer = null;
                     getEditorKit().read(vstup, document,0);
                     this.syntaxLexer = l;
-                   // reHighlight();
                     this.setCaretPosition(0);
                     vstup.close(); fileSaved = true;
                 }  catch (java.io.FileNotFoundException ex) {
