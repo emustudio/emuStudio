@@ -49,7 +49,7 @@ public class TerminalDisplay extends Canvas {
         max_width = t_columns * char_width;
         
         Dimension d = getSize();
-        start_y = line_ascent + (d.height - t_rows * line_height) / 2;
+        start_y = 2*line_ascent + (d.height - t_rows * line_height) / 2;
     }
 
     // Here are four versions of the cosntrutor.

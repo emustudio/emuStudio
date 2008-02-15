@@ -86,7 +86,7 @@ public class Mits88SIO implements IDevice {
     }
     public String getVersion() { return "0.09b"; }
     public String getName() { return "ADM-3A Interactive display terminal"; }
-    public String getCopyright() { return "� Copyright 2007, Peter Jakubčo"; }
+    public String getCopyright() { return "\u00A9 Copyright 2007-2008, Peter Jakubčo"; }
 
     public static void showErrorMessage(String message) {
         javax.swing.JOptionPane.showMessageDialog(null,
