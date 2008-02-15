@@ -225,9 +225,12 @@ public class cpuEmulator implements ICPU, Runnable {
     }
     
         
-    public void setBreakpoint(int address) { breaks.add(address); }
-    public boolean isBreakpoint(int address) { return breaks.contains(address); }
-    public void clearBreakpoint(int address) { breaks.remove(address); }
+    public void setBreakpoint(int adr, boolean set) { 
+        if (set) breaks.add(adr);
+        else breaks.remove(adr);
+    }
+    public boolean getBreakpoint(int address) { return breaks.contains(address); }
+    public boolean isBreakpointSupported() { return true; }
     
     /**
      * Run a CPU execution (thread).

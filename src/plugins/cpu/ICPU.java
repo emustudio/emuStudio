@@ -108,6 +108,26 @@ public interface ICPU extends IPlugin {
         public Object getDebugValue(int index, int col);
         
         /**
+         * Determine if is breakpoint supported
+         * @return true if breakpoint is supported
+         */
+        public boolean isBreakpointSupported();
+        
+        /**
+         * Set/unset breakpoint to/from specified address
+         * @param adr address to which toggle the breakpoint
+         * @param set if set or unsed breakpoint from specified address
+         */
+        public void setBreakpoint(int adr, boolean set);
+        
+        /**
+         * Test if on specified address is set a breakpoint
+         * @param adr address of breakpoint test
+         * @return true if breakpoint is set
+         */
+        public boolean getBreakpoint(int adr);
+        
+        /**
          * Gets a GUI JPanel for status window (will be rendered in
          * main module)
          * @return status GUI window
