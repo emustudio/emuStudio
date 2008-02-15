@@ -9,7 +9,6 @@
 
 package emu8.gui.utils;
 
-import emu8.gui.utils.DebugTableModel;
 import emu8.*;
 import javax.swing.*;
 import javax.swing.table.*;

@@ -8,7 +8,6 @@ package emu8.gui;
 
 import emu8.gui.utils.*;
 import emu8.*;
-import emu8.gui.syntaxHighlighting.StyledDocumentReader;
 import plugins.device.*;
 import plugins.compiler.*;
 import plugins.memory.IMemory.*;
@@ -55,6 +54,7 @@ public class StudioFrame extends javax.swing.JFrame {
         
         // create other components
         initComponents();
+        btnBreakpoint.setEnabled(arch.getCPU().isBreakpointSupported());
         jScrollPane1.setViewportView(txtSource);
         paneDebug.setViewportView(tblDebug);
         
@@ -246,7 +246,7 @@ public class StudioFrame extends javax.swing.JFrame {
         btnRun = new javax.swing.JButton();
         btnStep = new javax.swing.JButton();
         javax.swing.JButton btnJump = new javax.swing.JButton();
-        javax.swing.JButton btnBreakpoint = new javax.swing.JButton();
+        btnBreakpoint = new javax.swing.JButton();
         javax.swing.JButton btnMemory = new javax.swing.JButton();
         paneDebug = new javax.swing.JScrollPane();
         jPanel4 = new javax.swing.JPanel();
@@ -522,11 +522,16 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         jToolBar2.add(btnJump);
 
-        btnBreakpoint.setText("jButton1");
-        btnBreakpoint.setToolTipText("Set breakpoint to address...");
+        btnBreakpoint.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Break24.gif"))); // NOI18N
+        btnBreakpoint.setToolTipText("Set/unset breakpoint to address...");
         btnBreakpoint.setFocusable(false);
         btnBreakpoint.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnBreakpoint.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnBreakpoint.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnBreakpointActionPerformed(evt);
+            }
+        });
         jToolBar2.add(btnBreakpoint);
 
         btnMemory.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/Memory24.gif"))); // NOI18N
@@ -1026,10 +1031,24 @@ public class StudioFrame extends javax.swing.JFrame {
         } 
     }//GEN-LAST:event_mnuEditFindNextActionPerformed
 
+    private void btnBreakpointActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBreakpointActionPerformed
+        int address = 0;
+        new BreakpointDialog(this,true).setVisible(true);
+        address = BreakpointDialog.getAdr();
+        if (address != -1)
+            arch.getCPU().setBreakpoint(address, BreakpointDialog.getSet());
+        paneDebug.revalidate();
+        if (tblDebug.isVisible()) {
+            tblDebug.revalidate();
+            tblDebug.repaint();
+        }
+    }//GEN-LAST:event_btnBreakpointActionPerformed
+
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     javax.swing.JButton btnBack;
     javax.swing.JButton btnBeginning;
+    javax.swing.JButton btnBreakpoint;
     javax.swing.JButton btnCopy;
     javax.swing.JButton btnCut;
     javax.swing.JButton btnPaste;
