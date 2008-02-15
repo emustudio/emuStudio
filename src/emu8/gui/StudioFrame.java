@@ -627,7 +627,7 @@ public class StudioFrame extends javax.swing.JFrame {
                 .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
-        jTabbedPane1.addTab("CPU Emulator", jPanel2);
+        jTabbedPane1.addTab("Emulator", jPanel2);
 
         mnuFile.setText("File");
 
