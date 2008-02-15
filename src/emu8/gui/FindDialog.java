@@ -31,7 +31,31 @@ public class FindDialog extends javax.swing.JDialog {
     private static byte checks = 0;
     
     private static ArrayList list = new ArrayList();
+    private static ArrayList rlist = new ArrayList();
+    private String repl = "";
     private JTextPane textPane;
+    
+    private class CMBModel implements ComboBoxModel {
+        private int in = -1;
+        private ArrayList clist;
+        
+        public CMBModel(ArrayList clist) {
+            this.clist = clist;
+        }
+        public void setSelectedItem(Object anItem) {
+            in = clist.indexOf(anItem);
+        }
+        public Object getSelectedItem() {
+            if (in != -1) return clist.get(in);
+            else return null;
+        }
+        public int getSize() { return clist.size(); }
+        public Object getElementAt(int index) {
+            return clist.get(index);
+        }
+        public void addListDataListener(ListDataListener l) {}
+        public void removeListDataListener(ListDataListener l) {}
+    }
     
     /** Creates new form FindDialog */
     public FindDialog(StudioFrame parent, boolean modal, JTextPane pane) {
@@ -46,24 +70,9 @@ public class FindDialog extends javax.swing.JDialog {
         }
         if ((checks & cCASE) != 0) caseCheck.setSelected(true);
         if ((checks & cWHOLE) != 0) wholeCheck.setSelected(true);
-//        if ((checks & 4) != 0) regularCheck.setSelected(true);
         
-        searchCombo.setModel(new ComboBoxModel() {
-            private int in = -1;
-            public void setSelectedItem(Object anItem) {
-                in = list.indexOf(anItem);
-            }
-            public Object getSelectedItem() {
-                if (in != -1) return list.get(in);
-                else return null;
-            }
-            public int getSize() { return list.size(); }
-            public Object getElementAt(int index) {
-                return list.get(index);
-            }
-            public void addListDataListener(ListDataListener l) {}
-            public void removeListDataListener(ListDataListener l) {}
-        });        
+        searchCombo.setModel(new CMBModel(list));
+        replaceCombo.setModel(new CMBModel(rlist));        
         this.setLocationRelativeTo(parent);
     }
     
@@ -75,14 +84,19 @@ public class FindDialog extends javax.swing.JDialog {
         else checks &= (~cCASE);
         if (wholeCheck.isSelected()) checks |= cWHOLE;
         else checks &= (~cWHOLE);
-//        if (regularCheck.isSelected()) checks |= 4;
-  //      else checks &= 3;
         String str = (String)searchCombo.getEditor().getItem();
-        if (!list.contains(str))
+        if (!list.contains(str)) {
             list.add(str);
+            searchCombo.setModel(new CMBModel(list));
+        }
+        this.repl = (String)replaceCombo.getEditor().getItem();
+        if (!rlist.contains(this.repl)) {
+            rlist.add(this.repl);
+            replaceCombo.setModel(new CMBModel(rlist));
+        }
         return str;
     }
-        
+
     public boolean findForward() throws NullPointerException {
         if (matcher == null)
             throw new NullPointerException("matcher can't be null, use dialog");
@@ -126,6 +140,76 @@ public class FindDialog extends javax.swing.JDialog {
             }
         }
         if (match) textPane.select(startM, endM);
+        return match;
+    }
+
+    // maybe optimization needed
+    public boolean replaceForward(boolean all) throws NullPointerException {
+        if (matcher == null)
+            throw new NullPointerException("matcher can't be null, use dialog");
+        boolean match = false;
+        
+        String txt = textPane.getText().replaceAll("\n\r", "\n")
+                .replaceAll("\r\n", "\n");
+        matcher.reset(txt);
+        int endPos = textPane.getDocument().getEndPosition().getOffset()-1;
+        int curPos = textPane.getCaretPosition();
+        
+        StringBuffer sb = new StringBuffer();
+        matcher.useTransparentBounds(false);
+        if (radioDirection == 0) {
+            // To end of document
+            matcher.region(curPos, endPos);
+            match = matcher.find();
+            if (match) {
+                matcher.appendReplacement(sb, repl);
+                while (all && matcher.find())
+                    matcher.appendReplacement(sb, repl);
+                matcher.appendTail(sb);
+                textPane.setText(sb.toString());
+            }
+        } else if (radioDirection == 1) {
+            // To start
+            matcher.region(0, curPos);
+            match = false;
+            int endM = 0, startM = 0;
+            if (!all) {
+                while (matcher.find(endM)) {
+                    if (matcher.end() >= curPos) break;
+                    startM = matcher.start()-1;
+                    endM = matcher.end();
+                    match = true;
+                }
+                if (startM < 0) startM = 0;
+                matcher.region(startM, curPos); // here is only one match
+                match = matcher.find(startM);
+                if (match) {
+                    matcher.appendReplacement(sb, repl);
+                    matcher.appendTail(sb);
+                    textPane.setText(sb.toString());
+                }
+            } else {
+                while (matcher.find())
+                    matcher.appendReplacement(sb, repl);
+                matcher.appendTail(sb);
+                textPane.setText(sb.toString());
+            }
+        }
+        else if (radioDirection == 2) {
+            // all document
+            matcher.region(0, endPos);
+            matcher.useTransparentBounds(true);
+            match = true;
+            
+            if (!all) {
+                if (!matcher.find(curPos)) match = matcher.find(0);
+                if (match)
+                    matcher.appendReplacement(sb, repl);
+                matcher.appendTail(sb);
+                textPane.setText(sb.toString());
+            } else 
+                textPane.setText(matcher.replaceAll(repl));
+        }
         return match;
     }
     
@@ -328,10 +412,45 @@ public class FindDialog extends javax.swing.JDialog {
 
     private void replaceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceButtonActionPerformed
         String str = saveGUI();
+        
+        int flags = 0;
+        if ((checks & cCASE) == 0) flags |= Pattern.CASE_INSENSITIVE;
+        try {
+            if ((checks & cWHOLE) != 0) str = "\\b(" + str + ")\\b";
+            Pattern p = Pattern.compile(str, flags);
+            String txt = textPane.getText().replaceAll("\n\r", "\n")
+                    .replaceAll("\r\n", "\n");
+            matcher = p.matcher(txt);
+            if (replaceForward(false)) {
+                this.setVisible(false);
+                textPane.grabFocus();
+            } else Main.showMessage("Expression was not found");
+        } catch (PatternSyntaxException e) {
+            Main.showErrorMessage("Pattern syntax error");
+            searchCombo.grabFocus();
+            return;
+        }
 }//GEN-LAST:event_replaceButtonActionPerformed
 
     private void replaceAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceAllButtonActionPerformed
         String str = saveGUI();
+        int flags = 0;
+        if ((checks & cCASE) == 0) flags |= Pattern.CASE_INSENSITIVE;        
+        try {
+            if ((checks & cWHOLE) != 0) str = "\\b(" + str + ")\\b";
+            Pattern p = Pattern.compile(str, flags);
+            String txt = textPane.getText().replaceAll("\n\r", "\n")
+                    .replaceAll("\r\n", "\n");
+            matcher = p.matcher(txt);
+            if (replaceForward(true)) {
+                this.setVisible(false);
+                textPane.grabFocus();
+            } else Main.showMessage("Expression was not found");
+        } catch (PatternSyntaxException e) {
+            Main.showErrorMessage("Pattern syntax error");
+            searchCombo.grabFocus();
+            return;
+        }
 }//GEN-LAST:event_replaceAllButtonActionPerformed
   
     

@@ -752,6 +752,11 @@ public class StudioFrame extends javax.swing.JFrame {
 
         mnuEditReplaceNext.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4, 0));
         mnuEditReplaceNext.setText("Replace next");
+        mnuEditReplaceNext.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuEditReplaceNextActionPerformed(evt);
+            }
+        });
         mnuEdit.add(mnuEditReplaceNext);
 
         jMenuBar2.add(mnuEdit);
@@ -1043,6 +1048,18 @@ public class StudioFrame extends javax.swing.JFrame {
             tblDebug.repaint();
         }
     }//GEN-LAST:event_btnBreakpointActionPerformed
+
+    private void mnuEditReplaceNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditReplaceNextActionPerformed
+        if (findD == null) mnuEditFindActionPerformed(evt);
+        else {
+            try {
+                if (!findD.replaceForward(false))
+                    Main.showMessage("Expression was not found");
+            } catch (NullPointerException e) {
+                mnuEditFindActionPerformed(evt);
+            }
+        } 
+    }//GEN-LAST:event_mnuEditReplaceNextActionPerformed
 
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
