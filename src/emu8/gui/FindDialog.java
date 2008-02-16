@@ -9,9 +9,8 @@
 package emu8.gui;
 
 import emu8.Main;
+import emu8.gui.utils.FindText;
 import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import javax.swing.ComboBoxModel;
 import javax.swing.JTextPane;
@@ -22,17 +21,8 @@ import javax.swing.event.ListDataListener;
  * @author  vbmacher
  */
 public class FindDialog extends javax.swing.JDialog {
-    private static Matcher matcher;
-    private static int radioDirection = 0;
-    
-    private static final int cCASE = 1;
-    private static final int cWHOLE = 2;
-
-    private static byte checks = 0;
-    
     private static ArrayList list = new ArrayList();
     private static ArrayList rlist = new ArrayList();
-    private String repl = "";
     private JTextPane textPane;
     
     private class CMBModel implements ComboBoxModel {
@@ -63,154 +53,65 @@ public class FindDialog extends javax.swing.JDialog {
         this.textPane = pane;
         initComponents();
         
-        switch(radioDirection) {
-            case 0: endRadio.setSelected(true); break;
-            case 1: startRadio.setSelected(true); break;
-            case 2: allRadio.setSelected(true); break;
+        switch(FindText.getThis().getDirection()) {
+            case FindText.DIRECTION_TO_END: 
+                endRadio.setSelected(true); break;
+            case FindText.DIRECTION_TO_START:
+                startRadio.setSelected(true); break;
+            case FindText.DIRECTION_ALL:
+                allRadio.setSelected(true); break;
         }
-        if ((checks & cCASE) != 0) caseCheck.setSelected(true);
-        if ((checks & cWHOLE) != 0) wholeCheck.setSelected(true);
+        caseCheck.setSelected(FindText.getThis().isCaseSensitive());
+        wholeCheck.setSelected(FindText.getThis().isWholeWords());
         
         searchCombo.setModel(new CMBModel(list));
-        replaceCombo.setModel(new CMBModel(rlist));        
+        replaceCombo.setModel(new CMBModel(rlist));
+        
+        String str = FindText.getThis().getFindExpr();
+        String rstr = FindText.getThis().replacement;
+        for (int i = 0; i < list.size(); i++)
+            if (((String)list.get(i)).equals(str)) {
+                searchCombo.setSelectedIndex(i);
+                searchCombo.getEditor().setItem(str);
+                break;
+            }
+        for (int i = 0; i < rlist.size(); i++)
+            if (((String)rlist.get(i)).equals(rstr)) {
+                replaceCombo.setSelectedIndex(i);
+                replaceCombo.getEditor().setItem(rstr);
+                break;
+            }
         this.setLocationRelativeTo(parent);
     }
     
     private String saveGUI() {
-        if (endRadio.isSelected()) radioDirection = 0;
-        else if (startRadio.isSelected()) radioDirection = 1;
-        else radioDirection = 2;
-        if (caseCheck.isSelected()) checks |= cCASE;
-        else checks &= (~cCASE);
-        if (wholeCheck.isSelected()) checks |= cWHOLE;
-        else checks &= (~cWHOLE);
+        if (endRadio.isSelected()) 
+            FindText.getThis().setDirection(FindText.DIRECTION_TO_END);
+        else if (startRadio.isSelected())
+            FindText.getThis().setDirection(FindText.DIRECTION_TO_START);
+        else FindText.getThis().setDirection(FindText.DIRECTION_ALL);
+        
+        byte checks = 0;
+        if (caseCheck.isSelected()) checks |= FindText.CASE_SENSITIVE;
+        if (wholeCheck.isSelected()) checks |= FindText.WHOLE_WORDS;
+        FindText.getThis().setParams(checks);
+        
         String str = (String)searchCombo.getEditor().getItem();
-        if (!list.contains(str)) {
+        if (!str.equals("") && !list.contains(str)) {
             list.add(str);
             searchCombo.setModel(new CMBModel(list));
+            searchCombo.setSelectedIndex(list.indexOf(str));
+            searchCombo.getEditor().setItem(str);
         }
-        this.repl = (String)replaceCombo.getEditor().getItem();
-        if (!rlist.contains(this.repl)) {
-            rlist.add(this.repl);
+        String rstr = (String)replaceCombo.getEditor().getItem();
+        FindText.getThis().replacement = rstr;
+        if (!rstr.equals("") && !rlist.contains(rstr)) {
+            rlist.add(rstr);
             replaceCombo.setModel(new CMBModel(rlist));
+            replaceCombo.setSelectedIndex(rlist.indexOf(rstr));
+            replaceCombo.getEditor().setItem(rstr);
         }
         return str;
-    }
-
-    public boolean findForward() throws NullPointerException {
-        if (matcher == null)
-            throw new NullPointerException("matcher can't be null, use dialog");
-        int startM = -1;
-        int endM = -1;
-        boolean match = false;
-        
-        String txt = textPane.getText().replaceAll("\n\r", "\n")
-                .replaceAll("\r\n", "\n");
-        matcher.reset(txt);
-        int endPos = textPane.getDocument().getEndPosition().getOffset()-1;
-        int curPos = textPane.getCaretPosition();
-        matcher.useTransparentBounds(false);
-        if (radioDirection == 0) {
-            matcher.region(curPos, endPos);
-            match = matcher.find();
-            if (match) {
-                startM = matcher.start();
-                endM = matcher.end();
-            }
-        }
-        else if (radioDirection == 1) {
-            matcher.region(0, curPos);
-            endM = 0;
-            match = false;
-            while (matcher.find(endM)) {
-                if (matcher.end() >= curPos) break;
-                match = true;
-                startM = matcher.start();
-                endM = matcher.end();
-            }
-        }
-        else if (radioDirection == 2) {
-            matcher.region(0, endPos);
-            matcher.useTransparentBounds(true);
-            match = true;
-            if (!matcher.find(curPos)) match = matcher.find(0);
-            if (match) {
-                startM = matcher.start();
-                endM = matcher.end();
-            }
-        }
-        if (match) textPane.select(startM, endM);
-        return match;
-    }
-
-    // maybe optimization needed
-    public boolean replaceForward(boolean all) throws NullPointerException {
-        if (matcher == null)
-            throw new NullPointerException("matcher can't be null, use dialog");
-        boolean match = false;
-        
-        String txt = textPane.getText().replaceAll("\n\r", "\n")
-                .replaceAll("\r\n", "\n");
-        matcher.reset(txt);
-        int endPos = textPane.getDocument().getEndPosition().getOffset()-1;
-        int curPos = textPane.getCaretPosition();
-        
-        StringBuffer sb = new StringBuffer();
-        matcher.useTransparentBounds(false);
-        if (radioDirection == 0) {
-            // To end of document
-            matcher.region(curPos, endPos);
-            match = matcher.find();
-            if (match) {
-                matcher.appendReplacement(sb, repl);
-                while (all && matcher.find())
-                    matcher.appendReplacement(sb, repl);
-                matcher.appendTail(sb);
-                textPane.setText(sb.toString());
-            }
-        } else if (radioDirection == 1) {
-            // To start
-            matcher.region(0, curPos);
-            match = false;
-            int endM = 0, startM = 0;
-            if (!all) {
-                while (matcher.find(endM)) {
-                    if (matcher.end() >= curPos) break;
-                    startM = matcher.start()-1;
-                    endM = matcher.end();
-                    match = true;
-                }
-                if (startM < 0) startM = 0;
-                matcher.region(startM, curPos); // here is only one match
-                match = matcher.find(startM);
-                if (match) {
-                    matcher.appendReplacement(sb, repl);
-                    matcher.appendTail(sb);
-                    textPane.setText(sb.toString());
-                }
-            } else {
-                while (matcher.find())
-                    matcher.appendReplacement(sb, repl);
-                matcher.appendTail(sb);
-                textPane.setText(sb.toString());
-            }
-        }
-        else if (radioDirection == 2) {
-            // all document
-            matcher.region(0, endPos);
-            matcher.useTransparentBounds(true);
-            match = true;
-            
-            if (!all) {
-                if (!matcher.find(curPos)) match = matcher.find(0);
-                if (match)
-                    matcher.appendReplacement(sb, repl);
-                matcher.appendTail(sb);
-                textPane.setText(sb.toString());
-            } else 
-                textPane.setText(matcher.replaceAll(repl));
-        }
-        return match;
     }
     
     /** This method is called from within the constructor to
@@ -237,6 +138,7 @@ public class FindDialog extends javax.swing.JDialog {
         javax.swing.JButton replaceButton = new javax.swing.JButton();
         javax.swing.JButton replaceAllButton = new javax.swing.JButton();
 
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Find/replace text");
         setAlwaysOnTop(true);
         setResizable(false);
@@ -374,7 +276,7 @@ public class FindDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 15, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 9, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(searchButton)
                     .addComponent(replaceButton)
@@ -386,23 +288,17 @@ public class FindDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        String str = saveGUI();
-        int flags = 0;
-        if ((checks & cCASE) == 0) flags |= Pattern.CASE_INSENSITIVE;
-        
+        String str = saveGUI();        
         try {
-            if ((checks & cWHOLE) != 0) str = "\\b(" + str + ")\\b";
-            Pattern p = Pattern.compile(str, flags);
-            String txt = textPane.getText().replaceAll("\n\r", "\n")
-                    .replaceAll("\r\n", "\n");
-            matcher = p.matcher(txt);
-            
-            if (findForward()) {
-                this.setVisible(false);
+            FindText.getThis().createPattern(str);
+            if (FindText.getThis().findNext(textPane.getText(),
+                    textPane.getCaretPosition(), 
+                    textPane.getDocument().getEndPosition().getOffset()-1)) {
+                textPane.select(FindText.getThis().getMatchStart(), 
+                        FindText.getThis().getMatchEnd());
                 textPane.grabFocus();
-            } else {
-                Main.showMessage("Expression was not found");
-            }
+                dispose();
+            } else Main.showMessage("Expression was not found");
         } catch (PatternSyntaxException e) {
             Main.showErrorMessage("Pattern syntax error");
             searchCombo.grabFocus();
@@ -412,18 +308,16 @@ public class FindDialog extends javax.swing.JDialog {
 
     private void replaceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceButtonActionPerformed
         String str = saveGUI();
-        
-        int flags = 0;
-        if ((checks & cCASE) == 0) flags |= Pattern.CASE_INSENSITIVE;
         try {
-            if ((checks & cWHOLE) != 0) str = "\\b(" + str + ")\\b";
-            Pattern p = Pattern.compile(str, flags);
-            String txt = textPane.getText().replaceAll("\n\r", "\n")
-                    .replaceAll("\r\n", "\n");
-            matcher = p.matcher(txt);
-            if (replaceForward(false)) {
-                this.setVisible(false);
+            FindText.getThis().createPattern(str);
+            FindText.getThis().replacement = (String)
+                    replaceCombo.getEditor().getItem();
+            if (FindText.getThis().replaceNext(textPane.getText(),
+                    textPane.getCaretPosition(),
+                    textPane.getDocument().getEndPosition().getOffset()-1)) {
+                textPane.setText(FindText.getThis().getReplacedString());
                 textPane.grabFocus();
+                dispose();
             } else Main.showMessage("Expression was not found");
         } catch (PatternSyntaxException e) {
             Main.showErrorMessage("Pattern syntax error");
@@ -434,17 +328,16 @@ public class FindDialog extends javax.swing.JDialog {
 
     private void replaceAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceAllButtonActionPerformed
         String str = saveGUI();
-        int flags = 0;
-        if ((checks & cCASE) == 0) flags |= Pattern.CASE_INSENSITIVE;        
         try {
-            if ((checks & cWHOLE) != 0) str = "\\b(" + str + ")\\b";
-            Pattern p = Pattern.compile(str, flags);
-            String txt = textPane.getText().replaceAll("\n\r", "\n")
-                    .replaceAll("\r\n", "\n");
-            matcher = p.matcher(txt);
-            if (replaceForward(true)) {
-                this.setVisible(false);
+            FindText.getThis().createPattern(str);
+            FindText.getThis().replacement = (String)
+                    replaceCombo.getEditor().getItem();
+            if (FindText.getThis().replaceAll(textPane.getText(),
+                    textPane.getCaretPosition(),
+                    textPane.getDocument().getEndPosition().getOffset()-1)) {
+                textPane.setText(FindText.getThis().getReplacedString());
                 textPane.grabFocus();
+                dispose();
             } else Main.showMessage("Expression was not found");
         } catch (PatternSyntaxException e) {
             Main.showErrorMessage("Pattern syntax error");

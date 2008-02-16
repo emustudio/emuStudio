@@ -25,6 +25,7 @@ public class ConfigurationFrame extends javax.swing.JFrame {
     /** Creates new form ConfigurationFrame */
     public ConfigurationFrame() {
         aloader = Main.getInstance().emuConfig;
+        settings = new Properties();
         initComponents();
         this.setLocationRelativeTo(null);
     }

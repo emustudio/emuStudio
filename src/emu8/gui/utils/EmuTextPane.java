@@ -44,6 +44,7 @@ public class EmuTextPane extends JTextPane {
     private File fileSource;   // opened file
     private UndoManager undo;
     private ActionListener undoStateListener;
+    private ActionEvent aevt;
 
     /**
      * A lock for modifying the document, or for
@@ -67,11 +68,14 @@ public class EmuTextPane extends JTextPane {
         fileSaved = true;
         fileSource = null;
         undo = new UndoManager();
+        aevt = new ActionEvent(this,0,"");
         document.addUndoableEditListener(new UndoableEditListener() {
             public void undoableEditHappened(UndoableEditEvent e) {
-                undo.addEdit(e.getEdit());
-                if (undoStateListener != null)
-                    undoStateListener.actionPerformed(new ActionEvent(this,0,""));
+                if (e.getEdit().isSignificant()) {
+                    undo.addEdit(e.getEdit());
+                    if (undoStateListener != null)
+                        undoStateListener.actionPerformed(aevt);
+                }
             }
         });
         undoStateListener = null;
@@ -321,5 +325,4 @@ public class EmuTextPane extends JTextPane {
         return true;
     }
     
-    /*** DOCUMENT READER CLASS IMPLEMENTATION ***/
 }

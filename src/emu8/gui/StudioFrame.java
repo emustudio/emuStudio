@@ -37,7 +37,6 @@ public class StudioFrame extends javax.swing.JFrame {
     private IMessageReporter reporter;
     private DebugTable tblDebug;
     private boolean cpuPermanentRunning;
-    private FindDialog findD;
     
     // emulator
     private DebugTableModel debug_model;
@@ -125,6 +124,7 @@ public class StudioFrame extends javax.swing.JFrame {
                 return arch.getDevices()[index].getName();
             }
         });
+        new FindText(); // create instance
         this.setLocationRelativeTo(null);
         this.setTitle("emu8 Studio - " + arch.getArchName());
         txtSource.grabFocus();
@@ -1020,20 +1020,21 @@ public class StudioFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnUndoActionPerformed
 
     private void mnuEditFindActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditFindActionPerformed
-        if (findD == null) findD = new FindDialog(this,false,txtSource);
-        findD.setVisible(true);
+        new FindDialog(this,false,txtSource).setVisible(true);
     }//GEN-LAST:event_mnuEditFindActionPerformed
 
     private void mnuEditFindNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditFindNextActionPerformed
-        if (findD == null) mnuEditFindActionPerformed(evt);
-        else {
-            try {
-                if (!findD.findForward())
-                    Main.showMessage("Expression was not found");
-            } catch (NullPointerException e) {
-                mnuEditFindActionPerformed(evt);
-            }
-        } 
+        try {
+            if (FindText.getThis().findNext(txtSource.getText(), 
+                    txtSource.getCaretPosition(), 
+                    txtSource.getDocument().getEndPosition().getOffset()-1)) {
+                txtSource.select(FindText.getThis().getMatchStart(), 
+                        FindText.getThis().getMatchEnd());
+                txtSource.grabFocus();
+            } else Main.showMessage("Expression was not found");
+        } catch (NullPointerException e) {
+            mnuEditFindActionPerformed(evt);
+        }
     }//GEN-LAST:event_mnuEditFindNextActionPerformed
 
     private void btnBreakpointActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBreakpointActionPerformed
@@ -1050,15 +1051,16 @@ public class StudioFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnBreakpointActionPerformed
 
     private void mnuEditReplaceNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditReplaceNextActionPerformed
-        if (findD == null) mnuEditFindActionPerformed(evt);
-        else {
-            try {
-                if (!findD.replaceForward(false))
-                    Main.showMessage("Expression was not found");
-            } catch (NullPointerException e) {
-                mnuEditFindActionPerformed(evt);
-            }
-        } 
+        try {
+            if (FindText.getThis().replaceNext(txtSource.getText(), 
+                    txtSource.getCaretPosition(),
+                    txtSource.getDocument().getEndPosition().getOffset()-1)) {
+                txtSource.setText(FindText.getThis().getReplacedString());
+                txtSource.grabFocus();
+            } else Main.showMessage("Expression was not found");
+        } catch (NullPointerException e) {
+            mnuEditFindActionPerformed(evt);
+        }
     }//GEN-LAST:event_mnuEditReplaceNextActionPerformed
 
     
