@@ -54,7 +54,7 @@ public class AboutDialog extends javax.swing.JDialog {
         jLabel8.setFont(jLabel8.getFont().deriveFont(jLabel8.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel8.setText("Version:");
 
-        jLabel9.setText("0.20b1");
+        jLabel9.setText("0.21b1");
 
         jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel3.setText("ing. Slavomir Šimoňák");
