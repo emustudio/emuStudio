@@ -44,7 +44,7 @@ public class MemMain implements IMemory {
                 + "implementation of non-banked memory type.";
     }
 
-    public String getVersion() { return "0.1b"; }
+    public String getVersion() { return "0.11b"; }
 
     public String getName() {
         return "Standard non-banked operating memory";
@@ -173,11 +173,20 @@ public class MemMain implements IMemory {
         lastImageStart = 0;
         lastStartSet = true;
         try {
-            FileReader vstup = new FileReader(filename);
-            int i =0;
-            while((i = vstup.read()) != -1) mem[address++] = (short)i;
+            File f = new File(filename);
+            if (f.isFile() == false)
+                throw new IOException("Specified file name doesn't point to a file");
+            RandomAccessFile vstup = new RandomAccessFile(f, "r");
+            int i=0;
+            long r=0, l = vstup.length();
+            while(r < l) {
+                i = vstup.readUnsignedByte();
+                mem[address++] = (short)(i & 0xFF);
+                l++;
+            }
             vstup.close();
-        }  catch (java.io.FileNotFoundException ex) {
+        } catch(EOFException ex) {} 
+        catch (java.io.FileNotFoundException ex) {
             showErrorMessage("File not found: " + filename);
             fireChange(-1);
             return false;
