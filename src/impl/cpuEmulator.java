@@ -591,8 +591,9 @@ public class cpuEmulator implements ICPU, Runnable {
             case 042:                                      /* SHLD */
                 DAR = mem.read16(PC); PC += 2; mem.write16(DAR, (H << 8) | L);
                 return 16;
-            case 052:                                      /* LHLD */
-                L = mem.read8(PC++); H = mem.read8(PC++);
+            case 052:                                      /* LHLD BUG !*/
+                DAR = mem.read16(PC); PC += 2;
+                L = mem.read8(DAR); H = mem.read8(DAR+1);
                 return 16;
             case 0353:                                     /* XCHG */
                 short x = H, y = L; H = D; L = E; D = x; E = y; return 4;
