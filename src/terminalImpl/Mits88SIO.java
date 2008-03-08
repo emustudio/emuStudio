@@ -135,10 +135,10 @@ public class Mits88SIO implements IDevice {
                 gui.sendChar((char)data);
             }
             public int devIN(EventObject evt) {
-                if (buffer == 0 && gui != null) {
-                    // get key from terminal (polling)
-                    buffer = gui.getChar();
-                }
+            //    if (buffer == 0 && gui != null) {
+              //      // get key from terminal (polling)
+                //    buffer = gui.getChar();
+               // }
                 int v = buffer;
                 status &= 0xFE;
                 buffer = 0;
