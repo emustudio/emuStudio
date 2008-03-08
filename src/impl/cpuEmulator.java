@@ -705,11 +705,14 @@ public class cpuEmulator implements ICPU, Runnable {
     
 
     private void fireIO(int port, boolean read) {
-        if (devicesList.containsKey(port) == false) return;
-        
-        if (read == true)
+        if (devicesList.containsKey(port) == false) {
+            if (read == true) A = 0;
+            return;
+        }
+        if (read == true) {
             A = (short)((IDevice.IDevListener)devicesList.get(port)).
                     devIN(cpuEvt);
+        }
         else
             ((IDevice.IDevListener)devicesList.get(port)).
                     devOUT(cpuEvt,A);
