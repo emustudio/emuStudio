@@ -832,8 +832,8 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void btnRunActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRunActionPerformed
         tblDebug.setVisible(false);
-        arch.getCPU().execute();
         cpuPermanentRunning = true;
+        arch.getCPU().execute();
     }//GEN-LAST:event_btnRunActionPerformed
 
     private void btnStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnStopActionPerformed
@@ -906,7 +906,8 @@ public class StudioFrame extends javax.swing.JFrame {
         fn = fn.substring(0,fn.lastIndexOf(".")) + ".hex";
         boolean compileResult = false;
         try {
-            syntaxLexer.reset();
+            syntaxLexer.reset(new DocumentReader(txtSource.getDocument()),0,
+                    0, 0);
             compileResult = arch.getCompiler().compile(fn);
         }
         catch(Exception e) {
