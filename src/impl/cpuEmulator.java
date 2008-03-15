@@ -39,6 +39,7 @@ public class cpuEmulator implements ICPU, Runnable {
     private long long_cycles = 0; // count of executed cycles for runtime freq. computing
     private java.util.Timer freqScheduler;
     private RuntimeFrequencyCalculator rfc;
+    private int sliceCheckTime = 1000;
 
     // registers are public meant for only statusGUI (didnt want make it thru get() methods)
     private int PC=0; // program counter
@@ -80,7 +81,7 @@ public class cpuEmulator implements ICPU, Runnable {
 
     public String getDescription() { return "Intel 8080 CPU VM,"
             + " modified for use as CPU for MITS Altair 8800 computer"; }
-    public String getVersion() { return "0.11b"; }
+    public String getVersion() { return "0.12b"; }
     public String getName() { return "Virtual i8080 CPU"; }
     public String getCopyright() { return "\u00A9 Copyright 2006-2008, Peter Jakubčo"; }
 
@@ -205,6 +206,8 @@ public class cpuEmulator implements ICPU, Runnable {
     }
     
     /* DOWN: other */
+    public int getSliceTime() { return sliceCheckTime; }
+    public void setSliceTime(int t) { sliceCheckTime = t; }
     
     public int getFrequency() { return this.clockFrequency; }
     // frequency in kHz
@@ -214,7 +217,7 @@ public class cpuEmulator implements ICPU, Runnable {
         if (run) {
             try { 
                 freqScheduler.purge();
-                freqScheduler.scheduleAtFixedRate(rfc, 0, 1000);
+                freqScheduler.scheduleAtFixedRate(rfc, 0, sliceCheckTime);
             } catch(Exception e) {}
         } else {
             try {
@@ -255,6 +258,7 @@ public class cpuEmulator implements ICPU, Runnable {
         int cycles_executed;
         int cycles_to_execute; // per second
         int cycles;
+        long slice;
         
         run_state = stateEnum.runned;
         fireCpuRun(cpuEvt);
@@ -263,8 +267,9 @@ public class cpuEmulator implements ICPU, Runnable {
          * 1 kHz .... 1000 tStates per second
          * clockFrequency is in kHz it have to be multiplied with 1000
          */
-        cycles_to_execute = 1000 * clockFrequency;
+        cycles_to_execute = sliceCheckTime * clockFrequency;
         long i = 0;
+        slice = sliceCheckTime * 1000000;
         synchronized(run_state) {
             while(run_state == stateEnum.runned) {
                 i++;
@@ -289,9 +294,9 @@ public class cpuEmulator implements ICPU, Runnable {
                     break;
                 }
                 endTime = System.nanoTime() - startTime;
-                if (endTime < 1000000000) {
+                if (endTime < slice) {
                     // time correction
-                    try { cpuThread.sleep((1000000000 - endTime)/1000000); }
+                    try { cpuThread.sleep((slice - endTime)/1000000); }
                     catch(java.lang.InterruptedException e) {}
                 }
             }

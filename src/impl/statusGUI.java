@@ -13,6 +13,8 @@ import java.util.EventObject;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.JPanel;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import plugins.cpu.ICPU.*;
 import plugins.cpu.*;
 import plugins.memory.*;
@@ -29,7 +31,7 @@ public class statusGUI extends javax.swing.JPanel {
 
     
     /** Creates new form cpuGUI */
-    public statusGUI(cpuEmulator cpu) {
+    public statusGUI(final cpuEmulator cpu) {
         this.cpu = cpu;
         columns = new IDebugColumns[4];
         IDebugColumns c1 = new columnInfo("breakpoint", java.lang.Boolean.class,true);
@@ -50,6 +52,24 @@ public class statusGUI extends javax.swing.JPanel {
             }
             public void frequencyChanged(EventObject evt, float frequency) {
                 lblFrequency.setText(String.format("%.2f kHz", frequency));
+            }
+        });
+        spnFrequency.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                int i = (Integer)((SpinnerNumberModel)spnFrequency.getModel()).getValue();
+                try { setCPUFreq(i); } catch(IndexOutOfBoundsException ex) {
+                    ((SpinnerNumberModel)spnFrequency.getModel())
+                    .setValue(cpu.getFrequency());
+                }
+            }
+        });
+        spnTestPeriode.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                int i = (Integer)((SpinnerNumberModel)spnTestPeriode.getModel()).getValue();
+                try { cpu.setSliceTime(i); } catch(IndexOutOfBoundsException ex) {
+                    ((SpinnerNumberModel)spnTestPeriode.getModel())
+                    .setValue(cpu.getSliceTime());
+                }
             }
         });
     }
@@ -487,9 +507,11 @@ public class statusGUI extends javax.swing.JPanel {
         if (run_state == stateEnum.runned) {
             lblRun.setText("running");
             spnFrequency.setEnabled(false);
+            spnTestPeriode.setEnabled(false);
         }
         else {
             spnFrequency.setEnabled(true);
+            spnTestPeriode.setEnabled(true);
             RFCcheckbox.setSelected(false);
             switch (run_state.ordinal()) {
                 case 0: lblRun.setText("stopped (normal)"); break;
@@ -552,6 +574,9 @@ public class statusGUI extends javax.swing.JPanel {
         javax.swing.JLabel jLabel13 = new javax.swing.JLabel();
         lblFrequency = new javax.swing.JLabel();
         RFCcheckbox = new javax.swing.JCheckBox();
+        javax.swing.JLabel jLabel14 = new javax.swing.JLabel();
+        spnTestPeriode = new javax.swing.JSpinner();
+        javax.swing.JLabel jLabel15 = new javax.swing.JLabel();
 
         paneInfoRegisters.setBorder(javax.swing.BorderFactory.createTitledBorder(new javax.swing.border.LineBorder(new java.awt.Color(153, 153, 153), 1, true), "", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11), new java.awt.Color(102, 102, 102)));
 
@@ -836,13 +861,8 @@ public class statusGUI extends javax.swing.JPanel {
         jLabel11.setText("CPU frequency:");
 
         spnFrequency.setModel(new SpinnerNumberModel(2000, 1, 99999, 100));
-        spnFrequency.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                spnFrequencyStateChanged(evt);
-            }
-        });
 
-        jLabel12.setFont(new java.awt.Font("Tahoma", 1, 11));
+        jLabel12.setFont(jLabel12.getFont().deriveFont(jLabel12.getFont().getStyle() | java.awt.Font.BOLD, jLabel12.getFont().getSize()-3));
         jLabel12.setText("kHz");
 
         jLabel13.setText("Runtime frequency:");
@@ -857,6 +877,13 @@ public class statusGUI extends javax.swing.JPanel {
             }
         });
 
+        jLabel14.setText("Test periode:");
+
+        spnTestPeriode.setModel(new SpinnerNumberModel(1000, 1, 10000, 50));
+
+        jLabel15.setFont(jLabel15.getFont().deriveFont(jLabel15.getFont().getStyle() | java.awt.Font.BOLD, jLabel15.getFont().getSize()-3));
+        jLabel15.setText("ms");
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -866,17 +893,26 @@ public class statusGUI extends javax.swing.JPanel {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblRun)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel11)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(spnFrequency, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(4, 4, 4)
-                        .addComponent(jLabel12))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jLabel13)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(lblFrequency))
-                    .addComponent(RFCcheckbox))
-                .addContainerGap(44, Short.MAX_VALUE))
+                    .addComponent(RFCcheckbox)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                                .addComponent(jLabel11)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(jLabel14)
+                                .addGap(26, 26, 26)))
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(spnTestPeriode)
+                            .addComponent(spnFrequency, javax.swing.GroupLayout.DEFAULT_SIZE, 83, Short.MAX_VALUE))
+                        .addGap(4, 4, 4)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel15)
+                            .addComponent(jLabel12))))
+                .addGap(44, 44, 44))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -888,6 +924,11 @@ public class statusGUI extends javax.swing.JPanel {
                     .addComponent(jLabel11)
                     .addComponent(spnFrequency, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel12))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel14)
+                    .addComponent(spnTestPeriode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel15))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel13)
@@ -902,7 +943,7 @@ public class statusGUI extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(paneInfoRegisters, javax.swing.GroupLayout.DEFAULT_SIZE, 295, Short.MAX_VALUE)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 295, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -912,13 +953,6 @@ public class statusGUI extends javax.swing.JPanel {
                 .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void spnFrequencyStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spnFrequencyStateChanged
-        SpinnerNumberModel dateModel = 
-                (SpinnerNumberModel)spnFrequency.getModel();
-        Integer i = (Integer)dateModel.getValue();
-        setCPUFreq(i.intValue());
-    }//GEN-LAST:event_spnFrequencyStateChanged
 
     private void RFCcheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RFCcheckboxActionPerformed
         cpu.setRuntimeFreqCounter(RFCcheckbox.isSelected());
@@ -930,6 +964,7 @@ public class statusGUI extends javax.swing.JPanel {
     javax.swing.JLabel lblFrequency;
     javax.swing.JLabel lblRun;
     javax.swing.JSpinner spnFrequency;
+    javax.swing.JSpinner spnTestPeriode;
     javax.swing.JTextField txtFlagAC;
     javax.swing.JTextField txtFlagC;
     javax.swing.JTextField txtFlagP;
