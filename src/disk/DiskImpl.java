@@ -114,7 +114,7 @@ public class DiskImpl implements IDevice {
     private ArrayList drives;
     private int current_drive;
     private DiskFrame gui = null;
-    
+            
     public DiskImpl() {
         this.drives = new ArrayList();
         for (int i = 0; i < DRIVES_COUNT; i++)
@@ -200,7 +200,7 @@ public class DiskImpl implements IDevice {
                 + "I/O addresses were 10Q-12Q.";
     }
 
-    public String getVersion() { return "0.1b"; }
+    public String getVersion() { return "0.2b"; }
 
     public String getName() { return "MITS-88 DISK (floppy drive)"; }
 

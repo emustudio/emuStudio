@@ -19,7 +19,7 @@ import javax.swing.event.EventListenerList;
  * @author vbmacher
  */
 public class Drive {
-    public final static int tracksCount = 77;
+    public final static int tracksCount = 254;
     public final static int sectorsCount = 32;
     public final static int sectorLength = 137;
     
@@ -60,11 +60,10 @@ public class Drive {
     }
     
     public Drive() {
-        track = tracksCount-1;
-        sector = sectorsCount-1;
-        sectorOffset = sectorLength-1;
+        track = 0; 
+        sector = sectorsCount;
+        sectorOffset = sectorLength;
         flags = 0xE7; // 11100111b
-        
         listeners = new EventListenerList();
         evt = new EventObject(this);
     }
@@ -98,8 +97,8 @@ public class Drive {
     public void select() {
         selected = true;
         flags = 0xE5; // 11100101b
-        sector = sectorsCount-1;
-        sectorOffset = sectorLength-1;
+        sector = sectorsCount;
+        sectorOffset = sectorLength;
         if (track == 0)
             flags &= 0xBF; // head is on track 0
         fireListeners(true, true);
@@ -135,10 +134,10 @@ public class Drive {
         File f = new File(fileName);
         if (f.isFile() == false)
             throw new IOException("Specified file name doesn't point to a file");
-        if (f.length() < tracksCount * sectorsCount * sectorLength)
-            throw new IOException("Image file has small size");
+//        if (f.length() < tracksCount * sectorsCount * sectorLength)
+  //          throw new IOException("Image file has small size");
         umount();
-        this.floppy = f;        
+        this.floppy = f;
         image = new RandomAccessFile(f, "rwd");
     }
     
@@ -154,9 +153,7 @@ public class Drive {
     /**
      * gets image File
      */
-    public File getImageFile() {
-        return floppy;
-    }
+    public File getImageFile() { return floppy; }
 
     public short getFlags() { return flags; }
     
@@ -188,8 +185,8 @@ public class Drive {
         if ((val & 0x01) != 0) { /* Step head in */
             track++;
             if (track > 76) track = 76;
-            sector = sectorsCount-1;
-            sectorOffset = sectorLength-1;
+            sector = sectorsCount;
+            sectorOffset = sectorLength;
         }
         if ((val & 0x02) != 0) { /* Step head out */
             track--;
@@ -197,8 +194,8 @@ public class Drive {
                 track = 0;
                 flags &= 0xBF; // head is on track 0
             }
-            sector = sectorsCount-1;
-            sectorOffset = sectorLength-1;
+            sector = sectorsCount;
+            sectorOffset = sectorLength;
         }
         if ((val & 0x04) != 0) { /* Head load */
             // 11111011
@@ -208,12 +205,12 @@ public class Drive {
         if ((val & 0x08) != 0) { /* Head Unload */
             flags |= 0x04; /* turn off 'head loaded' */
             flags |= 0x80; /* turn off 'read data avail */
-            sector = sectorsCount-1;
-            sectorOffset = sectorLength-1;
+            sector = sectorsCount;
+            sectorOffset = sectorLength;
         }
         /* Interrupts & head current are ignored */
         if ((val & 0x80) != 0) { /* write sequence start */
-            sectorOffset = sectorLength-1;
+            sectorOffset = 0; // sectorLength-1;
             flags &= 0xFE; /* enter new write data on */
         }
         fireListeners(false,true);
@@ -226,7 +223,7 @@ public class Drive {
         if (((~flags) & 0x04) != 0) { /* head loaded? */
             sector++;
             if (sector > 31) sector = 0;
-            sectorOffset = sectorLength-1;
+            sectorOffset = sectorLength;
             int stat = sector << 1;
             stat &= 0x3E;  /* 111110b, return 'sector true' bit = 0 (true) */
             stat |= 0xC0;  // set on 'unused' bits  ?? > in simh bit are gonna up
@@ -236,28 +233,42 @@ public class Drive {
     }
     
     public void writeData(int data) throws IOException {
-        sectorOffset++;
-        // this is questionable... what to do if pos is on the end ?
-        if (sectorOffset >= sectorLength) sectorOffset = 0;
+        int i = sectorOffset;
+
+        if (sectorOffset < sectorLength) sectorOffset++;
+        else {
+            flags |= 1; /* ENWD off */
+            fireListeners(false,true);
+            return;
+        }
+
         long pos = sectorsCount * sectorLength * track
-                + sectorLength * sector
-                + sectorOffset;
+                + sectorLength * sector + i;
+        
         image.seek(pos);
         image.writeByte(data & 0xFF);
-        flags |= 1; /* ENWD off */
+        
         fireListeners(false,true);
     }
     
     public int readData() throws IOException {
-        sectorOffset++;
-        // this is questionable... what to do if pos is on the end ?
-        if (sectorOffset >= sectorLength) sectorOffset = 0;
+        if (floppy == null) return 0;
+        int i=0;
+                
+        if (sectorOffset >= sectorLength) i = 0;
+        else i = sectorOffset;
+        
+        if (sectorOffset >= sectorLength) sectorOffset = 1;
+        else sectorOffset++;
+
         long pos = sectorsCount * sectorLength * track
-                + sectorLength * sector
-                + sectorOffset;
+                + sectorLength * sector + i;
         image.seek(pos);
         fireListeners(false,true);
-        return image.readByte();
+        try {
+        int r = image.readUnsignedByte() & 0xFF;
+        return r;
+        } catch(Exception e) { return 0; } 
     }
 
     // for gui calls (drive info)
