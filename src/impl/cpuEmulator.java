@@ -39,7 +39,7 @@ public class cpuEmulator implements ICPU, Runnable {
     private long long_cycles = 0; // count of executed cycles for runtime freq. computing
     private java.util.Timer freqScheduler;
     private RuntimeFrequencyCalculator rfc;
-    private int sliceCheckTime = 1000;
+    private int sliceCheckTime = 50;
 
     // registers are public meant for only statusGUI (didnt want make it thru get() methods)
     private int PC=0; // program counter
@@ -711,7 +711,7 @@ public class cpuEmulator implements ICPU, Runnable {
 
     private void fireIO(int port, boolean read) {
         if (devicesList.containsKey(port) == false) {
-            if (read == true) A = 0;
+            if (read == true) A = 0xFF;
             return;
         }
         if (read == true) {
