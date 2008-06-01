@@ -57,7 +57,7 @@
 
 package terminal;
 
-import terminal.gui.frmGUI;
+import terminal.gui.TerminalWindow;
 import plugins.device.*;
 import plugins.cpu.*;
 import plugins.memory.*;
@@ -74,7 +74,7 @@ public class Mits88SIO implements IDevice {
     private boolean attached = false;
 
     private ICPU cpu = null;
-    private frmGUI gui = null;
+    private TerminalWindow gui = null;
     
     /** Creates a new instance of Mits88SIO_2 */
     public Mits88SIO() {}
@@ -154,7 +154,7 @@ public class Mits88SIO implements IDevice {
     }
 
     public void showGUI() {
-        if (gui == null) gui = new frmGUI(this);
+        if (gui == null) gui = new TerminalWindow(this);
         gui.setVisible(true);
     }
     

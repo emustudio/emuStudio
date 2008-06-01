@@ -1,5 +1,5 @@
 /*
- * frmGUI.java
+ * TerminalWindow.java
  *
  * Implementation of interactive display terminal ADM-3A
  *
@@ -17,7 +17,7 @@ import java.io.*;
  *
  * @author  vbmacher
  */
-public class frmGUI extends javax.swing.JFrame {
+public class TerminalWindow extends javax.swing.JFrame {
     private boolean halfDuplex = false;
     private TerminalDisplay lblTerminal;
     private Object keyLock; // monitor for key pressing
@@ -25,8 +25,8 @@ public class frmGUI extends javax.swing.JFrame {
     private Mits88SIO sio;
     private Font terminalFont;
     
-    /** Creates new form frmGUI */
-    public frmGUI(Mits88SIO sio) {
+    /** Creates new form TerminalWindow */
+    public TerminalWindow(Mits88SIO sio) {
         this.sio = sio;
         keyLock = new Object();
         initTerminalLabel();
@@ -192,6 +192,7 @@ public class frmGUI extends javax.swing.JFrame {
 
         btnGroupDuplex = new javax.swing.ButtonGroup();
         configButton = new javax.swing.JButton();
+        javax.swing.JButton btnAbout = new javax.swing.JButton();
         lblBack = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -209,6 +210,15 @@ public class frmGUI extends javax.swing.JFrame {
         getContentPane().add(configButton);
         configButton.setBounds(600, 550, 100, 29);
 
+        btnAbout.setText("About...");
+        btnAbout.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAboutActionPerformed(evt);
+            }
+        });
+        getContentPane().add(btnAbout);
+        btnAbout.setBounds(520, 550, 65, 29);
+
         lblBack.setFont(new java.awt.Font("Monospaced", 0, 12));
         lblBack.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/display.gif"))); // NOI18N
         lblBack.setFocusable(false);
@@ -222,6 +232,10 @@ public class frmGUI extends javax.swing.JFrame {
     private void configButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_configButtonActionPerformed
         new ConfigDialog(this, true, lblTerminal).setVisible(true);
     }//GEN-LAST:event_configButtonActionPerformed
+
+private void btnAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAboutActionPerformed
+    new AboutDialog(this,true).setVisible(true);
+}//GEN-LAST:event_btnAboutActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

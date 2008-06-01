@@ -7,7 +7,7 @@
 package terminal.gui;
 
 import terminal.*;
-import terminal.gui.frmGUI;
+import terminal.gui.TerminalWindow;
 
 /**
  *
@@ -15,10 +15,10 @@ import terminal.gui.frmGUI;
  */
 public class ConfigDialog extends javax.swing.JDialog {
     private TerminalDisplay lblTerminal;
-    private frmGUI parent;
+    private TerminalWindow parent;
     
     /** Creates new form ConfigDialog */
-    public ConfigDialog(frmGUI parent, boolean modal,
+    public ConfigDialog(TerminalWindow parent, boolean modal,
             TerminalDisplay lblTerminal) {
         super(parent, modal);
         initComponents();
