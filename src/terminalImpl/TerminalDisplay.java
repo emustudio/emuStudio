@@ -36,6 +36,20 @@ public class TerminalDisplay extends Canvas {
     private int char_width = 0;
     private int start_y;
 
+    private Image dbImage; // second buffer
+    private Graphics dbg;  // graphics for double buffering
+
+    // Here are four versions of the cosntrutor.
+    // Break the label up into separate lines, and save the other info.
+    public TerminalDisplay(int cols, int rows) { 
+        this.t_columns = cols;
+        this.t_rows = rows;
+        video_memory = new char[rows * cols];
+        cursorTimer = new Timer();
+        cursorPainter = new CursorPainter();
+        cursorTimer.scheduleAtFixedRate(cursorPainter,0, 800);
+    }    
+    
     public void setCursorPos(int x, int y) {
         cursor_x = x; cursor_y = y; repaint();
     }
@@ -50,17 +64,6 @@ public class TerminalDisplay extends Canvas {
         
         Dimension d = getSize();
         start_y = 2*line_ascent + (d.height - t_rows * line_height) / 2;
-    }
-
-    // Here are four versions of the cosntrutor.
-    // Break the label up into separate lines, and save the other info.
-    public TerminalDisplay(int cols, int rows) { 
-        this.t_columns = cols;
-        this.t_rows = rows;
-        video_memory = new char[rows * cols];
-        cursorTimer = new Timer();
-        cursorPainter = new CursorPainter();
-        cursorTimer.scheduleAtFixedRate(cursorPainter,0, 800);
     }
 
     public void destroyMe() {
@@ -163,34 +166,53 @@ public class TerminalDisplay extends Canvas {
         repaint();
     }
     
+    public void update(Graphics g) {
+        // initialize buffer
+        if (dbImage == null) {
+            dbImage = createImage (this.getSize().width, this.getSize().height);
+            dbg = dbImage.getGraphics();
+        }
+        // clear screen in background
+        dbg.setColor(getBackground());
+        dbg.fillRect (0, 0, this.getSize().width, this.getSize().height);
+
+        // draw elements in background
+        dbg.setColor(getForeground());
+        paint(dbg);
+
+        // draw image on the screen
+        g.drawImage(dbImage, 0, 0, this);
+    }
+    
     // TODO: improve speed
     public void paint(Graphics g) {
-        int t_x,t_y;
+        //int t_x;
+        int t_y;
         int x,y;
         int temp = 0;
-        String s = "";
-                
+        String sLine = "";
+
+        Graphics2D g2d = (Graphics2D)g;
+        // for antialiasing text
+      //  g2d.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING,
+        //        RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
+        
         for (y = 0; y < t_rows; y++) {
-            t_x = 0;
+           // t_x = 0;
             t_y = start_y + y * line_height;
             for (x = 0; x < t_columns; x++) {
                 temp = y * t_columns + x;
                 synchronized(video_memory) {
                     if (video_memory[temp] != 0)
-                        s += (char)video_memory[temp];
-                    else {
-                        if (s.equals("") == false) {
-                            g.drawString(s,t_x,t_y);
-                            s = "";
-                        }
-                        t_x = 1 + x * char_width;
-                    }
+                        sLine += (char)video_memory[temp];
+                    else
+                        sLine += " ";
                 }
+                //t_x = 1 + x * char_width;
             }
-            if (s.equals("") == false) {
-                g.drawString(s,t_x,t_y);
-                s = "";
-            }
+
+            g2d.drawString(sLine,1,t_y);
+            sLine = "";
         }
     }
     
