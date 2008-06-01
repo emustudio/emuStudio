@@ -55,8 +55,9 @@
  * the paper tape reader/punch for support under CP/M.
  */
 
-package terminalImpl;
+package terminal;
 
+import terminal.gui.frmGUI;
 import plugins.device.*;
 import plugins.cpu.*;
 import plugins.memory.*;
@@ -84,7 +85,7 @@ public class Mits88SIO implements IDevice {
                 + " 0x10(status), 0x11(data). For SIO programming see "
                 + "http://www.classiccmp.org/dunfield/s100c/mits/88sio_1.pdf";
     }
-    public String getVersion() { return "0.09b"; }
+    public String getVersion() { return "0.1b"; }
     public String getName() { return "ADM-3A Interactive display terminal"; }
     public String getCopyright() { return "\u00A9 Copyright 2007-2008, Peter Jakubčo"; }
 

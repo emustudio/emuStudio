@@ -6,8 +6,9 @@
  * Created on Piatok, 2007, november 16, 11:42
  */
 
-package terminalImpl;
+package terminal.gui;
 
+import terminal.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;

@@ -4,7 +4,10 @@
  * Created on Streda, 2008, január 2, 13:32
  */
 
-package terminalImpl;
+package terminal.gui;
+
+import terminal.*;
+import terminal.gui.frmGUI;
 
 /**
  *
@@ -20,7 +23,9 @@ public class ConfigDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         this.radioHalf.setSelected(parent.isHalfDuplex());
+        this.chkAlwaysOnTop.setSelected(parent.isAlwaysOnTop());
         this.lblTerminal = lblTerminal;
+        this.chkAntiAliasing.setSelected(lblTerminal.isAntiAliasing());
         this.parent = parent;
         this.setLocationRelativeTo(parent);
     }
@@ -35,38 +40,47 @@ public class ConfigDialog extends javax.swing.JDialog {
 
         javax.swing.ButtonGroup buttonGroup1 = new javax.swing.ButtonGroup();
         controlPanel = new javax.swing.JPanel();
-        jCheckBox1 = new javax.swing.JCheckBox();
-        javax.swing.JButton jButton1 = new javax.swing.JButton();
-        javax.swing.JButton jButton2 = new javax.swing.JButton();
+        chkAlwaysOnTop = new javax.swing.JCheckBox();
+        javax.swing.JButton btnClearScreen = new javax.swing.JButton();
+        javax.swing.JButton btnRollLine = new javax.swing.JButton();
+        chkAntiAliasing = new javax.swing.JCheckBox();
         radioFull = new javax.swing.JRadioButton();
         radioHalf = new javax.swing.JRadioButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Terminal configuration");
 
         controlPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Display"));
 
-        jCheckBox1.setText("Always on top");
-        jCheckBox1.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        jCheckBox1.setFocusable(false);
-        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+        chkAlwaysOnTop.setText("Always on top");
+        chkAlwaysOnTop.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        chkAlwaysOnTop.setFocusable(false);
+        chkAlwaysOnTop.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox1ActionPerformed(evt);
+                chkAlwaysOnTopActionPerformed(evt);
             }
         });
 
-        jButton1.setText("Clear screen");
-        jButton1.setFocusable(false);
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        btnClearScreen.setText("Clear screen");
+        btnClearScreen.setFocusable(false);
+        btnClearScreen.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                btnClearScreenActionPerformed(evt);
             }
         });
 
-        jButton2.setText("Roll line");
-        jButton2.setFocusable(false);
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
+        btnRollLine.setText("Roll line");
+        btnRollLine.setFocusable(false);
+        btnRollLine.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
+                btnRollLineActionPerformed(evt);
+            }
+        });
+
+        chkAntiAliasing.setText("Use anti-aliasing");
+        chkAntiAliasing.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkAntiAliasingActionPerformed(evt);
             }
         });
 
@@ -77,21 +91,25 @@ public class ConfigDialog extends javax.swing.JDialog {
             .addGroup(controlPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jCheckBox1)
+                    .addComponent(chkAntiAliasing)
                     .addGroup(controlPanelLayout.createSequentialGroup()
-                        .addComponent(jButton1)
+                        .addComponent(btnClearScreen)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap(19, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(btnRollLine))
+                    .addComponent(chkAlwaysOnTop))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         controlPanelLayout.setVerticalGroup(
             controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(controlPanelLayout.createSequentialGroup()
-                .addComponent(jCheckBox1)
+                .addContainerGap()
+                .addComponent(chkAlwaysOnTop)
+                .addGap(6, 6, 6)
+                .addComponent(chkAntiAliasing)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1)
-                    .addComponent(jButton2))
+                    .addComponent(btnClearScreen)
+                    .addComponent(btnRollLine))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -123,11 +141,9 @@ public class ConfigDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(radioFull)
-                        .addGap(2, 2, 2))
-                    .addComponent(radioHalf)
-                    .addComponent(controlPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(controlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(radioFull)
+                    .addComponent(radioHalf))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -139,24 +155,24 @@ public class ConfigDialog extends javax.swing.JDialog {
                 .addComponent(radioHalf)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(controlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(14, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
-        if (jCheckBox1.isSelected() == true) parent.setAlwaysOnTop(true);
+    private void chkAlwaysOnTopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkAlwaysOnTopActionPerformed
+        if (chkAlwaysOnTop.isSelected() == true) parent.setAlwaysOnTop(true);
         else parent.setAlwaysOnTop(false);
-    }//GEN-LAST:event_jCheckBox1ActionPerformed
+}//GEN-LAST:event_chkAlwaysOnTopActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void btnClearScreenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearScreenActionPerformed
         lblTerminal.clear_screen();
-    }//GEN-LAST:event_jButton1ActionPerformed
+}//GEN-LAST:event_btnClearScreenActionPerformed
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+    private void btnRollLineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRollLineActionPerformed
         lblTerminal.roll_line();
-    }//GEN-LAST:event_jButton2ActionPerformed
+}//GEN-LAST:event_btnRollLineActionPerformed
 
     private void radioFullActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioFullActionPerformed
         parent.setHalfDuplex(false);
@@ -165,11 +181,16 @@ public class ConfigDialog extends javax.swing.JDialog {
     private void radioHalfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioHalfActionPerformed
         parent.setHalfDuplex(true);
     }//GEN-LAST:event_radioHalfActionPerformed
+
+private void chkAntiAliasingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkAntiAliasingActionPerformed
+    lblTerminal.setAntiAliasing(chkAntiAliasing.isSelected());
+}//GEN-LAST:event_chkAntiAliasingActionPerformed
     
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    javax.swing.JCheckBox chkAlwaysOnTop;
+    javax.swing.JCheckBox chkAntiAliasing;
     javax.swing.JPanel controlPanel;
-    javax.swing.JCheckBox jCheckBox1;
     javax.swing.JRadioButton radioFull;
     javax.swing.JRadioButton radioHalf;
     // End of variables declaration//GEN-END:variables
