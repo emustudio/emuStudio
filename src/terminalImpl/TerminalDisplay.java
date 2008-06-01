@@ -70,17 +70,36 @@ public class TerminalDisplay extends Canvas {
     
     // Methods to set the various attributes of the component
     @Override
-    public void setFont(Font f) { super.setFont(f); measure(); repaint(); }
+    public void setFont(Font f) { 
+        super.setFont(f);
+        measure();
+        repaint();
+    }
+    
     @Override
-    public void setForeground(Color c) { super.setForeground(c); repaint(); }
+    public void setForeground(Color c) {
+        super.setForeground(c);
+        repaint();
+    }
 
-    public void addNotify() { super.addNotify(); measure(); }
-    public Dimension getPreferredSize() { return new Dimension(max_width, t_rows * line_height); }
-    public Dimension getMinimumSize() { return new Dimension(max_width, t_rows * line_height); }
+    public void addNotify() { 
+        super.addNotify();
+        measure();
+    }
+    
+    public Dimension getPreferredSize() { 
+        return new Dimension(max_width, t_rows * line_height);
+    }
+    
+    public Dimension getMinimumSize() { 
+        return new Dimension(max_width, t_rows * line_height);
+    }
 
     public void clear_screen() {
-        for (int i = 0; i < (t_rows * t_columns); i++)
-            video_memory[i] = 0;
+        synchronized(video_memory) {
+            for (int i = 0; i < (t_rows * t_columns); i++)
+                video_memory[i] = 0;
+        }
         cursor_x = 0; cursor_y = 0; repaint();
     }
     
@@ -108,7 +127,9 @@ public class TerminalDisplay extends Canvas {
 
     // insert char to cursor position
     private void insert_char(char c) {
-        video_memory[cursor_y * t_columns + cursor_x] = c;
+        synchronized(video_memory) {
+            video_memory[cursor_y * t_columns + cursor_x] = c;
+        }
     }
     
     // don't move cursor vertically
@@ -132,13 +153,17 @@ public class TerminalDisplay extends Canvas {
     // rolls screen by 1 row up
     // hiw: moves lines from 1 in videomemory to line 0
     public void roll_line() {        
-        for (int i = t_columns; i < (t_columns * t_rows); i++)
-            video_memory[i-t_columns] = video_memory[i];
-        for (int i = t_columns * t_rows - t_columns; i < (t_columns * t_rows); i++)
-            video_memory[i] = 0;
+        synchronized(video_memory) {
+            for (int i = t_columns; i < (t_columns * t_rows); i++)
+                video_memory[i-t_columns] = video_memory[i];
+            for (int i = t_columns * t_rows - t_columns
+                    ; i < (t_columns * t_rows); i++)
+                video_memory[i] = 0;
+        }
         repaint();
     }
     
+    // TODO: improve speed
     public void paint(Graphics g) {
         int t_x,t_y;
         int x,y;
@@ -150,14 +175,16 @@ public class TerminalDisplay extends Canvas {
             t_y = start_y + y * line_height;
             for (x = 0; x < t_columns; x++) {
                 temp = y * t_columns + x;
-                if (video_memory[temp] != 0)
-                    s += (char)video_memory[temp];
-                else {
-                    if (s.equals("") == false) {
-                        g.drawString(s,t_x,t_y);
-                        s = "";
+                synchronized(video_memory) {
+                    if (video_memory[temp] != 0)
+                        s += (char)video_memory[temp];
+                    else {
+                        if (s.equals("") == false) {
+                            g.drawString(s,t_x,t_y);
+                            s = "";
+                        }
+                        t_x = 1 + x * char_width;
                     }
-                    t_x = 1 + x * char_width;
                 }
             }
             if (s.equals("") == false) {
@@ -168,14 +195,6 @@ public class TerminalDisplay extends Canvas {
     }
     
     private class CursorPainter extends TimerTask {
-//        private boolean on = false;
-  //      private int c_x, c_y;
-        
-    //    public CursorPainter() {
-      //      c_x = cursor_x;
-        //    c_y = cursor_y;
-//        }
-
         @Override
         public void run() {
             if (!EventQueue.isDispatchThread()) {
@@ -183,23 +202,10 @@ public class TerminalDisplay extends Canvas {
 	    } else {
                 Graphics g = getGraphics();
                 if (g == null) return;
-
-  //              if (on == true) {
-    //                g.setXORMode(Color.BLACK);
-      //              g.fillRect(c_x * char_width, c_y*line_height 
-        //                    + start_y-line_height, char_width,line_height);
-          //          g.setPaintMode();
-            //    } else {
-              //      c_x = cursor_x;
-                //    c_y = cursor_y;
-                    g.setXORMode(Color.BLACK);
-//                    g.fillRect(c_x * char_width, c_y*line_height 
-  //                          + start_y-line_height, char_width,line_height);
-                    g.fillRect(cursor_x * char_width, cursor_y*line_height 
-                            + start_y-line_height, char_width,line_height);
-                    g.setPaintMode();
-  //              }
-//                on = !on;
+                g.setXORMode(Color.BLACK);
+                g.fillRect(cursor_x * char_width, cursor_y*line_height 
+                        + start_y-line_height, char_width,line_height);
+                g.setPaintMode();
 	    }
         }
         public void stop() {
