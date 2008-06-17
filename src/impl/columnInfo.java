@@ -14,7 +14,7 @@ import plugins.cpu.*;
  *
  * @author vbmacher
  */
-public class columnInfo implements IDebugColumns {
+public class columnInfo implements IDebugColumn {
     private String name;
     private Class type;
     private boolean editable;

@@ -17,6 +17,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import plugins.cpu.ICPU.*;
 import plugins.cpu.*;
+import plugins.cpu.ICPUContext.ICPUListener;
+import plugins.cpu.ICPUContext.stateEnum;
 import plugins.memory.*;
 
 /**
@@ -26,28 +28,28 @@ import plugins.memory.*;
 public class statusGUI extends javax.swing.JPanel {
     private cpuEmulator cpu;
     private IMemory mem = null;
-    private IDebugColumns[] columns;
+    private IDebugColumn[] columns;
     private stateEnum run_state;
 
     
     /** Creates new form cpuGUI */
     public statusGUI(final cpuEmulator cpu) {
         this.cpu = cpu;
-        columns = new IDebugColumns[4];
-        IDebugColumns c1 = new columnInfo("breakpoint", java.lang.Boolean.class,true);
-        IDebugColumns c2 = new columnInfo("address", java.lang.String.class,false);
-        IDebugColumns c3 = new columnInfo("mnemonics", java.lang.String.class,false);
-        IDebugColumns c4 = new columnInfo("opcode", java.lang.String.class,false);
+        columns = new IDebugColumn[4];
+        IDebugColumn c1 = new columnInfo("breakpoint", java.lang.Boolean.class,true);
+        IDebugColumn c2 = new columnInfo("address", java.lang.String.class,false);
+        IDebugColumn c3 = new columnInfo("mnemonics", java.lang.String.class,false);
+        IDebugColumn c4 = new columnInfo("opcode", java.lang.String.class,false);
         
         columns[0] = c1;columns[1] = c2;columns[2] = c3;columns[3] = c4;
         run_state = stateEnum.stoppedNormal;
 
         initComponents();
         cpu.addCPUListener(new ICPUListener() {
-            public void cpuRunChanged(EventObject evt, stateEnum state) {
+            public void runChanged(EventObject evt, stateEnum state) {
                 run_state = state;
             }
-            public void cpuStateUpdated(EventObject evt) {
+            public void stateUpdated(EventObject evt) {
                 updateGUI();   
             }
             public void frequencyChanged(EventObject evt, float frequency) {
@@ -102,7 +104,7 @@ public class statusGUI extends javax.swing.JPanel {
         }
     }
 
-    public IDebugColumns[] getDebugColumns() { return columns; }
+    public IDebugColumn[] getDebugColumns() { return columns; }
 
     
     public void setDebugColVal(int index, int col, Object value) {

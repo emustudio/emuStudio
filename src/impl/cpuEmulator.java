@@ -18,6 +18,8 @@ import plugins.memory.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import java.util.*;
+import plugins.cpu.ICPUContext.ICPUListener;
+import plugins.cpu.ICPUContext.stateEnum;
 
 /**
  * Main implementation class for CPU emulation
@@ -148,7 +150,7 @@ public class cpuEmulator implements ICPU, Runnable {
                 }
             }
             catch (IndexOutOfBoundsException e) {
-                run_state = stateEnum.stoppedAdrFallout;
+                run_state = stateEnum.stoppedAddrFallout;
             }
             fireCpuRun(cpuEvt);
             fireCpuState(cpuEvt);
@@ -170,7 +172,7 @@ public class cpuEmulator implements ICPU, Runnable {
     }
     
     /* DOWN: GUI interaction */
-    public IDebugColumns[] getDebugColumns() { return status.getDebugColumns(); }
+    public IDebugColumn[] getDebugColumns() { return status.getDebugColumns(); }
     public void setDebugValue(int index, int col, Object value) {
         status.setDebugColVal(index, col, value);
     }
@@ -252,7 +254,6 @@ public class cpuEmulator implements ICPU, Runnable {
      * 
      */
     
-    @SuppressWarnings("static-access")
     public void run() {
         long startTime, endTime;
         int cycles_executed;
@@ -286,7 +287,7 @@ public class cpuEmulator implements ICPU, Runnable {
                     }
                 }
                 catch (IndexOutOfBoundsException e) {
-                    run_state = stateEnum.stoppedAdrFallout;
+                    run_state = stateEnum.stoppedAddrFallout;
                     break;
                 }
                 catch (Error er) {
@@ -296,7 +297,7 @@ public class cpuEmulator implements ICPU, Runnable {
                 endTime = System.nanoTime() - startTime;
                 if (endTime < slice) {
                     // time correction
-                    try { cpuThread.sleep((slice - endTime)/1000000); }
+                    try { Thread.sleep((slice - endTime)/1000000); }
                     catch(java.lang.InterruptedException e) {}
                 }
             }
