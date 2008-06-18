@@ -11,8 +11,12 @@
 
 package compiler8080;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Vector;
 import plugins.memory.IMemoryContext;
 import runtime.StaticDialogs;
 /**
@@ -168,14 +172,13 @@ public class HEXFileHandler {
         }
         Vector adrs = new Vector(program.keySet());
         Collections.sort(adrs);
-
         for (Enumeration e = adrs.elements(); e.hasMoreElements();) {
             int adr = (Integer)e.nextElement();
             String code = this.getCode(adr);
-
-            for (int i = 0; i < code.length()-2; i+=2) {
+            for (int i = 0, j = 0; i < code.length()-1; i+=2, j++) {
                 String hexCode = code.substring(i, i+2);
-                mem.write(adr+i, (Integer.decode("0x" + hexCode)) & 0xFF);
+                short num = (short)((Short.decode("0x" + hexCode)) & 0xFF);
+                mem.write(adr+j, num);
             }
         }
         return true;
@@ -188,6 +191,14 @@ public class HEXFileHandler {
         BufferedWriter out = new BufferedWriter(new FileWriter(filename));
         out.write(fileData);
         out.close();
+    }
+    
+    public int getProgramStart() {
+        Vector adrs = new Vector(program.keySet());
+        Collections.sort(adrs);
+        if (adrs.isEmpty() == false)
+            return (Integer)adrs.firstElement();
+        else return 0;
     }
     
 

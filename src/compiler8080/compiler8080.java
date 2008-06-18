@@ -26,6 +26,7 @@ public class compiler8080 implements ICompiler {
     private parser8080 par;
     private IMessageReporter reporter;
     private ISettingsHandler settings;
+    private int programStart = 0; // actualize after compile 
     
     /** Creates a new instance of compiler8080 */
     public compiler8080() {}
@@ -102,8 +103,13 @@ public class compiler8080 implements ICompiler {
             else print_text("Compiled file couldn't be loaded into operating"
                     + "memory due to an error.");
         }
+        programStart = hex.getProgramStart();
         return true;
     }
     public void reset() {}
+
+    public int getProgramStartAddress() {
+        return programStart;
+    }
 
 }
