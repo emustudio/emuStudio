@@ -4,31 +4,43 @@
  * Created on Nede�a, 2007, okt�ber 28, 10:40
  */
 
-package memImpl;
+package gui;
 
-import javax.swing.*;
-import javax.swing.table.*;
-import javax.swing.event.*;
-import java.awt.event.*;
-import java.awt.*;
-import java.io.*;
+import gui.utils.emuFileFilter;
+import gui.utils.memoryTableModel;
+import gui.utils.tableMemory;
+import interfaces.SMemoryContext;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import runtime.StaticDialogs;
+
 
 /**
  *
  * @author  vbmacher
  */
 public class frmMemory extends javax.swing.JFrame {
-    private MemMain mem;
+    private SMemoryContext mem;
     private tableMemory tblMemory;
     private memoryTableModel memModel;
     
     /** Creates new form frmMemory */
-    public frmMemory(MemMain mem) {
+    public frmMemory(SMemoryContext mem) {
         this.mem = mem;
         this.memModel = new memoryTableModel(mem);
         
         initComponents();
-        tblMemory = new tableMemory(mem,memModel,paneMemory);
+        tblMemory = new tableMemory(memModel,paneMemory);
         paneMemory.setViewportView(tblMemory);
         tblMemory.setVisible(true);
         paneMemory.repaint();
@@ -86,7 +98,7 @@ public class frmMemory extends javax.swing.JFrame {
         txtValBin.setText(Integer.toBinaryString(data));
     }
     
-    private void destroyME() { mem.destroy(); }
+    private void destroyME() { dispose(); }
     
     /** This method is called from within the constructor to
      * initialize the form.
@@ -342,7 +354,7 @@ public class frmMemory extends javax.swing.JFrame {
                 this.tblMemory.revalidate();
                 this.tblMemory.repaint();
             } else {
-                MemMain.showErrorMessage("File " + fileSource.getPath()
+                StaticDialogs.showErrorMessage("File " + fileSource.getPath()
                     + " can't be read.");
             }
         }

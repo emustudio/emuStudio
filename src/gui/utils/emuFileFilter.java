@@ -7,7 +7,7 @@
  * some things just: YOU AREN'T GONNA NEED IT
  */
 
-package memImpl;
+package gui.utils;
 
 /**
  *

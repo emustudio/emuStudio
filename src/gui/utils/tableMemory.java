@@ -7,24 +7,33 @@
  * some things just: YOU AREN'T GONNA NEED IT
  */
 
-package memImpl;
+package gui.utils;
 
-import javax.swing.*;
-import javax.swing.table.*;
-import java.awt.*;
-import plugins.memory.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
+import javax.swing.UIManager;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellRenderer;
+
+
 /**
  *
  * @author vbmacher
  */
 public class tableMemory extends JTable {
     private memoryTableModel memModel;
-    private IMemory mem;
     private JScrollPane paneMemory;
     
     /** Creates a new instance of tableMemory */
-    public tableMemory(IMemory mem, memoryTableModel memModel, JScrollPane pm) {
-        this.mem = mem;
+    public tableMemory(memoryTableModel memModel, JScrollPane pm) {
         this.paneMemory = pm;
         this.memModel = memModel;
         this.setModel(this.memModel);

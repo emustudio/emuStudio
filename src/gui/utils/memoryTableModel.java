@@ -12,10 +12,11 @@
  *
  */
 
-package memImpl;
+package gui.utils;
 
-import javax.swing.table.*;
-import javax.swing.*;
+import interfaces.SMemoryContext;
+import javax.swing.table.AbstractTableModel;
+
 
 /**
  * model pre tabulku operacnej pamate
@@ -25,13 +26,13 @@ import javax.swing.*;
  * @author vbmacher
  */
 public class memoryTableModel extends AbstractTableModel {
-    private MemMain mem;
+    private SMemoryContext mem;
     private int currentPage;
     private final int ROW_COUNT = 16;
     private final int COLUMN_COUNT = 16;
 
     /** Creates a new instance of memoryTableModel */
-    public memoryTableModel(MemMain mem) {
+    public memoryTableModel(SMemoryContext mem) {
         this.mem = mem;
         currentPage = 0;
     }
@@ -54,13 +55,13 @@ public class memoryTableModel extends AbstractTableModel {
     public Object getValueAt(int rowIndex, int columnIndex) {
         int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
         if (pos >= mem.getSize()) return ".";
-        return String.format("%1$02X", mem.read8(pos));
+        return String.format("%1$02X", mem.read(pos));
     }
     
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
         try {
-            mem.write8(pos,Short.decode(String.valueOf(aValue)));
+            mem.write(pos,Short.decode(String.valueOf(aValue)));
             fireTableCellUpdated(rowIndex, columnIndex);
         } catch (NumberFormatException e) {}
     }

@@ -4,24 +4,31 @@
  * Created on Nedeľa, 2007, október 28, 18:39
  */
 
-package memImpl;
+package gui;
 
-import java.util.*;
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.table.*;
+import gui.utils.tableMemory;
+import interfaces.SMemoryContext;
+import java.util.Collections;
+import java.util.Vector;
+import javax.swing.InputVerifier;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.AbstractTableModel;
 
 /**
  *
  * @author  vbmacher
  */
 public class frmROMRange extends javax.swing.JFrame {
-    private MemMain mem;
+    private SMemoryContext mem;
     private ROMmodel rom_model;
     private tableMemory tblMem;
     
     /** Creates new form frmROMRange */
-    public frmROMRange(MemMain mem, tableMemory tblMem) {
+    public frmROMRange(SMemoryContext mem, tableMemory tblMem) {
         this.mem = mem;
         this.tblMem = tblMem;
         
@@ -32,7 +39,7 @@ public class frmROMRange extends javax.swing.JFrame {
         InputVerifier vf = new InputVerifier() {
             public boolean verify(JComponent input) {
                 JTextField tf = (JTextField) input;
-                try { Integer.parseInt(tf.getText()); }
+                try { Integer.decode(tf.getText()); }
                 catch (NumberFormatException e) { return false; }
                 return true;
             }
