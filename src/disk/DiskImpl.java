@@ -96,12 +96,14 @@
 package disk;
 
 import disk.gui.DiskFrame;
-import java.io.IOException;
+import interfaces.ACpuContext;
 import java.util.ArrayList;
-import java.util.EventObject;
-import plugins.cpu.ICPU;
+import plugins.ISettingsHandler;
+import plugins.cpu.ICPUContext;
 import plugins.device.IDevice;
-import plugins.memory.IMemory;
+import plugins.device.IDeviceContext;
+import plugins.memory.IMemoryContext;
+import runtime.StaticDialogs;
 
 /**
  *
@@ -109,10 +111,15 @@ import plugins.memory.IMemory;
  */
 public class DiskImpl implements IDevice {
     private final static int DRIVES_COUNT = 16;
-    private ICPU cpu;
-    private IMemory mem;
-    private ArrayList drives;
-    private int current_drive;
+    private ACpuContext cpu;
+    private IMemoryContext mem;
+    
+    public ArrayList drives;
+    private Port1 port1;
+    private Port2 port2;
+    private Port3 port3;
+    
+    public int current_drive;
     private DiskFrame gui = null;
             
     public DiskImpl() {
@@ -120,69 +127,43 @@ public class DiskImpl implements IDevice {
         for (int i = 0; i < DRIVES_COUNT; i++)
             drives.add(new Drive());
         this.current_drive = 0xFF;
+        port1 = new Port1(this);
+        port2 = new Port2(this);
+        port3 = new Port3(this);
     }
     
-    public static void showErrorMessage(String message) {
-        javax.swing.JOptionPane.showMessageDialog(null,
-                message,"Error",javax.swing.JOptionPane.ERROR_MESSAGE);
-    }
-
-    public void init(ICPU cpu, IMemory mem) {
-        this.cpu = cpu;
+    public boolean initialize(ICPUContext cpu, IMemoryContext mem,
+            ISettingsHandler sHandler) {
+        if (!(cpu instanceof ACpuContext)) {
+            StaticDialogs.showErrorMessage("Device can't be loaded, because "
+                    + "CPU is not compatible with the device.");
+            return false;
+        }
+        if (!mem.getID().equals("byte_simple_variable")) {
+            StaticDialogs.showErrorMessage("Device can't be loaded, because "
+                    + "operating memory is not compatible with the device.");
+            return false;
+        }
+        this.cpu = (ACpuContext) cpu;
         this.mem = mem;
         
         // attach device to CPU
-        if (cpu.attachDevice(new IDevListener() {
-            public void devOUT(EventObject evt, int data) {
-                // select device
-                current_drive = data & 0x0F;
-                if ((data & 0x80) != 0) {
-                    // disable device
-                    ((Drive)drives.get(current_drive)).deselect();
-                    current_drive = 0xFF;
-                } else
-                    ((Drive)drives.get(current_drive)).select();
-            }
-            public int devIN(EventObject evt) {
-                return ((Drive)drives.get(current_drive)).getFlags();
-            }
-        }, 0x8) == false) {
-            showErrorMessage("Error: this device can't be attached (maybe there is a hardware conflict)");
-            return;
+        if (this.cpu.attachDevice(port1, 0x8) == false) {
+            StaticDialogs.showErrorMessage("Error: this device can't be attached (maybe there is a hardware conflict)");
+            return false;
         }
-        if (cpu.attachDevice(new IDevListener() {
-            public void devOUT(EventObject evt, int data) {
-                ((Drive)drives.get(current_drive)).setFlags((short)data);
-            }
-            public int devIN(EventObject evt) {
-                return ((Drive)drives.get(current_drive)).getSectorPos();
-            }
-        }, 0x9) == false) {
-            showErrorMessage("Error: this device can't be attached (maybe there is a hardware conflict)");
-            return;
+        if (this.cpu.attachDevice(port2, 0x9) == false) {
+            StaticDialogs.showErrorMessage("Error: this device can't be attached (maybe there is a hardware conflict)");
+            return false;
         }
-        if (cpu.attachDevice(new IDevListener() {
-            public void devOUT(EventObject evt, int data) {
-                try {
-                    ((Drive)drives.get(current_drive)).writeData(data);
-                } catch(IOException e) {
-                    showErrorMessage("Couldn't write to disk");
-                }
-            }
-            public int devIN(EventObject evt) {
-                int d = 0;
-                try { d = ((Drive)drives.get(current_drive)).readData(); }
-                catch(IOException e) {
-                    showErrorMessage("Couldn't read from disk");
-                }
-                return d;
-            }
-        }, 0xA) == false) {
-            showErrorMessage("Error: this device can't be attached (maybe there is a hardware conflict)");
-            return;
+        if (this.cpu.attachDevice(port3, 0xA) == false) {
+            StaticDialogs.showErrorMessage("Error: this device can't be attached (maybe there is a hardware conflict)");
+            return false;
         }
-
+        return true;
     }
+
+    public void reset() { }
 
     public void showGUI() {
         if (gui == null) gui = new DiskFrame(drives);
@@ -200,20 +181,23 @@ public class DiskImpl implements IDevice {
                 + "I/O addresses were 10Q-12Q.";
     }
 
-    public String getVersion() { return "0.2b"; }
-
+    public String getVersion() { return "0.22b"; }
     public String getName() { return "MITS-88 DISK (floppy drive)"; }
-
     public String getCopyright() {
         return "\u00A9 Copyright 2008, P. Jakubčo";
     }
 
     public void destroy() {
         if (gui != null) gui.dispose();
-        cpu.disattachDevice(0x8);
-        cpu.disattachDevice(0x9);
-        cpu.disattachDevice(0xA);
+        cpu.detachDevice(0x8);
+        cpu.detachDevice(0x9);
+        cpu.detachDevice(0xA);
         drives.clear();
+    }
+
+    public IDeviceContext[] getContext() {
+        IDeviceContext[] idev = { port1, port2, port3 };
+        return idev;
     }
 
 }
