@@ -4,7 +4,7 @@
  * Created on Nedeľa, 2008, jún 1, 14:27
  */
 
-package terminal.gui;
+package gui;
 
 /**
  *

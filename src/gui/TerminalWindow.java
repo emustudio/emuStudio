@@ -6,8 +6,9 @@
  * Created on Piatok, 2007, november 16, 11:42
  */
 
-package terminal.gui;
+package gui;
 
+import sio88.Mits88SIO;
 import terminal.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -211,6 +212,7 @@ public class TerminalWindow extends javax.swing.JFrame {
         configButton.setBounds(600, 550, 100, 29);
 
         btnAbout.setText("About...");
+        btnAbout.setFocusable(false);
         btnAbout.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnAboutActionPerformed(evt);

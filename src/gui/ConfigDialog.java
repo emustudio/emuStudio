@@ -4,10 +4,10 @@
  * Created on Streda, 2008, január 2, 13:32
  */
 
-package terminal.gui;
+package gui;
 
 import terminal.*;
-import terminal.gui.TerminalWindow;
+import gui.TerminalWindow;
 
 /**
  *

@@ -16,8 +16,18 @@
 
 package terminal;
 
-import java.awt.*;
-import java.util.*;
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.RenderingHints;
+import java.util.Timer;
+import java.util.TimerTask;
+
 
 /**
  * This class provides emulation of CRT display. It supports double buffering
