@@ -7,45 +7,51 @@
  * some things just: YOU AREN'T GONNA NEED IT
  */
 
-package impl;
+package gui;
 
+import impl.ColumnInfo;
+import impl.Cpu8080;
+import impl.CpuContext;
+import interfaces.ACpuListener;
 import java.util.EventObject;
-import javax.swing.SpinnerNumberModel;
 import javax.swing.JPanel;
-
+import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import plugins.cpu.ICPU.*;
-import plugins.cpu.*;
-import plugins.cpu.ICPUContext.ICPUListener;
 import plugins.cpu.ICPUContext.stateEnum;
-import plugins.memory.*;
+import plugins.cpu.ICPUInstruction;
+import plugins.cpu.IDebugColumn;
+import plugins.memory.IMemoryContext;
+
+
 
 /**
  *
  * @author  vbmacher
  */
 public class statusGUI extends javax.swing.JPanel {
-    private cpuEmulator cpu;
-    private IMemory mem = null;
+    private Cpu8080 cpu;
+    private CpuContext cpuC;
+    private IMemoryContext mem = null;
     private IDebugColumn[] columns;
     private stateEnum run_state;
 
     
     /** Creates new form cpuGUI */
-    public statusGUI(final cpuEmulator cpu) {
+    public statusGUI(final Cpu8080 cpu) {
         this.cpu = cpu;
+        this.cpuC = (CpuContext)cpu.getContext();
         columns = new IDebugColumn[4];
-        IDebugColumn c1 = new columnInfo("breakpoint", java.lang.Boolean.class,true);
-        IDebugColumn c2 = new columnInfo("address", java.lang.String.class,false);
-        IDebugColumn c3 = new columnInfo("mnemonics", java.lang.String.class,false);
-        IDebugColumn c4 = new columnInfo("opcode", java.lang.String.class,false);
+        IDebugColumn c1 = new ColumnInfo("breakpoint", java.lang.Boolean.class,true);
+        IDebugColumn c2 = new ColumnInfo("address", java.lang.String.class,false);
+        IDebugColumn c3 = new ColumnInfo("mnemonics", java.lang.String.class,false);
+        IDebugColumn c4 = new ColumnInfo("opcode", java.lang.String.class,false);
         
         columns[0] = c1;columns[1] = c2;columns[2] = c3;columns[3] = c4;
         run_state = stateEnum.stoppedNormal;
 
         initComponents();
-        cpu.addCPUListener(new ICPUListener() {
+        cpuC.addCPUListener(new ACpuListener() {
             public void runChanged(EventObject evt, stateEnum state) {
                 run_state = state;
             }
@@ -61,7 +67,7 @@ public class statusGUI extends javax.swing.JPanel {
                 int i = (Integer)((SpinnerNumberModel)spnFrequency.getModel()).getValue();
                 try { setCPUFreq(i); } catch(IndexOutOfBoundsException ex) {
                     ((SpinnerNumberModel)spnFrequency.getModel())
-                    .setValue(cpu.getFrequency());
+                    .setValue(cpuC.getFrequency());
                 }
             }
         });
@@ -77,13 +83,13 @@ public class statusGUI extends javax.swing.JPanel {
     }
 
     
-    private void setCPUFreq(int f) { cpu.setFrequency(f); }
+    private void setCPUFreq(int f) { cpuC.setFrequency(f); }
     
     public Object getDebugColVal(int index, int col) {
         try {
             ICPUInstruction instr = cpuDecode(index);
             switch (col) {
-                case 0: return cpu.getBreakpoint(index); // breakpoint
+                case 0: return cpuC.getBreakpoint(index); // breakpoint
                 case 1: return String.format("%04Xh", index); // adresa
                 case 2: return instr.getMnemo(); // mnemonika
                 case 3: return instr.getOperCode(); // operacny kod
@@ -95,10 +101,10 @@ public class statusGUI extends javax.swing.JPanel {
             // instrukciu s viacerymi bytami, ktore sa uz nezmestili
             // do operacnej pamate
             switch (col) {
-                case 0: return cpu.getBreakpoint(index);
+                case 0: return cpuC.getBreakpoint(index);
                 case 1: return String.format("%04Xh", index);
                 case 2: return "incomplete instruction";
-                case 3: return String.format("%X", mem.read8(index));
+                case 3: return String.format("%X", (Integer)mem.read(index));
                 default: return "";
             }
         }
@@ -112,10 +118,10 @@ public class statusGUI extends javax.swing.JPanel {
         if (value.getClass() != Boolean.class) return;
         
         boolean v = Boolean.valueOf(value.toString());
-        cpu.setBreakpoint(index,v);
+        cpuC.setBreakpoint(index,v);
     }
     
-    public void setMem(IMemory mem) {
+    public void setMem(IMemoryContext mem) {
         this.mem = mem;
     }
     
@@ -142,7 +148,7 @@ public class statusGUI extends javax.swing.JPanel {
         String mnemo, oper;
         
         if (this.mem == null) return null;
-        val = mem.read8(actPos++);
+        val = ((Integer)mem.read(actPos++)).shortValue();
         oper = String.format("%02X",val);
         if ((val >= 64) && (val <= 127) && (val != 118))
             mnemo = "mov " + getRegMnemo((val&56) >> 3) + ","
@@ -158,12 +164,12 @@ public class statusGUI extends javax.swing.JPanel {
         else {
             switch (val) {
                 case 58: // lda addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("lda %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 50: // sta addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("sta %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
@@ -172,73 +178,73 @@ public class statusGUI extends javax.swing.JPanel {
                 case 2:  mnemo = "stax BC"; break;
                 case 18: mnemo = "stax DE"; break;
                 case 42: // lhld addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("lhld %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 34: // shld addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("shld %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 235: mnemo = "xchg"; break;
                 case 6: // mvi b, byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi B,%02Xh", val);
                      oper += String.format(" %02X", val);
                      break;
                 case 14: // mvi c, byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi C,%02Xh", val);
                      oper += String.format(" %02X", val);
                      break;
                 case 22: // mvi d, byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi D,%02Xh", val);
                      oper += String.format(" %02X", val);
                      break;
                 case 30: // mvi e, byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi E,%02Xh", val);
                      oper = String.format(" %02X", val);
                      break;
                 case 38: // mvi h, byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi H,%02Xh", val);
                      oper += String.format(" %02X", val);
                      break;
                 case 46: // mvi l, byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi L,%02Xh", val);
                      oper += String.format(" %02X", val);
                      break;
                 case 54: // mvi m, byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi M,%02Xh", val);
                      oper += String.format(" %02X", val);
                      break;
                 case 62: // mvi a, byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi A,%02Xh", val);
                      oper += String.format(" %02X", val);
                      break;
                 case 1: // lxi bc, dble
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("lxi BC,%04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 17: // lxi de, dble
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("lxi DE,%04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 33: // lxi hl, dble
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("lxi HL,%04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 49: // lxi sp, dble
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("lxi SP,%04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
@@ -253,19 +259,19 @@ public class statusGUI extends javax.swing.JPanel {
                 case 229: mnemo = "push HL"; break;
                 case 245: mnemo = "push PSW"; break;
                 case 219: // in port
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("in %Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 211: // out port
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("out %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 198: // adi byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("adi %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 206: // aci byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("aci %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 9: mnemo = "dad BC"; break;
@@ -273,11 +279,11 @@ public class statusGUI extends javax.swing.JPanel {
                 case 41: mnemo = "dad HL"; break;
                 case 57: mnemo = "dad SP"; break;
                 case 214: // sui byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("sui %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 222: // sbi byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("sbi %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 4: mnemo = "inr B"; break;
@@ -305,20 +311,20 @@ public class statusGUI extends javax.swing.JPanel {
                 case 43: mnemo = "dcx HL"; break;
                 case 59: mnemo = "dcx SP"; break;
                 case 254: // cpi byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("cpi %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 39: mnemo = "daa"; oper = "27"; break;
                 case 230: // ani byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("ani %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 246: // ori byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("ori %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 238: // xri byte
-                     val = mem.read8(actPos++);
+                     val = ((Integer)mem.read(actPos++)).shortValue();
                      mnemo = String.format("xri %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 47: mnemo = "cma"; break;
@@ -330,92 +336,92 @@ public class statusGUI extends javax.swing.JPanel {
                 case 63: mnemo = "cmc"; break;
                 case 233: mnemo = "pchl"; break;
                 case 195: // jmp addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("jmp %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 194: // jnz addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("jnz %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 202: // jz addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("jz %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 210: // jnc addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("jnc %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 218: // jc addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("jc %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 226: // jpo addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("jpo %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 234: // jpe addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("jpe %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 242: // jp addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("jp %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 250: // jm addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("jm %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 205: // call addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("call %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 196: // cnz addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("cnz %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 204: // cz addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("cz %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 212: // cnc addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("cnc %04Xh", addr);
                      oper += String.format("%02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 220: // cc addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("cc %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 228: // cpo addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("cpo %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 236: // cpe addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("cpe %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 244: // cp addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("cp %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
                 case 252: // cm addr
-                     addr = mem.read16(actPos);
+                     addr = (Integer)mem.readWord(actPos);
                      mnemo = String.format("cm %04Xh", addr);
                      oper += String.format(" %02X %02X", addr&0xFF,(addr>>8)&0xFF);
                      actPos += 2; break;
@@ -450,7 +456,7 @@ public class statusGUI extends javax.swing.JPanel {
     public int getNextPosition(int memPos) throws ArrayIndexOutOfBoundsException {
         short val;
         if (mem == null) return 0;
-        val = mem.read8(memPos++);
+        val = ((Integer)mem.read(memPos++)).shortValue();
         switch (val) {
             case 64: case 65: case 66: case 67: case 68: case 69: case 70: case 71: case 72: case 73: case 74: case 75: case 76:
             case 77: case 78: case 79: case 80: case 81: case 82: case 83: case 84: case 85: case 86: case 87: case 88: case 89:
@@ -580,7 +586,7 @@ public class statusGUI extends javax.swing.JPanel {
         spnTestPeriode = new javax.swing.JSpinner();
         javax.swing.JLabel jLabel15 = new javax.swing.JLabel();
 
-        paneInfoRegisters.setBorder(javax.swing.BorderFactory.createTitledBorder(new javax.swing.border.LineBorder(new java.awt.Color(153, 153, 153), 1, true), "", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11), new java.awt.Color(102, 102, 102)));
+        paneInfoRegisters.setBorder(javax.swing.BorderFactory.createTitledBorder(new javax.swing.border.LineBorder(new java.awt.Color(153, 153, 153), 1, true), "", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11), new java.awt.Color(102, 102, 102))); // NOI18N
 
         txtRegHL.setEditable(false);
         txtRegHL.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
@@ -854,7 +860,7 @@ public class statusGUI extends javax.swing.JPanel {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(new javax.swing.border.LineBorder(new java.awt.Color(153, 153, 153), 1, true), "Run status", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("DejaVu Sans", 1, 14), new java.awt.Color(102, 102, 102)));
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(new javax.swing.border.LineBorder(new java.awt.Color(153, 153, 153), 1, true), "Run status", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("DejaVu Sans", 1, 14), new java.awt.Color(102, 102, 102))); // NOI18N
 
         lblRun.setFont(lblRun.getFont().deriveFont(lblRun.getFont().getStyle() | java.awt.Font.BOLD));
         lblRun.setForeground(new java.awt.Color(0, 102, 0));
@@ -944,8 +950,8 @@ public class statusGUI extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(paneInfoRegisters, javax.swing.GroupLayout.DEFAULT_SIZE, 295, Short.MAX_VALUE)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 295, Short.MAX_VALUE)
+            .addComponent(paneInfoRegisters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

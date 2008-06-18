@@ -1,5 +1,5 @@
 /*
- * cpuEmulator.java
+ * Cpu8080.java
  *
  * Implementation of CPU emulation
  * 
@@ -11,15 +11,16 @@
 
 package impl;
 
-import plugins.cpu.*;
-import plugins.device.*;
-import plugins.memory.*;
-
-import javax.swing.*;
-import javax.swing.event.*;
-import java.util.*;
-import plugins.cpu.ICPUContext.ICPUListener;
+import gui.statusGUI;
+import java.util.TimerTask;
+import javax.swing.JPanel;
+import plugins.ISettingsHandler;
+import plugins.cpu.ICPU;
+import plugins.cpu.ICPUContext;
 import plugins.cpu.ICPUContext.stateEnum;
+import plugins.cpu.IDebugColumn;
+import plugins.memory.IMemoryContext;
+
 
 /**
  * Main implementation class for CPU emulation
@@ -27,17 +28,15 @@ import plugins.cpu.ICPUContext.stateEnum;
  * 
  * @author vbmacher
  */
-public class cpuEmulator implements ICPU, Runnable {
+public class Cpu8080 implements ICPU, Runnable {
     private Thread cpuThread = null;
     private statusGUI status;
-    private EventListenerList listenerList;
-    private Hashtable devicesList;
-    private EventObject cpuEvt = new EventObject(this);
 
-    private IMemory mem;
+    private IMemoryContext mem;
+    private CpuContext cpu;
+    private ISettingsHandler settings;
 
     // cpu speed
-    private int clockFrequency = 2000; // kHz
     private long long_cycles = 0; // count of executed cycles for runtime freq. computing
     private java.util.Timer freqScheduler;
     private RuntimeFrequencyCalculator rfc;
@@ -55,7 +54,6 @@ public class cpuEmulator implements ICPU, Runnable {
     private short b2 = 0;
     private short b3 = 0;
     
-    private HashSet breaks; // zoznam breakpointov (mnozina)
     private stateEnum run_state; // dovod zastavenia emulatora
 
     private byte parity_table[] = {
@@ -70,13 +68,11 @@ public class cpuEmulator implements ICPU, Runnable {
     };
     
     
-    /** Creates a new instance of cpuEmulator */
-    public cpuEmulator() {
+    /** Creates a new instance of Cpu8080 */
+    public Cpu8080() {
+        cpu = new CpuContext();
         run_state = stateEnum.stoppedNormal;
-        breaks = new HashSet();
-        listenerList = new EventListenerList();
         status = new statusGUI(this);
-        devicesList = new Hashtable();
         rfc = new RuntimeFrequencyCalculator();
         freqScheduler = new java.util.Timer();
     }
@@ -87,32 +83,35 @@ public class cpuEmulator implements ICPU, Runnable {
     public String getName() { return "Virtual i8080 CPU"; }
     public String getCopyright() { return "\u00A9 Copyright 2006-2008, Peter Jakubčo"; }
 
-    /**
-     * this must be called as constructor (initialization)
-     */ 
-    public void init(IMemory mem) {
+    public void initialize(IMemoryContext mem, ISettingsHandler sHandler) {
         this.mem = mem;
+        this.settings = sHandler;
         status.setMem(mem);
     }
+
+    public ICPUContext getContext() {
+        return cpu;
+    }
+    
     public void destroy() {
         run_state = stateEnum.stoppedNormal;
         setRuntimeFreqCounter(false);        
-        devicesList.clear();
+        cpu.clearDevices();
     }
 
     /**
      * Reset CPU (initialize before run)
      */    
-    public void reset(int programStart) {
+    public void reset() {
         SP = A = B = C = D = E = H = L = 0;
         Flags = 2; //0000 0010b
-        PC = programStart;
+        PC = 0; // programStart;
         INTE = false;
         run_state = stateEnum.stoppedBreak;
         cpuThread = null;
         setRuntimeFreqCounter(false);
-        fireCpuRun(cpuEvt);
-        fireCpuState(cpuEvt);
+        cpu.fireCpuRun(status,run_state);
+        cpu.fireCpuState();
     }
     /**
      * Create CPU Thread and start it until CPU halt (instruction hlt)
@@ -128,7 +127,7 @@ public class cpuEmulator implements ICPU, Runnable {
     public void pause() {
         run_state = stateEnum.stoppedBreak;
         setRuntimeFreqCounter(false);
-        fireCpuRun(cpuEvt);
+        cpu.fireCpuRun(status,run_state);
     }
     /**
      *  Stops an emulation
@@ -136,7 +135,7 @@ public class cpuEmulator implements ICPU, Runnable {
     public void stop() {
         run_state = stateEnum.stoppedNormal;
         setRuntimeFreqCounter(false);
-        fireCpuRun(cpuEvt);
+        cpu.fireCpuRun(status,run_state);
     }
     // vykona 1 krok - bez merania casov (bez real-time odozvy)
     public void step() {
@@ -152,8 +151,8 @@ public class cpuEmulator implements ICPU, Runnable {
             catch (IndexOutOfBoundsException e) {
                 run_state = stateEnum.stoppedAddrFallout;
             }
-            fireCpuRun(cpuEvt);
-            fireCpuState(cpuEvt);
+            cpu.fireCpuRun(status,run_state);
+            cpu.fireCpuState();
         }
     }
     public void interrupt(short b1, short b2, short b3) {
@@ -164,12 +163,6 @@ public class cpuEmulator implements ICPU, Runnable {
         this.b3 = b3;
     }
     
-    public void addCPUListener(ICPUListener listener) {
-        listenerList.add(ICPUListener.class, listener);
-    }    
-    public void removeCPUListener(ICPUListener listener) {
-        listenerList.remove(ICPUListener.class, listener);
-    }
     
     /* DOWN: GUI interaction */
     public IDebugColumn[] getDebugColumns() { return status.getDebugColumns(); }
@@ -181,18 +174,6 @@ public class cpuEmulator implements ICPU, Runnable {
     }
     public JPanel getStatusGUI() { return status.getStatusPanel(); }    
     
-    /* DOWN: Device interaction */
-    // device mapping = only one device can be attached to one port
-    public boolean attachDevice(IDevice.IDevListener listener, int port) {
-        if (devicesList.containsKey(port)) return false;
-        devicesList.put(port, listener);
-        return true;
-    }
-    public void disattachDevice(int port) {
-        if (devicesList.containsKey(port))
-            devicesList.remove(port);
-    }
-
     /* DOWN: CPU Context */
     // get the address from next instruction
     // this method exist only from a view of effectivity
@@ -211,9 +192,6 @@ public class cpuEmulator implements ICPU, Runnable {
     public int getSliceTime() { return sliceCheckTime; }
     public void setSliceTime(int t) { sliceCheckTime = t; }
     
-    public int getFrequency() { return this.clockFrequency; }
-    // frequency in kHz
-    public void setFrequency(int freq) { this.clockFrequency = freq; }
     
     public void setRuntimeFreqCounter(boolean run) {
         if (run) {
@@ -230,12 +208,6 @@ public class cpuEmulator implements ICPU, Runnable {
     }
     
         
-    public void setBreakpoint(int adr, boolean set) { 
-        if (set) breaks.add(adr);
-        else breaks.remove(adr);
-    }
-    public boolean getBreakpoint(int address) { return breaks.contains(address); }
-    public boolean isBreakpointSupported() { return true; }
     
     /**
      * Run a CPU execution (thread).
@@ -262,13 +234,13 @@ public class cpuEmulator implements ICPU, Runnable {
         long slice;
         
         run_state = stateEnum.runned;
-        fireCpuRun(cpuEvt);
-        fireCpuState(cpuEvt);
+        cpu.fireCpuRun(status,run_state);
+        cpu.fireCpuState();
         /* 1 Hz  .... 1 tState per second
          * 1 kHz .... 1000 tStates per second
          * clockFrequency is in kHz it have to be multiplied with 1000
          */
-        cycles_to_execute = sliceCheckTime * clockFrequency;
+        cycles_to_execute = sliceCheckTime * cpu.getFrequency();
         long i = 0;
         slice = sliceCheckTime * 1000000;
         synchronized(run_state) {
@@ -282,7 +254,7 @@ public class cpuEmulator implements ICPU, Runnable {
                         cycles = evalStep();
                         cycles_executed += cycles;
                         long_cycles += cycles;
-                        if (breaks.contains(PC) == true)
+                        if (cpu.getBreakpoint(PC) == true)
                             throw new Error();
                     }
                 }
@@ -303,8 +275,8 @@ public class cpuEmulator implements ICPU, Runnable {
             }
         }
         setRuntimeFreqCounter(false);
-        fireCpuState(cpuEvt);
-        fireCpuRun(cpuEvt);
+        cpu.fireCpuState();
+        cpu.fireCpuRun(status,run_state);
     }
 
     /**
@@ -332,18 +304,18 @@ public class cpuEmulator implements ICPU, Runnable {
             double freq = (double)long_cycles / (time / 1000000.0);
             startTimeSaved = (long)endTime;
             long_cycles = 0;
-            fireFrequencyChanged(cpuEvt, (float)freq);
+            cpu.fireFrequencyChanged((float)freq);
         }
         
     }
-        
     
     /* Get an 8080 register and return it */
     private short getreg(int reg) {
         switch (reg) {
             case 0: return B;  case 1: return C;  case 2: return D;
             case 3: return E;  case 4: return H;  case 5: return L;
-            case 6: return mem.read8((H << 8) | L);  case 7: return A;
+            case 6: return ((Integer)mem.read((H << 8) | L)).shortValue();
+            case 7: return A;
         }
         return 0;
     }
@@ -354,7 +326,7 @@ public class cpuEmulator implements ICPU, Runnable {
             case 0: B = val; break; case 1: C = val; break;
             case 2: D = val; break; case 3: E = val; break;
             case 4: H = val; break; case 5: L = val; break;
-            case 6: mem.write8((H << 8) | L, val); break;
+            case 6: mem.write((H << 8) | L, val); break;
             case 7: A = val;
         }
     }
@@ -475,16 +447,16 @@ public class cpuEmulator implements ICPU, Runnable {
         if (isINT == true) {
             if (INTE == true) {
                 if ((b1 & 0xC7) == 0xC7) {                      /* RST */
-                    mem.write16(SP-2,PC); SP -= 2; PC = b1 & 0x38; return 11;
+                    mem.writeWord(SP-2,PC); SP -= 2; PC = b1 & 0x38; return 11;
                 } else if (b1 == 0315) {                        /* CALL */
-                    mem.write16(SP-2, PC+2); SP -= 2; 
+                    mem.writeWord(SP-2, PC+2); SP -= 2; 
                     PC = (int)(((b3 & 0xFF) << 8) | (b2 & 0xFF));
                     return 17;
                 }
             }
             isINT = false;
         }        
-        OP = mem.read8(PC++);
+        OP = ((Integer)mem.read(PC++)).shortValue();
         if (OP == 118) { // hlt?
             run_state = stateEnum.stoppedNormal;
             return 7;
@@ -496,36 +468,36 @@ public class cpuEmulator implements ICPU, Runnable {
             putreg((OP >>> 3) & 0x07, getreg(OP & 0x07)); 
             if (((OP & 0x07) == 6) || (((OP >>> 3) & 0x07) == 6)) return 7; else return 5;
         } else if ((OP & 0xC7) == 0x06) {                      /* MVI */
-            putreg((OP >>> 3) & 0x07, mem.read8(PC++));
+            putreg((OP >>> 3) & 0x07, ((Integer)mem.read(PC++)).shortValue());
             if (((OP >>> 3) & 0x07) == 6) return 10; else return 7;
         } else if ((OP & 0xCF) == 0x01) {                      /* LXI */
-            putpair((OP >>> 4) & 0x03, mem.read16(PC)); PC += 2; return 10;
+            putpair((OP >>> 4) & 0x03, (Integer)mem.readWord(PC)); PC += 2; return 10;
         } else if ((OP & 0xEF) == 0x0A) {                      /* LDAX */
-            putreg(7, mem.read8(getpair((OP >>> 4) & 0x03))); return 7;
+            putreg(7, ((Integer)mem.read(getpair((OP >>> 4) & 0x03))).shortValue()); return 7;
         } else if ((OP & 0xEF) == 0x02) {                      /* STAX */
-            mem.write8(getpair((OP >>> 4) & 0x03), getreg(7)); return 7;
+            mem.write(getpair((OP >>> 4) & 0x03), getreg(7)); return 7;
         } else if ((OP & 0xF8) == 0xB8) {                      /* CMP */
             int X = A; DAR = A & 0xFF; DAR -= getreg(OP & 0x07);
             setarith(DAR, X); if ((OP & 0x07) == 6) return 7; else return 4;
         } else if ((OP & 0xC7) == 0xC2) {                      /* JMP <condition> */
-            if (cond((OP >>> 3) & 0x07) == 1) PC = mem.read16(PC);
+            if (cond((OP >>> 3) & 0x07) == 1) PC = (Integer)mem.readWord(PC);
             else PC += 2; return 10;
         } else if ((OP & 0xC7) == 0xC4) {                      /* CALL <condition> */
             if (cond((OP >>> 3) & 0x07) == 1) {
-                DAR = mem.read16(PC); PC += 2; mem.write16(SP-2,PC); SP -= 2;
-                PC = DAR; return 17;
+                DAR = (Integer)mem.readWord(PC); PC += 2; mem.writeWord(SP-2,PC);
+                SP -= 2; PC = DAR; return 17;
             } else { PC += 2; return 11; }
         } else if ((OP & 0xC7) == 0xC0) {                      /* RET <condition> */
             if (cond((OP >>> 3) & 0x07) == 1) {
-                PC = mem.read16(SP); SP += 2;
+                PC = (Integer)mem.readWord(SP); SP += 2;
             } return 10;
         } else if ((OP & 0xC7) == 0xC7) {                      /* RST */
-            mem.write16(SP-2,PC); SP -= 2; PC = OP & 0x38; return 11;
+            mem.writeWord(SP-2,PC); SP -= 2; PC = OP & 0x38; return 11;
         } else if ((OP & 0xCF) == 0xC5) {                      /* PUSH */
-            DAR = getpush((OP >>> 4) & 0x03); mem.write16(SP-2,DAR); SP -= 2;
+            DAR = getpush((OP >>> 4) & 0x03); mem.writeWord(SP-2,DAR); SP -= 2;
             return 11;
         } else if ((OP & 0xCF) == 0xC1) {                      /*POP */
-            DAR = mem.read16(SP); SP += 2; putpush((OP >>> 4) & 0x03, DAR);
+            DAR = (Integer)mem.readWord(SP); SP += 2; putpush((OP >>> 4) & 0x03, DAR);
             return 10;
         } else if ((OP & 0xF8) == 0x80) {                      /* ADD */
             int X = A; DAR = A & 0xF0; A += getreg(OP & 0x07); setarith(A,X);
@@ -567,54 +539,56 @@ public class cpuEmulator implements ICPU, Runnable {
         /* The Big Instruction Decode Switch */
         switch (OP) {
             /* Logical instructions */
-            case 0376: {                                     /* CPI */
-                int X = A; DAR = A & 0xFF; DAR -= mem.read8(PC++); setarith(DAR,X);
-                return 7; }
+            case 0376:                                     /* CPI */
+                int X = A; DAR = A & 0xFF; DAR -= ((Integer)mem.read(PC++)).shortValue();
+                setarith(DAR,X); return 7;
             case 0346:                                     /* ANI */
-                A &= mem.read8(PC++); Flags &= (~flagC); Flags &= (~flagAC);
-                setlogical(A); A &= 0xFF; return 7;
+                A &= ((Integer)mem.read(PC++)).shortValue(); Flags &= (~flagC);
+                Flags &= (~flagAC); setlogical(A); A &= 0xFF; return 7;
             case 0356:                                     /* XRI */
-                A ^= mem.read8(PC++); Flags &= (~flagC); Flags &= (~flagAC);
-                setlogical(A); A &= 0xFF; return 7;
+                A ^= ((Integer)mem.read(PC++)).shortValue(); Flags &= (~flagC);
+                Flags &= (~flagAC); setlogical(A); A &= 0xFF; return 7;
             case 0366:                                     /* ORI */
-                A |= mem.read8(PC++); Flags &= (~flagC); Flags &= (~flagAC);
-                setlogical(A); A &= 0xFF; return 7;
+                A |= ((Integer)mem.read(PC++)).shortValue(); Flags &= (~flagC);
+                Flags &= (~flagAC); setlogical(A); A &= 0xFF; return 7;
             /* Jump instructions */
             case 0303:                                     /* JMP */
-                PC = mem.read16(PC); return 10;
+                PC = (Integer)mem.readWord(PC); return 10;
             case 0351:                                     /* PCHL */
                 PC = (H << 8) | L; return 5;
             case 0315:                                     /* CALL */
-                mem.write16(SP-2, PC+2); SP -= 2; PC = mem.read16(PC);
+                mem.writeWord(SP-2, PC+2); SP -= 2; PC = (Integer)mem.readWord(PC);
                 return 17;
             case 0311:                                     /* RET */
-                PC = mem.read16(SP); SP += 2; return 10;
+                PC = (Integer)mem.readWord(SP); SP += 2; return 10;
             /* Data Transfer Group */
             case 062:                                      /* STA */
-                DAR = mem.read16(PC); PC += 2; mem.write8(DAR, A); return 13;
+                DAR = (Integer)mem.readWord(PC); PC += 2; mem.write(DAR, A); return 13;
             case 072:                                      /* LDA */
-                DAR = mem.read16(PC); PC += 2; A = mem.read8(DAR); return 13;
+                DAR = (Integer)mem.readWord(PC); PC += 2; 
+                A = ((Integer)mem.read(DAR)).shortValue(); return 13;
             case 042:                                      /* SHLD */
-                DAR = mem.read16(PC); PC += 2; mem.write16(DAR, (H << 8) | L);
-                return 16;
+                DAR = (Integer)mem.readWord(PC); PC += 2;
+                mem.writeWord(DAR, (H << 8) | L); return 16;
             case 052:                                      /* LHLD BUG !*/
-                DAR = mem.read16(PC); PC += 2;
-                L = mem.read8(DAR); H = mem.read8(DAR+1);
-                return 16;
+                DAR = (Integer)mem.readWord(PC); PC += 2;
+                L = ((Integer)mem.read(DAR)).shortValue();
+                H = ((Integer)mem.read(DAR+1)).shortValue(); return 16;
             case 0353:                                     /* XCHG */
                 short x = H, y = L; H = D; L = E; D = x; E = y; return 4;
             /* Arithmetic Group */
             case 0306:                                     /* ADI */
-                DAR = A; A += mem.read8(PC++); setarith(A,DAR); A = (short)(A & 0xFF);
-                return 7;
-            case 0316:                                     /* ACI */
-                DAR = A; A += mem.read8(PC++); if ((Flags & flagC) != 0) A++;
+                DAR = A; A += ((Integer)mem.read(PC++)).shortValue(); 
                 setarith(A,DAR); A = (short)(A & 0xFF); return 7;
+            case 0316:                                     /* ACI */
+                DAR = A; A += ((Integer)mem.read(PC++)).shortValue();
+                if ((Flags & flagC) != 0) A++; setarith(A,DAR); A = (short)(A & 0xFF);
+                return 7;
             case 0326:                                     /* SUI */
-                DAR = A; A -= mem.read8(PC++); setarith(A,DAR);
+                DAR = A; A -= ((Integer)mem.read(PC++)).shortValue(); setarith(A,DAR);
                 A = (short)(A & 0xFF); return 7;
             case 0336:                                     /* SBI */
-                DAR = A; A -= mem.read8(PC++); if ((Flags & flagC) != 0) A--;
+                DAR = A; A -= ((Integer)mem.read(PC++)).shortValue(); if ((Flags & flagC) != 0) A--;
                 setarith(A,DAR); A = (short)(A & 0xFF); return 7;
             case 047:                                      /* DAA */
                 DAR = A & 0x0F;
@@ -661,7 +635,7 @@ public class cpuEmulator implements ICPU, Runnable {
             case 0:                                        /* NOP */
                 return 4;
             case 0343:                                     /* XTHL */
-                DAR = mem.read16(SP); mem.write16(SP, (H << 8) | L);
+                DAR = (Integer)mem.readWord(SP); mem.writeWord(SP, (H << 8) | L);
                 H = (short)((DAR >>> 8) & 0xFF); L = (short)(DAR & 0xFF);
                 return 18;
             case 0371:                                     /* SPHL */
@@ -671,12 +645,12 @@ public class cpuEmulator implements ICPU, Runnable {
             case 0363:                                     /* DI */
                 INTE = false; return 4;
             case 0333:                                     /* IN */
-                DAR = mem.read8(PC++);
-                fireIO(DAR, true);
+                DAR = ((Integer)mem.read(PC++)).shortValue();
+                A = cpu.fireIO(DAR, true, (short)0);
                 return 10;
             case 0323:                                     /* OUT */
-                DAR = mem.read8(PC++);
-                fireIO(DAR, false); 
+                DAR = ((Integer)mem.read(PC++)).shortValue();
+                cpu.fireIO(DAR, false, A); 
                 return 10;
         }
         run_state = stateEnum.stoppedBadInstr;
@@ -684,43 +658,5 @@ public class cpuEmulator implements ICPU, Runnable {
     }
     
 
-    private void fireCpuRun(EventObject evt) {
-        Object[] listeners = listenerList.getListenerList();
-        for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i] == ICPUListener.class)
-                ((ICPUListener)listeners[i+1]).cpuRunChanged(evt, run_state);
-        }
-        status.updateGUI();
-    }
-    
-    private void fireCpuState(EventObject evt) {
-        Object[] listeners = listenerList.getListenerList();
-        for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i] == ICPUListener.class)
-                ((ICPUListener)listeners[i+1]).cpuStateUpdated(evt);
-        }
-    }
 
-    private void fireFrequencyChanged(EventObject evt, float freq) {
-        Object[] listeners = listenerList.getListenerList();
-        for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i] == ICPUListener.class)
-                ((ICPUListener)listeners[i+1]).frequencyChanged(evt,freq);
-        }
-    }
-    
-
-    private void fireIO(int port, boolean read) {
-        if (devicesList.containsKey(port) == false) {
-            if (read == true) A = 0;
-            return;
-        }
-        if (read == true) {
-            A = (short)((IDevice.IDevListener)devicesList.get(port)).
-                    devIN(cpuEvt);
-        }
-        else
-            ((IDevice.IDevListener)devicesList.get(port)).
-                    devOUT(cpuEvt,A);
-    }
 }
