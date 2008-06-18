@@ -156,56 +156,58 @@ public class HighlightThread extends Thread {
                 dp = null;
                 if (workingIt.hasNext()) dp = (DocPosition)workingIt.next();
 
-                IToken t;
-                boolean done = false;
-                dpEnd = dpStart;
-                synchronized (doclock) {
-                    syntaxLexer.reset(reader, 0, dpStart.getPosition(), 0);
-                    reader.seek(dpStart.getPosition());
-                    t = syntaxLexer.getSymbol();
-                }
-                newPositions.add(dpStart);
-                while (!done && t.getType() != IToken.TEOF){
-//                    synchronized (doclock){
-                        if (t.getCharEnd() <= document.getLength()) {
-                            SimpleAttributeSet style = (SimpleAttributeSet)
-                                    styles.get(t.getType());
-                            if (style == null)
-                            style = (SimpleAttributeSet)
-                                    styles.get(IToken.ERROR);
-                            document.setCharacterAttributes(t.getCharBegin() 
-                                    + change,t.getCharEnd()-t.getCharBegin(),
-                                    style,true);         
-                            // record the position of the last bit of text that we colored
-                            dpEnd = new DocPosition(t.getCharEnd());
-                        }
-                        lastPosition = (t.getCharEnd() + change);
-                //    }
-                    // look at all the positions from last time that are less than or
-                    // equal to the current position
-                    while (dp != null && dp.getPosition() <= t.getCharEnd()){
-                        if (dp.getPosition() == t.getCharEnd() 
-                                && dp.getPosition() >= endRequest.getPosition()){
-                            // we have found a state that is the same
-                            done = true;
-                            dp = null;
-                        } else if (workingIt.hasNext()){
-                            // didn't find it, try again.
-                            dp = (DocPosition)workingIt.next();
-                        } else {
-                            // didn't find it, and there is no more info from last
-                            // time.  This means that we will just continue
-                            // until the end of the document.
-                            dp = null;
-                        }
-                    }
-                    // so that we can do this check next time, record all the
-                    // initial states from this time.
-                    newPositions.add(dpEnd);
+                try {
+                    IToken t;
+                    boolean done = false;
+                    dpEnd = dpStart;
                     synchronized (doclock) {
+                        syntaxLexer.reset(reader, 0, dpStart.getPosition(), 0);
+                        reader.seek(dpStart.getPosition());
                         t = syntaxLexer.getSymbol();
                     }
-                }
+                    newPositions.add(dpStart);
+                    while (!done && t.getType() != IToken.TEOF){
+    //                    synchronized (doclock){
+                            if (t.getCharEnd() <= document.getLength()) {
+                                SimpleAttributeSet style = (SimpleAttributeSet)
+                                        styles.get(t.getType());
+                                if (style == null)
+                                style = (SimpleAttributeSet)
+                                        styles.get(IToken.ERROR);
+                                document.setCharacterAttributes(t.getCharBegin() 
+                                        + change,t.getCharEnd()-t.getCharBegin(),
+                                        style,true);         
+                                // record the position of the last bit of text that we colored
+                                dpEnd = new DocPosition(t.getCharEnd());
+                            }
+                            lastPosition = (t.getCharEnd() + change);
+                    //    }
+                        // look at all the positions from last time that are less than or
+                        // equal to the current position
+                        while (dp != null && dp.getPosition() <= t.getCharEnd()){
+                            if (dp.getPosition() == t.getCharEnd() 
+                                    && dp.getPosition() >= endRequest.getPosition()){
+                                // we have found a state that is the same
+                                done = true;
+                                dp = null;
+                            } else if (workingIt.hasNext()){
+                                // didn't find it, try again.
+                                dp = (DocPosition)workingIt.next();
+                            } else {
+                                // didn't find it, and there is no more info from last
+                                // time.  This means that we will just continue
+                                // until the end of the document.
+                                dp = null;
+                            }
+                        }
+                        // so that we can do this check next time, record all the
+                        // initial states from this time.
+                        newPositions.add(dpEnd);
+                        synchronized (doclock) {
+                            t = syntaxLexer.getSymbol();
+                        }
+                    }
+                } catch (IOException e) {}
                 // remove all the old initial positions from the place where
                 // we started doing the highlighting right up through the last
                 // bit of text we touched.

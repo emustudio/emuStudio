@@ -42,7 +42,7 @@ public class DebugTableModel extends AbstractTableModel {
 
     // pocet riadkov
     public int getRowCount() {
-        int a = mem.getSize() - cpu.getContext().getInstrPosition();
+        int a = mem.getContext().getSize() - cpu.getContext().getInstrPosition();
         if (a < MAX_ROW_COUNT) return a;
         else return MAX_ROW_COUNT;
     }

@@ -46,7 +46,7 @@ public class ArchitectureHandler implements ISettingsHandler {
      */
     public ArchitectureHandler(String name, ICompiler compiler, ICPU cpu,
             IMemory memory, IDevice[] devices, Properties settings) 
-            throws IllegalArgumentException {
+            throws IllegalArgumentException, Error {
         if (compiler == null) 
             throw new IllegalArgumentException("Compiler can't be null");
         if (cpu == null)
@@ -68,19 +68,22 @@ public class ArchitectureHandler implements ISettingsHandler {
             if (settings.containsKey("device"+i))
                 devs.add(settings.getProperty("device"+i));
         devNames = (String[])devs.toArray(new String[0]);
-        initialize();
+        if (initialize() == false) 
+            throw new Error("Initialization of plugins failed");
     }
     
     /**
      * Initialize all plugins. It is called from constructor
      */
-    private void initialize() {
+    private boolean initialize() {
+        boolean r = true;
         compiler.initialize(this);
         memSize = Integer.valueOf(settings.getProperty("memorySize"));
         memory.initialize(memSize, this);
-        cpu.initialize(memory, this);
+        r = cpu.initialize(memory.getContext(), this);
         for (int i=0; i < devices.length; i++)
-            devices[i].initialize(cpu.getContext(), memory, this);
+            devices[i].initialize(cpu.getContext(), memory.getContext(), this);
+        return r;
     }
     
     /**

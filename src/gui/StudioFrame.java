@@ -906,7 +906,7 @@ public class StudioFrame extends javax.swing.JFrame {
         if (arch.getCPU().getContext().setInstrPosition(address) == false) {
             JOptionPane.showMessageDialog(this,
                     "Typed address is incorrect ! (expected range from 0 to "
-                    + String.valueOf(arch.getMemory().getSize())+")",
+                    + String.valueOf(arch.getMemory().getContext().getSize())+")",
                     "Jump",JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -935,22 +935,22 @@ public class StudioFrame extends javax.swing.JFrame {
         String fn = txtSource.getFileName();
         fn = fn.substring(0,fn.lastIndexOf(".")) + ".hex";
 
-// zatial... neskor sa bude dat nastavit v kompilatore...
+// zatial... neskor sa bude dat nastavit v kompilatore...asi
         int res = JOptionPane.showConfirmDialog(null,
                 "Will you want to load compiled file into operating memory ?",
                 "Confirmation", JOptionPane.YES_NO_OPTION);
         try {
             syntaxLexer.reset(new DocumentReader(txtSource.getDocument()),0,
                     0, 0);
-            boolean compileResult = false;
-            compileResult = arch.getCompiler().compile(fn,
-                    arch.getMemory().getContext(), res==JOptionPane.YES_OPTION);
+            arch.getCompiler().compile(fn, arch.getMemory().getContext(),
+                    (res==JOptionPane.YES_OPTION));
+            arch.getMemory().setProgramStart(arch.getCompiler()
+                    .getProgramStartAddress());
         }
         catch(Exception e) {
             txtOutput.append(e.toString()+"\n");
             txtSource.setEditable(true);
-            return;
-        } catch(Error ex) { return ;}
+        } catch(Error ex) {}
         txtSource.setEditable(true);
 
     }//GEN-LAST:event_btnCompileActionPerformed
