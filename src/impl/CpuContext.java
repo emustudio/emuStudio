@@ -28,40 +28,23 @@ public class CpuContext implements ACpuContext {
     private Hashtable devicesList;
     private HashSet breaks; // zoznam breakpointov (mnozina)
     private int clockFrequency = 2000; // kHz
+    private Cpu8080 cpu;
 
-    public CpuContext() {
+    public CpuContext(Cpu8080 cpu) {
         devicesList = new Hashtable();
         breaks = new HashSet();
         listenerList = new EventListenerList();
+        this.cpu = cpu;
     }
     
-    public String getID() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+    public String getID() { return "i8080"; }
+    public int getVersionMajor() { return 1; }
+    public int getVersionMinor() { return 8; }
+    public String getVersionRev() { return "b1"; }
 
-    public int getVersionMajor() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public int getVersionMinor() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public String getVersionRev() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public int getInstrPosition() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public int getNextInstrPos(int pos) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public boolean setInstrPosition(int pos) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+    public int getInstrPosition() { return cpu.getPC(); }
+    public int getNextInstrPos(int pos) { return cpu.getNextPC(pos); }
+    public boolean setInstrPosition(int pos) { return cpu.setPC(pos); }
 
     public void addCPUListener(ICPUListener listener) {
         listenerList.add(ICPUListener.class, listener);
@@ -71,18 +54,12 @@ public class CpuContext implements ACpuContext {
         listenerList.remove(ICPUListener.class, listener);
     }
 
-    public boolean isBreakpointSupported() {
-        return true;
-    }
-
+    public boolean isBreakpointSupported() { return true; }
     public void setBreakpoint(int pos, boolean set) {
         if (set) breaks.add(pos);
         else breaks.remove(pos);
     }
-
-    public boolean getBreakpoint(int pos) {
-        return breaks.contains(pos);
-    }
+    public boolean getBreakpoint(int pos) { return breaks.contains(pos); }
 
     // device mapping = only one device can be attached to one port
     public boolean attachDevice(IDeviceContext listener, int port) {
@@ -90,24 +67,21 @@ public class CpuContext implements ACpuContext {
         devicesList.put(port, listener);
         return true;
     }
-    public void disattachDevice(int port) {
+    public void detachDevice(int port) {
         if (devicesList.containsKey(port))
             devicesList.remove(port);
     }
     
-    public void clearDevices() {
-        devicesList.clear();
-    }
+    public void clearDevices() { devicesList.clear(); }
     
     public int getFrequency() { return this.clockFrequency; }
     // frequency in kHz
     public void setFrequency(int freq) { this.clockFrequency = freq; }
     
-
     public void fireCpuRun(statusGUI status, stateEnum run_state) {
         Object[] listeners = listenerList.getListenerList();
         for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i] instanceof ICPUListener)
+            if (listeners[i] == ICPUListener.class)
                 ((ICPUListener)listeners[i+1]).runChanged(cpuEvt, run_state);
         }
         status.updateGUI();
@@ -116,7 +90,7 @@ public class CpuContext implements ACpuContext {
     public void fireCpuState() {
         Object[] listeners = listenerList.getListenerList();
         for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i] instanceof ICPUListener)
+            if (listeners[i] == ICPUListener.class)
                 ((ICPUListener)listeners[i+1]).stateUpdated(cpuEvt);
         }
     }
@@ -124,7 +98,7 @@ public class CpuContext implements ACpuContext {
     public void fireFrequencyChanged(float freq) {
         Object[] listeners = listenerList.getListenerList();
         for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i] instanceof ACpuListener)
+            if (listeners[i+1] instanceof ACpuListener)
                 ((ACpuListener)listeners[i+1]).frequencyChanged(cpuEvt,freq);
         }
     }
@@ -140,7 +114,7 @@ public class CpuContext implements ACpuContext {
     public short fireIO(int port, boolean read, short val) {
         if (devicesList.containsKey(port) == false) {
             // this behavior isn't constant for all situations...
-            if (read == true) return 0;
+            return 0;
         }
         if (read == true) 
             return (short)((IDeviceContext)devicesList.get(port)).in(cpuEvt);

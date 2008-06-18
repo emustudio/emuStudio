@@ -20,6 +20,7 @@ import plugins.cpu.ICPUContext;
 import plugins.cpu.ICPUContext.stateEnum;
 import plugins.cpu.IDebugColumn;
 import plugins.memory.IMemoryContext;
+import runtime.StaticDialogs;
 
 
 /**
@@ -40,7 +41,7 @@ public class Cpu8080 implements ICPU, Runnable {
     private long long_cycles = 0; // count of executed cycles for runtime freq. computing
     private java.util.Timer freqScheduler;
     private RuntimeFrequencyCalculator rfc;
-    private int sliceCheckTime = 1000;
+    private int sliceCheckTime = 50;
 
     // registers are public meant for only statusGUI (didnt want make it thru get() methods)
     private int PC=0; // program counter
@@ -70,7 +71,7 @@ public class Cpu8080 implements ICPU, Runnable {
     
     /** Creates a new instance of Cpu8080 */
     public Cpu8080() {
-        cpu = new CpuContext();
+        cpu = new CpuContext(this);
         run_state = stateEnum.stoppedNormal;
         status = new statusGUI(this);
         rfc = new RuntimeFrequencyCalculator();
@@ -79,14 +80,20 @@ public class Cpu8080 implements ICPU, Runnable {
 
     public String getDescription() { return "Intel 8080 CPU VM,"
             + " modified for use as CPU for MITS Altair 8800 computer"; }
-    public String getVersion() { return "0.12b"; }
+    public String getVersion() { return "0.18b"; }
     public String getName() { return "Virtual i8080 CPU"; }
     public String getCopyright() { return "\u00A9 Copyright 2006-2008, Peter Jakubčo"; }
 
-    public void initialize(IMemoryContext mem, ISettingsHandler sHandler) {
+    public boolean initialize(IMemoryContext mem, ISettingsHandler sHandler) {
+        if (!mem.getID().equals("byte_simple_variable")) {
+            StaticDialogs.showErrorMessage("Operating memory type is not supported"
+                    + " for this kind of CPU.");
+            return false;
+        }
         this.mem = mem;
         this.settings = sHandler;
         status.setMem(mem);
+        return true;
     }
 
     public ICPUContext getContext() {
@@ -105,7 +112,7 @@ public class Cpu8080 implements ICPU, Runnable {
     public void reset() {
         SP = A = B = C = D = E = H = L = 0;
         Flags = 2; //0000 0010b
-        PC = 0; // programStart;
+        PC = mem.getProgramStart();
         INTE = false;
         run_state = stateEnum.stoppedBreak;
         cpuThread = null;
@@ -192,8 +199,7 @@ public class Cpu8080 implements ICPU, Runnable {
     public int getSliceTime() { return sliceCheckTime; }
     public void setSliceTime(int t) { sliceCheckTime = t; }
     
-    
-    public void setRuntimeFreqCounter(boolean run) {
+    private void setRuntimeFreqCounter(boolean run) {
         if (run) {
             try { 
                 freqScheduler.purge();
@@ -236,6 +242,7 @@ public class Cpu8080 implements ICPU, Runnable {
         run_state = stateEnum.runned;
         cpu.fireCpuRun(status,run_state);
         cpu.fireCpuState();
+        setRuntimeFreqCounter(true);
         /* 1 Hz  .... 1 tState per second
          * 1 kHz .... 1000 tStates per second
          * clockFrequency is in kHz it have to be multiplied with 1000
@@ -314,7 +321,7 @@ public class Cpu8080 implements ICPU, Runnable {
         switch (reg) {
             case 0: return B;  case 1: return C;  case 2: return D;
             case 3: return E;  case 4: return H;  case 5: return L;
-            case 6: return ((Integer)mem.read((H << 8) | L)).shortValue();
+            case 6: return ((Short)mem.read((H << 8) | L)).shortValue();
             case 7: return A;
         }
         return 0;
@@ -456,7 +463,7 @@ public class Cpu8080 implements ICPU, Runnable {
             }
             isINT = false;
         }        
-        OP = ((Integer)mem.read(PC++)).shortValue();
+        OP = ((Short)mem.read(PC++)).shortValue();
         if (OP == 118) { // hlt?
             run_state = stateEnum.stoppedNormal;
             return 7;
@@ -468,12 +475,12 @@ public class Cpu8080 implements ICPU, Runnable {
             putreg((OP >>> 3) & 0x07, getreg(OP & 0x07)); 
             if (((OP & 0x07) == 6) || (((OP >>> 3) & 0x07) == 6)) return 7; else return 5;
         } else if ((OP & 0xC7) == 0x06) {                      /* MVI */
-            putreg((OP >>> 3) & 0x07, ((Integer)mem.read(PC++)).shortValue());
+            putreg((OP >>> 3) & 0x07, ((Short)mem.read(PC++)).shortValue());
             if (((OP >>> 3) & 0x07) == 6) return 10; else return 7;
         } else if ((OP & 0xCF) == 0x01) {                      /* LXI */
             putpair((OP >>> 4) & 0x03, (Integer)mem.readWord(PC)); PC += 2; return 10;
         } else if ((OP & 0xEF) == 0x0A) {                      /* LDAX */
-            putreg(7, ((Integer)mem.read(getpair((OP >>> 4) & 0x03))).shortValue()); return 7;
+            putreg(7, ((Short)mem.read(getpair((OP >>> 4) & 0x03))).shortValue()); return 7;
         } else if ((OP & 0xEF) == 0x02) {                      /* STAX */
             mem.write(getpair((OP >>> 4) & 0x03), getreg(7)); return 7;
         } else if ((OP & 0xF8) == 0xB8) {                      /* CMP */
@@ -540,16 +547,16 @@ public class Cpu8080 implements ICPU, Runnable {
         switch (OP) {
             /* Logical instructions */
             case 0376:                                     /* CPI */
-                int X = A; DAR = A & 0xFF; DAR -= ((Integer)mem.read(PC++)).shortValue();
+                int X = A; DAR = A & 0xFF; DAR -= ((Short)mem.read(PC++)).shortValue();
                 setarith(DAR,X); return 7;
             case 0346:                                     /* ANI */
-                A &= ((Integer)mem.read(PC++)).shortValue(); Flags &= (~flagC);
+                A &= ((Short)mem.read(PC++)).shortValue(); Flags &= (~flagC);
                 Flags &= (~flagAC); setlogical(A); A &= 0xFF; return 7;
             case 0356:                                     /* XRI */
-                A ^= ((Integer)mem.read(PC++)).shortValue(); Flags &= (~flagC);
+                A ^= ((Short)mem.read(PC++)).shortValue(); Flags &= (~flagC);
                 Flags &= (~flagAC); setlogical(A); A &= 0xFF; return 7;
             case 0366:                                     /* ORI */
-                A |= ((Integer)mem.read(PC++)).shortValue(); Flags &= (~flagC);
+                A |= ((Short)mem.read(PC++)).shortValue(); Flags &= (~flagC);
                 Flags &= (~flagAC); setlogical(A); A &= 0xFF; return 7;
             /* Jump instructions */
             case 0303:                                     /* JMP */
@@ -566,29 +573,29 @@ public class Cpu8080 implements ICPU, Runnable {
                 DAR = (Integer)mem.readWord(PC); PC += 2; mem.write(DAR, A); return 13;
             case 072:                                      /* LDA */
                 DAR = (Integer)mem.readWord(PC); PC += 2; 
-                A = ((Integer)mem.read(DAR)).shortValue(); return 13;
+                A = ((Short)mem.read(DAR)).shortValue(); return 13;
             case 042:                                      /* SHLD */
                 DAR = (Integer)mem.readWord(PC); PC += 2;
                 mem.writeWord(DAR, (H << 8) | L); return 16;
             case 052:                                      /* LHLD BUG !*/
                 DAR = (Integer)mem.readWord(PC); PC += 2;
-                L = ((Integer)mem.read(DAR)).shortValue();
-                H = ((Integer)mem.read(DAR+1)).shortValue(); return 16;
+                L = ((Short)mem.read(DAR)).shortValue();
+                H = ((Short)mem.read(DAR+1)).shortValue(); return 16;
             case 0353:                                     /* XCHG */
                 short x = H, y = L; H = D; L = E; D = x; E = y; return 4;
             /* Arithmetic Group */
             case 0306:                                     /* ADI */
-                DAR = A; A += ((Integer)mem.read(PC++)).shortValue(); 
+                DAR = A; A += ((Short)mem.read(PC++)).shortValue(); 
                 setarith(A,DAR); A = (short)(A & 0xFF); return 7;
             case 0316:                                     /* ACI */
-                DAR = A; A += ((Integer)mem.read(PC++)).shortValue();
+                DAR = A; A += ((Short)mem.read(PC++)).shortValue();
                 if ((Flags & flagC) != 0) A++; setarith(A,DAR); A = (short)(A & 0xFF);
                 return 7;
             case 0326:                                     /* SUI */
-                DAR = A; A -= ((Integer)mem.read(PC++)).shortValue(); setarith(A,DAR);
+                DAR = A; A -= ((Short)mem.read(PC++)).shortValue(); setarith(A,DAR);
                 A = (short)(A & 0xFF); return 7;
             case 0336:                                     /* SBI */
-                DAR = A; A -= ((Integer)mem.read(PC++)).shortValue(); if ((Flags & flagC) != 0) A--;
+                DAR = A; A -= ((Short)mem.read(PC++)).shortValue(); if ((Flags & flagC) != 0) A--;
                 setarith(A,DAR); A = (short)(A & 0xFF); return 7;
             case 047:                                      /* DAA */
                 DAR = A & 0x0F;
@@ -645,11 +652,11 @@ public class Cpu8080 implements ICPU, Runnable {
             case 0363:                                     /* DI */
                 INTE = false; return 4;
             case 0333:                                     /* IN */
-                DAR = ((Integer)mem.read(PC++)).shortValue();
+                DAR = ((Short)mem.read(PC++)).shortValue();
                 A = cpu.fireIO(DAR, true, (short)0);
                 return 10;
             case 0323:                                     /* OUT */
-                DAR = ((Integer)mem.read(PC++)).shortValue();
+                DAR = ((Short)mem.read(PC++)).shortValue();
                 cpu.fireIO(DAR, false, A); 
                 return 10;
         }

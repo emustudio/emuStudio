@@ -23,8 +23,6 @@ import plugins.cpu.ICPUInstruction;
 import plugins.cpu.IDebugColumn;
 import plugins.memory.IMemoryContext;
 
-
-
 /**
  *
  * @author  vbmacher
@@ -81,7 +79,6 @@ public class statusGUI extends javax.swing.JPanel {
             }
         });
     }
-
     
     private void setCPUFreq(int f) { cpuC.setFrequency(f); }
     
@@ -104,7 +101,7 @@ public class statusGUI extends javax.swing.JPanel {
                 case 0: return cpuC.getBreakpoint(index);
                 case 1: return String.format("%04Xh", index);
                 case 2: return "incomplete instruction";
-                case 3: return String.format("%X", (Integer)mem.read(index));
+                case 3: return String.format("%X", (Short)mem.read(index));
                 default: return "";
             }
         }
@@ -148,7 +145,7 @@ public class statusGUI extends javax.swing.JPanel {
         String mnemo, oper;
         
         if (this.mem == null) return null;
-        val = ((Integer)mem.read(actPos++)).shortValue();
+        val = ((Short)mem.read(actPos++)).shortValue();
         oper = String.format("%02X",val);
         if ((val >= 64) && (val <= 127) && (val != 118))
             mnemo = "mov " + getRegMnemo((val&56) >> 3) + ","
@@ -189,42 +186,42 @@ public class statusGUI extends javax.swing.JPanel {
                      actPos += 2; break;
                 case 235: mnemo = "xchg"; break;
                 case 6: // mvi b, byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi B,%02Xh", val);
                      oper += String.format(" %02X", val);
                      break;
                 case 14: // mvi c, byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi C,%02Xh", val);
                      oper += String.format(" %02X", val);
                      break;
                 case 22: // mvi d, byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi D,%02Xh", val);
                      oper += String.format(" %02X", val);
                      break;
                 case 30: // mvi e, byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi E,%02Xh", val);
                      oper = String.format(" %02X", val);
                      break;
                 case 38: // mvi h, byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi H,%02Xh", val);
                      oper += String.format(" %02X", val);
                      break;
                 case 46: // mvi l, byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi L,%02Xh", val);
                      oper += String.format(" %02X", val);
                      break;
                 case 54: // mvi m, byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi M,%02Xh", val);
                      oper += String.format(" %02X", val);
                      break;
                 case 62: // mvi a, byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("mvi A,%02Xh", val);
                      oper += String.format(" %02X", val);
                      break;
@@ -259,19 +256,19 @@ public class statusGUI extends javax.swing.JPanel {
                 case 229: mnemo = "push HL"; break;
                 case 245: mnemo = "push PSW"; break;
                 case 219: // in port
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("in %Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 211: // out port
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("out %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 198: // adi byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("adi %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 206: // aci byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("aci %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 9: mnemo = "dad BC"; break;
@@ -279,11 +276,11 @@ public class statusGUI extends javax.swing.JPanel {
                 case 41: mnemo = "dad HL"; break;
                 case 57: mnemo = "dad SP"; break;
                 case 214: // sui byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("sui %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 222: // sbi byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("sbi %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 4: mnemo = "inr B"; break;
@@ -311,20 +308,20 @@ public class statusGUI extends javax.swing.JPanel {
                 case 43: mnemo = "dcx HL"; break;
                 case 59: mnemo = "dcx SP"; break;
                 case 254: // cpi byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("cpi %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 39: mnemo = "daa"; oper = "27"; break;
                 case 230: // ani byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("ani %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 246: // ori byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("ori %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 238: // xri byte
-                     val = ((Integer)mem.read(actPos++)).shortValue();
+                     val = ((Short)mem.read(actPos++)).shortValue();
                      mnemo = String.format("xri %02Xh", val);
                      oper += String.format(" %02X", val); break;
                 case 47: mnemo = "cma"; break;
@@ -456,7 +453,7 @@ public class statusGUI extends javax.swing.JPanel {
     public int getNextPosition(int memPos) throws ArrayIndexOutOfBoundsException {
         short val;
         if (mem == null) return 0;
-        val = ((Integer)mem.read(memPos++)).shortValue();
+        val = (Short)mem.read(memPos++);
         switch (val) {
             case 64: case 65: case 66: case 67: case 68: case 69: case 70: case 71: case 72: case 73: case 74: case 75: case 76:
             case 77: case 78: case 79: case 80: case 81: case 82: case 83: case 84: case 85: case 86: case 87: case 88: case 89:
@@ -499,6 +496,7 @@ public class statusGUI extends javax.swing.JPanel {
         txtRegL.setText(String.format("%02X", cpu.L));
         txtRegHL.setText(String.format("%04X", ((cpu.H << 8) | cpu.L)&0xFFFF));
         txtRegSP.setText(String.format("%04X", cpu.SP));
+        txtRegPC.setText(String.format("%04X", cpu.getPC()));
         
         txtFlags.setText(String.format("%02X", cpu.Flags));
         if ((cpu.Flags & cpu.flagS) != 0) txtFlagS.setText("1");
@@ -520,7 +518,6 @@ public class statusGUI extends javax.swing.JPanel {
         else {
             spnFrequency.setEnabled(true);
             spnTestPeriode.setEnabled(true);
-            RFCcheckbox.setSelected(false);
             switch (run_state.ordinal()) {
                 case 0: lblRun.setText("stopped (normal)"); break;
                 case 1: lblRun.setText("breakpoint"); break;
@@ -574,6 +571,8 @@ public class statusGUI extends javax.swing.JPanel {
         javax.swing.JLabel jLabel9 = new javax.swing.JLabel();
         txtFlagC = new javax.swing.JTextField();
         javax.swing.JLabel jLabel10 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel16 = new javax.swing.JLabel();
+        txtRegPC = new javax.swing.JTextField();
         javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
         lblRun = new javax.swing.JLabel();
         javax.swing.JLabel jLabel11 = new javax.swing.JLabel();
@@ -581,7 +580,6 @@ public class statusGUI extends javax.swing.JPanel {
         javax.swing.JLabel jLabel12 = new javax.swing.JLabel();
         javax.swing.JLabel jLabel13 = new javax.swing.JLabel();
         lblFrequency = new javax.swing.JLabel();
-        RFCcheckbox = new javax.swing.JCheckBox();
         javax.swing.JLabel jLabel14 = new javax.swing.JLabel();
         spnTestPeriode = new javax.swing.JSpinner();
         javax.swing.JLabel jLabel15 = new javax.swing.JLabel();
@@ -710,6 +708,14 @@ public class statusGUI extends javax.swing.JPanel {
         jLabel10.setFont(jLabel10.getFont().deriveFont(jLabel10.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel10.setText("C");
 
+        jLabel16.setFont(new java.awt.Font("DejaVu Sans", 1, 14)); // NOI18N
+        jLabel16.setText("PC");
+
+        txtRegPC.setEditable(false);
+        txtRegPC.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtRegPC.setText("0000");
+        txtRegPC.setPreferredSize(new java.awt.Dimension(40, 20));
+
         javax.swing.GroupLayout paneInfoRegistersLayout = new javax.swing.GroupLayout(paneInfoRegisters);
         paneInfoRegisters.setLayout(paneInfoRegistersLayout);
         paneInfoRegistersLayout.setHorizontalGroup(
@@ -719,15 +725,6 @@ public class statusGUI extends javax.swing.JPanel {
                 .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(paneInfoRegistersLayout.createSequentialGroup()
                         .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, paneInfoRegistersLayout.createSequentialGroup()
-                                .addGap(40, 40, 40)
-                                .addComponent(lblReg5, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(txtRegH, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(10, 10, 10)
-                                .addComponent(lblReg6, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(txtRegL, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(10, 10, 10)
-                                .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, paneInfoRegistersLayout.createSequentialGroup()
                                 .addGap(40, 40, 40)
                                 .addComponent(lblReg3, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -755,7 +752,20 @@ public class statusGUI extends javax.swing.JPanel {
                                 .addGap(10, 10, 10)
                                 .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel2)
-                                    .addComponent(jLabel7))))
+                                    .addComponent(jLabel7)))
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, paneInfoRegistersLayout.createSequentialGroup()
+                                .addGap(40, 40, 40)
+                                .addComponent(lblReg5, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(txtRegH, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(10, 10, 10)
+                                .addComponent(lblReg6, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(txtRegL, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(10, 10, 10)
+                                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(paneInfoRegistersLayout.createSequentialGroup()
+                                        .addComponent(jLabel16)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                                    .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                         .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                 .addGroup(paneInfoRegistersLayout.createSequentialGroup()
@@ -768,7 +778,10 @@ public class statusGUI extends javax.swing.JPanel {
                                     .addComponent(txtRegDE, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, paneInfoRegistersLayout.createSequentialGroup()
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtRegHL, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtRegPC, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtRegHL, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(34, 34, 34))))
                     .addGroup(paneInfoRegistersLayout.createSequentialGroup()
                         .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel5)
@@ -800,7 +813,7 @@ public class statusGUI extends javax.swing.JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(txtFlagAC, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(txtFlags, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addGap(30, 30, 30))
+                .addGap(92, 92, 92))
         );
         paneInfoRegistersLayout.setVerticalGroup(
             paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -842,7 +855,12 @@ public class statusGUI extends javax.swing.JPanel {
                         .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel5)
                             .addComponent(txtFlags, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(paneInfoRegistersLayout.createSequentialGroup()
+                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel16)
+                            .addComponent(txtRegPC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addGap(13, 13, 13)
                 .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
@@ -878,16 +896,9 @@ public class statusGUI extends javax.swing.JPanel {
         lblFrequency.setFont(lblFrequency.getFont().deriveFont(lblFrequency.getFont().getStyle() | java.awt.Font.BOLD));
         lblFrequency.setText("0,0 kHz");
 
-        RFCcheckbox.setText("Compute runtime frequency");
-        RFCcheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                RFCcheckboxActionPerformed(evt);
-            }
-        });
-
         jLabel14.setText("Test periode:");
 
-        spnTestPeriode.setModel(new SpinnerNumberModel(1000, 1, 10000, 50));
+        spnTestPeriode.setModel(new SpinnerNumberModel(50, 1, 10000, 50));
 
         jLabel15.setFont(jLabel15.getFont().deriveFont(jLabel15.getFont().getStyle() | java.awt.Font.BOLD, jLabel15.getFont().getSize()-3));
         jLabel15.setText("ms");
@@ -904,7 +915,6 @@ public class statusGUI extends javax.swing.JPanel {
                         .addComponent(jLabel13)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(lblFrequency))
-                    .addComponent(RFCcheckbox)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
@@ -920,7 +930,7 @@ public class statusGUI extends javax.swing.JPanel {
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel15)
                             .addComponent(jLabel12))))
-                .addGap(44, 44, 44))
+                .addGap(140, 140, 140))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -941,8 +951,6 @@ public class statusGUI extends javax.swing.JPanel {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel13)
                     .addComponent(lblFrequency))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(RFCcheckbox)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -951,24 +959,20 @@ public class statusGUI extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(paneInfoRegisters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 391, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(paneInfoRegisters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void RFCcheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RFCcheckboxActionPerformed
-        cpu.setRuntimeFreqCounter(RFCcheckbox.isSelected());
-}//GEN-LAST:event_RFCcheckboxActionPerformed
     
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    javax.swing.JCheckBox RFCcheckbox;
     javax.swing.JLabel lblFrequency;
     javax.swing.JLabel lblRun;
     javax.swing.JSpinner spnFrequency;
@@ -989,6 +993,7 @@ public class statusGUI extends javax.swing.JPanel {
     javax.swing.JTextField txtRegH;
     javax.swing.JTextField txtRegHL;
     javax.swing.JTextField txtRegL;
+    javax.swing.JTextField txtRegPC;
     javax.swing.JTextField txtRegSP;
     // End of variables declaration//GEN-END:variables
     

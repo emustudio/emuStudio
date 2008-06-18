@@ -19,5 +19,5 @@ import plugins.device.IDeviceContext;
 public interface ACpuContext extends ICPUContext {
 
     public boolean attachDevice(IDeviceContext listener, int port);
-    public void disattachDevice(int port);
+    public void detachDevice(int port);
 }
