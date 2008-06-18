@@ -12,9 +12,12 @@
 
 package compiler8080;
 
-import java.util.*;
-import tree8080Abstract.*;
-import tree8080.*;
+import java.util.Vector;
+import tree8080.EquPseudoNode;
+import tree8080.InstructionNode;
+import tree8080.LabelNode;
+import tree8080.MacroPseudoNode;
+import tree8080.SetPseudoNode;
 
 /**
  *

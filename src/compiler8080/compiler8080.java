@@ -8,10 +8,14 @@
  */
 
 package compiler8080;
-import plugins.compiler.*;
-import tree8080.*;
 
-import java.util.*;
+import plugins.ISettingsHandler;
+import plugins.compiler.ICompiler;
+import plugins.compiler.ILexer;
+import plugins.compiler.IMessageReporter;
+import plugins.memory.IMemoryContext;
+import tree8080.Statement;
+
 
 /**
  *
@@ -21,6 +25,7 @@ public class compiler8080 implements ICompiler {
     private lexer8080 lex;
     private parser8080 par;
     private IMessageReporter reporter;
+    private ISettingsHandler settings;
     
     /** Creates a new instance of compiler8080 */
     public compiler8080() {}
@@ -34,12 +39,26 @@ public class compiler8080 implements ICompiler {
     }
     
     private void print_text(String mes) {
-        if (reporter != null) reporter.reportMessage(mes);
+        if (reporter != null) reporter.report(mes);
         else System.out.println(mes);
     }
     
+    public String getName() { return "Intel 8080 Compiler"; }
+    public String getVersion() { return "0.2b"; }
+    public String getCopyright() { return "\u00A9 Copyright 2007-2008, Peter Jakubčo"; }
+    public String getDescription() {
+        return "It is a clone of original Intel's assembler. For syntax look"
+                + " at users manual.";
+    }
+    
+    public void destroy() {}
+
+    public void initialize(ISettingsHandler sHandler) {
+        this.settings = sHandler;
+    }
+
     @SuppressWarnings("empty-statement")
-    public boolean compile(String filename) {
+    public boolean compile(String fileName, IMemoryContext mem, boolean use_mem) {
         if (par == null) return false;
 
         Object s = null;
@@ -70,23 +89,21 @@ public class compiler8080 implements ICompiler {
                 return false;
             }
             stat.pass4(hex,env);
-            hex.generateFile(filename);
+            hex.generateFile(fileName);
         } catch(Exception e) {
             print_text(e.getMessage());
             return false;
         }
-        print_text("Compile was sucessfull. Output: " + filename);
+        print_text("Compile was sucessfull. Output: " + fileName);
+        
+        if (use_mem) {
+            boolean r = hex.loadIntoMemory(mem);
+            if (r) print_text("Compiled file was loaded into operating memory.");
+            else print_text("Compiled file couldn't be loaded into operating"
+                    + "memory due to an error.");
+        }
         return true;
     }
-    
-    public String getName() { return "Intel 8080 Compiler"; }
-    public String getVersion() { return "0.2b"; }
-    public String getCopyright() { return "\u00A9 Copyright 2007-2008, Peter Jakubčo"; }
-    public String getDescription() {
-        return "It is a clone of original Intel's assembler. For syntax look"
-                + " at users manual.";
-    }
-    
-    public void destroy() {}
+    public void reset() {}
 
 }

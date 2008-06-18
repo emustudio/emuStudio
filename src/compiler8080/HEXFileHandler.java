@@ -13,6 +13,8 @@ package compiler8080;
 
 import java.io.*;
 import java.util.*;
+import plugins.memory.IMemoryContext;
+import runtime.StaticDialogs;
 /**
  *
  * @author vbmacher
@@ -151,6 +153,35 @@ public class HEXFileHandler {
         return lines;
     }
     
+    /**
+     * Method is similar to generateHex() method in that way, that
+     * compiled program is also transformed into chunk of bytes, but
+     * not to hex file but to the operating memory.
+     * 
+     * @param mem context of operating memory
+     */
+    public boolean loadIntoMemory(IMemoryContext mem) {
+        if (!mem.getID().equals("byte_simple_variable")) {
+            StaticDialogs.showErrorMessage("Incompatible operating memory type!"
+                    + "\n\nThis compiler can't load file into this memory.");
+            return false;
+        }
+        Vector adrs = new Vector(program.keySet());
+        Collections.sort(adrs);
+
+        for (Enumeration e = adrs.elements(); e.hasMoreElements();) {
+            int adr = (Integer)e.nextElement();
+            String code = this.getCode(adr);
+
+            for (int i = 0; i < code.length()-2; i+=2) {
+                String hexCode = code.substring(i, i+2);
+                mem.write(adr+i, (Integer.decode("0x" + hexCode)) & 0xFF);
+            }
+        }
+        return true;
+    }
+
+    
     public void generateFile(String filename) throws java.io.IOException{
         String fileData = generateHEX();
 
@@ -158,5 +189,6 @@ public class HEXFileHandler {
         out.write(fileData);
         out.close();
     }
+    
 
 }
