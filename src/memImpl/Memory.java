@@ -71,4 +71,8 @@ public class Memory implements IMemory {
      */
     public void reset() {}
 
+    public void setProgramStart(int address) {
+        memContext.lastImageStart = address;
+    }
+
 }

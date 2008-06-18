@@ -28,7 +28,7 @@ import runtime.StaticDialogs;
  * @author vbmacher
  */
 public class MemoryContext implements SMemoryContext {
-    private int lastImageStart = 0;
+    public int lastImageStart = 0;
     private boolean lastStartSet = false;
     private short[] mem;
     private boolean sizeSet; // whether memory was initialized (created)
@@ -53,24 +53,14 @@ public class MemoryContext implements SMemoryContext {
         return true;
     }
     
-    public String getID() {
-        return "byte_simple_variable";
-    }
-
-    public int getVersionMajor() {
-        return 0;
-    }
-
-    public int getVersionMinor() {
-        return 2;
-    }
+    public String getID() { return "byte_simple_variable"; }
+    public int getVersionMajor() { return 0; }
+    public int getVersionMinor() { return 2; }
 
     /**
      * @return "b" for beta, "rc-1" for release candidate 1, etc.
      */
-    public String getVersionRev() {
-        return "b";
-    }
+    public String getVersionRev() { return "b"; }
 
     /**
      * Clears memory content.
@@ -221,7 +211,7 @@ public class MemoryContext implements SMemoryContext {
 
     public void write(int to, Object val) {
         if (isRom(to) == true) return;
-        mem[to] = (short)((Integer)val & 0xFF);
+        mem[to] = (short)((Short)val & 0xFF);
         fireChange(to);
     }
 
@@ -250,7 +240,7 @@ public class MemoryContext implements SMemoryContext {
         return mem.length;
     }
 
-    public int getLastImageStart() {
+    public int getProgramStart() {
         return lastImageStart;
     }
     

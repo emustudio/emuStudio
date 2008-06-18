@@ -109,8 +109,8 @@ public class frmMemory extends javax.swing.JFrame {
     private void initComponents() {
 
         jToolBar1 = new javax.swing.JToolBar();
-        jButton3 = new javax.swing.JButton();
-        jButton4 = new javax.swing.JButton();
+        btnClearMemory = new javax.swing.JButton();
+        btnOpenImage = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JToolBar.Separator();
         jLabel1 = new javax.swing.JLabel();
         spnPage = new javax.swing.JSpinner();
@@ -118,9 +118,9 @@ public class frmMemory extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         lblPageCount = new javax.swing.JLabel();
         jSeparator3 = new javax.swing.JToolBar.Separator();
-        jButton1 = new javax.swing.JButton();
+        btnFindAddress = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JToolBar.Separator();
-        jButton2 = new javax.swing.JButton();
+        btnROMRanges = new javax.swing.JButton();
         paneMemory = new javax.swing.JScrollPane();
         jPanel1 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
@@ -143,25 +143,25 @@ public class frmMemory extends javax.swing.JFrame {
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
 
-        jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Delete24.gif"))); // NOI18N
-        jButton3.setToolTipText("Clear memory");
-        jButton3.setFocusable(false);
-        jButton3.addActionListener(new java.awt.event.ActionListener() {
+        btnClearMemory.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Delete24.gif"))); // NOI18N
+        btnClearMemory.setToolTipText("Clear memory");
+        btnClearMemory.setFocusable(false);
+        btnClearMemory.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton3ActionPerformed(evt);
+                btnClearMemoryActionPerformed(evt);
             }
         });
-        jToolBar1.add(jButton3);
+        jToolBar1.add(btnClearMemory);
 
-        jButton4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Open24.gif"))); // NOI18N
-        jButton4.setToolTipText("Load image");
-        jButton4.setFocusable(false);
-        jButton4.addActionListener(new java.awt.event.ActionListener() {
+        btnOpenImage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Open24.gif"))); // NOI18N
+        btnOpenImage.setToolTipText("Load image");
+        btnOpenImage.setFocusable(false);
+        btnOpenImage.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton4ActionPerformed(evt);
+                btnOpenImageActionPerformed(evt);
             }
         });
-        jToolBar1.add(jButton4);
+        jToolBar1.add(btnOpenImage);
         jToolBar1.add(jSeparator2);
 
         jLabel1.setText("Page number:");
@@ -180,26 +180,26 @@ public class frmMemory extends javax.swing.JFrame {
         jToolBar1.add(lblPageCount);
         jToolBar1.add(jSeparator3);
 
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Find24.gif"))); // NOI18N
-        jButton1.setToolTipText("Find address");
-        jButton1.setFocusable(false);
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        btnFindAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Find24.gif"))); // NOI18N
+        btnFindAddress.setToolTipText("Find address");
+        btnFindAddress.setFocusable(false);
+        btnFindAddress.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                btnFindAddressActionPerformed(evt);
             }
         });
-        jToolBar1.add(jButton1);
+        jToolBar1.add(btnFindAddress);
         jToolBar1.add(jSeparator1);
 
-        jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/History24.gif"))); // NOI18N
-        jButton2.setToolTipText("ROM ranges");
-        jButton2.setFocusable(false);
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
+        btnROMRanges.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/History24.gif"))); // NOI18N
+        btnROMRanges.setToolTipText("ROM ranges");
+        btnROMRanges.setFocusable(false);
+        btnROMRanges.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
+                btnROMRangesActionPerformed(evt);
             }
         });
-        jToolBar1.add(jButton2);
+        jToolBar1.add(btnROMRanges);
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Memory value"));
 
@@ -318,7 +318,7 @@ public class frmMemory extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+    private void btnOpenImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOpenImageActionPerformed
         JFileChooser f = new JFileChooser();
         emuFileFilter f1 = new emuFileFilter();
         emuFileFilter f2 = new emuFileFilter();
@@ -358,19 +358,19 @@ public class frmMemory extends javax.swing.JFrame {
                     + " can't be read.");
             }
         }
-    }//GEN-LAST:event_jButton4ActionPerformed
+}//GEN-LAST:event_btnOpenImageActionPerformed
 
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+    private void btnClearMemoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearMemoryActionPerformed
        mem.clear();
        tblMemory.revalidate();
        tblMemory.repaint();
-    }//GEN-LAST:event_jButton3ActionPerformed
+}//GEN-LAST:event_btnClearMemoryActionPerformed
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+    private void btnROMRangesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnROMRangesActionPerformed
         new frmROMRange(mem, this.tblMemory).setVisible(true);
-    }//GEN-LAST:event_jButton2ActionPerformed
+}//GEN-LAST:event_btnROMRangesActionPerformed
     
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void btnFindAddressActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFindAddressActionPerformed
         int address = 0;
         try {
             address = Integer.decode(JOptionPane.showInputDialog(this,
@@ -384,14 +384,14 @@ public class frmMemory extends javax.swing.JFrame {
         }
         this.memModel.setPage(address /
                 (memModel.getRowCount() * memModel.getColumnCount()));
-    }//GEN-LAST:event_jButton1ActionPerformed
+}//GEN-LAST:event_btnFindAddressActionPerformed
     
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
+    private javax.swing.JButton btnClearMemory;
+    private javax.swing.JButton btnFindAddress;
+    private javax.swing.JButton btnOpenImage;
+    private javax.swing.JButton btnROMRanges;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
