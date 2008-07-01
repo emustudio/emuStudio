@@ -12,7 +12,6 @@ import gui.statusGUI;
 import interfaces.ACpuContext;
 import interfaces.ACpuListener;
 import java.util.EventObject;
-import java.util.HashSet;
 import java.util.Hashtable;
 import javax.swing.event.EventListenerList;
 import plugins.device.IDeviceContext;
@@ -26,13 +25,11 @@ public class CpuContext implements ACpuContext {
     private EventListenerList listenerList;
     private EventObject cpuEvt = new EventObject(this);
     private Hashtable devicesList;
-    private HashSet breaks; // zoznam breakpointov (mnozina)
     private int clockFrequency = 2000; // kHz
     private Cpu8080 cpu;
 
     public CpuContext(Cpu8080 cpu) {
         devicesList = new Hashtable();
-        breaks = new HashSet();
         listenerList = new EventListenerList();
         this.cpu = cpu;
     }
@@ -53,13 +50,6 @@ public class CpuContext implements ACpuContext {
     public void removeCPUListener(ICPUListener listener) {
         listenerList.remove(ICPUListener.class, listener);
     }
-
-    public boolean isBreakpointSupported() { return true; }
-    public void setBreakpoint(int pos, boolean set) {
-        if (set) breaks.add(pos);
-        else breaks.remove(pos);
-    }
-    public boolean getBreakpoint(int pos) { return breaks.contains(pos); }
 
     // device mapping = only one device can be attached to one port
     public boolean attachDevice(IDeviceContext listener, int port) {

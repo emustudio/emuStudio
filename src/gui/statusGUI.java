@@ -86,7 +86,7 @@ public class statusGUI extends javax.swing.JPanel {
         try {
             ICPUInstruction instr = cpuDecode(index);
             switch (col) {
-                case 0: return cpuC.getBreakpoint(index); // breakpoint
+                case 0: return cpu.getBreakpoint(index); // breakpoint
                 case 1: return String.format("%04Xh", index); // adresa
                 case 2: return instr.getMnemo(); // mnemonika
                 case 3: return instr.getOperCode(); // operacny kod
@@ -98,7 +98,7 @@ public class statusGUI extends javax.swing.JPanel {
             // instrukciu s viacerymi bytami, ktore sa uz nezmestili
             // do operacnej pamate
             switch (col) {
-                case 0: return cpuC.getBreakpoint(index);
+                case 0: return cpu.getBreakpoint(index);
                 case 1: return String.format("%04Xh", index);
                 case 2: return "incomplete instruction";
                 case 3: return String.format("%X", (Short)mem.read(index));
@@ -115,7 +115,7 @@ public class statusGUI extends javax.swing.JPanel {
         if (value.getClass() != Boolean.class) return;
         
         boolean v = Boolean.valueOf(value.toString());
-        cpuC.setBreakpoint(index,v);
+        cpu.setBreakpoint(index,v);
     }
     
     public void setMem(IMemoryContext mem) {

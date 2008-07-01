@@ -12,6 +12,7 @@
 package impl;
 
 import gui.statusGUI;
+import java.util.HashSet;
 import java.util.TimerTask;
 import javax.swing.JPanel;
 import plugins.ISettingsHandler;
@@ -36,6 +37,7 @@ public class Cpu8080 implements ICPU, Runnable {
     private IMemoryContext mem;
     private CpuContext cpu;
     private ISettingsHandler settings;
+    private HashSet breaks; // zoznam breakpointov (mnozina)
 
     // cpu speed
     private long long_cycles = 0; // count of executed cycles for runtime freq. computing
@@ -73,6 +75,7 @@ public class Cpu8080 implements ICPU, Runnable {
     public Cpu8080() {
         cpu = new CpuContext(this);
         run_state = stateEnum.stoppedNormal;
+        breaks = new HashSet();
         status = new statusGUI(this);
         rfc = new RuntimeFrequencyCalculator();
         freqScheduler = new java.util.Timer();
@@ -96,9 +99,7 @@ public class Cpu8080 implements ICPU, Runnable {
         return true;
     }
 
-    public ICPUContext getContext() {
-        return cpu;
-    }
+    public ICPUContext getContext() { return cpu; }
     
     public void destroy() {
         run_state = stateEnum.stoppedNormal;
@@ -106,6 +107,14 @@ public class Cpu8080 implements ICPU, Runnable {
         cpu.clearDevices();
     }
 
+    public boolean isBreakpointSupported() { return true; }
+    public void setBreakpoint(int pos, boolean set) {
+        if (set) breaks.add(pos);
+        else breaks.remove(pos);
+    }
+    public boolean getBreakpoint(int pos) { return breaks.contains(pos); }
+    
+    
     /**
      * Reset CPU (initialize before run)
      */    
@@ -261,7 +270,7 @@ public class Cpu8080 implements ICPU, Runnable {
                         cycles = evalStep();
                         cycles_executed += cycles;
                         long_cycles += cycles;
-                        if (cpu.getBreakpoint(PC) == true)
+                        if (getBreakpoint(PC) == true)
                             throw new Error();
                     }
                 }
