@@ -67,7 +67,7 @@ public class StudioFrame extends javax.swing.JFrame {
         
         // create other components
         initComponents();
-        btnBreakpoint.setEnabled(arch.getCPU().getContext().isBreakpointSupported());
+        btnBreakpoint.setEnabled(arch.getCPU().isBreakpointSupported());
         jScrollPane1.setViewportView(txtSource);
         paneDebug.setViewportView(tblDebug);
         
@@ -130,8 +130,7 @@ public class StudioFrame extends javax.swing.JFrame {
                 tblDebug.repaint();
             }
         });
-        btnBreakpoint.setEnabled(arch.getCPU().getContext()
-                .isBreakpointSupported());
+        btnBreakpoint.setEnabled(arch.getCPU().isBreakpointSupported());
         // first reset
         arch.getCPU().reset(); // first address of an image??
         IDevice dev[] = arch.getDevices();
@@ -1073,8 +1072,8 @@ public class StudioFrame extends javax.swing.JFrame {
         int address = 0;
         new BreakpointDialog(this,true).setVisible(true);
         address = BreakpointDialog.getAdr();
-        if ((address != -1) && arch.getCPU().getContext().isBreakpointSupported())
-            arch.getCPU().getContext().setBreakpoint(address,
+        if ((address != -1) && arch.getCPU().isBreakpointSupported())
+            arch.getCPU().setBreakpoint(address,
                     BreakpointDialog.getSet());
         paneDebug.revalidate();
         if (tblDebug.isVisible()) {
