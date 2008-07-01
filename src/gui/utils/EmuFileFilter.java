@@ -1,5 +1,5 @@
 /*
- * emuFileFilter.java
+ * EmuFileFilter.java
  *
  * Created on Streda, 2007, august 8, 8:58
  *
@@ -13,12 +13,12 @@ package gui.utils;
  *
  * @author vbmacher
  */
-public class emuFileFilter extends javax.swing.filechooser.FileFilter {
+public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
     private String[] exts;
     private String desc;
     
     /** Creates a new instance of emuFileFilter */
-    public emuFileFilter() {
+    public EmuFileFilter() {
     }
     
     public void addExtension(String ext) {

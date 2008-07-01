@@ -6,7 +6,7 @@
 
 package gui;
 
-import gui.utils.emuFileFilter;
+import gui.utils.EmuFileFilter;
 import gui.utils.memoryTableModel;
 import gui.utils.tableMemory;
 import interfaces.SMemoryContext;
@@ -320,8 +320,8 @@ public class frmMemory extends javax.swing.JFrame {
 
     private void btnOpenImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOpenImageActionPerformed
         JFileChooser f = new JFileChooser();
-        emuFileFilter f1 = new emuFileFilter();
-        emuFileFilter f2 = new emuFileFilter();
+        EmuFileFilter f1 = new EmuFileFilter();
+        EmuFileFilter f2 = new EmuFileFilter();
 
         f1.addExtension("hex");
         f1.addExtension("bin");

@@ -13,15 +13,20 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.UIManager;
 import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 
 
 /**
@@ -43,6 +48,12 @@ public class tableMemory extends JTable {
         this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         this.getTableHeader().setFont(new Font("Monospaced",Font.PLAIN,12));
         this.setDefaultRenderer(Object.class, new MemCellRenderer(this));
+        
+        MemoryCellEditor ed = new MemoryCellEditor();
+        for (int i =0; i < memModel.getColumnCount(); i++) {
+            TableColumn col = this.getColumnModel().getColumn(i);
+            col.setCellEditor(ed);
+        }
     }
     
     // riadkovy header
@@ -118,6 +129,32 @@ public class tableMemory extends JTable {
             remakeAdresses();
             setText(value.toString());
             return this;
+        }
+    }
+
+    private class MemoryCellEditor extends AbstractCellEditor implements TableCellEditor {
+        // This is the component that will handle the editing of the cell value
+        JTextField component;
+        
+        public MemoryCellEditor() {
+            component = new JTextField();
+            FontMetrics fm = getFontMetrics(getFont());
+            if (fm != null) {
+                component.setSize(fm.stringWidth("0xFFFFFF"), fm.getHeight()+10);
+                component.setBorder(null);
+            }
+        }
+    
+        // This method is called when a cell value is edited by the user.
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                boolean isSelected, int rowIndex, int vColIndex) {
+            // 'value' is value contained in the cell located at (rowIndex, vColIndex)
+            if (isSelected == false) return null;
+            component.setText("0x" + (String)value);
+            return component;
+        }
+        public Object getCellEditorValue() {
+            return component.getText();
         }
     }
 
