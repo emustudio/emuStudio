@@ -85,6 +85,13 @@ public class ConnectionLine {
         points.add(before+1, p);
     }
     
+    /**
+     * Dont use, only if necessary (for loading configuration)
+     */
+    public void addPoint(Point p) {
+        points.add(p);
+    }
+    
     public void removePoint(int index) {
         points.remove(index);
     }
@@ -101,4 +108,47 @@ public class ConnectionLine {
         if (e1 == e || e2 == e) return true;
         return false;
     }
+    
+    /**
+     * Determine whether point (x,y) crosses the line with
+     * some tolerance (5)
+     * 
+     * d(X, p) = abs(a*x0 + b*y0 + c)/sqrt(a^2 + b^2)
+     * 
+     */
+    public boolean crossPoint(int x, int y) {
+        int x1 = e1.getX() + e1.getWidth()/2;
+        int y1 = e1.getY() + e1.getHeight()/2;
+        int x2, y2;
+        double a,b,c,d;
+        
+        for (int i = 0; i < points.size(); i++) {
+            Point p = points.get(i);
+            x2 = (int)p.getX();
+            y2 = (int)p.getY();
+            
+            // ciel: vseobecna rovnica priamky
+            // smerovy vektor: s = (-b,a)
+            // -b = x2-x1
+            // a = y2-y1
+            a = y2-y1;
+            b = x1-x2;
+            c = -a*x1-b*y1; // mam rovnicu
+            d = Math.abs(a*x + b*y + c)/Math.hypot(a, b);
+            if (d < 5) return true;
+            x1 = x2;
+            y1 = y2;
+        }
+        x2 = e2.getX() + e2.getWidth()/2;
+        y2 = e2.getY() + e2.getHeight()/2;
+        a = y2-y1;
+        b = x1-x2;
+        c = -a*x1-b*y1; // mam rovnicu
+        d = Math.abs(a*x + b*y + c)/Math.hypot(a, b);
+        if (d < 5) return true;
+        return false;
+    }
+    
+    public Element getJunc0() { return e1; }
+    public Element getJunc1() { return e2; }
 }

@@ -8,8 +8,6 @@ package gui;
 import architecture.*;
 import gui.StudioFrame;
 import javax.swing.*;
-import javax.swing.event.*;
-import java.io.*;
 import java.util.Properties;
 import javax.swing.text.*;
 
@@ -35,9 +33,13 @@ public class ConfigurationFrame extends javax.swing.JFrame {
         private String[] allModels;
         public lstModel(int index) {
             if (index == 0)
-                allModels = aloader.getAllNames(aloader.configsDir, ".props");
+                allModels = ArchitectureLoader
+                        .getAllConfigNames(ArchitectureLoader.configsDir,
+                        ".props");
             else
-                allModels = aloader.getAllNames(aloader.devicesDir, ".jar");
+                allModels = ArchitectureLoader
+                        .getAllConfigNames(ArchitectureLoader.devicesDir,
+                        ".jar");
         }
         public Object getElementAt(int index) {
             return allModels[index].substring(0,
@@ -53,11 +55,11 @@ public class ConfigurationFrame extends javax.swing.JFrame {
         private String[] allModels;
         public cmbModel(int index) {
             if (index == 0)
-                allModels = aloader.getAllNames(aloader.cpusDir, ".jar");
+                allModels = ArchitectureLoader.getAllConfigNames(ArchitectureLoader.cpusDir, ".jar");
             else if (index == 1)
-                allModels = aloader.getAllNames(aloader.memoriesDir, ".jar");
+                allModels = ArchitectureLoader.getAllConfigNames(ArchitectureLoader.memoriesDir, ".jar");
             else
-                allModels = aloader.getAllNames(aloader.compilersDir, ".jar");
+                allModels = ArchitectureLoader.getAllConfigNames(ArchitectureLoader.compilersDir, ".jar");
         }
         public int getSize() {
             if (allModels == null) return 0;
@@ -357,7 +359,7 @@ public class ConfigurationFrame extends javax.swing.JFrame {
                 return;
             }
             updateSettings();
-            aloader.writeConfig(this.configName, settings);
+            ArchitectureLoader.writeConfig(this.configName, settings);
         }
         Main.getInstance().setCurrentArch(aloader.load(configName, settings)); 
         StudioFrame stud = new StudioFrame();
@@ -368,7 +370,7 @@ public class ConfigurationFrame extends javax.swing.JFrame {
     private void lstConfigsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstConfigsValueChanged
         try {
             String name = (String)lstConfigs.getSelectedValue();
-            if ((settings = aloader.
+            if ((settings = ArchitectureLoader.
                     readConfig(name)) == null) {
                 lstConfigs.clearSelection();
                 return;

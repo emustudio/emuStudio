@@ -11,12 +11,14 @@
 package architecture;
 
 import java.util.Properties;
-import java.util.Vector;
 import plugins.memory.IMemory;
 import plugins.cpu.ICPU;
 import plugins.device.IDevice;
 import plugins.ISettingsHandler;
 import plugins.compiler.ICompiler;
+import plugins.cpu.ICPUContext;
+import plugins.device.IDeviceContext;
+import plugins.memory.IMemoryContext;
 
 /**
  * Class holds actual computer configuration - plugins and settings.
@@ -25,19 +27,32 @@ import plugins.compiler.ICompiler;
  */
 public class ArchitectureHandler implements ISettingsHandler {
     private ICompiler compiler;
-    private ICPU cpu;
+    private ICPU cpu;    
     private IMemory memory;
     private IDevice[] devices;
-    
-    private int memSize;
-
-    private Properties settings;
+    private PluginConnection[] connections;
     private String name;
-    private String[] devNames;
+    private Properties settings;
+    
+    public class PluginConnection {
+        private String junc0;
+        private String junc1;
+        public PluginConnection(String junc0, String junc1) {
+            this.junc0 = junc0;
+            this.junc1 = junc1;
+        }
+        public String getJunc0() { return junc0; }
+        public String getJunc1() { return junc1; }
+        public boolean contains(String type) {
+            if (junc0.equals(type) || junc1.equals(type))
+                return true;
+            return false;
+        }
+    }
 
     /**
      * Constructor of new computer configuration and init all plugins.
-     *
+     * 
      * @param compiler Compiler plugin object
      * @param cpu CPU plugin object
      * @param memory Memory plugin object
@@ -45,8 +60,10 @@ public class ArchitectureHandler implements ISettingsHandler {
      * @throws IllegalArgumentException if compiler, CPU or memory is null.
      */
     public ArchitectureHandler(String name, ICompiler compiler, ICPU cpu,
-            IMemory memory, IDevice[] devices, Properties settings) 
+            IMemory memory, IDevice[] devices, 
+            PluginConnection[] connections, Properties settings) 
             throws IllegalArgumentException, Error {
+        
         if (compiler == null) 
             throw new IllegalArgumentException("Compiler can't be null");
         if (cpu == null)
@@ -54,35 +71,67 @@ public class ArchitectureHandler implements ISettingsHandler {
         if (memory == null)
             throw new IllegalArgumentException("Memory can't be null");
         if (name == null) name = "";
-        this.settings = settings;
         this.compiler = compiler;
         this.cpu = cpu;
         this.memory = memory;
         this.devices = devices;
+        this.connections = connections;
+        this.settings = settings;
         
-        // assign names
-        this.name = name;
-        Vector devs = new Vector();
-        // max. 256 devices
-        for (int i = 0; i < 256; i++)
-            if (settings.containsKey("device"+i))
-                devs.add(settings.getProperty("device"+i));
-        devNames = (String[])devs.toArray(new String[0]);
         if (initialize() == false) 
             throw new Error("Initialization of plugins failed");
     }
     
+    private boolean isConnected(String type1, String type2) {
+        for (int i = 0; i < connections.length; i++)
+            if (connections[i].contains(type1)
+                    && connections[i].contains(type2))
+                return true;
+        return false;
+    }
     /**
-     * Initialize all plugins. It is called from constructor
+     * Initialize all plugins. It is called from constructor.
+     * Also provides necessary connections
      */
     private boolean initialize() {
-        boolean r = true;
+        boolean r = false;
         compiler.initialize(this);
-        memSize = Integer.valueOf(settings.getProperty("memorySize"));
+        int memSize = Integer.parseInt(settings
+                .getProperty("memory.size"));
         memory.initialize(memSize, this);
-        r = cpu.initialize(memory.getContext(), this);
-        for (int i=0; i < devices.length; i++)
-            devices[i].initialize(cpu.getContext(), memory.getContext(), this);
+        
+        if (isConnected("cpu","memory"))        
+            r = cpu.initialize(memory.getContext(), this);
+        else
+            r = cpu.initialize(null, this);
+        
+        for (int i=0; i < devices.length; i++) {
+            ICPUContext ccon = isConnected("cpu","device"+i) 
+                    ? cpu.getContext() : null;
+            IMemoryContext mcon = isConnected("memory","device"+i)
+                    ? memory.getContext() : null;
+            r &= devices[i].initialize(ccon, mcon, this);
+        }
+        // finally device-device connections
+        for (int i = 0; i < connections.length; i++) {
+            String j0 = connections[i].getJunc0();
+            String j1 = connections[i].getJunc1();
+            if (j0.startsWith("device") && j1.startsWith("device")) {
+                // TODO: jednosmerna komunikacia??
+                int i1 = Integer.parseInt(j0.substring(6));
+                int i2 = Integer.parseInt(j1.substring(6));
+                // 1. smer
+                IDeviceContext female = devices[i1].getFreeFemale();
+                IDeviceContext male = devices[i2].getFreeMale();
+                if (female != null && male != null)
+                    r &= devices[i1].attachDevice(female, male);
+                // 2. smer
+                female = devices[i2].getFreeFemale();
+                male = devices[i1].getFreeMale();
+                if (female != null && male != null)
+                    r &= devices[i2].attachDevice(female, male);
+            }
+        }
         return r;
     }
     
@@ -115,18 +164,6 @@ public class ArchitectureHandler implements ISettingsHandler {
     public IDevice[] getDevices() { return devices; }
 
     public String getArchName() { return name; }
-    public String getCompilerName() {
-        return settings.getProperty("compiler");
-    }
-    public String getCPUName() {
-        return settings.getProperty("cpu");
-    }
-    public String getMemoryName() {
-        return settings.getProperty("memory");
-    }
-    public String[] getDeviceNames() { return devNames; }
-
-    // work with settings
     
     /**
      * Method reads value of specified setting from Properties for 
@@ -137,7 +174,8 @@ public class ArchitectureHandler implements ISettingsHandler {
      * @param settingName name of wanted setting
      * @return setting value if exists, or null if not
      */
-    public String readSetting(pluginType plType, String pluginID, String settingName) {
+    public String readSetting(pluginType plType, String pluginID, 
+            String settingName) {
         if (settingName == null || settingName.equals("")) return null;
         if (pluginID == null || pluginID.equals("")) return null;
         if (plType == null) return null;
@@ -146,12 +184,11 @@ public class ArchitectureHandler implements ISettingsHandler {
                 
         if (plType == pluginType.device) {
             // search for device
-            for (int i = 0; i < 255; i++) {
-                if (settings.containsKey("device"+i)
-                        && settings.getProperty("device"+i).equals(pluginID)) {
+            for (int i = 0; i < devices.length; i++)
+                if (settings.getProperty("device"+i,"").equals(pluginID)) {
                     prop = "device"+i+".";
+                    break;
                 }
-            }
         } else prop = plType.toString();
         
         if (prop.equals("")) return null;
@@ -178,12 +215,11 @@ public class ArchitectureHandler implements ISettingsHandler {
         String prop = "";
         if (plType == pluginType.device) {
             // search for device
-            for (int i = 0; i < 255; i++) {
-                if (settings.containsKey("device"+i)
-                        && settings.getProperty("device"+i).equals(pluginID)) {
+            for (int i = 0; i < devices.length; i++)
+                if (settings.getProperty("device"+i,"").equals(pluginID)) {
                     prop = "device"+i+".";
+                    break;
                 }
-            }
         } else prop = plType.toString();
         
         if (prop.equals("")) return;

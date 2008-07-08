@@ -31,8 +31,6 @@ public class DrawingPanel extends JPanel implements MouseListener,
     private Dimension area; // velkost kresliacej plochy
     private BasicStroke thickLine;
     
-    private ArrayList<Element> shapes;
-    private ArrayList<ConnectionLine> lines;
     private ArrayList<Point> points;
     private boolean useGrid; // whether should use and draw grid
     private int gridGap; // gap between vertical and horizontal grid lines
@@ -238,7 +236,17 @@ public class DrawingPanel extends JPanel implements MouseListener,
                     return;
                 }
             }
-            if (tool == drawTool.connectLine) {
+            if (tool == drawTool.delete) {
+                // delete line ?
+                for (int i = lines.size()-1; i >= 0 ; i--) {
+                    ConnectionLine l = lines.get(i);
+                    Point p = e.getPoint();
+                    if (l.crossPoint((int)p.getX(), (int)p.getY())) {
+                        lines.remove(i);
+                        return;
+                    }
+                }
+            } else if (tool == drawTool.connectLine) {
                 Point p = e.getPoint();
                 if (useGrid)
                     p.setLocation(searchGridPointX((int)p.getX()),

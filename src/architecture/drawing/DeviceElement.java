@@ -24,7 +24,7 @@ public class DeviceElement extends Element {
     private int y;
     private int width;
     private int height;
-    private int tX1; // text "Device"
+    private int tX1; // details "Device"
     private int tY1;
 
     private int tX2; // details
@@ -35,17 +35,19 @@ public class DeviceElement extends Element {
     private Font italicFont;
     private Font plainFont;
     private Color devColor;
-    
-    private String text;
-  
-    public DeviceElement(Point e1, String text) {
-        x = (int)e1.getX();
-        y = (int)e1.getY();
-        this.text = text;
+      
+    public DeviceElement(int x, int y, String text) {
+        super(text);
+        this.x = x;
+        this.y = y;
         wasMeasured = false;
         devColor = new Color(0xFFFEFF);
     }
     
+    public DeviceElement(Point e1, String text) {
+        this((int)e1.getX(),(int)e1.getY(), text);
+    }
+
     public void draw(Graphics g)  {
         if (!wasMeasured) measure(g);
         g.setColor(devColor);
@@ -55,38 +57,21 @@ public class DeviceElement extends Element {
         g.setFont(boldFont);
         g.drawString("Device", tX1, tY1);
         g.setFont(italicFont);
-        g.drawString(text, tX2, tY2);
+        g.drawString(details, tX2, tY2);
         g.setFont(plainFont);
     }
     
-    @Override
-    public int getWidth() {
-        return width;
-    }
-
-    @Override
-    public int getHeight() {
-        return height;
-    }
-
-    @Override
-    public int getX() {
-        return x;
-    }
-
-    @Override
-    public int getY() {
-        return y;
-    }
+    public int getWidth() { return width; }
+    public int getHeight() { return height; }
+    public int getX() { return x; }
+    public int getY() { return y; }
     
-    @Override
     public void move(int x, int y) {
         wasMeasured = false;
         this.x = x;
         this.y = y;
     }
 
-    @Override
     public void measure(Graphics g) {
         if (wasMeasured) return;
         Font f = g.getFont();
@@ -104,7 +89,7 @@ public class DeviceElement extends Element {
         tY1 = height + 20 - tH;
 
         fm = g.getFontMetrics(italicFont);
-        r = fm.getStringBounds(text, g);
+        r = fm.getStringBounds(details, g);
 
         if (width < (int)r.getWidth())
             width = (int)r.getWidth();

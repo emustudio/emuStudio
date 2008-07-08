@@ -24,10 +24,10 @@ public class CpuElement extends Element {
     private int y;
     private int width;
     private int height;
-    private int tX1; // text "CPU"
+    private int tX1; // pozicia textu "CPU"
     private int tY1;
 
-    private int tX2; // details
+    private int tX2; // pozicia details
     private int tY2;
     
     private boolean wasMeasured;
@@ -35,15 +35,18 @@ public class CpuElement extends Element {
     private Font italicFont;
     private Font plainFont;
     
-    private String text;
     private Color cpuColor;
   
-    public CpuElement(Point e1, String text) {
-        x = (int)e1.getX();
-        y = (int)e1.getY();
-        this.text = text;
+    public CpuElement(int x, int y, String text) {
+        super(text);
+        this.x = x;
+        this.y = y;
         wasMeasured = false;
         cpuColor = new Color(0x6D8471);        
+    }
+
+    public CpuElement(Point e1, String text) {
+        this((int)e1.getX(),(int)e1.getY(), text);
     }
     
     public void draw(Graphics g)  {
@@ -55,38 +58,21 @@ public class CpuElement extends Element {
         g.setFont(boldFont);
         g.drawString("CPU", tX1, tY1);
         g.setFont(italicFont);
-        g.drawString(text, tX2, tY2);
+        g.drawString(details, tX2, tY2);
         g.setFont(plainFont);
     }
 
-    @Override
-    public int getWidth() {
-        return width;
-    }
+    public int getWidth() { return width; }
+    public int getHeight() { return height; }
+    public int getX() { return x; }
+    public int getY() { return y; }
 
-    @Override
-    public int getHeight() {
-        return height;
-    }
-
-    @Override
-    public int getX() {
-        return x;
-    }
-
-    @Override
-    public int getY() {
-        return y;
-    }
-
-    @Override
     public void move(int x, int y) {
         wasMeasured = false;
         this.x = x;
         this.y = y;
     }
 
-    @Override
     public void measure(Graphics g) {
         if (wasMeasured) return;
         Font f = g.getFont();
@@ -103,7 +89,7 @@ public class CpuElement extends Element {
         tY1 = height + 20 - tH;
 
         fm = g.getFontMetrics(italicFont);
-        r = fm.getStringBounds(text, g);
+        r = fm.getStringBounds(details, g);
 
         if (width < (int)r.getWidth())
             width = (int)r.getWidth();

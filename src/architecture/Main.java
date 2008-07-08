@@ -9,7 +9,7 @@
 
 package architecture;
 
-import gui.ConfigurationFrame;
+import gui.StartFrame;
 
 /**
  *
@@ -55,7 +55,7 @@ public class Main {
         catch (IllegalAccessException e) {}
 
         new Main();
-        new ConfigurationFrame().setVisible(true);
+        new StartFrame().setVisible(true);
     }
     
 }
