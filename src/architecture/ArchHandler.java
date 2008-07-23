@@ -1,5 +1,5 @@
 /*
- * ArchitectureHandler.java
+ * ArchHandler.java
  * 
  * Created on Friday, 28.1.2008 22:31
  * 
@@ -10,6 +10,7 @@
 
 package architecture;
 
+import architecture.drawing.Schema;
 import java.util.Properties;
 import plugins.memory.IMemory;
 import plugins.cpu.ICPU;
@@ -25,7 +26,7 @@ import plugins.memory.IMemoryContext;
  *
  * @author vbmacher
  */
-public class ArchitectureHandler implements ISettingsHandler {
+public class ArchHandler implements ISettingsHandler {
     private ICompiler compiler;
     private ICPU cpu;    
     private IMemory memory;
@@ -33,23 +34,8 @@ public class ArchitectureHandler implements ISettingsHandler {
     private PluginConnection[] connections;
     private String name;
     private Properties settings;
+    private Schema schema;
     
-    public class PluginConnection {
-        private String junc0;
-        private String junc1;
-        public PluginConnection(String junc0, String junc1) {
-            this.junc0 = junc0;
-            this.junc1 = junc1;
-        }
-        public String getJunc0() { return junc0; }
-        public String getJunc1() { return junc1; }
-        public boolean contains(String type) {
-            if (junc0.equals(type) || junc1.equals(type))
-                return true;
-            return false;
-        }
-    }
-
     /**
      * Constructor of new computer configuration and init all plugins.
      * 
@@ -59,9 +45,9 @@ public class ArchitectureHandler implements ISettingsHandler {
      * @param devices Array of devices
      * @throws IllegalArgumentException if compiler, CPU or memory is null.
      */
-    public ArchitectureHandler(String name, ICompiler compiler, ICPU cpu,
+    public ArchHandler(String name, ICompiler compiler, ICPU cpu,
             IMemory memory, IDevice[] devices, 
-            PluginConnection[] connections, Properties settings) 
+            PluginConnection[] connections, Properties settings, Schema schema) 
             throws IllegalArgumentException, Error {
         
         if (compiler == null) 
@@ -77,6 +63,7 @@ public class ArchitectureHandler implements ISettingsHandler {
         this.devices = devices;
         this.connections = connections;
         this.settings = settings;
+        this.schema = schema;
         
         if (initialize() == false) 
             throw new Error("Initialization of plugins failed");
@@ -135,6 +122,8 @@ public class ArchitectureHandler implements ISettingsHandler {
         return r;
     }
     
+    public Schema getSchema() { return schema; }
+    
     /**
      * Gets actual compiler
      *
@@ -176,27 +165,31 @@ public class ArchitectureHandler implements ISettingsHandler {
      */
     public String readSetting(pluginType plType, String pluginID, 
             String settingName) {
-        if (settingName == null || settingName.equals("")) return null;
-        if (pluginID == null || pluginID.equals("")) return null;
         if (plType == null) return null;
 
         String prop = "";
                 
         if (plType == pluginType.device) {
+            if (pluginID == null || pluginID.equals("")) return null;
             // search for device
             for (int i = 0; i < devices.length; i++)
                 if (settings.getProperty("device"+i,"").equals(pluginID)) {
-                    prop = "device"+i+".";
+                    prop = "device"+i;
                     break;
                 }
         } else prop = plType.toString();
         
         if (prop.equals("")) return null;
-        prop += settingName;
+        if (settingName != null && !settingName.equals("")) 
+            prop += "." + settingName;
         
         return settings.getProperty(prop);
     }
 
+    public String getDeviceName(int index) {
+        return settings.getProperty("device"+index,"");
+    }
+    
     /**
      * Method writes a value of specified setting to Properties for 
      * specified plugin. Setting has to be fully specified.
@@ -209,11 +202,11 @@ public class ArchitectureHandler implements ISettingsHandler {
     public void writeSetting(pluginType plType, String pluginID,
             String settingName, String val) {
         if (settingName == null || settingName.equals("")) return;
-        if (pluginID == null || pluginID.equals("")) return;
         if (plType == null) return;
 
         String prop = "";
         if (plType == pluginType.device) {
+            if (pluginID == null || pluginID.equals("")) return;
             // search for device
             for (int i = 0; i < devices.length; i++)
                 if (settings.getProperty("device"+i,"").equals(pluginID)) {
@@ -223,10 +216,10 @@ public class ArchitectureHandler implements ISettingsHandler {
         } else prop = plType.toString();
         
         if (prop.equals("")) return;
-        prop += settingName;
+        prop += "." + settingName;
         
         settings.setProperty(prop, val);
-        ArchitectureLoader.writeConfig(name, settings);
+        ArchLoader.writeConfig(name, settings);
     }
  
 }

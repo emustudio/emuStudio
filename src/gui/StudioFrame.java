@@ -7,7 +7,7 @@
 package gui;
 
 
-import architecture.ArchitectureHandler;
+import architecture.ArchHandler;
 import architecture.Main;
 import gui.utils.DebugTable;
 import gui.utils.DebugTableModel;
@@ -35,6 +35,7 @@ import plugins.cpu.ICPUContext.stateEnum;
 import plugins.cpu.ICPUContext.ICPUListener;
 import plugins.device.IDevice;
 import plugins.memory.IMemoryContext.IMemListener;
+import runtime.StaticDialogs;
 
 /**
  *
@@ -42,7 +43,7 @@ import plugins.memory.IMemoryContext.IMemListener;
  */
 public class StudioFrame extends javax.swing.JFrame {
     private EmuTextPane txtSource;
-    private ArchitectureHandler arch; // current architecture
+    private ArchHandler arch; // current architecture
     private ActionListener undoStateListener;
     private Clipboard systemClipboard;
     
@@ -58,7 +59,7 @@ public class StudioFrame extends javax.swing.JFrame {
     /** Creates new form StudioFrame */
     public StudioFrame() {
         // create models and components
-        arch = Main.getInstance().currentArch;
+        arch = Main.currentArch;
         txtSource = new EmuTextPane();
         cpuPermanentRunning = false;
         debug_model = new DebugTableModel(arch.getCPU(),arch.getCompiler(),
@@ -842,7 +843,7 @@ public class StudioFrame extends javax.swing.JFrame {
             ((IDevice)arch.getDevices()[lstDevices.getMinSelectionIndex()]).
                     showGUI();
         } catch(Exception e) {
-            Main.showErrorMessage("Can't show GUI of a device: " + e.getMessage());
+            StaticDialogs.showErrorMessage("Can't show GUI of a device: " + e.getMessage());
         }
 }//GEN-LAST:event_showGUIButtonActionPerformed
 
@@ -926,7 +927,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void btnCompileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCompileActionPerformed
         if (txtSource.isFileSaved() == false) {
-            Main.showErrorMessage("You must first save source file.");
+            StaticDialogs.showErrorMessage("You must first save source file.");
             return;
         }
         txtSource.setEditable(false);
@@ -955,7 +956,7 @@ public class StudioFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCompileActionPerformed
 
     private void mnuProjectViewConfigActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuProjectViewConfigActionPerformed
-        new ViewConfigFrame().setVisible(true);
+        new ViewArchDialog(this,true).setVisible(true);
     }//GEN-LAST:event_mnuProjectViewConfigActionPerformed
 
     private void mnuEditPasteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditPasteActionPerformed
@@ -1062,7 +1063,7 @@ public class StudioFrame extends javax.swing.JFrame {
                 txtSource.select(FindText.getThis().getMatchStart(), 
                         FindText.getThis().getMatchEnd());
                 txtSource.grabFocus();
-            } else Main.showMessage("Expression was not found");
+            } else StaticDialogs.showMessage("Expression was not found");
         } catch (NullPointerException e) {
             mnuEditFindActionPerformed(evt);
         }
@@ -1089,7 +1090,7 @@ public class StudioFrame extends javax.swing.JFrame {
                     txtSource.getDocument().getEndPosition().getOffset()-1)) {
                 txtSource.setText(FindText.getThis().getReplacedString());
                 txtSource.grabFocus();
-            } else Main.showMessage("Expression was not found");
+            } else StaticDialogs.showMessage("Expression was not found");
         } catch (NullPointerException e) {
             mnuEditFindActionPerformed(evt);
         }

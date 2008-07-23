@@ -8,7 +8,7 @@
 
 package gui;
 
-import architecture.Main;
+import runtime.StaticDialogs;
 
 /**
  *
@@ -115,7 +115,7 @@ public class BreakpointDialog extends javax.swing.JDialog {
         try {
             BreakpointDialog.adr = Integer.decode(txtAddress.getText());
         } catch (NumberFormatException e) {
-            Main.showErrorMessage("Invalid address, try again !");
+            StaticDialogs.showErrorMessage("Invalid address, try again !");
             txtAddress.grabFocus();
             return;
         }
@@ -127,7 +127,7 @@ public class BreakpointDialog extends javax.swing.JDialog {
         try {
             BreakpointDialog.adr = Integer.decode(txtAddress.getText());
         } catch (NumberFormatException e) {
-            Main.showErrorMessage("Invalid address, try again !");
+            StaticDialogs.showErrorMessage("Invalid address, try again !");
             txtAddress.grabFocus();
             return;
         }

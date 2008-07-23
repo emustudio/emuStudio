@@ -19,16 +19,24 @@ public class Schema {
     private MemoryElement memoryElement;
     private ArrayList<DeviceElement> deviceElements;
     private ArrayList<ConnectionLine> lines;
+    
+    private String compilerName;
+    private int memorySize;
+    private String configName;
 
     public Schema(CpuElement cpuElement, MemoryElement memoryElement, 
             ArrayList<DeviceElement> deviceElements, 
-            ArrayList<ConnectionLine> lines) {
+            ArrayList<ConnectionLine> lines, String configName, String compilerName,
+            int memorySize) {
         this.cpuElement = cpuElement;
         this.memoryElement = memoryElement;
         this.deviceElements = new ArrayList<DeviceElement>();
         this.deviceElements.addAll(deviceElements);
         this.lines = new ArrayList<ConnectionLine>();
         this.lines.addAll(lines);
+        this.configName = configName;
+        this.compilerName = compilerName;
+        this.memorySize = memorySize;
     }
     
     public Schema() {
@@ -36,6 +44,9 @@ public class Schema {
         memoryElement = null;
         deviceElements = new ArrayList<DeviceElement>();
         lines = new ArrayList<ConnectionLine>();
+        configName = "";
+        compilerName = "";
+        memorySize = 0;
     }
     
     private void removeIncidentLines(Element el) {
@@ -44,6 +55,13 @@ public class Schema {
                 lines.remove(i);
     }
     
+    public String getConfigName() { return configName; }
+    public String getCompilerName() { return compilerName; }
+    public int getMemorySize() { return memorySize; }
+    public void setConfigName(String cName) { configName = cName; }
+    public void setCompilerName(String cName) { compilerName = cName; }
+    public void setMemorySize(int mSize) { memorySize = mSize; }
+
     public CpuElement getCpuElement() {
         return cpuElement;
     }
@@ -54,6 +72,14 @@ public class Schema {
     
     public ArrayList<DeviceElement>getDeviceElements() {
         return deviceElements;
+    }
+    
+    public ArrayList<Element>getAllElements() {
+        ArrayList<Element> a = new ArrayList<Element>();
+        if (cpuElement != null) a.add(cpuElement);
+        if (memoryElement != null) a.add(memoryElement);
+        a.addAll(deviceElements);
+        return a;
     }
     
     public ArrayList<ConnectionLine>getConnectionLines() {

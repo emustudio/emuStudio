@@ -30,12 +30,14 @@ public class DrawingPanel extends JPanel implements MouseListener,
     private Point e1 = null;
     private Dimension area; // velkost kresliacej plochy
     private BasicStroke thickLine;
+    private Schema schema;
     
     private ArrayList<Point> points;
     private boolean useGrid; // whether should use and draw grid
     private int gridGap; // gap between vertical and horizontal grid lines
     
     private drawTool tool;
+    private String newText;
     private boolean shapeMove;
 
     public enum drawTool {
@@ -71,10 +73,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
         return (dY * gridGap);
     }
     
-    public DrawingPanel(boolean useGrid, int gridGap) {
+    public DrawingPanel(Schema schema, boolean useGrid, int gridGap) {
         this.setBackground(Color.WHITE);
-        shapes = new ArrayList<Element>();
-        lines = new ArrayList<ConnectionLine>();
+        this.schema = schema;
         points = new ArrayList<Point>();
         tool = drawTool.nothing;
         area = new Dimension(0,0);
@@ -124,15 +125,16 @@ public class DrawingPanel extends JPanel implements MouseListener,
         // nemoze byt dalej ako bod)
         area.width=0;
         area.height=0;
-        for (int i = 0; i < shapes.size(); i++) {
-            Element e = shapes.get(i);
+        ArrayList<Element> a = schema.getAllElements();
+        for (int i = 0; i < a.size(); i++) {
+            Element e = a.get(i);
             if (e.getX() + e.getWidth() > area.width)
                 area.width = e.getX() + e.getWidth();
             if (e.getY() + e.getHeight() > area.height)
                 area.height = e.getY() + e.getHeight();
         }
-        for (int i = 0; i < lines.size(); i++) {
-            ArrayList<Point> ps = lines.get(i).getPoints();
+        for (int i = 0; i < schema.getConnectionLines().size(); i++) {
+            ArrayList<Point> ps = schema.getConnectionLines().get(i).getPoints();
             for (int j = 0; j < ps.size(); j++) {
                 Point p = ps.get(j);
                 if ((int)p.getX() > area.width)
@@ -147,26 +149,28 @@ public class DrawingPanel extends JPanel implements MouseListener,
         }
     }
     
+    private void paintGrid(Graphics g) {
+        g.setColor(gridColor);
+        for (int xi = 0; xi < this.getWidth(); xi+=gridGap)
+            g.drawLine(xi, 0, xi, this.getHeight());
+        for (int yi = 0; yi < this.getHeight(); yi+= gridGap)
+            g.drawLine(0, yi, this.getWidth(), yi);
+    }
+    
     //override panel paint method to draw shapes
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+        ArrayList<Element> a = schema.getAllElements();
         
         // najprv mriezka
-        if (useGrid) {
-            g.setColor(gridColor);
-            for (int xi = 0; xi < this.getWidth(); xi+=gridGap) {
-                g.drawLine(xi, 0, xi, this.getHeight());
-            }
-            for (int yi = 0; yi < this.getHeight(); yi+= gridGap) {
-                g.drawLine(0, yi, this.getWidth(), yi);
-            }
-        }
-        for (int i = 0; i < shapes.size(); i++)
-            shapes.get(i).measure(g);
-        for (int i = 0; i < lines.size(); i++)
-            lines.get(i).draw((Graphics2D)g);
-        for (int i = 0; i < shapes.size(); i++)
-            shapes.get(i).draw(g);
+        if (useGrid) paintGrid(g);
+        
+        for (int i = 0; i < a.size(); i++)
+            a.get(i).measure(this.getGraphics());
+        for (int i = 0; i < schema.getConnectionLines().size(); i++)
+            schema.getConnectionLines().get(i).draw((Graphics2D)g);
+        for (int i = 0; i < a.size(); i++)
+            a.get(i).draw(g);
         // ak je oznaceny nejaky bod ciary
         if (selPoint != null) {
             int xx = (int)selPoint.getX();
@@ -181,8 +185,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
         }
     }
 
-    public void setTool(drawTool tool) {
+    public void setTool(drawTool tool, String text) {
         this.tool = tool;
+        this.newText = text;
         shapeMove = false;
         selShape = null;
         selShape2 = null;
@@ -191,8 +196,10 @@ public class DrawingPanel extends JPanel implements MouseListener,
     
     
     public void clear() {
-        shapes.clear();
-        lines.clear();
+        schema.setCpuElement(null);
+        schema.setMemoryElement(null);
+        schema.getDeviceElements().clear();
+        schema.getConnectionLines().clear();
         points.clear();
         repaint();
     }
@@ -210,66 +217,92 @@ public class DrawingPanel extends JPanel implements MouseListener,
     public void mouseExited(MouseEvent e){}
 
     public void mousePressed(MouseEvent e) {
-        if (e.getButton() != MouseEvent.BUTTON1) return;
         if (tool == drawTool.nothing || tool == drawTool.delete
                 || tool == drawTool.connectLine) {
             // shapeMove?
             shapeMove = false;
-            for (int i = shapes.size()-1; i >= 0 ; i--) {
-                Element el = shapes.get(i);
-                Point p = e.getPoint();
-                if ((el.getX() <= p.getX()) 
-                        && (el.getX() + el.getWidth() >= p.getX())
-                        && (el.getY() <= p.getY())
-                        && (el.getY() + el.getHeight() >= p.getY())) {
+            ArrayList<Element> a = schema.getAllElements();
+            Point p = e.getPoint();
+            for (int i = a.size()-1; i >= 0 ; i--) {
+                Element shape = a.get(i);
+                if ((shape.getX() <= p.getX()) 
+                        && (shape.getX() + shape.getWidth() >= p.getX())
+                        && (shape.getY() <= p.getY())
+                        && (shape.getY() + shape.getHeight() >= p.getY())) {
+                    if (e.getButton() != MouseEvent.BUTTON1) return;
                     if (tool == drawTool.nothing) {
+                        // move a shape
                         shapeMove = true;
-                        selShape = el;
+                        selShape = shape;
                         selShape2 = null;
                     } else if (tool == drawTool.connectLine) {
-                        if (selShape == null) selShape = el;
-                        else selShape2 = el;
+                        // draw a line
+                        if (selShape == null) selShape = shape;
+                        else selShape2 = shape;
                     } else if (tool == drawTool.delete) {
-                        selShape = el;
+                        // delete shape
+                        selShape = shape;
                         selShape2 = null;
                     }
                     return;
                 }
             }
             if (tool == drawTool.delete) {
+                if (e.getButton() != MouseEvent.BUTTON1) return;
                 // delete line ?
-                for (int i = lines.size()-1; i >= 0 ; i--) {
-                    ConnectionLine l = lines.get(i);
-                    Point p = e.getPoint();
-                    if (l.crossPoint((int)p.getX(), (int)p.getY())) {
-                        lines.remove(i);
+                for (int i = schema.getConnectionLines().size()-1; i >= 0 ; i--) {
+                    ConnectionLine l = schema.getConnectionLines().get(i);
+                    // bug?
+                    if (l.getCrossPointAfter((int)p.getX(), (int)p.getY()) != -1) {
+                        schema.getConnectionLines().remove(i);
                         return;
                     }
                 }
             } else if (tool == drawTool.connectLine) {
-                Point p = e.getPoint();
+                // user doesn't clicked on shape, but on drawing area
+                if (e.getButton() != MouseEvent.BUTTON1) return;
                 if (useGrid)
                     p.setLocation(searchGridPointX((int)p.getX()),
                         searchGridPointY((int)p.getY()));
                 points.add(p);
-            }
-            return;
-        }
-        e1 = e.getPoint();
-        if (useGrid)
-            e1.setLocation(searchGridPointX((int)e1.getX()),
-                    searchGridPointY((int)e1.getY()));
+            } else if (tool == drawTool.nothing) {
+                // add/remove a point to line ?
 
+                if (selPoint != null) return;
+                if (e.getButton() != MouseEvent.BUTTON1) return;
+                for (int i = schema.getConnectionLines().size()-1; i >= 0 ; i--) {
+                    ConnectionLine l = schema.getConnectionLines().get(i);
+                    int pi = -1;
+                    if ((pi = l.getCrossPointAfter((int)p.getX(), (int)p.getY()))
+                            != -1) {
+                        if (useGrid)
+                            p.setLocation(searchGridPointX((int)p.getX()),
+                                searchGridPointY((int)p.getY()));
+                        l.addPoint(pi-1,p);
+                        selPointIndex = pi;
+                        selPoint = p;
+                        selLine = l;
+                        repaint();
+                        break;
+                    }
+                }
+            }
+        }
     }
     
     public void mouseReleased(MouseEvent e) {
         shapeMove = false;
         if (tool == drawTool.delete && selShape != null) {
-            for (int i = lines.size()-1; i >= 0; i--) {
-                if (lines.get(i).containsElement(selShape))
-                    lines.remove(i);
+            if (e.getButton() != MouseEvent.BUTTON1) return;
+            for (int i = schema.getConnectionLines().size()-1; i >= 0; i--) {
+                if (schema.getConnectionLines().get(i).containsElement(selShape))
+                    schema.getConnectionLines().remove(i);
             }
-            shapes.remove(selShape);
+            if (selShape instanceof CpuElement) schema.setCpuElement(null);
+            else if (selShape instanceof MemoryElement) 
+                schema.setMemoryElement(null);
+            else if (selShape instanceof DeviceElement)
+                schema.getDeviceElements().remove(selShape);
             repaint();
             resizePanel();
             selShape = null;
@@ -277,21 +310,35 @@ public class DrawingPanel extends JPanel implements MouseListener,
         }
         if (tool == drawTool.nothing) {
             selShape = null;
+            // if a point is selected, remove line if user pressed
+            // right mouse button
+            if (selLine != null && selPoint != null) {
+                if (e.getButton() != MouseEvent.BUTTON3) return;
+                selLine.removePoint(selPointIndex);
+                selPoint = null;
+                selLine = null;
+                selPointIndex = -1;
+                repaint();
+            }
             return;
         }
+        Point shapePoint = e.getPoint();
+        if (useGrid)
+            shapePoint.setLocation(searchGridPointX((int)e.getX()),
+                    searchGridPointY((int)e.getY()));        
         if (tool == drawTool.shapeCPU)
-            shapes.add(new CpuElement(e1, "CPU " + (shapes.size()+1)));
+            schema.setCpuElement(new CpuElement(shapePoint, newText));
         else if (tool == drawTool.shapeMemory)
-            shapes.add(new MemoryElement(e1, "Mem " + (shapes.size()+1)));
+            schema.setMemoryElement(new MemoryElement(shapePoint, newText));
         else if (tool == drawTool.shapeDevice)
-            shapes.add(new DeviceElement(e1, "Dev " + (shapes.size()+1)));
+            schema.addDeviceElement(new DeviceElement(shapePoint, newText));
         else if (tool == drawTool.connectLine) {
             if (selShape != null && selShape2 != null) {
                 // kontrola ci nahodou uz spojenie neexistuje
                 // resp. ci nie je spojenie sam so sebou
                 boolean b = false;
-                for (int i = 0; i < lines.size(); i++) {
-                    ConnectionLine l = lines.get(i);
+                for (int i = 0; i < schema.getConnectionLines().size(); i++) {
+                    ConnectionLine l = schema.getConnectionLines().get(i);
                     if (l.containsElement(selShape) 
                             && l.containsElement(selShape2)) {
                         b = true;
@@ -299,7 +346,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
                     }
                 }
                 if (!b && (selShape != selShape2)) 
-                    lines.add(new ConnectionLine(selShape, 
+                    schema.getConnectionLines().add(new ConnectionLine(selShape, 
                         selShape2,points));
                 selShape = null;
                 selShape2 = null;
@@ -342,14 +389,14 @@ public class DrawingPanel extends JPanel implements MouseListener,
         selLine = null;
 
         if (tool == drawTool.nothing) {
-            for (int i = lines.size()-1; i >= 0 ; i--) {
-                Point[]ps = lines.get(i).getPoints().toArray(new Point[0]);
+            for (int i = schema.getConnectionLines().size()-1; i >= 0 ; i--) {
+                Point[]ps = schema.getConnectionLines().get(i).getPoints().toArray(new Point[0]);
                 Point p = e.getPoint();
                 for (int j = 0; j < ps.length; j++) {
                     double d = Math.hypot(ps[j].getX() - p.getX(), 
                             ps[j].getY() - p.getY());
                     if (d < 8) {
-                        selLine = lines.get(i);
+                        selLine = schema.getConnectionLines().get(i);
                         selPointIndex = j;
                         selPoint  = ps[j];
                         repaint();

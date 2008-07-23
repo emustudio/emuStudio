@@ -15,6 +15,7 @@ import java.util.regex.PatternSyntaxException;
 import javax.swing.ComboBoxModel;
 import javax.swing.JTextPane;
 import javax.swing.event.ListDataListener;
+import runtime.StaticDialogs;
 
 /**
  *
@@ -298,9 +299,9 @@ public class FindDialog extends javax.swing.JDialog {
                         FindText.getThis().getMatchEnd());
                 textPane.grabFocus();
                 dispose();
-            } else Main.showMessage("Expression was not found");
+            } else StaticDialogs.showMessage("Expression was not found");
         } catch (PatternSyntaxException e) {
-            Main.showErrorMessage("Pattern syntax error");
+            StaticDialogs.showErrorMessage("Pattern syntax error");
             searchCombo.grabFocus();
             return;
         }
@@ -318,9 +319,9 @@ public class FindDialog extends javax.swing.JDialog {
                 textPane.setText(FindText.getThis().getReplacedString());
                 textPane.grabFocus();
                 dispose();
-            } else Main.showMessage("Expression was not found");
+            } else StaticDialogs.showMessage("Expression was not found");
         } catch (PatternSyntaxException e) {
-            Main.showErrorMessage("Pattern syntax error");
+            StaticDialogs.showErrorMessage("Pattern syntax error");
             searchCombo.grabFocus();
             return;
         }
@@ -338,9 +339,9 @@ public class FindDialog extends javax.swing.JDialog {
                 textPane.setText(FindText.getThis().getReplacedString());
                 textPane.grabFocus();
                 dispose();
-            } else Main.showMessage("Expression was not found");
+            } else StaticDialogs.showMessage("Expression was not found");
         } catch (PatternSyntaxException e) {
-            Main.showErrorMessage("Pattern syntax error");
+            StaticDialogs.showErrorMessage("Pattern syntax error");
             searchCombo.grabFocus();
             return;
         }

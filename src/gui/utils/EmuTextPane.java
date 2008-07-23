@@ -13,18 +13,32 @@
 
 package gui.utils;
 
-import architecture.*;
-import gui.syntaxHighlighting.*;
-import plugins.compiler.*;
-
-import java.awt.event.*;
-import javax.swing.*;
-import java.io.*;
-import javax.swing.event.*;
-import java.awt.*;
-import javax.swing.text.*;
-import java.util.*;
-import javax.swing.undo.*;
+import gui.syntaxHighlighting.HighlightStyle;
+import gui.syntaxHighlighting.HighlightThread;
+import gui.syntaxHighlighting.StyledDocumentReader;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.Reader;
+import java.util.Hashtable;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.JTextPane;
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultStyledDocument;
+import javax.swing.undo.UndoManager;
+import plugins.compiler.ILexer;
+import plugins.compiler.IToken;
+import plugins.compiler.ITokenColor;
+import runtime.StaticDialogs;
 
 /**
  *
@@ -201,17 +215,17 @@ public class EmuTextPane extends JTextPane {
                     this.setCaretPosition(0);
                     vstup.close(); fileSaved = true;
                 }  catch (java.io.FileNotFoundException ex) {
-                    Main.showErrorMessage("File not found: " 
+                    StaticDialogs.showErrorMessage("File not found: " 
                             + fileSource.getPath());
                     return false;
                 }
                 catch (Exception e) {
-                    Main.showErrorMessage("Error opening file: "
+                    StaticDialogs.showErrorMessage("Error opening file: "
                             + fileSource.getPath());
                     return false;
                 }
             } else {
-                Main.showErrorMessage("File " + fileSource.getPath()
+                StaticDialogs.showErrorMessage("File " + fileSource.getPath()
                     + " can't be read.");
                 return false;
             }
@@ -245,7 +259,7 @@ public class EmuTextPane extends JTextPane {
                 fileSaved = true;
             } 
             catch (Exception e) {
-                Main.showErrorMessage("Can't save file: " + fileSource.getPath());
+                StaticDialogs.showErrorMessage("Can't save file: " + fileSource.getPath());
                 return false;
             }
             return true;
@@ -294,11 +308,11 @@ public class EmuTextPane extends JTextPane {
                     fileSaved = true;
                 } 
                 catch (Exception e) {
-                    Main.showErrorMessage("Can't save file: " + fileSource.getPath());
+                    StaticDialogs.showErrorMessage("Can't save file: " + fileSource.getPath());
                     return false;
                 }
             } else {
-                Main.showErrorMessage("Bad file name"); return false;
+                StaticDialogs.showErrorMessage("Bad file name"); return false;
             }
             return true;
         }

@@ -1,52 +1,70 @@
 /*
- * ViewConfigFrame.java
+ * ViewArchDialog.java
  *
  * Created on Utorok, 2007, september 11, 15:42
  */
 
 package gui;
 
-import architecture.*;
-import java.awt.event.*;
-import java.util.*;
+import architecture.ArchHandler;
+import architecture.Main;
+import architecture.drawing.PreviewPanel;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Vector;
+import plugins.ISettingsHandler.pluginType;
+import runtime.StaticDialogs;
 
 /**
  *
  * @author  vbmacher
  */
-public class ViewConfigFrame extends javax.swing.JFrame {
-    private ArchitectureHandler arch;
+public class ViewArchDialog extends javax.swing.JDialog {
+    private ArchHandler arch;
+    private String compilerName;
+    private String cpuName;
+    private String memoryName;
+    private Vector<String> devNames;
+    private PreviewPanel pan;
 
-    /** Creates new form ViewConfigFrame */
-    public ViewConfigFrame() {
-        arch = Main.getInstance().currentArch;
+    /** Creates new form ViewArchDialog */
+    public ViewArchDialog(javax.swing.JFrame parent, boolean modal) {
+        super(parent, modal);
+        arch = Main.currentArch;
         initComponents();
+        compilerName = arch.readSetting(pluginType.compiler, null, null);
+        cpuName = arch.readSetting(pluginType.cpu, null, null);
+        memoryName = arch.readSetting(pluginType.memory, null, null);
+        
+        devNames = new Vector<String>();
+        for (int i = 0; i < arch.getDevices().length; i++)
+            devNames.add(arch.getDeviceName(i));
         
         try {
             lblName.setText(arch.getArchName());
-            lblCompilerFileName.setText(arch.getCompilerName()+".jar");
+            lblCompilerFileName.setText(compilerName+".jar");
             lblCompilerName.setText(arch.getCompiler().getName());
             lblCompilerVersion.setText(arch.getCompiler().getVersion());
             lblCompilerCopyright.setText(arch.getCompiler().getCopyright());
             txtCompilerDescription.setText(arch.getCompiler().getDescription());
             
-            lblCPUFileName.setText(arch.getCPUName()+".jar");
+            lblCPUFileName.setText(cpuName+".jar");
             lblCPUName.setText(arch.getCPU().getName());
             lblCPUVersion.setText(arch.getCPU().getVersion());
             lblCPUCopyright.setText(arch.getCPU().getCopyright());
             txtCPUDescription.setText(arch.getCPU().getDescription());
             
-            lblMemoryFileName.setText(arch.getMemoryName()+".jar");
+            lblMemoryFileName.setText(memoryName+".jar");
             lblMemoryName.setText(arch.getMemory().getName());
             lblMemoryVersion.setText(arch.getMemory().getVersion());
             lblMemoryCopyright.setText(arch.getMemory().getCopyright());
             txtMemoryDescription.setText(arch.getMemory().getDescription());
 
-            for (int i = 0; i < arch.getDeviceNames().length; i++)
-                cmbDevice.addItem(arch.getDeviceNames()[i]);
+            for (int i = 0; i < devNames.size(); i++)
+                cmbDevice.addItem(devNames.get(i));
         }
         catch (NullPointerException e) {
-            Main.showErrorMessage("Can't get plugins info:" + e.getMessage());
+            StaticDialogs.showErrorMessage("Can't get plugins info:" + e.getMessage());
         }
         
         if (cmbDevice.getItemCount() > 0) showDevConfig(0);
@@ -57,11 +75,15 @@ public class ViewConfigFrame extends javax.swing.JFrame {
                 catch(Exception ex) {}
             }
         });
+        pan = new PreviewPanel(arch.getSchema());
+        scrollScheme.setViewportView(pan);
+        scrollScheme.getHorizontalScrollBar().setUnitIncrement(10);
+        scrollScheme.getVerticalScrollBar().setUnitIncrement(10);
         this.setLocationRelativeTo(null);
     }
     
     private void showDevConfig(int i) {
-        lblDeviceFileName.setText(arch.getDeviceNames()[i]+".jar");
+        lblDeviceFileName.setText(devNames.get(i) +".jar");
         lblDeviceName.setText(arch.getDevices()[i].getName());
         lblDeviceVersion.setText(arch.getDevices()[i].getVersion());
         lblDeviceCopyright.setText(arch.getDevices()[i].getCopyright());
@@ -128,11 +150,12 @@ public class ViewConfigFrame extends javax.swing.JFrame {
         txtDeviceDescription = new javax.swing.JTextArea();
         javax.swing.JLabel jLabel17 = new javax.swing.JLabel();
         cmbDevice = new javax.swing.JComboBox();
+        javax.swing.JPanel jPanel5 = new javax.swing.JPanel();
+        scrollScheme = new javax.swing.JScrollPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("View current configuration");
         setAlwaysOnTop(true);
-        setResizable(false);
 
         lblName.setFont(lblName.getFont().deriveFont(lblName.getFont().getStyle() | java.awt.Font.BOLD));
         lblName.setText(null);
@@ -207,7 +230,7 @@ public class ViewConfigFrame extends javax.swing.JFrame {
                     .addComponent(lblCompilerCopyright))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 191, Short.MAX_VALUE)
                     .addComponent(jLabel4))
                 .addContainerGap())
         );
@@ -283,7 +306,7 @@ public class ViewConfigFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel8)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 191, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -358,7 +381,7 @@ public class ViewConfigFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel12)
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE))
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 191, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -412,7 +435,7 @@ public class ViewConfigFrame extends javax.swing.JFrame {
                     .addComponent(lblDeviceFileName)
                     .addComponent(lblDeviceVersion)
                     .addComponent(jScrollPane4)
-                    .addComponent(cmbDevice, 0, 322, Short.MAX_VALUE))
+                    .addComponent(cmbDevice, 0, 471, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -441,11 +464,30 @@ public class ViewConfigFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel16)
-                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE))
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 166, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
         jTabbedPane1.addTab("Devices", jPanel4);
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(scrollScheme, javax.swing.GroupLayout.DEFAULT_SIZE, 567, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(scrollScheme, javax.swing.GroupLayout.DEFAULT_SIZE, 283, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("Abstract scheme", jPanel5);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -454,7 +496,7 @@ public class ViewConfigFrame extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 450, Short.MAX_VALUE)
+                    .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 603, Short.MAX_VALUE)
                     .addComponent(lblName))
                 .addContainerGap())
         );
@@ -464,7 +506,7 @@ public class ViewConfigFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lblName)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -491,6 +533,7 @@ public class ViewConfigFrame extends javax.swing.JFrame {
     javax.swing.JLabel lblMemoryName;
     javax.swing.JLabel lblMemoryVersion;
     javax.swing.JLabel lblName;
+    javax.swing.JScrollPane scrollScheme;
     javax.swing.JTextArea txtCPUDescription;
     javax.swing.JTextArea txtCompilerDescription;
     javax.swing.JTextArea txtDeviceDescription;
