@@ -13,7 +13,6 @@
 
 package sio88;
 
-import sio88.Mits88SIO;
 import java.util.EventObject;
 import plugins.device.IDeviceContext;
 
