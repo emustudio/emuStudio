@@ -19,9 +19,10 @@ non terminal Integer Expression;
 
 package tree8080;
 
-import java.util.*;
-import tree8080Abstract.*;
-import compiler8080.*;
+import compiler8080.HEXFileHandler;
+import compiler8080.NeedMorePassException;
+import compiler8080.compileEnv;
+import java.util.Vector;
 
 /**
  *

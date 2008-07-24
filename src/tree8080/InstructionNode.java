@@ -1,4 +1,10 @@
 package tree8080;
+
+import compiler8080.HEXFileHandler;
+import compiler8080.NeedMorePassException;
+import compiler8080.compileEnv;
+import tree8080Abstract.CodePseudoNode;
+
 /*
  * Instruction.java
  *
@@ -7,9 +13,6 @@ package tree8080;
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
  */
-
-import compiler8080.*;
-import tree8080Abstract.*;
 
 /**
  *

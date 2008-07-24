@@ -9,8 +9,9 @@
 
 package tree8080;
 
-import compiler8080.*;
-import tree8080Abstract.*;
+import compiler8080.compileEnv;
+import tree8080Abstract.ExprNode;
+
 /**
  *
  * @author vbmacher

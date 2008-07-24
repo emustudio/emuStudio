@@ -9,7 +9,7 @@
 
 package tree8080Abstract;
 
-import compiler8080.*;
+import compiler8080.compileEnv;
 
 /**
  *

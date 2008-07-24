@@ -730,6 +730,12 @@ Label ={Identifier}[\:]
     return (new token8080(lastToken,IToken.OPERATOR,text,null,yyline,yycolumn,
         yychar,yychar+text.length()));
 }
+"=" {
+    lastToken = token8080.OPERATOR_EQUAL;
+    String text = yytext();
+    return (new token8080(lastToken,IToken.OPERATOR,text,null,yyline,yycolumn,
+        yychar,yychar+text.length()));
+}
 "mod" {
     lastToken = token8080.OPERATOR_MOD;
     String text = yytext();

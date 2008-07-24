@@ -14,7 +14,6 @@
 
 package compiler8080;
 
-import java.lang.*;
 /**
  *
  * @author vbmacher
@@ -26,7 +25,7 @@ public class NeedMorePassException extends Exception {
     
     /** Creates a new instance of NeedMorePassException */
     public NeedMorePassException(Object o, int line, int column) {
-        this.obj = obj;
+        this.obj = o;
         this.line = line;
         this.column = column;
     }

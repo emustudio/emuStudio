@@ -9,8 +9,11 @@
 
 package tree8080;
 
-import compiler8080.*;
-import tree8080Abstract.*;
+import compiler8080.HEXFileHandler;
+import compiler8080.compileEnv;
+import tree8080Abstract.ExprNode;
+import tree8080Abstract.PseudoNode;
+
 /**
  *
  * @author vbmacher
@@ -26,17 +29,13 @@ public class SetPseudoNode extends PseudoNode {
         this.expr = expr;
     }
     
-    @Override
     public String getName() { return mnemo;}
     public int getValue() { return expr.getValue(); }
     /// compile time ///
 
-    @Override
     public int getSize() { return 0; }
-    @Override
     public void pass1() {}
 
-    @Override
     public int pass2(compileEnv env, int addr_start) throws Exception { 
         if (env.addSetDef(this) == false)
             throw new Exception("[" + line + "," + column
@@ -45,7 +44,6 @@ public class SetPseudoNode extends PseudoNode {
         return addr_start;
     }
 
-    @Override
     public void pass4(HEXFileHandler hex) {}
     
 }

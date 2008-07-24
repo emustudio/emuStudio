@@ -9,8 +9,8 @@
 
 package tree8080;
 
-import compiler8080.*;
-import tree8080Abstract.*;
+import compiler8080.compileEnv;
+import tree8080Abstract.ExprNode;
 
 /**
  *
@@ -33,6 +33,5 @@ public class DecimalValueNode extends ExprNode {
     public int eval(compileEnv env, int curr_addr) throws Exception {
         return value;
     }
-
 
 }

@@ -9,8 +9,8 @@
 
 package tree8080;
 
-import compiler8080.*;
-import tree8080Abstract.*;
+import compiler8080.compileEnv;
+import tree8080Abstract.ExprNode;
 
 /**
  *
@@ -31,22 +31,24 @@ public class ArithNode extends ExprNode {
     /// compile time ///
        
     public int eval(compileEnv env, int curr_addr) throws Exception {
-        int lv = left.eval(env,curr_addr);;
+        int lv = left.eval(env,curr_addr);
         int rv = 0;
         if (right != null) rv = right.eval(env, curr_addr);
  
         this.value = 0;
-        if (operator == "or") this.value = lv | rv;
-        else if (operator == "xor") this.value = lv ^ rv;
-        else if (operator == "and") this.value = lv & rv;
-        else if (operator == "not") this.value = ~lv;
-        else if (operator == "+") this.value = lv + rv;
-        else if (operator == "-") this.value = lv - rv;
-        else if (operator == "*") this.value = lv * rv;
-        else if (operator == "/") this.value = lv / rv;
-        else if (operator == "mod") this.value = lv % rv;
-        else if (operator == "shr") this.value = lv >>> rv;
-        else if (operator == "shl") this.value = lv << rv; // it works! (tested)
+        if (operator.equals("or")) this.value = lv | rv;
+        else if (operator.equals("xor")) this.value = lv ^ rv;
+        else if (operator.equals("and")) this.value = lv & rv;
+        else if (operator.equals("not")) this.value = ~lv;
+        else if (operator.equals("+")) this.value = lv + rv;
+        else if (operator.equals("-")) this.value = lv - rv;
+        else if (operator.equals("*")) this.value = lv * rv;
+        else if (operator.equals("/")) this.value = lv / rv;
+        else if (operator.equals("mod")) this.value = lv % rv;
+        else if (operator.equals("shr")) this.value = lv >>> rv;
+        else if (operator.equals("shl")) this.value = lv << rv; // it works! (tested)
+        else if (operator.equals("=")) this.value = (lv == rv) ? 1 : 0;
+        
         return this.value;
     }
 

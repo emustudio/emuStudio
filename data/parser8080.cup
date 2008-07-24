@@ -82,8 +82,8 @@ terminal REGISTERS_A,REGISTERS_B,REGISTERS_C,REGISTERS_D,REGISTERS_E,
         REGISTERS_H,REGISTERS_L,REGISTERS_M,REGISTERS_PSW,REGISTERS_SP;
 terminal SEPARATOR_LPAR,SEPARATOR_RPAR,SEPARATOR_COMMA,SEPARATOR_EOL;
 terminal OPERATOR_ADD,OPERATOR_SUBTRACT,OPERATOR_MULTIPLY,OPERATOR_DIVIDE,
-        OPERATOR_MOD,OPERATOR_SHR,OPERATOR_SHL,OPERATOR_NOT,OPERATOR_AND,
-        OPERATOR_OR,OPERATOR_XOR;
+        OPERATOR_EQUAL,OPERATOR_MOD,OPERATOR_SHR,OPERATOR_SHL,OPERATOR_NOT,
+        OPERATOR_AND,OPERATOR_OR,OPERATOR_XOR;
 terminal Integer LITERAL_DECIMAL_8BIT,LITERAL_DECIMAL_16BIT;
 terminal String LITERAL_STRING,TLABEL,TIDENTIFIER;
 terminal TCOMMENT;
@@ -106,6 +106,7 @@ non terminal CommentOptional;
 precedence left OPERATOR_OR,OPERATOR_XOR;
 precedence left OPERATOR_AND;
 precedence left OPERATOR_NOT;
+precedence nonassoc OPERATOR_EQUAL;
 precedence left OPERATOR_ADD,OPERATOR_SUBTRACT;
 precedence left OPERATOR_MULTIPLY,OPERATOR_DIVIDE,OPERATOR_MOD,OPERATOR_SHL,
                 OPERATOR_SHR;
@@ -170,6 +171,7 @@ Expression ::= SEPARATOR_LPAR Expression:e SEPARATOR_RPAR {: RESULT = e; :}
  | Expression:e1 OPERATOR_XOR Expression:e2 {: RESULT = new ArithNode(e1,e2,"xor"); :}
  | Expression:e1 OPERATOR_AND Expression:e2 {: RESULT = new ArithNode(e1,e2,"and"); :}
  | OPERATOR_NOT Expression:e {: RESULT = new ArithNode(e,null,"not"); :}
+ | Expression:e1 OPERATOR_EQUAL Expression:e2 {: RESULT = new ArithNode(e1,e2,"="); :}
  | Expression:e1 OPERATOR_ADD Expression:e2 {: RESULT = new ArithNode(e1,e2,"+"); :}
  | OPERATOR_ADD Expression:e1 {: RESULT = new ArithNode(new DecimalValueNode(0),e1,"+"); :}
  | Expression:e1 OPERATOR_SUBTRACT Expression:e2 {: RESULT = new ArithNode(e1,e2,"-"); :}

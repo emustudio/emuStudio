@@ -9,8 +9,8 @@
 
 package compiler8080;
 
+import java_cup.runtime.Symbol;
 import plugins.compiler.IToken;
-import java_cup.runtime.*;
 
 /**
  *

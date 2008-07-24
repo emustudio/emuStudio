@@ -9,9 +9,12 @@
 
 package tree8080;
 
-import compiler8080.*;
-import java.util.*;
-import tree8080Abstract.*;
+import compiler8080.HEXFileHandler;
+import compiler8080.compileEnv;
+import java.util.Vector;
+import tree8080Abstract.CodeNode;
+import tree8080Abstract.DataValueNode;
+
 /**
  *
  * @author vbmacher

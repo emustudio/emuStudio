@@ -11,7 +11,8 @@ package tree8080;
 
 import compiler8080.HEXFileHandler;
 import compiler8080.compileEnv;
-import tree8080Abstract.*;
+import tree8080Abstract.OpCodeNode;
+
 /**
  *
  * @author vbmacher
@@ -33,6 +34,7 @@ public class OC_NoParams extends OpCodeNode {
         return addr_start + 1;
     }
 
+    @SuppressWarnings("empty-statement")
     public void pass4(HEXFileHandler hex) throws Exception {
         short opCode = 0; // nop
 
