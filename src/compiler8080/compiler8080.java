@@ -45,10 +45,10 @@ public class compiler8080 implements ICompiler {
     }
     
     public String getName() { return "Intel 8080 Compiler"; }
-    public String getVersion() { return "0.2b"; }
+    public String getVersion() { return "0.23b"; }
     public String getCopyright() { return "\u00A9 Copyright 2007-2008, Peter Jakubčo"; }
     public String getDescription() {
-        return "It is a clone of original Intel's assembler. For syntax look"
+        return "It is light modified clone of original Intel's assembler. For syntax look"
                 + " at users manual.";
     }
     
