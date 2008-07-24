@@ -347,7 +347,6 @@ public class ArchLoader extends ClassLoader {
 
     /**
      * Method loads architecture configuration from current settings
-     * @param settings Properties object
      * @return a handler of loaded architecture
      */
     public ArchHandler load(String name) {

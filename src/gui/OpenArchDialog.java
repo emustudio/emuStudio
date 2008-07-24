@@ -7,7 +7,6 @@
 package gui;
 import architecture.*;
 import architecture.drawing.Schema;
-import java.io.File;
 import javax.swing.*;
 import runtime.StaticDialogs;
 
@@ -40,6 +39,8 @@ public class OpenArchDialog extends javax.swing.JDialog {
         btnEdit.setVisible(false);
         btnDelete.setEnabled(false);
         btnDelete.setVisible(false);
+        btnNew.setEnabled(false);
+        btnNew.setVisible(false);
         this.setLocationRelativeTo(parent);
     }
     
@@ -85,6 +86,7 @@ public class OpenArchDialog extends javax.swing.JDialog {
         btnEdit = new javax.swing.JButton();
         javax.swing.JButton btnPreview = new javax.swing.JButton();
         btnDelete = new javax.swing.JButton();
+        btnNew = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Microcomputer configuration control");
@@ -122,6 +124,13 @@ public class OpenArchDialog extends javax.swing.JDialog {
             }
         });
 
+        btnNew.setText("New...");
+        btnNew.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNewActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -129,15 +138,17 @@ public class OpenArchDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 366, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 393, Short.MAX_VALUE)
                     .addComponent(jLabel1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(btnNew)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnEdit, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnDelete)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 47, Short.MAX_VALUE)
                         .addComponent(btnPreview)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnEdit, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnDelete, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 31, Short.MAX_VALUE)
                         .addComponent(btnOpen, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
@@ -152,6 +163,7 @@ public class OpenArchDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnOpen)
                     .addComponent(btnPreview)
+                    .addComponent(btnNew)
                     .addComponent(btnEdit)
                     .addComponent(btnDelete))
                 .addContainerGap())
@@ -209,10 +221,20 @@ private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
         lstArchNames.setSelectedIndex(-1);
     }
 }//GEN-LAST:event_btnDeleteActionPerformed
+
+private void btnNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewActionPerformed
+    AddEditArchDialog di = new AddEditArchDialog(null, true);
+    di.setVisible(true);
+    if (di.getOK()) {
+        ArchLoader.saveSchema(di.getSchema());
+        amodel.update();
+    }
+}//GEN-LAST:event_btnNewActionPerformed
         
     // Variables declaration - do not modify//GEN-BEGIN:variables
     javax.swing.JButton btnDelete;
     javax.swing.JButton btnEdit;
+    javax.swing.JButton btnNew;
     javax.swing.JList lstArchNames;
     // End of variables declaration//GEN-END:variables
     

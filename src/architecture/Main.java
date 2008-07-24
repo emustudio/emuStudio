@@ -8,9 +8,7 @@
 
 package architecture;
 
-import gui.AddEditArchDialog;
 import gui.OpenArchDialog;
-import gui.StartDialog;
 import gui.StudioFrame;
 
 /**
@@ -33,31 +31,15 @@ public class Main {
 
         aloader = new ArchLoader();
 
-        StartDialog sFrame = new StartDialog();
-        sFrame.setVisible(true);
-        
         String configName = null;
-        switch (sFrame.getRes()) {
-            case newArch:
-                AddEditArchDialog di = new AddEditArchDialog(null, true);
-                di.setVisible(true);
-                if (di.getOK()) {
-                    configName = di.getSchema().getConfigName();
-                    ArchLoader.saveSchema(di.getSchema());
-                }
-                break;
-            case openArch:
-                OpenArchDialog odi = new OpenArchDialog();
-                odi.setVisible(true);
-                if (odi.getOK()) configName = odi.getArchName();
-                break;
-            case exit:
-                return;
-        }
+        OpenArchDialog odi = new OpenArchDialog();
+        odi.setVisible(true);
+        if (odi.getOK()) configName = odi.getArchName();
         if (configName == null) return;
         currentArch = aloader.load(configName);
         if (currentArch != null)
             new StudioFrame().setVisible(true);
+        System.exit(0);
     }
     
 }
