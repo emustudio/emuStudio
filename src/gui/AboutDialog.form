@@ -95,12 +95,12 @@
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Arial" size="24" style="1"/>
         </Property>
-        <Property name="text" type="java.lang.String" value="emu8 Studio"/>
+        <Property name="text" type="java.lang.String" value="emuStudio"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel7">
       <Properties>
-        <Property name="text" type="java.lang.String" value="&lt;html&gt;Emulation platform for emulating various kinds of 8-bit architectures. It was created for educational purposes. It is a property of Technical University of Ko&#x161;ice."/>
+        <Property name="text" type="java.lang.String" value="&lt;html&gt;Emulation platform for emulating various kinds of mainly older (e.g. 8-bit) architectures. It was designed for educational purposes. It is a property of Technical University of Ko&#x161;ice."/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel5">
@@ -125,7 +125,7 @@
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel9">
       <Properties>
-        <Property name="text" type="java.lang.String" value="2.5b1"/>
+        <Property name="text" type="java.lang.String" value="3.0b1"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel3">

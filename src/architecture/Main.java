@@ -39,7 +39,7 @@ public class Main {
         currentArch = aloader.load(configName);
         if (currentArch != null)
             new StudioFrame().setVisible(true);
-        System.exit(0);
+        else System.exit(0);
     }
     
 }

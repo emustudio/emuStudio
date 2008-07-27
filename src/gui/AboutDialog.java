@@ -43,10 +43,10 @@ public class AboutDialog extends javax.swing.JDialog {
         jLabel1.setBackground(new java.awt.Color(255, 255, 255));
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/altair.jpg"))); // NOI18N
 
-        jLabel2.setFont(new java.awt.Font("Arial", 1, 24));
-        jLabel2.setText("emu8 Studio");
+        jLabel2.setFont(new java.awt.Font("Arial", 1, 24)); // NOI18N
+        jLabel2.setText("emuStudio");
 
-        jLabel7.setText("<html>Emulation platform for emulating various kinds of 8-bit architectures. It was created for educational purposes. It is a property of Technical University of Košice.");
+        jLabel7.setText("<html>Emulation platform for emulating various kinds of mainly older (e.g. 8-bit) architectures. It was designed for educational purposes. It is a property of Technical University of Košice.");
 
         jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel5.setText("Consultant:");
@@ -54,7 +54,7 @@ public class AboutDialog extends javax.swing.JDialog {
         jLabel8.setFont(jLabel8.getFont().deriveFont(jLabel8.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel8.setText("Version:");
 
-        jLabel9.setText("0.25b1");
+        jLabel9.setText("0.30b1");
 
         jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel3.setText("ing. Slavomir Šimoňák");

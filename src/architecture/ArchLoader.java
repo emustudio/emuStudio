@@ -7,7 +7,7 @@
  * some things just: YOU AREN'T GONNA NEED IT
  *
  * This class deals with emulator configuration - loads classes, maps devices,
- * etc.
+ * etc
  *
  * A configuration file is Java properties file. It means it is like Windows INI
  * file without [] classes. Settings of specific devices can be accessed via
@@ -372,7 +372,7 @@ public class ArchLoader extends ClassLoader {
             }
             
             ArrayList<PluginConnection> lines = new ArrayList<PluginConnection>();
-            for (int i = 0; settings.containsKey("connection"+i); i++) {
+            for (int i = 0; settings.containsKey("connection"+i+".junc0"); i++) {
                 String j0 = settings.getProperty("connection"+i
                         +".junc0", "");
                 String j1 = settings.getProperty("connection"+i

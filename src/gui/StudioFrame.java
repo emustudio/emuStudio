@@ -155,8 +155,8 @@ public class StudioFrame extends javax.swing.JFrame {
     public void setStatusGUI() {
         JPanel statusPanel = arch.getCPU().getStatusGUI();
         if (statusPanel == null) return;
-        GroupLayout layout = new GroupLayout(jPanel4);
-        jPanel4.setLayout(layout);
+        GroupLayout layout = new GroupLayout(this.statusPanel);
+        this.statusPanel.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
@@ -257,7 +257,10 @@ public class StudioFrame extends javax.swing.JFrame {
         javax.swing.JScrollPane jScrollPane2 = new javax.swing.JScrollPane();
         txtOutput = new javax.swing.JTextArea();
         javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
-        javax.swing.JPanel jPanel3 = new javax.swing.JPanel();
+        javax.swing.JSplitPane splitLeftRight = new javax.swing.JSplitPane();
+        statusPanel = new javax.swing.JPanel();
+        javax.swing.JSplitPane splitPerDebug = new javax.swing.JSplitPane();
+        javax.swing.JPanel debuggerPanel = new javax.swing.JPanel();
         javax.swing.JToolBar jToolBar2 = new javax.swing.JToolBar();
         javax.swing.JButton btnReset = new javax.swing.JButton();
         btnBeginning = new javax.swing.JButton();
@@ -270,12 +273,10 @@ public class StudioFrame extends javax.swing.JFrame {
         btnBreakpoint = new javax.swing.JButton();
         javax.swing.JButton btnMemory = new javax.swing.JButton();
         paneDebug = new javax.swing.JScrollPane();
-        jPanel4 = new javax.swing.JPanel();
-        javax.swing.JPanel jPanel5 = new javax.swing.JPanel();
+        javax.swing.JPanel peripheralPanel = new javax.swing.JPanel();
         javax.swing.JScrollPane paneDevices = new javax.swing.JScrollPane();
         lstDevices = new javax.swing.JList();
         javax.swing.JButton showGUIButton = new javax.swing.JButton();
-        javax.swing.JButton btnSettings = new javax.swing.JButton();
         javax.swing.JMenuBar jMenuBar2 = new javax.swing.JMenuBar();
         javax.swing.JMenu mnuFile = new javax.swing.JMenu();
         javax.swing.JMenuItem mnuFileNew = new javax.swing.JMenuItem();
@@ -441,10 +442,10 @@ public class StudioFrame extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 771, Short.MAX_VALUE)
+            .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 728, Short.MAX_VALUE)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(10, 10, 10)
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 751, Short.MAX_VALUE)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 708, Short.MAX_VALUE)
                 .addGap(10, 10, 10))
         );
         jPanel1Layout.setVerticalGroup(
@@ -452,7 +453,7 @@ public class StudioFrame extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 444, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -460,7 +461,29 @@ public class StudioFrame extends javax.swing.JFrame {
 
         jPanel2.setOpaque(false);
 
-        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Debugger"));
+        splitLeftRight.setContinuousLayout(true);
+        splitLeftRight.setFocusable(false);
+
+        statusPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Status"));
+
+        javax.swing.GroupLayout statusPanelLayout = new javax.swing.GroupLayout(statusPanel);
+        statusPanel.setLayout(statusPanelLayout);
+        statusPanelLayout.setHorizontalGroup(
+            statusPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 260, Short.MAX_VALUE)
+        );
+        statusPanelLayout.setVerticalGroup(
+            statusPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 443, Short.MAX_VALUE)
+        );
+
+        splitLeftRight.setRightComponent(statusPanel);
+
+        splitPerDebug.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        splitPerDebug.setAutoscrolls(true);
+        splitPerDebug.setContinuousLayout(true);
+
+        debuggerPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Debugger"));
 
         jToolBar2.setFloatable(false);
         jToolBar2.setRollover(true);
@@ -534,7 +557,7 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         jToolBar2.add(btnStep);
 
-        btnJump.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/jump24.GIF"))); // NOI18N
+        btnJump.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/jump24.gif"))); // NOI18N
         btnJump.setToolTipText("Jump to address");
         btnJump.setFocusable(false);
         btnJump.addActionListener(new java.awt.event.ActionListener() {
@@ -566,90 +589,71 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         jToolBar2.add(btnMemory);
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addComponent(jToolBar2, javax.swing.GroupLayout.DEFAULT_SIZE, 437, Short.MAX_VALUE)
+        javax.swing.GroupLayout debuggerPanelLayout = new javax.swing.GroupLayout(debuggerPanel);
+        debuggerPanel.setLayout(debuggerPanelLayout);
+        debuggerPanelLayout.setHorizontalGroup(
+            debuggerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(debuggerPanelLayout.createSequentialGroup()
+                .addComponent(jToolBar2, javax.swing.GroupLayout.DEFAULT_SIZE, 426, Short.MAX_VALUE)
                 .addContainerGap())
-            .addComponent(paneDebug, javax.swing.GroupLayout.DEFAULT_SIZE, 449, Short.MAX_VALUE)
+            .addComponent(paneDebug, javax.swing.GroupLayout.DEFAULT_SIZE, 438, Short.MAX_VALUE)
         );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
+        debuggerPanelLayout.setVerticalGroup(
+            debuggerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(debuggerPanelLayout.createSequentialGroup()
                 .addComponent(jToolBar2, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(paneDebug, javax.swing.GroupLayout.DEFAULT_SIZE, 233, Short.MAX_VALUE))
+                .addComponent(paneDebug, javax.swing.GroupLayout.DEFAULT_SIZE, 196, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Status"));
+        splitPerDebug.setTopComponent(debuggerPanel);
 
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 292, Short.MAX_VALUE)
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 264, Short.MAX_VALUE)
-        );
-
-        jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder("Additional peripheral devices"));
+        peripheralPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Peripheral devices"));
 
         paneDevices.setViewportView(lstDevices);
 
-        showGUIButton.setText("Show GUI");
+        showGUIButton.setText("Show");
         showGUIButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 showGUIButtonActionPerformed(evt);
             }
         });
 
-        btnSettings.setText("Settings...");
-
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(paneDevices, javax.swing.GroupLayout.PREFERRED_SIZE, 326, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(6, 6, 6)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(showGUIButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(334, Short.MAX_VALUE))
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(paneDevices, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 76, Short.MAX_VALUE)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addComponent(btnSettings)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        javax.swing.GroupLayout peripheralPanelLayout = new javax.swing.GroupLayout(peripheralPanel);
+        peripheralPanel.setLayout(peripheralPanelLayout);
+        peripheralPanelLayout.setHorizontalGroup(
+            peripheralPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(peripheralPanelLayout.createSequentialGroup()
+                .addContainerGap(376, Short.MAX_VALUE)
                 .addComponent(showGUIButton)
                 .addContainerGap())
+            .addComponent(paneDevices, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 438, Short.MAX_VALUE)
         );
+        peripheralPanelLayout.setVerticalGroup(
+            peripheralPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, peripheralPanelLayout.createSequentialGroup()
+                .addComponent(paneDevices, javax.swing.GroupLayout.DEFAULT_SIZE, 132, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(showGUIButton))
+        );
+
+        splitPerDebug.setRightComponent(peripheralPanel);
+
+        splitLeftRight.setLeftComponent(splitPerDebug);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(splitLeftRight, javax.swing.GroupLayout.DEFAULT_SIZE, 728, Short.MAX_VALUE)
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap()
+                .addComponent(splitLeftRight, javax.swing.GroupLayout.DEFAULT_SIZE, 470, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         jTabbedPane1.addTab("Emulator", jPanel2);
@@ -824,11 +828,11 @@ public class StudioFrame extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 783, Short.MAX_VALUE)
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 740, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 443, Short.MAX_VALUE)
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 537, Short.MAX_VALUE)
         );
 
         pack();
@@ -840,10 +844,14 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void showGUIButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showGUIButtonActionPerformed
         try {
-            ((IDevice)arch.getDevices()[lstDevices.getMinSelectionIndex()]).
-                    showGUI();
+            int i = lstDevices.getSelectedIndex();
+            if (i == -1) {
+                StaticDialogs.showErrorMessage("Device has to be selected!");
+                return;
+            }
+            arch.getDevices()[i].showGUI();
         } catch(Exception e) {
-            StaticDialogs.showErrorMessage("Can't show GUI of a device: " + e.getMessage());
+            StaticDialogs.showErrorMessage("Can't show the device: " + e.getMessage());
         }
 }//GEN-LAST:event_showGUIButtonActionPerformed
 
@@ -1110,7 +1118,6 @@ public class StudioFrame extends javax.swing.JFrame {
     javax.swing.JButton btnStep;
     javax.swing.JButton btnStop;
     javax.swing.JButton btnUndo;
-    javax.swing.JPanel jPanel4;
     javax.swing.JScrollPane jScrollPane1;
     javax.swing.JList lstDevices;
     javax.swing.JMenuItem mnuEditCopy;
@@ -1119,6 +1126,7 @@ public class StudioFrame extends javax.swing.JFrame {
     javax.swing.JMenuItem mnuEditRedo;
     javax.swing.JMenuItem mnuEditUndo;
     javax.swing.JScrollPane paneDebug;
+    javax.swing.JPanel statusPanel;
     javax.swing.JTextArea txtOutput;
     // End of variables declaration//GEN-END:variables
     
