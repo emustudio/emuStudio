@@ -112,7 +112,7 @@ import runtime.StaticDialogs;
 public class DiskImpl implements IDevice {
     private final static int DRIVES_COUNT = 16;
     private ACpuContext cpu;
-    private IMemoryContext mem;
+    private ISettingsHandler sHandler;
     
     public ArrayList drives;
     private Port1 port1;
@@ -134,30 +134,30 @@ public class DiskImpl implements IDevice {
     
     public boolean initialize(ICPUContext cpu, IMemoryContext mem,
             ISettingsHandler sHandler) {
+        this.sHandler = sHandler;
+        if (cpu == null) return true;
+        
         if (!(cpu instanceof ACpuContext)) {
             StaticDialogs.showErrorMessage("Device can't be loaded, because "
                     + "CPU is not compatible with the device.");
             return false;
         }
-        if (!mem.getID().equals("byte_simple_variable")) {
-            StaticDialogs.showErrorMessage("Device can't be loaded, because "
-                    + "operating memory is not compatible with the device.");
-            return false;
-        }
         this.cpu = (ACpuContext) cpu;
-        this.mem = mem;
         
         // attach device to CPU
         if (this.cpu.attachDevice(port1, 0x8) == false) {
-            StaticDialogs.showErrorMessage("Error: this device can't be attached (maybe there is a hardware conflict)");
+            StaticDialogs.showErrorMessage("Error: this device can't be attached"
+                    + "(maybe there is a hardware conflict)");
             return false;
         }
         if (this.cpu.attachDevice(port2, 0x9) == false) {
-            StaticDialogs.showErrorMessage("Error: this device can't be attached (maybe there is a hardware conflict)");
+            StaticDialogs.showErrorMessage("Error: this device can't be attached" +
+                    " (maybe there is a hardware conflict)");
             return false;
         }
         if (this.cpu.attachDevice(port3, 0xA) == false) {
-            StaticDialogs.showErrorMessage("Error: this device can't be attached (maybe there is a hardware conflict)");
+            StaticDialogs.showErrorMessage("Error: this device can't be attached" +
+                    " (maybe there is a hardware conflict)");
             return false;
         }
         return true;
@@ -181,7 +181,7 @@ public class DiskImpl implements IDevice {
                 + "I/O addresses were 10Q-12Q.";
     }
 
-    public String getVersion() { return "0.22b"; }
+    public String getVersion() { return "0.23b"; }
     public String getName() { return "MITS-88 DISK (floppy drive)"; }
     public String getCopyright() {
         return "\u00A9 Copyright 2008, P. Jakubčo";
@@ -189,15 +189,30 @@ public class DiskImpl implements IDevice {
 
     public void destroy() {
         if (gui != null) gui.dispose();
-        cpu.detachDevice(0x8);
-        cpu.detachDevice(0x9);
-        cpu.detachDevice(0xA);
+        if (cpu != null) {
+            cpu.detachDevice(0x8);
+            cpu.detachDevice(0x9);
+            cpu.detachDevice(0xA);
+        }
         drives.clear();
     }
 
-    public IDeviceContext[] getContext() {
-        IDeviceContext[] idev = { port1, port2, port3 };
-        return idev;
+    /**
+     * Nothing can be plugged into this device.
+     * @return null
+     */
+    public IDeviceContext getFreeFemale() { return null; }
+
+    /**
+     * This device can not be plugged to anywhere.
+     * @return null
+     */
+    public IDeviceContext getFreeMale() { return null; }
+
+    public boolean attachDevice(IDeviceContext female, IDeviceContext male) {
+        return false;
     }
+
+    public void detachDevice(IDeviceContext device, boolean male) {}
 
 }
