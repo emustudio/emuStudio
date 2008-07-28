@@ -30,7 +30,7 @@ public class Memory implements IMemory {
                 + "or pagination.";
     }
 
-    public String getVersion() { return "0.2b"; }
+    public String getVersion() { return "0.21b"; }
 
     public String getName() {
         return "Standard linear-byte operating memory with variable size";
