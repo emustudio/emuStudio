@@ -64,7 +64,7 @@ public class Mits88SIO implements IDevice {
                 + " 0x10(status), 0x11(data). For programming see manual at\n"
                 + "http://www.classiccmp.org/dunfield/s100c/mits/88sio_1.pdf";
     }
-    public String getVersion() { return "0.1b"; }
+    public String getVersion() { return "0.12b"; }
     public String getName() { return "MITS-88-SIO serial card"; }
     public String getCopyright() { return "\u00A9 Copyright 2007-2008, Peter Jakubčo"; }
     
@@ -115,7 +115,12 @@ public class Mits88SIO implements IDevice {
     }
    
     public void showGUI() {
-        if (gui == null) gui = new SIODialog(null,false);
+        
+        if (gui == null) {
+            String name = (port2.getAttachedDevice() == null) ? "none" :
+                port2.getAttachedDevice().getID();
+            gui = new SIODialog(null,false, name);
+        }
         gui.setVisible(true);
     }
     
@@ -165,7 +170,7 @@ public class Mits88SIO implements IDevice {
     public boolean attachDevice(IDeviceContext female, IDeviceContext male) {
         // instanceof CpuPort2 is not correct, because it has to be concrete
         // instance port2.
-        if (female == port2) {
+        if (female == port2 && !port2Attached) {
             port2.attachDevice(male);
             port2Attached = true;
             return true;
@@ -178,8 +183,8 @@ public class Mits88SIO implements IDevice {
      * happened.
      */
     public void detachDevice(IDeviceContext device, boolean male) {
-        if (port2Attached == false) return;
-        if (male == true)  {
+        if (!port2Attached) return;
+        if (male)  {
             port2.detachDevice();
             port2Attached = false;
         }

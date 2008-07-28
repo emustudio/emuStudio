@@ -6,6 +6,7 @@
  * Created on 28.7.2008, 8:22:30
  * hold to: KISS, YAGNI
  *
+ * Male plug
  */
 
 package sio88;

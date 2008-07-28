@@ -32,6 +32,7 @@ public class CpuPort2 implements IDeviceContext {
 
     public void attachDevice(IDeviceContext device) { this.dev = device; }
     public void detachDevice() { this.dev = null; }
+    public IDeviceContext getAttachedDevice() { return dev; }
     
     public void out(EventObject evt, int data) {
         if (dev == null) return;
