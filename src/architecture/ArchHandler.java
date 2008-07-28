@@ -32,7 +32,6 @@ public class ArchHandler implements ISettingsHandler {
     private IMemory memory;
     private IDevice[] devices;
     private PluginConnection[] connections;
-    private String name;
     private Properties settings;
     private Schema schema;
     
@@ -152,7 +151,9 @@ public class ArchHandler implements ISettingsHandler {
      */
     public IDevice[] getDevices() { return devices; }
 
-    public String getArchName() { return name; }
+    public String getArchName() { 
+        return (schema == null) ? "unknown" : schema.getConfigName(); 
+    }
     
     /**
      * Method reads value of specified setting from Properties for 
@@ -219,7 +220,7 @@ public class ArchHandler implements ISettingsHandler {
         prop += "." + settingName;
         
         settings.setProperty(prop, val);
-        ArchLoader.writeConfig(name, settings);
+        ArchLoader.writeConfig(schema.getConfigName(), settings);
     }
  
 }
