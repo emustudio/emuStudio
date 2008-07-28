@@ -8,7 +8,6 @@
 
 package gui;
 
-import sio88.Mits88SIO;
 import terminal.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -20,15 +19,16 @@ import java.io.*;
  */
 public class TerminalWindow extends javax.swing.JFrame {
     private boolean halfDuplex = false;
-    private TerminalDisplay lblTerminal;
+    private TerminalDisplay terminal;
     private Object keyLock; // monitor for key pressing
     private int keyCode = 0;
-    private Mits88SIO sio;
     private Font terminalFont;
+    private TerminalFemale female;
     
     /** Creates new form TerminalWindow */
-    public TerminalWindow(Mits88SIO sio) {
-        this.sio = sio;
+    public TerminalWindow(TerminalDisplay lblTerminal, TerminalFemale female) {
+        this.terminal = lblTerminal;
+        this.female = female;
         keyLock = new Object();
         initTerminalLabel();
         initComponents();
@@ -40,20 +40,19 @@ public class TerminalWindow extends javax.swing.JFrame {
     }
     
     private void initTerminalLabel() {
-        lblTerminal = new TerminalDisplay(80,25);
         try {
             // load terminal font from resources
             InputStream fin = this.getClass().getResourceAsStream("/resources/terminal.ttf");
             this.terminalFont = Font.createFont(Font.TRUETYPE_FONT,fin).deriveFont(12f);
             fin.close();
-            lblTerminal.setFont(this.terminalFont);
+            terminal.setFont(this.terminalFont);
         } catch (Exception e) {
-            lblTerminal.setFont(new java.awt.Font("Monospaced", 0, 12));
+            terminal.setFont(new java.awt.Font("Monospaced", 0, 12));
         }
-        lblTerminal.setForeground(new java.awt.Color(0, 255, 0));
-        lblTerminal.setBackground(new Color(0,0,0));
-        getContentPane().add(lblTerminal);
-        lblTerminal.setBounds(35, 70, 635, 400);
+        terminal.setForeground(new java.awt.Color(0, 255, 0));
+        terminal.setBackground(new Color(0,0,0));
+        getContentPane().add(terminal);
+        terminal.setBounds(35, 70, 635, 400);
     }
         
     private void addKeyAndContainerListenerRecursively(Component c) {
@@ -69,11 +68,7 @@ public class TerminalWindow extends javax.swing.JFrame {
      }
     
     public void destroyMe() {
-        lblTerminal.destroyMe();
-    }
-
-    public void sendChar(char c) {
-        lblTerminal.sendChar(c);
+        terminal.destroyMe();
     }
     
     public int getChar() {
@@ -94,7 +89,6 @@ public class TerminalWindow extends javax.swing.JFrame {
     }    
     
     private class TerminalKeyboard extends java.awt.event.KeyAdapter implements ContainerListener {
-        @Override
         public void keyPressed(java.awt.event.KeyEvent evt) {
             if (evt.isControlDown()) {
                 switch (evt.getKeyCode()) {
@@ -147,10 +141,10 @@ public class TerminalWindow extends javax.swing.JFrame {
                 }
             }
             if (halfDuplex == true) {
-                if (keyCode == 13) lblTerminal.sendChar(10);
-                lblTerminal.sendChar(keyCode);
+                if (keyCode == 13) terminal.out(evt,10);
+                terminal.out(evt,keyCode);
             }
-            sio.writeBuffer(keyCode);
+            female.out(evt,keyCode);
             synchronized(keyLock) {
                 keyLock.notifyAll();
             }
@@ -167,20 +161,16 @@ public class TerminalWindow extends javax.swing.JFrame {
             }
         }
         
-        @Override
         public void componentAdded(ContainerEvent e) {
             addKeyAndContainerListenerRecursively(e.getChild());
         }
 
-        @Override
         public void componentRemoved(ContainerEvent e) {
             removeKeyAndContainerListenerRecursively(e.getChild());
         }
     }
     
-    public void setHalfDuplex(boolean hd) {
-        halfDuplex = hd;
-    }
+    public void setHalfDuplex(boolean hd) { halfDuplex = hd; }
     public boolean isHalfDuplex() { return halfDuplex; }
     
     /** This method is called from within the constructor to
@@ -232,7 +222,7 @@ public class TerminalWindow extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void configButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_configButtonActionPerformed
-        new ConfigDialog(this, true, lblTerminal).setVisible(true);
+        new ConfigDialog(this, true, terminal).setVisible(true);
     }//GEN-LAST:event_configButtonActionPerformed
 
 private void btnAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAboutActionPerformed

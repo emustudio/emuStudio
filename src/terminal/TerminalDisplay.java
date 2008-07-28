@@ -12,6 +12,8 @@
  *
  * Terminal can interpret ASCII codes from 0-127. Some have special
  * functionality (0-31)
+ * 
+ * THIS IS a MALE PLUG!!!
  */
 
 package terminal;
@@ -25,8 +27,10 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
+import java.util.EventObject;
 import java.util.Timer;
 import java.util.TimerTask;
+import plugins.device.IDeviceContext;
 
 
 /**
@@ -35,7 +39,7 @@ import java.util.TimerTask;
  *
  * @author vbmacher
  */
-public class TerminalDisplay extends Canvas {
+public class TerminalDisplay extends Canvas implements IDeviceContext {
     private char[] video_memory;
     private int col_count; // column count in CRT
     private int row_count; // row count in CRT
@@ -133,33 +137,6 @@ public class TerminalDisplay extends Canvas {
         cursor_x = 0; cursor_y = 0; repaint();
     }
     
-    /**
-     * This method is called from serial I/O card (by OUT instruction)
-     */
-    public void sendChar(int c) {
-        measure();
-        /*
-         * if it is special char, interpret it. else just add
-         * to "video memory"
-         */
-        switch (c) {
-            case 7: return; /* bell */
-            case 8: back_cursor(); repaint(); return; /* backspace*/
-            case 0x0A: /* line feed */
-                cursor_y++; cursor_x = 0;
-                if (cursor_y > (row_count-1)) {
-                    cursor_y = (row_count-1);
-                    roll_line();
-                }
-                repaint(); // to be sure for erasing cursor
-                return; 
-            case 0x0D: cursor_x = 0; return; /* carriage return */
-        }
-        insert_char((char)c);
-        move_cursor();
-        repaint();
-    }
-
     /**
      * Method inserts char to cursor position. Doesn't move cursor.
      * @param c char to insert
@@ -282,5 +259,45 @@ public class TerminalDisplay extends Canvas {
 	    this.cancel();
         } 
     }
+
+    /**
+     * Input from the device is everytime 0, because everything new is
+     * sent immediately to the device, so internal buffer of terminal is
+     * everytime empty (in the implementation also doesn't exist).
+     * @return 0
+     */
+    public int in(EventObject evt) { return 0; }
+
+    /**
+     * This method is called from serial I/O card (by OUT instruction)
+     */
+    public void out(EventObject evt, int val) {
+        measure();
+        /*
+         * if it is special char, interpret it. else just add
+         * to "video memory"
+         */
+        switch (val) {
+            case 7: return; /* bell */
+            case 8: back_cursor(); repaint(); return; /* backspace*/
+            case 0x0A: /* line feed */
+                cursor_y++; cursor_x = 0;
+                if (cursor_y > (row_count-1)) {
+                    cursor_y = (row_count-1);
+                    roll_line();
+                }
+                repaint(); // to be sure for erasing cursor
+                return; 
+            case 0x0D: cursor_x = 0; return; /* carriage return */
+        }
+        insert_char((char)val);
+        move_cursor();
+        repaint();
+    }
+
+    public String getID() { return "ADM-3A"; }
+    public int getVersionMajor() { return 1; }
+    public int getVersionMinor() { return 2; }
+    public String getVersionRev() { return "b1"; }
   
 }
