@@ -18,6 +18,8 @@ import java.io.*;
  * @author  vbmacher
  */
 public class TerminalWindow extends javax.swing.JFrame {
+    private final int termWIDTH = 750;
+    private final int termHEIGHT = 584;
     private boolean halfDuplex = false;
     private TerminalDisplay terminal;
     private Object keyLock; // monitor for key pressing
@@ -34,7 +36,8 @@ public class TerminalWindow extends javax.swing.JFrame {
         initComponents();
         getContentPane().setBackground(Color.BLACK);
 
-        this.setSize(lblBack.getWidth()+5, lblBack.getHeight()+configButton.getHeight());
+        lblBack.setLocation(0, 0);
+        this.setSize(termWIDTH+5, termHEIGHT+24);
         addKeyAndContainerListenerRecursively(this);
         this.setLocationRelativeTo(null);
     }
@@ -52,7 +55,7 @@ public class TerminalWindow extends javax.swing.JFrame {
         terminal.setForeground(new java.awt.Color(0, 255, 0));
         terminal.setBackground(new Color(0,0,0));
         getContentPane().add(terminal);
-        terminal.setBounds(35, 70, 635, 400);
+        terminal.setBounds(53, 60, 653, 400);
     }
         
     private void addKeyAndContainerListenerRecursively(Component c) {
@@ -183,7 +186,6 @@ public class TerminalWindow extends javax.swing.JFrame {
 
         btnGroupDuplex = new javax.swing.ButtonGroup();
         configButton = new javax.swing.JButton();
-        javax.swing.JButton btnAbout = new javax.swing.JButton();
         lblBack = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -199,23 +201,13 @@ public class TerminalWindow extends javax.swing.JFrame {
             }
         });
         getContentPane().add(configButton);
-        configButton.setBounds(600, 550, 100, 29);
+        configButton.setBounds(640, 550, 100, 29);
 
-        btnAbout.setText("About...");
-        btnAbout.setFocusable(false);
-        btnAbout.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnAboutActionPerformed(evt);
-            }
-        });
-        getContentPane().add(btnAbout);
-        btnAbout.setBounds(520, 550, 65, 29);
-
-        lblBack.setFont(new java.awt.Font("Monospaced", 0, 12));
+        lblBack.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         lblBack.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/display.gif"))); // NOI18N
         lblBack.setFocusable(false);
         getContentPane().add(lblBack);
-        lblBack.setBounds(0, 0, 713, 584);
+        lblBack.setBounds(0, 0, 750, 584);
         lblBack.getAccessibleContext().setAccessibleName("Display");
 
         pack();
@@ -224,10 +216,6 @@ public class TerminalWindow extends javax.swing.JFrame {
     private void configButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_configButtonActionPerformed
         new ConfigDialog(this, true, terminal).setVisible(true);
     }//GEN-LAST:event_configButtonActionPerformed
-
-private void btnAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAboutActionPerformed
-    new AboutDialog(this,true).setVisible(true);
-}//GEN-LAST:event_btnAboutActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
