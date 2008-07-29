@@ -118,6 +118,7 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
         btnConnect = new javax.swing.JToggleButton();
         btnDelete = new javax.swing.JToggleButton();
         javax.swing.JToolBar.Separator jSeparator2 = new javax.swing.JToolBar.Separator();
+        javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
         cmbElement = new javax.swing.JComboBox();
         scrollScheme = new javax.swing.JScrollPane();
         chkUseGrid = new javax.swing.JCheckBox();
@@ -225,12 +226,32 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
         jToolBar1.add(btnDelete);
         jToolBar1.add(jSeparator2);
 
+        jPanel1.setOpaque(false);
+        jPanel1.setPreferredSize(new java.awt.Dimension(250, 44));
+
         cmbElement.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbElementActionPerformed(evt);
             }
         });
-        jToolBar1.add(cmbElement);
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addComponent(cmbElement, 0, 238, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(cmbElement, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(13, Short.MAX_VALUE))
+        );
+
+        jToolBar1.add(jPanel1);
 
         chkUseGrid.setSelected(true);
         chkUseGrid.setText("Use grid");
