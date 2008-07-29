@@ -545,6 +545,11 @@
           <SubComponents>
             <Container class="javax.swing.JSplitPane" name="splitLeftRight">
               <Properties>
+                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                  <Border info="org.netbeans.modules.form.compat2.border.EmptyBorderInfo">
+                    <EmptyBorder/>
+                  </Border>
+                </Property>
                 <Property name="continuousLayout" type="boolean" value="true"/>
                 <Property name="focusable" type="boolean" value="false"/>
               </Properties>
@@ -571,18 +576,23 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <EmptySpace min="0" pref="260" max="32767" attributes="0"/>
+                          <EmptySpace min="0" pref="258" max="32767" attributes="0"/>
                       </Group>
                     </DimensionLayout>
                     <DimensionLayout dim="1">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <EmptySpace min="0" pref="443" max="32767" attributes="0"/>
+                          <EmptySpace min="0" pref="441" max="32767" attributes="0"/>
                       </Group>
                     </DimensionLayout>
                   </Layout>
                 </Container>
                 <Container class="javax.swing.JSplitPane" name="splitPerDebug">
                   <Properties>
+                    <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                      <Border info="org.netbeans.modules.form.compat2.border.EmptyBorderInfo">
+                        <EmptyBorder/>
+                      </Border>
+                    </Property>
                     <Property name="orientation" type="int" value="0"/>
                     <Property name="autoscrolls" type="boolean" value="true"/>
                     <Property name="continuousLayout" type="boolean" value="true"/>
@@ -613,10 +623,10 @@
                         <DimensionLayout dim="0">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
-                                  <Component id="jToolBar2" pref="426" max="32767" attributes="0"/>
+                                  <Component id="jToolBar2" pref="424" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
-                              <Component id="paneDebug" alignment="0" pref="438" max="32767" attributes="0"/>
+                              <Component id="paneDebug" alignment="0" pref="436" max="32767" attributes="0"/>
                           </Group>
                         </DimensionLayout>
                         <DimensionLayout dim="1">
@@ -624,7 +634,7 @@
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="jToolBar2" min="-2" pref="25" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="paneDebug" pref="196" max="32767" attributes="0"/>
+                                  <Component id="paneDebug" pref="198" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
                           </Group>
@@ -810,17 +820,17 @@
                         <DimensionLayout dim="0">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
-                                  <EmptySpace pref="376" max="32767" attributes="0"/>
+                                  <EmptySpace pref="374" max="32767" attributes="0"/>
                                   <Component id="showGUIButton" min="-2" max="-2" attributes="1"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
-                              <Component id="paneDevices" alignment="1" pref="438" max="32767" attributes="1"/>
+                              <Component id="paneDevices" alignment="1" pref="436" max="32767" attributes="1"/>
                           </Group>
                         </DimensionLayout>
                         <DimensionLayout dim="1">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="1" attributes="0">
-                                  <Component id="paneDevices" pref="132" max="32767" attributes="0"/>
+                                  <Component id="paneDevices" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="showGUIButton" min="-2" max="-2" attributes="0"/>
                               </Group>
