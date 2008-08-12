@@ -14,8 +14,6 @@ import plugins.compiler.ICompiler;
 import plugins.compiler.ILexer;
 import plugins.compiler.IMessageReporter;
 import plugins.memory.IMemoryContext;
-import tree8080.Statement;
-
 
 /**
  *
@@ -23,7 +21,7 @@ import tree8080.Statement;
  */
 public class assemblerZ80 implements ICompiler {
     private lexerZ80 lex;
-    private parser8080 par;
+    private parserZ80 par;
     private IMessageReporter reporter;
     private ISettingsHandler settings;
     private int programStart = 0; // actualize after compile 
@@ -34,7 +32,7 @@ public class assemblerZ80 implements ICompiler {
     // create lexer and parser, return lexer
     public ILexer getLexer(java.io.Reader in, IMessageReporter reporter) { 
         lex = new lexerZ80(in);
-        par = new parser8080(lex, reporter);
+        par = new parserZ80(lex, reporter);
         this.reporter = reporter;
         return lex;
     }
@@ -75,22 +73,22 @@ public class assemblerZ80 implements ICompiler {
             print_text("Unexpected end of file");
             return false;
         }
-        if (parser8080.errorCount != 0)
+        if (parserZ80.errorCount != 0)
             return false;
         
         // do several passes for compiling
         try {
-            Statement stat = (Statement)s;
-            compileEnv env = new compileEnv();
-            stat.pass1(env); // create symbol table
-            stat.pass2(0); // try to evaulate all expressions + compute relative addresses
-            while (stat.pass3(env) == true) ;
-            if (env.getPassNeedCount() != 0) {
-                print_text("Error: can't evaulate all expressions");
-                return false;
-            }
-            stat.pass4(hex,env);
-            hex.generateFile(fileName);
+//            Statement stat = (Statement)s;
+//            compileEnv env = new compileEnv();
+//            stat.pass1(env); // create symbol table
+//            stat.pass2(0); // try to evaulate all expressions + compute relative addresses
+//            while (stat.pass3(env) == true) ;
+//            if (env.getPassNeedCount() != 0) {
+//                print_text("Error: can't evaulate all expressions");
+//                return false;
+//            }
+//            stat.pass4(hex,env);
+//            hex.generateFile(fileName);
         } catch(Exception e) {
             print_text(e.getMessage());
             return false;
