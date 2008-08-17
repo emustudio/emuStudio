@@ -14,6 +14,7 @@ import plugins.compiler.ICompiler;
 import plugins.compiler.ILexer;
 import plugins.compiler.IMessageReporter;
 import plugins.memory.IMemoryContext;
+import treeZ80.Program;
 
 /**
  *
@@ -78,17 +79,17 @@ public class assemblerZ80 implements ICompiler {
         
         // do several passes for compiling
         try {
-//            Statement stat = (Statement)s;
-//            compileEnv env = new compileEnv();
-//            stat.pass1(env); // create symbol table
-//            stat.pass2(0); // try to evaulate all expressions + compute relative addresses
-//            while (stat.pass3(env) == true) ;
-//            if (env.getPassNeedCount() != 0) {
-//                print_text("Error: can't evaulate all expressions");
-//                return false;
-//            }
-//            stat.pass4(hex,env);
-//            hex.generateFile(fileName);
+            Program program = (Program)s;
+            compileEnv env = new compileEnv();
+            program.pass1(env); // create symbol table
+            program.pass2(0); // try to evaulate all expressions + compute relative addresses
+            while (program.pass3(env) == true) ;
+            if (env.getPassNeedCount() != 0) {
+                print_text("Error: can't evaulate all expressions");
+                return false;
+            }
+            program.pass4(hex,env);
+            hex.generateFile(fileName);
         } catch(Exception e) {
             print_text(e.getMessage());
             return false;
