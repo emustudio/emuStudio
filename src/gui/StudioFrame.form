@@ -593,6 +593,7 @@
                         <EmptyBorder/>
                       </Border>
                     </Property>
+                    <Property name="dividerLocation" type="int" value="330"/>
                     <Property name="orientation" type="int" value="0"/>
                     <Property name="autoscrolls" type="boolean" value="true"/>
                     <Property name="continuousLayout" type="boolean" value="true"/>
@@ -634,7 +635,7 @@
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="jToolBar2" min="-2" pref="25" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="paneDebug" pref="198" max="32767" attributes="0"/>
+                                  <Component id="paneDebug" pref="259" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
                           </Group>
@@ -820,7 +821,7 @@
                         <DimensionLayout dim="0">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
-                                  <EmptySpace pref="374" max="32767" attributes="0"/>
+                                  <EmptySpace pref="378" max="32767" attributes="0"/>
                                   <Component id="showGUIButton" min="-2" max="-2" attributes="1"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
@@ -830,7 +831,7 @@
                         <DimensionLayout dim="1">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="1" attributes="0">
-                                  <Component id="paneDevices" max="32767" attributes="0"/>
+                                  <Component id="paneDevices" pref="69" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="showGUIButton" min="-2" max="-2" attributes="0"/>
                               </Group>

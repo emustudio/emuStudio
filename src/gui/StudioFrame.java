@@ -481,6 +481,7 @@ public class StudioFrame extends javax.swing.JFrame {
         splitLeftRight.setRightComponent(statusPanel);
 
         splitPerDebug.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        splitPerDebug.setDividerLocation(330);
         splitPerDebug.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         splitPerDebug.setAutoscrolls(true);
         splitPerDebug.setContinuousLayout(true);
@@ -605,7 +606,7 @@ public class StudioFrame extends javax.swing.JFrame {
             .addGroup(debuggerPanelLayout.createSequentialGroup()
                 .addComponent(jToolBar2, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(paneDebug, javax.swing.GroupLayout.DEFAULT_SIZE, 198, Short.MAX_VALUE)
+                .addComponent(paneDebug, javax.swing.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -627,7 +628,7 @@ public class StudioFrame extends javax.swing.JFrame {
         peripheralPanelLayout.setHorizontalGroup(
             peripheralPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(peripheralPanelLayout.createSequentialGroup()
-                .addContainerGap(374, Short.MAX_VALUE)
+                .addContainerGap(378, Short.MAX_VALUE)
                 .addComponent(showGUIButton)
                 .addContainerGap())
             .addComponent(paneDevices, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 436, Short.MAX_VALUE)
@@ -635,7 +636,7 @@ public class StudioFrame extends javax.swing.JFrame {
         peripheralPanelLayout.setVerticalGroup(
             peripheralPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, peripheralPanelLayout.createSequentialGroup()
-                .addComponent(paneDevices)
+                .addComponent(paneDevices, javax.swing.GroupLayout.DEFAULT_SIZE, 69, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(showGUIButton))
         );
