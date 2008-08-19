@@ -167,7 +167,8 @@ public class HighlightThread extends Thread {
                     }
                     newPositions.add(dpStart);
                     while (!done && t.getType() != IToken.TEOF){
-    //                    synchronized (doclock){
+                        //synchronized (doclock){
+                        synchronized (styles){
                             if (t.getCharEnd() <= document.getLength()) {
                                 SimpleAttributeSet style = (SimpleAttributeSet)
                                         styles.get(t.getType());
@@ -181,7 +182,7 @@ public class HighlightThread extends Thread {
                                 dpEnd = new DocPosition(t.getCharEnd());
                             }
                             lastPosition = (t.getCharEnd() + change);
-                    //    }
+                        }//}
                         // look at all the positions from last time that are less than or
                         // equal to the current position
                         while (dp != null && dp.getPosition() <= t.getCharEnd()){

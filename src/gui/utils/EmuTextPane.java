@@ -101,6 +101,7 @@ public class EmuTextPane extends JTextPane {
         else {
             highlight = new HighlightThread(syntaxLexer, reader,
                     document, styles,doclock);
+            highlight.setDaemon(true);
             highlight.start();
         }
     }
