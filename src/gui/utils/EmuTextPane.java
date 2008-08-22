@@ -15,7 +15,7 @@ package gui.utils;
 
 import gui.syntaxHighlighting.HighlightStyle;
 import gui.syntaxHighlighting.HighlightThread;
-import gui.syntaxHighlighting.StyledDocumentReader;
+import gui.syntaxHighlighting.DocumentReader;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Insets;
@@ -31,8 +31,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
 import javax.swing.undo.UndoManager;
 import plugins.compiler.ILexer;
@@ -49,8 +47,8 @@ public class EmuTextPane extends JTextPane {
     public static final short NUMBERS_HEIGHT = 4;
 
     private ILexer syntaxLexer = null;
-    private StyledDocumentReader reader;
-    private HighlightedDocument document;
+    private DocumentReader reader;
+    private volatile DefaultStyledDocument document;
     private Hashtable styles; // token styles
     private HighlightThread highlight;
 
@@ -59,21 +57,13 @@ public class EmuTextPane extends JTextPane {
     private UndoManager undo;
     private ActionListener undoStateListener;
     private ActionEvent aevt;
-
-    /**
-     * A lock for modifying the document, or for
-     * actions that depend on the document not being
-     * modified.
-     */
-    public volatile Object doclock = new Object();
-    
     
     /** Creates a new instance of EmuTextPane */
     public EmuTextPane() {
         styles = new Hashtable();
         initStyles();
-        document = new HighlightedDocument();
-        reader = new StyledDocumentReader(document);
+        document = new DefaultStyledDocument();
+        reader = new DocumentReader(document);
         this.setStyledDocument(document);
         this.setFont(new java.awt.Font("monospaced", 0, 12));
         this.setMargin(new Insets(NUMBERS_HEIGHT,NUMBERS_WIDTH,0,0));
@@ -98,12 +88,8 @@ public class EmuTextPane extends JTextPane {
     public void setLexer(ILexer sLexer) {
         this.syntaxLexer = sLexer;
         if (highlight != null) highlight.stopRun();
-        else {
-            highlight = new HighlightThread(syntaxLexer, reader,
-                    document, styles,doclock);
-            highlight.setDaemon(true);
-            highlight.start();
-        }
+        highlight = new HighlightThread(syntaxLexer, reader,styles);
+//        highlight.start();
     }
 
     private void initStyles() {
@@ -134,25 +120,6 @@ public class EmuTextPane extends JTextPane {
      
     public Reader getDocumentReader() { return reader; }
     
-    public class HighlightedDocument extends DefaultStyledDocument { 
-        public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
-            synchronized (doclock){
-                fileSaved = false;
-                super.insertString(offs, str, a);
-                highlight.color(offs, str.length());
-                reader.update(offs, str.length());
-            }
-        }
-        public void remove(int offs, int len) throws BadLocationException {
-            synchronized (doclock){
-                fileSaved = false;
-                super.remove(offs, len);
-                highlight.color(offs, -len);
-                reader.update(offs, -len);
-            }
-        }
-    }    
-   
     /*** LINE NUMBERS PAINT IMPLEMENTATION ***/
     // implements view lines numbers
     public void paint(Graphics g) {
@@ -209,10 +176,9 @@ public class EmuTextPane extends JTextPane {
                 try {
                     FileReader vstup = new FileReader(fileSource.getAbsolutePath());
                     setText("");
-                    ILexer l = this.syntaxLexer;
-                    this.syntaxLexer = null;
+                    highlight.pauseRun();
                     getEditorKit().read(vstup, document,0);
-                    this.syntaxLexer = l;
+                    highlight.continueRun();
                     this.setCaretPosition(0);
                     vstup.close(); fileSaved = true;
                 }  catch (java.io.FileNotFoundException ex) {

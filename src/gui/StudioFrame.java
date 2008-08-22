@@ -11,7 +11,7 @@ import architecture.ArchHandler;
 import architecture.Main;
 import gui.utils.DebugTable;
 import gui.utils.DebugTableModel;
-import gui.utils.DocumentReader;
+import gui.syntaxHighlighting.DocumentReader;
 import gui.utils.EmuTextPane;
 import gui.utils.FindText;
 import java.awt.Font;
@@ -155,8 +155,8 @@ public class StudioFrame extends javax.swing.JFrame {
     public void setStatusGUI() {
         JPanel statusPanel = arch.getCPU().getStatusGUI();
         if (statusPanel == null) return;
-        GroupLayout layout = new GroupLayout(this.statusPanel);
-        this.statusPanel.setLayout(layout);
+        GroupLayout layout = new GroupLayout(this.statusWindow);
+        this.statusWindow.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
@@ -258,7 +258,7 @@ public class StudioFrame extends javax.swing.JFrame {
         txtOutput = new javax.swing.JTextArea();
         javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
         javax.swing.JSplitPane splitLeftRight = new javax.swing.JSplitPane();
-        statusPanel = new javax.swing.JPanel();
+        statusWindow = new javax.swing.JPanel();
         javax.swing.JSplitPane splitPerDebug = new javax.swing.JSplitPane();
         javax.swing.JPanel debuggerPanel = new javax.swing.JPanel();
         javax.swing.JToolBar jToolBar2 = new javax.swing.JToolBar();
@@ -465,20 +465,20 @@ public class StudioFrame extends javax.swing.JFrame {
         splitLeftRight.setContinuousLayout(true);
         splitLeftRight.setFocusable(false);
 
-        statusPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Status"));
+        statusWindow.setBorder(javax.swing.BorderFactory.createTitledBorder("Status"));
 
-        javax.swing.GroupLayout statusPanelLayout = new javax.swing.GroupLayout(statusPanel);
-        statusPanel.setLayout(statusPanelLayout);
-        statusPanelLayout.setHorizontalGroup(
-            statusPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout statusWindowLayout = new javax.swing.GroupLayout(statusWindow);
+        statusWindow.setLayout(statusWindowLayout);
+        statusWindowLayout.setHorizontalGroup(
+            statusWindowLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 258, Short.MAX_VALUE)
         );
-        statusPanelLayout.setVerticalGroup(
-            statusPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 441, Short.MAX_VALUE)
+        statusWindowLayout.setVerticalGroup(
+            statusWindowLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 439, Short.MAX_VALUE)
         );
 
-        splitLeftRight.setRightComponent(statusPanel);
+        splitLeftRight.setRightComponent(statusWindow);
 
         splitPerDebug.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         splitPerDebug.setDividerLocation(330);
@@ -606,7 +606,7 @@ public class StudioFrame extends javax.swing.JFrame {
             .addGroup(debuggerPanelLayout.createSequentialGroup()
                 .addComponent(jToolBar2, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(paneDebug, javax.swing.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE)
+                .addComponent(paneDebug, javax.swing.GroupLayout.DEFAULT_SIZE, 257, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -636,7 +636,7 @@ public class StudioFrame extends javax.swing.JFrame {
         peripheralPanelLayout.setVerticalGroup(
             peripheralPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, peripheralPanelLayout.createSequentialGroup()
-                .addComponent(paneDevices, javax.swing.GroupLayout.DEFAULT_SIZE, 69, Short.MAX_VALUE)
+                .addComponent(paneDevices, javax.swing.GroupLayout.DEFAULT_SIZE, 67, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(showGUIButton))
         );
@@ -1129,7 +1129,7 @@ public class StudioFrame extends javax.swing.JFrame {
     javax.swing.JMenuItem mnuEditRedo;
     javax.swing.JMenuItem mnuEditUndo;
     javax.swing.JScrollPane paneDebug;
-    javax.swing.JPanel statusPanel;
+    javax.swing.JPanel statusWindow;
     javax.swing.JTextArea txtOutput;
     // End of variables declaration//GEN-END:variables
     
