@@ -48,7 +48,7 @@ public class EmuTextPane extends JTextPane {
 
     private ILexer syntaxLexer = null;
     private DocumentReader reader;
-    private volatile DefaultStyledDocument document;
+    private DefaultStyledDocument document;
     private Hashtable styles; // token styles
     private HighlightThread highlight;
 
@@ -124,13 +124,14 @@ public class EmuTextPane extends JTextPane {
     // implements view lines numbers
     public void paint(Graphics g) {
         super.paint(g);
-        int start = document.getStartPosition().getOffset();
-        int end = document.getEndPosition().getOffset();
-
-        // translate offsets to lines
-        int startline = document.getDefaultRootElement().getElementIndex(start) ;
-        int endline = document.getDefaultRootElement().getElementIndex(end)+1;
-
+        int start,end,startline,endline;
+        synchronized(HighlightThread.doclock) {
+            start = document.getStartPosition().getOffset();
+            end = document.getEndPosition().getOffset();
+            // translate offsets to lines
+            startline = document.getDefaultRootElement().getElementIndex(start) ;
+            endline = document.getDefaultRootElement().getElementIndex(end)+1;
+        }
         int fontHeight = g.getFontMetrics(getFont()).getHeight(); // font height
 
         g.setColor(Color.RED);
@@ -177,7 +178,9 @@ public class EmuTextPane extends JTextPane {
                     FileReader vstup = new FileReader(fileSource.getAbsolutePath());
                     setText("");
                     highlight.pauseRun();
-                    getEditorKit().read(vstup, document,0);
+                    synchronized(HighlightThread.doclock) {
+                        getEditorKit().read(vstup, document,0);
+                    }
                     highlight.continueRun();
                     this.setCaretPosition(0);
                     vstup.close(); fileSaved = true;

@@ -10,7 +10,6 @@ package gui.syntaxHighlighting;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -34,13 +33,17 @@ public class HighlightThread extends Thread {
     
     private ILexer lex;
     private DocumentReader lexReader;
+    private DefaultStyledDocument doc;
     
-    private boolean running = false;
-    private boolean pause = false;
-    private HashSet<DocumentEvent> work = new HashSet<DocumentEvent>();
+    public static Object doclock = new Object();
+    private Object lock = new Object();
+    
+    private volatile boolean running = false;
+    private volatile boolean pause = false;
+    private volatile Vector<DocumentEvent> work = new Vector<DocumentEvent>();
     private HighlightThread tthis;
     private Hashtable styles;
-    private HashSet<RecolorEvent> recolorWork = new HashSet<RecolorEvent>();
+    private volatile Vector<RecolorEvent> recolorWork = new Vector<RecolorEvent>();
 
     private class RecolorEvent {
         private SimpleAttributeSet style;
@@ -54,8 +57,7 @@ public class HighlightThread extends Thread {
         }
         
         public void reColor() {
-            DefaultStyledDocument doc = (DefaultStyledDocument)lexReader.getDocument();   
-            synchronized (doc) {
+            synchronized(doclock) {
                 doc.setCharacterAttributes(offset,length,style,true);
             }
         }
@@ -63,29 +65,34 @@ public class HighlightThread extends Thread {
     
     public HighlightThread(ILexer lex, DocumentReader lexReader, Hashtable styles) {
         this.lex = lex;
+        this.doc = (DefaultStyledDocument)lexReader.getDocument();   
         this.setName("highlightThread");
         this.lexReader = lexReader;
         this.styles = styles;
         this.tthis = this;
-        lexReader.reset();
-        lexReader.getDocument().addDocumentListener(new DocumentListener() {
+        
+        doc.addDocumentListener(new DocumentListener() {
             /**
              * 1. add e.length to position in tokensPos that begins from e.offset
              * 2. reset lexical analyzer from before-last token
              * 3. read lex tokensPos until they are equal
              */
             public void insertUpdate(DocumentEvent e) {
-                synchronized(work) {
+                synchronized(lock) {
                     work.add(e);
+                    try {
+                        if (!pause) tthis.interrupt();
+                    } catch(Exception ex) {}
                 }
-                if (!pause) tthis.interrupt();
             };
 
             public void removeUpdate(DocumentEvent e) {
-                synchronized(work) {
+                synchronized(lock) {
                     work.add(e);
+                    try {
+                        if (!pause) tthis.interrupt();
+                    } catch(Exception ex) {}
                 }
-                if (!pause) tthis.interrupt();
             }
 
             public void changedUpdate(DocumentEvent e) {}
@@ -97,73 +104,83 @@ public class HighlightThread extends Thread {
     
     public void run() {
         boolean shouldTry = true;
+        DocumentEvent e;
         while (running) {
             while (pause) {
                 try {sleep(0xffffff); }
                 catch(InterruptedException ex) {}
             }
+            synchronized(lock) {
+                shouldTry = !work.isEmpty();
+            }
             if (!shouldTry) {
-                try {sleep(0xffffff); }
+                try { sleep(0xffffff); }
                 catch(InterruptedException ex) {}
             }
-            synchronized(work) {
-                try {
+            synchronized(lock) {
+                if (work.isEmpty()) continue;
+                e = (DocumentEvent)work.elementAt(0);
+                work.removeElementAt(0);
+            }
+            try {
+                synchronized(doclock) {
                     lex.reset(lexReader,0,0,0);
                     lexReader.seek(0);
-                } catch(IOException ex) {}
-                for (Iterator wit = work.iterator(); wit.hasNext();) {
-                    DocumentEvent e = (DocumentEvent)wit.next();
-                    int len = (e.getType() == DocumentEvent.EventType.INSERT) ?
-                        e.getLength() : -e.getLength();
-                    int bl = updateTokenPositions(e.getOffset(),len);
-                    try {
-                        if (bl >= 0) {
-                            lex.reset(lexReader, 0, bl, 0);
-                            lexReader.seek(bl);
-                        }                    
-                        IToken t = lex.getSymbol();
-                        while (t.getType() != IToken.TEOF) {
-                            if (tokensPos.contains(t.getCharBegin())) {
-                                int tid = tokenTypes.get(t.getCharBegin());
-                                // ak je token ZA kurzorom v dokumente a tokeny su
-                                // zhodne
-                                if ((t.getCharBegin() > e.getOffset()) 
-                                        && (tid == t.getID())) {
-                                    break;
-                                }
-                                else tokensPos.remove(t.getCharBegin());
-                            }
-                            removeTokens(t.getCharBegin(),t.getCharEnd());
-                            tokensPos.add(Integer.valueOf(t.getCharBegin()));
-                            tokenTypes.put(Integer.valueOf(t.getCharBegin()), 
-                                    Integer.valueOf(t.getID()));
-                            
-                            len = t.getCharEnd() - t.getCharBegin();
-                            SimpleAttributeSet style = (SimpleAttributeSet)
-                                        styles.get(t.getType());
-                            if (style == null)
-                                style = (SimpleAttributeSet)
-                                        styles.get(IToken.ERROR);
-                            recolorWork.add(new RecolorEvent(style,t.getCharBegin(),len));                                
-                            bl = t.getCharBegin(); // before last token on the end of while cycle
-                            t = lex.getSymbol();
-                        }
-                        if ((e.getType() == DocumentEvent.EventType.REMOVE) 
-                                && (t.getType() == IToken.TEOF)) {
-                            // remove rest tokens in tokenPos and tokenTypes
-                            try { removeTokens(bl+1,(Integer)tokensPos.last()+1);}
-                            catch(NoSuchElementException exx) {}
-                        }
-                    } catch (IOException xe) {}
-                    wit.remove();
                 }
-                for (Iterator cit = recolorWork.iterator(); cit.hasNext();) {
-                    RecolorEvent r = (RecolorEvent)cit.next();
-                    r.reColor();
-                    cit.remove();
+            } catch(IOException ex) {}
+            int len = (e.getType() == DocumentEvent.EventType.INSERT) ?
+                e.getLength() : -e.getLength();
+            int bl = updateTokenPositions(e.getOffset(),len);
+            try {
+                if (bl >= 0) {
+                    synchronized(doclock) {
+                        lex.reset(lexReader, 0, bl, 0);
+                        lexReader.seek(bl);
+                    }
                 }
-                
-                shouldTry = !work.isEmpty();
+                IToken t;
+                synchronized(doclock) {
+                    t = lex.getSymbol();
+                }
+                while (t.getType() != IToken.TEOF) {
+                    if (tokensPos.contains(t.getCharBegin())) {
+                        int tid = tokenTypes.get(t.getCharBegin());
+                        // ak je token ZA kurzorom v dokumente a tokeny su
+                        // zhodne
+                        if ((t.getCharBegin() > e.getOffset()) 
+                                && (tid == t.getID())) {
+                            break;
+                        }
+                        else tokensPos.remove(t.getCharBegin());
+                    }
+                    removeTokens(t.getCharBegin(),t.getCharEnd());
+                    tokensPos.add(t.getCharBegin());
+                    tokenTypes.put(t.getCharBegin(), t.getID());
+
+                    len = t.getCharEnd() - t.getCharBegin();
+                    SimpleAttributeSet style = (SimpleAttributeSet)
+                                styles.get(t.getType());
+                    if (style == null)
+                        style = (SimpleAttributeSet)
+                                styles.get(IToken.ERROR);
+                    recolorWork.add(new RecolorEvent(style,t.getCharBegin(),len));                                
+                    bl = t.getCharBegin(); // before last token on the end of while cycle
+                    synchronized(doclock) {
+                        t = lex.getSymbol();
+                    }
+                }
+                if ((e.getType() == DocumentEvent.EventType.REMOVE) 
+                        && (t.getType() == IToken.TEOF)) {
+                    // remove rest tokens in tokenPos and tokenTypes
+                    try { removeTokens(bl+1,(Integer)tokensPos.last()+1);}
+                    catch(NoSuchElementException exx) {}
+                }
+            } catch (IOException xe) {}
+            for (Iterator cit = recolorWork.iterator(); cit.hasNext();) {
+                RecolorEvent r = (RecolorEvent)cit.next();
+                try { r.reColor();}
+                catch(Error exx) {}
+                cit.remove();
             }
         }
     }
