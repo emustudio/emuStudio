@@ -480,10 +480,6 @@ public class statusGUI extends javax.swing.JPanel {
         return memPos;
     }
 
-    public JPanel getStatusPanel() {
-        return this;
-    }
-    
     public void updateGUI() {
         txtRegA.setText(String.format("%02X", cpu.A));
         txtRegB.setText(String.format("%02X", cpu.B));
@@ -589,21 +585,25 @@ public class statusGUI extends javax.swing.JPanel {
         txtRegHL.setEditable(false);
         txtRegHL.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtRegHL.setText("0000");
+        txtRegHL.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
         txtRegHL.setPreferredSize(new java.awt.Dimension(40, 20));
 
         txtRegDE.setEditable(false);
         txtRegDE.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtRegDE.setText("0000");
+        txtRegDE.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
         txtRegDE.setPreferredSize(new java.awt.Dimension(40, 20));
 
         txtRegBC.setEditable(false);
         txtRegBC.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtRegBC.setText("0000");
+        txtRegBC.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
         txtRegBC.setPreferredSize(new java.awt.Dimension(40, 20));
 
         txtRegSP.setEditable(false);
         txtRegSP.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtRegSP.setText("0000");
+        txtRegSP.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
         txtRegSP.setPreferredSize(new java.awt.Dimension(40, 20));
 
         jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() | java.awt.Font.BOLD));
@@ -620,14 +620,17 @@ public class statusGUI extends javax.swing.JPanel {
 
         txtRegL.setEditable(false);
         txtRegL.setText("00");
+        txtRegL.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
         txtRegL.setPreferredSize(new java.awt.Dimension(40, 20));
 
         txtRegE.setEditable(false);
         txtRegE.setText("00");
+        txtRegE.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
         txtRegE.setPreferredSize(new java.awt.Dimension(40, 20));
 
         txtRegC.setEditable(false);
         txtRegC.setText("00");
+        txtRegC.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
         txtRegC.setPreferredSize(new java.awt.Dimension(40, 20));
 
         lblReg2.setFont(lblReg2.getFont().deriveFont(lblReg2.getFont().getStyle() | java.awt.Font.BOLD));
@@ -641,14 +644,17 @@ public class statusGUI extends javax.swing.JPanel {
 
         txtRegH.setEditable(false);
         txtRegH.setText("00");
+        txtRegH.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
         txtRegH.setPreferredSize(new java.awt.Dimension(40, 20));
 
         txtRegD.setEditable(false);
         txtRegD.setText("00");
+        txtRegD.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
         txtRegD.setPreferredSize(new java.awt.Dimension(40, 20));
 
         txtRegB.setEditable(false);
         txtRegB.setText("00");
+        txtRegB.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
         txtRegB.setPreferredSize(new java.awt.Dimension(40, 20));
 
         lblReg0.setFont(lblReg0.getFont().deriveFont(lblReg0.getFont().getStyle() | java.awt.Font.BOLD));
@@ -665,15 +671,18 @@ public class statusGUI extends javax.swing.JPanel {
 
         txtRegA.setEditable(false);
         txtRegA.setText("00");
+        txtRegA.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 5, 1, 1));
         txtRegA.setPreferredSize(new java.awt.Dimension(40, 20));
 
         txtFlags.setEditable(false);
         txtFlags.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtFlags.setText("00");
+        txtFlags.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
 
         txtFlagS.setEditable(false);
         txtFlagS.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtFlagS.setText("0");
+        txtFlagS.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
 
         jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel1.setText("S");
@@ -683,6 +692,7 @@ public class statusGUI extends javax.swing.JPanel {
         txtFlagZ.setEditable(false);
         txtFlagZ.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtFlagZ.setText("0");
+        txtFlagZ.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
 
         jLabel6.setFont(jLabel6.getFont().deriveFont(jLabel6.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel6.setText("Z");
@@ -690,6 +700,7 @@ public class statusGUI extends javax.swing.JPanel {
         txtFlagAC.setEditable(false);
         txtFlagAC.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtFlagAC.setText("0");
+        txtFlagAC.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
 
         jLabel8.setFont(jLabel8.getFont().deriveFont(jLabel8.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel8.setText("AC");
@@ -697,6 +708,7 @@ public class statusGUI extends javax.swing.JPanel {
         txtFlagP.setEditable(false);
         txtFlagP.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtFlagP.setText("0");
+        txtFlagP.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
 
         jLabel9.setFont(jLabel9.getFont().deriveFont(jLabel9.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel9.setText("P");
@@ -704,6 +716,7 @@ public class statusGUI extends javax.swing.JPanel {
         txtFlagC.setEditable(false);
         txtFlagC.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtFlagC.setText("0");
+        txtFlagC.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
 
         jLabel10.setFont(jLabel10.getFont().deriveFont(jLabel10.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel10.setText("C");
@@ -714,6 +727,7 @@ public class statusGUI extends javax.swing.JPanel {
         txtRegPC.setEditable(false);
         txtRegPC.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtRegPC.setText("0000");
+        txtRegPC.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
         txtRegPC.setPreferredSize(new java.awt.Dimension(40, 20));
 
         javax.swing.GroupLayout paneInfoRegistersLayout = new javax.swing.GroupLayout(paneInfoRegisters);

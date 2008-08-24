@@ -188,7 +188,7 @@ public class Cpu8080 implements ICPU, Runnable {
     public Object getDebugValue(int index, int col) {
         return status.getDebugColVal(index, col);
     }
-    public JPanel getStatusGUI() { return status.getStatusPanel(); }    
+    public JPanel getStatusGUI() { return status; }    
     
     /* DOWN: CPU Context */
     // get the address from next instruction
