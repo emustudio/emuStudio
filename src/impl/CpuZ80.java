@@ -8,6 +8,8 @@
 
 package impl;
 
+import gui.statusGUI;
+import java.util.HashSet;
 import javax.swing.JPanel;
 import plugins.ISettingsHandler;
 import plugins.cpu.ICPU;
@@ -20,7 +22,39 @@ import plugins.memory.IMemoryContext;
  * @author vbmacher
  */
 public class CpuZ80 implements ICPU {
+    private statusGUI status;
 
+    private HashSet breaks; // zoznam breakpointov (mnozina)
+
+    // 2 sets of 6 GPR
+    private short[] B; private short[] C;
+    private short[] D; private short[] E;
+    private short[] H; private short[] L;
+    
+    // accumulator and flags
+    private short[] A; private short[] F;
+    
+    // special registers
+    private int PC = 0; private int SP = 0;
+    private int IX = 0; private int IY = 0;
+    private short I = 0; private short R = 0; // interrupt r., refresh r.
+    
+    private boolean[] IFF; // interrupt enable flip-flops
+    
+    public CpuZ80() {
+        breaks = new HashSet();
+        B = new short[2];
+        C = new short[2];
+        D = new short[2];
+        E = new short[2];
+        H = new short[2];
+        L = new short[2];
+        A = new short[2];
+        F = new short[2];
+        IFF = new boolean[2];
+        status = new statusGUI();
+    }
+    
     public boolean initialize(IMemoryContext mem, ISettingsHandler sHandler) {
         return true;
     }
@@ -45,35 +79,33 @@ public class CpuZ80 implements ICPU {
         return null;
     }
 
-    public JPanel getStatusGUI() {
+    /* GUI interaction */
+    public IDebugColumn[] getDebugColumns() { return null; /*return status.getDebugColumns();*/ }
+    public void setDebugValue(int index, int col, Object value) {
+        //status.setDebugColVal(index, col, value);
+    }
+    public Object getDebugValue(int index, int col) {
         return null;
+        //return status.getDebugColVal(index, col);
     }
+    public JPanel getStatusGUI() { return status; }
 
-    public IDebugColumn[] getDebugColumns() {
-        return null;
-    }
-
-    public void setDebugValue(int row, int col, Object value) {
-        
-    }
-
-    public Object getDebugValue(int row, int col) {
-        return null;
-    }
-
-    public boolean isBreakpointSupported() {
-        return false;
-    }
-
+    // breakpoints
+    public boolean isBreakpointSupported() { return true; }
     public void setBreakpoint(int pos, boolean set) {
-        
+        if (set) breaks.add(pos);
+        else breaks.remove(pos);
     }
+    public boolean getBreakpoint(int pos) { return breaks.contains(pos); }
 
-    public boolean getBreakpoint(int pos) {
-        return false;
+    public void reset() {
+        PC = SP = IX = IY = 0;
+        I = R = 0;
+        for (int i = 0; i < 2; i++) {
+            A[i] = B[i] = C[i] = D[i] = E[i] = H[i] = L[i] = 0;
+            IFF[i] = false;
+        }
     }
-
-    public void reset() {}
 
     public String getName() {
         return "Zilog Z80";
