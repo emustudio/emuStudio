@@ -42,13 +42,20 @@ public class DebugTableModel extends AbstractTableModel {
 
     // pocet riadkov
     public int getRowCount() {
-        int a = mem.getContext().getSize() - cpu.getContext().getInstrPosition();
-        if (a < MAX_ROW_COUNT) return a;
-        else return MAX_ROW_COUNT;
+        try {
+            int a = mem.getContext().getSize() - cpu.getContext().getInstrPosition();
+            if (a < MAX_ROW_COUNT) return a;
+            else return MAX_ROW_COUNT;
+        } catch(NullPointerException e) {
+            return 0;
+        }
     }
 
     public int getColumnCount() {
-        return cpu.getDebugColumns().length;
+        try {  return cpu.getDebugColumns().length; }
+        catch(NullPointerException e) {
+            return 0;
+        }
     }
 
     public String getColumnName(int col) {
@@ -62,12 +69,16 @@ public class DebugTableModel extends AbstractTableModel {
     // zisti adresu prveho riadku v tabulke, ktory sa zobrazi
     // urychlena verzia
     private int getFirstRowAddress() {
-        int pc = cpu.getContext().getInstrPosition();
-        // max 10 operacnych kodov sa zobrazi pred aktualnou instrukciou
-        firstRowAddress = 0;
-        while (pc > firstRowAddress+10)
-            firstRowAddress = cpu.getContext().getNextInstrPos(firstRowAddress);
-        return firstRowAddress;
+        try {
+            int pc = cpu.getContext().getInstrPosition();
+            // max 10 operacnych kodov sa zobrazi pred aktualnou instrukciou
+            firstRowAddress = 0;
+            while (pc > firstRowAddress+10)
+                firstRowAddress = cpu.getContext().getNextInstrPos(firstRowAddress);
+            return firstRowAddress;
+        } catch(NullPointerException e) {
+            return 0;
+        }
     }
     
     public int getRowAddress(int rowIndex) {

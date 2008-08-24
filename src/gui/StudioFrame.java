@@ -95,42 +95,44 @@ public class StudioFrame extends javax.swing.JFrame {
         
         //emulator settings
         this.setStatusGUI();
-        arch.getMemory().getContext().addMemoryListener(new IMemListener() {
-            public void memChange(EventObject evt, int adr) {
-                if (cpuPermanentRunning == true) return;
-                tblDebug.revalidate();
-                tblDebug.repaint();
-            }
-        });
-        
-        arch.getCPU().getContext().addCPUListener(new ICPUListener() {
-            public void runChanged(EventObject evt, stateEnum state) {
-                if (state == stateEnum.runned) {
-                    btnStop.setEnabled(true); btnBack.setEnabled(false);
-                    btnRun.setEnabled(false); btnStep.setEnabled(false);
-                    btnBeginning.setEnabled(false); btnPause.setEnabled(true);
-                } else {
-                    btnPause.setEnabled(false);
-                    cpuPermanentRunning = false;
-                    if (state == stateEnum.stoppedBreak) {
-                        btnStop.setEnabled(true);
-                        btnRun.setEnabled(true); btnStep.setEnabled(true);
-                    } else {
-                        btnStop.setEnabled(false);
-                        btnRun.setEnabled(false); btnStep.setEnabled(false);
-                    }
-                    btnBack.setEnabled(true); btnBeginning.setEnabled(true);
-                    tblDebug.setEnabled(true);
-                    tblDebug.setVisible(true);
+        try {
+            arch.getMemory().getContext().addMemoryListener(new IMemListener() {
+                public void memChange(EventObject evt, int adr) {
+                    if (cpuPermanentRunning == true) return;
                     tblDebug.revalidate();
                     tblDebug.repaint();
                 }
-            }
-            public void stateUpdated(EventObject evt) {
-                tblDebug.revalidate();
-                tblDebug.repaint();
-            }
-        });
+            });
+
+            arch.getCPU().getContext().addCPUListener(new ICPUListener() {
+                public void runChanged(EventObject evt, stateEnum state) {
+                    if (state == stateEnum.runned) {
+                        btnStop.setEnabled(true); btnBack.setEnabled(false);
+                        btnRun.setEnabled(false); btnStep.setEnabled(false);
+                        btnBeginning.setEnabled(false); btnPause.setEnabled(true);
+                    } else {
+                        btnPause.setEnabled(false);
+                        cpuPermanentRunning = false;
+                        if (state == stateEnum.stoppedBreak) {
+                            btnStop.setEnabled(true);
+                            btnRun.setEnabled(true); btnStep.setEnabled(true);
+                        } else {
+                            btnStop.setEnabled(false);
+                            btnRun.setEnabled(false); btnStep.setEnabled(false);
+                        }
+                        btnBack.setEnabled(true); btnBeginning.setEnabled(true);
+                        tblDebug.setEnabled(true);
+                        tblDebug.setVisible(true);
+                        tblDebug.revalidate();
+                        tblDebug.repaint();
+                    }
+                }
+                public void stateUpdated(EventObject evt) {
+                    tblDebug.revalidate();
+                    tblDebug.repaint();
+                }
+            });
+        } catch(NullPointerException e) {}
         btnBreakpoint.setEnabled(arch.getCPU().isBreakpointSupported());
         // first reset
         arch.getCPU().reset(); // first address of an image??
@@ -160,15 +162,17 @@ public class StudioFrame extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+//                .addContainerGap()
                 .addComponent(statusPanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+  //              .addContainerGap()
+                )
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(statusPanel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                //.addContainerGap()
+                )
         );
         pack();
     }
@@ -877,24 +881,28 @@ public class StudioFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnStopActionPerformed
 
     private void btnBackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBackActionPerformed
-        int pc = arch.getCPU().getContext().getInstrPosition();
-        if (pc > 0) {
-            arch.getCPU().getContext().setInstrPosition(pc-1);
+        try {
+            int pc = arch.getCPU().getContext().getInstrPosition();
+            if (pc > 0) {
+                arch.getCPU().getContext().setInstrPosition(pc-1);
+                paneDebug.revalidate();
+                if (tblDebug.isVisible()) {
+                    tblDebug.revalidate();
+                    tblDebug.repaint();
+                }
+            }
+        } catch(NullPointerException e) {}
+    }//GEN-LAST:event_btnBackActionPerformed
+
+    private void btnBeginningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBeginningActionPerformed
+        try {
+            arch.getCPU().getContext().setInstrPosition(0);
             paneDebug.revalidate();
             if (tblDebug.isVisible()) {
                 tblDebug.revalidate();
                 tblDebug.repaint();
             }
-        }
-    }//GEN-LAST:event_btnBackActionPerformed
-
-    private void btnBeginningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBeginningActionPerformed
-        arch.getCPU().getContext().setInstrPosition(0);
-        paneDebug.revalidate();
-        if (tblDebug.isVisible()) {
-            tblDebug.revalidate();
-            tblDebug.repaint();
-        }
+        } catch(NullPointerException e) {}
     }//GEN-LAST:event_btnBeginningActionPerformed
 
     private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResetActionPerformed
@@ -914,13 +922,15 @@ public class StudioFrame extends javax.swing.JFrame {
                     "Jump to address: ", "Jump",JOptionPane.QUESTION_MESSAGE,
                     null,null,0).toString()).intValue();
         } catch(Exception e) {return;}
-        if (arch.getCPU().getContext().setInstrPosition(address) == false) {
-            JOptionPane.showMessageDialog(this,
-                    "Typed address is incorrect ! (expected range from 0 to "
-                    + String.valueOf(arch.getMemory().getContext().getSize())+")",
-                    "Jump",JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        try {
+            if (arch.getCPU().getContext().setInstrPosition(address) == false) {
+                JOptionPane.showMessageDialog(this,
+                        "Typed address is incorrect ! (expected range from 0 to "
+                        + String.valueOf(arch.getMemory().getContext().getSize())+")",
+                        "Jump",JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        } catch(NullPointerException e) {}
         paneDebug.revalidate();
         if (tblDebug.isVisible()) {
             tblDebug.revalidate();
