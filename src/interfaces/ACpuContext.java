@@ -1,5 +1,5 @@
 /*
- * ACpuContext.java
+ * IICpuContext.java
  * (interface)
  *
  * Created on 18.6.2008, 8:56:44

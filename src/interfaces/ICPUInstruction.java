@@ -9,7 +9,7 @@
  * Interface for one row in debug window (GUI)
  */
 
-package plugins.cpu;
+package interfaces;
 
 /**
  *

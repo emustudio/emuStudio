@@ -1,5 +1,5 @@
 /*
- * debugInteraction.java
+ * ColumnInfo.java
  *
  * Created on Piatok, 2007, október 26, 10:51
  *

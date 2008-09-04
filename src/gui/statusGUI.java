@@ -12,14 +12,13 @@ package gui;
 import impl.ColumnInfo;
 import impl.Cpu8080;
 import impl.CpuContext;
-import interfaces.ACpuListener;
+import interfaces.IICpuListener;
+import interfaces.ICPUInstruction;
 import java.util.EventObject;
-import javax.swing.JPanel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import plugins.cpu.ICPUContext.stateEnum;
-import plugins.cpu.ICPUInstruction;
 import plugins.cpu.IDebugColumn;
 import plugins.memory.IMemoryContext;
 
@@ -33,9 +32,7 @@ public class statusGUI extends javax.swing.JPanel {
     private IMemoryContext mem = null;
     private IDebugColumn[] columns;
     private stateEnum run_state;
-
     
-    /** Creates new form cpuGUI */
     public statusGUI(final Cpu8080 cpu) {
         this.cpu = cpu;
         this.cpuC = (CpuContext)cpu.getContext();
@@ -49,7 +46,7 @@ public class statusGUI extends javax.swing.JPanel {
         run_state = stateEnum.stoppedNormal;
 
         initComponents();
-        cpuC.addCPUListener(new ACpuListener() {
+        cpuC.addCPUListener(new IICpuListener() {
             public void runChanged(EventObject evt, stateEnum state) {
                 run_state = state;
             }
@@ -533,42 +530,42 @@ public class statusGUI extends javax.swing.JPanel {
     private void initComponents() {
 
         javax.swing.JPanel paneInfoRegisters = new javax.swing.JPanel();
-        txtRegHL = new javax.swing.JTextField();
-        txtRegDE = new javax.swing.JTextField();
-        txtRegBC = new javax.swing.JTextField();
-        txtRegSP = new javax.swing.JTextField();
-        javax.swing.JLabel jLabel7 = new javax.swing.JLabel();
-        javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
-        javax.swing.JLabel jLabel3 = new javax.swing.JLabel();
-        javax.swing.JLabel jLabel4 = new javax.swing.JLabel();
-        txtRegL = new javax.swing.JTextField();
-        txtRegE = new javax.swing.JTextField();
-        txtRegC = new javax.swing.JTextField();
-        javax.swing.JLabel lblReg2 = new javax.swing.JLabel();
-        javax.swing.JLabel lblReg4 = new javax.swing.JLabel();
-        javax.swing.JLabel lblReg6 = new javax.swing.JLabel();
-        txtRegH = new javax.swing.JTextField();
-        txtRegD = new javax.swing.JTextField();
-        txtRegB = new javax.swing.JTextField();
-        javax.swing.JLabel lblReg0 = new javax.swing.JLabel();
-        javax.swing.JLabel lblReg1 = new javax.swing.JLabel();
-        javax.swing.JLabel lblReg3 = new javax.swing.JLabel();
-        javax.swing.JLabel lblReg5 = new javax.swing.JLabel();
-        txtRegA = new javax.swing.JTextField();
-        txtFlags = new javax.swing.JTextField();
-        txtFlagS = new javax.swing.JTextField();
         javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
+        txtRegB = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
+        txtRegC = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel3 = new javax.swing.JLabel();
+        txtRegBC = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel4 = new javax.swing.JLabel();
+        txtRegD = new javax.swing.JTextField();
         javax.swing.JLabel jLabel5 = new javax.swing.JLabel();
-        txtFlagZ = new javax.swing.JTextField();
+        txtRegE = new javax.swing.JTextField();
         javax.swing.JLabel jLabel6 = new javax.swing.JLabel();
-        txtFlagAC = new javax.swing.JTextField();
+        txtRegDE = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel7 = new javax.swing.JLabel();
+        txtRegH = new javax.swing.JTextField();
         javax.swing.JLabel jLabel8 = new javax.swing.JLabel();
-        txtFlagP = new javax.swing.JTextField();
+        txtRegL = new javax.swing.JTextField();
         javax.swing.JLabel jLabel9 = new javax.swing.JLabel();
-        txtFlagC = new javax.swing.JTextField();
+        txtRegHL = new javax.swing.JTextField();
         javax.swing.JLabel jLabel10 = new javax.swing.JLabel();
+        txtRegA = new javax.swing.JTextField();
         javax.swing.JLabel jLabel16 = new javax.swing.JLabel();
+        txtFlags = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel17 = new javax.swing.JLabel();
         txtRegPC = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel18 = new javax.swing.JLabel();
+        txtRegSP = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel19 = new javax.swing.JLabel();
+        txtFlagS = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel20 = new javax.swing.JLabel();
+        txtFlagZ = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel21 = new javax.swing.JLabel();
+        txtFlagAC = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel22 = new javax.swing.JLabel();
+        txtFlagP = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel23 = new javax.swing.JLabel();
+        txtFlagC = new javax.swing.JTextField();
         javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
         lblRun = new javax.swing.JLabel();
         javax.swing.JLabel jLabel11 = new javax.swing.JLabel();
@@ -580,155 +577,175 @@ public class statusGUI extends javax.swing.JPanel {
         spnTestPeriode = new javax.swing.JSpinner();
         javax.swing.JLabel jLabel15 = new javax.swing.JLabel();
 
-        paneInfoRegisters.setBorder(javax.swing.BorderFactory.createTitledBorder(new javax.swing.border.LineBorder(new java.awt.Color(153, 153, 153), 1, true), "", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11), new java.awt.Color(102, 102, 102))); // NOI18N
-
-        txtRegHL.setEditable(false);
-        txtRegHL.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtRegHL.setText("0000");
-        txtRegHL.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
-        txtRegHL.setPreferredSize(new java.awt.Dimension(40, 20));
-
-        txtRegDE.setEditable(false);
-        txtRegDE.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtRegDE.setText("0000");
-        txtRegDE.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
-        txtRegDE.setPreferredSize(new java.awt.Dimension(40, 20));
-
-        txtRegBC.setEditable(false);
-        txtRegBC.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtRegBC.setText("0000");
-        txtRegBC.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
-        txtRegBC.setPreferredSize(new java.awt.Dimension(40, 20));
-
-        txtRegSP.setEditable(false);
-        txtRegSP.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtRegSP.setText("0000");
-        txtRegSP.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
-        txtRegSP.setPreferredSize(new java.awt.Dimension(40, 20));
-
-        jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel7.setText("SP");
-
-        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel2.setText("BC");
-
-        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel3.setText("DE");
-
-        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel4.setText("HL");
-
-        txtRegL.setEditable(false);
-        txtRegL.setText("00");
-        txtRegL.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
-        txtRegL.setPreferredSize(new java.awt.Dimension(40, 20));
-
-        txtRegE.setEditable(false);
-        txtRegE.setText("00");
-        txtRegE.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
-        txtRegE.setPreferredSize(new java.awt.Dimension(40, 20));
-
-        txtRegC.setEditable(false);
-        txtRegC.setText("00");
-        txtRegC.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
-        txtRegC.setPreferredSize(new java.awt.Dimension(40, 20));
-
-        lblReg2.setFont(lblReg2.getFont().deriveFont(lblReg2.getFont().getStyle() | java.awt.Font.BOLD));
-        lblReg2.setText("C");
-
-        lblReg4.setFont(lblReg4.getFont().deriveFont(lblReg4.getFont().getStyle() | java.awt.Font.BOLD));
-        lblReg4.setText("E");
-
-        lblReg6.setFont(lblReg6.getFont().deriveFont(lblReg6.getFont().getStyle() | java.awt.Font.BOLD));
-        lblReg6.setText("L");
-
-        txtRegH.setEditable(false);
-        txtRegH.setText("00");
-        txtRegH.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
-        txtRegH.setPreferredSize(new java.awt.Dimension(40, 20));
-
-        txtRegD.setEditable(false);
-        txtRegD.setText("00");
-        txtRegD.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
-        txtRegD.setPreferredSize(new java.awt.Dimension(40, 20));
-
-        txtRegB.setEditable(false);
-        txtRegB.setText("00");
-        txtRegB.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
-        txtRegB.setPreferredSize(new java.awt.Dimension(40, 20));
-
-        lblReg0.setFont(lblReg0.getFont().deriveFont(lblReg0.getFont().getStyle() | java.awt.Font.BOLD));
-        lblReg0.setText("A");
-
-        lblReg1.setFont(lblReg1.getFont().deriveFont(lblReg1.getFont().getStyle() | java.awt.Font.BOLD));
-        lblReg1.setText("B");
-
-        lblReg3.setFont(lblReg3.getFont().deriveFont(lblReg3.getFont().getStyle() | java.awt.Font.BOLD));
-        lblReg3.setText("D");
-
-        lblReg5.setFont(lblReg5.getFont().deriveFont(lblReg5.getFont().getStyle() | java.awt.Font.BOLD));
-        lblReg5.setText("H");
-
-        txtRegA.setEditable(false);
-        txtRegA.setText("00");
-        txtRegA.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 5, 1, 1));
-        txtRegA.setPreferredSize(new java.awt.Dimension(40, 20));
-
-        txtFlags.setEditable(false);
-        txtFlags.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtFlags.setText("00");
-        txtFlags.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
-
-        txtFlagS.setEditable(false);
-        txtFlagS.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtFlagS.setText("0");
-        txtFlagS.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        paneInfoRegisters.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
         jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel1.setText("S");
+        jLabel1.setText("B");
 
-        jLabel5.setText("Flags:");
+        txtRegB.setBackground(java.awt.Color.white);
+        txtRegB.setEditable(false);
+        txtRegB.setFont(txtRegB.getFont());
+        txtRegB.setText("00");
+        txtRegB.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtRegB.setPreferredSize(new java.awt.Dimension(27, 21));
 
-        txtFlagZ.setEditable(false);
-        txtFlagZ.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtFlagZ.setText("0");
-        txtFlagZ.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel2.setText("C");
+
+        txtRegC.setBackground(java.awt.Color.white);
+        txtRegC.setEditable(false);
+        txtRegC.setText("00");
+        txtRegC.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtRegC.setPreferredSize(new java.awt.Dimension(27, 21));
+
+        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel3.setText("BC");
+
+        txtRegBC.setBackground(java.awt.Color.white);
+        txtRegBC.setEditable(false);
+        txtRegBC.setText("0000");
+        txtRegBC.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtRegBC.setPreferredSize(new java.awt.Dimension(50, 21));
+
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel4.setText("D");
+
+        txtRegD.setBackground(java.awt.Color.white);
+        txtRegD.setEditable(false);
+        txtRegD.setFont(txtRegD.getFont());
+        txtRegD.setText("00");
+        txtRegD.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtRegD.setPreferredSize(new java.awt.Dimension(27, 21));
+
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel5.setText("E");
+
+        txtRegE.setBackground(java.awt.Color.white);
+        txtRegE.setEditable(false);
+        txtRegE.setText("00");
+        txtRegE.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtRegE.setPreferredSize(new java.awt.Dimension(27, 21));
 
         jLabel6.setFont(jLabel6.getFont().deriveFont(jLabel6.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel6.setText("Z");
+        jLabel6.setText("DE");
 
-        txtFlagAC.setEditable(false);
-        txtFlagAC.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtFlagAC.setText("0");
-        txtFlagAC.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegDE.setBackground(java.awt.Color.white);
+        txtRegDE.setEditable(false);
+        txtRegDE.setText("0000");
+        txtRegDE.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtRegDE.setPreferredSize(new java.awt.Dimension(50, 21));
+
+        jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel7.setText("H");
+
+        txtRegH.setBackground(java.awt.Color.white);
+        txtRegH.setEditable(false);
+        txtRegH.setFont(txtRegH.getFont());
+        txtRegH.setText("00");
+        txtRegH.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtRegH.setPreferredSize(new java.awt.Dimension(27, 21));
 
         jLabel8.setFont(jLabel8.getFont().deriveFont(jLabel8.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel8.setText("AC");
+        jLabel8.setText("L");
 
-        txtFlagP.setEditable(false);
-        txtFlagP.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtFlagP.setText("0");
-        txtFlagP.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegL.setBackground(java.awt.Color.white);
+        txtRegL.setEditable(false);
+        txtRegL.setText("00");
+        txtRegL.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtRegL.setPreferredSize(new java.awt.Dimension(27, 21));
 
         jLabel9.setFont(jLabel9.getFont().deriveFont(jLabel9.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel9.setText("P");
+        jLabel9.setText("HL");
 
-        txtFlagC.setEditable(false);
-        txtFlagC.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtFlagC.setText("0");
-        txtFlagC.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegHL.setBackground(java.awt.Color.white);
+        txtRegHL.setEditable(false);
+        txtRegHL.setText("0000");
+        txtRegHL.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtRegHL.setPreferredSize(new java.awt.Dimension(50, 21));
 
         jLabel10.setFont(jLabel10.getFont().deriveFont(jLabel10.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel10.setText("C");
+        jLabel10.setText("A");
 
-        jLabel16.setFont(new java.awt.Font("DejaVu Sans", 1, 14));
-        jLabel16.setText("PC");
+        txtRegA.setBackground(java.awt.Color.white);
+        txtRegA.setEditable(false);
+        txtRegA.setFont(txtRegA.getFont());
+        txtRegA.setText("00");
+        txtRegA.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtRegA.setPreferredSize(new java.awt.Dimension(27, 21));
 
+        jLabel16.setFont(jLabel16.getFont().deriveFont(jLabel16.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel16.setText("F");
+
+        txtFlags.setBackground(java.awt.Color.white);
+        txtFlags.setEditable(false);
+        txtFlags.setText("00");
+        txtFlags.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtFlags.setPreferredSize(new java.awt.Dimension(27, 21));
+
+        jLabel17.setFont(jLabel17.getFont().deriveFont(jLabel17.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel17.setText("PC");
+
+        txtRegPC.setBackground(java.awt.Color.white);
         txtRegPC.setEditable(false);
-        txtRegPC.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtRegPC.setText("0000");
-        txtRegPC.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 5, 1, 1));
-        txtRegPC.setPreferredSize(new java.awt.Dimension(40, 20));
+        txtRegPC.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtRegPC.setPreferredSize(new java.awt.Dimension(50, 21));
+
+        jLabel18.setFont(jLabel18.getFont().deriveFont(jLabel18.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel18.setText("SP");
+
+        txtRegSP.setBackground(java.awt.Color.white);
+        txtRegSP.setEditable(false);
+        txtRegSP.setText("0000");
+        txtRegSP.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtRegSP.setPreferredSize(new java.awt.Dimension(50, 21));
+
+        jLabel19.setFont(jLabel19.getFont().deriveFont(jLabel19.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel19.setText("S");
+
+        txtFlagS.setBackground(java.awt.Color.white);
+        txtFlagS.setEditable(false);
+        txtFlagS.setFont(txtFlagS.getFont());
+        txtFlagS.setText("00");
+        txtFlagS.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtFlagS.setPreferredSize(new java.awt.Dimension(27, 21));
+
+        jLabel20.setFont(jLabel20.getFont().deriveFont(jLabel20.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel20.setText("Z");
+
+        txtFlagZ.setBackground(java.awt.Color.white);
+        txtFlagZ.setEditable(false);
+        txtFlagZ.setText("00");
+        txtFlagZ.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtFlagZ.setPreferredSize(new java.awt.Dimension(27, 21));
+
+        jLabel21.setFont(jLabel21.getFont().deriveFont(jLabel21.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel21.setText("AC");
+
+        txtFlagAC.setBackground(java.awt.Color.white);
+        txtFlagAC.setEditable(false);
+        txtFlagAC.setText("00");
+        txtFlagAC.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtFlagAC.setPreferredSize(new java.awt.Dimension(27, 21));
+
+        jLabel22.setFont(jLabel22.getFont().deriveFont(jLabel22.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel22.setText("P");
+
+        txtFlagP.setBackground(java.awt.Color.white);
+        txtFlagP.setEditable(false);
+        txtFlagP.setFont(txtFlagP.getFont());
+        txtFlagP.setText("00");
+        txtFlagP.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtFlagP.setPreferredSize(new java.awt.Dimension(27, 21));
+
+        jLabel23.setFont(jLabel23.getFont().deriveFont(jLabel23.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel23.setText("C");
+
+        txtFlagC.setBackground(java.awt.Color.white);
+        txtFlagC.setEditable(false);
+        txtFlagC.setText("00");
+        txtFlagC.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 3, 2, 3));
+        txtFlagC.setPreferredSize(new java.awt.Dimension(27, 21));
 
         javax.swing.GroupLayout paneInfoRegistersLayout = new javax.swing.GroupLayout(paneInfoRegisters);
         paneInfoRegisters.setLayout(paneInfoRegistersLayout);
@@ -738,157 +755,134 @@ public class statusGUI extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(paneInfoRegistersLayout.createSequentialGroup()
-                        .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, paneInfoRegistersLayout.createSequentialGroup()
-                                .addGap(40, 40, 40)
-                                .addComponent(lblReg3, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(txtRegD, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(10, 10, 10)
-                                .addComponent(lblReg4, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(txtRegE, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(10, 10, 10)
-                                .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, paneInfoRegistersLayout.createSequentialGroup()
-                                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(paneInfoRegistersLayout.createSequentialGroup()
-                                        .addGap(40, 40, 40)
-                                        .addComponent(lblReg1, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, paneInfoRegistersLayout.createSequentialGroup()
-                                        .addGap(40, 40, 40)
-                                        .addComponent(lblReg0, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(paneInfoRegistersLayout.createSequentialGroup()
-                                        .addComponent(txtRegB, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(10, 10, 10)
-                                        .addComponent(lblReg2, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(txtRegC, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addComponent(txtRegA, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(10, 10, 10)
-                                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel2)
-                                    .addComponent(jLabel7)))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, paneInfoRegistersLayout.createSequentialGroup()
-                                .addGap(40, 40, 40)
-                                .addComponent(lblReg5, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(txtRegH, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(10, 10, 10)
-                                .addComponent(lblReg6, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(txtRegL, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(10, 10, 10)
-                                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(paneInfoRegistersLayout.createSequentialGroup()
-                                        .addComponent(jLabel16)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
-                                    .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                        .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(paneInfoRegistersLayout.createSequentialGroup()
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(txtRegBC, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(txtRegSP, javax.swing.GroupLayout.DEFAULT_SIZE, 50, Short.MAX_VALUE)))
-                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, paneInfoRegistersLayout.createSequentialGroup()
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(txtRegDE, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, paneInfoRegistersLayout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtRegPC, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(txtRegHL, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(34, 34, 34))))
-                    .addGroup(paneInfoRegistersLayout.createSequentialGroup()
-                        .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel5)
-                            .addGroup(paneInfoRegistersLayout.createSequentialGroup()
-                                .addGap(40, 40, 40)
-                                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel9)
-                                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtRegB, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtRegC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtRegBC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(paneInfoRegistersLayout.createSequentialGroup()
+                        .addComponent(jLabel4)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtRegD, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtRegE, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel6)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtRegDE, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(paneInfoRegistersLayout.createSequentialGroup()
+                        .addComponent(jLabel7)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtRegH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel8)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtRegL, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel9)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtRegHL, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(paneInfoRegistersLayout.createSequentialGroup()
+                        .addComponent(jLabel10)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtRegA, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel16)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtFlags, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
                         .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(paneInfoRegistersLayout.createSequentialGroup()
+                                .addComponent(jLabel18)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(txtFlagS)
-                                    .addComponent(txtFlagP, javax.swing.GroupLayout.DEFAULT_SIZE, 28, Short.MAX_VALUE))
+                                .addComponent(txtRegSP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(paneInfoRegistersLayout.createSequentialGroup()
+                                .addComponent(jLabel17)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, paneInfoRegistersLayout.createSequentialGroup()
-                                        .addComponent(jLabel6)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
-                                    .addGroup(paneInfoRegistersLayout.createSequentialGroup()
-                                        .addComponent(jLabel10)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
-                                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(txtFlagC)
-                                    .addComponent(txtFlagZ, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel8)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtFlagAC, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(txtFlags, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addComponent(txtRegPC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                    .addGroup(paneInfoRegistersLayout.createSequentialGroup()
+                        .addComponent(jLabel19)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtFlagS, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel20)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtFlagZ, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel21)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtFlagAC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(paneInfoRegistersLayout.createSequentialGroup()
+                        .addComponent(jLabel22)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtFlagP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel23)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtFlagC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(37, Short.MAX_VALUE))
         );
         paneInfoRegistersLayout.setVerticalGroup(
             paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(paneInfoRegistersLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblReg0, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(txtRegA, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(txtRegSP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(10, 10, 10)
-                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblReg1)
-                    .addComponent(txtRegB, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblReg2, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtRegC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtRegBC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(10, 10, 10)
-                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblReg3)
-                    .addComponent(txtRegD, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblReg4)
-                    .addComponent(txtRegE, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtRegDE, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(10, 10, 10)
-                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(paneInfoRegistersLayout.createSequentialGroup()
-                        .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblReg5)
-                            .addComponent(txtRegH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(lblReg6, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txtRegL, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txtRegHL, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(20, 20, 20)
-                        .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel5)
-                            .addComponent(txtFlags, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(paneInfoRegistersLayout.createSequentialGroup()
-                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel16)
-                            .addComponent(txtRegPC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addGap(13, 13, 13)
                 .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
+                    .addComponent(txtRegB, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2)
+                    .addComponent(txtRegC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3)
+                    .addComponent(txtRegBC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel4)
+                    .addComponent(txtRegD, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel5)
+                    .addComponent(txtRegE, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel6)
-                    .addComponent(txtFlagZ, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtRegDE, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel7)
+                    .addComponent(txtRegH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel8)
-                    .addComponent(txtFlagAC, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtFlagS, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(10, 10, 10)
-                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtRegL, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel9)
+                    .addComponent(txtRegHL, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel10)
-                    .addComponent(txtFlagP, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtFlagC, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtRegA, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel16)
+                    .addComponent(txtFlags, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel17)
+                    .addComponent(txtRegPC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel18)
+                    .addComponent(txtRegSP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel19)
+                    .addComponent(txtFlagS, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel20)
+                    .addComponent(txtFlagZ, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel21)
+                    .addComponent(txtFlagAC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(paneInfoRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel22)
+                    .addComponent(txtFlagP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel23)
+                    .addComponent(txtFlagC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -902,7 +896,7 @@ public class statusGUI extends javax.swing.JPanel {
 
         spnFrequency.setModel(new SpinnerNumberModel(2000, 1, 99999, 100));
 
-        jLabel12.setFont(jLabel12.getFont().deriveFont(jLabel12.getFont().getStyle() | java.awt.Font.BOLD, jLabel12.getFont().getSize()-3));
+        jLabel12.setFont(jLabel12.getFont().deriveFont(jLabel12.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel12.setText("kHz");
 
         jLabel13.setText("Runtime frequency:");
@@ -914,7 +908,7 @@ public class statusGUI extends javax.swing.JPanel {
 
         spnTestPeriode.setModel(new SpinnerNumberModel(50, 1, 10000, 50));
 
-        jLabel15.setFont(jLabel15.getFont().deriveFont(jLabel15.getFont().getStyle() | java.awt.Font.BOLD, jLabel15.getFont().getSize()-3));
+        jLabel15.setFont(jLabel15.getFont().deriveFont(jLabel15.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel15.setText("ms");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
@@ -937,14 +931,14 @@ public class statusGUI extends javax.swing.JPanel {
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(jLabel14)
                                 .addGap(26, 26, 26)))
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(spnTestPeriode)
-                            .addComponent(spnFrequency, javax.swing.GroupLayout.DEFAULT_SIZE, 83, Short.MAX_VALUE))
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(spnTestPeriode, javax.swing.GroupLayout.DEFAULT_SIZE, 83, Short.MAX_VALUE)
+                            .addComponent(spnFrequency, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(4, 4, 4)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel15)
                             .addComponent(jLabel12))))
-                .addGap(140, 140, 140))
+                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -959,8 +953,8 @@ public class statusGUI extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel14)
-                    .addComponent(spnTestPeriode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel15))
+                    .addComponent(jLabel15)
+                    .addComponent(spnTestPeriode, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel13)
@@ -972,15 +966,16 @@ public class statusGUI extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, 0, 299, Short.MAX_VALUE)
             .addComponent(paneInfoRegisters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(paneInfoRegisters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
     

@@ -43,10 +43,10 @@ public class Cpu8080 implements ICPU, Runnable {
     private long long_cycles = 0; // count of executed cycles for runtime freq. computing
     private java.util.Timer freqScheduler;
     private RuntimeFrequencyCalculator rfc;
-    private int sliceCheckTime = 50;
+    private int sliceCheckTime = 100;
 
     // registers are public meant for only statusGUI (didnt want make it thru get() methods)
-    private int PC=0; // program counter
+    private volatile int PC=0; // program counter
     public int SP=0; // stack pointer
     public short B=0, C=0, D=0, E=0, H=0, L=0, Flags=2, A=0; // registre
     public final int flagS = 0x80, flagZ = 0x40, flagAC = 0x10, flagP = 0x4, flagC = 0x1;
@@ -54,7 +54,7 @@ public class Cpu8080 implements ICPU, Runnable {
     private boolean INTE = false; // povolenie / zakazanie preruseni
     private boolean isINT = false;
     private short b1 = 0; // interrupt instruction can be rst (b1) or call (b1,b2,b3)
-    private short b2 = 0;
+    private short b2 = 0; //?? doesn't work or what... i dont care
     private short b3 = 0;
     
     private stateEnum run_state; // dovod zastavenia emulatora
@@ -138,7 +138,7 @@ public class Cpu8080 implements ICPU, Runnable {
         cpuThread.start();
     }
     /**
-     * Forced (external) breakpoint
+     * Force (external) breakpoint
      */
     public void pause() {
         run_state = stateEnum.stoppedBreak;
@@ -240,7 +240,6 @@ public class Cpu8080 implements ICPU, Runnable {
      * 1000 s = 1 micros => slice_length (can vary)
      * 
      */
-    
     public void run() {
         long startTime, endTime;
         int cycles_executed;

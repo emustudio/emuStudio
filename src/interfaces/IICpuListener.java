@@ -1,5 +1,5 @@
 /*
- * ACpuListener.java
+ * IICpuListener.java
  * (interface)
  *
  * Created on 18.6.2008, 9:31:16
@@ -16,6 +16,6 @@ import plugins.cpu.ICPUContext.ICPUListener;
  *
  * @author vbmacher
  */
-public interface ACpuListener extends ICPUListener {
+public interface IICpuListener extends ICPUListener {
     public void frequencyChanged(EventObject evt, float freq);
 }

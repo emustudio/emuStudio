@@ -11,7 +11,7 @@ package impl;
 
 import gui.statusGUI;
 import interfaces.ACpuContext;
-import interfaces.ACpuListener;
+import interfaces.IICpuListener;
 import java.util.EventObject;
 import java.util.Hashtable;
 import javax.swing.event.EventListenerList;
@@ -89,8 +89,8 @@ public class CpuContext implements ACpuContext {
     public void fireFrequencyChanged(float freq) {
         Object[] listeners = listenerList.getListenerList();
         for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i+1] instanceof ACpuListener)
-                ((ACpuListener)listeners[i+1]).frequencyChanged(cpuEvt,freq);
+            if (listeners[i+1] instanceof IICpuListener)
+                ((IICpuListener)listeners[i+1]).frequencyChanged(cpuEvt,freq);
         }
     }
 
