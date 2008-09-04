@@ -11,10 +11,10 @@ package gui.utils;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import javax.swing.AbstractCellEditor;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
@@ -52,6 +52,7 @@ public class tableMemory extends JTable {
         MemoryCellEditor ed = new MemoryCellEditor();
         for (int i =0; i < memModel.getColumnCount(); i++) {
             TableColumn col = this.getColumnModel().getColumn(i);
+            col.setPreferredWidth(3 * 17);
             col.setCellEditor(ed);
         }
     }
@@ -65,7 +66,8 @@ public class tableMemory extends JTable {
             setHorizontalAlignment(CENTER);
             setForeground(header.getForeground());
             setBackground(header.getBackground());
-            setFont(header.getFont());
+            setFont(new Font("Monospaced",Font.PLAIN,11));
+            this.setPreferredSize(new Dimension(4 * 17,header.getPreferredSize().height));
         }
   
         public Component getListCellRendererComponent(JList list, Object value,
@@ -92,13 +94,13 @@ public class tableMemory extends JTable {
                         * memModel.getRowCount() * currentPage);
             this.setOpaque(true);
             rowHeader = new JList(adresses);
-            this.setFont(new Font("Monospaced",Font.PLAIN,12));
+            this.setFont(new Font("Monospaced",Font.PLAIN,11));
             
             FontMetrics fm = rowHeader.getFontMetrics(rowHeader.getFont());
-            int char_width = 14;
+            int char_width = 17;
             if (fm != null) char_width = fm.stringWidth("FF");
             
-            rowHeader.setFixedCellWidth(char_width * 3);
+            rowHeader.setFixedCellWidth(char_width * 4);
             rowHeader.setFixedCellHeight(getRowHeight());
             rowHeader.setCellRenderer(new MemRowHeaderRenderer(this.tm));
             setHorizontalAlignment(CENTER);
