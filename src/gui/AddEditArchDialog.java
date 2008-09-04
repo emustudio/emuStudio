@@ -413,7 +413,9 @@ private void btnCPUActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:
     buttonSelected = true;
     String[] cpus = ArchLoader.getAllNames(ArchLoader.cpusDir, ".jar");
     cmbElement.setModel(new pluginModel(cpus));
-    cmbElement.setSelectedIndex(-1);
+    try {
+        cmbElement.setSelectedIndex(0);
+    } catch(IllegalArgumentException e) {}
 }//GEN-LAST:event_btnCPUActionPerformed
 
 private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMemoryActionPerformed
@@ -428,7 +430,9 @@ private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
     buttonSelected = true;
     String[] mems = ArchLoader.getAllNames(ArchLoader.memoriesDir, ".jar");
     cmbElement.setModel(new pluginModel(mems));
-    cmbElement.setSelectedIndex(-1);
+    try {
+        cmbElement.setSelectedIndex(0);
+    } catch(IllegalArgumentException e) {}
 }//GEN-LAST:event_btnMemoryActionPerformed
 
 private void btnDeviceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeviceActionPerformed
@@ -443,7 +447,9 @@ private void btnDeviceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
     buttonSelected = true;
     String[] devs = ArchLoader.getAllNames(ArchLoader.devicesDir, ".jar");
     cmbElement.setModel(new pluginModel(devs));
-    cmbElement.setSelectedIndex(-1);
+    try {
+        cmbElement.setSelectedIndex(0);
+    } catch(IllegalArgumentException e) {}
 }//GEN-LAST:event_btnDeviceActionPerformed
 
 private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectActionPerformed

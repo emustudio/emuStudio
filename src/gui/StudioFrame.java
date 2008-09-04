@@ -466,6 +466,7 @@ public class StudioFrame extends javax.swing.JFrame {
         jPanel2.setOpaque(false);
 
         splitLeftRight.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        splitLeftRight.setDividerLocation(400);
         splitLeftRight.setContinuousLayout(true);
         splitLeftRight.setFocusable(false);
 
@@ -475,11 +476,11 @@ public class StudioFrame extends javax.swing.JFrame {
         statusWindow.setLayout(statusWindowLayout);
         statusWindowLayout.setHorizontalGroup(
             statusWindowLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 258, Short.MAX_VALUE)
+            .addGap(0, 309, Short.MAX_VALUE)
         );
         statusWindowLayout.setVerticalGroup(
             statusWindowLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 439, Short.MAX_VALUE)
+            .addGap(0, 441, Short.MAX_VALUE)
         );
 
         splitLeftRight.setRightComponent(statusWindow);
@@ -601,16 +602,16 @@ public class StudioFrame extends javax.swing.JFrame {
         debuggerPanelLayout.setHorizontalGroup(
             debuggerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(debuggerPanelLayout.createSequentialGroup()
-                .addComponent(jToolBar2, javax.swing.GroupLayout.DEFAULT_SIZE, 424, Short.MAX_VALUE)
+                .addComponent(jToolBar2, javax.swing.GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
                 .addContainerGap())
-            .addComponent(paneDebug, javax.swing.GroupLayout.DEFAULT_SIZE, 436, Short.MAX_VALUE)
+            .addComponent(paneDebug, javax.swing.GroupLayout.DEFAULT_SIZE, 385, Short.MAX_VALUE)
         );
         debuggerPanelLayout.setVerticalGroup(
             debuggerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(debuggerPanelLayout.createSequentialGroup()
                 .addComponent(jToolBar2, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(paneDebug, javax.swing.GroupLayout.DEFAULT_SIZE, 257, Short.MAX_VALUE)
+                .addComponent(paneDebug, javax.swing.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -632,15 +633,15 @@ public class StudioFrame extends javax.swing.JFrame {
         peripheralPanelLayout.setHorizontalGroup(
             peripheralPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(peripheralPanelLayout.createSequentialGroup()
-                .addContainerGap(378, Short.MAX_VALUE)
+                .addContainerGap(323, Short.MAX_VALUE)
                 .addComponent(showGUIButton)
                 .addContainerGap())
-            .addComponent(paneDevices, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 436, Short.MAX_VALUE)
+            .addComponent(paneDevices, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 385, Short.MAX_VALUE)
         );
         peripheralPanelLayout.setVerticalGroup(
             peripheralPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, peripheralPanelLayout.createSequentialGroup()
-                .addComponent(paneDevices, javax.swing.GroupLayout.DEFAULT_SIZE, 67, Short.MAX_VALUE)
+                .addComponent(paneDevices, javax.swing.GroupLayout.DEFAULT_SIZE, 69, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(showGUIButton))
         );

@@ -550,6 +550,7 @@
                     <EmptyBorder/>
                   </Border>
                 </Property>
+                <Property name="dividerLocation" type="int" value="400"/>
                 <Property name="continuousLayout" type="boolean" value="true"/>
                 <Property name="focusable" type="boolean" value="false"/>
               </Properties>
@@ -576,12 +577,12 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <EmptySpace min="0" pref="258" max="32767" attributes="0"/>
+                          <EmptySpace min="0" pref="309" max="32767" attributes="0"/>
                       </Group>
                     </DimensionLayout>
                     <DimensionLayout dim="1">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <EmptySpace min="0" pref="439" max="32767" attributes="0"/>
+                          <EmptySpace min="0" pref="441" max="32767" attributes="0"/>
                       </Group>
                     </DimensionLayout>
                   </Layout>
@@ -624,10 +625,10 @@
                         <DimensionLayout dim="0">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
-                                  <Component id="jToolBar2" pref="424" max="32767" attributes="0"/>
+                                  <Component id="jToolBar2" pref="373" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
-                              <Component id="paneDebug" alignment="0" pref="436" max="32767" attributes="0"/>
+                              <Component id="paneDebug" alignment="0" pref="385" max="32767" attributes="0"/>
                           </Group>
                         </DimensionLayout>
                         <DimensionLayout dim="1">
@@ -635,7 +636,7 @@
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="jToolBar2" min="-2" pref="25" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="paneDebug" pref="257" max="32767" attributes="0"/>
+                                  <Component id="paneDebug" pref="259" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
                           </Group>
@@ -821,17 +822,17 @@
                         <DimensionLayout dim="0">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
-                                  <EmptySpace pref="378" max="32767" attributes="0"/>
+                                  <EmptySpace pref="323" max="32767" attributes="0"/>
                                   <Component id="showGUIButton" min="-2" max="-2" attributes="1"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
-                              <Component id="paneDevices" alignment="1" pref="436" max="32767" attributes="1"/>
+                              <Component id="paneDevices" alignment="1" pref="385" max="32767" attributes="1"/>
                           </Group>
                         </DimensionLayout>
                         <DimensionLayout dim="1">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="1" attributes="0">
-                                  <Component id="paneDevices" pref="67" max="32767" attributes="0"/>
+                                  <Component id="paneDevices" pref="69" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="showGUIButton" min="-2" max="-2" attributes="0"/>
                               </Group>
