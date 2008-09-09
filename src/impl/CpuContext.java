@@ -9,7 +9,7 @@
 package impl;
 
 import interfaces.IICpuListener;
-import interfaces.IICpuContext;
+import interfaces.ACpuContext;
 import gui.statusGUI;
 import java.util.EventObject;
 import java.util.Hashtable;
@@ -21,7 +21,7 @@ import plugins.device.IDeviceContext;
  *
  * @author vbmacher
  */
-public class CpuContext implements IICpuContext {
+public class CpuContext implements ACpuContext {
     private EventListenerList listenerList;
     private EventObject cpuEvt = new EventObject(this);
     private Hashtable devicesList;

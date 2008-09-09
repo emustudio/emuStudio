@@ -47,6 +47,7 @@ public class statusGUI extends javax.swing.JPanel {
                 case 0: return flags[columnIndex];
                 case 1: return flagsI[columnIndex];
             }
+            return null;
         }
         public void fireTableDataChanged() {
             flagsI[0] = Integer.valueOf(String.valueOf((cpu.getF(set)&CpuZ80.flagS)!=0));
@@ -244,6 +245,7 @@ public class statusGUI extends javax.swing.JPanel {
 
     public ICPUInstruction cpuDecode(int memPos) {
         short val;
+        int tmp;
         int actPos = memPos;
         ICPUInstruction instr;
         String mnemo, oper;
@@ -265,227 +267,7 @@ public class statusGUI extends javax.swing.JPanel {
             case 0x03: mnemo = "inc " + getRegPairMnemo((val>>>4)&3); break;
             case 0x09: mnemo = "add hl, " + getRegPairMnemo((val>>>4)&3); break;
             case 0x0B: mnemo = "dec " + getRegPairMnemo((val>>>4)&3); break;
-                
         }
-
-//|ADC A,N      | 7  | 2 |      |CE XX       |                     |                      |
-//|ADC A,(IX+N) | 19 | 3 |      |DD 8E XX    |                     |                      |
-//|ADC A,(IY+N) | 19 | 3 |      |FD 8E XX    |                     |                      |
-//|ADC HL,BC    | 15 | 2 |**?V0*|ED 4A       |Add with Carry       |HL=HL+ss+CY           |
-//|ADC HL,DE    | 15 | 2 |      |ED 5A       |                     |                      |
-//|ADC HL,HL    | 15 | 2 |      |ED 6A       |                     |                      |
-//|ADC HL,SP    | 15 | 2 |      |ED 7A       |                     |                      |
-//|ADD A,N      | 7  | 2 |      |C6 XX       |                     |                      |
-//|ADD A,(IX+N) | 19 | 3 |      |DD 86 XX    |                     |                      |
-//|ADD A,(IY+N) | 19 | 3 |      |FD 86 XX    |                     |                      |
-//|ADD IX,BC    | 15 | 2 |--?-0*|DD 09       |Add (IX register)    |IX=IX+pp              |
-//|ADD IX,DE    | 15 | 2 |      |DD 19       |                     |                      |
-//|ADD IX,IX    | 15 | 2 |      |DD 29       |                     |                      |
-//|ADD IX,SP    | 15 | 2 |      |DD 39       |                     |                      |
-//|ADD IY,BC    | 15 | 2 |--?-0*|FD 09       |Add (IY register)    |IY=IY+rr              |
-//|ADD IY,DE    | 15 | 2 |      |FD 19       |                     |                      |
-//|ADD IY,IY    | 15 | 2 |      |FD 29       |                     |                      |
-//|ADD IY,SP    | 15 | 2 |      |FD 39       |                     |                      |
-//|AND N        | 7  | 2 |      |E6 XX       |                     |                      |
-//|AND (IX+N)   | 19 | 3 |      |DD A6 XX    |                     |                      |
-//|AND (IY+N)   | 19 | 3 |      |FD A6 XX    |                     |                      |
-//|BIT b,r      | 8  | 2 |?*1?0-|CB 40+8*b+rb|Test Bit             |m&{2^b}               |
-//|BIT b,(HL)   | 12 | 2 |      |CB 46+8*b   |                     |                      |
-//|BIT b,(IX+N) | 20 | 4 |      |DD CB XX 46+8*b                   |                      |
-//|BIT b,(IY+N) | 20 | 4 |      |FD CB XX 46+8*b                   |                      |
-//|CALL NN      | 17 | 3 |------|CD XX XX    |Unconditional Call   |-(SP)=PC,PC=nn        |
-//|CALL C,NN    |17/1| 3 |------|DC XX XX    |Conditional Call     |If Carry = 1          |
-//|CALL NC,NN   |17/1| 3 |      |D4 XX XX    |                     |If carry = 0          |
-//|CALL M,NN    |17/1| 3 |      |FC XX XX    |                     |If Sign = 1 (negative)|
-//|CALL P,NN    |17/1| 3 |      |F4 XX XX    |                     |If Sign = 0 (positive)|
-//|CALL Z,NN    |17/1| 3 |      |CC XX XX    |                     |If Zero = 1 (ans.=0)  |
-//|CALL NZ,NN   |17/1| 3 |      |C4 XX XX    |                     |If Zero = 0 (non-zero)|
-//|CALL PE,NN   |17/1| 3 |      |EC XX XX    |                     |If Parity = 1 (even)  |
-//|CALL PO,NN   |17/1| 3 |      |E4 XX XX    |                     |If Parity = 0 (odd)   |
-//|CP N         | 7  | 2 |      |FE XX       |                     |                      |
-//|CP (IX+N)    | 19 | 3 |      |DD BE XX    |                     |                      |
-//|CP (IY+N)    | 19 | 3 |      |FD BE XX    |                     |                      |
-//|CPD          | 16 | 2 |****1-|ED A9       |Compare and Decrement|A-(HL),HL=HL-1,BC=BC-1|
-//|CPDR         |21/1| 2 |****1-|ED B9       |Compare, Dec., Repeat|CPD till A=(HL)or BC=0|
-//|CPI          | 16 | 2 |****1-|ED A1       |Compare and Increment|A-(HL),HL=HL+1,BC=BC-1|
-//|CPIR         |21/1| 2 |****1-|ED B1       |Compare, Inc., Repeat|CPI till A=(HL)or BC=0|
-//|DEC (IX+N)   | 23 | 3 |      |DD 35 XX    |                     |                      |
-//|DEC (IY+N)   | 23 | 3 |      |FD 35 XX    |                     |                      |
-//|DEC IX       | 10 | 2 |------|DD 2B       |Decrement            |xx=xx-1               |
-//|DEC IY       | 10 | 2 |      |FD 2B       |                     |                      |
-//|EX (SP),IX   | 23 | 2 |------|DD E3       |                     |(SP)<->xx             |
-//|EX (SP),IY   | 23 | 2 |      |FD E3       |                     |                      |
-//|IM 0         | 8  | 2 |------|ED 46       |Interrupt Mode       |             (n=0,1,2)|
-//|IM 1         | 8  | 2 |      |ED 56       |                     |                      |
-//|IM 2         | 8  | 2 |      |ED 5E       |                     |                      |
-//|IN A,(N)     | 11 | 2 |------|DB XX       |Input                |A=(n)                 |
-//|IN (C)       | 12 | 2 |***P0-|ED 70       |Input*               |         (Unsupported)|
-//|IN A,(C)     | 12 | 2 |***P0-|ED 78       |Input                |r=(C)                 |
-//|IN B,(C)     | 12 | 2 |      |ED 40       |                     |                      |
-//|IN C,(C)     | 12 | 2 |      |ED 48       |                     |                      |
-//|IN D,(C)     | 12 | 2 |      |ED 50       |                     |                      |
-//|IN E,(C)     | 12 | 2 |      |ED 58       |                     |                      |
-//|IN H,(C)     | 12 | 2 |      |ED 60       |                     |                      |
-//|IN L,(C)     | 12 | 2 |      |ED 68       |                     |                      |
-//|INC IX       | 10 | 2 |------|DD 23       |Increment            |xx=xx+1               |
-//|INC IY       | 10 | 2 |      |FD 23       |                     |                      |
-//|INC (IX+N)   | 23 | 3 |***V0-|DD 34 XX    |Increment            |(xx+d)=(xx+d)+1       |
-//|INC (IY+N)   | 23 | 3 |      |FD 34 XX    |                     |                      |
-//|IND          | 16 | 2 |?*??1-|ED AA       |Input and Decrement  |(HL)=(C),HL=HL-1,B=B-1|
-//|INDR         |21/1| 2 |?1??1-|ED BA       |Input, Dec., Repeat  |IND till B=0          |
-//|INI          | 16 | 2 |?*??1-|ED A2       |Input and Increment  |(HL)=(C),HL=HL+1,B=B-1|
-//|INIR         |21/1| 2 |?1??1-|ED B2       |Input, Inc., Repeat  |INI till B=0          |
-//|JP $NN       | 10 | 3 |------|C3 XX XX    |Unconditional Jump   |PC=nn                 |
-//|JP (IX)      | 8  | 2 |------|DD E9       |Unconditional Jump   |PC=(xx)               |
-//|JP (IY)      | 8  | 2 |      |FD E9       |                     |                      |
-//|JP C,$NN     |10/1| 3 |------|DA XX XX    |Conditional Jump     |If Carry = 1          |
-//|JP NC,$NN    |10/1| 3 |      |D2 XX XX    |                     |If Carry = 0          |
-//|JP M,$NN     |10/1| 3 |      |FA XX XX    |                     |If Sign = 1 (negative)|
-//|JP P,$NN     |10/1| 3 |      |F2 XX XX    |                     |If Sign = 0 (positive)|
-//|JP Z,$NN     |10/1| 3 |      |CA XX XX    |                     |If Zero = 1 (ans.= 0) |
-//|JP NZ,$NN    |10/1| 3 |      |C2 XX XX    |                     |If Zero = 0 (non-zero)|
-//|JP PE,$NN    |10/1| 3 |      |EA XX XX    |                     |If Parity = 1 (even)  |
-//|JP PO,$NN    |10/1| 3 |      |E2 XX XX    |                     |If Parity = 0 (odd)   |
-//|JR $N+2      | 12 | 2 |------|18 XX       |Relative Jump        |PC=PC+e               |
-//|JR C,$N+2    |12/7| 2 |------|38 XX       |Cond. Relative Jump  |If cc JR(cc=C,NC,NZ,Z)|
-//|JR NC,$N+2   |12/7| 2 |      |30 XX       |                     |                      |
-//|JR Z,$N+2    |12/7| 2 |      |28 XX       |                     |                      |
-//|JR NZ,$N+2   |12/7| 2 |      |20 XX       |                     |                      |
-//|LD I,A       | 9  | 2 |------|ED 47       |Load*                |dst=src               |
-//|LD R,A       | 9  | 2 |      |ED 4F       |                     |                      |
-//|LD A,I       | 9  | 2 |**0*0-|ED 57       |Load*                |dst=src               |
-//|LD A,R       | 9  | 2 |      |ED 5F       |                     |                      |
-//|LD A,N       | 7  | 2 |      |3E XX       |                     |                      |
-//|LD A,(IX+N)  | 19 | 3 |      |DD 7E XX    |                     |                      |
-//|LD A,(IY+N)  | 19 | 3 |      |FD 7E XX    |                     |                      |
-//|LD A,(NN)    | 13 | 3 |      |3A XX XX    |                     |                      |
-//|LD B,N       | 7  | 2 |      |06 XX       |                     |                      |
-//|LD B,(IX+N)  | 19 | 3 |      |DD 46 XX    |                     |                      |
-//|LD B,(IY+N)  | 19 | 3 |      |FD 46 XX    |                     |                      |
-//|LD C,N       | 7  | 2 |      |0E XX       |                     |                      |
-//|LD C,(IX+N)  | 19 | 3 |      |DD 4E XX    |                     |                      |
-//|LD C,(IY+N)  | 19 | 3 |      |FD 4E XX    |                     |                      |
-//|LD D,N       | 7  | 2 |      |16 XX       |                     |                      |
-//|LD D,(IX+N)  | 19 | 3 |      |DD 56 XX    |                     |                      |
-//|LD D,(IY+N)  | 19 | 3 |      |FD 56 XX    |                     |                      |
-//|LD E,N       | 7  | 2 |      |1E XX       |                     |                      |
-//|LD E,(IX+N)  | 19 | 3 |      |DD 5E XX    |                     |                      |
-//|LD E,(IY+N)  | 19 | 3 |      |FD 5E XX    |                     |                      |
-//|LD H,N       | 7  | 2 |      |26 XX       |                     |                      |
-//|LD H,(IX+N)  | 19 | 3 |      |DD 66 XX    |                     |                      |
-//|LD H,(IY+N)  | 19 | 3 |      |FD 66 XX    |                     |                      |
-//|LD L,N       | 7  | 2 |      |2E XX       |                     |                      |
-//|LD L,(IX+N)  | 19 | 3 |      |DD 6E XX    |                     |                      |
-//|LD L,(IY+N)  | 19 | 3 |      |FD 6E XX    |                     |                      |
-//|LD BC,(NN)   | 20 | 4 |------|ED 4B XX XX |Load (16-bit)        |dst=src               |
-//|LD BC,NN     | 10 | 3 |      |01 XX XX    |                     |                      |
-//|LD DE,(NN)   | 20 | 4 |      |ED 5B XX XX |                     |                      |
-//|LD DE,NN     | 10 | 3 |      |11 XX XX    |                     |                      |
-//|LD HL,(NN)   | 20 | 3 |      |2A XX XX    |                     |                      |
-//|LD HL,NN     | 10 | 3 |      |21 XX XX    |                     |                      |
-//|LD SP,(NN)   | 20 | 4 |      |ED 7B XX XX |                     |                      |
-//|LD SP,IX     | 10 | 2 |      |DD F9       |                     |                      |
-//|LD SP,IY     | 10 | 2 |      |FD F9       |                     |                      |
-//|LD SP,NN     | 10 | 3 |      |31 XX XX    |                     |                      |
-//|LD IX,(NN)   | 20 | 4 |      |DD 2A XX XX |                     |                      |
-//|LD IX,NN     | 14 | 4 |      |DD 21 XX XX |                     |                      |
-//|LD IY,(NN)   | 20 | 4 |      |FD 2A XX XX |                     |                      |
-//|LD IY,NN     | 14 | 4 |      |FD 21 XX XX |                     |                      |
-//|LD (HL),N    | 10 | 2 |      |36 XX       |                     |                      |
-//|LD (NN),A    | 13 | 3 |      |32 XX XX    |                     |                      |
-//|LD (NN),BC   | 20 | 4 |      |ED 43 XX XX |                     |                      |
-//|LD (NN),DE   | 20 | 4 |      |ED 53 XX XX |                     |                      |
-//|LD (NN),HL   | 16 | 3 |      |22 XX XX    |                     |                      |
-//|LD (NN),IX   | 20 | 4 |      |DD 22 XX XX |                     |                      |
-//|LD (NN),IY   | 20 | 4 |      |FD 22 XX XX |                     |                      |
-//|LD (NN),SP   | 20 | 4 |      |ED 73 XX XX |                     |                      |
-//|LD (IX+N),r  | 19 | 3 |      |DD 70+rb XX |                     |                      |
-//|LD (IX+N),N  | 19 | 4 |      |DD 36 XX XX |                     |                      |
-//|LD (IY+N),r  | 19 | 3 |      |FD 70+rb XX |                     |                      |
-//|LD (IY+N),N  | 19 | 4 |      |FD 36 XX XX |                     |                      |
-//|LDD          | 16 | 2 |--0*0-|ED A8       |Load and Decrement   |(DE)=(HL),HL=HL-1,#   |
-//|LDDR         |21/1| 2 |--000-|ED B8       |Load, Dec., Repeat   |LDD till BC=0         |
-//|LDI          | 16 | 2 |--0*0-|ED A0       |Load and Increment   |(DE)=(HL),HL=HL+1,#   |
-//|LDIR         |21/1| 2 |--000-|ED B0       |Load, Inc., Repeat   |LDI till BC=0         |
-//|NEG          | 8  | 2 |***V1*|ED 44       |Negate               |A=-A                  |
-//|OR N         | 7  | 2 |      |F6 XX       |                     |                      |
-//|OR (IX+N)    | 19 | 3 |      |DD B6 XX    |                     |                      |
-//|OR (IY+N)    | 19 | 3 |      |FD B6 XX    |                     |                      |
-//|OUT (N),A    | 11 | 2 |------|D3 XX       |Output               |(n)=A                 |
-//|OUT (C),0    | 12 | 2 |------|ED 71       |Output*              |         (Unsupported)|
-//|OUT (C),A    | 12 | 2 |------|ED 79       |Output               |(C)=r                 |
-//|OUT (C),B    | 12 | 2 |      |ED 41       |                     |                      |
-//|OUT (C),C    | 12 | 2 |      |ED 49       |                     |                      |
-//|OUT (C),D    | 12 | 2 |      |ED 51       |                     |                      |
-//|OUT (C),E    | 12 | 2 |      |ED 59       |                     |                      |
-//|OUT (C),H    | 12 | 2 |      |ED 61       |                     |                      |
-//|OUT (C),L    | 12 | 2 |      |ED 69       |                     |                      |
-//|OUTD         | 16 | 2 |?*??1-|ED AB       |Output and Decrement |(C)=(HL),HL=HL-1,B=B-1|
-//|OTDR         |21/1| 2 |?1??1-|ED BB       |Output, Dec., Repeat |OUTD till B=0         |
-//|OUTI         | 16 | 2 |?*??1-|ED A3       |Output and Increment |(C)=(HL),HL=HL+1,B=B-1|
-//|OTIR         |21/1| 2 |?1??1-|ED B3       |Output, Inc., Repeat |OUTI till B=0         |
-//|POP IX       | 14 | 2 |------|DD E1       |Pop                  |xx=(SP)+              |
-//|POP IY       | 14 | 2 |      |FD E1       |                     |                      |
-//|PUSH IX      | 15 | 2 |------|DD E5       |Push                 |-(SP)=xx              |
-//|PUSH IY      | 15 | 2 |      |FD E5       |                     |                      |
-//|RES b,r      | 8  | 2 |------|CB 80+8*b+rb|Reset bit            |m=m&{~2^b}            |
-//|RES b,(HL)   | 15 | 2 |------|CB 86+8*b   |                     |                      |
-//|RES b,(IX+N) | 23 | 4 |------|DD CB XX 86+8*b                   |                      |
-//|RES b,(IY+N) | 23 | 4 |------|FD CB XX 86+8*b                   |                      |
-//|RETI         | 14 | 2 |------|ED 4D       |Return from Interrupt|PC=(SP)+              |
-//|RETN         | 14 | 2 |------|ED 45       |Return from NMI      |PC=(SP)+              |
-//|RL r         | 8  | 2 |**0P0*|CB 10+rb    |Rotate Left          |m={CY,m}<-            |
-//|RL (HL)      | 15 | 2 |      |CB 16       |                     |                      |
-//|RL (IX+N)    | 23 | 4 |      |DD CB XX 16 |                     |                      |
-//|RL (IY+N)    | 23 | 4 |      |FD CB XX 16 |                     |                      |
-//|RLC r        | 8  | 2 |**0P0*|CB 00+rb    |Rotate Left Circular |m=m<-                 |
-//|RLC (HL)     | 15 | 2 |      |CB 06       |                     |                      |
-//|RLC (IX+N)   | 23 | 4 |      |DD CB XX 06 |                     |                      |
-//|RLC (IY+N)   | 23 | 4 |      |FD CB XX 06 |                     |                      |
-//|RLD          | 18 | 2 |**0P0-|ED 6F       |Rotate Left 4 bits   |{A,(HL)}={A,(HL)}<- ##|
-//|RR r         | 8  | 2 |**0P0*|CB 18+rb    |Rotate Right         |m=->{CY,m}            |
-//|RR (HL)      | 15 | 2 |      |CB 1E       |                     |                      |
-//|RR (IX+N)    | 23 | 4 |      |DD CB XX 1E |                     |                      |
-//|RR (IY+N)    | 23 | 4 |      |FD CB XX 1E |                     |                      |
-//|RRC r        | 8  | 2 |**0P0*|CB 08+rb    |Rotate Right Circular|m=->m                 |
-//|RRC (HL)     | 15 | 2 |      |CB 0E       |                     |                      |
-//|RRC (IX+N)   | 23 | 4 |      |DD CB XX 0E |                     |                      |
-//|RRC (IY+N)   | 23 | 4 |      |FD CB XX 0E |                     |                      |
-//|RRD          | 18 | 2 |**0P0-|ED 67       |Rotate Right 4 bits  |{A,(HL)}=->{A,(HL)} ##|
-//|SBC A,N      | 7  | 2 |      |DE XX       |                     |                      |
-//|SBC A,(IX+N) | 19 | 3 |      |DD 9E XX    |                     |                      |
-//|SBC A,(IY+N) | 19 | 3 |      |FD 9E XX    |                     |                      |
-//|SBC HL,BC    | 15 | 2 |**?V1*|ED 42       |Subtract with Carry  |HL=HL-ss-CY           |
-//|SBC HL,DE    | 15 | 2 |      |ED 52       |                     |                      |
-//|SBC HL,HL    | 15 | 2 |      |ED 62       |                     |                      |
-//|SBC HL,SP    | 15 | 2 |      |ED 72       |                     |                      |
-//|SET b,r      | 8  | 2 |------|CB C0+8*b+rb|Set bit              |m=mv{2^b}             |
-//|SET b,(HL)   | 15 | 2 |      |CB C6+8*b   |                     |                      |
-//|SET b,(IX+N) | 23 | 4 |      |DD CB XX C6+8*b                   |                      |
-//|SET b,(IY+N) | 23 | 4 |      |FD CB XX C6+8*b                   |                      |
-//|SLA r        | 8  | 2 |**0P0*|CB 20+rb    |Shift Left Arithmetic|m=m*2                 |
-//|SLA (HL)     | 15 | 2 |      |CB 26       |                     |                      |
-//|SLA (IX+N)   | 23 | 4 |      |DD CB XX 26 |                     |                      |
-//|SLA (IY+N)   | 23 | 4 |      |FD CB XX 26 |                     |                      |
-//|SRA r        | 8  | 2 |**0P0*|CB 28+rb    |Shift Right Arith.   |m=m/2                 |
-//|SRA (HL)     | 15 | 2 |      |CB 2E       |                     |                      |
-//|SRA (IX+N)   | 23 | 4 |      |DD CB XX 2E |                     |                      |
-//|SRA (IY+N)   | 23 | 4 |      |FD CB XX 2E |                     |                      |
-//|SLL r        | 8  | 2 |**0P0*|CB 30+rb    |Shift Left Logical*  |m={0,m,CY}<-          |
-//|SLL (HL)     | 15 | 2 |      |CB 36       |                     |  (SLL instructions   |
-//|SLL (IX+N)   | 23 | 4 |      |DD CB XX 36 |                     |     are Unsupported) |
-//|SLL (IY+N)   | 23 | 4 |      |FD CB XX 36 |                     |                      |
-//|SRL r        | 8  | 2 |**0P0*|CB 38+rb    |Shift Right Logical  |m=->{0,m,CY}          |
-//|SRL (HL)     | 15 | 2 |      |CB 3E       |                     |                      |
-//|SRL (IX+N)   | 23 | 4 |      |DD CB XX 3E |                     |                      |
-//|SRL (IY+N)   | 23 | 4 |      |FD CB XX 3E |                     |                      |
-//|SUB N        | 7  | 2 |      |D6 XX       |                     |                      |
-//|SUB (IX+N)   | 19 | 3 |      |DD 96 XX    |                     |                      |
-//|SUB (IY+N)   | 19 | 3 |      |FD 96 XX    |                     |                      |
-//|XOR N        | 7  | 2 |      |EE XX       |                     |                      |
-//|XOR (IX+N)   | 19 | 3 |      |DD AE XX    |                     |                      |
-//|XOR (IY+N)   | 19 | 3 |      |FD AE XX    |                 
-//        
         mnemo = null;
         switch (val) {
             case 0x00: mnemo = "nop"; break;
@@ -493,213 +275,448 @@ public class statusGUI extends javax.swing.JPanel {
             case 0x07: mnemo = "rlca"; break;
             case 0x08: mnemo = "ex af,af'"; break;
             case 0x0A: mnemo = "ld a,(bc)"; break;
-            case 0x0B: case 0x0C: case 0x0D:
-            case 0x0F: case 0x10: case 0x12: case 0x13: case 0x14: case 0x15:
-            case 0x17: case 0x19:
+            case 0x0F: mnemo = "rrca"; break;
+            case 0x10: val = ((Short)mem.read(actPos++)).shortValue();
+                mnemo = "djnz " + String.format("%02X", val);
+                oper += String.format(" %02X", val);break;
+            case 0x12: mnemo = "ld (de),a"; break;
+            case 0x17: mnemo = "rla"; break;
             case 0x1A: mnemo = "ld a,(de)"; break;
-            case 0x1B: case 0x1C: case 0x1D:
-            case 0x1F: case 0x23: case 0x24: case 0x25:
+            case 0x1F: mnemo = "rra"; break;
             case 0x27: mnemo = "daa"; break;
-            case 0x29:
-            case 0x2B: case 0x2C: case 0x2D:
             case 0x2F: mnemo = "cpl"; break;
-            case 0x33: case 0x34:
-            case 0x35: case 0x37: case 0x39: case 0x3B: case 0x3C: case 0x3D:
+            case 0x37: mnemo = "scf"; break;
             case 0x3F: mnemo = "ccf"; break;
-            case 0xC0: case 0xC1: case 0xC5: case 0xC7: case 0xC8:
-            case 0xC9: case 0xCF: case 0xD0: case 0xD1: case 0xD5: case 0xD7:
-            case 0xD8: 
+            case 0x76: mnemo = "halt"; break;
+            case 0xC0: mnemo = "ret nz"; break;
+            case 0xC1: mnemo = "pop bc"; break;
+            case 0xC5: mnemo = "push bc"; break;
+            case 0xC7: mnemo = "rst 0"; break;
+            case 0xC8: mnemo = "ret z"; break;
+            case 0xC9: mnemo = "ret"; break;
+            case 0xCF: mnemo = "rst 08"; break;
+            case 0xD0: mnemo = "ret nc"; break;
+            case 0xD1: mnemo = "pop de"; break;
+            case 0xD5: mnemo = "push de"; break;
+            case 0xD7: mnemo = "rst 10"; break;
+            case 0xD8: mnemo = "ret c"; break;
             case 0xD9: mnemo = "exx"; break;
-            case 0xDF: case 0xE0: case 0xE1:
+            case 0xDF: mnemo = "rst 18"; break;
+            case 0xE0: mnemo = "ret po"; break;
+            case 0xE1: mnemo = "pop hl"; break;
             case 0xE3: mnemo = "ex (sp),hl"; break;
-            case 0xE5: case 0xE7: case 0xE8: case 0xE9:
+            case 0xE5: mnemo = "push hl"; break;
+            case 0xE7: mnemo = "rst 20"; break;
+            case 0xE8: mnemo = "ret pe"; break;
+            case 0xE9: mnemo = "jp (hl)"; break;
             case 0xEB: mnemo = "ex de,hl"; break;
-            case 0xEF:
-            case 0xF0: case 0xF1:
+            case 0xEF: mnemo = "rst 28"; break;
+            case 0xF0: mnemo = "ret p"; break;
+            case 0xF1: mnemo = "pop af"; break;
             case 0xF3: mnemo = "di"; break;
-            case 0xF5: case 0xF7: case 0xF8:
-            case 0xF9:
+            case 0xF5: mnemo = "push af"; break;
+            case 0xF7: mnemo = "rst 30"; break;
+            case 0xF8: mnemo = "ret m"; break;
+            case 0xF9: mnemo = "ld sp,hl"; break;
             case 0xFB: mnemo = "ei"; break;
-            case 0xFF:
-//|DJNZ $+2     |13/8| 1 |------|10          |Dec., Jump Non-Zero  |B=B-1 till B=0        |
-//|HALT         | 4  | 1 |------|76          |Halt                 |                      |
-//|JP (HL)      | 4  | 1 |------|E9          |Unconditional Jump   |PC=(HL)               |
-//|LD SP,HL     | 6  | 1 |      |F9          |                     |                      |
-//|LD (DE),A    | 7  | 1 |      |12          |                     |                      |
-//|POP AF       | 10 | 1 |------|F1          |Pop                  |qq=(SP)+              |
-//|POP BC       | 10 | 1 |      |C1          |                     |                      |
-//|POP DE       | 10 | 1 |      |D1          |                     |                      |
-//|POP HL       | 10 | 1 |      |E1          |                     |                      |
-//|PUSH AF      | 11 | 1 |------|F5          |Push                 |-(SP)=qq              |
-//|PUSH BC      | 11 | 1 |      |C5          |                     |                      |
-//|PUSH DE      | 11 | 1 |      |D5          |                     |                      |
-//|PUSH HL      | 11 | 1 |      |E5          |                     |                      |
-//|RET          | 10 | 1 |------|C9          |Return               |PC=(SP)+              |
-//|RET C        |11/5| 1 |------|D8          |Conditional Return   |If Carry = 1          |
-//|RET NC       |11/5| 1 |      |D0          |                     |If Carry = 0          |
-//|RET M        |11/5| 1 |      |F8          |                     |If Sign = 1 (negative)|
-//|RET P        |11/5| 1 |      |F0          |                     |If Sign = 0 (positive)|
-//|RET Z        |11/5| 1 |      |C8          |                     |If Zero = 1 (ans.=0)  |
-//|RET NZ       |11/5| 1 |      |C0          |                     |If Zero = 0 (non-zero)|
-//|RET PE       |11/5| 1 |      |E8          |                     |If Parity = 1 (even)  |
-//|RET PO       |11/5| 1 |      |E0          |                     |If Parity = 0 (odd)   |
-//|RLA          | 4  | 1 |--0-0*|17          |Rotate Left Acc.     |A={CY,A}<-            |
-//|RRA          | 4  | 1 |--0-0*|1F          |Rotate Right Acc.    |A=->{CY,A}            |
-//|RRCA         | 4  | 1 |--0-0*|0F          |Rotate Right Cir.Acc.|A=->A                 |
-//|RST 0        | 11 | 1 |------|C7          |Restart              | (p=0H,8H,10H,...,38H)|
-//|RST 08H      | 11 | 1 |      |CF          |                     |                      |
-//|RST 10H      | 11 | 1 |      |D7          |                     |                      |
-//|RST 18H      | 11 | 1 |      |DF          |                     |                      |
-//|RST 20H      | 11 | 1 |      |E7          |                     |                      |
-//|RST 28H      | 11 | 1 |      |EF          |                     |                      |
-//|RST 30H      | 11 | 1 |      |F7          |                     |                      |
-//|RST 38H      | 11 | 1 |      |FF          |                     |                      |
-//|SCF          | 4  | 1 |--0-01|37          |Set Carry Flag       |CY=1                  |
-            
-            case 0x06: case 0x0E: case 0x16: case 0x18: case 0x1E: case 0x20:
-            case 0x26: case 0x28: case 0x2E: case 0x30: case 0x36: case 0x38:
-            case 0x3E: case 0xC6: case 0xCE: case 0xD3: case 0xD6: case 0xDB:
-            case 0xDE: case 0xE6: case 0xEE: case 0xF6: case 0xFE: case 0xCB:
-                return (memPos+1);
+            case 0xFF: mnemo = "rst 38"; break;
             case 0xED:
-                tmp = (Short)mem.read(memPos++);
-                switch (tmp) {
-                    case 0x40: case 0x41: case 0x42: case 0x44: case 0x45:
-                    case 0x46: case 0x47: case 0x48: case 0x49: case 0x4A:
-                    case 0x4D: case 0x4F: case 0x50: case 0x51: case 0x52:
-                    case 0x56: case 0x57: case 0x58: case 0x59: case 0x5A:
-                    case 0x5E: case 0x5F: case 0x60: case 0x61: case 0x62:
-                    case 0x67: case 0x6A: case 0x6F: case 0x70: case 0x71:
-                    case 0x72: case 0x78: case 0x79: case 0x7A: case 0xA0:
-                    case 0xA1: case 0xA2: case 0xA3: case 0xA8: case 0xA9:
-                    case 0xAA: case 0xAB: case 0xB0: case 0xB1: case 0xB2:
-                    case 0xB3: case 0xB8: case 0xB9: case 0xBA: case 0xBB:
-                        return memPos;
-                    case 0x43: case 0x4B: case 0x53: case 0x5B: case 0x73:
-                    case 0x7B:
-                        return memPos+2;
-                } memPos--;
-                break;
+                val = ((Short)mem.read(actPos++)).shortValue();
+                oper += String.format(" %02X", val);
+                switch(val) {
+                    case 0x40: mnemo = "in b,(c)"; break;
+                    case 0x41: mnemo = "out (c),b"; break;
+                    case 0x42: mnemo = "sbc hl,bc"; break;
+                    case 0x44: mnemo = "neg"; break;
+                    case 0x45: mnemo = "retn"; break;
+                    case 0x46: mnemo = "im 0"; break;
+                    case 0x47: mnemo = "ld i,a"; break;
+                    case 0x48: mnemo = "in c,(c)"; break;
+                    case 0x49: mnemo = "out (c),c"; break;
+                    case 0x4A: mnemo = "add hl,bc"; break;
+                    case 0x4D: mnemo = "reti"; break;
+                    case 0x4F: mnemo = "ld r,a"; break;
+                    case 0x50: mnemo = "in d,(c)"; break;
+                    case 0x51: mnemo = "out (c),d"; break;
+                    case 0x52: mnemo = "sbc hl,de"; break;
+                    case 0x56: mnemo = "im 1"; break;
+                    case 0x57: mnemo = "ld a,i"; break;
+                    case 0x58: mnemo = "in e,(c)"; break;
+                    case 0x59: mnemo = "out (c),e"; break;
+                    case 0x5A: mnemo = "add hl,de"; break;
+                    case 0x5E: mnemo = "im 2"; break;
+                    case 0x5F: mnemo = "ld a,r"; break;
+                    case 0x60: mnemo = "in h,(c)"; break;
+                    case 0x61: mnemo = "out (c),h"; break;
+                    case 0x62: mnemo = "sbc hl,hl"; break;
+                    case 0x67: mnemo = "rrd"; break;
+                    case 0x68: mnemo = "in l,(c)"; break;
+                    case 0x69: mnemo = "out (c),l"; break;
+                    case 0x6A: mnemo = "add hl,hl"; break;
+                    case 0x6F: mnemo = "rld"; break;
+                    case 0x70: mnemo = "in (c)"; break;
+                    case 0x71: mnemo = "out (c),0"; break;
+                    case 0x72: mnemo = "sbc hl,sp"; break;
+                    case 0x78: mnemo = "in a,(c)"; break;
+                    case 0x79: mnemo = "out (c),a"; break;
+                    case 0x7A: mnemo = "add hl,sp"; break;
+                    case 0xA0: mnemo = "ldi"; break;
+                    case 0xA1: mnemo = "cpi"; break;
+                    case 0xA2: mnemo = "ini"; break;
+                    case 0xA3: mnemo = "outi"; break;
+                    case 0xA8: mnemo = "ldd"; break;
+                    case 0xA9: mnemo = "cpd"; break;
+                    case 0xAA: mnemo = "ind"; break;
+                    case 0xAB: mnemo = "outd"; break;
+                    case 0xB0: mnemo = "ldir"; break;
+                    case 0xB1: mnemo = "cpir"; break;
+                    case 0xB2: mnemo = "inir"; break;
+                    case 0xB3: mnemo = "otir"; break;
+                    case 0xB8: mnemo = "lddr"; break;
+                    case 0xB9: mnemo = "cpdr"; break;
+                    case 0xBA: mnemo = "indr"; break;
+                    case 0xBB: mnemo = "otdr"; break;
+                }
+                if (mnemo == null) {
+                    tmp = (Integer)mem.readWord(actPos);
+                    actPos += 2;
+                    oper += String.format(" %02X %02X", tmp&0xFF, (tmp>>>8)&0xff);
+                    switch (val) {
+                        case 0x43: mnemo = "ld (" + String.format("%04X", tmp)+"),bc"; break;
+                        case 0x4B: mnemo = "ld bc,(" + String.format("%04X", tmp)+")"; break;
+                        case 0x53: mnemo = "ld (" + String.format("%04X", tmp)+"),de"; break;
+                        case 0x5B: mnemo = "ld de,(" + String.format("%04X", tmp)+")"; break;
+                        case 0x73: mnemo = "ld (" + String.format("%04X", tmp)+"),sp"; break;
+                        case 0x7B: mnemo = "ld sp,(" + String.format("%04X", tmp)+")"; break;
+                    }
+                }break;
             case 0xDD:
-                tmp = (Short)mem.read(memPos++);
-                switch (tmp) {
-                    case 0x09: case 0x19: case 0x23: case 0x29: case 0x2B:
-                    case 0x34: case 0x39: case 0xE1: case 0xE3: case 0xE5:
-                    case 0xE9: case 0xF9:
-                        return memPos;
-                    case 0x35: case 0x46: case 0x4E: case 0x56: case 0x5E:
-                    case 0x66: case 0x6E: case 0x7E: case 0x86: case 0x8E:
-                    case 0x96: case 0x9E: case 0xA6: case 0xAE: case 0xB6:
-                    case 0xBE: case 0x70: case 0x71: case 0x72: case 0x73:
-                    case 0x74: case 0x75: case 0x77:
-                        return (memPos+1);
-                    case 0x21: case 0x22: case 0x2A: case 0x36: 
-                        return (memPos+2);
-                    case 0xCB:
-                        memPos++;
-                        tmp = (Short)mem.read(memPos++);
-                        switch (tmp) {
-                            case 0x06: case 0x0E: case 0x16: case 0x1E:
-                            case 0x26: case 0x2E: case 0x36: case 0x3E:
-                            case 0x46: case 0x4E: case 0x56: case 0x5E:
-                            case 0x66: case 0x6E: case 0x76: case 0x7E:
-                            case 0x86: case 0x8E: case 0x96: case 0x9E:
-                            case 0xA6: case 0xAE: case 0xB6: case 0xBE:
-                            case 0xC6: case 0xCE: case 0xD6: case 0xDE:
-                            case 0xE6: case 0xEE: case 0xF6: case 0xFE:
-                                return memPos;
-                        } memPos -= 2;
-                        
-                } memPos--;
-                break;
+                val = ((Short)mem.read(actPos++)).shortValue();
+                oper += String.format(" %02X", val); tmp = 0;
+                switch (val) {
+                    case 0x09: mnemo = "add ix,bc"; break;
+                    case 0x19: mnemo = "add ix,de"; break;
+                    case 0x23: mnemo = "inc ix"; break;
+                    case 0x29: mnemo = "add ix,ix"; break;
+                    case 0x2B: mnemo = "dec ix"; break;
+                    case 0x39: mnemo = "add ix,sp"; break;
+                    case 0xE1: mnemo = "pop ix"; break;
+                    case 0xE3: mnemo = "ex (sp),ix"; break;
+                    case 0xE5: mnemo = "push ix"; break;
+                    case 0xE9: mnemo = "jp (ix)"; break;
+                    case 0xF9: mnemo = "ld sp,ix"; break;
+                }
+                if (mnemo == null) {
+                    tmp = ((Short)mem.read(actPos++)).shortValue();
+                    oper += String.format(" %02X", tmp);
+                    switch(val) {
+                        case 0x34: mnemo = "inc (ix+" + String.format("%02X",tmp)+")";break;
+                        case 0x35: mnemo = "dec (ix+" + String.format("%02X",tmp)+")";break;
+                        case 0x46: mnemo = "ld b,(ix+" + String.format("%02X",tmp)+")";break;
+                        case 0x4E: mnemo = "ld c,(ix+" + String.format("%02X",tmp)+")";break;
+                        case 0x56: mnemo = "ld d,(ix+" + String.format("%02X",tmp)+")";break;
+                        case 0x5E: mnemo = "ld e,(ix+" + String.format("%02X",tmp)+")";break;
+                        case 0x66: mnemo = "ld h,(ix+" + String.format("%02X",tmp)+")";break;
+                        case 0x6E: mnemo = "ld l,(ix+" + String.format("%02X",tmp)+")";break;
+                        case 0x7E: mnemo = "ld a,(ix+" + String.format("%02X",tmp)+")";break;
+                        case 0x86: mnemo = "add a,(ix+" + String.format("%02X",tmp)+")";break;
+                        case 0x8E: mnemo = "adc a,(ix+" + String.format("%02X",tmp)+")";break;
+                        case 0x96: mnemo = "sub (ix+" + String.format("%02X",tmp)+")";break;
+                        case 0x9E: mnemo = "sbc a,(ix+" + String.format("%02X",tmp)+")";break;
+                        case 0xA6: mnemo = "and (ix+" + String.format("%02X",tmp)+")";break;
+                        case 0xAE: mnemo = "xor (ix+" + String.format("%02X",tmp)+")";break;
+                        case 0xB6: mnemo = "or (ix+" + String.format("%02X",tmp)+")";break;
+                        case 0xBE: mnemo = "cp (ix+" + String.format("%02X",tmp)+")";break;
+                        case 0x70: mnemo = "ld (ix+" + String.format("%02X", tmp)+"),b";break;
+                        case 0x71: mnemo = "ld (ix+" + String.format("%02X", tmp)+"),c";break;
+                        case 0x72: mnemo = "ld (ix+" + String.format("%02X", tmp)+"),d";break;
+                        case 0x73: mnemo = "ld (ix+" + String.format("%02X", tmp)+"),e";break;
+                        case 0x74: mnemo = "ld (ix+" + String.format("%02X", tmp)+"),h";break;
+                        case 0x75: mnemo = "ld (ix+" + String.format("%02X", tmp)+"),l";break;
+                        case 0x77: mnemo = "ld (ix+" + String.format("%02X", tmp)+"),a";break;
+                    }
+                }
+                if (mnemo == null) {
+                    tmp += (((Short)mem.read(actPos++)).shortValue()<<8);
+                    oper += String.format(" %02X", (tmp>>>8)&0xff);
+                    switch (val) {
+                        case 0x21: mnemo = "ld ix," + String.format("%04X", tmp);break;
+                        case 0x22: mnemo = "ld (" + String.format("%04X", tmp)+"),ix";break;
+                        case 0x2A: mnemo = "ld ix,(" + String.format("%04X", tmp)+")";break;
+                        case 0x36:
+                            mnemo = "ld (ix+" + String.format("%02X", tmp&0xff)
+                                    +")," + String.format("%02X", (tmp>>>8)&0xff);break;
+                    }
+                }
+                if ((mnemo == null) && (val == 0xCB)) {
+                    val = (short)((tmp >>> 8)&0xff); tmp &= 0xff;
+                    switch (val) {
+                        case 0x06: mnemo = "rlc (ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x0E: mnemo = "rrc (ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x16: mnemo = "rl (ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x1E: mnemo = "rr (ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x26: mnemo = "sla (ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x2E: mnemo = "sra (ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x36: mnemo = "sll (ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x3E: mnemo = "srl (ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x46: mnemo = "bit 0,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x4E: mnemo = "bit 1,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x56: mnemo = "bit 2,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x5E: mnemo = "bit 3,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x66: mnemo = "bit 4,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x6E: mnemo = "bit 5,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x76: mnemo = "bit 6,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x7E: mnemo = "bit 7,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x86: mnemo = "res 0,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x8E: mnemo = "res 1,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x96: mnemo = "res 2,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0x9E: mnemo = "res 3,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0xA6: mnemo = "res 4,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0xAE: mnemo = "res 5,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0xB6: mnemo = "res 6,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0xBE: mnemo = "res 7,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0xC6: mnemo = "set 0,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0xCE: mnemo = "set 1,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0xD6: mnemo = "set 2,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0xDE: mnemo = "set 3,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0xE6: mnemo = "set 4,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0xEE: mnemo = "set 5,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0xF6: mnemo = "set 6,(ix+"+String.format("%02X",tmp)+")";break;
+                        case 0xFE: mnemo = "set 7,(ix+"+String.format("%02X",tmp)+")";break;
+                    }
+                }break;
             case 0xFD:
-                tmp = (Short)mem.read(memPos++);
-                switch (tmp) {
-                    case 0x09: case 0x19: case 0x23: case 0x29: case 0x2B:
-                    case 0x34: case 0x39: case 0xE1: case 0xE3: case 0xE5:
-                    case 0xE9: case 0xF9:
-                        return memPos;
-                    case 0x35: case 0x46: case 0x4E: case 0x56: case 0x5E:
-                    case 0x66: case 0x6E: case 0x7E: case 0x86: case 0x8E:
-                    case 0x96: case 0x9E: case 0xA6: case 0xAE: case 0xB6:
-                    case 0xBE: case 0x70: case 0x71: case 0x72: case 0x73:
-                    case 0x74: case 0x75: case 0x77:
-                        return (memPos+1);
-                    case 0x21: case 0x22: case 0x2A: case 0x36: 
-                        return (memPos+2);
-                    case 0xCB:
-                        memPos++;
-                        tmp = (Short)mem.read(memPos++);
-                        switch (tmp) {
-                            case 0x06: case 0x0E: case 0x16: case 0x1E:
-                            case 0x26: case 0x2E: case 0x36: case 0x3E:
-                            case 0x46: case 0x4E: case 0x56: case 0x5E:
-                            case 0x66: case 0x6E: case 0x76: case 0x7E:
-                            case 0x86: case 0x8E: case 0x96: case 0x9E:
-                            case 0xA6: case 0xAE: case 0xB6: case 0xBE:
-                            case 0xC6: case 0xCE: case 0xD6: case 0xDE:
-                            case 0xE6: case 0xEE: case 0xF6: case 0xFE:
-                                return memPos;
-                        } memPos -= 2;
-                        
-                } memPos--;
-                break;
-//            case 0xCB:
-  //              return memPos + 1;
-//                tmp = (Short)mem.read(memPos++);
-//                switch (tmp) {
-//                    case 0x00: case 0x01: case 0x02: case 0x03: case 0x04:
-//                    case 0x05: case 0x06: case 0x07: case 0x08: case 0x09:
-//                    case 0x0A: case 0x0B: case 0x0C: case 0x0D: case 0x0E:
-//                    case 0x0F: case 0x10: case 0x11: case 0x12: case 0x13:
-//                    case 0x14: case 0x15: case 0x16: case 0x17: case 0x18:
-//                    case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D:
-//                    case 0x1E: case 0x1F: case 0x20: case 0x21: case 0x22:
-//                    case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
-//                    case 0x28: case 0x29: case 0x2A: case 0x2B: case 0x2C:
-//                    case 0x2D: case 0x2E: case 0x2F: case 0x30: case 0x31:
-//                    case 0x32: case 0x33: case 0x34: case 0x35: case 0x36:
-//                    case 0x37: case 0x38: case 0x39: case 0x3A: case 0x3B:
-//                    case 0x3C: case 0x3D: case 0x3E: case 0x3F: case 0x40:
-//                    case 0x41: case 0x42: case 0x43: case 0x44: case 0x45:
-//                    case 0x46: case 0x47: case 0x48: case 0x49: case 0x4A:
-//                    case 0x4B: case 0x4C: case 0x4D: case 0x4E: case 0x4F:
-//                    case 0x50: case 0x51: case 0x52: case 0x53: case 0x54:
-//                    case 0x55: case 0x56: case 0x57: case 0x58: case 0x59:
-//                    case 0x5A: case 0x5B: case 0x5C: case 0x5D: case 0x5E:
-//                    case 0x5F: case 0x60: case 0x61: case 0x62: case 0x63:
-//                    case 0x64: case 0x65: case 0x66: case 0x67: case 0x68:
-//                    case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D:
-//                    case 0x6E: case 0x6F: case 0x70: case 0x71: case 0x72:
-//                    case 0x73: case 0x74: case 0x75: case 0x76: case 0x77:
-//                    case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C:
-//                    case 0x7D: case 0x7E: case 0x7F: case 0x80: case 0x81:
-//                    case 0x82: case 0x83: case 0x84: case 0x85: case 0x86:
-//                    case 0x87: case 0x88: case 0x89: case 0x8A: case 0x8B:
-//                    case 0x8C: case 0x8D: case 0x8E: case 0x8F: case 0x90:
-//                    case 0x91: case 0x92: case 0x93: case 0x94: case 0x95:
-//                    case 0x96: case 0x97: case 0x98: case 0x99: case 0x9A:
-//                    case 0x9B: case 0x9C: case 0x9D: case 0x9E: case 0x9F:
-//                    case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4:
-//                    case 0xA5: case 0xA6: case 0xA7: case 0xA8: case 0xA9:
-//                    case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE:
-//                    case 0xAF: case 0xB0: case 0xB1: case 0xB2: case 0xB3:
-//                    case 0xB4: case 0xB5: case 0xB6: case 0xB7: case 0xB8:
-//                    case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD:
-//                    case 0xBE: case 0xBF:
-//                    case 0xC6: case 0xCE: case 0xD6: case 0xDE: case 0xE6:
-//                    case 0xEE: case 0xF6: case 0xFE: 
-//                        return memPos;
-//                } memPos--;
-            case 0x01: case 0x11: case 0x21: case 0x22: case 0x2A: case 0x31:
-            case 0x32: case 0x3A: case 0xC2: case 0xC3: case 0xC4: case 0xCA:
-            case 0xCC: case 0xCD: case 0xD2: case 0xD4: case 0xDC: case 0xDA:
-            case 0xE2: case 0xE4: case 0xEA: case 0xEC: case 0xF2: case 0xF4:
-            case 0xFA: case 0xFC:
-                return (memPos+2);
+                val = ((Short)mem.read(actPos++)).shortValue();
+                oper += String.format(" %02X", val); tmp = 0;
+                switch (val) {
+                    case 0x09: mnemo = "add iy,bc"; break;
+                    case 0x19: mnemo = "add iy,de"; break;
+                    case 0x23: mnemo = "inc iy"; break;
+                    case 0x29: mnemo = "add iy,iy"; break;
+                    case 0x2B: mnemo = "dec iy"; break;
+                    case 0x39: mnemo = "add iy,sp"; break;
+                    case 0xE1: mnemo = "pop iy"; break;
+                    case 0xE3: mnemo = "ex (sp),iy"; break;
+                    case 0xE5: mnemo = "push iy"; break;
+                    case 0xE9: mnemo = "jp (iy)"; break;
+                    case 0xF9: mnemo = "ld sp,iy"; break;
+                }
+                if (mnemo == null) {
+                    tmp = ((Short)mem.read(actPos++)).shortValue();
+                    oper += String.format(" %02X", tmp);
+                    switch(val) {
+                        case 0x34: mnemo = "inc (iy+" + String.format("%02X",tmp)+")";break;
+                        case 0x35: mnemo = "dec (iy+" + String.format("%02X",tmp)+")";break;
+                        case 0x46: mnemo = "ld b,(iy+" + String.format("%02X",tmp)+")";break;
+                        case 0x4E: mnemo = "ld c,(iy+" + String.format("%02X",tmp)+")";break;
+                        case 0x56: mnemo = "ld d,(iy+" + String.format("%02X",tmp)+")";break;
+                        case 0x5E: mnemo = "ld e,(iy+" + String.format("%02X",tmp)+")";break;
+                        case 0x66: mnemo = "ld h,(iy+" + String.format("%02X",tmp)+")";break;
+                        case 0x6E: mnemo = "ld l,(iy+" + String.format("%02X",tmp)+")";break;
+                        case 0x7E: mnemo = "ld a,(iy+" + String.format("%02X",tmp)+")";break;
+                        case 0x86: mnemo = "add a,(iy+" + String.format("%02X",tmp)+")";break;
+                        case 0x8E: mnemo = "adc a,(iy+" + String.format("%02X",tmp)+")";break;
+                        case 0x96: mnemo = "sub (iy+" + String.format("%02X",tmp)+")";break;
+                        case 0x9E: mnemo = "sbc a,(iy+" + String.format("%02X",tmp)+")";break;
+                        case 0xA6: mnemo = "and (iy+" + String.format("%02X",tmp)+")";break;
+                        case 0xAE: mnemo = "xor (iy+" + String.format("%02X",tmp)+")";break;
+                        case 0xB6: mnemo = "or (iy+" + String.format("%02X",tmp)+")";break;
+                        case 0xBE: mnemo = "cp (iy+" + String.format("%02X",tmp)+")";break;
+                        case 0x70: mnemo = "ld (iy+" + String.format("%02X", tmp)+"),b";break;
+                        case 0x71: mnemo = "ld (iy+" + String.format("%02X", tmp)+"),c";break;
+                        case 0x72: mnemo = "ld (iy+" + String.format("%02X", tmp)+"),d";break;
+                        case 0x73: mnemo = "ld (iy+" + String.format("%02X", tmp)+"),e";break;
+                        case 0x74: mnemo = "ld (iy+" + String.format("%02X", tmp)+"),h";break;
+                        case 0x75: mnemo = "ld (iy+" + String.format("%02X", tmp)+"),l";break;
+                        case 0x77: mnemo = "ld (iy+" + String.format("%02X", tmp)+"),a";break;
+                    }
+                }
+                if (mnemo == null) {
+                    tmp += (((Short)mem.read(actPos++)).shortValue()<<8);
+                    oper += String.format(" %02X", (tmp>>>8)&0xff);
+                    switch (val) {
+                        case 0x21: mnemo = "ld iy," + String.format("%04X", tmp);break;
+                        case 0x22: mnemo = "ld (" + String.format("%04X", tmp)+"),iy";break;
+                        case 0x2A: mnemo = "ld iy,(" + String.format("%04X", tmp)+")";break;
+                        case 0x36:
+                            mnemo = "ld (iy+" + String.format("%02X", tmp&0xff)
+                                    +")," + String.format("%02X", (tmp>>>8)&0xff);break;
+                    }
+                }
+                if ((mnemo == null) && (val == 0xCB)) {
+                    val = (short)((tmp >>> 8)&0xff); tmp &= 0xff;
+                    switch (val) {
+                        case 0x06: mnemo = "rlc (iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x0E: mnemo = "rrc (iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x16: mnemo = "rl (iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x1E: mnemo = "rr (iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x26: mnemo = "sla (iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x2E: mnemo = "sra (iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x36: mnemo = "sll (iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x3E: mnemo = "srl (iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x46: mnemo = "bit 0,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x4E: mnemo = "bit 1,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x56: mnemo = "bit 2,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x5E: mnemo = "bit 3,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x66: mnemo = "bit 4,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x6E: mnemo = "bit 5,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x76: mnemo = "bit 6,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x7E: mnemo = "bit 7,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x86: mnemo = "res 0,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x8E: mnemo = "res 1,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x96: mnemo = "res 2,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0x9E: mnemo = "res 3,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0xA6: mnemo = "res 4,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0xAE: mnemo = "res 5,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0xB6: mnemo = "res 6,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0xBE: mnemo = "res 7,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0xC6: mnemo = "set 0,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0xCE: mnemo = "set 1,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0xD6: mnemo = "set 2,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0xDE: mnemo = "set 3,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0xE6: mnemo = "set 4,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0xEE: mnemo = "set 5,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0xF6: mnemo = "set 6,(iy+"+String.format("%02X",tmp)+")";break;
+                        case 0xFE: mnemo = "set 7,(iy+"+String.format("%02X",tmp)+")";break;
+                    }
+                }break;
+            case 0xCB:
+                val = (Short)mem.read(memPos++);
+                oper += String.format(" %02X", val);
+                switch (val & 0xF8) {
+                    case 0x00: mnemo = "rlc " + getRegMnemo(val & 7); break;
+                    case 0x08: mnemo = "rrc " + getRegMnemo(val & 7); break;
+                    case 0x10: mnemo = "rl " + getRegMnemo(val & 0x7); break;
+                    case 0x18: mnemo = "rr " + getRegMnemo(val & 7); break;
+                    case 0x20: mnemo = "sla " + getRegMnemo(val & 7); break;
+                    case 0x28: mnemo = "sra " + getRegMnemo(val & 7); break;
+                    case 0x30: mnemo = "sll " + getRegMnemo(val & 7); break;
+                    case 0x38: mnemo = "srl " + getRegMnemo(val & 7); break;
+                    case 0x40: mnemo = "bit 0," + getRegMnemo(val & 7); break;
+                    case 0x48: mnemo = "bit 1," + getRegMnemo(val & 7); break;
+                    case 0x50: mnemo = "bit 2," + getRegMnemo(val & 7); break;
+                    case 0x58: mnemo = "bit 3," + getRegMnemo(val & 7); break;
+                    case 0x60: mnemo = "bit 4," + getRegMnemo(val & 7); break;
+                    case 0x68: mnemo = "bit 5," + getRegMnemo(val & 7); break;
+                    case 0x70: mnemo = "bit 6," + getRegMnemo(val & 7); break;
+                    case 0x78: mnemo = "bit 7," + getRegMnemo(val & 7); break;
+                    case 0x80: mnemo = "res 0," + getRegMnemo(val & 7); break;
+                    case 0x88: mnemo = "res 1," + getRegMnemo(val & 7); break;
+                    case 0x90: mnemo = "res 2," + getRegMnemo(val & 7); break;
+                    case 0x98: mnemo = "res 3," + getRegMnemo(val & 7); break;
+                    case 0xA0: mnemo = "res 4," + getRegMnemo(val & 7); break;
+                    case 0xA8: mnemo = "res 5," + getRegMnemo(val & 7); break;
+                    case 0xB0: mnemo = "res 6," + getRegMnemo(val & 7); break;
+                    case 0xB8: mnemo = "res 7," + getRegMnemo(val & 7); break;
+                    case 0xC0: mnemo = "set 0," + getRegMnemo(val & 7); break;
+                    case 0xC8: mnemo = "set 1," + getRegMnemo(val & 7); break;
+                    case 0xD0: mnemo = "set 2," + getRegMnemo(val & 7); break;
+                    case 0xD8: mnemo = "set 3," + getRegMnemo(val & 7); break;
+                    case 0xE0: mnemo = "set 4," + getRegMnemo(val & 7); break;
+                    case 0xE8: mnemo = "set 5," + getRegMnemo(val & 7); break;
+                    case 0xF0: mnemo = "set 6," + getRegMnemo(val & 7); break;
+                    case 0xF8: mnemo = "set 7," + getRegMnemo(val & 7); break;
+                    
+                }
+                if (mnemo != null) break;
+                switch (val) {
+                    case 0x06: mnemo = "rlc (hl)"; break;
+                    case 0x0E: mnemo = "rrc (hl)"; break;
+                    case 0x16: mnemo = "rl (hl)"; break;
+                    case 0x1E: mnemo = "rr (hl)"; break;
+                    case 0x26: mnemo = "sla (hl)"; break;
+                    case 0x2E: mnemo = "sra (hl)"; break;
+                    case 0x36: mnemo = "sll (hl)"; break;
+                    case 0x3E: mnemo = "srl (hl)"; break;
+                    case 0x46: mnemo = "bit 0,(hl)"; break;
+                    case 0x4E: mnemo = "bit 1,(hl)"; break;
+                    case 0x56: mnemo = "bit 2,(hl)"; break;
+                    case 0x5E: mnemo = "bit 3,(hl)"; break;
+                    case 0x66: mnemo = "bit 4,(hl)"; break;
+                    case 0x6E: mnemo = "bit 5,(hl)"; break;
+                    case 0x76: mnemo = "bit 6,(hl)"; break;
+                    case 0x7E: mnemo = "bit 7,(hl)"; break;
+                    case 0x86: mnemo = "res 0,(hl)"; break;
+                    case 0x8E: mnemo = "res 1,(hl)"; break;
+                    case 0x96: mnemo = "res 2,(hl)"; break;
+                    case 0x9E: mnemo = "res 3,(hl)"; break;
+                    case 0xA6: mnemo = "res 4,(hl)"; break;
+                    case 0xAE: mnemo = "res 5,(hl)"; break;
+                    case 0xB6: mnemo = "res 6,(hl)"; break;
+                    case 0xBE: mnemo = "res 7,(hl)"; break;
+                    case 0xC6: mnemo = "set 0,(hl)"; break;
+                    case 0xCE: mnemo = "set 1,(hl)"; break;
+                    case 0xD6: mnemo = "set 2,(hl)"; break;
+                    case 0xDE: mnemo = "set 3,(hl)"; break;
+                    case 0xE6: mnemo = "set 4,(hl)"; break;
+                    case 0xEE: mnemo = "set 5,(hl)"; break;
+                    case 0xF6: mnemo = "set 6,(hl)"; break;
+                    case 0xFE: mnemo = "set 7,(hl)"; break;
+                }
         }
-        
-        
+        tmp = 0;
+        if (mnemo == null) {
+            tmp = ((Short)mem.read(actPos++)).shortValue();
+            oper += String.format(" %02X", tmp&0xff);
+            switch (val) {
+                case 0x06: mnemo = "ld b," + String.format("%02X", tmp); break;
+                case 0x0E: mnemo = "ld c," + String.format("%02X", tmp); break;
+                case 0x16: mnemo = "ld d," + String.format("%02X", tmp); break;
+                case 0x18: mnemo = "jr " + String.format("%02X", tmp); break;
+                case 0x1E: mnemo = "ld e," + String.format("%02X", tmp); break;
+                case 0x20: mnemo = "jr nz," + String.format("%02X", tmp); break;
+                case 0x26: mnemo = "ld h," + String.format("%02X", tmp); break;
+                case 0x28: mnemo = "jr z," + String.format("%02X", tmp); break;
+                case 0x2E: mnemo = "ld l," + String.format("%02X", tmp); break;
+                case 0x30: mnemo = "jr nc," + String.format("%02X", tmp); break;
+                case 0x36: mnemo = "ld (hl)," + String.format("%02X", tmp); break;
+                case 0x38: mnemo = "jr c," + String.format("%02X", tmp); break;
+                case 0x3E: mnemo = "ld a," + String.format("%02X", tmp); break;
+                case 0xC6: mnemo = "add a," + String.format("%02X", tmp); break;
+                case 0xCE: mnemo = "adc a," + String.format("%02X", tmp); break;
+                case 0xD3: mnemo = "out (" + String.format("%02X", tmp)+"),a"; break;
+                case 0xD6: mnemo = "sub " + String.format("%02X", tmp); break;
+                case 0xDB: mnemo = "in a,(" + String.format("%02X", tmp)+")"; break;
+                case 0xDE: mnemo = "sbc a," + String.format("%02X", tmp); break;
+                case 0xE6: mnemo = "and " + String.format("%02X", tmp); break;
+                case 0xEE: mnemo = "xor " + String.format("%02X", tmp); break;
+                case 0xF6: mnemo = "or " + String.format("%02X", tmp); break;
+                case 0xFE: mnemo = "cp " + String.format("%02X", tmp); break;
+            }
+        }
+        if (mnemo == null) {
+            tmp += (((Short)mem.read(actPos++)).shortValue() << 8);
+            oper += String.format(" %02X", (tmp>>>8)&0xff);
+            switch (val) {
+                case 0x01: mnemo = "ld bc," + String.format("%04X", tmp); break;
+                case 0x11: mnemo = "ld de," + String.format("%04X", tmp); break;
+                case 0x21: mnemo = "ld hl," + String.format("%04X", tmp); break;
+                case 0x22: mnemo = "ld (" + String.format("%04X", tmp) + "),hl"; break;
+                case 0x2A: mnemo = "ld hl,(" + String.format("%04X", tmp)+")"; break;
+                case 0x31: mnemo = "ld sp," + String.format("%04X", tmp); break;
+                case 0x32: mnemo = "ld (" + String.format("%04X", tmp) + "),a"; break;
+                case 0x3A: mnemo = "ld a,(" + String.format("%04X", tmp) + ")"; break;
+                case 0xC2: mnemo = "jp nz," + String.format("%04X", tmp); break;
+                case 0xC3: mnemo = "jp " + String.format("%04X", tmp); break;
+                case 0xC4: mnemo = "call nz," + String.format("%04X", tmp); break;
+                case 0xCA: mnemo = "jp z," + String.format("%04X", tmp); break;
+                case 0xCC: mnemo = "call z," + String.format("%04X", tmp); break;
+                case 0xCD: mnemo = "call " + String.format("%04X", tmp); break;
+                case 0xD2: mnemo = "jp nc," + String.format("%04X", tmp); break;
+                case 0xD4: mnemo = "call nc," + String.format("%04X", tmp); break;
+                case 0xDC: mnemo = "call c," + String.format("%04X", tmp); break;
+                case 0xDA: mnemo = "jp c," + String.format("%04X", tmp); break;
+                case 0xE2: mnemo = "jp po," + String.format("%04X", tmp); break;
+                case 0xE4: mnemo = "call po," + String.format("%04X", tmp); break;
+                case 0xEA: mnemo = "jp pe," + String.format("%04X", tmp); break;
+                case 0xEC: mnemo = "call pe," + String.format("%04X", tmp); break;
+                case 0xF2: mnemo = "jp p," + String.format("%04X", tmp); break;
+                case 0xF4: mnemo = "call p," + String.format("%04X", tmp); break;
+                case 0xFA: mnemo = "jp m," + String.format("%04X", tmp); break;
+                case 0xFC: mnemo = "call m," + String.format("%04X", tmp); break;
+            }
+        }
+        if (mnemo == null) mnemo = "unknown";
         instr = new ICPUInstruction(mnemo,oper,actPos);
         return instr;
     }
@@ -729,11 +746,12 @@ public class statusGUI extends javax.swing.JPanel {
                     case 0x4D: case 0x4F: case 0x50: case 0x51: case 0x52:
                     case 0x56: case 0x57: case 0x58: case 0x59: case 0x5A:
                     case 0x5E: case 0x5F: case 0x60: case 0x61: case 0x62:
-                    case 0x67: case 0x6A: case 0x6F: case 0x70: case 0x71:
-                    case 0x72: case 0x78: case 0x79: case 0x7A: case 0xA0:
-                    case 0xA1: case 0xA2: case 0xA3: case 0xA8: case 0xA9:
-                    case 0xAA: case 0xAB: case 0xB0: case 0xB1: case 0xB2:
-                    case 0xB3: case 0xB8: case 0xB9: case 0xBA: case 0xBB:
+                    case 0x67: case 0x68: case 0x69: case 0x6A: case 0x6F:
+                    case 0x70: case 0x71: case 0x72: case 0x78: case 0x79:
+                    case 0x7A: case 0xA0: case 0xA1: case 0xA2: case 0xA3:
+                    case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xB0:
+                    case 0xB1: case 0xB2: case 0xB3: case 0xB8: case 0xB9:
+                    case 0xBA: case 0xBB:
                         return memPos;
                     case 0x43: case 0x4B: case 0x53: case 0x5B: case 0x73:
                     case 0x7B:
@@ -744,14 +762,14 @@ public class statusGUI extends javax.swing.JPanel {
                 tmp = (Short)mem.read(memPos++);
                 switch (tmp) {
                     case 0x09: case 0x19: case 0x23: case 0x29: case 0x2B:
-                    case 0x34: case 0x39: case 0xE1: case 0xE3: case 0xE5:
-                    case 0xE9: case 0xF9:
+                    case 0x39: case 0xE1: case 0xE3: case 0xE5: case 0xE9:
+                    case 0xF9:
                         return memPos;
-                    case 0x35: case 0x46: case 0x4E: case 0x56: case 0x5E:
-                    case 0x66: case 0x6E: case 0x7E: case 0x86: case 0x8E:
-                    case 0x96: case 0x9E: case 0xA6: case 0xAE: case 0xB6:
-                    case 0xBE: case 0x70: case 0x71: case 0x72: case 0x73:
-                    case 0x74: case 0x75: case 0x77:
+                    case 0x34: case 0x35: case 0x46: case 0x4E: case 0x56:
+                    case 0x5E: case 0x66: case 0x6E: case 0x7E: case 0x86:
+                    case 0x8E: case 0x96: case 0x9E: case 0xA6: case 0xAE:
+                    case 0xB6: case 0xBE: case 0x70: case 0x71: case 0x72:
+                    case 0x73: case 0x74: case 0x75: case 0x77:
                         return (memPos+1);
                     case 0x21: case 0x22: case 0x2A: case 0x36: 
                         return (memPos+2);
@@ -776,14 +794,14 @@ public class statusGUI extends javax.swing.JPanel {
                 tmp = (Short)mem.read(memPos++);
                 switch (tmp) {
                     case 0x09: case 0x19: case 0x23: case 0x29: case 0x2B:
-                    case 0x34: case 0x39: case 0xE1: case 0xE3: case 0xE5:
-                    case 0xE9: case 0xF9:
+                    case 0x39: case 0xE1: case 0xE3: case 0xE5: case 0xE9:
+                    case 0xF9:
                         return memPos;
-                    case 0x35: case 0x46: case 0x4E: case 0x56: case 0x5E:
-                    case 0x66: case 0x6E: case 0x7E: case 0x86: case 0x8E:
-                    case 0x96: case 0x9E: case 0xA6: case 0xAE: case 0xB6:
-                    case 0xBE: case 0x70: case 0x71: case 0x72: case 0x73:
-                    case 0x74: case 0x75: case 0x77:
+                    case 0x34: case 0x35: case 0x46: case 0x4E: case 0x56:
+                    case 0x5E: case 0x66: case 0x6E: case 0x7E: case 0x86:
+                    case 0x8E: case 0x96: case 0x9E: case 0xA6: case 0xAE:
+                    case 0xB6: case 0xBE: case 0x70: case 0x71: case 0x72:
+                    case 0x73: case 0x74: case 0x75: case 0x77:
                         return (memPos+1);
                     case 0x21: case 0x22: case 0x2A: case 0x36: 
                         return (memPos+2);

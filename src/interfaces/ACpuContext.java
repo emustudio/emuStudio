@@ -16,7 +16,7 @@ import plugins.device.IDeviceContext;
  *
  * @author vbmacher
  */
-public interface IICpuContext extends ICPUContext {
+public interface ACpuContext extends ICPUContext {
 
     public boolean attachDevice(IDeviceContext listener, int port);
     public void detachDevice(int port);

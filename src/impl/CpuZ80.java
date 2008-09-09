@@ -228,6 +228,10 @@ public class CpuZ80 implements ICPU, Runnable {
 
     public int getSliceTime() { return sliceCheckTime; }
     public void setSliceTime(int t) { sliceCheckTime = t; }
+
+    private int evalStep() {
+        return 0;
+    }
     
     private void setRuntimeFreqCounter(boolean run) {
         if (run) {
