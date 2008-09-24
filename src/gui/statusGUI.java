@@ -31,7 +31,7 @@ public class statusGUI extends javax.swing.JPanel {
     private IMemoryContext mem = null;
     private AbstractTableModel flagModel1;
     private AbstractTableModel flagModel2;
-    private String regs[] = new String[11];
+    //private String regs[] = new String[11];
 
     // syntax = prefix,size,postfix
     private String[][] mnemoTab = {
@@ -237,12 +237,15 @@ public class statusGUI extends javax.swing.JPanel {
         }
         @Override
         public void fireTableDataChanged() {
-            flagsI[0] = ((cpu.getF(set)&CpuZ80.flagS)!=0) ? 1 : 0;
-            flagsI[1] = ((cpu.getF(set)&CpuZ80.flagZ)!=0) ? 1 : 0;
-            flagsI[2] = ((cpu.getF(set)&CpuZ80.flagH)!=0) ? 1 : 0;
-            flagsI[3] = ((cpu.getF(set)&CpuZ80.flagPV)!=0) ? 1 : 0;
-            flagsI[4] = ((cpu.getF(set)&CpuZ80.flagN)!=0) ? 1 : 0;
-            flagsI[5] = ((cpu.getF(set)&CpuZ80.flagC)!=0) ? 1 : 0;
+            short F = 0;
+            if (set == 0) F = cpu.getF();
+            else F = cpu.getF_S();
+            flagsI[0] = ((F&CpuZ80.flagS)!=0) ? 1 : 0;
+            flagsI[1] = ((F&CpuZ80.flagZ)!=0) ? 1 : 0;
+            flagsI[2] = ((F&CpuZ80.flagH)!=0) ? 1 : 0;
+            flagsI[3] = ((F&CpuZ80.flagPV)!=0) ? 1 : 0;
+            flagsI[4] = ((F&CpuZ80.flagN)!=0) ? 1 : 0;
+            flagsI[5] = ((F&CpuZ80.flagC)!=0) ? 1 : 0;
             super.fireTableDataChanged();
         }
     }
@@ -334,40 +337,30 @@ public class statusGUI extends javax.swing.JPanel {
         }
     }
     
+    private String f(int what) {
+        return String.format("%04X", what);
+    }
+    
+    private String f(short what) {
+        return String.format("%02X", what);
+    }
+    
     public void updateGUI() {
-        regs[0] = String.format("%02X", cpu.getA());
-        regs[1] = String.format("%02X", cpu.getF());
-        regs[2] = String.format("%02X", cpu.getB());
-        regs[3] = String.format("%02X", cpu.getC());
-        regs[4] = String.format("%04X",cpu.getBC());
-        regs[5] = String.format("%02X", cpu.getD());
-        regs[6] = String.format("%02X", cpu.getE());
-        regs[7] = String.format("%04X",cpu.getDE());
-        regs[8] = String.format("%02X", cpu.getH());
-        regs[9] = String.format("%02X", cpu.getL());
-        regs[10] = String.format("%04X",cpu.getHL());
-
-        switch (cpu.getActiveRegSet()) {
-            case 0:
-                txtRegA.setText(regs[0]); txtRegF.setText(regs[1]);
-                txtRegB.setText(regs[2]); txtRegC.setText(regs[3]);
-                txtRegBC.setText(regs[4]); txtRegD.setText(regs[5]);
-                txtRegE.setText(regs[6]); txtRegDE.setText(regs[7]);
-                txtRegH.setText(regs[8]); txtRegL.setText(regs[9]);
-                txtRegHL.setText(regs[10]);
-                flagModel1.fireTableDataChanged();
-                break;
-            case 1:
-                txtRegA1.setText(regs[0]); txtRegF1.setText(regs[1]);
-                txtRegB1.setText(regs[2]); txtRegC1.setText(regs[3]);
-                txtRegBC1.setText(regs[4]); txtRegD1.setText(regs[5]);
-                txtRegE1.setText(regs[6]); txtRegDE1.setText(regs[7]);
-                txtRegH1.setText(regs[8]); txtRegL1.setText(regs[9]);
-                txtRegHL1.setText(regs[10]);
-                flagModel2.fireTableDataChanged();
-                break;
-               
-        }
+        txtRegA.setText(f(cpu.getA())); txtRegF.setText(f(cpu.getF()));
+        txtRegB.setText(f(cpu.getB())); txtRegC.setText(f(cpu.getC()));
+        txtRegBC.setText(f(cpu.getBC())); txtRegD.setText(f(cpu.getD()));
+        txtRegE.setText(f(cpu.getE())); txtRegDE.setText(f(cpu.getDE()));
+        txtRegH.setText(f(cpu.getH())); txtRegL.setText(f(cpu.getL()));
+        txtRegHL.setText(f(cpu.getHL()));
+        flagModel1.fireTableDataChanged();
+        txtRegA1.setText(f(cpu.getA_S())); txtRegF1.setText(f(cpu.getF_S()));
+        txtRegB1.setText(f(cpu.getB_S())); txtRegC1.setText(f(cpu.getC_S()));
+        txtRegBC1.setText(f(cpu.getBC_S())); txtRegD1.setText(f(cpu.getD_S()));
+        txtRegE1.setText(f(cpu.getE_S())); txtRegDE1.setText(f(cpu.getDE_S()));
+        txtRegH1.setText(f(cpu.getH_S())); txtRegL1.setText(f(cpu.getL_S()));
+        txtRegHL1.setText(f(cpu.getHL_S()));
+        flagModel2.fireTableDataChanged();
+        
         txtRegSP.setText(String.format("%04X", cpu.getSP()));
         txtRegPC.setText(String.format("%04X", cpu.getPC()));
         txtRegIX.setText(String.format("%04X", cpu.getIX()));
@@ -540,6 +533,8 @@ public class statusGUI extends javax.swing.JPanel {
                         case 0x4B: mnemo = "ld bc,(" + String.format("%04X", tmp)+")"; break;
                         case 0x53: mnemo = "ld (" + String.format("%04X", tmp)+"),de"; break;
                         case 0x5B: mnemo = "ld de,(" + String.format("%04X", tmp)+")"; break;
+                        case 0x63: mnemo = "ld (" + String.format("%04X", tmp)+"),hl"; break;
+                        case 0x6B: mnemo = "ld hl,(" + String.format("%04X", tmp)+")"; break;
                         case 0x73: mnemo = "ld (" + String.format("%04X", tmp)+"),sp"; break;
                         case 0x7B: mnemo = "ld sp,(" + String.format("%04X", tmp)+")"; break;
                     }
@@ -679,8 +674,8 @@ public class statusGUI extends javax.swing.JPanel {
                     case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA8: case 0xA9:
                     case 0xAA: case 0xAB: case 0xB0: case 0xB1: case 0xB2: case 0xB3:
                     case 0xB8: case 0xB9: case 0xBA: case 0xBB: return memPos;
-                    case 0x43: case 0x4B: case 0x53: case 0x5B: case 0x73: case 0x7B:
-                        return memPos+2;
+                    case 0x43: case 0x4B: case 0x53: case 0x5B: case 0x63: case 0x6B:
+                    case 0x73: case 0x7B: return memPos+2;
                     default: memPos--;
                 }
             default:

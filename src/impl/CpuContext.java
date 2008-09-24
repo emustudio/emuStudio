@@ -124,4 +124,9 @@ public class CpuContext implements ACpuContext {
         return 0;
     }
 
+    // implement, please...
+    public void interrupt(byte[] instr) {
+        
+    }
+
 }
