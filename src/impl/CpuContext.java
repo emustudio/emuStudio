@@ -113,4 +113,17 @@ public class CpuContext implements ACpuContext {
         return 0;
     }
 
+    /*
+     * the interrupting device can insert any instruction on the data bus
+     * for execution by the CPU. The first byte of a multi-byte instruction
+     * is read during the interrupt acknowledge cycle. Subsequent bytes are
+     * read in by a normal memory read sequence.
+     */
+    public void interrupt(byte[] instr) {
+        short b1 = (instr.length >= 1) ? instr[0] : 0;
+        short b2 = (instr.length >= 2) ? instr[1] : 0;
+        short b3 = (instr.length >= 3) ? instr[2] : 0;
+        cpu.interrupt(b1, b2, b3);
+    }
+
 }

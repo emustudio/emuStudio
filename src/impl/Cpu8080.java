@@ -53,9 +53,9 @@ public class Cpu8080 implements ICPU, Runnable {
     
     private boolean INTE = false; // povolenie / zakazanie preruseni
     private boolean isINT = false;
-    private short b1 = 0; // interrupt instruction can be rst (b1) or call (b1,b2,b3)
-    private short b2 = 0; //?? doesn't work or what... i dont care
-    private short b3 = 0;
+    private volatile short b1 = 0; // interrupt instruction
+    private volatile short b2 = 0;
+    private volatile short b3 = 0;
     
     private stateEnum run_state; // dovod zastavenia emulatora
 
@@ -88,6 +88,8 @@ public class Cpu8080 implements ICPU, Runnable {
     public String getCopyright() { return "\u00A9 Copyright 2006-2008, Peter Jakubčo"; }
 
     public boolean initialize(IMemoryContext mem, ISettingsHandler sHandler) {
+        if (mem == null)
+            throw new java.lang.NullPointerException("CPU must have access to memory");
         if (!mem.getID().equals("byte_simple_variable")) {
             StaticDialogs.showErrorMessage("Operating memory type is not supported"
                     + " for this kind of CPU.");
@@ -171,6 +173,7 @@ public class Cpu8080 implements ICPU, Runnable {
             cpu.fireCpuState();
         }
     }
+    
     public void interrupt(short b1, short b2, short b3) {
         if (INTE == false) return;
         isINT = true;
@@ -672,6 +675,5 @@ public class Cpu8080 implements ICPU, Runnable {
         return 0;
     }
     
-
 
 }
