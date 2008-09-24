@@ -67,7 +67,7 @@ public class MemoryContext implements SMemoryContext {
      */
     public void clear() {
         if (sizeSet == false) return;
-        for (int i = 0; i < mem.length; mem[i] = 0, i++);
+        for (int i = 0; i < mem.length; i++) mem[i] = 0;
         lastImageStart = 0;
         fireChange(-1);
     }
@@ -211,7 +211,10 @@ public class MemoryContext implements SMemoryContext {
 
     public void write(int to, Object val) {
         if (isRom(to) == true) return;
-        mem[to] = (short)((Short)val & 0xFF);
+        if (val instanceof Integer)
+            mem[to] = (short)((Integer)val & 0xFF);
+        else
+            mem[to] = (short)((Short)val & 0xFF);
         fireChange(to);
     }
 
