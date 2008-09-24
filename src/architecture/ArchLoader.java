@@ -387,7 +387,9 @@ public class ArchLoader extends ClassLoader {
                     loadSchema(name));
         }
         catch (Exception e) {
-            StaticDialogs.showErrorMessage("Error reading plugins: " + e.toString());
+            String h = e.getLocalizedMessage();
+            if (h.equals("")) h = "Unknown error";
+            StaticDialogs.showErrorMessage("Error reading plugins: " + h);
             return null;
         }
     }
@@ -476,7 +478,6 @@ public class ArchLoader extends ClassLoader {
             }
             zf.close();
         }
-        catch (NullPointerException e) {}
         catch (Exception e) {
             StaticDialogs.showErrorMessage("Error reading plugin: " + filename);
         }

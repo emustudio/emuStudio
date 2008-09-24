@@ -8,6 +8,7 @@
 
 package architecture;
 
+import gui.LoadingDialog;
 import gui.OpenArchDialog;
 import gui.StudioFrame;
 
@@ -30,13 +31,18 @@ public class Main {
         catch (IllegalAccessException e) {}
 
         aloader = new ArchLoader();
-
         String configName = null;
         OpenArchDialog odi = new OpenArchDialog();
         odi.setVisible(true);
         if (odi.getOK()) configName = odi.getArchName();
         if (configName == null) return;
+
+        LoadingDialog splash = new LoadingDialog();
+        splash.setVisible(true);
         currentArch = aloader.load(configName);
+        splash.dispose();
+        splash = null;
+        
         if (currentArch != null)
             new StudioFrame().setVisible(true);
         else System.exit(0);

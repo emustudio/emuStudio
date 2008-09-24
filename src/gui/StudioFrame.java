@@ -134,13 +134,6 @@ public class StudioFrame extends javax.swing.JFrame {
             });
         } catch(NullPointerException e) {}
         btnBreakpoint.setEnabled(arch.getCPU().isBreakpointSupported());
-        // first reset
-        arch.getCPU().reset(); // first address of an image??
-        IDevice dev[] = arch.getDevices();
-        if (dev != null) {
-            for (int i = 0; i < dev.length; i++)
-                dev[i].reset();
-        }
         lstDevices.setModel(new AbstractListModel() {
             public int getSize() { return arch.getDevices().length; }
             public Object getElementAt(int index) {

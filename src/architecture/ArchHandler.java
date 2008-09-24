@@ -118,6 +118,9 @@ public class ArchHandler implements ISettingsHandler {
                     r &= devices[i2].attachDevice(female, male);
             }
         }
+        // first reset
+        cpu.reset();
+        for (int i=0; i < devices.length; i++) devices[i].reset();
         return r;
     }
     
