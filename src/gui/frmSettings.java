@@ -6,8 +6,9 @@
 
 package gui;
 
-import gui.utils.emuFileFilter;
+import gui.utils.EmuFileFilter;
 import gui.utils.tableMemory;
+import interfaces.SMemoryContext;
 import java.io.File;
 import java.util.Collections;
 import java.util.Vector;
@@ -21,7 +22,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import memImpl.Memory;
-import memImpl.MemoryContext;
 import plugins.ISettingsHandler;
 import plugins.ISettingsHandler.pluginType;
 import runtime.StaticDialogs;
@@ -31,7 +31,7 @@ import runtime.StaticDialogs;
  * @author  vbmacher
  */
 public class frmSettings extends javax.swing.JDialog {
-    private MemoryContext memContext;
+    private SMemoryContext memContext;
     private Memory mem;
     private ROMmodel rom_model;
     private ImagesModel images_model;
@@ -99,7 +99,7 @@ public class frmSettings extends javax.swing.JDialog {
             tableMemory tblMem, ISettingsHandler settings) {
         super(parent, modal);
         this.mem = mem;
-        this.memContext = (MemoryContext)mem.getContext();
+        this.memContext = (SMemoryContext)mem.getContext();
         this.tblMem = tblMem;
         this.settings = settings;
         initComponents();
@@ -110,7 +110,7 @@ public class frmSettings extends javax.swing.JDialog {
         else txtBanksCount.setText("0");
 
         s = settings.readSetting(pluginType.memory, null, "commonBoundary");
-        if (s != null) txtCommonBoundary.setText(s);
+        if (s != null) txtCommonBoundary.setText(String.format("0x%04X", Integer.decode(s)));
         else txtCommonBoundary.setText("0");
 
         int i = 0;
@@ -489,7 +489,7 @@ private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:e
             StaticDialogs.showErrorMessage("Banks count has to be positive integer !");
             return;
         }
-        try { bCommon = Integer.parseInt(txtCommonBoundary.getText()); }
+        try { bCommon = Integer.decode(txtCommonBoundary.getText()); }
         catch(Exception e) {
             StaticDialogs.showErrorMessage("Common boundary has to be positive integer !");
             return;
@@ -508,8 +508,8 @@ private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:e
 
 private void btnAddImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddImageActionPerformed
         JFileChooser f = new JFileChooser();
-        emuFileFilter f1 = new emuFileFilter();
-        emuFileFilter f2 = new emuFileFilter();
+        EmuFileFilter f1 = new EmuFileFilter();
+        EmuFileFilter f2 = new EmuFileFilter();
 
         f1.addExtension("hex");
         f1.addExtension("bin");

@@ -9,7 +9,6 @@ package gui;
 import gui.utils.EmuFileFilter;
 import gui.utils.memoryTableModel;
 import gui.utils.tableMemory;
-import interfaces.SMemoryContext;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -25,6 +24,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import memImpl.Memory;
+import memImpl.MemoryContext;
 import plugins.ISettingsHandler;
 import runtime.StaticDialogs;
 
@@ -34,7 +34,7 @@ import runtime.StaticDialogs;
  * @author  vbmacher
  */
 public class frmMemory extends javax.swing.JFrame {
-    private SMemoryContext memContext;
+    private MemoryContext memContext;
     private Memory mem;
     private tableMemory tblMemory;
     private memoryTableModel memModel;
@@ -44,7 +44,7 @@ public class frmMemory extends javax.swing.JFrame {
     public frmMemory(Memory mem, ISettingsHandler settings) {
         this.mem = mem;
         this.settings = settings;
-        this.memContext = (SMemoryContext)mem.getContext();
+        this.memContext = (MemoryContext)mem.getContext();
         this.memModel = new memoryTableModel(memContext);
         
         initComponents();
@@ -58,6 +58,7 @@ public class frmMemory extends javax.swing.JFrame {
             }
         });
         lblPageCount.setText(String.valueOf(memModel.getPageCount()));
+        lblBanksCount.setText(String.valueOf(memContext.getBanksCount()));
         spnPage.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
                 int i = (Integer)((SpinnerNumberModel)spnPage.getModel()).getValue();
@@ -67,8 +68,18 @@ public class frmMemory extends javax.swing.JFrame {
                 }
             }
         });
+        spnBank.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                int i = (Integer)((SpinnerNumberModel)spnBank.getModel()).getValue();
+                try { memModel.setCurrentBank(i); } catch(IndexOutOfBoundsException ex) {
+                    ((SpinnerNumberModel)spnBank.getModel())
+                    .setValue(memModel.getCurrentBank());
+                }
+            }
+        });
 
         this.addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent e) {
                 destroyME();
             }
@@ -322,6 +333,9 @@ public class frmMemory extends javax.swing.JFrame {
 
         jLabel10.setText("Bank:");
 
+        spnBank.setMinimumSize(new java.awt.Dimension(70, 28));
+        spnBank.setPreferredSize(new java.awt.Dimension(70, 28));
+
         jLabel11.setText("Banks count:");
 
         lblBanksCount.setFont(lblBanksCount.getFont().deriveFont(lblBanksCount.getFont().getStyle() | java.awt.Font.BOLD));
@@ -343,7 +357,7 @@ public class frmMemory extends javax.swing.JFrame {
                 .addComponent(jLabel11)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblBanksCount)
-                .addContainerGap(423, Short.MAX_VALUE))
+                .addContainerGap(388, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -357,7 +371,7 @@ public class frmMemory extends javax.swing.JFrame {
                     .addComponent(spnBank, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel11)
                     .addComponent(lblBanksCount))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 9, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 11, Short.MAX_VALUE)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 

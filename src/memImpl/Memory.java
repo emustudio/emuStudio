@@ -29,9 +29,8 @@ public class Memory implements IMemory {
     private ISettingsHandler settings;
 
     public String getDescription() {
-        return "Operating memory for most CPUs. This is very simple "
-                + "implementation without any support of banking, segmentation,"
-                + "or pagination.";
+        return "Operating memory for most CPUs. This plugin supports banking" +
+                " controllable via SMemoryContext class.";
     }
 
     public String getVersion() { return "0.21b"; }

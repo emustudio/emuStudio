@@ -80,6 +80,14 @@ public class MemoryContext implements SMemoryContext {
         fireChange(-1);
     }
 
+    public int getBanksCount() { return banksCount; }
+    public short getSelectedBank() { return bankSelect; }
+    public void setSeletedBank(short bankSelect) {
+        if (bankSelect < banksCount)
+            this.bankSelect = bankSelect;
+    }
+    public int getCommonBoundary() { return bankCommon; }
+    
     // this can parse classic old data
     // line beginning with ; is ignored
     public boolean loadHex(String filename, int bank) {
@@ -217,6 +225,11 @@ public class MemoryContext implements SMemoryContext {
         if (from < bankCommon) return mem[from][bankSelect];
         else return mem[from][0];
     }
+    
+    public Object read(int from, int bank) {
+        if (from < bankCommon) return mem[from][bank];
+        else return mem[from][0];
+    }
 
     public Object readWord(int from) {
         b = (from < bankCommon)?bankSelect:0;
@@ -229,6 +242,16 @@ public class MemoryContext implements SMemoryContext {
     public void write(int to, Object val) {
         if (isRom(to) == true) return;
         b = (to < bankCommon)?bankSelect:0;
+        if (val instanceof Integer)
+            mem[to][b] = (short)((Integer)val & 0xFF);
+        else
+            mem[to][b] = (short)((Short)val & 0xFF);
+        fireChange(to);
+    }
+
+    public void write(int to, Object val,int bank) {
+        if (isRom(to) == true) return;
+        b = (to < bankCommon)?bank:0;
         if (val instanceof Integer)
             mem[to][b] = (short)((Integer)val & 0xFF);
         else

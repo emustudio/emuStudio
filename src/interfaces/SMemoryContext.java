@@ -23,6 +23,11 @@ public interface SMemoryContext extends IMemoryContext {
     public void setRAM(int from, int to);
     public void setROM(int from, int to);
 
+    public int getBanksCount();
+    public short getSelectedBank();
+    public void setSeletedBank(short bankSelect);
+    public int getCommonBoundary();
+
     public boolean loadHex(String filename, int bank);
     public boolean loadBin(String filename, int address, int bank);
 

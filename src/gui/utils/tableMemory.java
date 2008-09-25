@@ -123,8 +123,10 @@ public class tableMemory extends JTable {
                 this.setBackground(tm.getSelectionBackground());
                 this.setForeground(tm.getSelectionForeground());
             } else {
-                if (memModel.isROMAt(row,column) == true)
-                    this.setBackground(Color.RED); 
+                if (memModel.isROMAt(row,column))
+                    this.setBackground(Color.RED);
+                else if (memModel.isAtBANK(row, column))
+                    this.setBackground(Color.decode("0xFFE6BF"));
                 else this.setBackground(Color.WHITE); 
                 this.setForeground(Color.BLACK); 
             }
