@@ -39,7 +39,7 @@ public class frmSettings extends javax.swing.JDialog {
     private ISettingsHandler settings;
     private Vector<String> imageNames = new Vector<String>();
     private Vector<String> imageFullNames = new Vector<String>();
-    private Vector<String> imageAddresses = new Vector<String>();
+    private Vector<Integer> imageAddresses = new Vector<Integer>();
 
     private class ImagesModel extends AbstractTableModel {
         public int getRowCount() { 
@@ -49,7 +49,7 @@ public class frmSettings extends javax.swing.JDialog {
         @Override
         public String getColumnName(int columnIndex) {
             if (columnIndex == 0) return "File name";
-            else return "Load address";
+            else return "Load address (hex)";
         }
         @Override
         public Class<?> getColumnClass(int col) { return String.class; }
@@ -58,7 +58,7 @@ public class frmSettings extends javax.swing.JDialog {
 
         public Object getValueAt(int rowIndex, int columnIndex) {
             if (columnIndex == 0) return imageNames.get(rowIndex);
-            else return imageAddresses.get(rowIndex);
+            else return String.format("%04X", imageAddresses.get(rowIndex));
         }
         public void setValueAt(int r, int c) {
             fireTableCellUpdated(r,c);
@@ -72,11 +72,11 @@ public class frmSettings extends javax.swing.JDialog {
         public int getColumnCount() { return 2; }
         @Override
         public String getColumnName(int columnIndex) {
-            if (columnIndex == 0) return "From";
-            else return "To";
+            if (columnIndex == 0) return "From (hex)";
+            else return "To (hex)";
         }
         @Override
-        public Class<?> getColumnClass(int col) { return Integer.class; }
+        public Class<?> getColumnClass(int col) { return String.class; }
         @Override
         public boolean isCellEditable(int r, int c) { return false; }
 
@@ -85,9 +85,9 @@ public class frmSettings extends javax.swing.JDialog {
             Collections.sort(keys);
             Object[] ar = keys.toArray();
             if (columnIndex == 0) {
-                return ar[rowIndex];
+                return String.format("%04X", ar[rowIndex]);
             } else
-                return memContext.getROMRanges().get(ar[rowIndex]);
+                return String.format("%04X", memContext.getROMRanges().get(ar[rowIndex]));
         }
         public void setValueAt(int r, int c) {
             fireTableCellUpdated(r,c);
@@ -121,8 +121,10 @@ public class frmSettings extends javax.swing.JDialog {
             if (s == null) break;
             imageFullNames.add(s);
             imageNames.add(new File(s).getName());
-            if (r != null) imageAddresses.add(r);
-            else imageAddresses.add("0");
+            if (r != null) 
+                try { imageAddresses.add(Integer.decode(r)); }
+                catch(Exception e) { imageAddresses.add(0); }
+            else imageAddresses.add(0);
             i++;
         }
         images_model = new ImagesModel();
@@ -537,7 +539,7 @@ private void btnAddImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
                     try { adr = Integer.decode(sadr); }
                     catch(NumberFormatException e) {}
                 }
-                imageAddresses.add(String.valueOf(adr));
+                imageAddresses.add(adr);
                 tblImages.revalidate();
                 tblImages.repaint();
             } else {

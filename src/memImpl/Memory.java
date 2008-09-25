@@ -93,7 +93,7 @@ public class Memory implements IMemory {
             if (new File(s).getName().toUpperCase().endsWith(".HEX"))
                 memContext.loadHex(s, 0);
             else {
-                if (r != null) try { adr = Integer.parseInt(r); } catch(Exception e) {}
+                if (r != null) try { adr = Integer.decode(r); } catch(Exception e) {}
                 memContext.loadBin(s, adr, 0);
             }
             i++;
@@ -118,7 +118,7 @@ public class Memory implements IMemory {
      * tab0 in frmSettings.
      */
     public void saveSettings0(int banksCount, int commonBoundary, 
-            Vector<String> imageFullNames, Vector<String> imageAddresses) {
+            Vector<String> imageFullNames, Vector<Integer> imageAddresses) {
         settings.writeSetting(pluginType.memory, null, "banksCount", String.valueOf(banksCount));
         settings.writeSetting(pluginType.memory, null, "commonBoundary", String.valueOf(commonBoundary));
 
@@ -131,7 +131,7 @@ public class Memory implements IMemory {
         }
         for (i = 0; i < imageFullNames.size(); i++)  {
             settings.writeSetting(pluginType.memory, null, "imageName"+i, imageFullNames.get(i));
-            settings.writeSetting(pluginType.memory, null, "imageAddress"+i, imageAddresses.get(i));
+            settings.writeSetting(pluginType.memory, null, "imageAddress"+i, String.valueOf(imageAddresses.get(i)));
         }
     }
 
