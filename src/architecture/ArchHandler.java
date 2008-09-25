@@ -167,7 +167,7 @@ public class ArchHandler implements ISettingsHandler {
      * @param settingName name of wanted setting
      * @return setting value if exists, or null if not
      */
-    public String readSetting(pluginType plType, String pluginID, 
+    public synchronized String readSetting(pluginType plType, String pluginID, 
             String settingName) {
         if (plType == null) return null;
 
@@ -203,7 +203,7 @@ public class ArchHandler implements ISettingsHandler {
      * @param settingName name of wanted setting
      * @return setting value if exists, or null if not
      */
-    public void writeSetting(pluginType plType, String pluginID,
+    public synchronized void writeSetting(pluginType plType, String pluginID,
             String settingName, String val) {
         if (settingName == null || settingName.equals("")) return;
         if (plType == null) return;
@@ -225,5 +225,39 @@ public class ArchHandler implements ISettingsHandler {
         settings.setProperty(prop, val);
         ArchLoader.writeConfig(schema.getConfigName(), settings);
     }
+    
+    /**
+     * Method removes value of specified setting from Properties for 
+     * specified plugin. Setting has to be fully specified.
+     * 
+     * @param pluginID plugin name, this have a mean only for device plugin,
+     *                 otherwise it is ignored.
+     * @param settingName name of wanted setting
+     */
+    public synchronized void removeSetting(pluginType plType, String pluginID, 
+            String settingName) {
+        if (plType == null) return;
+
+        String prop = "";
+                
+        if (plType == pluginType.device) {
+            if (pluginID == null || pluginID.equals("")) return;
+            // search for device
+            for (int i = 0; i < devices.length; i++)
+                if (settings.getProperty("device"+i,"").equals(pluginID)) {
+                    prop = "device"+i;
+                    break;
+                }
+        } else prop = plType.toString();
+        
+        if (prop.equals("")) return;
+        if (settingName != null && !settingName.equals("")) 
+            prop += "." + settingName;
+        
+        if (settings.getProperty(prop,null) != null)
+            settings.remove(prop);
+        ArchLoader.writeConfig(schema.getConfigName(), settings);        
+    }
+
  
 }
