@@ -221,7 +221,7 @@ public class CpuZ80 implements ICPU, Runnable {
                + " it is similar to Intel's 8080 but something is modified and"
                + " extended.";
     }
-    public String getVersion() { return "0.1a1"; }
+    public String getVersion() { return "0.1b"; }
 
     /**
      * Should be called only once
@@ -376,12 +376,9 @@ public class CpuZ80 implements ICPU, Runnable {
     /* Get an GPR register and return it */
     private short getreg(int reg) {
         switch (reg) {
-            case 0: return B;
-            case 1: return C;
-            case 2: return D;
-            case 3: return E;
-            case 4: return H;
-            case 5: return L;
+            case 0: return B; case 1: return C;
+            case 2: return D; case 3: return E;
+            case 4: return H; case 5: return L;
             case 6: return ((Short)mem.read((H << 8) | L)).shortValue();
             case 7: return A;
         }
@@ -391,13 +388,9 @@ public class CpuZ80 implements ICPU, Runnable {
     /* Get an GPR register and return it */
     private short getreg2(int reg) {
         switch (reg) {
-            case 0: return B;
-            case 1: return C;
-            case 2: return D;
-            case 3: return E;
-            case 4: return H;
-            case 5: return L;
-            case 7: return A;
+            case 0: return B; case 1: return C;
+            case 2: return D; case 3: return E;
+            case 4: return H; case 5: return L; case 7: return A;
         }
         return 0;
     }
@@ -548,6 +541,7 @@ public class CpuZ80 implements ICPU, Runnable {
     private int evalStep() {
         short OP; int tmp, tmp1, tmp2, tmp3;
         short special = 0; // prefix if available = 0xDD or 0xFD
+        byte b;
 
         /* if interrupt is waiting, instruction won't be read from memory
          * but from one or all of 3 bytes (b1,b2,b3) which represents either
@@ -604,7 +598,7 @@ public class CpuZ80 implements ICPU, Runnable {
             case 0x09: /* ADD HL, ss*/
                 tmp = (OP >>> 4) & 0x03; tmp1 = getpair(tmp);
                 tmp2 = getpair(2); tmp3 = tmp1 + tmp2; putpair(2,tmp3);
-                F = (short)((F & 0xEC) | cbitsTable[(short)((short)(tmp1 ^ tmp2 ^ tmp3) >>> 8)]);
+                F = (short)((F & 0xEC) |cbitsTable[((tmp1 ^ tmp2 ^ tmp3) >>> 8)&0x1ff]);
                 return 11;
             case 0x0B: /* DEC ss*/
                 tmp = (OP >>> 4) & 0x03; tmp1 = getpair(tmp) - 1;
@@ -618,17 +612,21 @@ public class CpuZ80 implements ICPU, Runnable {
         }
         switch (OP & 0xF8) {
             case 0x80: /* ADD A,r */
-                tmp = getreg(OP&7); tmp1 = (A + tmp)&0xff; tmp2 = A ^ tmp1 ^ tmp;
+                tmp = getreg(OP&7); tmp1 = A + tmp; tmp2 = A ^ tmp1 ^ tmp;
                 F = (short)((tmp1&0x80)|((tmp1 == 0)?flagZ:0)|cbitsTable[tmp2] 
-                        |(((tmp2>>6)^(tmp2>>5))&4)); return 4;
+                        |(((tmp2>>6)^(tmp2>>5))&4)); A = (short)(tmp1&0xff); return 4;
             case 0x88: /* ADC A,r */
-                tmp3 = getreg(OP&7); tmp1 = (A + tmp3 + (F&1))&0xff; tmp2 = A ^ tmp1 ^ tmp3;
+                tmp3 = getreg(OP&7); tmp1 = A + tmp3 + (F&1); tmp2 = A ^ tmp1 ^ tmp3;
                 F = (short)((tmp1&0x80)|((tmp1 == 0)?flagZ:0)|cbitsTable[tmp2] 
-                        |(((tmp2>>6)^(tmp2>>5))&4)); return 4;
+                        |(((tmp2>>6)^(tmp2>>5))&4)); A = (short)(tmp1&0xff);return 4;
             case 0x90: /* SUB r */
-                tmp3 = getreg(OP&7); tmp1 = (A - tmp3)&0xff; tmp2 = A ^ tmp1 ^ tmp3;
+                tmp3 = getreg(OP&7); tmp1 = A - tmp3; tmp2 = A ^ tmp1 ^ tmp3;
                 F = (short)((tmp1&0x80)|((tmp1 == 0)?flagZ:0)|cbitsTable[tmp2&0x1ff] 
-                        |(((tmp2>>6)^(tmp2>>5))&4)|flagN); return 4;
+                        |(((tmp2>>6)^(tmp2>>5))&4)|flagN); A = (short)(tmp1&0xff);return 4;
+            case 0x98: /* SBC A,r */
+                tmp = getreg(OP&7); tmp2 = A - tmp - (F&1);
+                F = (short)(cbits2Z80Table[(A ^ tmp ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
+                  | (((tmp2&0xff)==0)?flagZ:0) | flagN); A = (short)(tmp2&0xff); return 4;
             case 0xA0: /* AND r */
                 A &= getreg(OP&7); F = andTable[A]; return 4;
             case 0xA8: /* XOR r */
@@ -687,7 +685,7 @@ public class CpuZ80 implements ICPU, Runnable {
                     if ((tmp1 != 0) || ((A & 0xf) > 9)) tmp += 6;
                     if ((tmp2 != 0) || (A > 0x99)) tmp += 0x60;
                 }
-                F = (short)((F & 3)|daaTable[(short)tmp]|((A > 0x99)?1:0)|((A^tmp) & 0x10));
+                F = (short)((F & 3)|daaTable[tmp&0xff]|((A > 0x99)?1:0)|((A^tmp) & 0x10));
                 A = (short)tmp;
                 return 4;
             case 0x2F: /* CPL */
@@ -994,7 +992,6 @@ public class CpuZ80 implements ICPU, Runnable {
                     case 0x70: /* LD (ii+d) */
                         tmp1 = (OP & 7); tmp2 = (getspecial(special)+tmp)&0xffff;
                         mem.write(tmp2, getreg2(tmp1)); return 19;
-
                 }
                 switch(OP) {
                     case 0x34: /* INC (ii+d) */
@@ -1154,26 +1151,28 @@ public class CpuZ80 implements ICPU, Runnable {
         switch (OP & 0xE7) {
             case 0x20: /* JR cc,d */
                 if (getCC1((OP>>>3)&3)) {
-                    synchronized(PClock) { PC += tmp+1; PC &= 0xFFFF;} return 12;
+                    b = (byte)tmp;
+                    synchronized(PClock) { PC += b; PC &= 0xFFFF;} return 12;
                 } return 7;
         }
         switch (OP) {
             case 0x18: /* JR e */
-                synchronized(PClock) { PC += tmp+1; PC &= 0xFFFF; } return 12;
+                b = (byte)tmp;
+                synchronized(PClock) { PC += b; PC &= 0xFFFF; } return 12;
             case 0xC6: /* ADD A,d */
-                tmp1 = (A + tmp)&0xff; tmp2 = A ^ tmp1 ^ tmp;
+                tmp1 = A + tmp; tmp2 = A ^ tmp1 ^ tmp;
                 F = (short)((tmp1&0x80)|((tmp1 == 0)?flagZ:0)|cbitsTable[tmp2] 
-                        |(((tmp2>>6)^(tmp2>>5))&4)); return 7;
+                        |(((tmp2>>6)^(tmp2>>5))&4)); A = (short)(tmp1&0xff); return 7;
             case 0xCE: /* ADC A,d */
-                tmp1 = (A + tmp + (F&1))&0xff; tmp2 = A ^ tmp1 ^ tmp;
+                tmp1 = A + tmp + (F&1); tmp2 = A ^ tmp1 ^ tmp;
                 F = (short)((tmp1&0x80)|((tmp1 == 0)?flagZ:0)|cbitsTable[tmp2] 
-                        |(((tmp2>>6)^(tmp2>>5))&4)); return 7;
+                        |(((tmp2>>6)^(tmp2>>5))&4)); A = (short)(tmp1&0xff); return 7;
             case 0xD3: /* OUT (d),A */
                 cpu.fireIO(tmp, false, A); return 11;
             case 0xD6: /* SUB d */
-                tmp1 = (A - tmp)&0xff; tmp2 = A ^ tmp1 ^ tmp;
+                tmp1 = A - tmp; tmp2 = A ^ tmp1 ^ tmp;
                 F = (short)((tmp1&0x80)|((tmp1 == 0)?flagZ:0)|cbitsTable[tmp2&0x1ff] 
-                        |(((tmp2>>6)^(tmp2>>5))&4)|flagN); return 7;
+                        |(((tmp2>>6)^(tmp2>>5))&4)|flagN); A = (short)(tmp1&0xff); return 7;
             case 0xDB: /* IN A,(d) */
                 A = (short)(cpu.fireIO(tmp, true, (short)0) & 0xFF); return 11;
             case 0xDE: /* SBC A,d */
@@ -1318,6 +1317,7 @@ public class CpuZ80 implements ICPU, Runnable {
                     }
                 }
                 catch (IndexOutOfBoundsException e) {
+                    e.printStackTrace();
                     run_state = stateEnum.stoppedAddrFallout;
                     break;
                 }
