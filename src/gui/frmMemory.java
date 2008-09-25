@@ -10,6 +10,8 @@ import gui.utils.EmuFileFilter;
 import gui.utils.memoryTableModel;
 import gui.utils.tableMemory;
 import interfaces.SMemoryContext;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -73,13 +75,24 @@ public class frmMemory extends javax.swing.JFrame {
                 updateMemVal(row, column);
             }
         });
-        
         tblMemory.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseClicked(MouseEvent e) {
-                int row = tblMemory.rowAtPoint(e.getPoint());
-                int col = tblMemory.columnAtPoint(e.getPoint());
+                super.mousePressed(e);
+                int row = tblMemory.getSelectedRow();
+                int col = tblMemory.getSelectedColumn();
                 updateMemVal(row, col);
             }
+        });
+        tblMemory.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                super.keyReleased(e);
+                int row = tblMemory.getSelectedRow();
+                int col = tblMemory.getSelectedColumn();
+                updateMemVal(row, col);
+            }
+            
         });
         this.setLocationRelativeTo(null);
     }
@@ -111,6 +124,7 @@ public class frmMemory extends javax.swing.JFrame {
         jToolBar1 = new javax.swing.JToolBar();
         btnClearMemory = new javax.swing.JButton();
         btnOpenImage = new javax.swing.JButton();
+        btnSettings = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JToolBar.Separator();
         jLabel1 = new javax.swing.JLabel();
         spnPage = new javax.swing.JSpinner();
@@ -136,6 +150,10 @@ public class frmMemory extends javax.swing.JFrame {
         txtValBin = new javax.swing.JTextField();
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
+        spnBank = new javax.swing.JSpinner();
+        jLabel11 = new javax.swing.JLabel();
+        lblBanksCount = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Operating memory plugin");
@@ -162,6 +180,13 @@ public class frmMemory extends javax.swing.JFrame {
             }
         });
         jToolBar1.add(btnOpenImage);
+
+        btnSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/SaveAs24.gif"))); // NOI18N
+        btnSettings.setToolTipText("Settings...");
+        btnSettings.setFocusable(false);
+        btnSettings.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnSettings.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar1.add(btnSettings);
         jToolBar1.add(jSeparator2);
 
         jLabel1.setText("Page number:");
@@ -273,7 +298,7 @@ public class frmMemory extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel8)
                     .addComponent(jLabel9))
-                .addContainerGap(57, Short.MAX_VALUE))
+                .addContainerGap(143, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -297,22 +322,45 @@ public class frmMemory extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
+        jLabel10.setText("Bank:");
+
+        jLabel11.setText("Banks count:");
+
+        lblBanksCount.setFont(lblBanksCount.getFont().deriveFont(lblBanksCount.getFont().getStyle() | java.awt.Font.BOLD));
+        lblBanksCount.setText("0");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 556, Short.MAX_VALUE)
+            .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 642, Short.MAX_VALUE)
             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(paneMemory, javax.swing.GroupLayout.DEFAULT_SIZE, 556, Short.MAX_VALUE)
+            .addComponent(paneMemory, javax.swing.GroupLayout.DEFAULT_SIZE, 642, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel10)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(spnBank, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel11)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblBanksCount)
+                .addContainerGap(423, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(paneMemory, javax.swing.GroupLayout.DEFAULT_SIZE, 169, Short.MAX_VALUE)
+                .addComponent(paneMemory, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel10)
+                    .addComponent(spnBank, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel11)
+                    .addComponent(lblBanksCount))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 11, Short.MAX_VALUE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
@@ -335,6 +383,7 @@ public class frmMemory extends javax.swing.JFrame {
         f.addChoosableFileFilter(f2);
         f.setFileFilter(f1);
         f.setApproveButtonText("Load");
+        f.setCurrentDirectory(new File(System.getProperty("user.dir")));
 
         int returnVal = f.showOpenDialog(this);
         f.setVisible(true);
@@ -342,14 +391,14 @@ public class frmMemory extends javax.swing.JFrame {
             File fileSource = f.getSelectedFile();
             if (fileSource.canRead() == true) {
                 if (fileSource.getName().toLowerCase().endsWith(".hex"))
-                    mem.loadHex(fileSource.getAbsolutePath());
+                    mem.loadHex(fileSource.getAbsolutePath(),0);
                 else {
                     // ask for address where to load image
                     int adr = 0;
                     String sadr = JOptionPane.showInputDialog("Enter starting address:", 0);
                     try { adr = Integer.decode(sadr); }
                     catch(NumberFormatException e) {}
-                    mem.loadBin(fileSource.getAbsolutePath(),adr);
+                    mem.loadBin(fileSource.getAbsolutePath(),adr,0);
                 }
                 this.tblMemory.revalidate();
                 this.tblMemory.repaint();
@@ -392,7 +441,10 @@ public class frmMemory extends javax.swing.JFrame {
     private javax.swing.JButton btnFindAddress;
     private javax.swing.JButton btnOpenImage;
     private javax.swing.JButton btnROMRanges;
+    private javax.swing.JButton btnSettings;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -407,8 +459,10 @@ public class frmMemory extends javax.swing.JFrame {
     private javax.swing.JToolBar.Separator jSeparator3;
     private javax.swing.JToolBar.Separator jSeparator4;
     private javax.swing.JToolBar jToolBar1;
+    private javax.swing.JLabel lblBanksCount;
     private javax.swing.JLabel lblPageCount;
     private javax.swing.JScrollPane paneMemory;
+    private javax.swing.JSpinner spnBank;
     private javax.swing.JSpinner spnPage;
     private javax.swing.JTextField txtAddress;
     private javax.swing.JTextField txtChar;

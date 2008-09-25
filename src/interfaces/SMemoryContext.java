@@ -23,8 +23,8 @@ public interface SMemoryContext extends IMemoryContext {
     public void setRAM(int from, int to);
     public void setROM(int from, int to);
 
-    public boolean loadHex(String filename);
-    public boolean loadBin(String filename, int address);
+    public boolean loadHex(String filename, int bank);
+    public boolean loadBin(String filename, int address, int bank);
 
     public void clear();
     

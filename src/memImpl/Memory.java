@@ -11,6 +11,7 @@ package memImpl;
 
 import gui.frmMemory;
 import plugins.ISettingsHandler;
+import plugins.ISettingsHandler.pluginType;
 import plugins.memory.IMemory;
 import plugins.memory.IMemoryContext;
 
@@ -62,7 +63,14 @@ public class Memory implements IMemory {
     }
 
     public void initialize(int size, ISettingsHandler sHandler) {
-        memContext.init(size);
+        String s = sHandler.readSetting(pluginType.memory, null, "banksCount");
+        int bCount = 0;
+        
+        if (s != null) {
+            try { bCount = Integer.parseInt(s); }
+            catch(Exception e) {}
+        }
+        memContext.init(size, bCount);
         this.settings = sHandler;
     }
 

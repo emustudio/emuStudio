@@ -30,8 +30,12 @@ import runtime.StaticDialogs;
 public class MemoryContext implements SMemoryContext {
     public int lastImageStart = 0;
     private boolean lastStartSet = false;
-    private short[] mem;
+    private short[][] mem;
     private boolean sizeSet; // whether memory was initialized (created)
+    private int banksCount;
+    private short bankSelect = 0;
+    private int bankCommon = 0xB000;
+    private int b;
 
     // this table contains ROM parts of memory
     private Hashtable romBitmap; // keys: low boundary (limit); values: upper boundary
@@ -46,9 +50,11 @@ public class MemoryContext implements SMemoryContext {
         deviceList = new EventListenerList();
     }
     
-    public boolean init(int size) {
+    public boolean init(int size, int banks) {
         if (sizeSet == true) return false;
-        mem = new short[size];
+        this.banksCount = banks;
+        if (banks <= 0) banks=1;
+        mem = new short[size][banks];
         sizeSet = true;
         return true;
     }
@@ -67,14 +73,15 @@ public class MemoryContext implements SMemoryContext {
      */
     public void clear() {
         if (sizeSet == false) return;
-        for (int i = 0; i < mem.length; i++) mem[i] = 0;
+        for (int i = 0; i < mem.length; i++) 
+            for (int j = 0; j < banksCount;j++) mem[i][j] = 0;
         lastImageStart = 0;
         fireChange(-1);
     }
 
     // this can parse classic old data
     // line beginning with ; is ignored
-    public boolean loadHex(String filename) {
+    public boolean loadHex(String filename, int bank) {
         if (sizeSet == false) return false;
         lastStartSet = false;
         ArrayList a = new ArrayList();
@@ -139,7 +146,7 @@ public class MemoryContext implements SMemoryContext {
                     if (j == -1) { vstup.close(); return false; }
                     d = (char)j;
                     short data = Short.decode(String.format("0x%c%c",c,d));
-                    mem[address++] = data;
+                    mem[address++][bank] = data;
                 }
                 // checksum - dont care..
                 while((i = vstup.read()) != -1) if ((char)i == '\n' || i == 0x0D) break;
@@ -165,7 +172,7 @@ public class MemoryContext implements SMemoryContext {
      * @param address an address where the file should be loaded.
      * @return true if file was successfully loaded, false if not.
      */
-    public boolean loadBin(String filename, int address) {
+    public boolean loadBin(String filename, int address, int bank) {
         if (sizeSet == false) return false;
         lastImageStart = 0;
         lastStartSet = true;
@@ -178,7 +185,7 @@ public class MemoryContext implements SMemoryContext {
             long r=0, l = vstup.length();
             while(r < l) {
                 i = vstup.readUnsignedByte();
-                mem[address++] = (short)(i & 0xFF);
+                mem[address++][bank] = (short)(i & 0xFF);
                 l++;
             }
             vstup.close();
@@ -199,33 +206,37 @@ public class MemoryContext implements SMemoryContext {
     
     
     public Object read(int from) {
-        return (short)(mem[from] & 0xFF);
+        if (from < bankCommon) return mem[from][bankSelect];
+        else return mem[from][0];
     }
 
     public Object readWord(int from) {
-        if (from == mem.length-1) return mem[from];
-        int low = mem[from] & 0xFF;
-        int high = mem[from+1];
+        b = (from < bankCommon)?bankSelect:0;
+        if (from == mem.length-1) return mem[from][b];
+        int low = mem[from][b] & 0xFF;
+        int high = mem[from+1][b];
         return (int)((high << 8)| low);
     }
 
     public void write(int to, Object val) {
         if (isRom(to) == true) return;
+        b = (to < bankCommon)?bankSelect:0;
         if (val instanceof Integer)
-            mem[to] = (short)((Integer)val & 0xFF);
+            mem[to][b] = (short)((Integer)val & 0xFF);
         else
-            mem[to] = (short)((Short)val & 0xFF);
+            mem[to][b] = (short)((Short)val & 0xFF);
         fireChange(to);
     }
 
     public void writeWord(int to, Object val) {
         if (isRom(to) == true) return;
+        b = (to < bankCommon)?bankSelect:0;
         short low = (short)((Integer)val & 0xFF);
-        mem[to] = low;
+        mem[to][b] = low;
         fireChange(to);
         if (to < mem.length-1) {
             short high = (short)(((Integer)val >>> 8) & 0xFF);
-            mem[to+1] = high;
+            mem[to+1][b] = high;
             fireChange(to+1);
         }
     }
