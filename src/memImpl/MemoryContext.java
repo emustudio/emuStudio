@@ -34,7 +34,7 @@ public class MemoryContext implements SMemoryContext {
     private boolean sizeSet; // whether memory was initialized (created)
     private int banksCount;
     private short bankSelect = 0;
-    private int bankCommon = 0xB000;
+    private int bankCommon = 0;
     private int b;
 
     // this table contains ROM parts of memory
@@ -50,9 +50,10 @@ public class MemoryContext implements SMemoryContext {
         deviceList = new EventListenerList();
     }
     
-    public boolean init(int size, int banks) {
+    public boolean init(int size, int banks, int bankCommon) {
         if (sizeSet == true) return false;
         this.banksCount = banks;
+        this.bankCommon = bankCommon;
         if (banks <= 0) banks=1;
         mem = new short[size][banks];
         sizeSet = true;
@@ -164,6 +165,13 @@ public class MemoryContext implements SMemoryContext {
         }
         fireChange(-1);
         return true;
+    }
+    
+    /**
+     * Get starting address (load address) from HEX file
+     */
+    public int getHexStartAddress(File file) {
+        return 0;
     }
     
     /**

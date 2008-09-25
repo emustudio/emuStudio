@@ -24,6 +24,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import memImpl.Memory;
+import plugins.ISettingsHandler;
 import runtime.StaticDialogs;
 
 
@@ -32,14 +34,18 @@ import runtime.StaticDialogs;
  * @author  vbmacher
  */
 public class frmMemory extends javax.swing.JFrame {
-    private SMemoryContext mem;
+    private SMemoryContext memContext;
+    private Memory mem;
     private tableMemory tblMemory;
     private memoryTableModel memModel;
+    private ISettingsHandler settings;
     
     /** Creates new form frmMemory */
-    public frmMemory(SMemoryContext mem) {
+    public frmMemory(Memory mem, ISettingsHandler settings) {
         this.mem = mem;
-        this.memModel = new memoryTableModel(mem);
+        this.settings = settings;
+        this.memContext = (SMemoryContext)mem.getContext();
+        this.memModel = new memoryTableModel(memContext);
         
         initComponents();
         tblMemory = new tableMemory(memModel,paneMemory);
@@ -133,8 +139,6 @@ public class frmMemory extends javax.swing.JFrame {
         lblPageCount = new javax.swing.JLabel();
         jSeparator3 = new javax.swing.JToolBar.Separator();
         btnFindAddress = new javax.swing.JButton();
-        jSeparator1 = new javax.swing.JToolBar.Separator();
-        btnROMRanges = new javax.swing.JButton();
         paneMemory = new javax.swing.JScrollPane();
         jPanel1 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
@@ -186,6 +190,11 @@ public class frmMemory extends javax.swing.JFrame {
         btnSettings.setFocusable(false);
         btnSettings.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnSettings.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnSettings.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSettingsActionPerformed(evt);
+            }
+        });
         jToolBar1.add(btnSettings);
         jToolBar1.add(jSeparator2);
 
@@ -214,17 +223,6 @@ public class frmMemory extends javax.swing.JFrame {
             }
         });
         jToolBar1.add(btnFindAddress);
-        jToolBar1.add(jSeparator1);
-
-        btnROMRanges.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/History24.gif"))); // NOI18N
-        btnROMRanges.setToolTipText("ROM ranges");
-        btnROMRanges.setFocusable(false);
-        btnROMRanges.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnROMRangesActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(btnROMRanges);
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Memory value"));
 
@@ -359,7 +357,7 @@ public class frmMemory extends javax.swing.JFrame {
                     .addComponent(spnBank, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel11)
                     .addComponent(lblBanksCount))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 11, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 9, Short.MAX_VALUE)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
@@ -391,14 +389,14 @@ public class frmMemory extends javax.swing.JFrame {
             File fileSource = f.getSelectedFile();
             if (fileSource.canRead() == true) {
                 if (fileSource.getName().toLowerCase().endsWith(".hex"))
-                    mem.loadHex(fileSource.getAbsolutePath(),0);
+                    memContext.loadHex(fileSource.getAbsolutePath(),0);
                 else {
                     // ask for address where to load image
                     int adr = 0;
                     String sadr = JOptionPane.showInputDialog("Enter starting address:", 0);
                     try { adr = Integer.decode(sadr); }
                     catch(NumberFormatException e) {}
-                    mem.loadBin(fileSource.getAbsolutePath(),adr,0);
+                    memContext.loadBin(fileSource.getAbsolutePath(),adr,0);
                 }
                 this.tblMemory.revalidate();
                 this.tblMemory.repaint();
@@ -410,14 +408,10 @@ public class frmMemory extends javax.swing.JFrame {
 }//GEN-LAST:event_btnOpenImageActionPerformed
 
     private void btnClearMemoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearMemoryActionPerformed
-       mem.clear();
+       memContext.clear();
        tblMemory.revalidate();
        tblMemory.repaint();
 }//GEN-LAST:event_btnClearMemoryActionPerformed
-
-    private void btnROMRangesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnROMRangesActionPerformed
-        new frmROMRange(mem, this.tblMemory).setVisible(true);
-}//GEN-LAST:event_btnROMRangesActionPerformed
     
     private void btnFindAddressActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFindAddressActionPerformed
         int address = 0;
@@ -426,7 +420,7 @@ public class frmMemory extends javax.swing.JFrame {
                     "Find address:","Find Address",
                     JOptionPane.QUESTION_MESSAGE,null,null,0).toString()).intValue();
         } catch(NumberFormatException e) {return;} catch (NullPointerException f) {return;}
-        if (address <0 || address >= mem.getSize()) {
+        if (address <0 || address >= memContext.getSize()) {
             JOptionPane.showMessageDialog(this,"Error: Address out of bounds",
                     "Find Address",JOptionPane.ERROR_MESSAGE);
             return;
@@ -434,13 +428,16 @@ public class frmMemory extends javax.swing.JFrame {
         this.memModel.setPage(address /
                 (memModel.getRowCount() * memModel.getColumnCount()));
 }//GEN-LAST:event_btnFindAddressActionPerformed
+
+private void btnSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSettingsActionPerformed
+    new frmSettings(this,true,mem,tblMemory,settings).setVisible(true);
+}//GEN-LAST:event_btnSettingsActionPerformed
     
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnClearMemory;
     private javax.swing.JButton btnFindAddress;
     private javax.swing.JButton btnOpenImage;
-    private javax.swing.JButton btnROMRanges;
     private javax.swing.JButton btnSettings;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
@@ -454,7 +451,6 @@ public class frmMemory extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JToolBar.Separator jSeparator1;
     private javax.swing.JToolBar.Separator jSeparator2;
     private javax.swing.JToolBar.Separator jSeparator3;
     private javax.swing.JToolBar.Separator jSeparator4;
