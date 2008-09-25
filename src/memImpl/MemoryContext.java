@@ -52,9 +52,9 @@ public class MemoryContext implements SMemoryContext {
     
     public boolean init(int size, int banks, int bankCommon) {
         if (sizeSet == true) return false;
-        this.banksCount = banks;
         this.bankCommon = bankCommon;
         if (banks <= 0) banks=1;
+        this.banksCount = banks;
         mem = new short[size][banks];
         sizeSet = true;
         return true;

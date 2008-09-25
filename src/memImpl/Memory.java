@@ -33,7 +33,7 @@ public class Memory implements IMemory {
                 " controllable via SMemoryContext class.";
     }
 
-    public String getVersion() { return "0.25b"; }
+    public String getVersion() { return "0.26b"; }
 
     public String getName() {
         return "Standard linear-byte operating memory with variable size";
