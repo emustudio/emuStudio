@@ -635,6 +635,8 @@ public class DiskFrame extends javax.swing.JFrame {
         int i = driveCombo.getSelectedIndex();
         File ff = ((Drive)drives.get(i)).getImageFile();
         f.setSelectedFile(ff);
+        if (ff == null)
+            f.setCurrentDirectory(new File(System.getProperty("user.dir")));
         int returnVal = f.showOpenDialog(this);
         f.setVisible(true);
         if(returnVal == JFileChooser.APPROVE_OPTION)
