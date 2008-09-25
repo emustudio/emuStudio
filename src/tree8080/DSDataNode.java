@@ -38,7 +38,7 @@ public class DSDataNode extends DataValueNode {
     public int pass2(compileEnv env, int addr_start) throws Exception{
         try { 
             int val = expression.eval(env, addr_start);
-            return val;
+            return addr_start+val;
         }
         catch(NeedMorePassException e) {
             throw new Exception("[" + line + "," + column
