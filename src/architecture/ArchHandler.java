@@ -187,7 +187,7 @@ public class ArchHandler implements ISettingsHandler {
         if (settingName != null && !settingName.equals("")) 
             prop += "." + settingName;
         
-        return settings.getProperty(prop);
+        return settings.getProperty(prop,null);
     }
 
     public String getDeviceName(int index) {

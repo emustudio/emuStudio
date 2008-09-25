@@ -168,6 +168,9 @@ public class EmuTextPane extends JTextPane {
         f.setFileFilter(f1);
         f.setApproveButtonText("Open");
         f.setSelectedFile(fileSource);
+        if (fileSource == null) {
+            f.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        }
 
         int returnVal = f.showOpenDialog(this);
         f.setVisible(true);

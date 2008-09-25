@@ -71,6 +71,7 @@ public class DebugTableModel extends AbstractTableModel {
     private int getFirstRowAddress() {
         try {
             int pc = cpu.getContext().getInstrPosition();
+//            short diff;
             // max 10 operacnych kodov sa zobrazi pred aktualnou instrukciou
             firstRowAddress = 0;
             while (pc > firstRowAddress+10)
