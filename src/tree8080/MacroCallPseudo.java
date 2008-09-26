@@ -13,6 +13,7 @@ import compiler8080.HEXFileHandler;
 import compiler8080.NeedMorePassException;
 import compiler8080.compileEnv;
 import java.util.Vector;
+import plugins.compiler.IMessageReporter;
 import tree8080Abstract.ExprNode;
 import tree8080Abstract.PseudoNode;
 
@@ -41,7 +42,7 @@ public class MacroCallPseudo extends PseudoNode {
         return macro.getStatSize();
     }
 
-    public void pass1() {}
+    public void pass1(IMessageReporter r) {}
     
     
     // this is a call for expanding a macro

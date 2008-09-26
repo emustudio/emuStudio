@@ -75,7 +75,7 @@ terminal RESERVED_STC,RESERVED_CMC,RESERVED_INR,RESERVED_DCR,RESERVED_CMA,
         RESERVED_RNC,RESERVED_RZ,RESERVED_RNZ,RESERVED_RM,RESERVED_RP,
         RESERVED_RPE,RESERVED_RPO,RESERVED_RST,RESERVED_EI,RESERVED_DI,
         RESERVED_IN,RESERVED_OUT,RESERVED_HLT;
-terminal PREPROCESSOR_ORG,PREPROCESSOR_EQU,PREPROCESSOR_SET,
+terminal PREPROCESSOR_ORG,PREPROCESSOR_EQU,PREPROCESSOR_SET,PREPROCESSOR_INCLUDE,
         PREPROCESSOR_IF,PREPROCESSOR_ENDIF,PREPROCESSOR_MACRO,PREPROCESSOR_ENDM,
         PREPROCESSOR_DB,PREPROCESSOR_DW,PREPROCESSOR_DS,PREPROCESSOR_ADDR;
 terminal REGISTERS_A,REGISTERS_B,REGISTERS_C,REGISTERS_D,REGISTERS_E,
@@ -195,8 +195,10 @@ Pseudocode ::= PREPROCESSOR_ORG Expression:e
  Statement:s PREPROCESSOR_ENDM
     {: RESULT = new MacroPseudoNode(name,vec,s,parser.lastLine, parser.lastColumn); :}
  | TIDENTIFIER:name MacroExprOptional:vec
-    {: RESULT = new MacroCallPseudo(name, vec,parser.lastLine, parser.lastColumn); :};
- 
+    {: RESULT = new MacroCallPseudo(name, vec,parser.lastLine, parser.lastColumn); :}
+ | PREPROCESSOR_INCLUDE LITERAL_STRING:filename
+    {: RESULT = new IncludePseudoNode(filename,parser.lastLine,parser.lastColumn); :};
+
 MacroOperOptional ::= MOperList:vec {: RESULT = vec; :} | {: RESULT = null; :};
 MOperList ::= TIDENTIFIER:name
     {: Vector vec = new Vector();

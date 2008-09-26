@@ -11,6 +11,7 @@ package tree8080;
 
 import compiler8080.HEXFileHandler;
 import compiler8080.compileEnv;
+import plugins.compiler.IMessageReporter;
 import tree8080Abstract.OpCodeNode;
 
 /**
@@ -33,7 +34,7 @@ public class OC_RegReg extends OpCodeNode {
     /// compile time ///
     
     public int getSize() { return 1; }
-    public void pass1() {}
+    public void pass1(IMessageReporter r) {}
 
     public int pass2(compileEnv parentEnv, int addr_start) throws Exception {
         if ((reg_src == reg_dst) && (reg_src == 6))

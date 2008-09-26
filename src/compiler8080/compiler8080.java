@@ -45,7 +45,7 @@ public class compiler8080 implements ICompiler {
     }
     
     public String getName() { return "Intel 8080 Compiler"; }
-    public String getVersion() { return "0.23b"; }
+    public String getVersion() { return "0.27b"; }
     public String getCopyright() { return "\u00A9 Copyright 2007-2008, Peter Jakubčo"; }
     public String getDescription() {
         return "It is light modified clone of original Intel's assembler. For syntax look"
@@ -82,7 +82,7 @@ public class compiler8080 implements ICompiler {
         try {
             Statement stat = (Statement)s;
             compileEnv env = new compileEnv();
-            stat.pass1(env); // create symbol table
+            stat.pass1(env,reporter); // create symbol table
             stat.pass2(0); // try to evaulate all expressions + compute relative addresses
             while (stat.pass3(env) == true) ;
             if (env.getPassNeedCount() != 0) {

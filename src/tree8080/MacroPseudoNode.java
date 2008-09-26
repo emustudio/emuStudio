@@ -12,6 +12,7 @@ package tree8080;
 import compiler8080.HEXFileHandler;
 import compiler8080.compileEnv;
 import java.util.Vector;
+import plugins.compiler.IMessageReporter;
 import tree8080Abstract.ExprNode;
 import tree8080Abstract.PseudoNode;
 
@@ -44,8 +45,8 @@ public class MacroPseudoNode extends PseudoNode {
     public int getSize() { return 0; }
     public int getStatSize() { return stat.getSize(); }
     
-    public void pass1() throws Exception {
-        stat.pass1(); // pass1 creates block symbol table (local for block)
+    public void pass1(IMessageReporter r) throws Exception {
+        stat.pass1(r); // pass1 creates block symbol table (local for block)
     }
     
     // for pass4

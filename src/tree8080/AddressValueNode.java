@@ -26,9 +26,6 @@ public class AddressValueNode extends ExprNode {
     
     public int getAddress() { return value; }
     
-    public String toString() {
-        return String.valueOf(value);
-    }
     
     /** Creates a new instance of AddressValueNode */
     public AddressValueNode() {

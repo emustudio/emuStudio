@@ -11,6 +11,7 @@ package tree8080Abstract;
 
 import compiler8080.HEXFileHandler;
 import compiler8080.compileEnv;
+import plugins.compiler.IMessageReporter;
 
 
 /**
@@ -34,7 +35,7 @@ public abstract class CodePseudoNode {
     
     // return size of compiled code
     public abstract int getSize();
-    public abstract void pass1() throws Exception;
+    public abstract void pass1(IMessageReporter rep) throws Exception;
     public abstract int pass2(compileEnv parentEnv, int addr_start) throws Exception;
     public abstract void pass4(HEXFileHandler hex) throws Exception;
 }

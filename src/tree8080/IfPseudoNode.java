@@ -12,6 +12,7 @@ package tree8080;
 import compiler8080.HEXFileHandler;
 import compiler8080.NeedMorePassException;
 import compiler8080.compileEnv;
+import plugins.compiler.IMessageReporter;
 import tree8080Abstract.ExprNode;
 import tree8080Abstract.PseudoNode;
 
@@ -42,8 +43,8 @@ public class IfPseudoNode extends PseudoNode {
         else return 0;
     }
 
-    public void pass1() throws Exception {
-        stat.pass1();
+    public void pass1(IMessageReporter r) throws Exception {
+        stat.pass1(r);
     }
     
     public int pass2(compileEnv env, int addr_start) throws Exception {

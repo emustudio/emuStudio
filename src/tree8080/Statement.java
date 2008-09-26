@@ -23,6 +23,7 @@ import compiler8080.HEXFileHandler;
 import compiler8080.NeedMorePassException;
 import compiler8080.compileEnv;
 import java.util.Vector;
+import plugins.compiler.IMessageReporter;
 
 /**
  *
@@ -30,10 +31,14 @@ import java.util.Vector;
  */
 public class Statement {
     private Vector list; // all instructions
-    
+    private Vector<String> includefiles; // list of files that
+                                         // were checked for include-loops
+                                         // in short: list of included files
+
     public Statement() { 
         list = new Vector();
         this.env = new compileEnv();
+        includefiles = new Vector<String>();
     }
     
     public void addElement(InstructionNode node) {
@@ -64,10 +69,10 @@ public class Statement {
     
     public compileEnv getCompileEnv() { return env; }
     
-    public void pass1(compileEnv env) throws Exception { this.env = env; pass1(); }
+    public void pass1(compileEnv env,IMessageReporter r) throws Exception { this.env = env; pass1(r); }
     // creates symbol table
     // return next current address
-    public void pass1() throws Exception {
+    public void pass1(IMessageReporter r) throws Exception {
         int i = 0;
         InstructionNode in;
         // only labels and macros have right to be all added to symbol table at once
@@ -80,7 +85,7 @@ public class Statement {
                 if (env.addMacroDef((MacroPseudoNode)in.codePseudo) == false)
                     throw new Exception("Macro already defined: " 
                             + ((MacroPseudoNode)in.codePseudo).getName());
-            in.pass1();
+            in.pass1(r,includefiles);
         }
     }
     
@@ -103,7 +108,7 @@ public class Statement {
     public int pass2(int addr_start) throws Exception {
         return this.pass2(env,addr_start);
     }
-    
+
     public boolean pass3(compileEnv parentEnv) throws Exception {
         int pnCount = parentEnv.getPassNeedCount();
         for (int i = parentEnv.getPassNeedCount()-1; i >=0 ; i--) {
@@ -115,7 +120,7 @@ public class Statement {
         if (pnCount < parentEnv.getPassNeedCount()) return true;
         else return false;
     }
-    
+
     public void pass4(HEXFileHandler hex) throws Exception {
         for (int i = 0; i < list.size(); i++) {
             InstructionNode in = (InstructionNode)list.get(i);
@@ -125,6 +130,33 @@ public class Statement {
     public void pass4(HEXFileHandler hex,compileEnv env) throws Exception {
         this.env = env;
         pass4(hex);
-        
     }
+
+    /**
+     * Method check whether this "subprogram" contains include
+     * pseudocode(s) and if yes, whether the statement calls for
+     * filename given by parameter.
+     * @param filename name of the file that "include" pseudocode should contain
+     * @return true if subprogram contains "include filename" pseudocode
+     */
+    public boolean getIncludeLoops(String filename) {
+        int i;
+        for (i = 0; i < includefiles.size(); i++) {
+            String s = includefiles.elementAt(i);
+            if (s.equals(filename)) return true;
+        }
+        includefiles.add(filename);
+        InstructionNode in;
+        for (i = 0; i < list.size(); i++) {
+            in = (InstructionNode)list.get(i);
+            if (in.getIncludeLoops(filename) == true)
+                return true;
+        }
+        return false;
+    }
+
+    public void addIncludeFiles(Vector<String> inclfiles) {
+        includefiles.addAll(inclfiles);
+    }
+
 }

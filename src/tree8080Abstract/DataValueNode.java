@@ -17,8 +17,6 @@ import compiler8080.compileEnv;
  * @author vbmacher
  */
 public abstract class DataValueNode {
-    public abstract String getDataType();
-    
     protected int line;
     protected int column;
     

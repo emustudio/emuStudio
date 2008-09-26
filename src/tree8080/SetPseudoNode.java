@@ -11,6 +11,7 @@ package tree8080;
 
 import compiler8080.HEXFileHandler;
 import compiler8080.compileEnv;
+import plugins.compiler.IMessageReporter;
 import tree8080Abstract.ExprNode;
 import tree8080Abstract.PseudoNode;
 
@@ -34,7 +35,7 @@ public class SetPseudoNode extends PseudoNode {
     /// compile time ///
 
     public int getSize() { return 0; }
-    public void pass1() {}
+    public void pass1(IMessageReporter r) {}
 
     public int pass2(compileEnv env, int addr_start) throws Exception { 
         if (env.addSetDef(this) == false)

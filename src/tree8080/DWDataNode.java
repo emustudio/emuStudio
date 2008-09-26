@@ -21,8 +21,6 @@ import tree8080Abstract.ExprNode;
 public class DWDataNode extends DataValueNode{
     private ExprNode expression = null;
     
-    public String getDataType() { return "dw"; }
-    
     /** Creates a new instance of DWDataNode */
     public DWDataNode(ExprNode expr, int line, int column) {
         super(line,column);

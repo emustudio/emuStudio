@@ -12,6 +12,7 @@ package tree8080;
 import compiler8080.HEXFileHandler;
 import compiler8080.compileEnv;
 import java.util.Vector;
+import plugins.compiler.IMessageReporter;
 import tree8080Abstract.CodeNode;
 import tree8080Abstract.DataValueNode;
 
@@ -48,7 +49,7 @@ public class DataNode extends CodeNode {
         return size;
     }
 
-    public void pass1() throws Exception {
+    public void pass1(IMessageReporter r) throws Exception {
         for (int i = 0; i < list.size(); i++) {
             DataValueNode n = (DataValueNode)list.elementAt(i);
             n.pass1();

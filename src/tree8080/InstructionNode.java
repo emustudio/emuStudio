@@ -3,6 +3,8 @@ package tree8080;
 import compiler8080.HEXFileHandler;
 import compiler8080.NeedMorePassException;
 import compiler8080.compileEnv;
+import java.util.Vector;
+import plugins.compiler.IMessageReporter;
 import tree8080Abstract.CodePseudoNode;
 
 /*
@@ -41,10 +43,15 @@ public class InstructionNode {
     }
     
     // do pass1 for all elements
-    public void pass1() throws Exception {
-        if (codePseudo != null) codePseudo.pass1();
+    public void pass1(IMessageReporter rep, Vector<String> inclfiles)
+            throws Exception {
+        if (codePseudo != null) {
+            if (codePseudo instanceof IncludePseudoNode)
+                ((IncludePseudoNode)codePseudo).pass1(rep, inclfiles);
+            else codePseudo.pass1(rep);
+        }
     }
-    
+
     public int pass2(compileEnv prev_env, int addr_start) throws Exception {
         this.current_address = addr_start;
         if (label != null) label.setAddress(new Integer(addr_start));
@@ -74,6 +81,16 @@ public class InstructionNode {
         if (codePseudo != null) 
             if ((codePseudo instanceof MacroPseudoNode) == false)
                 codePseudo.pass4(hex);
+    }
+
+    public boolean getIncludeLoops(String filename) {
+        if (codePseudo == null) return false;
+        if (codePseudo instanceof IncludePseudoNode) {
+            IncludePseudoNode i = (IncludePseudoNode)codePseudo;
+            if (i.isEqualName(filename)) 
+                return true;
+        }
+        return false;
     }
 
 }

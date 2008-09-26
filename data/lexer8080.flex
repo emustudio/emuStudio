@@ -567,6 +567,12 @@ Label ={Identifier}[\:]
     return (new token8080(lastToken,IToken.PREPROCESSOR,text,null,yyline,
         yycolumn,yychar,yychar+text.length()));
 }
+"include" {
+    lastToken = token8080.PREPROCESSOR_INCLUDE;
+    String text = yytext();
+    return (new token8080(lastToken,IToken.PREPROCESSOR,text,null,yyline,
+        yycolumn,yychar,yychar+text.length()));
+}
 "if" {
     lastToken = token8080.PREPROCESSOR_IF;
     String text = yytext();

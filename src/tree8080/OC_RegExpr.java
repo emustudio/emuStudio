@@ -11,6 +11,7 @@ package tree8080;
 
 import compiler8080.HEXFileHandler;
 import compiler8080.compileEnv;
+import plugins.compiler.IMessageReporter;
 import tree8080Abstract.ExprNode;
 import tree8080Abstract.OpCodeNode;
 
@@ -34,10 +35,13 @@ public class OC_RegExpr extends OpCodeNode {
     /// compile time ///
 
     public int getSize() { return 2; }
-    public void pass1() {}
+    public void pass1(IMessageReporter r) {}
 
     public int pass2(compileEnv parentEnv, int addr_start) throws Exception {
         expr.eval(parentEnv, addr_start);
+        
+        if (expr.getValue() > 0xff)
+            throw new Exception("["+line+","+column+"] Expression is too big (maximum is 0FFh)");
         return addr_start + 2;
     }
 
@@ -46,7 +50,7 @@ public class OC_RegExpr extends OpCodeNode {
         int opCode = 6;
         
         if (expr.getEncValue(true).length() > 2)
-            throw new Exception("["+line+","+column+"] Value of expression is too big");
+            throw new Exception("["+line+","+column+"] Expression is too big (maximum is 0FFh)");
         opCode |= (reg << 3);
         hex.putCode(String.format("%1$02X",opCode));
         hex.putCode(expr.getEncValue(true));

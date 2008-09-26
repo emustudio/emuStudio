@@ -11,6 +11,7 @@ package tree8080;
 
 import compiler8080.HEXFileHandler;
 import compiler8080.compileEnv;
+import plugins.compiler.IMessageReporter;
 import tree8080Abstract.ExprNode;
 import tree8080Abstract.OpCodeNode;
 
@@ -59,7 +60,7 @@ public class OC_Expr extends OpCodeNode {
         return rval;
     }
     
-    public void pass1() {}
+    public void pass1(IMessageReporter r) {}
 
     public int pass2(compileEnv parentEnv, int addr_start) throws Exception {
         expr.eval(parentEnv, addr_start);
@@ -119,7 +120,7 @@ public class OC_Expr extends OpCodeNode {
 
         if ((found == false) && mnemo.equals("rst")) {
             int v = expr.getValue();
-            if (v > 7) throw new Exception("[" + line + "," + column + "] value too large");
+            if (v > 7) throw new Exception("[" + line + "," + column + "] value too large (maximum is 7)");
             opCode |= (expr.getValue() << 3);
             insertAfter = false; found = true;
         }
@@ -129,8 +130,8 @@ public class OC_Expr extends OpCodeNode {
         code = String.format("%02X",opCode);
         if (insertAfter) {
             if (oneDataByte) {
-                if (expr.getEncValue(true).length() > 2)
-                    throw new Exception("[" + line + "," + column + "] value too large");
+                if (expr.getValue() > 0xFF)
+                    throw new Exception("[" + line + "," + column + "] value too large (maximum is 0FFh)");
                 code += expr.getEncValue(true);
             } else {
                 code += expr.getEncValue(false);

@@ -11,6 +11,7 @@ package tree8080;
 
 import compiler8080.HEXFileHandler;
 import compiler8080.compileEnv;
+import plugins.compiler.IMessageReporter;
 import tree8080Abstract.DataValueNode;
 import tree8080Abstract.ExprNode;
 import tree8080Abstract.OpCodeNode;
@@ -39,8 +40,6 @@ public class DBDataNode extends DataValueNode {
         super(line,column);
         this.opcode = opcode;
     }
- 
-    public String getDataType() { return "db"; }
     
     /// compile time ///
     public int getSize() { 
@@ -51,7 +50,7 @@ public class DBDataNode extends DataValueNode {
     }
     
     public void pass1() throws Exception {
-        if (opcode != null) opcode.pass1();
+        if (opcode != null) opcode.pass1(null);
     }
     
     public int pass2(compileEnv env, int addr_start) throws Exception {
