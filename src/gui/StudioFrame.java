@@ -270,6 +270,9 @@ public class StudioFrame extends javax.swing.JFrame {
         btnBreakpoint = new javax.swing.JButton();
         javax.swing.JButton btnMemory = new javax.swing.JButton();
         paneDebug = new javax.swing.JScrollPane();
+        javax.swing.JButton btnPrevious = new javax.swing.JButton();
+        javax.swing.JButton btnNext = new javax.swing.JButton();
+        javax.swing.JButton btnToPC = new javax.swing.JButton();
         javax.swing.JPanel peripheralPanel = new javax.swing.JPanel();
         javax.swing.JScrollPane paneDevices = new javax.swing.JScrollPane();
         lstDevices = new javax.swing.JList();
@@ -450,7 +453,7 @@ public class StudioFrame extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 444, Short.MAX_VALUE)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 543, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -473,7 +476,7 @@ public class StudioFrame extends javax.swing.JFrame {
         );
         statusWindowLayout.setVerticalGroup(
             statusWindowLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 441, Short.MAX_VALUE)
+            .addGap(0, 540, Short.MAX_VALUE)
         );
 
         splitLeftRight.setRightComponent(statusWindow);
@@ -590,6 +593,27 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         jToolBar2.add(btnMemory);
 
+        btnPrevious.setText("< Previous");
+        btnPrevious.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnPreviousActionPerformed(evt);
+            }
+        });
+
+        btnNext.setText("Next >");
+        btnNext.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNextActionPerformed(evt);
+            }
+        });
+
+        btnToPC.setText("To PC");
+        btnToPC.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnToPCActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout debuggerPanelLayout = new javax.swing.GroupLayout(debuggerPanel);
         debuggerPanel.setLayout(debuggerPanelLayout);
         debuggerPanelLayout.setHorizontalGroup(
@@ -597,6 +621,12 @@ public class StudioFrame extends javax.swing.JFrame {
             .addGroup(debuggerPanelLayout.createSequentialGroup()
                 .addComponent(jToolBar2, javax.swing.GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
                 .addContainerGap())
+            .addGroup(debuggerPanelLayout.createSequentialGroup()
+                .addComponent(btnPrevious)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnToPC)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 180, Short.MAX_VALUE)
+                .addComponent(btnNext))
             .addComponent(paneDebug, javax.swing.GroupLayout.DEFAULT_SIZE, 385, Short.MAX_VALUE)
         );
         debuggerPanelLayout.setVerticalGroup(
@@ -604,8 +634,12 @@ public class StudioFrame extends javax.swing.JFrame {
             .addGroup(debuggerPanelLayout.createSequentialGroup()
                 .addComponent(jToolBar2, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(paneDebug, javax.swing.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(paneDebug, javax.swing.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(debuggerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnPrevious)
+                    .addComponent(btnNext)
+                    .addComponent(btnToPC)))
         );
 
         splitPerDebug.setTopComponent(debuggerPanel);
@@ -634,7 +668,7 @@ public class StudioFrame extends javax.swing.JFrame {
         peripheralPanelLayout.setVerticalGroup(
             peripheralPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, peripheralPanelLayout.createSequentialGroup()
-                .addComponent(paneDevices, javax.swing.GroupLayout.DEFAULT_SIZE, 69, Short.MAX_VALUE)
+                .addComponent(paneDevices, javax.swing.GroupLayout.DEFAULT_SIZE, 162, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(showGUIButton))
         );
@@ -653,7 +687,7 @@ public class StudioFrame extends javax.swing.JFrame {
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(splitLeftRight, javax.swing.GroupLayout.DEFAULT_SIZE, 470, Short.MAX_VALUE)
+                .addComponent(splitLeftRight, javax.swing.GroupLayout.DEFAULT_SIZE, 569, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -833,7 +867,7 @@ public class StudioFrame extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 537, Short.MAX_VALUE)
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 636, Short.MAX_VALUE)
         );
 
         pack();
@@ -1110,6 +1144,24 @@ public class StudioFrame extends javax.swing.JFrame {
             mnuEditFindActionPerformed(evt);
         }
     }//GEN-LAST:event_mnuEditReplaceNextActionPerformed
+
+private void btnPreviousActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPreviousActionPerformed
+    debug_model.previous();
+    tblDebug.revalidate();
+    tblDebug.repaint();
+}//GEN-LAST:event_btnPreviousActionPerformed
+
+private void btnToPCActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnToPCActionPerformed
+    debug_model.topc();
+    tblDebug.revalidate();
+    tblDebug.repaint();
+}//GEN-LAST:event_btnToPCActionPerformed
+
+private void btnNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNextActionPerformed
+    debug_model.next();
+    tblDebug.revalidate();
+    tblDebug.repaint();
+}//GEN-LAST:event_btnNextActionPerformed
 
     
     // Variables declaration - do not modify//GEN-BEGIN:variables

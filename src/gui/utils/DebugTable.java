@@ -43,7 +43,8 @@ public class DebugTable extends JTable {
                 this.setBackground(Color.WHITE);
                 this.setForeground(Color.BLACK);
             }
-            setText(" " + value.toString());
+            if (value != null)  setText(" " + value.toString());
+            else setText(" ");
             return this;
         }
     }
