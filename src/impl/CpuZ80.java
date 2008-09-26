@@ -248,7 +248,11 @@ public class CpuZ80 implements ICPU, Runnable {
                 synchronized(run_state) {
                     run_state = stateEnum.runned;
                     evalStep();
-                    if (run_state == stateEnum.runned)
+                    if (PC > 0xffff) {
+                        run_state = stateEnum.stoppedAddrFallout;
+                        PC = 0xffff;
+                    }
+                    else if (run_state == stateEnum.runned)
                         run_state = stateEnum.stoppedBreak;
                 }
             }
@@ -334,7 +338,7 @@ public class CpuZ80 implements ICPU, Runnable {
     public boolean setPC(int memPos) {
         if (memPos < 0 || memPos > mem.getSize()) return false;
    //     synchronized(PClock) {
-            PC = memPos;
+            PC = memPos &0xFFFF;
     //    }
         return true;
     }
