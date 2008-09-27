@@ -36,6 +36,7 @@ public class TerminalImpl implements IDevice {
 
     public void showGUI() {
         if (terminalGUI == null) terminalGUI = new TerminalWindow(terminal,female);
+        else terminalGUI.initTerminalLabel();
         terminalGUI.setVisible(true);
     }
 
@@ -79,7 +80,7 @@ public class TerminalImpl implements IDevice {
     }
 
     public String getVersion() {
-        return "0.12b";
+        return "0.12b1";
     }
 
     public void destroy() {

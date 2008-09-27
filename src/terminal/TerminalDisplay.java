@@ -83,7 +83,8 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
     }
 
     protected void measure() {
-        FontMetrics fm = getFontMetrics(getFont());
+        FontMetrics fm = null;
+        try { fm = getFontMetrics(getFont()); } catch(Exception e) { return; }
         if (fm == null) return;
         line_height = fm.getHeight();
         line_ascent = fm.getAscent();
@@ -102,26 +103,31 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
     }
     
     // Methods to set the various attributes of the component
+    @Override
     public void setFont(Font f) { 
         super.setFont(f);
         measure();
         repaint();
     }
     
+    @Override
     public void setForeground(Color c) {
         super.setForeground(c);
         repaint();
     }
 
+    @Override
     public void addNotify() { 
         super.addNotify();
         measure();
     }
     
+    @Override
     public Dimension getPreferredSize() { 
         return new Dimension(max_width, max_height);
     }
     
+    @Override
     public Dimension getMinimumSize() { 
         return new Dimension(max_width, max_height);
     }
@@ -190,6 +196,7 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
      * Override previous update method in order to implement double-buffering.
      * As a second buffer is used Image object.
      */
+    @Override
     public void update(Graphics g) {
         // initialize buffer if needed
         if (dbImage == null) {
@@ -226,6 +233,7 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
      * This overridement paints video memory into screen. Every char
      * in videomemory represents ASCII form of the char.
      */
+    @Override
     public void paint(Graphics g) {
         int t_y;
         int x,y;
@@ -298,6 +306,6 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
     public String getID() { return "ADM-3A"; }
     public int getVersionMajor() { return 1; }
     public int getVersionMinor() { return 2; }
-    public String getVersionRev() { return "b1"; }
+    public String getVersionRev() { return "b2"; }
   
 }

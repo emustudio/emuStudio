@@ -42,7 +42,7 @@ public class TerminalWindow extends javax.swing.JFrame {
         this.setLocationRelativeTo(null);
     }
     
-    private void initTerminalLabel() {
+    public void initTerminalLabel() {
         try {
             // load terminal font from resources
             InputStream fin = this.getClass().getResourceAsStream("/resources/terminal.ttf");
