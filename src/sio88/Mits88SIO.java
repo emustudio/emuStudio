@@ -86,27 +86,27 @@ public class Mits88SIO implements IDevice {
             ISettingsHandler sHandler) {
 
         this.settings = sHandler;
-        this.cpu = (ACpuContext) cpu;
         this.attached = false;
         reset();
         if (cpu == null) return true;
         
         // ID of cpu can be ofcourse also else.
         if ((cpu instanceof ACpuContext) == false) {
-            StaticDialogs.showErrorMessage("The device can not be attached"
+            StaticDialogs.showErrorMessage("88-SIO device can not be attached"
                     + " to this kind of CPU");
             return false;
         }
+        this.cpu = (ACpuContext) cpu;
         
         // attach IO ports
         if (this.cpu.attachDevice(port1, 0x10) == false) {
-            StaticDialogs.showErrorMessage("Error: this device can't be"
-                    + " attached (there is a hardware conflict )");
+            StaticDialogs.showErrorMessage("Error: 88-SIO (port1) can't be"
+                    + " attached to CPU (there is a hardware conflict)");
             return false;
         }
         if (this.cpu.attachDevice(port2 ,0x11) == false) {
-            StaticDialogs.showErrorMessage("Error: this device can't be"
-                    + " attached (maybe there is a hardware conflict)");
+            StaticDialogs.showErrorMessage("Error: 88-SIO (port2) can't be"
+                    + " attached to CPU (there is a hardware conflict)");
             this.cpu.detachDevice(0x10);
             return false;
         }
