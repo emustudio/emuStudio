@@ -56,7 +56,7 @@ public class PseudoContext implements IDeviceContext {
     private int getCommonPos   = 0; /* determines state for sending the 'common' register           */
     private Calendar currentTime = Calendar.getInstance();
     private boolean currentTimeValid = false;
-    private short version[] = {'S', 'I', 'M', 'H', '0', '0', '3'};
+    private short version[] = {'S', 'I', 'M', 'H', '0', '0', '3',0};
 
     private final static int SECONDS_PER_MINUTE = 60;
     private final static int SECONDS_PER_HOUR = (60 * SECONDS_PER_MINUTE);
@@ -167,7 +167,6 @@ public class PseudoContext implements IDeviceContext {
 //#define CPM_COMMAND_LINE_LENGTH    128
 //#define TIMER_STACK_LIMIT          10       /* stack depth of timer stack   */
 //static uint32 markTime[TIMER_STACK_LIMIT];  /* timer stack                  */
-//static char version[] = "SIMH003";
 //
 //static void warnNoRealTimeClock(void) {
 //    if (simh_unit.flags & UNIT_SIMH_VERBOSE)
