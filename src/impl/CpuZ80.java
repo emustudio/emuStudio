@@ -600,13 +600,13 @@ public class CpuZ80 implements ICPU, Runnable {
                 tmp = (OP >>> 3) & 7;
                 if (getCC(tmp)) {
                     //synchronized(PClock) {
-                    PC = (Integer)mem.readWord(SP); SP += 2;
+                    PC = (Integer)mem.readWord(SP); SP = (SP + 2)&0xffff;
                     //}
                     return 11;
                 } return 5;
             case 0xC7: /* RST p */
                 //synchronized(PClock) {
-                mem.writeWord(SP-2,PC); SP -= 2; PC = OP & 0x38;
+                mem.writeWord(SP-2,PC); SP = (SP - 2)&0xffff; PC = OP & 0x38;
         //}
                 return 11;
         }
@@ -623,11 +623,11 @@ public class CpuZ80 implements ICPU, Runnable {
                 tmp = (OP >>> 4) & 0x03; tmp1 = getpair(tmp) - 1;
                 putpair(tmp,tmp1); return 6;
             case 0xC1: /* POP qq */
-                tmp = (OP >>> 4) & 0x03; tmp1 = (Integer)mem.readWord(SP); SP += 2;
+                tmp = (OP >>> 4) & 0x03; tmp1 = (Integer)mem.readWord(SP); SP = (SP+2)&0xffff;
                 putpair2(tmp, tmp1); return 10;
             case 0xC5: /* PUSH qq */
                 tmp = (OP >>> 4) & 0x03; tmp1 = getpair2(tmp);
-                SP -= 2; mem.writeWord(SP,tmp1); return 11;
+                SP = (SP -2)&0xffff; mem.writeWord(SP,tmp1); return 11;
         }
         switch (OP & 0xF8) {
             case 0x80: /* ADD A,r */
@@ -647,11 +647,11 @@ public class CpuZ80 implements ICPU, Runnable {
                 F = (short)(cbits2Z80Table[(A ^ tmp ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
                   | (((tmp2&0xff)==0)?flagZ:0) | flagN); A = (short)(tmp2&0xff); return 4;
             case 0xA0: /* AND r */
-                A &= getreg(OP&7); A &= 0xFF;F = andTable[A]; return 4;
+                A = (short)((A & getreg(OP&7))&0xff); F = andTable[A]; return 4;
             case 0xA8: /* XOR r */
-                A ^= getreg(OP&7); A &= 0xFF;F = daaTable[A]; return 4;
+                A = (short)((A ^ getreg(OP&7))&0xff); F = daaTable[A]; return 4;
             case 0xB0: /* OR r */
-                A |= getreg(OP&7); A &= 0xFF; F = daaTable[A]; return 4;
+                A = (short)((A |getreg(OP&7))&0xff); F = daaTable[A]; return 4;
             case 0xB8: /* CP r */
                 tmp3 = getreg(OP&7); tmp2 = A - tmp3; F = (short)(cpTable[tmp2&0xff]
                         |cbits2Z80Table[(A ^ tmp3 ^ tmp2) & 0x1ff]); return 4;
@@ -662,7 +662,7 @@ public class CpuZ80 implements ICPU, Runnable {
             case 0x02: /* LD (BC),A */
                 mem.write(getpair(0), A); return 7;
             case 0x07: /* RLCA */
-                tmp = A >>> 7; A = (short)(((A << 1)&0xFF) | tmp);
+                tmp = A >>> 7; A = (short)((((A << 1)&0xFF) | tmp)&0xff);
                 F = (short)((F & 0xEC) | tmp);
                 return 4;
             case 0x08: /* EX AF,AF' */
@@ -682,21 +682,20 @@ public class CpuZ80 implements ICPU, Runnable {
                 B--; B &= 0xFF;
                 if (B != 0) {
                    // synchronized(PClock) {
-                    PC += tmp + 1;
+                    PC += (tmp + 1);
                 //}
                     return 13;
                 } return 8;
             case 0x12: /* LD (DE), A */
                 mem.write(getpair(1), A);return 7;
             case 0x17: /* RLA */
-                tmp = A >>> 7; A = (short)((A << 1) | (F & 1));
+                tmp = A >>> 7; A = (short)(((A << 1) | (F & 1))&0xff);
                 F = (short)((F & 0xEC) | tmp); return 4;
             case 0x1A: /* LD A,(DE) */
-                tmp = (Short)mem.read(getpair(1)); A = (short)tmp;
-                return 7;
+                tmp = (Short)mem.read(getpair(1)); A = (short)(tmp&0xff);return 7;
             case 0x1F: /* RRA */
                 tmp = (F & 1) << 7; F = (short)((F & 0xEC) | (A & 1));
-                A = (short)(A >>> 1 | tmp);
+                A = (short)((A >>> 1 | tmp)&0xff);
                 return 4;
             case 0x27: /* DAA */
                 // code taken from:
@@ -710,10 +709,10 @@ public class CpuZ80 implements ICPU, Runnable {
                     if ((tmp2 != 0) || (A > 0x99)) tmp += 0x60;
                 }
                 F = (short)((F & 3)|daaTable[tmp&0xff]|((A > 0x99)?1:0)|((A^tmp) & 0x10));
-                A = (short)tmp;
+                A = (short)(tmp&0xff);
                 return 4;
             case 0x2F: /* CPL */
-                A = (short)~A; F |= 0x0A; return 4;
+                A = (short)((~A)&0xff); F |= 0x0A; return 4;
             case 0x37: /* SCF */
                 F = (short)((F & 0xED) | 1); return 4;
             case 0x3F: /* CCF */
@@ -733,7 +732,7 @@ public class CpuZ80 implements ICPU, Runnable {
                 return 4;
             case 0xE3: /* EX (SP),HL */
                 tmp = (Short)mem.read(SP); tmp1 = (Short)mem.read(SP+1);
-                mem.write(SP, L); mem.write(SP+1, H); L = (short)tmp; H = (short)tmp1;
+                mem.write(SP, L); mem.write(SP+1, H); L = (short)(tmp&0xff); H = (short)(tmp1&0xff);
                 return 19;
             case 0xE9: /* JP (HL) */
                 //synchronized(PClock) {
@@ -771,7 +770,7 @@ public class CpuZ80 implements ICPU, Runnable {
                         // this code taken from: simh
                         F = (short)(((tmp1 == 0) ? flagZ : 0) |
                             cbits2Z80Table[((tmp2 ^ tmp3 ^ tmp1) >>> 8) & 0x1ff]);
-                        H = (short)(tmp1 >>> 8); L = (short)(tmp1 & 0xFF);
+                        H = (short)((tmp1 >>> 8)&0xff); L = (short)(tmp1 & 0xFF);
                         return 15;
                     case 0x4A: /* ADC HL,ss */
                         tmp = (OP >>> 4) & 3; tmp2 = (H<<8)|L;
@@ -779,7 +778,7 @@ public class CpuZ80 implements ICPU, Runnable {
                         tmp1 = (tmp2 + tmp3 + (F & 1)) & 0xFFFF;
                         F = (short)(((tmp1 >>> 8) & 0x80) | ((tmp1 == 0)? flagZ:0) |
                             cbitsZ80Table[(tmp2 ^ tmp3 ^ tmp1) >>> 8]);
-                        H = (short)(tmp1 >>> 8); L = (short)(tmp1 & 0xFF);
+                        H = (short)((tmp1 >>> 8)&0xff); L = (short)(tmp1 & 0xFF);
                         return 11;
                 }
                 switch(OP) {
@@ -788,7 +787,7 @@ public class CpuZ80 implements ICPU, Runnable {
                     case 0x45: /* RETN */
                         IFF[0] = IFF[1];
                      //   synchronized(PClock) {
-                        PC = (Integer)mem.readWord(SP); SP += 2;// }
+                        PC = (Integer)mem.readWord(SP); SP = (SP +2)&0xffff;// }
                         return 14;
                     case 0x46: /* IM 0 */
                         intMode = 0; return 8;
@@ -797,7 +796,7 @@ public class CpuZ80 implements ICPU, Runnable {
                     case 0x4D: /* RETI - weird.. */ 
                         IFF[0] = IFF[1];
                         //synchronized(PClock) { 
-                        PC = (Integer)mem.readWord(SP); SP += 2;// }
+                        PC = (Integer)mem.readWord(SP); SP = (SP+2)&0xffff;// }
                         return 14;
                     case 0x4F: /* LD R,A */
                         R = A; return 9;
@@ -826,34 +825,34 @@ public class CpuZ80 implements ICPU, Runnable {
                         mem.writeWord(tmp2, (Integer)mem.readWord(tmp1));
                         tmp1 = (tmp1 + 1) & 0xFFFF; tmp2 = (tmp2 + 1) & 0xFFFF;
                         tmp = (((B<<8)|C) - 1) & 0xFFFF;
-                        H = (short)(tmp1 >>> 8); L = (short)(tmp1 & 0xFF);
-                        B = (short)(tmp >>> 8); C = (short)(tmp & 0xFF);
-                        D = (short)(tmp2 >>> 8); E = (short)(tmp2 & 0xFF);
+                        H = (short)((tmp1 >>> 8)&0xff); L = (short)(tmp1 & 0xFF);
+                        B = (short)((tmp >>> 8)&0xff); C = (short)(tmp & 0xFF);
+                        D = (short)((tmp2 >>> 8)&0xff); E = (short)(tmp2 & 0xFF);
                         F = (short)((F & 0xE9) | ((tmp != 0) ? flagPV : 0));
                         return 16;
                     case 0xA1: /* CPI */
                         tmp2 = (Short)mem.read((H<<8)|L);tmp = (A - tmp2)&0xFF;
                         tmp1 = (((B<<8)|C)-1)&0xFFFF;tmp3 = tmp ^ tmp2 ^ A;
-                        B = (short)(tmp1 >>> 8); C = (short)(tmp1 & 0xFF);
+                        B = (short)((tmp1 >>> 8)&0xff); C = (short)(tmp1 & 0xFF);
                         // flags borrowed from simh
                         F = (short)((F & flagC)|flagN|((tmp1 != 0)?flagPV:0)
                                 |((tmp == 0)?flagZ:0)|(tmp & 0x80)
                                 |(((tmp - ((tmp3 & 16) >>> 4)) & 2) << 4) | (tmp3 & 16)
                                 |((tmp - ((tmp3 >>> 4) & 1)) & 8));
                         if (((tmp & 15) == 8) && ((tmp3 & 16) != 0)) F &= 0xF7;
-                        tmp = (((H<<8)|L)+1)&0xFFFF;H=(short)(tmp>>>8);L=(short)(tmp&0xFF);
+                        tmp = (((H<<8)|L)+1)&0xFFFF;H=(short)((tmp>>>8)&0xff);L=(short)(tmp&0xFF);
                         return 16;
                     case 0xA2: /* INI */
-                        tmp = (cpu.fireIO(C, true, (short)0) & 0xFF);
+                        tmp = (cpu.fireIO(C, true, (short)0)&0xFF);
                         tmp1 = (H<<8)|L; mem.write(tmp1, (short)tmp);
-                        tmp1 = (tmp1 + 1) & 0xFFFF; H = (short)(tmp1 >>> 8);
+                        tmp1 = (tmp1 + 1) & 0xFFFF; H = (short)((tmp1 >>> 8)&0xff);
                         L = (short)(tmp1 & 0xFF); B = (short)((B - 1) & 0xFF);
                         F = (short)((F & 0xBF)|flagN|((B == 0)?flagZ:0));
                         return 16;
                     case 0xA3: /* OUTI */
                         tmp1 = (H<<8)|L;
                         cpu.fireIO(C, false, (Short)mem.read(tmp1));
-                        tmp1 = (tmp1 + 1) & 0xFFFF; H = (short)(tmp1 >>> 8);
+                        tmp1 = (tmp1 + 1) & 0xFFFF; H = (short)((tmp1 >>> 8)&0xff);
                         L = (short)(tmp1 & 0xFF); B = (short)((B - 1) & 0xFF);
                         F = (short)((F & 0xBF)|flagN|((B == 0)?flagZ:0));
                         return 16;
@@ -862,34 +861,34 @@ public class CpuZ80 implements ICPU, Runnable {
                         mem.writeWord(tmp2, (Integer)mem.readWord(tmp1));
                         tmp1 = (tmp1 - 1) & 0xFFFF; tmp2 = (tmp2 - 1) & 0xFFFF;
                         tmp = (((B<<8)|C) - 1) & 0xFFFF;
-                        H = (short)(tmp1 >>> 8); L = (short)(tmp1 & 0xFF);
-                        B = (short)(tmp >>> 8); C = (short)(tmp & 0xFF);
-                        D = (short)(tmp2 >>> 8); E = (short)(tmp2 & 0xFF);
+                        H = (short)((tmp1 >>> 8)&0xff); L = (short)(tmp1 & 0xFF);
+                        B = (short)((tmp >>> 8)&0xff); C = (short)(tmp & 0xFF);
+                        D = (short)((tmp2 >>> 8)&0xff); E = (short)(tmp2 & 0xFF);
                         F = (short)((F & 0xE9) | ((tmp != 0) ? flagPV : 0));
                         return 16;
                     case 0xA9: /* CPD */
                         tmp2 = (Short)mem.read((H<<8)|L); tmp = (A - tmp2)&0xFF;
                         tmp1 = (((B<<8)|C)-1)&0xFFFF; tmp3 = tmp ^ tmp2 ^ A;
-                        B = (short)(tmp1 >>> 8); C = (short)(tmp1 & 0xFF);
+                        B = (short)((tmp1 >>> 8)&0xff); C = (short)(tmp1 & 0xFF);
                         // flags borrowed from simh
                         F = (short)((F & 1) | (tmp & 0x80) | (((tmp & 0xff)==0)?flagZ:0)
                                 | (((tmp - ((tmp3 & 16) >> 4)) & 2) << 4)
                                 | (tmp3 & 16) | ((tmp - ((tmp3 >> 4) & 1)) & 8)
                                 | ((tmp1 != 0)?flagPV:0) | flagN);
                         if (((tmp & 15) == 8) && ((tmp3 & 16) != 0)) F &= 0xF7;
-                        tmp = (((H<<8)|L)-1)&0xFFFF;H=(short)(tmp>>>8);L=(short)(tmp&0xFF);
+                        tmp = (((H<<8)|L)-1)&0xFFFF;H=(short)((tmp>>>8)&0xff);L=(short)(tmp&0xFF);
                         return 16;
                     case 0xAA: /* IND */
                         tmp = (cpu.fireIO(C, true, (short)0) & 0xFF);
                         tmp1 = (H<<8)|L; mem.write(tmp1, (short)tmp);
-                        tmp1 = (tmp1 - 1) & 0xFFFF; H = (short)(tmp1 >>> 8);
+                        tmp1 = (tmp1 - 1) & 0xFFFF; H = (short)((tmp1 >>> 8)&0xff);
                         L = (short)(tmp1 & 0xFF); B = (short)((B - 1) & 0xFF);
                         F = (short)((F & 0xBF)|flagN|((B == 0)?flagZ:0));
                         return 16;
                     case 0xAB: /* OUTD */
                         tmp1 = (H<<8)|L;
                         cpu.fireIO(C, false, (Short)mem.read((short)tmp1));
-                        tmp1 = (tmp1 - 1) & 0xFFFF; H = (short)(tmp1 >>> 8);
+                        tmp1 = (tmp1 - 1) & 0xFFFF; H = (short)((tmp1 >>> 8)&0xff);
                         L = (short)(tmp1 & 0xFF); B = (short)((B - 1) & 0xFF);
                         F = (short)((F & 0xBF)|flagN|((B == 0)?flagZ:0));
                         return 16;
@@ -897,19 +896,19 @@ public class CpuZ80 implements ICPU, Runnable {
                         tmp1 = (H<<8)|L; tmp2 = (D<<8)|E;
                         mem.writeWord(tmp2, (Integer)mem.readWord(tmp1));
                         tmp1 = (tmp1 + 1) & 0xFFFF; tmp2 = (tmp2 + 1) & 0xFFFF;
-                        H = (short)(tmp1 >>> 8); L = (short)(tmp1 & 0xFF);
-                        D = (short)(tmp2 >>> 8); E = (short)(tmp2 & 0xFF);
+                        H = (short)((tmp1 >>> 8)&0xff); L = (short)(tmp1 & 0xFF);
+                        D = (short)((tmp2 >>> 8)&0xff); E = (short)(tmp2 & 0xFF);
                         tmp = (((B<<8)|C) - 1) & 0xFFFF;
-                        B = (short)(tmp >>> 8); C = (short)(tmp & 0xFF); F &= 0xE9;
+                        B = (short)((tmp >>> 8)&0xff); C = (short)(tmp & 0xFF); F &= 0xE9;
                         if (tmp == 0) return 16;
                        // synchronized(PClock) { 
                         PC -= 2;
-                //} 
-                return 21;
+                        //} 
+                        return 21;
                     case 0xB1: /* CPIR */
                         tmp2 = (Short)mem.read((H<<8)|L);tmp = (A - tmp2)&0xFF;
                         tmp1 = (((B<<8)|C)-1)&0xFFFF;tmp3 = tmp ^ tmp2 ^ A;
-                        B = (short)(tmp1 >>> 8); C = (short)(tmp1 & 0xFF);
+                        B = (short)((tmp1 >>> 8)&0xff); C = (short)(tmp1 & 0xFF);
                         if (tmp == 0) {
                             // flags borrowed from simh
                             F = (short)((F & flagC)|flagN|((tmp1 != 0)?flagPV:0)
@@ -918,7 +917,7 @@ public class CpuZ80 implements ICPU, Runnable {
                                     |((tmp - ((tmp3 >>> 4) & 1)) & 8));
                             if (((tmp & 15) == 8) && ((tmp3 & 16) != 0)) F &= 0xF7;
                         }
-                        tmp2 = (((H<<8)|L)+1)&0xFFFF;H=(short)(tmp2>>>8);L=(short)(tmp2&0xFF);
+                        tmp2 = (((H<<8)|L)+1)&0xFFFF;H=(short)((tmp2>>>8)&0xff);L=(short)(tmp2&0xFF);
                         if ((tmp1 == 0) || (tmp == 0)) return 16;
                       //  synchronized(PClock) { 
                         PC -= 2;
@@ -927,7 +926,7 @@ public class CpuZ80 implements ICPU, Runnable {
                     case 0xB2: /* INIR */
                         tmp = (cpu.fireIO(C, true, (short)0) & 0xFF);
                         tmp1 = (H<<8)|L; mem.write(tmp1, (short)tmp);
-                        tmp1 = (tmp1 + 1) & 0xFFFF; H = (short)(tmp1 >>> 8);
+                        tmp1 = (tmp1 + 1) & 0xFFFF; H = (short)((tmp1 >>> 8)&0xff);
                         L = (short)(tmp1 & 0xFF); B = (short)((B - 1) & 0xFF);
                         F |= (short)(flagN|flagZ); if (B == 0) return 16;
                         //synchronized(PClock) {
@@ -937,7 +936,7 @@ public class CpuZ80 implements ICPU, Runnable {
                     case 0xB3: /* OTIR */
                         tmp1 = (H<<8)|L;
                         cpu.fireIO(C, false, (Short)mem.read(tmp1));
-                        tmp1 = (tmp1 + 1) & 0xFFFF; H = (short)(tmp1 >>> 8);
+                        tmp1 = (tmp1 + 1) & 0xFFFF; H = (short)((tmp1 >>> 8)&0xff);
                         L = (short)(tmp1 & 0xFF); B = (short)((B - 1) & 0xFF);
                         F |= (short)(flagN|flagZ); if (B == 0) return 16;
                       //  synchronized(PClock) { 
@@ -949,9 +948,9 @@ public class CpuZ80 implements ICPU, Runnable {
                         mem.writeWord(tmp2, (Integer)mem.readWord(tmp1));
                         tmp1 = (tmp1 - 1) & 0xFFFF; tmp2 = (tmp2 - 1) & 0xFFFF;
                         tmp = (((B<<8)|C) - 1) & 0xFFFF;
-                        H = (short)(tmp1 >>> 8); L = (short)(tmp1 & 0xFF);
-                        B = (short)(tmp >>> 8); C = (short)(tmp & 0xFF);
-                        D = (short)(tmp2 >>> 8); E = (short)(tmp2 & 0xFF);
+                        H = (short)((tmp1 >>> 8)&0xff); L = (short)(tmp1 & 0xFF);
+                        B = (short)((tmp >>> 8)&0xff); C = (short)(tmp & 0xFF);
+                        D = (short)((tmp2 >>> 8)&0xff); E = (short)(tmp2 & 0xFF);
                         F &= 0xE9; if (tmp == 0) return 16;
                       // synchronized(PClock) { 
                         PC -= 2;
@@ -960,7 +959,7 @@ public class CpuZ80 implements ICPU, Runnable {
                     case 0xB9: /* CPDR */
                         tmp2 = (Short)mem.read((H<<8)|L); tmp = (A - tmp2)&0xFF;
                         tmp1 = (((B<<8)|C)-1)&0xFFFF; tmp3 = tmp ^ tmp2 ^ A;
-                        B = (short)(tmp1 >>> 8); C = (short)(tmp1 & 0xFF);
+                        B = (short)((tmp1 >>> 8)&0xff); C = (short)(tmp1 & 0xFF);
                         // flags borrowed from simh
                         if (tmp == 0) {
                             F = (short)((F & 1) | (tmp & 0x80) | (((tmp & 0xff)==0)?flagZ:0)
@@ -1076,13 +1075,13 @@ public class CpuZ80 implements ICPU, Runnable {
                           | (((tmp2&0xff)==0)?flagZ:0) | flagN); A = (short)(tmp2&0xff); return 19;
                     case 0xA6: /* AND (ii+d) */
                         tmp1 = (Short)mem.read(getspecial(special)+tmp)&0xFF;
-                        A &= tmp1; F = andTable[A]; return 19;
+                        A = (short)((A & tmp1)&0xff); F = andTable[A]; return 19;
                     case 0xAE: /* XOR (ii+d) */
                         tmp1 = (Short)mem.read(getspecial(special)+tmp)&0xFF;
-                        A ^= tmp1; F = daaTable[A]; return 19;
+                        A = (short)((A^tmp1)&0xff); F = daaTable[A]; return 19;
                     case 0xB6: /* OR (ii+d) */
                         tmp1 = (Short)mem.read(getspecial(special)+tmp)&0xFF;
-                        A |= tmp1; F = daaTable[A]; return 19;
+                        A = (short)((A | tmp1)&0xff); F = daaTable[A]; return 19;
                     case 0xBE: /* CP (ii+d) */
                         tmp1 = (Short)mem.read(getspecial(special)+tmp)&0xFF;
                         tmp2 = A - tmp1; F = (short)(cpTable[tmp2&0xff]|cbits2Z80Table[(A ^ tmp1 ^ tmp2) & 0x1ff]);
@@ -1117,7 +1116,7 @@ public class CpuZ80 implements ICPU, Runnable {
                         switch (OP) {
                             case 0x06: /* RLC (ii+d) */
                                 tmp2 = (getspecial(special) + tmp)&0xffff;
-                                tmp1 = (Short)mem.read(tmp2); F = (short)(tmp1>>>7);
+                                tmp1 = (Short)mem.read(tmp2); F = (short)((tmp1>>>7)&0xff);
                                 tmp1 <<= 1; tmp1 |= (F&1); mem.write(tmp2, tmp1&0xff);
                                 F |= daaTable[tmp1]; return 23;
                             case 0x0E: /* RRC (ii+d) */
@@ -1127,7 +1126,7 @@ public class CpuZ80 implements ICPU, Runnable {
                                 F |= daaTable[tmp1]; return 23;
                             case 0x16: /* RL (ii+d) */
                                 tmp2 = (getspecial(special) + tmp)&0xffff; tmp3 = F&1;
-                                tmp1 = (Short)mem.read(tmp2); F = (short)(tmp1>>>7);
+                                tmp1 = (Short)mem.read(tmp2); F = (short)((tmp1>>>7)&0xff);
                                 tmp1 <<= 1; tmp1 |= tmp3; mem.write(tmp2, tmp1&0xff);
                                 F |= daaTable[tmp1]; return 23;
                             case 0x1E: /* RR (ii+d) */
@@ -1137,7 +1136,7 @@ public class CpuZ80 implements ICPU, Runnable {
                                 F |= daaTable[tmp1]; return 23;
                             case 0x26: /* SLA (ii+d) */
                                 tmp2 = (getspecial(special)+tmp)&0xffff; 
-                                tmp1 = (Short)mem.read(tmp2); F = (short)(tmp1>>>7);
+                                tmp1 = (Short)mem.read(tmp2); F = (short)((tmp1>>>7)&0xff);
                                 tmp1 <<= 1; mem.write(tmp2, tmp1&0xff); F|=daaTable[tmp1]; return 23;
                             case 0x2E: /* SRA (ii+d) */
                                 tmp2 = (getspecial(special) + tmp)&0xffff;
@@ -1146,7 +1145,7 @@ public class CpuZ80 implements ICPU, Runnable {
                                 mem.write(tmp2, tmp1&0xff); F |= daaTable[tmp1]; return 23;
                             case 0x36: /* SLL (ii+d) unsupported */
                                 tmp2 = (getspecial(special)+tmp)&0xffff; 
-                                tmp1 = (Short)mem.read(tmp2); F = (short)(tmp1>>>7);tmp3=tmp1&1;
+                                tmp1 = (Short)mem.read(tmp2); F = (short)((tmp1>>>7)&0xff);tmp3=tmp1&1;
                                 tmp1 <<= 1; tmp1 |= tmp3; mem.write(tmp2, tmp1&0xff);
                                 F|=daaTable[tmp1]; return 23;
                             case 0x3E: /* SRL (ii+d) */
@@ -1214,7 +1213,7 @@ public class CpuZ80 implements ICPU, Runnable {
                 if (getCC1((OP>>>3)&3)) {
                     b = (byte)tmp;
                     //synchronized(PClock) {
-                    PC += b; PC &= 0xFFFF;
+                    PC += b;
                 //}
                     return 12;
                 } return 7;
@@ -1223,7 +1222,7 @@ public class CpuZ80 implements ICPU, Runnable {
             case 0x18: /* JR e */
                 b = (byte)tmp;
                // synchronized(PClock) {
-                PC += b; PC &= 0xFFFF; 
+                PC += b;
         //}
                 return 12;
             case 0xC6: /* ADD A,d */
@@ -1247,11 +1246,11 @@ public class CpuZ80 implements ICPU, Runnable {
                 F = (short)(cbits2Z80Table[(A ^ tmp ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
                   | (((tmp2&0xff)==0)?flagZ:0) | flagN); A = (short)(tmp2&0xff); return 7;
             case 0xE6: /* AND d */
-                A &= tmp; F = andTable[A]; return 7;
+                A = (short)((A & tmp)&0xff); F = andTable[A]; return 7;
             case 0xEE: /* XOR d */
-                A ^= tmp; F = daaTable[A]; return 7;
+                A = (short)((A^tmp)&0xff); F = daaTable[A]; return 7;
             case 0xF6: /* OR d */
-                A |= tmp; F = daaTable[A]; return 7;
+                A = (short)((A|tmp)&0xff); F = daaTable[A]; return 7;
             case 0xFE: /* CP d */
                 tmp2 = A - tmp; F = (short)(cpTable[tmp2&0xff]|cbits2Z80Table[(A ^ tmp ^ tmp2) & 0x1ff]);
                 return 7;
@@ -1265,7 +1264,7 @@ public class CpuZ80 implements ICPU, Runnable {
                 return 10;
             case 0xC4: /* CALL cc,nn */
                 if (getCC((OP>>>3)&7)) {
-                    SP -= 2;// synchronized(PClock) { 
+                    SP = (SP -2)&0xffff;// synchronized(PClock) { 
                     mem.writeWord(SP, PC); PC = tmp;// }
                     return 17;
                 } return 10;
@@ -1282,13 +1281,13 @@ public class CpuZ80 implements ICPU, Runnable {
             case 0x32: /* LD (nn),A */
                 mem.write(tmp, A); return 13;
             case 0x3A: /* LD A,(nn) */
-                A = (Short)mem.read(tmp); return 13;
+                A = (short)((Short)mem.read(tmp)&0xff); return 13;
             case 0xC3: /* JP nn */
               //  synchronized(PClock) {
                 PC = tmp; //}
                 return 10;
             case 0xCD: /* CALL nn */
-                SP -= 2;// synchronized(PClock) { 
+                SP = (SP-2)&0xffff;// synchronized(PClock) { 
                 mem.writeWord(SP, PC); PC = tmp; //}
                 return 17;
         }
