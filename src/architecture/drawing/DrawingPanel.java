@@ -158,6 +158,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
     }
     
     //override panel paint method to draw shapes
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         ArrayList<Element> a = schema.getAllElements();
