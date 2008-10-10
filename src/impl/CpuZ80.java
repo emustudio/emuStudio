@@ -33,10 +33,8 @@ public class CpuZ80 implements ICPU, Runnable {
     private ISettingsHandler settings;
     private HashSet breaks; // zoznam breakpointov (mnozina)
     
-    private int bankSelect;
-    
     // sychronization locks for PC
-    private Object PClock = new Object();
+//    private Object PClock = new Object();
 
     // 2 sets of 6 GPR
     private volatile short B; private short B_S;
@@ -245,16 +243,14 @@ public class CpuZ80 implements ICPU, Runnable {
     public void step() {
         if (run_state == stateEnum.stoppedBreak) {
             try {
-                synchronized(run_state) {
-                    run_state = stateEnum.runned;
-                    evalStep();
-                    if (PC > 0xffff) {
-                        run_state = stateEnum.stoppedAddrFallout;
-                        PC = 0xffff;
-                    }
-                    else if (run_state == stateEnum.runned)
-                        run_state = stateEnum.stoppedBreak;
+                run_state = stateEnum.runned;
+                evalStep();
+                if (PC > 0xffff) {
+                    run_state = stateEnum.stoppedAddrFallout;
+                    PC = 0xffff;
                 }
+                else if (run_state == stateEnum.runned)
+                    run_state = stateEnum.stoppedBreak;
             }
             catch (IndexOutOfBoundsException e) {
                 run_state = stateEnum.stoppedAddrFallout;
@@ -573,6 +569,10 @@ public class CpuZ80 implements ICPU, Runnable {
         //synchronized(PClock) {
             OP = ((Short)mem.read(PC++)).shortValue(); 
         //}
+        if (OP == 0x76) { /* HALT */
+            run_state = stateEnum.stoppedNormal;
+            return 4;
+        }
         
         /* Handle below all operations which refer to registers or register pairs.
           After that, a large switch statement takes care of all other opcodes */
@@ -719,8 +719,6 @@ public class CpuZ80 implements ICPU, Runnable {
                 tmp = F & 1; //flagC
                 F = (short)((F & 0xEC) | (tmp << 4) | ((~tmp)&1));
                 return 4;
-            case 0x76: /* HALT */
-                run_state = stateEnum.stoppedNormal; return 4;
             case 0xC9: /* RET */
               //  synchronized(PClock) {
                 PC = (Integer)mem.readWord(SP); SP += 2;// }
