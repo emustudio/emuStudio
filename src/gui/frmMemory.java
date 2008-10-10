@@ -102,9 +102,96 @@ public class frmMemory extends javax.swing.JFrame {
             }
         });
         tblMemory.addKeyListener(new KeyAdapter() {
+            private boolean right_correct = false; // perform correction
+            private boolean left_correct = false; // perform correction
+            private boolean up_correct = false; // perform correction
+            private boolean down_correct = false; // perform correction
+            @Override
+            public void keyPressed(KeyEvent e) {
+                super.keyPressed(e);
+                int key = e.getKeyCode();
+                if ((key == KeyEvent.VK_RIGHT) // ->
+                        && (tblMemory.getSelectedColumn() == memModel.getColumnCount()-1)) {
+                    if (tblMemory.getSelectedRow() == memModel.getRowCount()-1) {
+                        int i = (Integer)((SpinnerNumberModel)spnPage.getModel()).getValue();
+                        try { memModel.setPage(i+1); } catch(IndexOutOfBoundsException ex) {
+                            ((SpinnerNumberModel)spnPage.getModel()).setValue(0);
+                        }
+                        tblMemory.setRowSelectionInterval(0, 0);
+                        tblMemory.scrollRectToVisible(tblMemory.getCellRect(0, 0, true));
+                    } else {
+                        int row = tblMemory.getSelectedRow();
+                        tblMemory.setRowSelectionInterval(row+1, row+1);
+                        right_correct = true;
+                    }
+                } else if ((key == KeyEvent.VK_LEFT) // <-
+                        && (tblMemory.getSelectedColumn() == 0)) {
+                    if (tblMemory.getSelectedRow() == 0) {
+                        int i = (Integer)((SpinnerNumberModel)spnPage.getModel()).getValue();
+                        try { memModel.setPage(i-1); } catch(IndexOutOfBoundsException ex) {
+                            ((SpinnerNumberModel)spnPage.getModel()).setValue(memModel.getPageCount()-1);
+                        }
+                        tblMemory.setRowSelectionInterval(memModel.getRowCount()-1,
+                                memModel.getRowCount()-1);
+                        left_correct = true;
+                    } else {
+                        int row = tblMemory.getSelectedRow();
+                        tblMemory.setRowSelectionInterval(row-1, row-1);
+                        left_correct = true;
+                    }
+                } else if ((key == KeyEvent.VK_UP) // ^
+                        && (tblMemory.getSelectedRow() == 0)) {
+                    int i = (Integer)((SpinnerNumberModel)spnPage.getModel()).getValue();
+                    int col = tblMemory.getSelectedColumn();
+                    try { memModel.setPage(i-1); } catch(IndexOutOfBoundsException ex) {
+                        ((SpinnerNumberModel)spnPage.getModel()).setValue(memModel.getPageCount()-1);
+                    }
+                    tblMemory.setColumnSelectionInterval(col, col);
+                    up_correct = true;
+                } else if ((key == KeyEvent.VK_DOWN) // v
+                        && (tblMemory.getSelectedRow() == memModel.getRowCount()-1)) {
+                    int i = (Integer)((SpinnerNumberModel)spnPage.getModel()).getValue();
+                    int col = tblMemory.getSelectedColumn();
+                    try { memModel.setPage(i+1); } catch(IndexOutOfBoundsException ex) {
+                        ((SpinnerNumberModel)spnPage.getModel()).setValue(0);
+                    }
+                    tblMemory.setColumnSelectionInterval(col, col);
+                    down_correct = true;
+                }
+
+            }
             @Override
             public void keyReleased(KeyEvent e) {
                 super.keyReleased(e);
+
+                if (right_correct) {
+                    try { tblMemory.setColumnSelectionInterval(0, 0);}
+                    catch(Exception ex) {}
+                    right_correct = false;
+                }
+                if (left_correct) {
+                    try { tblMemory.setColumnSelectionInterval(memModel.getColumnCount()-1,
+                                memModel.getColumnCount()-1); }
+                    catch(Exception ex) {}
+                    left_correct = false;
+                }
+                if (up_correct) {
+                    try { tblMemory.setRowSelectionInterval(memModel.getRowCount()-1,
+                            memModel.getRowCount()-1); }
+                    catch(Exception ex) {}
+                    int row = tblMemory.getSelectedRow();
+                    int col = tblMemory.getSelectedColumn();
+                    tblMemory.scrollRectToVisible(tblMemory.getCellRect(row, col, true));
+                    up_correct = false;
+                }
+                if (down_correct) {
+                    try { tblMemory.setRowSelectionInterval(0, 0); }
+                    catch(Exception ex) {}
+                    int row = tblMemory.getSelectedRow();
+                    int col = tblMemory.getSelectedColumn();
+                    tblMemory.scrollRectToVisible(tblMemory.getCellRect(row, col, true));
+                    down_correct = false;
+                }
                 int row = tblMemory.getSelectedRow();
                 int col = tblMemory.getSelectedColumn();
                 updateMemVal(row, col);
