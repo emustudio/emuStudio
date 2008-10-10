@@ -157,15 +157,17 @@ public class compileEnv {
         }
     }
     
-    public void copyTo(compileEnv env) {
+    public boolean copyTo(compileEnv env) {
+        boolean r = true;
         for (int i = 0; i < defLabels.size(); i++)
-            env.addLabelDef((LabelNode)defLabels.get(i));
+            r &= env.addLabelDef((LabelNode)defLabels.get(i));
         for (int i = 0; i < defMacros.size(); i++)
-            env.addMacroDef((MacroPseudoNode)defMacros.get(i));
+            r &= env.addMacroDef((MacroPseudoNode)defMacros.get(i));
         for (int i = 0; i < defEqus.size(); i++)
-            env.addEquDef((EquPseudoNode)defEqus.get(i));
+            r &= env.addEquDef((EquPseudoNode)defEqus.get(i));
         for (int i = 0; i < defSets.size(); i++)
-            env.addSetDef((SetPseudoNode)defSets.get(i));
+            r &= env.addSetDef((SetPseudoNode)defSets.get(i));
+        return r;
     }
     //---
     

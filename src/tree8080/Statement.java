@@ -85,7 +85,10 @@ public class Statement {
                 if (env.addMacroDef((MacroPseudoNode)in.codePseudo) == false)
                     throw new Exception("Macro already defined: " 
                             + ((MacroPseudoNode)in.codePseudo).getName());
-            in.pass1(r,includefiles);
+            if ((in.codePseudo != null) && (in.codePseudo instanceof IncludePseudoNode))
+                in.pass1(r, includefiles, env);
+            else
+                in.pass1(r);
         }
     }
     

@@ -66,7 +66,8 @@ public class IncludePseudoNode extends PseudoNode {
     }
     
     public void pass1(IMessageReporter r) throws Exception {}
-    public void pass1(IMessageReporter r, Vector<String> includefiles)
+    public void pass1(IMessageReporter r, Vector<String> includefiles,
+            compileEnv parentEnv)
             throws Exception {
         try {
             MRep rep = new MRep(r);
@@ -80,7 +81,7 @@ public class IncludePseudoNode extends PseudoNode {
                         "Error: Unexpected end of file (" + shortFileName + ")");
             program = (Statement)s;
             program.addIncludeFiles(includefiles);
-            namespace = new compileEnv();
+            namespace = parentEnv;
             
             if (program.getIncludeLoops(filename))
                 throw new Exception("[" + line + "," + column + "] "+
@@ -88,9 +89,11 @@ public class IncludePseudoNode extends PseudoNode {
             program.pass1(namespace,r); // create symbol table
         } catch (IOException e) {
             throw new Exception(shortFileName + ": I/O Error");
+        } catch (Exception e) {
+            throw new Exception("[" + line + "," + column + "] "+
+                    e.getMessage());
         }
     }
-  
 
     public int pass2(compileEnv parentEnv, int addr_start) throws Exception {
         return program.pass2(addr_start); // try to evaulate all expressions + compute relative addresses

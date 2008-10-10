@@ -43,15 +43,16 @@ public class InstructionNode {
     }
     
     // do pass1 for all elements
-    public void pass1(IMessageReporter rep, Vector<String> inclfiles)
-            throws Exception {
-        if (codePseudo != null) {
-            if (codePseudo instanceof IncludePseudoNode)
-                ((IncludePseudoNode)codePseudo).pass1(rep, inclfiles);
-            else codePseudo.pass1(rep);
-        }
+    public void pass1(IMessageReporter rep) throws Exception {
+        if (codePseudo != null)
+            codePseudo.pass1(rep);
     }
 
+    public void pass1(IMessageReporter rep, Vector<String> inclfiles, 
+            compileEnv parentEnv) throws Exception {
+        ((IncludePseudoNode)codePseudo).pass1(rep, inclfiles, parentEnv);        
+    }
+    
     public int pass2(compileEnv prev_env, int addr_start) throws Exception {
         this.current_address = addr_start;
         if (label != null) label.setAddress(new Integer(addr_start));
