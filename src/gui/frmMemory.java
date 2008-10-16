@@ -15,7 +15,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SpinnerNumberModel;
@@ -228,6 +233,7 @@ public class frmMemory extends javax.swing.JFrame {
         jToolBar1 = new javax.swing.JToolBar();
         btnClearMemory = new javax.swing.JButton();
         btnOpenImage = new javax.swing.JButton();
+        btnDump = new javax.swing.JButton();
         btnSettings = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JToolBar.Separator();
         jLabel1 = new javax.swing.JLabel();
@@ -282,6 +288,18 @@ public class frmMemory extends javax.swing.JFrame {
             }
         });
         jToolBar1.add(btnOpenImage);
+
+        btnDump.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Save24.gif"))); // NOI18N
+        btnDump.setToolTipText("Dump memory...");
+        btnDump.setFocusable(false);
+        btnDump.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnDump.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnDump.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDumpActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(btnDump);
 
         btnSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/SaveAs24.gif"))); // NOI18N
         btnSettings.setToolTipText("Settings...");
@@ -394,7 +412,7 @@ public class frmMemory extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel8)
                     .addComponent(jLabel9))
-                .addContainerGap(143, Short.MAX_VALUE))
+                .addContainerGap(145, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -458,7 +476,7 @@ public class frmMemory extends javax.swing.JFrame {
                     .addComponent(spnBank, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel11)
                     .addComponent(lblBanksCount))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 11, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 9, Short.MAX_VALUE)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
@@ -533,10 +551,56 @@ public class frmMemory extends javax.swing.JFrame {
 private void btnSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSettingsActionPerformed
     new frmSettings(this,true,mem,tblMemory,settings).setVisible(true);
 }//GEN-LAST:event_btnSettingsActionPerformed
+
+private void btnDumpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDumpActionPerformed
+        JFileChooser f = new JFileChooser();
+        EmuFileFilter f1 = new EmuFileFilter();
+        EmuFileFilter f2 = new EmuFileFilter();
+
+        f1.addExtension("txt");
+        f1.setDescription("Human-readable dump (*.txt)");
+        f2.addExtension("bin");
+        f2.setDescription("Binary dump (*.bin)");
+        
+        f.setDialogTitle("Dump memory into a file");
+        f.setAcceptAllFileFilterUsed(false);
+        f.addChoosableFileFilter(f1);
+        f.addChoosableFileFilter(f2);
+        f.setFileFilter(f1);
+        f.setApproveButtonText("Dump");
+        f.setCurrentDirectory(new File(System.getProperty("user.dir")));
+
+        int returnVal = f.showOpenDialog(this);
+        f.setVisible(true);
+        if(returnVal == JFileChooser.APPROVE_OPTION) {
+            File fileSource = f.getSelectedFile();
+            try {
+                if (fileSource.exists()) fileSource.delete();
+                fileSource.createNewFile();
+                if (f.getFileFilter().equals(f1)) {
+                    // human-readable format
+                    BufferedWriter out = new BufferedWriter(new FileWriter(fileSource));
+                    for (int i =0; i < memContext.getSize(); i++)
+                        out.write(String.format("%X:\t%02X\n", i,(Short)memContext.read(i)));
+                    out.close();
+                } else {
+                    // binary format
+                    FileOutputStream fos = new FileOutputStream(fileSource);
+                    DataOutputStream ds = new DataOutputStream( fos );
+                    for (int i =0; i < memContext.getSize(); i++)
+                        ds.writeByte((Short)memContext.read(i)&0xff);
+                    ds.close();
+                }
+            } catch(IOException e) {
+                StaticDialogs.showErrorMessage("Error: Dumpfile couldn't be created.");
+            }
+        }
+}//GEN-LAST:event_btnDumpActionPerformed
     
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnClearMemory;
+    private javax.swing.JButton btnDump;
     private javax.swing.JButton btnFindAddress;
     private javax.swing.JButton btnOpenImage;
     private javax.swing.JButton btnSettings;

@@ -148,8 +148,8 @@ public class frmSettings extends javax.swing.JDialog {
         tblROM.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent e) {
                 int i = tblROM.getSelectedRow();
-                txtFrom.setText(tblROM.getValueAt(i,0).toString());
-                txtTo.setText(tblROM.getValueAt(i,1).toString());
+                txtFrom.setText("0x" + tblROM.getValueAt(i,0).toString());
+                txtTo.setText("0x" + tblROM.getValueAt(i,1).toString());
             }
         });
     }
