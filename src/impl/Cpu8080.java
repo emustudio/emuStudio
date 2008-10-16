@@ -609,19 +609,19 @@ public class Cpu8080 implements ICPU, Runnable {
                 DAR = A; A -= ((Short)mem.read(PC++)).shortValue(); if ((Flags & flagC) != 0) A--;
                 setarith(A,DAR); A = (short)(A & 0xFF); return 7;
             case 047:                                      /* DAA */
-                DAR = A & 0x0F;
-                if ((DAR > 9) || ((Flags & flagAC) != 0)) {
-                    DAR += 6; A &= 0xF0; A |= DAR & 0x0F;
-                    if ((DAR & 0x10) != 0) Flags |= flagAC;
+                DAR = A;
+                if (((DAR&0x0F) > 9) || ((Flags & flagAC) != 0)) {
+                    DAR += 6; 
+                    if ((DAR & 0x10) != (A & 0x10)) Flags |= flagAC;
                     else Flags &= (~flagAC);
+                    A = (short)(DAR & 0xFF);
                 }
-                DAR = (A >>> 4) & 0x0F;
-                if ((DAR > 9) || ((Flags & flagAC) != 0)) {
-                    DAR += 6; if ((Flags & flagAC) != 0) DAR++;
-                    A &= 0x0F; A |= (DAR << 4);
+                DAR = (A >>> 4)&0x0F;
+                if ((DAR > 9) || ((Flags & flagC) != 0)) {
+                    DAR += 6;
+                    if ((DAR & 0x10) != 0) Flags |= flagC;
+                    A &= 0x0F; A |= ((DAR << 4)&0xF0);
                 }
-                if (((DAR << 4) & 0x100) != 0) Flags |= flagC; 
-                else Flags &= (~flagC);
                 if ((A & 0x80) != 0) Flags |= flagS; else Flags &= (~flagS);
                 if ((A & 0xff) == 0) Flags |= flagZ; else Flags &= (~flagZ);
                 parity(A); A = (short)(A & 0xFF); return 4;
