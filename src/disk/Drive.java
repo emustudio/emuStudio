@@ -184,7 +184,7 @@ public class Drive {
         if (floppy == null) return;
         if ((val & 0x01) != 0) { /* Step head in */
             track++;
-            if (track > 76) track = 76;
+           // if (track > 76) track = 76;
             sector = sectorsCount;
             sectorOffset = sectorLength;
         }
@@ -263,6 +263,7 @@ public class Drive {
 
         long pos = sectorsCount * sectorLength * track
                 + sectorLength * sector + i;
+        
         image.seek(pos);
         fireListeners(false,true);
         try {
