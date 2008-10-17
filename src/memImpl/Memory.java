@@ -144,7 +144,14 @@ public class Memory implements IMemory {
         Collections.sort(keys);
         Object[] ar = keys.toArray();
 
-        for (int i = 0; i < ar.length; i++) {
+        int i = 0;
+        while (settings.readSetting(pluginType.memory, null, "ROMfrom"+i) != null) {
+            settings.removeSetting(pluginType.memory, null, "ROMfrom"+i);
+            settings.removeSetting(pluginType.memory, null, "ROMto"+i);
+            i++;
+        }
+        
+        for (i = 0; i < ar.length; i++) {
             settings.writeSetting(pluginType.memory, null, "ROMfrom" + i, String.valueOf(ar[i]));
             settings.writeSetting(pluginType.memory, null, "ROMto" + i, 
                     String.valueOf(memContext.getROMRanges().get(ar[i])));
