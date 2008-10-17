@@ -579,81 +579,114 @@ public class CpuZ80 implements ICPU, Runnable {
                 tmp = (OP >>> 3) & 0x07; tmp1 = OP & 0x07; putreg(tmp, getreg(tmp1)); 
                 if ((tmp1 == 6) || (tmp == 6)) return 7; else return 4;
         }
-        switch (OP & 0xC7) {
-            case 0x06: /* LD r,n */
-                tmp = (OP >>> 3) & 0x07;
-                putreg(tmp, ((Short)mem.read(PC++)).shortValue());
-                if (tmp == 6) return 10; else return 7;
-            case 0x04: /* INC r */
-                tmp = (OP >>> 3) & 0x07; tmp1 = (getreg(tmp)+1) & 0xff;
-                putreg(tmp,(short)tmp1); F = (short)((F & 1)|incTable[tmp1]);
-                if (tmp == 6) return 11; else return 4;
-            case 0x05: /* DEC r */
-                tmp = (OP >>> 3) & 0x07; tmp1 = (getreg(tmp)-1) & 0xff;
-                putreg(tmp,(short)tmp1); F = (short)((F & 1)|decTable[tmp1]);
-                if (tmp == 6) return 11; else return 4;
-            case 0xC0: /* RET cc */
-                tmp = (OP >>> 3) & 7;
-                if (getCC(tmp)) {
-                    PC = (Integer)mem.readWord(SP); SP = (SP + 2)&0xffff;
-                    return 11;
-                } return 5;
-            case 0xC7: /* RST p */
-                mem.writeWord(SP-2,PC); SP = (SP - 2)&0xffff; PC = OP & 0x38;
-                return 11;
-        }
-        switch (OP & 0xCF) {
-            case 0x03: /* INC ss */
-                tmp = (OP >>> 4) & 0x03; tmp1 = getpair(tmp) + 1;
-                putpair(tmp,tmp1); return 6;
-            case 0x09: /* ADD HL, ss*/
-                tmp = (OP >>> 4) & 0x03; tmp1 = getpair(tmp);
-                tmp2 = getpair(2); tmp3 = tmp1 + tmp2; putpair(2,tmp3);
-                F = (short)((F & 0xEC) |cbitsTable[((tmp1 ^ tmp2 ^ tmp3) >>> 8)&0x1ff]);
-                return 11;
-            case 0x0B: /* DEC ss*/
-                tmp = (OP >>> 4) & 0x03; tmp1 = getpair(tmp) - 1;
-                putpair(tmp,tmp1); return 6;
-            case 0xC1: /* POP qq */
-                tmp = (OP >>> 4) & 0x03; tmp1 = (Integer)mem.readWord(SP); SP = (SP+2)&0xffff;
-                putpair2(tmp, tmp1); return 10;
-            case 0xC5: /* PUSH qq */
-                tmp = (OP >>> 4) & 0x03; tmp1 = getpair2(tmp);
-                SP = (SP -2)&0xffff;
-                mem.writeWord(SP,tmp1); return 11;
-        }
-        switch (OP & 0xF8) {
-            case 0x80: /* ADD A,r */
-                tmp = getreg(OP&7); tmp1 = A + tmp; tmp2 = A ^ tmp1 ^ tmp;
-                F = (short)((tmp1&0x80)|((tmp1 == 0)?flagZ:0)|cbitsTable[tmp2] 
-                        |(((tmp2>>6)^(tmp2>>5))&4)); A = (short)(tmp1&0xff); return 4;
-            case 0x88: /* ADC A,r */
-                tmp3 = getreg(OP&7); tmp1 = A + tmp3 + (F&1); tmp2 = A ^ tmp1 ^ tmp3;
-                F = (short)((tmp1&0x80)|((tmp1 == 0)?flagZ:0)|cbitsTable[tmp2] 
-                        |(((tmp2>>6)^(tmp2>>5))&4)); A = (short)(tmp1&0xff);return 4;
-            case 0x90: /* SUB r */
-                tmp3 = getreg(OP&7); tmp1 = A - tmp3; tmp2 = A ^ tmp1 ^ tmp3;
-                F = (short)((tmp1&0x80)|((tmp1 == 0)?flagZ:0)|cbitsTable[tmp2&0x1ff] 
-                        |(((tmp2>>6)^(tmp2>>5))&4)|flagN); A = (short)(tmp1&0xff);return 4;
-            case 0x98: /* SBC A,r */
-                tmp = getreg(OP&7); tmp2 = A - tmp - (F&1);
-                F = (short)(cbits2Z80Table[(A ^ tmp ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
-                  | (((tmp2&0xff)==0)?flagZ:0) | flagN); A = (short)(tmp2&0xff); return 4;
-            case 0xA0: /* AND r */
-                A = (short)((A & getreg(OP&7))&0xff); F = andTable[A]; return 4;
-            case 0xA8: /* XOR r */
-                A = (short)((A ^ getreg(OP&7))&0xff); F = daaTable[A]; return 4;
-            case 0xB0: /* OR r */
-                A = (short)((A |getreg(OP&7))&0xff); F = daaTable[A]; return 4;
-            case 0xB8: /* CP r */
-                tmp3 = getreg(OP&7); tmp2 = A - tmp3; F = (short)(cpTable[tmp2&0xff]
-                        |cbits2Z80Table[(A ^ tmp3 ^ tmp2) & 0x1ff]); return 4;
-        }
         switch (OP) {
             case 0x00: /* NOP */
                 return 4;
             case 0x02: /* LD (BC),A */
                 mem.write(getpair(0), A); return 7;
+            /* INC ss */
+            case 0x03: case 0x13: case 0x23: case 0x33:
+                tmp = (OP >>> 4) & 0x03; tmp1 = getpair(tmp) + 1;
+                putpair(tmp,tmp1); return 6;
+            /* ADD HL, ss*/
+            case 0x09: case 0x19: case 0x29: case 0x39:
+                tmp = (OP >>> 4) & 0x03; tmp1 = getpair(tmp);
+                tmp2 = getpair(2); tmp3 = tmp1 + tmp2; putpair(2,tmp3);
+                F = (short)((F & 0xEC) |cbitsTable[((tmp1 ^ tmp2 ^ tmp3) >>> 8)&0x1ff]);
+                return 11;
+            /* DEC ss*/
+            case 0x0B: case 0x1B: case 0x2B: case 0x3B:
+                tmp = (OP >>> 4) & 0x03; tmp1 = getpair(tmp) - 1;
+                putpair(tmp,tmp1); return 6;
+            /* POP qq */
+            case 0xC1: case 0xD1: case 0xE1: case 0xF1:
+                tmp = (OP >>> 4) & 0x03; tmp1 = (Integer)mem.readWord(SP); SP = (SP+2)&0xffff;
+                putpair2(tmp, tmp1); return 10;
+            /* PUSH qq */
+            case 0xC5: case 0xD5: case 0xE5: case 0xF5:
+                tmp = (OP >>> 4) & 0x03; tmp1 = getpair2(tmp);
+                SP = (SP -2)&0xffff;
+                mem.writeWord(SP,tmp1); return 11;
+            /* LD r,n */
+            case 0x06: case 0x0E: case 0x16: case 0x1E: case 0x26: case 0x2E:
+            case 0x36: case 0x3E:
+                tmp = (OP >>> 3) & 0x07;
+                putreg(tmp, ((Short)mem.read(PC++)).shortValue());
+                if (tmp == 6) return 10; else return 7;
+            /* INC r */
+            case 0x04: case 0x0C: case 0x14: case 0x1C: case 0x24: case 0x2C:
+            case 0x34: case 0x3C:
+                tmp = (OP >>> 3) & 0x07; tmp1 = (getreg(tmp)+1) & 0xff;
+                putreg(tmp,(short)tmp1); F = (short)((F & 1)|incTable[tmp1]);
+                if (tmp == 6) return 11; else return 4;
+            /* DEC r */
+            case 0x05: case 0x0D: case 0x15: case 0x1D: case 0x25: case 0x2D:
+            case 0x35: case 0x3D:
+                tmp = (OP >>> 3) & 0x07; tmp1 = (getreg(tmp)-1) & 0xff;
+                putreg(tmp,(short)tmp1); F = (short)((F & 1)|decTable[tmp1]);
+                if (tmp == 6) return 11; else return 4;
+            /* RET cc */
+            case 0xC0: case 0xC8: case 0xD0: case 0xD8: case 0xE0: case 0xE8:
+            case 0xF0: case 0xF8:
+                tmp = (OP >>> 3) & 7;
+                if (getCC(tmp)) {
+                    PC = (Integer)mem.readWord(SP); SP = (SP + 2)&0xffff;
+                    return 11;
+                } return 5;
+            /* RST p */
+            case 0xC7: case 0xCF: case 0xD7: case 0xDF: case 0xE7: case 0xEF:
+            case 0xF7: case 0xFF:
+                mem.writeWord(SP-2,PC); SP = (SP - 2)&0xffff; PC = OP & 0x38;
+                return 11;
+            /* ADD A,r */
+            case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85:
+            case 0x86: case 0x87:
+                tmp = getreg(OP&7); tmp1 = A + tmp; tmp2 = A ^ tmp1 ^ tmp;
+                F = (short)((tmp1&0x80)|((tmp1 == 0)?flagZ:0)|cbitsTable[tmp2] 
+                        |(((tmp2>>6)^(tmp2>>5))&4)); A = (short)(tmp1&0xff);
+                if (OP == 0x86) return 7; else return 4;
+            /* ADC A,r */
+            case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D:
+            case 0x8E: case 0x8F:
+                tmp3 = getreg(OP&7); tmp1 = A + tmp3 + (F&1); tmp2 = A ^ tmp1 ^ tmp3;
+                F = (short)((tmp1&0x80)|((tmp1 == 0)?flagZ:0)|cbitsTable[tmp2] 
+                        |(((tmp2>>6)^(tmp2>>5))&4)); A = (short)(tmp1&0xff);
+                if (OP == 0x8E) return 7; else return 4;
+            /* SUB r */
+            case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95:
+            case 0x96: case 0x97:
+                tmp3 = getreg(OP&7); tmp1 = A - tmp3; tmp2 = A ^ tmp1 ^ tmp3;
+                F = (short)((tmp1&0x80)|((tmp1 == 0)?flagZ:0)|cbitsTable[tmp2&0x1ff] 
+                        |(((tmp2>>6)^(tmp2>>5))&4)|flagN); A = (short)(tmp1&0xff);
+                if (OP == 0x96) return 7; else return 4;
+            /* SBC A,r */
+            case 0x98: case 0x99: case 0x9A: case 0x9B: case 0x9C: case 0x9D:
+            case 0x9E: case 0x9F:
+                tmp = getreg(OP&7); tmp2 = A - tmp - (F&1);
+                F = (short)(cbits2Z80Table[(A ^ tmp ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
+                  | (((tmp2&0xff)==0)?flagZ:0) | flagN); A = (short)(tmp2&0xff);
+                if (OP == 0x9E) return 7; else return 4;
+            /* AND r */
+            case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5:
+            case 0xA6: case 0xA7:
+                A = (short)((A & getreg(OP&7))&0xff); F = andTable[A];
+                if (OP == 0xA6) return 7; else return 4;
+            /* XOR r */
+            case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD:
+            case 0xAE: case 0xAF:
+                A = (short)((A ^ getreg(OP&7))&0xff); F = daaTable[A];
+                if (OP == 0xAE) return 7; else return 4;
+            /* OR r */
+            case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5:
+            case 0xB6: case 0xB7:
+                A = (short)((A |getreg(OP&7))&0xff); F = daaTable[A];
+                if (OP == 0xB6) return 7; else return 4;
+            /* CP r */
+            case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD:
+            case 0xBE: case 0xBF:
+                tmp3 = getreg(OP&7); tmp2 = A - tmp3; F = (short)(cpTable[tmp2&0xff]
+                        |cbits2Z80Table[(A ^ tmp3 ^ tmp2) & 0x1ff]);
+                if (OP == 0xBE) return 7; else return 4;
             case 0x07: /* RLCA */
                 tmp = A >>> 7; A = (short)((((A << 1)&0xFF) | tmp)&0xff);
                 F = (short)((F & 0xEC) | tmp);
@@ -733,22 +766,20 @@ public class CpuZ80 implements ICPU, Runnable {
                 IFF[0] = IFF[1] = true; return 4;
             case 0xED:
                 OP = ((Short)mem.read(PC++)).shortValue();
-                switch (OP & 0xC7) {
-                    case 0x70: /* IN (C) - unsupported */
-                        tmp = (cpu.fireIO(C, true, (short)0) & 0xFF);
-                        F = (short)((F & 1) | daaTable[tmp]); return 12;
-                    case 0x40: /* IN r,(C) */
+                switch(OP) {
+                    /* IN r,(C) */
+                    case 0x40: case 0x48: case 0x50: case 0x58: case 0x60: case 0x68:
+                    case 0x78:
                         tmp = (OP >>> 3) & 0x7;
                         putreg(tmp, cpu.fireIO(C, true, (short)0));
                         F = (short)((F & 1) | daaTable[tmp]); return 12;
-                    case 0x71: /* OUT (C),0 - unsupported */
-                        cpu.fireIO(C, false, (short)0); return 12;
-                    case 0x41: /* OUT (C),r */
+                    /* OUT (C),r */
+                    case 0x41: case 0x49: case 0x51: case 0x59: case 0x61: case 0x69:
+                    case 0x79:
                         tmp = (OP >>> 3) & 0x7; cpu.fireIO(C, false, getreg(tmp));
                         return 12;
-                }
-                switch (OP & 0xCF) {
-                    case 0x42: /* SBC HL, ss */
+                    /* SBC HL, ss */
+                    case 0x42: case 0x52: case 0x62: case 0x72:
                         tmp = (OP >>> 4) & 3; tmp2 = (H<<8)|L; tmp3 = getpair(tmp);
                         tmp1 = (tmp2 - tmp3 - (F & 1)) & 0xFFFF;
                         // this code taken from: simh
@@ -756,7 +787,8 @@ public class CpuZ80 implements ICPU, Runnable {
                             cbits2Z80Table[((tmp2 ^ tmp3 ^ tmp1) >>> 8) & 0x1ff]);
                         H = (short)((tmp1 >>> 8)&0xff); L = (short)(tmp1 & 0xFF);
                         return 15;
-                    case 0x4A: /* ADC HL,ss */
+                    /* ADC HL,ss */
+                    case 0x4A: case 0x5A: case 0x6A: case 0x7A:
                         tmp = (OP >>> 4) & 3; tmp2 = (H<<8)|L;
                         tmp3 = getpair(tmp);
                         tmp1 = (tmp2 + tmp3 + (F & 1)) & 0xFFFF;
@@ -764,8 +796,6 @@ public class CpuZ80 implements ICPU, Runnable {
                             cbitsZ80Table[(tmp2 ^ tmp3 ^ tmp1) >>> 8]);
                         H = (short)((tmp1 >>> 8)&0xff); L = (short)(tmp1 & 0xFF);
                         return 11;
-                }
-                switch(OP) {
                     case 0x44: /* NEG */
                         A = (short)((0 - A) & 0xFF); F = negTable[A]; return 8;
                     case 0x45: /* RETN */
@@ -802,6 +832,11 @@ public class CpuZ80 implements ICPU, Runnable {
                         tmp = ((tmp<<4)&0xF0)|(A&0x0F);A = (short)((A&0xF0)|tmp1);
                         mem.write((H<<8)|L,(short)tmp&0xff); F = (short)(daaTable[A]|(F&flagC));
                         return 18;
+                    case 0x70: /* IN (C) - unsupported */
+                        tmp = (cpu.fireIO(C, true, (short)0) & 0xFF);
+                        F = (short)((F & 1) | daaTable[tmp]); return 12;
+                    case 0x71: /* OUT (C),0 - unsupported */
+                        cpu.fireIO(C, false, (short)0); return 12;
                     case 0xA0: /* LDI */
                         tmp1 = (H<<8)|L; tmp2 = (D<<8)|E;
                         mem.write(tmp2, (Short)mem.read(tmp1));
@@ -962,22 +997,22 @@ public class CpuZ80 implements ICPU, Runnable {
                         return 21;
                 }
                 tmp = (Integer)mem.readWord(PC); PC += 2;
-                switch (OP & 0xCF) {
-                    case 0x43: /* LD (nn), ss */
-                        tmp1 = getpair((OP>>>4)&3);
-                        mem.writeWord(tmp, tmp1); return 20;
-                    case 0x4B: /* LD ss,(nn) */
+                switch (OP) {
+                    /* LD (nn), ss */
+                    case 0x43: case 0x53: case 0x63: case 0x73:
+                        tmp1 = getpair((OP>>>4)&3);mem.writeWord(tmp, tmp1); return 20;
+                    /* LD ss,(nn) */
+                    case 0x4B: case 0x5B: case 0x6B: case 0x7B:
                         tmp1 = (Integer)mem.readWord(tmp); putpair((OP>>>4)&3, tmp1); return 20;                        
                 }
             case 0xDD: special = 0xDD; case 0xFD: if (OP == 0xFD) special = 0xFD;
-            OP = ((Short)mem.read(PC++)).shortValue();
-                switch (OP & 0xCF) {
-                    case 0x09: /* ADD ii,pp */
+                OP = ((Short)mem.read(PC++)).shortValue();
+                switch (OP) {
+                    /* ADD ii,pp */
+                    case 0x09: case 0x19: case 0x29: case 0x39:
                         tmp1 = getpair(special,(OP>>>4)&3); tmp = getspecial(special)+tmp1;
                         F = (short)((F&0xEC)|cbitsTable[(IX ^ tmp1 ^ tmp) >> 8]);
                         putspecial(special, tmp); return 15;
-                }
-                switch (OP) {
                     case 0x23: /* INC ii */
                         if (special == 0xDD) IX++; else IY++; return 10;
                     case 0x2B: /* DEC ii */
@@ -1002,19 +1037,18 @@ public class CpuZ80 implements ICPU, Runnable {
                         SP = (special == 0xDD)?IX:IY; return 10;
                 }
                 tmp = ((Short)mem.read(PC++)).shortValue();
-                switch (OP & 0xC7) {
+                switch (OP) {
                     case 0x76: break;
-                    case 0x46: /* LD r,(ii+d) */
+                    /* LD r,(ii+d) */
+                    case 0x46: case 0x4E: case 0x56: case 0x5E: case 0x66: case 0x6E:
+                    case 0x7E:
                         tmp1 = (OP>>>3)&7; putreg2(tmp1,(Short)mem.read((getspecial(special)+tmp)&0xffff));
                         return 19;
-                }
-                switch (OP & 0xF8) {
-                    case 0x76: break;
-                    case 0x70: /* LD (ii+d) */
+                    /* LD (ii+d),r */
+                    case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75:
+                    case 0x77:
                         tmp1 = (OP & 7); tmp2 = (getspecial(special)+tmp)&0xffff;
                         mem.write(tmp2, getreg2(tmp1)); return 19;
-                }
-                switch(OP) {
                     case 0x34: /* INC (ii+d) */
                         tmp1 = (getspecial(special)+tmp)&0xffff; tmp2 = ((Short)mem.read(tmp1)+1)&0xff;
                         mem.write(tmp1, tmp2); F = (short)((F&1)|incZ80Table[tmp2]); return 23;
@@ -1063,20 +1097,24 @@ public class CpuZ80 implements ICPU, Runnable {
                         mem.write(getspecial(special)+(tmp&0xff), (tmp>>>8)&0xff); return 19;
                     case 0xCB:
                         OP = (short)((tmp >>> 8)&0xff); tmp &= 0xff;
-                        switch(OP & 0xC7) {
-                            case 0x46: /* BIT b,(ii+d) */
+                        switch (OP) {
+                            /* BIT b,(ii+d) */
+                            case 0x46: case 0x4E: case 0x56: case 0x5E: case 0x66:
+                            case 0x6E: case 0x76: case 0x7E:
                                 tmp2 = (OP>>>3)&7;tmp1 = (Short)mem.read((getspecial(special) + tmp)&0xffff);
                                 F = (short)((F&0x95)|flagH|(((tmp1&(1<<tmp2)) == 0)?flagZ:0)); return 20;
-                            case 0x86: /* RES b,(ii+d) */
+                            /* RES b,(ii+d) */
+                            case 0x86: case 0x8E: case 0x96: case 0x9E: case 0xA6:
+                            case 0xAE: case 0xB6: case 0xBE:
                                 tmp2 = (OP>>>3)&7; tmp3 = (getspecial(special) + tmp)&0xffff;
                                 tmp1 = (Short)mem.read(tmp3); tmp1 = (tmp1 & (~(1<<tmp2)));
                                 mem.write(tmp3, tmp1&0xff); return 23;
-                            case 0xC6: /* SET b,(ii+d) */
+                            /* SET b,(ii+d) */
+                            case 0xC6: case 0xCE: case 0xD6: case 0xDE: case 0xE6:
+                            case 0xEE: case 0xF6: case 0xFE:
                                 tmp2 = (OP>>>3)&7; tmp3 = (getspecial(special) + tmp)&0xffff;
                                 tmp1 = (Short)mem.read(tmp3); tmp1 = (tmp1 | (1<<tmp2));
                                 mem.write(tmp3, tmp1&0xff); return 23;
-                        }
-                        switch (OP) {
                             case 0x06: /* RLC (ii+d) */
                                 tmp2 = (getspecial(special) + tmp)&0xffff;
                                 tmp1 = (Short)mem.read(tmp2); F = (short)((tmp1>>>7)&0xff);
@@ -1119,41 +1157,59 @@ public class CpuZ80 implements ICPU, Runnable {
                 }
             case 0xCB:
                 OP = (Short)mem.read(PC++);
-                switch (OP & 0xF8) {
-                    case 0x00: /* RLC r */
+                switch (OP) {
+                    /* RLC r */
+                    case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05:
+                    case 0x06: case 0x07:
                         tmp = OP&7; tmp1 = getreg(tmp); F = (short)(tmp1>>>7);
                         tmp1 <<= 1; tmp1 |= (F&1); F |= daaTable[tmp1]; putreg(tmp,(short)tmp1);
                         if (tmp==6) return 15; else return 8;
-                    case 0x08: /* RRC r */
+                    /* RRC r */
+                    case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D:
+                    case 0x0E: case 0x0F:
                         tmp = OP&7;tmp1 = getreg(tmp); F = (short)(tmp1&1);
                         tmp1 >>>= 1; tmp1 |= ((F&1)<<7); putreg(tmp, (short)tmp1);
                         F |= daaTable[tmp1]; if (tmp==6) return 15; else return 8;
-                    case 0x10: /* RL r */
+                    /* RL r */
+                    case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15:
+                    case 0x16: case 0x17:
                         tmp = OP&7;tmp1 = getreg(tmp);tmp2 = F&1;
                         F = (short)(tmp1>>>7);
                         tmp1 <<= 1; tmp1 |= tmp2; putreg(tmp,(short)tmp1);
                         F |= daaTable[tmp1]; if (tmp==6) return 15; else return 8;
-                    case 0x18: /* RR r */
+                    /* RR r */
+                    case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D:
+                    case 0x1E: case 0x1F:
                         tmp = OP&7; tmp1=getreg(tmp); tmp2 = F&1;F = (short)(tmp1&1);
                         tmp1 >>>= 1; tmp1 |= (tmp2<<7); putreg(tmp,(short)tmp1);
                         F |= daaTable[tmp1]; if (tmp==6) return 15; else return 8;
-                    case 0x20: /* SLA r */
+                    /* SLA r */
+                    case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25:
+                    case 0x26: case 0x27:
                         tmp = OP&7; tmp1 = getreg(tmp); F = (short)(tmp1>>>7);
                         tmp1 <<= 1; putreg(tmp,(short)tmp1); F|=daaTable[tmp1];
                         if (tmp==6) return 15; else return 8;
-                    case 0x28: /* SRA r */
+                    /* SRA r */
+                    case 0x28: case 0x29: case 0x2A: case 0x2B: case 0x2C: case 0x2D:
+                    case 0x2E: case 0x2F:
                         tmp = OP&7; tmp1 = getreg(tmp); tmp2 = tmp1&0x80;
                         F = (short)(tmp1&1); tmp1 >>>= 1; tmp1 |= tmp2;
                         putreg(tmp,(short)tmp1); F |= daaTable[tmp1];
                         if (tmp==6) return 15; else return 8;
-                    case 0x30: /* SLL r - unsupported */
+                    /* SLL r - unsupported */
+                    case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35:
+                    case 0x36: case 0x37:
                         tmp = OP&7; tmp1 = getreg(tmp); F = (short)(tmp1>>>7);tmp2=tmp1&1;
                         tmp1 <<= 1; tmp1 |= tmp2; putreg(tmp,(short)tmp1);
                         F|=daaTable[tmp1]; if (tmp==6) return 15; else return 8;
-                    case 0x38: /* SRL r */
+                    /* SRL r */
+                    case 0x38: case 0x39: case 0x3A: case 0x3B: case 0x3C: case 0x3D:
+                    case 0x3E: case 0x3F:
                         tmp = OP&7; tmp1 = getreg(tmp); F = (short)(tmp1&1); tmp1 >>>= 1;
                         putreg(tmp,(short)tmp1); F |= ((tmp1 == 0)?flagZ:0)|parityTable[tmp1];
                         if (tmp==6) return 15; else return 8;
+                }
+                switch (OP & 0xF8) {
                     case 0x40: /* BIT b,r */
                         tmp = (OP>>>3)&7; tmp2 = OP&7; tmp1 = getreg(tmp2);
                         F = (short)((F&0x95)|flagH|(((tmp1&(1<<tmp)) == 0)?flagZ:0));
@@ -1169,15 +1225,14 @@ public class CpuZ80 implements ICPU, Runnable {
                 }
         }
         tmp = (Short)mem.read(PC++);
-        switch (OP & 0xE7) {
-            case 0x20: /* JR cc,d */
+        switch (OP) {
+            /* JR cc,d */
+            case 0x20: case 0x28: case 0x30: case 0x38:
                 if (getCC1((OP>>>3)&3)) {
                     b = (byte)tmp;
                     PC += b;
                     return 12;
                 } return 7;
-        }
-        switch (OP) {
             case 0x18: /* JR e */
                 b = (byte)tmp;
                 PC += b;
@@ -1213,23 +1268,23 @@ public class CpuZ80 implements ICPU, Runnable {
                 return 7;
         }
         tmp += ((Short)mem.read(PC++) << 8);
-        switch (OP & 0xC7) {
-            case 0xC2: /* JP cc,nn */
-                if (getCC((OP>>>3)&7))
-                    PC = tmp;
+        switch (OP) {
+            /* LD ss, nn */
+            case 0x01: case 0x11: case 0x21: case 0x31:
+                putpair((OP>>>4)&3,tmp); return 10;
+            /* JP cc,nn */
+            case 0xC2: case 0xCA: case 0xD2: case 0xDA: case 0xE2: case 0xEA:
+            case 0xF2: case 0xFA:
+                if (getCC((OP>>>3)&7)) PC = tmp;
                 return 10;
-            case 0xC4: /* CALL cc,nn */
+            /* CALL cc,nn */
+            case 0xC4: case 0xCC: case 0xD4: case 0xDC: case 0xE4: case 0xEC:
+            case 0xF4: case 0xFC:
                 if (getCC((OP>>>3)&7)) {
                     SP = (SP -2)&0xffff;
                     mem.writeWord(SP, PC); PC = tmp;
                     return 17;
                 } return 10;
-        }
-        switch (OP & 0xCF) {
-            case 0x01: /* LD ss, nn */
-                putpair((OP>>>4)&3,tmp); return 10;
-        }
-        switch (OP) {
             case 0x22: /* LD (nn),HL */
                 tmp1 = getpair(2); 
                 mem.writeWord(tmp, tmp1); return 16;
