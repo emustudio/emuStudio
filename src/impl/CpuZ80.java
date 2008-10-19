@@ -1209,7 +1209,7 @@ public class CpuZ80 implements ICPU, Runnable {
                         putreg(tmp,(short)tmp1); F |= ((tmp1 == 0)?flagZ:0)|parityTable[tmp1];
                         if (tmp==6) return 15; else return 8;
                 }
-                switch (OP & 0xF8) {
+                switch (OP & 0xC0) {
                     case 0x40: /* BIT b,r */
                         tmp = (OP>>>3)&7; tmp2 = OP&7; tmp1 = getreg(tmp2);
                         F = (short)((F&0x95)|flagH|(((tmp1&(1<<tmp)) == 0)?flagZ:0));
