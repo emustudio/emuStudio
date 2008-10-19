@@ -399,7 +399,7 @@ public class statusGUI extends javax.swing.JPanel {
         mnemo = null;
         switch (val) {
             case 0xCB:
-                val = (Short)mem.read(memPos++);
+                val = (Short)mem.read(actPos++);
                 oper += String.format(" %02X", val);
                 mnemo = mnemoTabCB[val]; break;
             case 0xDD:
