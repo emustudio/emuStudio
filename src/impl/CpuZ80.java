@@ -545,7 +545,7 @@ public class CpuZ80 implements ICPU, Runnable {
      * This method evaluates one instruction. It provides all phases:
      * Fetch, Decode, Execute, Store.
      */
-    private int evalStep() {
+    private int evalStep() throws ArrayIndexOutOfBoundsException {
         short OP; int tmp, tmp1, tmp2, tmp3;
         short special = 0; // prefix if available = 0xDD or 0xFD
         byte b;
@@ -1400,8 +1400,11 @@ public class CpuZ80 implements ICPU, Runnable {
                             throw new Error();
                     }
                 }
+                catch (ArrayIndexOutOfBoundsException e) {
+                    run_state = stateEnum.stoppedAddrFallout;
+                    break;                    
+                } 
                 catch (IndexOutOfBoundsException e) {
-                    e.printStackTrace();
                     run_state = stateEnum.stoppedAddrFallout;
                     break;
                 }
