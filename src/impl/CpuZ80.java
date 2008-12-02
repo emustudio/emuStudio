@@ -1119,26 +1119,26 @@ public class CpuZ80 implements ICPU, Runnable {
                                 tmp2 = (getspecial(special) + tmp)&0xffff;
                                 tmp1 = (Short)mem.read(tmp2); F = (short)((tmp1>>>7)&0xff);
                                 tmp1 <<= 1; tmp1 |= (F&1); mem.write(tmp2, tmp1&0xff);
-                                F |= daaTable[tmp1]; return 23;
+                                F |= daaTable[tmp1&0xff]; return 23;
                             case 0x0E: /* RRC (ii+d) */
                                 tmp2 = (getspecial(special) + tmp)&0xffff;
                                 tmp1 = (Short)mem.read(tmp2); F = (short)(tmp1&1);
                                 tmp1 >>>= 1; tmp1 |= ((F&1)<<7); mem.write(tmp2, tmp1&0xff);
-                                F |= daaTable[tmp1]; return 23;
+                                F |= daaTable[tmp1&0xff]; return 23;
                             case 0x16: /* RL (ii+d) */
                                 tmp2 = (getspecial(special) + tmp)&0xffff; tmp3 = F&1;
                                 tmp1 = (Short)mem.read(tmp2); F = (short)((tmp1>>>7)&0xff);
                                 tmp1 <<= 1; tmp1 |= tmp3; mem.write(tmp2, tmp1&0xff);
-                                F |= daaTable[tmp1]; return 23;
+                                F |= daaTable[tmp1&0xff]; return 23;
                             case 0x1E: /* RR (ii+d) */
                                 tmp2 = (getspecial(special) + tmp)&0xffff;
                                 tmp1 = (Short)mem.read(tmp2); tmp3 = F&1;F = (short)(tmp1&1);
                                 tmp1 >>>= 1; tmp1 |= (tmp3<<7); mem.write(tmp2, tmp1&0xff);
-                                F |= daaTable[tmp1]; return 23;
+                                F |= daaTable[tmp1&0xff]; return 23;
                             case 0x26: /* SLA (ii+d) */
                                 tmp2 = (getspecial(special)+tmp)&0xffff; 
                                 tmp1 = (Short)mem.read(tmp2); F = (short)((tmp1>>>7)&0xff);
-                                tmp1 <<= 1; mem.write(tmp2, tmp1&0xff); F|=daaTable[tmp1]; return 23;
+                                tmp1 <<= 1; mem.write(tmp2, tmp1&0xff); F|=daaTable[tmp1&0xff]; return 23;
                             case 0x2E: /* SRA (ii+d) */
                                 tmp2 = (getspecial(special) + tmp)&0xffff;
                                 tmp1 = (Short)mem.read(tmp2); tmp3 = tmp1&0x80;
@@ -1148,7 +1148,7 @@ public class CpuZ80 implements ICPU, Runnable {
                                 tmp2 = (getspecial(special)+tmp)&0xffff; 
                                 tmp1 = (Short)mem.read(tmp2); F = (short)((tmp1>>>7)&0xff);tmp3=tmp1&1;
                                 tmp1 <<= 1; tmp1 |= tmp3; mem.write(tmp2, tmp1&0xff);
-                                F|=daaTable[tmp1]; return 23;
+                                F|=daaTable[tmp1&0xff]; return 23;
                             case 0x3E: /* SRL (ii+d) */
                                 tmp2 = (getspecial(special) + tmp)&0xffff;
                                 tmp1 = (Short)mem.read(tmp2); F = (short)(tmp1&1); tmp1 >>>= 1;
@@ -1162,32 +1162,32 @@ public class CpuZ80 implements ICPU, Runnable {
                     case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05:
                     case 0x06: case 0x07:
                         tmp = OP&7; tmp1 = getreg(tmp); F = (short)(tmp1>>>7);
-                        tmp1 <<= 1; tmp1 |= (F&1); F |= daaTable[tmp1]; putreg(tmp,(short)tmp1);
+                        tmp1 <<= 1; tmp1 |= (F&1); F |= daaTable[tmp1&0xff]; putreg(tmp,(short)tmp1);
                         if (tmp==6) return 15; else return 8;
                     /* RRC r */
                     case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D:
                     case 0x0E: case 0x0F:
                         tmp = OP&7;tmp1 = getreg(tmp); F = (short)(tmp1&1);
                         tmp1 >>>= 1; tmp1 |= ((F&1)<<7); putreg(tmp, (short)tmp1);
-                        F |= daaTable[tmp1]; if (tmp==6) return 15; else return 8;
+                        F |= daaTable[tmp1&0xff]; if (tmp==6) return 15; else return 8;
                     /* RL r */
                     case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15:
                     case 0x16: case 0x17:
                         tmp = OP&7;tmp1 = getreg(tmp);tmp2 = F&1;
                         F = (short)(tmp1>>>7);
                         tmp1 <<= 1; tmp1 |= tmp2; putreg(tmp,(short)tmp1);
-                        F |= daaTable[tmp1]; if (tmp==6) return 15; else return 8;
+                        F |= daaTable[tmp1&0xff]; if (tmp==6) return 15; else return 8;
                     /* RR r */
                     case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D:
                     case 0x1E: case 0x1F:
                         tmp = OP&7; tmp1=getreg(tmp); tmp2 = F&1;F = (short)(tmp1&1);
                         tmp1 >>>= 1; tmp1 |= (tmp2<<7); putreg(tmp,(short)tmp1);
-                        F |= daaTable[tmp1]; if (tmp==6) return 15; else return 8;
+                        F |= daaTable[tmp1&0xff]; if (tmp==6) return 15; else return 8;
                     /* SLA r */
                     case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25:
                     case 0x26: case 0x27:
                         tmp = OP&7; tmp1 = getreg(tmp); F = (short)(tmp1>>>7);
-                        tmp1 <<= 1; putreg(tmp,(short)tmp1); F|=daaTable[tmp1];
+                        tmp1 <<= 1; putreg(tmp,(short)tmp1); F|=daaTable[tmp1&0xff];
                         if (tmp==6) return 15; else return 8;
                     /* SRA r */
                     case 0x28: case 0x29: case 0x2A: case 0x2B: case 0x2C: case 0x2D:
@@ -1201,7 +1201,7 @@ public class CpuZ80 implements ICPU, Runnable {
                     case 0x36: case 0x37:
                         tmp = OP&7; tmp1 = getreg(tmp); F = (short)(tmp1>>>7);tmp2=tmp1&1;
                         tmp1 <<= 1; tmp1 |= tmp2; putreg(tmp,(short)tmp1);
-                        F|=daaTable[tmp1]; if (tmp==6) return 15; else return 8;
+                        F|=daaTable[tmp1&0xff]; if (tmp==6) return 15; else return 8;
                     /* SRL r */
                     case 0x38: case 0x39: case 0x3A: case 0x3B: case 0x3C: case 0x3D:
                     case 0x3E: case 0x3F:
