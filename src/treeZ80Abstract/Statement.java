@@ -10,7 +10,8 @@
 package treeZ80Abstract;
 
 import impl.HEXFileHandler;
-import impl.compileEnv;
+import impl.Namespace;
+import plugins.compiler.IMessageReporter;
 
 
 /**
@@ -34,7 +35,7 @@ public abstract class Statement {
     
     // return size of compiled code
     public abstract int getSize();
-    public abstract void pass1() throws Exception;
-    public abstract int pass2(compileEnv parentEnv, int addr_start) throws Exception;
+    public abstract void pass1(IMessageReporter rep) throws Exception;
+    public abstract int pass2(Namespace parentEnv, int addr_start) throws Exception;
     public abstract void pass4(HEXFileHandler hex) throws Exception;
 }

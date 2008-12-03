@@ -10,8 +10,9 @@
 package treeZ80;
 
 import impl.HEXFileHandler;
-import impl.compileEnv;
+import impl.Namespace;
 import java.util.Vector;
+import plugins.compiler.IMessageReporter;
 import treeZ80Abstract.InstrData;
 import treeZ80Abstract.DataValue;
 
@@ -48,14 +49,14 @@ public class DataNode extends InstrData {
         return size;
     }
 
-    public void pass1() throws Exception {
+    public void pass1(IMessageReporter rep) throws Exception {
         for (int i = 0; i < list.size(); i++) {
             DataValue n = (DataValue)list.elementAt(i);
             n.pass1();
         }
     }
     
-    public int pass2(compileEnv env, int addr_start) throws Exception {
+    public int pass2(Namespace env, int addr_start) throws Exception {
         DataValue dv;
         for (int i =0; i < list.size(); i++) {
             dv = (DataValue)list.get(i);

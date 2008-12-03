@@ -12,8 +12,9 @@ package treeZ80;
 
 import impl.HEXFileHandler;
 import impl.NeedMorePassException;
-import impl.compileEnv;
+import impl.Namespace;
 import java.util.Vector;
+import plugins.compiler.IMessageReporter;
 
 /**
  *
@@ -21,11 +22,19 @@ import java.util.Vector;
  */
 public class Program {
     private Vector list; // all instructions
-    private compileEnv env; // compile-time environment
+    private Namespace namespace; // compile-time environment
+    private Vector<String> includefiles; // list of files that
+                                         // were checked for include-loops
+                                         // in short: list of included files
     
     public Program() { 
         list = new Vector();
-        this.env = new compileEnv();
+        namespace = new Namespace();
+        includefiles = new Vector<String>();
+    }
+
+    public void addIncludeFiles(Vector<String> inclfiles) {
+        includefiles.addAll(inclfiles);
     }
     
     /**
@@ -61,34 +70,57 @@ public class Program {
      * 1. get all label definitions
      * 2. get all macro definitions
      */
-    public compileEnv getCompileEnv() { return env; }
+    public Namespace getNamespace() { return namespace; }
     
-    public void pass1(compileEnv env) throws Exception { 
-        this.env = env; 
-        pass1(); 
+    /**
+     * Method check whether this "subprogram" contains include
+     * pseudocode(s) and if yes, whether the statement calls for
+     * filename given by parameter.
+     * @param filename name of the file that "include" pseudocode should contain
+     * @return true if subprogram contains "include filename" pseudocode
+     */
+    public boolean getIncludeLoops(String filename) {
+        int i;
+        for (i = 0; i < includefiles.size(); i++) {
+            String s = includefiles.elementAt(i);
+            if (s.equals(filename)) return true;
+        }
+        includefiles.add(filename);
+        Row in;
+        for (i = 0; i < list.size(); i++) {
+            in = (Row)list.get(i);
+            if (in.getIncludeLoops(filename) == true)
+                return true;
+        }
+        return false;
+    } 
+    
+    public void pass1(Namespace namespace,IMessageReporter r) throws Exception { 
+        this.namespace = namespace; 
+        pass1(r); 
     }
     
     // creates symbol table
     // return next current address
-    public void pass1() throws Exception {
+    public void pass1(IMessageReporter r) throws Exception {
         int i = 0;
         Row in;
         // only labels and macros have right to be all added to symbol table at once
         for (i = 0; i < list.size(); i++) {
             in = (Row)list.get(i);
             if (in.label != null)
-                if (env.addLabelDef(in.label) == false)
-                    throw new Exception("Label already defined: " + in.label.getName());
-            if ((in.codePseudo != null) && (in.codePseudo instanceof PseudoMACRO))
-                if (env.addMacroDef((PseudoMACRO)in.codePseudo) == false)
-                    throw new Exception("Macro already defined: " 
-                            + ((PseudoMACRO)in.codePseudo).getName());
-            in.pass1();
+                if (namespace.addLabelDef(in.label) == false)
+                    throw new Exception("Error: Label already defined: " + in.label.getName());
+            if ((in.statement != null) && (in.statement instanceof PseudoMACRO))
+                if (namespace.addMacroDef((PseudoMACRO)in.statement) == false)
+                    throw new Exception("Error: Macro already defined: " 
+                            + ((PseudoMACRO)in.statement).getName());
+            in.pass1(r,includefiles);
         }
     }
     
     // pass2 tries to evaulate all expressions and compute relative addresses
-    public int pass2(compileEnv parentEnv, int addr_start) throws Exception {
+    public int pass2(Namespace parentEnv, int addr_start) throws Exception {
         int curr_addr = addr_start;
         for (int i = 0; i < list.size(); i++) {
             Row in = (Row)list.get(i);
@@ -104,10 +136,10 @@ public class Program {
     }
 
     public int pass2(int addr_start) throws Exception {
-        return this.pass2(env,addr_start);
+        return this.pass2(namespace,addr_start);
     }
     
-    public boolean pass3(compileEnv parentEnv) throws Exception {
+    public boolean pass3(Namespace parentEnv) throws Exception {
         int pnCount = parentEnv.getPassNeedCount();
         for (int i = parentEnv.getPassNeedCount()-1; i >=0 ; i--) {
             if (parentEnv.getPassNeed(i).pass3(parentEnv) == true) {
@@ -125,8 +157,8 @@ public class Program {
             in.pass4(hex);
         }
     }
-    public void pass4(HEXFileHandler hex,compileEnv env) throws Exception {
-        this.env = env;
+    public void pass4(HEXFileHandler hex,Namespace env) throws Exception {
+        this.namespace = env;
         pass4(hex);
         
     }

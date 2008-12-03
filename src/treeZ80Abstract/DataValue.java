@@ -10,14 +10,13 @@
 package treeZ80Abstract;
 
 import impl.HEXFileHandler;
-import impl.compileEnv;
+import impl.Namespace;
 
 /**
  *
  * @author vbmacher
  */
 public abstract class DataValue {
-    public abstract String getDataType();
     
     protected int line;
     protected int column;
@@ -30,7 +29,7 @@ public abstract class DataValue {
     /// compile time ///
     public abstract int getSize();
     public abstract void pass1() throws Exception;
-    public abstract int pass2(compileEnv env, int addr_start) throws Exception;
+    public abstract int pass2(Namespace env, int addr_start) throws Exception;
     public abstract void pass4(HEXFileHandler hex) throws Exception;
     
     /**
@@ -41,7 +40,7 @@ public abstract class DataValue {
         String enc = "";
         
         for (int i = 0; i < byts.length; i++)
-            enc += Expression.encodeValue((int)byts[i],true);
+            enc += Expression.encodeValue((int)byts[i]);
         return enc;
     }
 

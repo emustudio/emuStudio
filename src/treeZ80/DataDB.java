@@ -10,7 +10,7 @@
 package treeZ80;
 
 import impl.HEXFileHandler;
-import impl.compileEnv;
+import impl.Namespace;
 import treeZ80Abstract.DataValue;
 import treeZ80Abstract.Expression;
 import treeZ80Abstract.Instruction;
@@ -51,10 +51,10 @@ public class DataDB extends DataValue {
     }
     
     public void pass1() throws Exception {
-        if (opcode != null) opcode.pass1();
+        if (opcode != null) opcode.pass1(null);
     }
     
-    public int pass2(compileEnv env, int addr_start) throws Exception {
+    public int pass2(Namespace env, int addr_start) throws Exception {
         if (expression != null) {
             expression.eval(env,addr_start);
             return addr_start + 1;
@@ -66,9 +66,9 @@ public class DataDB extends DataValue {
 
     public void pass4(HEXFileHandler hex) throws Exception {
         if (expression != null) {
-            if (expression.encodeValue(true).length() > 2)
-                throw new Exception("[" + line + "," + column + "] value too large");
-            hex.putCode(expression.encodeValue(true));
+            if (expression.encodeValue().length() > 2)
+                throw new Exception("[" + line + "," + column + "] Error: value too large");
+            hex.putCode(expression.encodeValue());
         } else if (literalString != null)
             hex.putCode(this.encodeValue(literalString));
         else if (opcode != null) opcode.pass4(hex);

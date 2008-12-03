@@ -9,7 +9,7 @@
 
 package treeZ80;
 
-import impl.compileEnv;
+import impl.Namespace;
 import treeZ80Abstract.Expression;
 
 /**
@@ -38,7 +38,7 @@ public class Address extends Expression {
     /// compile time ///
     
     //??
-    public int eval(compileEnv env, int curr_addr) {
+    public int eval(Namespace env, int curr_addr) {
         this.setAddress(curr_addr);
         return curr_addr;
     }

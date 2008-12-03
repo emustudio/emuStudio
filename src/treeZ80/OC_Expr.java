@@ -10,7 +10,8 @@
 package treeZ80;
 
 import impl.HEXFileHandler;
-import impl.compileEnv;
+import impl.Namespace;
+import plugins.compiler.IMessageReporter;
 import treeZ80Abstract.Expression;
 import treeZ80Abstract.Instruction;
 
@@ -28,6 +29,7 @@ public class OC_Expr extends Instruction {
     public static final int AND = 0xE600; // AND N
     public static final int AND_IIX_NN = 0xDDA600; // AND (IX+N)
     public static final int AND_IIY_NN = 0xFDA600; // AND (IY+N)
+    public static final int BIT = 0xCB46; // BIT b,(HL)
     public static final int CALL = 0xCD0000; // CALL NN
     public static final int CP = 0xFE00; // CP N
     public static final int CP_IIX_NN = 0xDDBE00; // CP (IX+N)
@@ -83,6 +85,7 @@ public class OC_Expr extends Instruction {
     public static final int OR_IIX_NN = 0xDDB600; // OR (IX+N)
     public static final int OR_IIY_NN = 0xFDB600; // OR (IY+N)
     public static final int OUT = 0xD300; // OUT (N),A
+    public static final int RES = 0xCB86; // RES b,(HL)
     public static final int RL_IIX_NN = 0xDDCB0016; // RL (IX+N)
     public static final int RL_IIY_NN = 0xFDCB0016; // RL (IY+N)
     public static final int RLC_IIX_NN = 0xDDCB0006; // RLC (IX+N)
@@ -95,10 +98,13 @@ public class OC_Expr extends Instruction {
     public static final int SBC = 0xDE00; // SBC A,N
     public static final int SBC_A_IIX_NN = 0xDD9E00; // SBC A,(IX+N)
     public static final int SBC_A_IIY_NN = 0xFD9E00; // SBC A,(IY+N)
+    public static final int SET = 0xCBC6; // SET b,(HL)
     public static final int SLA_IIX_NN = 0xDDCB0026; // SLA (IX+N)
     public static final int SLA_IIY_NN = 0xFDCB0026; // SLA (IY+N)
     public static final int SRA_IIX_NN = 0xDDCB002E; // SRA (IX+N)
     public static final int SRA_IIY_NN = 0xFDCB002E; // SRA (IY+N)
+    public static final int SLL_IIX_NN = 0xDDCB0036; // SLL (IX+N)
+    public static final int SLL_IIY_NN = 0xFDCB0036; // SLL (IY+N)
     public static final int SRL_IIX_NN = 0xDDCB003E; // SRL (IX+N)
     public static final int SRL_IIY_NN = 0xFDCB003E; // SRL (IY+N)
     public static final int SUB = 0xD600; // SUB N
@@ -119,17 +125,21 @@ public class OC_Expr extends Instruction {
     }
 
     /// compile time ///
-    public int getSize() {
-        return Expression.getSize(opcode);
-    }
     
-    public void pass1() {}
+    public void pass1(IMessageReporter rep) {}
 
-    public int pass2(compileEnv parentEnv, int addr_start) throws Exception {
+    public int pass2(Namespace parentEnv, int addr_start) throws Exception {
         expr.eval(parentEnv, addr_start);
         if (oneByte && (Expression.getSize(expr.getValue()) > 1))
-            throw new Exception("[" + line + "," + column + "] value too large");
+            throw new Exception("[" + line + "," + column + "] Error: value too large");
         switch (opcode) {
+            case BIT: case RES: case SET:
+                int v = expr.getValue();
+                if ((v > 7) || (v < 0))
+                    throw new Exception("[" + line + "," + column + "]" +
+                            " Error: value can be only in range 0-7");
+                opcode += (8*v);
+                break;
             case IM:
                 switch (expr.getValue()) {
                     case 0: opcode += 0x46; break;
@@ -137,7 +147,7 @@ public class OC_Expr extends Instruction {
                     case 2: opcode += 0x5E; break;
                     default:
                         throw new Exception("[" + line + "," + column + "]" +
-                                " value can be only 0,1 or 2");
+                                " Error: value can be only 0,1 or 2");
                 }
                 break;
             case RL_IIX_NN: case RL_IIY_NN:
@@ -146,6 +156,7 @@ public class OC_Expr extends Instruction {
             case RRC_IIX_NN: case RRC_IIY_NN:
             case SLA_IIX_NN: case SLA_IIY_NN:
             case SRA_IIX_NN: case SRA_IIY_NN:
+            case SLL_IIX_NN: case SLL_IIY_NN:
             case SRL_IIX_NN: case SRL_IIY_NN:
                 opcode += ((expr.getValue() << 8)&0xFF00);
                 break;
@@ -161,17 +172,22 @@ public class OC_Expr extends Instruction {
                     case 0x38: opcode = 0xFF; break;
                     default:
                         throw new Exception("[" + line + "," + column + "]" +
-                                " value can be only 0,8h,10h,18h,20h," +
+                                " Error: value can be only 0,8h,10h,18h,20h," +
                                 "28h,30h or 38h");
                 }
                 break;
-            default: opcode += expr.getValue(); //? little endian
+            default: 
+                opcode += Expression.reverseBytes(expr.getValue());
         }
         return (addr_start + getSize());
     }
 
     public void pass4(HEXFileHandler hex) throws Exception {
-        String s = (getSize() == 1) ? "%1$02X" : "%1$04X";
+        String s;
+        if (getSize() == 1) s = "%1$02X";
+        else if (getSize() == 2) s = "%1$04X";
+        else if (getSize() == 3) s = "%1$06X";
+        else s = "%1$08X";
         hex.putCode(String.format(s,opcode));
     }
 }

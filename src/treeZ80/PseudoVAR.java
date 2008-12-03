@@ -10,7 +10,8 @@
 package treeZ80;
 
 import impl.HEXFileHandler;
-import impl.compileEnv;
+import impl.Namespace;
+import plugins.compiler.IMessageReporter;
 import treeZ80Abstract.Expression;
 import treeZ80Abstract.Pseudo;
 
@@ -34,12 +35,12 @@ public class PseudoVAR extends Pseudo {
     /// compile time ///
 
     public int getSize() { return 0; }
-    public void pass1() {}
+    public void pass1(IMessageReporter rep) {}
 
-    public int pass2(compileEnv env, int addr_start) throws Exception { 
+    public int pass2(Namespace env, int addr_start) throws Exception { 
         if (env.addVarDef(this) == false)
             throw new Exception("[" + line + "," + column
-                    + "] Variable can't be set (already defined): " + mnemo);
+                    + "] Error: variable can't be set (already defined): " + mnemo);
         expr.eval(env, addr_start);
         return addr_start;
     }

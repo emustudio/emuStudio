@@ -22,6 +22,6 @@ public abstract class Instruction extends InstrData {
     }
 
     public int getSize() { 
-        return Expression.is8Bit(opcode) ? 1 : 2;
+        return Expression.getSize(opcode);
     }
 }

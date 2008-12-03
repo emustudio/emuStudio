@@ -11,8 +11,9 @@ package treeZ80;
 
 import impl.HEXFileHandler;
 import impl.NeedMorePassException;
-import impl.compileEnv;
+import impl.Namespace;
 import java.util.Vector;
+import plugins.compiler.IMessageReporter;
 import treeZ80Abstract.Expression;
 import treeZ80Abstract.Pseudo;
 
@@ -41,17 +42,17 @@ public class PseudoMACROCall extends Pseudo {
         return macro.getStatSize();
     }
 
-    public void pass1() {}
+    public void pass1(IMessageReporter rep) {}
     
     
     // this is a call for expanding a macro
     // also generate code for pass4
-    public int pass2(compileEnv env, int addr_start) throws Exception {
+    public int pass2(Namespace env, int addr_start) throws Exception {
         // first find a macro
         this.macro = env.getMacro(this.mnemo); 
         if (macro == null)
             throw new Exception("[" + line + "," + column
-                    + "] Undefined macro: " + this.mnemo);
+                    + "] Error: Undefined macro: " + this.mnemo);
         // do pass2 for expressions (real macro parameters)
         try {
             for (int i = 0; i < params.size(); i++)
@@ -63,11 +64,9 @@ public class PseudoMACROCall extends Pseudo {
             return a;
         } catch(NeedMorePassException e) {
             throw new Exception("[" + line + "," + column
-                    + "] MACRO expression can't be ambiguous");
+                    + "] Error: MACRO expression can't be ambiguous");
         }
     }
-
-    public String getName() { return this.mnemo; }
 
     public void pass4(HEXFileHandler hex) {
         hex.addTable(statHex.getTable());

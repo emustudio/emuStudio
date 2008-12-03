@@ -9,7 +9,7 @@
 
 package treeZ80Abstract;
 
-import impl.compileEnv;
+import impl.Namespace;
 
 /**
  *
@@ -31,23 +31,44 @@ public abstract class Expression {
         else return false;
     }
 
-    public static int getSize(int val) {
-        if (val == (val&0xFF)) return 1;
-        else if (val == (val&0xFFFF)) return 2;
-        else if (val == (val&0xFFFFFF)) return 3;
-        else return 4;
+    private static double log2(double val) {
+        return Math.log(val)/Math.log(2.0);
     }
     
-    public abstract int eval(compileEnv env, int curr_addr) throws Exception;
+    public static int getSize(int val) {
+        int y = (int)(Math.ceil(log2(val+1)/8.0));
+        return (y == 0) ? 1 : y;
+    }
     
-    public static String encodeValue(int val, boolean oneByte) {
-        if (oneByte) return String.format("%02X",(val & 0xFF));
-        else return String.format("%02X%02X",(val & 0xFF),((val>>8)&0xFF));
+    public abstract int eval(Namespace env, int curr_addr) throws Exception;
+    
+    public static String encodeValue(int val) {
+        int size = getSize(val);
+        if (size == 1) return String.format("%02X",(val & 0xFF));
+        else if (size == 2) return String.format("%02X%02X",(val & 0xFF),((val>>8)&0xFF));
+        else if (size == 3) return String.format("%02X%02X%02X",
+                (val & 0xFF),((val>>8)&0xFF),((val>>16)&0xFF));
+        else return String.format("%02X%02X%02X%02X",
+                (val & 0xFF),((val>>8)&0xFF),((val>>16)&0xFF),
+                ((val>>24)&0xFF));
     };
+
+    public static int reverseBytes(int val) {
+        int i = 0;
+        int size = getSize(val);
+        for (int j = 0; j < size; j++) {
+//            System.out.println(Integer.toHexString(val) + " : " 
+  //                  + Integer.toHexString(val&0xFF) + " : " 
+    //                + Integer.toHexString(val>>8));
+            i += (val&0xFF);
+            val >>= 8;
+            i <<= 8;
+        }
+        return i>>8;
+    }
     
-    public String encodeValue(boolean oneByte) {
-        if (oneByte) return String.format("%02X",(value & 0xFF));
-        else return String.format("%02X%02X",(value & 0xFF),((value>>8)&0xFF));
+    public String encodeValue() {
+        return encodeValue(value);
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * compileEnv.java
+ * Namespace.java
  *
  * Created on Pondelok, 2007, október 8, 18:08
  *
@@ -30,15 +30,15 @@ import treeZ80.Row;
  * in pass1. This means that if eg. equ wasnt defined before first use
  * error comes.
  */
-public class compileEnv {
+public class Namespace {
     private Hashtable<String,Label> defLabels;  // labelnode objects
     private Hashtable<String,PseudoMACRO> defMacros;  // all macros
     private Hashtable<String,PseudoEQU> defEqus;    // all equs
     private Hashtable<String,PseudoVAR> defVars;    // all sets
     private Vector<Row> passNeed;   // objects that need more passes
     
-    /** Creates a new instance of compileEnv */
-    public compileEnv() {
+    /** Creates a new instance of Namespace */
+    public Namespace() {
         defLabels = new Hashtable<String,Label>();
         defMacros = new Hashtable<String,PseudoMACRO>();
         defEqus = new Hashtable<String,PseudoEQU>();
@@ -119,7 +119,7 @@ public class compileEnv {
         defVars.remove(name);
     }
     
-    public void copyTo(compileEnv env) {
+    public void copyTo(Namespace env) {
         Iterator i = defLabels.values().iterator();
         while (i.hasNext()) env.addLabelDef((Label)i.next());
         i = defMacros.values().iterator();
@@ -148,3 +148,4 @@ public class compileEnv {
     public void clearPassNeeds() { passNeed.clear(); }
     
 }
+

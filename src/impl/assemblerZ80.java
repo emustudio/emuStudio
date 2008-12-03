@@ -80,8 +80,8 @@ public class assemblerZ80 implements ICompiler {
         // do several passes for compiling
         try {
             Program program = (Program)s;
-            compileEnv env = new compileEnv();
-            program.pass1(env); // create symbol table
+            Namespace env = new Namespace();
+            program.pass1(env,reporter); // create symbol table
             program.pass2(0); // try to evaulate all expressions + compute relative addresses
             while (program.pass3(env) == true) ;
             if (env.getPassNeedCount() != 0) {

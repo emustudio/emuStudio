@@ -10,7 +10,8 @@
 package treeZ80;
 
 import impl.HEXFileHandler;
-import impl.compileEnv;
+import impl.Namespace;
+import plugins.compiler.IMessageReporter;
 import treeZ80Abstract.Instruction;
 
 /**
@@ -130,6 +131,7 @@ public class OC_NoParams extends Instruction {
     public static final int SCF = 0x37;
     public static final int SLA_HHLL = 0xCB26;
     public static final int SRA_HHLL = 0xCB2E;
+    public static final int SLL_HHLL = 0xCB36;
     public static final int SRL_HHLL = 0xCB3E;
     public static final int SUB_HHLL = 0x96;
     public static final int XOR_HHLL = 0xAE;
@@ -141,9 +143,9 @@ public class OC_NoParams extends Instruction {
     
     /// compile time ///
 
-    public void pass1() {}
+    public void pass1(IMessageReporter rep) {}
 
-    public int pass2(compileEnv parentEnv, int addr_start) throws Exception {
+    public int pass2(Namespace parentEnv, int addr_start) throws Exception {
         return addr_start + getSize();
     }
 

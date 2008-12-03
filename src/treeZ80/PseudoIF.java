@@ -11,7 +11,8 @@ package treeZ80;
 
 import impl.HEXFileHandler;
 import impl.NeedMorePassException;
-import impl.compileEnv;
+import impl.Namespace;
+import plugins.compiler.IMessageReporter;
 import treeZ80Abstract.Expression;
 import treeZ80Abstract.Pseudo;
 
@@ -32,9 +33,6 @@ public class PseudoIF extends Pseudo {
         this.subprogram = stat;
         this.condTrue = false;
     }
-    
-    // if doesnt have and id
-    public String getName() { return ""; }
 
     /// compile time ///
     
@@ -43,11 +41,11 @@ public class PseudoIF extends Pseudo {
         else return 0;
     }
 
-    public void pass1() throws Exception {
-        subprogram.pass1();
+    public void pass1(IMessageReporter rep) throws Exception {
+        subprogram.pass1(rep);
     }
     
-    public int pass2(compileEnv env, int addr_start) throws Exception {
+    public int pass2(Namespace env, int addr_start) throws Exception {
         // now evaluate expression and then decide if block can be passed
         try {
             if (expr.eval(env, addr_start) != 0) {
@@ -57,7 +55,7 @@ public class PseudoIF extends Pseudo {
             else return addr_start;
         } catch (NeedMorePassException e) {
             throw new Exception("[" + line + "," + column
-                    + "] IF expression can't be ambiguous");
+                    + "] Error: IF expression can't be ambiguous");
         }
     }
 

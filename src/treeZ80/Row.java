@@ -10,7 +10,9 @@ package treeZ80;
 
 import impl.HEXFileHandler;
 import impl.NeedMorePassException;
-import impl.compileEnv;
+import impl.Namespace;
+import java.util.Vector;
+import plugins.compiler.IMessageReporter;
 import treeZ80Abstract.Statement;
 
 /**
@@ -19,49 +21,64 @@ import treeZ80Abstract.Statement;
  */
 public class Row {
     protected Label label;
-    protected Statement codePseudo;
+    protected Statement statement;
     private int current_address; // its computed in pass2
     
-    public Row(Label label, Statement codePseudo) {
+    public Row(Label label, Statement statement) {
         this.label = label;
-        this.codePseudo = codePseudo;
+        this.statement = statement;
     }
     
-    public Row(Statement codePseudo) {
+    public Row(Statement statement) {
         this.label = null;
-        this.codePseudo = codePseudo;
+        this.statement = statement;
     }
     
 
+    public boolean getIncludeLoops(String filename) {
+        if (statement == null) return false;
+        if (statement instanceof PseudoINCLUDE) {
+            PseudoINCLUDE i = (PseudoINCLUDE)statement;
+            if (i.isEqualName(filename)) 
+                return true;
+        }
+        return false;
+    }
+            
     /// compile time ///
     public int getSize() { 
-        if (codePseudo !=null) return codePseudo.getSize();
+        if (statement !=null) return statement.getSize();
         else return 0;
     }
     
     // do pass1 for all elements
-    public void pass1() throws Exception {
-        if (codePseudo != null) codePseudo.pass1();
+    public void pass1(IMessageReporter rep, Vector<String> inclfiles)
+            throws Exception {
+        if (statement != null) {
+            if (statement instanceof PseudoINCLUDE)
+                ((PseudoINCLUDE)statement).pass1(rep, inclfiles);
+            else statement.pass1(rep);
+        }
     }
     
-    public int pass2(compileEnv prev_env, int addr_start) throws Exception {
+    public int pass2(Namespace prev_env, int addr_start) throws Exception {
         this.current_address = addr_start;
         if (label != null) label.setAddress(new Integer(addr_start));
         // pass2 pre definiciu makra nemozem volat. ide totiz o samotnu expanziu
         // makra. preto pass2 mozem volat az pri samotnom volani makra (pass2 triedy
         // MacroCallPseudo)
-        if (codePseudo != null) 
-            if ((codePseudo instanceof PseudoMACRO) == false)
-                addr_start = codePseudo.pass2(prev_env, addr_start);
+        if (statement != null) 
+            if ((statement instanceof PseudoMACRO) == false)
+                addr_start = statement.pass2(prev_env, addr_start);
         return addr_start;
     }
     
     public int getCurrentAddress() { return this.current_address; }
     
-    public boolean pass3(compileEnv env) throws Exception {
+    public boolean pass3(Namespace env) throws Exception {
         try {
-            if (codePseudo != null)
-                codePseudo.pass2(env,this.current_address);
+            if (statement != null)
+                statement.pass2(env,this.current_address);
         } catch (NeedMorePassException e) {
             return false;
         }
@@ -70,9 +87,9 @@ public class Row {
     
     // code generation
     public void pass4(HEXFileHandler hex) throws Exception {
-        if (codePseudo != null) 
-            if ((codePseudo instanceof PseudoMACRO) == false)
-                codePseudo.pass4(hex);
+        if (statement != null) 
+            if ((statement instanceof PseudoMACRO) == false)
+                statement.pass4(hex);
     }
 
 }

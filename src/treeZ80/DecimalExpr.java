@@ -9,7 +9,7 @@
 
 package treeZ80;
 
-import impl.compileEnv;
+import impl.Namespace;
 import treeZ80Abstract.Expression;
 
 /**
@@ -30,7 +30,7 @@ public class DecimalExpr extends Expression {
         else return 2;
     }
 
-    public int eval(compileEnv env, int curr_addr) throws Exception {
+    public int eval(Namespace env, int curr_addr) throws Exception {
         return value;
     }
 

@@ -10,7 +10,8 @@
 package treeZ80;
 
 import impl.HEXFileHandler;
-import impl.compileEnv;
+import impl.Namespace;
+import plugins.compiler.IMessageReporter;
 import treeZ80Abstract.Expression;
 import treeZ80Abstract.Pseudo;
 
@@ -30,23 +31,18 @@ public class PseudoEQU extends Pseudo {
     }
     
     public String getName() { return mnemo;}
-
-    // this is used in macro expansion for defining macro params
-  //  public void setExpr(ExprNode expr) {
-    //    this.expr = expr;
-    //}
     
     public int getValue() { return expr.getValue(); }
 
     /// compile time ///
     public int getSize() { return 0; }
     
-    public void pass1() {}
+    public void pass1(IMessageReporter rep) {}
     
-    public int pass2(compileEnv env, int addr_start) throws Exception { 
+    public int pass2(Namespace env, int addr_start) throws Exception { 
         if (env.addEquDef(this) == false)
             throw new Exception("[" + line + "," + column
-                    + "] Constant already defined: " + mnemo);
+                    + "] Error: constant already defined: " + mnemo);
         expr.eval(env, addr_start);
         return addr_start;
     }

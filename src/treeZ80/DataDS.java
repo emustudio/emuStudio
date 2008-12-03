@@ -11,7 +11,7 @@ package treeZ80;
 
 import impl.HEXFileHandler;
 import impl.NeedMorePassException;
-import impl.compileEnv;
+import impl.Namespace;
 import treeZ80Abstract.DataValue;
 import treeZ80Abstract.Expression;
 
@@ -22,7 +22,6 @@ import treeZ80Abstract.Expression;
 public class DataDS extends DataValue {
     private Expression expression = null;
     
-    public String getDataType() { return "ds"; }
     /** Creates a new instance of DataDS */
     public DataDS(Expression expr, int line, int column) {
         super(line,column);
@@ -35,24 +34,26 @@ public class DataDS extends DataValue {
     
     public void pass1() {}
 
-    public int pass2(compileEnv env, int addr_start) throws Exception{
+    public int pass2(Namespace env, int addr_start) throws Exception{
         try { 
             int val = expression.eval(env, addr_start);
             return val;
         }
         catch(NeedMorePassException e) {
             throw new Exception("[" + line + "," + column
-                + "] DS expression can't be ambiguous");
+                + "] Error: DS expression can't be ambiguous");
         }
     }
 
     public void pass4(HEXFileHandler hex) throws Exception {
         String str = "";
         
-        if (expression.encodeValue(true).length() > 2)
-            throw new Exception("[" + line + "," + column + "] value too large");
+        if (expression.encodeValue().length() > 2)
+            throw new Exception("[" + line + "," + column + "] Error:" +
+                    " value too large");
         if (expression.getValue() < 0)
-            throw new Exception("[" + line + "," + column + "] value can't be negative");
+            throw new Exception("[" + line + "," + column + "] Error:" +
+                    " value can't be negative");
         
         for (int i = 0; i < expression.getValue(); i++)
             str += "00";

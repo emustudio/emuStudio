@@ -10,8 +10,9 @@
 package treeZ80;
 
 import impl.HEXFileHandler;
-import impl.compileEnv;
+import impl.Namespace;
 import java.util.Vector;
+import plugins.compiler.IMessageReporter;
 import treeZ80Abstract.Expression;
 import treeZ80Abstract.Pseudo;
 
@@ -34,7 +35,6 @@ public class PseudoMACRO extends Pseudo {
         else this.params = params;
         this.subprogram = s;
     }
-
     
     public String getName() { return mnemo; }
     
@@ -44,28 +44,28 @@ public class PseudoMACRO extends Pseudo {
     public int getSize() { return 0; }
     public int getStatSize() { return subprogram.getSize(); }
     
-    public void pass1() throws Exception {
-        subprogram.pass1(); // pass1 creates block symbol table (local for block)
+    public void pass1(IMessageReporter rep) throws Exception {
+        subprogram.pass1(rep); // pass1 creates block symbol table (local for block)
     }
     
     // for pass4
-    private compileEnv newEnv;
+    private Namespace newEnv;
     // this is macro expansion ! can be called only in MacroCallPseudo class
     // call parameters have to be set
-    public int pass2(compileEnv env, int addr_start) throws Exception {
-        newEnv = new compileEnv();
+    public int pass2(Namespace env, int addr_start) throws Exception {
+        newEnv = new Namespace();
         // add local statement env to newEnv
-        subprogram.getCompileEnv().copyTo(newEnv);
+        subprogram.getNamespace().copyTo(newEnv);
         env.copyTo(newEnv); // add parent statement env to newEnv
         // remove all existing definitions of params name (from level-up environment)
         for (int i = 0; i < params.size(); i++)
             newEnv.removeAllDefinitions((String)params.get(i));
         // check of call_params
         if (call_params == null) throw new Exception("[" + line + "," + column
-                + "] Unknown macro parameters");
+                + "] Error: Unknown macro parameters");
         if (call_params.size() != params.size())
             throw new Exception("[" + line + "," + column 
-                    + "] Incorrect macro paramers count");
+                    + "] Error: Incorrect macro paramers count");
         // create/rewrite symbols => parameters as equ pseudo instructions
         for (int i = 0; i < params.size(); i++)
             newEnv.addEquDef(new PseudoEQU((String)params.get(i),

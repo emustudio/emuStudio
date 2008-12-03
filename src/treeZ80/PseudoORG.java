@@ -11,7 +11,8 @@ package treeZ80;
 
 import impl.HEXFileHandler;
 import impl.NeedMorePassException;
-import impl.compileEnv;
+import impl.Namespace;
+import plugins.compiler.IMessageReporter;
 import treeZ80Abstract.Expression;
 import treeZ80Abstract.Pseudo;
 
@@ -32,9 +33,7 @@ public class PseudoORG extends Pseudo {
 
     public int getSize() { return 0; }
 
-    public void pass1() {}
-
-    public String getName() { return ""; }
+    public void pass1(IMessageReporter rep) {}
 
     // org only changes current address
     // if expr isnt valuable, then error exception is thrown
@@ -43,12 +42,12 @@ public class PseudoORG extends Pseudo {
     // mvi a,50
     // label: hlt
     // label address cant be evaluated
-    public int pass2(compileEnv parentEnv, int addr_start) throws Exception {
+    public int pass2(Namespace parentEnv, int addr_start) throws Exception {
         int val = addr_start;
         try { val = expr.eval(parentEnv, addr_start); }
         catch(NeedMorePassException e) {
             throw new Exception("[" + line + "," + column 
-                    + "] ORG expression can't be ambiguous");
+                    + "] Error: ORG expression can't be ambiguous");
         }
         return val;
     }

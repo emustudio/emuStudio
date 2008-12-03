@@ -10,7 +10,7 @@
 package treeZ80;
 
 import impl.NeedMorePassException;
-import impl.compileEnv;
+import impl.Namespace;
 import treeZ80Abstract.Expression;
 
 /**
@@ -19,16 +19,20 @@ import treeZ80Abstract.Expression;
  */
 public class Identifier extends Expression {
     private String name;
+    private int line;
+    private int col;
     
     /** Creates a new instance of Identifier */
-    public Identifier(String name) {
+    public Identifier(String name, int line, int col) {
         this.name = name;
+        this.line = line;
+        this.col = col;
     }
 
     /// compile time ///
     public int getSize() { return 0; }
 
-    public int eval(compileEnv env, int curr_addr) throws Exception {
+    public int eval(Namespace env, int curr_addr) throws Exception {
         // identifier in expression can be only label, equ, or set statement. macro NOT
         // search in env for labels
         Label lab = env.getLabel(this.name);
@@ -51,7 +55,8 @@ public class Identifier extends Expression {
             return this.value;
         }
         else
-            throw new Exception("Unknown identifier (" + this.name + ")");
+            throw new Exception("[" + line + "," + col +
+                    "] Error: Unknown identifier (" + this.name + ")");
     }
     
 }
