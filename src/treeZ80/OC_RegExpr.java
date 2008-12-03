@@ -48,7 +48,7 @@ public class OC_RegExpr extends Instruction {
             boolean oneByte, int line, int column) {
         super(opcode, line, column);
         this.opcode += (reg<<((getSize()-1-pos)*8));
-        old_opcode = this.opcode;
+        old_opcode = opcode; //this.opcode;
         this.oneByte = oneByte;
         this.expr = expr;
         bitInstr = false;
@@ -63,7 +63,7 @@ public class OC_RegExpr extends Instruction {
         oneByte = true;
         this.expr = bit;
         this.opcode += reg;
-        old_opcode = this.opcode;
+        old_opcode = opcode; //this.opcode;
         bitInstr = true;
     }
     /// compile time ///
@@ -76,7 +76,12 @@ public class OC_RegExpr extends Instruction {
         if (oneByte && (Expression.getSize(val) > 1))
             throw new Exception("[" + line + "," + column + "] Error:" +
                     " value too large");
-        opcode = old_opcode;
+     //   opcode = old_opcode;
+        System.out.println("OPCODE: " + old_opcode + " : " + JR);
+        if (old_opcode == JR) {
+            val = (0xFF-(val+1))&0xff;
+            System.out.println("m Here: " + Integer.toHexString(val));
+        }
         if (bitInstr) {
             if ((val > 7) || (val < 0))
                 throw new Exception("[" + line + "," + column + "] Error:" +

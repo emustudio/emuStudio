@@ -139,6 +139,7 @@ public class OC_Expr extends Instruction {
                     + "] Error: value too large");
         opcode = old_opcode;
         switch (opcode) {
+            case DJNZ: val--; break;
             case BIT: case RES: case SET:
                 if ((val > 7) || (val < 0))
                     throw new Exception("[" + line + "," + column + "]" +
