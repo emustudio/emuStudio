@@ -148,4 +148,3 @@ public class Namespace {
     public void clearPassNeeds() { passNeed.clear(); }
     
 }
-

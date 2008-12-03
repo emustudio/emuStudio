@@ -25,6 +25,4 @@ public abstract class Pseudo extends Statement {
     }
     
     public boolean isPseudo() { return true; }
-    
-    public abstract String getName();
 }
