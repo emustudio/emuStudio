@@ -66,8 +66,8 @@ public class PseudoINCLUDE extends Pseudo {
     }
     
     public void pass1(IMessageReporter r) throws Exception {}
-    public void pass1(IMessageReporter r, Vector<String> includefiles)
-            throws Exception {
+    public void pass1(IMessageReporter r, Vector<String> includefiles,
+            Namespace parent) throws Exception {
         try {
             MRep rep = new MRep(r);
             FileReader f = new FileReader(new File(filename));
@@ -80,7 +80,7 @@ public class PseudoINCLUDE extends Pseudo {
                         "Error: Unexpected end of file (" + shortFileName + ")");
             program = (Program)s;
             program.addIncludeFiles(includefiles);
-            namespace = new Namespace();
+            namespace = parent;
             
             if (program.getIncludeLoops(filename))
                 throw new Exception("[" + line + "," + column + "] "+
@@ -88,6 +88,9 @@ public class PseudoINCLUDE extends Pseudo {
             program.pass1(namespace,rep); // create symbol table
         } catch (IOException e) {
             throw new Exception(shortFileName + ": I/O Error");
+        } catch (Exception e) {
+            throw new Exception("[" + line + "," + column + "] "+
+                    e.getMessage());
         }
     }
   
@@ -96,6 +99,7 @@ public class PseudoINCLUDE extends Pseudo {
         return program.pass2(addr_start); // try to evaulate all expressions + compute relative addresses
     }
 
+    @SuppressWarnings("empty-statement")
     public void pass4(HEXFileHandler hex) throws Exception {
         while (program.pass3(namespace) == true) ;
         if (namespace.getPassNeedCount() != 0)

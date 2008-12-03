@@ -51,13 +51,14 @@ public class Row {
     }
     
     // do pass1 for all elements
-    public void pass1(IMessageReporter rep, Vector<String> inclfiles)
+    public void pass1(IMessageReporter rep)
             throws Exception {
-        if (statement != null) {
-            if (statement instanceof PseudoINCLUDE)
-                ((PseudoINCLUDE)statement).pass1(rep, inclfiles);
-            else statement.pass1(rep);
-        }
+        if (statement != null)
+            statement.pass1(rep);
+    }
+    public void pass1(IMessageReporter rep, Vector<String> inclfiles, 
+            Namespace parent) throws Exception {
+        ((PseudoINCLUDE)statement).pass1(rep, inclfiles, parent);        
     }
     
     public int pass2(Namespace prev_env, int addr_start) throws Exception {

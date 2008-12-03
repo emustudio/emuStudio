@@ -115,7 +115,10 @@ public class Program {
                 if (namespace.addMacroDef((PseudoMACRO)in.statement) == false)
                     throw new Exception("Error: Macro already defined: " 
                             + ((PseudoMACRO)in.statement).getName());
-            in.pass1(r,includefiles);
+            if ((in.statement != null) && (in.statement instanceof PseudoINCLUDE))
+                in.pass1(r, includefiles, namespace);
+            else
+                in.pass1(r);
         }
     }
     
