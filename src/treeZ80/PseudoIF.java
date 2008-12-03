@@ -37,7 +37,7 @@ public class PseudoIF extends Pseudo {
     /// compile time ///
     
     public int getSize() {
-        if (expr.getValue() != 0) return subprogram.getSize();
+        if (condTrue) return subprogram.getSize();
         else return 0;
     }
 

@@ -37,7 +37,7 @@ public class DataDS extends DataValue {
     public int pass2(Namespace env, int addr_start) throws Exception{
         try { 
             int val = expression.eval(env, addr_start);
-            return val;
+            return addr_start+val;
         }
         catch(NeedMorePassException e) {
             throw new Exception("[" + line + "," + column
@@ -47,8 +47,7 @@ public class DataDS extends DataValue {
 
     public void pass4(HEXFileHandler hex) throws Exception {
         String str = "";
-        
-        if (expression.encodeValue().length() > 2)
+        if (!expression.is8Bit())
             throw new Exception("[" + line + "," + column + "] Error:" +
                     " value too large");
         if (expression.getValue() < 0)

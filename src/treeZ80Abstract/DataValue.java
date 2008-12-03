@@ -40,7 +40,7 @@ public abstract class DataValue {
         String enc = "";
         
         for (int i = 0; i < byts.length; i++)
-            enc += Expression.encodeValue((int)byts[i]);
+            enc += Expression.encodeValue((int)byts[i],1);
         return enc;
     }
 

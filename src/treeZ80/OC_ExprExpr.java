@@ -31,6 +31,7 @@ public class OC_ExprExpr extends Instruction {
     private Expression e1;
     private Expression e2;
     private boolean bitInstr;
+    private int old_opcode;
     
     public OC_ExprExpr(int opcode, Expression e1, Expression e2,
             boolean bitInstr,int line,int column) {
@@ -38,6 +39,7 @@ public class OC_ExprExpr extends Instruction {
         this.e1 = e1;
         this.e2 = e2;
         this.bitInstr = bitInstr;
+        this.old_opcode = opcode;
     }
     public void pass1(IMessageReporter rep) throws Exception {}
 
@@ -53,6 +55,7 @@ public class OC_ExprExpr extends Instruction {
         if (Expression.getSize(val2) > 1)
             throw new Exception("[" + line + "," + column + "] " +
                     "Error: value(2) too large");
+        opcode = old_opcode;
         if (bitInstr) {
             if ((val1 > 7) || (val1 < 0))
                 throw new Exception("[" + line + "," + column + "] " +

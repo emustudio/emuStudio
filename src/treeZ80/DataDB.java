@@ -39,8 +39,6 @@ public class DataDB extends DataValue {
         super(line,column);
         this.opcode = opcode;
     }
- 
-    public String getDataType() { return "db"; }
     
     /// compile time ///
     public int getSize() { 
@@ -55,20 +53,25 @@ public class DataDB extends DataValue {
     }
     
     public int pass2(Namespace env, int addr_start) throws Exception {
+        int next;
         if (expression != null) {
             expression.eval(env,addr_start);
-            return addr_start + 1;
-        }
-        else if (literalString != null) return addr_start + literalString.length();
-        else if (opcode != null) return opcode.pass2(env,addr_start);
-        return addr_start;
+            next = addr_start + 1;
+        } else if (literalString != null)
+            next = addr_start + literalString.length();
+        else if (opcode != null) 
+            next = opcode.pass2(env,addr_start);
+        else next = addr_start;
+        return next;
     }
 
     public void pass4(HEXFileHandler hex) throws Exception {
         if (expression != null) {
-            if (expression.encodeValue().length() > 2)
-                throw new Exception("[" + line + "," + column + "] Error: value too large");
-            hex.putCode(expression.encodeValue());
+            String s = expression.encodeValue(1);
+            if (s.length() > 2)
+                throw new Exception("[" + line + "," + column 
+                        + "] Error: value too large");
+            hex.putCode(s);
         } else if (literalString != null)
             hex.putCode(this.encodeValue(literalString));
         else if (opcode != null) opcode.pass4(hex);

@@ -35,6 +35,7 @@ public class OC_RegExpr extends Instruction {
     private Expression expr;
     private boolean oneByte;
     private boolean bitInstr; // bit instruction? (BIT,SET,RES)
+    private int old_opcode;
     
     /***
      * Creates a new instance of OC_RegExpr
@@ -47,6 +48,7 @@ public class OC_RegExpr extends Instruction {
             boolean oneByte, int line, int column) {
         super(opcode, line, column);
         this.opcode += (reg<<((getSize()-1-pos)*8));
+        old_opcode = this.opcode;
         this.oneByte = oneByte;
         this.expr = expr;
         bitInstr = false;
@@ -61,6 +63,7 @@ public class OC_RegExpr extends Instruction {
         oneByte = true;
         this.expr = bit;
         this.opcode += reg;
+        old_opcode = this.opcode;
         bitInstr = true;
     }
     /// compile time ///
@@ -73,12 +76,16 @@ public class OC_RegExpr extends Instruction {
         if (oneByte && (Expression.getSize(val) > 1))
             throw new Exception("[" + line + "," + column + "] Error:" +
                     " value too large");
+        opcode = old_opcode;
         if (bitInstr) {
             if ((val > 7) || (val < 0))
                 throw new Exception("[" + line + "," + column + "] Error:" +
                         " value can be only in range 0-7");
             opcode += (8*val);
-        } else opcode += Expression.reverseBytes(val);
+        } else {
+            if (oneByte) opcode += Expression.reverseBytes(val,1);
+            else opcode += Expression.reverseBytes(val,2);
+        }
         return addr_start + getSize();
     }
 

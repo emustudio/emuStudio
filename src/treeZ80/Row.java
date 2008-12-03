@@ -34,7 +34,6 @@ public class Row {
         this.statement = statement;
     }
     
-
     public boolean getIncludeLoops(String filename) {
         if (statement == null) return false;
         if (statement instanceof PseudoINCLUDE) {

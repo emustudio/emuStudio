@@ -41,19 +41,23 @@ public abstract class Expression {
     }
     
     public abstract int eval(Namespace env, int curr_addr) throws Exception;
-    
-    public static String encodeValue(int val) {
+
+    public static String encodeValue(int val, int neededSize) {
         int size = getSize(val);
-        if (size == 1) return String.format("%02X",(val & 0xFF));
-        else if (size == 2) return String.format("%02X%02X",(val & 0xFF),((val>>8)&0xFF));
-        else if (size == 3) return String.format("%02X%02X%02X",
+        String s = "";
+        if (size == 1) s = String.format("%02X",(val & 0xFF));
+        else if (size == 2) s = String.format("%02X%02X",(val & 0xFF),((val>>8)&0xFF));
+        else if (size == 3) s = String.format("%02X%02X%02X",
                 (val & 0xFF),((val>>8)&0xFF),((val>>16)&0xFF));
-        else return String.format("%02X%02X%02X%02X",
+        else s = String.format("%02X%02X%02X%02X",
                 (val & 0xFF),((val>>8)&0xFF),((val>>16)&0xFF),
                 ((val>>24)&0xFF));
+        for (int j = size; j < neededSize; j++) 
+            s += "00";
+        return s;
     };
-
-    public static int reverseBytes(int val) {
+    
+    public static int reverseBytes(int val, int neededSize) {
         int i = 0;
         int size = getSize(val);
         for (int j = 0; j < size; j++) {
@@ -64,11 +68,12 @@ public abstract class Expression {
             val >>= 8;
             i <<= 8;
         }
-        return i>>8;
+        for(int j = size; j < neededSize; j++) i<<=8;
+        return i>>>8;
     }
     
-    public String encodeValue() {
-        return encodeValue(value);
+    public String encodeValue(int neededSize) {
+        return encodeValue(value, neededSize);
     }
 
 }

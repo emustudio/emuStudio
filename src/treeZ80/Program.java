@@ -160,6 +160,5 @@ public class Program {
     public void pass4(HEXFileHandler hex,Namespace env) throws Exception {
         this.namespace = env;
         pass4(hex);
-        
     }
 }

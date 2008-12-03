@@ -116,10 +116,12 @@ public class OC_Expr extends Instruction {
     
     private Expression expr;
     private boolean oneByte;
+    private int old_opcode;
     
     /** Creates a new instance of OC_Expr */
     public OC_Expr(int opcode, Expression expr,boolean oneByte,int line, int column) {
         super(opcode,line, column);
+        this.old_opcode = opcode;
         this.expr = expr;
         this.oneByte = oneByte;
     }
@@ -130,18 +132,21 @@ public class OC_Expr extends Instruction {
 
     public int pass2(Namespace parentEnv, int addr_start) throws Exception {
         expr.eval(parentEnv, addr_start);
-        if (oneByte && (Expression.getSize(expr.getValue()) > 1))
-            throw new Exception("[" + line + "," + column + "] Error: value too large");
+        int val = expr.getValue();
+        
+        if (oneByte && (Expression.getSize(val) > 1))
+            throw new Exception("[" + line + "," + column 
+                    + "] Error: value too large");
+        opcode = old_opcode;
         switch (opcode) {
             case BIT: case RES: case SET:
-                int v = expr.getValue();
-                if ((v > 7) || (v < 0))
+                if ((val > 7) || (val < 0))
                     throw new Exception("[" + line + "," + column + "]" +
                             " Error: value can be only in range 0-7");
-                opcode += (8*v);
+                opcode += (8*val);
                 break;
             case IM:
-                switch (expr.getValue()) {
+                switch (val) {
                     case 0: opcode += 0x46; break;
                     case 1: opcode += 0x56; break;
                     case 2: opcode += 0x5E; break;
@@ -158,10 +163,10 @@ public class OC_Expr extends Instruction {
             case SRA_IIX_NN: case SRA_IIY_NN:
             case SLL_IIX_NN: case SLL_IIY_NN:
             case SRL_IIX_NN: case SRL_IIY_NN:
-                opcode += ((expr.getValue() << 8)&0xFF00);
+                opcode += ((val<<8)&0xFF00);
                 break;
             case RST:
-                switch (expr.getValue()) {
+                switch (val) {
                     case 0: break;
                     case 8: opcode = 0xCF; break;
                     case 0x10: opcode = 0xD7; break;
@@ -176,8 +181,17 @@ public class OC_Expr extends Instruction {
                                 "28h,30h or 38h");
                 }
                 break;
-            default: 
-                opcode += Expression.reverseBytes(expr.getValue());
+            case JR:
+                int x = addr_start - val;
+                if ((x < -126) || (x > 129))
+                    throw new Exception("[" + line + "," + column + "]" +
+                            " Error: Jump out of range (range is from -129 to"
+                            + "+129 bytes)");
+                opcode += Expression.reverseBytes(val-2,1);
+                break;
+            default:
+                if (oneByte) opcode += Expression.reverseBytes(val,1);
+                else opcode += Expression.reverseBytes(val,2);
         }
         return (addr_start + getSize());
     }

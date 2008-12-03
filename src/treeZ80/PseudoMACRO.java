@@ -67,9 +67,10 @@ public class PseudoMACRO extends Pseudo {
             throw new Exception("[" + line + "," + column 
                     + "] Error: Incorrect macro paramers count");
         // create/rewrite symbols => parameters as equ pseudo instructions
-        for (int i = 0; i < params.size(); i++)
+        for (int i = 0; i < params.size(); i++) {
             newEnv.addEquDef(new PseudoEQU((String)params.get(i),
                     (Expression)call_params.get(i),line,column));
+        }
         return subprogram.pass2(newEnv, addr_start);
     }
 

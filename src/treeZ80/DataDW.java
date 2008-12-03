@@ -38,7 +38,7 @@ public class DataDW extends DataValue{
     }
 
     public void pass4(HEXFileHandler hex) throws Exception {
-        hex.putCode(expression.encodeValue());
+        hex.putCode(expression.encodeValue(2));
     }
 
 }

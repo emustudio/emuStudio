@@ -33,22 +33,16 @@ public class HEXFileHandler {
         nextAddress = 0;
     }
     
-    // code in ascii hex format
-    public void putCode(int address, String code) {
-        if (program.containsKey(nextAddress)) program.remove(nextAddress);
-        program.put(address,code);
-        nextAddress = address + (code.length()/2);
-    }
-    
-    // put code on next address
-    // if element exist on the address, then is rewritten
+    /**
+     * Put code on next address
+     * if element exist on the address, then is rewritten
+     */
     public void putCode(String code) {
-        if (program.containsKey(nextAddress)) program.remove(nextAddress);
         program.put(nextAddress,code);
         nextAddress += (code.length()/2);
     }
     
-    public String getCode(int address) {
+    private String getCode(int address) {
         return (String)program.get(address);
     }
     
@@ -56,13 +50,10 @@ public class HEXFileHandler {
         nextAddress = address;
     }
     
-    // bug
     private String checksum(String lin) {
         int sum = 0, chsum = 0;
-        for (int i =0; i < lin.length(); i += 2) {
+        for (int i =0; i < lin.length()-1; i += 2)
             sum += Integer.parseInt(lin.substring(i,i+2),16);
-           
-        }
         sum %= 0x100;
         // :
         // 10 00 08 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
@@ -74,17 +65,24 @@ public class HEXFileHandler {
         return String.format("%1$02X",chsum);
     }
     
-    // this is very risky, keys of the hashtable
-    // have to be adresses and values have to be
-    // compiled code. Method copies all elements
-    // from this hashtable to data member program
+    /**
+     * Keys of the hashtable have to represent adresses
+     * and values have to represent compiled code.
+     * Method copies all elements from param hashtable
+     * to internal data member.
+     */
     public void addTable(Hashtable ha) {
         Vector adrs = new Vector(ha.keySet());
+        int largestAdr = nextAddress;
         for (Enumeration e = adrs.elements(); e.hasMoreElements();) {
-            int adr = (Integer)e.nextElement();
-            String cd = (String)ha.get(adr);
-            program.put(adr,cd);
+            nextAddress = (Integer)e.nextElement();
+            String cd = (String)ha.get(nextAddress);
+            program.put(nextAddress,cd);
+            nextAddress += (cd.length()/2);
+            if (nextAddress > largestAdr) 
+                largestAdr = nextAddress;
         }
+        nextAddress = largestAdr;
     }
     
     public Hashtable getTable() { return this.program; }
