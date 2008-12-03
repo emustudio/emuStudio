@@ -9,7 +9,7 @@
 
 package treeZ80;
 
-import impl.compileEnv;
+import impl.Namespace;
 import treeZ80Abstract.Expression;
 
 /**
@@ -47,7 +47,7 @@ public class Arithmetic extends Expression {
     
     /// compile time ///
        
-    public int eval(compileEnv env, int curr_addr) throws Exception {
+    public int eval(Namespace env, int curr_addr) throws Exception {
         int lv = left.eval(env,curr_addr);
         int rv = 0;
         if (right != null) rv = right.eval(env, curr_addr);
@@ -59,7 +59,7 @@ public class Arithmetic extends Expression {
             case AND: this.value = lv & rv; break;
             case NOT: this.value = ~lv; break;
             case ADD: this.value = lv + rv; break;
-            case MINUS: this.value = lv - rv; break;
+            case MINUS: this.value = (right==null)?-lv: (lv - rv); break;
             case MUL: this.value = lv * rv; break;
             case DIV: this.value = lv / rv; break;
             case MOD: this.value = lv % rv; break;

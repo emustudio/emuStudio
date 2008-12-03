@@ -77,10 +77,8 @@ public class OC_RegExpr extends Instruction {
             throw new Exception("[" + line + "," + column + "] Error:" +
                     " value too large");
      //   opcode = old_opcode;
-        System.out.println("OPCODE: " + old_opcode + " : " + JR);
         if (old_opcode == JR) {
-            val = (0xFF-(val+1))&0xff;
-            System.out.println("m Here: " + Integer.toHexString(val));
+            val = (val-2)&0xff;
         }
         if (bitInstr) {
             if ((val > 7) || (val < 0))

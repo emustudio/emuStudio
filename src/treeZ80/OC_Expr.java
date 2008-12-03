@@ -183,12 +183,10 @@ public class OC_Expr extends Instruction {
                 }
                 break;
             case JR:
-                int x = addr_start - val;
-                if ((x < -126) || (x > 129))
-                    throw new Exception("[" + line + "," + column + "]" +
-                            " Error: Jump out of range (range is from -129 to"
-                            + "+129 bytes)");
-                opcode += Expression.reverseBytes(val-2,1);
+             //   if (val < 0) val = (0xFF-(val+1))&0xff;
+               // else 
+                val = (val-2)&0xff;
+                opcode += Expression.reverseBytes(val,1);
                 break;
             default:
                 if (oneByte) opcode += Expression.reverseBytes(val,1);
