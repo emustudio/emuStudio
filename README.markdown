@@ -25,14 +25,14 @@ called `emu_ifaces`, you can find it in my repos.
 
 Directory tree should be:
 
-`emuStudio
-  |
-  +- compilers -> here should be compiler plugins located
-  +- cpu       -> here should be CPU plugins located
-  +- devices   -> here should be device plugins located
-  +- mem       -> here should be memory plugins located
-  +- lib       -> here should be libraries located
-  +- config    -> here is a place for emuStudio config files`
+    emuStudio
+      |
+      +- compilers -> here should be compiler plugins located
+      +- cpu       -> here should be CPU plugins located
+      +- devices   -> here should be device plugins located
+      +- mem       -> here should be memory plugins located
+      +- lib       -> here should be libraries located
+      +- config    -> here is a place for emuStudio config files`
 
 For correct functionality of compilers plugins, also add run-time library of
 [CUP parser generator][cup]. The library you can download from:
