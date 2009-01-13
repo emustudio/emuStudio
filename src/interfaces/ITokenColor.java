@@ -7,7 +7,7 @@
  * some things just: YOU AREN'T GONNA NEED IT
  */
 
-package plugins.compiler;
+package interfaces;
 
 import java.awt.Color;
 

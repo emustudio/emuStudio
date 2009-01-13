@@ -28,7 +28,7 @@ import plugins.compiler.IToken;
  * @author vbmacher
  */
 public class HighlightThread extends Thread {
-    private SortedSet tokensPos = Collections.synchronizedSortedSet(new TreeSet());
+    private SortedSet<Integer> tokensPos = Collections.synchronizedSortedSet(new TreeSet<Integer>());
     private Hashtable<Integer,Integer> tokenTypes = new Hashtable<Integer,Integer>();
     
     private ILexer lex;
@@ -42,7 +42,7 @@ public class HighlightThread extends Thread {
     private volatile boolean pause = false;
     private volatile Vector<DocumentEvent> work = new Vector<DocumentEvent>();
     private HighlightThread tthis;
-    private Hashtable styles;
+    private Hashtable<?, ?> styles;
     private volatile Vector<RecolorEvent> recolorWork = new Vector<RecolorEvent>();
 
     private class RecolorEvent {
@@ -63,7 +63,7 @@ public class HighlightThread extends Thread {
         }
     }
     
-    public HighlightThread(ILexer lex, DocumentReader lexReader, Hashtable styles) {
+    public HighlightThread(ILexer lex, DocumentReader lexReader, Hashtable<?, ?> styles) {
         this.lex = lex;
         this.doc = (DefaultStyledDocument)lexReader.getDocument();   
         this.setName("highlightThread");
@@ -119,7 +119,7 @@ public class HighlightThread extends Thread {
             }
             synchronized(lock) {
                 if (work.isEmpty()) continue;
-                e = (DocumentEvent)work.elementAt(0);
+                e = work.elementAt(0);
                 work.removeElementAt(0);
             }
             try {
@@ -172,12 +172,12 @@ public class HighlightThread extends Thread {
                 if ((e.getType() == DocumentEvent.EventType.REMOVE) 
                         && (t.getType() == IToken.TEOF)) {
                     // remove rest tokens in tokenPos and tokenTypes
-                    try { removeTokens(bl+1,(Integer)tokensPos.last()+1);}
+                    try { removeTokens(bl+1,tokensPos.last()+1);}
                     catch(NoSuchElementException exx) {}
                 }
             } catch (IOException xe) {}
-            for (Iterator cit = recolorWork.iterator(); cit.hasNext();) {
-                RecolorEvent r = (RecolorEvent)cit.next();
+            for (Iterator<RecolorEvent> cit = recolorWork.iterator(); cit.hasNext();) {
+                RecolorEvent r = cit.next();
                 try { r.reColor();}
                 catch(Error exx) {}
                 cit.remove();
@@ -194,16 +194,16 @@ public class HighlightThread extends Thread {
         int p = -1;
         int beforeLast = -1;
         // search for nearest "from"
-        for (Iterator i = tokensPos.iterator();i.hasNext();) {
-            p = (Integer)i.next();
+        for (Iterator<Integer> i = tokensPos.iterator();i.hasNext();) {
+            p = i.next();
             if (p >= from) break;
             beforeLast = p;
         }
         // treeset contains no elements or from is last position
         if ((p == -1) || (p < from)) return beforeLast;
-        SortedSet s = tokensPos.tailSet(p);
-        Integer[] poss = (Integer[])s.toArray(new Integer[0]);
-        Vector types = new Vector();
+        SortedSet<Integer> s = tokensPos.tailSet(p);
+        Integer[] poss = s.toArray(new Integer[0]);
+        Vector<Integer> types = new Vector<Integer>();
         for (int i = 0; i < poss.length; i++) {
             tokensPos.remove(poss[i]);
             types.add(tokenTypes.get(poss[i]));
@@ -213,7 +213,7 @@ public class HighlightThread extends Thread {
             int l = poss[i] + length;
             if (l < 0) continue;
             tokensPos.add(l);
-            tokenTypes.put(l, (Integer)types.elementAt(i));
+            tokenTypes.put(l, types.elementAt(i));
         }
         return beforeLast;
     }
@@ -227,8 +227,8 @@ public class HighlightThread extends Thread {
     private void removeTokens(int from, int to) {
         int p = -1;
         // search for nearest "from"
-        for (Iterator i = tokensPos.iterator();i.hasNext();) {
-            p = (Integer)i.next();
+        for (Iterator<Integer> i = tokensPos.iterator();i.hasNext();) {
+            p = i.next();
             if ((p >= from) && (p < to)) {
                 tokenTypes.remove(p);
                 i.remove();

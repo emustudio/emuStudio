@@ -13,15 +13,14 @@ import javax.swing.table.*;
 
 import plugins.memory.IMemory;
 import plugins.cpu.ICPU;
-import plugins.compiler.ICompiler;
 
 /**
  *
  * @author vbmacher
  */
+@SuppressWarnings("serial")
 public class DebugTableModel extends AbstractTableModel {
     private ICPU cpu;
-    private ICompiler compiler;
     private IMemory mem;
     
     private int nextAddress;
@@ -32,9 +31,8 @@ public class DebugTableModel extends AbstractTableModel {
     private final int MAX_ROW_COUNT = 25;
     
     /** Creates a new instance of DebugTableModel */
-    public DebugTableModel(ICPU cpu, ICompiler comp, IMemory mem) {
+    public DebugTableModel(ICPU cpu, IMemory mem) {
         this.cpu = cpu;
-        this.compiler = comp;
         this.mem = mem;
         lastRow = 0;
         nextAddress = this.getFirstRowAddress();
@@ -66,7 +64,7 @@ public class DebugTableModel extends AbstractTableModel {
     }
     
     @Override
-    public Class getColumnClass(int columnIndex) {
+    public Class<?> getColumnClass(int columnIndex) {
         return cpu.getDebugColumns()[columnIndex].getType();
     }
     
@@ -109,7 +107,6 @@ public class DebugTableModel extends AbstractTableModel {
             }
             
             int diff = firstRowAddress;
-            int i = 0;
             while (true) {
                 if (diff == (pc+page)) break; /* ak sa dosiahol pc, firstRowAddress
                                           ma tu spravnu hodnotu */

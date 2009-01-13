@@ -14,6 +14,7 @@ import runtime.StaticDialogs;
  *
  * @author  vbmacher
  */
+@SuppressWarnings("serial")
 public class BreakpointDialog extends javax.swing.JDialog {
     private static int adr = -1; // if adr == -1 then it means cancel
     private static boolean set = false;

@@ -16,6 +16,7 @@ import javax.swing.text.StyleConstants;
  *
  * @author vbmacher
  */
+@SuppressWarnings("serial")
 public class HighlightStyle extends SimpleAttributeSet {
     public HighlightStyle(boolean italic, boolean bold, Color color) {
         StyleConstants.setFontFamily(this, "Monospaced");

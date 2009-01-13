@@ -18,6 +18,7 @@ import plugins.cpu.ICPU;
  *
  * @author vbmacher
  */
+@SuppressWarnings("serial")
 public class DebugTable extends JTable {
     private DebugTableModel debug_model;
     private ICPU cpu;

@@ -21,6 +21,7 @@ import javax.swing.JPanel;
  *
  * @author vbmacher
  */
+@SuppressWarnings("serial")
 public class PreviewPanel extends JPanel {
     private Dimension area; // velkost kresliacej plochy
     private Schema schema;

@@ -35,13 +35,14 @@ import javax.swing.text.DefaultStyledDocument;
 import javax.swing.undo.UndoManager;
 import plugins.compiler.ILexer;
 import plugins.compiler.IToken;
-import plugins.compiler.ITokenColor;
+import interfaces.ITokenColor;
 import runtime.StaticDialogs;
 
 /**
  *
  * @author vbmacher
  */
+@SuppressWarnings("serial")
 public class EmuTextPane extends JTextPane {
     public static final short NUMBERS_WIDTH = 40;
     public static final short NUMBERS_HEIGHT = 4;
@@ -49,7 +50,7 @@ public class EmuTextPane extends JTextPane {
     private ILexer syntaxLexer = null;
     private DocumentReader reader;
     private DefaultStyledDocument document;
-    private Hashtable styles; // token styles
+	private Hashtable<Integer, HighlightStyle> styles; // token styles
     private HighlightThread highlight;
 
     private boolean fileSaved; // if is document saved
@@ -60,7 +61,7 @@ public class EmuTextPane extends JTextPane {
     
     /** Creates a new instance of EmuTextPane */
     public EmuTextPane() {
-        styles = new Hashtable();
+        styles = new Hashtable<Integer, HighlightStyle>();
         initStyles();
         document = new DefaultStyledDocument();
         reader = new DocumentReader(document);

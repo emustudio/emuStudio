@@ -14,6 +14,7 @@ import runtime.StaticDialogs;
  *
  * @author  vbmacher
  */
+@SuppressWarnings("serial")
 public class OpenArchDialog extends javax.swing.JDialog {
     private String archName;
     private boolean OOK = false;

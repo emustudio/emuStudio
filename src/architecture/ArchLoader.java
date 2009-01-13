@@ -100,11 +100,11 @@ public class ArchLoader extends ClassLoader {
     public final static String memoriesDir = "mem";
     public final static String devicesDir = "devices";
     
-    private Hashtable resources;
+    private Hashtable<Object, URL> resources;
     
     /** Creates a new instance of ArchLoader */
     public ArchLoader() {     
-        resources = new Hashtable();
+        resources = new Hashtable<Object, URL>();
     }
     
     /**
@@ -230,7 +230,7 @@ public class ArchLoader extends ClassLoader {
                         + mem.getHeight()/2)));
             }
             ArrayList<DeviceElement> devs = s.getDeviceElements();
-            Hashtable devsHash = new Hashtable();
+            Hashtable<DeviceElement, Object> devsHash = new Hashtable<DeviceElement, Object>();
             for (int i = 0; i < devs.size(); i++) {
                 DeviceElement dev = devs.get(i);
                 devsHash.put(dev, "device" + i);
@@ -404,16 +404,16 @@ public class ArchLoader extends ClassLoader {
      * @return instance object of loaded plugin
      */
     private Object loadPlugin(String dirname, String filename, String interfaceName) {
-        ArrayList classes = new ArrayList();
-        Hashtable sizes = new Hashtable();
-        Vector undone = new Vector();
+        ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
+        Hashtable<String, Integer> sizes = new Hashtable<String, Integer>();
+        Vector<String> undone = new Vector<String>();
         
         if (!filename.toLowerCase().endsWith(".jar")) filename += ".jar";
         try {
             // load all classes in jar
             JarFile zf = new JarFile(System.getProperty("user.dir") + File.separator
                     + dirname + File.separator + filename);
-            Enumeration e = zf.entries();
+            Enumeration<JarEntry> e = zf.entries();
             while (e.hasMoreElements()) {
                   JarEntry ze=(JarEntry)e.nextElement();
                   sizes.put(ze.getName(),new Integer((int)ze.getSize()));
@@ -451,7 +451,7 @@ public class ArchLoader extends ClassLoader {
                 }
                 try {
                     // try load class data
-                    Class cl = defineLoadedClass(ze.getName(),b,size,true);
+                    Class<?> cl = defineLoadedClass(ze.getName(),b,size,true);
                     classes.add(cl);
                 } catch (Exception nf) {
                     undone.addElement(ze.getName());
@@ -469,8 +469,8 @@ public class ArchLoader extends ClassLoader {
             }
             // find a first class that implements wanted interface
             for (int i = 0; i < classes.size(); i++) {
-                Class c = (Class)classes.get(i);
-                Class[] intf = c.getInterfaces();
+                Class<?> c = (Class<?>)classes.get(i);
+                Class<?>[] intf = c.getInterfaces();
                 for (int j = 0; j < intf.length; j++) {
                     if (intf[j].getName().equals(interfaceName))
                         return c.newInstance();
@@ -514,8 +514,8 @@ public class ArchLoader extends ClassLoader {
      * @param filename name of the plugin (jar file)
      * @return true if at least 1 class was loaded successfully
      */
-    private boolean loadUndoneClasses(Vector undone, ArrayList classes,
-            Hashtable sizes, String filename) {
+    private boolean loadUndoneClasses(Vector<String> undone, ArrayList<Class<?>> classes,
+            Hashtable<String, Integer> sizes, String filename) {
         JarEntry ze = null;
         boolean result = false;
         try {
@@ -539,7 +539,7 @@ public class ArchLoader extends ClassLoader {
                 }
                 try {
                     // try load class data
-                    Class cl = defineLoadedClass(ze.getName(),b,size,true);
+                    Class<?> cl = defineLoadedClass(ze.getName(),b,size,true);
                     classes.add(cl);
                     undone.removeElement(ze.getName());
                     result = true;
@@ -549,7 +549,7 @@ public class ArchLoader extends ClassLoader {
         return result;
     }
     
-    public synchronized Class defineLoadedClass(String classname,
+    public synchronized Class<?> defineLoadedClass(String classname,
             byte[] classbytes, int length, boolean resolve) 
             throws ClassNotFoundException {
         if (classname.toLowerCase().endsWith(".class"))
@@ -557,7 +557,7 @@ public class ArchLoader extends ClassLoader {
         classname = classname.replace('/', '.');
         classname = classname.replace(File.separatorChar, '.');
         try {
-            Class c = findLoadedClass(classname);
+            Class<?> c = findLoadedClass(classname);
             if (c == null) {
                 try { c = findSystemClass(classname); }
                 catch (Exception e) {}

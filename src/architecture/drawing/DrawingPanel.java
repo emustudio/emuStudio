@@ -25,6 +25,7 @@ import javax.swing.JPanel;
  *
  * @author vbmacher
  */
+@SuppressWarnings("serial")
 public class DrawingPanel extends JPanel implements MouseListener,
         MouseMotionListener {
     private Point e1 = null;

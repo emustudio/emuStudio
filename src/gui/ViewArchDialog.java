@@ -19,6 +19,7 @@ import runtime.StaticDialogs;
  *
  * @author  vbmacher
  */
+@SuppressWarnings("serial")
 public class ViewArchDialog extends javax.swing.JDialog {
     private ArchHandler arch;
     private String compilerName;

@@ -41,6 +41,7 @@ import runtime.StaticDialogs;
  *
  * @author  vbmacher
  */
+@SuppressWarnings("serial")
 public class StudioFrame extends javax.swing.JFrame {
     private EmuTextPane txtSource;
     private ArchHandler arch; // current architecture
@@ -62,8 +63,7 @@ public class StudioFrame extends javax.swing.JFrame {
         arch = Main.currentArch;
         txtSource = new EmuTextPane();
         cpuPermanentRunning = false;
-        debug_model = new DebugTableModel(arch.getCPU(),arch.getCompiler(),
-                arch.getMemory());
+        debug_model = new DebugTableModel(arch.getCPU(),arch.getMemory());
         tblDebug = new DebugTable(debug_model, arch.getCPU());
         
         // create other components

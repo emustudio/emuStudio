@@ -8,7 +8,6 @@
 
 package gui;
 
-import architecture.Main;
 import gui.utils.FindText;
 import java.util.ArrayList;
 import java.util.regex.PatternSyntaxException;
@@ -21,16 +20,17 @@ import runtime.StaticDialogs;
  *
  * @author  vbmacher
  */
+@SuppressWarnings("serial")
 public class FindDialog extends javax.swing.JDialog {
-    private static ArrayList list = new ArrayList();
-    private static ArrayList rlist = new ArrayList();
+    private static ArrayList<String> list = new ArrayList<String>();
+    private static ArrayList<String> rlist = new ArrayList<String>();
     private JTextPane textPane;
     
     private class CMBModel implements ComboBoxModel {
         private int in = -1;
-        private ArrayList clist;
+        private ArrayList<String> clist;
         
-        public CMBModel(ArrayList clist) {
+        public CMBModel(ArrayList<String> clist) {
             this.clist = clist;
         }
         public void setSelectedItem(Object anItem) {
