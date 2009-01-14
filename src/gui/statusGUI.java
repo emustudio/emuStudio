@@ -797,47 +797,47 @@ public class statusGUI extends javax.swing.JPanel {
 
         lblRegB.setFont(lblRegB.getFont().deriveFont(lblRegB.getFont().getStyle() | Font.BOLD));
         txtRegB.setEditable(false);
-        txtRegB.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegB.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegC.setFont(lblRegC.getFont().deriveFont(lblRegC.getFont().getStyle() | Font.BOLD));        
         txtRegC.setEditable(false);
-        txtRegC.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegC.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegBC.setFont(lblRegBC.getFont().deriveFont(lblRegBC.getFont().getStyle() | Font.BOLD));
         txtRegBC.setEditable(false);
-        txtRegBC.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegBC.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegD.setFont(lblRegD.getFont().deriveFont(lblRegD.getFont().getStyle() | Font.BOLD));
         txtRegD.setEditable(false);
-        txtRegD.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegD.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegE.setFont(lblRegE.getFont().deriveFont(lblRegE.getFont().getStyle() | Font.BOLD));
         txtRegE.setEditable(false);
-        txtRegE.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegE.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegDE.setFont(lblRegDE.getFont().deriveFont(lblRegDE.getFont().getStyle() | Font.BOLD));
         txtRegDE.setEditable(false);
-        txtRegDE.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegDE.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegH.setFont(lblRegH.getFont().deriveFont(lblRegH.getFont().getStyle() | Font.BOLD));
         txtRegH.setEditable(false);
-        txtRegH.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegH.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegL.setFont(lblRegL.getFont().deriveFont(lblRegL.getFont().getStyle() | Font.BOLD));
         txtRegL.setEditable(false);
-        txtRegL.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegL.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegHL.setFont(lblRegHL.getFont().deriveFont(lblRegHL.getFont().getStyle() | Font.BOLD));
         txtRegHL.setEditable(false);
-        txtRegHL.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegHL.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegA.setFont(lblRegA.getFont().deriveFont(lblRegA.getFont().getStyle() | Font.BOLD));
         txtRegA.setEditable(false);
-        txtRegA.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegA.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegF.setFont(lblRegF.getFont().deriveFont(lblRegF.getFont().getStyle() | Font.BOLD));
         txtRegF.setEditable(false);
-        txtRegF.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegF.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         tblFlags.setAutoCreateRowSorter(true);
         tblFlags.setBackground(Color.white);
@@ -965,47 +965,47 @@ public class statusGUI extends javax.swing.JPanel {
 
         lblRegB1.setFont(lblRegB1.getFont().deriveFont(lblRegB1.getFont().getStyle() | Font.BOLD));
         txtRegB1.setEditable(false);
-        txtRegB1.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegB1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegC1.setFont(lblRegC1.getFont().deriveFont(lblRegC1.getFont().getStyle() | Font.BOLD));
         txtRegC1.setEditable(false);
-        txtRegC1.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegC1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegBC1.setFont(lblRegBC1.getFont().deriveFont(lblRegBC1.getFont().getStyle() | Font.BOLD));
         txtRegBC1.setEditable(false);
-        txtRegBC1.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegBC1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegD1.setFont(lblRegD1.getFont().deriveFont(lblRegD1.getFont().getStyle() | Font.BOLD));
         txtRegD1.setEditable(false);
-        txtRegD1.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegD1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegE1.setFont(lblRegE1.getFont().deriveFont(lblRegE1.getFont().getStyle() | Font.BOLD));
         txtRegE1.setEditable(false);
-        txtRegE1.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegE1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegDE1.setFont(lblRegDE1.getFont().deriveFont(lblRegDE1.getFont().getStyle() | Font.BOLD));
         txtRegDE1.setEditable(false);
-        txtRegDE1.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegDE1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegH1.setFont(lblRegH1.getFont().deriveFont(lblRegH1.getFont().getStyle() | Font.BOLD));
         txtRegH1.setEditable(false);
-        txtRegH1.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegH1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegL1.setFont(lblRegL1.getFont().deriveFont(lblRegL1.getFont().getStyle() | Font.BOLD));
         txtRegL1.setEditable(false);
-        txtRegL1.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegL1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegHL1.setFont(lblRegHL1.getFont().deriveFont(lblRegHL1.getFont().getStyle() | Font.BOLD));
         txtRegHL1.setEditable(false);
-        txtRegHL1.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegHL1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegA1.setFont(lblRegA1.getFont().deriveFont(lblRegA1.getFont().getStyle() | Font.BOLD));
         txtRegA1.setEditable(false);
-        txtRegA1.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegA1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegF1.setFont(lblRegF1.getFont().deriveFont(lblRegF1.getFont().getStyle() | Font.BOLD));
         txtRegF1.setEditable(false);
-        txtRegF1.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegF1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         tblFlags2.setAutoCreateRowSorter(true);
         tblFlags2.setBackground(java.awt.Color.white);
@@ -1133,97 +1133,89 @@ public class statusGUI extends javax.swing.JPanel {
 
         lblRegPC.setFont(lblRegPC.getFont().deriveFont(lblRegPC.getFont().getStyle() | Font.BOLD));
         txtRegPC.setEditable(false);
-        txtRegPC.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegPC.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegSP.setFont(lblRegSP.getFont().deriveFont(lblRegSP.getFont().getStyle() | Font.BOLD));
         txtRegSP.setEditable(false);
-        txtRegSP.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegSP.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegIX.setFont(lblRegIX.getFont().deriveFont(lblRegIX.getFont().getStyle() | Font.BOLD));
         txtRegIX.setEditable(false);
-        txtRegIX.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegIX.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegI.setFont(lblRegI.getFont().deriveFont(lblRegI.getFont().getStyle() | Font.BOLD));
         txtRegI.setEditable(false);
-        txtRegI.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegI.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegIY.setFont(lblRegIY.getFont().deriveFont(lblRegIY.getFont().getStyle() | Font.BOLD));
         txtRegIY.setEditable(false);
-        txtRegIY.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegIY.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         lblRegR.setFont(lblRegR.getFont().deriveFont(lblRegR.getFont().getStyle() | Font.BOLD));
         txtRegR.setEditable(false);
-        txtRegR.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+        txtRegR.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         GroupLayout paneRegistersLayout = new GroupLayout(paneRegisters);
         paneRegisters.setLayout(paneRegistersLayout);
         paneRegistersLayout.setHorizontalGroup(
-            paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(paneRegistersLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(lblRegI)
-                    .addGroup(paneRegistersLayout.createSequentialGroup()
-                        .addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                            .addGroup(paneRegistersLayout.createSequentialGroup()
-                                .addComponent(lblRegIX)
-                                .addGap(18, 18, 18)
-                                .addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                    .addGroup(paneRegistersLayout.createSequentialGroup()
-                                        .addComponent(txtRegIX, GroupLayout.PREFERRED_SIZE, 48, GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(lblRegIY))
-                                    .addGroup(paneRegistersLayout.createSequentialGroup()
-                                        .addComponent(txtRegI, GroupLayout.PREFERRED_SIZE, 48, GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(lblRegR))))
-                            .addGroup(paneRegistersLayout.createSequentialGroup()
-                                .addComponent(lblRegPC)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtRegPC, GroupLayout.PREFERRED_SIZE, 48, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblRegSP)))
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                            .addComponent(txtRegSP, GroupLayout.PREFERRED_SIZE, 55, GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txtRegR, GroupLayout.PREFERRED_SIZE, 55, GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txtRegIY, GroupLayout.PREFERRED_SIZE, 55, GroupLayout.PREFERRED_SIZE)))
-                    .addComponent(tabbedGPR, GroupLayout.PREFERRED_SIZE, 251, GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+        		paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        		.addGroup(paneRegistersLayout.createSequentialGroup()
+        				.addContainerGap()
+        				.addComponent(tabbedGPR,javax.swing.GroupLayout.PREFERRED_SIZE, 251, javax.swing.GroupLayout.PREFERRED_SIZE)
+        				.addContainerGap())
+        		.addGroup(paneRegistersLayout.createSequentialGroup()
+        			.addContainerGap()
+	        		.addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+       						.addComponent(lblRegPC)
+       						.addComponent(lblRegIX)
+       						.addComponent(lblRegI))
+       				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+	        		.addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+       						.addComponent(txtRegPC)
+       						.addComponent(txtRegIX)
+       						.addComponent(txtRegI))
+	        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+	        		.addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+       						.addComponent(lblRegSP)
+       						.addComponent(lblRegIY)
+       						.addComponent(lblRegR))
+       				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+	        		.addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+	        				.addComponent(txtRegSP)
+       						.addComponent(txtRegIY)
+	        				.addComponent(txtRegR))
+        		    .addContainerGap()));
         paneRegistersLayout.setVerticalGroup(
-            paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(paneRegistersLayout.createSequentialGroup()
-                .addComponent(tabbedGPR, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblRegPC)
-                    .addComponent(txtRegPC, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblRegSP)
-                    .addComponent(txtRegSP, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblRegIX)
-                    .addComponent(txtRegIX, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblRegIY)
-                    .addComponent(txtRegIY, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblRegI)
-                    .addComponent(txtRegI, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblRegR)
-                    .addComponent(txtRegR, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
+        		paneRegistersLayout.createSequentialGroup()
+        		.addContainerGap()
+        		.addComponent(tabbedGPR, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+        		.addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+        				.addComponent(lblRegPC)
+        				.addComponent(txtRegPC)
+        				.addComponent(lblRegSP)
+        				.addComponent(txtRegSP))
+        	    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+        		.addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+        				.addComponent(lblRegIX)
+        				.addComponent(txtRegIX)
+        				.addComponent(lblRegIY)
+        				.addComponent(txtRegIY))
+        	    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+        		.addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+        				.addComponent(lblRegI)
+        				.addComponent(txtRegI)
+        				.addComponent(lblRegR)
+        				.addComponent(txtRegR))
+        	    .addContainerGap());
         panelStatus.setBorder(BorderFactory.createTitledBorder(new javax.swing.border.LineBorder(java.awt.Color.gray, 1, true), "Run control", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new Font("DejaVu Sans", 1, 14), java.awt.Color.gray)); // NOI18N
 
         lblRun.setFont(lblRun.getFont().deriveFont(lblRun.getFont().getStyle() | Font.BOLD));
         lblRun.setForeground(new java.awt.Color(0, 102, 0));
         spnFrequency.setModel(new SpinnerNumberModel(20000, 1, 99999, 100));
-        lblKHZ.setFont(lblKHZ.getFont().deriveFont(lblKHZ.getFont().getStyle() | Font.BOLD, lblKHZ.getFont().getSize()-3));
+        lblKHZ.setFont(lblKHZ.getFont().deriveFont(lblKHZ.getFont().getStyle() | Font.BOLD));
         spnTestPeriode.setModel(new SpinnerNumberModel(50, 1, 10000, 10));
-        lblMS.setFont(lblMS.getFont().deriveFont(lblMS.getFont().getStyle() | Font.BOLD, lblMS.getFont().getSize()-3));
+        lblMS.setFont(lblMS.getFont().deriveFont(lblMS.getFont().getStyle() | Font.BOLD));
         lblFrequency.setFont(lblFrequency.getFont().deriveFont(lblFrequency.getFont().getStyle() | Font.BOLD));
         lblFrequency.setText("0,0 kHz");
 
@@ -1281,14 +1273,14 @@ public class statusGUI extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addComponent(paneRegisters, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(panelStatus, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(panelStatus, 0, 285, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(paneRegisters, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(panelStatus, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(panelStatus))
         );
     }
 
