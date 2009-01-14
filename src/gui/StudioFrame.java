@@ -153,19 +153,12 @@ public class StudioFrame extends javax.swing.JFrame {
         GroupLayout layout = new GroupLayout(this.statusWindow);
         this.statusWindow.setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-//                .addContainerGap()
+        		layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addComponent(statusPanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-  //              .addContainerGap()
-                )
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(statusPanel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                //.addContainerGap()
-                )
+            layout.createSequentialGroup()
+            .addComponent(statusPanel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         pack();
     }

@@ -79,6 +79,7 @@ public class AboutDialog extends javax.swing.JDialog {
         									.addComponent(lblVersionLBL)
         									.addComponent(lblConsultantLBL)
         									)
+        							.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
         						    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
         						    		.addComponent(lblVersion)
         						    		.addComponent(lblConsultant)
@@ -103,7 +104,7 @@ public class AboutDialog extends javax.swing.JDialog {
         					.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
         							.addComponent(lblConsultantLBL)
         							.addComponent(lblConsultant))
-        					.addGap(10)
+        					.addGap(20)
         				    .addComponent(lblLicense)
         					)
         		);
