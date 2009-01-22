@@ -22,16 +22,16 @@ import treeZ80Abstract.Pseudo;
  * @author vbmacher
  */
 public class PseudoMACROCall extends Pseudo {
-    private Vector params; // vector of expressions
+    private Vector<Expression> params; // vector of expressions
     private PseudoMACRO macro; // only pointer...
     private HEXFileHandler statHex; // hex file for concrete macro
     private String mnemo;
     
     /** Creates a new instance of PseudoMACROCall */
-    public PseudoMACROCall(String name, Vector params, int line, int column) {
+    public PseudoMACROCall(String name, Vector<Expression> params, int line, int column) {
         super(line, column);
         this.mnemo = name;
-        if (params == null) this.params = new Vector();
+        if (params == null) this.params = new Vector<Expression>();
         else this.params = params;
         statHex = new HEXFileHandler();
     }
@@ -56,7 +56,7 @@ public class PseudoMACROCall extends Pseudo {
         // do pass2 for expressions (real macro parameters)
         try {
             for (int i = 0; i < params.size(); i++)
-                ((Expression)params.get(i)).eval(env, addr_start);
+                params.get(i).eval(env, addr_start);
             macro.setCallParams(params);
             int a = macro.pass2(env, addr_start);
             statHex.setNextAddress(addr_start);

@@ -120,7 +120,7 @@ public class Namespace {
     }
     
     public void copyTo(Namespace env) {
-        Iterator i = defLabels.values().iterator();
+        Iterator<?> i = defLabels.values().iterator();
         while (i.hasNext()) env.addLabelDef((Label)i.next());
         i = defMacros.values().iterator();
         while (i.hasNext()) env.addMacroDef((PseudoMACRO)i.next());

@@ -27,8 +27,8 @@ public class tokenZ80 extends Symbol implements IToken,symZ80 {
     private String text;
     private int lineNumber;
     private int columnNumber;
-    private int charBegin;
-    private int charEnd;
+    private int offset;
+    private int length;
     private int type;
  
     /** Creates a new instance of tokenZ80 */
@@ -38,8 +38,8 @@ public class tokenZ80 extends Symbol implements IToken,symZ80 {
         this.text = text;
         this.lineNumber = lineNumber;
         this.columnNumber = columnNumber;
-        this.charBegin = charBegin;
-        this.charEnd = charEnd;
+        this.offset = charBegin;
+        this.length = charEnd - charBegin;
         this.type = type;
     }
 
@@ -58,6 +58,6 @@ public class tokenZ80 extends Symbol implements IToken,symZ80 {
     }
     public int getLine() { return lineNumber; }
     public int getColumn() { return columnNumber; }
-    public int getCharBegin() { return charBegin; }
-    public int getCharEnd() { return charEnd; }
+    public int getOffset() { return offset; }
+    public int getLength() { return length; }
 }

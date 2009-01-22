@@ -21,20 +21,20 @@ import treeZ80Abstract.DataValue;
  * @author vbmacher
  */
 public class DataNode extends InstrData {
-    private Vector list; // this vector stores only data values
+    private Vector<DataValue> list; // this vector stores only data values
 
     public void addElement(DataValue node) {
         list.addElement(node);
     }
     
-    public void addAll(Vector vec) {
+    public void addAll(Vector<DataValue> vec) {
         list.addAll(vec);
     }
     
     /** Creates a new instance of DataNode */
     public DataNode(int line , int column) {
         super(line, column);
-        this.list = new Vector();
+        this.list = new Vector<DataValue>();
     }
 
     /// compile time ///

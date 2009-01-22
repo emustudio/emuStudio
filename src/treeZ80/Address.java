@@ -17,11 +17,9 @@ import treeZ80Abstract.Expression;
  * @author vbmacher
  */
 public class Address extends Expression {
-    private boolean wasSet;
     
     public void setAddress(int address) {
         this.value = address;
-        this.wasSet = true;
     }
     
     public int getAddress() { return value; }
@@ -29,12 +27,7 @@ public class Address extends Expression {
     public String toString() {
         return String.valueOf(value);
     }
-    
-    /** Creates a new instance of Address */
-    public Address() {
-        this.wasSet = false;
-    }
-    
+        
     /// compile time ///
     
     //??

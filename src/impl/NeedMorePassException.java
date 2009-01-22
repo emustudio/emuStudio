@@ -19,7 +19,11 @@ package impl;
  * @author vbmacher
  */
 public class NeedMorePassException extends Exception {
-    private Object obj;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private Object obj;
     private int line;
     private int column;
     

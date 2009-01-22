@@ -1,7 +1,7 @@
 /*
  * lexerZ80.flex
  *
- * (c) Copyright 2008, vbmacher
+ * (c) Copyright 2008-2009, vbmacher
  *
  * Lexical analyser for Z80 assembler
  *
@@ -38,14 +38,13 @@ import java.io.*;
         return next_token();
     }
 
-    public void reset(java.io.Reader reader, int yyline, int yychar, int yycolumn)
-            throws IOException {
-        yyreset(reader);
+    public void reset(int yyline, int yychar, int yycolumn) {
+        yyreset(zzReader);
         this.yyline = yyline;
-	this.yychar = yychar;
-	this.yycolumn = yycolumn;
+        this.yychar = yychar;
+        this.yycolumn = yycolumn;
     }
-	
+    
     public void reset() {
         this.yyline = 0;
         this.yychar = 0;

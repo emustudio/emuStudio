@@ -21,24 +21,24 @@ import treeZ80Abstract.Pseudo;
  * @author vbmacher
  */
 public class PseudoMACRO extends Pseudo {
-    private Vector params; // macro parameters
-    private Vector call_params; // concrete parameters, they can change
+    private Vector<String> params; // macro parameters
+    private Vector<Expression> call_params; // concrete parameters, they can change
     private Program subprogram;
     private String mnemo;
     
     /** Creates a new instance of PseudoMACRO */
-    public PseudoMACRO(String name, Vector params, Program s, int line,
+    public PseudoMACRO(String name, Vector<String> params, Program s, int line,
             int column) {
         super(line,column);
         this.mnemo = name;
-        if (params == null) this.params = new Vector();
+        if (params == null) this.params = new Vector<String>();
         else this.params = params;
         this.subprogram = s;
     }
     
     public String getName() { return mnemo; }
     
-    public void setCallParams(Vector params) { this.call_params = params; }
+    public void setCallParams(Vector<Expression> params) { this.call_params = params; }
 
     /// compile time /// 
     public int getSize() { return 0; }
@@ -59,7 +59,7 @@ public class PseudoMACRO extends Pseudo {
         env.copyTo(newEnv); // add parent statement env to newEnv
         // remove all existing definitions of params name (from level-up environment)
         for (int i = 0; i < params.size(); i++)
-            newEnv.removeAllDefinitions((String)params.get(i));
+            newEnv.removeAllDefinitions(params.get(i));
         // check of call_params
         if (call_params == null) throw new Exception("[" + line + "," + column
                 + "] Error: Unknown macro parameters");
@@ -68,8 +68,8 @@ public class PseudoMACRO extends Pseudo {
                     + "] Error: Incorrect macro paramers count");
         // create/rewrite symbols => parameters as equ pseudo instructions
         for (int i = 0; i < params.size(); i++) {
-            newEnv.addEquDef(new PseudoEQU((String)params.get(i),
-                    (Expression)call_params.get(i),line,column));
+            newEnv.addEquDef(new PseudoEQU(params.get(i),
+                    call_params.get(i),line,column));
         }
         return subprogram.pass2(newEnv, addr_start);
     }

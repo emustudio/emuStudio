@@ -21,14 +21,14 @@ import plugins.compiler.IMessageReporter;
  * @author vbmacher
  */
 public class Program {
-    private Vector list; // all instructions
+    private Vector<Row> list; // all instructions
     private Namespace namespace; // compile-time environment
     private Vector<String> includefiles; // list of files that
                                          // were checked for include-loops
                                          // in short: list of included files
     
     public Program() { 
-        list = new Vector();
+        list = new Vector<Row>();
         namespace = new Namespace();
         includefiles = new Vector<String>();
     }
@@ -47,7 +47,7 @@ public class Program {
     /**
      * Adds several rows into program
      */
-    public void addRowsVector(Vector vec) {
+    public void addRowsVector(Vector<Row> vec) {
         list.addAll(vec);
     }
     

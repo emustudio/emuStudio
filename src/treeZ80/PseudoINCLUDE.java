@@ -34,11 +34,11 @@ public class PseudoINCLUDE extends Pseudo {
         public MRep(IMessageReporter r) {
             old = r;
         }
-        public void report(String message) {
-            old.report(shortFileName + ": " + message);
+        public void report(String message, int type) {
+            old.report(shortFileName + ": " + message, type);
         }
-        public void report(String location, String message) {
-            old.report(shortFileName + ": " + location + " " + message);
+        public void report(int row, int col, String message, int type) {
+            old.report(row,col,shortFileName + ": " + message, type);
         }
     }
     
@@ -96,10 +96,10 @@ public class PseudoINCLUDE extends Pseudo {
   
 
     public int pass2(Namespace parentEnv, int addr_start) throws Exception {
-        return program.pass2(addr_start); // try to evaulate all expressions + compute relative addresses
+    	// try to evaluate all expressions + compute relative addresses
+    	return program.pass2(addr_start); 
     }
 
-    @SuppressWarnings("empty-statement")
     public void pass4(HEXFileHandler hex) throws Exception {
         while (program.pass3(namespace) == true) ;
         if (namespace.getPassNeedCount() != 0)
