@@ -30,13 +30,13 @@ import plugins.compiler.IMessageReporter;
  * @author vbmacher
  */
 public class Statement {
-    private Vector list; // all instructions
+    private Vector<InstructionNode> list; // all instructions
     private Vector<String> includefiles; // list of files that
                                          // were checked for include-loops
                                          // in short: list of included files
 
     public Statement() { 
-        list = new Vector();
+        list = new Vector<InstructionNode>();
         this.env = new compileEnv();
         includefiles = new Vector<String>();
     }
@@ -45,7 +45,7 @@ public class Statement {
         list.addElement(node);
     }
     
-    public void addVector(Vector vec) {
+    public void addVector(Vector<InstructionNode> vec) {
         list.addAll(vec);
     }
     

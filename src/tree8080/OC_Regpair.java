@@ -20,14 +20,12 @@ import tree8080Abstract.OpCodeNode;
  */
 public class OC_Regpair extends OpCodeNode {
     private byte regpair;
-    private boolean psw; // if regpair 11 is treated as sp or psw
     
     /** Creates a new instance of OC_RegRegpair */
     public OC_Regpair(String mnemo, byte regpair, boolean psw, int line,
             int column) {
         super(mnemo, line, column);
         this.regpair = regpair;
-        this.psw = psw;
     }
     
     /// compile time ///

@@ -29,19 +29,19 @@ import tree8080.SetPseudoNode;
  * error comes.
  */
 public class compileEnv {
-    private Vector defLabels;  // labelnode objects
-    private Vector defMacros;  // all macros
-    private Vector defEqus;    // all equs
-    private Vector defSets;    // all sets
-    private Vector passNeed;   // objects that need more passes
+    private Vector<LabelNode> defLabels;        // labelnode objects
+    private Vector<MacroPseudoNode> defMacros;  // all macros
+    private Vector<EquPseudoNode> defEqus;      // all equs
+    private Vector<SetPseudoNode> defSets;      // all sets
+    private Vector<InstructionNode> passNeed;   // objects that need more passes
     
     /** Creates a new instance of compileEnv */
     public compileEnv() {
-        defLabels = new Vector();
-        defMacros = new Vector();
-        defEqus = new Vector();
-        defSets = new Vector();
-        passNeed = new Vector();
+        defLabels = new Vector<LabelNode>();
+        defMacros = new Vector<MacroPseudoNode>();
+        defEqus = new Vector<EquPseudoNode>();
+        defSets = new Vector<SetPseudoNode>();
+        passNeed = new Vector<InstructionNode>();
     }
     
     // check if id is already defined (as whatever)

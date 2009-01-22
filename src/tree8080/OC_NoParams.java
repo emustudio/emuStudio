@@ -35,7 +35,6 @@ public class OC_NoParams extends OpCodeNode {
         return addr_start + 1;
     }
 
-    @SuppressWarnings("empty-statement")
     public void pass4(HEXFileHandler hex) throws Exception {
         short opCode = 0; // nop
 

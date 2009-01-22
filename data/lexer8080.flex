@@ -37,14 +37,13 @@ import java_cup.runtime.*;
         return next_token();
     }
 
-    public void reset(java.io.Reader reader, int yyline, int yychar, int yycolumn)
-            throws IOException {
-        yyreset(reader);
+    public void reset(int yyline, int yychar, int yycolumn) {
+        yyreset(zzReader);
         this.yyline = yyline;
-	this.yychar = yychar;
-	this.yycolumn = yycolumn;
+        this.yychar = yychar;
+        this.yycolumn = yycolumn;
     }
-	
+    
     public void reset() {
         this.yyline = 0;
         this.yychar = 0;

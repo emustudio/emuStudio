@@ -22,16 +22,16 @@ import tree8080Abstract.PseudoNode;
  * @author vbmacher
  */
 public class MacroCallPseudo extends PseudoNode {
-    private Vector params; // vector of expressions
+    private Vector<ExprNode> params; // vector of expressions
     private MacroPseudoNode macro; // only pointer...
     private HEXFileHandler statHex; // hex file for concrete macro
     private String mnemo;
     
     /** Creates a new instance of MacroCallPseudo */
-    public MacroCallPseudo(String name, Vector params, int line, int column) {
+    public MacroCallPseudo(String name, Vector<ExprNode> params, int line, int column) {
         super(line, column);
         this.mnemo = name;
-        if (params == null) this.params = new Vector();
+        if (params == null) this.params = new Vector<ExprNode>();
         else this.params = params;
         statHex = new HEXFileHandler();
     }
@@ -56,7 +56,7 @@ public class MacroCallPseudo extends PseudoNode {
         // do pass2 for expressions (real macro parameters)
         try {
             for (int i = 0; i < params.size(); i++)
-                ((ExprNode)params.get(i)).eval(env, addr_start);
+                params.get(i).eval(env, addr_start);
             macro.setCallParams(params);
             int a = macro.pass2(env, addr_start);
             statHex.setNextAddress(addr_start);

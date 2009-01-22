@@ -17,20 +17,12 @@ import tree8080Abstract.ExprNode;
  * @author vbmacher
  */
 public class AddressValueNode extends ExprNode {
-    private boolean wasSet;
     
     public void setAddress(int address) {
         this.value = address;
-        this.wasSet = true;
     }
     
     public int getAddress() { return value; }
-    
-    
-    /** Creates a new instance of AddressValueNode */
-    public AddressValueNode() {
-        this.wasSet = false;
-    }
     
     /// compile time ///
     

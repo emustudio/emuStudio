@@ -21,20 +21,20 @@ import tree8080Abstract.DataValueNode;
  * @author vbmacher
  */
 public class DataNode extends CodeNode {
-    private Vector list; // this vector stores only data values
+    private Vector<DataValueNode> list; // this vector stores only data values
 
     public void addElement(DataValueNode node) {
         list.addElement(node);
     }
     
-    public void addAll(Vector vec) {
+    public void addAll(Vector<DataValueNode> vec) {
         list.addAll(vec);
     }
     
     /** Creates a new instance of DataNode */
     public DataNode(int line , int column) {
         super(line, column);
-        this.list = new Vector();
+        this.list = new Vector<DataValueNode>();
     }
 
     /// compile time ///

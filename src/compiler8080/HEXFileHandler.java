@@ -24,12 +24,12 @@ import runtime.StaticDialogs;
  * @author vbmacher
  */
 public class HEXFileHandler {
-    private Hashtable program;
+    private Hashtable<Integer, String> program;
     private int nextAddress;
     
     /** Creates a new instance of HEXFileHandler */
     public HEXFileHandler() {
-        this.program = new Hashtable();
+        this.program = new Hashtable<Integer, String>();
         nextAddress = 0;
     }
     
@@ -71,10 +71,10 @@ public class HEXFileHandler {
      * Method copies all elements from param hashtable
      * to internal data member.
      */
-    public void addTable(Hashtable ha) {
-        Vector adrs = new Vector(ha.keySet());
+    public void addTable(Hashtable<Integer,String> ha) {
+        Vector<Integer> adrs = new Vector<Integer>(ha.keySet());
         int largestAdr = nextAddress;
-        for (Enumeration e = adrs.elements(); e.hasMoreElements();) {
+        for (Enumeration<Integer> e = adrs.elements(); e.hasMoreElements();) {
             nextAddress = (Integer)e.nextElement();
             String cd = (String)ha.get(nextAddress);
             program.put(nextAddress,cd);
@@ -85,7 +85,7 @@ public class HEXFileHandler {
         nextAddress = largestAdr;
     }
     
-    public Hashtable getTable() { return this.program; }
+    public Hashtable<Integer, String> getTable() { return this.program; }
     
     // generate hex file
     private String generateHEX() {
@@ -95,11 +95,11 @@ public class HEXFileHandler {
         int address = 0;         // current address in hex file
         int bytesCount = 0;      // current count of data bytes on single line
         
-        Vector adrs = new Vector(program.keySet());
+        Vector<Integer> adrs = new Vector<Integer>(program.keySet());
         Collections.sort(adrs);
 
         // for all code elements (they won't be separated)
-        for (Enumeration e = adrs.elements(); e.hasMoreElements();) {
+        for (Enumeration<Integer> e = adrs.elements(); e.hasMoreElements();) {
             int adr = (Integer)e.nextElement();
             
             // is line very beginning ?
@@ -168,9 +168,9 @@ public class HEXFileHandler {
                     + "\n\nThis compiler can't load file into this memory.");
             return false;
         }
-        Vector adrs = new Vector(program.keySet());
+        Vector<Integer> adrs = new Vector<Integer>(program.keySet());
         Collections.sort(adrs);
-        for (Enumeration e = adrs.elements(); e.hasMoreElements();) {
+        for (Enumeration<Integer> e = adrs.elements(); e.hasMoreElements();) {
             int adr = (Integer)e.nextElement();
             String code = this.getCode(adr);
             for (int i = 0, j = 0; i < code.length()-1; i+=2, j++) {
@@ -192,7 +192,7 @@ public class HEXFileHandler {
     }
     
     public int getProgramStart() {
-        Vector adrs = new Vector(program.keySet());
+        Vector<Integer> adrs = new Vector<Integer>(program.keySet());
         Collections.sort(adrs);
         if (adrs.isEmpty() == false)
             return (Integer)adrs.firstElement();
