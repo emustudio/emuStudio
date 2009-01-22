@@ -12,7 +12,6 @@ import architecture.drawing.PreviewPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Vector;
-import plugins.ISettingsHandler.pluginType;
 import runtime.StaticDialogs;
 
 /**
@@ -33,9 +32,6 @@ public class ViewArchDialog extends javax.swing.JDialog {
         super(parent, modal);
         arch = Main.currentArch;
         initComponents();
-        compilerName = arch.readSetting(pluginType.compiler, null, null);
-        cpuName = arch.readSetting(pluginType.cpu, null, null);
-        memoryName = arch.readSetting(pluginType.memory, null, null);
         
         devNames = new Vector<String>();
         for (int i = 0; i < arch.getDevices().length; i++)
@@ -44,19 +40,19 @@ public class ViewArchDialog extends javax.swing.JDialog {
         try {
             lblName.setText(arch.getArchName());
             lblCompilerFileName.setText(compilerName+".jar");
-            lblCompilerName.setText(arch.getCompiler().getName());
+            lblCompilerName.setText(arch.getCompiler().getTitle());
             lblCompilerVersion.setText(arch.getCompiler().getVersion());
             lblCompilerCopyright.setText(arch.getCompiler().getCopyright());
             txtCompilerDescription.setText(arch.getCompiler().getDescription());
             
             lblCPUFileName.setText(cpuName+".jar");
-            lblCPUName.setText(arch.getCPU().getName());
+            lblCPUName.setText(arch.getCPU().getTitle());
             lblCPUVersion.setText(arch.getCPU().getVersion());
             lblCPUCopyright.setText(arch.getCPU().getCopyright());
             txtCPUDescription.setText(arch.getCPU().getDescription());
             
             lblMemoryFileName.setText(memoryName+".jar");
-            lblMemoryName.setText(arch.getMemory().getName());
+            lblMemoryName.setText(arch.getMemory().getTitle());
             lblMemoryVersion.setText(arch.getMemory().getVersion());
             lblMemoryCopyright.setText(arch.getMemory().getCopyright());
             txtMemoryDescription.setText(arch.getMemory().getDescription());
@@ -85,7 +81,7 @@ public class ViewArchDialog extends javax.swing.JDialog {
     
     private void showDevConfig(int i) {
         lblDeviceFileName.setText(devNames.get(i) +".jar");
-        lblDeviceName.setText(arch.getDevices()[i].getName());
+        lblDeviceName.setText(arch.getDevices()[i].getTitle());
         lblDeviceVersion.setText(arch.getDevices()[i].getVersion());
         lblDeviceCopyright.setText(arch.getDevices()[i].getCopyright());
         txtDeviceDescription.setText(arch.getDevices()[i].getDescription());

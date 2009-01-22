@@ -138,7 +138,7 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
         jToolBar1.setRollover(true);
 
         buttonGroup1.add(btnCPU);
-        btnCPU.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/cpu.gif"))); // NOI18N
+        btnCPU.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emuStudio/cpu.gif"))); // NOI18N
         btnCPU.setFocusable(false);
         btnCPU.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnCPU.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -155,7 +155,7 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
         jToolBar1.add(btnCPU);
 
         buttonGroup1.add(btnMemory);
-        btnMemory.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/ram.gif"))); // NOI18N
+        btnMemory.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emuStudio/ram.gif"))); // NOI18N
         btnMemory.setFocusable(false);
         btnMemory.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnMemory.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -172,7 +172,7 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
         jToolBar1.add(btnMemory);
 
         buttonGroup1.add(btnDevice);
-        btnDevice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/device.gif"))); // NOI18N
+        btnDevice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emuStudio/device.gif"))); // NOI18N
         btnDevice.setFocusable(false);
         btnDevice.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnDevice.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -190,7 +190,7 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
         jToolBar1.add(jSeparator1);
 
         buttonGroup1.add(btnConnect);
-        btnConnect.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/connector.gif"))); // NOI18N
+        btnConnect.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emuStudio/connector.gif"))); // NOI18N
         btnConnect.setFocusable(false);
         btnConnect.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnConnect.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -207,7 +207,7 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
         jToolBar1.add(btnConnect);
 
         buttonGroup1.add(btnDelete);
-        btnDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/delete.gif"))); // NOI18N
+        btnDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emuStudio/delete.gif"))); // NOI18N
         btnDelete.setToolTipText("Delete element/line");
         btnDelete.setFocusable(false);
         btnDelete.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);

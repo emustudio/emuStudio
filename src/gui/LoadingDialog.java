@@ -33,7 +33,7 @@ public class LoadingDialog extends javax.swing.JDialog {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emu8/motherboard-icon.gif"))); // NOI18N
+        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emuStudio/motherboard-icon.gif"))); // NOI18N
         jLabel1.setText("Loading architecture, please wait...");
 
         jLabel2.setText("<html>If you see some errors during the loading, check your abstract scheme or plugins.");

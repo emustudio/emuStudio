@@ -122,19 +122,17 @@ public class HighlightThread extends Thread {
                 e = work.elementAt(0);
                 work.removeElementAt(0);
             }
-            try {
-                synchronized(doclock) {
-                    lex.reset(lexReader,0,0,0);
-                    lexReader.seek(0);
-                }
-            } catch(IOException ex) {}
+            synchronized(doclock) {
+                lex.reset(0,0,0);
+                lexReader.seek(0);
+            }
             int len = (e.getType() == DocumentEvent.EventType.INSERT) ?
                 e.getLength() : -e.getLength();
             int bl = updateTokenPositions(e.getOffset(),len);
             try {
                 if (bl >= 0) {
                     synchronized(doclock) {
-                        lex.reset(lexReader, 0, bl, 0);
+                        lex.reset(0, bl, 0);
                         lexReader.seek(bl);
                     }
                 }
@@ -143,28 +141,25 @@ public class HighlightThread extends Thread {
                     t = lex.getSymbol();
                 }
                 while (t.getType() != IToken.TEOF) {
-                    if (tokensPos.contains(t.getCharBegin())) {
-                        int tid = tokenTypes.get(t.getCharBegin());
+                    if (tokensPos.contains(t.getOffset())) {
+                        int tid = tokenTypes.get(t.getOffset());
                         // ak je token ZA kurzorom v dokumente a tokeny su
                         // zhodne
-                        if ((t.getCharBegin() > e.getOffset()) 
-                                && (tid == t.getID())) {
-                            break;
-                        }
-                        else tokensPos.remove(t.getCharBegin());
+                        if ((t.getOffset() > e.getOffset())
+                        		&& (tid == t.getID())) break;
+                        else tokensPos.remove(t.getOffset());
                     }
-                    removeTokens(t.getCharBegin(),t.getCharEnd());
-                    tokensPos.add(t.getCharBegin());
-                    tokenTypes.put(t.getCharBegin(), t.getID());
+                    removeTokens(t.getOffset(),t.getOffset() + t.getLength());
+                    tokensPos.add(t.getOffset());
+                    tokenTypes.put(t.getOffset(), t.getID());
 
-                    len = t.getCharEnd() - t.getCharBegin();
                     SimpleAttributeSet style = (SimpleAttributeSet)
                                 styles.get(t.getType());
                     if (style == null)
                         style = (SimpleAttributeSet)
                                 styles.get(IToken.ERROR);
-                    recolorWork.add(new RecolorEvent(style,t.getCharBegin(),len));                                
-                    bl = t.getCharBegin(); // before last token on the end of while cycle
+                    recolorWork.add(new RecolorEvent(style,t.getOffset(),t.getLength()));                                
+                    bl = t.getOffset(); // before last token on the end of while cycle
                     synchronized(doclock) {
                         t = lex.getSymbol();
                     }

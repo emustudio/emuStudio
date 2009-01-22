@@ -44,7 +44,7 @@ public class DebugTableModel extends AbstractTableModel {
         try {
 //            int a = mem.getContext().getSize() - (cpu.getContext().getInstrPosition()+page);
   //          if (a < MAX_ROW_COUNT) return a;
-         //   else
+    //        else
             return MAX_ROW_COUNT;
         } catch(NullPointerException e) {
             return 0;
@@ -73,9 +73,8 @@ public class DebugTableModel extends AbstractTableModel {
     
     // posun dolava o 20 instrukcii
     public void next() {
-        if (mem.getContext().getSize() > (cpu.getContext().getInstrPosition() + page))
+        if (mem.getSize() > (cpu.getInstrPosition() + page))
             page += 20;
-            
     }
 
     // posun dolava o 20 instrukcii
@@ -90,19 +89,20 @@ public class DebugTableModel extends AbstractTableModel {
     // urychlena verzia
     private int getFirstRowAddress() {
         try {
-            int pc = cpu.getContext().getInstrPosition();
+            int pc = cpu.getInstrPosition();
             int up = 0; /* ci korekcia ma stupajucu(1),
                            alebo klesajucu(2) tendenciu */
 
-            firstRowAddress = pc-10+page; /* na zaciatku sa natvrdo nastavi 
+            firstRowAddress = pc-10+page; 
+            							/* na zaciatku sa natvrdo nastavi 
                                              pohlad o 10 bytov dozadu
                                            */
             if (firstRowAddress < 0) {
                 firstRowAddress = 0; // ak je to < 0, potom je pohlad 0
                 page = 0;
             }
-            if ((pc+page) > mem.getContext().getSize()) {
-                page = mem.getContext().getSize() - pc;
+            if ((pc+page) > mem.getSize()) {
+                page = mem.getSize() - pc;
                 firstRowAddress = pc-10+page;
             }
             
@@ -112,7 +112,7 @@ public class DebugTableModel extends AbstractTableModel {
                                           ma tu spravnu hodnotu */
                 try { 
                     // inak pokracuj v hladani 
-                    diff = cpu.getContext().getNextInstrPos(diff); 
+                    diff = cpu.getInstrPosition(diff); 
                 } catch(ArrayIndexOutOfBoundsException w) { break; }
                 if (diff > (pc+page)) { 
                     // ak sa od firstRowAddress neviem dostat k PC (iba za neho)
@@ -132,7 +132,7 @@ public class DebugTableModel extends AbstractTableModel {
                         // pouzijem klasicky sposob.. od 0-ly
                         firstRowAddress = 0;
                         while (pc > (firstRowAddress+10+page))
-                            firstRowAddress = cpu.getContext().getNextInstrPos(firstRowAddress);
+                            firstRowAddress = cpu.getInstrPosition(firstRowAddress);
                         return firstRowAddress;
                     }                    
                     if (up == 1) firstRowAddress++;
@@ -152,7 +152,7 @@ public class DebugTableModel extends AbstractTableModel {
         else { int i = 0, a = 0;
             a = this.getFirstRowAddress();
             try {
-                for (i = 0; i < rowIndex; i++) a = cpu.getContext().getNextInstrPos(a);
+                for (i = 0; i < rowIndex; i++) a = cpu.getInstrPosition(a);
             } catch(ArrayIndexOutOfBoundsException w) {
                 return 0;
             }
@@ -170,11 +170,11 @@ public class DebugTableModel extends AbstractTableModel {
                 int i = 0;
                 nextAddress = this.getFirstRowAddress();
                 for (i = 0; i < rowIndex; i++) 
-                    nextAddress = cpu.getContext().getNextInstrPos(nextAddress);
+                    nextAddress = cpu.getInstrPosition(nextAddress);
                 lastRow = i;
             }
             addr = nextAddress;
-            nextAddress = cpu.getContext().getNextInstrPos(nextAddress);
+            nextAddress = cpu.getInstrPosition(nextAddress);
             lastRow = rowIndex;
             return cpu.getDebugValue(addr, columnIndex);
         } catch(ArrayIndexOutOfBoundsException w) {

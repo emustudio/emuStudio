@@ -37,7 +37,7 @@ public class DebugTable extends JTable {
         public DebugCellRenderer() {  super(); setOpaque(true); }
         public Component getTableCellRendererComponent(JTable table, Object value,
                 boolean isSelected, boolean hasFocus, int row, int column) {
-            if (debug_model.getRowAddress(row) == cpu.getContext().getInstrPosition()) {
+            if (debug_model.getRowAddress(row) == cpu.getInstrPosition()) {
                 this.setBackground(Color.RED);
                 this.setForeground(Color.WHITE);
             } else { 

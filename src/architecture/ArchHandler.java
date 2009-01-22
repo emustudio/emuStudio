@@ -11,15 +11,19 @@
 package architecture;
 
 import architecture.drawing.Schema;
+
+import java.util.Hashtable;
 import java.util.Properties;
 import plugins.memory.IMemory;
 import plugins.cpu.ICPU;
 import plugins.device.IDevice;
+import plugins.IPlugin;
 import plugins.ISettingsHandler;
 import plugins.compiler.ICompiler;
 import plugins.cpu.ICPUContext;
 import plugins.device.IDeviceContext;
 import plugins.memory.IMemoryContext;
+
 
 /**
  * Class holds actual computer configuration - plugins and settings.
@@ -27,103 +31,78 @@ import plugins.memory.IMemoryContext;
  * @author vbmacher
  */
 public class ArchHandler implements ISettingsHandler {
-    private ICompiler compiler;
-    private ICPU cpu;    
-    private IMemory memory;
-    private IDevice[] devices;
-    private PluginConnection[] connections;
-    private Properties settings;
-    private Schema schema;
+    private Architecture           arch;
+    private Properties             settings;
+    private Schema                 schema;
+    private Hashtable<Long,String> deviceNames;
     
     /**
      * Constructor of new computer configuration and init all plugins.
      * 
-     * @param compiler Compiler plugin object
-     * @param cpu CPU plugin object
-     * @param memory Memory plugin object
-     * @param devices Array of devices
-     * @throws IllegalArgumentException if compiler, CPU or memory is null.
+     * @param name         Name of the architecture
+     * @param arch         Virtual architecture object - plugin handler
+     * @param settings     Architecture settings (Properties)
+     * @param schema       Abstract schema of the architecture
+     * @param deviceNames  Names of all devices (can be redundant)
+     *  
+     * @throws Error if initialization of the architecture failed.
      */
-    public ArchHandler(String name, ICompiler compiler, ICPU cpu,
-            IMemory memory, IDevice[] devices, 
-            PluginConnection[] connections, Properties settings, Schema schema) 
-            throws IllegalArgumentException, Error {
-        
-        if (compiler == null) 
-            throw new IllegalArgumentException("Compiler can't be null");
-        if (cpu == null)
-            throw new IllegalArgumentException("CPU can't be null");
-        if (memory == null)
-            throw new IllegalArgumentException("Memory can't be null");
-        if (name == null) name = "";
-        this.compiler = compiler;
-        this.cpu = cpu;
-        this.memory = memory;
-        this.devices = devices;
-        this.connections = connections;
+    public ArchHandler(String name, Architecture arch, Properties settings,
+            Schema schema, Hashtable<Long,String> deviceNames) throws Error {
+    	if (name == null) name = "";
+    	this.arch = arch;
         this.settings = settings;
         this.schema = schema;
-        
+        this.deviceNames = deviceNames;
+
         if (initialize() == false) 
             throw new Error("Initialization of plugins failed");
     }
-    
-    private boolean isConnected(String type1, String type2) {
-        for (int i = 0; i < connections.length; i++)
-            if (connections[i].contains(type1)
-                    && connections[i].contains(type2))
-                return true;
-        return false;
-    }
+
     /**
-     * Initialize all plugins. It is called from constructor.
-     * Also provides necessary connections
+     * Initialize all plugins exept compiler. The method is called by
+     * constructor. Also provides necessary connections.
+     * 
+     * @return true If the initialization succeeded, false otherwise
      */
     private boolean initialize() {
-        boolean r = false;
-        compiler.initialize(this);
-        int memSize = Integer.parseInt(settings
-                .getProperty("memory.size"));
-        memory.initialize(memSize, this);
+        boolean success = false;
+
+        int memSize = Integer.parseInt(settings.getProperty("memory.size"));
+        success = arch.getMemory().initialize(memSize, this);
         
-        if (isConnected("cpu","memory"))        
-            r = cpu.initialize(memory.getContext(), this);
+        if (arch.isConnected(arch.getCPU(), arch.getMemory()))
+            success &= arch.getCPU().initialize(arch.getMemory().getContext(), this);
         else
-            r = cpu.initialize(null, this);
+            success &= arch.getCPU().initialize(null, this);
         
-        for (int i=0; i < devices.length; i++) {
-            ICPUContext ccon = isConnected("cpu","device"+i) 
-                    ? cpu.getContext() : null;
-            IMemoryContext mcon = isConnected("memory","device"+i)
-                    ? memory.getContext() : null;
-            r &= devices[i].initialize(ccon, mcon, this);
+        // CPU-device and Memory-device connections
+        for (int i=0; i < arch.getDeviceCount(); i++) {
+            ICPUContext ccon = arch.isConnected(arch.getCPU(),arch.getDevice(i)) 
+                    ? arch.getCPU().getContext() : null;
+            IMemoryContext mcon = arch.isConnected(arch.getMemory(),arch.getDevice(i))
+                    ? arch.getMemory().getContext() : null;
+            success &= arch.getDevice(i).initialize(ccon, mcon, this);
         }
+        
         // finally device-device connections
-        for (int i = 0; i < connections.length; i++) {
-            String j0 = connections[i].getJunc0();
-            String j1 = connections[i].getJunc1();
-            if (j0.startsWith("device") && j1.startsWith("device")) {
-                // TODO: jednosmerna komunikacia??
-                int i1 = Integer.parseInt(j0.substring(6));
-                int i2 = Integer.parseInt(j1.substring(6));
-                // 1. smer
-                IDeviceContext female = devices[i1].getFreeFemale();
-                IDeviceContext male = devices[i2].getFreeMale();
-                if (female != null && male != null)
-                    r &= devices[i1].attachDevice(female, male);
-                // 2. smer
-                female = devices[i2].getFreeFemale();
-                male = devices[i1].getFreeMale();
-                if (female != null && male != null)
-                    r &= devices[i2].attachDevice(female, male);
-            }
+        for (int i = 0; i < arch.getDeviceCount(); i++) {
+        	IDevice female = arch.getDevice(i);
+        	IDeviceContext[] males = arch.getMales(female);
+        	for (int j = 0; j < males.length; j++)
+        		female.attachDevice(males[j]);
         }
-        // first reset
-        cpu.reset();
-        for (int i=0; i < devices.length; i++) devices[i].reset();
-        return r;
+
+        // first reset of all plugins
+        arch.resetPlugins();
+        return success;
     }
     
+    /***
+     * Get schema of this virtual architecture
+     * 
+     * @return Abstract schema
+     */
     public Schema getSchema() { return schema; }
     
     /**
@@ -131,28 +110,28 @@ public class ArchHandler implements ISettingsHandler {
      *
      * @return compiler interface object
      */
-    public ICompiler getCompiler() { return compiler; }
+    public ICompiler getCompiler() { return arch.getCompiler(); }
 
     /**
      * Gets actual operating memory
      *
      * @return memory interface object
      */
-    public IMemory getMemory() { return memory; }
+    public IMemory getMemory() { return arch.getMemory(); }
 
     /**
      * Gets actual CPU
      *
      * @return CPU interface object
      */
-    public ICPU getCPU() { return cpu; }
+    public ICPU getCPU() { return arch.getCPU(); }
 
     /**
      * Gets list of available devices
      *
      * @return array of device interface objects
      */
-    public IDevice[] getDevices() { return devices; }
+    public IDevice[] getDevices() { return arch.getAllDevices(); }
 
     public String getArchName() { 
         return (schema == null) ? "unknown" : schema.getConfigName(); 
@@ -162,26 +141,27 @@ public class ArchHandler implements ISettingsHandler {
      * Method reads value of specified setting from Properties for 
      * specified plugin. Setting has to be fully specified.
      * 
-     * @param pluginID plugin name, this have a mean only for device plugin,
-     *                 otherwise it is ignored.
-     * @param settingName name of wanted setting
+     * @param hash         plugin hash, identification of a plugin
+     * @param settingName  name of wanted setting
      * @return setting value if exists, or null if not
      */
-    public synchronized String readSetting(pluginType plType, String pluginID, 
-            String settingName) {
-        if (plType == null) return null;
-
+    public synchronized String readSetting(long hash, String settingName) {
+        IPlugin plug = arch.getPlugin(hash);
+        if (plug == null) return null;
+        
         String prop = "";
                 
-        if (plType == pluginType.device) {
-            if (pluginID == null || pluginID.equals("")) return null;
+        if (plug instanceof IDevice) {
             // search for device
-            for (int i = 0; i < devices.length; i++)
-                if (settings.getProperty("device"+i,"").equals(pluginID)) {
+        	String deviceName = deviceNames.get(hash);
+            for (int i = 0; i < arch.getDeviceCount(); i++)
+                if (settings.getProperty("device"+i,"").equals(deviceName)) {
                     prop = "device"+i;
                     break;
                 }
-        } else prop = plType.toString();
+        } else if (plug instanceof ICPU)    prop = "cpu";
+        else if (plug instanceof IMemory)   prop = "memory";
+        else if (plug instanceof ICompiler) prop = "compiler";
         
         if (prop.equals("")) return null;
         if (settingName != null && !settingName.equals("")) 
@@ -190,34 +170,42 @@ public class ArchHandler implements ISettingsHandler {
         return settings.getProperty(prop,null);
     }
 
-    public String getDeviceName(int index) {
-        return settings.getProperty("device"+index,"");
+    /**
+     * Get device name (file name without extension)
+     * 
+     * @param index  Index of the device
+     * @return device file name without extension, or null
+     *         if device is unknown
+     */
+    public String getDeviceName(int index) { 
+    	return settings.getProperty("device"+index, null);
     }
     
     /**
      * Method writes a value of specified setting to Properties for 
      * specified plugin. Setting has to be fully specified.
      * 
-     * @param pluginID plugin name, this have a mean only for device plugin,
-     *                 otherwise it is ignored.
+     * @param hash         plugin hash, identification of a plugin
      * @param settingName name of wanted setting
-     * @return setting value if exists, or null if not
      */
-    public synchronized void writeSetting(pluginType plType, String pluginID,
-            String settingName, String val) {
+    public synchronized void writeSetting(long hash, String settingName, String val) {
         if (settingName == null || settingName.equals("")) return;
-        if (plType == null) return;
+
+        IPlugin plug = arch.getPlugin(hash);
+        if (plug == null) return;
 
         String prop = "";
-        if (plType == pluginType.device) {
-            if (pluginID == null || pluginID.equals("")) return;
+        if (plug instanceof IDevice) {
             // search for device
-            for (int i = 0; i < devices.length; i++)
-                if (settings.getProperty("device"+i,"").equals(pluginID)) {
+        	String deviceName = deviceNames.get(hash);
+            for (int i = 0; i < arch.getDeviceCount(); i++)
+                if (settings.getProperty("device"+i,"").equals(deviceName)) {
                     prop = "device"+i+".";
                     break;
                 }
-        } else prop = plType.toString();
+        } else if (plug instanceof ICPU) prop = "cpu";
+        else if (plug instanceof IMemory)   prop = "memory";
+        else if (plug instanceof ICompiler) prop = "compiler";
         
         if (prop.equals("")) return;
         prop += "." + settingName;
@@ -230,32 +218,33 @@ public class ArchHandler implements ISettingsHandler {
      * Method removes value of specified setting from Properties for 
      * specified plugin. Setting has to be fully specified.
      * 
-     * @param pluginID plugin name, this have a mean only for device plugin,
-     *                 otherwise it is ignored.
+     * @param hash         plugin hash, identification of a plugin
      * @param settingName name of wanted setting
      */
-    public synchronized void removeSetting(pluginType plType, String pluginID, 
-            String settingName) {
-        if (plType == null) return;
+    public synchronized void removeSetting(long hash, String settingName) {
+        if (settingName == null || settingName.equals("")) return;
+
+        IPlugin plug = arch.getPlugin(hash);
+        if (plug == null) return;
 
         String prop = "";
                 
-        if (plType == pluginType.device) {
-            if (pluginID == null || pluginID.equals("")) return;
+        if (plug instanceof IDevice) {
             // search for device
-            for (int i = 0; i < devices.length; i++)
-                if (settings.getProperty("device"+i,"").equals(pluginID)) {
-                    prop = "device"+i;
+        	String deviceName = deviceNames.get(hash);
+            for (int i = 0; i < arch.getDeviceCount(); i++)
+                if (settings.getProperty("device"+i,"").equals(deviceName)) {
+                    prop = "device"+i+".";
                     break;
                 }
-        } else prop = plType.toString();
-        
+        } else if (plug instanceof ICPU) prop = "cpu";
+        else if (plug instanceof IMemory)   prop = "memory";
+        else if (plug instanceof ICompiler) prop = "compiler";
+
         if (prop.equals("")) return;
-        if (settingName != null && !settingName.equals("")) 
-            prop += "." + settingName;
+        prop += "." + settingName;
         
-        if (settings.getProperty(prop,null) != null)
-            settings.remove(prop);
+        settings.remove(prop);
         ArchLoader.writeConfig(schema.getConfigName(), settings);        
     }
 

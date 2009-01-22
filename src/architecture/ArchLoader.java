@@ -73,6 +73,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -83,6 +84,8 @@ import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
+
+import plugins.IPlugin;
 import plugins.compiler.ICompiler;
 import plugins.memory.IMemory;
 import plugins.cpu.ICPU;
@@ -347,6 +350,8 @@ public class ArchLoader extends ClassLoader {
 
     /**
      * Method loads architecture configuration from current settings
+     * 
+     * @param name  Name of the configuration
      * @return a handler of loaded architecture
      */
     public ArchHandler load(String name) {
@@ -354,37 +359,78 @@ public class ArchLoader extends ClassLoader {
             Properties settings = readConfig(name,true);
             if (settings == null) return null;
             
+            // load compiler
             String comName = settings.getProperty("compiler");
+            long comHash = createPluginHash();
             ICompiler com = (ICompiler)loadPlugin(compilersDir, comName,
-                    ICompiler.class.getName());
+                    ICompiler.class.getName(),comHash);
+            if (com == null) throw new IllegalArgumentException("Compiler can't be null");
+            
+            // load cpu
             String cpuName = settings.getProperty("cpu");
-            ICPU cpu = (ICPU)loadPlugin(cpusDir, cpuName, ICPU.class.getName());
+            long cpuHash = createPluginHash();
+            ICPU cpu = (ICPU)loadPlugin(cpusDir, cpuName, ICPU.class.getName(),cpuHash);
+            if (cpu == null) throw new IllegalArgumentException("CPU can't be null");
+            
+            // load memory
             String memName = settings.getProperty("memory");
+            long memHash = createPluginHash();
             IMemory mem = (IMemory)loadPlugin(memoriesDir, memName,
-                    IMemory.class.getName());
+                    IMemory.class.getName(), memHash);
+            if (mem == null) throw new IllegalArgumentException("Memory can't be null");
 
-            ArrayList<IDevice> devs = new ArrayList<IDevice>();
+            // load devices
+            Hashtable<Long,IDevice> devs = new Hashtable<Long,IDevice>();
+            Hashtable<Long,String> devNames = new Hashtable<Long,String>();
             for (int i = 0; settings.containsKey("device"+i); i++) {
-                IDevice dev = (IDevice)loadPlugin(devicesDir,
-                        settings.getProperty("device"+i),
-                        IDevice.class.getName());
-                devs.add(dev);
+            	long devHash   = createPluginHash();
+            	String devName = settings.getProperty("device"+i);
+            	
+                IDevice dev = (IDevice)loadPlugin(devicesDir, devName,
+                		IDevice.class.getName(),devHash);
+                devs.put(devHash, dev);
+                devNames.put(devHash,devName);
             }
             
-            ArrayList<PluginConnection> lines = new ArrayList<PluginConnection>();
+            // create connections hashtable
+            Hashtable<IPlugin,ArrayList<IPlugin>> lines = new Hashtable<IPlugin,ArrayList<IPlugin>>();
+            IDevice[] devsArray = (IDevice[])devs.values().toArray();
             for (int i = 0; settings.containsKey("connection"+i+".junc0"); i++) {
+            	
+            	// get i-th connection from settings
                 String j0 = settings.getProperty("connection"+i
                         +".junc0", "");
                 String j1 = settings.getProperty("connection"+i
                         +".junc1", "");
                 if (j0.equals("") || j1.equals("")) continue;
-                lines.add(new PluginConnection(j0,j1));
+
+                // get connection elements - e1 and e2
+                IPlugin e1 = null,e2 = null;
+                if (j0.equals("cpu")) e1 = cpu;
+                else if (j0.equals("memory")) e1 = mem;
+                else if (j0.startsWith("device")) {
+                    int index = Integer.parseInt(j0.substring(6));
+                    e1 = devsArray[index];
+                }
+                if (j1.equals("cpu")) e2 = cpu;
+                else if (j1.equals("memory")) e2 = mem;
+                else if (j1.startsWith("device")) {
+                    int index = Integer.parseInt(j1.substring(6));
+                    e2 = devsArray[index];
+                }
+                
+                // save male (e2) into arraylist for female (e2)
+                ArrayList<IPlugin> males;
+                if (lines.containsKey(e1)) males = lines.get(e1);
+                else males = new ArrayList<IPlugin>();
+                males.add(e2);
+                
+                lines.put(e1, males);
             }
 
-            return new ArchHandler(name, com, cpu, mem, 
-                    devs.toArray(new IDevice[0]), 
-                    lines.toArray(new PluginConnection[0]), settings,
-                    loadSchema(name));
+            Architecture arch = new Architecture(cpu, cpuHash, mem, memHash,
+            		com, comHash, devs, lines);
+            return new ArchHandler(name, arch, settings, loadSchema(name),devNames);
         }
         catch (Exception e) {
             String h = e.getLocalizedMessage();
@@ -392,6 +438,22 @@ public class ArchLoader extends ClassLoader {
             StaticDialogs.showErrorMessage("Error reading plugins: " + h);
             return null;
         }
+    }
+    
+    /**
+     * Method compute a CBUhash for a plugin identification for one runtime
+     * session. The key for a hash is taken from 
+     * <code>System.nanoTime()</code> and from <code>Math.random()</code>.
+     * 
+     * @return hash for an identification of the plugin
+     */
+    private long createPluginHash() {
+    	long h=0;
+    	String key = String.valueOf(Math.random()) 
+    		+ String.valueOf(System.nanoTime());
+    	for (int i =0; i < key.length(); i++)
+    		h= h << 2 + key.charAt(i);
+    	return h;
     }
     
     /**
@@ -403,7 +465,7 @@ public class ArchLoader extends ClassLoader {
      *        has to implement
      * @return instance object of loaded plugin
      */
-    private Object loadPlugin(String dirname, String filename, String interfaceName) {
+    private Object loadPlugin(String dirname, String filename, String interfaceName, long pluginHash) {
         ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
         Hashtable<String, Integer> sizes = new Hashtable<String, Integer>();
         Vector<String> undone = new Vector<String>();
@@ -432,7 +494,8 @@ public class ArchLoader extends ClassLoader {
                     if (!fN.startsWith("/")) fN = "/" + fN;
                     String URLstr = URLEncoder.encode("jar:file:" + fN
                             + "!/" + ze.getName().replaceAll("\\\\","/"),"UTF-8");
-                    URLstr = URLstr.replaceAll("%3A",":").replaceAll("%2F","/").replaceAll("%21","!").replaceAll("\\+","%20");
+                    URLstr = URLstr.replaceAll("%3A",":").replaceAll("%2F","/")
+                    			.replaceAll("%21","!").replaceAll("\\+","%20");
                     resources.put("/" + ze.getName(), new URL(URLstr));
                     continue;
                 }
@@ -468,12 +531,15 @@ public class ArchLoader extends ClassLoader {
                 }
             }
             // find a first class that implements wanted interface
+    		Class<?>[] conParameters = {Long.class}; // hash 
             for (int i = 0; i < classes.size(); i++) {
                 Class<?> c = (Class<?>)classes.get(i);
                 Class<?>[] intf = c.getInterfaces();
                 for (int j = 0; j < intf.length; j++) {
-                    if (intf[j].getName().equals(interfaceName))
-                        return c.newInstance();
+                    if (intf[j].getName().equals(interfaceName)) {
+                  	    Constructor<?> con = c.getDeclaredConstructor(conParameters);
+                   	    con.newInstance(pluginHash);
+                    }
                 }
             }
             zf.close();
