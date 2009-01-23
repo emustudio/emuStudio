@@ -362,21 +362,19 @@ public class ArchLoader extends ClassLoader {
             // load compiler
             String comName = settings.getProperty("compiler");
             long comHash = createPluginHash();
-            ICompiler com = (ICompiler)loadPlugin(compilersDir, comName,
-                    ICompiler.class.getName(),comHash);
+            ICompiler com = (ICompiler)loadPlugin(compilersDir, comName,ICompiler.class,comHash);
             if (com == null) throw new IllegalArgumentException("Compiler can't be null");
             
             // load cpu
             String cpuName = settings.getProperty("cpu");
             long cpuHash = createPluginHash();
-            ICPU cpu = (ICPU)loadPlugin(cpusDir, cpuName, ICPU.class.getName(),cpuHash);
+            ICPU cpu = (ICPU)loadPlugin(cpusDir, cpuName, ICPU.class,cpuHash);
             if (cpu == null) throw new IllegalArgumentException("CPU can't be null");
             
             // load memory
             String memName = settings.getProperty("memory");
             long memHash = createPluginHash();
-            IMemory mem = (IMemory)loadPlugin(memoriesDir, memName,
-                    IMemory.class.getName(), memHash);
+            IMemory mem = (IMemory)loadPlugin(memoriesDir, memName,IMemory.class, memHash);
             if (mem == null) throw new IllegalArgumentException("Memory can't be null");
 
             // load devices
@@ -386,8 +384,7 @@ public class ArchLoader extends ClassLoader {
             	long devHash   = createPluginHash();
             	String devName = settings.getProperty("device"+i);
             	
-                IDevice dev = (IDevice)loadPlugin(devicesDir, devName,
-                		IDevice.class.getName(),devHash);
+                IDevice dev = (IDevice)loadPlugin(devicesDir, devName,IDevice.class,devHash);
                 devs.put(devHash, dev);
                 devNames.put(devHash,devName);
             }
@@ -434,7 +431,7 @@ public class ArchLoader extends ClassLoader {
         }
         catch (Exception e) {
             String h = e.getLocalizedMessage();
-            if (h.equals("")) h = "Unknown error";
+            if (h == null || h.equals("")) h = "Unknown error";
             StaticDialogs.showErrorMessage("Error reading plugins: " + h);
             return null;
         }
@@ -465,7 +462,7 @@ public class ArchLoader extends ClassLoader {
      *        has to implement
      * @return instance object of loaded plugin
      */
-    private Object loadPlugin(String dirname, String filename, String interfaceName, long pluginHash) {
+    private Object loadPlugin(String dirname, String filename, Class<?> interfaceName, long pluginHash) {
         ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
         Hashtable<String, Integer> sizes = new Hashtable<String, Integer>();
         Vector<String> undone = new Vector<String>();
@@ -536,9 +533,9 @@ public class ArchLoader extends ClassLoader {
                 Class<?> c = (Class<?>)classes.get(i);
                 Class<?>[] intf = c.getInterfaces();
                 for (int j = 0; j < intf.length; j++) {
-                    if (intf[j].getName().equals(interfaceName)) {
+                    if (intf[j].equals(interfaceName)) {
                   	    Constructor<?> con = c.getDeclaredConstructor(conParameters);
-                   	    con.newInstance(pluginHash);
+                   	    return con.newInstance(pluginHash);
                     }
                 }
             }
