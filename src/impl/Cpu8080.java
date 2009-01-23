@@ -18,7 +18,6 @@ import javax.swing.JPanel;
 import plugins.ISettingsHandler;
 import plugins.cpu.ICPU;
 import plugins.cpu.ICPUContext;
-import plugins.cpu.ICPUContext.stateEnum;
 import plugins.cpu.IDebugColumn;
 import plugins.memory.IMemoryContext;
 import runtime.StaticDialogs;
@@ -31,13 +30,15 @@ import runtime.StaticDialogs;
  * @author vbmacher
  */
 public class Cpu8080 implements ICPU, Runnable {
+	private long hash;
     private Thread cpuThread = null;
     private statusGUI status;
 
     private IMemoryContext mem;
     private CpuContext cpu;
-    private ISettingsHandler settings;
-    private HashSet breaks; // zoznam breakpointov (mnozina)
+    @SuppressWarnings("unused")
+	private ISettingsHandler settings;
+    private HashSet<Integer> breaks; // zoznam breakpointov (mnozina)
 
     // cpu speed
     private long long_cycles = 0; // count of executed cycles for runtime freq. computing
@@ -46,18 +47,18 @@ public class Cpu8080 implements ICPU, Runnable {
     private int sliceCheckTime = 100;
 
     // registers are public meant for only statusGUI (didnt want make it thru get() methods)
-    private volatile int PC=0; // program counter
+    private int PC=0; // program counter
     public int SP=0; // stack pointer
     public short B=0, C=0, D=0, E=0, H=0, L=0, Flags=2, A=0; // registre
     public final int flagS = 0x80, flagZ = 0x40, flagAC = 0x10, flagP = 0x4, flagC = 0x1;
     
     private boolean INTE = false; // povolenie / zakazanie preruseni
     private boolean isINT = false;
-    private volatile short b1 = 0; // interrupt instruction
-    private volatile short b2 = 0;
-    private volatile short b3 = 0;
+    private short b1 = 0; // interrupt instruction
+    private short b2 = 0;
+    private short b3 = 0;
     
-    private stateEnum run_state; // dovod zastavenia emulatora
+    private int run_state; // dovod zastavenia emulatora
 
     private byte parity_table[] = {
         1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,0,1,1,0,
@@ -72,21 +73,30 @@ public class Cpu8080 implements ICPU, Runnable {
     
     
     /** Creates a new instance of Cpu8080 */
-    public Cpu8080() {
+    public Cpu8080(Long hash) {
+    	this.hash = hash;
         cpu = new CpuContext(this);
-        run_state = stateEnum.stoppedNormal;
-        breaks = new HashSet();
+        run_state = ICPU.STATE_STOPPED_NORMAL;
+        breaks = new HashSet<Integer>();
         status = new statusGUI(this);
         rfc = new RuntimeFrequencyCalculator();
         freqScheduler = new java.util.Timer();
     }
 
-    public String getDescription() { return "Intel 8080 CPU VM,"
-            + " modified for use as CPU for MITS Altair 8800 computer"; }
+    @Override
+    public String getDescription() {
+    	return "Modified for use as CPU for MITS Altair 8800 computer";
+    }
+    @Override
     public String getVersion() { return "0.18b"; }
-    public String getName() { return "Virtual i8080 CPU"; }
-    public String getCopyright() { return "\u00A9 Copyright 2006-2008, Peter Jakubčo"; }
+    @Override
+    public String getTitle() { return "Intel 8080 CPU"; }
+    @Override
+    public String getCopyright() { return "\u00A9 Copyright 2006-2009, P. Jakubčo"; }
 
+    @Override
+    public long getHash() { return hash; }
+    @Override
     public boolean initialize(IMemoryContext mem, ISettingsHandler sHandler) {
         if (mem == null)
             throw new java.lang.NullPointerException("CPU must have access to memory");
@@ -101,40 +111,55 @@ public class Cpu8080 implements ICPU, Runnable {
         return true;
     }
 
+    @Override
     public ICPUContext getContext() { return cpu; }
     
+    @Override
     public void destroy() {
-        run_state = stateEnum.stoppedNormal;
+        run_state = ICPU.STATE_STOPPED_NORMAL;
         setRuntimeFreqCounter(false);        
         cpu.clearDevices();
     }
 
+    @Override
     public boolean isBreakpointSupported() { return true; }
+    @Override
     public void setBreakpoint(int pos, boolean set) {
         if (set) breaks.add(pos);
         else breaks.remove(pos);
     }
+    @Override
     public boolean getBreakpoint(int pos) { return breaks.contains(pos); }
     
     
     /**
      * Reset CPU (initialize before run)
      */    
+    @Override
     public void reset() {
+    	reset(0);
+    }
+    
+    @Override
+    public void reset(int startPos) {
         SP = A = B = C = D = E = H = L = 0;
         Flags = 2; //0000 0010b
-        PC = mem.getProgramStart();
+        PC = startPos; 
         INTE = false;
-        run_state = stateEnum.stoppedBreak;
+        run_state = ICPU.STATE_STOPPED_BREAK;
         cpuThread = null;
         setRuntimeFreqCounter(false);
         cpu.fireCpuRun(status,run_state);
         cpu.fireCpuState();
     }
+    
+    public int getPC() { return PC; }
+    
     /**
      * Create CPU Thread and start it until CPU halt (instruction hlt)
      * or until address fallout
      */ 
+    @Override
     public void execute() {
         cpuThread = new Thread(this, "i8080");
         cpuThread.start();
@@ -142,32 +167,33 @@ public class Cpu8080 implements ICPU, Runnable {
     /**
      * Force (external) breakpoint
      */
+    @Override
     public void pause() {
-        run_state = stateEnum.stoppedBreak;
+        run_state = ICPU.STATE_STOPPED_BREAK;
         setRuntimeFreqCounter(false);
         cpu.fireCpuRun(status,run_state);
     }
     /**
      *  Stops an emulation
      */    
+    @Override
     public void stop() {
-        run_state = stateEnum.stoppedNormal;
+        run_state = ICPU.STATE_STOPPED_NORMAL;
         setRuntimeFreqCounter(false);
         cpu.fireCpuRun(status,run_state);
     }
     // vykona 1 krok - bez merania casov (bez real-time odozvy)
+    @Override
     public void step() {
-        if (run_state == stateEnum.stoppedBreak) {
+        if (run_state == ICPU.STATE_STOPPED_BREAK) {
             try {
-                synchronized(run_state) {
-                    run_state = stateEnum.runned;
-                    evalStep();
-                    if (run_state == stateEnum.runned)
-                        run_state = stateEnum.stoppedBreak;
-                }
+                run_state = ICPU.STATE_RUNNING;
+                evalStep();
+                if (run_state == ICPU.STATE_RUNNING)
+                    run_state = ICPU.STATE_STOPPED_BREAK;
             }
             catch (IndexOutOfBoundsException e) {
-                run_state = stateEnum.stoppedAddrFallout;
+                run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
             }
             cpu.fireCpuRun(status,run_state);
             cpu.fireCpuState();
@@ -184,25 +210,24 @@ public class Cpu8080 implements ICPU, Runnable {
     
     
     /* DOWN: GUI interaction */
+    @Override
     public IDebugColumn[] getDebugColumns() { return status.getDebugColumns(); }
+    @Override
     public void setDebugValue(int index, int col, Object value) {
         status.setDebugColVal(index, col, value);
     }
+    @Override
     public Object getDebugValue(int index, int col) {
         return status.getDebugColVal(index, col);
     }
+    @Override
     public JPanel getStatusGUI() { return status; }    
     
     /* DOWN: CPU Context */
-    // get the address from next instruction
-    // this method exist only from a view of effectivity
-    public int getNextPC(int memPos) {
-        return status.getNextPosition(memPos);
-    }
-    public int getPC() { return PC; }
+//    public int getPC() { return PC; }
     
     public boolean setPC(int memPos) { 
-        if (memPos < 0 || memPos > mem.getSize()) return false;
+        if (memPos < 0) return false;
         PC = memPos;
         return true;
     }
@@ -250,7 +275,7 @@ public class Cpu8080 implements ICPU, Runnable {
         int cycles;
         long slice;
         
-        run_state = stateEnum.runned;
+        run_state = ICPU.STATE_RUNNING;
         cpu.fireCpuRun(status,run_state);
         cpu.fireCpuState();
         setRuntimeFreqCounter(true);
@@ -261,35 +286,33 @@ public class Cpu8080 implements ICPU, Runnable {
         cycles_to_execute = sliceCheckTime * cpu.getFrequency();
         long i = 0;
         slice = sliceCheckTime * 1000000;
-        synchronized(run_state) {
-            while(run_state == stateEnum.runned) {
-                i++;
-                startTime = System.nanoTime();
-                cycles_executed = 0;
-                try { 
-                    while((cycles_executed < cycles_to_execute)
-                            && (run_state == stateEnum.runned)) {
-                        cycles = evalStep();
-                        cycles_executed += cycles;
-                        long_cycles += cycles;
-                        if (getBreakpoint(PC) == true)
-                            throw new Error();
-                    }
+        while(run_state == ICPU.STATE_RUNNING) {
+            i++;
+            startTime = System.nanoTime();
+            cycles_executed = 0;
+            try { 
+                while((cycles_executed < cycles_to_execute)
+                        && (run_state == ICPU.STATE_RUNNING)) {
+                    cycles = evalStep();
+                    cycles_executed += cycles;
+                    long_cycles += cycles;
+                    if (getBreakpoint(PC) == true)
+                        throw new Error();
                 }
-                catch (IndexOutOfBoundsException e) {
-                    run_state = stateEnum.stoppedAddrFallout;
-                    break;
-                }
-                catch (Error er) {
-                    run_state = stateEnum.stoppedBreak;
-                    break;
-                }
-                endTime = System.nanoTime() - startTime;
-                if (endTime < slice) {
-                    // time correction
-                    try { Thread.sleep((slice - endTime)/1000000); }
-                    catch(java.lang.InterruptedException e) {}
-                }
+            }
+            catch (IndexOutOfBoundsException e) {
+                run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
+                break;
+            }
+            catch (Error er) {
+                run_state = ICPU.STATE_STOPPED_BREAK;
+                break;
+            }
+            endTime = System.nanoTime() - startTime;
+            if (endTime < slice) {
+                // time correction
+                try { Thread.sleep((slice - endTime)/1000000); }
+                catch(java.lang.InterruptedException e) {}
             }
         }
         setRuntimeFreqCounter(false);
@@ -476,7 +499,7 @@ public class Cpu8080 implements ICPU, Runnable {
         }        
         OP = ((Short)mem.read(PC++)).shortValue();
         if (OP == 118) { // hlt?
-            run_state = stateEnum.stoppedNormal;
+            run_state = ICPU.STATE_STOPPED_NORMAL;
             return 7;
         }
 
@@ -671,9 +694,24 @@ public class Cpu8080 implements ICPU, Runnable {
                 cpu.fireIO(DAR, false, A); 
                 return 10;
         }
-        run_state = stateEnum.stoppedBadInstr;
+        run_state = ICPU.STATE_STOPPED_BAD_INSTR;
         return 0;
     }
     
+    @Override
+    public int getInstrPosition() { return PC; }
+
+    // get the address from next instruction
+    // this method exist only from a view of effectivity
+    @Override
+    public int getInstrPosition(int pos) { return status.getNextPosition(pos); }
+    @Override
+    public boolean setInstrPosition(int pos) { return setPC(pos); }
+
+	@Override
+	public void showSettings() {
+		// TODO Auto-generated method stub
+		
+	}
 
 }

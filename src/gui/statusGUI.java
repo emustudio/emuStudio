@@ -18,7 +18,8 @@ import java.util.EventObject;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import plugins.cpu.ICPUContext.stateEnum;
+
+import plugins.cpu.ICPU;
 import plugins.cpu.IDebugColumn;
 import plugins.memory.IMemoryContext;
 
@@ -26,12 +27,13 @@ import plugins.memory.IMemoryContext;
  *
  * @author  vbmacher
  */
+@SuppressWarnings("serial")
 public class statusGUI extends javax.swing.JPanel {
     private Cpu8080 cpu;
     private CpuContext cpuC;
     private IMemoryContext mem = null;
     private IDebugColumn[] columns;
-    private stateEnum run_state;
+    private int run_state;
     
     public statusGUI(final Cpu8080 cpu) {
         this.cpu = cpu;
@@ -43,11 +45,11 @@ public class statusGUI extends javax.swing.JPanel {
         IDebugColumn c4 = new ColumnInfo("opcode", java.lang.String.class,false);
         
         columns[0] = c1;columns[1] = c2;columns[2] = c3;columns[3] = c4;
-        run_state = stateEnum.stoppedNormal;
+        run_state = ICPU.STATE_STOPPED_NORMAL;
 
         initComponents();
         cpuC.addCPUListener(new IICpuListener() {
-            public void runChanged(EventObject evt, stateEnum state) {
+            public void runChanged(EventObject evt, int state) {
                 run_state = state;
             }
             public void stateUpdated(EventObject evt) {
@@ -503,7 +505,7 @@ public class statusGUI extends javax.swing.JPanel {
         if ((cpu.Flags & cpu.flagC) != 0) txtFlagC.setText("1");
         else txtFlagC.setText("0");
         
-        if (run_state == stateEnum.runned) {
+        if (run_state == ICPU.STATE_RUNNING) {
             lblRun.setText("running");
             spnFrequency.setEnabled(false);
             spnTestPeriode.setEnabled(false);
@@ -511,11 +513,15 @@ public class statusGUI extends javax.swing.JPanel {
         else {
             spnFrequency.setEnabled(true);
             spnTestPeriode.setEnabled(true);
-            switch (run_state.ordinal()) {
-                case 0: lblRun.setText("stopped (normal)"); break;
-                case 1: lblRun.setText("breakpoint"); break;
-                case 2: lblRun.setText("stopped (address fallout)"); break;
-                case 3: lblRun.setText("stopped (instruction fallout)"); break;
+            switch (run_state) {
+                case ICPU.STATE_STOPPED_NORMAL:
+                	lblRun.setText("stopped (normal)"); break;
+                case ICPU.STATE_STOPPED_BREAK:
+                	lblRun.setText("breakpoint"); break;
+                case ICPU.STATE_STOPPED_ADDR_FALLOUT:
+                	lblRun.setText("stopped (address fallout)"); break;
+                case ICPU.STATE_STOPPED_BAD_INSTR:
+                	lblRun.setText("stopped (instruction fallout)"); break;
             }
         }
     }

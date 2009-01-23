@@ -25,39 +25,40 @@ import plugins.device.IDeviceContext;
 public class CpuContext implements ACpuContext {
     private EventListenerList listenerList;
     private EventObject cpuEvt = new EventObject(this);
-    private Hashtable devicesList;
+    private Hashtable<Integer,IDeviceContext> devicesList;
     private int clockFrequency = 2000; // kHz
     private Cpu8080 cpu;
 
     public CpuContext(Cpu8080 cpu) {
-        devicesList = new Hashtable();
+        devicesList = new Hashtable<Integer,IDeviceContext>();
         listenerList = new EventListenerList();
         this.cpu = cpu;
     }
     
-    public String getID() { return "i8080"; }
-    public int getVersionMajor() { return 1; }
-    public int getVersionMinor() { return 8; }
-    public String getVersionRev() { return "b1"; }
+    @Override
+    public String getID() { return "i8080Context"; }
+    @Override
+    public String getHash() { return "4bb574accc0ed96b5ed84b5832127289";}
 
-    public int getInstrPosition() { return cpu.getPC(); }
-    public int getNextInstrPos(int pos) { return cpu.getNextPC(pos); }
-    public boolean setInstrPosition(int pos) { return cpu.setPC(pos); }
-
+    @Override
     public void addCPUListener(ICPUListener listener) {
         listenerList.add(ICPUListener.class, listener);
     }
 
+    @Override
     public void removeCPUListener(ICPUListener listener) {
         listenerList.remove(ICPUListener.class, listener);
     }
 
     // device mapping = only one device can be attached to one port
+    @Override
     public boolean attachDevice(IDeviceContext listener, int port) {
         if (devicesList.containsKey(port)) return false;
+        if (listener.getDataType() != Short.class) return false;
         devicesList.put(port, listener);
         return true;
     }
+    @Override
     public void detachDevice(int port) {
         if (devicesList.containsKey(port))
             devicesList.remove(port);
@@ -69,7 +70,7 @@ public class CpuContext implements ACpuContext {
     // frequency in kHz
     public void setFrequency(int freq) { this.clockFrequency = freq; }
     
-    public void fireCpuRun(statusGUI status, stateEnum run_state) {
+    public void fireCpuRun(statusGUI status, int run_state) {
         Object[] listeners = listenerList.getListenerList();
         for (int i=0; i<listeners.length; i+=2) {
             if (listeners[i] == ICPUListener.class)
@@ -108,8 +109,8 @@ public class CpuContext implements ACpuContext {
             return 0;
         }
         if (read == true) 
-            return (short)((IDeviceContext)devicesList.get(port)).in(cpuEvt);
-        else ((IDeviceContext)devicesList.get(port)).out(cpuEvt,val);
+            return (Short)devicesList.get(port).in(cpuEvt);
+        else devicesList.get(port).out(cpuEvt,val);
         return 0;
     }
 
@@ -119,6 +120,7 @@ public class CpuContext implements ACpuContext {
      * is read during the interrupt acknowledge cycle. Subsequent bytes are
      * read in by a normal memory read sequence.
      */
+    @Override
     public void interrupt(byte[] instr) {
         short b1 = (instr.length >= 1) ? instr[0] : 0;
         short b2 = (instr.length >= 2) ? instr[1] : 0;
