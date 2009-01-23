@@ -15,7 +15,6 @@ import javax.swing.JPanel;
 import plugins.ISettingsHandler;
 import plugins.cpu.ICPU;
 import plugins.cpu.ICPUContext;
-import plugins.cpu.ICPUContext.stateEnum;
 import plugins.cpu.IDebugColumn;
 import plugins.memory.IMemoryContext;
 import runtime.StaticDialogs;
@@ -25,38 +24,40 @@ import runtime.StaticDialogs;
  * @author vbmacher
  */
 public class CpuZ80 implements ICPU, Runnable {
+	private long hash;
     private Thread cpuThread = null;
     private statusGUI status;
 
     private IMemoryContext mem;
     private CpuContext cpu;
-    private ISettingsHandler settings;
-    private HashSet breaks; // zoznam breakpointov (mnozina)
-    
-    // sychronization locks for PC
-//    private Object PClock = new Object();
+    @SuppressWarnings("unused")
+	private ISettingsHandler settings;
+    private HashSet<Integer> breaks; // zoznam breakpointov (mnozina)
 
     // 2 sets of 6 GPR
-    private volatile short B; private short B_S;
-    private volatile short C; private short C_S;
-    private volatile short D; private short D_S;
-    private volatile short E; private short E_S;
-    private volatile short H; private short H_S;
-    private volatile short L; private short L_S;
+    private short B; private short B_S;
+    private short C; private short C_S;
+    private short D; private short D_S;
+    private short E; private short E_S;
+    private short H; private short H_S;
+    private short L; private short L_S;
     
     // accumulator and flags
-    private volatile short A; private short A_S;
-    private volatile short F; private volatile short F_S;
+    private short A; private short A_S;
+    private short F; private short F_S;
     
     // special registers
-    private volatile int PC = 0; private volatile int SP = 0;
-    private volatile int IX = 0; private volatile int IY = 0;
-    private volatile short I = 0; private volatile short R = 0; // interrupt r., refresh r.
+    private int PC = 0; private int SP = 0;
+    private int IX = 0; private int IY = 0;
+    private short I = 0; private short R = 0; // interrupt r., refresh r.
     private boolean[] IFF; // interrupt enable flip-flops
     
-    private volatile boolean INTE = false; // interrupts
-    private boolean isInt = false;
-    private byte intMode = 0; // interrupt mode (0,1,2)
+    @SuppressWarnings("unused")
+	private boolean INTE = false; // interrupts
+    @SuppressWarnings("unused")
+	private boolean isInt = false;
+    @SuppressWarnings("unused")
+	private byte intMode = 0; // interrupt mode (0,1,2)
     
     public static final int flagS = 0x80, flagZ = 0x40, flagH = 0x10, flagPV = 0x4,flagN = 0x2, flagC = 0x1;
     
@@ -65,7 +66,7 @@ public class CpuZ80 implements ICPU, Runnable {
     private java.util.Timer freqScheduler;
     private RuntimeFrequencyCalculator rfc;
     private int sliceCheckTime = 100;
-    private stateEnum run_state; // state of emulation run
+    private int run_state; // state of emulation run
 
     /* parityTable[i] = (number of 1's in i is odd) ? 0 : 4, i = 0..255 */
     private final static short parityTable[] = {
@@ -205,27 +206,39 @@ public class CpuZ80 implements ICPU, Runnable {
     /**
      * Constructor
      */
-    public CpuZ80() {
+    public CpuZ80(Long hash) {
+    	this.hash = hash;
         IFF = new boolean[2];
-        cpu = new CpuContext(this);
-        run_state = stateEnum.stoppedNormal;
-        breaks = new HashSet();
+        cpu = new CpuContext();
+        run_state = ICPU.STATE_STOPPED_NORMAL;
+        breaks = new HashSet<Integer>();
         rfc = new RuntimeFrequencyCalculator();
         freqScheduler = new java.util.Timer();
     }
     
-    public String getName() { return "Zilog Z80"; }
+    @Override
+    public String getTitle() { return "Zilog Z80"; }
+    @Override
     public String getCopyright() { return "\u00A9 Copyright 2008, Peter Jakubčo"; }
+    @Override
     public String getDescription() {
         return "Implementation of Zilog Z80 8bit CPU. With its architecture"
                + " it is similar to Intel's 8080 but something is modified and"
                + " extended.";
     }
-    public String getVersion() { return "0.1b"; }
+    @Override
+    public String getVersion() { return "0.11b"; }
+    @Override
+    public int getInstrPosition() { return PC; }
+    @Override
+    public int getInstrPosition(int pos) { return getNextPC(pos); }
+    @Override
+    public boolean setInstrPosition(int pos) { return setPC(pos); }
 
     /**
      * Should be called only once
      */
+    @Override
     public boolean initialize(IMemoryContext mem, ISettingsHandler sHandler) {
         if (mem == null)
             throw new NullPointerException("CPU must have access to memory");
@@ -240,20 +253,21 @@ public class CpuZ80 implements ICPU, Runnable {
         return true;
     }
 
+    @Override
     public void step() {
-        if (run_state == stateEnum.stoppedBreak) {
+        if (run_state == ICPU.STATE_STOPPED_BREAK) {
             try {
-                run_state = stateEnum.runned;
+                run_state = ICPU.STATE_RUNNING;
                 evalStep();
                 if (PC > 0xffff) {
-                    run_state = stateEnum.stoppedAddrFallout;
+                    run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
                     PC = 0xffff;
                 }
-                else if (run_state == stateEnum.runned)
-                    run_state = stateEnum.stoppedBreak;
+                else if (run_state == ICPU.STATE_RUNNING)
+                    run_state = ICPU.STATE_STOPPED_BREAK;
             }
             catch (IndexOutOfBoundsException e) {
-                run_state = stateEnum.stoppedAddrFallout;
+                run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
             }
             cpu.fireCpuRun(status,run_state);
             cpu.fireCpuState();
@@ -264,6 +278,7 @@ public class CpuZ80 implements ICPU, Runnable {
      * Create CPU Thread and start it until CPU halt (instruction hlt)
      * or until address fallout
      */ 
+    @Override
     public void execute() {
         if (cpuThread != null && cpuThread.isAlive()) return;
         cpuThread = new Thread(this, "Z80");
@@ -273,20 +288,23 @@ public class CpuZ80 implements ICPU, Runnable {
     /**
      * Force (external) breakpoint
      */
+    @Override
     public void pause() {
-        run_state = stateEnum.stoppedBreak;
+        run_state = ICPU.STATE_STOPPED_BREAK;
         setRuntimeFreqCounter(false);
         cpu.fireCpuRun(status,run_state);
     }
 
+    @Override
     public void stop() {
-        run_state = stateEnum.stoppedNormal;
+        run_state = ICPU.STATE_STOPPED_NORMAL;
         setRuntimeFreqCounter(false);
         cpu.fireCpuRun(status,run_state);
     }
 
     /* CPU Context */
 
+    @Override
     public ICPUContext getContext() { return cpu; }
 
     // get the address from next instruction
@@ -294,10 +312,7 @@ public class CpuZ80 implements ICPU, Runnable {
     public int getNextPC(int memPos) {
         return status.getNextPosition(memPos);
     }
-    public int getPC() { //synchronized(PClock) { 
-        return PC;
-    //}
-    }
+    public int getPC() { return PC; }
     public int getSP() { return SP; }
     public short getA() { return A; }
     public short getF() { return F; }
@@ -332,49 +347,63 @@ public class CpuZ80 implements ICPU, Runnable {
      * Sets program counter to specific value
      */
     public boolean setPC(int memPos) {
-        if (memPos < 0 || memPos > mem.getSize()) return false;
-   //     synchronized(PClock) {
+        if (memPos < 0) return false;
             PC = memPos &0xFFFF;
-    //    }
         return true;
     }
 
     /* GUI interaction */
+    @Override
     public IDebugColumn[] getDebugColumns() { return status.getDebugColumns(); }
+    @Override
     public void setDebugValue(int index, int col, Object value) {
         status.setDebugColVal(index, col, value);
     }
+    @Override
     public Object getDebugValue(int index, int col) {
         return status.getDebugColVal(index, col);
     }
+    @Override
     public JPanel getStatusGUI() { return status; }
 
     // breakpoints
+    @Override
     public boolean isBreakpointSupported() { return true; }
+    @Override
     public void setBreakpoint(int pos, boolean set) {
         if (set) breaks.add(pos);
         else breaks.remove(pos);
     }
+    @Override
     public boolean getBreakpoint(int pos) { return breaks.contains(pos); }
 
+    @Override
     public void reset() {
+    	reset(0);
+    }
+    
+    @Override
+    public void reset(int startPos) {
         SP = IX = IY = 0;
         I = R = 0;
         A = B = C = D = E = H = L = 0;
         A_S = B_S = C_S = D_S = E_S = H_S = L_S = F = F_S = 0;
         IFF[0] = false;
         IFF[1] = false;
-        //synchronized(PClock) { 
-            PC = mem.getProgramStart(); 
-       // }
-        run_state = stateEnum.stoppedBreak;
+        PC = startPos; 
+        run_state = ICPU.STATE_STOPPED_BREAK;
         cpuThread = null;
         setRuntimeFreqCounter(false);
         cpu.fireCpuRun(status,run_state);
         cpu.fireCpuState();
     }
 
-    public void destroy() {}
+    @Override
+    public void destroy() {
+        run_state = ICPU.STATE_STOPPED_NORMAL;
+        setRuntimeFreqCounter(false);        
+        cpu.clearDevices();
+    }
 
     public int getSliceTime() { return sliceCheckTime; }
     public void setSliceTime(int t) { sliceCheckTime = t; }
@@ -568,7 +597,7 @@ public class CpuZ80 implements ICPU, Runnable {
 //        }        
         OP = ((Short)mem.read(PC++)).shortValue(); 
         if (OP == 0x76) { /* HALT */
-            run_state = stateEnum.stoppedNormal;
+            run_state = ICPU.STATE_STOPPED_NORMAL;
             return 4;
         }
         
@@ -1302,7 +1331,7 @@ public class CpuZ80 implements ICPU, Runnable {
                 mem.writeWord(SP, PC); PC = tmp;
                 return 17;
         }
-        run_state = stateEnum.stoppedBadInstr;
+        run_state = ICPU.STATE_STOPPED_BAD_INSTR;
         return 0;
     }
     
@@ -1374,7 +1403,7 @@ public class CpuZ80 implements ICPU, Runnable {
         int cycles;
         long slice;
         
-        run_state = stateEnum.runned;
+        run_state = ICPU.STATE_RUNNING;
         cpu.fireCpuRun(status,run_state);
         cpu.fireCpuState();
         setRuntimeFreqCounter(true);
@@ -1385,44 +1414,52 @@ public class CpuZ80 implements ICPU, Runnable {
         cycles_to_execute = sliceCheckTime * cpu.getFrequency();
         long i = 0;
         slice = sliceCheckTime * 1000000;
-        synchronized(run_state) {
-            while(run_state == stateEnum.runned) {
-                i++;
-                startTime = System.nanoTime();
-                cycles_executed = 0;
-                try { 
-                    while((cycles_executed < cycles_to_execute)
-                            && (run_state == stateEnum.runned)) {
-                        cycles = evalStep();
-                        cycles_executed += cycles;
-                        long_cycles += cycles;
-                        if (getBreakpoint(PC) == true)
-                            throw new Error();
-                    }
+        while(run_state == ICPU.STATE_RUNNING) {
+            i++;
+            startTime = System.nanoTime();
+            cycles_executed = 0;
+            try { 
+                while((cycles_executed < cycles_to_execute)
+                        && (run_state == ICPU.STATE_RUNNING)) {
+                    cycles = evalStep();
+                    cycles_executed += cycles;
+                    long_cycles += cycles;
+                    if (getBreakpoint(PC) == true)
+                        throw new Error();
                 }
-                catch (ArrayIndexOutOfBoundsException e) {
-                    run_state = stateEnum.stoppedAddrFallout;
-                    break;                    
-                } 
-                catch (IndexOutOfBoundsException e) {
-                    run_state = stateEnum.stoppedAddrFallout;
-                    break;
-                }
-                catch (Error er) {
-                    run_state = stateEnum.stoppedBreak;
-                    break;
-                }
-                endTime = System.nanoTime() - startTime;
-                if (endTime < slice) {
-                    // time correction
-                    try { Thread.sleep((slice - endTime)/1000000); }
-                    catch(java.lang.InterruptedException e) {}
-                }
+            }
+            catch (ArrayIndexOutOfBoundsException e) {
+                run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
+                break;                    
+            } 
+            catch (IndexOutOfBoundsException e) {
+                run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
+                break;
+            }
+            catch (Error er) {
+                run_state = ICPU.STATE_STOPPED_BREAK;
+                break;
+            }
+            endTime = System.nanoTime() - startTime;
+            if (endTime < slice) {
+                // time correction
+                try { Thread.sleep((slice - endTime)/1000000); }
+                catch(java.lang.InterruptedException e) {}
             }
         }
         setRuntimeFreqCounter(false);
         cpu.fireCpuState();
         cpu.fireCpuRun(status,run_state);
     }
+
+	@Override
+	public long getHash() {
+		return hash;
+	}
+
+	@Override
+	public void showSettings() {
+		// TODO Auto-generated method stub		
+	}
     
 }

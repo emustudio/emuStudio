@@ -27,8 +27,8 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
-import plugins.cpu.ICPUContext.stateEnum;
 import interfaces.ICPUInstruction;
+import plugins.cpu.ICPU;
 import plugins.cpu.IDebugColumn;
 import plugins.memory.IMemoryContext;
 
@@ -39,7 +39,7 @@ import plugins.memory.IMemoryContext;
 @SuppressWarnings("serial")
 public class statusGUI extends javax.swing.JPanel {
     private IDebugColumn[] columns;
-    private stateEnum run_state;
+    private int run_state;
     private CpuZ80 cpu;
     private CpuContext cpuC;
     private IMemoryContext mem = null;
@@ -271,7 +271,7 @@ public class statusGUI extends javax.swing.JPanel {
         this.cpu = cpu;
         this.mem = mem;
         this.cpuC = (CpuContext) cpu.getContext();
-        run_state = stateEnum.stoppedNormal;
+        run_state = ICPU.STATE_STOPPED_NORMAL;
         columns = new IDebugColumn[4];
         columns[0] = new ColumnInfo("breakpoint", java.lang.Boolean.class,true);
         columns[1] = new ColumnInfo("address", java.lang.String.class,false);
@@ -279,7 +279,7 @@ public class statusGUI extends javax.swing.JPanel {
         columns[3] = new ColumnInfo("opcode", java.lang.String.class,false);
 
         cpuC.addCPUListener(new IICpuListener() {
-            public void runChanged(EventObject evt, stateEnum state) {
+            public void runChanged(EventObject evt, int state) {
                 run_state = state;
             }
             public void stateUpdated(EventObject evt) {
@@ -382,7 +382,7 @@ public class statusGUI extends javax.swing.JPanel {
         txtRegI.setText(String.format("%02X", cpu.getI()));
         txtRegR.setText(String.format("%02X", cpu.getR()));
         
-        if (run_state == stateEnum.runned) {
+        if (run_state == ICPU.STATE_RUNNING) {
             lblRun.setText("running");
             spnFrequency.setEnabled(false);
             spnTestPeriode.setEnabled(false);
@@ -390,11 +390,15 @@ public class statusGUI extends javax.swing.JPanel {
         else {
             spnFrequency.setEnabled(true);
             spnTestPeriode.setEnabled(true);
-            switch (run_state.ordinal()) {
-                case 0: lblRun.setText("stopped (normal)"); break;
-                case 1: lblRun.setText("breakpoint"); break;
-                case 2: lblRun.setText("stopped (address fallout)"); break;
-                case 3: lblRun.setText("stopped (instruction fallout)"); break;
+            switch (run_state) {
+                case ICPU.STATE_STOPPED_NORMAL:
+                	lblRun.setText("stopped (normal)"); break;
+                case ICPU.STATE_STOPPED_BREAK:
+                	lblRun.setText("breakpoint"); break;
+                case ICPU.STATE_STOPPED_ADDR_FALLOUT:
+                	lblRun.setText("stopped (address fallout)"); break;
+                case ICPU.STATE_STOPPED_BAD_INSTR:
+                	lblRun.setText("stopped (instruction fallout)"); break;
             }
         }
     }
