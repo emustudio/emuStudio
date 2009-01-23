@@ -33,7 +33,7 @@ public class assemblerZ80 implements ICompiler {
     private int programStart = 0; // actualize after compile 
     
     /** Creates a new instance of assemblerZ80 */
-    public assemblerZ80(long hash) {
+    public assemblerZ80(Long hash) {
     	this.hash = hash;
     }
         
