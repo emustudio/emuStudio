@@ -35,7 +35,7 @@ public class compiler8080 implements ICompiler {
     private int programStart = 0; // actualize after compile 
     
     /** Creates a new instance of compiler8080 */
-    public compiler8080(long hash) {
+    public compiler8080(Long hash) {
     	this.hash = hash;
     }
     
