@@ -23,23 +23,23 @@ import plugins.device.IDeviceContext;
 public class CpuPort2 implements IDeviceContext {
     private Mits88SIO sio;
     private IDeviceContext dev;
-    private EventObject evt;
     
     public CpuPort2(Mits88SIO sio) {
         this.sio = sio;
-        this.evt = new EventObject(this);
     }
 
     public void attachDevice(IDeviceContext device) { this.dev = device; }
     public void detachDevice() { this.dev = null; }
     public IDeviceContext getAttachedDevice() { return dev; }
     
-    public void out(EventObject evt, int data) {
+    @Override
+    public void out(EventObject evt, Object data) {
         if (dev == null) return;
         dev.out(evt, data);
     }
 
-    public int in(EventObject evt) {
+    @Override
+    public Object in(EventObject evt) {
     //    if (buffer == 0 && gui != null) {
       //      // get key from terminal (polling)
         //    buffer = gui.getChar();
@@ -61,9 +61,18 @@ public class CpuPort2 implements IDeviceContext {
     }
     
 
+    @Override
     public String getID() { return "88-SIO-PORT2"; }
-    public int getVersionMajor() { return 1; }
-    public int getVersionMinor() { return 5; }
-    public String getVersionRev() { return "b1"; }
+
+	@Override
+	public Class<?> getDataType() {
+		return Integer.class;
+	}
+
+	@Override
+	public String getHash() {
+		return "4a0411686e1560c765c1d6ea903a9c5f";
+	}
+
 
 }

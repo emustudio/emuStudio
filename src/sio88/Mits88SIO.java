@@ -38,6 +38,9 @@ import runtime.StaticDialogs;
  * @author vbmacher
  */
 public class Mits88SIO implements IDevice {
+	private static final String KNOWN_CPU_CONTEXT_HASH = "4bb574accc0ed96b5ed84b5832127289"; 
+	
+	private long hash;
     public int buffer;
     public short status;
     private CpuPort1 port1;
@@ -45,18 +48,20 @@ public class Mits88SIO implements IDevice {
     private PhysicalPort malePlug;
     private boolean port2Attached = false;
     
-    private boolean attached = false;
-    private ISettingsHandler settings;
+    @SuppressWarnings("unused")
+	private ISettingsHandler settings;
 
     private ACpuContext cpu = null;
     public SIODialog gui = null;
 
-    public Mits88SIO() {
+    public Mits88SIO(Long hash) {
+    	this.hash = hash;
         port1 = new CpuPort1(this);
         port2 = new CpuPort2(this);
         malePlug = new PhysicalPort(port2);
     }
     
+    @Override
     public String getDescription() {
         return "Recomended to use with MITS Altair8800 computer. This is"
                 + " an implementation of MITS 88-SIO serial card. It has one"
@@ -64,11 +69,15 @@ public class Mits88SIO implements IDevice {
                 + " 0x10(status), 0x11(data). For programming see manual at\n"
                 + "http://www.classiccmp.org/dunfield/s100c/mits/88sio_1.pdf";
     }
+    @Override
     public String getVersion() { return "0.12b"; }
-    public String getName() { return "MITS-88-SIO serial card"; }
-    public String getCopyright() { return "\u00A9 Copyright 2007-2008, Peter Jakubčo"; }
+    @Override
+    public String getTitle() { return "MITS-88-SIO serial card"; }
+    @Override
+    public String getCopyright() { return "\u00A9 Copyright 2007-2009, P.Jakubčo"; }
     
     /* Reset routine */
+    @Override
     public void reset() {
         buffer = 0;    /* Data */
         status = 0x02; /* Status */
@@ -82,16 +91,15 @@ public class Mits88SIO implements IDevice {
      * input is passed as the return value, on output, 'data' is written
      * to the device.
      */
+    @Override
     public boolean initialize(ICPUContext cpu, IMemoryContext mem, 
             ISettingsHandler sHandler) {
 
         this.settings = sHandler;
-        this.attached = false;
-        reset();
         if (cpu == null) return true;
         
         // ID of cpu can be ofcourse also else.
-        if ((cpu instanceof ACpuContext) == false) {
+        if (!cpu.getHash().equals(KNOWN_CPU_CONTEXT_HASH)) {
             StaticDialogs.showErrorMessage("88-SIO device can not be attached"
                     + " to this kind of CPU");
             return false;
@@ -110,12 +118,11 @@ public class Mits88SIO implements IDevice {
             this.cpu.detachDevice(0x10);
             return false;
         }
-        this.attached = true;
         return true;
     }
    
+    @Override
     public void showGUI() {
-        
         if (gui == null) {
             String name = (port2.getAttachedDevice() == null) ? "none" :
                 port2.getAttachedDevice().getID();
@@ -124,28 +131,45 @@ public class Mits88SIO implements IDevice {
         gui.setVisible(true);
     }
     
+    @Override
     public void destroy() {
+    	detachAll();
         cpu.detachDevice(0x10);
         cpu.detachDevice(0x11);
-        this.attached = false;
-        port2.detachDevice();
         if (gui != null) {
-          //  gui.destroyMe();
             gui.dispose();
         }
         gui = null;
     }
 
     /**
-     * This implementation of the serial card has only 
-     * one physical serial port.
+     * Attach a male plug (other device). Theoretically into this port
+     * can be attached almost anything...
      * 
-     * @return free female plug (the port)
+     * @param male device that is going to be connected to this device
+     * @return true if attachment was completed successfully
      */
-    public IDeviceContext getFreeFemale() {
-        if (port2Attached == false) return port2;
-        else return null;
+    @Override
+    public boolean attachDevice(IDeviceContext male) {
+        if (!port2Attached) {
+            port2.attachDevice(male);
+            port2Attached = true;
+            return true;
+        }
+        return false;
     }
+
+    /**
+     * Detach all devices that are connected to any of the port.
+     * If port is free already, nothing happened.
+     */
+	@Override
+	public void detachAll() {
+        if (port2Attached) {
+        	port2.detachDevice();
+        	port2Attached = false;
+        }	
+	}
 
     /**
      * Return "male plug" of the port that is connected to some
@@ -156,38 +180,16 @@ public class Mits88SIO implements IDevice {
      * 
      * @return male plug (port)
      */
-    public IDeviceContext getFreeMale() { return malePlug; }
+	@Override
+	public IDeviceContext getNextContext() { return malePlug; }
 
-    /**
-     * Into female plug (some port of this device), is connected
-     * a male plug (other device). Theoretically into this port can be connected
-     * anything...
-     * 
-     * @param female port of this device returned by getFreeFemale() method
-     * @param male device that is going to be connected to this device
-     * @return true if attachment was completed successfully
-     */
-    public boolean attachDevice(IDeviceContext female, IDeviceContext male) {
-        // instanceof CpuPort2 is not correct, because it has to be concrete
-        // instance port2.
-        if (female == port2 && !port2Attached) {
-            port2.attachDevice(male);
-            port2Attached = true;
-            return true;
-        }
-        return false;
-    }
+	@Override
+	public long getHash() { return hash; }
 
-    /**
-     * Detach device from port. If port isn't connected already, nothing is
-     * happened.
-     */
-    public void detachDevice(IDeviceContext device, boolean male) {
-        if (!port2Attached) return;
-        if (male)  {
-            port2.detachDevice();
-            port2Attached = false;
-        }
-    }
+	@Override
+	public void showSettings() {
+		// TODO Auto-generated method stub
+		
+	}
 
 }

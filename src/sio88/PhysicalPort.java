@@ -23,11 +23,28 @@ public class PhysicalPort implements IDeviceContext {
     
     public PhysicalPort(CpuPort2 port2) { this.port2 = port2; }
 
-    public int in(EventObject evt) { return port2.in(evt); }
-    public void out(EventObject evt, int val) { port2.writeBuffer(val); }
+    @Override
+    public Object in(EventObject evt) { 
+    	return port2.in(evt);
+    }
 
+    @Override
+    public void out(EventObject evt, Object val) {
+        int v = (Integer)val;
+    	port2.writeBuffer(v);
+    }
+    
+    @Override
+    public Class<?> getDataType() {
+    	return Integer.class;
+    }
+
+    @Override
     public String getID() { return "RS232"; }
-    public int getVersionMajor() { return 1; }
-    public int getVersionMinor() { return 0; }
-    public String getVersionRev() { return "b1"; }
+
+	@Override
+	public String getHash() {
+		return "4a0411686e1560c765c1d6ea903a9c5f";
+	}
+
 }

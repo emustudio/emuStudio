@@ -55,13 +55,25 @@ public class CpuPort1 implements IDeviceContext {
         this.sio = sio;
     }
 
-    public int in(EventObject evt) { return sio.status; }
-    public void out(EventObject evt, int val) {
-        if (val == 0x03) sio.reset();
+    @Override
+    public Object in(EventObject evt) { return sio.status; }
+    @Override
+    public void out(EventObject evt, Object val) {
+    	short v = (Short)val;
+        if (v == 0x03) sio.reset();
     }
     
+    @Override
+    public Class<?> getDataType() {
+    	return Short.class;
+    }
+    
+    @Override
     public String getID() { return "88-SIO-PORT1"; }
-    public int getVersionMajor() { return 1; }
-    public int getVersionMinor() { return 5; }
-    public String getVersionRev() { return "b1"; }
+    
+    @Override
+    public String getHash() {
+    	return "4a0411686e1560c765c1d6ea903a9c5f";
+    }
+
 }
