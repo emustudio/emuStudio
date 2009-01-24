@@ -17,6 +17,7 @@ import java.io.*;
  *
  * @author  vbmacher
  */
+@SuppressWarnings("serial")
 public class TerminalWindow extends javax.swing.JFrame {
     private final int termWIDTH = 750;
     private final int termHEIGHT = 584;

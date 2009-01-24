@@ -13,6 +13,7 @@ import gui.TerminalWindow;
  *
  * @author  vbmacher
  */
+@SuppressWarnings("serial")
 public class ConfigDialog extends javax.swing.JDialog {
     private TerminalDisplay lblTerminal;
     private TerminalWindow parent;

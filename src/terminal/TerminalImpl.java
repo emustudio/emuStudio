@@ -20,20 +20,28 @@ import plugins.memory.IMemoryContext;
  * @author vbmacher
  */
 public class TerminalImpl implements IDevice {
-    private ISettingsHandler sHandler;
+	private long hash;
+    @SuppressWarnings("unused")
+	private ISettingsHandler sHandler;
     private TerminalWindow terminalGUI;
     private TerminalDisplay terminal; // male
     private TerminalFemale female;
     private boolean femaleAttached = false;
     
+    public TerminalImpl(Long hash) {
+    	this.hash = hash;
+    }
+    
+    @Override
     public boolean initialize(ICPUContext cpu, IMemoryContext mem, 
             ISettingsHandler sHandler) {
         this.sHandler = sHandler;
         terminal = new TerminalDisplay(80,25);
-        female = new TerminalFemale(terminal);
+        female = new TerminalFemale();
         return true;
     }
 
+    @Override
     public void showGUI() {
         if (terminalGUI == null) terminalGUI = new TerminalWindow(terminal,female);
         else terminalGUI.initTerminalLabel();
@@ -41,52 +49,61 @@ public class TerminalImpl implements IDevice {
     }
 
     /**
-     * Return female plug.
-     */
-    public IDeviceContext getFreeFemale() { return female; }
-
-    /**
      * This terminal can be connected to any serial RS232 device.
      */
-    public IDeviceContext getFreeMale() { return terminal; }
+    public IDeviceContext getNextContext() { return terminal; }
 
-    public boolean attachDevice(IDeviceContext female, IDeviceContext male) {
-        if (female == this.female && !femaleAttached) {
-            this.female.attachDevice(male);
+    @Override
+    public boolean attachDevice(IDeviceContext male) {
+        if (!femaleAttached) {
+            female.attachDevice(male);
             femaleAttached = true;
             return true;
         }
         return false;
     }
 
-    public void detachDevice(IDeviceContext device, boolean male) {
+    @Override
+    public void detachAll() {
         if (!femaleAttached) return;
-        if (male) {
-            female.detachDevice();
-            femaleAttached = false;
-        }
+        female.detachDevice();
+        femaleAttached = false;
     }
 
+    @Override
     public void reset() {
         terminal.clear_screen();
     }
 
-    public String getName() { return "Terminal ADM-3A"; }
+    @Override
+    public String getTitle() { return "Terminal ADM-3A"; }
+    @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2007-2008, Peter Jakubčo";
+        return "\u00A9 Copyright 2007-2009, Peter Jakubčo";
     }
+    @Override
     public String getDescription() {
         return "Implementation of virtual terminal LSI ADM-3A";
     }
 
+    @Override
     public String getVersion() {
         return "0.12b1";
     }
 
+    @Override
     public void destroy() {
         if (terminalGUI != null) terminalGUI.destroyMe();
-        female.detachDevice();
-        femaleAttached = false;
+    	detachAll();
     }
+
+	@Override
+	public long getHash() { return hash; }
+
+	@Override
+	public void showSettings() {
+		// TODO Auto-generated method stub
+		
+	}
 
 }

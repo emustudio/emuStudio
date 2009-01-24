@@ -39,6 +39,7 @@ import plugins.device.IDeviceContext;
  *
  * @author vbmacher
  */
+@SuppressWarnings("serial")
 public class TerminalDisplay extends Canvas implements IDeviceContext {
     private char[] video_memory;
     private int col_count; // column count in CRT
@@ -274,12 +275,15 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
      * everytime empty (in the implementation also doesn't exist).
      * @return 0
      */
-    public int in(EventObject evt) { return 0; }
+    @Override
+    public Object in(EventObject evt) { return 0; }
 
     /**
      * This method is called from serial I/O card (by OUT instruction)
      */
-    public void out(EventObject evt, int val) {
+    @Override
+    public void out(EventObject evt, Object value) {
+    	short val = (Short)value; 
         measure();
         /*
          * if it is special char, interpret it. else just add
@@ -303,9 +307,18 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
         repaint();
     }
 
+    @Override
     public String getID() { return "ADM-3A"; }
-    public int getVersionMajor() { return 1; }
-    public int getVersionMinor() { return 2; }
-    public String getVersionRev() { return "b2"; }
+
+	@Override
+	public Class<?> getDataType() {
+		return Short.class;
+	}
+
+	@Override
+	public String getHash() {
+		return "4a0411686e1560c765c1d6ea903a9c5f";
+	}
+
   
 }

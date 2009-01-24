@@ -18,26 +18,30 @@ import plugins.device.IDeviceContext;
  * @author vbmacher
  */
 public class TerminalFemale implements IDeviceContext {
-    private TerminalDisplay terminal;
     private IDeviceContext dev;
-    
-    public TerminalFemale(TerminalDisplay terminal) {
-        this.terminal = terminal;
-    }
-    
+        
     public void attachDevice(IDeviceContext device) { this.dev = device; }
     public void detachDevice() { this.dev = null; }
 
-    public int in(EventObject evt) { return 0; }
+    @Override
+    public Object in(EventObject evt) { return 0; }
 
-    public void out(EventObject evt, int val) {
+    @Override
+    public void out(EventObject evt, Object val) {
         if (dev == null) return;
         dev.out(evt, val);
     }
 
+    @Override
     public String getID() { return "ADM-3A"; }
-    public int getVersionMajor() { return 1; }
-    public int getVersionMinor() { return 2; }
-    public String getVersionRev() { return "b1"; }
+    
+	@Override
+	public Class<?> getDataType() {
+		return Short.class;
+	}
+	@Override
+	public String getHash() {
+		return "4a0411686e1560c765c1d6ea903a9c5f";
+	}
 
 }
