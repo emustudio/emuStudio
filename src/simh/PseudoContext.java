@@ -268,7 +268,8 @@ public class PseudoContext implements IDeviceContext {
                 - (short)(Calendar.getInstance().getTimeInMillis()/1000);
     }
 
-    public int in(EventObject evt) {
+    @Override
+    public Object in(EventObject evt) {
         int result = 0;
         switch(lastCommand) {
             case getHostFilenames:
@@ -388,7 +389,9 @@ public class PseudoContext implements IDeviceContext {
         return result;
     }
 
-    public void out(EventObject evt, int val) {
+    @Override
+    public void out(EventObject evt, Object value) {
+    	int val = (Integer)value;
         long now;
         switch(lastCommand) {
             case setClockZSDOSCmd:
@@ -614,8 +617,17 @@ public class PseudoContext implements IDeviceContext {
         }
     }
 
-    public String getID() { return "simh-pseudo"; }
-    public int getVersionMajor() { return 0; }
-    public int getVersionMinor() { return 1; }
-    public String getVersionRev() { return "b1"; }
+    @Override
+    public String getID() { return "SIMH-PSEUDO"; }
+
+	@Override
+	public Class<?> getDataType() {
+		return Integer.class;
+	}
+
+	@Override
+	public String getHash() {
+		return "4a0411686e1560c765c1d6ea903a9c5f";
+	}
+
 }
