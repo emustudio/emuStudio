@@ -11,7 +11,6 @@ package disk;
 
 import java.io.*;
 import java.util.EventListener;
-import java.util.EventObject;
 import javax.swing.event.EventListenerList;
 
 /**
@@ -36,7 +35,6 @@ public class Drive {
 
     /** gui interaction */
     private EventListenerList listeners; // list of listeners
-    private EventObject evt; // event object
 
     /*
       7   6   5   4   3   2   1   0
@@ -65,7 +63,6 @@ public class Drive {
         sectorOffset = sectorLength;
         flags = 0xE7; // 11100111b
         listeners = new EventListenerList();
-        evt = new EventObject(this);
     }
     
     public void addDriveListener(DriveListener l) {
@@ -251,7 +248,7 @@ public class Drive {
         fireListeners(false,true);
     }
     
-    public int readData() throws IOException {
+    public short readData() throws IOException {
         if (floppy == null) return 0;
         int i=0;
                 
@@ -267,7 +264,7 @@ public class Drive {
         image.seek(pos);
         fireListeners(false,true);
         try {
-        int r = image.readUnsignedByte() & 0xFF;
+        short r = (short) (image.readUnsignedByte() & 0xFF);
         return r;
         } catch(Exception e) { return 0; } 
     }

@@ -25,25 +25,33 @@ public class Port1 implements IDeviceContext {
     public boolean attachDevice(IDeviceContext device) { return false; }
     public void detachDevice(IDeviceContext device) { }
     
-    public int in(EventObject evt) {
+    @Override
+    public Object in(EventObject evt) {
         return ((Drive)dsk.drives.get(dsk.current_drive)).getFlags();
     }
 
-    public void out(EventObject evt, int val) {
+    @Override
+    public void out(EventObject evt, Object val) {
+    	short v = (Short)val; 
         // select device
-        dsk.current_drive = val & 0x0F;
-        if ((val & 0x80) != 0) {
+        dsk.current_drive = v & 0x0F;
+        if ((v & 0x80) != 0) {
             // disable device
             ((Drive)dsk.drives.get(dsk.current_drive)).deselect();
             dsk.current_drive = 0xFF;
         } else
             ((Drive)dsk.drives.get(dsk.current_drive)).select();
-
     }
+    
+    @Override
+    public Class<?> getDataType() { return Short.class; }
 
+    @Override
     public String getID() { return "88-DISK-PORT1"; }
-    public int getVersionMajor() { return 1; }
-    public int getVersionMinor() { return 0; }
-    public String getVersionRev() { return "b1"; }
+
+	@Override
+	public String getHash() {
+		return "4a0411686e1560c765c1d6ea903a9c5f";
+	}
 
 }

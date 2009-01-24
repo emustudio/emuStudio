@@ -27,8 +27,9 @@ public class Port3 implements IDeviceContext {
     public boolean attachDevice(IDeviceContext device) { return false; }
     public void detachDevice(IDeviceContext device) {}
 
-    public int in(EventObject evt) {
-        int d = 0;
+    @Override
+    public Object in(EventObject evt) {
+        short d = 0;
         try { d = ((Drive)dsk.drives.get(dsk.current_drive)).readData(); }
         catch(IOException e) {
             StaticDialogs.showErrorMessage("Couldn't read from disk");
@@ -36,17 +37,28 @@ public class Port3 implements IDeviceContext {
         return d;
     }
 
-    public void out(EventObject evt, int val) {
+    @Override
+    public void out(EventObject evt, Object val) {
         try {
-            ((Drive)dsk.drives.get(dsk.current_drive)).writeData(val);
+            ((Drive)dsk.drives.get(dsk.current_drive)).writeData((Short)val);
         } catch(IOException e) {
             StaticDialogs.showErrorMessage("Couldn't write to disk");
         }
     }
 
+    @Override
     public String getID() { return "88-DISK-PORT3"; }
-    public int getVersionMajor() { return 1; }
-    public int getVersionMinor() { return 0; }
-    public String getVersionRev() { return "b1"; }
+
+	@Override
+	public Class<?> getDataType() {
+		return Short.class;
+	}
+
+	@Override
+	public String getHash() {
+		return "4a0411686e1560c765c1d6ea903a9c5f";
+	}
+
+
     
 }

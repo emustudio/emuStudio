@@ -111,10 +111,14 @@ import runtime.StaticDialogs;
  */
 public class DiskImpl implements IDevice {
     private final static int DRIVES_COUNT = 16;
-    private ACpuContext cpu;
-    private ISettingsHandler sHandler;
+    private final static String KNOWN_CPU_CONTEXT_HASH = "4bb574accc0ed96b5ed84b5832127289";
     
-    public ArrayList drives;
+    private long hash;
+    private ACpuContext cpu;
+    @SuppressWarnings("unused")
+	private ISettingsHandler sHandler;
+    
+    public ArrayList<Drive> drives;
     private Port1 port1;
     private Port2 port2;
     private Port3 port3;
@@ -122,8 +126,9 @@ public class DiskImpl implements IDevice {
     public int current_drive;
     private DiskFrame gui = null;
             
-    public DiskImpl() {
-        this.drives = new ArrayList();
+    public DiskImpl(Long hash) {
+    	this.hash = hash;
+        this.drives = new ArrayList<Drive>();
         for (int i = 0; i < DRIVES_COUNT; i++)
             drives.add(new Drive());
         this.current_drive = 0xFF;
@@ -132,12 +137,13 @@ public class DiskImpl implements IDevice {
         port3 = new Port3(this);
     }
     
+    @Override
     public boolean initialize(ICPUContext cpu, IMemoryContext mem,
             ISettingsHandler sHandler) {
         this.sHandler = sHandler;
         if (cpu == null) return true;
         
-        if (!(cpu instanceof ACpuContext)) {
+        if (!cpu.getHash().equals(KNOWN_CPU_CONTEXT_HASH)) {
             StaticDialogs.showErrorMessage("Device can't be loaded, because "
                     + "CPU is not compatible with the device.");
             return false;
@@ -163,13 +169,16 @@ public class DiskImpl implements IDevice {
         return true;
     }
 
+    @Override
     public void reset() { }
 
+    @Override
     public void showGUI() {
         if (gui == null) gui = new DiskFrame(drives);
         gui.setVisible(true);
     }
 
+    @Override
     public String getDescription() {
         return "MITS 88-DISK Floppy Disk controller with up to 16 drives. "
                 + "The connected floppy drives were Pertec FD-400 8\" "
@@ -181,12 +190,16 @@ public class DiskImpl implements IDevice {
                 + "I/O addresses were 10Q-12Q.";
     }
 
-    public String getVersion() { return "0.23b"; }
-    public String getName() { return "MITS-88 DISK (floppy drive)"; }
+    @Override
+    public String getVersion() { return "0.24b"; }
+    @Override
+    public String getTitle() { return "MITS-88 DISK (floppy drive)"; }
+    @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2008, P. Jakubčo";
+        return "\u00A9 Copyright 2008-2009, P. Jakubčo";
     }
 
+    @Override
     public void destroy() {
         if (gui != null) gui.dispose();
         if (cpu != null) {
@@ -198,21 +211,31 @@ public class DiskImpl implements IDevice {
     }
 
     /**
-     * Nothing can be plugged into this device.
-     * @return null
-     */
-    public IDeviceContext getFreeFemale() { return null; }
-
-    /**
      * This device can not be plugged to anywhere.
      * @return null
      */
-    public IDeviceContext getFreeMale() { return null; }
+    @Override
+    public IDeviceContext getNextContext() { return null; }
 
-    public boolean attachDevice(IDeviceContext female, IDeviceContext male) {
+    /**
+     * Nothing can be plugged into this device.
+     * @return false
+     */
+    @Override
+    public boolean attachDevice(IDeviceContext male) {
         return false;
     }
 
-    public void detachDevice(IDeviceContext device, boolean male) {}
+    @Override
+    public void detachAll() {}
+
+	@Override
+	public long getHash() { return hash; }
+
+	@Override
+	public void showSettings() {
+		// TODO Auto-generated method stub
+		
+	}
 
 }

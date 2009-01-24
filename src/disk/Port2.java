@@ -25,17 +25,26 @@ public class Port2 implements IDeviceContext {
     public boolean attachDevice(IDeviceContext device) { return false; }
     public void detachDevice(IDeviceContext device) {}
 
-    public int in(EventObject evt) {
+    @Override
+    public Object in(EventObject evt) {
         return ((Drive)dsk.drives.get(dsk.current_drive)).getSectorPos();
     }
 
-    public void out(EventObject evt, int val) {
-        ((Drive)dsk.drives.get(dsk.current_drive)).setFlags((short)val);
+    @Override
+    public void out(EventObject evt, Object val) {
+        ((Drive)dsk.drives.get(dsk.current_drive)).setFlags((Short)val);
     }
 
     public String getID() { return "88-DISK-PORT2"; }
-    public int getVersionMajor() { return 1; }
-    public int getVersionMinor() { return 0; }
-    public String getVersionRev() { return "b1"; }
+
+	@Override
+	public Class<?> getDataType() {
+		return Short.class;
+	}
+
+	@Override
+	public String getHash() {
+		return "4a0411686e1560c765c1d6ea903a9c5f";
+	}
 
 }

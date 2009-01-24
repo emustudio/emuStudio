@@ -18,12 +18,13 @@ import runtime.StaticDialogs;
  *
  * @author  vbmacher
  */
+@SuppressWarnings("serial")
 public class DiskFrame extends javax.swing.JFrame {
-    private ArrayList drives;
+    private ArrayList<Drive> drives;
     private int driveInfoIndex = -1; // drive that wants to show current params
     
     /** Creates new form DiskFrame */
-    public DiskFrame(ArrayList drives) {
+    public DiskFrame(ArrayList<Drive> drives) {
         initComponents();
         this.drives = drives;
         driveCombo.setSelectedIndex(0);
@@ -38,7 +39,7 @@ public class DiskFrame extends javax.swing.JFrame {
             }
         };
         for (int i = 0; i < drives.size(); i++) {
-            Drive d = ((Drive)drives.get(i));
+            Drive d = drives.get(i);
             d.removeAllListeners();
             d.addDriveListener(dl);
         }
