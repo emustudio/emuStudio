@@ -8,6 +8,7 @@
 
 package architecture;
 
+import runtime.StaticDialogs;
 import gui.LoadingDialog;
 import gui.OpenArchDialog;
 import gui.StudioFrame;
@@ -39,7 +40,13 @@ public class Main {
 
         LoadingDialog splash = new LoadingDialog();
         splash.setVisible(true);
-        currentArch = aloader.load(configName);
+        try {  currentArch = aloader.load(configName); }
+        catch(Error er) {
+            String h = er.getLocalizedMessage();
+            if (h == null || h.equals("")) h = "Unknown error";
+            StaticDialogs.showErrorMessage("Fatal Error: " + h);
+            currentArch = null;
+        }
         splash.dispose();
         splash = null;
         

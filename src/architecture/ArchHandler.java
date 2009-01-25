@@ -89,8 +89,10 @@ public class ArchHandler implements ISettingsHandler {
         for (int i = 0; i < arch.getDeviceCount(); i++) {
         	IDevice female = arch.getDevice(i);
         	IDeviceContext[] males = arch.getMales(female);
-        	for (int j = 0; j < males.length; j++)
-        		female.attachDevice(males[j]);
+        	if (males != null) {
+        		for (int j = 0; j < males.length; j++)
+        			female.attachDevice(males[j]);
+        	}
         }
 
         // first reset of all plugins

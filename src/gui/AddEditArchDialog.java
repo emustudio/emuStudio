@@ -14,7 +14,26 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+
+import javax.swing.ButtonGroup;
 import javax.swing.ComboBoxModel;
+import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.JTextField;
+import javax.swing.JToggleButton;
+import javax.swing.JToolBar;
+import javax.swing.LayoutStyle;
+import javax.swing.SwingConstants;
+import javax.swing.WindowConstants;
 import javax.swing.event.ListDataListener;
 import runtime.StaticDialogs;
 
@@ -23,7 +42,7 @@ import runtime.StaticDialogs;
  * @author  vbmacher
  */
 @SuppressWarnings("serial")
-public class AddEditArchDialog extends javax.swing.JDialog implements KeyListener {
+public class AddEditArchDialog extends JDialog implements KeyListener {
     private Schema schema;
     private boolean OOK = false;
     private DrawingPanel pan;
@@ -59,7 +78,7 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
     }
     
     /** Creates new form AddEditArchDialog */
-    public AddEditArchDialog(javax.swing.JFrame parent, boolean modal) {
+    public AddEditArchDialog(JFrame parent, boolean modal) {
         super(parent, modal);
         this.schema = new Schema();
         constructor();
@@ -67,7 +86,7 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
         this.setTitle("Add new architecture");
     }
     
-    public AddEditArchDialog(javax.swing.JDialog parent, boolean modal,
+    public AddEditArchDialog(JDialog parent, boolean modal,
             Schema schema) {
         super(parent, modal);
         this.schema = schema;
@@ -108,40 +127,40 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
      */
     private void initComponents() {
 
-        buttonGroup1 = new javax.swing.ButtonGroup();
-        javax.swing.JToolBar jToolBar1 = new javax.swing.JToolBar();
-        btnCPU = new javax.swing.JToggleButton();
-        btnMemory = new javax.swing.JToggleButton();
-        btnDevice = new javax.swing.JToggleButton();
-        javax.swing.JToolBar.Separator jSeparator1 = new javax.swing.JToolBar.Separator();
-        btnConnect = new javax.swing.JToggleButton();
-        btnDelete = new javax.swing.JToggleButton();
-        javax.swing.JToolBar.Separator jSeparator2 = new javax.swing.JToolBar.Separator();
-        javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
-        cmbElement = new javax.swing.JComboBox();
-        scrollScheme = new javax.swing.JScrollPane();
-        chkUseGrid = new javax.swing.JCheckBox();
-        sliderGridGap = new javax.swing.JSlider();
-        javax.swing.JButton btnOK = new javax.swing.JButton();
-        javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
-        txtArchName = new javax.swing.JTextField();
-        btnBrowse = new javax.swing.JButton();
-        javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
-        cmbCompiler = new javax.swing.JComboBox();
-        javax.swing.JLabel jLabel3 = new javax.swing.JLabel();
-        txtMemorySize = new javax.swing.JTextField();
+        grpElements = new ButtonGroup();
+        JToolBar toolBar = new JToolBar();
+        btnCPU = new JToggleButton();
+        btnMemory = new JToggleButton();
+        btnDevice = new JToggleButton();
+        JToolBar.Separator jSeparator1 = new JToolBar.Separator();
+        btnConnect = new JToggleButton();
+        btnDelete = new JToggleButton();
+        JToolBar.Separator jSeparator2 = new JToolBar.Separator();
+        JPanel panelSelectElement = new JPanel();
+        cmbElement = new JComboBox();
+        scrollScheme = new JScrollPane();
+        chkUseGrid = new JCheckBox();
+        sliderGridGap = new JSlider();
+        JButton btnOK = new JButton();
+        JLabel lblArchName = new JLabel();
+        txtArchName = new JTextField();
+        btnBrowse = new JButton();
+        JLabel lblCompiler = new JLabel();
+        cmbCompiler = new JComboBox();
+        JLabel lblMemorySize = new JLabel();
+        txtMemorySize = new JTextField();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Add new architecture");
 
-        jToolBar1.setFloatable(false);
-        jToolBar1.setRollover(true);
+        toolBar.setFloatable(false);
+        toolBar.setRollover(true);
 
-        buttonGroup1.add(btnCPU);
-        btnCPU.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emuStudio/cpu.gif"))); // NOI18N
+        grpElements.add(btnCPU);
+        btnCPU.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/cpu.gif"))); // NOI18N
         btnCPU.setFocusable(false);
-        btnCPU.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnCPU.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnCPU.setHorizontalTextPosition(SwingConstants.CENTER);
+        btnCPU.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnCPU.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnCPUItemStateChanged(evt);
@@ -152,13 +171,13 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
                 btnCPUActionPerformed(evt);
             }
         });
-        jToolBar1.add(btnCPU);
+        toolBar.add(btnCPU);
 
-        buttonGroup1.add(btnMemory);
-        btnMemory.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emuStudio/ram.gif"))); // NOI18N
+        grpElements.add(btnMemory);
+        btnMemory.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/ram.gif"))); // NOI18N
         btnMemory.setFocusable(false);
-        btnMemory.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnMemory.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnMemory.setHorizontalTextPosition(SwingConstants.CENTER);
+        btnMemory.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnMemory.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnMemoryItemStateChanged(evt);
@@ -169,13 +188,13 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
                 btnMemoryActionPerformed(evt);
             }
         });
-        jToolBar1.add(btnMemory);
+        toolBar.add(btnMemory);
 
-        buttonGroup1.add(btnDevice);
-        btnDevice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emuStudio/device.gif"))); // NOI18N
+        grpElements.add(btnDevice);
+        btnDevice.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/device.gif"))); // NOI18N
         btnDevice.setFocusable(false);
-        btnDevice.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnDevice.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnDevice.setHorizontalTextPosition(SwingConstants.CENTER);
+        btnDevice.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnDevice.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnDeviceItemStateChanged(evt);
@@ -186,14 +205,14 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
                 btnDeviceActionPerformed(evt);
             }
         });
-        jToolBar1.add(btnDevice);
-        jToolBar1.add(jSeparator1);
+        toolBar.add(btnDevice);
+        toolBar.add(jSeparator1);
 
-        buttonGroup1.add(btnConnect);
-        btnConnect.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emuStudio/connector.gif"))); // NOI18N
+        grpElements.add(btnConnect);
+        btnConnect.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/connector.gif"))); // NOI18N
         btnConnect.setFocusable(false);
-        btnConnect.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnConnect.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnConnect.setHorizontalTextPosition(SwingConstants.CENTER);
+        btnConnect.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnConnect.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnConnectItemStateChanged(evt);
@@ -204,14 +223,14 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
                 btnConnectActionPerformed(evt);
             }
         });
-        jToolBar1.add(btnConnect);
+        toolBar.add(btnConnect);
 
-        buttonGroup1.add(btnDelete);
-        btnDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/emuStudio/delete.gif"))); // NOI18N
+        grpElements.add(btnDelete);
+        btnDelete.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/delete.gif"))); // NOI18N
         btnDelete.setToolTipText("Delete element/line");
         btnDelete.setFocusable(false);
-        btnDelete.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnDelete.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnDelete.setHorizontalTextPosition(SwingConstants.CENTER);
+        btnDelete.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnDelete.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnDeleteItemStateChanged(evt);
@@ -222,11 +241,11 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
                 btnDeleteActionPerformed(evt);
             }
         });
-        jToolBar1.add(btnDelete);
-        jToolBar1.add(jSeparator2);
+        toolBar.add(btnDelete);
+        toolBar.add(jSeparator2);
 
-        jPanel1.setOpaque(false);
-        jPanel1.setPreferredSize(new java.awt.Dimension(250, 44));
+        panelSelectElement.setOpaque(false);
+        panelSelectElement.setPreferredSize(new java.awt.Dimension(250, 44));
 
         cmbElement.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -234,23 +253,22 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
             }
         });
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(cmbElement, 0, 238, Short.MAX_VALUE)
-                .addContainerGap())
+        GroupLayout panelSelectElementLayout = new GroupLayout(panelSelectElement);
+        panelSelectElement.setLayout(panelSelectElementLayout);
+        panelSelectElementLayout.setHorizontalGroup(
+            panelSelectElementLayout.createSequentialGroup()
+                        .addContainerGap()
+            			.addComponent(cmbElement, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            			.addContainerGap()
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        panelSelectElementLayout.setVerticalGroup(
+            panelSelectElementLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(cmbElement, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(13, Short.MAX_VALUE))
+                .addComponent(cmbElement)
+                .addContainerGap()
         );
 
-        jToolBar1.add(jPanel1);
+        toolBar.add(panelSelectElement);
 
         chkUseGrid.setSelected(true);
         chkUseGrid.setText("Use grid");
@@ -273,13 +291,15 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
         });
 
         btnOK.setText("OK");
+        btnOK.setPreferredSize(new java.awt.Dimension(btnOK.getPreferredSize().width + 30,
+        		btnOK.getPreferredSize().height));
         btnOK.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnOKActionPerformed(evt);
             }
         });
 
-        jLabel2.setText("Architecture name:");
+        lblArchName.setText("Config name:");
 
         btnBrowse.setText("Browse...");
         btnBrowse.addActionListener(new java.awt.event.ActionListener() {
@@ -288,74 +308,64 @@ public class AddEditArchDialog extends javax.swing.JDialog implements KeyListene
             }
         });
 
-        jLabel1.setText("Compiler:");
+        lblCompiler.setText("Compiler:");
 
-        jLabel3.setText("Memory size:");
+        lblMemorySize.setText("Memory size:");
 
         txtMemorySize.setText("65536");
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
+        
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 627, Short.MAX_VALUE)
-            .addComponent(scrollScheme, javax.swing.GroupLayout.DEFAULT_SIZE, 627, Short.MAX_VALUE)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(chkUseGrid)
-                    .addComponent(jLabel2)
-                    .addComponent(jLabel1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(sliderGridGap, javax.swing.GroupLayout.DEFAULT_SIZE, 459, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(cmbCompiler, javax.swing.GroupLayout.Alignment.LEADING, 0, 289, Short.MAX_VALUE)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtMemorySize, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE)
-                                    .addComponent(txtArchName, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnBrowse)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnOK, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel3)
-                .addContainerGap(523, Short.MAX_VALUE))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollScheme, javax.swing.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(chkUseGrid)
-                    .addComponent(sliderGridGap, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(cmbCompiler, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(txtMemorySize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnOK)
-                    .addComponent(jLabel2)
-                    .addComponent(btnBrowse)
-                    .addComponent(txtArchName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
-        );
-
+        		layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        		.addComponent(toolBar)
+        		.addComponent(scrollScheme,GroupLayout.PREFERRED_SIZE, 700, Short.MAX_VALUE)
+        		.addGroup(layout.createSequentialGroup()
+        				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+        						.addComponent(chkUseGrid)
+        						.addComponent(lblCompiler)
+        						.addComponent(lblMemorySize)
+        						.addComponent(lblArchName))
+        				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+        				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING,true)
+        						.addComponent(sliderGridGap,GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        						.addComponent(cmbCompiler,GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        						.addComponent(txtMemorySize,GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        						.addGroup(layout.createSequentialGroup()
+        								.addComponent(txtArchName)
+        								.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+        								.addComponent(btnBrowse))))
+        		.addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+   						.addComponent(btnOK,GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
+   					          GroupLayout.PREFERRED_SIZE)));        
+        layout.setVerticalGroup(layout.createSequentialGroup()
+        		.addComponent(toolBar,GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
+        		          GroupLayout.PREFERRED_SIZE)
+        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+        		.addComponent(scrollScheme,GroupLayout.PREFERRED_SIZE, 300, Short.MAX_VALUE)
+        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+        				.addComponent(chkUseGrid)
+        				.addComponent(sliderGridGap))
+        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+        				.addComponent(lblCompiler)
+        				.addComponent(cmbCompiler))
+        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+        				.addComponent(lblMemorySize)
+        				.addComponent(txtMemorySize))
+        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+        				.addComponent(lblArchName)
+        				.addComponent(txtArchName)
+        				.addComponent(btnBrowse))
+        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+        		.addComponent(btnOK,GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
+        		          GroupLayout.PREFERRED_SIZE)
+        		.addContainerGap());
         pack();
-    }// </editor-fold>//GEN-END:initComponents
+    }
 
 private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOKActionPerformed
     String s = txtArchName.getText();
@@ -404,7 +414,7 @@ private void btnCPUActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:
     pan.cancelTasks();
     pan.setTool(drawTool.nothing, "");
     if (buttonSelected) {
-        buttonGroup1.clearSelection();
+        grpElements.clearSelection();
         cmbElement.setModel(empty_model);
         btnCPU.setSelected(false);
         return;
@@ -422,7 +432,7 @@ private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
     pan.setTool(drawTool.nothing, "");
     if (buttonSelected) {
         cmbElement.setModel(empty_model);
-        buttonGroup1.clearSelection();
+        grpElements.clearSelection();
         btnMemory.setSelected(false);
         return;
     }
@@ -439,7 +449,7 @@ private void btnDeviceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
     pan.setTool(drawTool.nothing, "");
     if (buttonSelected) {
         cmbElement.setModel(empty_model);
-        buttonGroup1.clearSelection();
+        grpElements.clearSelection();
         btnDevice.setSelected(false);
         return;
     }
@@ -456,7 +466,7 @@ private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     pan.setTool(drawTool.nothing, "");
     cmbElement.setModel(empty_model);
     if (buttonSelected) {
-        buttonGroup1.clearSelection();
+        grpElements.clearSelection();
         btnConnect.setSelected(false);
         return;
     }
@@ -500,7 +510,7 @@ private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
     pan.setTool(drawTool.nothing, "");
     cmbElement.setModel(empty_model);
     if (buttonSelected) {
-        buttonGroup1.clearSelection();
+        grpElements.clearSelection();
         btnConnect.setSelected(false);
         return;
     }
@@ -517,20 +527,20 @@ private void btnBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    javax.swing.JButton btnBrowse;
-    javax.swing.JToggleButton btnCPU;
-    javax.swing.JToggleButton btnConnect;
-    javax.swing.JToggleButton btnDelete;
-    javax.swing.JToggleButton btnDevice;
-    javax.swing.JToggleButton btnMemory;
-    javax.swing.ButtonGroup buttonGroup1;
-    javax.swing.JCheckBox chkUseGrid;
-    javax.swing.JComboBox cmbCompiler;
-    javax.swing.JComboBox cmbElement;
-    javax.swing.JScrollPane scrollScheme;
-    javax.swing.JSlider sliderGridGap;
-    javax.swing.JTextField txtArchName;
-    javax.swing.JTextField txtMemorySize;
+    JButton btnBrowse;
+    JToggleButton btnCPU;
+    JToggleButton btnConnect;
+    JToggleButton btnDelete;
+    JToggleButton btnDevice;
+    JToggleButton btnMemory;
+    ButtonGroup grpElements;
+    JCheckBox chkUseGrid;
+    JComboBox cmbCompiler;
+    JComboBox cmbElement;
+    JScrollPane scrollScheme;
+    JSlider sliderGridGap;
+    JTextField txtArchName;
+    JTextField txtMemorySize;
     // End of variables declaration//GEN-END:variables
 
 }

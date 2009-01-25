@@ -104,6 +104,7 @@ public class ArchLoader extends ClassLoader {
     public final static String devicesDir = "devices";
     
     private Hashtable<Object, URL> resources;
+	private static long dehash = 0; // device hash counter 
     
     /** Creates a new instance of ArchLoader */
     public ArchLoader() {     
@@ -135,6 +136,12 @@ public class ArchLoader extends ClassLoader {
         return allNames;
     }
     
+    /**
+     * Method deletes configuration file from filesystem.
+     * 
+     * @param configName Name of the configuration
+     * @return true if the deletion was successful, false otherwise
+     */
     public static boolean deleteConfig(String configName) {
         File f = new File(System.getProperty("user.dir") + 
                 File.separator + configsDir + File.separator + configName
@@ -143,6 +150,14 @@ public class ArchLoader extends ClassLoader {
         return f.delete();
     }
     
+    /**
+     * Method loads schema from configuration file. It is used
+     * by ArchitectureEditor.
+     * 
+     * @param configName Name of the configuration
+     * @return Schema of the configuration, or null if some error
+     *         raises.
+     */
     public static Schema loadSchema(String configName) {
         try{
             Properties p = readConfig(configName,true);
@@ -152,29 +167,22 @@ public class ArchLoader extends ClassLoader {
             
             int x = Integer.parseInt(p.getProperty("cpu.point.x","0"));
             int y = Integer.parseInt(p.getProperty("cpu.point.y","0"));
-            CpuElement cpu = new CpuElement(x,y,p.getProperty("cpu",
-                    "cpu"));
+            CpuElement cpu = new CpuElement(x,y,p.getProperty("cpu","cpu"));
             x = Integer.parseInt(p.getProperty("memory.point.x","0"));
             y = Integer.parseInt(p.getProperty("memory.point.y","0"));
-            MemoryElement memory = new MemoryElement(x,y,
-                    p.getProperty("memory","memory"));
+            MemoryElement memory = new MemoryElement(x,y,p.getProperty("memory","memory"));
             
             ArrayList<DeviceElement> devices = new ArrayList<DeviceElement>();
             ArrayList<ConnectionLine> lines = new ArrayList<ConnectionLine>();
 
             for (int i = 0; p.containsKey("device"+i); i++) {
-                x = Integer.parseInt(p.getProperty("device"+i+".point.x",
-                        "0"));
-                y = Integer.parseInt(p.getProperty("device"+i+".point.y",
-                        "0"));
-                devices.add(new DeviceElement(x,y,p.getProperty("device"+i,
-                        "device"+i)));
+                x = Integer.parseInt(p.getProperty("device"+i+".point.x","0"));
+                y = Integer.parseInt(p.getProperty("device"+i+".point.y","0"));
+                devices.add(new DeviceElement(x,y,p.getProperty("device"+i,"device"+i)));
             }
             for (int i = 0; p.containsKey("connection"+i+".junc0"); i++) {
-                String j0 = p.getProperty("connection"+i
-                        +".junc0", "");
-                String j1 = p.getProperty("connection"+i
-                        +".junc1", "");
+                String j0 = p.getProperty("connection"+i+".junc0", "");
+                String j1 = p.getProperty("connection"+i+".junc1", "");
                 if (j0.equals("") || j1.equals("")) continue;
                 
                 Element e1=null,e2=null;
@@ -209,6 +217,11 @@ public class ArchLoader extends ClassLoader {
         }
     }
     
+    /**
+     * Method saves abstract schema of some configuration into configuration
+     * file. 
+     * @param s Schema to save
+     */
     public static void saveSchema(Schema s) {
         try {
             Properties p = readConfig(s.getConfigName(),false);
@@ -380,25 +393,23 @@ public class ArchLoader extends ClassLoader {
             // load devices
             Hashtable<Long,IDevice> devs = new Hashtable<Long,IDevice>();
             Hashtable<Long,String> devNames = new Hashtable<Long,String>();
+            ArrayList<IDevice> devsArray = new ArrayList<IDevice>();
             for (int i = 0; settings.containsKey("device"+i); i++) {
             	long devHash   = createPluginHash();
-            	String devName = settings.getProperty("device"+i);
-            	
+            	String devName = settings.getProperty("device"+i);            	
                 IDevice dev = (IDevice)loadPlugin(devicesDir, devName,IDevice.class,devHash);
                 devs.put(devHash, dev);
+                devsArray.add(dev);
                 devNames.put(devHash,devName);
             }
             
             // create connections hashtable
             Hashtable<IPlugin,ArrayList<IPlugin>> lines = new Hashtable<IPlugin,ArrayList<IPlugin>>();
-            IDevice[] devsArray = (IDevice[])devs.values().toArray();
             for (int i = 0; settings.containsKey("connection"+i+".junc0"); i++) {
             	
             	// get i-th connection from settings
-                String j0 = settings.getProperty("connection"+i
-                        +".junc0", "");
-                String j1 = settings.getProperty("connection"+i
-                        +".junc1", "");
+                String j0 = settings.getProperty("connection"+i+".junc0", "");
+                String j1 = settings.getProperty("connection"+i+".junc1", "");
                 if (j0.equals("") || j1.equals("")) continue;
 
                 // get connection elements - e1 and e2
@@ -407,22 +418,30 @@ public class ArchLoader extends ClassLoader {
                 else if (j0.equals("memory")) e1 = mem;
                 else if (j0.startsWith("device")) {
                     int index = Integer.parseInt(j0.substring(6));
-                    e1 = devsArray[index];
+                    e1 = devsArray.get(index);
                 }
                 if (j1.equals("cpu")) e2 = cpu;
                 else if (j1.equals("memory")) e2 = mem;
                 else if (j1.startsWith("device")) {
                     int index = Integer.parseInt(j1.substring(6));
-                    e2 = devsArray[index];
+                    e2 = devsArray.get(index);
                 }
                 
-                // save male (e2) into arraylist for female (e2)
+                // save male (e2) into arraylist for female (e1)
                 ArrayList<IPlugin> males;
                 if (lines.containsKey(e1)) males = lines.get(e1);
                 else males = new ArrayList<IPlugin>();
                 males.add(e2);
-                
                 lines.put(e1, males);
+                
+                // if male and female are devices, connection is
+                // going to be made from the other direction, too.
+                if ((e1 instanceof IDevice) && (e2 instanceof IDevice)) {
+                	if (lines.containsKey(e2)) males = lines.get(e2);
+                	else males = new ArrayList<IPlugin>();
+                	males.add(e1);
+                	lines.put(e2, males);
+                }
             }
 
             Architecture arch = new Architecture(cpu, cpuHash, mem, memHash,
@@ -438,19 +457,14 @@ public class ArchLoader extends ClassLoader {
     }
     
     /**
-     * Method compute a CBUhash for a plugin identification for one runtime
-     * session. The key for a hash is taken from 
-     * <code>System.nanoTime()</code> and from <code>Math.random()</code>.
+     * Method compute a hash for a plugin identification for one runtime
+     * session. The hash is made from <code>System.nanoTime()</code> and
+     * from <code>Math.random()</code>.
      * 
      * @return hash for an identification of the plugin
      */
     private long createPluginHash() {
-    	long h=0;
-    	String key = String.valueOf(Math.random()) 
-    		+ String.valueOf(System.nanoTime());
-    	for (int i =0; i < key.length(); i++)
-    		h= h << 2 + key.charAt(i);
-    	return h;
+    	return dehash++;
     }
     
     /**
@@ -606,7 +620,8 @@ public class ArchLoader extends ClassLoader {
                     classes.add(cl);
                     undone.removeElement(ze.getName());
                     result = true;
-                } catch (ClassNotFoundException nf) {}
+                } catch (ClassNotFoundException nf) {
+                }
             }
         } catch(Exception e) {}
         return result;

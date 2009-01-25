@@ -42,9 +42,9 @@ public class Architecture {
 		this.compiler = compiler;
 		this.compilerHash = compilerHash;
 		this.devices = devices;
-		devicesArray = (IDevice[]) devices.values().toArray();
+		devicesArray = (IDevice[]) devices.values().toArray(new IDevice[0]);
 		this.connections = connections;
-	}
+    }
 	
 	public ICPU      getCPU()          { return cpu;          }
 	public ICompiler getCompiler()     { return compiler;     }
@@ -101,7 +101,7 @@ public class Architecture {
     		if (male instanceof IDevice)
     			maleDevices.add(((IDevice)male).getNextContext());
     	}
-    	return (IDeviceContext[])maleDevices.toArray();
+    	return (IDeviceContext[])maleDevices.toArray(new IDeviceContext[0]);
     }
     
     /**
