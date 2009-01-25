@@ -24,7 +24,7 @@ public class TerminalFemale implements IDeviceContext {
     public void detachDevice() { this.dev = null; }
 
     @Override
-    public Object in(EventObject evt) { return 0; }
+    public Object in(EventObject evt) { return (short)0; }
 
     @Override
     public void out(EventObject evt, Object val) {

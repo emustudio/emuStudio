@@ -145,10 +145,10 @@ public class TerminalWindow extends javax.swing.JFrame {
                 }
             }
             if (halfDuplex == true) {
-                if (keyCode == 13) terminal.out(evt,10);
-                terminal.out(evt,keyCode);
+                if (keyCode == 13) terminal.out(evt,(short)10);
+                terminal.out(evt,(short)keyCode);
             }
-            female.out(evt,keyCode);
+            female.out(evt,(short)keyCode);
             synchronized(keyLock) {
                 keyLock.notifyAll();
             }
