@@ -22,9 +22,9 @@ public class Drive {
     public final static int sectorsCount = 32;
     public final static int sectorLength = 137;
     
-    private int track;
-    private int sector;
-    private int sectorOffset;
+    private short track;
+    private short sector;
+    private short sectorOffset;
     
     /** mounted image */
     private File floppy = null;
@@ -216,12 +216,12 @@ public class Drive {
     /**
      * return sector position in specified format
      */
-    public int getSectorPos() {
+    public short getSectorPos() {
         if (((~flags) & 0x04) != 0) { /* head loaded? */
             sector++;
             if (sector > 31) sector = 0;
             sectorOffset = sectorLength;
-            int stat = sector << 1;
+            short stat = (short) (sector << 1);
             stat &= 0x3E;  /* 111110b, return 'sector true' bit = 0 (true) */
             stat |= 0xC0;  // set on 'unused' bits  ?? > in simh bit are gonna up
             fireListeners(false,true);
