@@ -16,6 +16,10 @@ import java.awt.Graphics;
  */
 public abstract class Element {
     protected String details;
+    protected int width;
+    protected int height;
+    protected int x;
+    protected int y;
 
     public Element(String details) {
         this.details = details;
@@ -25,9 +29,9 @@ public abstract class Element {
     
     public abstract void measure(Graphics g);
     public abstract void draw(Graphics g);
-    public abstract int getWidth();
-    public abstract int getHeight();
-    public abstract int getX();
-    public abstract int getY();
+    public int getWidth() { return (width == 0) ? 80 : width; }
+    public int getHeight() { return (height == 0) ? 50: height; }
+    public int getX() { return x; }
+    public int getY() { return y; }
     public abstract void move(int x, int y);
 }

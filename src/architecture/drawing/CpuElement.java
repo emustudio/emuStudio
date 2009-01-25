@@ -20,10 +20,6 @@ import java.awt.geom.Rectangle2D;
  * @author vbmacher
  */
 public class CpuElement extends Element {
-    private int x;
-    private int y;
-    private int width;
-    private int height;
     private int tX1; // pozicia textu "CPU"
     private int tY1;
 
@@ -61,11 +57,6 @@ public class CpuElement extends Element {
         g.drawString(details, tX2, tY2);
         g.setFont(plainFont);
     }
-
-    public int getWidth() { return width; }
-    public int getHeight() { return height; }
-    public int getX() { return x; }
-    public int getY() { return y; }
 
     public void move(int x, int y) {
         wasMeasured = false;

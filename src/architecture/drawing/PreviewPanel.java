@@ -9,7 +9,6 @@
 package architecture.drawing;
 
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -23,7 +22,6 @@ import javax.swing.JPanel;
  */
 @SuppressWarnings("serial")
 public class PreviewPanel extends JPanel {
-    private Dimension area; // velkost kresliacej plochy
     private Schema schema;
     
     /* double buffering */
@@ -32,7 +30,6 @@ public class PreviewPanel extends JPanel {
     
     public PreviewPanel(Schema schema) {
         this.schema = schema;
-        area = new Dimension(0,0);
         this.setBackground(Color.WHITE);
         resizePanel();
     }
@@ -64,28 +61,28 @@ public class PreviewPanel extends JPanel {
     private void resizePanel() {
         // hladanie najvzdialenejsich elementov (alebo bodov lebo ciara
         // nemoze byt dalej ako bod)
-        area.width=0;
-        area.height=0;
+        int width=0, height=0;
+
         ArrayList<Element> a = schema.getAllElements();
         for (int i = 0; i < a.size(); i++) {
             Element e = a.get(i);
-            if (e.getX() + e.getWidth() > area.width)
-                area.width = e.getX() + e.getWidth();
-            if (e.getY() + e.getHeight() > area.height)
-                area.height = e.getY() + e.getHeight();
+            if (e.getX() + e.getWidth() > width)
+                width = e.getX() + e.getWidth();
+            if (e.getY() + e.getHeight() > height)
+                height = e.getY() + e.getHeight();
         }
         for (int i = 0; i < schema.getConnectionLines().size(); i++) {
             ArrayList<Point> ps = schema.getConnectionLines().get(i).getPoints();
             for (int j = 0; j < ps.size(); j++) {
                 Point p = ps.get(j);
-                if ((int)p.getX() > area.width)
-                    area.width = (int)p.getX();
-                if ((int)p.getY() > area.height)
-                    area.height = (int)p.getY();
+                if ((int)p.getX() > width)
+                    width = (int)p.getX();
+                if ((int)p.getY() > height)
+                    height = (int)p.getY();
             }
         }
-        if (area.width != 0 && area.height != 0) {
-            this.setPreferredSize(area);
+        if (width != 0 && height != 0) {
+            this.setSize(width,height);
             this.revalidate();
         }
     }
