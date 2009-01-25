@@ -14,7 +14,6 @@ import java.io.File;
 import java.util.Collections;
 import java.util.Vector;
 import plugins.ISettingsHandler;
-import plugins.ISettingsHandler.pluginType;
 import plugins.memory.IMemory;
 import plugins.memory.IMemoryContext;
 
@@ -25,34 +24,46 @@ import plugins.memory.IMemoryContext;
  */
 public class Memory implements IMemory {
     private MemoryContext memContext;
+    private long hash;
     private frmMemory memGUI;
     private ISettingsHandler settings;
 
+    @Override
     public String getDescription() {
-        return "Operating memory for most CPUs. This plugin supports banking" +
-                " controllable via SMemoryContext class.";
+        return "Operating memory for most CPUs. Every cell is one byte long." +
+        		"This plugin supports banking" +
+                " controllable via context.";
     }
 
+    @Override
     public String getVersion() { return "0.27b"; }
+    
+    @Override
+    public long getHash() { return hash; }
 
-    public String getName() {
-        return "Standard linear-byte operating memory with variable size";
+    @Override
+    public String getTitle() {
+        return "Operating memory";
     }
 
+    @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2008, Peter Jakubčo";
+        return "\u00A9 Copyright 2006-2009, P. Jakubčo";
     }
 
     /** Creates a new instance of Memory */
-    public Memory() {
+    public Memory(Long hash) {
+    	this.hash = hash;
         memContext = new MemoryContext();
     }
 
+    @Override
     public void showGUI() {
         if (memGUI == null) memGUI = new frmMemory(this,settings);
         memGUI.setVisible(true);
     }
 
+    @Override
     public void destroy() {
         if (this.memGUI != null) {
             memGUI.dispose();
@@ -60,8 +71,19 @@ public class Memory implements IMemory {
         }
     }
 
+    @Override
     public IMemoryContext getContext() {
         return memContext;
+    }
+
+    @Override
+    public int getProgramStart() {
+        return memContext.getProgramStart();
+    }
+    
+    @Override
+    public int getSize() {
+    	return memContext.getSize();
     }
 
     /**
@@ -73,11 +95,12 @@ public class Memory implements IMemory {
      *     5. load rom ranges from settings
      *     6. set rom ranges to memory
      */
-    public void initialize(int size, ISettingsHandler sHandler) {
-        String s = sHandler.readSetting(pluginType.memory, null, "banksCount");
+    @Override
+    public boolean initialize(int size, ISettingsHandler sHandler) {
+        String s = sHandler.readSetting(hash, "banksCount");
         int bCount = 0, bCommon = 0;        
         if (s != null) { try { bCount = Integer.parseInt(s); } catch(Exception e) {} }
-        s = sHandler.readSetting(pluginType.memory, null, "commonBoundary");
+        s = sHandler.readSetting(hash, "commonBoundary");
         if (s != null) { try { bCommon = Integer.parseInt(s); } catch(Exception e) {} }        
         memContext.init(size, bCount,bCommon);
         this.settings = sHandler;
@@ -86,8 +109,8 @@ public class Memory implements IMemory {
         int i = 0, adr = 0;
         String r = null;
         while (true) {
-            s = sHandler.readSetting(pluginType.memory, null, "imageName" + i);
-            r = sHandler.readSetting(pluginType.memory, null, "imageAddress" + i);
+            s = sHandler.readSetting(hash, "imageName" + i);
+            r = sHandler.readSetting(hash, "imageAddress" + i);
             if (s == null) break;
             if (new File(s).getName().toUpperCase().endsWith(".HEX"))
                 memContext.loadHex(s, 0);
@@ -101,14 +124,15 @@ public class Memory implements IMemory {
         // load rom ranges
         i = 0; int j,k;
         while (true) {
-            s = sHandler.readSetting(pluginType.memory, null, "ROMfrom" + i);
-            r = sHandler.readSetting(pluginType.memory, null, "ROMto" + i);
+            s = sHandler.readSetting(hash, "ROMfrom" + i);
+            r = sHandler.readSetting(hash, "ROMto" + i);
             if ((s == null) || (r == null)) break;            
             try { j = Integer.parseInt(s); } catch(Exception e) { break; }
             try { k = Integer.parseInt(r); } catch(Exception e) { break; }
             memContext.setROM(j, k);
             i++;
         }
+        return true;
     }
 
     /**
@@ -118,19 +142,19 @@ public class Memory implements IMemory {
      */
     public void saveSettings0(int banksCount, int commonBoundary, 
             Vector<String> imageFullNames, Vector<Integer> imageAddresses) {
-        settings.writeSetting(pluginType.memory, null, "banksCount", String.valueOf(banksCount));
-        settings.writeSetting(pluginType.memory, null, "commonBoundary", String.valueOf(commonBoundary));
+        settings.writeSetting(hash, "banksCount", String.valueOf(banksCount));
+        settings.writeSetting(hash, "commonBoundary", String.valueOf(commonBoundary));
 
         int i = 0;
         while (true) {
-            if (settings.readSetting(pluginType.memory, null, "imageName"+i) != null) {
-                settings.removeSetting(pluginType.memory, null, "imageName"+i);
-                settings.removeSetting(pluginType.memory, null, "imageAddress"+i);
+            if (settings.readSetting(hash, "imageName"+i) != null) {
+                settings.removeSetting(hash, "imageName"+i);
+                settings.removeSetting(hash, "imageAddress"+i);
             } else break;
         }
         for (i = 0; i < imageFullNames.size(); i++)  {
-            settings.writeSetting(pluginType.memory, null, "imageName"+i, imageFullNames.get(i));
-            settings.writeSetting(pluginType.memory, null, "imageAddress"+i, String.valueOf(imageAddresses.get(i)));
+            settings.writeSetting(hash, "imageName"+i, imageFullNames.get(i));
+            settings.writeSetting(hash, "imageAddress"+i, String.valueOf(imageAddresses.get(i)));
         }
     }
 
@@ -140,20 +164,20 @@ public class Memory implements IMemory {
      * directly from memory context.
      */
     public void saveSettings1() {
-        Vector keys = new Vector(memContext.getROMRanges().keySet());
+        Vector<Integer> keys = new Vector<Integer>(memContext.getROMRanges().keySet());
         Collections.sort(keys);
         Object[] ar = keys.toArray();
 
         int i = 0;
-        while (settings.readSetting(pluginType.memory, null, "ROMfrom"+i) != null) {
-            settings.removeSetting(pluginType.memory, null, "ROMfrom"+i);
-            settings.removeSetting(pluginType.memory, null, "ROMto"+i);
+        while (settings.readSetting(hash, "ROMfrom"+i) != null) {
+            settings.removeSetting(hash, "ROMfrom"+i);
+            settings.removeSetting(hash, "ROMto"+i);
             i++;
         }
         
         for (i = 0; i < ar.length; i++) {
-            settings.writeSetting(pluginType.memory, null, "ROMfrom" + i, String.valueOf(ar[i]));
-            settings.writeSetting(pluginType.memory, null, "ROMto" + i, 
+            settings.writeSetting(hash, "ROMfrom" + i, String.valueOf(ar[i]));
+            settings.writeSetting(hash, "ROMto" + i, 
                     String.valueOf(memContext.getROMRanges().get(ar[i])));
         }
     }
@@ -161,10 +185,18 @@ public class Memory implements IMemory {
     /**
      * Clear memory? no.. not
      */
+    @Override
     public void reset() {}
 
+    @Override
     public void setProgramStart(int address) {
         memContext.lastImageStart = address;
     }
+
+	@Override
+	public void showSettings() {
+		// TODO Auto-generated method stub
+		
+	}
 
 }

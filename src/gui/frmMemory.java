@@ -38,6 +38,7 @@ import runtime.StaticDialogs;
  *
  * @author  vbmacher
  */
+@SuppressWarnings("serial")
 public class frmMemory extends javax.swing.JFrame {
     private MemoryContext memContext;
     private Memory mem;
@@ -527,7 +528,7 @@ public class frmMemory extends javax.swing.JFrame {
 }//GEN-LAST:event_btnOpenImageActionPerformed
 
     private void btnClearMemoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearMemoryActionPerformed
-       memContext.clear();
+       memContext.clearMemory();
        tblMemory.revalidate();
        tblMemory.repaint();
 }//GEN-LAST:event_btnClearMemoryActionPerformed

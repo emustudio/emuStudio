@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.EventObject;
@@ -38,14 +37,14 @@ public class MemoryContext implements SMemoryContext {
     private int b;
 
     // this table contains ROM parts of memory
-    private Hashtable romBitmap; // keys: low boundary (limit); values: upper boundary
+    private Hashtable<Integer,Integer> romBitmap; // keys: low boundary (limit); values: upper boundary
     /* list of devices that wants to get annoucement about memory changes */
     private EventListenerList deviceList;
     private EventObject changeEvent;
 
     public MemoryContext() {
         sizeSet = false;
-        romBitmap = new Hashtable();
+        romBitmap = new Hashtable<Integer,Integer>();
         changeEvent = new EventObject(this);
         deviceList = new EventListenerList();
     }
@@ -59,20 +58,15 @@ public class MemoryContext implements SMemoryContext {
         sizeSet = true;
         return true;
     }
-    
-    public String getID() { return "byte_simple_variable"; }
-    public int getVersionMajor() { return 0; }
-    public int getVersionMinor() { return 2; }
 
-    /**
-     * @return "b" for beta, "rc-1" for release candidate 1, etc.
-     */
-    public String getVersionRev() { return "b"; }
+    @Override
+    public String getID() { return "byte_simple_variable"; }
 
     /**
      * Clears memory content.
      */
-    public void clear() {
+    @Override
+    public void clearMemory() {
         if (sizeSet == false) return;
         for (int i = 0; i < mem.length; i++) 
             for (int j = 0; j < banksCount;j++) mem[i][j] = 0;
@@ -80,12 +74,19 @@ public class MemoryContext implements SMemoryContext {
         fireChange(-1);
     }
 
+    @Override
     public int getBanksCount() { return banksCount; }
+    
+    @Override
     public short getSelectedBank() { return bankSelect; }
+    
+    @Override
     public void setSeletedBank(short bankSelect) {
         if (bankSelect < banksCount)
             this.bankSelect = bankSelect;
     }
+    
+    @Override
     public int getCommonBoundary() { return bankCommon; }
     
     // this can parse classic old data
@@ -93,7 +94,6 @@ public class MemoryContext implements SMemoryContext {
     public boolean loadHex(String filename, int bank) {
         if (sizeSet == false) return false;
         lastStartSet = false;
-        ArrayList a = new ArrayList();
         try {
             FileReader vstup = new FileReader(filename);
             int i =0,j =0;
@@ -178,9 +178,9 @@ public class MemoryContext implements SMemoryContext {
     /**
      * Get starting address (load address) from HEX file
      */
-    public int getHexStartAddress(File file) {
-        return 0;
-    }
+//    public int getHexStartAddress(File file) {
+  //      return 0;
+   // }
     
     /**
      * Method loads a binary file into memory.
@@ -220,7 +220,8 @@ public class MemoryContext implements SMemoryContext {
         return true;
     }
     
-    
+
+    @Override
     public Object read(int from) {
         if (from < bankCommon) return mem[from][bankSelect];
         else return mem[from][0];
@@ -231,6 +232,7 @@ public class MemoryContext implements SMemoryContext {
         else return mem[from][0];
     }
 
+    @Override
     public Object readWord(int from) {
         b = (from < bankCommon)?bankSelect:0;
         if (from == mem.length-1) return mem[from][b];
@@ -239,6 +241,7 @@ public class MemoryContext implements SMemoryContext {
         return (int)((high << 8)| low);
     }
 
+    @Override
     public void write(int to, Object val) {
         if (isRom(to) == true) return;
         b = (to < bankCommon)?bankSelect:0;
@@ -259,6 +262,7 @@ public class MemoryContext implements SMemoryContext {
         fireChange(to);
     }
 
+    @Override
     public void writeWord(int to, Object val) {
         if (isRom(to) == true) return;
         b = (to < bankCommon)?bankSelect:0;
@@ -272,10 +276,12 @@ public class MemoryContext implements SMemoryContext {
         }
     }
 
+    @Override
     public void addMemoryListener(IMemListener listener) {
         deviceList.add(IMemListener.class, listener);
     }
 
+    @Override
     public void removeMemoryListener(IMemListener listener) {
         deviceList.remove(IMemListener.class, listener);
     }
@@ -292,10 +298,10 @@ public class MemoryContext implements SMemoryContext {
     /* ROM */
     // merges all continuous ranges to one
     private void mergeRanges() {
-        Vector keys = new Vector(romBitmap.keySet());
+        Vector<Integer> keys = new Vector<Integer>(romBitmap.keySet());
         Collections.sort(keys);
         
-        Enumeration e = keys.elements();
+        Enumeration<Integer> e = keys.elements();
         if (e.hasMoreElements() == false) return;
         int key1 = (Integer)e.nextElement();
         int value1 = (Integer)romBitmap.get(key1);
@@ -317,9 +323,9 @@ public class MemoryContext implements SMemoryContext {
     }
     
     private void removeRomRange(int from, int to) {
-        for (Enumeration e = romBitmap.keys(); e.hasMoreElements();) {
-            int key = (Integer)e.nextElement();
-            int value = (Integer)romBitmap.get(key);
+        for (Enumeration<Integer> e = romBitmap.keys(); e.hasMoreElements();) {
+            int key = e.nextElement();
+            int value = romBitmap.get(key);
             
             if ((key >= from) && (value <= to)) {
                 romBitmap.remove(key);
@@ -350,29 +356,33 @@ public class MemoryContext implements SMemoryContext {
     }
     
     // remove range from romBitmap
+    @Override
     public void setRAM(int from, int to) {
         if (sizeSet == false) return;
         if (from > to) return;
         removeRomRange(from,to);
     }
 
+    @Override
     public void setROM(int from, int to) {
         if (sizeSet == false) return;
         if (from > to) return;
         addRomRange(from, to);
     }
 
+    @Override
     public boolean isRom(int address) {
-        for (Enumeration e = romBitmap.keys(); e.hasMoreElements();) {
-            int key = (Integer)e.nextElement();
-            int value = (Integer)romBitmap.get(key);
+        for (Enumeration<Integer> e = romBitmap.keys(); e.hasMoreElements();) {
+            int key = e.nextElement();
+            int value = romBitmap.get(key);
             if ((key <= address) && (address <= value)) return true;
         }
         return false;
     }
     
     // only for GUI purposes, this have nothing to do with memory emulation
-    public Hashtable getROMRanges() {
+    @Override
+    public Hashtable<Integer,Integer> getROMRanges() {
         return romBitmap;
     }
 
@@ -384,5 +394,15 @@ public class MemoryContext implements SMemoryContext {
             }
         }
     }
+
+	@Override
+	public Class<?> getDataType() {
+		return Short.class;
+	}
+
+	@Override
+	public String getHash() {
+		return "a93730cef0f15c6ea9d6b5e9e5d7f05f";
+	}
     
 }

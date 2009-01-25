@@ -27,6 +27,7 @@ import memImpl.MemoryContext;
  *
  * @author vbmacher
  */
+@SuppressWarnings("serial")
 public class memoryTableModel extends AbstractTableModel {
     private MemoryContext mem;
     private int currentPage=0;

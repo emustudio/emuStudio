@@ -33,6 +33,7 @@ import javax.swing.table.TableColumn;
  *
  * @author vbmacher
  */
+@SuppressWarnings("serial")
 public class tableMemory extends JTable {
     private memoryTableModel memModel;
     private JScrollPane paneMemory;
@@ -78,7 +79,7 @@ public class tableMemory extends JTable {
     }
     
     /* farebnost a zobrazenie buniek v operacnej pamati */
-    public class MemCellRenderer extends JLabel implements TableCellRenderer {
+	public class MemCellRenderer extends JLabel implements TableCellRenderer {
         private JList rowHeader;
         private String adresses[];
         private int currentPage;
