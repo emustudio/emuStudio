@@ -10,7 +10,6 @@ package simh;
 import interfaces.SMemoryContext;
 import java.io.File;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.EventObject;
 import plugins.device.IDeviceContext;
 
@@ -26,14 +25,14 @@ public class PseudoContext implements IDeviceContext {
     private Calendar ClockZSDOSDelta = Calendar.getInstance(); /* delta between real clock and Altair clock                    */
     private int setClockZSDOSPos = 0; /* determines state for receiving address of parameter block    */
     private int setClockZSDOSAdr = 0; /* address in M of 6 byte parameter block for setting time      */
-    private int getClockZSDOSPos = 0; /* determines state for sending clock information               */
+    private short getClockZSDOSPos = 0; /* determines state for sending clock information               */
 
     /* CPM3 clock definitions                                                                                       */
     private int ClockCPM3Delta = 0; /* delta between real clock and Altair clock                    */
     private int setClockCPM3Pos = 0; /* determines state for receiving address of parameter block    */
     private int setClockCPM3Adr = 0; /* address in M of 5 byte parameter block for setting time      */
-    private int getClockCPM3Pos = 0; /* determines state for sending clock information               */
-    private int daysCPM3SinceOrg = 0; /* days since 1 Jan 1978                                        */
+    private short getClockCPM3Pos = 0; /* determines state for sending clock information               */
+    private short daysCPM3SinceOrg = 0; /* days since 1 Jan 1978                                        */
 
 /* interrupt related                                                                                            */
     private int timeOfNextInterrupt; /* time when next interrupt is scheduled                        */
@@ -44,15 +43,15 @@ public class PseudoContext implements IDeviceContext {
     private int setTimerDeltaPos = 0; /* determines state for receiving timerDelta                    */
 
 /* stop watch and timer related                                                                                 */
-    private int stopWatchDelta        = 0;        /* stores elapsed time of stop watch                            */
+    private short stopWatchDelta        = 0;        /* stores elapsed time of stop watch                            */
     private int getStopWatchDeltaPos   = 0;        /* determines the state for receiving stopWatchDelta            */
     private int stopWatchNow          = 0;        /* stores starting time of stop watch                           */
     private int markTimeSP             = 0;        /* stack pointer for timer stack                                */
 
     ///* miscellaneous                                                                                                */
     private int versionPos     = 0; /* determines state for sending device identifier               */
-    private int lastCPMStatus  = 0; /* result of last attachCPM command                             */
-    private int lastCommand    = 0; /* most recent command processed on port 0xfeh */
+    private short lastCPMStatus  = 0; /* result of last attachCPM command                             */
+    private short lastCommand    = 0; /* most recent command processed on port 0xfeh */
     private int getCommonPos   = 0; /* determines state for sending the 'common' register           */
     private Calendar currentTime = Calendar.getInstance();
     private boolean currentTimeValid = false;
@@ -270,7 +269,7 @@ public class PseudoContext implements IDeviceContext {
 
     @Override
     public Object in(EventObject evt) {
-        int result = 0;
+        short result = 0;
         switch(lastCommand) {
             case getHostFilenames:
 //#if UNIX_PLATFORM
@@ -315,22 +314,22 @@ public class PseudoContext implements IDeviceContext {
                     switch(getClockZSDOSPos) {
                         case 0:
                             int year = (currentTime.get(Calendar.YEAR)-1900);
-                            result = toBCD(year > 99 ? year - 100 : year);
+                            result = (short) toBCD(year > 99 ? year - 100 : year);
                             getClockZSDOSPos = 1; break;
                         case 1:
-                            result = toBCD(currentTime.get(Calendar.MONTH) + 1);
+                            result = (short) toBCD(currentTime.get(Calendar.MONTH) + 1);
                             getClockZSDOSPos = 2; break;
                         case 2:
-                            result = toBCD(currentTime.get(Calendar.DAY_OF_MONTH));
+                            result = (short) toBCD(currentTime.get(Calendar.DAY_OF_MONTH));
                             getClockZSDOSPos = 3; break;
                         case 3:
-                            result = toBCD(currentTime.get(Calendar.HOUR_OF_DAY));
+                            result = (short) toBCD(currentTime.get(Calendar.HOUR_OF_DAY));
                             getClockZSDOSPos = 4; break;
                         case 4:
-                            result = toBCD(currentTime.get(Calendar.MINUTE));
+                            result = (short) toBCD(currentTime.get(Calendar.MINUTE));
                             getClockZSDOSPos = 5; break;
                         case 5:
-                            result = toBCD(currentTime.get(Calendar.SECOND));
+                            result = (short) toBCD(currentTime.get(Calendar.SECOND));
                             getClockZSDOSPos = lastCommand = 0; break;
                     }
                 } else { result = getClockZSDOSPos = lastCommand = 0; }
@@ -339,19 +338,19 @@ public class PseudoContext implements IDeviceContext {
                 if (currentTimeValid) {
                     switch(getClockCPM3Pos) {
                         case 0:
-                            result = daysCPM3SinceOrg & 0xff;
+                            result = (short) (daysCPM3SinceOrg & 0xff);
                             getClockCPM3Pos = 1; break;
                         case 1:
-                            result = (daysCPM3SinceOrg >> 8) & 0xff;
+                            result = (short) ((daysCPM3SinceOrg >> 8) & 0xff);
                             getClockCPM3Pos = 2; break;
                         case 2:
-                            result = toBCD(currentTime.get(Calendar.HOUR_OF_DAY));
+                            result = (short) toBCD(currentTime.get(Calendar.HOUR_OF_DAY));
                             getClockCPM3Pos = 3; break;
                         case 3:
-                            result = toBCD(currentTime.get(Calendar.MINUTE));
+                            result = (short) toBCD(currentTime.get(Calendar.MINUTE));
                             getClockCPM3Pos = 4; break;
                         case 4:
-                            result = toBCD(currentTime.get(Calendar.SECOND));
+                            result = (short) toBCD(currentTime.get(Calendar.SECOND));
                             getClockCPM3Pos = lastCommand = 0; break;
                     }
                 } else { result = getClockCPM3Pos = lastCommand = 0; }
@@ -364,24 +363,24 @@ public class PseudoContext implements IDeviceContext {
                 result = mem.getSelectedBank(); lastCommand = 0; break;
             case getCommonCmd:
                 if (getCommonPos == 0) {
-                    result = mem.getCommonBoundary() & 0xff;
+                    result = (short) (mem.getCommonBoundary() & 0xff);
                     getCommonPos = 1;
                 } else {
-                    result = (mem.getCommonBoundary() >> 8) & 0xff;
+                    result = (short) ((mem.getCommonBoundary() >> 8) & 0xff);
                     getCommonPos = lastCommand = 0;
                 } break;
             case hasBankedMemoryCmd:
-                result = mem.getBanksCount(); lastCommand = 0; break;
+                result = (short) mem.getBanksCount(); lastCommand = 0; break;
             case readStopWatchCmd:
                 if (getStopWatchDeltaPos == 0) {
-                    result = stopWatchDelta & 0xff;
+                    result = (short) (stopWatchDelta & 0xff);
                     getStopWatchDeltaPos = 1;
                 } else {
-                    result = (stopWatchDelta >> 8) & 0xff;
+                    result = (short) ((stopWatchDelta >> 8) & 0xff);
                     getStopWatchDeltaPos = lastCommand = 0;
                 } break;
             case getHostOSPathSeparator:
-                result = File.separatorChar;
+                result = (short) File.separatorChar;
                 break;
             default: /* undefined */
                 result = lastCommand = 0;
@@ -391,7 +390,7 @@ public class PseudoContext implements IDeviceContext {
 
     @Override
     public void out(EventObject evt, Object value) {
-    	int val = (Integer)value;
+    	short val = (Short)value;
         long now;
         switch(lastCommand) {
             case setClockZSDOSCmd:
@@ -535,7 +534,7 @@ public class PseudoContext implements IDeviceContext {
                         now += ClockCPM3Delta*1000;
                         currentTime.setTimeInMillis(now);
                         currentTimeValid = true;
-                        daysCPM3SinceOrg = (int)((now - mkCPM3Origin()) / SECONDS_PER_DAY);
+                        daysCPM3SinceOrg = (short)((now - mkCPM3Origin()) / SECONDS_PER_DAY);
                         getClockCPM3Pos = 0; break;
                     case setClockCPM3Cmd:
                         setClockCPM3Pos = 0;break;
@@ -622,7 +621,7 @@ public class PseudoContext implements IDeviceContext {
 
 	@Override
 	public Class<?> getDataType() {
-		return Integer.class;
+		return Short.class;
 	}
 
 	@Override

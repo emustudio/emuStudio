@@ -37,6 +37,18 @@ public class SIMHpseudo implements IDevice {
     
     @Override
     public boolean initialize(ICPUContext cpu, IMemoryContext mem, ISettingsHandler sHandler) {
+        if (cpu == null) {
+            StaticDialogs.showErrorMessage("SIMH-pseudo device has to be attached"
+                    + " to a CPU");
+            return false;
+        }
+    	
+        if (mem == null) {
+            StaticDialogs.showErrorMessage("SIMH-pseudo device has to be attached"
+                    + " to a Memory");
+            return false;
+        }
+    	
         // ID of cpu can be ofcourse also else.
         if (!cpu.getHash().equals(KNOWN_CPU_CONTEXT_HASH)) {
             StaticDialogs.showErrorMessage("SIMH-pseudo device can not be attached"
@@ -58,7 +70,7 @@ public class SIMHpseudo implements IDevice {
         // attach IO port
         if (this.cpu.attachDevice(male, 0xFE) == false) {
             StaticDialogs.showErrorMessage("Error: SIMH device can't be"
-                    + " attached to CPU (there is a hardware conflict)");
+                    + " attached to CPU (maybe there is a hardware conflict)");
             return false;
         }
         reset();
