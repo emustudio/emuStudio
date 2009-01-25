@@ -44,7 +44,7 @@ public class CpuPort2 implements IDeviceContext {
       //      // get key from terminal (polling)
         //    buffer = gui.getChar();
        // }
-        int v = sio.buffer;
+        short v = sio.buffer;
         sio.status &= 0xFE;
         sio.buffer = 0;
         return v;
@@ -55,7 +55,7 @@ public class CpuPort2 implements IDeviceContext {
      * SIO. For terminal: If user pressed a key, then it is
      * sent from terminal to SIO device via this method.
      */
-    public void writeBuffer(int data) {
+    public void writeBuffer(short data) {
         sio.status |= 0x01;
         sio.buffer = data;
     }
@@ -66,7 +66,7 @@ public class CpuPort2 implements IDeviceContext {
 
 	@Override
 	public Class<?> getDataType() {
-		return Integer.class;
+		return Short.class;
 	}
 
 	@Override

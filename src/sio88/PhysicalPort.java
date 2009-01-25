@@ -30,13 +30,13 @@ public class PhysicalPort implements IDeviceContext {
 
     @Override
     public void out(EventObject evt, Object val) {
-        int v = (Integer)val;
+        short v = (Short)val;
     	port2.writeBuffer(v);
     }
     
     @Override
     public Class<?> getDataType() {
-    	return Integer.class;
+    	return Short.class;
     }
 
     @Override

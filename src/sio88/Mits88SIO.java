@@ -41,7 +41,7 @@ public class Mits88SIO implements IDevice {
 	private static final String KNOWN_CPU_CONTEXT_HASH = "4bb574accc0ed96b5ed84b5832127289"; 
 	
 	private long hash;
-    public int buffer;
+    public short buffer;
     public short status;
     private CpuPort1 port1;
     private CpuPort2 port2;
@@ -109,12 +109,12 @@ public class Mits88SIO implements IDevice {
         // attach IO ports
         if (this.cpu.attachDevice(port1, 0x10) == false) {
             StaticDialogs.showErrorMessage("Error: 88-SIO (port1) can't be"
-                    + " attached to CPU (there is a hardware conflict)");
+                    + " attached to CPU (maybe there is a hardware conflict)");
             return false;
         }
         if (this.cpu.attachDevice(port2 ,0x11) == false) {
             StaticDialogs.showErrorMessage("Error: 88-SIO (port2) can't be"
-                    + " attached to CPU (there is a hardware conflict)");
+                    + " attached to CPU (maybe there is a hardware conflict)");
             this.cpu.detachDevice(0x10);
             return false;
         }
