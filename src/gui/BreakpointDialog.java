@@ -10,9 +10,11 @@ package gui;
 
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
+import javax.swing.WindowConstants;
 
 import runtime.StaticDialogs;
 
@@ -21,7 +23,7 @@ import runtime.StaticDialogs;
  * @author  vbmacher
  */
 @SuppressWarnings("serial")
-public class BreakpointDialog extends javax.swing.JDialog {
+public class BreakpointDialog extends JDialog {
     private static int adr = -1; // if adr == -1 then it means cancel
     private static boolean set = false;
     
@@ -38,12 +40,12 @@ public class BreakpointDialog extends javax.swing.JDialog {
     
     private void initComponents() {
 
-        lblSetUnset = new javax.swing.JLabel();
-        txtAddress = new javax.swing.JTextField();
-        btnSet = new javax.swing.JButton();
-        btnUnset = new javax.swing.JButton();
+        lblSetUnset = new JLabel();
+        txtAddress = new JTextField();
+        btnSet = new JButton();
+        btnUnset = new JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Set/unset breakpoint");
         setResizable(false);
 
