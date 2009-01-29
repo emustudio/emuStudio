@@ -24,7 +24,9 @@
 
 package sio88;
 
-import gui.SIODialog;
+import javax.swing.JOptionPane;
+
+
 import interfaces.ACpuContext;
 import plugins.ISettingsHandler;
 import plugins.cpu.ICPUContext;
@@ -32,6 +34,8 @@ import plugins.device.IDevice;
 import plugins.device.IDeviceContext;
 import plugins.memory.IMemoryContext;
 import runtime.StaticDialogs;
+import sio88.gui.ConfigDialog;
+import sio88.gui.SIODialog;
 
 /**
  *
@@ -39,16 +43,19 @@ import runtime.StaticDialogs;
  */
 public class Mits88SIO implements IDevice {
 	private static final String KNOWN_CPU_CONTEXT_HASH = "4bb574accc0ed96b5ed84b5832127289"; 
+	public static final int CPU_PORT1 = 0x10;
+	public static final int CPU_PORT2 = 0x11;
 	
 	private long hash;
     public short buffer;
     public short status;
     private CpuPort1 port1;
     private CpuPort2 port2;
+    private int port1CPU;
+    private int port2CPU;
     private PhysicalPort malePlug;
     private boolean port2Attached = false;
     
-    @SuppressWarnings("unused")
 	private ISettingsHandler settings;
 
     private ACpuContext cpu = null;
@@ -58,6 +65,8 @@ public class Mits88SIO implements IDevice {
     	this.hash = hash;
         port1 = new CpuPort1(this);
         port2 = new CpuPort2(this);
+        port1CPU = CPU_PORT1;
+        port2CPU = CPU_PORT2;
         malePlug = new PhysicalPort(port2);
     }
     
@@ -65,7 +74,7 @@ public class Mits88SIO implements IDevice {
     public String getDescription() {
         return "Recomended to use with MITS Altair8800 computer. This is"
                 + " an implementation of MITS 88-SIO serial card. It has one"
-                + " physical port and 2 programmable IO ports:"
+                + " physical port and 2 programmable IO ports (default):"
                 + " 0x10(status), 0x11(data). For programming see manual at\n"
                 + "http://www.classiccmp.org/dunfield/s100c/mits/88sio_1.pdf";
     }
@@ -83,6 +92,24 @@ public class Mits88SIO implements IDevice {
         status = 0x02; /* Status */
     }
         
+    private void readSettings() {
+		String s;
+		s = settings.readSetting(hash, "port1");
+		if (s != null) {
+			try { port1CPU = Integer.decode(s); }
+			catch(NumberFormatException e) { 
+				port1CPU = CPU_PORT1; 
+			}
+		}
+		s = settings.readSetting(hash, "port2");
+		if (s != null) {
+			try { port2CPU = Integer.decode(s); }
+			catch(NumberFormatException e) { 
+				port2CPU = CPU_PORT2; 
+			}
+		}
+    }
+    
     /**
      * I/O instruction handlers, called from the CPU module when an IN or OUT
      * instruction is issued.
@@ -90,6 +117,9 @@ public class Mits88SIO implements IDevice {
      * the port, and 1 means a write to the port.  On input, the actual
      * input is passed as the return value, on output, 'data' is written
      * to the device.
+     * 
+     * Don't have to care about detaching ports from CPU if initialization
+     * fails. Main module won't start and make all detachments. 
      */
     @Override
     public boolean initialize(ICPUContext cpu, IMemoryContext mem, 
@@ -97,6 +127,7 @@ public class Mits88SIO implements IDevice {
 
         this.settings = sHandler;
         if (cpu == null) return true;
+        readSettings();
         
         // ID of cpu can be ofcourse also else.
         if (!cpu.getHash().equals(KNOWN_CPU_CONTEXT_HASH)) {
@@ -107,16 +138,33 @@ public class Mits88SIO implements IDevice {
         this.cpu = (ACpuContext) cpu;
         
         // attach IO ports
-        if (this.cpu.attachDevice(port1, 0x10) == false) {
-            StaticDialogs.showErrorMessage("Error: 88-SIO (port1) can't be"
-                    + " attached to CPU (maybe there is a hardware conflict)");
-            return false;
+        if (this.cpu.attachDevice(port1, port1CPU) == false) {
+        	String p;
+        	p = JOptionPane.showInputDialog("This device (port1) can not be attached to" +
+        			" default CPU port, please enter another one: ", CPU_PORT1);
+        	try { port1CPU = Integer.decode(p); }
+        	catch(NumberFormatException e) {
+        		StaticDialogs.showErrorMessage("Error: wrong port number");
+        		return false;
+        	}
+        	if (this.cpu.attachDevice(port1, port1CPU) == false) {
+        		StaticDialogs.showErrorMessage("Error: the device still can't be attached");
+        		return false;
+        	}
         }
-        if (this.cpu.attachDevice(port2 ,0x11) == false) {
-            StaticDialogs.showErrorMessage("Error: 88-SIO (port2) can't be"
-                    + " attached to CPU (maybe there is a hardware conflict)");
-            this.cpu.detachDevice(0x10);
-            return false;
+        if (this.cpu.attachDevice(port2 ,port2CPU) == false) {
+        	String p;
+        	p = JOptionPane.showInputDialog("This device (port2) can not be attached to" +
+        			" default CPU port, please enter another one: ", CPU_PORT2);
+        	try { port2CPU = Integer.decode(p); }
+        	catch(NumberFormatException e) {
+        		StaticDialogs.showErrorMessage("Error: wrong port number");
+        		return false;
+        	}
+        	if (this.cpu.attachDevice(port2, port2CPU) == false) {
+        		StaticDialogs.showErrorMessage("Error: the device still can't be attached");
+        		return false;
+        	}
         }
         return true;
     }
@@ -126,7 +174,7 @@ public class Mits88SIO implements IDevice {
         if (gui == null) {
             String name = (port2.getAttachedDevice() == null) ? "none" :
                 port2.getAttachedDevice().getID();
-            gui = new SIODialog(null,false, name);
+            gui = new SIODialog(null,false, name,port1CPU,port2CPU);
         }
         gui.setVisible(true);
     }
@@ -134,8 +182,8 @@ public class Mits88SIO implements IDevice {
     @Override
     public void destroy() {
     	detachAll();
-        cpu.detachDevice(0x10);
-        cpu.detachDevice(0x11);
+        cpu.detachDevice(port1CPU);
+        cpu.detachDevice(port2CPU);
         if (gui != null) {
             gui.dispose();
         }
@@ -188,8 +236,7 @@ public class Mits88SIO implements IDevice {
 
 	@Override
 	public void showSettings() {
-		// TODO Auto-generated method stub
-		
+		new ConfigDialog(hash,settings).setVisible(true);
 	}
 
 }
