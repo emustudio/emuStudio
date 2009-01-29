@@ -8,12 +8,13 @@
 
 package terminal;
 
-import gui.TerminalWindow;
 import plugins.ISettingsHandler;
 import plugins.cpu.ICPUContext;
 import plugins.device.IDevice;
 import plugins.device.IDeviceContext;
 import plugins.memory.IMemoryContext;
+import terminal.gui.ConfigDialog;
+import terminal.gui.TerminalWindow;
 
 /**
  *
@@ -21,8 +22,7 @@ import plugins.memory.IMemoryContext;
  */
 public class TerminalImpl implements IDevice {
 	private long hash;
-    @SuppressWarnings("unused")
-	private ISettingsHandler sHandler;
+	private ISettingsHandler settings;
     private TerminalWindow terminalGUI;
     private TerminalDisplay terminal; // male
     private TerminalFemale female;
@@ -35,16 +35,35 @@ public class TerminalImpl implements IDevice {
     @Override
     public boolean initialize(ICPUContext cpu, IMemoryContext mem, 
             ISettingsHandler sHandler) {
-        this.sHandler = sHandler;
+        this.settings = sHandler;
         terminal = new TerminalDisplay(80,25);
         female = new TerminalFemale();
+        terminalGUI = new TerminalWindow(terminal,female);
+        readSettings();
         return true;
     }
 
+    private void readSettings() {
+    	String s;
+    	s = settings.readSetting(hash, "duplex_mode");
+        if (s != null && s.toUpperCase().equals("HALF"))
+        	terminalGUI.setHalfDuplex(true);
+        else terminalGUI.setHalfDuplex(false);
+        
+        s = settings.readSetting(hash, "always_on_top");
+        if (s != null && s.toUpperCase().equals("TRUE"))
+        	terminalGUI.setAlwaysOnTop(true);
+        else terminalGUI.setAlwaysOnTop(false);
+        
+        s = settings.readSetting(hash, "anti_aliasing");
+        if (s != null && s.toUpperCase().equals("TRUE"))
+        	terminal.setAntiAliasing(true);
+        else terminal.setAntiAliasing(false); 
+    }
+    
+    
     @Override
     public void showGUI() {
-        if (terminalGUI == null) terminalGUI = new TerminalWindow(terminal,female);
-        else terminalGUI.initTerminalLabel();
         terminalGUI.setVisible(true);
     }
 
@@ -102,8 +121,7 @@ public class TerminalImpl implements IDevice {
 
 	@Override
 	public void showSettings() {
-		// TODO Auto-generated method stub
-		
+		new ConfigDialog(settings,hash, terminalGUI, terminal).setVisible(true);
 	}
 
 }
