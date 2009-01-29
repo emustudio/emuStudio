@@ -4,6 +4,8 @@
  * Created on 18.6.2008, 15:01:27
  * hold to: KISS, YAGNI
  *
+ * IN:  disk flags
+ * OUT: select/unselect drive
  */
 
 package disk;

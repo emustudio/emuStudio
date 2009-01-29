@@ -95,9 +95,15 @@
 
 package disk;
 
+import disk.gui.ConfigDialog;
 import disk.gui.DiskFrame;
 import interfaces.ACpuContext;
+
+import java.io.IOException;
 import java.util.ArrayList;
+
+import javax.swing.JOptionPane;
+
 import plugins.ISettingsHandler;
 import plugins.cpu.ICPUContext;
 import plugins.device.IDevice;
@@ -115,8 +121,7 @@ public class DiskImpl implements IDevice {
     
     private long hash;
     private ACpuContext cpu;
-    @SuppressWarnings("unused")
-	private ISettingsHandler sHandler;
+	private ISettingsHandler settings;
     
     public ArrayList<Drive> drives;
     private Port1 port1;
@@ -140,7 +145,7 @@ public class DiskImpl implements IDevice {
     @Override
     public boolean initialize(ICPUContext cpu, IMemoryContext mem,
             ISettingsHandler sHandler) {
-        this.sHandler = sHandler;
+        this.settings = sHandler;
         if (cpu == null) return true;
         
         if (!cpu.getHash().equals(KNOWN_CPU_CONTEXT_HASH)) {
@@ -152,29 +157,63 @@ public class DiskImpl implements IDevice {
         
         // attach device to CPU
         if (this.cpu.attachDevice(port1, 0x8) == false) {
-            StaticDialogs.showErrorMessage("Error: this device can't be attached"
-                    + "(maybe there is a hardware conflict)");
-            return false;
+        	String p;
+        	p = JOptionPane.showInputDialog("This device (port1) can not be attached to" +
+        			" default CPU port, please enter another one: ", 8);
+        	if (this.cpu.attachDevice(port1, Integer.decode(p)) == false) {
+        		StaticDialogs.showErrorMessage("Error: the device still can't be attached");
+        		return false;
+        	}
         }
         if (this.cpu.attachDevice(port2, 0x9) == false) {
-            StaticDialogs.showErrorMessage("Error: this device can't be attached" +
-                    " (maybe there is a hardware conflict)");
-            return false;
+        	String p;
+        	p = JOptionPane.showInputDialog("This device (port2) can not be attached to" +
+        			" default CPU port, please enter another one: ", 9);
+        	if (this.cpu.attachDevice(port2, Integer.decode(p)) == false) {
+        		StaticDialogs.showErrorMessage("Error: the device still can't be attached");
+        		return false;
+        	}
         }
         if (this.cpu.attachDevice(port3, 0xA) == false) {
-            StaticDialogs.showErrorMessage("Error: this device can't be attached" +
-                    " (maybe there is a hardware conflict)");
-            return false;
+        	String p;
+        	p = JOptionPane.showInputDialog("This device (port3) can not be attached to" +
+        			" default CPU port, please enter another one: ", 10);
+        	if (this.cpu.attachDevice(port3, Integer.decode(p)) == false) {
+        		StaticDialogs.showErrorMessage("Error: the device still can't be attached");
+        		return false;
+        	}
         }
+        
+        // GUI initialization, settings load
+        gui = new DiskFrame(drives);
+        readSettings();
+        
         return true;
     }
 
+    private void readSettings() {
+    	String s;
+    	s = settings.readSetting(hash, "always_on_top");
+    	if (s != null && s.toUpperCase().equals("TRUE"))
+    		gui.setAlwaysOnTop(true);
+    	else gui.setAlwaysOnTop(false);
+    	
+    	for (int i = 0; i < 16; i++) {
+    		s = settings.readSetting(hash, "image"+i);
+    		if (s != null)
+    			try { drives.get(i).mount(s); }
+    	        catch (IOException ex) {
+    	            StaticDialogs.showErrorMessage(ex.getMessage());
+    	        }
+    	}
+    }
+    
+    
     @Override
     public void reset() { }
 
     @Override
     public void showGUI() {
-        if (gui == null) gui = new DiskFrame(drives);
         gui.setVisible(true);
     }
 
@@ -234,8 +273,7 @@ public class DiskImpl implements IDevice {
 
 	@Override
 	public void showSettings() {
-		// TODO Auto-generated method stub
-		
+		new ConfigDialog(hash,settings,drives,gui).setVisible(true);
 	}
 
 }
