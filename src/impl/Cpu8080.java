@@ -50,7 +50,7 @@ public class Cpu8080 implements ICPU, Runnable {
     private int PC=0; // program counter
     public int SP=0; // stack pointer
     public short B=0, C=0, D=0, E=0, H=0, L=0, Flags=2, A=0; // registre
-    public final int flagS = 0x80, flagZ = 0x40, flagAC = 0x10, flagP = 0x4, flagC = 0x1;
+    public static final int flagS = 0x80, flagZ = 0x40, flagAC = 0x10, flagP = 0x4, flagC = 0x1;
     
     private boolean INTE = false; // povolenie / zakazanie preruseni
     private boolean isINT = false;
