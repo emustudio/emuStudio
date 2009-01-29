@@ -252,8 +252,8 @@ public class statusGUI extends javax.swing.JPanel {
         @Override
         public void fireTableDataChanged() {
             short F = 0;
-            if (set == 0) F = cpu.getF();
-            else F = cpu.getF_S();
+            if (set == 0) F = cpu.F;
+            else F = cpu.F_S;
             flagsI[0] = ((F&CpuZ80.flagS)!=0) ? 1 : 0;
             flagsI[1] = ((F&CpuZ80.flagZ)!=0) ? 1 : 0;
             flagsI[2] = ((F&CpuZ80.flagH)!=0) ? 1 : 0;
@@ -360,27 +360,28 @@ public class statusGUI extends javax.swing.JPanel {
     }
     
     public void updateGUI() {
-        txtRegA.setText(f(cpu.getA())); txtRegF.setText(f(cpu.getF()));
-        txtRegB.setText(f(cpu.getB())); txtRegC.setText(f(cpu.getC()));
-        txtRegBC.setText(f(cpu.getBC())); txtRegD.setText(f(cpu.getD()));
-        txtRegE.setText(f(cpu.getE())); txtRegDE.setText(f(cpu.getDE()));
-        txtRegH.setText(f(cpu.getH())); txtRegL.setText(f(cpu.getL()));
-        txtRegHL.setText(f(cpu.getHL()));
+        txtRegA.setText(f(cpu.A)); txtRegF.setText(f(cpu.F));
+        txtRegB.setText(f(cpu.B)); txtRegC.setText(f(cpu.C));
+        txtRegBC.setText(f(((cpu.B<<8)|cpu.C)&0xFFFF)); txtRegD.setText(f(cpu.D));
+        txtRegE.setText(f(cpu.E)); txtRegDE.setText(f(((cpu.D<<8)|cpu.E)&0xFFFF));
+        txtRegH.setText(f(cpu.H)); txtRegL.setText(f(cpu.L));
+        txtRegHL.setText(f(((cpu.H<<8)|cpu.L)&0xFFFF));
         flagModel1.fireTableDataChanged();
-        txtRegA1.setText(f(cpu.getA_S())); txtRegF1.setText(f(cpu.getF_S()));
-        txtRegB1.setText(f(cpu.getB_S())); txtRegC1.setText(f(cpu.getC_S()));
-        txtRegBC1.setText(f(cpu.getBC_S())); txtRegD1.setText(f(cpu.getD_S()));
-        txtRegE1.setText(f(cpu.getE_S())); txtRegDE1.setText(f(cpu.getDE_S()));
-        txtRegH1.setText(f(cpu.getH_S())); txtRegL1.setText(f(cpu.getL_S()));
-        txtRegHL1.setText(f(cpu.getHL_S()));
+        txtRegA1.setText(f(cpu.A_S)); txtRegF1.setText(f(cpu.F_S));
+        txtRegB1.setText(f(cpu.B_S)); txtRegC1.setText(f(cpu.C_S));
+        txtRegBC1.setText(f(((cpu.B_S<<8)|cpu.C_S)&0xFFFF));
+        txtRegD1.setText(f(cpu.D_S)); txtRegE1.setText(f(cpu.E_S));
+        txtRegDE1.setText(f(((cpu.D_S<<8)|cpu.E_S)&0xFFFF));
+        txtRegH1.setText(f(cpu.H_S)); txtRegL1.setText(f(cpu.L_S));
+        txtRegHL1.setText(f(((cpu.H_S<<8)|cpu.L_S)&0xFFFF));
         flagModel2.fireTableDataChanged();
         
-        txtRegSP.setText(String.format("%04X", cpu.getSP()));
-        txtRegPC.setText(String.format("%04X", cpu.getPC()));
-        txtRegIX.setText(String.format("%04X", cpu.getIX()));
-        txtRegIY.setText(String.format("%04X", cpu.getIY()));
-        txtRegI.setText(String.format("%02X", cpu.getI()));
-        txtRegR.setText(String.format("%02X", cpu.getR()));
+        txtRegSP.setText(String.format("%04X", cpu.SP));
+        txtRegPC.setText(String.format("%04X", cpu.PC));
+        txtRegIX.setText(String.format("%04X", cpu.IX));
+        txtRegIY.setText(String.format("%04X", cpu.IY));
+        txtRegI.setText(String.format("%02X", cpu.I));
+        txtRegR.setText(String.format("%02X", cpu.R));
         
         if (run_state == ICPU.STATE_RUNNING) {
             lblRun.setText("running");
@@ -709,67 +710,67 @@ public class statusGUI extends javax.swing.JPanel {
         JTabbedPane tabbedGPR = new JTabbedPane();
         JPanel panelSET1 = new JPanel();
         JLabel lblRegB = new JLabel("B");
-        txtRegB = new JTextField("0");
+        txtRegB = new JTextField("00");
         JLabel lblRegC = new JLabel("C");
-        txtRegC = new JTextField("0");
+        txtRegC = new JTextField("00");
         JLabel lblRegBC = new JLabel("BC");
-        txtRegBC = new JTextField("0");
+        txtRegBC = new JTextField("0000");
         JLabel lblRegD = new JLabel("D");
-        txtRegD = new JTextField("0");
+        txtRegD = new JTextField("00");
         JLabel lblRegE = new JLabel("E");
-        txtRegE = new JTextField("0");
+        txtRegE = new JTextField("00");
         JLabel lblRegDE = new JLabel("DE");
-        txtRegDE = new JTextField("0");
+        txtRegDE = new JTextField("0000");
         JLabel lblRegH = new JLabel("H");
-        txtRegH = new JTextField("0");
+        txtRegH = new JTextField("00");
         JLabel lblRegL = new JLabel("L");
-        txtRegL = new JTextField("0");
+        txtRegL = new JTextField("00");
         JLabel lblRegHL = new JLabel("HL");
-        txtRegHL = new JTextField("0");
+        txtRegHL = new JTextField("0000");
         JLabel lblRegA = new JLabel("A");
-        txtRegA = new JTextField("0");
+        txtRegA = new JTextField("00");
         JLabel lblRegF = new JLabel("F");
-        txtRegF = new JTextField("0");
+        txtRegF = new JTextField("00");
         JLabel lblFlagsLBL = new JLabel("Flags (F): ");
         tblFlags = new JTable();
         JPanel panelSET2 = new JPanel();
         JLabel lblRegB1 = new JLabel("B");
-        txtRegB1 = new JTextField("0");
+        txtRegB1 = new JTextField("00");
         JLabel lblRegC1 = new JLabel("C");
-        txtRegC1 = new JTextField("0");
+        txtRegC1 = new JTextField("00");
         JLabel lblRegBC1 = new JLabel("BC");
-        txtRegBC1 = new JTextField("0");
+        txtRegBC1 = new JTextField("0000");
         JLabel lblRegD1 = new JLabel("D");
-        txtRegD1 = new JTextField("0");
+        txtRegD1 = new JTextField("00");
         JLabel lblRegE1 = new JLabel("E");
-        txtRegE1 = new JTextField("0");
+        txtRegE1 = new JTextField("00");
         JLabel lblRegDE1 = new JLabel("DE");
-        txtRegDE1 = new JTextField("0");
+        txtRegDE1 = new JTextField("0000");
         JLabel lblRegH1 = new JLabel("H");
-        txtRegH1 = new JTextField("0");
+        txtRegH1 = new JTextField("00");
         JLabel lblRegL1 = new JLabel("L");
-        txtRegL1 = new JTextField("0");
+        txtRegL1 = new JTextField("00");
         JLabel lblRegHL1 = new JLabel("HL");
-        txtRegHL1 = new JTextField("0");
+        txtRegHL1 = new JTextField("0000");
         JLabel lblRegA1 = new JLabel("A");
-        txtRegA1 = new JTextField("0");
+        txtRegA1 = new JTextField("00");
         JLabel lblRegF1 = new JLabel("F");
-        txtRegF1 = new JTextField("0");
+        txtRegF1 = new JTextField("00");
         JLabel lblFlags1LBL = new JLabel("Flags (F): ");
         tblFlags2 = new JTable();
         JLabel lblRegPC = new JLabel("PC");
-        txtRegPC = new JTextField("0");
+        txtRegPC = new JTextField("0000");
         JLabel lblRegSP = new JLabel("SP");
-        txtRegSP = new JTextField("0");
+        txtRegSP = new JTextField("0000");
         JLabel lblRegIX = new JLabel("IX");
-        txtRegIX = new JTextField("0");
+        txtRegIX = new JTextField("0000");
         JLabel lblRegIY = new JLabel("IY");
         JLabel lblRegI = new JLabel("I");
-        txtRegI = new JTextField("0");
+        txtRegI = new JTextField("00");
         JLabel lblRegR = new JLabel("R");
-        txtRegIY = new JTextField("0");
-        txtRegR = new JTextField("0");
-        JPanel panelStatus = new JPanel();
+        txtRegIY = new JTextField("0000");
+        txtRegR = new JTextField("00");
+        JPanel panelRun = new JPanel();
         lblRun = new JLabel("Stopped");
         JLabel lblCPUFreq = new JLabel("CPU frequency:");
         spnFrequency = new JSpinner();
@@ -781,13 +782,7 @@ public class statusGUI extends javax.swing.JPanel {
         lblFrequency = new JLabel();
 
         setBorder(null);
-
-        paneRegisters.setBorder(BorderFactory.createTitledBorder(
-        		new javax.swing.border.LineBorder(java.awt.Color.gray, 1, true),
-        		"Registers", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-        		javax.swing.border.TitledBorder.DEFAULT_POSITION,
-        		paneRegisters.getFont().deriveFont(Font.BOLD),
-        		Color.gray)); // NOI18N
+        paneRegisters.setBorder(null);
 
         tabbedGPR.setBorder(null);
         panelSET1.setBorder(null);
@@ -839,19 +834,6 @@ public class statusGUI extends javax.swing.JPanel {
         tblFlags.setAutoCreateRowSorter(true);
         tblFlags.setBackground(Color.white);
         tblFlags.setBorder(null);
-        tblFlags.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {"S", "Z", "H", "P/V", "N", "C"},
-                {"0", "0", "0", "0", "0", "0"}
-            },
-            new String [] {
-                "S", "Z", "H", "P/V", "N", "C"
-            }
-        ) {
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return false;
-            }
-        });
         tblFlags.setRowSelectionAllowed(false);
 
         GroupLayout panelSET1Layout = new GroupLayout(panelSET1);
@@ -861,57 +843,39 @@ public class statusGUI extends javax.swing.JPanel {
     			.addGroup(panelSET1Layout.createSequentialGroup()
 	    			.addContainerGap()
 	        		.addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-	        				.addGroup(panelSET1Layout.createSequentialGroup()
-	        						.addComponent(lblRegB)
-	        						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-	        						.addComponent(txtRegB))
-	        			    .addGroup(panelSET1Layout.createSequentialGroup()
-	        			    		.addComponent(lblRegD)
-	        			    		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-	        			    		.addComponent(txtRegD))
-	        			    .addGroup(panelSET1Layout.createSequentialGroup()
-	        			    		.addComponent(lblRegH)
-	        			    		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-	        			    		.addComponent(txtRegH))
-	           			    .addGroup(panelSET1Layout.createSequentialGroup()
-	           			    		.addComponent(lblRegA)
-	           			    		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-	           			    		.addComponent(txtRegA)))
+       						.addComponent(lblRegB)
+       			    		.addComponent(lblRegD)
+       			    		.addComponent(lblRegH)
+       			    		.addComponent(lblRegA))
+       			    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+       			    .addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+	        				.addComponent(txtRegB)
+       			    		.addComponent(txtRegD)
+       			    		.addComponent(txtRegH)
+        			    	.addComponent(txtRegA))
 	           		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
 	           		.addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-	           				.addGroup(panelSET1Layout.createSequentialGroup()
-	           						.addComponent(lblRegC)
-	           						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-	           						.addComponent(txtRegC))
-	           				.addGroup(panelSET1Layout.createSequentialGroup()
-	           						.addComponent(lblRegE)
-	           						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-	           						.addComponent(txtRegE))
-	           				.addGroup(panelSET1Layout.createSequentialGroup()
-	           						.addComponent(lblRegL)
-	           						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-	           						.addComponent(txtRegL))
-	           				.addGroup(panelSET1Layout.createSequentialGroup()
-	           						.addComponent(lblRegF)
-	           						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-	           						.addComponent(txtRegF)))
+       						.addComponent(lblRegC)
+	   						.addComponent(lblRegE)
+       						.addComponent(lblRegL)
+       						.addComponent(lblRegF))
+             		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+             		.addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+	           				.addComponent(txtRegC)
+       						.addComponent(txtRegE)
+       						.addComponent(txtRegL)
+       						.addComponent(txtRegF))
 	           		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
 	           		.addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-	           				.addGroup(panelSET1Layout.createSequentialGroup()
-	           						.addComponent(lblRegBC)
-	           						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-	           						.addComponent(txtRegBC)
-	           						.addContainerGap())
-	   						.addGroup(panelSET1Layout.createSequentialGroup()
-	   								.addComponent(lblRegDE)
-	   								.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-	   								.addComponent(txtRegDE)
-	   								.addContainerGap())
-	           				.addGroup(panelSET1Layout.createSequentialGroup()
-	           						.addComponent(lblRegHL)
-	           						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-	           						.addComponent(txtRegHL)
-	           						.addContainerGap())))
+       						.addComponent(lblRegBC)
+							.addComponent(lblRegDE)
+       						.addComponent(lblRegHL))
+	           		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+	           		.addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+       						.addComponent(txtRegBC)
+     						.addComponent(txtRegDE)
+       						.addComponent(txtRegHL))
+	           		.addContainerGap())
 	           	.addGroup(panelSET1Layout.createSequentialGroup()
 	           			.addContainerGap()
 	           			.addComponent(lblFlagsLBL))
@@ -954,8 +918,7 @@ public class statusGUI extends javax.swing.JPanel {
         		.addComponent(lblFlagsLBL)
         		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
         		.addComponent(tblFlags)
-        		.addContainerGap()
-        		);
+        		.addContainerGap());
         tabbedGPR.addTab("Set1", panelSET1);
 
         panelSET2.setBorder(null);
@@ -1007,19 +970,6 @@ public class statusGUI extends javax.swing.JPanel {
         tblFlags2.setAutoCreateRowSorter(true);
         tblFlags2.setBackground(java.awt.Color.white);
         tblFlags2.setBorder(null);
-        tblFlags2.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {"S", "Z", "H", "P/V", "N", "C"},
-                {"0", "0", "0", "0", "0", "0"}
-            },
-            new String [] {
-                "S", "Z", "H", "P/V", "N", "C"
-            }
-        ) {
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return false;
-            }
-        });
         tblFlags2.setRowSelectionAllowed(false);
 
         GroupLayout panelSET2Layout = new GroupLayout(panelSET2);
@@ -1027,60 +977,42 @@ public class statusGUI extends javax.swing.JPanel {
 
         panelSET2Layout.setHorizontalGroup(
         		panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        			.addGroup(panelSET2Layout.createSequentialGroup()
-    	    			.addContainerGap()
-    	        		.addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-    	        				.addGroup(panelSET2Layout.createSequentialGroup()
-    	        						.addComponent(lblRegB1)
-    	        						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-    	        						.addComponent(txtRegB1))
-    	        			    .addGroup(panelSET2Layout.createSequentialGroup()
-    	        			    		.addComponent(lblRegD1)
-    	        			    		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-    	        			    		.addComponent(txtRegD1))
-    	        			    .addGroup(panelSET2Layout.createSequentialGroup()
-    	        			    		.addComponent(lblRegH1)
-    	        			    		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-    	        			    		.addComponent(txtRegH1))
-    	           			    .addGroup(panelSET2Layout.createSequentialGroup()
-    	           			    		.addComponent(lblRegA1)
-    	           			    		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-    	           			    		.addComponent(txtRegA1)))
-    	           		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-    	           		.addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-    	           				.addGroup(panelSET2Layout.createSequentialGroup()
-    	           						.addComponent(lblRegC1)
-    	           						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-    	           						.addComponent(txtRegC1))
-    	           				.addGroup(panelSET2Layout.createSequentialGroup()
-    	           						.addComponent(lblRegE1)
-    	           						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-    	           						.addComponent(txtRegE1))
-    	           				.addGroup(panelSET2Layout.createSequentialGroup()
-    	           						.addComponent(lblRegL1)
-    	           						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-    	           						.addComponent(txtRegL1))
-    	           				.addGroup(panelSET2Layout.createSequentialGroup()
-    	           						.addComponent(lblRegF1)
-    	           						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-    	           						.addComponent(txtRegF1)))
-    	           		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-    	           		.addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-    	           				.addGroup(panelSET2Layout.createSequentialGroup()
-    	           						.addComponent(lblRegBC1)
-    	           						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-    	           						.addComponent(txtRegBC1)
-    	           						.addContainerGap())
-    	   						.addGroup(panelSET2Layout.createSequentialGroup()
-    	   								.addComponent(lblRegDE1)
-    	   								.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-    	   								.addComponent(txtRegDE1)
-    	   								.addContainerGap())
-    	           				.addGroup(panelSET2Layout.createSequentialGroup()
-    	           						.addComponent(lblRegHL1)
-    	           						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-    	           						.addComponent(txtRegHL1)
-    	           						.addContainerGap())))
+    			.addGroup(panelSET2Layout.createSequentialGroup()
+	    			.addContainerGap()
+	        		.addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+       						.addComponent(lblRegB1)
+       			    		.addComponent(lblRegD1)
+       			    		.addComponent(lblRegH1)
+       			    		.addComponent(lblRegA1))
+       			    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+       			    .addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+	        				.addComponent(txtRegB1)
+       			    		.addComponent(txtRegD1)
+       			    		.addComponent(txtRegH1)
+        			    	.addComponent(txtRegA1))
+	           		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+	           		.addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+       						.addComponent(lblRegC1)
+	   						.addComponent(lblRegE1)
+       						.addComponent(lblRegL1)
+       						.addComponent(lblRegF1))
+             		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+             		.addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+	           				.addComponent(txtRegC1)
+       						.addComponent(txtRegE1)
+       						.addComponent(txtRegL1)
+       						.addComponent(txtRegF1))
+	           		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+	           		.addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+       						.addComponent(lblRegBC1)
+							.addComponent(lblRegDE1)
+       						.addComponent(lblRegHL1))
+	           		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+	           		.addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+       						.addComponent(txtRegBC1)
+     						.addComponent(txtRegDE1)
+       						.addComponent(txtRegHL1))
+	           		.addContainerGap())
     	           	.addGroup(panelSET2Layout.createSequentialGroup()
     	           			.addContainerGap()
     	           			.addComponent(lblFlags1LBL))
@@ -1123,8 +1055,7 @@ public class statusGUI extends javax.swing.JPanel {
             		.addComponent(lblFlags1LBL)
             		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
             		.addComponent(tblFlags2)
-            		.addContainerGap()
-            		);
+            		.addContainerGap());
 
         tabbedGPR.addTab("Set 2", panelSET2);
 
@@ -1205,10 +1136,10 @@ public class statusGUI extends javax.swing.JPanel {
         				.addComponent(lblRegR)
         				.addComponent(txtRegR))
         	    .addContainerGap());
-        panelStatus.setBorder(BorderFactory.createTitledBorder(new javax.swing.border.LineBorder(
+        panelRun.setBorder(BorderFactory.createTitledBorder(new javax.swing.border.LineBorder(
         		Color.gray, 1, true), "Run control", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
         		javax.swing.border.TitledBorder.DEFAULT_POSITION,
-        		panelStatus.getFont().deriveFont(Font.BOLD), Color.gray)); // NOI18N
+        		panelRun.getFont().deriveFont(Font.BOLD), Color.gray)); // NOI18N
 
         lblRun.setFont(lblRun.getFont().deriveFont(lblRun.getFont().getStyle() | Font.BOLD));
         lblRun.setForeground(new java.awt.Color(0, 102, 0));
@@ -1219,51 +1150,51 @@ public class statusGUI extends javax.swing.JPanel {
         lblFrequency.setFont(lblFrequency.getFont().deriveFont(lblFrequency.getFont().getStyle() | Font.BOLD));
         lblFrequency.setText("0,0 kHz");
 
-        GroupLayout panelStatusLayout = new GroupLayout(panelStatus);
-        panelStatus.setLayout(panelStatusLayout);
+        GroupLayout panelRunLayout = new GroupLayout(panelRun);
+        panelRun.setLayout(panelRunLayout);
         
-        panelStatusLayout.setHorizontalGroup(
-        		panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        		.addGroup(panelStatusLayout.createSequentialGroup()
+        panelRunLayout.setHorizontalGroup(
+        		panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        		.addGroup(panelRunLayout.createSequentialGroup()
         				.addContainerGap()
         				.addComponent(lblRun)
         				.addContainerGap())
-        		.addGroup(panelStatusLayout.createSequentialGroup()
+        		.addGroup(panelRunLayout.createSequentialGroup()
         				.addContainerGap()
-        				.addGroup(panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        				.addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
         						.addComponent(lblCPUFreq)
         						.addComponent(lblTestPeriode))
         				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        				.addGroup(panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        				.addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
         						.addComponent(spnFrequency)
         						.addComponent(spnTestPeriode))
         				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        				.addGroup(panelStatusLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        				.addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
         						.addComponent(lblKHZ)
         						.addComponent(lblMS))
         				.addContainerGap())
-        		.addGroup(panelStatusLayout.createSequentialGroup()
+        		.addGroup(panelRunLayout.createSequentialGroup()
         				.addContainerGap()
         				.addComponent(lblRuntimeFreq)
         				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
         				.addComponent(lblFrequency)
         				.addContainerGap()));
-        panelStatusLayout.setVerticalGroup(
-        		panelStatusLayout.createSequentialGroup()
+        panelRunLayout.setVerticalGroup(
+        		panelRunLayout.createSequentialGroup()
         		.addContainerGap()
         		.addComponent(lblRun)
         		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-        		.addGroup(panelStatusLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+        		.addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
         				.addComponent(lblCPUFreq)
         				.addComponent(spnFrequency)
         				.addComponent(lblKHZ))
         		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(panelStatusLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+        		.addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
         				.addComponent(lblTestPeriode)
         				.addComponent(spnTestPeriode)
         				.addComponent(lblMS))
         		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-        		.addGroup(panelStatusLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+        		.addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
         				.addComponent(lblRuntimeFreq)
         				.addComponent(lblFrequency))
         		.addContainerGap());
@@ -1273,14 +1204,14 @@ public class statusGUI extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addComponent(paneRegisters, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(panelStatus, 10, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
+            .addComponent(panelRun, 10, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(paneRegisters, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(panelStatus))
+                .addComponent(panelRun))
         );
     }
 

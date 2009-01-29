@@ -35,21 +35,15 @@ public class CpuZ80 implements ICPU, Runnable {
     private HashSet<Integer> breaks; // zoznam breakpointov (mnozina)
 
     // 2 sets of 6 GPR
-    private short B; private short B_S;
-    private short C; private short C_S;
-    private short D; private short D_S;
-    private short E; private short E_S;
-    private short H; private short H_S;
-    private short L; private short L_S;
+    public short B, B_S, C, C_S, D, D_S, E, E_S;
+    public short H, H_S, L, L_S;
     
     // accumulator and flags
-    private short A; private short A_S;
-    private short F; private short F_S;
+    public short A, A_S, F, F_S;
     
     // special registers
-    private int PC = 0; private int SP = 0;
-    private int IX = 0; private int IY = 0;
-    private short I = 0; private short R = 0; // interrupt r., refresh r.
+    public int PC = 0, SP = 0, IX = 0, IY = 0;
+    public short I = 0, R = 0; // interrupt r., refresh r.
     private boolean[] IFF; // interrupt enable flip-flops
     
     @SuppressWarnings("unused")
@@ -312,36 +306,6 @@ public class CpuZ80 implements ICPU, Runnable {
     public int getNextPC(int memPos) {
         return status.getNextPosition(memPos);
     }
-    public int getPC() { return PC; }
-    public int getSP() { return SP; }
-    public short getA() { return A; }
-    public short getF() { return F; }
-
-    public short getB() { return B; }
-    public short getC() { return C; }
-    public int getBC() { return (((B<<8)|C)&0xFFFF); }
-    public short getD() { return D; }
-    public short getE() { return E; }
-    public int getDE() { return (((D<<8)|E)&0xFFFF); }
-    public short getH() { return H; }
-    public short getL() { return L; }
-    public int getHL() { return (((H<<8)|L)&0xFFFF); }
-    public int getIX() { return IX; }
-    public int getIY() { return IY; }
-    public short getI() { return I; }
-    public short getR() { return R; }
-
-    public short getA_S() { return A_S; }
-    public short getF_S() { return F_S; }
-    public short getB_S() { return B_S; }
-    public short getC_S() { return C_S; }
-    public int getBC_S() { return (((B_S<<8)|C_S)&0xFFFF); }
-    public short getD_S() { return D_S; }
-    public short getE_S() { return E_S; }
-    public int getDE_S() { return (((D_S<<8)|E_S)&0xFFFF); }
-    public short getH_S() { return H_S; }
-    public short getL_S() { return L_S; }
-    public int getHL_S() { return (((H_S<<8)|L_S)&0xFFFF); }
     
     /**
      * Sets program counter to specific value
