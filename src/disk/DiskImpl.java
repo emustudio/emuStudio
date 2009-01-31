@@ -129,7 +129,7 @@ public class DiskImpl implements IDevice {
     private Port3 port3;
     
     public int current_drive;
-    private DiskFrame gui = null;
+    private DiskFrame gui;
             
     public DiskImpl(Long hash) {
     	this.hash = hash;
@@ -140,6 +140,7 @@ public class DiskImpl implements IDevice {
         port1 = new Port1(this);
         port2 = new Port2(this);
         port3 = new Port3(this);
+        gui = new DiskFrame(drives);
     }
     
     @Override
@@ -184,10 +185,7 @@ public class DiskImpl implements IDevice {
         	}
         }
         
-        // GUI initialization, settings load
-        gui = new DiskFrame(drives);
-        readSettings();
-        
+        readSettings();        
         return true;
     }
 
