@@ -1506,7 +1506,8 @@ public class parserZ80 extends java_cup.runtime.lr_parser {
     }
 
   /** Invoke a user supplied parse action. */
-  public java_cup.runtime.Symbol do_action(
+  @SuppressWarnings("unchecked")
+public java_cup.runtime.Symbol do_action(
     int                        act_num,
     java_cup.runtime.lr_parser parser,
     java.util.Stack            stack,
@@ -1588,7 +1589,8 @@ class CUP$parserZ80$actions {
   }
 
   /** Method with the actual generated action code. */
-  public final java_cup.runtime.Symbol CUP$parserZ80$do_action(
+  @SuppressWarnings("unchecked")
+public final java_cup.runtime.Symbol CUP$parserZ80$do_action(
     int                        CUP$parserZ80$act_num,
     java_cup.runtime.lr_parser CUP$parserZ80$parser,
     java.util.Stack            CUP$parserZ80$stack,
@@ -1848,8 +1850,10 @@ class CUP$parserZ80$actions {
           case 288: // RegRR ::= RegRR_WSP 
             {
               Integer RESULT =null;
-		int rleft = ((java_cup.runtime.Symbol)CUP$parserZ80$stack.peek()).left;
-		int rright = ((java_cup.runtime.Symbol)CUP$parserZ80$stack.peek()).right;
+	//	int rleft = ((java_cup.runtime.Symbol)
+              CUP$parserZ80$stack.peek(); //).left;
+	//	int rright = ((java_cup.runtime.Symbol)
+		CUP$parserZ80$stack.peek(); //).right;
 		Integer r = (Integer)((java_cup.runtime.Symbol) CUP$parserZ80$stack.peek()).value;
 		 RESULT = r; 
               CUP$parserZ80$result = parser.getSymbolFactory().newSymbol("RegRR",23, ((java_cup.runtime.Symbol)CUP$parserZ80$stack.peek()), ((java_cup.runtime.Symbol)CUP$parserZ80$stack.peek()), RESULT);

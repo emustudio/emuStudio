@@ -9,7 +9,6 @@
 
 package impl;
 
-import java.io.IOException;
 import java.io.Reader;
 
 import plugins.ISettingsHandler;
@@ -25,7 +24,7 @@ import treeZ80.Program;
  */
 public class assemblerZ80 implements ICompiler {
 	private long hash;
-    private lexerZ80 lex;
+    private lexerZ80 lex = null;
     private parserZ80 par;
     private IMessageReporter reporter;
     @SuppressWarnings("unused")
@@ -35,6 +34,8 @@ public class assemblerZ80 implements ICompiler {
     /** Creates a new instance of assemblerZ80 */
     public assemblerZ80(Long hash) {
     	this.hash = hash;
+    	// lex has to be reset WITH a reader object before compile
+    	lex = new lexerZ80((Reader)null);
     }
         
     private void print_text(String mes, int type) {
@@ -58,14 +59,11 @@ public class assemblerZ80 implements ICompiler {
 	public long getHash() { return hash; }
     
 	@Override
-	public boolean initialize(ISettingsHandler sHandler, Reader in,
-			IMessageReporter reporter) {
+	public boolean initialize(ISettingsHandler sHandler, IMessageReporter reporter) {
         this.settings = sHandler;
         this.reporter = reporter;
 
-        lex = new lexerZ80(in);
         par = new parserZ80(lex, reporter);
-
 		return true;
 	}
 
@@ -83,20 +81,20 @@ public class assemblerZ80 implements ICompiler {
 	/**
 	 * Compile the source code into HEXFileHadler
 	 * 
+	 * @param in  Reader object of the source code
 	 * @return HEXFileHandler object
 	 */
-    private HEXFileHandler compile() {
+    private HEXFileHandler compile(Reader in) throws Exception {
         if (par == null) return null;
+        if (in == null) return null;
 
         Object s = null;
         HEXFileHandler hex = new HEXFileHandler();
 
         print_text(getTitle()+", version "+getVersion(), IMessageReporter.TYPE_INFO);
-        try { s = par.parse().value; }
-        catch(Exception e) {
-            print_text(e.getMessage(), IMessageReporter.TYPE_ERROR);
-            return null;
-        }
+        lex.reset(in,0,0,0);
+        s = par.parse().value;
+
         if (s == null) {
             print_text("Unexpected end of file", IMessageReporter.TYPE_ERROR);
             return null;
@@ -105,60 +103,51 @@ public class assemblerZ80 implements ICompiler {
             return null;
         
         // do several passes for compiling
-        try {
-            Program program = (Program)s;
-            Namespace env = new Namespace();
-            program.pass1(env,reporter); // create symbol table
-            program.pass2(0); // try to evaluate all expressions + compute relative addresses
-            while (program.pass3(env) == true) ;
-            if (env.getPassNeedCount() != 0) {
-                print_text("Error: can't evaulate all expressions", IMessageReporter.TYPE_ERROR);
-                return null;
-            }
-            program.pass4(hex,env);
-        } catch(Exception e) {
-            print_text(e.getMessage(), IMessageReporter.TYPE_ERROR);
+        Program program = (Program)s;
+        Namespace env = new Namespace();
+        program.pass1(env,reporter); // create symbol table
+        program.pass2(0); // try to evaluate all expressions + compute relative addresses
+        while (program.pass3(env) == true) ;
+        if (env.getPassNeedCount() != 0) {
+            print_text("Error: can't evaulate all expressions", IMessageReporter.TYPE_ERROR);
             return null;
         }
+        program.pass4(hex,env);
         return hex;
     }
     
 	@Override
-	public boolean compile(String fileName) {
-		HEXFileHandler hex = compile();
-		if (hex == null) return false;
+	public boolean compile(String fileName, Reader in) {
         try {
+    		HEXFileHandler hex = compile(in);
+    		if (hex == null) return false;
 			hex.generateFile(fileName);
-		} catch (IOException e) {
+	        print_text("Compile was sucessfull. Output: " + fileName, IMessageReporter.TYPE_INFO);
+	        programStart = hex.getProgramStart();
+	        return true;
+		} catch (Exception e) {
             print_text(e.getMessage(), IMessageReporter.TYPE_ERROR);
             return false;
 		}
-        print_text("Compile was sucessfull. Output: " + fileName, IMessageReporter.TYPE_INFO);
-        programStart = hex.getProgramStart();
-        return true;
 	}
 
 	@Override
-	public boolean compile(String fileName, IMemoryContext mem) {
-		HEXFileHandler hex = compile();
+	public boolean compile(String fileName, Reader in, IMemoryContext mem) {
         try {
+    		HEXFileHandler hex = compile(in);
 			hex.generateFile(fileName);
-		} catch (IOException e) {
+	        print_text("Compile was sucessfull. Output: " + fileName, IMessageReporter.TYPE_INFO);
+	        programStart = hex.getProgramStart();
+	        boolean r = hex.loadIntoMemory(mem);
+	        if (r) print_text("Compiled file was loaded into operating memory.", IMessageReporter.TYPE_INFO);
+	        else print_text("Compiled file couldn't be loaded into operating"
+	                + "memory due to an error.",IMessageReporter.TYPE_ERROR);
+	        return true;
+		} catch (Exception e) {
             print_text(e.getMessage(), IMessageReporter.TYPE_ERROR);
             return false;
 		}
-        print_text("Compile was sucessfull. Output: " + fileName, IMessageReporter.TYPE_INFO);
-        programStart = hex.getProgramStart();
-
-        boolean r = hex.loadIntoMemory(mem);
-        if (r) print_text("Compiled file was loaded into operating memory.", IMessageReporter.TYPE_INFO);
-        else print_text("Compiled file couldn't be loaded into operating"
-                + "memory due to an error.",IMessageReporter.TYPE_ERROR);
-        return true;
 	}
-
-	@Override
-	public ILexer getLexer() { return lex; }
 
 	@Override
 	public ILexer getLexer(Reader in) { return new lexerZ80(in); }

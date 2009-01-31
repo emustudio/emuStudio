@@ -38,8 +38,8 @@ import java.io.*;
         return next_token();
     }
 
-    public void reset(int yyline, int yychar, int yycolumn) {
-        yyreset(zzReader);
+    public void reset(Reader in, int yyline, int yychar, int yycolumn) {
+        yyreset(in);
         this.yyline = yyline;
         this.yychar = yychar;
         this.yycolumn = yycolumn;
