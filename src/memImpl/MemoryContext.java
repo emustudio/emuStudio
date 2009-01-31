@@ -20,6 +20,8 @@ import java.util.EventObject;
 import java.util.Hashtable;
 import java.util.Vector;
 import javax.swing.event.EventListenerList;
+
+import memImpl.gui.frmMemory;
 import runtime.StaticDialogs;
 
 /**
@@ -35,6 +37,7 @@ public class MemoryContext implements SMemoryContext {
     private short bankSelect = 0;
     private int bankCommon = 0;
     private int b;
+    private frmMemory gui;
 
     // this table contains ROM parts of memory
     private Hashtable<Integer,Integer> romBitmap; // keys: low boundary (limit); values: upper boundary
@@ -49,7 +52,8 @@ public class MemoryContext implements SMemoryContext {
         deviceList = new EventListenerList();
     }
     
-    public boolean init(int size, int banks, int bankCommon) {
+    public boolean init(int size, int banks, int bankCommon,frmMemory gui) {
+        this.gui = gui;
         if (sizeSet == true) return false;
         this.bankCommon = bankCommon;
         if (banks <= 0) banks=1;
@@ -82,8 +86,10 @@ public class MemoryContext implements SMemoryContext {
     
     @Override
     public void setSeletedBank(short bankSelect) {
-        if (bankSelect < banksCount)
+        if (bankSelect < banksCount) {
             this.bankSelect = bankSelect;
+            if (gui != null) gui.updateBank(bankSelect);
+        }
     }
     
     @Override

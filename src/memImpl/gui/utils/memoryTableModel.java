@@ -12,7 +12,7 @@
  *
  */
 
-package gui.utils;
+package memImpl.gui.utils;
 
 import javax.swing.table.AbstractTableModel;
 import memImpl.MemoryContext;

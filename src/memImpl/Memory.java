@@ -9,10 +9,11 @@
 
 package memImpl;
 
-import gui.frmMemory;
 import java.io.File;
 import java.util.Collections;
 import java.util.Vector;
+
+import memImpl.gui.frmMemory;
 import plugins.ISettingsHandler;
 import plugins.memory.IMemory;
 import plugins.memory.IMemoryContext;
@@ -59,8 +60,7 @@ public class Memory implements IMemory {
 
     @Override
     public void showGUI() {
-        if (memGUI == null) memGUI = new frmMemory(this,settings);
-        memGUI.setVisible(true);
+        if (memGUI != null) memGUI.setVisible(true);
     }
 
     @Override
@@ -102,8 +102,9 @@ public class Memory implements IMemory {
         if (s != null) { try { bCount = Integer.parseInt(s); } catch(Exception e) {} }
         s = sHandler.readSetting(hash, "commonBoundary");
         if (s != null) { try { bCommon = Integer.parseInt(s); } catch(Exception e) {} }        
-        memContext.init(size, bCount,bCommon);
         this.settings = sHandler;
+        memContext.init(size, bCount,bCommon,memGUI);
+        memGUI = new frmMemory(this,settings);
     
         // load images
         int i = 0, adr = 0;
