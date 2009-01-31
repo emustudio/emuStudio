@@ -449,6 +449,7 @@ public class ArchLoader extends ClassLoader {
             return new ArchHandler(name, arch, settings, loadSchema(name),devNames);
         }
         catch (Exception e) {
+        	e.printStackTrace();
             String h = e.getLocalizedMessage();
             if (h == null || h.equals("")) h = "Unknown error";
             StaticDialogs.showErrorMessage("Error reading plugins: " + h);
@@ -635,10 +636,14 @@ public class ArchLoader extends ClassLoader {
         classname = classname.replace('/', '.');
         classname = classname.replace(File.separatorChar, '.');
         try {
-            Class<?> c = findLoadedClass(classname);
+            Class<?> c = null;
+            c = findLoadedClass(classname);
+//            if (findLoadedClass(classname) != null) {
+    //        	c = new ArchLoader().defineLoadedClass(classname, classbytes, length, resolve);
+  //          }
             if (c == null) {
-                try { c = findSystemClass(classname); }
-                catch (Exception e) {}
+            	try { c = findSystemClass(classname); }
+            	catch (Exception e) {}
             }
             if (c == null) 
                 c = defineClass(null, classbytes, 0, length);

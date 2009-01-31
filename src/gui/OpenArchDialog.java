@@ -5,6 +5,9 @@
  */
 
 package gui;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+
 import javax.swing.AbstractListModel;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
@@ -105,6 +108,22 @@ public class OpenArchDialog extends JDialog {
         lblChoose.setText("Choose virtual architecture to open:");
 
         scrollConfigs.setViewportView(lstArchNames);
+        
+        lstArchNames.addMouseListener(new MouseListener(){
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2)
+					btnOpenActionPerformed(null);
+			}
+			@Override
+			public void mouseEntered(MouseEvent e) {}
+			@Override
+			public void mouseExited(MouseEvent e) {}
+			@Override
+			public void mousePressed(MouseEvent e) {}
+			@Override
+			public void mouseReleased(MouseEvent e) {}
+        });
 
         btnEdit.setText("Edit...");
         btnEdit.addActionListener(new java.awt.event.ActionListener() {
@@ -164,46 +183,10 @@ public class OpenArchDialog extends JDialog {
         				.addComponent(btnEdit)
         				.addComponent(btnDelete)
         				.addComponent(btnPreview)
-        				.addComponent(btnOpen)));
-        
-//        layout.setHorizontalGroup(
-//            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-//            .addGroup(layout.createSequentialGroup()
-//                .addContainerGap()
-//                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-//                    .addComponent(scrollConfigs, GroupLayout.DEFAULT_SIZE, 414, Short.MAX_VALUE)
-//                    .addComponent(lblChoose)
-//                    .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-//                        .addComponent(btnNew, GroupLayout.PREFERRED_SIZE, 73, GroupLayout.PREFERRED_SIZE)
-//                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-//                        .addComponent(btnEdit, GroupLayout.PREFERRED_SIZE, 68, GroupLayout.PREFERRED_SIZE)
-//                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-//                        .addComponent(btnDelete, GroupLayout.PREFERRED_SIZE, 66, GroupLayout.PREFERRED_SIZE)
-//                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 32, Short.MAX_VALUE)
-//                        .addComponent(btnPreview)
-//                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-//                        .addComponent(btnOpen, GroupLayout.PREFERRED_SIZE, 80, GroupLayout.PREFERRED_SIZE)))
-//                .addContainerGap())
-//        );
-//        layout.setVerticalGroup(
-//            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-//            .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-//                .addContainerGap()
-//                .addComponent(lblChoose)
-//                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-//                .addComponent(scrollConfigs, GroupLayout.DEFAULT_SIZE, 154, Short.MAX_VALUE)
-//                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-//                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-//                    .addComponent(btnOpen)
-//                    .addComponent(btnPreview)
-//                    .addComponent(btnNew)
-//                    .addComponent(btnEdit)
-//                    .addComponent(btnDelete))
-//                .addContainerGap())
-//        );
-
+        				.addComponent(btnOpen))
+        		.addContainerGap());
         pack();
-    }// </editor-fold>//GEN-END:initComponents
+    }
 
     private void btnOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOpenActionPerformed
         if (lstArchNames.getSelectedIndex() == -1) {

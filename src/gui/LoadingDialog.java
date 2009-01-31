@@ -57,7 +57,7 @@ public class LoadingDialog extends JDialog {
                 .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(lblWarning)
                 .addContainerGap(lblWarning.getPreferredSize().height,lblWarning.getPreferredSize().height)
-        );
+                .addContainerGap());
 
         pack();
     }

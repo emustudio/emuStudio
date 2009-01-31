@@ -123,8 +123,8 @@ public class HighlightThread extends Thread {
                 work.removeElementAt(0);
             }
             synchronized(doclock) {
-                lex.reset(0,0,0);
                 lexReader.seek(0);
+                lex.reset(lexReader,0,0,0);
             }
             int len = (e.getType() == DocumentEvent.EventType.INSERT) ?
                 e.getLength() : -e.getLength();
@@ -132,8 +132,8 @@ public class HighlightThread extends Thread {
             try {
                 if (bl >= 0) {
                     synchronized(doclock) {
-                        lex.reset(0, bl, 0);
                         lexReader.seek(bl);
+                        lex.reset(lexReader,0, bl, 0);
                     }
                 }
                 IToken t;

@@ -202,7 +202,7 @@ public class ArchHandler implements ISettingsHandler {
         	String deviceName = deviceNames.get(hash);
             for (int i = 0; i < arch.getDeviceCount(); i++)
                 if (settings.getProperty("device"+i,"").equals(deviceName)) {
-                    prop = "device"+i+".";
+                    prop = "device"+i;
                     break;
                 }
         } else if (plug instanceof ICPU) prop = "cpu";
@@ -236,7 +236,7 @@ public class ArchHandler implements ISettingsHandler {
         	String deviceName = deviceNames.get(hash);
             for (int i = 0; i < arch.getDeviceCount(); i++)
                 if (settings.getProperty("device"+i,"").equals(deviceName)) {
-                    prop = "device"+i+".";
+                    prop = "device"+i;
                     break;
                 }
         } else if (plug instanceof ICPU) prop = "cpu";

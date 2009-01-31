@@ -46,7 +46,6 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
-import plugins.compiler.ILexer;
 import plugins.compiler.IMessageReporter;
 import plugins.cpu.ICPU;
 import plugins.cpu.ICPUContext.ICPUListener;
@@ -64,9 +63,7 @@ public class StudioFrame extends javax.swing.JFrame {
     private ArchHandler arch; // current architecture
     private ActionListener undoStateListener;
     private Clipboard systemClipboard;
-    
-    /* for compiling, not for syntax highlighting */
-    private ILexer syntaxLexer;
+
     private IMessageReporter reporter;
     private DebugTable tblDebug;
     private boolean cpuPermanentRunning;
@@ -101,10 +98,8 @@ public class StudioFrame extends javax.swing.JFrame {
         };
         
         // Initialize compiler
-        arch.getCompiler().initialize(arch, txtSource.getDocumentReader(), reporter);
-        txtSource.setLexer(arch.getCompiler().getLexer());
-        syntaxLexer = arch.getCompiler().getLexer(new DocumentReader(txtSource.getDocument()));
-        
+        arch.getCompiler().initialize(arch, reporter);
+        txtSource.setLexer(arch.getCompiler().getLexer(txtSource.getDocumentReader()));
         setUndoListener();
         setClipboardListener();
         
@@ -277,7 +272,8 @@ public class StudioFrame extends javax.swing.JFrame {
         JPanel peripheralPanel = new JPanel();
         JScrollPane paneDevices = new JScrollPane();
         lstDevices = new JList();
-        JButton showGUIButton = new JButton();
+        JButton btnShowGUI = new JButton();
+        JButton btnShowSettings = new JButton();
         JMenuBar jMenuBar2 = new JMenuBar();
         JMenu mnuFile = new JMenu();
         JMenuItem mnuFileNew = new JMenuItem();
@@ -631,8 +627,15 @@ public class StudioFrame extends javax.swing.JFrame {
 
         paneDevices.setViewportView(lstDevices);
 
-        showGUIButton.setText("Show");
-        showGUIButton.addActionListener(new java.awt.event.ActionListener() {
+        btnShowSettings.setText("Settings");
+        btnShowSettings.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                showSettingsButtonActionPerformed(evt);
+            }
+        });
+
+        btnShowGUI.setText("Show");
+        btnShowGUI.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 showGUIButtonActionPerformed(evt);
             }
@@ -643,17 +646,19 @@ public class StudioFrame extends javax.swing.JFrame {
         peripheralPanelLayout.setHorizontalGroup(
             peripheralPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addComponent(paneDevices)
-            .addGroup(peripheralPanelLayout.createSequentialGroup()
-                .addContainerGap(323, Short.MAX_VALUE)
-                .addComponent(showGUIButton)
-                .addContainerGap())
-        );
+            .addGroup(GroupLayout.Alignment.TRAILING, peripheralPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(btnShowSettings)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnShowGUI)
+                .addContainerGap()));
         peripheralPanelLayout.setVerticalGroup(
             peripheralPanelLayout.createSequentialGroup()
                 .addComponent(paneDevices)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(showGUIButton)
-        );
+                .addGroup(peripheralPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                		.addComponent(btnShowSettings)
+                        .addComponent(btnShowGUI)));
         splitPerDebug.setRightComponent(peripheralPanel);
         splitLeftRight.setLeftComponent(splitPerDebug);
 
@@ -856,6 +861,20 @@ public class StudioFrame extends javax.swing.JFrame {
         arch.getCPU().pause();
     }//GEN-LAST:event_btnPauseActionPerformed
 
+    private void showSettingsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showGUIButtonActionPerformed
+        try {
+            int i = lstDevices.getSelectedIndex();
+            if (i == -1) {
+                StaticDialogs.showErrorMessage("Device has to be selected!");
+                return;
+            }
+            arch.getDevices()[i].showSettings();
+        } catch(Exception e) {
+            StaticDialogs.showErrorMessage("Can't show settings of the device:\n " + e.getMessage());
+        }
+    }//GEN-LAST:event_showGUIButtonActionPerformed
+    
+    
     private void showGUIButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showGUIButtonActionPerformed
         try {
             int i = lstDevices.getSelectedIndex();
@@ -865,9 +884,9 @@ public class StudioFrame extends javax.swing.JFrame {
             }
             arch.getDevices()[i].showGUI();
         } catch(Exception e) {
-            StaticDialogs.showErrorMessage("Can't show the device: " + e.getMessage());
+            StaticDialogs.showErrorMessage("Can't show GUI of the device:\n " + e.getMessage());
         }
-}//GEN-LAST:event_showGUIButtonActionPerformed
+    }//GEN-LAST:event_showGUIButtonActionPerformed
 
     private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMemoryActionPerformed
         arch.getMemory().showGUI();
@@ -968,12 +987,12 @@ public class StudioFrame extends javax.swing.JFrame {
                 "Will you want to load compiled file into operating memory ?",
                 "Confirmation", JOptionPane.YES_NO_OPTION);
         try {
-            syntaxLexer.reset(0, 0, 0);
+        	DocumentReader r = new DocumentReader(txtSource.getDocument());
             if (res == JOptionPane.YES_OPTION) {
-            	arch.getCompiler().compile(fn, arch.getMemory().getContext());
+            	arch.getCompiler().compile(fn, r, arch.getMemory().getContext());
             	int programStart = arch.getCompiler().getProgramStartAddress();
             	arch.getMemory().setProgramStart(programStart);
-            } else arch.getCompiler().compile(fn);
+            } else arch.getCompiler().compile(fn,r);
         }
         catch(Exception e) {
             txtOutput.append(e.toString()+"\n");
