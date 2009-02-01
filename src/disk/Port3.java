@@ -4,6 +4,8 @@
  * Created on 18.6.2008, 15:13:58
  * hold to: KISS, YAGNI
  *
+ * IN: read data
+ * OUT: write data
  */
 
 package disk;

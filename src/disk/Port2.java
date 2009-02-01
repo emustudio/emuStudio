@@ -4,6 +4,8 @@
  * Created on 18.6.2008, 15:10:20
  * hold to: KISS, YAGNI
  *
+ * IN: sector pos
+ * OUT: set flags
  */
 
 package disk;

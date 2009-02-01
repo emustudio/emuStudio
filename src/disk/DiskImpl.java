@@ -118,6 +118,13 @@ import runtime.StaticDialogs;
 public class DiskImpl implements IDevice {
     private final static int DRIVES_COUNT = 16;
     private final static String KNOWN_CPU_CONTEXT_HASH = "4bb574accc0ed96b5ed84b5832127289";
+    public final static int CPU_PORT1 = 0x8;
+    public final static int CPU_PORT2 = 0x9;
+    public final static int CPU_PORT3 = 0xA;
+    
+    private int port1CPU;
+    private int port2CPU;
+    private int port3CPU;
     
     private long hash;
     private ACpuContext cpu;
@@ -137,6 +144,10 @@ public class DiskImpl implements IDevice {
         for (int i = 0; i < DRIVES_COUNT; i++)
             drives.add(new Drive());
         this.current_drive = 0xFF;
+        port1CPU = CPU_PORT1;
+        port2CPU = CPU_PORT2;
+        port3CPU = CPU_PORT3;
+
         port1 = new Port1(this);
         port2 = new Port2(this);
         port3 = new Port3(this);
@@ -149,43 +160,66 @@ public class DiskImpl implements IDevice {
         this.settings = sHandler;
         if (cpu == null) return true;
         
-        if (!cpu.getHash().equals(KNOWN_CPU_CONTEXT_HASH)) {
+        if (!(cpu instanceof ACpuContext) || (!cpu.getHash().equals(KNOWN_CPU_CONTEXT_HASH))) {
             StaticDialogs.showErrorMessage("Device can't be loaded, because "
                     + "CPU is not compatible with the device.");
             return false;
         }
         this.cpu = (ACpuContext) cpu;
+        readSettings();        
         
         // attach device to CPU
-        if (this.cpu.attachDevice(port1, 0x8) == false) {
+        if (this.cpu.attachDevice(port1, port1CPU) == false) {
         	String p;
-        	p = JOptionPane.showInputDialog("This device (port1) can not be attached to" +
-        			" default CPU port, please enter another one: ", 8);
-        	if (this.cpu.attachDevice(port1, Integer.decode(p)) == false) {
-        		StaticDialogs.showErrorMessage("Error: the device still can't be attached");
+        	p = JOptionPane.showInputDialog("88-DISK (port1) can not be attached to" +
+        			" default CPU port, please enter another one: ", port1CPU);
+        	try {
+        		port1CPU = Integer.decode(p);
+        		if (this.cpu.attachDevice(port1, port1CPU) == false) {
+        			StaticDialogs.showErrorMessage("Error: the device still can't be attached");
+        			return false;
+        		}
+        	} catch(NumberFormatException e) {
+        		StaticDialogs.showMessage("Bad number");
         		return false;
         	}
         }
-        if (this.cpu.attachDevice(port2, 0x9) == false) {
+        if (this.cpu.attachDevice(port2, port2CPU) == false) {
         	String p;
-        	p = JOptionPane.showInputDialog("This device (port2) can not be attached to" +
-        			" default CPU port, please enter another one: ", 9);
-        	if (this.cpu.attachDevice(port2, Integer.decode(p)) == false) {
-        		StaticDialogs.showErrorMessage("Error: the device still can't be attached");
+        	p = JOptionPane.showInputDialog("88-DISK (port2) can not be attached to" +
+        			" default CPU port, please enter another one: ", port2CPU);
+        	try {
+        		port2CPU = Integer.decode(p);
+        		if (this.cpu.attachDevice(port2, port2CPU) == false) {
+        			this.cpu.detachDevice(port1CPU);
+        			StaticDialogs.showErrorMessage("Error: the device still can't be attached");
+        			return false;
+        		}
+        	} catch(NumberFormatException e) {
+        		StaticDialogs.showMessage("Bad number");
+    			this.cpu.detachDevice(port1CPU);
         		return false;
         	}
         }
-        if (this.cpu.attachDevice(port3, 0xA) == false) {
+        if (this.cpu.attachDevice(port3, port3CPU) == false) {
         	String p;
-        	p = JOptionPane.showInputDialog("This device (port3) can not be attached to" +
-        			" default CPU port, please enter another one: ", 10);
-        	if (this.cpu.attachDevice(port3, Integer.decode(p)) == false) {
-        		StaticDialogs.showErrorMessage("Error: the device still can't be attached");
+        	p = JOptionPane.showInputDialog("88-DISK (port3) can not be attached to" +
+        			" default CPU port, please enter another one: ", port3CPU);
+        	try {
+        		port3CPU = Integer.decode(p);
+        		if (this.cpu.attachDevice(port3, port3CPU) == false) {
+        			this.cpu.detachDevice(port1CPU);
+        			this.cpu.detachDevice(port2CPU);
+        			StaticDialogs.showErrorMessage("Error: the device still can't be attached");
+        			return false;
+        		}
+        	} catch(NumberFormatException e) {
+        		StaticDialogs.showMessage("Bad number");
+    			this.cpu.detachDevice(port1CPU);
+    			this.cpu.detachDevice(port2CPU);
         		return false;
         	}
         }
-        
-        readSettings();        
         return true;
     }
 
@@ -195,7 +229,28 @@ public class DiskImpl implements IDevice {
     	if (s != null && s.toUpperCase().equals("TRUE"))
     		gui.setAlwaysOnTop(true);
     	else gui.setAlwaysOnTop(false);
-    	
+    	s = settings.readSetting(hash, "port1CPU");
+    	if (s != null) {
+    		try { port1CPU = Integer.decode(s);	}
+    		catch(NumberFormatException e) { 
+    			port1CPU = CPU_PORT1;
+    		}
+    	}
+    	s = settings.readSetting(hash, "port2CPU");
+    	if (s != null) {
+    		try { port2CPU = Integer.decode(s);	}
+    		catch(NumberFormatException e) {
+    			port2CPU = CPU_PORT2;
+    		}
+    	}
+    	s = settings.readSetting(hash, "port3CPU");
+    	if (s != null) {
+    		try { port3CPU = Integer.decode(s);	}
+    		catch(NumberFormatException e) {
+    			port3CPU = CPU_PORT3;
+    		}
+    	}
+
     	for (int i = 0; i < 16; i++) {
     		s = settings.readSetting(hash, "image"+i);
     		if (s != null)
@@ -205,7 +260,6 @@ public class DiskImpl implements IDevice {
     	        }
     	}
     }
-    
     
     @Override
     public void reset() { }

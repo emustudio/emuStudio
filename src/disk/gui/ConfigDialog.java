@@ -28,6 +28,7 @@ import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
 
 import disk.Drive;
+import disk.DiskImpl;
 
 import plugins.ISettingsHandler;
 import runtime.StaticDialogs;
@@ -58,12 +59,21 @@ public class ConfigDialog extends JDialog {
     	if (s != null && s.toUpperCase().equals("TRUE"))
     		chkAlwaysOnTop.setSelected(true);
     	else chkAlwaysOnTop.setSelected(false);
+    	s = settings.readSetting(hash, "port1CPU");
+    	if (s != null) txtPort1.setText(s);
+    	s = settings.readSetting(hash, "port2CPU");
+    	if (s != null) txtPort2.setText(s);
+    	s = settings.readSetting(hash, "port3CPU");
+    	if (s != null) txtPort3.setText(s);
     }
 
     private void writeSettings() {
     	if (chkAlwaysOnTop.isSelected())
     		settings.writeSetting(hash, "always_on_top", "true");
     	else settings.writeSetting(hash, "always_on_top", "false");
+    	settings.writeSetting(hash, "port1CPU", txtPort1.getText());
+    	settings.writeSetting(hash, "port2CPU", txtPort2.getText());
+    	settings.writeSetting(hash, "port3CPU", txtPort3.getText());
     		
     	for (int i = 0; i < 16; i++) {
             File f = ((Drive)drives.get(i)).getImageFile();
@@ -86,17 +96,29 @@ public class ConfigDialog extends JDialog {
     
     private void initComponents() {
         driveCombo = new JComboBox();
-        lblImage = new JLabel("Image:");
+        JLabel lblImage = new JLabel("Image:");
         txtImage = new JTextField();
         browseButton = new JButton("Browse...");
         mountButton = new JButton("Mount");
         umountButton = new JButton("Un-mount");
         createButton = new JButton("Create new image");
-        panelImages = new JPanel();
-        panelOther = new JPanel();
+        JPanel panelImages = new JPanel();
+        JPanel panelOther = new JPanel();
         chkAlwaysOnTop = new JCheckBox("GUI always on top");
         btnOK = new JButton("OK");
         chkSaveSettings = new JCheckBox("Save settings");
+        JPanel panelPorts = new JPanel();
+        JLabel lblWarning = new JLabel("These settings will be affected after restart");
+        JLabel lblPort1 = new JLabel("Port1:");
+        JLabel lblPort1D = new JLabel("(IN: flags, OUT: select/unselect drive)");
+        JLabel lblPort2 = new JLabel("Port2:");
+        JLabel lblPort2D = new JLabel("(IN: current sector, OUT: set flags)");
+        JLabel lblPort3 = new JLabel("Port3:");
+        JLabel lblPort3D = new JLabel("(IN: read data, OUT: write data)");
+        btnDefault = new JButton("Default");
+        txtPort1 = new JTextField("0x8");
+        txtPort2 = new JTextField("0x9");
+        txtPort3 = new JTextField("0xA");
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("MITS 88-DISK Configuration");
@@ -178,6 +200,64 @@ public class ConfigDialog extends JDialog {
                 .addComponent(createButton))            
             .addContainerGap());
 
+        panelPorts.setBorder(BorderFactory.createTitledBorder("CPU ports connection"));
+        btnDefault.addActionListener(new java.awt.event.ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				btnDefaultActionPerformed(e);
+			}        	
+        });
+        
+        GroupLayout panelPortsLayout = new GroupLayout(panelPorts);
+        panelPorts.setLayout(panelPortsLayout);
+        panelPortsLayout.setHorizontalGroup(
+        		panelPortsLayout.createSequentialGroup()
+        		.addContainerGap()
+        		.addGroup(panelPortsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        				.addComponent(lblWarning)
+        				.addGroup(panelPortsLayout.createSequentialGroup()
+        						.addComponent(lblPort1)
+        						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+        						.addComponent(txtPort1))
+        				.addComponent(lblPort1D)
+        				.addGroup(panelPortsLayout.createSequentialGroup()
+        						.addComponent(lblPort2)
+        						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+        						.addComponent(txtPort2))
+        				.addComponent(lblPort2D)
+        				.addGroup(panelPortsLayout.createSequentialGroup()
+        						.addComponent(lblPort3)
+        						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+        						.addComponent(txtPort3))
+        				.addComponent(lblPort3D)
+        				.addGroup(GroupLayout.Alignment.TRAILING, panelPortsLayout.createSequentialGroup()
+        						.addComponent(btnDefault)))
+        		.addContainerGap());
+        panelPortsLayout.setVerticalGroup(
+        		panelPortsLayout.createSequentialGroup()
+        		.addContainerGap()
+        		.addComponent(lblWarning)
+        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+        		.addGroup(panelPortsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+        				.addComponent(lblPort1)
+        				.addComponent(txtPort1))
+        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+        		.addComponent(lblPort1D)
+        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+        		.addGroup(panelPortsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+        				.addComponent(lblPort2)
+        				.addComponent(txtPort2))
+        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+        		.addComponent(lblPort2D)
+        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+        		.addGroup(panelPortsLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+        				.addComponent(lblPort3)
+        				.addComponent(txtPort3))
+        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+        		.addComponent(lblPort3D)
+        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+        		.addComponent(btnDefault)
+        		.addContainerGap());
+        
         panelOther.setBorder(BorderFactory.createTitledBorder("Other"));
 
         GroupLayout panelOtherLayout = new GroupLayout(panelOther);
@@ -207,7 +287,8 @@ public class ConfigDialog extends JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(panelImages, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(panelImages, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(panelPorts, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(panelOther, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
             .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -218,6 +299,8 @@ public class ConfigDialog extends JDialog {
             layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(panelImages, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(panelPorts, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(panelOther, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
@@ -307,23 +390,50 @@ public class ConfigDialog extends JDialog {
     }
     
     private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {
+    	
+    	try { Integer.decode(txtPort1.getText()); }
+    	catch(NumberFormatException e) {
+    		StaticDialogs.showErrorMessage("Port1: Bad number");
+    		txtPort1.grabFocus();
+    		return;
+    	}
+    	try { Integer.decode(txtPort2.getText()); }
+    	catch(NumberFormatException e) {
+    		StaticDialogs.showErrorMessage("Port2: Bad number");
+    		txtPort2.grabFocus();
+    		return;
+    	}
+    	try { Integer.decode(txtPort3.getText()); }
+    	catch(NumberFormatException e) {
+    		StaticDialogs.showErrorMessage("Port3: Bad number");
+    		txtPort3.grabFocus();
+    		return;
+    	}
+    	
     	gui.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
     	if (chkSaveSettings.isSelected()) writeSettings();
     	dispose();
     }
     
+    private void btnDefaultActionPerformed(java.awt.event.ActionEvent evt) {
+    	txtPort1.setText(String.valueOf(DiskImpl.CPU_PORT1));
+    	txtPort2.setText(String.valueOf(DiskImpl.CPU_PORT2));
+    	txtPort3.setText(String.valueOf(DiskImpl.CPU_PORT3));
+    }
+
     private JCheckBox chkAlwaysOnTop;
     private JButton browseButton;
     private JButton createButton;
     private JComboBox driveCombo;
-    private JLabel lblImage;
-    private JPanel panelImages;
-    private JPanel panelOther;
     private JButton mountButton;
     private JTextField txtImage;
     private JButton umountButton;
     private JButton btnOK;
     private JCheckBox chkSaveSettings;
+    private JButton btnDefault;
+    private JTextField txtPort1;
+    private JTextField txtPort2;
+    private JTextField txtPort3;
 
     
 }
