@@ -445,7 +445,7 @@ public class ArchLoader extends ClassLoader {
             }
 
             Architecture arch = new Architecture(cpu, cpuHash, mem, memHash,
-            		com, comHash, devs, lines);
+            		com, comHash, devs, devsArray.toArray(new IDevice[0]), lines);
             return new ArchHandler(name, arch, settings, loadSchema(name),devNames);
         }
         catch (Exception e) {

@@ -2,6 +2,8 @@
  * ViewArchDialog.java
  *
  * Created on Utorok, 2007, september 11, 15:42
+ * 
+ * KISS,YAGNI
  */
 
 package gui;
@@ -45,6 +47,10 @@ public class ViewArchDialog extends JDialog {
         super(parent, modal);
         arch = Main.currentArch;
         initComponents();
+        
+        compilerName = arch.getCompilerName();
+        memoryName = arch.getMemoryName();
+        cpuName = arch.getCPUName();
         
         devNames = new Vector<String>();
         for (int i = 0; i < arch.getDevices().length; i++)

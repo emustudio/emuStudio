@@ -184,6 +184,33 @@ public class ArchHandler implements ISettingsHandler {
     }
     
     /**
+     * Get compiler file name, without file extension.
+     * 
+     * @return compiler name or null
+     */     
+    public String getCompilerName() {
+    	return settings.getProperty("compiler",null);
+    }
+
+    /**
+     * Get CPU file name, without file extension.
+     * 
+     * @return CPU name or null
+     */     
+    public String getCPUName() {
+    	return settings.getProperty("cpu",null);
+    }
+
+    /**
+     * Get memory file name, without file extension.
+     * 
+     * @return memory name or null
+     */     
+    public String getMemoryName() {
+    	return settings.getProperty("memory",null);
+    }
+    
+    /**
      * Method writes a value of specified setting to Properties for 
      * specified plugin. Setting has to be fully specified.
      * 

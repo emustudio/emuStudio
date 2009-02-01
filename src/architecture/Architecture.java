@@ -33,7 +33,7 @@ public class Architecture {
 	
 	public Architecture(ICPU cpu, long cpuHash, IMemory memory,
 			long memoryHash, ICompiler compiler, long compilerHash,
-			Hashtable<Long,IDevice> devices,
+			Hashtable<Long,IDevice> devices, IDevice[] devicesArray,
 			Hashtable<IPlugin,ArrayList<IPlugin>> connections) {
 		this.cpu = cpu;
 		this.cpuHash = cpuHash;
@@ -42,7 +42,7 @@ public class Architecture {
 		this.compiler = compiler;
 		this.compilerHash = compilerHash;
 		this.devices = devices;
-		devicesArray = (IDevice[]) devices.values().toArray(new IDevice[0]);
+		this.devicesArray = devicesArray;
 		this.connections = connections;
     }
 	
