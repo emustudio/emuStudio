@@ -88,7 +88,7 @@ public class Cpu8080 implements ICPU, Runnable {
     	return "Modified for use as CPU for MITS Altair 8800 computer";
     }
     @Override
-    public String getVersion() { return "0.18b"; }
+    public String getVersion() { return "0.20b"; }
     @Override
     public String getTitle() { return "Intel 8080 CPU"; }
     @Override
