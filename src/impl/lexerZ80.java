@@ -458,6 +458,7 @@ public class lexerZ80 implements java_cup.runtime.Scanner, ILexer {
     private int lastToken;
     private String lastText; // token string holder
 
+    @Override
     public tokenZ80 getSymbol() throws IOException {
         return next_token();
     }
