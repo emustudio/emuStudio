@@ -107,7 +107,7 @@ public class TerminalImpl implements IDevice {
 
     @Override
     public String getVersion() {
-        return "0.12b1";
+        return "0.15b";
     }
 
     @Override
