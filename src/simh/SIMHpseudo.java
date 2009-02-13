@@ -100,7 +100,8 @@ public class SIMHpseudo implements IDevice {
     public String getTitle() { return "SIMH pseudo device"; }
     @Override
     public String getCopyright() {
-        return "Copyright (c) 2002-2007, Peter Schorn\n\u00A9 Copyright 2007-2008, Peter Jakubčo";
+        return "Copyright (c) 2002-2007, Peter Schorn\n"
+            + "\u00A9 Copyright 2007-2009, Peter Jakubčo";
     }
     @Override
     public String getDescription() {
@@ -109,7 +110,7 @@ public class SIMHpseudo implements IDevice {
                 + "via port 0xfe. The version of the interface is: SIMH003";
     }
     @Override
-    public String getVersion() { return "0.1b"; }
+    public String getVersion() { return "0.11b"; }
 
     @Override
     public void destroy() {}
