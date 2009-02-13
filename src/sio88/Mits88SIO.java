@@ -79,7 +79,7 @@ public class Mits88SIO implements IDevice {
                 + "http://www.classiccmp.org/dunfield/s100c/mits/88sio_1.pdf";
     }
     @Override
-    public String getVersion() { return "0.12b"; }
+    public String getVersion() { return "0.15b"; }
     @Override
     public String getTitle() { return "MITS-88-SIO serial card"; }
     @Override
