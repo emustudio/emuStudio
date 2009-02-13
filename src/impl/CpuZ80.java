@@ -213,7 +213,7 @@ public class CpuZ80 implements ICPU, Runnable {
     @Override
     public String getTitle() { return "Zilog Z80"; }
     @Override
-    public String getCopyright() { return "\u00A9 Copyright 2008, Peter Jakubčo"; }
+    public String getCopyright() { return "\u00A9 Copyright 2008-2009, Peter Jakubčo"; }
     @Override
     public String getDescription() {
         return "Implementation of Zilog Z80 8bit CPU. With its architecture"
@@ -221,7 +221,7 @@ public class CpuZ80 implements ICPU, Runnable {
                + " extended.";
     }
     @Override
-    public String getVersion() { return "0.11b"; }
+    public String getVersion() { return "0.15b"; }
     @Override
     public int getInstrPosition() { return PC; }
     @Override
