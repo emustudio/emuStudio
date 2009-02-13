@@ -18,17 +18,14 @@ package interfaces;
 public class ICPUInstruction {
     private String mnemo;
     private String operCode;
-    private int nextInstruction;
     
     /** Creates a new instance of ICPUInstruction */
-    public ICPUInstruction(String mnemo, String opCode, int next) {
+    public ICPUInstruction(String mnemo, String opCode) {
         this.mnemo = mnemo;
         this.operCode = opCode;
-        this.nextInstruction = next;
     }
     
     public String getMnemo() { return this.mnemo; }
     public String getOperCode() { return this.operCode; }
-    public int getNextInstruction() { return this.nextInstruction; }
     
 }

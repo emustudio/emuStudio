@@ -488,7 +488,7 @@ public class statusGUI extends JPanel {
                 default: mnemo = "unknown instruction";
             }
         }
-        instr = new ICPUInstruction(mnemo,oper,actPos);
+        instr = new ICPUInstruction(mnemo,oper);
         return instr;
     }
     
