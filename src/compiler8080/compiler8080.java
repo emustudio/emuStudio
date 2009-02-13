@@ -48,7 +48,7 @@ public class compiler8080 implements ICompiler {
     @Override
     public String getTitle() { return "Intel 8080 Compiler"; }
     @Override
-    public String getVersion() { return "0.28b"; }
+    public String getVersion() { return "0.29b"; }
     @Override
     public String getCopyright() { return "\u00A9 Copyright 2007-2009, P.Jakubčo"; }
     @Override
