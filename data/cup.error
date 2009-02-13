@@ -1,0 +1,276 @@
+Opening files...
+Parsing specification from standard input...
+Checking specification...
+Building parse tables...
+  Computing non-terminal nullability...
+  Computing first sets...
+  Building state machine...
+  Filling in tables...
+  Checking for non-reduced productions...
+Writing parser...
+===== Terminals =====
+[0]EOF [1]error [2]INC [3]DEC [4]INCV 
+[5]DECV [6]PRINT [7]LOAD [8]LOOP [9]ENDL 
+[10]EOL [11]TCOMMENT 
+
+===== Non terminals =====
+[0]Program [1]Row [2]Statement [3]Comment 
+
+===== Productions =====
+[0] $START ::= Program EOF 
+[1] Program ::= Row 
+[2] Program ::= Program EOL Row 
+[3] Row ::= Statement Comment 
+[4] Row ::= Comment 
+[5] Comment ::= TCOMMENT 
+[6] Comment ::= 
+[7] Statement ::= INC 
+[8] Statement ::= DEC 
+[9] Statement ::= INCV 
+[10] Statement ::= DECV 
+[11] Statement ::= PRINT 
+[12] Statement ::= LOAD 
+[13] Statement ::= LOOP 
+[14] Statement ::= ENDL 
+
+===== Viable Prefix Recognizer =====
+START lalr_state [0]: {
+  [Statement ::= (*) ENDL , {EOF EOL TCOMMENT }]
+  [Statement ::= (*) PRINT , {EOF EOL TCOMMENT }]
+  [Statement ::= (*) DEC , {EOF EOL TCOMMENT }]
+  [Comment ::= (*) TCOMMENT , {EOF EOL }]
+  [Program ::= (*) Program EOL Row , {EOF EOL }]
+  [Statement ::= (*) LOOP , {EOF EOL TCOMMENT }]
+  [Statement ::= (*) DECV , {EOF EOL TCOMMENT }]
+  [Statement ::= (*) INC , {EOF EOL TCOMMENT }]
+  [Row ::= (*) Comment , {EOF EOL }]
+  [Program ::= (*) Row , {EOF EOL }]
+  [Statement ::= (*) LOAD , {EOF EOL TCOMMENT }]
+  [Statement ::= (*) INCV , {EOF EOL TCOMMENT }]
+  [Comment ::= (*) , {EOF EOL }]
+  [Row ::= (*) Statement Comment , {EOF EOL }]
+  [$START ::= (*) Program EOF , {EOF }]
+}
+transition on ENDL to state [13]
+transition on DEC to state [12]
+transition on INCV to state [11]
+transition on INC to state [10]
+transition on TCOMMENT to state [9]
+transition on LOAD to state [8]
+transition on PRINT to state [7]
+transition on Statement to state [6]
+transition on LOOP to state [5]
+transition on DECV to state [4]
+transition on Comment to state [3]
+transition on Program to state [2]
+transition on Row to state [1]
+
+-------------------
+lalr_state [1]: {
+  [Program ::= Row (*) , {EOF EOL }]
+}
+
+-------------------
+lalr_state [2]: {
+  [Program ::= Program (*) EOL Row , {EOF EOL }]
+  [$START ::= Program (*) EOF , {EOF }]
+}
+transition on EOF to state [16]
+transition on EOL to state [15]
+
+-------------------
+lalr_state [3]: {
+  [Row ::= Comment (*) , {EOF EOL }]
+}
+
+-------------------
+lalr_state [4]: {
+  [Statement ::= DECV (*) , {EOF EOL TCOMMENT }]
+}
+
+-------------------
+lalr_state [5]: {
+  [Statement ::= LOOP (*) , {EOF EOL TCOMMENT }]
+}
+
+-------------------
+lalr_state [6]: {
+  [Comment ::= (*) TCOMMENT , {EOF EOL }]
+  [Comment ::= (*) , {EOF EOL }]
+  [Row ::= Statement (*) Comment , {EOF EOL }]
+}
+transition on Comment to state [14]
+transition on TCOMMENT to state [9]
+
+-------------------
+lalr_state [7]: {
+  [Statement ::= PRINT (*) , {EOF EOL TCOMMENT }]
+}
+
+-------------------
+lalr_state [8]: {
+  [Statement ::= LOAD (*) , {EOF EOL TCOMMENT }]
+}
+
+-------------------
+lalr_state [9]: {
+  [Comment ::= TCOMMENT (*) , {EOF EOL }]
+}
+
+-------------------
+lalr_state [10]: {
+  [Statement ::= INC (*) , {EOF EOL TCOMMENT }]
+}
+
+-------------------
+lalr_state [11]: {
+  [Statement ::= INCV (*) , {EOF EOL TCOMMENT }]
+}
+
+-------------------
+lalr_state [12]: {
+  [Statement ::= DEC (*) , {EOF EOL TCOMMENT }]
+}
+
+-------------------
+lalr_state [13]: {
+  [Statement ::= ENDL (*) , {EOF EOL TCOMMENT }]
+}
+
+-------------------
+lalr_state [14]: {
+  [Row ::= Statement Comment (*) , {EOF EOL }]
+}
+
+-------------------
+lalr_state [15]: {
+  [Statement ::= (*) ENDL , {EOF EOL TCOMMENT }]
+  [Statement ::= (*) PRINT , {EOF EOL TCOMMENT }]
+  [Statement ::= (*) DEC , {EOF EOL TCOMMENT }]
+  [Program ::= Program EOL (*) Row , {EOF EOL }]
+  [Comment ::= (*) TCOMMENT , {EOF EOL }]
+  [Statement ::= (*) LOOP , {EOF EOL TCOMMENT }]
+  [Statement ::= (*) DECV , {EOF EOL TCOMMENT }]
+  [Statement ::= (*) INC , {EOF EOL TCOMMENT }]
+  [Row ::= (*) Comment , {EOF EOL }]
+  [Statement ::= (*) LOAD , {EOF EOL TCOMMENT }]
+  [Statement ::= (*) INCV , {EOF EOL TCOMMENT }]
+  [Comment ::= (*) , {EOF EOL }]
+  [Row ::= (*) Statement Comment , {EOF EOL }]
+}
+transition on ENDL to state [13]
+transition on DEC to state [12]
+transition on INCV to state [11]
+transition on INC to state [10]
+transition on TCOMMENT to state [9]
+transition on LOAD to state [8]
+transition on PRINT to state [7]
+transition on Statement to state [6]
+transition on LOOP to state [5]
+transition on DECV to state [4]
+transition on Comment to state [3]
+transition on Row to state [17]
+
+-------------------
+lalr_state [16]: {
+  [$START ::= Program EOF (*) , {EOF }]
+}
+
+-------------------
+lalr_state [17]: {
+  [Program ::= Program EOL Row (*) , {EOF EOL }]
+}
+
+-------------------
+-------- ACTION_TABLE --------
+From state #0
+ [term 0:REDUCE(with prod 6)] [term 2:SHIFT(to state 10)]
+ [term 3:SHIFT(to state 12)] [term 4:SHIFT(to state 11)]
+ [term 5:SHIFT(to state 4)] [term 6:SHIFT(to state 7)]
+ [term 7:SHIFT(to state 8)] [term 8:SHIFT(to state 5)]
+ [term 9:SHIFT(to state 13)] [term 10:REDUCE(with prod 6)]
+ [term 11:SHIFT(to state 9)]
+From state #1
+ [term 0:REDUCE(with prod 1)] [term 10:REDUCE(with prod 1)]
+From state #2
+ [term 0:SHIFT(to state 16)] [term 10:SHIFT(to state 15)]
+From state #3
+ [term 0:REDUCE(with prod 4)] [term 10:REDUCE(with prod 4)]
+From state #4
+ [term 0:REDUCE(with prod 10)] [term 10:REDUCE(with prod 10)]
+ [term 11:REDUCE(with prod 10)]
+From state #5
+ [term 0:REDUCE(with prod 13)] [term 10:REDUCE(with prod 13)]
+ [term 11:REDUCE(with prod 13)]
+From state #6
+ [term 0:REDUCE(with prod 6)] [term 10:REDUCE(with prod 6)]
+ [term 11:SHIFT(to state 9)]
+From state #7
+ [term 0:REDUCE(with prod 11)] [term 10:REDUCE(with prod 11)]
+ [term 11:REDUCE(with prod 11)]
+From state #8
+ [term 0:REDUCE(with prod 12)] [term 10:REDUCE(with prod 12)]
+ [term 11:REDUCE(with prod 12)]
+From state #9
+ [term 0:REDUCE(with prod 5)] [term 10:REDUCE(with prod 5)]
+From state #10
+ [term 0:REDUCE(with prod 7)] [term 10:REDUCE(with prod 7)]
+ [term 11:REDUCE(with prod 7)]
+From state #11
+ [term 0:REDUCE(with prod 9)] [term 10:REDUCE(with prod 9)]
+ [term 11:REDUCE(with prod 9)]
+From state #12
+ [term 0:REDUCE(with prod 8)] [term 10:REDUCE(with prod 8)]
+ [term 11:REDUCE(with prod 8)]
+From state #13
+ [term 0:REDUCE(with prod 14)] [term 10:REDUCE(with prod 14)]
+ [term 11:REDUCE(with prod 14)]
+From state #14
+ [term 0:REDUCE(with prod 3)] [term 10:REDUCE(with prod 3)]
+From state #15
+ [term 0:REDUCE(with prod 6)] [term 2:SHIFT(to state 10)]
+ [term 3:SHIFT(to state 12)] [term 4:SHIFT(to state 11)]
+ [term 5:SHIFT(to state 4)] [term 6:SHIFT(to state 7)]
+ [term 7:SHIFT(to state 8)] [term 8:SHIFT(to state 5)]
+ [term 9:SHIFT(to state 13)] [term 10:REDUCE(with prod 6)]
+ [term 11:SHIFT(to state 9)]
+From state #16
+ [term 0:REDUCE(with prod 0)]
+From state #17
+ [term 0:REDUCE(with prod 2)] [term 10:REDUCE(with prod 2)]
+------------------------------
+-------- REDUCE_TABLE --------
+From state #0
+ [non term 0->state 2] [non term 1->state 1] [non term 2->state 6]
+ [non term 3->state 3]
+From state #1
+From state #2
+From state #3
+From state #4
+From state #5
+From state #6
+ [non term 3->state 14]
+From state #7
+From state #8
+From state #9
+From state #10
+From state #11
+From state #12
+From state #13
+From state #14
+From state #15
+ [non term 1->state 17] [non term 2->state 6] [non term 3->state 3]
+From state #16
+From state #17
+-----------------------------
+Closing files...
+------- CUP v0.11a beta 20060608 Parser Generation Summary -------
+  0 errors and 0 warnings
+  12 terminals, 4 non-terminals, and 15 productions declared, 
+  producing 18 unique parse states.
+  0 terminals declared but not used.
+  0 non-terminals declared but not used.
+  0 productions never reduced.
+  0 conflicts detected (0 expected).
+  Code written to "BDParser.java", and "symBD.java".
+---------------------------------------------------- (v0.11a beta 20060608)

@@ -1,0 +1,87 @@
+/*
+ * BDParser.java
+ *
+ * Parser (syntactic analyzer for BrainDuck)
+ *
+ * KEEP IT SIMPLE STUPID
+ * sometimes just: YOU AREN'T GONNA NEED IT
+ *
+ */
+
+import java_cup.runtime.Symbol;
+import plugins.compiler.IMessageReporter;
+import plugins.compiler.IToken;
+import brainduck.tree.*;
+
+init with {: errorCount = 0; :}
+parser code {:
+    private IMessageReporter reporter = null;
+    public IToken lastToken;
+    public int errorCount = 0;
+    
+    public BDParser(java_cup.runtime.Scanner s, IMessageReporter reporter) {
+        this(s);
+        this.reporter = reporter;
+    }
+    	
+    public void syntax_error(Symbol current) {
+        errorCount++;
+        report_error("Syntax error: ",current);
+    }
+
+    public void unrecovered_syntax_error(Symbol current) {
+        errorCount++;
+        report_error("Fatal syntax error: ", current);
+        done_parsing();
+    }
+
+    public void report_error(String message, Symbol current) {
+        String mes;
+
+        IToken t = (IToken)current;
+        mes = message + t.getErrorString() + " ('"+t.getText()+"')";
+
+        reporter.report(t.getLine()+1, t.getColumn(),mes, IMessageReporter.TYPE_ERROR);
+    }
+:}
+
+terminal INC,DEC,INCV,DECV,PRINT,LOAD,LOOP,ENDL;
+terminal EOL;
+terminal TCOMMENT;
+
+non terminal Program Program;
+non terminal Row Row;
+non terminal Statement Statement;
+non terminal Comment;
+
+start with Program;
+
+Program ::= Row:row
+            {:
+                Program program = new Program();
+                if (row != null) program.addRow(row);
+                RESULT = program;
+            :}
+          | Program:program EOL Row:row
+            {:
+                if (row != null) program.addRow(row);
+                RESULT = program;
+            :};
+
+Row ::= Statement:stmt Comment
+        {: RESULT = new Row(stmt); :}
+      | Comment
+        {: RESULT = null; :};
+         
+Comment ::= TCOMMENT | ;
+
+Statement ::= INC   {: RESULT = new Statement(Statement.INC); :}
+            | DEC   {: RESULT = new Statement(Statement.DEC); :}
+            | INCV  {: RESULT = new Statement(Statement.INCV); :}
+            | DECV  {: RESULT = new Statement(Statement.DECV); :}
+            | PRINT {: RESULT = new Statement(Statement.PRINT); :}
+            | LOAD  {: RESULT = new Statement(Statement.LOAD); :}
+            | LOOP  {: RESULT = new Statement(Statement.LOOP); :}
+            | ENDL  {: RESULT = new Statement(Statement.ENDL); :}
+            ;
+
