@@ -55,11 +55,12 @@ public class AboutDialog extends javax.swing.JDialog {
         lblVersionLBL.setFont(lblVersionLBL.getFont().deriveFont(lblVersionLBL.getFont().getStyle() | Font.BOLD));
         lblVersionLBL.setText("Version:");
 
-        lblVersion.setText("0.32b1");
+        lblVersion.setText("0.35b1");
+
         lblConsultant.setText("ing. Slavomir Šimoňák");
 
         lblCopyright.setFont(lblCopyright.getFont().deriveFont(lblCopyright.getFont().getStyle() | Font.BOLD));
-        lblCopyright.setText("© Copyright 2006-2008, Peter Jakubčo");
+        lblCopyright.setText("© Copyright 2006-2009, Peter Jakubčo");
 
         lblLicense.setText("<html>Full license agreement is written in file <strong>license.txt</strong>");
 
