@@ -282,7 +282,7 @@ public class DiskImpl implements IDevice {
     }
 
     @Override
-    public String getVersion() { return "0.24b"; }
+    public String getVersion() { return "0.25b"; }
     @Override
     public String getTitle() { return "MITS-88 DISK (floppy drive)"; }
     @Override
