@@ -992,6 +992,7 @@ public class StudioFrame extends javax.swing.JFrame {
             	arch.getCompiler().compile(fn, r, arch.getMemory().getContext());
             	int programStart = arch.getCompiler().getProgramStartAddress();
             	arch.getMemory().setProgramStart(programStart);
+            	arch.getCPU().reset(programStart);
             } else arch.getCompiler().compile(fn,r);
         }
         catch(Exception e) {
@@ -1052,13 +1053,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         if (txtSource.confirmSave() == true) return;
-        // destroy all devices
-        try {
-            for (int i = 0; i < arch.getDevices().length; i++)
-                arch.getDevices()[i].destroy();
-            arch.getCPU().destroy();
-            arch.getMemory().destroy();
-        } catch (Exception e) {}
+        arch.destroy();
         dispose();
         System.exit(0); //calling the method is a must
     }//GEN-LAST:event_formWindowClosing
@@ -1132,10 +1127,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void mnuEditReplaceNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditReplaceNextActionPerformed
         try {
-            if (FindText.getThis().replaceNext(txtSource.getText(), 
-                    txtSource.getCaretPosition(),
-                    txtSource.getDocument().getEndPosition().getOffset()-1)) {
-                txtSource.setText(FindText.getThis().getReplacedString());
+            if (FindText.getThis().replaceNext(txtSource)) {
                 txtSource.grabFocus();
             } else StaticDialogs.showMessage("Expression was not found");
         } catch (NullPointerException e) {

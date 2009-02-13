@@ -29,7 +29,8 @@ import plugins.compiler.IToken;
  */
 public class HighlightThread extends Thread {
     private SortedSet<Integer> tokensPos = Collections.synchronizedSortedSet(new TreeSet<Integer>());
-    private Hashtable<Integer,Integer> tokenTypes = new Hashtable<Integer,Integer>();
+    private Hashtable<Integer,Integer> tokenTypes   = new Hashtable<Integer,Integer>();
+    private Hashtable<Integer,Integer> tokenLengths = new Hashtable<Integer,Integer>();
     
     private ILexer lex;
     private DocumentReader lexReader;
@@ -129,6 +130,7 @@ public class HighlightThread extends Thread {
             int len = (e.getType() == DocumentEvent.EventType.INSERT) ?
                 e.getLength() : -e.getLength();
             int bl = updateTokenPositions(e.getOffset(),len);
+//            System.out.print("Seek at:" + bl);
             try {
                 if (bl >= 0) {
                     synchronized(doclock) {
@@ -140,18 +142,34 @@ public class HighlightThread extends Thread {
                 synchronized(doclock) {
                     t = lex.getSymbol();
                 }
+//                System.out.println("; <" + t.getID() + "> [" + t.getOffset() + ";" + t.getLength() + "]");
                 while (t.getType() != IToken.TEOF) {
                     if (tokensPos.contains(t.getOffset())) {
+//                    	System.out.print("    found: ");
                         int tid = tokenTypes.get(t.getOffset());
+                        int tlen = tokenTypes.get(t.getOffset());
                         // ak je token ZA kurzorom v dokumente a tokeny su
-                        // zhodne
+                        // zhodne (rovnake ID a dlzku) tak uz viac netreba
+                        // skenovat
                         if ((t.getOffset() > e.getOffset())
-                        		&& (tid == t.getID())) break;
-                        else tokensPos.remove(t.getOffset());
+                        		&& (tid == t.getID()) && (tlen == t.getLength())) {
+//                        	System.out.println("the same: " + t.getText());
+                        	break;
+                        }
+                        else {
+//                        	System.out.println("not equal: <" + t.getID() + "> != saved<" + tid + ">");
+                        	// inak odstranujem token
+                        	tokensPos.remove(t.getOffset());
+                        	tokenTypes.remove(t.getOffset());
+                        	tokenLengths.remove(t.getOffset());
+                        }
                     }
+//                    System.out.println("Removing tokens from: " + t.getOffset() 
+  //                  		+ " to " + (t.getOffset() + t.getLength()));
                     removeTokens(t.getOffset(),t.getOffset() + t.getLength());
                     tokensPos.add(t.getOffset());
                     tokenTypes.put(t.getOffset(), t.getID());
+                    tokenLengths.put(t.getOffset(), t.getLength());
 
                     SimpleAttributeSet style = (SimpleAttributeSet)
                                 styles.get(t.getType());
@@ -166,7 +184,7 @@ public class HighlightThread extends Thread {
                 }
                 if ((e.getType() == DocumentEvent.EventType.REMOVE) 
                         && (t.getType() == IToken.TEOF)) {
-                    // remove rest tokens in tokenPos and tokenTypes
+                    // remove rest tokens in tokenPos and tokenTypes and tokenLengths
                     try { removeTokens(bl+1,tokensPos.last()+1);}
                     catch(NoSuchElementException exx) {}
                 }
@@ -183,34 +201,56 @@ public class HighlightThread extends Thread {
     /**
      * Add to tokensPos from position "from" length "length". Length can be
      * both positive or negative.
-     * @return before-last(from) token position if change was made, -1 otherwise
+     * @return before-before-last(from) token position if change was made,
+     *         or first error token from continuous error token string to
+     *         the left if the last token is error
+     *         -1 otherwise
      */
     private int updateTokenPositions(int from, int length) {
         int p = -1;
         int beforeLast = -1;
+        int BBlast = -1;
+        int lastError = -1;
+        int type;
+        
         // search for nearest "from"
         for (Iterator<Integer> i = tokensPos.iterator();i.hasNext();) {
+        	BBlast = beforeLast;
             p = i.next();
+            type = tokenTypes.get(p);
+            if ((lastError == -1) && type == IToken.ERROR)
+            	lastError = p;
+            else if (type != IToken.ERROR)
+            	lastError = -1;
             if (p >= from) break;
             beforeLast = p;
         }
         // treeset contains no elements or from is last position
-        if ((p == -1) || (p < from)) return beforeLast;
+        if ((p == -1) || (p < from)) {
+        	if ((lastError != -1) && (lastError < BBlast)) return lastError;
+        	else return BBlast;
+        }
+        
         SortedSet<Integer> s = tokensPos.tailSet(p);
         Integer[] poss = s.toArray(new Integer[0]);
         Vector<Integer> types = new Vector<Integer>();
+        Vector<Integer> lengths = new Vector<Integer>();
         for (int i = 0; i < poss.length; i++) {
             tokensPos.remove(poss[i]);
             types.add(tokenTypes.get(poss[i]));
+            lengths.add(tokenLengths.get(poss[i]));
             tokenTypes.remove(poss[i]);
+            tokenLengths.remove(poss[i]);
         }
         for (int i = 0; i < poss.length; i++) {
             int l = poss[i] + length;
             if (l < 0) continue;
             tokensPos.add(l);
             tokenTypes.put(l, types.elementAt(i));
+            tokenLengths.put(l, lengths.elementAt(i));
         }
-        return beforeLast;
+    	if ((lastError != -1) && (lastError < BBlast)) return lastError;
+    	else return BBlast;
     }
 
     
@@ -226,6 +266,7 @@ public class HighlightThread extends Thread {
             p = i.next();
             if ((p >= from) && (p < to)) {
                 tokenTypes.remove(p);
+                tokenLengths.remove(p);
                 i.remove();
             }
             if (p >= to) break; // no more tokens in range

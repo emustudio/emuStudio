@@ -309,10 +309,7 @@ public class FindDialog extends javax.swing.JDialog {
             FindText.getThis().createPattern(str);
             FindText.getThis().replacement = (String)
                     cmbReplace.getEditor().getItem();
-            if (FindText.getThis().replaceNext(textPane.getText(),
-                    textPane.getCaretPosition(),
-                    textPane.getDocument().getEndPosition().getOffset()-1)) {
-                textPane.setText(FindText.getThis().getReplacedString());
+            if (FindText.getThis().replaceNext(textPane)) {
                 textPane.grabFocus();
                 dispose();
             } else StaticDialogs.showMessage("Expression was not found");
@@ -329,10 +326,7 @@ public class FindDialog extends javax.swing.JDialog {
             FindText.getThis().createPattern(str);
             FindText.getThis().replacement = (String)
                     cmbReplace.getEditor().getItem();
-            if (FindText.getThis().replaceAll(textPane.getText(),
-                    textPane.getCaretPosition(),
-                    textPane.getDocument().getEndPosition().getOffset()-1)) {
-                textPane.setText(FindText.getThis().getReplacedString());
+            if (FindText.getThis().replaceAll(textPane)) {
                 textPane.grabFocus();
                 dispose();
             } else StaticDialogs.showMessage("Expression was not found");

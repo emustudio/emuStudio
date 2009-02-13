@@ -14,6 +14,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import javax.swing.JTextPane;
+import javax.swing.text.BadLocationException;
+
 /**
  *
  * @author vbmacher
@@ -38,7 +41,6 @@ public class FindText {
     private Pattern pattern = null;
     
     public String replacement = "";
-    private StringBuffer sb = new StringBuffer();
 
     private int direction = 0;
     private byte params = 0;
@@ -123,15 +125,22 @@ public class FindText {
     public int getMatchStart() { return startM; }
     public int getMatchEnd() { return endM; }
     
-    public boolean replaceNext(String text, int curPos, int endPos)
+    /**
+     * Method replaces found occurence by
+     * "replacement" variable
+     */
+    public boolean replaceNext(JTextPane textPane)
             throws NullPointerException {
         if ((matcher == null) && (pattern == null))
             throw new NullPointerException("matcher can't be null, use dialog");
         else if (matcher == null)
             matcher = pattern.matcher("");
+        if (replacement == null) return false;
 
         boolean match = false;
-        String txt = text.replaceAll("\n\r", "\n").replaceAll("\r\n", "\n");
+        int curPos = textPane.getCaretPosition();
+        int endPos = textPane.getDocument().getEndPosition().getOffset()-1;
+        String txt = textPane.getText();
 
         matcher.reset(txt);
         matcher.useTransparentBounds(false);
@@ -139,8 +148,13 @@ public class FindText {
             matcher.region(curPos, endPos);
             match = matcher.find();
             if (match) {
-                matcher.appendReplacement(sb, replacement);
-                matcher.appendTail(sb);
+            	try {
+					textPane.getDocument().remove(matcher.start(), 
+							matcher.end()-matcher.start());
+	            	textPane.getDocument().insertString(matcher.start(), 
+	            			replacement, null);
+	            	textPane.setCaretPosition(matcher.start()+replacement.length());
+				} catch (BadLocationException e) {}
             }
         } else if (direction == FindText.DIRECTION_TO_START) {
             matcher.region(0, curPos);
@@ -155,8 +169,13 @@ public class FindText {
             matcher.region(startM, curPos); // here is only one match
             match = matcher.find(startM);
             if (match) {
-                matcher.appendReplacement(sb, replacement);
-                matcher.appendTail(sb);
+            	try {
+					textPane.getDocument().remove(matcher.start(), 
+							matcher.end()-matcher.start());
+	            	textPane.getDocument().insertString(matcher.start(), 
+	            			replacement, null);
+	            	textPane.setCaretPosition(matcher.start()+replacement.length());
+				} catch (BadLocationException e) {}
             }
         }
         else if (direction == FindText.DIRECTION_ALL) {
@@ -164,46 +183,72 @@ public class FindText {
             matcher.useTransparentBounds(true);
             match = true;
             if (!matcher.find(curPos)) match = matcher.find(0);
-            if (match) matcher.appendReplacement(sb, replacement);
-            matcher.appendTail(sb);
+            if (match) {
+            	try {
+					textPane.getDocument().remove(matcher.start(), 
+							matcher.end()-matcher.start());
+	            	textPane.getDocument().insertString(matcher.start(), 
+	            			replacement, null);
+	            	textPane.setCaretPosition(matcher.start()+replacement.length());
+				} catch (BadLocationException e) {}
+            }
         }
         return match;
     }
     
-    public boolean replaceAll(String text, int curPos, int endPos)
+    public boolean replaceAll(JTextPane textPane)
             throws NullPointerException {
         if ((matcher == null) && (pattern == null))
             throw new NullPointerException("matcher can't be null, use dialog");
         else if (matcher == null)
             matcher = pattern.matcher("");
+        if (replacement == null) return false;
 
         boolean match = false;
-        String txt = text.replaceAll("\n\r", "\n").replaceAll("\r\n", "\n");
-        
+        int curPos = textPane.getCaretPosition();
+        int endPos = textPane.getDocument().getEndPosition().getOffset()-1;
+        String txt = textPane.getText();
+
         matcher.reset(txt);
         matcher.useTransparentBounds(false);
         if (direction == FindText.DIRECTION_TO_END) {
             matcher.region(curPos, endPos);
             while (matcher.find()) {
                 match = true;
-                matcher.appendReplacement(sb, replacement);
+				try {
+					textPane.getDocument().remove(matcher.start(), 
+							matcher.end()-matcher.start());
+	            	textPane.getDocument().insertString(matcher.start(), 
+	            			replacement, null);
+				} catch (BadLocationException e) {}
             }
-            matcher.appendTail(sb);
         } else if (direction == FindText.DIRECTION_TO_START) {
             matcher.region(0, curPos);
             match = false;
-            while (matcher.find())
-                matcher.appendReplacement(sb, replacement);
-            matcher.appendTail(sb);
+            while (matcher.find()) {
+				try {
+					textPane.getDocument().remove(matcher.start(), 
+							matcher.end()-matcher.start());
+	            	textPane.getDocument().insertString(matcher.start(), 
+	            			replacement, null);            	
+				} catch (BadLocationException e) {}
+            }
         }
         else if (direction == FindText.DIRECTION_ALL) {
             matcher.region(0, endPos);
             matcher.useTransparentBounds(true);
-            match = true;
-            sb.append(matcher.replaceAll(replacement));
+            match = false;
+            while (matcher.find()) {
+                match = true;
+				try {
+					textPane.getDocument().remove(matcher.start(), 
+							matcher.end()-matcher.start());
+	            	textPane.getDocument().insertString(matcher.start(), 
+	            			replacement, null);            	
+				} catch (BadLocationException e) {}
+            }
         }
         return match;        
     }
     
-    public String getReplacedString() { return sb.toString(); }
 }

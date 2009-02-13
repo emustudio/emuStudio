@@ -100,6 +100,18 @@ public class ArchHandler implements ISettingsHandler {
         return success;
     }
     
+    /**
+     * Method destroys current architecture
+     */
+    public void destroy() {
+        try {
+            for (int i = 0; i < arch.getAllDevices().length; i++)
+                arch.getAllDevices()[i].destroy();
+            arch.getCPU().destroy();
+            arch.getMemory().destroy();
+        } catch (Exception e) {}    	
+    }
+    
     /***
      * Get schema of this virtual architecture
      * 
