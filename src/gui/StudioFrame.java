@@ -933,6 +933,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResetActionPerformed
         arch.getCPU().reset(arch.getMemory().getProgramStart()); // first address of an image??
+        arch.getMemory().reset();
         IDevice dev[] = arch.getDevices();
         if (dev != null) {
             for (int i = 0; i < dev.length; i++)

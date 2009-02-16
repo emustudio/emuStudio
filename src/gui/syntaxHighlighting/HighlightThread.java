@@ -108,14 +108,18 @@ public class HighlightThread extends Thread {
         DocumentEvent e;
         while (running) {
             while (pause) {
-                try {sleep(0xffffff); }
+                try { //printTokens(); 
+                	sleep(0xffffff);
+                }
                 catch(InterruptedException ex) {}
             }
             synchronized(lock) {
                 shouldTry = !work.isEmpty();
             }
             if (!shouldTry) {
-                try { sleep(0xffffff); }
+                try { //printTokens();
+                	sleep(0xffffff);
+                }
                 catch(InterruptedException ex) {}
             }
             synchronized(lock) {
@@ -129,7 +133,7 @@ public class HighlightThread extends Thread {
             }
             int len = (e.getType() == DocumentEvent.EventType.INSERT) ?
                 e.getLength() : -e.getLength();
-            int bl = updateTokenPositions(e.getOffset(),len);
+            int bl = updatePositions(e.getOffset(),len);
 //            System.out.print("Seek at:" + bl);
             try {
                 if (bl >= 0) {
@@ -145,9 +149,10 @@ public class HighlightThread extends Thread {
 //                System.out.println("; <" + t.getID() + "> [" + t.getOffset() + ";" + t.getLength() + "]");
                 while (t.getType() != IToken.TEOF) {
                     if (tokensPos.contains(t.getOffset())) {
-//                    	System.out.print("    found: ");
                         int tid = tokenTypes.get(t.getOffset());
-                        int tlen = tokenTypes.get(t.getOffset());
+                        int tlen = tokenLengths.get(t.getOffset());
+  //                  	System.out.print("    found: ("+(t.getOffset() > e.getOffset()
+    //                			&& (tid == t.getID())) + ")");
                         // ak je token ZA kurzorom v dokumente a tokeny su
                         // zhodne (rovnake ID a dlzku) tak uz viac netreba
                         // skenovat
@@ -157,7 +162,8 @@ public class HighlightThread extends Thread {
                         	break;
                         }
                         else {
-//                        	System.out.println("not equal: <" + t.getID() + "> != saved<" + tid + ">");
+//                        	System.out.println("not equal: <" + t.getID() + "> != saved<" + tid + ">, "
+  //                      			+ tlen + " != " + t.getLength());
                         	// inak odstranujem token
                         	tokensPos.remove(t.getOffset());
                         	tokenTypes.remove(t.getOffset());
@@ -199,58 +205,69 @@ public class HighlightThread extends Thread {
     }
 
     /**
-     * Add to tokensPos from position "from" length "length". Length can be
-     * both positive or negative.
-     * @return before-before-last(from) token position if change was made,
+     * Method remove tokens from offset "from" and length "length". Length
+     * can be both positive or negative.
+     * @return before-before-last token position from "from" if change was made,
      *         or first error token from continuous error token string to
      *         the left if the last token is error
      *         -1 otherwise
      */
-    private int updateTokenPositions(int from, int length) {
-        int p = -1;
-        int beforeLast = -1;
-        int BBlast = -1;
-        int lastError = -1;
+    private int updatePositions(int from, int length) {
+        int pos = -1;
+        int i;
         int type;
         
-        // search for nearest "from"
-        for (Iterator<Integer> i = tokensPos.iterator();i.hasNext();) {
-        	BBlast = beforeLast;
-            p = i.next();
-            type = tokenTypes.get(p);
-            if ((lastError == -1) && type == IToken.ERROR)
-            	lastError = p;
-            else if (type != IToken.ERROR)
-            	lastError = -1;
-            if (p >= from) break;
-            beforeLast = p;
-        }
-        // treeset contains no elements or from is last position
-        if ((p == -1) || (p < from)) {
-        	if ((lastError != -1) && (lastError < BBlast)) return lastError;
-        	else return BBlast;
+//        System.out.println("Adjusting: " + from + " -> " + (from+length));
+        // get a position of token that is 2 tokens before "from" token 
+        Integer[] positions = (Integer[])tokensPos.toArray(new Integer[0]);
+        
+        for (i = 0; i < positions.length; i++) {
+            if (positions[i] >= from) {
+            	pos = ((i - 2) >= 0) ? positions[i-2] : 0;
+            	break;
+            }
+            type = tokenTypes.get(positions[i]);
+            if (type == IToken.ERROR) {
+            	pos = positions[i]; 
+            	break;
+            }
         }
         
-        SortedSet<Integer> s = tokensPos.tailSet(p);
+        // treeset contains no elements or "from" is last position
+        if ((pos == -1) || (i == positions.length && positions[i-1] < from))
+        	return -1;        
+        
+        // Now I'm going to "adjust" tokens - move
+        // tokens positions to appropriate offset:
+        //   new_position = old_position + length 
+        
+        // tokeny od lex-pozicie
+        SortedSet<Integer> s = tokensPos.tailSet(from);
         Integer[] poss = s.toArray(new Integer[0]);
+        
         Vector<Integer> types = new Vector<Integer>();
         Vector<Integer> lengths = new Vector<Integer>();
-        for (int i = 0; i < poss.length; i++) {
+        
+        // remove old positions saving types and lengths
+        for (i = 0; i < poss.length; i++) {
+//        	System.out.println("   " + i + ". R(" +tokenTypes.get(poss[i]) + ") "+ poss[i]);      	
             tokensPos.remove(poss[i]);
             types.add(tokenTypes.get(poss[i]));
             lengths.add(tokenLengths.get(poss[i]));
             tokenTypes.remove(poss[i]);
             tokenLengths.remove(poss[i]);
         }
-        for (int i = 0; i < poss.length; i++) {
+        
+        // add new positions with saved types and lengths
+        for (i = 0; i < poss.length; i++) {
             int l = poss[i] + length;
             if (l < 0) continue;
+//        	System.out.println("   " + i + ". A(" +types.elementAt(i) + ") "+ l);
             tokensPos.add(l);
             tokenTypes.put(l, types.elementAt(i));
             tokenLengths.put(l, lengths.elementAt(i));
         }
-    	if ((lastError != -1) && (lastError < BBlast)) return lastError;
-    	else return BBlast;
+    	return pos;
     }
 
     
