@@ -45,14 +45,16 @@ parser code {:
     }
 :}
 
-terminal INC,DEC,INCV,DECV,PRINT,LOAD,LOOP,ENDL;
+terminal HALT,INC,DEC,INCV,DECV,PRINT,LOAD,LOOP,ENDL;
 terminal EOL;
+terminal String NUMBER;
 terminal TCOMMENT;
 
 non terminal Program Program;
 non terminal Row Row;
 non terminal Statement Statement;
 non terminal Comment;
+non terminal Integer NumberOpt;
 
 start with Program;
 
@@ -75,13 +77,22 @@ Row ::= Statement:stmt Comment
          
 Comment ::= TCOMMENT | ;
 
-Statement ::= INC   {: RESULT = new Statement(Statement.INC); :}
-            | DEC   {: RESULT = new Statement(Statement.DEC); :}
-            | INCV  {: RESULT = new Statement(Statement.INCV); :}
-            | DECV  {: RESULT = new Statement(Statement.DECV); :}
-            | PRINT {: RESULT = new Statement(Statement.PRINT); :}
-            | LOAD  {: RESULT = new Statement(Statement.LOAD); :}
-            | LOOP  {: RESULT = new Statement(Statement.LOOP); :}
-            | ENDL  {: RESULT = new Statement(Statement.ENDL); :}
+Statement ::= INC NumberOpt:num  {: RESULT = new Statement(Statement.INC, num); :}
+            | DEC NumberOpt:num  {: RESULT = new Statement(Statement.DEC, num); :}
+            | INCV NumberOpt:num {: RESULT = new Statement(Statement.INCV, num); :}
+            | DECV NumberOpt:num {: RESULT = new Statement(Statement.DECV, num); :}
+            | PRINT NumberOpt:num {: RESULT = new Statement(Statement.PRINT, num); :}
+            | LOAD NumberOpt:num {: RESULT = new Statement(Statement.LOAD, num); :}
+            | LOOP  {: RESULT = new Statement(Statement.LOOP, 0); :}
+            | ENDL  {: RESULT = new Statement(Statement.ENDL, 0); :}
+            | HALT  {: RESULT = new Statement(Statement.HALT, 0); :}
+            ;
+
+NumberOpt ::= NUMBER:num {: 
+
+RESULT = Integer.parseInt((String)num)&0xFF;
+                            
+                         :}
+            |            {: RESULT = 0xFF;   :}
             ;
 

@@ -36,7 +36,7 @@ public class BrainDuck implements ICompiler {
     @Override
     public String getTitle() { return "BrainDuck Assembler"; }
     @Override
-    public String getVersion() { return "0.1b"; }
+    public String getVersion() { return "0.11b"; }
     @Override
     public String getCopyright() { return "\u00A9 Copyright 2009, P. Jakubčo"; }
     @Override

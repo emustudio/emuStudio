@@ -10,6 +10,7 @@ package brainduck.tree;
 import brainduck.impl.HEXFileHandler;
 
 public class Statement {
+	public final static int HALT = 0;
 	public final static int INC = 1;
 	public final static int DEC = 2;
 	public final static int INCV = 3;
@@ -20,18 +21,26 @@ public class Statement {
 	public final static int ENDL = 8;
 	
 	private int instr;
+	private int param;
 	
-	public Statement(int instr) {
+	public Statement(int instr, int param) {
 		this.instr = instr;
+		this.param = param;
 	}
 
 	// prvá fáza vracia nasledujúcu adresu
 	// od adresy addr_start
 	public int pass1(int addr_start) throws Exception {
-		return addr_start +1;
+		if (instr == LOOP || instr == ENDL)
+			return addr_start +1;
+		else
+			return addr_start+2;
 	}
 	
 	public void pass2(HEXFileHandler hex) {
-        hex.putCode(String.format("%1$02X",instr));
+		if (instr == LOOP || instr == ENDL)
+			hex.putCode(String.format("%1$02X",instr));
+		else
+			hex.putCode(String.format("%1$02X%2$02X",instr,param));
 	}
 }

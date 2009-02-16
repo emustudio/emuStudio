@@ -27,8 +27,8 @@ public class tokenBD extends Symbol implements IToken,symBD {
     private int type;    // typ tokenu
  
     public tokenBD(int ID, int type, String text, 
-    		int line, int column, int offset) {
-        super(ID);
+    		int line, int column, int offset, Object val) {
+        super(ID,val);
         this.type = type;
         this.text = text;
         this.row = line;
