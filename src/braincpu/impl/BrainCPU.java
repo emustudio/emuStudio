@@ -60,7 +60,7 @@ public class BrainCPU implements ICPU, Runnable {
     public String getTitle() { return "BrainCPU"; }
 
     @Override
-    public String getVersion() { return "1.0b1"; }
+    public String getVersion() { return "0.12b"; }
     
     @Override
     public long getHash() { return hash; }
@@ -138,7 +138,11 @@ public class BrainCPU implements ICPU, Runnable {
      */
     @Override
     public int getInstrPosition(int pos) {
-        return pos+1;
+    	short op = (Short)mem.read(pos);
+    	// LOOP || ENDL
+    	if (op == 7 || op == 8)
+    		return pos+1;
+    	else return pos+2;
     }
 
     @Override
@@ -152,7 +156,7 @@ public class BrainCPU implements ICPU, Runnable {
     
     @Override
     public JPanel getStatusGUI() {
-        return new BrainStatusPanel(this);
+        return new BrainStatusPanel(this,mem);
     }
 
     @Override
@@ -287,28 +291,64 @@ public class BrainCPU implements ICPU, Runnable {
      * Metóda emuluje jednu inštrukciu.
      */
     private void emulateInstruction() {
-    	short OP;
+    	short OP, param;
     	
     	// FETCH
         OP = ((Short)mem.read(IP++)).shortValue();
         
         // DECODE
         switch(OP) {
+        	case 0: /* HALT */
+        		run_state = ICPU.STATE_STOPPED_NORMAL;
+        		return;
         	case 1: /* INC */
-        		P++; return;
+        		param = ((Short)mem.read(IP++)).shortValue();
+        		if (param == 0xff) P++;
+        		else while (param > 0) { 
+        			P++;
+        			param--;
+        		}
+        		return;
         	case 2: /* DEC */
-        		P--; return;
+        		param = ((Short)mem.read(IP++)).shortValue();
+        		if (param == 0xff) P--;
+        		else while (param > 0) {
+        			P--;
+        			param--;
+        		}
+        		return;
         	case 3: /* INCV */
-        		mem.write(P, (Short)mem.read(P) + 1);
+        		param = ((Short)mem.read(IP++)).shortValue();
+        		if (param == 0xff) mem.write(P, (Short)mem.read(P) + 1);
+        		else while (param > 0) {
+        			mem.write(P, (Short)mem.read(P) + 1);
+        			param--;
+        		}
         		return;
         	case 4: /* DECV */
-        		mem.write(P, (Short)mem.read(P) - 1);
+        		param = ((Short)mem.read(IP++)).shortValue();
+        		if (param == 0xff) mem.write(P, (Short)mem.read(P) - 1);
+        		else while (param > 0) {
+        			mem.write(P, (Short)mem.read(P) - 1);
+        			param--;
+        		}
         		return;
         	case 5: /* PRINT */
-        		cpu.writeToDevice((Short)mem.read(P));
+        		param = ((Short)mem.read(IP++)).shortValue();
+        		if (param == 0xff) cpu.writeToDevice((Short)mem.read(P));
+        		else while (param > 0) {
+        			cpu.writeToDevice((Short)mem.read(P));
+        			param--;
+        		}
         		return;
         	case 6: /* LOAD */
-        		mem.write(P, cpu.readFromDevice());
+        		param = ((Short)mem.read(IP++)).shortValue();
+        		if (param == 0xff) mem.write(P, cpu.readFromDevice());
+        		else while (param > 0) {
+        			mem.write(P, cpu.readFromDevice());
+        			P++;
+        			param--;
+        		}
         		return;
         	case 7: { /* LOOP */
         		if ((Short)mem.read(P) != 0)
@@ -321,6 +361,10 @@ public class BrainCPU implements ICPU, Runnable {
         		// aktuálnej úrovni vnorenia (podľa loop_count)
         		// IP je nastavený na nasledujúcu inštrukciu
         		while ((OP = (Short)mem.read(IP++)) != 0) {
+        			// ak je instrukcia <0,6> tak ma parameter
+        			if ((OP > 0) && (OP <= 6))
+        				if ((OP = (Short)mem.read(IP++)) == 0)
+        					break;
         			if (OP == 7) loop_count++;
         			if (OP == 8) {
         				if (loop_count == 0)
@@ -336,6 +380,7 @@ public class BrainCPU implements ICPU, Runnable {
         	case 8: /* ENDL */
         		if ((Short)mem.read(P) == 0)
         			return;
+        		short old_OP = 0;
         		byte loop_count = 0; // počítadlo vnorenia
         		                     // v cykle (čiže počítadlo
         		                     // cyklov). Nerátam s viac ako
@@ -344,6 +389,12 @@ public class BrainCPU implements ICPU, Runnable {
         		// aktuálnej úrovni vnorenia (podľa loop_count)
         		IP--; // IP späť na túto inštrukciu
         		while ((OP = (Short)mem.read(--IP)) != 0) {
+        			if (IP - 1 >= 0) {
+        				old_OP = (Short)mem.read(IP-1);
+        				if (old_OP > 0 && old_OP <= 6) {
+        					OP = old_OP; IP--;
+        				}
+        			}
         			if (OP == 8) loop_count++;
         			if (OP == 7) {
         				if (loop_count == 0)

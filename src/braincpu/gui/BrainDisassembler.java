@@ -116,7 +116,7 @@ public class BrainDisassembler {
      * @return dekódovaná inštrukcia
      */
     private CPUInstruction cpuDecode(int memPos) {
-        short val;
+        short val,param;
         CPUInstruction instr;
         String mnemo, oper;
 
@@ -124,14 +124,51 @@ public class BrainDisassembler {
         oper = String.format("%02X",val);
         
         switch (val) {
-            case 1: mnemo = "inc"; break;
-            case 2: mnemo = "dec"; break;
-            case 3: mnemo = "incv"; break;
-            case 4: mnemo = "decv"; break;
-            case 5: mnemo = "print"; break;
-            case 6: mnemo = "load"; break;
-            case 7: mnemo = "loop"; break;
-            case 8: mnemo = "endl"; break;
+        	case 0: mnemo = "halt"; break;
+            case 1: 
+            	mnemo = "inc";
+            	param = ((Short)mem.read(memPos++)).shortValue();
+        		oper += String.format(" %02X", param);
+            	if (param != 0xFF)
+            		mnemo += String.format(" %02X", param);
+            	break;
+            case 2:
+            	mnemo = "dec";
+            	param = ((Short)mem.read(memPos++)).shortValue();
+        		oper += String.format(" %02X", param);
+            	if (param != 0xFF)
+            		mnemo += String.format(" %02X", param);
+            	break;
+            case 3:
+            	mnemo = "incv";
+            	param = ((Short)mem.read(memPos++)).shortValue();
+        		oper += String.format(" %02X", param);
+            	if (param != 0xFF)
+            		mnemo += String.format(" %02X", param);
+            	break;
+            case 4:
+            	mnemo = "decv";
+            	param = ((Short)mem.read(memPos++)).shortValue();
+        		oper += String.format(" %02X", param);
+            	if (param != 0xFF)
+            		mnemo += String.format(" %02X", param);
+            	break;
+            case 5:
+            	mnemo = "print";
+            	param = ((Short)mem.read(memPos++)).shortValue();
+        		oper += String.format(" %02X", param);
+            	if (param != 0xFF)
+            		mnemo += String.format(" %02X", param);
+            	break;
+            case 6:
+            	mnemo = "load";
+            	param = ((Short)mem.read(memPos++)).shortValue();
+        		oper += String.format(" %02X", param);
+        		if (param != 0xFF)
+            		mnemo += String.format(" %02X", param);
+            	break;
+            case 7:	mnemo = "loop";	break;
+            case 8:	mnemo = "endl";	break;
             default: mnemo = "unknown";
         }
         instr = new CPUInstruction(mnemo,oper);

@@ -20,12 +20,13 @@ import javax.swing.LayoutStyle;
 
 import plugins.cpu.ICPU;
 import plugins.cpu.ICPUContext.ICPUListener;
+import plugins.memory.IMemoryContext;
 
 import braincpu.impl.BrainCPU;
 
 @SuppressWarnings("serial")
 public class BrainStatusPanel extends JPanel {
-	public BrainStatusPanel(final BrainCPU cpu) {
+	public BrainStatusPanel(final BrainCPU cpu, final IMemoryContext mem) {
         initComponents();
 
         cpu.getContext().addCPUListener(new ICPUListener() {
@@ -51,6 +52,7 @@ public class BrainStatusPanel extends JPanel {
 			public void stateUpdated(EventObject evt) {
 				txtP.setText(String.format("%04X", cpu.getP()));
 				txtIP.setText(String.format("%04X", cpu.getIP()));
+				txtMemP.setText(String.format("%02X", (Short)mem.read(cpu.getP())));
 			}
         	
         });
@@ -62,12 +64,16 @@ public class BrainStatusPanel extends JPanel {
 		txtP = new JTextField("0000");
 		txtIP = new JTextField("0000");
 		lblStatus = new JLabel("breakpoint");
+		JLabel lblMemP = new JLabel("mem(P):");
+		txtMemP = new JTextField("00");
 		
 		lblStatus.setFont(lblStatus.getFont().deriveFont(Font.BOLD));
 		txtP.setEditable(false);
         txtP.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
         txtIP.setEditable(false);
         txtIP.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
+		txtMemP.setEditable(false);
+        txtMemP.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1,Color.lightGray));
 
         GroupLayout layout = new GroupLayout(this);
         this.setLayout(layout);
@@ -78,12 +84,14 @@ public class BrainStatusPanel extends JPanel {
         				.addGroup(layout.createSequentialGroup()
         		        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
         		        				.addComponent(lblP)
-        		        				.addComponent(lblIP))
+        		        				.addComponent(lblIP)
+        		        				.addComponent(lblMemP))
 		                	    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 		                	    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 		                	    		.addComponent(txtP,GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE)
-		                	    		.addComponent(txtIP,GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE)))
-		                .addComponent(lblStatus))
+		                	    		.addComponent(txtIP,GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE)
+		                	    		.addComponent(txtMemP,GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE)))
+		                .addComponent(lblStatus,GroupLayout.DEFAULT_SIZE, 150, Short.MAX_VALUE))
 		                .addContainerGap(20,Short.MAX_VALUE));
         layout.setVerticalGroup(
         		layout.createSequentialGroup()
@@ -94,6 +102,9 @@ public class BrainStatusPanel extends JPanel {
         		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
         				.addComponent(lblIP)
         				.addComponent(txtIP))
+        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+        				.addComponent(lblMemP)
+        				.addComponent(txtMemP))
         	    .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
         	    .addComponent(lblStatus)
         	    .addContainerGap());
@@ -101,4 +112,5 @@ public class BrainStatusPanel extends JPanel {
 	private JTextField txtP;
 	private JTextField txtIP;
 	private JLabel lblStatus;
+	private JTextField txtMemP;
 }
