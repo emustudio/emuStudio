@@ -59,6 +59,14 @@ public class BrainTerminal implements IDevice {
 		}
 		this.cpu = (IBrainCPUContext)cpu;
 		this.cpu.attachDevice(terminal);
+		// read settings
+		
+	    String s = settings.readSetting(hash, "verbose");
+	    if (s.toUpperCase().equals("TRUE")) {
+	    	gui.setVerbose(true);
+	    	gui.setVisible(true);
+	    } else
+	    	gui.setVerbose(false);
 		return true;
 	}
 	
