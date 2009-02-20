@@ -147,6 +147,48 @@ public class EmuTextPane extends JTextPane {
 
     /*** OPENING/SAVING FILE ***/
     
+    public boolean openFile(String fileName){
+    	return openFile(new File(fileName));
+    }
+
+    /***
+     * Opens a file into text editor.
+     * WARNING: Don't check whether file is saved.
+     * @param file
+     * @return true if file was successfuly opened.
+     */
+    public boolean openFile(File file) {        
+        fileSource = file;
+        if (fileSource.canRead() == true) {
+            try {
+                FileReader vstup = new FileReader(fileSource.getAbsolutePath());
+                setText("");
+                highlight.pauseRun();
+                synchronized(HighlightThread.doclock) {
+                    getEditorKit().read(vstup, document,0);
+                }
+                highlight.continueRun();
+                this.setCaretPosition(0);
+                vstup.close(); fileSaved = true;
+            }  catch (java.io.FileNotFoundException ex) {
+                StaticDialogs.showErrorMessage("File not found: " 
+                        + fileSource.getPath());
+                return false;
+            }
+            catch (Exception e) {
+                StaticDialogs.showErrorMessage("Error opening file: "
+                        + fileSource.getPath());
+                return false;
+            }
+        } else {
+            StaticDialogs.showErrorMessage("File " + fileSource.getPath()
+                + " can't be read.");
+            return false;
+        }
+        return true;
+    }
+    
+    
     // returns true if a file was opened
     public boolean openFileDialog() {
         JFileChooser f = new JFileChooser();
@@ -169,41 +211,14 @@ public class EmuTextPane extends JTextPane {
         f.setFileFilter(f1);
         f.setApproveButtonText("Open");
         f.setSelectedFile(fileSource);
-        if (fileSource == null) {
+        if (fileSource == null)
             f.setCurrentDirectory(new File(System.getProperty("user.dir")));
-        }
 
         int returnVal = f.showOpenDialog(this);
         f.setVisible(true);
         if(returnVal == JFileChooser.APPROVE_OPTION) {
             fileSource = f.getSelectedFile();
-            if (fileSource.canRead() == true) {
-                try {
-                    FileReader vstup = new FileReader(fileSource.getAbsolutePath());
-                    setText("");
-                    highlight.pauseRun();
-                    synchronized(HighlightThread.doclock) {
-                        getEditorKit().read(vstup, document,0);
-                    }
-                    highlight.continueRun();
-                    this.setCaretPosition(0);
-                    vstup.close(); fileSaved = true;
-                }  catch (java.io.FileNotFoundException ex) {
-                    StaticDialogs.showErrorMessage("File not found: " 
-                            + fileSource.getPath());
-                    return false;
-                }
-                catch (Exception e) {
-                    StaticDialogs.showErrorMessage("Error opening file: "
-                            + fileSource.getPath());
-                    return false;
-                }
-            } else {
-                StaticDialogs.showErrorMessage("File " + fileSource.getPath()
-                    + " can't be read.");
-                return false;
-            }
-            return true;
+            return openFile(fileSource);
         }
         return false;
     }

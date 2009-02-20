@@ -367,7 +367,7 @@ public class ArchLoader extends ClassLoader {
      * @param name  Name of the configuration
      * @return a handler of loaded architecture
      */
-    public ArchHandler load(String name) {
+    public ArchHandler load(String name, boolean verbose) {
         try {
             Properties settings = readConfig(name,true);
             if (settings == null) return null;
@@ -446,7 +446,8 @@ public class ArchLoader extends ClassLoader {
 
             Architecture arch = new Architecture(cpu, cpuHash, mem, memHash,
             		com, comHash, devs, devsArray.toArray(new IDevice[0]), lines);
-            return new ArchHandler(name, arch, settings, loadSchema(name),devNames);
+            return new ArchHandler(name, arch, settings, loadSchema(name),devNames,
+            		verbose);
         }
         catch (Exception e) {
         	e.printStackTrace();

@@ -71,6 +71,11 @@ public class StudioFrame extends javax.swing.JFrame {
     // emulator
     private DebugTableModel debug_model;
     
+    public StudioFrame(String fileName) {
+    	this();
+    	txtSource.openFile(fileName);
+    }
+    
     /** Creates new form StudioFrame */
     public StudioFrame() {
         // create models and components

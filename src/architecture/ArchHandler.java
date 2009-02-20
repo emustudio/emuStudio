@@ -35,6 +35,7 @@ public class ArchHandler implements ISettingsHandler {
     private Properties             settings;
     private Schema                 schema;
     private Hashtable<Long,String> deviceNames;
+    private boolean                verbose;
     
     /**
      * Constructor of new computer configuration and init all plugins.
@@ -48,7 +49,8 @@ public class ArchHandler implements ISettingsHandler {
      * @throws Error if initialization of the architecture failed.
      */
     public ArchHandler(String name, Architecture arch, Properties settings,
-            Schema schema, Hashtable<Long,String> deviceNames) throws Error {
+            Schema schema, Hashtable<Long,String> deviceNames, boolean verbose) throws Error {
+    	this.verbose = verbose;
     	if (name == null) name = "";
     	this.arch = arch;
         this.settings = settings;
@@ -100,6 +102,17 @@ public class ArchHandler implements ISettingsHandler {
         return success;
     }
     
+    /**
+     * Set/unset special setting "verbose". If it is
+     * set and a plugin asks for "verbose" setting,
+     * this will return the set value. The setting 
+     * overwrites plugin setting.
+     * 
+     * @param verbose
+     */
+    public void setVerbose(boolean verbose) {
+    	this.verbose = verbose;
+    }
     /**
      * Method destroys current architecture
      */
@@ -162,6 +175,9 @@ public class ArchHandler implements ISettingsHandler {
     public synchronized String readSetting(long hash, String settingName) {
         IPlugin plug = arch.getPlugin(hash);
         if (plug == null) return null;
+        
+        if (settingName.toUpperCase().equals("VERBOSE"))
+        	return verbose ? "true" : "false";
         
         String prop = "";
                 
