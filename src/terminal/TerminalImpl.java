@@ -45,6 +45,14 @@ public class TerminalImpl implements IDevice {
 
     private void readSettings() {
     	String s;
+    	
+    	s = settings.readSetting(hash, "verbose");
+        if (s != null && s.toUpperCase().equals("TRUE")) {
+        	terminal.setVerbose(true);
+        	terminalGUI.setVisible(true);
+        } else
+        	terminal.setVerbose(false);
+    	
     	s = settings.readSetting(hash, "duplex_mode");
         if (s != null && s.toUpperCase().equals("HALF"))
         	terminalGUI.setHalfDuplex(true);

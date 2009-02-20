@@ -27,6 +27,9 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.EventObject;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -41,6 +44,8 @@ import plugins.device.IDeviceContext;
  */
 @SuppressWarnings("serial")
 public class TerminalDisplay extends Canvas implements IDeviceContext {
+	private final static String VERBOSE_FILE_NAME = "terminalADM-3A.out";
+	
     private char[] video_memory;
     private int col_count; // column count in CRT
     private int row_count; // row count in CRT
@@ -62,7 +67,12 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
     
     private boolean antiAliasing; // use antialiasing?
 
-    public TerminalDisplay(int cols, int rows) { 
+    // verbose mode = output to a file
+    private boolean verbose =false;
+    private FileWriter outw= null;
+
+
+    public TerminalDisplay(int cols, int rows) {
         this.col_count = cols;
         this.row_count = rows;
         video_memory = new char[rows * cols];
@@ -73,6 +83,25 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
         antiAliasing = false;
     }    
     
+    /**
+     * Set verbose mode. If verbose mode is set, the output
+     * is redirected also to a file.
+     * 
+     * @param verbose set/unset verbose mode
+     */
+    public void setVerbose(boolean verbose) {
+    	if (verbose) {
+    		File f = new File(VERBOSE_FILE_NAME);
+    		try {
+				outw = new FileWriter(f);
+			} catch (IOException e) {}
+    	} else if (outw != null) {
+    		try {outw.close();} catch (IOException e) {}
+    		outw = null;
+    	}
+    	this.verbose = verbose;
+    }
+
     public boolean isAntiAliasing() { return antiAliasing; }
     public void setAntiAliasing(boolean val) { 
         antiAliasing = val;
@@ -101,6 +130,7 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
     public void destroyMe() {
         cursorPainter.stop();
         cursorTimer.cancel();
+    	setVerbose(false);
     }
     
     // Methods to set the various attributes of the component
@@ -278,6 +308,15 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
     @Override
     public Object in(EventObject evt) { return 0; }
 
+    private void verbose_char(short val) {
+        if (verbose && (outw != null)) {
+        	try {
+				outw.write((char)val);
+				outw.flush();
+			} catch (IOException e) {}
+        }    	
+    }
+    
     /**
      * This method is called from serial I/O card (by OUT instruction)
      */
@@ -285,13 +324,17 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
     public void out(EventObject evt, Object value) {
     	short val = (Short)value; 
         measure();
+
+        verbose_char(val);
         /*
          * if it is special char, interpret it. else just add
          * to "video memory"
          */
         switch (val) {
-            case 7: return; /* bell */
-            case 8: back_cursor(); repaint(); return; /* backspace*/
+            case 7:
+            	return; /* bell */
+            case 8: 
+            	back_cursor(); repaint(); return; /* backspace*/
             case 0x0A: /* line feed */
                 cursor_y++; cursor_x = 0;
                 if (cursor_y > (row_count-1)) {
@@ -302,11 +345,11 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
                 return; 
             case 0x0D: cursor_x = 0; return; /* carriage return */
         }
-        insert_char((char)val);
-        move_cursor();
-        repaint();
+    	insert_char((char)val);
+    	move_cursor();
+    	repaint();
     }
-
+    
     @Override
     public String getID() { return "ADM-3A"; }
 
