@@ -1,0 +1,115 @@
+/*
+ * RAMParser.java
+ *
+ * Parser (syntactic analyzer for RAM)
+ *
+ * KEEP IT SIMPLE STUPID
+ * sometimes just: YOU AREN'T GONNA NEED IT
+ *
+ */
+
+import java_cup.runtime.Symbol;
+import plugins.compiler.IMessageReporter;
+import plugins.compiler.IToken;
+import ram.tree.*;
+
+init with {: errorCount = 0; :}
+parser code {:
+    private IMessageReporter reporter = null;
+    public IToken lastToken;
+    public int errorCount = 0;
+    
+    public RAMParser(java_cup.runtime.Scanner s, IMessageReporter reporter) {
+        this(s);
+        this.reporter = reporter;
+    }
+    	
+    public void syntax_error(Symbol current) {
+        errorCount++;
+        report_error("Syntax error: ",current);
+    }
+
+    public void unrecovered_syntax_error(Symbol current) {
+        errorCount++;
+        report_error("Fatal syntax error: ", current);
+        done_parsing();
+    }
+
+    public void report_error(String message, Symbol current) {
+        String mes;
+
+        IToken t = (IToken)current;
+        mes = message + t.getErrorString() + " ('"+t.getText()+"')";
+
+        reporter.report(t.getLine()+1, t.getColumn(),mes, IMessageReporter.TYPE_ERROR);
+    }
+:}
+
+terminal HALT,LOAD,STORE,READ,WRITE,ADD,SUB,MUL,DIV,JMP,JZ;
+terminal EOL;
+terminal DIRECT,INDIRECT;
+terminal String NUMBER, IDENT, LABELL;
+terminal TCOMMENT;
+
+non terminal Program Program;
+non terminal Row Row;
+non terminal Statement Statement;
+non terminal Comment;
+non terminal Integer Number;
+non terminal Label LabelOpt;
+
+start with Program;
+
+Program ::= Row:row
+            {:
+                Program program = new Program();
+                if (row != null) program.addRow(row);
+                RESULT = program;
+            :}
+          | Program:program EOL Row:row
+            {:
+                if (row != null) program.addRow(row);
+                RESULT = program;
+            :};
+
+Row ::= LabelOpt:label Statement:stmt Comment
+        {: RESULT = new Row(stmt, label); :}
+      | LabelOpt:label Comment
+        {: RESULT = (label==null)?null:new Row(label); :};
+         
+Comment ::= TCOMMENT | ;
+
+LabelOpt ::= LABELL:label {: RESULT = new Label(label); :}
+           |             {: RESULT = null; :}
+           ;
+
+
+Statement ::= READ Number:num {: RESULT = new Statement(Statement.READ, 0, num); :}
+            | READ INDIRECT Number:num {: RESULT = new Statement(Statement.READ, 2, num); :}
+            | WRITE DIRECT Number:num {: RESULT = new Statement(Statement.WRITE, 1, num); :}
+            | WRITE Number:num {: RESULT = new Statement(Statement.WRITE, 0, num); :}
+            | WRITE INDIRECT Number:num {: RESULT = new Statement(Statement.WRITE, 2, num); :}
+            | LOAD DIRECT Number:num {: RESULT = new Statement(Statement.LOAD, 1, num); :}
+            | LOAD Number:num {: RESULT = new Statement(Statement.LOAD, 0, num); :}
+            | LOAD INDIRECT Number:num {: RESULT = new Statement(Statement.LOAD, 2, num); :}
+            | STORE Number:num {: RESULT = new Statement(Statement.STORE, 0, num); :}
+            | STORE INDIRECT Number:num {: RESULT = new Statement(Statement.STORE, 2, num); :}
+            | ADD DIRECT Number:num {: RESULT = new Statement(Statement.ADD, 1, num); :}
+            | ADD Number:num {: RESULT = new Statement(Statement.ADD, 0, num); :}
+            | ADD INDIRECT Number:num {: RESULT = new Statement(Statement.ADD, 2, num); :}
+            | SUB DIRECT Number:num {: RESULT = new Statement(Statement.SUB, 1, num); :}
+            | SUB Number:num {: RESULT = new Statement(Statement.SUB, 0, num); :}
+            | SUB INDIRECT Number:num {: RESULT = new Statement(Statement.SUB, 2, num); :}
+            | MUL DIRECT Number:num {: RESULT = new Statement(Statement.MUL, 1, num); :}
+            | MUL Number:num {: RESULT = new Statement(Statement.MUL, 0, num); :}
+            | MUL INDIRECT Number:num {: RESULT = new Statement(Statement.MUL, 2, num); :}
+            | DIV DIRECT Number:num {: RESULT = new Statement(Statement.DIV, 1, num); :}
+            | DIV Number:num {: RESULT = new Statement(Statement.DIV, 0, num); :}
+            | DIV INDIRECT Number:num {: RESULT = new Statement(Statement.DIV, 2, num); :}
+            | JMP IDENT:label {: RESULT = new Statement(Statement.JMP, label); :}
+            | JZ IDENT:label {: RESULT = new Statement(Statement.JZ, label); :}
+            | HALT  {: RESULT = new Statement(Statement.HALT, 0,0); :}
+            ;
+
+Number ::= NUMBER:num {: RESULT = Integer.parseInt((String)num); :};
+
