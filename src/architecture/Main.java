@@ -293,7 +293,6 @@ public class Main {
         	}
         }
         else {
-        	currentArch.destroy();
         	System.exit(0);
         }        
     }
