@@ -11,6 +11,7 @@ import java.io.Reader;
 
 import ram.compiled.CompiledFileHandler;
 import ram.tree.Program;
+import runtime.StaticDialogs;
 import plugins.ISettingsHandler;
 import plugins.compiler.ICompiler;
 import plugins.compiler.ILexer;
@@ -37,13 +38,13 @@ public class RAMCompiler implements ICompiler {
     }
 
 	@Override
-	public String getTitle() { return "RAM machine compiler"; }
+	public String getTitle() { return "RAM compiler"; }
 
 	@Override
 	public String getCopyright() { return "\u00A9 Copyright 2009, P. Jakubčo"; }
 
 	@Override
-	public String getVersion() { return "0.1a"; }
+	public String getVersion() { return "0.1b"; }
 
 	@Override
 	public String getDescription() {
@@ -85,34 +86,23 @@ public class RAMCompiler implements ICompiler {
 	
 	@Override
 	public boolean compile(String fileName, Reader reader) {
-        try {
-            CompiledFileHandler hex = compile(reader);
-            if (hex == null) return false;
-            hex.generateFile(fileName);
-            print_text("Compile was sucessfull. Output: "
-                    + fileName, IMessageReporter.TYPE_INFO);
-            return true;
-        } catch (Exception e) {
-        	e.printStackTrace();
-            print_text(e.getMessage(), IMessageReporter.TYPE_ERROR);
-            return false;
-        }
+		StaticDialogs.showErrorMessage("This compiler doesn't support " +
+				"compilation into a file.");
+        return false;
 	}
 
 	@Override
 	public boolean compile(String fileName, Reader reader, IMemoryContext mem) {
         try {
             CompiledFileHandler hex = compile(reader);
-            hex.generateFile(fileName);
-            print_text("Compile was sucessfull. Output: "
-                    + fileName, IMessageReporter.TYPE_INFO);
+            print_text("Compile was sucessfull.", IMessageReporter.TYPE_INFO);
             boolean r = hex.loadIntoMemory(mem);
             if (r)
                 print_text("Compiled file was loaded into operating memory.",
                         IMessageReporter.TYPE_INFO);
             else
                 print_text("Compiled file couldn't be loaded into operating"
-                    + "memory due to an error.",IMessageReporter.TYPE_ERROR);
+                    + " memory due to an error.",IMessageReporter.TYPE_ERROR);
             return true;
         } catch (Exception e) {
         	e.printStackTrace();

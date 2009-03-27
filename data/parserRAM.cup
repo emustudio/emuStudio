@@ -8,6 +8,7 @@
  *
  */
 
+import interfaces.IRAMInstruction;
 import java_cup.runtime.Symbol;
 import plugins.compiler.IMessageReporter;
 import plugins.compiler.IToken;
@@ -45,15 +46,15 @@ parser code {:
     }
 :}
 
-terminal HALT,LOAD,STORE,READ,WRITE,ADD,SUB,MUL,DIV,JMP,JZ;
+terminal HALT,LOAD,STORE,READ,WRITE,ADD,SUB,MUL,DIV,JMP,JZ,JGTZ;
 terminal EOL;
 terminal DIRECT,INDIRECT;
-terminal String NUMBER, IDENT, LABELL;
+terminal String NUMBER, IDENT, LABELL,STRING;
 terminal TCOMMENT;
 
 non terminal Program Program;
 non terminal Row Row;
-non terminal Statement Statement;
+non terminal RAMInstruction Statement;
 non terminal Comment;
 non terminal Integer Number;
 non terminal Label LabelOpt;
@@ -84,31 +85,32 @@ LabelOpt ::= LABELL:label {: RESULT = new Label(label); :}
            ;
 
 
-Statement ::= READ Number:num {: RESULT = new Statement(Statement.READ, 0, num); :}
-            | READ INDIRECT Number:num {: RESULT = new Statement(Statement.READ, 2, num); :}
-            | WRITE DIRECT Number:num {: RESULT = new Statement(Statement.WRITE, 1, num); :}
-            | WRITE Number:num {: RESULT = new Statement(Statement.WRITE, 0, num); :}
-            | WRITE INDIRECT Number:num {: RESULT = new Statement(Statement.WRITE, 2, num); :}
-            | LOAD DIRECT Number:num {: RESULT = new Statement(Statement.LOAD, 1, num); :}
-            | LOAD Number:num {: RESULT = new Statement(Statement.LOAD, 0, num); :}
-            | LOAD INDIRECT Number:num {: RESULT = new Statement(Statement.LOAD, 2, num); :}
-            | STORE Number:num {: RESULT = new Statement(Statement.STORE, 0, num); :}
-            | STORE INDIRECT Number:num {: RESULT = new Statement(Statement.STORE, 2, num); :}
-            | ADD DIRECT Number:num {: RESULT = new Statement(Statement.ADD, 1, num); :}
-            | ADD Number:num {: RESULT = new Statement(Statement.ADD, 0, num); :}
-            | ADD INDIRECT Number:num {: RESULT = new Statement(Statement.ADD, 2, num); :}
-            | SUB DIRECT Number:num {: RESULT = new Statement(Statement.SUB, 1, num); :}
-            | SUB Number:num {: RESULT = new Statement(Statement.SUB, 0, num); :}
-            | SUB INDIRECT Number:num {: RESULT = new Statement(Statement.SUB, 2, num); :}
-            | MUL DIRECT Number:num {: RESULT = new Statement(Statement.MUL, 1, num); :}
-            | MUL Number:num {: RESULT = new Statement(Statement.MUL, 0, num); :}
-            | MUL INDIRECT Number:num {: RESULT = new Statement(Statement.MUL, 2, num); :}
-            | DIV DIRECT Number:num {: RESULT = new Statement(Statement.DIV, 1, num); :}
-            | DIV Number:num {: RESULT = new Statement(Statement.DIV, 0, num); :}
-            | DIV INDIRECT Number:num {: RESULT = new Statement(Statement.DIV, 2, num); :}
-            | JMP IDENT:label {: RESULT = new Statement(Statement.JMP, label); :}
-            | JZ IDENT:label {: RESULT = new Statement(Statement.JZ, label); :}
-            | HALT  {: RESULT = new Statement(Statement.HALT, 0,0); :}
+Statement ::= READ Number:num {: RESULT = new RAMInstruction(IRAMInstruction.READ, (char)0, num); :}
+            | READ INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.READ, '*', num); :}
+            | WRITE DIRECT STRING:str {: RESULT = new RAMInstruction(IRAMInstruction.WRITE, '=', str); :}
+            | WRITE Number:num {: RESULT = new RAMInstruction(IRAMInstruction.WRITE, (char)0, num); :}
+            | WRITE INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.WRITE, '*', num); :}
+            | LOAD DIRECT STRING:str {: RESULT = new RAMInstruction(IRAMInstruction.LOAD, '=', str); :}
+            | LOAD Number:num {: RESULT = new RAMInstruction(IRAMInstruction.LOAD, (char)0, num); :}
+            | LOAD INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.LOAD, '*', num); :}
+            | STORE Number:num {: RESULT = new RAMInstruction(IRAMInstruction.STORE, (char)0, num); :}
+            | STORE INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.STORE, '*', num); :}
+            | ADD DIRECT STRING:str {: RESULT = new RAMInstruction(IRAMInstruction.ADD, '=', str); :}
+            | ADD Number:num {: RESULT = new RAMInstruction(IRAMInstruction.ADD, (char)0, num); :}
+            | ADD INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.ADD, '*', num); :}
+            | SUB DIRECT STRING:str {: RESULT = new RAMInstruction(IRAMInstruction.SUB, '=', str); :}
+            | SUB Number:num {: RESULT = new RAMInstruction(IRAMInstruction.SUB, (char)0, num); :}
+            | SUB INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.SUB, '*', num); :}
+            | MUL DIRECT STRING:str {: RESULT = new RAMInstruction(IRAMInstruction.MUL, '=', str); :}
+            | MUL Number:num {: RESULT = new RAMInstruction(IRAMInstruction.MUL, (char)0, num); :}
+            | MUL INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.MUL, '*', num); :}
+            | DIV DIRECT STRING:str {: RESULT = new RAMInstruction(IRAMInstruction.DIV, '=', str); :}
+            | DIV Number:num {: RESULT = new RAMInstruction(IRAMInstruction.DIV, (char)0, num); :}
+            | DIV INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.DIV, '*', num); :}
+            | JMP IDENT:label {: RESULT = new RAMInstruction(IRAMInstruction.JMP, label); :}
+            | JZ IDENT:label {: RESULT = new RAMInstruction(IRAMInstruction.JZ, label); :}
+            | JGTZ IDENT:label {: RESULT = new RAMInstruction(IRAMInstruction.JGTZ, label); :}
+            | HALT  {: RESULT = new RAMInstruction(IRAMInstruction.HALT, (char)0,0); :}
             ;
 
 Number ::= NUMBER:num {: RESULT = Integer.parseInt((String)num); :};

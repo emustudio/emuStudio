@@ -19,13 +19,18 @@ public class CompilerEnvironment {
     }
     
     public static int getLabelAddr(String label) {
-    	String l = label.toUpperCase();
+    	String l = label.toUpperCase() + ":";
     	for (int i = 0; i < labels.size(); i++) {
     		Label lab = labels.get(i);
-    		if (lab.getValue().equals(l))
+    		String ll = lab.getValue().toUpperCase();
+    		if (ll.equals(l))
     			return lab.getAddress();
     	}
     	// throw new ...label undefined
     	return -1;
+    }
+    
+    public static Label[] getLabels() {
+    	return labels.toArray(new Label[0]);
     }
 }
