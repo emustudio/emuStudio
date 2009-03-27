@@ -402,7 +402,7 @@ public class ArchLoader extends ClassLoader {
                 devsArray.add(dev);
                 devNames.put(devHash,devName);
             }
-            
+
             // create connections hashtable
             Hashtable<IPlugin,ArrayList<IPlugin>> lines = new Hashtable<IPlugin,ArrayList<IPlugin>>();
             for (int i = 0; settings.containsKey("connection"+i+".junc0"); i++) {
@@ -410,6 +410,8 @@ public class ArchLoader extends ClassLoader {
             	// get i-th connection from settings
                 String j0 = settings.getProperty("connection"+i+".junc0", "");
                 String j1 = settings.getProperty("connection"+i+".junc1", "");
+                
+                //System.out.println("CONN(" + i + "): J0="+ j0 + "; J1=" + j1);
                 if (j0.equals("") || j1.equals("")) continue;
 
                 // get connection elements - e1 and e2

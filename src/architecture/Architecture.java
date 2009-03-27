@@ -77,9 +77,13 @@ public class Architecture {
 	 * @return true if plugins 1 and 2 are connected; false otherwise
 	 */
     public boolean isConnected(IPlugin plugin1, IPlugin plugin2) {
+    	// at first suppose that plugin1 is female
 		ArrayList<IPlugin> males = connections.get(plugin1);
-		if (males == null) return false;		
-		if (males.contains(plugin2)) return true;
+		if ((males != null) && males.contains(plugin2)) return true;
+		
+		// now suppose plugin2 is female
+		males = connections.get(plugin2);
+		if ((males != null) && males.contains(plugin1)) return true;
     	return false;
     }
 

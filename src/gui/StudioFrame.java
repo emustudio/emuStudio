@@ -889,6 +889,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
             arch.getDevices()[i].showGUI();
         } catch(Exception e) {
+        	e.printStackTrace();
             StaticDialogs.showErrorMessage("Can't show GUI of the device:\n " + e.getMessage());
         }
     }//GEN-LAST:event_showGUIButtonActionPerformed
@@ -986,7 +987,7 @@ public class StudioFrame extends javax.swing.JFrame {
         txtSource.setEditable(false);
         txtOutput.setText("");
         String fn = txtSource.getFileName();
-        fn = fn.substring(0,fn.lastIndexOf(".")) + ".hex";
+        fn = fn.substring(0,fn.lastIndexOf(".")) + ".hex"; // chyba.
 
 // zatial... neskor sa bude dat nastavit v kompilatore...asi
         int res = JOptionPane.showConfirmDialog(null,
