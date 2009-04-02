@@ -3,6 +3,7 @@ package brainduckmem.impl;
 import plugins.ISettingsHandler;
 import plugins.memory.IMemory;
 import plugins.memory.IMemoryContext;
+import runtime.StaticDialogs;
 
 public class BrainDuckMem implements IMemory {
     private BrainMemContext memContext;
@@ -55,6 +56,7 @@ public class BrainDuckMem implements IMemory {
     @Override
     public void showGUI() {
     	// my nemáme GUI
+    	StaticDialogs.showMessage("BrainDuck memory doesn't support GUI.");
     }
 
     @Override
@@ -74,7 +76,9 @@ public class BrainDuckMem implements IMemory {
     public int getSize() {	return size; }
 
     @Override
-    public void reset() {}
+    public void reset() {
+    	//memContext.clearMemory();
+    }
 
     @Override
     public void setProgramStart(int address) {
