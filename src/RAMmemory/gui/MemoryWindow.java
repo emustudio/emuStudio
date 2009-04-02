@@ -8,9 +8,14 @@
 
 package RAMmemory.gui;
 
+import interfaces.IRAMInstruction;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Enumeration;
 import java.util.EventObject;
+import java.util.Hashtable;
+import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
@@ -23,6 +28,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.LayoutStyle;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.table.AbstractTableModel;
@@ -30,13 +36,12 @@ import javax.swing.table.AbstractTableModel;
 import plugins.memory.IMemoryContext.IMemListener;
 
 import RAMmemory.impl.RAMContext;
-import RAMmemory.impl.RAMInstruction;
 
 @SuppressWarnings("serial")
 public class MemoryWindow extends JFrame {
 	private RAMContext mem;
 	private RAMTableModel ram;
-
+	
 	private class RAMTableModel extends AbstractTableModel {
 		@Override
 		public int getColumnCount() { return 2; }
@@ -44,15 +49,20 @@ public class MemoryWindow extends JFrame {
 		public int getRowCount() { return mem.getSize(); }
 		@Override
 		public Object getValueAt(int rowIndex, int columnIndex) {
-			if (columnIndex == 0) return rowIndex;
+			if (columnIndex == 0) {
+				String label = mem.getLabel(rowIndex);
+				if (label != null) 
+					return String.valueOf(rowIndex) + " (" + label + ")";
+				else return String.valueOf(rowIndex);
+			}
 			else {
-				RAMInstruction i = (RAMInstruction)mem.read(rowIndex);
-				return i.getInstr() + " " + i.getOperand();
+				IRAMInstruction i = (IRAMInstruction)mem.read(rowIndex);
+				return i.getCodeStr() + " " + i.getOperandStr();
 			}
 		}
 	    @Override
 	    public Class<?> getColumnClass(int columnIndex) {
-	        return (columnIndex == 0)?Integer.class:String.class;
+	        return String.class;
 	    }
 	    @Override
 	    public String getColumnName(int col) {
@@ -63,7 +73,7 @@ public class MemoryWindow extends JFrame {
 	public MemoryWindow(RAMContext mem) {
 		this.mem = mem;
 		initComponents();
-		
+		setLocationRelativeTo(null);
 		ram = new RAMTableModel();
 		tableProgram.setModel(ram);
 		refillTable();
@@ -75,10 +85,90 @@ public class MemoryWindow extends JFrame {
 		});
 	}
 	
-	// TODO: complexity
+	// TODO: bug: S(n) computation is not always correct
+	private void setComplexity() {
+		Hashtable<String,Integer> labels;
+		Hashtable<Integer,Integer> levels = new Hashtable<Integer,Integer>();
+		Vector<Integer> registers = new Vector<Integer>();
+		int memcompl = 0;
+		
+		labels = mem.getSwitchedLabels();
+		int j = mem.getSize();
+		int i;
+		for (i = 0; i < j; i++)
+			levels.put(i, 0);
+		
+		// bottom-up cycles search
+		for (i = j-1; i >= 0; i--) {
+			IRAMInstruction in = (IRAMInstruction)mem.read(i);
+			switch (in.getCode()) {
+			case IRAMInstruction.JMP:
+			case IRAMInstruction.JGTZ:
+			case IRAMInstruction.JZ:
+				String lab = in.getOperandLabel();
+				Integer pos = labels.get(lab.toUpperCase()+":");
+				if (pos != null && (pos <= i)) {
+					// ak je definicia labelu vyssie ako jump (cyklus)
+					// pripocitaj 1 ku levelu vsetkych instrukcii v
+					// rozpati <pos;i>
+					for (int n = pos; n <= i; n++) {
+						int old = levels.get(n);
+						levels.put(n, old+1);
+					}
+				}
+				break;
+			case IRAMInstruction.LOAD:
+			case IRAMInstruction.STORE:
+				if (!registers.contains(0)) {
+					memcompl++;
+					registers.add(0);			    	
+			    }
+			default:
+				// other instructions has parameters - registers or
+				// direct values
+				if ((in.getCode() != IRAMInstruction.HALT) && 
+						(in.getDirection() != '=')) {
+					int operand = (Integer)in.getOperand();
+					if (!registers.contains(operand)) {
+						memcompl++;
+						registers.add(operand);
+					}
+				}
+			}
+		}
+		// count levels and make string
+		i = 0;	j=0;
+		String time = null;
+		String n = "";
+		boolean was = false;
+		while (true) {
+		    Enumeration<Integer> keys = levels.keys();
+			while (keys.hasMoreElements()) {
+				Integer pos = keys.nextElement();
+				if (levels.get(pos) == i) {
+					was = true;
+					j++;
+					levels.remove(pos);
+				}
+			}
+			if (was) {
+				if (time == null) time = String.valueOf(j)+n;
+				else time += "+" + String.valueOf(j)+n;
+				n += "*n";
+				i++;
+				j=0;
+				was = false;
+			}
+			else break;
+		}
+		if (time == null || time.equals("")) lblTime.setText("0");
+		else lblTime.setText(time);
+		lblMemory.setText(String.valueOf(memcompl));
+	}
+	
 	public void refillTable() {
 		int add=0,mul=0,div=0,sub=0,load=0,store=0,
-		    jmp=0,jz=0,halt=0,read=0,write=0;
+		    jmp=0,jz=0,jgtz=0,halt=0,read=0,write=0;
 		int count=0,i,j;
 		
 		ram.fireTableDataChanged();
@@ -86,18 +176,19 @@ public class MemoryWindow extends JFrame {
 		j = mem.getSize();
 		for (i = 0; i < j; i++) {
 			count++;
-			switch(((RAMInstruction)mem.read(i)).getInstr()) {
-			case RAMInstruction.LOAD:  load++;
-			case RAMInstruction.STORE: store++;
-			case RAMInstruction.READ:  read++;
-			case RAMInstruction.WRITE: write++;
-			case RAMInstruction.ADD:   add++;
-			case RAMInstruction.SUB:   sub++;
-			case RAMInstruction.MUL:   mul++;
-			case RAMInstruction.DIV:   div++;
-			case RAMInstruction.JMP:   jmp++;
-			case RAMInstruction.JZ:    jz++;
-			case RAMInstruction.HALT:  halt++;
+			switch(((IRAMInstruction)mem.read(i)).getCode()) {
+			case IRAMInstruction.LOAD:  load++; break;
+			case IRAMInstruction.STORE: store++; break;
+			case IRAMInstruction.READ:  read++; break;
+			case IRAMInstruction.WRITE: write++; break;
+			case IRAMInstruction.ADD:   add++; break;
+			case IRAMInstruction.SUB:   sub++; break;
+			case IRAMInstruction.MUL:   mul++; break;
+			case IRAMInstruction.DIV:   div++; break;
+			case IRAMInstruction.JMP:   jmp++; break;
+			case IRAMInstruction.JGTZ:  jgtz++; break;
+			case IRAMInstruction.JZ:    jz++; break;
+			case IRAMInstruction.HALT:  halt++; break;
 			}
 		}
 		lblCount.setText(String.valueOf(count));
@@ -110,23 +201,25 @@ public class MemoryWindow extends JFrame {
 		lblMUL.setText(String.valueOf(mul));
 		lblDIV.setText(String.valueOf(div));
 		lblJMP.setText(String.valueOf(jmp));
+		lblJGTZ.setText(String.valueOf(jgtz));
 		lblJZ.setText(String.valueOf(jz));
 		lblHALT.setText(String.valueOf(halt));
+		
+		setComplexity();
 	}
 	
 	public void initComponents() {
         toolMemory = new JToolBar();
-        btnLoad = new JButton();
         btnClear = new JButton();
         scrollProgram = new JScrollPane();
         tableProgram = new JTable();
         lblTapeContent = new JLabel("Tape content:");
         panelInfo = new JPanel();
         panelComplexity = new JPanel();
-        lblSimpleLBL = new JLabel("Simple:");
-        JLabel lblLogaritmicLBL = new JLabel("Logaritmic:");
-        lblLogaritmic = new JLabel("0");
-        lblSimple = new JLabel("0");
+        lblTimeLBL = new JLabel("Time T(n):");
+        JLabel lblMemoryLBL = new JLabel("Memory S(n):");
+        lblTime = new JLabel("0");
+        lblMemory = new JLabel("0");
         panelInstr = new JPanel();
         JLabel lblCountLBL = new JLabel("Instructions count:");
         lblCount = new JLabel("0");
@@ -140,6 +233,7 @@ public class MemoryWindow extends JFrame {
         lblDIV = new JLabel("0");
         JLabel lblJmpLBL = new JLabel("JMP:");
         JLabel lblJzLBL = new JLabel("JZ:");
+        JLabel lblJgtzLBL = new JLabel("JGTZ:");
         JLabel lblHaltLBL = new JLabel("HALT:");
         JLabel lblLoadLBL = new JLabel("LOAD:");
         JLabel lblStoreLBL = new JLabel("STORE:");
@@ -147,6 +241,7 @@ public class MemoryWindow extends JFrame {
         JLabel lblWriteLBL = new JLabel("WRITE:");
         lblHALT = new JLabel("0");
         lblJZ = new JLabel("0");
+        lblJGTZ = new JLabel("0");
         lblJMP = new JLabel("0");
         lblSTORE = new JLabel("0");
         lblLOAD = new JLabel("0");
@@ -154,23 +249,14 @@ public class MemoryWindow extends JFrame {
         lblREAD = new JLabel("0");
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Program tape for RAM");
 
         toolMemory.setFloatable(false);
         toolMemory.setRollover(true);
+        
+        tableProgram.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        btnLoad.setIcon(new ImageIcon(getClass().getResource("/resources/Open24.gif"))); // NOI18N
-        btnLoad.setFocusable(false);
-        btnLoad.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnLoad.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnLoad.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-			}
-        });
-        toolMemory.add(btnLoad);
-
-        btnClear.setIcon(new ImageIcon(getClass().getResource("/resources/Delete24.gif"))); // NOI18N
+        btnClear.setIcon(new ImageIcon(getClass().getResource("/RAMmemory/resources/edit-delete.png"))); // NOI18N
         btnClear.setFocusable(false);
         btnClear.setHorizontalTextPosition(SwingConstants.CENTER);
         btnClear.setVerticalTextPosition(SwingConstants.BOTTOM);
@@ -185,9 +271,9 @@ public class MemoryWindow extends JFrame {
         scrollProgram.setViewportView(tableProgram);
 
         panelInfo.setBorder(BorderFactory.createTitledBorder("Instructions Info"));
-        panelComplexity.setBorder(BorderFactory.createTitledBorder("Time Complexity"));
-        lblLogaritmic.setFont(lblLogaritmic.getFont().deriveFont(lblLogaritmic.getFont().getStyle() | java.awt.Font.BOLD));
-        lblSimple.setFont(lblSimple.getFont().deriveFont(lblSimple.getFont().getStyle() | java.awt.Font.BOLD));
+        panelComplexity.setBorder(BorderFactory.createTitledBorder("Uniform Complexity"));
+        lblTime.setFont(lblTime.getFont().deriveFont(lblTime.getFont().getStyle() | java.awt.Font.BOLD));
+        lblMemory.setFont(lblMemory.getFont().deriveFont(lblMemory.getFont().getStyle() | java.awt.Font.BOLD));
 
         GroupLayout panelComplLayout = new GroupLayout(panelComplexity);
         panelComplexity.setLayout(panelComplLayout);
@@ -195,24 +281,24 @@ public class MemoryWindow extends JFrame {
             panelComplLayout.createSequentialGroup()
             .addContainerGap()
             .addGroup(panelComplLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(lblLogaritmicLBL)
-                .addComponent(lblSimpleLBL))
+                .addComponent(lblMemoryLBL)
+                .addComponent(lblTimeLBL))
             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(panelComplLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(lblSimple)
-                .addComponent(lblLogaritmic))
+                .addComponent(lblMemory)
+                .addComponent(lblTime))
             .addContainerGap(134, Short.MAX_VALUE));
         
         panelComplLayout.setVerticalGroup(
         	panelComplLayout.createSequentialGroup()
         	.addContainerGap()
             .addGroup(panelComplLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(lblSimpleLBL)
-                .addComponent(lblSimple))
+                .addComponent(lblTimeLBL)
+                .addComponent(lblTime))
             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(panelComplLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(lblLogaritmicLBL)
-                .addComponent(lblLogaritmic))
+                .addComponent(lblMemoryLBL)
+                .addComponent(lblMemory))
             .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE));
 
         panelInstr.setBorder(BorderFactory.createTitledBorder("Instructions usage"));
@@ -225,6 +311,7 @@ public class MemoryWindow extends JFrame {
 
         lblHALT.setFont(lblHALT.getFont().deriveFont(lblHALT.getFont().getStyle() | java.awt.Font.BOLD));
         lblJZ.setFont(lblJZ.getFont().deriveFont(lblJZ.getFont().getStyle() | java.awt.Font.BOLD));
+        lblJGTZ.setFont(lblJGTZ.getFont().deriveFont(lblJGTZ.getFont().getStyle() | java.awt.Font.BOLD));
         lblJMP.setFont(lblJMP.getFont().deriveFont(lblJMP.getFont().getStyle() | java.awt.Font.BOLD));
         lblSTORE.setFont(lblSTORE.getFont().deriveFont(lblSTORE.getFont().getStyle() | java.awt.Font.BOLD));
         lblLOAD.setFont(lblLOAD.getFont().deriveFont(lblLOAD.getFont().getStyle() | java.awt.Font.BOLD));
@@ -257,11 +344,13 @@ public class MemoryWindow extends JFrame {
         			.addGroup(panelInstrLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
         				.addComponent(lblJmpLBL)
         				.addComponent(lblJzLBL)
+        				.addComponent(lblJgtzLBL)
         				.addComponent(lblHaltLBL))
         			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
         			.addGroup(panelInstrLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
         				.addComponent(lblJMP)
         				.addComponent(lblJZ)
+        				.addComponent(lblJGTZ)
         				.addComponent(lblHALT))
         			.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
         			.addGroup(panelInstrLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
@@ -303,14 +392,16 @@ public class MemoryWindow extends JFrame {
         	.addGroup(panelInstrLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
         		.addComponent(lblMulLBL)
         		.addComponent(lblMUL)
-        		.addComponent(lblHaltLBL)
-        		.addComponent(lblHALT)
+        		.addComponent(lblJgtzLBL)
+        		.addComponent(lblJGTZ)
         		.addComponent(lblReadLBL)
         		.addComponent(lblREAD))
         	.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
         	.addGroup(panelInstrLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
         		.addComponent(lblDivLBL)
         		.addComponent(lblDIV)
+        		.addComponent(lblHaltLBL)
+        		.addComponent(lblHALT)
         		.addComponent(lblWriteLBL)
         		.addComponent(lblWRITE))
         	.addContainerGap());
@@ -366,13 +457,13 @@ public class MemoryWindow extends JFrame {
 	}
 	
     private JButton btnClear;
-    private JButton btnLoad;
     private JLabel lblHALT;
     private JLabel lblJZ;
+    private JLabel lblJGTZ;
     private JLabel lblJMP;
     private JLabel lblSTORE;
     private JLabel lblLOAD;
-    private JLabel lblSimpleLBL;
+    private JLabel lblTimeLBL;
     private JLabel lblWRITE;
     private JLabel lblREAD;
     private JPanel panelComplexity;
@@ -381,10 +472,10 @@ public class MemoryWindow extends JFrame {
     private JLabel lblADD;
     private JLabel lblCount;
     private JLabel lblDIV;
-    private JLabel lblLogaritmic;
+    private JLabel lblTime;
     private JLabel lblMUL;
     private JLabel lblSUB;
-    private JLabel lblSimple;
+    private JLabel lblMemory;
     private JLabel lblTapeContent;
     private JTable tableProgram;
     private JPanel panelInfo;

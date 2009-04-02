@@ -28,7 +28,7 @@ public class RAMmemory implements IMemory {
 	public String getTitle() { return "RAM Memory"; }
 
 	@Override
-	public String getVersion() { return "0.1b"; }
+	public String getVersion() { return "0.11b"; }
 
 	@Override
 	public String getCopyright() {
@@ -83,7 +83,9 @@ public class RAMmemory implements IMemory {
 	public long getHash() { return hash; }
 
 	@Override
-	public void reset() { }
+	public void reset() { 
+		context.clearInputs();
+	}
 
 	@Override
 	public void showSettings() {
