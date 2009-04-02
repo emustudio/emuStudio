@@ -17,13 +17,15 @@ import javax.swing.event.EventListenerList;
 import plugins.device.IDeviceContext;
 
 public class RAMContext implements IRAMCPUContext {
-    private final static String KNOWN_TAPE = "c642e5f1dc280113ccd8739f3c01a06d"; 
+    private final static String KNOWN_TAPE = "ea9beaff230249da3c2e71d91c469c2a"; 
     private EventListenerList listenerList;
     private EventObject cpuEvt;
+    private RAM cpu;
     
     private IAbstractTapeContext[] tapes;
 
-    public RAMContext() {
+    public RAMContext(RAM cpu) {
+    	this.cpu = cpu;
         listenerList = new EventListenerList();
         cpuEvt = new EventObject(this);
         tapes = new IAbstractTapeContext[3];
@@ -83,22 +85,26 @@ public class RAMContext implements IRAMCPUContext {
     				tapes[i].setBounded(true);
     				tapes[i].setEditable(true);
     				tapes[i].setPosVisible(false);
+    				tapes[i].setClearAtReset(true);
     				return "Registers (storage tape)";
     			case 1:
     				tapes[i].setBounded(true);
     				tapes[i].setEditable(true);
     				tapes[i].setPosVisible(true);
+    				tapes[i].setClearAtReset(false);
+    				cpu.loadTape(tapes[i]);
     				return "Input tape";
     			case 2:
     				tapes[i].setBounded(true);
     				tapes[i].setEditable(false);
     				tapes[i].setPosVisible(true);
+    				tapes[i].setClearAtReset(true);
     				return "Output tape";
     			}
     			return "Unknown";
     		}
     	}
-    	return null;
+    	return "?";
     }
     
     public void destroy() {

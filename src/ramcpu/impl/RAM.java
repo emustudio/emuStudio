@@ -9,7 +9,9 @@ package ramcpu.impl;
 
 import java.util.EventObject;
 import java.util.HashSet;
+import java.util.Vector;
 
+import interfaces.IAbstractTapeContext;
 import interfaces.IRAMInstruction;
 import interfaces.IRAMMemoryContext;
 
@@ -25,7 +27,7 @@ import ramcpu.gui.RAMStatusPanel;
 import runtime.StaticDialogs;
 
 public class RAM implements ICPU, Runnable {
-	private final static String KNOWN_MEM = "f15733d5fdcfe37498c7d14dd913ea24";
+	private final static String KNOWN_MEM = "894da3cf31d433afcee33c22a64d2ed9";
 	private long hash;
 	@SuppressWarnings("unused")
 	private ISettingsHandler settings;
@@ -41,7 +43,7 @@ public class RAM implements ICPU, Runnable {
     
 	public RAM(Long hash) {
 		this.hash = hash;
-		context = new RAMContext();
+		context = new RAMContext(this);
         cpuThread = null;
         breaks = new HashSet<Integer>();
         run_state = ICPU.STATE_STOPPED_NORMAL;
@@ -85,6 +87,15 @@ public class RAM implements ICPU, Runnable {
 		return true;
 	}
 
+	// called from RAMContext after Input tape attachement
+	public void loadTape(IAbstractTapeContext tape) {
+		Vector<String> data = mem.getInputs();
+		if (data == null) return;
+		int j = data.size();
+		for (int i = 0; i < j; i++)
+			tape.setSymbolAt(i, data.elementAt(i));
+	}
+	
 	@Override
 	public IDebugColumn[] getDebugColumns() {
 		return dis.getDebugColumns();
@@ -168,6 +179,9 @@ public class RAM implements ICPU, Runnable {
         cpuThread = null;
         context.fireCpuRun(run_state);
         context.fireCpuState();
+        
+        if (context.checkTapes())
+        	loadTape(context.getInput());
 	}
 
 	@Override
@@ -236,11 +250,15 @@ public class RAM implements ICPU, Runnable {
 
     private void emulateInstruction() {
     	if (!context.checkTapes()) {
-    		run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
+        	run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
     		return;
     	}
     	
     	IRAMInstruction in = (IRAMInstruction)mem.read(IP++);
+    	if (in == null) {
+    		run_state = ICPU.STATE_STOPPED_BAD_INSTR;
+    		return;
+    	}
     	switch (in.getCode()) {
     	case IRAMInstruction.READ:
     		if (in.getDirection() == 0) {
@@ -248,7 +266,7 @@ public class RAM implements ICPU, Runnable {
     			context.getInput().moveRight();
     			context.getStorage().setSymbolAt((Integer)in.getOperand(), 
     					input);
-    			return;
+            	return;
     		} else if (in.getDirection() == '*') {
     			try {
     				int M = Integer.decode(context.getStorage()
@@ -257,7 +275,7 @@ public class RAM implements ICPU, Runnable {
     				String input = (String)context.getInput().in(evt);
         			context.getInput().moveRight();
         			context.getStorage().setSymbolAt(M, input);
-    			} catch(Exception e) { break; }
+    			} catch(NumberFormatException e) { break; }
     			return;
     		}
     		break;
@@ -275,7 +293,7 @@ public class RAM implements ICPU, Runnable {
     				context.getOutput().out(evt, 
     						context.getStorage().getSymbolAt(M));
     				context.getOutput().moveRight();
-    			} catch(Exception e) { break; }
+    			} catch(NumberFormatException e) { break; }
     			return;
     		} else if (in.getDirection() == '=') {
     			context.getOutput().out(evt, in.getOperand());
@@ -295,7 +313,7 @@ public class RAM implements ICPU, Runnable {
     				if (M < 0) break;
     				context.getStorage().setSymbolAt(0, context.getStorage()
     						.getSymbolAt(M));
-    			} catch(Exception e) { break; }
+    			} catch(NumberFormatException e) { break; }
     			return;
     		} else if (in.getDirection() == '=') {
     			context.getStorage().setSymbolAt(0, (String)in.getOperand());
@@ -314,152 +332,277 @@ public class RAM implements ICPU, Runnable {
     				if (M < 0) break;
     				context.getStorage().setSymbolAt(M, context.getStorage()
     						.getSymbolAt(0));
-    			} catch(Exception e) { break; }
+    			} catch(NumberFormatException e) { break; }
     			return;
     		}
     		break;
     	case IRAMInstruction.ADD:
     		if (in.getDirection() == 0) {
-    			try {
-    				int r0 = Integer.decode(context.getStorage().getSymbolAt(0));
-    				int ri = Integer.decode(context.getStorage().getSymbolAt(
-    						(Integer)in.getOperand()));
+				String sym0 = context.getStorage().getSymbolAt(0);
+				String sym1 = context.getStorage().getSymbolAt((Integer)in.getOperand());
+   				// first try double values
+   				try { 
+       				int r0 = Integer.decode(sym0);
+    				int ri = Integer.decode(sym1);
+   					context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
+   					return;
+   				} catch(NumberFormatException e) {}
+   				// then integer (if double failed)
+       			try {
+   					double r0 = Double.parseDouble(sym0);
+   					double ri = Double.parseDouble(sym1);
     				context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
-    			} catch(Exception e) { break; }
+    			} catch(NumberFormatException e) { break; }
     			return;
     		} else if (in.getDirection() == '*') {
     			try {
     				int M = Integer.decode(context.getStorage().getSymbolAt(
     						(Integer)in.getOperand()));
-    				int r0 = Integer.decode(context.getStorage().getSymbolAt(0));
-    				int ri = Integer.decode(context.getStorage().getSymbolAt(M));
-
     				if (M < 0) break;
+    				
+    				String sym0 = context.getStorage().getSymbolAt(0);
+    				String sym1 = context.getStorage().getSymbolAt(M);
+       				// first try double values
+       				try { 
+        				int r0 = Integer.decode(sym0);
+        				int ri = Integer.decode(sym1);
+       					context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
+       					return;
+       				} catch(NumberFormatException e) {}
+       				// then integer (if double failed)
+   					double r0 = Double.parseDouble(sym0);
+   					double ri = Double.parseDouble(sym1);
     				context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
-    			} catch(Exception e) { break; }
+    			} catch(NumberFormatException e) { break; }
     			return;
     		} else if (in.getDirection() == '=') {
+    			String sym0 = context.getStorage().getSymbolAt(0);
+    			String sym1 = (String)in.getOperand();
+   				// first try double values
+   				try { 
+    				int r0 = Integer.decode(sym0);
+    				int ri = Integer.decode(sym1);
+   					context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
+   					return;
+   				} catch(NumberFormatException e) {}
+   				// then integer (if double failed)
     			try {
-    				int r0 = Integer.decode(context.getStorage().getSymbolAt(0));
-    				int ri = Integer.decode((String)in.getOperand());
+   					double r0 = Double.parseDouble(sym0);
+   					double ri = Double.parseDouble(sym1);
     				context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
-    			} catch(Exception e) { break; }
+    			} catch(NumberFormatException e) { break; }
     			return;
     		}
     		break;
     	case IRAMInstruction.SUB:
     		if (in.getDirection() == 0) {
+    			String sym0 = context.getStorage().getSymbolAt(0);
+    			String sym1 = context.getStorage().getSymbolAt((Integer)in.getOperand());
+   				try { 
+    				int r0 = Integer.decode(sym0);
+    				int ri = Integer.decode(sym1);
+   					context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
+   					return;
+   				} catch(NumberFormatException e) {}
     			try {
-    				int r0 = Integer.decode(context.getStorage().getSymbolAt(0));
-    				int ri = Integer.decode(context.getStorage().getSymbolAt(
-    						(Integer)in.getOperand()));
+   					double r0 = Double.parseDouble(sym0);
+   					double ri = Double.parseDouble(sym1);
     				context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
-    			} catch(Exception e) { break; }
+    			} catch(NumberFormatException e) { break; }
     			return;
     		} else if (in.getDirection() == '*') {
     			try {
     				int M = Integer.decode(context.getStorage().getSymbolAt(
     						(Integer)in.getOperand()));
-    				int r0 = Integer.decode(context.getStorage().getSymbolAt(0));
-    				int ri = Integer.decode(context.getStorage().getSymbolAt(M));
-
     				if (M < 0) break;
+    				String sym0 = context.getStorage().getSymbolAt(0);
+    				String sym1 = context.getStorage().getSymbolAt(M);
+       				try { 
+        				int r0 = Integer.decode(sym0);
+        				int ri = Integer.decode(sym1);
+       					context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
+       					return;
+       				} catch(NumberFormatException e) {}
+   					double r0 = Double.parseDouble(sym0);
+   					double ri = Double.parseDouble(sym1);
     				context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
-    			} catch(Exception e) { break; }
+    			} catch(NumberFormatException e) { break; }
     			return;
     		} else if (in.getDirection() == '=') {
+    			String sym0 = context.getStorage().getSymbolAt(0);
+    			String sym1 = (String)in.getOperand();  
+   				try { 
+    				int r0 = Integer.decode(sym0);
+    				int ri = Integer.decode(sym1);
+   					context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
+   					return;
+   				} catch(NumberFormatException e) {}
     			try {
-    				int r0 = Integer.decode(context.getStorage().getSymbolAt(0));
-    				int ri = Integer.decode((String)in.getOperand());
+   					double r0 = Double.parseDouble(sym0);
+   					double ri = Double.parseDouble(sym1);
     				context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
-    			} catch(Exception e) { break; }
+    			} catch(NumberFormatException e) { break; }
     			return;
     		}
     		break;
     	case IRAMInstruction.MUL:
     		if (in.getDirection() == 0) {
+    			String sym0 = context.getStorage().getSymbolAt(0);
+    			String sym1 = context.getStorage().getSymbolAt((Integer)in.getOperand());
+   				try { 
+    				int r0 = Integer.decode(sym0);
+    				int ri = Integer.decode(sym1);
+   					context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
+   					return;
+   				} catch(NumberFormatException e) {}
     			try {
-    				int r0 = Integer.decode(context.getStorage().getSymbolAt(0));
-    				int ri = Integer.decode(context.getStorage().getSymbolAt(
-    						(Integer)in.getOperand()));
+   					double r0 = Double.parseDouble(sym0);
+   					double ri = Double.parseDouble(sym1);
     				context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
-    			} catch(Exception e) { break; }
+    			} catch(NumberFormatException e) { break; }
     			return;
     		} else if (in.getDirection() == '*') {
     			try {
     				int M = Integer.decode(context.getStorage().getSymbolAt(
     						(Integer)in.getOperand()));
-    				int r0 = Integer.decode(context.getStorage().getSymbolAt(0));
-    				int ri = Integer.decode(context.getStorage().getSymbolAt(M));
-
     				if (M < 0) break;
+
+    				String sym0 = context.getStorage().getSymbolAt(0);
+    				String sym1 = context.getStorage().getSymbolAt(M);
+       				try { 
+        				int r0 = Integer.decode(sym0);
+        				int ri = Integer.decode(sym1);
+       					context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
+       					return;
+       				} catch(NumberFormatException e) {}
+   					double r0 = Double.parseDouble(sym0);
+   					double ri = Double.parseDouble(sym1);
     				context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
-    			} catch(Exception e) { break; }
+    			} catch(NumberFormatException e) { break; }
     			return;
     		} else if (in.getDirection() == '=') {
+    			String sym0 = context.getStorage().getSymbolAt(0);
+    			String sym1 = (String)in.getOperand();
+   				try { 
+    				int r0 = Integer.decode(sym0);
+    				int ri = Integer.decode(sym1);
+   					context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
+   					return;
+   				} catch(NumberFormatException e) {}
     			try {
-    				int r0 = Integer.decode(context.getStorage().getSymbolAt(0));
-    				int ri = Integer.decode((String)in.getOperand());
+   					double r0 = Double.parseDouble(sym0);
+   					double ri = Double.parseDouble(sym1);
     				context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
-    			} catch(Exception e) { break; }
+    			} catch(NumberFormatException e) { break; }
     			return;
     		}
     		break;
     	case IRAMInstruction.DIV:
     		if (in.getDirection() == 0) {
+    			String sym0 = context.getStorage().getSymbolAt(0);
+    			String sym1 = context.getStorage().getSymbolAt((Integer)in.getOperand());
+   				try { 
+    				int r0 = Integer.decode(sym0);
+    				int ri = Integer.decode(sym0);
+   					if (ri == 0) break;
+   					context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
+   					return;
+   				} catch(NumberFormatException e) {}
     			try {
-    				int r0 = Integer.decode(context.getStorage().getSymbolAt(0));
-    				int ri = Integer.decode(context.getStorage().getSymbolAt(
-    						(Integer)in.getOperand()));
+   					double r0 = Double.parseDouble(sym0);
+   					double ri = Double.parseDouble(sym1);
+    				if (ri == 0) break;
     				context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
-    			} catch(Exception e) { break; }
+    			} catch(NumberFormatException e) { break; }
     			return;
     		} else if (in.getDirection() == '*') {
     			try {
     				int M = Integer.decode(context.getStorage().getSymbolAt(
     						(Integer)in.getOperand()));
-    				int r0 = Integer.decode(context.getStorage().getSymbolAt(0));
-    				int ri = Integer.decode(context.getStorage().getSymbolAt(M));
-
     				if (M < 0) break;
+
+    				String sym0 = context.getStorage().getSymbolAt(0);
+    				String sym1 = context.getStorage().getSymbolAt(M);
+    				
+       				try { 
+        				int r0 = Integer.decode(sym0);
+        				int ri = Integer.decode(sym1);
+       					if (ri == 0) break;
+       					context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
+       					return;
+       				} catch(NumberFormatException e) {}
+    				
+   					double r0 = Double.parseDouble(sym0);
+   					double ri = Double.parseDouble(sym1);
+    				if (ri == 0) break;
+
     				context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
     			} catch(Exception e) { break; }
     			return;
     		} else if (in.getDirection() == '=') {
+    			String sym0 = context.getStorage().getSymbolAt(0);
+    			String sym1 = (String)in.getOperand();
+   				try { 
+    				int r0 = Integer.decode(sym0);
+    				int ri = Integer.decode(sym1);
+   					if (ri == 0) break;
+   					context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
+   					return;
+   				} catch(NumberFormatException e) {}
     			try {
-    				int r0 = Integer.decode(context.getStorage().getSymbolAt(0));
-    				int ri = Integer.decode((String)in.getOperand());
+   					double r0 = Double.parseDouble(sym0);
+   					double ri = Double.parseDouble(sym1);
+    				if (ri == 0) break;
     				context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
-    			} catch(Exception e) { break; }
+    			} catch(NumberFormatException e) { break; }
     			return;
     		}
     		break;
     	case IRAMInstruction.JMP:
     		IP = (Integer)in.getOperand();
     		return;
-    	case IRAMInstruction.JZ:
-    		try {
-    			String r0 = context.getStorage().getSymbolAt(0);
-    			if (r0 == null || r0.equals("")) {
-    				IP = (Integer)in.getOperand();
-    				return;
-    			}
-    			int rr0 = Integer.decode(r0);
-    			if (rr0 == 0) {
-    				IP = (Integer)in.getOperand();
-    				return;
-    			}
-    		} catch(Exception e) { break; }
+    	case IRAMInstruction.JZ: {
+    		String r0 = context.getStorage().getSymbolAt(0);
+    		if (r0 == null || r0.equals("")) {
+    			IP = (Integer)in.getOperand();
+    			return;
+    		}
+    		int rr0 = 0;
+    		boolean t = false;
+        	try {
+    			rr0 = Integer.decode(r0);
+        		t = true;
+        	} catch(NumberFormatException e) { }
+        	if (t == false) {
+        		try {
+            		rr0 = (int)Double.parseDouble(r0);
+        		} catch(NumberFormatException e) { break; }
+        	}
+        	if (rr0 == 0) {
+        		IP = (Integer)in.getOperand();
+        		return;
+        	}
     		return;
+    	}
     	case IRAMInstruction.JGTZ:
     		try {
     			String r0 = context.getStorage().getSymbolAt(0);
-    			int rr0 = Integer.decode(r0);
+        		int rr0 = 0;
+        		boolean t = false;
+            	try {
+            		rr0 = Integer.decode(r0);
+            		t = true;
+            	} catch(NumberFormatException e) { }
+            	if (t == false) {
+            		try {
+            			rr0 = (int)Double.parseDouble(r0);
+            		} catch(NumberFormatException e) { break; }
+            	}
     			if (rr0 > 0) {
     				IP = (Integer)in.getOperand();
     				return;
     			}
-    		} catch(Exception e) { break; }
+    		} catch(NumberFormatException e) { break; }
     		return;    		
     	case IRAMInstruction.HALT:
     		run_state = ICPU.STATE_STOPPED_NORMAL;
