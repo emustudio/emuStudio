@@ -9,7 +9,6 @@ package terminal.gui;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -22,6 +21,7 @@ import plugins.ISettingsHandler;
 
 import terminal.TerminalDisplay;
 import terminal.gui.TerminalWindow;
+import terminal.gui.utils.NiceButton;
 
 
 /**
@@ -85,13 +85,13 @@ public class ConfigDialog extends JDialog {
         ButtonGroup btnGroup = new ButtonGroup();
         JPanel controlPanel = new JPanel();
         chkAlwaysOnTop = new JCheckBox();
-        JButton btnClearScreen = new JButton();
-        JButton btnRollLine = new JButton();
+        NiceButton btnClearScreen = new NiceButton();
+        NiceButton btnRollLine = new NiceButton();
         chkAntiAliasing = new JCheckBox();
         radioFull = new JRadioButton();
         radioHalf = new JRadioButton();
         chkSaveSettings = new JCheckBox();
-        JButton btnOK = new JButton();
+        NiceButton btnOK = new NiceButton();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Terminal configuration");
@@ -101,7 +101,7 @@ public class ConfigDialog extends JDialog {
 
         chkAlwaysOnTop.setText("Always on top");
 
-        btnClearScreen.setText("Clear screen");
+        btnClearScreen.setText("Clear");
         btnClearScreen.setFocusable(false);
         btnClearScreen.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
