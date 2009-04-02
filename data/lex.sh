@@ -1,2 +1,2 @@
 #!/bin/bash
-~/bin/jflex-1.4.2/bin/jflex lexer.flex
+~/bin/jflex-1.4.3/bin/jflex lexer.flex

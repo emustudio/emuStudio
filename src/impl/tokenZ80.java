@@ -30,16 +30,18 @@ public class tokenZ80 extends Symbol implements IToken,symZ80 {
     private int offset;
     private int length;
     private int type;
+    private boolean initial;
  
     /** Creates a new instance of tokenZ80 */
     public tokenZ80(int ID, int type, String text, Object value, int lineNumber,
-            int columnNumber, int charBegin, int charEnd) {
+            int columnNumber, int charBegin, int charEnd, boolean initial) {
         super(ID, value);
         this.text = text;
         this.lineNumber = lineNumber;
         this.columnNumber = columnNumber;
         this.offset = charBegin;
         this.length = charEnd - charBegin;
+        this.initial = initial;
         this.type = type;
     }
 
@@ -60,4 +62,9 @@ public class tokenZ80 extends Symbol implements IToken,symZ80 {
     public int getColumn() { return columnNumber; }
     public int getOffset() { return offset; }
     public int getLength() { return length; }
+
+	@Override
+	public boolean isInitialLexicalState() {
+		return initial;
+	}
 }
