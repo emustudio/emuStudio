@@ -12,7 +12,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.GroupLayout;
-import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
@@ -22,6 +21,7 @@ import javax.swing.WindowConstants;
 import plugins.ISettingsHandler;
 import runtime.StaticDialogs;
 import sio88.Mits88SIO;
+import sio88.gui.utils.NiceButton;
 
 @SuppressWarnings("serial")
 public class ConfigDialog extends JDialog {
@@ -62,8 +62,8 @@ public class ConfigDialog extends JDialog {
 		JLabel lblData = new JLabel("(data)");
 		txtPort1 = new JTextField();
 		txtPort2 = new JTextField();
-		btnOK = new JButton("OK");
-		btnDefault = new JButton("Default");
+		btnOK = new NiceButton("OK");
+		btnDefault = new NiceButton("Default");
 		
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		setTitle("MITS 88-SIO Configuration");
@@ -152,7 +152,7 @@ public class ConfigDialog extends JDialog {
 
 	private JTextField txtPort1;
 	private JTextField txtPort2;
-	private JButton btnOK;
-	private JButton btnDefault;
+	private NiceButton btnOK;
+	private NiceButton btnDefault;
 }
 
