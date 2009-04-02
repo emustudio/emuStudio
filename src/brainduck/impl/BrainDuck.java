@@ -34,9 +34,9 @@ public class BrainDuck implements ICompiler {
     }
     
     @Override
-    public String getTitle() { return "BrainDuck Assembler"; }
+    public String getTitle() { return "BrainDuck Compiler"; }
     @Override
-    public String getVersion() { return "0.11b"; }
+    public String getVersion() { return "0.13b"; }
     @Override
     public String getCopyright() { return "\u00A9 Copyright 2009, P. Jakubčo"; }
     @Override
@@ -133,7 +133,9 @@ public class BrainDuck implements ICompiler {
             return true;
         } catch (Exception e) {
         	e.printStackTrace();
-            print_text(e.getMessage(), IMessageReporter.TYPE_ERROR);
+        	String h = e.getLocalizedMessage();
+        	if (h == null || h.equals("")) h = "Unknown error";
+            print_text(h, IMessageReporter.TYPE_ERROR);
             return false;
         }
     }

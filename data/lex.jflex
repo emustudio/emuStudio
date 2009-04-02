@@ -48,14 +48,14 @@ import java.io.IOException;
         yyline = yychar = yycolumn = 0;
     }
     
-    private tokenBD token(int id, int type, Object val) {
-        return new tokenBD(id,type,yytext(),yyline,yycolumn,yychar,val);
+    private tokenBD token(int id, int type, Object val,boolean initial) {
+        return new tokenBD(id,type,yytext(),yyline,yycolumn,yychar,val,initial);
     }
     
 %}
 
 %eofval{
-  return token(tokenBD.EOF, IToken.TEOF,null);
+  return token(tokenBD.EOF, IToken.TEOF,null,false);
 %eofval}
 
 
@@ -66,21 +66,21 @@ Number     = [0-9]+
 
 %%
 
-"halt"  { return token(tokenBD.HALT, IToken.RESERVED,null); }
-"inc"   { return token(tokenBD.INC,  IToken.RESERVED,null); }
-"dec"   { return token(tokenBD.DEC,  IToken.RESERVED,null); }
-"incv"  { return token(tokenBD.INCV, IToken.RESERVED,null); }
-"decv"  { return token(tokenBD.DECV, IToken.RESERVED,null); }
-"print" { return token(tokenBD.PRINT,IToken.RESERVED,null); }
-"load"  { return token(tokenBD.LOAD, IToken.RESERVED,null); }
-"loop"  { return token(tokenBD.LOOP, IToken.RESERVED,null); }
-"endl"  { return token(tokenBD.ENDL, IToken.RESERVED,null); }
+"halt"  { return token(tokenBD.HALT, IToken.RESERVED,null,true); }
+"inc"   { return token(tokenBD.INC,  IToken.RESERVED,null,true); }
+"dec"   { return token(tokenBD.DEC,  IToken.RESERVED,null,true); }
+"incv"  { return token(tokenBD.INCV, IToken.RESERVED,null,true); }
+"decv"  { return token(tokenBD.DECV, IToken.RESERVED,null,true); }
+"print" { return token(tokenBD.PRINT,IToken.RESERVED,null,true); }
+"load"  { return token(tokenBD.LOAD, IToken.RESERVED,null,true); }
+"loop"  { return token(tokenBD.LOOP, IToken.RESERVED,null,true); }
+"endl"  { return token(tokenBD.ENDL, IToken.RESERVED,null,true); }
 
 {WhiteSpace}   { }
-{Eol}          { return token(tokenBD.EOL, IToken.SEPARATOR,null); }
-{Comment}      { return token(tokenBD.TCOMMENT, IToken.COMMENT,null); }
-{Number}       { return token(tokenBD.NUMBER, IToken.LITERAL,yytext()); }
+{Eol}          { return token(tokenBD.EOL, IToken.SEPARATOR,null,true); }
+{Comment}      { return token(tokenBD.TCOMMENT, IToken.COMMENT,null,true); }
+{Number}       { return token(tokenBD.NUMBER, IToken.LITERAL,yytext(),true); }
 
 //[^\n\r\ \t\f]+ { return token(tokenBD.error, tokenBD.ERROR); }
-.              { return token(tokenBD.error, tokenBD.ERROR,null); }
+.              { return token(tokenBD.error, tokenBD.ERROR,null,false); }
 
