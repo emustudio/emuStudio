@@ -142,8 +142,9 @@ public class DiskImpl implements IDevice {
     	this.hash = hash;
         this.drives = new ArrayList<Drive>();
         for (int i = 0; i < DRIVES_COUNT; i++)
-            drives.add(new Drive());
-        this.current_drive = 0xFF;
+            this.drives.add(new Drive());
+
+		this.current_drive = 0xFF;
         port1CPU = CPU_PORT1;
         port2CPU = CPU_PORT2;
         port3CPU = CPU_PORT3;
@@ -325,7 +326,7 @@ public class DiskImpl implements IDevice {
 
 	@Override
 	public void showSettings() {
-		new ConfigDialog(hash,settings,drives,gui).setVisible(true);
+    	new ConfigDialog(hash,settings,this.drives,gui).setVisible(true);
 	}
 
 }

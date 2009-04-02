@@ -13,22 +13,22 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.GroupLayout;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
 
 import disk.Drive;
 import disk.DiskImpl;
+import disk.gui.utils.NiceButton;
 
 import plugins.ISettingsHandler;
 import runtime.StaticDialogs;
@@ -98,14 +98,14 @@ public class ConfigDialog extends JDialog {
         driveCombo = new JComboBox();
         JLabel lblImage = new JLabel("Image:");
         txtImage = new JTextField();
-        browseButton = new JButton("Browse...");
-        mountButton = new JButton("Mount");
-        umountButton = new JButton("Un-mount");
-        createButton = new JButton("Create new image");
+        browseButton = new NiceButton("Browse...");
+        mountButton = new NiceButton("Mount");
+        umountButton = new NiceButton("Un-mount");
+        createButton = new NiceButton("Create...");
         JPanel panelImages = new JPanel();
         JPanel panelOther = new JPanel();
         chkAlwaysOnTop = new JCheckBox("GUI always on top");
-        btnOK = new JButton("OK");
+        btnOK = new NiceButton("OK");
         chkSaveSettings = new JCheckBox("Save settings");
         JPanel panelPorts = new JPanel();
         JLabel lblWarning = new JLabel("These settings will be affected after restart");
@@ -115,15 +115,14 @@ public class ConfigDialog extends JDialog {
         JLabel lblPort2D = new JLabel("(IN: current sector, OUT: set flags)");
         JLabel lblPort3 = new JLabel("Port3:");
         JLabel lblPort3D = new JLabel("(IN: read data, OUT: write data)");
-        btnDefault = new JButton("Default");
+        btnDefault = new NiceButton("Default");
         txtPort1 = new JTextField("0x8");
         txtPort2 = new JTextField("0x9");
         txtPort3 = new JTextField("0xA");
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("MITS 88-DISK Configuration");
-
-        panelImages.setBorder(BorderFactory.createTitledBorder("Mounted images"));
+        setResizable(false);
 
         driveCombo.setModel(new DefaultComboBoxModel(
         		new String[] { "Drive 0 (A)", "Drive 1 (B)", "Drive 2 (C)",
@@ -170,7 +169,7 @@ public class ConfigDialog extends JDialog {
             panelImagesLayout.createSequentialGroup()
 	        .addContainerGap()
 	        .addGroup(panelImagesLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-	            .addComponent(driveCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+	            .addComponent(driveCombo) //, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 	            .addComponent(lblImage)
 	            .addGroup(GroupLayout.Alignment.TRAILING, panelImagesLayout.createSequentialGroup()
 	                .addComponent(txtImage, GroupLayout.DEFAULT_SIZE, 283, Short.MAX_VALUE)
@@ -183,10 +182,12 @@ public class ConfigDialog extends JDialog {
 	                .addComponent(umountButton)
 	                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
 	                .addComponent(createButton)
-	                .addContainerGap())));
+	                .addContainerGap()))
+	        .addContainerGap());
         panelImagesLayout.setVerticalGroup(
             panelImagesLayout.createSequentialGroup()
-            .addComponent(driveCombo) //, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+            .addContainerGap()
+            .addComponent(driveCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(lblImage)
             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
@@ -200,7 +201,6 @@ public class ConfigDialog extends JDialog {
                 .addComponent(createButton))            
             .addContainerGap());
 
-        panelPorts.setBorder(BorderFactory.createTitledBorder("CPU ports connection"));
         btnDefault.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				btnDefaultActionPerformed(e);
@@ -258,8 +258,6 @@ public class ConfigDialog extends JDialog {
         		.addComponent(btnDefault)
         		.addContainerGap());
         
-        panelOther.setBorder(BorderFactory.createTitledBorder("Other"));
-
         GroupLayout panelOtherLayout = new GroupLayout(panelOther);
         panelOther.setLayout(panelOtherLayout);
         panelOtherLayout.setHorizontalGroup(
@@ -271,6 +269,7 @@ public class ConfigDialog extends JDialog {
                 .addContainerGap());
         panelOtherLayout.setVerticalGroup(
             panelOtherLayout.createSequentialGroup()
+            	.addContainerGap()
                 .addComponent(chkAlwaysOnTop)
                 .addComponent(chkSaveSettings)
                 .addContainerGap());
@@ -280,16 +279,20 @@ public class ConfigDialog extends JDialog {
 				btnOKActionPerformed(e);
 			}        	
         });
+        
+        JTabbedPane tab = new JTabbedPane();
+        
+        tab.addTab("Mounted images", panelImages);
+        tab.addTab("CPU ports connection", panelPorts);
+        tab.addTab("Other", panelOther);
+        
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(panelImages, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(panelPorts, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(panelOther, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(tab)
                 .addContainerGap())
             .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
             		.addContainerGap()
@@ -298,11 +301,7 @@ public class ConfigDialog extends JDialog {
         layout.setVerticalGroup(
             layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(panelImages, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(panelPorts, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(panelOther, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                .addComponent(tab)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(btnOK)
                 .addContainerGap());
@@ -422,15 +421,15 @@ public class ConfigDialog extends JDialog {
     }
 
     private JCheckBox chkAlwaysOnTop;
-    private JButton browseButton;
-    private JButton createButton;
+    private NiceButton browseButton;
+    private NiceButton createButton;
     private JComboBox driveCombo;
-    private JButton mountButton;
+    private NiceButton mountButton;
     private JTextField txtImage;
-    private JButton umountButton;
-    private JButton btnOK;
+    private NiceButton umountButton;
+    private NiceButton btnOK;
     private JCheckBox chkSaveSettings;
-    private JButton btnDefault;
+    private NiceButton btnDefault;
     private JTextField txtPort1;
     private JTextField txtPort2;
     private JTextField txtPort3;
