@@ -9,6 +9,7 @@ package abstracttape.gui;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.EventObject;
@@ -16,7 +17,6 @@ import java.util.EventObject;
 import javax.swing.AbstractListModel;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -30,6 +30,7 @@ import plugins.ISettingsHandler;
 
 import runtime.StaticDialogs;
 
+import abstracttape.gui.utils.NiceButton;
 import abstracttape.impl.AbstractTape;
 import abstracttape.impl.TapeContext;
 import abstracttape.impl.TapeContext.TapeListener;
@@ -38,7 +39,7 @@ import abstracttape.impl.TapeContext.TapeListener;
 public class TapeDialog extends JDialog {
 	private TapeContext tape;
 	private TapeListModel listModel;
-
+	
 	private class TapeListModel extends AbstractListModel {
 		@Override
 		public Object getElementAt(int index) {
@@ -53,7 +54,14 @@ public class TapeDialog extends JDialog {
 	}
 	
     public class TapeCellRenderer extends JLabel implements ListCellRenderer {
-        public TapeCellRenderer() {  super(); setOpaque(true); }
+    	private Font boldFont;
+    	private Font plainFont;
+        public TapeCellRenderer() {  
+        	super(); 
+        	setOpaque(true);
+        	boldFont = getFont().deriveFont(Font.BOLD);
+        	plainFont = getFont().deriveFont(Font.PLAIN);
+        }
 
 		@Override
 		public Component getListCellRendererComponent(JList list,
@@ -71,32 +79,37 @@ public class TapeDialog extends JDialog {
                 else
                 	this.setForeground(Color.BLACK);
             }
+            if (isSelected)
+            	this.setFont(boldFont);
+            else 
+            	this.setFont(plainFont);
+            
             if (value != null) setText(" " + value.toString());
             else setText("");
             return this;
         }
     }
 	
-	public TapeDialog(AbstractTape tape, ISettingsHandler settings, long hash) {
+	public TapeDialog(AbstractTape atape, ISettingsHandler settings, long hash) {
 		super();
-		this.tape = (TapeContext)tape.getNextContext();
+		this.tape = (TapeContext)atape.getNextContext();
 		this.listModel = new TapeListModel();
 		initComponents();
-		this.setTitle(tape.getTitle());
+		this.setTitle(atape.getTitle());
 		lstTape.setModel(listModel);
 		lstTape.setCellRenderer(new TapeCellRenderer());
 		this.tape.setListener(new TapeListener() {
 			@Override
 			public void tapeChanged(EventObject evt) {
 			    listModel.fireChange();
+			    lstTape.ensureIndexIsVisible(tape.getPos());
 			}
 		});
 		String s = settings.readSetting(hash, "alwaysOnTop");
-		if (s == null || !s.equals("true"))
+		if (s == null || !s.toLowerCase().equals("true"))
 			this.setAlwaysOnTop(false);
 		else
 			this.setAlwaysOnTop(true);
-
 		changeEditable();
 	}
 	
@@ -106,21 +119,23 @@ public class TapeDialog extends JDialog {
 		btnAddLast.setEnabled(b);
 		btnRemove.setEnabled(b);
 		btnEdit.setEnabled(b);
+		btnClear.setEnabled(b);
 	}
 	
 	private void initComponents() {
 		JScrollPane scrollTape = new JScrollPane();
         lstTape = new JList();
-        btnAddFirst = new JButton("Add symbol");
-        btnAddLast = new JButton("Add symbol");
-        btnRemove = new JButton("Remove symbol");
-        btnEdit = new JButton("Edit symbol");
+        btnAddFirst = new NiceButton("Add symbol");
+        btnAddLast = new NiceButton("Add symbol");
+        btnRemove = new NiceButton("Remove symbol");
+        btnEdit = new NiceButton("Edit symbol");
+        btnClear = new NiceButton("Clear tape");
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setLocationRelativeTo(null);
+        //setLocationRelativeTo(null);
         scrollTape.setViewportView(lstTape);
 
-        btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/abstracttape/resources/Up24.gif"))); // NOI18N
+        btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/abstracttape/resources/go-up.png"))); // NOI18N
         btnAddFirst.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -129,7 +144,7 @@ public class TapeDialog extends JDialog {
 			}
         });
 
-        btnAddLast.setIcon(new ImageIcon(getClass().getResource("/abstracttape/resources/Down24.gif"))); // NOI18N
+        btnAddLast.setIcon(new ImageIcon(getClass().getResource("/abstracttape/resources/go-down.png"))); // NOI18N
         btnAddLast.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -138,7 +153,7 @@ public class TapeDialog extends JDialog {
 			}
         });
 
-        btnRemove.addActionListener(new ActionListener() {
+        btnEdit.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				int i = lstTape.getSelectedIndex();
@@ -150,7 +165,7 @@ public class TapeDialog extends JDialog {
 				tape.editSymbol(i,s);
 			}
         });
-        btnEdit.addActionListener(new ActionListener() {
+        btnRemove.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				int i = lstTape.getSelectedIndex();
@@ -161,6 +176,12 @@ public class TapeDialog extends JDialog {
 				tape.removeSymbol(i);
 			}
         });
+        btnClear.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+			    tape.clear();
+			}
+        });
         
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -169,6 +190,7 @@ public class TapeDialog extends JDialog {
             .addContainerGap()
             .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING, false)
                 .addComponent(btnEdit, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(btnClear, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(btnRemove, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(btnAddLast, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(btnAddFirst, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -186,13 +208,16 @@ public class TapeDialog extends JDialog {
                 .addComponent(btnRemove)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnEdit)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnClear)
                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE));
         pack();
 	}
 
-    private JButton btnAddFirst;
-    private JButton btnAddLast;
-    private JButton btnRemove;
-    private JButton btnEdit;
+    private NiceButton btnAddFirst;
+    private NiceButton btnAddLast;
+    private NiceButton btnRemove;
+    private NiceButton btnEdit;
+    private NiceButton btnClear;
     private JList lstTape;
 }

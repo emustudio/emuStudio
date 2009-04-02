@@ -85,6 +85,11 @@ public class AbstractTape implements IDevice {
         String s = this.cpu.attachTape(context);
         if (s == null) return false;
         title = s;
+        
+        // show GUI at startup?        
+		s = settings.readSetting(hash, "showAtStartup");
+		if (s != null && s.toLowerCase().equals("true"))
+			showGUI();
 		return true;
 	}
 
@@ -108,7 +113,7 @@ public class AbstractTape implements IDevice {
 
 	@Override
 	public void reset() {
-		context.clear();
+		context.reset();
 	}
 
 	@Override

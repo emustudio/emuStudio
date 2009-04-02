@@ -39,6 +39,7 @@ public class TapeContext implements IAbstractTapeContext {
 	private TapeListener listener;
     private EventObject changeEvent;
     private boolean showPos;
+    private boolean clearAtReset = true;
 	
 	public interface TapeListener extends EventListener {
 		public void tapeChanged(EventObject evt);
@@ -53,7 +54,7 @@ public class TapeContext implements IAbstractTapeContext {
 		editable = true;
 		showPos = true;
 	}
-	
+		
 	@Override
 	public Class<?> getDataType() {
 		return String.class;
@@ -68,7 +69,14 @@ public class TapeContext implements IAbstractTapeContext {
 		pos = 0;
 		fireChange();
 	}
-
+	
+	public void reset() {
+		pos = 0;
+		if (clearAtReset)
+			clear();
+		fireChange();
+	}
+	
 	@Override
 	public void setBounded(boolean bounded) {
 		this.bounded = bounded;
@@ -157,10 +165,12 @@ public class TapeContext implements IAbstractTapeContext {
 	 */
 	@Override
 	public void setSymbolAt(int pos, String symbol) {
-		if (pos < tape.size() && pos >= 0)
+		if (pos >= tape.size()) {
+			while (pos > tape.size()) tape.add("");
+			tape.add(symbol);
+		}
+		else if ((pos < tape.size()) && (pos >= 0))
 			tape.set(pos, symbol);
-		else if (pos >= tape.size())
-			tape.add(pos,symbol);
 		fireChange();
 	}
 	
@@ -169,6 +179,10 @@ public class TapeContext implements IAbstractTapeContext {
 		showPos = visible;
 	}
 	
+	@Override
+	public void setClearAtReset(boolean clear) {
+		this.clearAtReset = clear;
+	}
 	/**
 	 * Used by GUI.
 	 * @return
@@ -197,7 +211,7 @@ public class TapeContext implements IAbstractTapeContext {
 
 	@Override
 	public String getHash() {
-		return "c642e5f1dc280113ccd8739f3c01a06d";
+		return "ea9beaff230249da3c2e71d91c469c2a";
 	}
 
 	@Override

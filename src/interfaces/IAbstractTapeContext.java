@@ -58,5 +58,7 @@ public interface IAbstractTapeContext extends IDeviceContext {
 	public String getSymbolAt(int pos);
 	public void setSymbolAt(int pos, String symbol);
 	public void setPosVisible(boolean visible);
+	
+	public void setClearAtReset(boolean clear);
 
 }

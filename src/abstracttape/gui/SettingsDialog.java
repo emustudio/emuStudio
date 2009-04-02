@@ -30,23 +30,33 @@ public class SettingsDialog extends JDialog {
 		this.settings = settings;
 		this.hash = hash;
 		initComponents();
+		this.setSize(250, this.getHeight());
 		String s = settings.readSetting(hash, "alwaysOnTop");
 		boolean b;
-		if (s == null || !s.equals("true"))
+		if (s == null || !s.toLowerCase().equals("true"))
+			b = false;
+		else
+			b = true;		
+		chkAlwaysOnTop.setSelected(b);
+
+		s = settings.readSetting(hash, "showAtStartup");
+		if (s == null || !s.toLowerCase().equals("true"))
 			b = false;
 		else
 			b = true;
+	    chkShowAtStartup.setSelected(b);
 		
-		chkAlwaysOnTop.setSelected(b);
 		this.gui = gui;
 	}
 	
 	public void initComponents() {
 		chkAlwaysOnTop = new JCheckBox("Always on top");
+		chkShowAtStartup = new JCheckBox("Show GUI at startup");
 		JButton btnOK = new JButton("OK");
 			
 		setTitle("AbstractTape settings");
 		setLocationRelativeTo(null);
+		setResizable(false);
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		
 		chkAlwaysOnTop.addActionListener(new ActionListener() {
@@ -63,6 +73,11 @@ public class SettingsDialog extends JDialog {
 					settings.writeSetting(hash, "alwaysOnTop", "true");
 				else
 					settings.writeSetting(hash, "alwaysOnTop", "false");
+				if (chkShowAtStartup.isSelected())
+					settings.writeSetting(hash, "showAtStartup", "true");
+				else
+					settings.writeSetting(hash, "showAtStartup", "false");
+			    dispose();
 			}
 		});
 		
@@ -75,15 +90,20 @@ public class SettingsDialog extends JDialog {
 				.addContainerGap()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 						.addComponent(chkAlwaysOnTop)
+						.addComponent(chkShowAtStartup))
+			    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
 						.addComponent(btnOK))
 				.addContainerGap());
 		layout.setVerticalGroup(
 				layout.createSequentialGroup()
 				.addContainerGap()
 				.addComponent(chkAlwaysOnTop)
+				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+				.addComponent(chkShowAtStartup)
 				.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
 				.addComponent(btnOK));
 		pack();
 	}
 	private JCheckBox chkAlwaysOnTop;
+	private JCheckBox chkShowAtStartup;
 }
