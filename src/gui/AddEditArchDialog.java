@@ -10,6 +10,8 @@ import architecture.ArchLoader;
 import architecture.drawing.DrawingPanel;
 import architecture.drawing.DrawingPanel.drawTool;
 import architecture.drawing.Schema;
+import gui.utils.NiceButton;
+
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.KeyEvent;
@@ -19,7 +21,6 @@ import javax.swing.ButtonGroup;
 import javax.swing.ComboBoxModel;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -141,10 +142,10 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         scrollScheme = new JScrollPane();
         chkUseGrid = new JCheckBox();
         sliderGridGap = new JSlider();
-        JButton btnOK = new JButton();
+        NiceButton btnOK = new NiceButton();
         JLabel lblArchName = new JLabel();
         txtArchName = new JTextField();
-        btnBrowse = new JButton();
+        btnBrowse = new NiceButton();
         JLabel lblCompiler = new JLabel();
         cmbCompiler = new JComboBox();
         JLabel lblMemorySize = new JLabel();
@@ -157,8 +158,9 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         toolBar.setRollover(true);
 
         grpElements.add(btnCPU);
-        btnCPU.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/cpu.gif"))); // NOI18N
+        btnCPU.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/cpu.png"))); // NOI18N
         btnCPU.setFocusable(false);
+        btnCPU.setToolTipText("CPU (processor)");
         btnCPU.setHorizontalTextPosition(SwingConstants.CENTER);
         btnCPU.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnCPU.addItemListener(new java.awt.event.ItemListener() {
@@ -174,8 +176,9 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         toolBar.add(btnCPU);
 
         grpElements.add(btnMemory);
-        btnMemory.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/ram.gif"))); // NOI18N
+        btnMemory.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/ram.png"))); // NOI18N
         btnMemory.setFocusable(false);
+        btnMemory.setToolTipText("Operating memory");
         btnMemory.setHorizontalTextPosition(SwingConstants.CENTER);
         btnMemory.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnMemory.addItemListener(new java.awt.event.ItemListener() {
@@ -191,8 +194,9 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         toolBar.add(btnMemory);
 
         grpElements.add(btnDevice);
-        btnDevice.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/device.gif"))); // NOI18N
+        btnDevice.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/input-gaming.png"))); // NOI18N
         btnDevice.setFocusable(false);
+        btnDevice.setToolTipText("Peripheral device");
         btnDevice.setHorizontalTextPosition(SwingConstants.CENTER);
         btnDevice.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnDevice.addItemListener(new java.awt.event.ItemListener() {
@@ -209,8 +213,9 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         toolBar.add(jSeparator1);
 
         grpElements.add(btnConnect);
-        btnConnect.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/connector.gif"))); // NOI18N
+        btnConnect.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/network-wired.png"))); // NOI18N
         btnConnect.setFocusable(false);
+        btnConnect.setToolTipText("Line connector");
         btnConnect.setHorizontalTextPosition(SwingConstants.CENTER);
         btnConnect.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnConnect.addItemListener(new java.awt.event.ItemListener() {
@@ -226,7 +231,7 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         toolBar.add(btnConnect);
 
         grpElements.add(btnDelete);
-        btnDelete.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/delete.gif"))); // NOI18N
+        btnDelete.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/edit-delete.png"))); // NOI18N
         btnDelete.setToolTipText("Delete element/line");
         btnDelete.setFocusable(false);
         btnDelete.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -291,8 +296,6 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         });
 
         btnOK.setText("OK");
-        btnOK.setPreferredSize(new java.awt.Dimension(btnOK.getPreferredSize().width + 30,
-        		btnOK.getPreferredSize().height));
         btnOK.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnOKActionPerformed(evt);
@@ -527,7 +530,7 @@ private void btnBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    JButton btnBrowse;
+    NiceButton btnBrowse;
     JToggleButton btnCPU;
     JToggleButton btnConnect;
     JToggleButton btnDelete;

@@ -8,8 +8,9 @@
 
 package gui;
 
+import gui.utils.NiceButton;
+
 import javax.swing.GroupLayout;
-import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
@@ -42,8 +43,8 @@ public class BreakpointDialog extends JDialog {
 
         lblSetUnset = new JLabel();
         txtAddress = new JTextField();
-        btnSet = new JButton();
-        btnUnset = new JButton();
+        btnSet = new NiceButton();
+        btnUnset = new NiceButton();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Set/unset breakpoint");
@@ -120,8 +121,8 @@ public class BreakpointDialog extends JDialog {
     }//GEN-LAST:event_btnUnsetActionPerformed
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private JButton btnSet;
-    private JButton btnUnset;
+    private NiceButton btnSet;
+    private NiceButton btnUnset;
     private JLabel lblSetUnset;
     private JTextField txtAddress;
     // End of variables declaration//GEN-END:variables

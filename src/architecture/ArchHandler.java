@@ -158,7 +158,7 @@ public class ArchHandler implements ISettingsHandler {
      *
      * @return array of device interface objects
      */
-    public IDevice[] getDevices() { return arch.getAllDevices(); }
+    public IDevice[] getDevices() {	return arch.getAllDevices(); }
 
     public String getArchName() { 
         return (schema == null) ? "unknown" : schema.getConfigName(); 
@@ -172,7 +172,7 @@ public class ArchHandler implements ISettingsHandler {
      * @param settingName  name of wanted setting
      * @return setting value if exists, or null if not
      */
-    public synchronized String readSetting(long hash, String settingName) {
+    public String readSetting(long hash, String settingName) {
         IPlugin plug = arch.getPlugin(hash);
         if (plug == null) return null;
         
@@ -183,12 +183,12 @@ public class ArchHandler implements ISettingsHandler {
                 
         if (plug instanceof IDevice) {
             // search for device
-        	String deviceName = deviceNames.get(hash);
-            for (int i = 0; i < arch.getDeviceCount(); i++)
-                if (settings.getProperty("device"+i,"").equals(deviceName)) {
-                    prop = "device"+i;
-                    break;
-                }
+        	prop = deviceNames.get(hash);
+//            for (int i = 0; i < arch.getDeviceCount(); i++)
+  //              if (settings.getProperty("device"+i,"").equals(deviceName)) {
+    //                prop = "device"+i;
+      //              break;
+        //        }
         } else if (plug instanceof ICPU)    prop = "cpu";
         else if (plug instanceof IMemory)   prop = "memory";
         else if (plug instanceof ICompiler) prop = "compiler";
@@ -245,7 +245,7 @@ public class ArchHandler implements ISettingsHandler {
      * @param hash         plugin hash, identification of a plugin
      * @param settingName name of wanted setting
      */
-    public synchronized void writeSetting(long hash, String settingName, String val) {
+    public void writeSetting(long hash, String settingName, String val) {
         if (settingName == null || settingName.equals("")) return;
 
         IPlugin plug = arch.getPlugin(hash);
@@ -254,12 +254,13 @@ public class ArchHandler implements ISettingsHandler {
         String prop = "";
         if (plug instanceof IDevice) {
             // search for device
-        	String deviceName = deviceNames.get(hash);
-            for (int i = 0; i < arch.getDeviceCount(); i++)
-                if (settings.getProperty("device"+i,"").equals(deviceName)) {
-                    prop = "device"+i;
-                    break;
-                }
+        	prop = deviceNames.get(hash);
+//        	String deviceName = deviceNames.get(hash);
+  //          for (int i = 0; i < arch.getDeviceCount(); i++)
+    //            if (settings.getProperty("device"+i,"").equals(deviceName)) {
+      //              prop = "device"+i;
+        //            break;
+          //      }
         } else if (plug instanceof ICPU) prop = "cpu";
         else if (plug instanceof IMemory)   prop = "memory";
         else if (plug instanceof ICompiler) prop = "compiler";
@@ -278,7 +279,7 @@ public class ArchHandler implements ISettingsHandler {
      * @param hash         plugin hash, identification of a plugin
      * @param settingName name of wanted setting
      */
-    public synchronized void removeSetting(long hash, String settingName) {
+    public void removeSetting(long hash, String settingName) {
         if (settingName == null || settingName.equals("")) return;
 
         IPlugin plug = arch.getPlugin(hash);
@@ -288,12 +289,13 @@ public class ArchHandler implements ISettingsHandler {
                 
         if (plug instanceof IDevice) {
             // search for device
-        	String deviceName = deviceNames.get(hash);
-            for (int i = 0; i < arch.getDeviceCount(); i++)
-                if (settings.getProperty("device"+i,"").equals(deviceName)) {
-                    prop = "device"+i;
-                    break;
-                }
+        	prop = deviceNames.get(hash);
+//        	String deviceName = deviceNames.get(hash);
+  //          for (int i = 0; i < arch.getDeviceCount(); i++)
+    //            if (settings.getProperty("device"+i,"").equals(deviceName)) {
+      //              prop = "device"+i;
+        //            break;
+          //      }
         } else if (plug instanceof ICPU) prop = "cpu";
         else if (plug instanceof IMemory)   prop = "memory";
         else if (plug instanceof ICompiler) prop = "compiler";

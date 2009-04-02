@@ -97,13 +97,14 @@ public class DebugTableModel extends AbstractTableModel {
             							/* na zaciatku sa natvrdo nastavi 
                                              pohlad o 10 bytov dozadu
                                            */
-            if (firstRowAddress < 0) {
-                firstRowAddress = 0; // ak je to < 0, potom je pohlad 0
-                page = 0;
-            }
             if ((pc+page) > mem.getSize()) {
                 page = mem.getSize() - pc;
                 firstRowAddress = pc-10+page;
+            }
+
+            if (firstRowAddress < 0) {
+                firstRowAddress = 0; // ak je to < 0, potom je pohlad 0
+                page = 0;
             }
             
             int diff = firstRowAddress;

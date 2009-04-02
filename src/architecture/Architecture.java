@@ -53,7 +53,7 @@ public class Architecture {
 	public IPlugin   getPlugin(long hash) {
 		if (hash == cpuHash) return cpu;
 		if (hash == memoryHash) return memory;
-		if (hash == compilerHash) return compiler; 
+		if (hash == compilerHash) return compiler;
 		return devices.get(hash);
 	}
 	

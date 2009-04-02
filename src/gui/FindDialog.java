@@ -9,6 +9,8 @@
 package gui;
 
 import gui.utils.FindText;
+import gui.utils.NiceButton;
+
 import java.util.ArrayList;
 import java.util.regex.PatternSyntaxException;
 
@@ -16,7 +18,6 @@ import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.ComboBoxModel;
 import javax.swing.GroupLayout;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -138,11 +139,11 @@ public class FindDialog extends javax.swing.JDialog {
         endRadio = new JRadioButton();
         startRadio = new JRadioButton();
         allRadio = new JRadioButton();
-        JButton btnSearch = new JButton();
+        NiceButton btnSearch = new NiceButton();
         JLabel lblReplaceWith = new JLabel();
         cmbReplace = new JComboBox();
-        JButton btnReplace = new JButton();
-        JButton btnReplaceAll = new JButton();
+        NiceButton btnReplace = new NiceButton();
+        NiceButton btnReplaceAll = new NiceButton();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Find/replace text");

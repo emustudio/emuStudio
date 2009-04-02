@@ -400,7 +400,7 @@ public class ArchLoader extends ClassLoader {
                 IDevice dev = (IDevice)loadPlugin(devicesDir, devName,IDevice.class,devHash);
                 devs.put(devHash, dev);
                 devsArray.add(dev);
-                devNames.put(devHash,devName);
+                devNames.put(devHash,"device" + i); // devName
             }
 
             // create connections hashtable
@@ -631,7 +631,7 @@ public class ArchLoader extends ClassLoader {
         return result;
     }
     
-    public synchronized Class<?> defineLoadedClass(String classname,
+    public Class<?> defineLoadedClass(String classname,
             byte[] classbytes, int length, boolean resolve) 
             throws ClassNotFoundException {
         if (classname.toLowerCase().endsWith(".class"))

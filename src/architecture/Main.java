@@ -179,6 +179,7 @@ public class Main {
         			break;
         	    default:
         			output_message("    => FAILED (invalid state)");
+        	        break;
         	}
 			output_message("       (instr. position: " +
 					String.format("%04Xh", 

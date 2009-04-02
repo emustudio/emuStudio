@@ -42,7 +42,10 @@ public class AboutDialog extends javax.swing.JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("About");
         
-        lblIcon.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/altair.jpg"))); // NOI18N
+        lblIcon.setIcon(new ImageIcon(getClass()
+        		.getResource("/resources/emuStudio/altair.jpg"))); // NOI18N
+        this.setIconImage(new ImageIcon(getClass()
+        		.getResource("/resources/emuStudio/dialog-information.png")).getImage());
 
         lblTitle.setFont(lblTitle.getFont().deriveFont(Font.BOLD,24));
         lblTitle.setText("emuStudio");

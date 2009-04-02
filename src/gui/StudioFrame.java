@@ -11,6 +11,7 @@ import architecture.ArchHandler;
 import architecture.Main;
 import gui.utils.DebugTable;
 import gui.utils.DebugTableModel;
+import gui.utils.NiceButton;
 import gui.syntaxHighlighting.DocumentReader;
 import gui.utils.EmuTextPane;
 import gui.utils.FindText;
@@ -21,6 +22,8 @@ import java.awt.datatransfer.FlavorEvent;
 import java.awt.datatransfer.FlavorListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.util.EventObject;
 import javax.swing.AbstractListModel;
@@ -63,6 +66,7 @@ public class StudioFrame extends javax.swing.JFrame {
     private ArchHandler arch; // current architecture
     private ActionListener undoStateListener;
     private Clipboard systemClipboard;
+    private int run_state = ICPU.STATE_STOPPED_BREAK;
 
     private IMessageReporter reporter;
     private DebugTable tblDebug;
@@ -125,26 +129,29 @@ public class StudioFrame extends javax.swing.JFrame {
                     tblDebug.repaint();
                 }
 				public void runChanged(EventObject evt, int state) {
-                    if (state == ICPU.STATE_RUNNING) {
-                        btnStop.setEnabled(true); btnBack.setEnabled(false);
-                        btnRun.setEnabled(false); btnStep.setEnabled(false);
-                        btnBeginning.setEnabled(false); btnPause.setEnabled(true);
-                    } else {
-                        btnPause.setEnabled(false);
-                        cpuPermanentRunning = false;
-                        if (state == ICPU.STATE_STOPPED_BREAK) {
-                            btnStop.setEnabled(true);
-                            btnRun.setEnabled(true); btnStep.setEnabled(true);
-                        } else {
-                            btnStop.setEnabled(false);
-                            btnRun.setEnabled(false); btnStep.setEnabled(false);
-                        }
-                        btnBack.setEnabled(true); btnBeginning.setEnabled(true);
-                        tblDebug.setEnabled(true);
-                        tblDebug.setVisible(true);
-                        tblDebug.revalidate();
-                        tblDebug.repaint();
-                    }
+					synchronized(this) {
+						run_state = state;
+	                    if (state == ICPU.STATE_RUNNING) {
+	                        btnStop.setEnabled(true); btnBack.setEnabled(false);
+	                        btnRun.setEnabled(false); btnStep.setEnabled(false);
+	                        btnBeginning.setEnabled(false); btnPause.setEnabled(true);
+	                    } else {
+	                        btnPause.setEnabled(false);
+	                        cpuPermanentRunning = false;
+	                        if (state == ICPU.STATE_STOPPED_BREAK) {
+	                            btnStop.setEnabled(true);
+	                            btnRun.setEnabled(true); btnStep.setEnabled(true);
+	                        } else {
+	                            btnStop.setEnabled(false);
+	                            btnRun.setEnabled(false); btnStep.setEnabled(false);
+	                        }
+	                        btnBack.setEnabled(true); btnBeginning.setEnabled(true);
+	                        tblDebug.setEnabled(true);
+	                        tblDebug.setVisible(true);
+	                        tblDebug.revalidate();
+	                        tblDebug.repaint();
+	                    }
+					}
     			}
             });
         } catch(NullPointerException e) {}
@@ -178,25 +185,25 @@ public class StudioFrame extends javax.swing.JFrame {
         pack();
     }
     
-    // undo/redo implementation
+    // TODO: serious synchronization bug
     private void setUndoListener() {
         undoStateListener = new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            public synchronized void actionPerformed(ActionEvent e) {
                 if (txtSource.canUndo() == true) {
-                    btnUndo.setEnabled(true);
-                    mnuEditUndo.setEnabled(true);
+               		mnuEditUndo.setEnabled(true);
+               		btnUndo.setEnabled(true);
                 }
                 else {
-                    btnUndo.setEnabled(false);
-                    mnuEditUndo.setEnabled(false);
+               		mnuEditUndo.setEnabled(false);
+               		btnUndo.setEnabled(false);
                 }
                 if (txtSource.canRedo() == true) {
-                    btnRedo.setEnabled(true);
-                    mnuEditRedo.setEnabled(true);
+               		mnuEditRedo.setEnabled(true);
+               		btnRedo.setEnabled(true);
                 }
                 else {
-                    btnRedo.setEnabled(false);
-                    mnuEditRedo.setEnabled(false);
+               		mnuEditRedo.setEnabled(false);
+               		btnRedo.setEnabled(false);
                 }
             }
         };
@@ -246,6 +253,7 @@ public class StudioFrame extends javax.swing.JFrame {
         btnCut = new JButton();
         btnCopy = new JButton();
         btnPaste = new JButton();
+        btnFindReplace = new JButton();
         btnUndo = new JButton();
         btnRedo = new JButton();
         JSeparator jSeparator2 = new JSeparator();
@@ -271,14 +279,14 @@ public class StudioFrame extends javax.swing.JFrame {
         btnBreakpoint = new JButton();
         JButton btnMemory = new JButton();
         paneDebug = new JScrollPane();
-        JButton btnPrevious = new JButton();
-        JButton btnNext = new JButton();
-        JButton btnToPC = new JButton();
+        JButton btnPrevious = new NiceButton();
+        JButton btnNext = new NiceButton();
+        JButton btnToPC = new NiceButton();
         JPanel peripheralPanel = new JPanel();
         JScrollPane paneDevices = new JScrollPane();
         lstDevices = new JList();
-        JButton btnShowGUI = new JButton();
-        JButton btnShowSettings = new JButton();
+        JButton btnShowGUI = new NiceButton();
+        JButton btnShowSettings = new NiceButton();
         JMenuBar jMenuBar2 = new JMenuBar();
         JMenu mnuFile = new JMenu();
         JMenuItem mnuFileNew = new JMenuItem();
@@ -304,6 +312,7 @@ public class StudioFrame extends javax.swing.JFrame {
         JMenuItem mnuProjectViewConfig = new JMenuItem();
         JMenu mnuHelp = new JMenu();
         JMenuItem mnuHelpAbout = new JMenuItem();
+        JSeparator jSeparator7 = new JSeparator();
 
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("emuStudio");
@@ -319,7 +328,7 @@ public class StudioFrame extends javax.swing.JFrame {
         toolStandard.setFloatable(false);
         toolStandard.setRollover(true);
 
-        btnNew.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/New24.gif"))); // NOI18N
+        btnNew.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/document-new.png"))); // NOI18N
         btnNew.setToolTipText("New file");
         btnNew.setFocusable(false);
         btnNew.addActionListener(new java.awt.event.ActionListener() {
@@ -327,9 +336,8 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnNewActionPerformed(evt);
             }
         });
-        toolStandard.add(btnNew);
 
-        btnOpen.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Open24.gif"))); // NOI18N
+        btnOpen.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/document-open.png"))); // NOI18N
         btnOpen.setToolTipText("Open file");
         btnOpen.setFocusable(false);
         btnOpen.addActionListener(new java.awt.event.ActionListener() {
@@ -337,9 +345,8 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnOpenActionPerformed(evt);
             }
         });
-        toolStandard.add(btnOpen);
 
-        btnSave.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Save24.gif"))); // NOI18N
+        btnSave.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/document-save.png"))); // NOI18N
         btnSave.setToolTipText("Save file");
         btnSave.setFocusable(false);
         btnSave.addActionListener(new java.awt.event.ActionListener() {
@@ -347,14 +354,12 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnSaveActionPerformed(evt);
             }
         });
-        toolStandard.add(btnSave);
 
         jSeparator1.setOrientation(SwingConstants.VERTICAL);
         jSeparator1.setMaximumSize(new java.awt.Dimension(10, 32768));
         jSeparator1.setPreferredSize(new java.awt.Dimension(10, 10));
-        toolStandard.add(jSeparator1);
 
-        btnCut.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Cut24.gif"))); // NOI18N
+        btnCut.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/edit-cut.png"))); // NOI18N
         btnCut.setToolTipText("Cut selection");
         btnCut.setEnabled(false);
         btnCut.setFocusable(false);
@@ -363,9 +368,8 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnCutActionPerformed(evt);
             }
         });
-        toolStandard.add(btnCut);
 
-        btnCopy.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Copy24.gif"))); // NOI18N
+        btnCopy.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/edit-copy.png"))); // NOI18N
         btnCopy.setToolTipText("Copy selection");
         btnCopy.setEnabled(false);
         btnCopy.setFocusable(false);
@@ -374,9 +378,8 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnCopyActionPerformed(evt);
             }
         });
-        toolStandard.add(btnCopy);
 
-        btnPaste.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Paste24.gif"))); // NOI18N
+        btnPaste.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/edit-paste.png"))); // NOI18N
         btnPaste.setToolTipText("Paste selection");
         btnPaste.setEnabled(false);
         btnPaste.setFocusable(false);
@@ -385,9 +388,17 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnPasteActionPerformed(evt);
             }
         });
-        toolStandard.add(btnPaste);
 
-        btnUndo.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Undo24.gif"))); // NOI18N
+        btnFindReplace.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/edit-find-replace.png"))); // NOI18N
+        btnFindReplace.setToolTipText("Find/replace text...");
+        btnFindReplace.setFocusable(false);
+        btnFindReplace.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnFindReplaceActionPerformed(evt);
+            }
+        });
+        
+        btnUndo.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/edit-undo.png"))); // NOI18N
         btnUndo.setToolTipText("Undo");
         btnUndo.setEnabled(false);
         btnUndo.setFocusable(false);
@@ -396,9 +407,8 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnUndoActionPerformed(evt);
             }
         });
-        toolStandard.add(btnUndo);
 
-        btnRedo.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Redo24.gif"))); // NOI18N
+        btnRedo.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/edit-redo.png"))); // NOI18N
         btnRedo.setToolTipText("Redo");
         btnRedo.setEnabled(false);
         btnRedo.setFocusable(false);
@@ -407,22 +417,36 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnRedoActionPerformed(evt);
             }
         });
-        toolStandard.add(btnRedo);
 
         jSeparator2.setOrientation(SwingConstants.VERTICAL);
         jSeparator2.setMaximumSize(new java.awt.Dimension(10, 32767));
-        toolStandard.add(jSeparator2);
 
-        btnCompile.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/patch.gif"))); // NOI18N
-        btnCompile.setToolTipText("Compile source...");
+        jSeparator7.setOrientation(SwingConstants.VERTICAL);
+        jSeparator7.setMaximumSize(new java.awt.Dimension(10, 32767));
+
+        btnCompile.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/compile.png"))); // NOI18N
+        btnCompile.setToolTipText("Compile source");
         btnCompile.setFocusable(false);
         btnCompile.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCompileActionPerformed(evt);
             }
         });
-        toolStandard.add(btnCompile);
 
+        toolStandard.add(btnNew);
+        toolStandard.add(btnOpen);
+        toolStandard.add(btnSave);
+        toolStandard.add(jSeparator1);
+        toolStandard.add(btnUndo);
+        toolStandard.add(btnRedo);
+        toolStandard.add(jSeparator2);
+        toolStandard.add(btnFindReplace);
+        toolStandard.add(btnCut);
+        toolStandard.add(btnCopy);
+        toolStandard.add(btnPaste);
+        toolStandard.add(jSeparator7);
+        toolStandard.add(btnCompile);
+        
         splitSoure.setBorder(null);
         splitSoure.setDividerLocation(260);
         splitSoure.setOrientation(JSplitPane.VERTICAL_SPLIT);
@@ -478,8 +502,10 @@ public class StudioFrame extends javax.swing.JFrame {
 
         toolDebug.setFloatable(false);
         toolDebug.setRollover(true);
+        toolDebug.setBorder(null);
+        toolDebug.setBorderPainted(false);
 
-        btnReset.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Refresh24.gif"))); // NOI18N
+        btnReset.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/view-refresh.png"))); // NOI18N
         btnReset.setToolTipText("Reset emulation");
         btnReset.setFocusable(false);
         btnReset.addActionListener(new java.awt.event.ActionListener() {
@@ -489,7 +515,7 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         toolDebug.add(btnReset);
 
-        btnBeginning.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/StepBack24.gif"))); // NOI18N
+        btnBeginning.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-first.png"))); // NOI18N
         btnBeginning.setToolTipText("Jump to beginning");
         btnBeginning.setFocusable(false);
         btnBeginning.addActionListener(new java.awt.event.ActionListener() {
@@ -499,7 +525,7 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         toolDebug.add(btnBeginning);
 
-        btnBack.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Back24.gif"))); // NOI18N
+        btnBack.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-previous.png"))); // NOI18N
         btnBack.setToolTipText("Step back");
         btnBack.setFocusable(false);
         btnBack.addActionListener(new java.awt.event.ActionListener() {
@@ -509,7 +535,7 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         toolDebug.add(btnBack);
 
-        btnStop.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Stop24.gif"))); // NOI18N
+        btnStop.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-stop.png"))); // NOI18N
         btnStop.setToolTipText("Stop emulation");
         btnStop.setFocusable(false);
         btnStop.addActionListener(new java.awt.event.ActionListener() {
@@ -519,7 +545,8 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         toolDebug.add(btnStop);
 
-        btnPause.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Pause24.gif"))); // NOI18N
+        btnPause.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-pause.png"))); // NOI18N
+        btnPause.setToolTipText("Pause emulation");
         btnPause.setFocusable(false);
         btnPause.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -528,7 +555,7 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         toolDebug.add(btnPause);
 
-        btnRun.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Run24.gif"))); // NOI18N
+        btnRun.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-play.png"))); // NOI18N
         btnRun.setToolTipText("Run emulation");
         btnRun.setFocusable(false);
         btnRun.addActionListener(new java.awt.event.ActionListener() {
@@ -538,7 +565,7 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         toolDebug.add(btnRun);
 
-        btnStep.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Play24.gif"))); // NOI18N
+        btnStep.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-next.png"))); // NOI18N
         btnStep.setToolTipText("Step forward");
         btnStep.setFocusable(false);
         btnStep.addActionListener(new java.awt.event.ActionListener() {
@@ -548,7 +575,7 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         toolDebug.add(btnStep);
 
-        btnJump.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/jump24.gif"))); // NOI18N
+        btnJump.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-jump.png"))); // NOI18N
         btnJump.setToolTipText("Jump to address");
         btnJump.setFocusable(false);
         btnJump.addActionListener(new java.awt.event.ActionListener() {
@@ -558,7 +585,7 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         toolDebug.add(btnJump);
 
-        btnBreakpoint.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Break24.gif"))); // NOI18N
+        btnBreakpoint.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/preferences-desktop.png"))); // NOI18N
         btnBreakpoint.setToolTipText("Set/unset breakpoint to address...");
         btnBreakpoint.setFocusable(false);
         btnBreakpoint.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -610,14 +637,13 @@ public class StudioFrame extends javax.swing.JFrame {
                 .addComponent(btnPrevious)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnToPC)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 180, Short.MAX_VALUE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 100, Short.MAX_VALUE)
                 .addComponent(btnNext))
-            .addComponent(paneDebug, 10, 385, Short.MAX_VALUE)
+            .addComponent(paneDebug, 10, 350, Short.MAX_VALUE)
         );
         debuggerPanelLayout.setVerticalGroup(
             debuggerPanelLayout.createSequentialGroup()
                 .addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(paneDebug, GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
@@ -631,6 +657,21 @@ public class StudioFrame extends javax.swing.JFrame {
         peripheralPanel.setBorder(BorderFactory.createTitledBorder("Peripheral devices"));
 
         paneDevices.setViewportView(lstDevices);
+        lstDevices.addMouseListener(new MouseListener() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) 
+	                showGUIButtonActionPerformed(new ActionEvent(this,0,""));				
+			}
+			@Override
+			public void mouseEntered(MouseEvent e) {}
+			@Override
+			public void mouseExited(MouseEvent e) {}
+			@Override
+			public void mousePressed(MouseEvent e) {}
+			@Override
+			public void mouseReleased(MouseEvent e) {}
+        });
 
         btnShowSettings.setText("Settings");
         btnShowSettings.addActionListener(new java.awt.event.ActionListener() {
@@ -875,6 +916,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
             arch.getDevices()[i].showSettings();
         } catch(Exception e) {
+        	e.printStackTrace();
             StaticDialogs.showErrorMessage("Can't show settings of the device:\n " + e.getMessage());
         }
     }//GEN-LAST:event_showGUIButtonActionPerformed
@@ -984,6 +1026,10 @@ public class StudioFrame extends javax.swing.JFrame {
             StaticDialogs.showErrorMessage("You must first save source file.");
             return;
         }
+        if (run_state == ICPU.STATE_RUNNING) {
+            StaticDialogs.showErrorMessage("You must first stop running emulation.");
+            return;        	
+        }
         txtSource.setEditable(false);
         txtOutput.setText("");
         String fn = txtSource.getFileName();
@@ -996,6 +1042,7 @@ public class StudioFrame extends javax.swing.JFrame {
         try {
         	DocumentReader r = new DocumentReader(txtSource.getDocument());
             if (res == JOptionPane.YES_OPTION) {
+            	arch.getMemory().reset();
             	arch.getCompiler().compile(fn, r, arch.getMemory().getContext());
             	int programStart = arch.getCompiler().getProgramStartAddress();
             	arch.getMemory().setProgramStart(programStart);
@@ -1075,6 +1122,10 @@ public class StudioFrame extends javax.swing.JFrame {
         txtOutput.setText("");
     }//GEN-LAST:event_btnNewActionPerformed
 
+    private void btnFindReplaceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewActionPerformed
+    	mnuEditFindActionPerformed(evt);
+    }//GEN-LAST:event_btnNewActionPerformed
+
     private void btnPasteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPasteActionPerformed
         try{ txtSource.paste(); }
         catch (Exception e) {}
@@ -1090,14 +1141,14 @@ public class StudioFrame extends javax.swing.JFrame {
         catch (Exception e) {}
     }//GEN-LAST:event_btnCutActionPerformed
 
-    private void btnRedoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRedoActionPerformed
-        txtSource.redo();
-        undoStateListener.actionPerformed(new ActionEvent(this,0,""));
+    private void btnRedoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRedoActionPerformed    	
+    	txtSource.redo();
+       	//undoStateListener.actionPerformed(new ActionEvent(this,0,""));
     }//GEN-LAST:event_btnRedoActionPerformed
 
     private void btnUndoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUndoActionPerformed
-        txtSource.undo();
-        undoStateListener.actionPerformed(new ActionEvent(this,0,""));
+      	txtSource.undo();
+       	//undoStateListener.actionPerformed(new ActionEvent(this,0,""));
     }//GEN-LAST:event_btnUndoActionPerformed
 
     private void mnuEditFindActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditFindActionPerformed
@@ -1165,6 +1216,7 @@ private void btnNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
     JButton btnBack;
     JButton btnBeginning;
     JButton btnBreakpoint;
+    JButton btnFindReplace;
     JButton btnCopy;
     JButton btnCut;
     JButton btnPaste;

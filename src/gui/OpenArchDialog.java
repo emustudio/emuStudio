@@ -10,7 +10,7 @@ import java.awt.event.MouseListener;
 
 import javax.swing.AbstractListModel;
 import javax.swing.GroupLayout;
-import javax.swing.JButton;
+import gui.utils.NiceButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -85,14 +85,14 @@ public class OpenArchDialog extends JDialog {
     public String getArchName() { return archName; }
     
     private void initComponents() {
-        JButton btnOpen = new JButton();
+        NiceButton btnOpen = new NiceButton();
         JLabel lblChoose = new JLabel();
         JScrollPane scrollConfigs = new JScrollPane();
         lstArchNames = new JList();
-        btnEdit = new JButton();
-        JButton btnPreview = new JButton();
-        btnDelete = new JButton();
-        btnNew = new JButton();
+        btnEdit = new NiceButton();
+        NiceButton btnPreview = new NiceButton();
+        btnDelete = new NiceButton();
+        btnNew = new NiceButton();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Microcomputer configuration control");
@@ -248,10 +248,10 @@ private void btnNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:
 }//GEN-LAST:event_btnNewActionPerformed
         
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    JButton btnDelete;
-    JButton btnEdit;
-    JButton btnNew;
-    JList lstArchNames;
+    private NiceButton btnDelete;
+    private NiceButton btnEdit;
+    private NiceButton btnNew;
+    private JList lstArchNames;
     // End of variables declaration//GEN-END:variables
     
 }
