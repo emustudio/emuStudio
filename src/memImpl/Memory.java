@@ -184,10 +184,10 @@ public class Memory implements IMemory {
     }
     
     /**
-     * Clear memory? no.. not
+     * Clear memory? no ..not.
      */
     @Override
-    public void reset() {}
+    public void reset() { }
 
     @Override
     public void setProgramStart(int address) {
