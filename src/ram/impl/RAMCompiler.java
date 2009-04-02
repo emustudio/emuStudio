@@ -44,7 +44,7 @@ public class RAMCompiler implements ICompiler {
 	public String getCopyright() { return "\u00A9 Copyright 2009, P. Jakubčo"; }
 
 	@Override
-	public String getVersion() { return "0.1b"; }
+	public String getVersion() { return "0.12b"; }
 
 	@Override
 	public String getDescription() {
@@ -81,6 +81,7 @@ public class RAMCompiler implements ICompiler {
         Program program = (Program)s;
         program.pass1(0);
         program.pass2(hex);
+
         return hex;
     }
 	

@@ -15,7 +15,7 @@ import runtime.StaticDialogs;
 */
 public class CompiledFileHandler {
 	private ArrayList<IRAMInstruction> program;
-	private String KNOWN_MEM_HASH = "f15733d5fdcfe37498c7d14dd913ea24";
+	private String KNOWN_MEM_HASH = "894da3cf31d433afcee33c22a64d2ed9";
 	
 	public CompiledFileHandler() {
 		program = new ArrayList<IRAMInstruction>();
@@ -44,11 +44,16 @@ public class CompiledFileHandler {
 	    Label[] labels = CompilerEnvironment.getLabels();
 	    for (int i = 0; i < labels.length; i++)
 	    	rmem.addLabel(labels[i].getAddress(), labels[i].getValue());
+	    
+	    // load input tape
+	    rmem.addInputs(CompilerEnvironment.getInputs());
 
 	    // load program
 	    for (int i = 0; i < program.size(); i++)
             rmem.write(i, program.get(i));
 	    
+	    // TODO: beware!
+	    CompilerEnvironment.clear();
 	    return true;
 	}
 }

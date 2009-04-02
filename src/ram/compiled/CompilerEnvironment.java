@@ -7,12 +7,13 @@
  */
 package ram.compiled;
 
-import java.util.ArrayList;
+import java.util.Vector;
 
 import ram.tree.Label;
 
 public class CompilerEnvironment {
-    private static ArrayList<Label> labels = new ArrayList<Label>();
+    private static Vector<Label> labels = new Vector<Label>();
+    private static Vector<String> inputs = new Vector<String>();
     
     public static void addLabel(Label label){
     	labels.add(label);
@@ -32,5 +33,18 @@ public class CompilerEnvironment {
     
     public static Label[] getLabels() {
     	return labels.toArray(new Label[0]);
+    }
+    
+    public static void addInputs(Vector<String> inp) {
+    	inputs.addAll(inp);
+    }
+    
+    public static Vector<String> getInputs() {
+    	return inputs;
+    }
+    
+    public static void clear() {
+    	inputs.clear();
+    	labels.clear();
     }
 }

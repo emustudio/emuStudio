@@ -7,6 +7,8 @@
  */
 package ram.tree;
 
+import java.util.Vector;
+
 import ram.compiled.CompiledFileHandler;
 import ram.compiled.CompilerEnvironment;
 
@@ -28,6 +30,12 @@ public class Row {
         	this.label = label;
         	CompilerEnvironment.addLabel(label);
         }
+    }
+    
+    public Row(Vector<String> inputs) {
+    	this.stat = null;
+    	this.label = null;
+    	CompilerEnvironment.addInputs(inputs);
     }
     
     public int pass1(int addr_start) throws Exception {

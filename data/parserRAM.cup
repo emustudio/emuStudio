@@ -12,6 +12,7 @@ import interfaces.IRAMInstruction;
 import java_cup.runtime.Symbol;
 import plugins.compiler.IMessageReporter;
 import plugins.compiler.IToken;
+import java.util.Vector;
 import ram.tree.*;
 
 init with {: errorCount = 0; :}
@@ -50,7 +51,7 @@ terminal HALT,LOAD,STORE,READ,WRITE,ADD,SUB,MUL,DIV,JMP,JZ,JGTZ;
 terminal EOL;
 terminal DIRECT,INDIRECT;
 terminal String NUMBER, IDENT, LABELL,STRING;
-terminal TCOMMENT;
+terminal TCOMMENT, INPUT;
 
 non terminal Program Program;
 non terminal Row Row;
@@ -58,6 +59,7 @@ non terminal RAMInstruction Statement;
 non terminal Comment;
 non terminal Integer Number;
 non terminal Label LabelOpt;
+non terminal Vector StringVector;
 
 start with Program;
 
@@ -76,8 +78,22 @@ Program ::= Row:row
 Row ::= LabelOpt:label Statement:stmt Comment
         {: RESULT = new Row(stmt, label); :}
       | LabelOpt:label Comment
-        {: RESULT = (label==null)?null:new Row(label); :};
-         
+        {: RESULT = (label==null)?null:new Row(label); :}
+      | INPUT StringVector:vector 
+        {: RESULT = new Row(vector); :};
+
+StringVector ::= STRING:str
+                 {: 
+                     Vector<String> v = new Vector<String>();
+                     v.add(str);
+                     RESULT = v;
+                 :}
+               | StringVector:v STRING:str
+                 {:
+                     v.add(str);
+                     RESULT = v;
+                 :};
+
 Comment ::= TCOMMENT | ;
 
 LabelOpt ::= LABELL:label {: RESULT = new Label(label); :}

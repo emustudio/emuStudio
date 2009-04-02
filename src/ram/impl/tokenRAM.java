@@ -25,15 +25,17 @@ public class tokenRAM extends Symbol implements IToken,symRAM {
     private int offset;  // pozícia tokenu
     private int length;  // dĺžka tokenu
     private int type;    // typ tokenu
+    private boolean initial;
  
     public tokenRAM(int ID, int type, String text, 
-    		int line, int column, int offset, Object val) {
+    		int line, int column, int offset, Object val, boolean initial) {
         super(ID,val);
         this.type = type;
         this.text = text;
         this.row = line;
         this.col = column;
         this.offset = offset;
+        this.initial = initial;
         this.length = (text==null)?0:text.length();
     }
 
@@ -51,4 +53,5 @@ public class tokenRAM extends Symbol implements IToken,symRAM {
     public int getColumn() { return col; }
     public int getOffset() { return offset; }
     public int getLength() { return length; }
+    public boolean isInitialLexicalState() { return initial; }
 }
