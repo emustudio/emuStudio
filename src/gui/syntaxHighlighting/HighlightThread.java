@@ -1,24 +1,35 @@
-/*
+/**
  * HighlightThread.java
  *
  * Created on 21.8.2008, 8:56:32
  * hold to: KISS, YAGNI
  *
+ * Copyright (C) 2001 Stephen Ostermiller 
+ * http://ostermiller.org/contact.pl?regarding=Syntax+Highlighting
+ * (c) Copyright 2008,2009 P. Jakubčo
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+*
  */
 
 package gui.syntaxHighlighting;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.Vector;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.SimpleAttributeSet;
 import plugins.compiler.ILexer;
 import plugins.compiler.IToken;
@@ -28,277 +39,317 @@ import plugins.compiler.IToken;
  * @author vbmacher
  */
 public class HighlightThread extends Thread{
-    private final String threadName = "highlightThread";
-
-    private SortedSet<Integer> tokensPos = Collections.synchronizedSortedSet(new TreeSet<Integer>());
-    private Hashtable<Integer,IToken> tokens = new Hashtable<Integer,IToken>();
-  //  private Hashtable<Integer,Integer> tokenLengths = new Hashtable<Integer,Integer>();
+    /**
+     * Keep a list of places in the file that it is safe to restart the
+     * highlighting.  This happens whenever the lexer reports that it has
+     * returned to its initial state.  Since this list needs to be sorted
+     * and we need to be able to retrieve ranges from it, it is stored in a
+     * balanced tree.
+     */
+    @SuppressWarnings("unchecked")
+	private TreeSet<DocPosition> iniPositions = new TreeSet<DocPosition>(new DocPositionComparator());
     
-    private ILexer lex;
-    private DocumentReader lexReader;
-    private DefaultStyledDocument doc;
+    /**
+     * As we go through and remove invalid positions we will also be finding
+     * new valid positions. 
+     * Since the position list cannot be deleted from and written to at the same
+     * time, we will keep a list of the new positions and simply add it to the
+     * list of positions once all the old positions have been removed.
+     */
+	private HashSet<DocPosition> newPositions = new HashSet<DocPosition>();
     
-    public static Object doclock = new Object();
-    private Object lock = new Object();
-    
-    private volatile boolean running = false;
-    private volatile boolean pause = false;
-    private volatile Vector<DocumentEvent> work = new Vector<DocumentEvent>();
-    private HighlightThread tthis;
-    private Hashtable<?, ?> styles;
-    private volatile Vector<RecolorEvent> recolorWork = new Vector<RecolorEvent>();
-
+    /**
+     * A simple wrapper representing something that needs to be colored.
+     * Placed into an object so that it can be stored in a Vector.
+     */
     private class RecolorEvent {
-        private SimpleAttributeSet style;
-        private int offset;
-        private int length;
-        
-        public RecolorEvent(SimpleAttributeSet style, int offset, int length) {
-            this.style = style;
-            this.offset = offset;
-            this.length = length;
-        }
-        
-        public void reColor() {
-      		// following method is thread safe !!
-            doc.setCharacterAttributes(offset,length,style,true);
+        public int position;
+        public int adjustment;
+        public RecolorEvent(int position, int adjustment){
+            this.position = position;
+            this.adjustment = adjustment;
         }
     }
+
+    /**
+     * Vector that stores the communication between the two threads.
+     */
+    private volatile Vector<RecolorEvent> v = new Vector<RecolorEvent>();
+
+    /**
+     * The amount of change that has occurred before the place in the
+     * document that we are currently highlighting (lastPosition).
+     */
+    private volatile int change = 0;
+	
+    /**
+     * The last position colored
+     */
+    private volatile int lastPosition = -1;
     
-    public HighlightThread(ILexer lex, DocumentReader lexReader, Hashtable<?, ?> styles) {
-        this.lex = lex;
-        this.doc = (DefaultStyledDocument)lexReader.getDocument();   
-        this.setName(threadName);
-        this.lexReader = lexReader;
+    private volatile boolean asleep = false;
+
+    /**
+     * When accessing the vector, we need to create a critical section.
+     * we will synchronize on this object to ensure that we don't get
+     * unsafe thread behavior.
+     */
+    private Object lock = new Object();
+    protected HighLightedDocument document;
+    protected DocumentReader documentReader;
+    protected ILexer syntaxLexer;
+    /**
+     * A lock for modifying the document, or for
+     * actions that depend on the document not being
+     * modified.
+     */
+  //  public static Object doclock = new Object();
+    private Hashtable<Integer, HighlightStyle> styles;
+    
+    public HighlightThread(ILexer lex,  
+    		DocumentReader lexReader, HighLightedDocument document, Hashtable<Integer, HighlightStyle> styles) {
+        this.syntaxLexer = lex;
+        this.document = document;
+        this.document.setThread(this);
+        this.documentReader = lexReader;
         this.styles = styles;
-        this.tthis = this;
-        
-        doc.addDocumentListener(new DocumentListener() {
-            /**
-             * 1. add e.length to position in tokensPos that begins from e.offset
-             * 2. reset lexical analyzer from before-last token
-             * 3. read lex tokensPos until they are equal
-             */
-            public void insertUpdate(DocumentEvent e) {
-                synchronized(lock) {
-                    work.add(e);
-                }
-                try { if (!pause) tthis.interrupt(); }
-                catch(Exception ex) {}
-            };
-
-            public void removeUpdate(DocumentEvent e) {
-                synchronized(lock) {
-                    work.add(e);
-                }
-                try { if (!pause) tthis.interrupt(); }
-                catch(Exception ex) {}
-            }
-
-            public void changedUpdate(DocumentEvent e) {}
-            
-        });
-        running = true;
         this.start();
     }
+
+    /**
+     * retrieve the style for the given type of text.
+     *
+     * @param styleName the label for the type of text ("tag" for example) 
+	 *      or null if the styleName is not known.
+     * @return the style
+     */
+    private SimpleAttributeSet getStyle(int type){
+        return ((SimpleAttributeSet)styles.get(type));
+    }
     
+    /**
+     * Tell the Syntax Highlighting thread to take another look at this
+     * section of the document.  It will process this as a FIFO.
+     * This method should be done inside a doclock.
+     */
+    public void color(int position, int adjustment){
+        // figure out if this adjustment effects the current run.
+        // if it does, then adjust the place in the document
+        // that gets highlighted.
+        if (position < lastPosition) {
+            if (lastPosition < position - adjustment)
+                change -= lastPosition - position;
+            else
+                change += adjustment;
+        }
+        synchronized(lock){
+            v.add(new RecolorEvent(position, adjustment));
+            if (asleep)
+                this.interrupt();
+        }
+    }
+
+    /**
+     * The colorer runs forever and may sleep for long
+     * periods of time.  It should be interrupted every
+     * time there is something for it to do.
+     */
     public void run() {
-        boolean shouldTry = true;
-        DocumentEvent e;
-        while (running) {
-            while (pause) {
-                try { //printTokens(); 
-                	sleep(0xffffff);
+        int position = -1;
+        int adjustment = 0;
+        // if we just finish, we can't go to sleep until we
+        // ensure there is nothing else for us to do.
+        // use try again to keep track of this.
+        boolean tryAgain = false;
+        for (;;){  // forever
+            synchronized(lock){
+                if (v.size() > 0){
+                    RecolorEvent re = (RecolorEvent)(v.elementAt(0));
+                    v.removeElementAt(0);
+                    position = re.position;
+                    adjustment = re.adjustment;
+                } else {
+                    tryAgain = false;
+                    position = -1;
+                    adjustment = 0;
                 }
-                catch(InterruptedException ex) {}
             }
-            synchronized(lock) {
-                shouldTry = !work.isEmpty();
-            }
-            if (!shouldTry) {
-                try { //printTokens();
-                	sleep(0xffffff);
-                }
-                catch(InterruptedException ex) {}
-            }
-            synchronized(lock) {
-                if (work.isEmpty()) continue;
-                e = work.elementAt(0);
-                work.removeElementAt(0);
-            }
-//    		System.out.println("Highlight.run.Entering(1)");
-            synchronized(doclock) {
-  //      		System.out.println("    Highlight.run.IN(1)");
-                lexReader.seek(0);
-                lex.reset(lexReader,0,0,0);
-    //    		System.out.println("    Highlight.run.Exiting(1)");
-            }
-//    		System.out.println("Highlight.run.OUT(1)");
-            int len = (e.getType() == DocumentEvent.EventType.INSERT) ?
-                e.getLength() : -e.getLength();
-            int bl = updatePositions(e.getOffset(),len);
-//            System.out.print("Seek at:" + bl);
-            try {
-                if (bl >= 0) {
-  //          		System.out.println("Highlight.run.Entering(2)");
-                    synchronized(doclock) {
-    //            		System.out.println("    Highlight.run.IN(2)");
-                        lexReader.seek(bl);
-                        lex.reset(lexReader,0, bl, 0);
-      //          		System.out.println("    Highlight.run.Exiting(2)");
-                    }
-        //    		System.out.println("Highlight.run.OUT(2)");
-                }
-                IToken t;
-        	//	System.out.println("Highlight.run.Entering(3)");
-                synchronized(doclock) {
-            	//	System.out.println("    Highlight.run.IN(3)");
-                    t = lex.getSymbol();
-            		//System.out.println("    Highlight.run.Exiting(3)");
-                }
-//        		System.out.println("Highlight.run.OUT(3)");
-//                System.out.println("; <" + t.getID() + "> [" + t.getOffset() + ";" + t.getLength() + "]");
-                while (t.getType() != IToken.TEOF) {
-                    if (tokensPos.contains(t.getOffset())) {
-                    	IToken tok = tokens.get(t.getOffset());
-                        int tid = tok.getType();
-                        int tlen = tok.getLength();
-  //                  	System.out.print("    found: ("+(t.getOffset() > e.getOffset()
-    //                			&& (tid == t.getID())) + ")");
-                        // ak je token ZA kurzorom v dokumente a tokeny su
-                        // zhodne (rovnake ID a dlzku) tak uz viac netreba
-                        // skenovat
-                        if ((t.getOffset() > e.getOffset())
-                        		&& (tid == t.getID()) && (tlen == t.getLength())) {
-//                        	System.out.println("the same: " + t.getText());
-                        	break;
-                        }
-                        else {
-//                        	System.out.println("not equal: <" + t.getID() + "> != saved<" + tid + ">, "
-  //                      			+ tlen + " != " + t.getLength());
-                        	// inak odstranujem token
-                        	tokensPos.remove(t.getOffset());
-                        	tokens.remove(t.getOffset());
-                        }
-                    }
-//                    System.out.println("Removing tokens from: " + t.getOffset() 
-  //                  		+ " to " + (t.getOffset() + t.getLength()));
-                    removeTokens(t.getOffset(),t.getOffset() + t.getLength());
-                    tokensPos.add(t.getOffset());
-                    tokens.put(t.getOffset(), t);
+            if (position != -1){
+                SortedSet<DocPosition> workingSet;
+                Iterator<DocPosition> workingIt;
+                DocPosition startRequest = new DocPosition(position);
+                DocPosition endRequest = new DocPosition(position + ((adjustment>=0)?adjustment:-adjustment));
+                DocPosition dp;
+                DocPosition dpStart = null;
+                DocPosition dpEnd = null;
 
-                    SimpleAttributeSet style = (SimpleAttributeSet)
-                                styles.get(t.getType());
-                    if (style == null)
-                        style = (SimpleAttributeSet)
-                                styles.get(IToken.ERROR);
-                    recolorWork.add(new RecolorEvent(style,t.getOffset(),t.getLength()));                                
-                    bl = t.getOffset(); // before last token on the end of while cycle
-                    synchronized(doclock) {
-                        t = lex.getSymbol();
+                // find the starting position.  We must start at least one
+                // token before the current position
+                try {
+                    // all the good positions before
+                    workingSet = iniPositions.headSet(startRequest);
+                    // the last of the stuff before
+                    dpStart = ((DocPosition)workingSet.last());
+                } catch (NoSuchElementException x){
+                    // if there were no good positions before the requested start,
+                    // we can always start at the very beginning.
+                    dpStart = new DocPosition(0);
+                }
+
+                // if stuff was removed, take any removed positions off the list.
+                if (adjustment < 0){
+                    workingSet = iniPositions.subSet(startRequest, endRequest);
+                    workingIt = workingSet.iterator();
+                    while (workingIt.hasNext()){
+                        workingIt.next();
+                        workingIt.remove();
                     }
                 }
-                if ((e.getType() == DocumentEvent.EventType.REMOVE) 
-                        && (t.getType() == IToken.TEOF)) {
-                    // remove rest tokens in tokenPos and tokenTypes and tokenLengths
-                    try { removeTokens(bl+1,tokensPos.last()+1);}
-                    catch(NoSuchElementException exx) {}
+
+                // adjust the positions of everything after the insertion/removal.
+                workingSet = iniPositions.tailSet(startRequest);
+                workingIt = workingSet.iterator();
+                while (workingIt.hasNext()){
+                    ((DocPosition)workingIt.next()).adjustPosition(adjustment);
                 }
-            } catch (IOException xe) {}
-            for (Iterator<RecolorEvent> cit = recolorWork.iterator(); cit.hasNext();) {
-                RecolorEvent r = cit.next();
-                try { r.reColor();}
-                catch(Error exx) {}
-                cit.remove();
+
+                // now go through and highlight as much as needed
+                workingSet = iniPositions.tailSet(dpStart);
+                workingIt = workingSet.iterator();
+                dp = null;
+                if (workingIt.hasNext()){
+                    dp = (DocPosition)workingIt.next();
+                }
+                try {
+                    IToken t;
+                    boolean done = false;
+                    dpEnd = dpStart;
+//                    synchronized (doclock){
+                        // we are playing some games with the lexer for efficiency.
+                        // we could just create a new lexer each time here, but instead,
+                        // we will just reset it so that it thinks it is starting at the
+                        // beginning of the document but reporting a funny start position.
+                        // Reseting the lexer causes the close() method on the reader
+                        // to be called but because the close() method has no effect on the
+                        // DocumentReader, we can do this.
+                        syntaxLexer.reset(documentReader, 0, dpStart.getPosition(), 0);
+                        // After the lexer has been set up, scroll the reader so that it
+                        // is in the correct spot as well.
+                        documentReader.seek(dpStart.getPosition());
+                        // we will highlight tokens until we reach a good stopping place.
+                        // the first obvious stopping place is the end of the document.
+                        // the lexer will return null at the end of the document and wee
+                        // need to stop there.
+                        t = syntaxLexer.getSymbol();
+               //     }
+                    newPositions.add(dpStart);
+                    while (!done && t != null && t.getType() != IToken.TEOF){
+                        // this is the actual command that colors the stuff.
+                        // Color stuff with the description of the style matched
+                        // to the hash table that has been set up ahead of time.
+            //            synchronized (doclock){
+                    	{
+                        	int tEnd = t.getOffset() + t.getLength();
+                            if (tEnd <= document.getLength()){
+                                document.setCharacterAttributes(
+                                    t.getOffset() + change,
+                                    t.getLength(),
+                                    getStyle(t.getType()),
+                                    true
+                                );                                                                  
+                                // record the position of the last bit of text that we colored
+                                dpEnd = new DocPosition(tEnd);
+                            }
+                            lastPosition = (tEnd + change);
+                        }
+                        // The other more complicated reason for doing no more highlighting
+                        // is that all the colors are the same from here on out anyway.
+                        // We can detect this by seeing if the place that the lexer returned
+                        // to the initial state last time we highlighted is the same as the
+                        // place that returned to the initial state this time.
+                        // As long as that place is after the last changed text, everything
+                        // from there on is fine already.
+                        if (t.isInitialLexicalState()){
+                            //System.out.println(t);
+                            // look at all the positions from last time that are less than or
+                            // equal to the current position
+                        	int tEnd = t.getOffset() + t.getLength();
+                            while (dp != null && dp.getPosition() <= tEnd){
+                                if (dp.getPosition() == tEnd && dp.getPosition() >= endRequest.getPosition()){
+                                    // we have found a state that is the same
+									done = true;
+                                    dp = null;
+                                } else if (workingIt.hasNext()){
+                                    // didn't find it, try again.
+                                    dp = (DocPosition)workingIt.next();
+                                } else {
+                                    // didn't find it, and there is no more info from last
+                                    // time.  This means that we will just continue
+                                    // until the end of the document.
+                                    dp = null;
+                                }
+                            }
+                            // so that we can do this check next time, record all the
+                            // initial states from this time.
+                            newPositions.add(dpEnd);
+                        }
+                  //      synchronized (doclock){
+                            t = syntaxLexer.getSymbol();
+                //        }
+                    }
+                    // remove all the old initial positions from the place where
+                    // we started doing the highlighting right up through the last
+                    // bit of text we touched.
+                    workingIt = iniPositions.subSet(dpStart, dpEnd).iterator();
+                    while (workingIt.hasNext()){
+                        workingIt.next();
+                        workingIt.remove();
+                    }
+                    
+                    // Remove all the positions that are after the end of the file.:
+                    workingIt = iniPositions.tailSet(new DocPosition(document.getLength())).iterator();
+                    while (workingIt.hasNext()){
+                        workingIt.next();
+                        workingIt.remove();
+                    }
+
+                    // and put the new initial positions that we have found on the list.
+                    iniPositions.addAll(newPositions);
+                    newPositions.clear();
+                    
+                    /*workingIt = iniPositions.iterator();
+                    while (workingIt.hasNext()){
+                        System.out.println(workingIt.next());
+                    }
+                    
+                    System.out.println("Started: " + dpStart.getPosition() + " Ended: " + dpEnd.getPosition());*/
+                } catch (IOException x){
+                }
+      //         synchronized (doclock){
+                    lastPosition = -1;
+                    change = 0;
+        //        }
+                // since we did something, we should check that there is
+                // nothing else to do before going back to sleep.
+                tryAgain = true;
+            }                
+            asleep = true;
+            if (!tryAgain){
+                try {
+                    sleep (0xffffff);
+                } catch (InterruptedException x){
+                }
+                
             }
+            asleep = false;
         }
     }
 
     /**
-     * Method remove tokens from offset "from" and length "length". Length
-     * can be both positive or negative.
-     * @return first "before" token in initial lexical state
-     *         -1 otherwise
+     * Color or recolor the entire document
      */
-    private int updatePositions(int from, int length) {
-        int pos = -1;
-        int i;
-        int old_from = from;
-
-        try {
-        	do {
-        		pos = tokensPos.subSet(0, from).last();
-        		from = pos;
-        	} while (!tokens.get(pos).isInitialLexicalState());
-        }
-        catch(NoSuchElementException e) { return -1; }
-        
-        from = old_from;
-        // Now I'm going to "adjust" tokens - move
-        // tokens positions to appropriate offset:
-        //   new_position = old_position + length 
-        
-        // tokeny od lex-pozicie
-        SortedSet<Integer> s = tokensPos.tailSet(from);
-        Integer[] poss = s.toArray(new Integer[0]);
-        
-        Vector<IToken> saved_tokens = new Vector<IToken>();
-        
-        // remove old positions saving types and lengths
-        for (i = 0; i < poss.length; i++) {
-//        	System.out.println("   " + i + ". R(" +tokenTypes.get(poss[i]) + ") "+ poss[i]);      	
-            tokensPos.remove(poss[i]);
-            saved_tokens.add(tokens.get(poss[i]));
-            tokens.remove(poss[i]);
-        }
-        
-        // add new positions with saved types and lengths
-        for (i = 0; i < poss.length; i++) {
-            int l = poss[i] + length;
-            if (l < 0) continue;
-//        	System.out.println("   " + i + ". A(" +types.elementAt(i) + ") "+ l);
-            tokensPos.add(l);
-            tokens.put(l, saved_tokens.elementAt(i));
-        }
-    	return pos;
-    }
-
-    
-    /**
-     * Method remove tokens between from-to. Used when typed char "joines"
-     * many tokens together and therefore creates one big token. Original smaller
-     * tokens has to be therefore removed.
-     */
-    private void removeTokens(int from, int to) {
-        int p = -1;
-        // search for nearest "from"
-        for (Iterator<Integer> i = tokensPos.iterator();i.hasNext();) {
-            p = i.next();
-            if ((p >= from) && (p < to)) {
-            	tokens.remove(p);
-                i.remove();
-            }
-            if (p >= to) break; // no more tokens in range
-        }
+    public void colorAll(){
+        color(0, document.getLength());
     }
     
-//    public void printTokens() {
-//        int j = 1;
-//        for (Iterator i = tokensPos.iterator(); i.hasNext();j++) {
-//            int pos = (Integer)i.next();
-//            System.out.println(j + ". =("+pos + ") " + tokenTypes.get(pos));
-//        }
-//    }
-    
-    public void stopRun() {
-        running = false;
-    }
-    
-    public void pauseRun() {
-        pause = true;
-    }
-    public void continueRun() {
-        pause = false;
-        this.interrupt();
-    }
 }

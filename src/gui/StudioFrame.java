@@ -70,7 +70,6 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private IMessageReporter reporter;
     private DebugTable tblDebug;
-    private boolean cpuPermanentRunning;
     
     // emulator
     private DebugTableModel debug_model;
@@ -85,7 +84,6 @@ public class StudioFrame extends javax.swing.JFrame {
         // create models and components
         arch = Main.currentArch;
         txtSource = new EmuTextPane();
-        cpuPermanentRunning = false;
         debug_model = new DebugTableModel(arch.getCPU(),arch.getMemory());
         tblDebug = new DebugTable(debug_model, arch.getCPU());
         initComponents();
@@ -117,7 +115,7 @@ public class StudioFrame extends javax.swing.JFrame {
         try {
             arch.getMemory().getContext().addMemoryListener(new IMemListener() {
                 public void memChange(EventObject evt, int adr) {
-                    if (cpuPermanentRunning == true) return;
+                    if (run_state == ICPU.STATE_RUNNING) return;
                     tblDebug.revalidate();
                     tblDebug.repaint();
                 }
@@ -135,14 +133,14 @@ public class StudioFrame extends javax.swing.JFrame {
 	                        btnStop.setEnabled(true); btnBack.setEnabled(false);
 	                        btnRun.setEnabled(false); btnStep.setEnabled(false);
 	                        btnBeginning.setEnabled(false); btnPause.setEnabled(true);
+	                        btnRunTime.setEnabled(false);
 	                    } else {
 	                        btnPause.setEnabled(false);
-	                        cpuPermanentRunning = false;
 	                        if (state == ICPU.STATE_STOPPED_BREAK) {
-	                            btnStop.setEnabled(true);
+	                            btnStop.setEnabled(true); btnRunTime.setEnabled(true);
 	                            btnRun.setEnabled(true); btnStep.setEnabled(true);
 	                        } else {
-	                            btnStop.setEnabled(false);
+	                            btnStop.setEnabled(false); btnRunTime.setEnabled(false);
 	                            btnRun.setEnabled(false); btnStep.setEnabled(false);
 	                        }
 	                        btnBack.setEnabled(true); btnBeginning.setEnabled(true);
@@ -185,7 +183,6 @@ public class StudioFrame extends javax.swing.JFrame {
         pack();
     }
     
-    // TODO: serious synchronization bug
     private void setUndoListener() {
         undoStateListener = new ActionListener() {
             public synchronized void actionPerformed(ActionEvent e) {
@@ -274,6 +271,7 @@ public class StudioFrame extends javax.swing.JFrame {
         btnStop = new JButton();
         btnPause = new JButton();
         btnRun = new JButton();
+        btnRunTime = new JButton();
         btnStep = new JButton();
         JButton btnJump = new JButton();
         btnBreakpoint = new JButton();
@@ -513,7 +511,6 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnResetActionPerformed(evt);
             }
         });
-        toolDebug.add(btnReset);
 
         btnBeginning.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-first.png"))); // NOI18N
         btnBeginning.setToolTipText("Jump to beginning");
@@ -523,7 +520,6 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnBeginningActionPerformed(evt);
             }
         });
-        toolDebug.add(btnBeginning);
 
         btnBack.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-previous.png"))); // NOI18N
         btnBack.setToolTipText("Step back");
@@ -533,7 +529,6 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnBackActionPerformed(evt);
             }
         });
-        toolDebug.add(btnBack);
 
         btnStop.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-stop.png"))); // NOI18N
         btnStop.setToolTipText("Stop emulation");
@@ -543,7 +538,6 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnStopActionPerformed(evt);
             }
         });
-        toolDebug.add(btnStop);
 
         btnPause.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-pause.png"))); // NOI18N
         btnPause.setToolTipText("Pause emulation");
@@ -553,7 +547,6 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnPauseActionPerformed(evt);
             }
         });
-        toolDebug.add(btnPause);
 
         btnRun.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-play.png"))); // NOI18N
         btnRun.setToolTipText("Run emulation");
@@ -563,8 +556,16 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnRunActionPerformed(evt);
             }
         });
-        toolDebug.add(btnRun);
 
+        btnRunTime.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-play-time.png"))); // NOI18N
+        btnRunTime.setToolTipText("Run emulation in time slices");
+        btnRunTime.setFocusable(false);
+        btnRunTime.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRunTimeActionPerformed(evt);
+            }
+        });
+        
         btnStep.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-next.png"))); // NOI18N
         btnStep.setToolTipText("Step forward");
         btnStep.setFocusable(false);
@@ -573,7 +574,6 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnStepActionPerformed(evt);
             }
         });
-        toolDebug.add(btnStep);
 
         btnJump.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-jump.png"))); // NOI18N
         btnJump.setToolTipText("Jump to address");
@@ -583,7 +583,6 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnJumpActionPerformed(evt);
             }
         });
-        toolDebug.add(btnJump);
 
         btnBreakpoint.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/preferences-desktop.png"))); // NOI18N
         btnBreakpoint.setToolTipText("Set/unset breakpoint to address...");
@@ -595,7 +594,6 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnBreakpointActionPerformed(evt);
             }
         });
-        toolDebug.add(btnBreakpoint);
 
         btnMemory.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Memory24.gif"))); // NOI18N
         btnMemory.setToolTipText("Show operating memory");
@@ -605,6 +603,16 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnMemoryActionPerformed(evt);
             }
         });
+        toolDebug.add(btnReset);
+        toolDebug.add(btnBeginning);
+        toolDebug.add(btnBack);
+        toolDebug.add(btnStop);
+        toolDebug.add(btnPause);
+        toolDebug.add(btnRun);
+        toolDebug.add(btnRunTime);
+        toolDebug.add(btnStep);
+        toolDebug.add(btnJump);
+        toolDebug.add(btnBreakpoint);
         toolDebug.add(btnMemory);
 
         btnPrevious.setText("< Previous");
@@ -946,10 +954,28 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void btnRunActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRunActionPerformed
         tblDebug.setVisible(false);
-        cpuPermanentRunning = true;
         arch.getCPU().execute();
     }//GEN-LAST:event_btnRunActionPerformed
 
+    private void btnRunTimeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRunActionPerformed
+    	String sliceText = JOptionPane.showInputDialog("Enter time slice in milliseconds:","500");
+    	try {
+    		final int slice = Integer.parseInt(sliceText);
+    		new Thread() {
+    			public void run() {
+    				ICPU cpu = arch.getCPU();
+    				while(run_state == ICPU.STATE_STOPPED_BREAK) {
+    					cpu.step();
+    					try { Thread.sleep(slice); }
+    					catch(InterruptedException e) {}
+    				}
+    			}
+    		}.start();
+    	} catch(NumberFormatException e) {
+    		StaticDialogs.showErrorMessage("Error: the number has to be integer,");
+    	}
+    }//GEN-LAST:event_btnRunActionPerformed
+    
     private void btnStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnStopActionPerformed
         arch.getCPU().stop();
     }//GEN-LAST:event_btnStopActionPerformed
@@ -1223,6 +1249,7 @@ private void btnNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST
     JButton btnPause;
     JButton btnRedo;
     JButton btnRun;
+    JButton btnRunTime;
     JButton btnStep;
     JButton btnStop;
     JButton btnUndo;

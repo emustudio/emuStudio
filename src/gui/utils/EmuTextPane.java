@@ -13,6 +13,7 @@
 
 package gui.utils;
 
+import gui.syntaxHighlighting.HighLightedDocument;
 import gui.syntaxHighlighting.HighlightStyle;
 import gui.syntaxHighlighting.HighlightThread;
 import gui.syntaxHighlighting.DocumentReader;
@@ -36,7 +37,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
-import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.AbstractDocument.DefaultDocumentEvent;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
@@ -58,7 +58,7 @@ public class EmuTextPane extends JTextPane {
 
     private ILexer syntaxLexer = null;
     private DocumentReader reader;
-    private DefaultStyledDocument document;
+    private HighLightedDocument document;
 	private Hashtable<Integer, HighlightStyle> styles; // token styles
     private HighlightThread highlight;
 
@@ -79,10 +79,7 @@ public class EmuTextPane extends JTextPane {
 				if (undoTimer != null)
 					undoTimer.cancel();
 				undoTimer = null;
-			} catch(Exception e) {
-				// AWT Event dispatcher sometimes
-				// throws weird NullPointerException here...
-			}
+			} catch(Exception e) {}
 		}
     }
     
@@ -90,9 +87,6 @@ public class EmuTextPane extends JTextPane {
     public EmuTextPane() {
         styles = new Hashtable<Integer, HighlightStyle>();
         initStyles();
-        document = new DefaultStyledDocument();
-        reader = new DocumentReader(document);
-        this.setStyledDocument(document);
         this.setFont(new java.awt.Font("monospaced", 0, 12));
         this.setMargin(new Insets(NUMBERS_HEIGHT,NUMBERS_WIDTH,0,0));
         this.setBackground(Color.WHITE);
@@ -102,11 +96,17 @@ public class EmuTextPane extends JTextPane {
         undo = new CompoundUndoManager();
         aevt = new ActionEvent(this,0,"");
         undoTimer = null;
+
+        document = new HighLightedDocument();
+        reader = new DocumentReader(document);
+        document.setDocumentReader(reader);
+        this.setStyledDocument(document);
         document.addDocumentListener(new DocumentListener() {
 			@Override
 			public void changedUpdate(DocumentEvent e) {}
 			@Override
 			public void insertUpdate(DocumentEvent e) {
+				if (acceptUndo == false) return;
 				if (undoTimer != null)
 					undoTimer.cancel();
 				undoTimer = new Timer();
@@ -114,6 +114,7 @@ public class EmuTextPane extends JTextPane {
 			}
 			@Override
 			public void removeUpdate(DocumentEvent e) {
+				if (acceptUndo == false) return;
 				if (undoTimer != null)
 					undoTimer.cancel();
 				undoTimer = new Timer();
@@ -124,26 +125,23 @@ public class EmuTextPane extends JTextPane {
 			@Override
 			public void undoableEditHappened(UndoableEditEvent e) {
 				if (!acceptUndo) return;
-	//			System.out.println("Text.UndoLis.Entering");
-			//	synchronized(HighlightThread.doclock) {
-//					System.out.println("    Text.UndoLis.IN");
-					UndoableEdit ed = e.getEdit();
-					DefaultDocumentEvent event = (DefaultDocumentEvent)e.getEdit();
-					if  (event.getType().equals(DocumentEvent.EventType.CHANGE))
-						return;
-					if (ed.isSignificant())
-						undo.addEdit(ed);
-					//System.out.println("    Text.UndoLis.Exiting");
-			//	}
-				//System.out.println("Text.UndoLis.OUT");
+				UndoableEdit ed = e.getEdit();
+				DefaultDocumentEvent event = (DefaultDocumentEvent)e.getEdit();
+				if  (event.getType().equals(DocumentEvent.EventType.CHANGE))
+					return;
+				if (ed.isSignificant())
+					undo.addEdit(ed);
 			}
         });
     }
 
     public void setLexer(ILexer sLexer) {
         this.syntaxLexer = sLexer;
-        if (highlight != null) highlight.stopRun();
-        highlight = new HighlightThread(syntaxLexer, reader,styles);
+        if (highlight != null) {
+        	try { highlight.wait(); }
+        	catch(Exception e) {}
+        }
+        highlight = new HighlightThread(syntaxLexer, reader, document, styles);
     }
 
     private void initStyles() {
@@ -165,58 +163,30 @@ public class EmuTextPane extends JTextPane {
         undoListener = l;
     }
     public synchronized boolean canRedo() {
-    	boolean b;
-	//	System.out.println("Text.canRedo.Entering");
-		synchronized(HighlightThread.doclock) {
-//			System.out.println("    Text.canRedo.IN");
-			b = undo.canRedo();
-	//		System.out.println("    Text.canRedo.Exiting");
-		}
-		//System.out.println("Text.canRedo.OUT");
-		return b;
+		return undo.canRedo();
     }
     public synchronized boolean canUndo() {
-    	boolean b;
-//		System.out.println("Text.canUndo.Entering");
-		synchronized(HighlightThread.doclock) {
-	//		System.out.println("    Text.canUndo.IN");
-			b =undo.canUndo();
-		//	System.out.println("    Text.canUndo.Exiting");
-		}
-		//System.out.println("Text.canUndo.OUT");
-		return b;
+    	return undo.canUndo();
     }
     
-    public synchronized void undo() {
-//		System.out.println("Text.Undo.Entering");
-        synchronized(HighlightThread.doclock) {
-  //  		System.out.println("    Text.Undo.IN");
-        	if (undoTimer != null)
-        		undoTimer.cancel();
-        	acceptUndo = false;
-        	try { undo.undo(); }
-        	catch(CannotUndoException e) {}
-        	undoTimer = new Timer();
-        	undoTimer.schedule(new UndoUpdater(), CompoundUndoManager.IDLE_DELAY_MS); 
-        	acceptUndo = true;
-    //		System.out.println("    Text.Undo.Exiting");
-        }
-		//System.out.println("Text.Undo.OUT");
-}
+    public void undo() {
+    	if (undoTimer != null)
+    		undoTimer.cancel();
+    	acceptUndo = false;
+    	try { undo.undo(); }
+    	catch(CannotUndoException e) {}
+    	undoTimer = new Timer();
+    	undoTimer.schedule(new UndoUpdater(), CompoundUndoManager.IDLE_DELAY_MS); 
+    	acceptUndo = true;
+    }
     
-    public synchronized void redo() {
-	//	System.out.println("Text.Redo.Entering");
-        synchronized(HighlightThread.doclock) {
-    	//	System.out.println("    Text.Redo.IN");
-        	if (undoTimer != null)
-        		undoTimer.cancel();
-        	try { undo.redo(); }
-        	catch(CannotRedoException e) {}
-        	undoTimer = new Timer();
-        	undoTimer.schedule(new UndoUpdater(), CompoundUndoManager.IDLE_DELAY_MS); 
-//    		System.out.println("    Text.Redo.Exiting");
-        }
-	//	System.out.println("Text.Redo.OUT");
+    public void redo() {
+    	if (undoTimer != null)
+    		undoTimer.cancel();
+    	try { undo.redo(); }
+    	catch(CannotRedoException e) {}
+    	undoTimer = new Timer();
+    	undoTimer.schedule(new UndoUpdater(), CompoundUndoManager.IDLE_DELAY_MS); 
     }
         
     /*** SYNTAX HIGHLIGHTING IMPLEMENTATION ***/
@@ -228,17 +198,11 @@ public class EmuTextPane extends JTextPane {
     public void paint(Graphics g) {
         super.paint(g);
         int start,end,startline,endline;
-//		System.out.println("Text.Paint.Entering");
-        synchronized(HighlightThread.doclock) {
-  //  		System.out.println("    Text.Paint.IN");
-            start = document.getStartPosition().getOffset();
-            end = document.getEndPosition().getOffset();
-            // translate offsets to lines
-            startline = document.getDefaultRootElement().getElementIndex(start) ;
-            endline = document.getDefaultRootElement().getElementIndex(end)+1;
-    //		System.out.println("    Text.Paint.Exiting");
-        }
-		//System.out.println("Text.Paint.OUT");
+        start = document.getStartPosition().getOffset();
+        end = document.getEndPosition().getOffset();
+        // translate offsets to lines
+        startline = document.getDefaultRootElement().getElementIndex(start) ;
+        endline = document.getDefaultRootElement().getElementIndex(end)+1;
         int fontHeight = g.getFontMetrics(getFont()).getHeight(); // font height
 
         g.setColor(Color.RED);
@@ -269,11 +233,7 @@ public class EmuTextPane extends JTextPane {
             try {
                 FileReader vstup = new FileReader(fileSource.getAbsolutePath());
                 setText("");
-                highlight.pauseRun();
-                synchronized(HighlightThread.doclock) {
-                    getEditorKit().read(vstup, document,0);
-                }
-                highlight.continueRun();
+                getEditorKit().read(vstup, document,0);
                 this.setCaretPosition(0);
                 vstup.close(); fileSaved = true;
             }  catch (java.io.FileNotFoundException ex) {
