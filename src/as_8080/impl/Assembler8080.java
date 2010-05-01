@@ -25,7 +25,6 @@
 
 package as_8080.impl;
 
-import as_8080.impl.HEXFileHandler;
 import as_8080.tree8080.Statement;
 
 import java.io.Reader;
@@ -38,8 +37,9 @@ import plugins.memory.IMemoryContext;
 
 
 /**
+ * Main implementation class of the plugin (assembler for 8080 processor).
  *
- * @author vbmacher
+ * @author Peter Jakubčo <pjakubco at gmail.com>
  */
 public class Assembler8080 implements ICompiler {
 	private long hash;
