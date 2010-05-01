@@ -77,7 +77,7 @@ public class DebugTableModel extends AbstractTableModel {
             page += 20;
     }
 
-    // posun dolava o 20 instrukcii
+    // posun na adresu PC
     public void topc() {
         page = 1;
     }
@@ -117,7 +117,7 @@ public class DebugTableModel extends AbstractTableModel {
                 } catch(ArrayIndexOutOfBoundsException w) { break; }
                 if (diff > (pc+page)) { 
                     // ak sa od firstRowAddress neviem dostat k PC (iba za neho)
-                    if ((up == 0) && (firstRowAddress == 0))
+                    if ((up == 0) && (firstRowAddress <= 0))
                         up = 1; /* ak je firstRowAddress==0, korekcia bude mat
                                    stupajucu tendenciu */
                     else if (up == 0) 
@@ -126,6 +126,7 @@ public class DebugTableModel extends AbstractTableModel {
                     if (firstRowAddress < (pc-20 +page)) {
                         // ak som klesol uz prilis vela, nema to zmysel, skusim stupat
                         firstRowAddress = pc-9+page; up=1;
+                        diff = firstRowAddress; // ?
                         continue;
                     }
                     if (firstRowAddress > (pc+page)) {
@@ -138,6 +139,15 @@ public class DebugTableModel extends AbstractTableModel {
                     }                    
                     if (up == 1) firstRowAddress++;
                     else firstRowAddress--;
+
+                    if (firstRowAddress < 0) {
+                        page--;
+                        firstRowAddress = pc-10+page; 
+                        if ((pc+page) > mem.getSize()) {
+                            page = mem.getSize() - pc;
+                            firstRowAddress = pc-10+page;
+                        }
+                    }
                     diff = firstRowAddress;
                 }
             }

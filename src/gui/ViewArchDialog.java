@@ -13,6 +13,10 @@ import architecture.Main;
 import architecture.drawing.PreviewPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Vector;
 
 import javax.swing.GroupLayout;
@@ -35,6 +39,7 @@ import runtime.StaticDialogs;
  */
 @SuppressWarnings("serial")
 public class ViewArchDialog extends JDialog {
+	private boolean easterClicked = false; // for easterEgg 
     private ArchHandler arch;
     private String compilerName;
     private String cpuName;
@@ -109,7 +114,7 @@ public class ViewArchDialog extends JDialog {
     private void initComponents() {
         lblName = new JLabel();
         JTabbedPane tabbedPane = new JTabbedPane();
-        JPanel panelCompiler = new JPanel();
+        final JPanel panelCompiler = new JPanel();
         JLabel lblFileNameLBL1 = new JLabel();
         JLabel lblPluginNameLBL1 = new JLabel();
         JLabel lblVersionLBL1 = new JLabel();
@@ -168,6 +173,25 @@ public class ViewArchDialog extends JDialog {
 
         lblName.setFont(lblName.getFont().deriveFont(lblName.getFont().getStyle() | java.awt.Font.BOLD));
         lblName.setText(null);
+        lblName.addMouseListener(new MouseListener() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if ((e.getButton() == MouseEvent.BUTTON1) && (e.getClickCount() == 2)) {
+					easterClicked = !easterClicked;
+					if (easterClicked)
+						panelCompiler.grabFocus();
+				}
+				e.consume();
+			}
+			@Override
+			public void mouseEntered(MouseEvent e) {}
+			@Override
+			public void mouseExited(MouseEvent e) {}
+			@Override
+			public void mousePressed(MouseEvent e) {}
+			@Override
+			public void mouseReleased(MouseEvent e) {}
+        });
 
         tabbedPane.setFocusable(false);
 
@@ -195,6 +219,19 @@ public class ViewArchDialog extends JDialog {
         txtCompilerDescription.setOpaque(false);
         scrollCompilerDescription.setViewportView(txtCompilerDescription);
 
+        panelCompiler.addKeyListener(new KeyListener() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (easterClicked && e.isAltDown() && (e.getKeyCode() == KeyEvent.VK_A)) {
+					StaticDialogs.showMessage("Easter egg: Welcome, vbmacher!");
+				}
+				e.consume();
+			}
+			@Override
+			public void keyReleased(KeyEvent e) {}
+			@Override
+			public void keyTyped(KeyEvent e) {}        	
+        });
         GroupLayout compilerLayout = new GroupLayout(panelCompiler);
         panelCompiler.setLayout(compilerLayout);
         

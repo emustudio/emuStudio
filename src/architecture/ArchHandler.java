@@ -173,7 +173,7 @@ public class ArchHandler implements ISettingsHandler {
      * @return setting value if exists, or null if not
      */
     public String readSetting(long hash, String settingName) {
-        IPlugin plug = arch.getPlugin(hash);
+    	IPlugin plug = arch.getPlugin(hash);
         if (plug == null) return null;
         
         if (settingName.toUpperCase().equals("VERBOSE"))
@@ -196,7 +196,6 @@ public class ArchHandler implements ISettingsHandler {
         if (prop.equals("")) return null;
         if (settingName != null && !settingName.equals("")) 
             prop += "." + settingName;
-        
         return settings.getProperty(prop,null);
     }
 

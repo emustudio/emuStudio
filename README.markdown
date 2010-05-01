@@ -1,5 +1,5 @@
-Welcome to emu8 Studio project page !
--------------------------------------
+Welcome to emuStudio !
+-------------------------
 
 In 2006 I began to write my own CPU emulator, Intel 8080. I had fun, but the software lacked many
 features. So I decided to enhance the software. Now it has grown to emulation platform
@@ -20,7 +20,7 @@ Installation
 ------------
 
 For istallation, copy distribution somewhere where you want. Then add library
-called `emu_ifaces`, you can find it in my repos.
+called `emuLib.jar`, you can find it in my repos.
 
 
 Directory tree should be:

@@ -50,7 +50,7 @@ public class AboutDialog extends javax.swing.JDialog {
         lblTitle.setFont(lblTitle.getFont().deriveFont(Font.BOLD,24));
         lblTitle.setText("emuStudio");
 
-        lblDescription.setText("<html>Emulation platform for emulating various kinds of mainly older (e.g. 8-bit) architectures. It was designed for educational purposes. It is a property of Technical University of Košice.");
+        lblDescription.setText("<html>Emulation platform for emulating Von-Neumann architectures. It is used for emulation of mainly older (e.g. 8-bit) architectures. It was designed for educational purposes. It is a property of Technical University of Košice.");
 
         lblConsultantLBL.setFont(lblConsultantLBL.getFont().deriveFont(lblConsultantLBL.getFont().getStyle() | Font.BOLD));
         lblConsultantLBL.setText("Consultant:");

@@ -560,6 +560,8 @@ public class ArchLoader extends ClassLoader {
             zf.close();
         }
         catch (Exception e) {
+        	e.printStackTrace();
+        	
             StaticDialogs.showErrorMessage("Error reading plugin: " + filename);
         }
         return null;
