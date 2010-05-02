@@ -5,12 +5,12 @@
  * 
  * KISS, YAGNI
  */
-package ram.tree;
+package ramc_ram.tree;
 
 import java.util.Vector;
 
-import ram.compiled.CompiledFileHandler;
-import ram.compiled.CompilerEnvironment;
+import ramc_ram.compiled.CompiledFileHandler;
+import ramc_ram.compiled.CompilerEnvironment;
 
 public class Row {
     private RAMInstruction stat;

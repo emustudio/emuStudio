@@ -4,7 +4,7 @@
 // Fri Mar 27 11:43:26 CET 2009
 //----------------------------------------------------
 
-package ram.impl;
+package ramc_ram.impl;
 
 /** CUP generated interface containing symbol constants. */
 public interface symRAM {

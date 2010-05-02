@@ -4,14 +4,14 @@
 // Fri Mar 27 11:43:26 CET 2009
 //----------------------------------------------------
 
-package ram.impl;
+package ramc_ram.impl;
 
 import interfaces.IRAMInstruction;
 import java_cup.runtime.Symbol;
 import plugins.compiler.IMessageReporter;
 import plugins.compiler.IToken;
 import java.util.Vector;
-import ram.tree.*;
+import ramc_ram.tree.*;
 
 /** CUP v0.11a beta 20060608 generated parser.
   * @version Fri Mar 27 11:43:26 CET 2009

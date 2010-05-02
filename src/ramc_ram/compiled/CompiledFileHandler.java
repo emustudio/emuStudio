@@ -1,4 +1,4 @@
-package ram.compiled;
+package ramc_ram.compiled;
 
 import interfaces.IRAMInstruction;
 import interfaces.IRAMMemoryContext;
@@ -6,7 +6,7 @@ import interfaces.IRAMMemoryContext;
 import java.util.ArrayList;
 
 import plugins.memory.IMemoryContext;
-import ram.tree.Label;
+import ramc_ram.tree.Label;
 import runtime.StaticDialogs;
 
 /**

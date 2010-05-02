@@ -7,7 +7,7 @@
  * some things just: YOU AREN'T GONNA NEED IT
  */
 
-package ram.impl;
+package ramc_ram.impl;
 
 import java_cup.runtime.Symbol;
 import plugins.compiler.IToken;

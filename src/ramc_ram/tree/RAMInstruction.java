@@ -5,9 +5,9 @@
  * 
  *  KISS, YAGNI
  */
-package ram.tree;
+package ramc_ram.tree;
 
-import ram.compiled.CompilerEnvironment;
+import ramc_ram.compiled.CompilerEnvironment;
 import interfaces.IRAMInstruction;
 
 public class RAMInstruction implements IRAMInstruction {

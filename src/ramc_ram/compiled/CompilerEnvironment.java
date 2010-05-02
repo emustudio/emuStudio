@@ -5,11 +5,11 @@
  * 
  *   KISS, YAGNI
  */
-package ram.compiled;
+package ramc_ram.compiled;
 
 import java.util.Vector;
 
-import ram.tree.Label;
+import ramc_ram.tree.Label;
 
 public class CompilerEnvironment {
     private static Vector<Label> labels = new Vector<Label>();

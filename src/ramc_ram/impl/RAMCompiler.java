@@ -5,12 +5,12 @@
  * 
  *  KISS, YAGNI
  */
-package ram.impl;
+package ramc_ram.impl;
 
 import java.io.Reader;
 
-import ram.compiled.CompiledFileHandler;
-import ram.tree.Program;
+import ramc_ram.compiled.CompiledFileHandler;
+import ramc_ram.tree.Program;
 import runtime.StaticDialogs;
 import plugins.ISettingsHandler;
 import plugins.compiler.ICompiler;

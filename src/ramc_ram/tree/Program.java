@@ -6,12 +6,12 @@
  * KISS, YAGNI
  * 
  */
-package ram.tree;
+package ramc_ram.tree;
 
 //import ram.impl.HEXFileHandler;
 import java.util.Vector;
 
-import ram.compiled.CompiledFileHandler;
+import ramc_ram.compiled.CompiledFileHandler;
 
 public class Program {
     private Vector<Row> list; // zoznam všetkých inštrukcií

@@ -10,7 +10,7 @@
  * KISS, YAGNI
  */
 
-package ram.impl;
+package ramc_ram.impl;
 
 import plugins.compiler.ILexer;
 import plugins.compiler.IToken;

@@ -1,4 +1,4 @@
-package ram.tree;
+package ramc_ram.tree;
 
 public class Label {
     private int address;
