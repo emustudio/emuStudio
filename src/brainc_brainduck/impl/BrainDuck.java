@@ -31,6 +31,11 @@ import plugins.compiler.IMessageReporter;
 import plugins.memory.IMemoryContext;
 import brainc_brainduck.tree.Program;
 
+/**
+ * Main class implementing main compiler interface.
+ *
+ * @author Peter Jakubčo <pjakubco at gmail.com>
+ */
 public class BrainDuck implements ICompiler {
     private long hash;
     private BDLexer lex = null;
@@ -40,6 +45,11 @@ public class BrainDuck implements ICompiler {
     private ISettingsHandler settings;
     private int programStart = 0; // actualize after compile 
     
+    /**
+     * A constructor.
+     *
+     * @param hash - long value to identify the plugin for settings.
+     */
     public BrainDuck(Long hash) {
         this.hash = hash;
         // lex has to be reset WITH a reader object before compile
@@ -54,7 +64,7 @@ public class BrainDuck implements ICompiler {
     @Override
     public String getTitle() { return "BrainDuck Compiler"; }
     @Override
-    public String getVersion() { return "0.13b1"; }
+    public String getVersion() { return "1.0b1"; }
     @Override
     public String getCopyright() { return "\u00A9 Copyright 2009, P. Jakubčo"; }
     @Override

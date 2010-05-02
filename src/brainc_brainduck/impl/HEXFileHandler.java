@@ -52,6 +52,7 @@ public class HEXFileHandler {
     /**
      * Put code on next address
      * if element exist on the address, then is rewritten
+     * @param code
      */
     public void putCode(String code) {
         program.put(nextAddress,code);
@@ -62,6 +63,10 @@ public class HEXFileHandler {
         return (String)program.get(address);
     }
     
+    /**
+     *
+     * @param address
+     */
     public void setNextAddress(int address) {
         nextAddress = address;
     }
@@ -86,6 +91,8 @@ public class HEXFileHandler {
      * and values have to represent compiled code.
      * Method copies all elements from param hashtable
      * to internal data member.
+     *
+     * @param ha sub-table with addresses and codes
      */
     public void addTable(Hashtable<Integer,String> ha) {
         Vector<Integer> adrs = new Vector<Integer>(ha.keySet());
@@ -101,6 +108,10 @@ public class HEXFileHandler {
         nextAddress = largestAdr;
     }
     
+    /**
+     *
+     * @return
+     */
     public Hashtable<Integer, String> getTable() { return this.program; }
     
     // generate hex file
@@ -199,6 +210,11 @@ public class HEXFileHandler {
     }
 
     
+    /**
+     *
+     * @param filename
+     * @throws java.io.IOException
+     */
     public void generateFile(String filename) throws java.io.IOException{
         String fileData = generateHEX();
 

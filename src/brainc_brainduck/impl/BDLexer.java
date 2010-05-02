@@ -381,6 +381,8 @@ public class BDLexer implements java_cup.runtime.Scanner, ILexer {
     
   /**
    * Closes the input stream.
+   *
+   * @throws java.io.IOException
    */
   public final void yyclose() throws java.io.IOException {
     zzAtEOF = true;            /* indicate end of file */
@@ -415,6 +417,7 @@ public class BDLexer implements java_cup.runtime.Scanner, ILexer {
 
   /**
    * Returns the current lexical state.
+   * @return
    */
   public final int yystate() {
     return zzLexicalState;
@@ -433,6 +436,7 @@ public class BDLexer implements java_cup.runtime.Scanner, ILexer {
 
   /**
    * Returns the text matched by the current regular expression.
+   * @return
    */
   public final String yytext() {
     return new String( zzBuffer, zzStartRead, zzMarkedPos-zzStartRead );
@@ -457,6 +461,7 @@ public class BDLexer implements java_cup.runtime.Scanner, ILexer {
 
   /**
    * Returns the length of the matched text region.
+   * @return length
    */
   public final int yylength() {
     return zzMarkedPos-zzStartRead;
