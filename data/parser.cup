@@ -1,5 +1,5 @@
 /*
- * parserZ80.java
+ * ParserZ80.java
  *
  * Parser (syntactic analyzer for Z80 assembler)
  *
@@ -27,8 +27,8 @@ import java.util.Vector;
 import java_cup.runtime.Symbol;
 import plugins.compiler.IMessageReporter;
 import plugins.compiler.IToken;
-import treeZ80.*;
-import treeZ80Abstract.*;
+import as_z80.treeZ80.*;
+import as_z80.treeZ80Abstract.*;
 
 init with {: errorCount = 0; lastLine = 0; lastColumn = 0; :}
 scan with {:
@@ -43,7 +43,7 @@ parser code {:
     public int lastColumn;
     public static int errorCount = 0;
     
-    public parserZ80(java_cup.runtime.Scanner s, IMessageReporter reporter) {
+    public ParserZ80(java_cup.runtime.Scanner s, IMessageReporter reporter) {
         this(s);
         this.reporter = reporter;
     }
