@@ -7,11 +7,11 @@
  * some things just: YOU AREN'T GONNA NEED IT
  */
 
-package gui;
+package cpu_8080.gui;
 
-import impl.ColumnInfo;
-import impl.Cpu8080;
-import impl.CpuContext;
+import cpu_8080.impl.ColumnInfo;
+import cpu_8080.impl.Cpu8080;
+import cpu_8080.impl.CpuContext;
 import interfaces.IICpuListener;
 import interfaces.ICPUInstruction;
 

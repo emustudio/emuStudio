@@ -7,7 +7,7 @@
  * some things just: YOU AREN'T GONNA NEED IT
  */
 
-package impl;
+package cpu_8080.impl;
 
 import plugins.cpu.*;
 /**

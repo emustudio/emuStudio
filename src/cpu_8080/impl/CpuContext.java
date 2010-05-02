@@ -7,9 +7,9 @@
  *
  */
 
-package impl;
+package cpu_8080.impl;
 
-import gui.statusGUI;
+import cpu_8080.gui.statusGUI;
 import interfaces.ACpuContext;
 import interfaces.IICpuListener;
 import java.util.EventObject;

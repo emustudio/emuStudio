@@ -9,9 +9,9 @@
  * some things just: YOU AREN'T GONNA NEED IT
  */
 
-package impl;
+package cpu_8080.impl;
 
-import gui.statusGUI;
+import cpu_8080.gui.statusGUI;
 import java.util.HashSet;
 import java.util.TimerTask;
 import javax.swing.JPanel;
