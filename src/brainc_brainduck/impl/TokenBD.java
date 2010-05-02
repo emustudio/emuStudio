@@ -1,13 +1,27 @@
 /*
- * token8080.java
- *
- * Created on Pondelok, 2007, august 20, 15:41
+ * TokenBD.java
  *
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
+ *
+ * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package brainduck.impl;
+package brainc_brainduck.impl;
 
 import java_cup.runtime.Symbol;
 import plugins.compiler.IToken;
@@ -16,7 +30,7 @@ import plugins.compiler.IToken;
  *
  * @author vbmacher
  */
-public class tokenBD extends Symbol implements IToken,symBD {
+public class TokenBD extends Symbol implements IToken,SymBD {
     public final static int ERROR_UNKNOWN_TOKEN = 0xA05;
 
     private String text; // hodnota tokenu
@@ -27,7 +41,7 @@ public class tokenBD extends Symbol implements IToken,symBD {
     private int type;    // typ tokenu
     private boolean initial;
  
-    public tokenBD(int ID, int type, String text, 
+    public TokenBD(int ID, int type, String text,
     		int line, int column, int offset, Object val,boolean initial) {
         super(ID,val);
         this.type = type;

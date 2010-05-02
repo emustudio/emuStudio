@@ -2,8 +2,8 @@
 
 source="parser.cup" # nazov zdrojoveho suboru
 target="BDParser"   # nazov triedy parsera
-symbols="symBD"     # nazov triedy symbolov
-package="brainduck.impl"      # aky balik ma mat parser aj symboly
+symbols="SymBD"     # nazov triedy symbolov
+package="brainc_brainduck.impl"      # aky balik ma mat parser aj symboly
 
 echo "Removing old files..."
 rm -f $target.java $symbols.java *.states cup.error
