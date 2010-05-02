@@ -74,7 +74,7 @@ public class BrainCPU implements ICPU, Runnable {
     public String getTitle() { return "BrainCPU"; }
 
     @Override
-    public String getVersion() { return "0.12b"; }
+    public String getVersion() { return "0.12-rc1"; }
     
     @Override
     public long getHash() { return hash; }
