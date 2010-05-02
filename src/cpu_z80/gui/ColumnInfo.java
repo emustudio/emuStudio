@@ -7,7 +7,7 @@
  * some things just: YOU AREN'T GONNA NEED IT
  */
 
-package gui;
+package cpu_z80.gui;
 
 import plugins.cpu.*;
 /**

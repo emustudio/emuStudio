@@ -6,11 +6,11 @@
  *
  */
 
-package impl;
+package cpu_z80.impl;
 
 import interfaces.IICpuListener;
 import interfaces.ACpuContext;
-import gui.statusGUI;
+import cpu_z80.gui.statusGUI;
 import java.util.EventObject;
 import java.util.Hashtable;
 import javax.swing.event.EventListenerList;

@@ -4,10 +4,10 @@
  * Created on Nedeľa, 2008, august 24, 10:22
  */
 
-package gui;
+package cpu_z80.gui;
 
-import impl.CpuContext;
-import impl.CpuZ80;
+import cpu_z80.impl.CpuContext;
+import cpu_z80.impl.CpuZ80;
 import interfaces.IICpuListener;
 
 import java.awt.Color;

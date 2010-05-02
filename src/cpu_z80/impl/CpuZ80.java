@@ -6,9 +6,9 @@
  *
  */
 
-package impl;
+package cpu_z80.impl;
 
-import gui.statusGUI;
+import cpu_z80.gui.statusGUI;
 import java.util.HashSet;
 import java.util.TimerTask;
 import javax.swing.JPanel;
