@@ -22,7 +22,7 @@ import runtime.StaticDialogs;
 
 public class BrainCPU implements ICPU, Runnable {
     private final static String BRAIN_MEMCONTEXT = "949fe1a163b65ae72a06aeb09976cb47";
-    
+
     private long hash;
     @SuppressWarnings("unused")
 	private ISettingsHandler settings;
