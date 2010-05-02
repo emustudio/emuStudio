@@ -12,6 +12,6 @@ Installation
 Plugin has to be compiled into single "jar" file and then it should be
 inserted in `cpu` directory where *emuStudio* is installed.
 
-For example: `emuStudio/cpu/i8080.jar`.
+For example: `emuStudio/cpu/8080-cpu.jar`.
 
 
