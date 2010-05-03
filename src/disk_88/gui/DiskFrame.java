@@ -6,9 +6,9 @@
  * KISS, YAGNI
  */
 
-package disk.gui;
+package disk_88.gui;
 
-import disk.Drive;
+import disk_88.Drive;
 import java.util.ArrayList;
 
 import javax.swing.BorderFactory;

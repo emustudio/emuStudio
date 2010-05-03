@@ -7,7 +7,7 @@
  * Performs disk operations on single drive
  */
 
-package disk;
+package disk_88;
 
 import java.io.*;
 import java.util.EventListener;

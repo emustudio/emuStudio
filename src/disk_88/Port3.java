@@ -8,7 +8,7 @@
  * OUT: write data
  */
 
-package disk;
+package disk_88;
 
 import java.io.IOException;
 import java.util.EventObject;

@@ -6,7 +6,7 @@
  * KISS, YAGNI
  * 
  */
-package disk.gui;
+package disk_88.gui;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -26,9 +26,9 @@ import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
 
-import disk.Drive;
-import disk.DiskImpl;
-import disk.gui.utils.NiceButton;
+import disk_88.Drive;
+import disk_88.DiskImpl;
+import disk_88.gui.utils.NiceButton;
 
 import plugins.ISettingsHandler;
 import runtime.StaticDialogs;

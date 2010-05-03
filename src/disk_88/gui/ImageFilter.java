@@ -7,7 +7,7 @@
  * some things just: YOU AREN'T GONNA NEED IT
  */
 
-package disk.gui;
+package disk_88.gui;
 
 /**
  *

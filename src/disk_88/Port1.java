@@ -8,7 +8,7 @@
  * OUT: select/unselect drive
  */
 
-package disk;
+package disk_88;
 
 import java.util.EventObject;
 import plugins.device.IDeviceContext;

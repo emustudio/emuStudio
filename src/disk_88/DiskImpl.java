@@ -93,10 +93,10 @@
 
  */
 
-package disk;
+package disk_88;
 
-import disk.gui.ConfigDialog;
-import disk.gui.DiskFrame;
+import disk_88.gui.ConfigDialog;
+import disk_88.gui.DiskFrame;
 import interfaces.ACpuContext;
 
 import java.io.IOException;

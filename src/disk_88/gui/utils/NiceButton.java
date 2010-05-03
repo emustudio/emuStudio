@@ -5,7 +5,7 @@
  * 
  *  KISS, YAGNI
  */
-package disk.gui.utils;
+package disk_88.gui.utils;
 
 import java.awt.Dimension;
 
