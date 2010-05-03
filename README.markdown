@@ -12,4 +12,4 @@ Installation
 Plugin has to be compiled into single "jar" file and then it should be
 inserted in `devices` directory where *emuStudio* is installed.
 
-For example: `emuStudio/devices/MITS-88disk.jar`.
+For example: `emuStudio/devices/88-disk.jar`.
