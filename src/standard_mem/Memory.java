@@ -7,13 +7,13 @@
  * some things just: YOU AREN'T GONNA NEED IT
  */
 
-package memImpl;
+package standard_mem;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.Vector;
 
-import memImpl.gui.frmMemory;
+import standard_mem.gui.frmMemory;
 import plugins.ISettingsHandler;
 import plugins.memory.IMemory;
 import plugins.memory.IMemoryContext;

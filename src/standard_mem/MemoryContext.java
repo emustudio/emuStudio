@@ -6,7 +6,7 @@
  *
  */
 
-package memImpl;
+package standard_mem;
 
 import interfaces.SMemoryContext;
 import java.io.EOFException;
@@ -21,7 +21,7 @@ import java.util.Hashtable;
 import java.util.Vector;
 import javax.swing.event.EventListenerList;
 
-import memImpl.gui.frmMemory;
+import standard_mem.gui.frmMemory;
 import runtime.StaticDialogs;
 
 /**

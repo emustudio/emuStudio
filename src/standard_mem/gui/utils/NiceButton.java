@@ -5,7 +5,7 @@
  * 
  *  KISS, YAGNI
  */
-package memImpl.gui.utils;
+package standard_mem.gui.utils;
 
 import java.awt.Dimension;
 

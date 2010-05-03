@@ -7,7 +7,7 @@
  * some things just: YOU AREN'T GONNA NEED IT
  */
 
-package memImpl.gui.utils;
+package standard_mem.gui.utils;
 
 import java.awt.Color;
 import java.awt.Component;

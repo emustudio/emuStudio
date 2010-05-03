@@ -4,7 +4,7 @@
  * Created on Štvrtok, 2008, september 25, 9:21
  */
 
-package memImpl.gui;
+package standard_mem.gui;
 
 import interfaces.SMemoryContext;
 import java.io.File;
@@ -31,10 +31,10 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-import memImpl.Memory;
-import memImpl.gui.utils.NiceButton;
-import memImpl.gui.utils.EmuFileFilter;
-import memImpl.gui.utils.tableMemory;
+import standard_mem.Memory;
+import standard_mem.gui.utils.NiceButton;
+import standard_mem.gui.utils.EmuFileFilter;
+import standard_mem.gui.utils.tableMemory;
 import plugins.ISettingsHandler;
 import runtime.StaticDialogs;
 

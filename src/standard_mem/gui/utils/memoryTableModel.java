@@ -12,10 +12,10 @@
  *
  */
 
-package memImpl.gui.utils;
+package standard_mem.gui.utils;
 
 import javax.swing.table.AbstractTableModel;
-import memImpl.MemoryContext;
+import standard_mem.MemoryContext;
 
 
 /**

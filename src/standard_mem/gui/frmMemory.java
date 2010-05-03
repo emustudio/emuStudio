@@ -4,7 +4,7 @@
  * Created on Nede�a, 2007, okt�ber 28, 10:40
  */
 
-package memImpl.gui;
+package standard_mem.gui;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -40,11 +40,11 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import memImpl.Memory;
-import memImpl.MemoryContext;
-import memImpl.gui.utils.EmuFileFilter;
-import memImpl.gui.utils.memoryTableModel;
-import memImpl.gui.utils.tableMemory;
+import standard_mem.Memory;
+import standard_mem.MemoryContext;
+import standard_mem.gui.utils.EmuFileFilter;
+import standard_mem.gui.utils.memoryTableModel;
+import standard_mem.gui.utils.tableMemory;
 import plugins.ISettingsHandler;
 import runtime.StaticDialogs;
 
