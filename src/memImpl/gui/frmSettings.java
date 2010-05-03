@@ -506,8 +506,8 @@ private void btnRemoveImageActionPerformed(java.awt.event.ActionEvent evt) {//GE
             StaticDialogs.showErrorMessage("Image has to be selected!");
             return;
         }
-        if (JOptionPane.showConfirmDialog(chkSave, this, 
-                "Are you sure to remove image from the list?", i) == JOptionPane.YES_OPTION) {
+        if (JOptionPane.showConfirmDialog(this, 
+                "Are you sure to remove image from the list?","Remove image", i) == JOptionPane.YES_OPTION) {
             imageNames.remove(i); imageFullNames.remove(i); imageAddresses.remove(i);
             tblImages.revalidate();
             tblImages.repaint();
