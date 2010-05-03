@@ -124,7 +124,7 @@ public class SIMHpseudo implements IDevice {
                 + "via port 0xfe. The version of the interface is: SIMH003";
     }
     @Override
-    public String getVersion() { return "0.11b"; }
+    public String getVersion() { return "0.11-rc1"; }
 
     @Override
     public void destroy() {}
