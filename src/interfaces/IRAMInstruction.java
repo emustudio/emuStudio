@@ -1,6 +1,6 @@
 /**
  * IRAMInstruction.java
- *
+ * 
  *  KISS, YAGNI
  *
  * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>

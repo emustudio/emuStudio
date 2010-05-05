@@ -55,10 +55,10 @@ public class RAMCompiler implements ICompiler {
 	public String getTitle() { return "RAM compiler"; }
 
 	@Override
-	public String getCopyright() { return "\u00A9 Copyright 2009, P. Jakubčo"; }
+	public String getCopyright() { return "\u00A9 Copyright 2009-2010, P. Jakubčo"; }
 
 	@Override
-	public String getVersion() { return "1.0b"; }
+	public String getVersion() { return "0.12b"; }
 
 	@Override
 	public String getDescription() {
