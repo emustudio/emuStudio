@@ -145,7 +145,7 @@ public class DiskFrame extends JFrame {
         panelSelectedDrives.setBorder(BorderFactory.createTitledBorder("Selected drives"));
 
         drivesGroup.add(btn0);
-        btn0.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn0.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn0.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn0ActionPerformed(evt);
@@ -153,7 +153,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn1);
-        btn1.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn1.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn1ActionPerformed(evt);
@@ -161,7 +161,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn2);
-        btn2.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn2.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn2ActionPerformed(evt);
@@ -169,7 +169,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn3);
-        btn3.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn3.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn3ActionPerformed(evt);
@@ -177,7 +177,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn4);
-        btn4.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn4.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn4ActionPerformed(evt);
@@ -185,7 +185,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn5);
-        btn5.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn5.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn5.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn5ActionPerformed(evt);
@@ -193,7 +193,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn6);
-        btn6.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn6.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn6.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn6ActionPerformed(evt);
@@ -201,7 +201,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn7);
-        btn7.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn7.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn7.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn7ActionPerformed(evt);
@@ -209,7 +209,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn8);
-        btn8.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn8.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn8.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn8ActionPerformed(evt);
@@ -217,7 +217,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn9);
-        btn9.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn9.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn9.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn9ActionPerformed(evt);
@@ -225,7 +225,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn10);
-        btn10.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn10.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn10.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn10ActionPerformed(evt);
@@ -233,7 +233,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn11);
-        btn11.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn11.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn11.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn11ActionPerformed(evt);
@@ -241,7 +241,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn12);
-        btn12.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn12.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn12.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn12ActionPerformed(evt);
@@ -249,7 +249,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn13);
-        btn13.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn13.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn13.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn13ActionPerformed(evt);
@@ -257,7 +257,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn14);
-        btn14.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn14.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn14.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn14ActionPerformed(evt);
@@ -265,7 +265,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn15);
-        btn15.setIcon(new ImageIcon(getClass().getResource("/resources/off.gif"))); // NOI18N
+        btn15.setIcon(new ImageIcon(getClass().getResource("/disk_88/resources/off.gif"))); // NOI18N
         btn15.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn15ActionPerformed(evt);
