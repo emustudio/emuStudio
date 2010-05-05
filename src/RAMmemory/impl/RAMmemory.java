@@ -42,11 +42,11 @@ public class RAMmemory implements IMemory {
 	public String getTitle() { return "RAM Memory"; }
 
 	@Override
-	public String getVersion() { return "0.11b"; }
+	public String getVersion() { return "0.11-rc1"; }
 
 	@Override
 	public String getCopyright() {
-		return "\u00A9 Copyright 2009, P. Jakubčo"; 
+		return "\u00A9 Copyright 2009-2010, P. Jakubčo"; 
 	}
 
 	@Override
