@@ -300,7 +300,7 @@ public class frmMemory extends JFrame {
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
 
-        btnClearMemory.setIcon(new ImageIcon(getClass().getResource("/resources/edit-delete.png"))); // NOI18N
+        btnClearMemory.setIcon(new ImageIcon(getClass().getResource("/standard_mem/resources/edit-delete.png"))); // NOI18N
         btnClearMemory.setToolTipText("Clear memory");
         btnClearMemory.setFocusable(false);
         btnClearMemory.addActionListener(new java.awt.event.ActionListener() {
@@ -311,7 +311,7 @@ public class frmMemory extends JFrame {
         toolBar.add(btnClearMemory);
         toolBar.add(jSeparator1);
 
-        btnOpenImage.setIcon(new ImageIcon(getClass().getResource("/resources/document-open.png"))); // NOI18N
+        btnOpenImage.setIcon(new ImageIcon(getClass().getResource("/standard_mem/resources/document-open.png"))); // NOI18N
         btnOpenImage.setToolTipText("Load image");
         btnOpenImage.setFocusable(false);
         btnOpenImage.addActionListener(new java.awt.event.ActionListener() {
@@ -321,7 +321,7 @@ public class frmMemory extends JFrame {
         });
         toolBar.add(btnOpenImage);
 
-        btnDump.setIcon(new ImageIcon(getClass().getResource("/resources/document-save.png"))); // NOI18N
+        btnDump.setIcon(new ImageIcon(getClass().getResource("/standard_mem/resources/document-save.png"))); // NOI18N
         btnDump.setToolTipText("Dump memory...");
         btnDump.setFocusable(false);
         btnDump.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -333,7 +333,7 @@ public class frmMemory extends JFrame {
         });
         toolBar.add(btnDump);
 
-        btnSettings.setIcon(new ImageIcon(getClass().getResource("/resources/preferences-system.png"))); // NOI18N
+        btnSettings.setIcon(new ImageIcon(getClass().getResource("/standard_mem/resources/preferences-system.png"))); // NOI18N
         btnSettings.setToolTipText("Settings...");
         btnSettings.setFocusable(false);
         btnSettings.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -346,7 +346,7 @@ public class frmMemory extends JFrame {
         toolBar.add(btnSettings);
         toolBar.add(jSeparator2);
 
-        btnFindAddress.setIcon(new ImageIcon(getClass().getResource("/resources/edit-find.png"))); // NOI18N
+        btnFindAddress.setIcon(new ImageIcon(getClass().getResource("/standard_mem/resources/edit-find.png"))); // NOI18N
         btnFindAddress.setToolTipText("Find address");
         btnFindAddress.setFocusable(false);
         btnFindAddress.addActionListener(new java.awt.event.ActionListener() {
