@@ -28,8 +28,8 @@ import plugins.cpu.ICPUContext;
 import plugins.device.IDevice;
 import plugins.device.IDeviceContext;
 import plugins.memory.IMemoryContext;
-import terminal.gui.ConfigDialog;
-import terminal.gui.TerminalWindow;
+import adm3a_terminal.gui.ConfigDialog;
+import adm3a_terminal.gui.TerminalWindow;
 
 /**
  *
@@ -130,7 +130,7 @@ public class TerminalImpl implements IDevice {
 
     @Override
     public String getVersion() {
-        return "0.15b";
+        return "0.15-rc1";
     }
 
     @Override

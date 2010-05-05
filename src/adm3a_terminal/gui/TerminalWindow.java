@@ -22,7 +22,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package terminal.gui;
+package adm3a_terminal.gui;
 
 import java.awt.Color;
 import java.awt.Container;
@@ -38,7 +38,7 @@ import javax.swing.WindowConstants;
 
 import terminal.TerminalDisplay;
 import terminal.TerminalFemale;
-import terminal.gui.utils.TerminalKeyboard;
+import adm3a_terminal.gui.utils.TerminalKeyboard;
 
 /**
  *
@@ -73,7 +73,7 @@ public class TerminalWindow extends JFrame {
     
     private void initComponents() {
         JLabel lblBack = new JLabel();
-        ImageIcon img = new ImageIcon(getClass().getResource("/resources/display.gif"));
+        ImageIcon img = new ImageIcon(getClass().getResource("/adm3a_terminal/resources/display.gif"));
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Terminal ADM-3A");
@@ -81,7 +81,7 @@ public class TerminalWindow extends JFrame {
         
         try {
             // load terminal font from resources
-            InputStream fin = this.getClass().getResourceAsStream("/resources/terminal.ttf");
+            InputStream fin = this.getClass().getResourceAsStream("/adm3a_terminal/resources/terminal.ttf");
             this.terminalFont = Font.createFont(Font.TRUETYPE_FONT,fin).deriveFont(12f);
             fin.close();
             terminal.setFont(this.terminalFont);

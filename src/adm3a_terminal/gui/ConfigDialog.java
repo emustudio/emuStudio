@@ -20,7 +20,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package terminal.gui;
+package adm3a_terminal.gui;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -36,8 +36,8 @@ import javax.swing.WindowConstants;
 import plugins.ISettingsHandler;
 
 import terminal.TerminalDisplay;
-import terminal.gui.TerminalWindow;
-import terminal.gui.utils.NiceButton;
+import adm3a_terminal.gui.TerminalWindow;
+import adm3a_terminal.gui.utils.NiceButton;
 
 
 /**
