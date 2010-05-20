@@ -74,7 +74,7 @@ public class AboutDialog extends javax.swing.JDialog {
         lblVersionLBL.setFont(lblVersionLBL.getFont().deriveFont(lblVersionLBL.getFont().getStyle() | Font.BOLD));
         lblVersionLBL.setText("Version:");
 
-        lblVersion.setText("0.35b1");
+        lblVersion.setText("0.36-rc1");
 
         lblConsultant.setText("ing. Slavomir Šimoňák");
 
