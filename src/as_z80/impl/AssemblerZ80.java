@@ -62,12 +62,12 @@ public class AssemblerZ80 implements ICompiler {
 	@Override
     public String getTitle() { return "Z80 Assembler"; }
 	@Override
-    public String getVersion() { return "1.5b1"; }
+    public String getVersion() { return "0.15b"; }
 	@Override
     public String getCopyright() { return "\u00A9 Copyright 2008-2009, Peter Jakubčo"; }
 	@Override
     public String getDescription() {
-        return "Light modified clone of original Z80's assembler. For syntax look"
+        return "It is my version of Z80 assembler. For syntax look"
                 + " at users manual.";
     }
 
