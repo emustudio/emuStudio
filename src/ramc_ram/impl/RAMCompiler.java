@@ -58,7 +58,7 @@ public class RAMCompiler implements ICompiler {
 	public String getCopyright() { return "\u00A9 Copyright 2009-2010, P. Jakubčo"; }
 
 	@Override
-	public String getVersion() { return "0.12b"; }
+	public String getVersion() { return "0.12-rc1"; }
 
 	@Override
 	public String getDescription() {
