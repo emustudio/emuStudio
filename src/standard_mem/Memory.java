@@ -53,7 +53,7 @@ public class Memory implements IMemory {
     }
 
     @Override
-    public String getVersion() { return "0.28b"; }
+    public String getVersion() { return "0.28-rc1"; }
     
     @Override
     public long getHash() { return hash; }
