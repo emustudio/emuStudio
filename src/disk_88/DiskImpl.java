@@ -300,12 +300,12 @@ public class DiskImpl implements IDevice {
     }
 
     @Override
-    public String getVersion() { return "0.25b"; }
+    public String getVersion() { return "0.25-rc1"; }
     @Override
     public String getTitle() { return "MITS-88 DISK (floppy drive)"; }
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2008-2009, P. Jakubčo";
+        return "\u00A9 Copyright 2008-2010, P. Jakubčo";
     }
 
     @Override
