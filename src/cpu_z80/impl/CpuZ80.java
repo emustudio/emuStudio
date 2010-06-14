@@ -236,7 +236,7 @@ public class CpuZ80 implements ICPU, Runnable {
                + " extended.";
     }
     @Override
-    public String getVersion() { return "0.15b"; }
+    public String getVersion() { return "0.15-rc1"; }
     @Override
     public int getInstrPosition() { return PC; }
     @Override
