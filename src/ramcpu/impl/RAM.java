@@ -75,7 +75,7 @@ public class RAM implements ICPU, Runnable {
 	}
 
 	@Override
-	public String getVersion() { return "0.1b"; }
+	public String getVersion() { return "0.1-rc1"; }
 
 	@Override
 	public String getDescription() {
