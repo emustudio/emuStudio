@@ -51,11 +51,11 @@ public class AbstractTape implements IDevice {
 	}
 
 	@Override
-	public String getVersion() { return "0.1b"; }
+	public String getVersion() { return "0.2-rc1"; }
  
 	@Override
 	public String getCopyright() {
-		return "\u00A9 Copyright 2009, P. Jakubčo";
+		return "\u00A9 Copyright 2009-2010, P. Jakubčo";
 	}
 
 	@Override
