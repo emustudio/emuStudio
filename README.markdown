@@ -1,16 +1,16 @@
 What's this?
 ------------
 
-It is light modified clone of original Intel's assembler, written in Java.
+It is light modified clone of original Intel's 8080 assembler, written in Java.
 Supports unlimited nested macros, conditional assembly, etc.
 It produces output in Intel HEX format.
 
-Installation
-------------
+Install
+-------
 
-Plugin has to be compiled into single "jar" file and then it should be
-inserted in `compilers` directory where *emuStudio* is installed.
+Put the plug-in into `compilers` directory where the *emuStudio* is installed.
+Don't forget to check plug-in's compatibility with chosen distribution.
 
-For example: `emuStudio/compilers/compiler8080.jar`.
+For example: `emuStudio/compilers/as-8080.jar`
 
 
