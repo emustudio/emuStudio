@@ -1,13 +1,13 @@
 What's this?
 ------------
 
-This is program tape for RAM machine. When applied to von-Neumann architecture
-this is the main store.
+This is the program tape for RAM machine. When applied to von-Neumann
+architecture, it corresponds with the main store.
 
-Installation
-------------
+Install
+-------
 
-Plugin has to be compiled into single "jar" file and then it should be
-inserted in `mem` directory where *emuStudio* is installed.
+Put the plug-in into `mem` directory where the *emuStudio* is installed.
+Don't forget to check the compatibility with chosen distribution.
 
-For example: `emuStudio/mem/ram-mem.jar`.
+For example: `emuStudio/mem/ram-mem.jar`
