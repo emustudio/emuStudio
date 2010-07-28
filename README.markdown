@@ -3,10 +3,10 @@ What's this?
 
 This is a Random Access Machine emulator - virtual CPU.
 
-Installation
-------------
+Install
+-------
 
-Plugin has to be compiled into single "jar" file and then it should be
-inserted in `cpu` directory where *emuStudio* is installed.
+Put the plug-in into `cpu` directory where the *emuStudio* is installed.
+Don't forget to check the compatibility with chosen distribution.
 
-For example: `emuStudio/cpu/ram-cpu.jar`.
+For example: `emuStudio/cpu/ram-cpu.jar`
