@@ -1,12 +1,12 @@
 What's this?
 ------------
 
-This is a terminal used in Brainduck architecture.
+This is a terminal used in Brainduck architecture. BrainDuck is abstract machine based on esoteric programming language, called brainfuck.
 
-Installation
-------------
+Install
+-------
 
-Plugin has to be compiled into single "jar" file and then it should be
-inserted in `devices` directory where *emuStudio* is installed.
+Put the plug-in into `devices` directory where *emuStudio* is installed.
+Don't forget to check compatibility with chosen distribution.
 
-For example: `emuStudio/devices/terminal-brainduck.jar`.
+For example: `emuStudio/devices/terminal-brainduck.jar`
