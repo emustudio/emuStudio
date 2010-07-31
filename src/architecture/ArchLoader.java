@@ -83,23 +83,14 @@ import architecture.drawing.Element;
 import architecture.drawing.MemoryElement;
 import architecture.drawing.Schema;
 import java.awt.Point;
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
-import java.io.InputStream;
 import java.lang.reflect.Constructor;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Properties;
-import java.util.Vector;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.jar.JarInputStream;
 
 import plugins.IPlugin;
 import plugins.compiler.ICompiler;
@@ -112,19 +103,17 @@ import runtime.StaticDialogs;
  * Class loader for plugins and their resources
  * @author vbmacher
  */
-public class ArchLoader extends ClassLoader {
+public class ArchLoader {
     public final static String configsDir = "config";
     public final static String cpusDir = "cpu";
     public final static String compilersDir = "compilers";
     public final static String memoriesDir = "mem";
     public final static String devicesDir = "devices";
     
-    private Hashtable<Object, URL> resources;
-	private static long dehash = 0; // device hash counter 
+    private static long dehash = 0; // device hash counter
     
     /** Creates a new instance of ArchLoader */
     public ArchLoader() {     
-        resources = new Hashtable<Object, URL>();
     }
     
     /**
@@ -141,6 +130,7 @@ public class ArchLoader extends ClassLoader {
         File dir = new File(System.getProperty("user.dir") + File.separator + dirname);
         if (dir.exists() && dir.isDirectory()) {
             allNames = dir.list(new FilenameFilter() {
+                @Override
                 public boolean accept(File dir, String name) {
                     return name.endsWith(postfix);
                 }
@@ -497,182 +487,29 @@ public class ArchLoader extends ClassLoader {
      * @return instance object of loaded plugin
      */
     private Object loadPlugin(String dirname, String filename, Class<?> interfaceName, long pluginHash) {
-        ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
-        Hashtable<String, Integer> sizes = new Hashtable<String, Integer>();
-        Vector<String> undone = new Vector<String>();
-        
-        if (!filename.toLowerCase().endsWith(".jar")) filename += ".jar";
         try {
-            // load all classes in jar
-            JarFile zf = new JarFile(System.getProperty("user.dir") + File.separator
-                    + dirname + File.separator + filename);
-            Enumeration<JarEntry> e = zf.entries();
-            while (e.hasMoreElements()) {
-                  JarEntry ze=(JarEntry)e.nextElement();
-                  sizes.put(ze.getName(),new Integer((int)ze.getSize()));
-            }
-            FileInputStream fis = new FileInputStream(zf.getName());
-            BufferedInputStream bis = new BufferedInputStream(fis);
-            JarInputStream zis = new JarInputStream(bis);
-            JarEntry ze = null;
-
-            while ((ze=zis.getNextJarEntry())!=null) {
-                if (ze.isDirectory()) continue;
-                if (!ze.getName().toLowerCase().endsWith(".class")) {
-                    //for windows: "jar:file:/D:/JavaApplicat%20ion12/dist/JavaApplication12.jar!/resources/Find%2024.gif";
-                    //for linux:   "jar:file:/home/vbmacher/dev/school%20projects/shit.jar!/resources/Find%2024.gif";
-                    String fN = zf.getName().replaceAll("\\\\","/");
-                    if (!fN.startsWith("/")) fN = "/" + fN;
-                    String URLstr = URLEncoder.encode("jar:file:" + fN
-                            + "!/" + ze.getName().replaceAll("\\\\","/"),"UTF-8");
-                    URLstr = URLstr.replaceAll("%3A",":").replaceAll("%2F","/")
-                    			.replaceAll("%21","!").replaceAll("\\+","%20");
-                    resources.put("/" + ze.getName(), new URL(URLstr));
-                    continue;
-                }
-                // load class data
-                int size=(int)ze.getSize();
-                if (size == -1)
-                    size = ((Integer)sizes.get(ze.getName())).intValue();
-                
-                byte[] b=new byte[(int)size];
-                int rb=0;
-                int chunk=0;
-                while (((int)size - rb) > 0) {
-                    chunk = zis.read(b,rb,(int)size - rb);
-                    if (chunk==-1) break;
-                    rb+=chunk;
-                }
-                try {
-                    // try load class data
-                    Class<?> cl = defineLoadedClass(ze.getName(),b,size,true);
-                    classes.add(cl);
-                } catch (Exception nf) {
-                    undone.addElement(ze.getName());
-                }
-            }
-            // try to load all undone classes
-            if (undone.size() > 0) {
-                boolean res = loadUndoneClasses(undone,classes,sizes,zf.getName());
-                while ((res == true) && (undone.size() > 0))
-                    res = loadUndoneClasses(undone,classes,sizes,zf.getName());
-                if (undone.size() > 0) {
-                    // if a jar file contains some error
-                    throw new Exception();
-                }
-            }
+            ArrayList<Class<?>> classes = runtime.Loader.getInstance().loadJAR(
+                System.getProperty("user.dir") + File.separator + dirname
+                + File.separator + filename);
+            if (classes == null)
+                throw new Exception();
+        
             // find a first class that implements wanted interface
-    		Class<?>[] conParameters = {Long.class}; // hash 
+            Class<?>[] conParameters = {Long.class}; // hash
             for (int i = 0; i < classes.size(); i++) {
                 Class<?> c = (Class<?>)classes.get(i);
                 Class<?>[] intf = c.getInterfaces();
                 for (int j = 0; j < intf.length; j++) {
                     if (intf[j].equals(interfaceName)) {
-                  	    Constructor<?> con = c.getDeclaredConstructor(conParameters);
-                   	    return con.newInstance(pluginHash);
+                        Constructor<?> con = c.getDeclaredConstructor(conParameters);
+                        return con.newInstance(pluginHash);
                     }
                 }
             }
-            zf.close();
-        }
-        catch (Exception e) {
-        	e.printStackTrace();
-        	
+        } catch (Exception e) {
             StaticDialogs.showErrorMessage("Error reading plugin: " + filename);
         }
         return null;
-    }
-
-    protected URL findResource(String name) {
-        if (!name.startsWith("/")) name = "/" + name;
-        if (resources.containsKey(name)) {
-            URL url = (URL)resources.get(name);
-            return url;
-        }
-        else return null;
-    }
-
-    public InputStream getResourceAsStream(String name) {
-        if (!name.startsWith("/")) name = "/" + name;
-        if (resources.containsKey(name)) {
-            URL url = (URL)resources.get(name);
-            try { return url != null ? url.openStream() : null; }
-            catch (Exception e) {}
-        }
-        return null;
-    }
-    
-    /**
-     * This method tries to load all classes that couldnt be loaded
-     * before. For example we cant load a class that is extended from
-     * yet not loaded class. So this method tries to resolve this
-     * 
-     * @param undone vector of not loaded classes
-     * @param classes where to put loaded classes
-     * @param sizes how much size has each class in bytes
-     * @param filename name of the plugin (jar file)
-     * @return true if at least 1 class was loaded successfully
-     */
-    private boolean loadUndoneClasses(Vector<String> undone, ArrayList<Class<?>> classes,
-            Hashtable<String, Integer> sizes, String filename) {
-        JarEntry ze = null;
-        boolean result = false;
-        try {
-            FileInputStream fis = new FileInputStream(filename);
-            BufferedInputStream bis = new BufferedInputStream(fis);
-            JarInputStream zis = new JarInputStream(bis);
-            while ((ze=zis.getNextJarEntry())!=null) {
-                if (ze.isDirectory()) continue;
-                if (!ze.getName().toLowerCase().endsWith(".class")) continue;
-                if (!undone.contains(ze.getName())) continue;
-                // load class data
-                int size=(int)ze.getSize();
-                if (size == -1)
-                    size = ((Integer)sizes.get(ze.getName())).intValue();
-                byte[] b=new byte[(int)size];
-                int rb=0,chunk=0;
-                while (((int)size - rb) > 0) {
-                    chunk = zis.read(b,rb,(int)size - rb);
-                    if (chunk==-1) break;
-                    rb+=chunk;
-                }
-                try {
-                    // try load class data
-                    Class<?> cl = defineLoadedClass(ze.getName(),b,size,true);
-                    classes.add(cl);
-                    undone.removeElement(ze.getName());
-                    result = true;
-                } catch (ClassNotFoundException nf) {
-                }
-            }
-        } catch(Exception e) {}
-        return result;
-    }
-    
-    public Class<?> defineLoadedClass(String classname,
-            byte[] classbytes, int length, boolean resolve) 
-            throws ClassNotFoundException {
-        if (classname.toLowerCase().endsWith(".class"))
-            classname = classname.substring(0,classname.length() - 6);
-        classname = classname.replace('/', '.');
-        classname = classname.replace(File.separatorChar, '.');
-        try {
-            Class<?> c = null;
-            c = findLoadedClass(classname);
-//            if (findLoadedClass(classname) != null) {
-    //        	c = new ArchLoader().defineLoadedClass(classname, classbytes, length, resolve);
-  //          }
-            if (c == null) {
-            	try { c = findSystemClass(classname); }
-            	catch (Exception e) {}
-            }
-            if (c == null) 
-                c = defineClass(null, classbytes, 0, length);
-            if (resolve && (c != null)) resolveClass(c);
-            return c;
-        }
-        catch (Error err) { throw new ClassNotFoundException(err.getMessage());}
-        catch (Exception ex) { throw new ClassNotFoundException(ex.toString());}
     }
     
 }
