@@ -4,3 +4,8 @@ nbproject/private
 *.*~
 *.log
 build.xml
+compilers/*.*
+cpu/*.*
+mem/*.*
+config/*.*
+devices/*.*
