@@ -32,8 +32,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Date;
 import java.util.EventObject;
-import plugins.compiler.ICompilerContext;
-import plugins.compiler.ICompilerContext.ICompilerListener;
+import plugins.compiler.ICompiler;
+import plugins.compiler.ICompiler.ICompilerListener;
 import plugins.cpu.ICPU;
 import plugins.cpu.ICPU.ICPUListener;
 import runtime.StaticDialogs;
@@ -50,7 +50,9 @@ public class Automatization {
     private File inputFile;
     private int result_state;
 
-    public Automatization(String inputFileName, String outputFileName) {
+    public Automatization(ArchHandler currentArch, String inputFileName,
+            String outputFileName) {
+        this.currentArch = currentArch;
         this.outputFile = new File(outputFileName);
         this.inputFile = new File(inputFileName);
         result_state = ICPU.STATE_STOPPED_NORMAL;
@@ -120,13 +122,13 @@ public class Automatization {
                         String text = "<p>";
 
                         switch (messageType) {
-                            case ICompilerContext.TYPE_ERROR:
+                            case ICompiler.TYPE_ERROR:
                                 text += "<strong>Error:</strong> ";
                                 break;
-                            case ICompilerContext.TYPE_INFO:
+                            case ICompiler.TYPE_INFO:
                                 text += "<strong>Info:</strong> ";
                                 break;
-                            case ICompilerContext.TYPE_WARNING:
+                            case ICompiler.TYPE_WARNING:
                                 text += "<strong>Warning:</strong> ";
                                 break;
                         }
@@ -144,6 +146,7 @@ public class Automatization {
                 // Initialize compiler
                 currentArch.getCompiler().initialize(currentArch.getCompilerHash(),
                         currentArch);
+                currentArch.getCompiler().addCompilerListener(reporter);
 
                 FileReader fileR;
                 fileR = new FileReader(inputFile);
@@ -190,7 +193,6 @@ public class Automatization {
                         t.interrupt();
                     }
                 }
-
                 @Override
                 public void stateUpdated(EventObject evt) {}
             });
@@ -226,12 +228,13 @@ public class Automatization {
             StaticDialogs.showErrorMessage("Error in compile process:\n" + e.toString());
 //            e.printStackTrace();
         } finally {
-            adia.dispose();
-            adia = null;
             try {
                 output_message("<p>" + new Date().toString() + "</p>", outw);
                 outw.close();
             } catch (IOException e1) {}
+            currentArch.destroy();
+            adia.dispose();
+            adia = null;
         }
     }
 

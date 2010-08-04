@@ -26,35 +26,25 @@ package emustudio.main;
 
 import emustudio.architecture.ArchHandler;
 import emustudio.architecture.ArchLoader;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Date;
-import java.util.EventObject;
-
-import plugins.compiler.IMessageReporter;
-import plugins.cpu.ICPU;
-import plugins.cpu.ICPUContext.ICPUListener;
-
 import runtime.StaticDialogs;
-import emustudio.gui.AutoDialog;
 import emustudio.gui.LoadingDialog;
 import emustudio.gui.OpenArchDialog;
 import emustudio.gui.StudioFrame;
 
 /**
+ * Main class of the emuStudio platform.
  *
  * @author vbmacher
  */
 public class Main {
     public static ArchLoader aloader;
     public static ArchHandler currentArch = null;    
-    private static String inputFile = null;
-	private static int result_state;
-    
+    private static String inputFileName = null;
+    private static String outputFileName = null;
+
+    private static String configName = null;
+    private static boolean auto = false;
+
     /**
      * This method parsers the command line parameters. It sets
      * internal class data members accordingly.
@@ -70,32 +60,28 @@ public class Main {
                 if (arg.equals("-CONFIG")) {
                     // what configuration to load
                     if (configName != null) {
-                        StaticDialogs.showErrorMessage("Error: Config file already defined!");
-                        return;
-                    }
-                    configName = args[i++];
+                        System.out.println("Error: Config file already defined!");
+                    } else
+                        configName = args[i++];
                 } else if (arg.equals("-INPUT")) {
                     // what input file take to compiler
-                    if (inputFile != null) {
-                        StaticDialogs.showErrorMessage("Error: Input file already defined!");
-                        return;
-                    }
-                    inputFile = args[i++];
+                    if (inputFileName != null) {
+                        System.out.println("Error: Input file already defined!");
+                    } else
+                        inputFileName = args[i++];
                 } else if (arg.equals("-OUTPUT")) {
                     // what output file take for emuStudio messages during
                     // automation process. This option has a meaning
                     // only if the "-auto" option is set too.
-                    if (outputFile != null) {
-                        StaticDialogs.showErrorMessage("Error: Output file already defined!");
-                        return;
-                    }
-                    outputFile = args[i++];
+                    if (outputFileName != null) {
+                        System.out.println("Error: Output file already defined!");
+                    } else
+                        outputFileName = args[i++];
                 } else if (arg.equals("-AUTO")) {
                     auto = true;
                 } else {
-                    StaticDialogs.showErrorMessage("Error: Invalid command line argument!\n" +
-                        "(" + arg + ")");
-                    return;
+                    System.out.println("Error: Invalid command line argument " +
+                        "(" + arg + ")!");
                 }
             }
         }
@@ -104,55 +90,64 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        try { javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName()); }
-        catch (javax.swing.UnsupportedLookAndFeelException e) {}
-        catch (ClassNotFoundException e) {}
-        catch (InstantiationException e) {}
-        catch (IllegalAccessException e) {}
-
-        aloader = new ArchLoader();
-        String configName = null;
-        boolean auto = false;
-        
-        
-        if (configName == null) {
-        	OpenArchDialog odi = new OpenArchDialog();
-        	odi.setVisible(true);
-        	if (odi.getOK()) configName = odi.getArchName();
-        	if (configName == null) return;
+        try {
+            javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
+        } catch (javax.swing.UnsupportedLookAndFeelException e) {
+        } catch (ClassNotFoundException e) {
+        } catch (InstantiationException e) {
+        } catch (IllegalAccessException e) {
         }
 
+        // parse command line arguments
+        parseCommandLine(args);
+
+        // if configuration name has not been specified, let user
+        // to choose the configuration manually
+        if (configName == null) {
+            OpenArchDialog odi = new OpenArchDialog();
+            odi.setVisible(true);
+            if (odi.getOK())
+                configName = odi.getArchName();
+            if (configName == null)
+                return;
+        }
+
+        // display splash screen, while loading the virtual computer
         LoadingDialog splash = new LoadingDialog();
         splash.setVisible(true);
-        try {
-        	if (auto)
-        		currentArch = aloader.load(configName, true);
-        	else
-            	currentArch = aloader.load(configName, false);
-        } catch(Error er) {
+
+        // load the virtual computer
+        aloader = new ArchLoader();
+        try { currentArch = aloader.load(configName, auto); }
+        catch (Error er) {
             String h = er.getLocalizedMessage();
-            if (h == null || h.equals("")) h = "Unknown error";
+            if (h == null || h.equals("")) {
+                h = "Unknown error";
+            }
             StaticDialogs.showErrorMessage("Fatal Error: " + h);
             currentArch = null;
         }
+
+        // hide splash screen
         splash.dispose();
         splash = null;
-        
-        if (currentArch != null) {
-        	if (!auto) {
-        		if (inputFile != null)
-        			new StudioFrame(inputFile).setVisible(true);
-        		else
-        			new StudioFrame().setVisible(true);
-        	} else {
-        		auto();
-            	currentArch.destroy();
-            	System.exit(0);
-        	}
+
+        if (currentArch == null) {
+            System.exit(0);
         }
-        else {
-        	System.exit(0);
-        }        
+
+        if (!auto) {
+            // if the automatization is turned off, start the emuStudio normally
+            if (inputFileName != null)
+                new StudioFrame(inputFileName).setVisible(true);
+            else
+                new StudioFrame().setVisible(true);
+        } else {
+            new Automatization(currentArch,inputFileName,outputFileName)
+                    .runAutomatization();
+            currentArch.destroy();
+            System.exit(0);
+        }
     }
-    
 }
+

@@ -137,6 +137,7 @@ public class ArchHandler implements ISettingsHandler {
      */
     public void destroy() {
         try {
+            arch.getCompiler().destroy();
             for (int i = 0; i < arch.getAllDevices().length; i++)
                 arch.getAllDevices()[i].destroy();
             arch.getCPU().destroy();
