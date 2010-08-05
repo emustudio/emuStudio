@@ -82,7 +82,7 @@ public class FindDialog extends javax.swing.JDialog {
         this.textPane = pane;
         initComponents();
         
-        switch(FindText.getThis().getDirection()) {
+        switch(FindText.getInstance().getDirection()) {
             case FindText.DIRECTION_TO_END: 
                 endRadio.setSelected(true); break;
             case FindText.DIRECTION_TO_START:
@@ -90,14 +90,14 @@ public class FindDialog extends javax.swing.JDialog {
             case FindText.DIRECTION_ALL:
                 allRadio.setSelected(true); break;
         }
-        caseCheck.setSelected(FindText.getThis().isCaseSensitive());
-        wholeCheck.setSelected(FindText.getThis().isWholeWords());
+        caseCheck.setSelected(FindText.getInstance().isCaseSensitive());
+        wholeCheck.setSelected(FindText.getInstance().isWholeWords());
         
         cmbSearch.setModel(new CMBModel(list));
         cmbReplace.setModel(new CMBModel(rlist));
         
-        String str = FindText.getThis().getFindExpr();
-        String rstr = FindText.getThis().replacement;
+        String str = FindText.getInstance().getFindExpr();
+        String rstr = FindText.getInstance().replacement;
         for (int i = 0; i < list.size(); i++)
             if (((String)list.get(i)).equals(str)) {
                 cmbSearch.setSelectedIndex(i);
@@ -115,15 +115,15 @@ public class FindDialog extends javax.swing.JDialog {
     
     private String saveGUI() {
         if (endRadio.isSelected()) 
-            FindText.getThis().setDirection(FindText.DIRECTION_TO_END);
+            FindText.getInstance().setDirection(FindText.DIRECTION_TO_END);
         else if (startRadio.isSelected())
-            FindText.getThis().setDirection(FindText.DIRECTION_TO_START);
-        else FindText.getThis().setDirection(FindText.DIRECTION_ALL);
+            FindText.getInstance().setDirection(FindText.DIRECTION_TO_START);
+        else FindText.getInstance().setDirection(FindText.DIRECTION_ALL);
         
         byte checks = 0;
         if (caseCheck.isSelected()) checks |= FindText.CASE_SENSITIVE;
         if (wholeCheck.isSelected()) checks |= FindText.WHOLE_WORDS;
-        FindText.getThis().setParams(checks);
+        FindText.getInstance().setParams(checks);
         
         String str = (String)cmbSearch.getEditor().getItem();
         if (!str.equals("") && !list.contains(str)) {
@@ -133,7 +133,7 @@ public class FindDialog extends javax.swing.JDialog {
             cmbSearch.getEditor().setItem(str);
         }
         String rstr = (String)cmbReplace.getEditor().getItem();
-        FindText.getThis().replacement = rstr;
+        FindText.getInstance().replacement = rstr;
         if (!rstr.equals("") && !rlist.contains(rstr)) {
             rlist.add(rstr);
             cmbReplace.setModel(new CMBModel(rlist));
@@ -303,12 +303,12 @@ public class FindDialog extends javax.swing.JDialog {
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         String str = saveGUI();        
         try {
-            FindText.getThis().createPattern(str);
-            if (FindText.getThis().findNext(textPane.getText(),
+            FindText.getInstance().createPattern(str);
+            if (FindText.getInstance().findNext(textPane.getText(),
                     textPane.getCaretPosition(), 
                     textPane.getDocument().getEndPosition().getOffset()-1)) {
-                textPane.select(FindText.getThis().getMatchStart(), 
-                        FindText.getThis().getMatchEnd());
+                textPane.select(FindText.getInstance().getMatchStart(),
+                        FindText.getInstance().getMatchEnd());
                 textPane.grabFocus();
                 dispose();
             } else StaticDialogs.showMessage("Expression was not found");
@@ -322,10 +322,10 @@ public class FindDialog extends javax.swing.JDialog {
     private void replaceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceButtonActionPerformed
         String str = saveGUI();
         try {
-            FindText.getThis().createPattern(str);
-            FindText.getThis().replacement = (String)
+            FindText.getInstance().createPattern(str);
+            FindText.getInstance().replacement = (String)
                     cmbReplace.getEditor().getItem();
-            if (FindText.getThis().replaceNext(textPane)) {
+            if (FindText.getInstance().replaceNext(textPane)) {
                 textPane.grabFocus();
                 dispose();
             } else StaticDialogs.showMessage("Expression was not found");
@@ -339,10 +339,10 @@ public class FindDialog extends javax.swing.JDialog {
     private void replaceAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceAllButtonActionPerformed
         String str = saveGUI();
         try {
-            FindText.getThis().createPattern(str);
-            FindText.getThis().replacement = (String)
+            FindText.getInstance().createPattern(str);
+            FindText.getInstance().replacement = (String)
                     cmbReplace.getEditor().getItem();
-            if (FindText.getThis().replaceAll(textPane)) {
+            if (FindText.getInstance().replaceAll(textPane)) {
                 textPane.grabFocus();
                 dispose();
             } else StaticDialogs.showMessage("Expression was not found");

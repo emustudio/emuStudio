@@ -22,6 +22,36 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
+ */
+
+package emustudio.architecture;
+
+import emustudio.architecture.drawing.ConnectionLine;
+import emustudio.architecture.drawing.CpuElement;
+import emustudio.architecture.drawing.DeviceElement;
+import emustudio.architecture.drawing.Element;
+import emustudio.architecture.drawing.MemoryElement;
+import emustudio.architecture.drawing.Schema;
+import java.awt.Point;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FilenameFilter;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.Properties;
+
+import plugins.IPlugin;
+import plugins.compiler.ICompiler;
+import plugins.memory.IMemory;
+import plugins.cpu.ICPU;
+import plugins.device.IDevice;
+import runtime.StaticDialogs;
+
+/**
+ * Class loader for plugins and their resources.
+ *
  * This class deals with emulator configuration - loads classes, maps devices,
  * etc
  *
@@ -30,16 +60,16 @@
  * dot (.) notation. Settings can have various hierarchy. Loader separates type
  * of plugin (first string before dot) and the rest passes to the plugin.
  * Syntax of the definition of a plugin in the configuration is as follows:
- * 
+ *
  * plugin_type = "name_of_plugin"
  * [plugin_type.param1 = "param"]
  * [plugin_type.param1.parama = "param2"]
  *   ...
- * 
+ *
  * Example of using them: http://www.rgagnon.com/javadetails/java-0024.html
  * Standard emulator configuration (e.g. Altair8800.conf) file contains
  * following: (# and ! are comments)
- * 
+ *
  *
  * # emulator version
  * emu8Version = 3
@@ -72,35 +102,7 @@
  * connection0.point0.x = 300
  * connection0.point0.y = 400
  * ...
- */
-
-package emustudio.architecture;
-
-import emustudio.architecture.drawing.ConnectionLine;
-import emustudio.architecture.drawing.CpuElement;
-import emustudio.architecture.drawing.DeviceElement;
-import emustudio.architecture.drawing.Element;
-import emustudio.architecture.drawing.MemoryElement;
-import emustudio.architecture.drawing.Schema;
-import java.awt.Point;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Properties;
-
-import plugins.IPlugin;
-import plugins.compiler.ICompiler;
-import plugins.memory.IMemory;
-import plugins.cpu.ICPU;
-import plugins.device.IDevice;
-import runtime.StaticDialogs;
-
-/**
- * Class loader for plugins and their resources
+ * 
  * @author vbmacher
  */
 public class ArchLoader {
@@ -109,8 +111,8 @@ public class ArchLoader {
     public final static String compilersDir = "compilers";
     public final static String memoriesDir = "mem";
     public final static String devicesDir = "devices";
-    
-    private static long dehash = 0; // device hash counter
+
+    private static long nextPluginID = 0;
     
     /** Creates a new instance of ArchLoader */
     public ArchLoader() {     
@@ -143,10 +145,10 @@ public class ArchLoader {
     }
     
     /**
-     * Method deletes configuration file from filesystem.
+     * Method deletes virtual configuration file from filesystem.
      * 
      * @param configName Name of the configuration
-     * @return true if the deletion was successful, false otherwise
+     * @return true if the operation was successful, false otherwise
      */
     public static boolean deleteConfig(String configName) {
         File f = new File(System.getProperty("user.dir") + 
@@ -160,7 +162,7 @@ public class ArchLoader {
      * Method loads schema from configuration file. It is used
      * by ArchitectureEditor.
      * 
-     * @param configName Name of the configuration
+     * @param configName Name of the virtual configuration
      * @return Schema of the configuration, or null if some error
      *         raises.
      */
@@ -169,7 +171,6 @@ public class ArchLoader {
             Properties p = readConfig(configName,true);
             
             String compilerName = p.getProperty("compiler");
-            int memorySize = Integer.parseInt(p.getProperty("memory.size","0"));
             
             int x = Integer.parseInt(p.getProperty("cpu.point.x","0"));
             int y = Integer.parseInt(p.getProperty("cpu.point.y","0"));
@@ -214,8 +215,7 @@ public class ArchLoader {
                 }
                 lines.add(lin);
             }
-            return new Schema(cpu,memory,devices,lines,configName,compilerName,
-                    memorySize);
+            return new Schema(cpu,memory,devices,lines,configName,compilerName);
         }
         catch (Exception e) {
             StaticDialogs.showErrorMessage("Error reading configuration: " + e.toString());
@@ -245,7 +245,6 @@ public class ArchLoader {
             MemoryElement mem = s.getMemoryElement();
             if (mem != null) {
                 p.put("memory", mem.getDetails());
-                p.put("memory.size", String.valueOf(s.getMemorySize()));
                 p.put("memory.point.x", String.valueOf((int)(mem.getX()
                         + mem.getWidth()/2)));
                 p.put("memory.point.y", String.valueOf((int)(mem.getY()
@@ -297,7 +296,7 @@ public class ArchLoader {
     
     
     /**
-     * Method reads configuration into properties
+     * Method reads configuration into Properties object.
      * 
      * @param configName
      * @param schema_too whether read schema settings too
@@ -348,7 +347,7 @@ public class ArchLoader {
     
     
     /** 
-     * Method save configuration to file with name configName. 
+     * Method save configuration to a file with name configName.
      *
      * @param configName name of configuration
      * @param settings data are taken from
@@ -368,94 +367,113 @@ public class ArchLoader {
     }
 
     /**
-     * Method loads architecture configuration from current settings
+     * Method loads virtual configuration from current settings and
+     * creates virtual architecture.
      * 
      * @param name  Name of the configuration
-     * @return a handler of loaded architecture
+     * @return instance of virtual architecture
      */
     public ArchHandler load(String name, boolean verbose) {
         try {
             Properties settings = readConfig(name,true);
             if (settings == null) return null;
             
+            Hashtable<IPlugin, Long> pluginsReverse = new Hashtable<IPlugin, Long>();
+            Hashtable<Long, IPlugin> plugins = new Hashtable<Long, IPlugin>();
+            Hashtable<Long,String> pluginNames = new Hashtable<Long, String>();
+
             // load compiler
             String comName = settings.getProperty("compiler");
-            long comHash = createPluginHash();
-            ICompiler com = (ICompiler)loadPlugin(compilersDir, comName,ICompiler.class,comHash);
-            if (com == null) throw new IllegalArgumentException("Compiler can't be null");
+            ICompiler com = (ICompiler)loadPlugin(compilersDir, comName,ICompiler.class);
+            long id = createPluginID();
+            if (com != null) {
+                pluginsReverse.put(com, id);
+                plugins.put(id, com);
+                pluginNames.put(id, "compiler");
+            }
             
             // load cpu
             String cpuName = settings.getProperty("cpu");
-            long cpuHash = createPluginHash();
-            ICPU cpu = (ICPU)loadPlugin(cpusDir, cpuName, ICPU.class,cpuHash);
-            if (cpu == null) throw new IllegalArgumentException("CPU can't be null");
+            ICPU cpu = (ICPU)loadPlugin(cpusDir, cpuName, ICPU.class);
+            if (cpu == null)
+                throw new IllegalArgumentException("CPU can't be null");
+            id = createPluginID();
+            pluginsReverse.put(cpu, id);
+            plugins.put(id, cpu);
+            pluginNames.put(id, "cpu");
             
             // load memory
             String memName = settings.getProperty("memory");
-            long memHash = createPluginHash();
-            IMemory mem = (IMemory)loadPlugin(memoriesDir, memName,IMemory.class, memHash);
-            if (mem == null) throw new IllegalArgumentException("Memory can't be null");
-
-            // load devices
-            Hashtable<Long,IDevice> devs = new Hashtable<Long,IDevice>();
-            Hashtable<Long,String> devNames = new Hashtable<Long,String>();
-            ArrayList<IDevice> devsArray = new ArrayList<IDevice>();
-            for (int i = 0; settings.containsKey("device"+i); i++) {
-            	long devHash   = createPluginHash();
-            	String devName = settings.getProperty("device"+i);            	
-                IDevice dev = (IDevice)loadPlugin(devicesDir, devName,IDevice.class,devHash);
-                devs.put(devHash, dev);
-                devsArray.add(dev);
-                devNames.put(devHash,"device" + i); // devName
+            IMemory mem = (IMemory)loadPlugin(memoriesDir, memName,IMemory.class);
+            if (mem != null) {
+                id = createPluginID();
+                pluginsReverse.put(mem, id);
+                plugins.put(id, mem);
+                pluginNames.put(id, "memory");
             }
 
-            // create connections hashtable
-            Hashtable<IPlugin,ArrayList<IPlugin>> lines = new Hashtable<IPlugin,ArrayList<IPlugin>>();
+            // load devices
+            Hashtable<IDevice,String> devNames = new Hashtable<IDevice,String>();
+            for (int i = 0; settings.containsKey("device"+i); i++) {
+            	String devName = settings.getProperty("device"+i);
+                IDevice dev = (IDevice)loadPlugin(devicesDir, devName,IDevice.class);
+                if (dev != null) {
+                    id = createPluginID();
+                    pluginsReverse.put(dev, id);
+                    plugins.put(id, dev);
+                    pluginNames.put(id,"device" + i);
+                    devNames.put(dev,"device" + i);
+                }
+            }
+
+            // load connections
+            Hashtable<Long,ArrayList<Long>> connections =
+                    new Hashtable<Long,ArrayList<Long>>();
+            IDevice[] tmpDevices = devNames.keySet().toArray(new IDevice[0]);
             for (int i = 0; settings.containsKey("connection"+i+".junc0"); i++) {
-            	
             	// get i-th connection from settings
                 String j0 = settings.getProperty("connection"+i+".junc0", "");
                 String j1 = settings.getProperty("connection"+i+".junc1", "");
                 
-                //System.out.println("CONN(" + i + "): J0="+ j0 + "; J1=" + j1);
-                if (j0.equals("") || j1.equals("")) continue;
+                if (j0.equals("") || j1.equals(""))
+                    continue;
 
-                // get connection elements - e1 and e2
-                IPlugin e1 = null,e2 = null;
-                if (j0.equals("cpu")) e1 = cpu;
-                else if (j0.equals("memory")) e1 = mem;
+                // map the connection elements to plug-ins: p1 and p2
+                IPlugin p1 = null,p2 = null;
+
+                if (j0.equals("cpu"))
+                    p1 = cpu;
+                else if (j0.equals("memory"))
+                    p1 = mem;
                 else if (j0.startsWith("device")) {
                     int index = Integer.parseInt(j0.substring(6));
-                    e1 = devsArray.get(index);
+                    p1 = tmpDevices[index];
                 }
-                if (j1.equals("cpu")) e2 = cpu;
-                else if (j1.equals("memory")) e2 = mem;
+                if (j1.equals("cpu"))
+                    p2 = cpu;
+                else if (j1.equals("memory"))
+                    p2 = mem;
                 else if (j1.startsWith("device")) {
                     int index = Integer.parseInt(j1.substring(6));
-                    e2 = devsArray.get(index);
+                    p2 = tmpDevices[index];
                 }
-                
-                // save male (e2) into arraylist for female (e1)
-                ArrayList<IPlugin> males;
-                if (lines.containsKey(e1)) males = lines.get(e1);
-                else males = new ArrayList<IPlugin>();
-                males.add(e2);
-                lines.put(e1, males);
-                
-                // if male and female are devices, connection is
-                // going to be made from the other direction, too.
-                if ((e1 instanceof IDevice) && (e2 instanceof IDevice)) {
-                	if (lines.containsKey(e2)) males = lines.get(e2);
-                	else males = new ArrayList<IPlugin>();
-                	males.add(e1);
-                	lines.put(e2, males);
+
+                // note the connection: p1 -> p2  (p1 wants to use p2)
+                long pID1 = pluginsReverse.get(p1);
+                long pID2 = pluginsReverse.get(p2);
+
+                if (connections.containsKey(pID1))
+                    connections.get(pID1).add(pID2);
+                else {
+                    ArrayList<Long> ar = new ArrayList<Long>();
+                    ar.add(pID2);
+                    connections.put(pID1, ar);
                 }
             }
-
-            Architecture arch = new Architecture(cpu, cpuHash, mem, memHash,
-            		com, comHash, devs, devsArray.toArray(new IDevice[0]), lines);
-            return new ArchHandler(name, arch, settings, loadSchema(name),devNames,
-            		verbose);
+            Computer arch = new Computer(cpu, mem, com, tmpDevices,
+                    plugins, pluginsReverse, connections);
+            return new ArchHandler(name, arch, settings, loadSchema(name),
+                    pluginNames, verbose);
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -473,8 +491,8 @@ public class ArchLoader {
      * 
      * @return hash for an identification of the plugin
      */
-    private long createPluginHash() {
-    	return dehash++;
+    private long createPluginID() {
+    	return nextPluginID++;
     }
     
     /**
@@ -486,7 +504,7 @@ public class ArchLoader {
      *        has to implement
      * @return instance object of loaded plugin
      */
-    private Object loadPlugin(String dirname, String filename, Class<?> interfaceName, long pluginHash) {
+    private Object loadPlugin(String dirname, String filename, Class<?> interfaceName) {
         try {
             ArrayList<Class<?>> classes = runtime.Loader.getInstance().loadJAR(
                 System.getProperty("user.dir") + File.separator + dirname
@@ -495,14 +513,14 @@ public class ArchLoader {
                 throw new Exception();
         
             // find a first class that implements wanted interface
-            Class<?>[] conParameters = {Long.class}; // hash
+            Class<?>[] conParameters = {};
             for (int i = 0; i < classes.size(); i++) {
                 Class<?> c = (Class<?>)classes.get(i);
                 Class<?>[] intf = c.getInterfaces();
                 for (int j = 0; j < intf.length; j++) {
                     if (intf[j].equals(interfaceName)) {
                         Constructor<?> con = c.getDeclaredConstructor(conParameters);
-                        return con.newInstance(pluginHash);
+                        return con.newInstance();
                     }
                 }
             }

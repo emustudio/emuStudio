@@ -36,13 +36,11 @@ public class Schema {
     private ArrayList<ConnectionLine> lines;
     
     private String compilerName;
-    private int memorySize;
     private String configName;
 
     public Schema(CpuElement cpuElement, MemoryElement memoryElement, 
             ArrayList<DeviceElement> deviceElements, 
-            ArrayList<ConnectionLine> lines, String configName, String compilerName,
-            int memorySize) {
+            ArrayList<ConnectionLine> lines, String configName, String compilerName) {
         this.cpuElement = cpuElement;
         this.memoryElement = memoryElement;
         this.deviceElements = new ArrayList<DeviceElement>();
@@ -51,7 +49,6 @@ public class Schema {
         this.lines.addAll(lines);
         this.configName = configName;
         this.compilerName = compilerName;
-        this.memorySize = memorySize;
     }
     
     public Schema() {
@@ -61,7 +58,6 @@ public class Schema {
         lines = new ArrayList<ConnectionLine>();
         configName = "";
         compilerName = "";
-        memorySize = 0;
     }
     
     private void removeIncidentLines(Element el) {
@@ -72,10 +68,8 @@ public class Schema {
     
     public String getConfigName() { return configName; }
     public String getCompilerName() { return compilerName; }
-    public int getMemorySize() { return memorySize; }
     public void setConfigName(String cName) { configName = cName; }
     public void setCompilerName(String cName) { compilerName = cName; }
-    public void setMemorySize(int mSize) { memorySize = mSize; }
 
     public CpuElement getCpuElement() {
         return cpuElement;

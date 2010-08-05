@@ -30,6 +30,7 @@ import runtime.StaticDialogs;
 import emustudio.gui.LoadingDialog;
 import emustudio.gui.OpenArchDialog;
 import emustudio.gui.StudioFrame;
+import java.util.Date;
 
 /**
  * Main class of the emuStudio platform.
@@ -44,6 +45,8 @@ public class Main {
 
     private static String configName = null;
     private static boolean auto = false;
+
+    private static String password = null;
 
     /**
      * This method parsers the command line parameters. It sets
@@ -98,6 +101,13 @@ public class Main {
         } catch (IllegalAccessException e) {
         }
 
+        password = runtime.Context.SHA1(new Date().toString());
+        if (!runtime.Context.assignPassword(password)) {
+            StaticDialogs.showErrorMessage("Error: communication with emuLib failed.");
+            return;
+        }
+
+
         // parse command line arguments
         parseCommandLine(args);
 
@@ -136,12 +146,15 @@ public class Main {
             System.exit(0);
         }
 
+        runtime.Context.getInstance().assignComputer(password, 
+                currentArch.getComputer());
+
         if (!auto) {
             // if the automatization is turned off, start the emuStudio normally
             if (inputFileName != null)
                 new StudioFrame(inputFileName).setVisible(true);
             else
-                new StudioFrame().setVisible(true);
+                new StudioFrame(configName).setVisible(true);
         } else {
             new Automatization(currentArch,inputFileName,outputFileName)
                     .runAutomatization();

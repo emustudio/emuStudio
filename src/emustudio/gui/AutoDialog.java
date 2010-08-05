@@ -96,7 +96,7 @@ public class AutoDialog extends JDialog {
     }
 
     private void btnStopActionPerformed(ActionEvent e) {
-    	Main.currentArch.getCPU().stop();
+    	Main.currentArch.getComputer().getCPU().stop();
     }
     
     private JLabel lblAction;

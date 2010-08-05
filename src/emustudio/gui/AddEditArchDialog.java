@@ -71,11 +71,17 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         private String[] pluginNames;
         private Object selectedObject = null;
         public pluginModel(String[] wt) { this.pluginNames = wt; }
+        @Override
         public void setSelectedItem(Object anItem) { selectedObject = anItem; }
+        @Override
         public Object getSelectedItem() { return selectedObject; }
+        @Override
         public int getSize() { return (pluginNames == null) ? 0 : pluginNames.length; }
+        @Override
         public Object getElementAt(int index) { return pluginNames[index]; }
+        @Override
         public void addListDataListener(ListDataListener l) {}
+        @Override
         public void removeListDataListener(ListDataListener l) {}
     }
 
@@ -109,18 +115,20 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         this.schema = schema;
         constructor();
         cmbCompiler.setSelectedItem(schema.getCompilerName());
-        txtMemorySize.setText(String.valueOf(schema.getMemorySize()));
         this.setTitle("Edit architecture");
         txtArchName.setText(schema.getConfigName());
         txtArchName.setEnabled(false);
         btnBrowse.setEnabled(false);
     }
 
+    @Override
     public void keyTyped(KeyEvent e) {}
+    @Override
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE)
             pan.cancelTasks();
     }
+    @Override
     public void keyReleased(KeyEvent e) {}
     
     private void addKeyListenerRecursively(Component c) {
@@ -164,8 +172,6 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         btnBrowse = new NiceButton();
         JLabel lblCompiler = new JLabel();
         cmbCompiler = new JComboBox();
-        JLabel lblMemorySize = new JLabel();
-        txtMemorySize = new JTextField();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Add new architecture");
@@ -180,11 +186,13 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         btnCPU.setHorizontalTextPosition(SwingConstants.CENTER);
         btnCPU.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnCPU.addItemListener(new java.awt.event.ItemListener() {
+            @Override
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnCPUItemStateChanged(evt);
             }
         });
         btnCPU.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCPUActionPerformed(evt);
             }
@@ -198,11 +206,13 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         btnMemory.setHorizontalTextPosition(SwingConstants.CENTER);
         btnMemory.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnMemory.addItemListener(new java.awt.event.ItemListener() {
+            @Override
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnMemoryItemStateChanged(evt);
             }
         });
         btnMemory.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnMemoryActionPerformed(evt);
             }
@@ -216,11 +226,13 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         btnDevice.setHorizontalTextPosition(SwingConstants.CENTER);
         btnDevice.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnDevice.addItemListener(new java.awt.event.ItemListener() {
+            @Override
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnDeviceItemStateChanged(evt);
             }
         });
         btnDevice.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnDeviceActionPerformed(evt);
             }
@@ -229,17 +241,19 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         toolBar.add(jSeparator1);
 
         grpElements.add(btnConnect);
-        btnConnect.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/network-wired.png"))); // NOI18N
+        btnConnect.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/network-wired.png"))); // NOI18N
         btnConnect.setFocusable(false);
         btnConnect.setToolTipText("Line connector");
         btnConnect.setHorizontalTextPosition(SwingConstants.CENTER);
         btnConnect.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnConnect.addItemListener(new java.awt.event.ItemListener() {
+            @Override
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnConnectItemStateChanged(evt);
             }
         });
         btnConnect.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnConnectActionPerformed(evt);
             }
@@ -253,11 +267,13 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         btnDelete.setHorizontalTextPosition(SwingConstants.CENTER);
         btnDelete.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnDelete.addItemListener(new java.awt.event.ItemListener() {
+            @Override
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnDeleteItemStateChanged(evt);
             }
         });
         btnDelete.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnDeleteActionPerformed(evt);
             }
@@ -269,6 +285,7 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         panelSelectElement.setPreferredSize(new java.awt.Dimension(250, 44));
 
         cmbElement.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbElementActionPerformed(evt);
             }
@@ -294,6 +311,7 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         chkUseGrid.setSelected(true);
         chkUseGrid.setText("Use grid");
         chkUseGrid.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 chkUseGridActionPerformed(evt);
             }
@@ -306,6 +324,7 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         sliderGridGap.setToolTipText("Grid gap");
         sliderGridGap.setValue(30);
         sliderGridGap.addChangeListener(new javax.swing.event.ChangeListener() {
+            @Override
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 sliderGridGapStateChanged(evt);
             }
@@ -313,6 +332,7 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
 
         btnOK.setText("OK");
         btnOK.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnOKActionPerformed(evt);
             }
@@ -322,16 +342,13 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
 
         btnBrowse.setText("Browse...");
         btnBrowse.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnBrowseActionPerformed(evt);
             }
         });
 
         lblCompiler.setText("Compiler:");
-
-        lblMemorySize.setText("Memory size:");
-
-        txtMemorySize.setText("65536");
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -344,13 +361,11 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
         						.addComponent(chkUseGrid)
         						.addComponent(lblCompiler)
-        						.addComponent(lblMemorySize)
         						.addComponent(lblArchName))
         				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
         				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING,true)
         						.addComponent(sliderGridGap,GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         						.addComponent(cmbCompiler,GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        						.addComponent(txtMemorySize,GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         						.addGroup(layout.createSequentialGroup()
         								.addComponent(txtArchName)
         								.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
@@ -370,10 +385,6 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
         				.addComponent(lblCompiler)
         				.addComponent(cmbCompiler))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblMemorySize)
-        				.addComponent(txtMemorySize))
         		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
         		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
         				.addComponent(lblArchName)
@@ -410,12 +421,6 @@ private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:e
         return;
     }
     schema.setCompilerName(String.valueOf(cmbCompiler.getSelectedItem()));
-    try { schema.setMemorySize(Integer.parseInt(txtMemorySize.getText())); }
-    catch(Exception e) {
-        StaticDialogs.showErrorMessage("Memory size has to be integer number!");
-        txtMemorySize.grabFocus();
-        return;
-    }
     OOK = true;
     dispose();
 }//GEN-LAST:event_btnOKActionPerformed
@@ -559,7 +564,6 @@ private void btnBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
     JScrollPane scrollScheme;
     JSlider sliderGridGap;
     JTextField txtArchName;
-    JTextField txtMemorySize;
     // End of variables declaration//GEN-END:variables
 
 }

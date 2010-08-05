@@ -36,6 +36,8 @@ import plugins.compiler.ICompiler;
 import plugins.compiler.ICompiler.ICompilerListener;
 import plugins.cpu.ICPU;
 import plugins.cpu.ICPU.ICPUListener;
+import plugins.device.IDevice;
+import plugins.memory.IMemory;
 import runtime.StaticDialogs;
 
 /**
@@ -81,33 +83,38 @@ public class Automatization {
      *
      */
     public void runAutomatization() {
-	FileWriter outw = null;
         AutoDialog adia = new AutoDialog();
 
         adia.setVisible(true);
 
+        ICompiler compiler = currentArch.getComputer().getCompiler();
+        IMemory memory = currentArch.getComputer().getMemory();
+        final ICPU cpu = currentArch.getComputer().getCPU();
+        IDevice[] devices = currentArch.getComputer().getDevices();
+
 	try {
-            if (outputFile != null) {
-                outw = new FileWriter(outputFile);
-            }
+            final FileWriter outw = (outputFile == null) ? null
+                    : new FileWriter(outputFile);
             String currentDate = new Date().toString();
 
             output_message("<html><head><title>Emulation report</title></head>"
                     + "<body><h1>Configuration</h1><p>" + currentDate + "</p>"
                     + "<table><tr><th>Compiler</th><td>" + 
-                    currentArch.getCompiler().getTitle() + "</td></tr>"
-                    + "<tr><th>CPU</th><td>" + currentArch.getCPU().getTitle()
+                    ((compiler == null) ? "none" : compiler.getTitle())
+                    + "</td></tr><tr><th>CPU</th><td>" + cpu.getTitle()
                     + "</td></tr><th>Memory</th><td>" +
-                    currentArch.getMemory().getTitle() + "</td></tr>", outw);
+                    ((memory == null) ? "none" : memory.getTitle())
+                    + "</td></tr>", outw);
 
-            for (int i = 0; i < currentArch.getDevices().length; i++) {
+            int size = devices.length;
+            for (int i = 0; i < size; i++) {
                 output_message("<tr><th>Device #" + String.format("%02d", i)
-                        + "</th><td>" + currentArch.getDevices()[i].getTitle()
+                        + "</th><td>" + devices[i].getTitle()
                         + "</td></tr>", outw);
             }
             output_message("</table>", outw);
 
-            if (inputFile != null) {
+            if ((compiler != null) && (inputFile != null)) {
                 adia.setAction("Compiling input file...", false);
                 output_message("<h1>Compile process</h1><p><strong>File name:"
                         + "</strong>" + inputFile, outw);
@@ -118,7 +125,8 @@ public class Automatization {
 
                     @Override
                     public void onCompileInfo(EventObject evt, int row,
-                            int col, String message, int errorCode, int messageType) {
+                            int col, String message, int errorCode,
+                            int messageType) {
                         String text = "<p>";
 
                         switch (messageType) {
@@ -137,36 +145,44 @@ public class Automatization {
                         if (errorCode >= 0)
                             text += " (" + errorCode + ") ";
                         text += message + "</p>";
+                        try {
+                            output_message(text, outw);
+                        } catch (IOException e2) {
+                            StaticDialogs.showErrorMessage("Error in writing to"
+                                    + " output file");
+                        }
                     }
 
                     @Override
-                    public void onCompileFinish(EventObject evt, int errorCode) {}
+                    public void onCompileFinish(EventObject evt, int errorCode)
+                    {}
                 };
 
                 // Initialize compiler
-                currentArch.getCompiler().initialize(currentArch.getCompilerHash(),
-                        currentArch);
-                currentArch.getCompiler().addCompilerListener(reporter);
+                compiler.addCompilerListener(reporter);
 
                 FileReader fileR;
                 fileR = new FileReader(inputFile);
                 BufferedReader r = new BufferedReader(fileR);
 
                 String fn = inputFile.getAbsolutePath();
-                fn = fn.substring(0, fn.lastIndexOf(".")) + ".hex"; // hex is correct?
+                // hex is correct assumption?
+                fn = fn.substring(0, fn.lastIndexOf(".")) + ".hex"; 
 
-                boolean succ = currentArch.getCompiler().compile(fn, r);
+                boolean succ = compiler.compile(fn, r);
 
                 if (succ == false) {
-                    StaticDialogs.showErrorMessage("Error: compile process failed!");
+                    StaticDialogs.showErrorMessage("Error: compile process"
+                            + " failed!");
                     output_message("<p>Compilation failed.</p>", outw);
                     return;
                 } else
                     output_message("<p>Compilation was successful.</p>", outw);
 
-                int programStart = currentArch.getCompiler().getProgramStartAddress();
-                currentArch.getMemory().setProgramStart(programStart);
-                currentArch.getCPU().reset(programStart);
+                int programStart = compiler.getProgramStartAddress();
+                if (memory != null)
+                    memory.setProgramStart(programStart);
+                cpu.reset(programStart);
             }
             adia.setAction("Running emulation...", true);
             output_message("<h1>Emulation process</h1>", outw);
@@ -175,17 +191,10 @@ public class Automatization {
                 @Override
                 public void run() {
                     result_state = ICPU.STATE_RUNNING;
-                    currentArch.getCPU().execute();
-                    // waits till something interrupts this thread
-                    try {
-                        while (true) {
-                            Thread.sleep(0xfffffff);
-                        }
-                    } catch (InterruptedException e) {
-                    }
+                    cpu.execute();
                 }
             };
-            currentArch.getCPU().addCPUListener(new ICPUListener() {
+            cpu.addCPUListener(new ICPUListener() {
                 @Override
                 public void runChanged(EventObject evt, int state) {
                     if (state != ICPU.STATE_RUNNING) {
@@ -217,25 +226,23 @@ public class Automatization {
                     break;
             }
             output_message("<p>Instruction postion: " + String.format("%04Xh",
-                    currentArch.getCPU().getInstrPosition()) + "</p>", outw);
+                    cpu.getInstrPosition()) + "</p>", outw);
 
             adia.setAction("Emulation finished.", false);
+
+            output_message("<p>" + new Date().toString() + "</p>", outw);
+            outw.close();
         } catch (FileNotFoundException e1) {
             StaticDialogs.showErrorMessage("Error: Input file not found!");
         } catch (IOException e2) {
             StaticDialogs.showErrorMessage("Error in writing to output file");
         } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Error in compile process:\n" + e.toString());
-//            e.printStackTrace();
-        } finally {
-            try {
-                output_message("<p>" + new Date().toString() + "</p>", outw);
-                outw.close();
-            } catch (IOException e1) {}
-            currentArch.destroy();
-            adia.dispose();
-            adia = null;
+            StaticDialogs.showErrorMessage("Error in compile process:\n"
+                    + e.toString());
         }
+        currentArch.destroy();
+        adia.dispose();
+        adia = null;
     }
 
 }

@@ -22,7 +22,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.architecture;
 
 import emustudio.architecture.drawing.Schema;
@@ -35,10 +34,6 @@ import plugins.device.IDevice;
 import plugins.IPlugin;
 import plugins.ISettingsHandler;
 import plugins.compiler.ICompiler;
-import plugins.cpu.ICPUContext;
-import plugins.device.IDeviceContext;
-import plugins.memory.IMemoryContext;
-
 
 /**
  * Class holds actual computer configuration - plugins and settings.
@@ -46,81 +41,59 @@ import plugins.memory.IMemoryContext;
  * @author vbmacher
  */
 public class ArchHandler implements ISettingsHandler {
-    private Architecture           arch;
-    private Properties             settings;
-    private Schema                 schema;
-    private Hashtable<Long,String> deviceNames;
-    private boolean                verbose;
 
-    public long getCompilerHash() {
-        return arch.getCompilerID();
-    }
-    
+    private Computer arch;
+    private Properties settings;
+    private Schema schema;
+    private Hashtable<Long, String> pluginNames;
+
     /**
-     * Constructor of new computer configuration and init all plugins.
+     * Special setting "verbose". If it is
+     * set and a plugin asks for "verbose" setting,
+     * this will return the set value. The setting
+     * overwrites plugin setting.
+     */
+    private boolean verbose;
+
+    /**
+     * Creates new virtual computer architecture and initializes all plug-ins.
      * 
      * @param name         Name of the architecture
-     * @param arch         Virtual architecture object - plugin handler
+     * @param arch         Virtual computer, handling the structure of plug-ins
      * @param settings     Architecture settings (Properties)
      * @param schema       Abstract schema of the architecture
-     * @param deviceNames  Names of all devices (can be redundant)
+     * @param pluginNames  Names of all plug-ins
+     * @param verbose      Verbose setting overwrite?
      *  
      * @throws Error if initialization of the architecture failed.
      */
-    public ArchHandler(String name, Architecture arch, Properties settings,
-            Schema schema, Hashtable<Long,String> deviceNames, boolean verbose) throws Error {
-    	this.verbose = verbose;
-    	if (name == null) name = "";
-    	this.arch = arch;
+    public ArchHandler(String name, Computer arch, Properties settings,
+            Schema schema, Hashtable<Long, String> pluginNames, boolean verbose)
+            throws Error {
+        if (name == null) {
+            name = "";
+        }
+        this.arch = arch;
         this.settings = settings;
         this.schema = schema;
-        this.deviceNames = deviceNames;
+        this.pluginNames = pluginNames;
+        this.verbose = verbose;
 
-        if (initialize() == false) 
+        if (initialize() == false) {
             throw new Error("Initialization of plugins failed");
+        }
     }
 
     /**
-     * Initialize all plugins exept compiler. The method is called by
+     * Initialize all plugins. The method is called by
      * constructor. Also provides necessary connections.
      * 
      * @return true If the initialization succeeded, false otherwise
      */
     private boolean initialize() {
-        boolean success = false;
-
-        int memSize = Integer.parseInt(settings.getProperty("memory.size"));
-        success = arch.getMemory().initialize(memSize, this);
-        
-        if (arch.isConnected(arch.getCPU(), arch.getMemory()))
-            success &= arch.getCPU().initialize(arch.getMemory().getContext(), this);
-        else
-            success &= arch.getCPU().initialize(null, this);
-        
-        // CPU-device and Memory-device connections
-        for (int i=0; i < arch.getDeviceCount(); i++) {
-            ICPUContext ccon = arch.isConnected(arch.getCPU(),arch.getDevice(i)) 
-                    ? arch.getCPU().getContext() : null;
-            IMemoryContext mcon = arch.isConnected(arch.getMemory(),arch.getDevice(i))
-                    ? arch.getMemory().getContext() : null;
-            success &= arch.getDevice(i).initialize(ccon, mcon, this);
-        }
-        
-        // finally device-device connections
-        for (int i = 0; i < arch.getDeviceCount(); i++) {
-        	IDevice female = arch.getDevice(i);
-        	IDeviceContext[] males = arch.getMales(female);
-        	if (males != null) {
-        		for (int j = 0; j < males.length; j++)
-        			female.attachDevice(males[j]);
-        	}
-        }
-
-        // first reset of all plugins
-        arch.resetPlugins();
-        return success;
+        return arch.initialize(this);
     }
-    
+
     /**
      * Set/unset special setting "verbose". If it is
      * set and a plugin asks for "verbose" setting,
@@ -130,93 +103,61 @@ public class ArchHandler implements ISettingsHandler {
      * @param verbose
      */
     public void setVerbose(boolean verbose) {
-    	this.verbose = verbose;
+        this.verbose = verbose;
     }
+
     /**
      * Method destroys current architecture
      */
     public void destroy() {
-        try {
-            arch.getCompiler().destroy();
-            for (int i = 0; i < arch.getAllDevices().length; i++)
-                arch.getAllDevices()[i].destroy();
-            arch.getCPU().destroy();
-            arch.getMemory().destroy();
-        } catch (Exception e) {}    	
+        arch.destroy();
+        pluginNames.clear();
     }
-    
-    /***
+
+    /**
      * Get schema of this virtual architecture
      * 
      * @return Abstract schema
      */
-    public Schema getSchema() { return schema; }
-    
-    /**
-     * Gets actual compiler
-     *
-     * @return compiler interface object
-     */
-    public ICompiler getCompiler() { return arch.getCompiler(); }
-
-    /**
-     * Gets actual operating memory
-     *
-     * @return memory interface object
-     */
-    public IMemory getMemory() { return arch.getMemory(); }
-
-    /**
-     * Gets actual CPU
-     *
-     * @return CPU interface object
-     */
-    public ICPU getCPU() { return arch.getCPU(); }
-
-    /**
-     * Gets list of available devices
-     *
-     * @return array of device interface objects
-     */
-    public IDevice[] getDevices() {	return arch.getAllDevices(); }
-
-    public String getArchName() { 
-        return (schema == null) ? "unknown" : schema.getConfigName(); 
+    public Schema getSchema() {
+        return schema;
     }
-    
+
+    public String getArchName() {
+        return (schema == null) ? "unknown" : schema.getConfigName();
+    }
+
+    public Computer getComputer() {
+        return arch;
+    }
+
     /**
      * Method reads value of specified setting from Properties for 
      * specified plugin. Setting has to be fully specified.
      * 
-     * @param hash         plugin hash, identification of a plugin
+     * @param pluginID  identification number of a plugin
      * @param settingName  name of wanted setting
      * @return setting value if exists, or null if not
      */
-    public String readSetting(long hash, String settingName) {
-    	IPlugin plug = arch.getPlugin(hash);
-        if (plug == null) return null;
+    @Override
+    public String readSetting(long pluginID, String settingName) {
+        IPlugin plug = arch.getPlugin(pluginID);
         
+        if (plug == null)
+            return null;
+
         if (settingName.toUpperCase().equals("VERBOSE"))
-        	return verbose ? "true" : "false";
+            return verbose ? "true" : "false";
+
+        String prop = pluginNames.get(pluginID);
+
+        if ((prop == null) || prop.equals(""))
+            return null;
         
-        String prop = "";
-                
-        if (plug instanceof IDevice) {
-            // search for device
-        	prop = deviceNames.get(hash);
-//            for (int i = 0; i < arch.getDeviceCount(); i++)
-  //              if (settings.getProperty("device"+i,"").equals(deviceName)) {
-    //                prop = "device"+i;
-      //              break;
-        //        }
-        } else if (plug instanceof ICPU)    prop = "cpu";
-        else if (plug instanceof IMemory)   prop = "memory";
-        else if (plug instanceof ICompiler) prop = "compiler";
-        
-        if (prop.equals("")) return null;
-        if (settingName != null && !settingName.equals("")) 
+        if ((settingName != null) && (!settingName.equals("")))
             prop += "." + settingName;
-        return settings.getProperty(prop,null);
+
+        return settings.getProperty(prop, null);
     }
 
     /**
@@ -226,37 +167,37 @@ public class ArchHandler implements ISettingsHandler {
      * @return device file name without extension, or null
      *         if device is unknown
      */
-    public String getDeviceName(int index) { 
-    	return settings.getProperty("device"+index, null);
+    public String getDeviceName(int index) {
+        return settings.getProperty("device" + index, null);
     }
-    
+
     /**
      * Get compiler file name, without file extension.
      * 
      * @return compiler name or null
-     */     
+     */
     public String getCompilerName() {
-    	return settings.getProperty("compiler",null);
+        return settings.getProperty("compiler", null);
     }
 
     /**
      * Get CPU file name, without file extension.
      * 
      * @return CPU name or null
-     */     
+     */
     public String getCPUName() {
-    	return settings.getProperty("cpu",null);
+        return settings.getProperty("cpu", null);
     }
 
     /**
      * Get memory file name, without file extension.
      * 
      * @return memory name or null
-     */     
+     */
     public String getMemoryName() {
-    	return settings.getProperty("memory",null);
+        return settings.getProperty("memory", null);
     }
-    
+
     /**
      * Method writes a value of specified setting to Properties for 
      * specified plugin. Setting has to be fully specified.
@@ -264,33 +205,38 @@ public class ArchHandler implements ISettingsHandler {
      * @param hash         plugin hash, identification of a plugin
      * @param settingName name of wanted setting
      */
+    @Override
     public void writeSetting(long hash, String settingName, String val) {
-        if (settingName == null || settingName.equals("")) return;
+        if (settingName == null || settingName.equals("")) {
+            return;
+        }
 
         IPlugin plug = arch.getPlugin(hash);
-        if (plug == null) return;
+        if (plug == null) {
+            return;
+        }
 
         String prop = "";
         if (plug instanceof IDevice) {
             // search for device
-        	prop = deviceNames.get(hash);
-//        	String deviceName = deviceNames.get(hash);
-  //          for (int i = 0; i < arch.getDeviceCount(); i++)
-    //            if (settings.getProperty("device"+i,"").equals(deviceName)) {
-      //              prop = "device"+i;
-        //            break;
-          //      }
-        } else if (plug instanceof ICPU) prop = "cpu";
-        else if (plug instanceof IMemory)   prop = "memory";
-        else if (plug instanceof ICompiler) prop = "compiler";
-        
-        if (prop.equals("")) return;
+            prop = pluginNames.get(hash);
+        } else if (plug instanceof ICPU) {
+            prop = "cpu";
+        } else if (plug instanceof IMemory) {
+            prop = "memory";
+        } else if (plug instanceof ICompiler) {
+            prop = "compiler";
+        }
+
+        if (prop.equals("")) {
+            return;
+        }
         prop += "." + settingName;
-        
+
         settings.setProperty(prop, val);
         ArchLoader.writeConfig(schema.getConfigName(), settings);
     }
-    
+
     /**
      * Method removes value of specified setting from Properties for 
      * specified plugin. Setting has to be fully specified.
@@ -298,33 +244,36 @@ public class ArchHandler implements ISettingsHandler {
      * @param hash         plugin hash, identification of a plugin
      * @param settingName name of wanted setting
      */
+    @Override
     public void removeSetting(long hash, String settingName) {
-        if (settingName == null || settingName.equals("")) return;
+        if (settingName == null || settingName.equals("")) {
+            return;
+        }
 
         IPlugin plug = arch.getPlugin(hash);
-        if (plug == null) return;
+        if (plug == null) {
+            return;
+        }
 
         String prop = "";
-                
+
         if (plug instanceof IDevice) {
             // search for device
-        	prop = deviceNames.get(hash);
-//        	String deviceName = deviceNames.get(hash);
-  //          for (int i = 0; i < arch.getDeviceCount(); i++)
-    //            if (settings.getProperty("device"+i,"").equals(deviceName)) {
-      //              prop = "device"+i;
-        //            break;
-          //      }
-        } else if (plug instanceof ICPU) prop = "cpu";
-        else if (plug instanceof IMemory)   prop = "memory";
-        else if (plug instanceof ICompiler) prop = "compiler";
+            prop = pluginNames.get(hash);
+        } else if (plug instanceof ICPU) {
+            prop = "cpu";
+        } else if (plug instanceof IMemory) {
+            prop = "memory";
+        } else if (plug instanceof ICompiler) {
+            prop = "compiler";
+        }
 
-        if (prop.equals("")) return;
+        if (prop.equals("")) {
+            return;
+        }
         prop += "." + settingName;
-        
-        settings.remove(prop);
-        ArchLoader.writeConfig(schema.getConfigName(), settings);        
-    }
 
- 
+        settings.remove(prop);
+        ArchLoader.writeConfig(schema.getConfigName(), settings);
+    }
 }

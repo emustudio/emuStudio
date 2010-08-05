@@ -21,7 +21,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.gui;
 
 import emustudio.architecture.ArchHandler;
@@ -46,6 +45,10 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
+import plugins.compiler.ICompiler;
+import plugins.cpu.ICPU;
+import plugins.device.IDevice;
+import plugins.memory.IMemory;
 
 import runtime.StaticDialogs;
 
@@ -55,7 +58,8 @@ import runtime.StaticDialogs;
  */
 @SuppressWarnings("serial")
 public class ViewArchDialog extends JDialog {
-	private boolean easterClicked = false; // for easterEgg 
+
+    private boolean easterClicked = false; // for easterEgg
     private ArchHandler arch;
     private String compilerName;
     private String cpuName;
@@ -68,48 +72,68 @@ public class ViewArchDialog extends JDialog {
         super(parent, modal);
         arch = Main.currentArch;
         initComponents();
-        
+
         compilerName = arch.getCompilerName();
         memoryName = arch.getMemoryName();
         cpuName = arch.getCPUName();
-        
-        devNames = new Vector<String>();
-        for (int i = 0; i < arch.getDevices().length; i++)
-            devNames.add(arch.getDeviceName(i));
-        
-        try {
-            lblName.setText(arch.getArchName());
-            lblCompilerFileName.setText(compilerName+".jar");
-            lblCompilerName.setText(arch.getCompiler().getTitle());
-            lblCompilerVersion.setText(arch.getCompiler().getVersion());
-            txtCompilerCopyright.setText(arch.getCompiler().getCopyright());
-            txtCompilerDescription.setText(arch.getCompiler().getDescription());
-            
-            lblCPUFileName.setText(cpuName+".jar");
-            lblCPUName.setText(arch.getCPU().getTitle());
-            lblCPUVersion.setText(arch.getCPU().getVersion());
-            txtCPUCopyright.setText(arch.getCPU().getCopyright());
-            txtCPUDescription.setText(arch.getCPU().getDescription());
-            
-            lblMemoryFileName.setText(memoryName+".jar");
-            lblMemoryName.setText(arch.getMemory().getTitle());
-            lblMemoryVersion.setText(arch.getMemory().getVersion());
-            txtMemoryCopyright.setText(arch.getMemory().getCopyright());
-            txtMemoryDescription.setText(arch.getMemory().getDescription());
 
-            for (int i = 0; i < devNames.size(); i++)
-                cmbDevice.addItem(devNames.get(i));
+        devNames = new Vector<String>();
+        int size = arch.getComputer().getDeviceCount();
+        for (int i = 0; i < size; i++) {
+            devNames.add(arch.getDeviceName(i));
         }
-        catch (NullPointerException e) {
+
+        try {
+            ICompiler compiler = arch.getComputer().getCompiler();
+
+            lblName.setText(arch.getArchName());
+            lblCompilerFileName.setText(compilerName + ".jar");
+
+            if (compiler != null) {
+                lblCompilerName.setText(compiler.getTitle());
+                lblCompilerVersion.setText(compiler.getVersion());
+                txtCompilerCopyright.setText(compiler.getCopyright());
+                txtCompilerDescription.setText(compiler.getDescription());
+            }
+
+            ICPU cpu = arch.getComputer().getCPU();
+
+            lblCPUFileName.setText(cpuName + ".jar");
+            lblCPUName.setText(cpu.getTitle());
+            lblCPUVersion.setText(cpu.getVersion());
+            txtCPUCopyright.setText(cpu.getCopyright());
+            txtCPUDescription.setText(cpu.getDescription());
+
+            lblMemoryFileName.setText(memoryName + ".jar");
+
+            IMemory memory = arch.getComputer().getMemory();
+
+            if (memory != null) {
+                lblMemoryName.setText(memory.getTitle());
+                lblMemoryVersion.setText(memory.getVersion());
+                txtMemoryCopyright.setText(memory.getCopyright());
+                txtMemoryDescription.setText(memory.getDescription());
+            }
+
+            for (int i = 0; i < devNames.size(); i++) {
+                cmbDevice.addItem(devNames.get(i));
+            }
+        } catch (NullPointerException e) {
             StaticDialogs.showErrorMessage("Can't get plugins info:" + e.getMessage());
         }
-        
-        if (cmbDevice.getItemCount() > 0) showDevConfig(0);
+
+        if (cmbDevice.getItemCount() > 0) {
+            showDevConfig(0);
+        }
         cmbDevice.addActionListener(new ActionListener() {
+
+            @Override
             public void actionPerformed(ActionEvent e) {
                 int i = cmbDevice.getSelectedIndex();
-                try { showDevConfig(i); }
-                catch(Exception ex) {}
+                try {
+                    showDevConfig(i);
+                } catch (Exception ex) {
+                }
             }
         });
         pan = new PreviewPanel(arch.getSchema());
@@ -118,15 +142,17 @@ public class ViewArchDialog extends JDialog {
         scrollScheme.getVerticalScrollBar().setUnitIncrement(10);
         this.setLocationRelativeTo(null);
     }
-    
+
     private void showDevConfig(int i) {
-        lblDeviceFileName.setText(devNames.get(i) +".jar");
-        lblDeviceName.setText(arch.getDevices()[i].getTitle());
-        lblDeviceVersion.setText(arch.getDevices()[i].getVersion());
-        txtDeviceCopyright.setText(arch.getDevices()[i].getCopyright());
-        txtDeviceDescription.setText(arch.getDevices()[i].getDescription());
+        IDevice device = arch.getComputer().getDevice(i);
+
+        lblDeviceFileName.setText(devNames.get(i) + ".jar");
+        lblDeviceName.setText(device.getTitle());
+        lblDeviceVersion.setText(device.getVersion());
+        txtDeviceCopyright.setText(device.getCopyright());
+        txtDeviceDescription.setText(device.getDescription());
     }
-    
+
     private void initComponents() {
         lblName = new JLabel();
         JTabbedPane tabbedPane = new JTabbedPane();
@@ -190,23 +216,33 @@ public class ViewArchDialog extends JDialog {
         lblName.setFont(lblName.getFont().deriveFont(lblName.getFont().getStyle() | java.awt.Font.BOLD));
         lblName.setText(null);
         lblName.addMouseListener(new MouseListener() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if ((e.getButton() == MouseEvent.BUTTON1) && (e.getClickCount() == 2)) {
-					easterClicked = !easterClicked;
-					if (easterClicked)
-						panelCompiler.grabFocus();
-				}
-				e.consume();
-			}
-			@Override
-			public void mouseEntered(MouseEvent e) {}
-			@Override
-			public void mouseExited(MouseEvent e) {}
-			@Override
-			public void mousePressed(MouseEvent e) {}
-			@Override
-			public void mouseReleased(MouseEvent e) {}
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if ((e.getButton() == MouseEvent.BUTTON1) && (e.getClickCount() == 2)) {
+                    easterClicked = !easterClicked;
+                    if (easterClicked) {
+                        panelCompiler.grabFocus();
+                    }
+                }
+                e.consume();
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+            }
         });
 
         tabbedPane.setFocusable(false);
@@ -236,61 +272,30 @@ public class ViewArchDialog extends JDialog {
         scrollCompilerDescription.setViewportView(txtCompilerDescription);
 
         panelCompiler.addKeyListener(new KeyListener() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (easterClicked && e.isAltDown() && (e.getKeyCode() == KeyEvent.VK_A)) {
-					StaticDialogs.showMessage("Easter egg: Welcome, vbmacher!");
-				}
-				e.consume();
-			}
-			@Override
-			public void keyReleased(KeyEvent e) {}
-			@Override
-			public void keyTyped(KeyEvent e) {}        	
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (easterClicked && e.isAltDown() && (e.getKeyCode() == KeyEvent.VK_A)) {
+                    StaticDialogs.showMessage("Easter egg: Welcome, vbmacher!");
+                }
+                e.consume();
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+            }
+
+            @Override
+            public void keyTyped(KeyEvent e) {
+            }
         });
         GroupLayout compilerLayout = new GroupLayout(panelCompiler);
         panelCompiler.setLayout(compilerLayout);
-        
-        compilerLayout.setHorizontalGroup(compilerLayout.createSequentialGroup()
-        		.addContainerGap()
-        		.addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        				.addComponent(lblFileNameLBL1)
-        				.addComponent(lblPluginNameLBL1)
-        				.addComponent(lblVersionLBL1)
-        				.addComponent(lblCopyrightLBL1)
-        				.addComponent(lblDescriptionLBL1))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        				.addComponent(lblCompilerFileName)
-        				.addComponent(lblCompilerName)
-        				.addComponent(lblCompilerVersion)
-        				.addComponent(txtCompilerCopyright)
-        				.addComponent(scrollCompilerDescription))
-        		.addContainerGap());
+
+        compilerLayout.setHorizontalGroup(compilerLayout.createSequentialGroup().addContainerGap().addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblFileNameLBL1).addComponent(lblPluginNameLBL1).addComponent(lblVersionLBL1).addComponent(lblCopyrightLBL1).addComponent(lblDescriptionLBL1)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblCompilerFileName).addComponent(lblCompilerName).addComponent(lblCompilerVersion).addComponent(txtCompilerCopyright).addComponent(scrollCompilerDescription)).addContainerGap());
         compilerLayout.setVerticalGroup(
-        		compilerLayout.createSequentialGroup()
-        		.addContainerGap()
-        		.addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblFileNameLBL1)
-        				.addComponent(lblCompilerFileName))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblPluginNameLBL1)
-        				.addComponent(lblCompilerName))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblVersionLBL1)
-        				.addComponent(lblCompilerVersion))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblCopyrightLBL1)
-        				.addComponent(txtCompilerCopyright))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblDescriptionLBL1)
-        				.addComponent(scrollCompilerDescription))
-        		.addContainerGap());
-        
+                compilerLayout.createSequentialGroup().addContainerGap().addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblFileNameLBL1).addComponent(lblCompilerFileName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblPluginNameLBL1).addComponent(lblCompilerName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblVersionLBL1).addComponent(lblCompilerVersion)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblCopyrightLBL1).addComponent(txtCompilerCopyright)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblDescriptionLBL1).addComponent(scrollCompilerDescription)).addContainerGap());
+
         tabbedPane.addTab("Compiler", panelCompiler);
         lblFileNameLBL2.setText("File name:");
         lblPluginNameLBL2.setText("Plugin name:");
@@ -318,45 +323,9 @@ public class ViewArchDialog extends JDialog {
 
         GroupLayout cpuLayout = new GroupLayout(panelCPU);
         panelCPU.setLayout(cpuLayout);
-        cpuLayout.setHorizontalGroup(cpuLayout.createSequentialGroup()
-        		.addContainerGap()
-        		.addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        				.addComponent(lblFileNameLBL2)
-        				.addComponent(lblPluginNameLBL2)
-        				.addComponent(lblVersionLBL2)
-        				.addComponent(lblCopyrightLBL2)
-        				.addComponent(lblDescriptionLBL2))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        				.addComponent(lblCPUFileName)
-        				.addComponent(lblCPUName)
-        				.addComponent(lblCPUVersion)
-        				.addComponent(txtCPUCopyright)
-        				.addComponent(scrollCpuDescription))
-        		.addContainerGap());
+        cpuLayout.setHorizontalGroup(cpuLayout.createSequentialGroup().addContainerGap().addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblFileNameLBL2).addComponent(lblPluginNameLBL2).addComponent(lblVersionLBL2).addComponent(lblCopyrightLBL2).addComponent(lblDescriptionLBL2)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblCPUFileName).addComponent(lblCPUName).addComponent(lblCPUVersion).addComponent(txtCPUCopyright).addComponent(scrollCpuDescription)).addContainerGap());
         cpuLayout.setVerticalGroup(
-        		cpuLayout.createSequentialGroup()
-        		.addContainerGap()
-        		.addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblFileNameLBL2)
-        				.addComponent(lblCPUFileName))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblPluginNameLBL2)
-        				.addComponent(lblCPUName))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblVersionLBL2)
-        				.addComponent(lblCPUVersion))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblCopyrightLBL2)
-        				.addComponent(txtCPUCopyright))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblDescriptionLBL2)
-        				.addComponent(scrollCpuDescription))
-        		.addContainerGap());
+                cpuLayout.createSequentialGroup().addContainerGap().addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblFileNameLBL2).addComponent(lblCPUFileName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblPluginNameLBL2).addComponent(lblCPUName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblVersionLBL2).addComponent(lblCPUVersion)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblCopyrightLBL2).addComponent(txtCPUCopyright)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblDescriptionLBL2).addComponent(scrollCpuDescription)).addContainerGap());
 
         tabbedPane.addTab("CPU", panelCPU);
         lblFileNameLBL3.setText("File name:");
@@ -385,45 +354,9 @@ public class ViewArchDialog extends JDialog {
 
         GroupLayout memoryLayout = new GroupLayout(panelMemory);
         panelMemory.setLayout(memoryLayout);
-        memoryLayout.setHorizontalGroup(memoryLayout.createSequentialGroup()
-        		.addContainerGap()
-        		.addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        				.addComponent(lblFileNameLBL3)
-        				.addComponent(lblPluginNameLBL3)
-        				.addComponent(lblVersionLBL3)
-        				.addComponent(lblCopyrightLBL3)
-        				.addComponent(lblDescriptionLBL3))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        				.addComponent(lblMemoryFileName)
-        				.addComponent(lblMemoryName)
-        				.addComponent(lblMemoryVersion)
-        				.addComponent(txtMemoryCopyright)
-        				.addComponent(scrollMemoryDescription))
-        		.addContainerGap());
+        memoryLayout.setHorizontalGroup(memoryLayout.createSequentialGroup().addContainerGap().addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblFileNameLBL3).addComponent(lblPluginNameLBL3).addComponent(lblVersionLBL3).addComponent(lblCopyrightLBL3).addComponent(lblDescriptionLBL3)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblMemoryFileName).addComponent(lblMemoryName).addComponent(lblMemoryVersion).addComponent(txtMemoryCopyright).addComponent(scrollMemoryDescription)).addContainerGap());
         memoryLayout.setVerticalGroup(
-        		memoryLayout.createSequentialGroup()
-        		.addContainerGap()
-        		.addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblFileNameLBL3)
-        				.addComponent(lblMemoryFileName))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblPluginNameLBL3)
-        				.addComponent(lblMemoryName))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblVersionLBL3)
-        				.addComponent(lblMemoryVersion))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblCopyrightLBL3)
-        				.addComponent(txtMemoryCopyright))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblDescriptionLBL3)
-        				.addComponent(scrollMemoryDescription))
-        		.addContainerGap());
+                memoryLayout.createSequentialGroup().addContainerGap().addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblFileNameLBL3).addComponent(lblMemoryFileName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblPluginNameLBL3).addComponent(lblMemoryName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblVersionLBL3).addComponent(lblMemoryVersion)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblCopyrightLBL3).addComponent(txtMemoryCopyright)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblDescriptionLBL3).addComponent(scrollMemoryDescription)).addContainerGap());
 
         tabbedPane.addTab("Memory", panelMemory);
         lblFileNameLBL4.setText("File name:");
@@ -454,66 +387,20 @@ public class ViewArchDialog extends JDialog {
 
         GroupLayout deviceLayout = new GroupLayout(panelDevices);
         panelDevices.setLayout(deviceLayout);
-        
-        deviceLayout.setHorizontalGroup(deviceLayout.createSequentialGroup()
-        		.addContainerGap()
-        		.addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        				.addComponent(lblDeviceLBL)
-        				.addComponent(lblFileNameLBL4)
-        				.addComponent(lblPluginNameLBL4)
-        				.addComponent(lblVersionLBL4)
-        				.addComponent(lblCopyrightLBL4)
-        				.addComponent(lblDescriptionLBL4))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        				.addComponent(cmbDevice)
-        				.addComponent(lblDeviceFileName)
-        				.addComponent(lblDeviceName)
-        				.addComponent(lblDeviceVersion)
-        				.addComponent(txtDeviceCopyright)
-        				.addComponent(scrollDeviceDescription))
-        		.addContainerGap());
+
+        deviceLayout.setHorizontalGroup(deviceLayout.createSequentialGroup().addContainerGap().addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblDeviceLBL).addComponent(lblFileNameLBL4).addComponent(lblPluginNameLBL4).addComponent(lblVersionLBL4).addComponent(lblCopyrightLBL4).addComponent(lblDescriptionLBL4)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(cmbDevice).addComponent(lblDeviceFileName).addComponent(lblDeviceName).addComponent(lblDeviceVersion).addComponent(txtDeviceCopyright).addComponent(scrollDeviceDescription)).addContainerGap());
         deviceLayout.setVerticalGroup(
-        		deviceLayout.createSequentialGroup()
-        		.addContainerGap()
-        		.addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblDeviceLBL)
-        				.addComponent(cmbDevice))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblFileNameLBL4)
-        				.addComponent(lblDeviceFileName))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblPluginNameLBL4)
-        				.addComponent(lblDeviceName))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblVersionLBL4)
-        				.addComponent(lblDeviceVersion))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblCopyrightLBL4)
-        				.addComponent(txtDeviceCopyright))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblDescriptionLBL4)
-        				.addComponent(scrollDeviceDescription))
-        		.addContainerGap());
+                deviceLayout.createSequentialGroup().addContainerGap().addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblDeviceLBL).addComponent(cmbDevice)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblFileNameLBL4).addComponent(lblDeviceFileName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblPluginNameLBL4).addComponent(lblDeviceName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblVersionLBL4).addComponent(lblDeviceVersion)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblCopyrightLBL4).addComponent(txtDeviceCopyright)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblDescriptionLBL4).addComponent(scrollDeviceDescription)).addContainerGap());
 
         tabbedPane.addTab("Devices", panelDevices);
 
         GroupLayout schemeLayout = new GroupLayout(panelScheme);
         panelScheme.setLayout(schemeLayout);
         schemeLayout.setHorizontalGroup(
-            schemeLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(scrollScheme) //, GroupLayout.DEFAULT_SIZE, 567, Short.MAX_VALUE)
+                schemeLayout.createSequentialGroup().addContainerGap().addComponent(scrollScheme) //, GroupLayout.DEFAULT_SIZE, 567, Short.MAX_VALUE)
                 .addContainerGap());
         schemeLayout.setVerticalGroup(
-            schemeLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(scrollScheme) //, GroupLayout.DEFAULT_SIZE, 283, Short.MAX_VALUE)
+                schemeLayout.createSequentialGroup().addContainerGap().addComponent(scrollScheme) //, GroupLayout.DEFAULT_SIZE, 283, Short.MAX_VALUE)
                 .addContainerGap());
 
         tabbedPane.addTab("Abstract schema", panelScheme);
@@ -521,25 +408,12 @@ public class ViewArchDialog extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(tabbedPane,100, 500, Short.MAX_VALUE)
-                    .addComponent(lblName))
-                .addContainerGap());
+                layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, 100, 500, Short.MAX_VALUE).addComponent(lblName)).addContainerGap());
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblName)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
-                .addContainerGap()));
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addContainerGap().addComponent(lblName).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE).addContainerGap()));
 
         pack();
     }
-
-    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     JComboBox cmbDevice;
     JTextArea txtCPUCopyright;
@@ -565,5 +439,4 @@ public class ViewArchDialog extends JDialog {
     JTextArea txtDeviceDescription;
     JTextArea txtMemoryDescription;
     // End of variables declaration//GEN-END:variables
-    
 }

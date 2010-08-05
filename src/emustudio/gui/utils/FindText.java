@@ -44,13 +44,18 @@ public class FindText {
     public static final int DIRECTION_TO_START = 1;
     public static final int DIRECTION_ALL = 2;
 
-    public static FindText instance;
+    public static FindText instance = null;
+
+    /**
+     * Private constructor
+     */
+    private FindText() {}
     
-    public FindText() {
-        FindText.instance = this;
+    public static FindText getInstance() {
+        if (instance == null)
+            instance = new FindText();
+        return instance;
     }
-    
-    public static FindText getThis() { return instance; }
 
     private Matcher matcher = null;
     private Pattern pattern = null;
