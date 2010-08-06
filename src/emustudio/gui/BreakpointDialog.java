@@ -20,7 +20,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.gui;
 
 import emustudio.gui.utils.NiceButton;
@@ -40,12 +39,18 @@ import runtime.StaticDialogs;
  */
 @SuppressWarnings("serial")
 public class BreakpointDialog extends JDialog {
+
     private static int adr = -1; // if adr == -1 then it means cancel
     private static boolean set = false;
-    
-    public static int getAdr() { return adr; }
-    public static boolean getSet() { return set; }
-    
+
+    public static int getAdr() {
+        return adr;
+    }
+
+    public static boolean getSet() {
+        return set;
+    }
+
     /** Creates new form BreakpointDialog */
     public BreakpointDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -53,7 +58,7 @@ public class BreakpointDialog extends JDialog {
         this.setLocationRelativeTo(parent);
         txtAddress.grabFocus();
     }
-    
+
     private void initComponents() {
 
         lblSetUnset = new JLabel();
@@ -71,6 +76,7 @@ public class BreakpointDialog extends JDialog {
 
         btnSet.setText("Set");
         btnSet.addActionListener(new java.awt.event.ActionListener() {
+
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnSetActionPerformed(evt);
             }
@@ -78,6 +84,7 @@ public class BreakpointDialog extends JDialog {
 
         btnUnset.setText("Unset");
         btnUnset.addActionListener(new java.awt.event.ActionListener() {
+
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnUnsetActionPerformed(evt);
             }
@@ -85,32 +92,15 @@ public class BreakpointDialog extends JDialog {
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
-        
-        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        		.addComponent(lblSetUnset)
-        		.addComponent(txtAddress)
-        		.addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-        				.addComponent(btnUnset)
-        				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        				.addComponent(btnSet)
-        				.addContainerGap())
-        		);
-        layout.setVerticalGroup(layout.createSequentialGroup()
-        		.addContainerGap()
-        		.addComponent(lblSetUnset)
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addComponent(txtAddress,GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
-        		          GroupLayout.PREFERRED_SIZE)
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(btnUnset)
-        				.addComponent(btnSet))
-        		);
-        
+
+        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblSetUnset).addComponent(txtAddress).addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup().addComponent(btnUnset).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnSet).addContainerGap()));
+        layout.setVerticalGroup(layout.createSequentialGroup().addContainerGap().addComponent(lblSetUnset).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(txtAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
+                GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(btnUnset).addComponent(btnSet)));
+
 
         pack();
     }
-    
+
     private void btnSetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSetActionPerformed
         try {
             BreakpointDialog.adr = Integer.decode(txtAddress.getText());
@@ -121,7 +111,7 @@ public class BreakpointDialog extends JDialog {
         }
         BreakpointDialog.set = true;
         dispose();
-}//GEN-LAST:event_btnSetActionPerformed
+    }//GEN-LAST:event_btnSetActionPerformed
 
     private void btnUnsetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUnsetActionPerformed
         try {
@@ -132,14 +122,12 @@ public class BreakpointDialog extends JDialog {
             return;
         }
         BreakpointDialog.set = false;
-        dispose();        
+        dispose();
     }//GEN-LAST:event_btnUnsetActionPerformed
-    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private NiceButton btnSet;
     private NiceButton btnUnset;
     private JLabel lblSetUnset;
     private JTextField txtAddress;
     // End of variables declaration//GEN-END:variables
-    
 }

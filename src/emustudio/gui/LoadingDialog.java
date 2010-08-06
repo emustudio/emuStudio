@@ -19,7 +19,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.gui;
 
 import javax.swing.GroupLayout;
@@ -52,7 +51,7 @@ public class LoadingDialog extends JDialog {
         setResizable(false);
 
         lblLoading.setFont(lblLoading.getFont().deriveFont(lblLoading.getFont().getStyle() | java.awt.Font.BOLD));
-        lblLoading.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/motherboard-icon.gif"))); // NOI18N
+        lblLoading.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/motherboard-icon.gif"))); // NOI18N
         lblLoading.setText("Loading architecture, please wait...");
 
         lblWarning.setText("<html>If you see some errors during the loading, check your abstract scheme or plugins.");
@@ -60,22 +59,10 @@ public class LoadingDialog extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createSequentialGroup()
-            .addContainerGap()
-            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(lblWarning, GroupLayout.PREFERRED_SIZE, 338, GroupLayout.PREFERRED_SIZE)
-                .addComponent(lblLoading))
-            .addContainerGap());
+                layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblWarning, GroupLayout.PREFERRED_SIZE, 338, GroupLayout.PREFERRED_SIZE).addComponent(lblLoading)).addContainerGap());
         layout.setVerticalGroup(
-            layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblLoading)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblWarning)
-                .addContainerGap(lblWarning.getPreferredSize().height,lblWarning.getPreferredSize().height)
-                .addContainerGap());
+                layout.createSequentialGroup().addContainerGap().addComponent(lblLoading).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(lblWarning).addContainerGap(lblWarning.getPreferredSize().height, lblWarning.getPreferredSize().height).addContainerGap());
 
         pack();
     }
-
 }

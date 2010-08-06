@@ -19,7 +19,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.gui;
 
 import emustudio.architecture.ArchLoader;
@@ -60,29 +59,49 @@ import runtime.StaticDialogs;
  */
 @SuppressWarnings("serial")
 public class AddEditArchDialog extends JDialog implements KeyListener {
+
     private Schema schema;
     private boolean OOK = false;
     private DrawingPanel pan;
     private pluginModel empty_model = new pluginModel(null);
-    
     private boolean buttonSelected = false;
-    
+
     private class pluginModel implements ComboBoxModel {
+
         private String[] pluginNames;
         private Object selectedObject = null;
-        public pluginModel(String[] wt) { this.pluginNames = wt; }
+
+        public pluginModel(String[] wt) {
+            this.pluginNames = wt;
+        }
+
         @Override
-        public void setSelectedItem(Object anItem) { selectedObject = anItem; }
+        public void setSelectedItem(Object anItem) {
+            selectedObject = anItem;
+        }
+
         @Override
-        public Object getSelectedItem() { return selectedObject; }
+        public Object getSelectedItem() {
+            return selectedObject;
+        }
+
         @Override
-        public int getSize() { return (pluginNames == null) ? 0 : pluginNames.length; }
+        public int getSize() {
+            return (pluginNames == null) ? 0 : pluginNames.length;
+        }
+
         @Override
-        public Object getElementAt(int index) { return pluginNames[index]; }
+        public Object getElementAt(int index) {
+            return pluginNames[index];
+        }
+
         @Override
-        public void addListDataListener(ListDataListener l) {}
+        public void addListDataListener(ListDataListener l) {
+        }
+
         @Override
-        public void removeListDataListener(ListDataListener l) {}
+        public void removeListDataListener(ListDataListener l) {
+        }
     }
 
     private void constructor() {
@@ -97,9 +116,9 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         scrollScheme.getVerticalScrollBar().setUnitIncrement(10);
         pan.addMouseListener(pan);
         pan.addMouseMotionListener(pan);
-        addKeyListenerRecursively(this);        
+        addKeyListenerRecursively(this);
     }
-    
+
     /** Creates new form AddEditArchDialog */
     public AddEditArchDialog(JFrame parent, boolean modal) {
         super(parent, modal);
@@ -108,7 +127,7 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         cmbCompiler.setSelectedIndex(-1);
         this.setTitle("Add new architecture");
     }
-    
+
     public AddEditArchDialog(JDialog parent, boolean modal,
             Schema schema) {
         super(parent, modal);
@@ -122,29 +141,39 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
     }
 
     @Override
-    public void keyTyped(KeyEvent e) {}
+    public void keyTyped(KeyEvent e) {
+    }
+
     @Override
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ESCAPE)
+        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
             pan.cancelTasks();
+        }
     }
+
     @Override
-    public void keyReleased(KeyEvent e) {}
-    
+    public void keyReleased(KeyEvent e) {
+    }
+
     private void addKeyListenerRecursively(Component c) {
         c.addKeyListener((KeyListener) this);
         if (c instanceof Container) {
-            Container cont = (Container)c;
+            Container cont = (Container) c;
             Component[] children = cont.getComponents();
-            for(int i = 0; i < children.length; i++)
+            for (int i = 0; i < children.length; i++) {
                 addKeyListenerRecursively(children[i]);
+            }
         }
     }
-    
-    public boolean getOK() { return OOK; }
-    
-    public Schema getSchema() { return schema; }
-    
+
+    public boolean getOK() {
+        return OOK;
+    }
+
+    public Schema getSchema() {
+        return schema;
+    }
+
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -180,18 +209,20 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         toolBar.setRollover(true);
 
         grpElements.add(btnCPU);
-        btnCPU.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/cpu.png"))); // NOI18N
+        btnCPU.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/cpu.png"))); // NOI18N
         btnCPU.setFocusable(false);
         btnCPU.setToolTipText("CPU (processor)");
         btnCPU.setHorizontalTextPosition(SwingConstants.CENTER);
         btnCPU.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnCPU.addItemListener(new java.awt.event.ItemListener() {
+
             @Override
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnCPUItemStateChanged(evt);
             }
         });
         btnCPU.addActionListener(new java.awt.event.ActionListener() {
+
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCPUActionPerformed(evt);
@@ -200,18 +231,20 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         toolBar.add(btnCPU);
 
         grpElements.add(btnMemory);
-        btnMemory.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/ram.png"))); // NOI18N
+        btnMemory.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/ram.png"))); // NOI18N
         btnMemory.setFocusable(false);
         btnMemory.setToolTipText("Operating memory");
         btnMemory.setHorizontalTextPosition(SwingConstants.CENTER);
         btnMemory.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnMemory.addItemListener(new java.awt.event.ItemListener() {
+
             @Override
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnMemoryItemStateChanged(evt);
             }
         });
         btnMemory.addActionListener(new java.awt.event.ActionListener() {
+
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnMemoryActionPerformed(evt);
@@ -220,18 +253,20 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         toolBar.add(btnMemory);
 
         grpElements.add(btnDevice);
-        btnDevice.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/input-gaming.png"))); // NOI18N
+        btnDevice.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/input-gaming.png"))); // NOI18N
         btnDevice.setFocusable(false);
         btnDevice.setToolTipText("Peripheral device");
         btnDevice.setHorizontalTextPosition(SwingConstants.CENTER);
         btnDevice.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnDevice.addItemListener(new java.awt.event.ItemListener() {
+
             @Override
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnDeviceItemStateChanged(evt);
             }
         });
         btnDevice.addActionListener(new java.awt.event.ActionListener() {
+
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnDeviceActionPerformed(evt);
@@ -247,12 +282,14 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         btnConnect.setHorizontalTextPosition(SwingConstants.CENTER);
         btnConnect.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnConnect.addItemListener(new java.awt.event.ItemListener() {
+
             @Override
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnConnectItemStateChanged(evt);
             }
         });
         btnConnect.addActionListener(new java.awt.event.ActionListener() {
+
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnConnectActionPerformed(evt);
@@ -261,18 +298,20 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         toolBar.add(btnConnect);
 
         grpElements.add(btnDelete);
-        btnDelete.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/edit-delete.png"))); // NOI18N
+        btnDelete.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/edit-delete.png"))); // NOI18N
         btnDelete.setToolTipText("Delete element/line");
         btnDelete.setFocusable(false);
         btnDelete.setHorizontalTextPosition(SwingConstants.CENTER);
         btnDelete.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnDelete.addItemListener(new java.awt.event.ItemListener() {
+
             @Override
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnDeleteItemStateChanged(evt);
             }
         });
         btnDelete.addActionListener(new java.awt.event.ActionListener() {
+
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnDeleteActionPerformed(evt);
@@ -285,6 +324,7 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         panelSelectElement.setPreferredSize(new java.awt.Dimension(250, 44));
 
         cmbElement.addActionListener(new java.awt.event.ActionListener() {
+
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbElementActionPerformed(evt);
@@ -294,23 +334,16 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         GroupLayout panelSelectElementLayout = new GroupLayout(panelSelectElement);
         panelSelectElement.setLayout(panelSelectElementLayout);
         panelSelectElementLayout.setHorizontalGroup(
-            panelSelectElementLayout.createSequentialGroup()
-                        .addContainerGap()
-            			.addComponent(cmbElement, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            			.addContainerGap()
-        );
+                panelSelectElementLayout.createSequentialGroup().addContainerGap().addComponent(cmbElement, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addContainerGap());
         panelSelectElementLayout.setVerticalGroup(
-            panelSelectElementLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(cmbElement)
-                .addContainerGap()
-        );
+                panelSelectElementLayout.createSequentialGroup().addContainerGap().addComponent(cmbElement).addContainerGap());
 
         toolBar.add(panelSelectElement);
 
         chkUseGrid.setSelected(true);
         chkUseGrid.setText("Use grid");
         chkUseGrid.addActionListener(new java.awt.event.ActionListener() {
+
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 chkUseGridActionPerformed(evt);
@@ -324,6 +357,7 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
         sliderGridGap.setToolTipText("Grid gap");
         sliderGridGap.setValue(30);
         sliderGridGap.addChangeListener(new javax.swing.event.ChangeListener() {
+
             @Override
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 sliderGridGapStateChanged(evt);
@@ -332,6 +366,7 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
 
         btnOK.setText("OK");
         btnOK.addActionListener(new java.awt.event.ActionListener() {
+
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnOKActionPerformed(evt);
@@ -342,6 +377,7 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
 
         btnBrowse.setText("Browse...");
         btnBrowse.addActionListener(new java.awt.event.ActionListener() {
+
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnBrowseActionPerformed(evt);
@@ -352,204 +388,185 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
-        
+
         layout.setHorizontalGroup(
-        		layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        		.addComponent(toolBar)
-        		.addComponent(scrollScheme,GroupLayout.PREFERRED_SIZE, 700, Short.MAX_VALUE)
-        		.addGroup(layout.createSequentialGroup()
-        				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-        						.addComponent(chkUseGrid)
-        						.addComponent(lblCompiler)
-        						.addComponent(lblArchName))
-        				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING,true)
-        						.addComponent(sliderGridGap,GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        						.addComponent(cmbCompiler,GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        						.addGroup(layout.createSequentialGroup()
-        								.addComponent(txtArchName)
-        								.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        								.addComponent(btnBrowse))))
-        		.addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-   						.addComponent(btnOK,GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
-   					          GroupLayout.PREFERRED_SIZE)));        
-        layout.setVerticalGroup(layout.createSequentialGroup()
-        		.addComponent(toolBar,GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
-        		          GroupLayout.PREFERRED_SIZE)
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addComponent(scrollScheme,GroupLayout.PREFERRED_SIZE, 300, Short.MAX_VALUE)
-        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-        				.addComponent(chkUseGrid)
-        				.addComponent(sliderGridGap))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblCompiler)
-        				.addComponent(cmbCompiler))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblArchName)
-        				.addComponent(txtArchName)
-        				.addComponent(btnBrowse))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-        		.addComponent(btnOK,GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
-        		          GroupLayout.PREFERRED_SIZE)
-        		.addContainerGap());
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(toolBar).addComponent(scrollScheme, GroupLayout.PREFERRED_SIZE, 700, Short.MAX_VALUE).addGroup(layout.createSequentialGroup().addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING).addComponent(chkUseGrid).addComponent(lblCompiler).addComponent(lblArchName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING, true).addComponent(sliderGridGap, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(cmbCompiler, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addGroup(layout.createSequentialGroup().addComponent(txtArchName).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnBrowse)))).addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup().addComponent(btnOK, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
+                GroupLayout.PREFERRED_SIZE)));
+        layout.setVerticalGroup(layout.createSequentialGroup().addComponent(toolBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
+                GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(scrollScheme, GroupLayout.PREFERRED_SIZE, 300, Short.MAX_VALUE).addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER).addComponent(chkUseGrid).addComponent(sliderGridGap)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblCompiler).addComponent(cmbCompiler)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblArchName).addComponent(txtArchName).addComponent(btnBrowse)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(btnOK, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
+                GroupLayout.PREFERRED_SIZE).addContainerGap());
         pack();
     }
 
-private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOKActionPerformed
-    String s = txtArchName.getText();
-    
-    // todo: check name for legal file name
-    if (s.equals("")) {
-        StaticDialogs.showErrorMessage("Architecture name can not be empty!");
-        txtArchName.grabFocus();
-        return;
-    }
-    schema.setConfigName(s);
-    
-    // check for correctness of the schema
-    if (schema.getCpuElement() == null || schema.getMemoryElement() == null) {
-        StaticDialogs.showErrorMessage("Abstract schema must contain CPU and"
-                + " MEMORY elements!");
-        return;
-    }
-    // really??
-    if (cmbCompiler.getSelectedIndex() == -1) {
-        StaticDialogs.showErrorMessage("Compiler has to be selected!");
-        cmbCompiler.grabFocus();
-        return;
-    }
-    schema.setCompilerName(String.valueOf(cmbCompiler.getSelectedItem()));
-    OOK = true;
-    dispose();
-}//GEN-LAST:event_btnOKActionPerformed
+    private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOKActionPerformed
+        String s = txtArchName.getText();
 
-private void chkUseGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkUseGridActionPerformed
-    pan.setUseGrid(chkUseGrid.isSelected());
-    sliderGridGap.setEnabled(chkUseGrid.isSelected());
-}//GEN-LAST:event_chkUseGridActionPerformed
+        // todo: check name for legal file name
+        if (s.equals("")) {
+            StaticDialogs.showErrorMessage("Architecture name can not be empty!");
+            txtArchName.grabFocus();
+            return;
+        }
+        schema.setConfigName(s);
 
-private void sliderGridGapStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderGridGapStateChanged
-    pan.setGridGap(sliderGridGap.getValue());
-}//GEN-LAST:event_sliderGridGapStateChanged
+        // check for correctness of the schema
+        if (schema.getCpuElement() == null || schema.getMemoryElement() == null) {
+            StaticDialogs.showErrorMessage("Abstract schema must contain CPU and"
+                    + " MEMORY elements!");
+            return;
+        }
+        // really??
+        if (cmbCompiler.getSelectedIndex() == -1) {
+            StaticDialogs.showErrorMessage("Compiler has to be selected!");
+            cmbCompiler.grabFocus();
+            return;
+        }
+        schema.setCompilerName(String.valueOf(cmbCompiler.getSelectedItem()));
+        OOK = true;
+        dispose();
+    }//GEN-LAST:event_btnOKActionPerformed
 
-private void btnCPUActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCPUActionPerformed
-    pan.cancelTasks();
-    pan.setTool(drawTool.nothing, "");
-    if (buttonSelected) {
-        grpElements.clearSelection();
-        cmbElement.setModel(empty_model);
-        btnCPU.setSelected(false);
-        return;
-    }
-    buttonSelected = true;
-    String[] cpus = ArchLoader.getAllNames(ArchLoader.cpusDir, ".jar");
-    cmbElement.setModel(new pluginModel(cpus));
-    try {
-        cmbElement.setSelectedIndex(0);
-    } catch(IllegalArgumentException e) {}
-}//GEN-LAST:event_btnCPUActionPerformed
+    private void chkUseGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkUseGridActionPerformed
+        pan.setUseGrid(chkUseGrid.isSelected());
+        sliderGridGap.setEnabled(chkUseGrid.isSelected());
+    }//GEN-LAST:event_chkUseGridActionPerformed
 
-private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMemoryActionPerformed
-    pan.cancelTasks();
-    pan.setTool(drawTool.nothing, "");
-    if (buttonSelected) {
-        cmbElement.setModel(empty_model);
-        grpElements.clearSelection();
-        btnMemory.setSelected(false);
-        return;
-    }
-    buttonSelected = true;
-    String[] mems = ArchLoader.getAllNames(ArchLoader.memoriesDir, ".jar");
-    cmbElement.setModel(new pluginModel(mems));
-    try {
-        cmbElement.setSelectedIndex(0);
-    } catch(IllegalArgumentException e) {}
-}//GEN-LAST:event_btnMemoryActionPerformed
+    private void sliderGridGapStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderGridGapStateChanged
+        pan.setGridGap(sliderGridGap.getValue());
+    }//GEN-LAST:event_sliderGridGapStateChanged
 
-private void btnDeviceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeviceActionPerformed
-    pan.cancelTasks();
-    pan.setTool(drawTool.nothing, "");
-    if (buttonSelected) {
-        cmbElement.setModel(empty_model);
-        grpElements.clearSelection();
-        btnDevice.setSelected(false);
-        return;
-    }
-    buttonSelected = true;
-    String[] devs = ArchLoader.getAllNames(ArchLoader.devicesDir, ".jar");
-    cmbElement.setModel(new pluginModel(devs));
-    try {
-        cmbElement.setSelectedIndex(0);
-    } catch(IllegalArgumentException e) {}
-}//GEN-LAST:event_btnDeviceActionPerformed
-
-private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectActionPerformed
-    pan.cancelTasks();
-    pan.setTool(drawTool.nothing, "");
-    cmbElement.setModel(empty_model);
-    if (buttonSelected) {
-        grpElements.clearSelection();
-        btnConnect.setSelected(false);
-        return;
-    }
-    pan.setTool(drawTool.connectLine, "");
-    buttonSelected = true;
-}//GEN-LAST:event_btnConnectActionPerformed
-
-private void cmbElementActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbElementActionPerformed
-    if (cmbElement.getSelectedIndex() == -1) {
+    private void btnCPUActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCPUActionPerformed
         pan.cancelTasks();
-        return;
-    }
-    String t = (String)cmbElement.getSelectedItem();
-    if (btnCPU.isSelected()) pan.setTool(drawTool.shapeCPU, t);
-    else if (btnMemory.isSelected()) pan.setTool(drawTool.shapeMemory, t);
-    else if (btnDevice.isSelected()) pan.setTool(drawTool.shapeDevice, t);
-}//GEN-LAST:event_cmbElementActionPerformed
+        pan.setTool(drawTool.nothing, "");
+        if (buttonSelected) {
+            grpElements.clearSelection();
+            cmbElement.setModel(empty_model);
+            btnCPU.setSelected(false);
+            return;
+        }
+        buttonSelected = true;
+        String[] cpus = ArchLoader.getAllNames(ArchLoader.cpusDir, ".jar");
+        cmbElement.setModel(new pluginModel(cpus));
+        try {
+            cmbElement.setSelectedIndex(0);
+        } catch (IllegalArgumentException e) {
+        }
+    }//GEN-LAST:event_btnCPUActionPerformed
 
-private void btnCPUItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnCPUItemStateChanged
-    if (!btnCPU.isSelected()) buttonSelected = false;
-}//GEN-LAST:event_btnCPUItemStateChanged
+    private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMemoryActionPerformed
+        pan.cancelTasks();
+        pan.setTool(drawTool.nothing, "");
+        if (buttonSelected) {
+            cmbElement.setModel(empty_model);
+            grpElements.clearSelection();
+            btnMemory.setSelected(false);
+            return;
+        }
+        buttonSelected = true;
+        String[] mems = ArchLoader.getAllNames(ArchLoader.memoriesDir, ".jar");
+        cmbElement.setModel(new pluginModel(mems));
+        try {
+            cmbElement.setSelectedIndex(0);
+        } catch (IllegalArgumentException e) {
+        }
+    }//GEN-LAST:event_btnMemoryActionPerformed
 
-private void btnMemoryItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnMemoryItemStateChanged
-    if (!btnMemory.isSelected()) buttonSelected = false;
-}//GEN-LAST:event_btnMemoryItemStateChanged
+    private void btnDeviceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeviceActionPerformed
+        pan.cancelTasks();
+        pan.setTool(drawTool.nothing, "");
+        if (buttonSelected) {
+            cmbElement.setModel(empty_model);
+            grpElements.clearSelection();
+            btnDevice.setSelected(false);
+            return;
+        }
+        buttonSelected = true;
+        String[] devs = ArchLoader.getAllNames(ArchLoader.devicesDir, ".jar");
+        cmbElement.setModel(new pluginModel(devs));
+        try {
+            cmbElement.setSelectedIndex(0);
+        } catch (IllegalArgumentException e) {
+        }
+    }//GEN-LAST:event_btnDeviceActionPerformed
 
-private void btnDeviceItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnDeviceItemStateChanged
-    if (!btnDevice.isSelected()) buttonSelected = false;
-}//GEN-LAST:event_btnDeviceItemStateChanged
+    private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConnectActionPerformed
+        pan.cancelTasks();
+        pan.setTool(drawTool.nothing, "");
+        cmbElement.setModel(empty_model);
+        if (buttonSelected) {
+            grpElements.clearSelection();
+            btnConnect.setSelected(false);
+            return;
+        }
+        pan.setTool(drawTool.connectLine, "");
+        buttonSelected = true;
+    }//GEN-LAST:event_btnConnectActionPerformed
 
-private void btnConnectItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnConnectItemStateChanged
-    if (!btnConnect.isSelected()) buttonSelected = false;
-}//GEN-LAST:event_btnConnectItemStateChanged
+    private void cmbElementActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbElementActionPerformed
+        if (cmbElement.getSelectedIndex() == -1) {
+            pan.cancelTasks();
+            return;
+        }
+        String t = (String) cmbElement.getSelectedItem();
+        if (btnCPU.isSelected()) {
+            pan.setTool(drawTool.shapeCPU, t);
+        } else if (btnMemory.isSelected()) {
+            pan.setTool(drawTool.shapeMemory, t);
+        } else if (btnDevice.isSelected()) {
+            pan.setTool(drawTool.shapeDevice, t);
+        }
+    }//GEN-LAST:event_cmbElementActionPerformed
 
-private void btnDeleteItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnDeleteItemStateChanged
-    if (!btnDelete.isSelected()) buttonSelected = false;
-}//GEN-LAST:event_btnDeleteItemStateChanged
+    private void btnCPUItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnCPUItemStateChanged
+        if (!btnCPU.isSelected()) {
+            buttonSelected = false;
+        }
+    }//GEN-LAST:event_btnCPUItemStateChanged
 
-private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteActionPerformed
-    pan.cancelTasks();
-    pan.setTool(drawTool.nothing, "");
-    cmbElement.setModel(empty_model);
-    if (buttonSelected) {
-        grpElements.clearSelection();
-        btnConnect.setSelected(false);
-        return;
-    }
-    pan.setTool(drawTool.delete, "");
-    buttonSelected = true;
-}//GEN-LAST:event_btnDeleteActionPerformed
+    private void btnMemoryItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnMemoryItemStateChanged
+        if (!btnMemory.isSelected()) {
+            buttonSelected = false;
+        }
+    }//GEN-LAST:event_btnMemoryItemStateChanged
 
-private void btnBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBrowseActionPerformed
-    OpenArchDialog d = new OpenArchDialog(this,true);
-    d.setVisible(true);
-    if (d.getOK())
-        txtArchName.setText(d.getArchName());
-}//GEN-LAST:event_btnBrowseActionPerformed
+    private void btnDeviceItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnDeviceItemStateChanged
+        if (!btnDevice.isSelected()) {
+            buttonSelected = false;
+        }
+    }//GEN-LAST:event_btnDeviceItemStateChanged
 
+    private void btnConnectItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnConnectItemStateChanged
+        if (!btnConnect.isSelected()) {
+            buttonSelected = false;
+        }
+    }//GEN-LAST:event_btnConnectItemStateChanged
 
+    private void btnDeleteItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnDeleteItemStateChanged
+        if (!btnDelete.isSelected()) {
+            buttonSelected = false;
+        }
+    }//GEN-LAST:event_btnDeleteItemStateChanged
+
+    private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteActionPerformed
+        pan.cancelTasks();
+        pan.setTool(drawTool.nothing, "");
+        cmbElement.setModel(empty_model);
+        if (buttonSelected) {
+            grpElements.clearSelection();
+            btnConnect.setSelected(false);
+            return;
+        }
+        pan.setTool(drawTool.delete, "");
+        buttonSelected = true;
+    }//GEN-LAST:event_btnDeleteActionPerformed
+
+    private void btnBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBrowseActionPerformed
+        OpenArchDialog d = new OpenArchDialog(this, true);
+        d.setVisible(true);
+        if (d.getOK()) {
+            txtArchName.setText(d.getArchName());
+        }
+    }//GEN-LAST:event_btnBrowseActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     NiceButton btnBrowse;
     JToggleButton btnCPU;
@@ -565,5 +582,4 @@ private void btnBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
     JSlider sliderGridGap;
     JTextField txtArchName;
     // End of variables declaration//GEN-END:variables
-
 }

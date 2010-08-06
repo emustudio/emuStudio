@@ -19,8 +19,8 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.gui;
+
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
@@ -45,10 +45,11 @@ import runtime.StaticDialogs;
  */
 @SuppressWarnings("serial")
 public class OpenArchDialog extends JDialog {
+
     private String archName;
     private boolean OOK = false;
     private ArchListModel amodel;
-        
+
     /** Creates new form OpenArchDialog */
     public OpenArchDialog() {
         super();
@@ -58,9 +59,9 @@ public class OpenArchDialog extends JDialog {
         this.setModal(true);
         this.setLocationRelativeTo(null);
     }
-    
+
     public OpenArchDialog(JDialog parent, boolean modal) {
-        super(parent,modal);
+        super(parent, modal);
         initComponents();
         amodel = new ArchListModel();
         lstArchNames.setModel(amodel);
@@ -73,33 +74,43 @@ public class OpenArchDialog extends JDialog {
         btnNew.setVisible(false);
         this.setLocationRelativeTo(parent);
     }
-    
+
     // existing configurations list model
     private class ArchListModel extends AbstractListModel {
+
         private String[] allModels;
+
         public ArchListModel() {
-            allModels = ArchLoader
-                    .getAllNames(ArchLoader.configsDir,".conf");
+            allModels = ArchLoader.getAllNames(ArchLoader.configsDir, ".conf");
         }
+
         public Object getElementAt(int index) {
             return allModels[index];
         }
+
         public int getSize() {
-            if (allModels != null) return allModels.length;
-            else return 0;
+            if (allModels != null) {
+                return allModels.length;
+            } else {
+                return 0;
+            }
         }
+
         public void update() {
-            allModels = ArchLoader
-                    .getAllNames(ArchLoader.configsDir,
+            allModels = ArchLoader.getAllNames(ArchLoader.configsDir,
                     ".conf");
             this.fireContentsChanged(this, -1, -1);
         }
     }
-    
-    public boolean getOK() { return OOK; }
-    
-    public String getArchName() { return archName; }
-    
+
+    public boolean getOK() {
+        return OOK;
+    }
+
+    public String getArchName() {
+        return archName;
+    }
+
     private void initComponents() {
         NiceButton btnOpen = new NiceButton();
         JLabel lblChoose = new JLabel();
@@ -116,6 +127,7 @@ public class OpenArchDialog extends JDialog {
 
         btnOpen.setText("Open");
         btnOpen.addActionListener(new java.awt.event.ActionListener() {
+
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnOpenActionPerformed(evt);
             }
@@ -124,25 +136,36 @@ public class OpenArchDialog extends JDialog {
         lblChoose.setText("Choose virtual architecture to open:");
 
         scrollConfigs.setViewportView(lstArchNames);
-        
-        lstArchNames.addMouseListener(new MouseListener(){
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2)
-					btnOpenActionPerformed(null);
-			}
-			@Override
-			public void mouseEntered(MouseEvent e) {}
-			@Override
-			public void mouseExited(MouseEvent e) {}
-			@Override
-			public void mousePressed(MouseEvent e) {}
-			@Override
-			public void mouseReleased(MouseEvent e) {}
+
+        lstArchNames.addMouseListener(new MouseListener() {
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    btnOpenActionPerformed(null);
+                }
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+            }
         });
 
         btnEdit.setText("Edit...");
         btnEdit.addActionListener(new java.awt.event.ActionListener() {
+
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnEditActionPerformed(evt);
             }
@@ -150,6 +173,7 @@ public class OpenArchDialog extends JDialog {
 
         btnPreview.setText("Preview...");
         btnPreview.addActionListener(new java.awt.event.ActionListener() {
+
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnPreviewActionPerformed(evt);
             }
@@ -157,6 +181,7 @@ public class OpenArchDialog extends JDialog {
 
         btnDelete.setText("Delete");
         btnDelete.addActionListener(new java.awt.event.ActionListener() {
+
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnDeleteActionPerformed(evt);
             }
@@ -164,6 +189,7 @@ public class OpenArchDialog extends JDialog {
 
         btnNew.setText("New...");
         btnNew.addActionListener(new java.awt.event.ActionListener() {
+
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnNewActionPerformed(evt);
             }
@@ -171,36 +197,9 @@ public class OpenArchDialog extends JDialog {
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
-        
-        layout.setHorizontalGroup(layout.createSequentialGroup()
-        		.addContainerGap()
-        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        				.addComponent(lblChoose)
-        				.addComponent(scrollConfigs)
-        				.addGroup(GroupLayout.Alignment.TRAILING,layout.createSequentialGroup()
-        						.addComponent(btnNew)
-        						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        						.addComponent(btnEdit)
-        						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        						.addComponent(btnDelete)
-        						.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-        						.addComponent(btnPreview)
-        						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        						.addComponent(btnOpen)))
-        				.addContainerGap());
-        layout.setVerticalGroup(layout.createSequentialGroup()
-        		.addContainerGap()
-        		.addComponent(lblChoose)
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addComponent(scrollConfigs)
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(btnNew)
-        				.addComponent(btnEdit)
-        				.addComponent(btnDelete)
-        				.addComponent(btnPreview)
-        				.addComponent(btnOpen))
-        		.addContainerGap());
+
+        layout.setHorizontalGroup(layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblChoose).addComponent(scrollConfigs).addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup().addComponent(btnNew).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnEdit).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnDelete).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(btnPreview).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnOpen))).addContainerGap());
+        layout.setVerticalGroup(layout.createSequentialGroup().addContainerGap().addComponent(lblChoose).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(scrollConfigs).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(btnNew).addComponent(btnEdit).addComponent(btnDelete).addComponent(btnPreview).addComponent(btnOpen)).addContainerGap());
         pack();
     }
 
@@ -209,65 +208,69 @@ public class OpenArchDialog extends JDialog {
             StaticDialogs.showErrorMessage("Virtual architecture has to be selected!");
             return;
         }
-        archName = (String)lstArchNames.getSelectedValue();
+        archName = (String) lstArchNames.getSelectedValue();
         OOK = true;
         dispose();
-}//GEN-LAST:event_btnOpenActionPerformed
+    }//GEN-LAST:event_btnOpenActionPerformed
 
-private void btnEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditActionPerformed
-    if (lstArchNames.getSelectedIndex() == -1) {
-        StaticDialogs.showErrorMessage("Virtual architecture has to be selected!");
-        return;
-    }
-    archName = (String)lstArchNames.getSelectedValue();
-    Schema s = ArchLoader.loadSchema(archName);
-    if (s == null) return;
-    AddEditArchDialog d = new AddEditArchDialog(this,true,s);
-    d.setVisible(true);
-    if (d.getOK()) ArchLoader.saveSchema(d.getSchema());
-}//GEN-LAST:event_btnEditActionPerformed
+    private void btnEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditActionPerformed
+        if (lstArchNames.getSelectedIndex() == -1) {
+            StaticDialogs.showErrorMessage("Virtual architecture has to be selected!");
+            return;
+        }
+        archName = (String) lstArchNames.getSelectedValue();
+        Schema s = ArchLoader.loadSchema(archName);
+        if (s == null) {
+            return;
+        }
+        AddEditArchDialog d = new AddEditArchDialog(this, true, s);
+        d.setVisible(true);
+        if (d.getOK()) {
+            ArchLoader.saveSchema(d.getSchema());
+        }
+    }//GEN-LAST:event_btnEditActionPerformed
 
-private void btnPreviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPreviewActionPerformed
-    if (lstArchNames.getSelectedIndex() == -1) {
-        StaticDialogs.showErrorMessage("Virtual architecture has to be selected!");
-        return;
-    }
-    archName = (String)lstArchNames.getSelectedValue();
-    Schema s = ArchLoader.loadSchema(archName);
-    if (s == null) return;
-    new ArchPreviewDialog(this,true,s).setVisible(true);
-}//GEN-LAST:event_btnPreviewActionPerformed
+    private void btnPreviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPreviewActionPerformed
+        if (lstArchNames.getSelectedIndex() == -1) {
+            StaticDialogs.showErrorMessage("Virtual architecture has to be selected!");
+            return;
+        }
+        archName = (String) lstArchNames.getSelectedValue();
+        Schema s = ArchLoader.loadSchema(archName);
+        if (s == null) {
+            return;
+        }
+        new ArchPreviewDialog(this, true, s).setVisible(true);
+    }//GEN-LAST:event_btnPreviewActionPerformed
 
-private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteActionPerformed
-    if (lstArchNames.getSelectedIndex() == -1) {
-        StaticDialogs.showErrorMessage("Virtual architecture has to be selected!");
-        return;
-    }
-    int r = JOptionPane.showConfirmDialog(this, "Do you really want to delete"
-            + " selected architecture?", "Delete architecture", 
-            JOptionPane.YES_NO_OPTION);
-    archName = (String)lstArchNames.getSelectedValue();
-    if ((r == JOptionPane.YES_OPTION) && ArchLoader.deleteConfig(archName)) {
-        amodel.update();
-        archName = "";
-        lstArchNames.setSelectedIndex(-1);
-    }
-}//GEN-LAST:event_btnDeleteActionPerformed
+    private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteActionPerformed
+        if (lstArchNames.getSelectedIndex() == -1) {
+            StaticDialogs.showErrorMessage("Virtual architecture has to be selected!");
+            return;
+        }
+        int r = JOptionPane.showConfirmDialog(this, "Do you really want to delete"
+                + " selected architecture?", "Delete architecture",
+                JOptionPane.YES_NO_OPTION);
+        archName = (String) lstArchNames.getSelectedValue();
+        if ((r == JOptionPane.YES_OPTION) && ArchLoader.deleteConfig(archName)) {
+            amodel.update();
+            archName = "";
+            lstArchNames.setSelectedIndex(-1);
+        }
+    }//GEN-LAST:event_btnDeleteActionPerformed
 
-private void btnNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewActionPerformed
-    AddEditArchDialog di = new AddEditArchDialog(null, true);
-    di.setVisible(true);
-    if (di.getOK()) {
-        ArchLoader.saveSchema(di.getSchema());
-        amodel.update();
-    }
-}//GEN-LAST:event_btnNewActionPerformed
-        
+    private void btnNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewActionPerformed
+        AddEditArchDialog di = new AddEditArchDialog(null, true);
+        di.setVisible(true);
+        if (di.getOK()) {
+            ArchLoader.saveSchema(di.getSchema());
+            amodel.update();
+        }
+    }//GEN-LAST:event_btnNewActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private NiceButton btnDelete;
     private NiceButton btnEdit;
     private NiceButton btnNew;
     private JList lstArchNames;
     // End of variables declaration//GEN-END:variables
-    
 }

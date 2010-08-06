@@ -37,7 +37,7 @@ import emustudio.main.Main;
 @SuppressWarnings("serial")
 public class AutoDialog extends JDialog {
 
-	public AutoDialog() {
+    public AutoDialog() {
         super();
         initComponents();
         this.setLocationRelativeTo(null);
@@ -52,53 +52,39 @@ public class AutoDialog extends JDialog {
         setResizable(false);
 
         lblPerforming.setFont(lblPerforming.getFont().deriveFont(lblPerforming.getFont().getStyle() | java.awt.Font.BOLD));
-        lblPerforming.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/motherboard-icon.gif"))); // NOI18N
+        lblPerforming.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/motherboard-icon.gif"))); // NOI18N
         lblPerforming.setText("Performing emulation, please wait...");
 
         lblAction.setText("Initializing...");
-        
+
         btnStop.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				btnStopActionPerformed(e);
-			}        	
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                btnStopActionPerformed(e);
+            }
         });
         btnStop.setEnabled(false);
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createSequentialGroup()
-            .addContainerGap()
-            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(lblAction, GroupLayout.PREFERRED_SIZE, 338, GroupLayout.PREFERRED_SIZE)
-                .addComponent(lblPerforming)
-                .addGroup(GroupLayout.Alignment.TRAILING,layout.createSequentialGroup()
-                	.addComponent(btnStop)))
-            .addContainerGap());
+                layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblAction, GroupLayout.PREFERRED_SIZE, 338, GroupLayout.PREFERRED_SIZE).addComponent(lblPerforming).addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup().addComponent(btnStop))).addContainerGap());
         layout.setVerticalGroup(
-            layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblPerforming)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblAction)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnStop)
-                .addContainerGap());
+                layout.createSequentialGroup().addContainerGap().addComponent(lblPerforming).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(lblAction).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnStop).addContainerGap());
 
         pack();
     }
-    
+
     public void setAction(String action, boolean enableButton) {
-    	lblAction.setText(action);
-    	lblAction.repaint();
-  		btnStop.setEnabled(enableButton);
+        lblAction.setText(action);
+        lblAction.repaint();
+        btnStop.setEnabled(enableButton);
     }
 
     private void btnStopActionPerformed(ActionEvent e) {
-    	Main.currentArch.getComputer().getCPU().stop();
+        Main.currentArch.getComputer().getCPU().stop();
     }
-    
     private JLabel lblAction;
     private JButton btnStop;
 }

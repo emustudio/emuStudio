@@ -20,7 +20,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.gui;
 
 import emustudio.gui.utils.FindText;
@@ -50,89 +49,121 @@ import runtime.StaticDialogs;
  */
 @SuppressWarnings("serial")
 public class FindDialog extends javax.swing.JDialog {
+
     private static ArrayList<String> list = new ArrayList<String>();
     private static ArrayList<String> rlist = new ArrayList<String>();
     private JTextPane textPane;
-    
+
     private class CMBModel implements ComboBoxModel {
+
         private int in = -1;
         private ArrayList<String> clist;
-        
+
         public CMBModel(ArrayList<String> clist) {
             this.clist = clist;
         }
+
+        @Override
         public void setSelectedItem(Object anItem) {
             in = clist.indexOf(anItem);
         }
+
+        @Override
         public Object getSelectedItem() {
-            if (in != -1) return clist.get(in);
-            else return null;
+            if (in != -1) {
+                return clist.get(in);
+            } else {
+                return null;
+            }
         }
-        public int getSize() { return clist.size(); }
+
+        @Override
+        public int getSize() {
+            return clist.size();
+        }
+
+        @Override
         public Object getElementAt(int index) {
             return clist.get(index);
         }
-        public void addListDataListener(ListDataListener l) {}
-        public void removeListDataListener(ListDataListener l) {}
+
+        @Override
+        public void addListDataListener(ListDataListener l) {
+        }
+
+        @Override
+        public void removeListDataListener(ListDataListener l) {
+        }
     }
-    
+
     /** Creates new form FindDialog */
     public FindDialog(StudioFrame parent, boolean modal, JTextPane pane) {
         super(parent, modal);
         this.textPane = pane;
         initComponents();
-        
-        switch(FindText.getInstance().getDirection()) {
-            case FindText.DIRECTION_TO_END: 
-                endRadio.setSelected(true); break;
+
+        switch (FindText.getInstance().getDirection()) {
+            case FindText.DIRECTION_TO_END:
+                endRadio.setSelected(true);
+                break;
             case FindText.DIRECTION_TO_START:
-                startRadio.setSelected(true); break;
+                startRadio.setSelected(true);
+                break;
             case FindText.DIRECTION_ALL:
-                allRadio.setSelected(true); break;
+                allRadio.setSelected(true);
+                break;
         }
         caseCheck.setSelected(FindText.getInstance().isCaseSensitive());
         wholeCheck.setSelected(FindText.getInstance().isWholeWords());
-        
+
         cmbSearch.setModel(new CMBModel(list));
         cmbReplace.setModel(new CMBModel(rlist));
-        
+
         String str = FindText.getInstance().getFindExpr();
         String rstr = FindText.getInstance().replacement;
-        for (int i = 0; i < list.size(); i++)
-            if (((String)list.get(i)).equals(str)) {
+        for (int i = 0; i < list.size(); i++) {
+            if (((String) list.get(i)).equals(str)) {
                 cmbSearch.setSelectedIndex(i);
                 cmbSearch.getEditor().setItem(str);
                 break;
             }
-        for (int i = 0; i < rlist.size(); i++)
-            if (((String)rlist.get(i)).equals(rstr)) {
+        }
+        for (int i = 0; i < rlist.size(); i++) {
+            if (((String) rlist.get(i)).equals(rstr)) {
                 cmbReplace.setSelectedIndex(i);
                 cmbReplace.getEditor().setItem(rstr);
                 break;
             }
+        }
         this.setLocationRelativeTo(parent);
     }
-    
+
     private String saveGUI() {
-        if (endRadio.isSelected()) 
+        if (endRadio.isSelected()) {
             FindText.getInstance().setDirection(FindText.DIRECTION_TO_END);
-        else if (startRadio.isSelected())
+        } else if (startRadio.isSelected()) {
             FindText.getInstance().setDirection(FindText.DIRECTION_TO_START);
-        else FindText.getInstance().setDirection(FindText.DIRECTION_ALL);
-        
+        } else {
+            FindText.getInstance().setDirection(FindText.DIRECTION_ALL);
+        }
+
         byte checks = 0;
-        if (caseCheck.isSelected()) checks |= FindText.CASE_SENSITIVE;
-        if (wholeCheck.isSelected()) checks |= FindText.WHOLE_WORDS;
+        if (caseCheck.isSelected()) {
+            checks |= FindText.CASE_SENSITIVE;
+        }
+        if (wholeCheck.isSelected()) {
+            checks |= FindText.WHOLE_WORDS;
+        }
         FindText.getInstance().setParams(checks);
-        
-        String str = (String)cmbSearch.getEditor().getItem();
+
+        String str = (String) cmbSearch.getEditor().getItem();
         if (!str.equals("") && !list.contains(str)) {
             list.add(str);
             cmbSearch.setModel(new CMBModel(list));
             cmbSearch.setSelectedIndex(list.indexOf(str));
             cmbSearch.getEditor().setItem(str);
         }
-        String rstr = (String)cmbReplace.getEditor().getItem();
+        String rstr = (String) cmbReplace.getEditor().getItem();
         FindText.getInstance().replacement = rstr;
         if (!rstr.equals("") && !rlist.contains(rstr)) {
             rlist.add(rstr);
@@ -142,7 +173,7 @@ public class FindDialog extends javax.swing.JDialog {
         }
         return str;
     }
-    
+
     private void initComponents() {
         ButtonGroup buttonGroup1 = new ButtonGroup();
         JLabel lblSearchFor = new JLabel();
@@ -178,21 +209,9 @@ public class FindDialog extends javax.swing.JDialog {
         GroupLayout panelOptionsLayout = new GroupLayout(panelOptions);
         panelOptions.setLayout(panelOptionsLayout);
         panelOptionsLayout.setHorizontalGroup(
-            panelOptionsLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(panelOptionsLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(caseCheck)
-                    .addComponent(wholeCheck))
-                .addContainerGap()
-        );
+                panelOptionsLayout.createSequentialGroup().addContainerGap().addGroup(panelOptionsLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(caseCheck).addComponent(wholeCheck)).addContainerGap());
         panelOptionsLayout.setVerticalGroup(
-            panelOptionsLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(caseCheck)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(wholeCheck)
-                .addContainerGap()
-        );
+                panelOptionsLayout.createSequentialGroup().addContainerGap().addComponent(caseCheck).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(wholeCheck).addContainerGap());
 
         panelDirection.setBorder(BorderFactory.createTitledBorder("Direction"));
 
@@ -209,26 +228,13 @@ public class FindDialog extends javax.swing.JDialog {
         GroupLayout panelDirectionLayout = new GroupLayout(panelDirection);
         panelDirection.setLayout(panelDirectionLayout);
         panelDirectionLayout.setHorizontalGroup(
-            panelDirectionLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(panelDirectionLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(endRadio)
-                    .addComponent(startRadio)
-                    .addComponent(allRadio))
-                .addContainerGap()
-        );
+                panelDirectionLayout.createSequentialGroup().addContainerGap().addGroup(panelDirectionLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(endRadio).addComponent(startRadio).addComponent(allRadio)).addContainerGap());
         panelDirectionLayout.setVerticalGroup(
-            panelDirectionLayout.createSequentialGroup()
-                .addComponent(endRadio)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(startRadio)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(allRadio)
-                .addContainerGap()
-        );
+                panelDirectionLayout.createSequentialGroup().addComponent(endRadio).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(startRadio).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(allRadio).addContainerGap());
 
         btnSearch.setText("Search");
         btnSearch.addActionListener(new java.awt.event.ActionListener() {
+
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 searchButtonActionPerformed(evt);
             }
@@ -240,6 +246,7 @@ public class FindDialog extends javax.swing.JDialog {
 
         btnReplace.setText("Replace");
         btnReplace.addActionListener(new java.awt.event.ActionListener() {
+
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 replaceButtonActionPerformed(evt);
             }
@@ -247,6 +254,7 @@ public class FindDialog extends javax.swing.JDialog {
 
         btnReplaceAll.setText("Replace all");
         btnReplaceAll.addActionListener(new java.awt.event.ActionListener() {
+
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 replaceAllButtonActionPerformed(evt);
             }
@@ -254,64 +262,25 @@ public class FindDialog extends javax.swing.JDialog {
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        		.addGroup(layout.createSequentialGroup()
-        				.addContainerGap()
-        				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        						.addComponent(lblSearchFor)
-        						.addComponent(lblReplaceWith))
-        				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        						.addComponent(cmbSearch)
-        						.addComponent(cmbReplace))
-        				.addContainerGap())
-        		.addGroup(layout.createSequentialGroup()
-        				.addContainerGap()
-        				.addComponent(panelOptions)
-        				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        				.addComponent(panelDirection)
-        				.addContainerGap())
-        		.addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-        				.addComponent(btnReplaceAll)
-        				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        				.addComponent(btnReplace)
-        				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        				.addComponent(btnSearch)
-        				.addContainerGap()));
-        layout.setVerticalGroup(layout.createSequentialGroup()
-        		.addContainerGap()
-        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblSearchFor)
-        				.addComponent(cmbSearch))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(lblReplaceWith)
-        				.addComponent(cmbReplace))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        				.addComponent(panelOptions,GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        				.addComponent(panelDirection,GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(btnReplaceAll)
-        				.addComponent(btnReplace)
-        				.addComponent(btnSearch))
-        		.addContainerGap());
+        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblSearchFor).addComponent(lblReplaceWith)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(cmbSearch).addComponent(cmbReplace)).addContainerGap()).addGroup(layout.createSequentialGroup().addContainerGap().addComponent(panelOptions).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(panelDirection).addContainerGap()).addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup().addComponent(btnReplaceAll).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnReplace).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnSearch).addContainerGap()));
+        layout.setVerticalGroup(layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblSearchFor).addComponent(cmbSearch)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblReplaceWith).addComponent(cmbReplace)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(panelOptions, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(panelDirection, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(btnReplaceAll).addComponent(btnReplace).addComponent(btnSearch)).addContainerGap());
         pack();
     }
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        String str = saveGUI();        
+        String str = saveGUI();
         try {
             FindText.getInstance().createPattern(str);
             if (FindText.getInstance().findNext(textPane.getText(),
-                    textPane.getCaretPosition(), 
-                    textPane.getDocument().getEndPosition().getOffset()-1)) {
+                    textPane.getCaretPosition(),
+                    textPane.getDocument().getEndPosition().getOffset() - 1)) {
                 textPane.select(FindText.getInstance().getMatchStart(),
                         FindText.getInstance().getMatchEnd());
                 textPane.grabFocus();
                 dispose();
-            } else StaticDialogs.showMessage("Expression was not found");
+            } else {
+                StaticDialogs.showMessage("Expression was not found");
+            }
         } catch (PatternSyntaxException e) {
             StaticDialogs.showErrorMessage("Pattern syntax error");
             cmbSearch.grabFocus();
@@ -323,37 +292,37 @@ public class FindDialog extends javax.swing.JDialog {
         String str = saveGUI();
         try {
             FindText.getInstance().createPattern(str);
-            FindText.getInstance().replacement = (String)
-                    cmbReplace.getEditor().getItem();
+            FindText.getInstance().replacement = (String) cmbReplace.getEditor().getItem();
             if (FindText.getInstance().replaceNext(textPane)) {
                 textPane.grabFocus();
                 dispose();
-            } else StaticDialogs.showMessage("Expression was not found");
+            } else {
+                StaticDialogs.showMessage("Expression was not found");
+            }
         } catch (PatternSyntaxException e) {
             StaticDialogs.showErrorMessage("Pattern syntax error");
             cmbSearch.grabFocus();
             return;
         }
-}//GEN-LAST:event_replaceButtonActionPerformed
+    }//GEN-LAST:event_replaceButtonActionPerformed
 
     private void replaceAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceAllButtonActionPerformed
         String str = saveGUI();
         try {
             FindText.getInstance().createPattern(str);
-            FindText.getInstance().replacement = (String)
-                    cmbReplace.getEditor().getItem();
+            FindText.getInstance().replacement = (String) cmbReplace.getEditor().getItem();
             if (FindText.getInstance().replaceAll(textPane)) {
                 textPane.grabFocus();
                 dispose();
-            } else StaticDialogs.showMessage("Expression was not found");
+            } else {
+                StaticDialogs.showMessage("Expression was not found");
+            }
         } catch (PatternSyntaxException e) {
             StaticDialogs.showErrorMessage("Pattern syntax error");
             cmbSearch.grabFocus();
             return;
         }
-}
-  
-    
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     JRadioButton allRadio;
     JCheckBox caseCheck;
@@ -363,5 +332,4 @@ public class FindDialog extends javax.swing.JDialog {
     JRadioButton startRadio;
     JCheckBox wholeCheck;
     // End of variables declaration//GEN-END:variables
-    
 }

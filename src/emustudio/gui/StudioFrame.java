@@ -150,36 +150,35 @@ public class StudioFrame extends javax.swing.JFrame {
 
                 @Override
                 public void runChanged(EventObject evt, int state) {
-                    synchronized (this) {
-                        run_state = state;
-                        if (state == ICPU.STATE_RUNNING) {
+                    run_state = state;
+                    if (state == ICPU.STATE_RUNNING) {
+                        btnStop.setEnabled(true);
+                        btnBack.setEnabled(false);
+                        btnRun.setEnabled(false);
+                        btnStep.setEnabled(false);
+                        btnBeginning.setEnabled(false);
+                        btnPause.setEnabled(true);
+                        btnRunTime.setEnabled(false);
+                    } else {
+                        btnPause.setEnabled(false);
+                        if (state == ICPU.STATE_STOPPED_BREAK) {
                             btnStop.setEnabled(true);
-                            btnBack.setEnabled(false);
+                            btnRunTime.setEnabled(true);
+                            btnRun.setEnabled(true);
+                            btnStep.setEnabled(true);
+                        } else {
+                            btnStop.setEnabled(false);
+                            btnRunTime.setEnabled(false);
                             btnRun.setEnabled(false);
                             btnStep.setEnabled(false);
-                            btnBeginning.setEnabled(false);
-                            btnPause.setEnabled(true);
-                            btnRunTime.setEnabled(false);
-                        } else {
-                            btnPause.setEnabled(false);
-                            if (state == ICPU.STATE_STOPPED_BREAK) {
-                                btnStop.setEnabled(true);
-                                btnRunTime.setEnabled(true);
-                                btnRun.setEnabled(true);
-                                btnStep.setEnabled(true);
-                            } else {
-                                btnStop.setEnabled(false);
-                                btnRunTime.setEnabled(false);
-                                btnRun.setEnabled(false);
-                                btnStep.setEnabled(false);
-                            }
-                            btnBack.setEnabled(true);
-                            btnBeginning.setEnabled(true);
-                            tblDebug.setEnabled(true);
-                            tblDebug.setVisible(true);
-                            tblDebug.revalidate();
-                            tblDebug.repaint();
                         }
+                        btnBack.setEnabled(true);
+                        btnBeginning.setEnabled(true);
+                        tblDebug.setEnabled(true);
+                        tblDebug.setVisible(true);
+                        tblDebug.revalidate();
+                        tblDebug.repaint();
+
                     }
                 }
             });
@@ -369,7 +368,7 @@ public class StudioFrame extends javax.swing.JFrame {
         toolStandard.setFloatable(false);
         toolStandard.setRollover(true);
 
-        btnNew.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/document-new.png"))); // NOI18N
+        btnNew.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/document-new.png"))); // NOI18N
         btnNew.setToolTipText("New file");
         btnNew.setFocusable(false);
         btnNew.addActionListener(new java.awt.event.ActionListener() {
@@ -379,7 +378,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnOpen.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/document-open.png"))); // NOI18N
+        btnOpen.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/document-open.png"))); // NOI18N
         btnOpen.setToolTipText("Open file");
         btnOpen.setFocusable(false);
         btnOpen.addActionListener(new java.awt.event.ActionListener() {
@@ -389,7 +388,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnSave.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/document-save.png"))); // NOI18N
+        btnSave.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/document-save.png"))); // NOI18N
         btnSave.setToolTipText("Save file");
         btnSave.setFocusable(false);
         btnSave.addActionListener(new java.awt.event.ActionListener() {
@@ -403,7 +402,7 @@ public class StudioFrame extends javax.swing.JFrame {
         jSeparator1.setMaximumSize(new java.awt.Dimension(10, 32768));
         jSeparator1.setPreferredSize(new java.awt.Dimension(10, 10));
 
-        btnCut.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/edit-cut.png"))); // NOI18N
+        btnCut.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/edit-cut.png"))); // NOI18N
         btnCut.setToolTipText("Cut selection");
         btnCut.setEnabled(false);
         btnCut.setFocusable(false);
@@ -414,7 +413,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnCopy.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/edit-copy.png"))); // NOI18N
+        btnCopy.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/edit-copy.png"))); // NOI18N
         btnCopy.setToolTipText("Copy selection");
         btnCopy.setEnabled(false);
         btnCopy.setFocusable(false);
@@ -425,7 +424,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnPaste.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/edit-paste.png"))); // NOI18N
+        btnPaste.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/edit-paste.png"))); // NOI18N
         btnPaste.setToolTipText("Paste selection");
         btnPaste.setEnabled(false);
         btnPaste.setFocusable(false);
@@ -436,7 +435,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnFindReplace.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/edit-find-replace.png"))); // NOI18N
+        btnFindReplace.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/edit-find-replace.png"))); // NOI18N
         btnFindReplace.setToolTipText("Find/replace text...");
         btnFindReplace.setFocusable(false);
         btnFindReplace.addActionListener(new java.awt.event.ActionListener() {
@@ -446,7 +445,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnUndo.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/edit-undo.png"))); // NOI18N
+        btnUndo.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/edit-undo.png"))); // NOI18N
         btnUndo.setToolTipText("Undo");
         btnUndo.setEnabled(false);
         btnUndo.setFocusable(false);
@@ -457,7 +456,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnRedo.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/edit-redo.png"))); // NOI18N
+        btnRedo.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/edit-redo.png"))); // NOI18N
         btnRedo.setToolTipText("Redo");
         btnRedo.setEnabled(false);
         btnRedo.setFocusable(false);
@@ -474,7 +473,7 @@ public class StudioFrame extends javax.swing.JFrame {
         jSeparator7.setOrientation(SwingConstants.VERTICAL);
         jSeparator7.setMaximumSize(new java.awt.Dimension(10, 32767));
 
-        btnCompile.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/compile.png"))); // NOI18N
+        btnCompile.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/compile.png"))); // NOI18N
         btnCompile.setToolTipText("Compile source");
         btnCompile.setFocusable(false);
         btnCompile.addActionListener(new java.awt.event.ActionListener() {
@@ -548,7 +547,7 @@ public class StudioFrame extends javax.swing.JFrame {
         toolDebug.setBorder(null);
         toolDebug.setBorderPainted(false);
 
-        btnReset.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/view-refresh.png"))); // NOI18N
+        btnReset.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/view-refresh.png"))); // NOI18N
         btnReset.setToolTipText("Reset emulation");
         btnReset.setFocusable(false);
         btnReset.addActionListener(new java.awt.event.ActionListener() {
@@ -558,7 +557,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnBeginning.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-first.png"))); // NOI18N
+        btnBeginning.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/go-first.png"))); // NOI18N
         btnBeginning.setToolTipText("Jump to beginning");
         btnBeginning.setFocusable(false);
         btnBeginning.addActionListener(new java.awt.event.ActionListener() {
@@ -568,7 +567,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnBack.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-previous.png"))); // NOI18N
+        btnBack.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/go-previous.png"))); // NOI18N
         btnBack.setToolTipText("Step back");
         btnBack.setFocusable(false);
         btnBack.addActionListener(new java.awt.event.ActionListener() {
@@ -578,7 +577,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnStop.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-stop.png"))); // NOI18N
+        btnStop.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/go-stop.png"))); // NOI18N
         btnStop.setToolTipText("Stop emulation");
         btnStop.setFocusable(false);
         btnStop.addActionListener(new java.awt.event.ActionListener() {
@@ -588,7 +587,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnPause.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-pause.png"))); // NOI18N
+        btnPause.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/go-pause.png"))); // NOI18N
         btnPause.setToolTipText("Pause emulation");
         btnPause.setFocusable(false);
         btnPause.addActionListener(new java.awt.event.ActionListener() {
@@ -598,7 +597,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnRun.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-play.png"))); // NOI18N
+        btnRun.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/go-play.png"))); // NOI18N
         btnRun.setToolTipText("Run emulation");
         btnRun.setFocusable(false);
         btnRun.addActionListener(new java.awt.event.ActionListener() {
@@ -608,7 +607,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnRunTime.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-play-time.png"))); // NOI18N
+        btnRunTime.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/go-play-time.png"))); // NOI18N
         btnRunTime.setToolTipText("Run emulation in time slices");
         btnRunTime.setFocusable(false);
         btnRunTime.addActionListener(new java.awt.event.ActionListener() {
@@ -618,7 +617,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnStep.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-next.png"))); // NOI18N
+        btnStep.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/go-next.png"))); // NOI18N
         btnStep.setToolTipText("Step forward");
         btnStep.setFocusable(false);
         btnStep.addActionListener(new java.awt.event.ActionListener() {
@@ -628,7 +627,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnJump.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/go-jump.png"))); // NOI18N
+        btnJump.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/go-jump.png"))); // NOI18N
         btnJump.setToolTipText("Jump to address");
         btnJump.setFocusable(false);
         btnJump.addActionListener(new java.awt.event.ActionListener() {
@@ -638,7 +637,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnBreakpoint.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/preferences-desktop.png"))); // NOI18N
+        btnBreakpoint.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/preferences-desktop.png"))); // NOI18N
         btnBreakpoint.setToolTipText("Set/unset breakpoint to address...");
         btnBreakpoint.setFocusable(false);
         btnBreakpoint.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -650,7 +649,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnMemory.setIcon(new ImageIcon(getClass().getResource("/resources/emuStudio/Memory24.gif"))); // NOI18N
+        btnMemory.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/Memory24.gif"))); // NOI18N
         btnMemory.setToolTipText("Show operating memory");
         btnMemory.setFocusable(false);
         btnMemory.addActionListener(new java.awt.event.ActionListener() {
@@ -979,7 +978,8 @@ public class StudioFrame extends javax.swing.JFrame {
             arch.getDevices()[i].showGUI();
         } catch (Exception e) {
             e.printStackTrace();
-            StaticDialogs.showErrorMessage("Can't show GUI of the device:\n " + e.getMessage());
+            StaticDialogs.showErrorMessage("Can't show GUI of the device:\n "
+                    + e.getMessage());
         }
     }//GEN-LAST:event_showGUIButtonActionPerformed
 

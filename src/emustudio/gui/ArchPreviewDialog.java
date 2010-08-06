@@ -19,7 +19,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.gui;
 
 import javax.swing.GroupLayout;
@@ -36,13 +35,14 @@ import emustudio.architecture.drawing.Schema;
  */
 @SuppressWarnings("serial")
 public class ArchPreviewDialog extends JDialog {
+
     private PreviewPanel pan;
 
     /** Creates new form ArchPreviewDialog */
     public ArchPreviewDialog(JDialog parent, boolean modal, Schema schema) {
         super(parent, modal);
         pan = new PreviewPanel(schema);
-        initComponents(pan.getWidth() , pan.getHeight());
+        initComponents(pan.getWidth(), pan.getHeight());
         scrollPane.setViewportView(pan);
         this.setLocationRelativeTo(null);
     }
@@ -62,19 +62,13 @@ public class ArchPreviewDialog extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, panelWidth, Short.MAX_VALUE)
-        );
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, panelWidth, Short.MAX_VALUE));
         layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, panelHeight, Short.MAX_VALUE)
-        );
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, panelHeight, Short.MAX_VALUE));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private JScrollPane scrollPane;
     // End of variables declaration//GEN-END:variables
-
 }
