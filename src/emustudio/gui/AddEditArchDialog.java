@@ -561,7 +561,7 @@ public class AddEditArchDialog extends JDialog implements KeyListener {
     }//GEN-LAST:event_btnDeleteActionPerformed
 
     private void btnBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBrowseActionPerformed
-        OpenArchDialog d = new OpenArchDialog(this, true);
+        OpenComputerDialog d = new OpenComputerDialog(this, true);
         d.setVisible(true);
         if (d.getOK()) {
             txtArchName.setText(d.getArchName());

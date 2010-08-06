@@ -26,6 +26,7 @@ package emustudio.architecture.drawing;
 import java.util.ArrayList;
 
 /**
+ * Class that manages the Abstract schema of virtual computer configuration.
  *
  * @author vbmacher
  */

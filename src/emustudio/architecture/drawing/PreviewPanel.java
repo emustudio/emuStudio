@@ -42,7 +42,11 @@ public class PreviewPanel extends JPanel {
     /* double buffering */
     private Image dbImage;   // second buffer
     private Graphics2D dbg;  // graphics for double buffering
-    
+
+    public PreviewPanel() {
+        this(null);
+    }
+
     public PreviewPanel(Schema schema) {
         this.schema = schema;
         this.setBackground(Color.WHITE);
@@ -53,6 +57,7 @@ public class PreviewPanel extends JPanel {
      * Override previous update method in order to implement
      * double-buffering. As a second buffer is used Image object.
      */
+    @Override
     public void update(Graphics g) {
         // initialize buffer if needed
         if (dbImage == null) {
@@ -74,6 +79,8 @@ public class PreviewPanel extends JPanel {
     }
     
     private void resizePanel() {
+        if (schema == null)
+            return;
         // hladanie najvzdialenejsich elementov (alebo bodov lebo ciara
         // nemoze byt dalej ako bod)
         int width=0, height=0;
@@ -103,8 +110,12 @@ public class PreviewPanel extends JPanel {
     }
     
     //override panel paint method to draw shapes
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+
+        if (schema == null)
+            return;
         ArrayList<Element> a = schema.getAllElements();
         for (int i = 0; i < a.size(); i++)
             a.get(i).measure(g);
@@ -114,5 +125,17 @@ public class PreviewPanel extends JPanel {
             a.get(i).draw(g);
     }
 
+    /**
+     * Assign new schema to this PreviewPanel. If it is null, does nothing
+     *
+     * @param s new abstract schema
+     */
+    public void setSchema(Schema s) {
+        if (s == null)
+            return;
+        this.schema = s;
+        resizePanel();
+        this.repaint();
+    }
 
 }

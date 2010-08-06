@@ -28,7 +28,7 @@ import emustudio.architecture.ArchHandler;
 import emustudio.architecture.ArchLoader;
 import runtime.StaticDialogs;
 import emustudio.gui.LoadingDialog;
-import emustudio.gui.OpenArchDialog;
+import emustudio.gui.OpenComputerDialog;
 import emustudio.gui.StudioFrame;
 import java.util.Date;
 
@@ -114,7 +114,7 @@ public class Main {
         // if configuration name has not been specified, let user
         // to choose the configuration manually
         if (configName == null) {
-            OpenArchDialog odi = new OpenArchDialog();
+            OpenComputerDialog odi = new OpenComputerDialog();
             odi.setVisible(true);
             if (odi.getOK())
                 configName = odi.getArchName();

@@ -60,6 +60,7 @@ public class CpuElement extends Element {
         this((int)e1.getX(),(int)e1.getY(), text);
     }
     
+    @Override
     public void draw(Graphics g)  {
         if (!wasMeasured) measure(g);
         g.setColor(cpuColor);
@@ -73,12 +74,14 @@ public class CpuElement extends Element {
         g.setFont(plainFont);
     }
 
+    @Override
     public void move(int x, int y) {
         wasMeasured = false;
         this.x = x;
         this.y = y;
     }
 
+    @Override
     public void measure(Graphics g) {
         if (wasMeasured) return;
         Font f = g.getFont();
