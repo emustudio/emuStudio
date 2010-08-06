@@ -384,28 +384,42 @@ public class ArchLoader {
 
             // load compiler
             String comName = settings.getProperty("compiler");
-            ICompiler com = (ICompiler)loadPlugin(compilersDir, comName,ICompiler.class);
-            long id = createPluginID();
-            if (com != null) {
+            long id;
+            ICompiler com = null;
+
+            if (comName != null) {
+                // the compiler is defined in the config file
+                com = (ICompiler)loadPlugin(compilersDir,
+                        comName,ICompiler.class);
+                if (com == null)
+                    throw new IllegalArgumentException("Compiler '" + comName
+                            + "' cannot be loaded.");
+                id = createPluginID();
                 pluginsReverse.put(com, id);
                 plugins.put(id, com);
                 pluginNames.put(id, "compiler");
             }
-            
             // load cpu
             String cpuName = settings.getProperty("cpu");
+            if (cpuName == null)
+                throw new IllegalArgumentException("CPU is not defined.");
             ICPU cpu = (ICPU)loadPlugin(cpusDir, cpuName, ICPU.class);
             if (cpu == null)
-                throw new IllegalArgumentException("CPU can't be null");
+                throw new IllegalArgumentException("CPU '" + cpuName
+                        + "' cannot be loaded.");
             id = createPluginID();
             pluginsReverse.put(cpu, id);
             plugins.put(id, cpu);
             pluginNames.put(id, "cpu");
             
             // load memory
+            IMemory mem = null;
             String memName = settings.getProperty("memory");
-            IMemory mem = (IMemory)loadPlugin(memoriesDir, memName,IMemory.class);
-            if (mem != null) {
+            if (memName != null) {
+                mem = (IMemory)loadPlugin(memoriesDir, memName,IMemory.class);
+                if (mem == null)
+                    throw new IllegalArgumentException("Memory '" + memName
+                            + "' cannot be loaded.");
                 id = createPluginID();
                 pluginsReverse.put(mem, id);
                 plugins.put(id, mem);
@@ -423,7 +437,9 @@ public class ArchLoader {
                     plugins.put(id, dev);
                     pluginNames.put(id,"device" + i);
                     devNames.put(dev,"device" + i);
-                }
+                } else
+                    throw new IllegalArgumentException("Device '" + devName
+                            + "' cannot be loaded.");
             }
 
             // load connections
@@ -475,11 +491,9 @@ public class ArchLoader {
             return new ArchHandler(name, arch, settings, loadSchema(name),
                     pluginNames, verbose);
         }
-        catch (Exception e) {
-            e.printStackTrace();
-            String h = e.getLocalizedMessage();
-            if (h == null || h.equals("")) h = "Unknown error";
-            StaticDialogs.showErrorMessage("Error reading plugins: " + h);
+        catch (IllegalArgumentException e) {
+            StaticDialogs.showMessage(e.getMessage(), "Error reading plugins");
+        } finally {
             return null;
         }
     }
@@ -524,11 +538,10 @@ public class ArchLoader {
                     }
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            StaticDialogs.showErrorMessage("Error reading plugin: " + filename);
+        } catch (Exception e) {}
+        finally {
+            return null;
         }
-        return null;
     }
     
 }
