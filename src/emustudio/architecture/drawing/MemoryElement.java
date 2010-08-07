@@ -46,7 +46,7 @@ public class MemoryElement extends Element {
     private Font italicFont;
     private Font plainFont;
     private Color memColor;
-      
+
     public MemoryElement(int x, int y, String text) {
         super(text);
         this.x = x;
@@ -59,8 +59,10 @@ public class MemoryElement extends Element {
         this((int)e1.getX(),(int)e1.getY(),text);
     }
 
+    @Override
     public void draw(Graphics g)  {
-        if (!wasMeasured) measure(g);
+        if (!wasMeasured)
+            measure(g,0,0);
         g.setColor(memColor);
         g.fillRect(x, y, width, height);
         g.setColor(Color.black);
@@ -73,13 +75,15 @@ public class MemoryElement extends Element {
     }
     
     
+    @Override
     public void move(int x, int y) {
         wasMeasured = false;
         this.x = x;
         this.y = y;
     }
 
-    public void measure(Graphics g) {
+    @Override
+    public void measure(Graphics g, int leftFactor, int topFactor) {
         if (wasMeasured) return;
         Font f = g.getFont();
         boldFont = f.deriveFont(Font.BOLD);
@@ -105,6 +109,11 @@ public class MemoryElement extends Element {
         x -= width/2;
         y -= height/2;
 
+        leftFactor -= width/2;
+        topFactor -= height/2;
+
+        performCorrection(leftFactor, topFactor);
+
         tX1 = x + (width - tW) / 2;
 
         tW = (int)r.getWidth();
@@ -115,5 +124,5 @@ public class MemoryElement extends Element {
         tY2 = y + (height - tH);
         wasMeasured = true;
     }
-    
+
 }

@@ -30,6 +30,10 @@ import java.awt.Graphics;
  * @author vbmacher
  */
 public abstract class Element {
+
+    public final static int MIN_LEFT_MARGIN = 5;
+    public final static int MIN_TOP_MARGIN = 5;
+    
     protected String details;
     protected int width;
     protected int height;
@@ -42,8 +46,24 @@ public abstract class Element {
     
     public String getDetails() { return details; }
     
-    public abstract void measure(Graphics g);
+    public abstract void measure(Graphics g, int leftFactor, int topFactor);
     public abstract void draw(Graphics g);
+
+    protected void performCorrection(int leftFactor, int topFactor) {
+//        if ((x - leftFactor) < MIN_LEFT_MARGIN) {
+  //          corrX = MIN_LEFT_MARGIN - x;
+    //    } else {
+      //      corrX = 0;
+        //}
+//        if ((y - topFactor) < MIN_TOP_MARGIN) {
+  //          corrY = MIN_TOP_MARGIN - y;
+    //    } else {
+      //      corrY = 0;
+        //}
+        x -= leftFactor;
+        y -= topFactor;
+    }
+    
     public int getWidth() { return (width == 0) ? 80 : width; }
     public int getHeight() { return (height == 0) ? 50: height; }
     public int getX() { return x; }

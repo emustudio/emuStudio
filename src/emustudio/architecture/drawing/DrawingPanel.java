@@ -116,6 +116,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
      * Override previous update method in order to implement
      * double-buffering. As a second buffer is used Image object.
      */
+    @Override
     public void update(Graphics g) {
         // initialize buffer if needed
         if (dbImage == null) {
@@ -183,7 +184,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
         if (useGrid) paintGrid(g);
         
         for (int i = 0; i < a.size(); i++)
-            a.get(i).measure(this.getGraphics());
+            a.get(i).measure(this.getGraphics(),0,0);
         for (int i = 0; i < schema.getConnectionLines().size(); i++)
             schema.getConnectionLines().get(i).draw((Graphics2D)g);
         for (int i = 0; i < a.size(); i++)
@@ -229,10 +230,14 @@ public class DrawingPanel extends JPanel implements MouseListener,
         repaint();
     }
     
+    @Override
     public void mouseClicked(MouseEvent e) {}
+    @Override
     public void mouseEntered(MouseEvent e){}
+    @Override
     public void mouseExited(MouseEvent e){}
 
+    @Override
     public void mousePressed(MouseEvent e) {
         if (tool == drawTool.nothing || tool == drawTool.delete
                 || tool == drawTool.connectLine) {
@@ -307,6 +312,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
         }
     }
     
+    @Override
     public void mouseReleased(MouseEvent e) {
         shapeMove = false;
         if (tool == drawTool.delete && selShape != null) {
@@ -375,6 +381,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
         e1 = null;
     }
 
+    @Override
     public void mouseDragged(MouseEvent e) {
         if (selPoint != null && selLine != null) {
             Point p = e.getPoint();
@@ -398,6 +405,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
         } 
     }
 
+    @Override
     public void mouseMoved(MouseEvent e) {
         if (shapeMove) return;
         selPoint = null;

@@ -94,7 +94,8 @@ public class Main {
      */
     public static void main(String[] args) {
         try {
-            javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
+            javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager
+                    .getSystemLookAndFeelClassName());
         } catch (javax.swing.UnsupportedLookAndFeelException e) {
         } catch (ClassNotFoundException e) {
         } catch (InstantiationException e) {

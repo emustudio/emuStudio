@@ -47,7 +47,7 @@ public class CpuElement extends Element {
     private Font plainFont;
     
     private Color cpuColor;
-  
+
     public CpuElement(int x, int y, String text) {
         super(text);
         this.x = x;
@@ -59,10 +59,11 @@ public class CpuElement extends Element {
     public CpuElement(Point e1, String text) {
         this((int)e1.getX(),(int)e1.getY(), text);
     }
-    
+
     @Override
     public void draw(Graphics g)  {
-        if (!wasMeasured) measure(g);
+        if (!wasMeasured)
+            measure(g,0,0);
         g.setColor(cpuColor);
         g.fillRect(x, y, width, height);
         g.setColor(Color.black);
@@ -74,6 +75,7 @@ public class CpuElement extends Element {
         g.setFont(plainFont);
     }
 
+
     @Override
     public void move(int x, int y) {
         wasMeasured = false;
@@ -82,8 +84,9 @@ public class CpuElement extends Element {
     }
 
     @Override
-    public void measure(Graphics g) {
-        if (wasMeasured) return;
+    public void measure(Graphics g, int leftFactor, int topFactor) {
+        if (wasMeasured)
+            return;
         Font f = g.getFont();
         boldFont = f.deriveFont(Font.BOLD);
         italicFont = f.deriveFont(Font.ITALIC);
@@ -106,6 +109,11 @@ public class CpuElement extends Element {
         height += (int)r.getHeight() + 20;
         x -= width/2;
         y -= height/2;
+
+        leftFactor -= width/2;
+        topFactor -= height/2;
+
+        performCorrection(leftFactor, topFactor);
 
         tX1 = x + (width - tW) / 2;
 

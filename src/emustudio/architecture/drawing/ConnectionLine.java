@@ -51,6 +51,10 @@ public class ConnectionLine {
     }
     
     public void draw(Graphics2D g) {
+        draw(g,0,0);
+    }
+
+    public void draw(Graphics2D g, int leftFactor, int topFactor) {
         g.setColor(Color.black);
         int x1 = e1.getX() + e1.getWidth()/2;
         int y1 = e1.getY() + e1.getHeight()/2;
@@ -62,6 +66,16 @@ public class ConnectionLine {
             Point p = points.get(i);
             x2 = (int)p.getX();
             y2 = (int)p.getY();
+
+            x2 -= leftFactor;
+            y2 -= topFactor;
+
+            if (x2 < Element.MIN_LEFT_MARGIN) {
+                x2 = Element.MIN_LEFT_MARGIN;
+            }
+            if (y2 < Element.MIN_TOP_MARGIN) {
+                y2 = Element.MIN_TOP_MARGIN;
+            }
             g.drawLine(x1, y1, x2, y2);
             x1 = x2;
             y1 = y2;

@@ -39,6 +39,19 @@ import javax.swing.JPanel;
 public class PreviewPanel extends JPanel {
     private Schema schema;
     
+    /**
+     * Left factor is a constant used in panel resizing. It is a distance
+     * between panel left and the x position of the nearest point in the
+     * schema.
+     */
+    private int leftFactor;
+    /**
+     * Top factor is a constant used in panel resizing. It is a distance
+     * between panel top and the y position of the nearest point in the
+     * schema.
+     */
+    private int topFactor;
+    
     /* double buffering */
     private Image dbImage;   // second buffer
     private Graphics2D dbg;  // graphics for double buffering
@@ -50,6 +63,7 @@ public class PreviewPanel extends JPanel {
     public PreviewPanel(Schema schema) {
         this.schema = schema;
         this.setBackground(Color.WHITE);
+        leftFactor = topFactor = 0;
         resizePanel();
     }
     
@@ -83,16 +97,29 @@ public class PreviewPanel extends JPanel {
             return;
         // hladanie najvzdialenejsich elementov (alebo bodov lebo ciara
         // nemoze byt dalej ako bod)
-        int width=0, height=0;
+        int width=0, height=0, minLeft = -1, minTop = -1;
 
         ArrayList<Element> a = schema.getAllElements();
         for (int i = 0; i < a.size(); i++) {
             Element e = a.get(i);
+            if (minLeft == -1)
+                minLeft = e.getX();
+            else if (minLeft > e.getX())
+                minLeft = e.getX();
+
+            if (minTop == -1)
+                minTop = e.getY();
+            else if (minTop > e.getY())
+                minTop = e.getY();
+
             if (e.getX() + e.getWidth() > width)
                 width = e.getX() + e.getWidth();
             if (e.getY() + e.getHeight() > height)
                 height = e.getY() + e.getHeight();
         }
+        leftFactor = minLeft - Element.MIN_LEFT_MARGIN;
+        topFactor = minTop - Element.MIN_TOP_MARGIN;
+        
         for (int i = 0; i < schema.getConnectionLines().size(); i++) {
             ArrayList<Point> ps = schema.getConnectionLines().get(i).getPoints();
             for (int j = 0; j < ps.size(); j++) {
@@ -104,7 +131,8 @@ public class PreviewPanel extends JPanel {
             }
         }
         if (width != 0 && height != 0) {
-            this.setSize(width,height);
+            this.setSize(width-leftFactor+Element.MIN_LEFT_MARGIN,
+                    height-topFactor+Element.MIN_TOP_MARGIN);
             this.revalidate();
         }
     }
@@ -113,14 +141,16 @@ public class PreviewPanel extends JPanel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-
         if (schema == null)
             return;
         ArrayList<Element> a = schema.getAllElements();
-        for (int i = 0; i < a.size(); i++)
-            a.get(i).measure(g);
+        for (int i = 0; i < a.size(); i++) {
+            Element e = a.get(i);
+            e.measure(g, leftFactor, topFactor);
+        }
         for (int i = 0; i < schema.getConnectionLines().size(); i++)
-            schema.getConnectionLines().get(i).draw((Graphics2D)g);
+            schema.getConnectionLines().get(i)
+                    .draw((Graphics2D)g, leftFactor, topFactor);
         for (int i = 0; i < a.size(); i++)
             a.get(i).draw(g);
     }
