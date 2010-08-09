@@ -376,7 +376,6 @@ public class ArchLoader {
         }
     }
     
-    
     /** 
      * Method save configuration to a file with name configName.
      *
@@ -385,8 +384,15 @@ public class ArchLoader {
      */
     public static void writeConfig(String configName, Properties settings) {
         try {
-            File f = new File(System.getProperty("user.dir") + File.separator
-                    + configsDir + File.separator + configName + ".conf");
+            String dir = System.getProperty("user.dir") + File.separator
+                    + configsDir;
+            File dirFile = new File(dir);
+            if (!dirFile.exists() || (dirFile.exists() && !dirFile.isDirectory())) {
+                if (!dirFile.mkdir())
+                    throw new Exception("could not create config directory");
+            }
+
+            File f = new File(dir + File.separator + configName + ".conf");
             f.createNewFile();
             FileOutputStream out = new FileOutputStream(f);
             settings.put("emu8Version", "3");
