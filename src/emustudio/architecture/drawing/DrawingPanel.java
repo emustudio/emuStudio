@@ -57,6 +57,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
     private boolean shapeMove;
 
     public enum drawTool {
+        shapeCompiler,
         shapeCPU,
         shapeMemory,
         shapeDevice,
@@ -214,10 +215,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
     
     
     public void clear() {
-        schema.setCpuElement(null);
-        schema.setMemoryElement(null);
-        schema.getDeviceElements().clear();
-        schema.getConnectionLines().clear();
+        schema.destroy();
         points.clear();
         repaint();
     }
@@ -321,7 +319,10 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 if (schema.getConnectionLines().get(i).containsElement(selShape))
                     schema.getConnectionLines().remove(i);
             }
-            if (selShape instanceof CpuElement) schema.setCpuElement(null);
+            if (selShape instanceof CompilerElement)
+                schema.setCompilerElement(null);
+            if (selShape instanceof CpuElement)
+                schema.setCpuElement(null);
             else if (selShape instanceof MemoryElement) 
                 schema.setMemoryElement(null);
             else if (selShape instanceof DeviceElement)
@@ -349,7 +350,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
         if (useGrid)
             shapePoint.setLocation(searchGridPointX((int)e.getX()),
                     searchGridPointY((int)e.getY()));        
-        if (tool == drawTool.shapeCPU)
+        if (tool == drawTool.shapeCompiler)
+            schema.setCompilerElement(new CompilerElement(shapePoint, newText));
+        else if(tool == drawTool.shapeCPU)
             schema.setCpuElement(new CpuElement(shapePoint, newText));
         else if (tool == drawTool.shapeMemory)
             schema.setMemoryElement(new MemoryElement(shapePoint, newText));

@@ -33,15 +33,16 @@ import java.util.ArrayList;
 public class Schema {
     private CpuElement cpuElement;
     private MemoryElement memoryElement;
+    private CompilerElement compilerElement;
     private ArrayList<DeviceElement> deviceElements;
     private ArrayList<ConnectionLine> lines;
     
-    private String compilerName;
     private String configName;
 
     public Schema(CpuElement cpuElement, MemoryElement memoryElement, 
             ArrayList<DeviceElement> deviceElements, 
-            ArrayList<ConnectionLine> lines, String configName, String compilerName) {
+            ArrayList<ConnectionLine> lines, String configName, CompilerElement
+            compilerElement) {
         this.cpuElement = cpuElement;
         this.memoryElement = memoryElement;
         this.deviceElements = new ArrayList<DeviceElement>();
@@ -49,45 +50,106 @@ public class Schema {
         this.lines = new ArrayList<ConnectionLine>();
         this.lines.addAll(lines);
         this.configName = configName;
-        this.compilerName = compilerName;
+        this.compilerElement = compilerElement;
     }
-    
+
+    /**
+     * Creates empty schema.
+     */
     public Schema() {
         cpuElement = null;
         memoryElement = null;
         deviceElements = new ArrayList<DeviceElement>();
         lines = new ArrayList<ConnectionLine>();
         configName = "";
-        compilerName = "";
+        compilerElement = null;
     }
     
+    /**
+     * Destroys the schema. It means - clear all arrays and
+     * free memory holding by variables.
+     */
+    public void destroy() {
+        cpuElement = null;
+        compilerElement = null;
+        memoryElement = null;
+        deviceElements.clear();
+        lines.clear();
+    }
+
+    /**
+     * Removes all lines that are connected to element e1.
+     * 
+     * @param el the inicident element
+     */
     private void removeIncidentLines(Element el) {
         for (int i = lines.size()-1; i >= 0; i--)
             if (lines.get(i).containsElement(el))
                 lines.remove(i);
     }
-    
-    public String getConfigName() { return configName; }
-    public String getCompilerName() { return compilerName; }
-    public void setConfigName(String cName) { configName = cName; }
-    public void setCompilerName(String cName) { compilerName = cName; }
 
+    /**
+     * Updates all lines connections from element e1 to e2.
+     * @param el old element
+     * @param e2 new element
+     */
+//    private void updateIncidentLines(Element el, Element e2) {
+  //      for (int i = lines.size()-1; i >= 0; i--)
+    //        if (lines.get(i).containsElement(el))
+      //          lines.get(i).
+        //        lines.remove(i);
+    //}
+
+    public String getConfigName() { return configName; }
+    public void setConfigName(String cName) { configName = cName; }
+
+    public void setCompilerElement(CompilerElement compiler) {
+        compilerElement = compiler;
+    }
+    public CompilerElement getCompilerElement() {
+        return compilerElement;
+    }
+
+    public void setCpuElement(CpuElement cpuElement) {
+        if ((cpuElement == null) && (this.cpuElement != null))
+            removeIncidentLines(this.cpuElement);
+        this.cpuElement = cpuElement;
+    }
     public CpuElement getCpuElement() {
         return cpuElement;
     }
     
+    public void setMemoryElement(MemoryElement memoryElement) {
+        if (memoryElement == null && this.memoryElement != null)
+            removeIncidentLines(this.memoryElement);
+        this.memoryElement = memoryElement;
+    }
     public MemoryElement getMemoryElement() {
         return memoryElement;
     }
     
+    public void addDeviceElement(DeviceElement deviceElement) {
+        deviceElements.add(deviceElement);
+    }
     public ArrayList<DeviceElement>getDeviceElements() {
         return deviceElements;
+    }
+    public void removeDeviceElement(int index) {
+        if (index < 0) return;
+        try {
+            removeIncidentLines(deviceElements.get(index));
+            deviceElements.remove(index);
+        } catch(Exception e) {}
     }
     
     public ArrayList<Element>getAllElements() {
         ArrayList<Element> a = new ArrayList<Element>();
-        if (cpuElement != null) a.add(cpuElement);
-        if (memoryElement != null) a.add(memoryElement);
+        if (cpuElement != null)
+            a.add(cpuElement);
+        if (memoryElement != null)
+            a.add(memoryElement);
+        if (compilerElement != null)
+            a.add(compilerElement);
         a.addAll(deviceElements);
         return a;
     }
@@ -96,32 +158,8 @@ public class Schema {
         return lines;
     }
     
-    public void setCpuElement(CpuElement cpuElement) {
-        if (cpuElement == null && this.cpuElement != null)
-            removeIncidentLines(this.cpuElement);
-        this.cpuElement = cpuElement;
-    }
-
-    public void setMemoryElement(MemoryElement memoryElement) {
-        if (memoryElement == null && this.memoryElement != null)
-            removeIncidentLines(this.memoryElement);
-        this.memoryElement = memoryElement;
-    }
-
-    public void addDeviceElement(DeviceElement deviceElement) {
-        deviceElements.add(deviceElement);
-    }
-    
     public void addConnectionLine(ConnectionLine conLine) {
         lines.add(conLine);
-    }
-    
-    public void removeDeviceElement(int index) {
-        if (index < 0) return;
-        try {
-            removeIncidentLines(deviceElements.get(index));
-            deviceElements.remove(index);
-        } catch(Exception e) {}
     }
     
     public void removeConnectionLine(int index) {

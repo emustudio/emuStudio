@@ -33,7 +33,6 @@ import java.awt.event.KeyListener;
 import java.io.File;
 import javax.swing.ComboBoxModel;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.event.ListDataListener;
 import runtime.StaticDialogs;
 
@@ -241,6 +240,11 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         btnCompiler.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 btnCompilerItemStateChanged(evt);
+            }
+        });
+        btnCompiler.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCompilerActionPerformed(evt);
             }
         });
         toolDraw.add(btnCompiler);
@@ -491,13 +495,14 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             return;
         }
         String t = (String) cmbPlugin.getSelectedItem();
-        if (btnCPU.isSelected()) {
+        if (btnCompiler.isSelected())
+            pan.setTool(drawTool.shapeCompiler, t);
+        if (btnCPU.isSelected())
             pan.setTool(drawTool.shapeCPU, t);
-        } else if (btnRAM.isSelected()) {
+        else if (btnRAM.isSelected())
             pan.setTool(drawTool.shapeMemory, t);
-        } else if (btnDevice.isSelected()) {
+        else if (btnDevice.isSelected())
             pan.setTool(drawTool.shapeDevice, t);
-        }
     }//GEN-LAST:event_cmbPluginActionPerformed
 
     private void btnCompilerItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnCompilerItemStateChanged
@@ -582,6 +587,25 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         pan.setUseGrid(btnUseGrid.isSelected());
         sliderGridGap.setEnabled(btnUseGrid.isSelected());
     }//GEN-LAST:event_btnUseGridActionPerformed
+
+    private void btnCompilerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCompilerActionPerformed
+        pan.cancelTasks();
+        pan.setTool(drawTool.nothing, "");
+        if (buttonSelected) {
+            groupDraw.clearSelection();
+            cmbPlugin.setModel(empty_model);
+            return;
+        }
+        buttonSelected = true;
+        String[] compilers = ArchLoader.getAllNames(ArchLoader.compilersDir,
+                ".jar");
+        cmbPlugin.setModel(new pluginModel(compilers));
+        try {
+            cmbPlugin.setSelectedIndex(0);
+        } catch (IllegalArgumentException e) {
+        }
+
+    }//GEN-LAST:event_btnCompilerActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToggleButton btnArrowLeft;

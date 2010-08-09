@@ -31,7 +31,8 @@ import java.awt.Stroke;
 import java.util.ArrayList;
 
 /**
- *
+ * The connection line within the abstract schemas.
+ * 
  * @author vbmacher
  */
 public class ConnectionLine {
@@ -85,7 +86,18 @@ public class ConnectionLine {
         g.drawLine(x1, y1, x2, y2);
         g.setStroke(ss);
     }
-    
+
+    /**
+     * This method draws a "sketch" line - in the process when user tries
+     * to draw a connection line. It is based on fixed first element ee1, where
+     * the line begins, and it continues through the points defined in the
+     * ppoints arraylist. The last point is defined by the point ee2.
+     *
+     * @param g graphics object, where to draw the sketch line.
+     * @param ee1 first element
+     * @param ee2 last point
+     * @param ppoints array of middle-points
+     */
     public static void drawSketch(Graphics2D g,Element ee1, Point ee2,
             ArrayList<Point> ppoints) {
         g.setColor(Color.black);

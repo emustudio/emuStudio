@@ -26,6 +26,7 @@
 
 package emustudio.architecture;
 
+import emustudio.architecture.drawing.CompilerElement;
 import emustudio.architecture.drawing.ConnectionLine;
 import emustudio.architecture.drawing.CpuElement;
 import emustudio.architecture.drawing.DeviceElement;
@@ -199,37 +200,53 @@ public class ArchLoader {
         try{
             Properties p = readConfig(configName,true);
             
-            String compilerName = p.getProperty("compiler");
+            int x = Integer.parseInt(p.getProperty("compiler.point.x","0"));
+            int y = Integer.parseInt(p.getProperty("compiler.point.y","0"));
+            CompilerElement compiler = new CompilerElement(x,y,p.getProperty("compiler",
+                    "unknown"));
             
-            int x = Integer.parseInt(p.getProperty("cpu.point.x","0"));
-            int y = Integer.parseInt(p.getProperty("cpu.point.y","0"));
-            CpuElement cpu = new CpuElement(x,y,p.getProperty("cpu","cpu"));
+            x = Integer.parseInt(p.getProperty("cpu.point.x","0"));
+            y = Integer.parseInt(p.getProperty("cpu.point.y","0"));
+            CpuElement cpu = new CpuElement(x,y,p.getProperty("cpu",
+                    "unknown"));
             x = Integer.parseInt(p.getProperty("memory.point.x","0"));
             y = Integer.parseInt(p.getProperty("memory.point.y","0"));
-            MemoryElement memory = new MemoryElement(x,y,p.getProperty("memory","memory"));
+            MemoryElement memory = new MemoryElement(x,y,p.getProperty("memory",
+                    "unknown"));
             
             ArrayList<DeviceElement> devices = new ArrayList<DeviceElement>();
-            ArrayList<ConnectionLine> lines = new ArrayList<ConnectionLine>();
 
             for (int i = 0; p.containsKey("device"+i); i++) {
                 x = Integer.parseInt(p.getProperty("device"+i+".point.x","0"));
                 y = Integer.parseInt(p.getProperty("device"+i+".point.y","0"));
                 devices.add(new DeviceElement(x,y,p.getProperty("device"+i,"device"+i)));
             }
+
+            // load connections
+            ArrayList<ConnectionLine> lines = new ArrayList<ConnectionLine>();
+
             for (int i = 0; p.containsKey("connection"+i+".junc0"); i++) {
                 String j0 = p.getProperty("connection"+i+".junc0", "");
                 String j1 = p.getProperty("connection"+i+".junc1", "");
                 if (j0.equals("") || j1.equals("")) continue;
                 
                 Element e1=null,e2=null;
-                if (j0.equals("cpu")) e1 = cpu;
-                else if (j0.equals("memory")) e1 = memory;
+                if (j0.equals("cpu"))
+                    e1 = cpu;
+                else if (j0.equals("memory"))
+                    e1 = memory;
+                else if (j0.equals("compiler"))
+                    e1 = compiler;
                 else if (j0.startsWith("device")) {
                     int index = Integer.parseInt(j0.substring(6));
                     e1 = devices.get(index);
                 }
-                if (j1.equals("cpu")) e2 = cpu;
-                else if (j1.equals("memory")) e2 = memory;
+                if (j1.equals("cpu"))
+                    e2 = cpu;
+                else if (j1.equals("memory")) 
+                    e2 = memory;
+                else if (j1.equals("compiler"))
+                    e2 = compiler;
                 else if (j1.startsWith("device")) {
                     int index = Integer.parseInt(j1.substring(6));
                     e2 = devices.get(index);
@@ -244,7 +261,7 @@ public class ArchLoader {
                 }
                 lines.add(lin);
             }
-            return new Schema(cpu,memory,devices,lines,configName,compilerName);
+            return new Schema(cpu,memory,devices,lines,configName,compiler);
         }
         catch (Exception e) {
             StaticDialogs.showErrorMessage("Error reading configuration: " + e.toString());
@@ -260,8 +277,17 @@ public class ArchLoader {
     public static void saveSchema(Schema s) {
         try {
             Properties p = readConfig(s.getConfigName(),false);
-            if (p == null) p = new Properties();
-            p.put("compiler", s.getCompilerName());
+            if (p == null)
+                p = new Properties();
+            // compiler
+            CompilerElement compiler = s.getCompilerElement();
+            if (compiler != null) {
+                p.put("compiler", compiler.getDetails());
+                p.put("compiler.point.x", String.valueOf((int)(compiler.getX()
+                        + compiler.getWidth()/2)));
+                p.put("compiler.point.y", String.valueOf((int)(compiler.getY()
+                        + compiler.getHeight()/2)));
+            }
             // cpu
             CpuElement cpu = s.getCpuElement();
             if (cpu != null) {
@@ -271,6 +297,7 @@ public class ArchLoader {
                 p.put("cpu.point.y", String.valueOf((int)(cpu.getY()
                         + cpu.getHeight()/2)));
             }
+            // memory
             MemoryElement mem = s.getMemoryElement();
             if (mem != null) {
                 p.put("memory", mem.getDetails());
@@ -279,6 +306,7 @@ public class ArchLoader {
                 p.put("memory.point.y", String.valueOf((int)(mem.getY()
                         + mem.getHeight()/2)));
             }
+            // devices
             ArrayList<DeviceElement> devs = s.getDeviceElements();
             Hashtable<DeviceElement, Object> devsHash = new Hashtable<DeviceElement, Object>();
             for (int i = 0; i < devs.size(); i++) {
