@@ -154,8 +154,17 @@ public class ArchLoader {
         File f = new File(System.getProperty("user.dir") + 
                 File.separator + configsDir + File.separator + configName
                 + ".conf");
-        if (!f.exists()) return false;
-        return f.delete();
+        if (!f.exists())
+            return false;
+        try {
+            boolean r = f.delete();
+            if (r == false)
+                System.out.println("NO!!!!!");
+            return r;
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
     
     /**

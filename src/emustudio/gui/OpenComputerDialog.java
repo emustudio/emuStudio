@@ -115,22 +115,22 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        splitConfig = new javax.swing.JSplitPane();
-        panelConfig = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        javax.swing.JSplitPane splitConfig = new javax.swing.JSplitPane();
+        javax.swing.JPanel panelConfig = new javax.swing.JPanel();
+        javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
         lstConfig = new javax.swing.JList();
-        toolConfig = new javax.swing.JToolBar();
+        javax.swing.JToolBar toolConfig = new javax.swing.JToolBar();
         btnAdd = new javax.swing.JButton();
         btnDelete = new javax.swing.JButton();
         btnEdit = new javax.swing.JButton();
-        panelPreview = new javax.swing.JPanel();
+        javax.swing.JPanel panelPreview = new javax.swing.JPanel();
         scrollPreview = new javax.swing.JScrollPane();
-        toolPreview = new javax.swing.JToolBar();
-        jLabel2 = new javax.swing.JLabel();
-        jSeparator1 = new javax.swing.JToolBar.Separator();
+        javax.swing.JToolBar toolPreview = new javax.swing.JToolBar();
+        javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
+        javax.swing.JToolBar.Separator jSeparator1 = new javax.swing.JToolBar.Separator();
         lblPreview = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
-        btnOpen = new javax.swing.JButton();
+        javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
+        javax.swing.JButton btnOpen = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("emuStudio - Open virtual computer");
@@ -226,8 +226,10 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         panelPreview.setLayout(panelPreviewLayout);
         panelPreviewLayout.setHorizontalGroup(
             panelPreviewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(toolPreview, javax.swing.GroupLayout.DEFAULT_SIZE, 394, Short.MAX_VALUE)
             .addComponent(scrollPreview, javax.swing.GroupLayout.DEFAULT_SIZE, 394, Short.MAX_VALUE)
+            .addGroup(panelPreviewLayout.createSequentialGroup()
+                .addGap(10, 10, 10)
+                .addComponent(toolPreview, javax.swing.GroupLayout.DEFAULT_SIZE, 384, Short.MAX_VALUE))
         );
         panelPreviewLayout.setVerticalGroup(
             panelPreviewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -285,7 +287,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
 
     private void btnOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOpenActionPerformed
         if (lstConfig.getSelectedIndex() == -1) {
-            StaticDialogs.showErrorMessage("Virtual architecture has to be selected!");
+            StaticDialogs.showErrorMessage("A computer has to be selected!");
             return;
         }
         archName = (String) lstConfig.getSelectedValue();
@@ -295,7 +297,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
 
     private void btnEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditActionPerformed
         if (lstConfig.getSelectedIndex() == -1) {
-            StaticDialogs.showErrorMessage("Virtual architecture has to be selected!");
+            StaticDialogs.showErrorMessage("A computer has to be selected!");
             return;
         }
         archName = (String) lstConfig.getSelectedValue();
@@ -303,30 +305,36 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         if (s == null) {
             return;
         }
-        AddEditArchDialog d = new AddEditArchDialog(this, true, s);
+        SchemaEditorDialog d = new SchemaEditorDialog(this, true, s);
         d.setVisible(true);
         if (d.getOK()) {
             ArchLoader.saveSchema(d.getSchema());
+            amodel.update();
         }
     }//GEN-LAST:event_btnEditActionPerformed
 
     private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteActionPerformed
         if (lstConfig.getSelectedIndex() == -1) {
-            StaticDialogs.showErrorMessage("Virtual architecture has to be selected!");
+            StaticDialogs.showErrorMessage("A computer has to be selected!");
             return;
         }
         int r = StaticDialogs.confirmMessage("Do you really want to delete"
-                + " selected architecture?", "Delete architecture");
+                + " selected computer?", "Delete architecture");
         archName = (String) lstConfig.getSelectedValue();
-        if ((r == StaticDialogs.YES_OPTION) && ArchLoader.deleteConfig(archName)) {
-            amodel.update();
-            archName = "";
-            lstConfig.setSelectedIndex(-1);
+        if (r == StaticDialogs.YES_OPTION) {
+            boolean re = ArchLoader.deleteConfig(archName);
+            if (re) {
+                archName = "";
+                lstConfig.setSelectedIndex(-1);
+                amodel.update();
+            } else {
+                StaticDialogs.showErrorMessage("Computer could not be deleted.");
+            }
         }
     }//GEN-LAST:event_btnDeleteActionPerformed
 
     private void btnAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddActionPerformed
-        AddEditArchDialog di = new AddEditArchDialog(null, true);
+        SchemaEditorDialog di = new SchemaEditorDialog(null, true);
         di.setVisible(true);
         if (di.getOK()) {
             ArchLoader.saveSchema(di.getSchema());
@@ -354,19 +362,9 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     private javax.swing.JButton btnAdd;
     private javax.swing.JButton btnDelete;
     private javax.swing.JButton btnEdit;
-    private javax.swing.JButton btnOpen;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JToolBar.Separator jSeparator1;
     private javax.swing.JLabel lblPreview;
     private javax.swing.JList lstConfig;
-    private javax.swing.JPanel panelConfig;
-    private javax.swing.JPanel panelPreview;
     private javax.swing.JScrollPane scrollPreview;
-    private javax.swing.JSplitPane splitConfig;
-    private javax.swing.JToolBar toolConfig;
-    private javax.swing.JToolBar toolPreview;
     // End of variables declaration//GEN-END:variables
 
 }

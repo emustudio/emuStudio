@@ -1,4 +1,8 @@
 /*
+ * SchemaEditorDialog.java
+ *
+ * KISS, YAGNI
+ *
  *  Copyright (C) 2010 vbmacher
  * 
  *  This program is free software; you can redistribute it and/or
@@ -16,24 +20,166 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-/*
- * SchemaEditorDialog.java
- *
- * Created on 6.8.2010, 11:01:00
- */
-
 package emustudio.gui;
+
+import emustudio.architecture.ArchLoader;
+import emustudio.architecture.drawing.DrawingPanel;
+import emustudio.architecture.drawing.DrawingPanel.drawTool;
+import emustudio.architecture.drawing.Schema;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.io.File;
+import javax.swing.ComboBoxModel;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.event.ListDataListener;
+import runtime.StaticDialogs;
 
 /**
  *
  * @author vbmacher
  */
-public class SchemaEditorDialog extends javax.swing.JDialog {
+public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
 
-    /** Creates new form SchemaEditorDialog */
-    public SchemaEditorDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
+    /**
+     * Schema of created computer.
+     */
+    private Schema schema;
+    private boolean OOK = false;
+    private DrawingPanel pan;
+    private pluginModel empty_model = new pluginModel(null);
+    private boolean buttonSelected = false;
+
+    /**
+     * This variable holds true if the window is for editing an existing
+     * computer, false or for creating a new computer.
+     */
+    private boolean edit;
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            pan.cancelTasks();
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+    }
+
+    private class pluginModel implements ComboBoxModel {
+
+        private String[] pluginNames;
+        private Object selectedObject = null;
+
+        public pluginModel(String[] wt) {
+            this.pluginNames = wt;
+        }
+
+        @Override
+        public void setSelectedItem(Object anItem) {
+            selectedObject = anItem;
+        }
+
+        @Override
+        public Object getSelectedItem() {
+            return selectedObject;
+        }
+
+        @Override
+        public int getSize() {
+            return (pluginNames == null) ? 0 : pluginNames.length;
+        }
+
+        @Override
+        public Object getElementAt(int index) {
+            return pluginNames[index];
+        }
+
+        @Override
+        public void addListDataListener(ListDataListener l) {
+        }
+
+        @Override
+        public void removeListDataListener(ListDataListener l) {
+        }
+    }
+
+    /**
+     * Perform common initialization used in both constructors.
+     */
+    private void constructor() {
         initComponents();
+        this.setLocationRelativeTo(null);
+        pan = new DrawingPanel(this.schema, true, sliderGridGap.getValue());
+        scrollScheme.setViewportView(pan);
+        scrollScheme.getHorizontalScrollBar().setUnitIncrement(10);
+        scrollScheme.getVerticalScrollBar().setUnitIncrement(10);
+        pan.addMouseListener(pan);
+        pan.addMouseMotionListener(pan);
+        addKeyListenerRecursively(this);
+    }
+
+    /**
+     * This method adds this key listener to all sub-components of given
+     * component.
+     *
+     * @param c Component to add this key listener recursively
+     */
+    private void addKeyListenerRecursively(Component c) {
+        c.addKeyListener((KeyListener) this);
+        if (c instanceof Container) {
+            Container cont = (Container) c;
+            Component[] children = cont.getComponents();
+            for (int i = 0; i < children.length; i++) {
+                addKeyListenerRecursively(children[i]);
+            }
+        }
+    }
+
+    public boolean getOK() {
+        return OOK;
+    }
+
+    public Schema getSchema() {
+        return schema;
+    }
+
+
+    /**
+     * This constructor is used for creating new virtual configurations.
+     *
+     * @param parent parent GUI - the OpenComputerDialog instance
+     * @param modal if the GUI should be modal
+     */
+    public SchemaEditorDialog(JDialog parent, boolean modal) {
+        super(parent, modal);
+        this.schema = new Schema();
+        this.edit = false;
+        constructor();
+        this.setTitle("Computer editor: new computer");
+    }
+
+    /**
+     * This constructor is used for editing the existing computer. If user
+     * changes the configuration name, the origin will be renamed.
+     *
+     * @param parent should be the OpenComputerDialog instance
+     * @param modal if the GUI should be modal
+     * @param schema Abstract schema of origin computer
+     */
+    public SchemaEditorDialog(JDialog parent, boolean modal, Schema schema) {
+        super(parent, modal);
+        this.schema = schema;
+        this.edit = true;
+        constructor();
+        this.setTitle("Computer editor: " + schema.getConfigName());
     }
 
     /** This method is called from within the constructor to
@@ -45,55 +191,428 @@ public class SchemaEditorDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jMenuBar1 = new javax.swing.JMenuBar();
-        jMenu1 = new javax.swing.JMenu();
-        jMenu2 = new javax.swing.JMenu();
+        groupDraw = new javax.swing.ButtonGroup();
+        toolDraw = new javax.swing.JToolBar();
+        btnSave = new javax.swing.JButton();
+        jSeparator4 = new javax.swing.JToolBar.Separator();
+        btnCompiler = new javax.swing.JToggleButton();
+        btnCPU = new javax.swing.JToggleButton();
+        btnRAM = new javax.swing.JToggleButton();
+        btnDevice = new javax.swing.JToggleButton();
+        jSeparator5 = new javax.swing.JToolBar.Separator();
+        btnLine = new javax.swing.JToggleButton();
+        btnArrowLeft = new javax.swing.JToggleButton();
+        btnArrowRight = new javax.swing.JToggleButton();
+        jSeparator2 = new javax.swing.JToolBar.Separator();
+        btnDelete = new javax.swing.JToggleButton();
+        jSeparator1 = new javax.swing.JToolBar.Separator();
+        cmbPlugin = new javax.swing.JComboBox();
+        jSeparator3 = new javax.swing.JToolBar.Separator();
+        btnUseGrid = new javax.swing.JToggleButton();
+        scrollScheme = new javax.swing.JScrollPane();
+        sliderGridGap = new javax.swing.JSlider();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Computer editor");
+        setIconImages(null);
 
-        jMenu1.setText("File");
-        jMenuBar1.add(jMenu1);
+        toolDraw.setFloatable(false);
+        toolDraw.setRollover(true);
 
-        jMenu2.setText("Edit");
-        jMenuBar1.add(jMenu2);
+        btnSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/document-save.png"))); // NOI18N
+        btnSave.setToolTipText("Save & Close");
+        btnSave.setFocusable(false);
+        btnSave.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnSave.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSaveActionPerformed(evt);
+            }
+        });
+        toolDraw.add(btnSave);
+        toolDraw.add(jSeparator4);
 
-        setJMenuBar(jMenuBar1);
+        groupDraw.add(btnCompiler);
+        btnCompiler.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/compile.png"))); // NOI18N
+        btnCompiler.setToolTipText("Set compiler");
+        btnCompiler.setFocusable(false);
+        btnCompiler.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnCompiler.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnCompiler.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                btnCompilerItemStateChanged(evt);
+            }
+        });
+        toolDraw.add(btnCompiler);
+
+        groupDraw.add(btnCPU);
+        btnCPU.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/cpu_24.gif"))); // NOI18N
+        btnCPU.setToolTipText("Set CPU");
+        btnCPU.setFocusable(false);
+        btnCPU.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnCPU.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnCPU.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                btnCPUItemStateChanged(evt);
+            }
+        });
+        btnCPU.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCPUActionPerformed(evt);
+            }
+        });
+        toolDraw.add(btnCPU);
+
+        groupDraw.add(btnRAM);
+        btnRAM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/ram.gif"))); // NOI18N
+        btnRAM.setToolTipText("Set main store");
+        btnRAM.setFocusable(false);
+        btnRAM.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnRAM.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnRAM.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                btnRAMItemStateChanged(evt);
+            }
+        });
+        btnRAM.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRAMActionPerformed(evt);
+            }
+        });
+        toolDraw.add(btnRAM);
+
+        groupDraw.add(btnDevice);
+        btnDevice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/input-gaming.png"))); // NOI18N
+        btnDevice.setToolTipText("Add device");
+        btnDevice.setFocusable(false);
+        btnDevice.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnDevice.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnDevice.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                btnDeviceItemStateChanged(evt);
+            }
+        });
+        btnDevice.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDeviceActionPerformed(evt);
+            }
+        });
+        toolDraw.add(btnDevice);
+        toolDraw.add(jSeparator5);
+
+        groupDraw.add(btnLine);
+        btnLine.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/network-wired.png"))); // NOI18N
+        btnLine.setToolTipText("Add connection");
+        btnLine.setFocusable(false);
+        btnLine.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnLine.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnLine.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                btnLineItemStateChanged(evt);
+            }
+        });
+        btnLine.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLineActionPerformed(evt);
+            }
+        });
+        toolDraw.add(btnLine);
+
+        btnArrowLeft.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/lineLeft.png"))); // NOI18N
+        btnArrowLeft.setSelected(true);
+        btnArrowLeft.setToolTipText("Connection permission: to first");
+        btnArrowLeft.setFocusable(false);
+        btnArrowLeft.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnArrowLeft.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        toolDraw.add(btnArrowLeft);
+
+        btnArrowRight.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/lineRight.png"))); // NOI18N
+        btnArrowRight.setSelected(true);
+        btnArrowRight.setToolTipText("Connection permission: to last");
+        btnArrowRight.setFocusable(false);
+        btnArrowRight.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnArrowRight.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        toolDraw.add(btnArrowRight);
+        toolDraw.add(jSeparator2);
+
+        groupDraw.add(btnDelete);
+        btnDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/edit-delete.png"))); // NOI18N
+        btnDelete.setToolTipText("Delete component or connection");
+        btnDelete.setFocusable(false);
+        btnDelete.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnDelete.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnDelete.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                btnDeleteItemStateChanged(evt);
+            }
+        });
+        btnDelete.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDeleteActionPerformed(evt);
+            }
+        });
+        toolDraw.add(btnDelete);
+        toolDraw.add(jSeparator1);
+
+        cmbPlugin.setToolTipText("Select plug-in");
+        cmbPlugin.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbPluginActionPerformed(evt);
+            }
+        });
+        toolDraw.add(cmbPlugin);
+        toolDraw.add(jSeparator3);
+
+        btnUseGrid.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/Memory24.gif"))); // NOI18N
+        btnUseGrid.setSelected(true);
+        btnUseGrid.setToolTipText("Use grid?");
+        btnUseGrid.setFocusable(false);
+        btnUseGrid.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnUseGrid.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnUseGrid.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnUseGridActionPerformed(evt);
+            }
+        });
+        toolDraw.add(btnUseGrid);
+
+        sliderGridGap.setMinimum(5);
+        sliderGridGap.setOrientation(javax.swing.JSlider.VERTICAL);
+        sliderGridGap.setPaintTicks(true);
+        sliderGridGap.setSnapToTicks(true);
+        sliderGridGap.setToolTipText("Set grid size");
+        sliderGridGap.setValue(30);
+        sliderGridGap.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                sliderGridGapStateChanged(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 610, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(toolDraw, javax.swing.GroupLayout.DEFAULT_SIZE, 641, Short.MAX_VALUE)
+                        .addContainerGap())
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(scrollScheme, javax.swing.GroupLayout.DEFAULT_SIZE, 614, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(sliderGridGap, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 279, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(toolDraw, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(sliderGridGap, javax.swing.GroupLayout.DEFAULT_SIZE, 353, Short.MAX_VALUE)
+                    .addComponent(scrollScheme, javax.swing.GroupLayout.DEFAULT_SIZE, 353, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    /**
-    * @param args the command line arguments
-    */
-    public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                SchemaEditorDialog dialog = new SchemaEditorDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
-        });
-    }
+    private void sliderGridGapStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderGridGapStateChanged
+        pan.setGridGap(sliderGridGap.getValue());
+    }//GEN-LAST:event_sliderGridGapStateChanged
+
+    private void btnCPUActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCPUActionPerformed
+        pan.cancelTasks();
+        pan.setTool(drawTool.nothing, "");
+        if (buttonSelected) {
+            groupDraw.clearSelection();
+            cmbPlugin.setModel(empty_model);
+            return;
+        }
+        buttonSelected = true;
+        String[] cpus = ArchLoader.getAllNames(ArchLoader.cpusDir, ".jar");
+        cmbPlugin.setModel(new pluginModel(cpus));
+        try {
+            cmbPlugin.setSelectedIndex(0);
+        } catch (IllegalArgumentException e) {
+        }
+    }//GEN-LAST:event_btnCPUActionPerformed
+
+    private void btnRAMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRAMActionPerformed
+        pan.cancelTasks();
+        pan.setTool(drawTool.nothing, "");
+        if (buttonSelected) {
+            cmbPlugin.setModel(empty_model);
+            groupDraw.clearSelection();
+            return;
+        }
+        buttonSelected = true;
+        String[] mems = ArchLoader.getAllNames(ArchLoader.memoriesDir, ".jar");
+        cmbPlugin.setModel(new pluginModel(mems));
+        try {
+            cmbPlugin.setSelectedIndex(0);
+        } catch (IllegalArgumentException e) {
+        }
+    }//GEN-LAST:event_btnRAMActionPerformed
+
+    private void btnDeviceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeviceActionPerformed
+        pan.cancelTasks();
+        pan.setTool(drawTool.nothing, "");
+        if (buttonSelected) {
+            cmbPlugin.setModel(empty_model);
+            groupDraw.clearSelection();
+            return;
+        }
+        buttonSelected = true;
+        String[] devs = ArchLoader.getAllNames(ArchLoader.devicesDir, ".jar");
+        cmbPlugin.setModel(new pluginModel(devs));
+        try {
+            cmbPlugin.setSelectedIndex(0);
+        } catch (IllegalArgumentException e) {
+        }
+    }//GEN-LAST:event_btnDeviceActionPerformed
+
+    private void btnLineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLineActionPerformed
+        pan.cancelTasks();
+        pan.setTool(drawTool.nothing, "");
+        cmbPlugin.setModel(empty_model);
+        if (buttonSelected) {
+            groupDraw.clearSelection();
+            return;
+        }
+        pan.setTool(drawTool.connectLine, "");
+        buttonSelected = true;
+    }//GEN-LAST:event_btnLineActionPerformed
+
+    private void cmbPluginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbPluginActionPerformed
+        if (cmbPlugin.getSelectedIndex() == -1) {
+            pan.cancelTasks();
+            return;
+        }
+        String t = (String) cmbPlugin.getSelectedItem();
+        if (btnCPU.isSelected()) {
+            pan.setTool(drawTool.shapeCPU, t);
+        } else if (btnRAM.isSelected()) {
+            pan.setTool(drawTool.shapeMemory, t);
+        } else if (btnDevice.isSelected()) {
+            pan.setTool(drawTool.shapeDevice, t);
+        }
+    }//GEN-LAST:event_cmbPluginActionPerformed
+
+    private void btnCompilerItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnCompilerItemStateChanged
+        if (!btnCompiler.isSelected()) {
+            buttonSelected = false;
+        }
+    }//GEN-LAST:event_btnCompilerItemStateChanged
+
+    private void btnCPUItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnCPUItemStateChanged
+        if (!btnCPU.isSelected()) {
+            buttonSelected = false;
+        }
+    }//GEN-LAST:event_btnCPUItemStateChanged
+
+    private void btnRAMItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnRAMItemStateChanged
+        if (!btnRAM.isSelected()) {
+            buttonSelected = false;
+        }
+    }//GEN-LAST:event_btnRAMItemStateChanged
+
+    private void btnDeviceItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnDeviceItemStateChanged
+        if (!btnDevice.isSelected()) {
+            buttonSelected = false;
+        }
+    }//GEN-LAST:event_btnDeviceItemStateChanged
+
+    private void btnLineItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnLineItemStateChanged
+        if (!btnLine.isSelected()) {
+            buttonSelected = false;
+        }
+    }//GEN-LAST:event_btnLineItemStateChanged
+
+    private void btnDeleteItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnDeleteItemStateChanged
+        if (!btnDelete.isSelected()) {
+            buttonSelected = false;
+        }
+    }//GEN-LAST:event_btnDeleteItemStateChanged
+
+    private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteActionPerformed
+        pan.cancelTasks();
+        pan.setTool(drawTool.nothing, "");
+        cmbPlugin.setModel(empty_model);
+        if (buttonSelected) {
+            groupDraw.clearSelection();
+            return;
+        }
+        pan.setTool(drawTool.delete, "");
+        buttonSelected = true;
+    }//GEN-LAST:event_btnDeleteActionPerformed
+
+    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
+        // check for correctness of the schema
+        if (schema.getCpuElement() == null) {
+            StaticDialogs.showErrorMessage("The computer must contain a CPU!");
+            return;
+        }
+
+        String name = StaticDialogs.inputStringValue(
+                edit ? "Enter computer name (leave for the origin name):"
+                     : "Enter new computer name:", "Save & Close",
+                edit ? schema.getConfigName()
+                     : "");
+
+        try {
+            File f = new File(name + ".conf");
+            f = null;
+        } catch (NullPointerException np) {
+            StaticDialogs.showErrorMessage("Computer name can not be empty!");
+            return;
+        } 
+        catch(Exception e) {
+            StaticDialogs.showErrorMessage("Computer name is wrong!");
+            return;
+        }
+
+        if (edit && !name.equals(schema.getConfigName())) {
+            int r = StaticDialogs.confirmMessage("You probably want to rename the"
+                    + " computer. If you do so, all other settings will be lost."
+                    + " Do you really want to rename the computer?",
+                    "Save & Close");
+            if (r != StaticDialogs.YES_OPTION)
+                return;
+            ArchLoader.deleteConfig(schema.getConfigName());
+        }
+        schema.setConfigName(name);
+        OOK = true;
+        dispose();
+    }//GEN-LAST:event_btnSaveActionPerformed
+
+    private void btnUseGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUseGridActionPerformed
+        pan.setUseGrid(btnUseGrid.isSelected());
+        sliderGridGap.setEnabled(btnUseGrid.isSelected());
+    }//GEN-LAST:event_btnUseGridActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JMenu jMenu1;
-    private javax.swing.JMenu jMenu2;
-    private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JToggleButton btnArrowLeft;
+    private javax.swing.JToggleButton btnArrowRight;
+    private javax.swing.JToggleButton btnCPU;
+    private javax.swing.JToggleButton btnCompiler;
+    private javax.swing.JToggleButton btnDelete;
+    private javax.swing.JToggleButton btnDevice;
+    private javax.swing.JToggleButton btnLine;
+    private javax.swing.JToggleButton btnRAM;
+    private javax.swing.JButton btnSave;
+    private javax.swing.JToggleButton btnUseGrid;
+    private javax.swing.JComboBox cmbPlugin;
+    private javax.swing.ButtonGroup groupDraw;
+    private javax.swing.JToolBar.Separator jSeparator1;
+    private javax.swing.JToolBar.Separator jSeparator2;
+    private javax.swing.JToolBar.Separator jSeparator3;
+    private javax.swing.JToolBar.Separator jSeparator4;
+    private javax.swing.JToolBar.Separator jSeparator5;
+    private javax.swing.JScrollPane scrollScheme;
+    private javax.swing.JSlider sliderGridGap;
+    private javax.swing.JToolBar toolDraw;
     // End of variables declaration//GEN-END:variables
 
 }
