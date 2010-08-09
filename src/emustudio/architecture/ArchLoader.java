@@ -114,8 +114,10 @@ public class ArchLoader {
 
     private static long nextPluginID = 0;
     
-    /** Creates a new instance of ArchLoader */
-    public ArchLoader() {     
+    /** 
+     * This forbids of creating the instance of this class.
+     */
+    private ArchLoader() {
     }
     
     /**
@@ -157,10 +159,28 @@ public class ArchLoader {
         if (!f.exists())
             return false;
         try {
-            boolean r = f.delete();
-            if (r == false)
-                System.out.println("NO!!!!!");
-            return r;
+            return f.delete();
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Renames configuration to a new name.
+     *
+     * @param newName new name
+     * @param oldName old, origin name
+     * @return true if the operation was successful.
+     */
+    public static boolean renameConfig(String newName, String oldName) {
+        File f = new File(System.getProperty("user.dir") +
+                File.separator + configsDir + File.separator + oldName
+                + ".conf");
+        if (!f.exists())
+            return false;
+        try {
+            return f.renameTo(new File(newName));
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -319,7 +339,9 @@ public class ArchLoader {
                     File.separator + configsDir + File.separator + configName
                     + ".conf");
             if (!f.exists()) return null;
-            p.load(new FileInputStream(f));
+            FileInputStream fin = new FileInputStream(f);
+            p.load(fin);
+            fin.close();
             if (!p.getProperty("emu8Version").equals("3")) {
                 StaticDialogs.showErrorMessage("Error reading configuration: " +
                         "unsupported file version");
@@ -369,6 +391,7 @@ public class ArchLoader {
             FileOutputStream out = new FileOutputStream(f);
             settings.put("emu8Version", "3");
             settings.store(out, configName + " configuration file");
+            out.close();
         }
         catch (Exception e) {
             StaticDialogs.showErrorMessage("Error writing configuration: " + e.toString());
@@ -382,7 +405,7 @@ public class ArchLoader {
      * @param name  Name of the configuration
      * @return instance of virtual architecture
      */
-    public ArchHandler load(String name, boolean verbose) {
+    public static ArchHandler load(String name, boolean verbose) {
         try {
             Properties settings = readConfig(name,true);
             if (settings == null) return null;
@@ -514,7 +537,7 @@ public class ArchLoader {
      * 
      * @return hash for an identification of the plugin
      */
-    private long createPluginID() {
+    private static long createPluginID() {
     	return nextPluginID++;
     }
     
@@ -527,7 +550,7 @@ public class ArchLoader {
      *        has to implement
      * @return instance object of loaded plugin
      */
-    private Object loadPlugin(String dirname, String filename, Class<?> interfaceName) {
+    private static Object loadPlugin(String dirname, String filename, Class<?> interfaceName) {
         try {
             ArrayList<Class<?>> classes = runtime.Loader.getInstance().loadJAR(
                 System.getProperty("user.dir") + File.separator + dirname

@@ -38,7 +38,6 @@ import java.util.Date;
  * @author vbmacher
  */
 public class Main {
-    public static ArchLoader aloader;
     public static ArchHandler currentArch = null;    
     private static String inputFileName = null;
     private static String outputFileName = null;
@@ -102,7 +101,8 @@ public class Main {
         } catch (IllegalAccessException e) {
         }
 
-        password = runtime.Context.SHA1(new Date().toString());
+        password = runtime.Context.SHA1(String.valueOf(Math.random()) +
+                new Date().toString());
         if (!runtime.Context.assignPassword(password)) {
             StaticDialogs.showErrorMessage("Error: communication with emuLib failed.");
             return;
@@ -128,14 +128,13 @@ public class Main {
         splash.setVisible(true);
 
         // load the virtual computer
-        aloader = new ArchLoader();
-        try { currentArch = aloader.load(configName, auto); }
+        try { currentArch = ArchLoader.load(configName, auto); }
         catch (Error er) {
             String h = er.getLocalizedMessage();
             if (h == null || h.equals("")) {
                 h = "Unknown error";
             }
-            StaticDialogs.showErrorMessage("Fatal Error: " + h);
+            StaticDialogs.showErrorMessage("Error with computer loading : " + h);
             currentArch = null;
         }
 

@@ -573,15 +573,15 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             return;
         }
 
-        if (edit && !name.equals(schema.getConfigName())) {
-            int r = StaticDialogs.confirmMessage("You probably want to rename the"
-                    + " computer. If you do so, all other settings will be lost."
-                    + " Do you really want to rename the computer?",
-                    "Save & Close");
-            if (r != StaticDialogs.YES_OPTION)
-                return;
-            ArchLoader.deleteConfig(schema.getConfigName());
-        }
+//        if (edit && !name.equals(schema.getConfigName())) {
+//            int r = StaticDialogs.confirmMessage("You probably want to rename the"
+//                    + " computer. If you do so, all other settings will be lost."
+//                    + " Do you really want to rename the computer?",
+//                    "Save & Close");
+//            if (r != StaticDialogs.YES_OPTION)
+//                return;
+//            ArchLoader.deleteConfig(schema.getConfigName());
+//        }
         schema.setConfigName(name);
         OOK = true;
         dispose();

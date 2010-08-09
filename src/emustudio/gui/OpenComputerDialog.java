@@ -308,8 +308,16 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         SchemaEditorDialog d = new SchemaEditorDialog(this, true, s);
         d.setVisible(true);
         if (d.getOK()) {
-            ArchLoader.saveSchema(d.getSchema());
+            String old = archName;
+            Schema sch = d.getSchema();
+            archName = d.getSchema().getConfigName();
+
+            if (!old.equals(archName)) {
+                ArchLoader.renameConfig(archName, old);
+            }
+            ArchLoader.saveSchema(sch);
             amodel.update();
+            lblPreview.setText(archName);
         }
     }//GEN-LAST:event_btnEditActionPerformed
 
