@@ -322,7 +322,9 @@ public class ArchLoader {
             for (int i = 0; i < lines.size(); i++) {
                 ConnectionLine line = lines.get(i);
                 Element e = line.getJunc0();
-                if (e instanceof CpuElement) 
+                if (e instanceof CompilerElement)
+                    p.put("connection"+i+".junc0", "compiler");
+                else if(e instanceof CpuElement)
                     p.put("connection"+i+".junc0", "cpu");
                 else if (e instanceof MemoryElement) 
                     p.put("connection"+i+".junc0", "memory");
@@ -330,7 +332,9 @@ public class ArchLoader {
                     p.put("connection"+i+".junc0", devsHash.get((DeviceElement)e));
                
                 e = line.getJunc1();
-                if (e instanceof CpuElement) 
+                if (e instanceof CompilerElement)
+                    p.put("connection"+i+".junc1", "compiler");
+                else if(e instanceof CpuElement)
                     p.put("connection"+i+".junc1", "cpu");
                 else if (e instanceof MemoryElement) 
                     p.put("connection"+i+".junc1", "memory");
@@ -376,6 +380,9 @@ public class ArchLoader {
                 return null;
             }
             if (!schema_too) {
+                p.remove("compiler");
+                p.remove("compiler.point.x");
+                p.remove("compiler.point.y");
                 p.remove("cpu");
                 p.remove("cpu.point.x");
                 p.remove("cpu.point.y");
@@ -423,7 +430,7 @@ public class ArchLoader {
             File f = new File(dir + File.separator + configName + ".conf");
             f.createNewFile();
             FileOutputStream out = new FileOutputStream(f);
-            settings.put("emu8Version", "3");
+            settings.put("emu8Version", "4");
             settings.store(out, configName + " configuration file");
             out.close();
         }
@@ -451,18 +458,18 @@ public class ArchLoader {
             // load compiler
             String comName = settings.getProperty("compiler");
             long id;
-            ICompiler com = null;
+            ICompiler compiler = null;
 
             if (comName != null) {
                 // the compiler is defined in the config file
-                com = (ICompiler)loadPlugin(compilersDir,
+                compiler = (ICompiler)loadPlugin(compilersDir,
                         comName,ICompiler.class);
-                if (com == null)
+                if (compiler == null)
                     throw new IllegalArgumentException("Compiler '" + comName
                             + "' cannot be loaded.");
                 id = createPluginID();
-                pluginsReverse.put(com, id);
-                plugins.put(id, com);
+                pluginsReverse.put(compiler, id);
+                plugins.put(id, compiler);
                 pluginNames.put(id, "compiler");
             }
             // load cpu
@@ -523,7 +530,9 @@ public class ArchLoader {
                 // map the connection elements to plug-ins: p1 and p2
                 IPlugin p1 = null,p2 = null;
 
-                if (j0.equals("cpu"))
+                if (j0.equals("compiler"))
+                    p1 = compiler;
+                else if(j0.equals("cpu"))
                     p1 = cpu;
                 else if (j0.equals("memory"))
                     p1 = mem;
@@ -531,7 +540,9 @@ public class ArchLoader {
                     int index = Integer.parseInt(j0.substring(6));
                     p1 = tmpDevices[index];
                 }
-                if (j1.equals("cpu"))
+                if (j1.equals("compiler"))
+                    p2 = compiler;
+                else if(j1.equals("cpu"))
                     p2 = cpu;
                 else if (j1.equals("memory"))
                     p2 = mem;
@@ -552,7 +563,7 @@ public class ArchLoader {
                     connections.put(pID1, ar);
                 }
             }
-            Computer arch = new Computer(cpu, mem, com, tmpDevices,
+            Computer arch = new Computer(cpu, mem, compiler, tmpDevices,
                     plugins, pluginsReverse, connections);
             return new ArchHandler(name, arch, settings, loadSchema(name),
                     pluginNames, verbose);

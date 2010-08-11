@@ -148,6 +148,13 @@ public class ConnectionLine {
         return false;
     }
     
+    public void replaceElement(Element e1, Element e2) {
+        if (this.e1 == e1)
+            this.e1 = e1;
+        if (this.e2 == e2)
+            this.e2 = e2;
+    }
+
     /**
      * Method determines whether point[x,y] crosses with this line
      * with some tolerance (5)

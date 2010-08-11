@@ -26,17 +26,21 @@ package emustudio.architecture.drawing;
 import java.util.ArrayList;
 
 /**
- * Class that manages the Abstract schema of virtual computer configuration.
+ * This class represents abstract schema of virtual computer configuration.
+ * It is created by the schema editor and used by ArchLoader.
  *
  * @author vbmacher
  */
 public class Schema {
+    private CompilerElement compilerElement;
     private CpuElement cpuElement;
     private MemoryElement memoryElement;
-    private CompilerElement compilerElement;
     private ArrayList<DeviceElement> deviceElements;
     private ArrayList<ConnectionLine> lines;
-    
+
+    /**
+     * Name of the configuration
+     */
     private String configName;
 
     public Schema(CpuElement cpuElement, MemoryElement memoryElement, 
@@ -75,6 +79,7 @@ public class Schema {
         memoryElement = null;
         deviceElements.clear();
         lines.clear();
+        configName = "";
     }
 
     /**
@@ -82,23 +87,21 @@ public class Schema {
      * 
      * @param el the inicident element
      */
-    private void removeIncidentLines(Element el) {
-        for (int i = lines.size()-1; i >= 0; i--)
-            if (lines.get(i).containsElement(el))
-                lines.remove(i);
-    }
+//    private void removeIncidentLines(Element el) {
+//        for (int i = lines.size()-1; i >= 0; i--)
+//            if (lines.get(i).containsElement(el))
+//                lines.remove(i);
+//    }
 
     /**
      * Updates all lines connections from element e1 to e2.
-     * @param el old element
+     * @param e1 old element
      * @param e2 new element
      */
-//    private void updateIncidentLines(Element el, Element e2) {
-  //      for (int i = lines.size()-1; i >= 0; i--)
-    //        if (lines.get(i).containsElement(el))
-      //          lines.get(i).
-        //        lines.remove(i);
-    //}
+    private void updateIncidentLines(Element e1, Element e2) {
+        for (int i = lines.size()-1; i >= 0; i--)
+            lines.get(i).replaceElement(e1, e2);
+    }
 
     public String getConfigName() { return configName; }
     public void setConfigName(String cName) { configName = cName; }
@@ -112,16 +115,17 @@ public class Schema {
 
     public void setCpuElement(CpuElement cpuElement) {
         if ((cpuElement == null) && (this.cpuElement != null))
-            removeIncidentLines(this.cpuElement);
+            updateIncidentLines(this.cpuElement, cpuElement);
         this.cpuElement = cpuElement;
     }
+    
     public CpuElement getCpuElement() {
         return cpuElement;
     }
     
     public void setMemoryElement(MemoryElement memoryElement) {
         if (memoryElement == null && this.memoryElement != null)
-            removeIncidentLines(this.memoryElement);
+            updateIncidentLines(this.memoryElement, memoryElement);
         this.memoryElement = memoryElement;
     }
     public MemoryElement getMemoryElement() {
@@ -134,13 +138,13 @@ public class Schema {
     public ArrayList<DeviceElement>getDeviceElements() {
         return deviceElements;
     }
-    public void removeDeviceElement(int index) {
-        if (index < 0) return;
-        try {
-            removeIncidentLines(deviceElements.get(index));
-            deviceElements.remove(index);
-        } catch(Exception e) {}
-    }
+//    public void removeDeviceElement(int index) {
+//        if (index < 0) return;
+//        try {
+//            removeIncidentLines(deviceElements.get(index));
+//            deviceElements.remove(index);
+//        } catch(Exception e) {}
+//    }
     
     public ArrayList<Element>getAllElements() {
         ArrayList<Element> a = new ArrayList<Element>();
