@@ -24,7 +24,7 @@ package emustudio.gui;
 
 import emustudio.architecture.ArchLoader;
 import emustudio.architecture.drawing.DrawingPanel;
-import emustudio.architecture.drawing.DrawingPanel.drawTool;
+import emustudio.architecture.drawing.DrawingPanel.PanelDrawTool;
 import emustudio.architecture.drawing.Schema;
 import java.awt.Component;
 import java.awt.Container;
@@ -427,11 +427,12 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
     }//GEN-LAST:event_sliderGridGapStateChanged
 
     private void btnCPUActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCPUActionPerformed
-        pan.cancelTasks();
-        pan.setTool(drawTool.nothing, "");
         if (buttonSelected) {
             groupDraw.clearSelection();
             cmbPlugin.setModel(empty_model);
+            pan.cancelTasks();
+            pan.setTool(PanelDrawTool.nothing, "");
+            buttonSelected = false;
             return;
         }
         buttonSelected = true;
@@ -444,11 +445,12 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
     }//GEN-LAST:event_btnCPUActionPerformed
 
     private void btnRAMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRAMActionPerformed
-        pan.cancelTasks();
-        pan.setTool(drawTool.nothing, "");
         if (buttonSelected) {
             cmbPlugin.setModel(empty_model);
             groupDraw.clearSelection();
+            pan.cancelTasks();
+            pan.setTool(PanelDrawTool.nothing, "");
+            buttonSelected = false;
             return;
         }
         buttonSelected = true;
@@ -461,11 +463,12 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
     }//GEN-LAST:event_btnRAMActionPerformed
 
     private void btnDeviceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeviceActionPerformed
-        pan.cancelTasks();
-        pan.setTool(drawTool.nothing, "");
         if (buttonSelected) {
             cmbPlugin.setModel(empty_model);
             groupDraw.clearSelection();
+            pan.cancelTasks();
+            pan.setTool(PanelDrawTool.nothing, "");
+            buttonSelected = false;
             return;
         }
         buttonSelected = true;
@@ -479,13 +482,13 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
 
     private void btnLineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLineActionPerformed
         pan.cancelTasks();
-        pan.setTool(drawTool.nothing, "");
+        pan.setTool(PanelDrawTool.nothing, "");
         cmbPlugin.setModel(empty_model);
         if (buttonSelected) {
             groupDraw.clearSelection();
             return;
         }
-        pan.setTool(drawTool.connectLine, "");
+        pan.setTool(PanelDrawTool.connectLine, "");
         buttonSelected = true;
     }//GEN-LAST:event_btnLineActionPerformed
 
@@ -496,13 +499,13 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         }
         String t = (String) cmbPlugin.getSelectedItem();
         if (btnCompiler.isSelected())
-            pan.setTool(drawTool.shapeCompiler, t);
+            pan.setTool(PanelDrawTool.shapeCompiler, t);
         if (btnCPU.isSelected())
-            pan.setTool(drawTool.shapeCPU, t);
+            pan.setTool(PanelDrawTool.shapeCPU, t);
         else if (btnRAM.isSelected())
-            pan.setTool(drawTool.shapeMemory, t);
+            pan.setTool(PanelDrawTool.shapeMemory, t);
         else if (btnDevice.isSelected())
-            pan.setTool(drawTool.shapeDevice, t);
+            pan.setTool(PanelDrawTool.shapeDevice, t);
     }//GEN-LAST:event_cmbPluginActionPerformed
 
     private void btnCompilerItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnCompilerItemStateChanged
@@ -543,13 +546,13 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
 
     private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteActionPerformed
         pan.cancelTasks();
-        pan.setTool(drawTool.nothing, "");
+        pan.setTool(PanelDrawTool.nothing, "");
         cmbPlugin.setModel(empty_model);
         if (buttonSelected) {
             groupDraw.clearSelection();
             return;
         }
-        pan.setTool(drawTool.delete, "");
+        pan.setTool(PanelDrawTool.delete, "");
         buttonSelected = true;
     }//GEN-LAST:event_btnDeleteActionPerformed
 
@@ -578,8 +581,12 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             return;
         }
 
-        schema.setConfigName(name);
-        OOK = true;
+        if ((name == null) || (name.equals(""))) {
+            OOK = false;
+        } else {
+            schema.setConfigName(name);
+            OOK = true;
+        }
         dispose();
     }//GEN-LAST:event_btnSaveActionPerformed
 
@@ -589,22 +596,22 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
     }//GEN-LAST:event_btnUseGridActionPerformed
 
     private void btnCompilerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCompilerActionPerformed
-        pan.cancelTasks();
-        pan.setTool(drawTool.nothing, "");
         if (buttonSelected) {
             groupDraw.clearSelection();
             cmbPlugin.setModel(empty_model);
+            buttonSelected = false;
+            pan.cancelTasks();
+            pan.setTool(PanelDrawTool.nothing, "");
             return;
         }
         buttonSelected = true;
         String[] compilers = ArchLoader.getAllNames(ArchLoader.compilersDir,
-                ".jar");
+                    ".jar");
         cmbPlugin.setModel(new pluginModel(compilers));
         try {
             cmbPlugin.setSelectedIndex(0);
         } catch (IllegalArgumentException e) {
         }
-
     }//GEN-LAST:event_btnCompilerActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

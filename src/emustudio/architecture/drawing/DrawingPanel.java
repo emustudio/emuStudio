@@ -37,26 +37,136 @@ import java.util.ArrayList;
 import javax.swing.JPanel;
 
 /**
+ * This class handles the drawing canvas - panel by which the user can draw
+ * abstract schemas of virtual computers.
  *
+ * The drawing is realized by capturing mouse events (motion, clicks).
+ *
+ * The "picture" is synchronized with the Schema object automatically.
+ *
+ * The panel has states, or modes.
+ * 
+ * In "draw" mode, the draw tool is selected and mouse clicks are events causing
+ * drawing in the mode.
+ * 
+ * In "move" mode, no draw tool is selected and elements selection, and drag-n-drop
+ * technique are used for elements and points of connection lines by mouse events.
+ * Also here it is allowed the movement of a elements selection.
+ *
+ * Finally in "select" mode, no draw tool is selected neither and user is able
+ * to select one or more elements and lines. This mode can be activated only from
+ * the "move" mode. When user finishes to select elements, the mode is returned
+ * to the "move" mode.
+ *
+ * The initial mode is "move" mode.
  * @author vbmacher
  */
 @SuppressWarnings("serial")
 public class DrawingPanel extends JPanel implements MouseListener,
         MouseMotionListener {
-    private Point e1 = null;
-    private Dimension area; // velkost kresliacej plochy
+    /**
+     * Whether to use and draw grid
+     */
+    private boolean useGrid;
+    
+    /**
+     * Gap between vertical and horizontal grid lines
+     */
+    private int gridGap;
+
+    /**
+     * Color of the grid
+     */
+    private Color gridColor;
+
+    /**
+     * A draw tool used by this panel in the time. 
+     */
+    private PanelDrawTool drawTool;
+
+    /**
+     * Mode of the panel. One of the draw, move or select.
+     */
+    private PanelMode panelMode;
+
+    /**
+     * This variable is used when "move" mode is active and user moves
+     * an element. It holds the moving element object.
+     *
+     * If "draw" mode is active and when users draws a line, it represents the
+     * first element that the line is connected to. If it is selected the element
+     * deletion, it represents a shape that should be deleted when mouse is
+     * released.
+     */
+    private Element tmpElem1;
+
+    /**
+     * Used when drawing lines. It represents last element that the line
+     * is connected to.
+     */
+    private Element tmpElem2;
+
+    /**
+     * Selected line. Used only in "move" mode.
+     *
+     * This variable is used if the user wants to remove or move an existing
+     * connection line point.
+     */
+    private ConnectionLine selLine;
+
+    /**
+     * Holds a point of a connection line.
+     *
+     * This is used in "move" mode for:
+     *   - move of the connection line point
+     *   - add/delete connection line point
+     *
+     * in the "draw" mode, it is used for:
+     *   - holds temporal point that will be added to temporal points array
+     *     when mouse is released, while drawing a line
+     */
+    private Point selPoint;
+
+    /**
+     * This variable contains last sketch point when drawing a connection line.
+     * The last point is variable according to the mouse position. It actually
+     * is the mouse position when drawing a line.
+     *
+     * It is used only in "draw" mode.
+     */
+    private Point sketchLastPoint;
+
+    /**
+     * Point where the selection starts. It is set when the "selection" mode
+     * is activated.
+     */
+    private Point selectionStart;
+
+    /**
+     * Point where the selection ends. It is set when the "selection" mode
+     * is active and mouse released.
+     */
+    private Point selectionEnd;
+
     private BasicStroke thickLine;
     private Schema schema;
-    
-    private ArrayList<Point> points;
-    private boolean useGrid; // whether should use and draw grid
-    private int gridGap; // gap between vertical and horizontal grid lines
-    
-    private drawTool tool;
-    private String newText;
-    private boolean shapeMove;
 
-    public enum drawTool {
+    /**
+     * Temporary points used in the process of connection line drawing.
+     * If the line is drawn, these points are saved, they are cleared otherwise.
+     */
+    private ArrayList<Point> tmpPoints;
+    
+    private String newText;
+
+    /* double buffering */
+    private Image dbImage;   // second buffer
+    private Graphics2D dbg;  // graphics for double buffering
+    
+    /**
+     * Draw tool enum. This panel
+     */
+    public enum PanelDrawTool {
         shapeCompiler,
         shapeCPU,
         shapeMemory,
@@ -65,49 +175,65 @@ public class DrawingPanel extends JPanel implements MouseListener,
         delete,
         nothing
     }
-    
-    /* double buffering */
-    private Image dbImage;   // second buffer
-    private Graphics2D dbg;  // graphics for double buffering
-    
-    private Element selShape;
-    private Element selShape2;
-    
-    private ConnectionLine selLine; // pri presuvani bodov ciary
-    private int selPointIndex;
-    private Point selPoint;
-    private Color gridColor;
-    
-    public int searchGridPointX(int x_near) {
-        if (gridGap <= 0) return x_near;
-        int dX = (int)Math.round(x_near / (double)gridGap);
-        return (dX * gridGap);
+
+    public enum PanelMode {
+        draw,
+        move,
+        select
     }
-    
-    public int searchGridPointY(int y_near) {
-        if (gridGap <= 0) return y_near;
-        int dY = (int)Math.round(y_near / (double)gridGap);
-        return (dY * gridGap);
-    }
-    
+
+    /**
+     * Creates new instance of the draw panel.
+     *
+     * @param schema  Schema object for the panel synchronization
+     * @param useGrid whether to use grid
+     * @param gridGap grid gap in pixels
+     */
     public DrawingPanel(Schema schema, boolean useGrid, int gridGap) {
         this.setBackground(Color.WHITE);
         this.schema = schema;
-        points = new ArrayList<Point>();
-        tool = drawTool.nothing;
-        area = new Dimension(0,0);
-        thickLine = new BasicStroke(2);
-        shapeMove = false;
         this.useGrid = useGrid;
         this.gridGap = gridGap;
+
+        panelMode = PanelMode.move;
+        drawTool = PanelDrawTool.nothing;
+
+        thickLine = new BasicStroke(2);
+        tmpPoints = new ArrayList<Point>();
         gridColor = new Color(0xBFBFBF);
     }
-    
+
+    /**
+     * This method searchs for the nearest point that crosses the grid. If the
+     * grid is not used, it just return the point represented by the parameter.
+     *
+     * @param old Point that needs to be corrected by the grid
+     * @return nearest grid point from the parameter, or the old point,
+     * if grid is not used.
+     */
+    private Point searchGridPoint(Point old) {
+        if (!useGrid || gridGap <= 0)
+            return old;
+        int dX = (int)Math.round(old.x / (double)gridGap);
+        int dY = (int)Math.round(old.y / (double)gridGap);
+        return new Point(dX * gridGap, dY * gridGap);
+    }
+
+    /**
+     * Set/unset to use grid. After the change, the panel is repainted.
+     *
+     * @param useGrid whether to use grid or not
+     */
     public void setUseGrid(boolean useGrid) {
         this.useGrid = useGrid;
         repaint();
     }
-    
+
+    /**
+     * Set the grid gap. After this change, the panel is repainted.
+     *
+     * @param gridGap grid gap in pixels
+     */
     public void setGridGap(int gridGap) {
         this.gridGap = gridGap;
         repaint();
@@ -115,7 +241,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
     
     /**
      * Override previous update method in order to implement
-     * double-buffering. As a second buffer is used Image object.
+     * double-buffering. As a second buffer is used the Image object.
+     *
+     * @param g Graphics object where to paint
      */
     @Override
     public void update(Graphics g) {
@@ -137,10 +265,23 @@ public class DrawingPanel extends JPanel implements MouseListener,
         // draw image on the screen
         g.drawImage(dbImage, 0, 0, this);
     }
-    
-    private void resizePanel() {
+
+    /**
+     * Perform a correction of the panel size. It means that the panel size
+     * will be accomodated to the schema needs.
+     *
+     * It is called after each schema change - new elements creation, or elements
+     * movement.
+     *
+     * The method searches for the furthest elements (or connection line points,
+     * because the line cannot be further than the line point) and fit the
+     * panel size only from the right and bottom.
+     */
+    private void panelSizeCorrection() {
         // hladanie najvzdialenejsich elementov (alebo bodov lebo ciara
         // nemoze byt dalej ako bod)
+        Dimension area = new Dimension(0,0); // velkost kresliacej plochy
+
         area.width=0;
         area.height=0;
         ArrayList<Element> a = schema.getAllElements();
@@ -166,68 +307,111 @@ public class DrawingPanel extends JPanel implements MouseListener,
             this.revalidate();
         }
     }
-    
+
+    /**
+     * Method paints grid to the draw panel. It should be called first while
+     * painting. If the grid is not used, it does nothing.
+     *
+     * @param g Graphics object, where to paint
+     */
     private void paintGrid(Graphics g) {
+        if (!useGrid)
+            return;
         g.setColor(gridColor);
         for (int xi = 0; xi < this.getWidth(); xi+=gridGap)
             g.drawLine(xi, 0, xi, this.getHeight());
         for (int yi = 0; yi < this.getHeight(); yi+= gridGap)
             g.drawLine(0, yi, this.getWidth(), yi);
     }
-    
-    //override panel paint method to draw shapes
+
+    /**
+     * Draw the schema to the graphics object. It overrides original panel paint
+     * method.
+     *
+     * @param g Graphics object where to paint
+     */
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         ArrayList<Element> a = schema.getAllElements();
         
         // najprv mriezka
-        if (useGrid) paintGrid(g);
-        
+        paintGrid(g);
+
+        // at first, measure objects
         for (int i = 0; i < a.size(); i++)
-            a.get(i).measure(this.getGraphics(),0,0);
+            a.get(i).measure(g,0,0);
+
+        // then draw connection lines (at the bottom)
         for (int i = 0; i < schema.getConnectionLines().size(); i++)
             schema.getConnectionLines().get(i).draw((Graphics2D)g);
+
+        // at least, draw all other elements
         for (int i = 0; i < a.size(); i++)
             a.get(i).draw(g);
-        // ak je oznaceny nejaky bod ciary
-        if (selPoint != null) {
-            int xx = (int)selPoint.getX();
-            int yy = (int)selPoint.getY();
-            g.setColor(Color.red);
-            ((Graphics2D)g).setStroke(thickLine);
-            g.drawOval(xx-4, yy-4, 8, 8);
-        }
-        if (tool == drawTool.connectLine && selShape != null) {
-            ConnectionLine.drawSketch((Graphics2D)g, selShape, 
-                    e1, points);
+
+        // ***** HERE BEGINS DRAWING OF TEMPORARY GRAPHICS *****
+
+        if (panelMode == PanelMode.move) {
+            // draw a small red circle around selected connection line point
+            if (selPoint != null) {
+                int xx = (int)selPoint.getX();
+                int yy = (int)selPoint.getY();
+                g.setColor(Color.red);
+                ((Graphics2D)g).setStroke(thickLine);
+                g.drawOval(xx-4, yy-4, 8, 8);
+            }
+        } else if (panelMode == PanelMode.draw) {
+            // if the connection line is being drawn, draw the sketch
+            if (drawTool == PanelDrawTool.connectLine && tmpElem1 != null) {
+                ConnectionLine.drawSketch((Graphics2D)g, tmpElem1,
+                        sketchLastPoint, tmpPoints);
+            }
+        } else if (panelMode == PanelMode.select) {
+            // TODO
         }
     }
 
-    public void setTool(drawTool tool, String text) {
-        this.tool = tool;
+    /**
+     * Set a draw tool.
+     *
+     * It first clear all "tasks" - clear
+     * temporary line points, selection and stop drag-n-drop.
+     *
+     * If the new draw tool is null, it then sets the panel
+     * mode to "move" mode.
+     *
+     * If the tool is not null, the "draw" mode is activated.
+     * The text is used only when the draw tool is some element - cpu, memory
+     * or device. It is not used if the other draw tool is selected.
+     *
+     * @param tool panel draw tool
+     * @param text text of the element
+     */
+    public void setTool(PanelDrawTool tool, String text) {
+        this.drawTool = tool;
         this.newText = text;
-        shapeMove = false;
-        selShape = null;
-        selShape2 = null;
-        points.clear();
+
+        cancelTasks();
+
+        if ((tool == null) || (tool == PanelDrawTool.nothing))
+            panelMode = PanelMode.move;
+        else
+            panelMode = PanelMode.draw;
     }
-    
-    
-    public void clear() {
-        schema.destroy();
-        points.clear();
-        repaint();
-    }
-    
+
+    /**
+     * Cancel all pending operations, like selection, or line drawing. It then
+     * repaints the schema.
+     */
     public void cancelTasks() {
-        shapeMove = false;
-        selShape = null;
-        selShape2 = null;
-        points.clear();
+        tmpElem1 = null;
+        tmpElem2 = null;
+        tmpPoints.clear();
         repaint();
     }
-    
+
+
     @Override
     public void mouseClicked(MouseEvent e) {}
     @Override
@@ -237,205 +421,234 @@ public class DrawingPanel extends JPanel implements MouseListener,
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (tool == drawTool.nothing || tool == drawTool.delete
-                || tool == drawTool.connectLine) {
-            // shapeMove?
-            shapeMove = false;
-            ArrayList<Element> a = schema.getAllElements();
-            Point p = e.getPoint();
-            for (int i = a.size()-1; i >= 0 ; i--) {
-                Element shape = a.get(i);
-                if ((shape.getX() <= p.getX()) 
-                        && (shape.getX() + shape.getWidth() >= p.getX())
-                        && (shape.getY() <= p.getY())
-                        && (shape.getY() + shape.getHeight() >= p.getY())) {
-                    if (e.getButton() != MouseEvent.BUTTON1) return;
-                    if (tool == drawTool.nothing) {
-                        // move a shape
-                        shapeMove = true;
-                        selShape = shape;
-                        selShape2 = null;
-                    } else if (tool == drawTool.connectLine) {
-                        // draw a line
-                        if (selShape == null) selShape = shape;
-                        else selShape2 = shape;
-                    } else if (tool == drawTool.delete) {
-                        // delete shape
-                        selShape = shape;
-                        selShape2 = null;
-                    }
+        Point p = e.getPoint();
+        if (panelMode == PanelMode.move) {
+            if (e.getButton() == MouseEvent.BUTTON1) {
+                tmpElem1 = schema.getCrossingElement(e.getPoint());
+                if (tmpElem1 != null)
                     return;
-                }
             }
-            if (tool == drawTool.delete) {
-                if (e.getButton() != MouseEvent.BUTTON1) return;
-                // delete line ?
-                for (int i = schema.getConnectionLines().size()-1; i >= 0 ; i--) {
-                    ConnectionLine l = schema.getConnectionLines().get(i);
-                    // bug?
-                    if (l.getCrossPointAfter((int)p.getX(), (int)p.getY()) != -1) {
-                        schema.getConnectionLines().remove(i);
-                        return;
-                    }
-                }
-            } else if (tool == drawTool.connectLine) {
-                // user doesn't clicked on shape, but on drawing area
-                if (e.getButton() != MouseEvent.BUTTON1) return;
-                if (useGrid)
-                    p.setLocation(searchGridPointX((int)p.getX()),
-                        searchGridPointY((int)p.getY()));
-                points.add(p);
-            } else if (tool == drawTool.nothing) {
-                // add/remove a point to line ?
 
-                if (selPoint != null) return;
-                if (e.getButton() != MouseEvent.BUTTON1) return;
-                for (int i = schema.getConnectionLines().size()-1; i >= 0 ; i--) {
-                    ConnectionLine l = schema.getConnectionLines().get(i);
-                    int pi = -1;
-                    if ((pi = l.getCrossPointAfter((int)p.getX(), (int)p.getY()))
-                            != -1) {
-                        if (useGrid)
-                            p.setLocation(searchGridPointX((int)p.getX()),
-                                searchGridPointY((int)p.getY()));
-                        l.addPoint(pi-1,p);
-                        selPointIndex = pi;
-                        selPoint = p;
-                        selLine = l;
-                        repaint();
-                        break;
-                    }
+            // add/remove a point to/from line, or start point drag-n-drop
+            // if the user is near a connection line
+            selPoint = null;
+            selLine = null;
+            p.setLocation(searchGridPoint(p));
+            selLine = schema.getCrossingLine(p);
+
+            if (selLine != null) {
+                int pi = selLine.getCrossPointAfter(p); // should not be -1
+                Point linePoint = selLine.containsPoint(p);
+                if (linePoint == null) {
+                    selLine.addPoint(pi - 1, p);
+                    selPoint = p;
+                } else
+                    selPoint = linePoint;
+            }
+            repaint(); // because of drawing selected point
+
+            // if user press a mouse button on empty area, activate "selection"
+            // mode
+            if (selPoint == null) {
+                panelMode = PanelMode.select;
+                selectionStart = e.getPoint(); // point without grid correction
+            }
+        } else if (panelMode == PanelMode.draw) {
+            if (drawTool == PanelDrawTool.connectLine) {
+                if (e.getButton() != MouseEvent.BUTTON1)
+                    return;
+
+                Element elem = schema.getCrossingElement(e.getPoint());
+                if (elem != null) {
+                    if (tmpElem1 == null)
+                        tmpElem1 = elem;
+                    else if (tmpElem2 == null)
+                        tmpElem2 = elem;
+                    return;
+                } else {
+                    // if user didn't clicked on an element, but on drawing area
+                    // means that there a new line point should be created.
+                    p.setLocation(searchGridPoint(p));
+                    selPoint = p;
                 }
+            } else if (drawTool == PanelDrawTool.delete) {
+                // only left button is accepted
+                if (e.getButton() != MouseEvent.BUTTON1)
+                    return;
+
+                Element elem = schema.getCrossingElement(e.getPoint());
+                tmpElem1 = elem;
+
+                // delete line?
+                if (elem == null)
+                    selLine = schema.getCrossingLine(p);
             }
         }
     }
     
     @Override
     public void mouseReleased(MouseEvent e) {
-        shapeMove = false;
-        if (tool == drawTool.delete && selShape != null) {
-            if (e.getButton() != MouseEvent.BUTTON1) return;
-            for (int i = schema.getConnectionLines().size()-1; i >= 0; i--) {
-                if (schema.getConnectionLines().get(i).containsElement(selShape))
-                    schema.getConnectionLines().remove(i);
-            }
-            if (selShape instanceof CompilerElement)
-                schema.setCompilerElement(null);
-            if (selShape instanceof CpuElement)
-                schema.setCpuElement(null);
-            else if (selShape instanceof MemoryElement) 
-                schema.setMemoryElement(null);
-            else if (selShape instanceof DeviceElement)
-                schema.getDeviceElements().remove(selShape);
-            repaint();
-            resizePanel();
-            selShape = null;
-            return;
-        }
-        if (tool == drawTool.nothing) {
-            selShape = null;
-            // if a point is selected, remove line if user pressed
+        Point p = e.getPoint();
+        p.setLocation(searchGridPoint(p));
+        if (panelMode == PanelMode.move) {
+            // if a point is selected, remove it if user pressed
             // right mouse button
             if (selLine != null && selPoint != null) {
-                if (e.getButton() != MouseEvent.BUTTON3) return;
-                selLine.removePoint(selPointIndex);
+                if (e.getButton() != MouseEvent.BUTTON3)
+                    return;
+                Point linePoint = selLine.containsPoint(p);
+                if ((selLine != schema.getCrossingLine(e.getPoint()))
+                        || (selPoint != linePoint)) {
+                    selLine = null;
+                    selPoint = null;
+                    return;
+                }
+                selLine.removePoint(selPoint);
                 selPoint = null;
                 selLine = null;
-                selPointIndex = -1;
-                repaint();
             }
-            return;
-        }
-        Point shapePoint = e.getPoint();
-        if (useGrid)
-            shapePoint.setLocation(searchGridPointX((int)e.getX()),
-                    searchGridPointY((int)e.getY()));        
-        if (tool == drawTool.shapeCompiler)
-            schema.setCompilerElement(new CompilerElement(shapePoint, newText));
-        else if(tool == drawTool.shapeCPU)
-            schema.setCpuElement(new CpuElement(shapePoint, newText));
-        else if (tool == drawTool.shapeMemory)
-            schema.setMemoryElement(new MemoryElement(shapePoint, newText));
-        else if (tool == drawTool.shapeDevice)
-            schema.addDeviceElement(new DeviceElement(shapePoint, newText));
-        else if (tool == drawTool.connectLine) {
-            if (selShape != null && selShape2 != null) {
-                // kontrola ci nahodou uz spojenie neexistuje
-                // resp. ci nie je spojenie sam so sebou
-                boolean b = false;
-                for (int i = 0; i < schema.getConnectionLines().size(); i++) {
-                    ConnectionLine l = schema.getConnectionLines().get(i);
-                    if (l.containsElement(selShape) 
-                            && l.containsElement(selShape2)) {
-                        b = true;
-                        break;
+        } else if (panelMode == PanelMode.select) {
+            selectionEnd = e.getPoint();
+            panelMode = PanelMode.move;
+
+            // TODO: Select elements contained in the selection area
+        } else if (panelMode == PanelMode.draw) {
+            if (drawTool == PanelDrawTool.delete) {
+                if (tmpElem1 != null) {
+                    if (e.getButton() != MouseEvent.BUTTON1)
+                        return;
+                    // if the mouse is released upon a point outside a tmpElem1
+                    // nothing is done.
+                    if (tmpElem1 != schema.getCrossingElement(e.getPoint())) {
+                        tmpElem1 = null;
+                        return;
+                    }
+                    schema.removeElement(tmpElem1);
+                    tmpElem1 = null;
+                } else if((tmpElem1 == null) && (selLine != null)) {
+                    // if the mouse is released upon a point outside the selLine
+                    // nothing is done.
+                    if (selLine != schema.getCrossingLine(e.getPoint())) {
+                        selLine = null;
+                        return;
+                    }
+                    schema.removeConnectionLine(selLine);
+                    selLine = null;
+                }
+            } else if (drawTool == PanelDrawTool.shapeCompiler)
+                schema.setCompilerElement(new CompilerElement(p, newText));
+            else if(drawTool == PanelDrawTool.shapeCPU)
+                schema.setCpuElement(new CpuElement(p, newText));
+            else if (drawTool == PanelDrawTool.shapeMemory)
+                schema.setMemoryElement(new MemoryElement(p, newText));
+            else if (drawTool == PanelDrawTool.shapeDevice)
+                schema.addDeviceElement(new DeviceElement(p, newText));
+            else if (drawTool == PanelDrawTool.connectLine) {
+                sketchLastPoint = null;
+                Element elem = schema.getCrossingElement(e.getPoint());
+
+                if (elem != null) {
+                    if ((tmpElem2 == null) && (tmpElem1 != elem)) {
+                        tmpElem1 = null;
+                        return;
+                    } else if ((tmpElem2 != null) && tmpElem2 != elem) {
+                        tmpElem1 = null;
+                        tmpElem2 = null;
+                    }
+                } else {
+                    if ((tmpElem1 != null) && (selPoint != null)) {
+                        tmpPoints.add(selPoint);
+                        selPoint = null;
                     }
                 }
-                if (!b && (selShape != selShape2)) 
-                    schema.getConnectionLines().add(new ConnectionLine(selShape, 
-                        selShape2,points));
-                selShape = null;
-                selShape2 = null;
-                points.clear();
+                if ((tmpElem1 != null) && (tmpElem2 != null)) {
+                    // kontrola ci nahodou uz spojenie neexistuje
+                    // resp. ci nie je spojenie sam so sebou
+                    boolean b = false;
+                    for (int i = 0; i < schema.getConnectionLines().size(); i++) {
+                        ConnectionLine l = schema.getConnectionLines().get(i);
+                        if (l.containsElement(tmpElem1)
+                                && l.containsElement(tmpElem2)) {
+                            b = true;
+                            break;
+                        }
+                    }
+                    if (!b && (tmpElem1 != tmpElem2)) {
+                        schema.getConnectionLines().add(new ConnectionLine(tmpElem1,
+                                tmpElem2, tmpPoints));
+                    }
+                    tmpElem1 = null;
+                    tmpElem2 = null;
+                    tmpPoints.clear();
+                }
             }
         }
+        panelSizeCorrection();
         repaint();
-        resizePanel();
-        e1 = null;
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        if (selPoint != null && selLine != null) {
-            Point p = e.getPoint();
-            if (p.getX() < 0 || p.getY() < 0) return;
-            if (useGrid)
-                p.setLocation(searchGridPointX((int)p.getX()),
-                        searchGridPointY((int)p.getY()));
-            selLine.pointMove(selPointIndex, (int)p.getX(),
-                    (int)p.getY());
-            repaint();
-            resizePanel();
-        } else if (shapeMove && selShape != null) {
-            Point p = e.getPoint();
-            if (p.getX() < 0 || p.getY() < 0) return;
-            if (useGrid)
-                p.setLocation(searchGridPointX((int)p.getX()),
-                        searchGridPointY((int)p.getY()));
-            selShape.move((int)p.getX(), (int)p.getY());
-            repaint();
-            resizePanel();
-        } 
+        Point p = e.getPoint();
+        if ((panelMode == PanelMode.draw)
+                && (drawTool == PanelDrawTool.connectLine)) {
+            if (schema.getCrossingElement(p) == null) {
+                // if user didn't clicked on an element, but on drawing area
+                // means that there a new line point should be created.
+                p.setLocation(searchGridPoint(p));
+                selPoint = p;
+            }
+        } else if (panelMode == PanelMode.move) {
+            if ((selPoint != null) && (selLine != null)) {
+                if (p.getX() < 0 || p.getY() < 0)
+                    return;
+                p.setLocation(searchGridPoint(p));
+                selLine.pointMove(selPoint, p);
+            } else if (tmpElem1 != null) {
+                if (p.getX() < 0 || p.getY() < 0)
+                    return;
+                p.setLocation(searchGridPoint(p));
+                tmpElem1.move(p);
+            }
+        } else if (panelMode == PanelMode.select) {
+            selectionEnd = e.getPoint();
+            // TODO: draw selection sketch
+        }
+        panelSizeCorrection();
+        repaint();
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        if (shapeMove) return;
-        selPoint = null;
-        selPointIndex = 0;
-        if (selLine != null) repaint();
-        selLine = null;
+        if (panelMode == PanelMode.move) {
+            selPoint = null;
+            if (selLine != null)  // ???
+                repaint();
+            selLine = null;
 
-        if (tool == drawTool.nothing) {
             for (int i = schema.getConnectionLines().size()-1; i >= 0 ; i--) {
                 Point[]ps = schema.getConnectionLines().get(i).getPoints().toArray(new Point[0]);
                 Point p = e.getPoint();
+                boolean out = false;
                 for (int j = 0; j < ps.length; j++) {
                     double d = Math.hypot(ps[j].getX() - p.getX(), 
                             ps[j].getY() - p.getY());
                     if (d < 8) {
                         selLine = schema.getConnectionLines().get(i);
-                        selPointIndex = j;
                         selPoint  = ps[j];
                         repaint();
+                        out = true;
                         break;
                     } 
                 }
+                if (out)
+                    break;
             }
-        } else if (tool == drawTool.connectLine && selShape != null) {
-            e1 = e.getPoint();
-            repaint();
-        }
+        } else if (panelMode == PanelMode.draw)
+            if (drawTool == PanelDrawTool.connectLine && tmpElem1 != null) {
+                sketchLastPoint = e.getPoint();
+                repaint();
+            }
     }
 
 }

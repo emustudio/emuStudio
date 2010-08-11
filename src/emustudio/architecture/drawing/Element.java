@@ -27,6 +27,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.geom.Rectangle2D;
 
 /**
@@ -138,10 +139,10 @@ public abstract class Element {
      * @param x
      * @param y
      */
-    public void move(int x, int y) {
+    public void move(Point p) {
         wasMeasured = false;
-        this.x = x;
-        this.y = y;
+        this.x = p.x;
+        this.y = p.y;
     }
 
     /**

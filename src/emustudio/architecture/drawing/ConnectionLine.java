@@ -131,18 +131,39 @@ public class ConnectionLine {
         points.add(p);
     }
     
-    public void removePoint(int index) {
-        points.remove(index);
+    public void removePoint(Point p) {
+        points.remove(p);
     }
     
     public ArrayList<Point> getPoints() {
         return points;
     }
-    
-    public void pointMove(int index, int x, int y) {
-        points.get(index).setLocation(x, y);
+
+    /**
+     * Test if given point is included within this line. If it is, return
+     * the original Point object, null otherwise.
+     *
+     * @param p Point to test
+     * @return original point object of the line, null if the test point is
+     * not included
+     */
+    public Point containsPoint(Point p) {
+        int size = points.size();
+        for (int i = 0; i < size; i++) {
+            Point tmp = points.get(i);
+            if ((tmp.x == p.x) && (tmp.y == p.y))
+                return tmp;
+        }
+        return null;
     }
     
+    public void pointMove(Point p, Point newLocation) {
+        int i = points.indexOf(p);
+        if (i == -1)
+            return;
+        points.get(i).setLocation(newLocation);
+    }
+
     public boolean containsElement(Element e) {
         if (e1 == e || e2 == e) return true;
         return false;
@@ -169,7 +190,7 @@ public class ConnectionLine {
      * And if point[x,y] doesn't cross the line, -1 is returned. Otherwise is
      * returned index of point that crosses the line.
      */
-    public int getCrossPointAfter(int x, int y) {
+    public int getCrossPointAfter(Point point) {
         int x1 = e1.getX() + e1.getWidth()/2;
         int y1 = e1.getY() + e1.getHeight()/2;
         int x2, y2;
@@ -187,10 +208,10 @@ public class ConnectionLine {
             a = y2-y1;
             b = x1-x2;
             c = -a*x1-b*y1; // mam rovnicu
-            d = Math.abs(a*x + b*y + c)/Math.hypot(a, b);
+            d = Math.abs(a*point.x + b*point.y + c)/Math.hypot(a, b);
             if (d < 5) {
-                double l1 = Math.hypot(x1-x, y1-y);
-                double l2 = Math.hypot(x2-x, y2-y);
+                double l1 = Math.hypot(x1-point.x, y1-point.y);
+                double l2 = Math.hypot(x2-point.x, y2-point.y);
                 double l = Math.hypot(x2-x1, y2-y1);
                 if ((l > l1) && (l > l2)) return i;
             }
@@ -202,10 +223,10 @@ public class ConnectionLine {
         a = y2-y1;
         b = x1-x2;
         c = -a*x1-b*y1; // mam rovnicu
-        d = Math.abs(a*x + b*y + c)/Math.hypot(a, b);
+        d = Math.abs(a*point.x + b*point.y + c)/Math.hypot(a, b);
         if (d < 5) {
-            double l1 = Math.hypot(x1-x, y1-y);
-            double l2 = Math.hypot(x2-x, y2-y);
+            double l1 = Math.hypot(x1-point.x, y1-point.y);
+            double l2 = Math.hypot(x2-point.x, y2-point.y);
             double l = Math.hypot(x2-x1, y2-y1);
             if ((l > l1) && (l > l2)) return points.size();
         }

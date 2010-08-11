@@ -23,6 +23,7 @@
 
 package emustudio.architecture.drawing;
 
+import java.awt.Point;
 import java.util.ArrayList;
 
 /**
@@ -106,49 +107,136 @@ public class Schema {
             lines.get(i).replaceElement(e1, e2);
     }
 
+    /**
+     * Remove lines that is connected to specific element.
+     *
+     * @param e incident element
+     */
+    private void removeIncidentLines(Element e) {
+        for (int i = lines.size()-1; i >= 0; i--)
+            if (lines.get(i).containsElement(e))
+                lines.remove(i);
+    }
+
     public String getConfigName() { return configName; }
     public void setConfigName(String cName) { configName = cName; }
 
+    /**
+     * Set compiler element to this schema. If the origin compiler is not
+     * null and it is connected to something, the connections are kept.
+     *
+     * @param compiler new compiler element.
+     */
     public void setCompilerElement(CompilerElement compiler) {
+        if ((compiler == null) && (this.compilerElement != null))
+            removeIncidentLines(this.compilerElement);
+        else if ((this.compilerElement != null) && (compiler != null))
+            updateIncidentLines(this.compilerElement, compiler);
         compilerElement = compiler;
     }
+
+    /**
+     * Get compiler element.
+     * @return Compiler element. Null if unset.
+     */
     public CompilerElement getCompilerElement() {
         return compilerElement;
     }
 
+    /**
+     * Set cpu element to this schema. If the origin cpu is not
+     * null and it is connected to something, the connections are kept.
+     *
+     * @param cpuElement new cpu element.
+     */
     public void setCpuElement(CpuElement cpuElement) {
         if ((cpuElement == null) && (this.cpuElement != null))
+            removeIncidentLines(this.cpuElement);
+        else if ((this.cpuElement != null) && (cpuElement != null))
             updateIncidentLines(this.cpuElement, cpuElement);
         this.cpuElement = cpuElement;
     }
     
+    /**
+     * Get cpu element.
+     * @return CPU element. Null if unset.
+     */
     public CpuElement getCpuElement() {
         return cpuElement;
     }
     
+    /**
+     * Set memory element to this schema. If the origin memory is not
+     * null and it is connected to something, the connections are kept.
+     *
+     * @param memoryElement new memory element.
+     */
     public void setMemoryElement(MemoryElement memoryElement) {
-        if (memoryElement == null && this.memoryElement != null)
+        if ((memoryElement == null) && (this.memoryElement != null))
+            removeIncidentLines(this.memoryElement);
+        else if ((this.memoryElement != null) && (memoryElement != null))
             updateIncidentLines(this.memoryElement, memoryElement);
         this.memoryElement = memoryElement;
     }
+
+    /**
+     * Get memory element.
+     * @return Memory element. Null if unset.
+     */
     public MemoryElement getMemoryElement() {
         return memoryElement;
     }
-    
+
+    /**
+     * Add device element. The method does nothing if the deviceElement
+     * is null.
+     *
+     * @param deviceElement the device element.
+     */
     public void addDeviceElement(DeviceElement deviceElement) {
+        if (deviceElement == null)
+            return;
         deviceElements.add(deviceElement);
     }
+
+    /**
+     * Method gets the list of all device elements.
+     *
+     * @return ArrayList object containing all devices
+     */
     public ArrayList<DeviceElement>getDeviceElements() {
         return deviceElements;
     }
-//    public void removeDeviceElement(int index) {
-//        if (index < 0) return;
-//        try {
-//            removeIncidentLines(deviceElements.get(index));
-//            deviceElements.remove(index);
-//        } catch(Exception e) {}
-//    }
-    
+
+    /**
+     * Removes specified device element. If the device is not included in the
+     * schema, nothing is done.
+     *
+     * @param device the device element to remove
+     */
+    public void removeDeviceElement(DeviceElement device) {
+        removeIncidentLines(device);
+        deviceElements.remove(device);
+    }
+
+    public void removeElement(Element elem) {
+        if (elem instanceof CompilerElement) {
+            setCompilerElement(null);
+        } else if (elem instanceof CpuElement) {
+            setCpuElement(null);
+        } else if (elem instanceof MemoryElement) {
+            setMemoryElement(null);
+        } else if (elem instanceof DeviceElement) {
+            removeDeviceElement((DeviceElement) elem);
+        }
+    }
+    /**
+     * This method gets the list of all elements within this schema.
+     * CPU, Memory, Compiler and devices are joined into a single ArrayList
+     * object and returned.
+     *
+     * @return ArrayList object containing all elements within this schema
+     */
     public ArrayList<Element>getAllElements() {
         ArrayList<Element> a = new ArrayList<Element>();
         if (cpuElement != null)
@@ -160,17 +248,78 @@ public class Schema {
         a.addAll(deviceElements);
         return a;
     }
-    
+
+    /**
+     * Gets all connection lines that exist within this schema.
+     *
+     * @return ArrayList object of all connection lines
+     */
     public ArrayList<ConnectionLine>getConnectionLines() {
         return lines;
     }
-    
+
+    /**
+     * Method adds new connection line to this schema. If it is null,
+     * nothing is done.
+     *
+     * @param conLine connection line to add
+     */
     public void addConnectionLine(ConnectionLine conLine) {
+        if (conLine == null)
+            return;
         lines.add(conLine);
     }
-    
+
+    /**
+     * Removes specified connection line. If the index is out of the boundaries,
+     * nothing is done.
+     *
+     * @param index index to an array of connection lines
+     */
     public void removeConnectionLine(int index) {
-        if (index < 0) return;
+        if ((index < 0) || (index >= lines.size()))
+            return;
         lines.remove(index);
+    }
+
+    /**
+     * Removes specified connection line. If the line is not included in the
+     * schema, nothing is done.
+     *
+     * @param line the connection line to remove
+     */
+    public void removeConnectionLine(ConnectionLine line) {
+        lines.remove(line);
+    }
+
+    /**
+     * Gets an element that is located under the given point. It is used
+     * in the drawing panel.
+     * 
+     * @param p Point that all elements locations are compared to
+     * @return crossing element, or null if it was not found
+     */
+    public Element getCrossingElement(Point p) {
+        ArrayList<Element> a = getAllElements();
+        for (int i = a.size() - 1; i >= 0; i--) {
+            Element elem = a.get(i);
+            int eX = elem.getX();
+            int eY = elem.getY();
+
+            if ((eX <= p.getX()) && (eX + elem.getWidth() >= p.x)
+                    && (eY <= p.getY()) && (eY + elem.getHeight() >= p.y)) {
+                return elem;
+            }
+        }
+        return null;
+    }
+
+    public ConnectionLine getCrossingLine(Point p) {
+        for (int i = lines.size() - 1; i >= 0; i--) {
+            ConnectionLine l = lines.get(i);
+            if (l.getCrossPointAfter(p) != -1)
+                return l;
+        }
+        return null;
     }
 }
