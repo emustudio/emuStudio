@@ -43,6 +43,16 @@ public class Schema {
      */
     private String configName;
 
+    /**
+     * Creates schema by parameters.
+     *
+     * @param cpuElement
+     * @param memoryElement
+     * @param deviceElements
+     * @param lines
+     * @param configName
+     * @param compilerElement
+     */
     public Schema(CpuElement cpuElement, MemoryElement memoryElement, 
             ArrayList<DeviceElement> deviceElements, 
             ArrayList<ConnectionLine> lines, String configName, CompilerElement
@@ -83,18 +93,11 @@ public class Schema {
     }
 
     /**
-     * Removes all lines that are connected to element e1.
+     * Update all lines connections.
      * 
-     * @param el the inicident element
-     */
-//    private void removeIncidentLines(Element el) {
-//        for (int i = lines.size()-1; i >= 0; i--)
-//            if (lines.get(i).containsElement(el))
-//                lines.remove(i);
-//    }
-
-    /**
-     * Updates all lines connections from element e1 to e2.
+     * This method will replace an element e1 that a line is connected to in at
+     * least one point to new element e2.
+     * 
      * @param e1 old element
      * @param e2 new element
      */

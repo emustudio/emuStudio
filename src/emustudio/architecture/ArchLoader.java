@@ -199,20 +199,37 @@ public class ArchLoader {
     public static Schema loadSchema(String configName) {
         try{
             Properties p = readConfig(configName,true);
-            
-            int x = Integer.parseInt(p.getProperty("compiler.point.x","0"));
-            int y = Integer.parseInt(p.getProperty("compiler.point.y","0"));
-            CompilerElement compiler = new CompilerElement(x,y,p.getProperty("compiler",
-                    "unknown"));
-            
-            x = Integer.parseInt(p.getProperty("cpu.point.x","0"));
-            y = Integer.parseInt(p.getProperty("cpu.point.y","0"));
-            CpuElement cpu = new CpuElement(x,y,p.getProperty("cpu",
-                    "unknown"));
-            x = Integer.parseInt(p.getProperty("memory.point.x","0"));
-            y = Integer.parseInt(p.getProperty("memory.point.y","0"));
-            MemoryElement memory = new MemoryElement(x,y,p.getProperty("memory",
-                    "unknown"));
+
+            // load compiler
+            String elementName = p.getProperty("compiler", null);
+            int x, y;
+            CompilerElement compiler = null;
+
+            if (elementName != null) {
+                x = Integer.parseInt(p.getProperty("compiler.point.x","0"));
+                y = Integer.parseInt(p.getProperty("compiler.point.y","0"));
+                compiler = new CompilerElement(x,y,elementName);
+            }
+
+            // load cpu
+            // if cpu is null here, it does not matter. Maybe user just did not
+            // finish the schema..
+            elementName = p.getProperty("cpu", null);
+            CpuElement cpu = null;
+            if (elementName != null) {
+                x = Integer.parseInt(p.getProperty("cpu.point.x","0"));
+                y = Integer.parseInt(p.getProperty("cpu.point.y","0"));
+                cpu = new CpuElement(x,y,elementName);
+            }
+
+            // load memory
+            elementName = p.getProperty("memory", null);
+            MemoryElement memory = null;
+            if (elementName != null) {
+                x = Integer.parseInt(p.getProperty("memory.point.x","0"));
+                y = Integer.parseInt(p.getProperty("memory.point.y","0"));
+                memory = new MemoryElement(x,y,elementName);
+            }
             
             ArrayList<DeviceElement> devices = new ArrayList<DeviceElement>();
 
@@ -251,20 +268,23 @@ public class ArchLoader {
                     int index = Integer.parseInt(j1.substring(6));
                     e2 = devices.get(index);
                 }
-                ConnectionLine lin = new ConnectionLine(e1,e2,null);
-                for (int j = 0; p.containsKey("connection"+i+".point"+j+".x"); j++) {
-                    x = Integer.parseInt(p.getProperty("connection"
-                            + i + ".point" + j + ".x","0"));
-                    y = Integer.parseInt(p.getProperty("connection"
-                            + i + ".point" + j + ".y","0"));
-                    lin.addPoint(new Point(x,y));
+                if ((e1 != null) && (e2 != null)) {
+                    ConnectionLine lin = new ConnectionLine(e1,e2,null);
+                    for (int j = 0; p.containsKey("connection"+i+".point"+j+".x"); j++) {
+                        x = Integer.parseInt(p.getProperty("connection"
+                                + i + ".point" + j + ".x","0"));
+                        y = Integer.parseInt(p.getProperty("connection"
+                                + i + ".point" + j + ".y","0"));
+                        lin.addPoint(new Point(x,y));
+                    }
+                    lines.add(lin);
                 }
-                lines.add(lin);
             }
             return new Schema(cpu,memory,devices,lines,configName,compiler);
         }
         catch (Exception e) {
-            StaticDialogs.showErrorMessage("Error reading configuration: " + e.toString());
+            StaticDialogs.showErrorMessage("Error reading configuration: "
+                    + e.toString());
             return null;
         }
     }
