@@ -42,7 +42,7 @@ import plugins.compiler.ICompiler;
  */
 public class ArchHandler implements ISettingsHandler {
 
-    private Computer arch;
+    private Computer computer;
     private Properties settings;
     private Schema schema;
     private Hashtable<Long, String> pluginNames;
@@ -73,7 +73,7 @@ public class ArchHandler implements ISettingsHandler {
         if (name == null) {
             name = "";
         }
-        this.arch = arch;
+        this.computer = arch;
         this.settings = settings;
         this.schema = schema;
         this.pluginNames = pluginNames;
@@ -91,7 +91,7 @@ public class ArchHandler implements ISettingsHandler {
      * @return true If the initialization succeeded, false otherwise
      */
     private boolean initialize() {
-        return arch.initialize(this);
+        return computer.initialize(this);
     }
 
     /**
@@ -110,7 +110,7 @@ public class ArchHandler implements ISettingsHandler {
      * Method destroys current architecture
      */
     public void destroy() {
-        arch.destroy();
+        computer.destroy();
         pluginNames.clear();
     }
 
@@ -123,12 +123,22 @@ public class ArchHandler implements ISettingsHandler {
         return schema;
     }
 
-    public String getArchName() {
+    /**
+     * Return the name of the computer (the configuration name).
+     *
+     * @return name of the virtual computer
+     */
+    public String getComputerName() {
         return (schema == null) ? "unknown" : schema.getConfigName();
     }
 
+    /**
+     * Return Computer object
+     *
+     * @return virtual computer structure
+     */
     public Computer getComputer() {
-        return arch;
+        return computer;
     }
 
     /**
@@ -141,7 +151,7 @@ public class ArchHandler implements ISettingsHandler {
      */
     @Override
     public String readSetting(long pluginID, String settingName) {
-        IPlugin plug = arch.getPlugin(pluginID);
+        IPlugin plug = computer.getPlugin(pluginID);
         
         if (plug == null)
             return null;
@@ -211,7 +221,7 @@ public class ArchHandler implements ISettingsHandler {
             return;
         }
 
-        IPlugin plug = arch.getPlugin(hash);
+        IPlugin plug = computer.getPlugin(hash);
         if (plug == null) {
             return;
         }
@@ -250,7 +260,7 @@ public class ArchHandler implements ISettingsHandler {
             return;
         }
 
-        IPlugin plug = arch.getPlugin(hash);
+        IPlugin plug = computer.getPlugin(hash);
         if (plug == null) {
             return;
         }

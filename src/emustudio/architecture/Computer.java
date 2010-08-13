@@ -50,6 +50,20 @@ public class Computer implements IConnections {
     private Hashtable<IPlugin, Long> pluginsReverse;
 
 
+    /**
+     * Creates new Computer instance.
+     *
+     * @param cpu ICPU object
+     * @param memory IMemory object
+     * @param compiler ICompiler object
+     * @param devices array of IDevice objects
+     * @param plugins hashtable with all plug-ins, the keys are plug-in IDs and
+     * values are plug-in objects.
+     * @param pluginsReverse hashtable with all plug-ins, the keys are plug-in
+     * objects, and values are plug-in IDs.
+     * @param connections hashtable with all connections. Keys and values are
+     * plug-in IDs.
+     */
     public Computer(ICPU cpu, IMemory memory, ICompiler compiler,
         IDevice[] devices, Hashtable<Long, IPlugin> plugins,
         Hashtable<IPlugin, Long> pluginsReverse,
@@ -63,30 +77,67 @@ public class Computer implements IConnections {
         this.pluginsReverse = pluginsReverse;
     }
 
+    /**
+     * Get a plug-in by given ID.
+     *
+     * @param pluginID ID of requested plug-in
+     * @return plug-in object
+     */
     public IPlugin getPlugin(long pluginID) {
         return plugins.get(pluginID);
     }
 
+    /**
+     * Get CPU plug-in.
+     *
+     * @return ICPU plug-in object
+     */
     public ICPU getCPU() {
         return cpu;
     }
 
+    /**
+     * Get compiler plug-in.
+     *
+     * @return ICompiler plug-in object
+     */
     public ICompiler getCompiler() {
         return compiler;
     }
 
+    /**
+     * Get memory plug-in.
+     *
+     * @return IMemory plug-in object
+     */
     public IMemory getMemory() {
         return memory;
     }
 
+    /**
+     * Get array of device plug-ins.
+     *
+     * @return array of IDevice plug-in object
+     */
     public IDevice[] getDevices() {
         return devices;
     }
 
+    /**
+     * Get a device plug-in by specific position.
+     *
+     * @param index position of the device in the devices array
+     * @return IDevice plug-in object
+     */
     public IDevice getDevice(int index) {
         return devices[index];
     }
 
+    /**
+     * Get devices count.
+     *
+     * @return devices count
+     */
     public int getDeviceCount() {
         return devices.length;
     }

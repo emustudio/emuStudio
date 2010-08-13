@@ -38,7 +38,10 @@ import java.util.Date;
  * @author vbmacher
  */
 public class Main {
-    public static ArchHandler currentArch = null;    
+    /**
+     * Loaded computer.
+     */
+    public static ArchHandler currentArch = null;
     private static String inputFileName = null;
     private static String outputFileName = null;
 

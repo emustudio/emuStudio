@@ -34,7 +34,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
+import java.util.EventListener;
 import javax.swing.JPanel;
+import javax.swing.event.EventListenerList;
 
 /**
  * This class handles the drawing canvas - panel by which the user can draw
@@ -64,6 +66,19 @@ import javax.swing.JPanel;
 @SuppressWarnings("serial")
 public class DrawingPanel extends JPanel implements MouseListener,
         MouseMotionListener {
+
+    /**
+     * Interface that should be implemented by an event listener.
+     */
+    public interface DrawEventListener extends EventListener {
+        public void toolUsed();
+    }
+
+    /**
+     * List of event listeners
+     */
+    private EventListenerList eventListeners;
+
     /**
      * Whether to use and draw grid
      */
@@ -164,7 +179,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
     private Graphics2D dbg;  // graphics for double buffering
     
     /**
-     * Draw tool enum. This panel
+     * Draw tool enum.
      */
     public enum PanelDrawTool {
         shapeCompiler,
@@ -176,6 +191,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
         nothing
     }
 
+    /**
+     * Panel mode enum.
+     */
     public enum PanelMode {
         draw,
         move,
@@ -201,6 +219,37 @@ public class DrawingPanel extends JPanel implements MouseListener,
         thickLine = new BasicStroke(2);
         tmpPoints = new ArrayList<Point>();
         gridColor = new Color(0xBFBFBF);
+
+        eventListeners = new EventListenerList();
+    }
+
+    /**
+     * Adds a DrawEventListener object onto the list of listeners.
+     *
+     * @param listener listener object
+     */
+    public void addEventListener(DrawEventListener listener) {
+        eventListeners.add(DrawEventListener.class, listener);
+    }
+
+    /**
+     * Remove DrawEventListener object from the list of listeners.
+     *
+     * @param listener listener object to remove
+     */
+    public void removeEventListener(DrawEventListener listener) {
+        eventListeners.remove(DrawEventListener.class, listener);
+    }
+
+    /**
+     * Fires the toolUsed() method on all listeners on listeners list
+     */
+    private void fireListeners() {
+        Object[] listenersList = eventListeners.getListenerList();
+        for (int i = listenersList.length-2; i>=0; i-=2) {
+            if (listenersList[i]==DrawEventListener.class)
+                ((DrawEventListener)listenersList[i+1]).toolUsed();
+        }
     }
 
     /**
@@ -408,6 +457,10 @@ public class DrawingPanel extends JPanel implements MouseListener,
         tmpElem1 = null;
         tmpElem2 = null;
         tmpPoints.clear();
+        selectionStart = null;
+        selectionEnd = null;
+        selPoint = null;
+        selLine = null;
         repaint();
     }
 
@@ -528,6 +581,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
                     }
                     schema.removeElement(tmpElem1);
                     tmpElem1 = null;
+                    fireListeners();
                 } else if((tmpElem1 == null) && (selLine != null)) {
                     // if the mouse is released upon a point outside the selLine
                     // nothing is done.
@@ -537,16 +591,21 @@ public class DrawingPanel extends JPanel implements MouseListener,
                     }
                     schema.removeConnectionLine(selLine);
                     selLine = null;
+                    fireListeners();
                 }
-            } else if (drawTool == PanelDrawTool.shapeCompiler)
+            } else if (drawTool == PanelDrawTool.shapeCompiler) {
                 schema.setCompilerElement(new CompilerElement(p, newText));
-            else if(drawTool == PanelDrawTool.shapeCPU)
+                fireListeners();
+            } else if(drawTool == PanelDrawTool.shapeCPU) {
                 schema.setCpuElement(new CpuElement(p, newText));
-            else if (drawTool == PanelDrawTool.shapeMemory)
+                fireListeners();
+            } else if (drawTool == PanelDrawTool.shapeMemory) {
                 schema.setMemoryElement(new MemoryElement(p, newText));
-            else if (drawTool == PanelDrawTool.shapeDevice)
+                fireListeners();
+            } else if (drawTool == PanelDrawTool.shapeDevice) {
                 schema.addDeviceElement(new DeviceElement(p, newText));
-            else if (drawTool == PanelDrawTool.connectLine) {
+                fireListeners();
+            } else if (drawTool == PanelDrawTool.connectLine) {
                 sketchLastPoint = null;
                 Element elem = schema.getCrossingElement(e.getPoint());
 
@@ -562,6 +621,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
                     if ((tmpElem1 != null) && (selPoint != null)) {
                         tmpPoints.add(selPoint);
                         selPoint = null;
+                        return;
                     }
                 }
                 if ((tmpElem1 != null) && (tmpElem2 != null)) {
@@ -583,6 +643,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
                     tmpElem1 = null;
                     tmpElem2 = null;
                     tmpPoints.clear();
+                    fireListeners();
                 }
             }
         }

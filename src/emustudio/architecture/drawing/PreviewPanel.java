@@ -56,6 +56,11 @@ public class PreviewPanel extends JPanel {
     private Image dbImage;   // second buffer
     private Graphics2D dbg;  // graphics for double buffering
 
+    /**
+     * Holds true when this PreviewPanel was resized, false otherwise
+     */
+    private boolean panelResized;
+
     public PreviewPanel() {
         this(null);
     }
@@ -64,7 +69,8 @@ public class PreviewPanel extends JPanel {
         this.schema = schema;
         this.setBackground(Color.WHITE);
         leftFactor = topFactor = 0;
-        resizePanel();
+        panelResized = false;
+        this.setDoubleBuffered(true);
     }
     
     /**
@@ -92,7 +98,7 @@ public class PreviewPanel extends JPanel {
         g.drawImage(dbImage, 0, 0, this);
     }
     
-    private void resizePanel() {
+    private void resizePanel(Graphics g) {
         if (schema == null)
             return;
         // hladanie najvzdialenejsich elementov (alebo bodov lebo ciara
@@ -100,6 +106,12 @@ public class PreviewPanel extends JPanel {
         int width=0, height=0, minLeft = -1, minTop = -1;
 
         ArrayList<Element> a = schema.getAllElements();
+
+        for (int i = 0; i < a.size(); i++) {
+            Element e = a.get(i);
+            e.measure(g,0,0);
+        }
+
         for (int i = 0; i < a.size(); i++) {
             Element e = a.get(i);
             if (minLeft == -1)
@@ -135,6 +147,7 @@ public class PreviewPanel extends JPanel {
                     height-topFactor+Element.MIN_TOP_MARGIN);
             this.revalidate();
         }
+        panelResized = true;
     }
     
     //override panel paint method to draw shapes
@@ -143,11 +156,16 @@ public class PreviewPanel extends JPanel {
         super.paintComponent(g);
         if (schema == null)
             return;
+        boolean moved = panelResized;
+        if (panelResized == false)
+            resizePanel(g);
         ArrayList<Element> a = schema.getAllElements();
-        for (int i = 0; i < a.size(); i++) {
-            Element e = a.get(i);
-            e.measure(g, leftFactor, topFactor);
-        }
+        if (moved == false)
+            for (int i = 0; i < a.size(); i++) {
+                Element e = a.get(i);
+                e.move(new Point(e.getX() - (leftFactor - e.getWidth()/2),
+                        e.getY() - (topFactor - e.getHeight()/2)));
+            }
         for (int i = 0; i < schema.getConnectionLines().size(); i++)
             schema.getConnectionLines().get(i)
                     .draw((Graphics2D)g, leftFactor, topFactor);
@@ -164,7 +182,7 @@ public class PreviewPanel extends JPanel {
         if (s == null)
             return;
         this.schema = s;
-        resizePanel();
+        panelResized = false;
         this.repaint();
     }
 

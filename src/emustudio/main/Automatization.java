@@ -52,6 +52,13 @@ public class Automatization {
     private File inputFile;
     private int result_state;
 
+    /**
+     * Creates new automatization object.
+     *
+     * @param currentArch loaded computer
+     * @param inputFileName input source code file name
+     * @param outputFileName output log file name
+     */
     public Automatization(ArchHandler currentArch, String inputFileName,
             String outputFileName) {
         this.currentArch = currentArch;

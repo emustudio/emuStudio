@@ -107,10 +107,29 @@ import runtime.StaticDialogs;
  * @author vbmacher
  */
 public class ArchLoader {
+    /**
+     * Directory name where the virtual computer configurations are stored.
+     */
     public final static String configsDir = "config";
+
+    /**
+     * Directory name where CPUs are stored.
+     */
     public final static String cpusDir = "cpu";
+
+    /**
+     * Directory name where compilers are stored.
+     */
     public final static String compilersDir = "compilers";
+
+    /**
+     * Directory name where memories are stored.
+     */
     public final static String memoriesDir = "mem";
+
+    /**
+     * Directory name where devices are stored.
+     */
     public final static String devicesDir = "devices";
 
     private static long nextPluginID = 0;
@@ -468,6 +487,7 @@ public class ArchLoader {
      * creates virtual architecture.
      * 
      * @param name  Name of the configuration
+     * @param verbose Whether to print verbose output
      * @return instance of virtual architecture
      */
     public static ArchHandler load(String name, boolean verbose) {

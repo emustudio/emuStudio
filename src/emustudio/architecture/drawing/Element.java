@@ -142,8 +142,8 @@ public abstract class Element {
      */
     public void move(Point p) {
         wasMeasured = false;
-        this.x = p.x - this.width/2;  //  correction x;
-        this.y = p.y - this.height/2; //  correction y;
+        this.x = p.x;
+        this.y = p.y;
     }
 
     /**
@@ -201,8 +201,10 @@ public abstract class Element {
         y -= getHeight()/2;
 
         // perform the correction, "trim" empty space from the left and top
-        x -= (leftFactor - getWidth()/2);
-        y -= (topFactor - getHeight()/2);
+        if (leftFactor > 0)
+            x -= (leftFactor - getWidth()/2);
+        if (topFactor > 0)
+            y -= (topFactor - getHeight()/2);
 
         textX = x + (getWidth() - tW) / 2;
 

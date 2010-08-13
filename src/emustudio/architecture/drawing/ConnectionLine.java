@@ -40,7 +40,14 @@ public class ConnectionLine {
     private Element e2;
     private ArrayList<Point> points;
     private BasicStroke thickLine;
-    
+
+    /**
+     * Create new ConnectionLine object.
+     *
+     * @param e1 first connection element
+     * @param e2 last connection element
+     * @param points middle-ponits arraylist
+     */
     public ConnectionLine(Element e1, Element e2,
             ArrayList<Point> points) {
         this.e1 = e1;
@@ -50,11 +57,25 @@ public class ConnectionLine {
             this.points.addAll(points);
         this.thickLine = new BasicStroke(2);
     }
-    
+
+    /**
+     * Draws this connection line.
+     *
+     * @param g Graphics2D object, where to draw the line
+     */
     public void draw(Graphics2D g) {
         draw(g,0,0);
     }
 
+    /**
+     * Draws this connection line.
+     *
+     * @param g Graphics2D object, where to draw the line
+     * @param leftFactor correction of the line (line will be moved backward to
+     *        the leftFactor value, in the X coordinate)
+     * @param topFactor correction of the line (line will be moved upward to
+     *        the topFactor value, in the Y coordinate)
+     */
     public void draw(Graphics2D g, int leftFactor, int topFactor) {
         g.setColor(Color.black);
         int x1 = e1.getX() + e1.getWidth()/2;
@@ -120,21 +141,41 @@ public class ConnectionLine {
         }
     }
 
+    /**
+     * Adds a middle-point to this line.
+     *
+     * @param before index of the point before that a new point will be added
+     * @param p the point that will be added
+     */
     public void addPoint(int before, Point p) {
         points.add(before+1, p);
     }
     
     /**
+     * Adds a middle-point to this line.
+     *
      * Dont use, only if necessary (for loading configuration)
+     *
+     * @param p the point that will be added
      */
     public void addPoint(Point p) {
         points.add(p);
     }
-    
+
+    /**
+     * Removes a middle-point if exists.
+     *
+     * @param p the point that will be removed
+     */
     public void removePoint(Point p) {
         points.remove(p);
     }
-    
+
+    /**
+     * Get all middle-points within this line.
+     *
+     * @return arraylist of all middle-points
+     */
     public ArrayList<Point> getPoints() {
         return points;
     }
@@ -156,7 +197,15 @@ public class ConnectionLine {
         }
         return null;
     }
-    
+
+    /**
+     * Moves specific middle-point to a new location.
+     *
+     * If the point is not found, nothing is done.
+     *
+     * @param p the point that will be moved
+     * @param newLocation new location of the point
+     */
     public void pointMove(Point p, Point newLocation) {
         int i = points.indexOf(p);
         if (i == -1)
@@ -164,11 +213,25 @@ public class ConnectionLine {
         points.get(i).setLocation(newLocation);
     }
 
+    /**
+     * Checks, whether this line is connected (from any side) to the specific
+     * element.
+     *
+     * @param e element to what the connection is checked
+     * @return true, if the line is connected to the element; false otherwise
+     */
     public boolean containsElement(Element e) {
         if (e1 == e || e2 == e) return true;
         return false;
     }
-    
+
+    /**
+     * If the line is connected (from any side) to the first element, then
+     * this method will replace it with new element.
+     *
+     * @param e1 first, origin element
+     * @param e2 replacement for the first element
+     */
     public void replaceElement(Element e1, Element e2) {
         if (this.e1 == e1)
             this.e1 = e1;
@@ -183,7 +246,8 @@ public class ConnectionLine {
      * d(X, p) = abs(a*x0 + b*y0 + c)/sqrt(a^2 + b^2)
      * 
      * and if yes, return index of a point of a cross point.
-     * 
+     *
+     * @param point point that is checked
      * @return If line doesn't contain any point but point[x,y] is crossing the
      * line; or if point[x,y] is crossing near the beginning of the line, then 0
      * is returned. It means that new point should be added before first point.
@@ -232,7 +296,60 @@ public class ConnectionLine {
         }
         return -1;
     }
-    
+
+    /**
+     * Get the first connection element of the line
+     *
+     * @return first connection element
+     */
     public Element getJunc0() { return e1; }
+
+    /**
+     * Get the last connection element of the line
+     *
+     * @return last connection element
+     */
     public Element getJunc1() { return e2; }
+
+    /**
+     * Returns the direction of the elements connection. The connection
+     * can be the one-directional, or bidirectional.
+     *
+     * If the connection is one-directional, then the connection direction is
+     * getJunc0() -> getJunc1(). If there is a need to switch the direction,
+     * use the switchDirection() method.
+     *
+     * If the connection is bidirectional, then the direction is in the form:
+     * getJunc0 <-> getJunc1().
+     *
+     * @return true if the connection is bidirectional; false otherwise
+     */
+    public boolean isBidirectional() {
+        return true;
+    }
+
+    /**
+     * This method switches the direction of the connection. If the connection
+     * is bidirectional, it has no implications.
+     *
+     * Otherwise, it switches a value returned from a call to getJunc0() method
+     * with the value returned from a call to getJunc1() method.
+     */
+    public void switchDirection() {
+        if (isBidirectional())
+            return;
+        Element e = e1;
+        e1 = e2;
+        e2 = e;
+    }
+
+    /**
+     * Sets the connection direction. If the parameter is true, the connection
+     * will be bidirectional. Otherwise, it will be one-directional.
+     *
+     * @param bidi whether the connection should be bidirectional
+     */
+    public void setBidirectional(boolean bidi) {
+        // TODO
+    }
 }

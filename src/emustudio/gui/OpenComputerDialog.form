@@ -26,7 +26,7 @@
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="splitConfig" alignment="0" pref="600" max="32767" attributes="0"/>
+                  <Component id="splitConfig" alignment="0" pref="684" max="32767" attributes="0"/>
                   <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="btnOpen" alignment="1" min="-2" pref="81" max="-2" attributes="0"/>
               </Group>
@@ -40,7 +40,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="splitConfig" pref="258" max="32767" attributes="0"/>
+              <Component id="splitConfig" pref="282" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="btnOpen" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -94,7 +94,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="toolConfig" min="-2" pref="25" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane1" pref="225" max="32767" attributes="0"/>
+                      <Component id="jScrollPane1" pref="249" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -194,10 +194,10 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="scrollPreview" alignment="0" pref="394" max="32767" attributes="0"/>
+                  <Component id="scrollPreview" alignment="0" pref="478" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
                       <EmptySpace min="10" pref="10" max="10" attributes="0"/>
-                      <Component id="toolPreview" pref="384" max="32767" attributes="0"/>
+                      <Component id="toolPreview" pref="468" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -206,7 +206,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="toolPreview" min="-2" pref="25" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="scrollPreview" pref="225" max="32767" attributes="0"/>
+                      <Component id="scrollPreview" pref="249" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>

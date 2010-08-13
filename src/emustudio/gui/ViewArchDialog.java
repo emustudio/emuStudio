@@ -86,7 +86,7 @@ public class ViewArchDialog extends JDialog {
         try {
             ICompiler compiler = arch.getComputer().getCompiler();
 
-            lblName.setText(arch.getArchName());
+            lblName.setText(arch.getComputerName());
             lblCompilerFileName.setText(compilerName + ".jar");
 
             if (compiler != null) {
