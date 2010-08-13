@@ -424,20 +424,23 @@ public class DrawingPanel extends JPanel implements MouseListener,
         Point p = e.getPoint();
         if (panelMode == PanelMode.move) {
             if (e.getButton() == MouseEvent.BUTTON1) {
-                tmpElem1 = schema.getCrossingElement(e.getPoint());
-                if (tmpElem1 != null)
+                tmpElem1 = schema.getCrossingElement(p);
+                if (tmpElem1 != null) {
+                    selLine = null;
+                    selPoint = null;
                     return;
+                }
             }
 
             // add/remove a point to/from line, or start point drag-n-drop
             // if the user is near a connection line
             selPoint = null;
             selLine = null;
-            p.setLocation(searchGridPoint(p));
             selLine = schema.getCrossingLine(p);
 
             if (selLine != null) {
                 int pi = selLine.getCrossPointAfter(p); // should not be -1
+                p.setLocation(searchGridPoint(p));
                 Point linePoint = selLine.containsPoint(p);
                 if (linePoint == null) {
                     selLine.addPoint(pi - 1, p);

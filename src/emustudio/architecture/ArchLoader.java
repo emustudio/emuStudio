@@ -200,6 +200,9 @@ public class ArchLoader {
         try{
             Properties p = readConfig(configName,true);
 
+            if (p == null)
+                return null;
+
             // load compiler
             String elementName = p.getProperty("compiler", null);
             int x, y;
@@ -394,7 +397,8 @@ public class ArchLoader {
             FileInputStream fin = new FileInputStream(f);
             p.load(fin);
             fin.close();
-            if (!p.getProperty("emu8Version").equals("3")) {
+            if (!p.getProperty("emu8Version").equals("3")
+                    && !p.getProperty("emu8Version").equals("4")) {
                 StaticDialogs.showErrorMessage("Error reading configuration: " +
                         "unsupported file version");
                 return null;

@@ -135,14 +135,15 @@ public abstract class Element {
 
     /**
      * Move this element to a new location.
+     * The correction is used to simulate (x,y) mouse location when starting to
+     * drag.
      *
-     * @param x
-     * @param y
+     * @param p new point location
      */
     public void move(Point p) {
         wasMeasured = false;
-        this.x = p.x;
-        this.y = p.y;
+        this.x = p.x - this.width/2;  //  correction x;
+        this.y = p.y - this.height/2; //  correction y;
     }
 
     /**
