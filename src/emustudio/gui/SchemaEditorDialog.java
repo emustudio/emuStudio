@@ -200,8 +200,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         btnDevice = new javax.swing.JToggleButton();
         jSeparator5 = new javax.swing.JToolBar.Separator();
         btnLine = new javax.swing.JToggleButton();
-        btnArrowLeft = new javax.swing.JToggleButton();
-        btnArrowRight = new javax.swing.JToggleButton();
+        btnBidirection = new javax.swing.JToggleButton();
         jSeparator2 = new javax.swing.JToolBar.Separator();
         btnDelete = new javax.swing.JToggleButton();
         jSeparator1 = new javax.swing.JToolBar.Separator();
@@ -322,21 +321,18 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         });
         toolDraw.add(btnLine);
 
-        btnArrowLeft.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/lineLeft.png"))); // NOI18N
-        btnArrowLeft.setSelected(true);
-        btnArrowLeft.setToolTipText("Connection permission: to first");
-        btnArrowLeft.setFocusable(false);
-        btnArrowLeft.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnArrowLeft.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        toolDraw.add(btnArrowLeft);
-
-        btnArrowRight.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/lineRight.png"))); // NOI18N
-        btnArrowRight.setSelected(true);
-        btnArrowRight.setToolTipText("Connection permission: to last");
-        btnArrowRight.setFocusable(false);
-        btnArrowRight.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnArrowRight.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        toolDraw.add(btnArrowRight);
+        btnBidirection.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/bidirection.png"))); // NOI18N
+        btnBidirection.setSelected(true);
+        btnBidirection.setToolTipText("Bidirectional connection");
+        btnBidirection.setFocusable(false);
+        btnBidirection.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnBidirection.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnBidirection.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnBidirectionActionPerformed(evt);
+            }
+        });
+        toolDraw.add(btnBidirection);
         toolDraw.add(jSeparator2);
 
         groupDraw.add(btnDelete);
@@ -614,9 +610,12 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         }
     }//GEN-LAST:event_btnCompilerActionPerformed
 
+    private void btnBidirectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBidirectionActionPerformed
+        pan.setFutureLineDirection(btnBidirection.isSelected());
+    }//GEN-LAST:event_btnBidirectionActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JToggleButton btnArrowLeft;
-    private javax.swing.JToggleButton btnArrowRight;
+    private javax.swing.JToggleButton btnBidirection;
     private javax.swing.JToggleButton btnCPU;
     private javax.swing.JToggleButton btnCompiler;
     private javax.swing.JToggleButton btnDelete;

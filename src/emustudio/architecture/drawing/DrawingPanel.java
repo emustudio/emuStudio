@@ -177,6 +177,12 @@ public class DrawingPanel extends JPanel implements MouseListener,
     /* double buffering */
     private Image dbImage;   // second buffer
     private Graphics2D dbg;  // graphics for double buffering
+
+    /**
+     * Future connection line direction. Holds true, if the drawing line
+     * should be bidirectional, false otherwise.
+     */
+    private boolean bidirectional;
     
     /**
      * Draw tool enum.
@@ -221,6 +227,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
         gridColor = new Color(0xBFBFBF);
 
         eventListeners = new EventListenerList();
+        bidirectional = true;
     }
 
     /**
@@ -392,8 +399,11 @@ public class DrawingPanel extends JPanel implements MouseListener,
             a.get(i).measure(g,0,0);
 
         // then draw connection lines (at the bottom)
-        for (int i = 0; i < schema.getConnectionLines().size(); i++)
-            schema.getConnectionLines().get(i).draw((Graphics2D)g);
+        for (int i = 0; i < schema.getConnectionLines().size(); i++) {
+            ConnectionLine l = schema.getConnectionLines().get(i);
+            l.computeArrows(0,0);
+            l.draw((Graphics2D)g);
+        }
 
         // at least, draw all other elements
         for (int i = 0; i < a.size(); i++)
@@ -406,9 +416,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
             if (selPoint != null) {
                 int xx = (int)selPoint.getX();
                 int yy = (int)selPoint.getY();
-                g.setColor(Color.red);
+                g.setColor(Color.BLACK);
                 ((Graphics2D)g).setStroke(thickLine);
-                g.drawOval(xx-4, yy-4, 8, 8);
+                g.fillOval(xx-7, yy-7, 14, 14);
             }
         } else if (panelMode == PanelMode.draw) {
             // if the connection line is being drawn, draw the sketch
@@ -447,6 +457,15 @@ public class DrawingPanel extends JPanel implements MouseListener,
             panelMode = PanelMode.move;
         else
             panelMode = PanelMode.draw;
+    }
+
+    /**
+     * Set future connection line direction.
+     * @param bidirectional if it is true, drawing line will be bidirectional,
+     * if it is false, it will be single-direction oriented.
+     */
+    public void setFutureLineDirection(boolean bidirectional) {
+        this.bidirectional = bidirectional;
     }
 
     /**
@@ -637,8 +656,10 @@ public class DrawingPanel extends JPanel implements MouseListener,
                         }
                     }
                     if (!b && (tmpElem1 != tmpElem2)) {
-                        schema.getConnectionLines().add(new ConnectionLine(tmpElem1,
-                                tmpElem2, tmpPoints));
+                        ConnectionLine l = new ConnectionLine(tmpElem1,
+                                tmpElem2, tmpPoints);
+                        l.setBidirectional(bidirectional);
+                        schema.getConnectionLines().add(l);
                     }
                     tmpElem1 = null;
                     tmpElem2 = null;
@@ -697,7 +718,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 for (int j = 0; j < ps.length; j++) {
                     double d = Math.hypot(ps[j].getX() - p.getX(), 
                             ps[j].getY() - p.getY());
-                    if (d < 8) {
+                    if (d < 10) {
                         selLine = schema.getConnectionLines().get(i);
                         selPoint  = ps[j];
                         repaint();

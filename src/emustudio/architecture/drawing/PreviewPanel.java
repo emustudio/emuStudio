@@ -107,27 +107,30 @@ public class PreviewPanel extends JPanel {
 
         ArrayList<Element> a = schema.getAllElements();
 
-        for (int i = 0; i < a.size(); i++) {
-            Element e = a.get(i);
-            e.measure(g,0,0);
-        }
+        for (int i = 0; i < a.size(); i++)
+            a.get(i).measure(g,0,0);
 
         for (int i = 0; i < a.size(); i++) {
             Element e = a.get(i);
+            int eX = e.getX();
+            int eY = e.getY();
+            int eWidth = e.getWidth();
+            int eHeight = e.getHeight();
+
             if (minLeft == -1)
-                minLeft = e.getX();
-            else if (minLeft > e.getX())
-                minLeft = e.getX();
+                minLeft = eX;
+            else if (minLeft > eX)
+                minLeft = eX;
 
             if (minTop == -1)
-                minTop = e.getY();
-            else if (minTop > e.getY())
-                minTop = e.getY();
+                minTop = eY;
+            else if (minTop > eY)
+                minTop = eY;
 
-            if (e.getX() + e.getWidth() > width)
-                width = e.getX() + e.getWidth();
-            if (e.getY() + e.getHeight() > height)
-                height = e.getY() + e.getHeight();
+            if (eX + eWidth > width)
+                width = eX + eWidth;
+            if (eY + eHeight > height)
+                height = eY + eHeight;
         }
         leftFactor = minLeft - Element.MIN_LEFT_MARGIN;
         topFactor = minTop - Element.MIN_TOP_MARGIN;
@@ -136,10 +139,10 @@ public class PreviewPanel extends JPanel {
             ArrayList<Point> ps = schema.getConnectionLines().get(i).getPoints();
             for (int j = 0; j < ps.size(); j++) {
                 Point p = ps.get(j);
-                if ((int)p.getX() > width)
-                    width = (int)p.getX();
-                if ((int)p.getY() > height)
-                    height = (int)p.getY();
+                if (p.x > width)
+                    width = p.x;
+                if (p.y > height)
+                    height = p.y;
             }
         }
         if (width != 0 && height != 0) {
@@ -166,9 +169,11 @@ public class PreviewPanel extends JPanel {
                 e.move(new Point(e.getX() - (leftFactor - e.getWidth()/2),
                         e.getY() - (topFactor - e.getHeight()/2)));
             }
-        for (int i = 0; i < schema.getConnectionLines().size(); i++)
-            schema.getConnectionLines().get(i)
-                    .draw((Graphics2D)g, leftFactor, topFactor);
+        for (int i = 0; i < schema.getConnectionLines().size(); i++) {
+            ConnectionLine l = schema.getConnectionLines().get(i);
+            l.computeArrows(leftFactor, topFactor);
+            l.draw((Graphics2D)g, leftFactor, topFactor);
+        }
         for (int i = 0; i < a.size(); i++)
             a.get(i).draw(g);
     }

@@ -38,8 +38,35 @@ import java.util.ArrayList;
 public class ConnectionLine {
     private Element e1;
     private Element e2;
+
     private ArrayList<Point> points;
-    private BasicStroke thickLine;
+    private static BasicStroke thickLine = new BasicStroke(2);
+
+    /**
+     * Holds true, if the line connection is bidirectional, false otherwise.
+     */
+    private boolean bidirectional;
+
+    /**
+     * The length of arrow arm
+     */
+    private final static int arrow_length = 10;
+
+    /**
+     * Begining arrow point for element1. The x and y values are relative
+     * to the element middle-point.
+     */
+    private Point arrow1;
+    private Point arrow1LeftEnd;
+    private Point arrow1RightEnd;
+
+    /**
+     * Begining arrow point for element2. The x and y values are relative
+     * to the element middle-point.
+     */
+    private Point arrow2;
+    private Point arrow2LeftEnd;
+    private Point arrow2RightEnd;
 
     /**
      * Create new ConnectionLine object.
@@ -55,7 +82,171 @@ public class ConnectionLine {
         this.points = new ArrayList<Point>();
         if (points != null)
             this.points.addAll(points);
-        this.thickLine = new BasicStroke(2);
+
+        this.bidirectional = true;
+    }
+
+    /**
+     * This method computes an intersection of two lines (not line segments)
+     * 
+     * @param l1s Point of the first point of the first line
+     * @param l1e Point of the ending point of the first line
+     * @param l2s Point of the first point of the second line
+     * @param l2e Point of the ending point of the second line
+     * @return the intersection point of two lines if they have one; null
+     * instead
+     */
+    private Point intersection(Point l1s, Point l1e, Point l2s, Point l2e) {
+        int div;
+        int p_x, p_y;
+
+        div = (l1s.x - l1e.x) * (l2s.y - l2e.y)
+                - (l1s.y - l1e.y) * (l2s.x - l2e.x);
+
+        // there is no intersection - lines are parallel
+        if (div == 0)
+            return null;
+
+        p_x = ((l1s.x * l1e.y - l1s.y * l1e.x) * (l2s.x - l2e.x)
+                - (l1s.x - l1e.x) * (l2s.x * l2e.y - l2s.y * l2e.x))/div;
+        p_y = ((l1s.x * l1e.y - l1s.y * l1e.x) * (l2s.y - l2e.y)
+                - (l1s.y - l1e.y) * (l2s.x * l2e.y - l2s.y * l2e.x))/div;
+
+        return new Point(p_x, p_y);
+    }
+
+    public void computeArrows(int leftFactor, int topFactor) {
+        computeElementArrow(leftFactor, topFactor, false);
+        if (bidirectional)
+            computeElementArrow(leftFactor, topFactor, true);
+        else {
+            arrow1 = null;
+            arrow1LeftEnd = null;
+            arrow1RightEnd = null;
+        }
+    }
+
+    /**
+     * This method computes relative begin points of "arrows" on line ends.
+     */
+    public void computeElementArrow(int leftFactor, int topFactor, boolean first) {
+        Point p, arrow;
+        int x_left, x_right, y_bottom, y_top;
+
+        int eX = first ? e1.getX(): e2.getX();
+        int eWidth = first ? e1.getWidth() : e2.getWidth();
+        int eY = first ? e1.getY() : e2.getY();
+        int eHeight = first ? e1.getHeight() : e2.getHeight();
+
+        Point lineStart = new Point (eX + eWidth/2, eY + eHeight/2);
+        Point lineEnd;
+
+        x_left = lineStart.x - eWidth/2;
+        x_right = lineStart.x + eWidth/2;
+        y_bottom = lineStart.y + eHeight/2;
+        y_top = lineStart.y - eHeight/2;
+
+        if (points.isEmpty())
+            lineEnd = new Point ((first ? e2.getX() : e1.getX())
+                    + (first ? e2.getWidth() : e1.getWidth())/2,
+                    (first ? e2.getY(): e1.getY())
+                    + (first ? e2.getHeight() : e1.getHeight())/2);
+        else {
+            lineEnd = first ? points.get(0) : points.get(points.size()-1);
+            int x2 = lineEnd.x  - leftFactor;
+            int y2 = lineEnd.y  - topFactor;
+
+            if (x2 < Element.MIN_LEFT_MARGIN)
+                x2 = Element.MIN_LEFT_MARGIN;
+            if (y2 < Element.MIN_TOP_MARGIN)
+                y2 = Element.MIN_TOP_MARGIN;
+
+            lineEnd = new Point(x2,y2);
+        }
+
+        // test: bottom line of element1
+        p = intersection(new Point(x_left,y_bottom), new Point(x_right, y_bottom),
+                 lineStart, lineEnd);
+        arrow = null;
+        if ((p != null) && (lineEnd.y > p.y) && (p.y == y_bottom)
+                && (p.x >= x_left) && (p.x <= x_right))
+            arrow = new Point(p.x-eX, p.y - eY);
+
+        if (arrow == null) {
+            // test: top line of element1
+            p = intersection(new Point(x_left,y_top), new Point(x_right, y_top),
+                     lineStart, lineEnd);
+            if ((p != null) && (lineEnd.y < p.y) && (p.y == y_top)
+                    && (p.x >= x_left) && (p.x <= x_right))
+                arrow = new Point(p.x-eX, p.y - eY);
+        }
+        if (arrow == null) {
+            // test: left line of element1
+            p = intersection(new Point(x_left,y_bottom), new Point(x_left, y_top),
+                     lineStart, lineEnd);
+            if ((p != null) && (lineEnd.x < p.x) && (p.x == x_left)
+                    && (p.y >= y_top) && (p.y <= y_bottom))
+                arrow = new Point(p.x-eX, p.y - eY);
+        }
+        if (arrow == null) {
+            // test: right line of element1
+            p = intersection(new Point(x_right,y_bottom), new Point(x_right, y_top),
+                     lineStart, lineEnd);
+            if ((p != null) && (lineEnd.x > p.x) && (p.x == x_right)
+                    && (p.y >= y_top) && (p.y <= y_bottom))
+                arrow = new Point(p.x-eX, p.y - eY);
+        }
+        if (first)
+            arrow1 = arrow;
+        else
+            arrow2 = arrow;
+        computeArrowEnds(lineStart, lineEnd, first);
+    }
+
+    /**
+     * This method computes the connection lines positions of arrows end lines.
+     *
+     * @param lineStart
+     * @param lineEnd
+     * @param first
+     */
+    private void computeArrowEnds(Point lineStart,
+           Point lineEnd, boolean first) {
+
+        double delta = Math.atan2(lineEnd.x - lineStart.x,
+                lineEnd.y-lineStart.y);
+
+        /*
+           |*
+           | *
+         h |de*
+           |   *
+           |----*
+             w
+
+           tg(de) =  w/h;
+           de = tg-1(w/h)
+        */
+        // line formula: y - y1 = m * (x - x1)
+
+        // circle: x = r * sin(phi)
+        //         y = r * cos(phi)
+
+        double radians = Math.toRadians(30) + delta;
+        double mRadians = Math.toRadians(-30) + delta;
+
+        Point a_left = new Point((int)(arrow_length * Math.sin(radians)),
+                (int)(arrow_length * Math.cos(radians)));
+        Point a_right = new Point((int)(arrow_length * Math.sin(mRadians)),
+                (int)(arrow_length * Math.cos(mRadians)));
+
+        if (first) {
+            arrow1LeftEnd = a_left;
+            arrow1RightEnd = a_right;
+        } else {
+            arrow2LeftEnd = a_left;
+            arrow2RightEnd = a_right;
+        }
     }
 
     /**
@@ -81,7 +272,7 @@ public class ConnectionLine {
         int x1 = e1.getX() + e1.getWidth()/2;
         int y1 = e1.getY() + e1.getHeight()/2;
         int x2, y2;
-        
+
         Stroke ss = g.getStroke();
         g.setStroke(thickLine);
         for (int i = 0; i < points.size(); i++) {
@@ -98,13 +289,37 @@ public class ConnectionLine {
             if (y2 < Element.MIN_TOP_MARGIN) {
                 y2 = Element.MIN_TOP_MARGIN;
             }
+
             g.drawLine(x1, y1, x2, y2);
+            g.fillOval(x2-4, y2-4, 8, 8);
             x1 = x2;
             y1 = y2;
         }
         x2 = e2.getX() + e2.getWidth()/2;
         y2 = e2.getY() + e2.getHeight()/2;
         g.drawLine(x1, y1, x2, y2);
+
+        // sipky - princip dedenia v UML <---> princip toku udajov => tok!!
+        if (arrow1 != null) {
+            g.drawLine(e1.getX() + arrow1.x,
+                    e1.getY() + arrow1.y,
+                    e1.getX() + arrow1.x + arrow1LeftEnd.x,
+                    e1.getY() + arrow1.y + arrow1LeftEnd.y);
+            g.drawLine(e1.getX() + arrow1.x,
+                    e1.getY() + arrow1.y,
+                    e1.getX() + arrow1.x + arrow1RightEnd.x,
+                    e1.getY() + arrow1.y + arrow1RightEnd.y);
+        }
+        if (arrow2 != null) {
+            g.drawLine(e2.getX() + arrow2.x,
+                    e2.getY() + arrow2.y,
+                    e2.getX() + arrow2.x + arrow2LeftEnd.x,
+                    e2.getY() + arrow2.y + arrow2LeftEnd.y);
+            g.drawLine(e2.getX() + arrow2.x,
+                    e2.getY() + arrow2.y,
+                    e2.getX() + arrow2.x + arrow2RightEnd.x,
+                    e2.getY() + arrow2.y + arrow2RightEnd.y);
+        }
         g.setStroke(ss);
     }
 
@@ -121,7 +336,9 @@ public class ConnectionLine {
      */
     public static void drawSketch(Graphics2D g,Element ee1, Point ee2,
             ArrayList<Point> ppoints) {
-        g.setColor(Color.black);
+        Stroke ss = g.getStroke();
+        g.setStroke(thickLine);
+        g.setColor(Color.GRAY);
         int x1 = ee1.getX() + ee1.getWidth()/2;
         int y1 = ee1.getY() + ee1.getHeight()/2;
         int x2, y2;
@@ -130,7 +347,16 @@ public class ConnectionLine {
             Point p = ppoints.get(i);
             x2 = (int)p.getX();
             y2 = (int)p.getY();
+
+            if (x2 < Element.MIN_LEFT_MARGIN) {
+                x2 = Element.MIN_LEFT_MARGIN;
+            }
+            if (y2 < Element.MIN_TOP_MARGIN) {
+                y2 = Element.MIN_TOP_MARGIN;
+            }
+
             g.drawLine(x1, y1, x2, y2);
+            g.fillOval(x2-4, y2-4, 8, 8);
             x1 = x2;
             y1 = y2;
         }
@@ -139,6 +365,7 @@ public class ConnectionLine {
             y2 = (int)ee2.getY();
             g.drawLine(x1, y1, x2, y2);
         }
+        g.setStroke(ss);
     }
 
     /**
@@ -325,7 +552,7 @@ public class ConnectionLine {
      * @return true if the connection is bidirectional; false otherwise
      */
     public boolean isBidirectional() {
-        return true;
+        return bidirectional;
     }
 
     /**
@@ -350,6 +577,6 @@ public class ConnectionLine {
      * @param bidi whether the connection should be bidirectional
      */
     public void setBidirectional(boolean bidi) {
-        // TODO
+        bidirectional = bidi;
     }
 }
