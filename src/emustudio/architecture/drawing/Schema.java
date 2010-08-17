@@ -322,4 +322,38 @@ public class Schema {
         }
         return null;
     }
+
+    /**
+     * This method selects all elements and connection lines that
+     * crosses or lies inside the selection area.
+     *
+     * If the area is empty (or null), nothing is done.
+     *
+     * @param x X coordinate of the selection start
+     * @param y Y coordinate of the selection start
+     * @param width width of the selection
+     * @param height height of the selection
+     */
+    public void selectElements(int x, int y, int width, int height) {
+        ArrayList<Element> a = getAllElements();
+
+        Point p1 = new Point(x,y);
+        Point p2 = new Point(x+width, y+height);
+
+        for (int i = a.size() - 1; i >= 0; i--) {
+            Element elem = a.get(i);
+
+            if (elem.isAreaCrossing(p1, p2))
+                elem.setSelected(true);
+            else
+                elem.setSelected(false);
+        }
+
+        for (int i = lines.size() - 1; i >= 0; i--) {
+            ConnectionLine l = lines.get(i);
+            l.setSelected(l.isAreaCrossing(p1, p2));
+        }
+
+    }
+
 }

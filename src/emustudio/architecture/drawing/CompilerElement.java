@@ -42,7 +42,8 @@ public class CompilerElement extends Element {
      * @param text name of the compiler
      */
     public CompilerElement(int x, int y, String text) {
-        super(Color.CYAN, text, x, y);
+        super(Color.WHITE, text, x, y);
+//        super(Color.CYAN, text, x, y);
     }
 
     /**

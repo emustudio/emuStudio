@@ -33,7 +33,8 @@ import java.awt.Point;
 public class CpuElement extends Element {
 
     public CpuElement(int x, int y, String text) {
-        super(new Color(0x6D8471), text, x, y);
+        super(Color.WHITE, text, x, y);
+        //super(new Color(0x6D8471), text, x, y);
     }
 
     public CpuElement(Point e1, String text) {

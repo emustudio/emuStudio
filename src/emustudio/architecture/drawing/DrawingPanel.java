@@ -164,6 +164,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
     private Point selectionEnd;
 
     private BasicStroke thickLine;
+
+    private BasicStroke dashedLine;
+
     private Schema schema;
 
     /**
@@ -187,7 +190,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
     /**
      * Tolerance radius for user point selection, in pixels
      */
-    private static final int toleranceRadius = 7;
+    private static final int toleranceRadius = 5;
     
     /**
      * Draw tool enum.
@@ -228,6 +231,10 @@ public class DrawingPanel extends JPanel implements MouseListener,
         drawTool = PanelDrawTool.nothing;
 
         thickLine = new BasicStroke(2);
+        float dash[] = { 10.0f };
+        dashedLine = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
+        BasicStroke.JOIN_MITER, 10.0f, dash, 0.0f);
+
         tmpPoints = new ArrayList<Point>();
         gridColor = new Color(0xBFBFBF);
 
@@ -423,11 +430,11 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 int yy = (int)selPoint.getY();
                 g.setColor(Color.WHITE);
                 ((Graphics2D)g).setStroke(thickLine);
-                g.fillOval(xx-toleranceRadius, yy-toleranceRadius,
-                        toleranceRadius*2, toleranceRadius*2);
+                g.fillOval(xx-toleranceRadius-2, yy-toleranceRadius-2,
+                        (toleranceRadius+2)*2, (toleranceRadius+2)*2);
                 g.setColor(Color.BLACK);
-                g.drawOval(xx-toleranceRadius-2, yy-toleranceRadius-2,
-                        (toleranceRadius-2)*2, (toleranceRadius-2)*2);
+                g.drawOval(xx-toleranceRadius, yy-toleranceRadius,
+                        toleranceRadius*2, toleranceRadius*2);
             }
         } else if (panelMode == PanelMode.draw) {
             // if the connection line is being drawn, draw the sketch
@@ -436,7 +443,26 @@ public class DrawingPanel extends JPanel implements MouseListener,
                         sketchLastPoint, tmpPoints);
             }
         } else if (panelMode == PanelMode.select) {
-            // TODO
+            if ((selectionStart != null) && (selectionEnd != null)) {
+                g.setColor(Color.BLUE);
+                ((Graphics2D)g).setStroke(dashedLine);
+
+                int x = selectionStart.x;
+                int y = selectionStart.y;
+
+                if (selectionEnd.x < x)
+                    x = selectionEnd.x;
+                if (selectionEnd.y < y)
+                    y = selectionEnd.y;
+                int w = selectionEnd.x - selectionStart.x;
+                int h = selectionEnd.y - selectionStart.y;
+
+                if (w < 0)
+                    w = -w;
+                if (h < 0)
+                    h = -h;
+                g.drawRect(x, y, w, h);
+            }
         }
     }
 
@@ -523,17 +549,13 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 int pi = selLine.getCrossPointAfter(p); // should not be -1
                 p.setLocation(searchGridPoint(p));
                 Point linePoint = selLine.containsPoint(p, toleranceRadius);
-                if (linePoint == null) {
-                    selLine.addPoint(pi - 1, p);
-                    selPoint = p;
-                } else
-                    selPoint = linePoint;
+                selPoint = linePoint;
             }
             repaint(); // because of drawing selected point
 
             // if user press a mouse button on empty area, activate "selection"
             // mode
-            if (selPoint == null) {
+            if (selLine == null) {
                 panelMode = PanelMode.select;
                 selectionStart = e.getPoint(); // point without grid correction
             }
@@ -592,10 +614,30 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 selLine = null;
             }
         } else if (panelMode == PanelMode.select) {
-            selectionEnd = e.getPoint();
             panelMode = PanelMode.move;
 
-            // TODO: Select elements contained in the selection area
+            int x = selectionStart.x;
+            int y = selectionStart.y;
+
+            if (selectionEnd == null)
+                selectionEnd = p;
+
+            if (selectionEnd.x < x)
+                x = selectionEnd.x;
+            if (selectionEnd.y < y)
+                y = selectionEnd.y;
+            int w = selectionEnd.x - selectionStart.x;
+            int h = selectionEnd.y - selectionStart.y;
+
+            if (w < 0)
+                w = -w;
+            if (h < 0)
+                h = -h;
+
+            schema.selectElements(x,y,w,h);
+
+            selectionStart = null;
+            selectionEnd = null;
         } else if (panelMode == PanelMode.draw) {
             if (drawTool == PanelDrawTool.delete) {
                 if (tmpElem1 != null) {
@@ -693,9 +735,19 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 selPoint = p;
             }
         } else if (panelMode == PanelMode.move) {
-            if ((selPoint != null) && (selLine != null)) {
+            if (selLine != null) {
                 if (p.getX() < 0 || p.getY() < 0)
                     return;
+                if (selPoint == null) {
+                    int pi = selLine.getCrossPointAfter(p); // should not be -1
+                    p.setLocation(searchGridPoint(p));
+                    Point linePoint = selLine.containsPoint(p, toleranceRadius);
+                    if (linePoint == null) {
+                        selLine.addPoint(pi - 1, p);
+                        selPoint = p;
+                    } else if (selPoint != linePoint)
+                        return;
+                }
                 p.setLocation(searchGridPoint(p));
                 selLine.pointMove(selPoint, p);
             } else if (tmpElem1 != null) {
@@ -704,10 +756,8 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 p.setLocation(searchGridPoint(p));
                 tmpElem1.move(p);
             }
-        } else if (panelMode == PanelMode.select) {
+        } else if (panelMode == PanelMode.select)
             selectionEnd = e.getPoint();
-            // TODO: draw selection sketch
-        }
         panelSizeCorrection();
         repaint();
     }
@@ -727,7 +777,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 for (int j = 0; j < ps.length; j++) {
                     double d = Math.hypot(ps[j].getX() - p.getX(), 
                             ps[j].getY() - p.getY());
-                    if (d < 10) {
+                    if (d < toleranceRadius) {
                         selLine = schema.getConnectionLines().get(i);
                         selPoint  = ps[j];
                         repaint();

@@ -107,12 +107,18 @@ public abstract class Element {
      */
     private Color backColor;
 
+    /**
+     * Holds true, when this element is selected by user. False otherwise.
+     */
+    protected boolean selected;
+
     public Element(Color backColor, String details,int x, int y) {
         this.x = x;
         this.y = y;
         this.details = details;
         this.backColor = backColor;
         this.wasMeasured = false;
+        this.selected = false;
     }
 
     /**
@@ -125,7 +131,10 @@ public abstract class Element {
             measure(g,0,0);
         g.setColor(backColor);
         g.fillRect(x, y, getWidth(), getHeight());
-        g.setColor(Color.black);
+        if (selected)
+            g.setColor(Color.BLUE);
+        else
+            g.setColor(Color.BLACK);
         g.drawRect(x, y, getWidth(), getHeight());
         g.setFont(boldFont);
         g.drawString(getPluginType(), textX, textY);
@@ -230,4 +239,33 @@ public abstract class Element {
     public int getHeight() { return (height == 0) ? 50: height; }
     public int getX() { return x; }
     public int getY() { return y; }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+
+    public boolean isSelected() {
+        return selected;
+    }
+
+    /**
+     * Determines whether a selection area crosses or overlays this element.
+     * It is assumed that the element is measured already.
+     *
+     * The following four conditions must be true:
+     *  1.  selection.Xleft <= element.Xright
+     *  2.  selection.Xright >= element.Xleft
+     *  3.  selection.Ytop <= element.Ybottom
+     *  4.  selection.Ybottom >= element.Ytop
+     *
+     * @param selectionStart the selection start point
+     * @param selectionEnd the selection end point
+     * @return true if the element is crossing
+     */
+    public boolean isAreaCrossing(Point selectionStart, Point selectionEnd) {
+        int xR = x + getWidth();
+        int yB = y + getHeight();
+        return (selectionStart.x <= xR) && (selectionEnd.x >= x)
+                && (selectionStart.y <= yB) && (selectionEnd.y >= y);
+    }
 }

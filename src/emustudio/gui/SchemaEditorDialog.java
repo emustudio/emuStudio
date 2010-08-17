@@ -24,6 +24,7 @@ package emustudio.gui;
 
 import emustudio.architecture.ArchLoader;
 import emustudio.architecture.drawing.DrawingPanel;
+import emustudio.architecture.drawing.DrawingPanel.DrawEventListener;
 import emustudio.architecture.drawing.DrawingPanel.PanelDrawTool;
 import emustudio.architecture.drawing.Schema;
 import java.awt.Component;
@@ -123,6 +124,19 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         pan.addMouseListener(pan);
         pan.addMouseMotionListener(pan);
         addKeyListenerRecursively(this);
+
+        pan.addEventListener(new DrawEventListener() {
+
+            @Override
+            public void toolUsed() {
+                pan.cancelTasks();
+                pan.setTool(PanelDrawTool.nothing, null);
+                cmbPlugin.setModel(empty_model);
+                groupDraw.clearSelection();
+                buttonSelected = false;
+            }
+
+        });
     }
 
     /**

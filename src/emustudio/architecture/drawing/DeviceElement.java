@@ -33,7 +33,8 @@ import java.awt.Point;
 public class DeviceElement extends Element {
 
     public DeviceElement(int x, int y, String text) {
-        super(new Color(0xFFFEFF), text, x, y);
+        super(Color.WHITE, text, x, y);
+        //super(new Color(0xFFFEFF), text, x, y);
     }
     
     public DeviceElement(Point e1, String text) {

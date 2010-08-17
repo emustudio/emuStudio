@@ -43,6 +43,11 @@ public class ConnectionLine {
     private static BasicStroke thickLine = new BasicStroke(2);
 
     /**
+     * Whether this line is selected by the user
+     */
+    private boolean selected;
+
+    /**
      * Holds true, if the line connection is bidirectional, false otherwise.
      */
     private boolean bidirectional;
@@ -84,6 +89,7 @@ public class ConnectionLine {
             this.points.addAll(points);
 
         this.bidirectional = true;
+        this.selected = false;
     }
 
     /**
@@ -263,6 +269,118 @@ public class ConnectionLine {
     }
 
     /**
+     * Determines whether a selection area crosses or overlays this line.
+     *
+     * If at least one intersection is found, then true is returned.
+     *
+     * @param selectionStart the selection start point
+     * @param selectionEnd the selection end point
+     * @return true if the line is crossing the selection area
+     */
+    public boolean isAreaCrossing(Point selectionStart, Point selectionEnd) {
+        Point lineStart = new Point(e1.getX() + e1.getWidth()/2,
+                e1.getY() + e1.getHeight()/2);
+        Point lineEnd;
+
+        Point intersection = null;
+
+        for (int i = 0; i < points.size(); i++) {
+            lineEnd = points.get(i);
+
+            // test: left side of the selection
+            Point bottomLeft = new Point(selectionStart.x, selectionEnd.y);
+            intersection = intersection(selectionStart, bottomLeft, lineStart,
+                    lineEnd);
+            if ((intersection != null) && (intersection.x == selectionStart.x)
+                    && (intersection.y >= selectionStart.y)
+                    && (intersection.y <= selectionEnd.y)
+                    && (getCrossPointAfter(intersection) != -1))
+                return true;
+
+            // test: right side of the selection
+            Point topRight = new Point(selectionEnd.x, selectionStart.y);
+            intersection = intersection(topRight, selectionEnd, lineStart,
+                    lineEnd);
+            if ((intersection != null) && (intersection.x == selectionEnd.x)
+                    && (intersection.y >= selectionStart.y)
+                    && (intersection.y <= selectionEnd.y)
+                    && (getCrossPointAfter(intersection) != -1))
+                return true;
+
+            // test: top side of the selection
+            intersection = intersection(selectionStart, topRight, lineStart,
+                    lineEnd);
+            if ((intersection != null) && (intersection.y == selectionStart.y)
+                    && (intersection.x >= selectionStart.x)
+                    && (intersection.x <= selectionEnd.x)
+                    && (getCrossPointAfter(intersection) != -1))
+                return true;
+
+            // test: bottom side of the selection
+            intersection = intersection(bottomLeft, selectionEnd, lineStart,
+                    lineEnd);
+            if ((intersection != null) && (intersection.y == selectionEnd.y)
+                    && (intersection.x >= selectionStart.x)
+                    && (intersection.x <= selectionEnd.x)
+                    && (getCrossPointAfter(intersection) != -1))
+                return true;
+
+            lineStart = lineEnd;
+        }
+        lineEnd = new Point(e2.getX() + e2.getWidth()/2,
+                e2.getY() + e2.getHeight()/2);
+
+        // test: left side of the selection
+        Point bottomLeft = new Point(selectionStart.x, selectionEnd.y);
+        intersection = intersection(selectionStart, bottomLeft, lineStart,
+                lineEnd);
+        if ((intersection != null) && (intersection.x == selectionStart.x)
+                && (intersection.y >= selectionStart.y)
+                && (intersection.y <= selectionEnd.y)
+                && (getCrossPointAfter(intersection) != -1))
+            return true;
+
+        // test: right side of the selection
+        Point topRight = new Point(selectionEnd.x, selectionStart.y);
+        intersection = intersection(topRight, selectionEnd, lineStart,
+                lineEnd);
+        if ((intersection != null) && (intersection.x == selectionEnd.x)
+                && (intersection.y >= selectionStart.y)
+                && (intersection.y <= selectionEnd.y)
+                && (getCrossPointAfter(intersection) != -1))
+            return true;
+
+        // test: top side of the selection
+        intersection = intersection(selectionStart, topRight, lineStart,
+                lineEnd);
+        if ((intersection != null) && (intersection.y == selectionStart.y)
+                && (intersection.x >= selectionStart.x)
+                && (intersection.x <= selectionEnd.x)
+                && (getCrossPointAfter(intersection) != -1))
+            return true;
+
+        // test: bottom side of the selection
+        intersection = intersection(bottomLeft, selectionEnd, lineStart,
+                lineEnd);
+        if ((intersection != null) && (intersection.y == selectionEnd.y)
+                && (intersection.x >= selectionStart.x)
+                && (intersection.x <= selectionEnd.x)
+                && (getCrossPointAfter(intersection) != -1))
+            return true;
+
+        return false;
+    }
+
+    /**
+     * Select or deselect this line.
+     *
+     * @param selected true if the line should be selected, false otherwise
+     */
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+
+    /**
      * Draws this connection line.
      *
      * @param g Graphics2D object, where to draw the line
@@ -281,7 +399,10 @@ public class ConnectionLine {
      *        the topFactor value, in the Y coordinate)
      */
     public void draw(Graphics2D g, int leftFactor, int topFactor) {
-        g.setColor(Color.black);
+        if (selected)
+            g.setColor(Color.BLUE);
+        else
+            g.setColor(Color.black);
         int x1 = e1.getX() + e1.getWidth()/2;
         int y1 = e1.getY() + e1.getHeight()/2;
         int x2, y2;
