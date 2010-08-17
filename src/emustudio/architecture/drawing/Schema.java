@@ -317,7 +317,7 @@ public class Schema {
     public ConnectionLine getCrossingLine(Point p) {
         for (int i = lines.size() - 1; i >= 0; i--) {
             ConnectionLine l = lines.get(i);
-            if (l.getCrossPointAfter(p) != -1)
+            if (l.getCrossPointAfter(p,5) != -1)
                 return l;
         }
         return null;

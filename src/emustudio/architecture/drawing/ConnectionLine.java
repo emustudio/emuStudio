@@ -32,12 +32,30 @@ import java.util.ArrayList;
 
 /**
  * The connection line within the abstract schemas.
+ *
+ * The line can connect two and only two different elements.
  * 
  * @author vbmacher
  */
 public class ConnectionLine {
+    /**
+     * First element in the connection.
+     *
+     * If the connection is not bidirectional, then from this element the data
+     * flow flows. It means that this element can access the other element,
+     */
     private Element e1;
+
+    /**
+     * The last element in the connection.
+     *
+     * If the connection is not bidirectional, then into this element the data
+     * flow flows. It means, that this device can only return the results, but
+     * can not activate the first element.
+     */
     private Element e2;
+    
+
 
     private ArrayList<Point> points;
     private static BasicStroke thickLine = new BasicStroke(2);
@@ -130,10 +148,8 @@ public class ConnectionLine {
      */
     public void computeArrows(int leftFactor, int topFactor) {
         computeElementArrow(leftFactor, topFactor, false);
-        if (bidirectional)
-            computeElementArrow(leftFactor, topFactor, true);
-        else {
-            arrow1 = null;
+        computeElementArrow(leftFactor, topFactor, true);
+        if (!bidirectional) {
             arrow1LeftEnd = null;
             arrow1RightEnd = null;
         }
@@ -278,10 +294,10 @@ public class ConnectionLine {
      * @return true if the line is crossing the selection area
      */
     public boolean isAreaCrossing(Point selectionStart, Point selectionEnd) {
-        Point lineStart = new Point(e1.getX() + e1.getWidth()/2,
-                e1.getY() + e1.getHeight()/2);
-        Point lineEnd;
+        Point lineStart = new Point(e1.getX() + arrow1.x,
+                e1.getY() + arrow1.y);
 
+        Point lineEnd;
         Point intersection = null;
 
         for (int i = 0; i < points.size(); i++) {
@@ -294,7 +310,7 @@ public class ConnectionLine {
             if ((intersection != null) && (intersection.x == selectionStart.x)
                     && (intersection.y >= selectionStart.y)
                     && (intersection.y <= selectionEnd.y)
-                    && (getCrossPointAfter(intersection) != -1))
+                    && (getCrossPointAfter(intersection,1) != -1))
                 return true;
 
             // test: right side of the selection
@@ -304,7 +320,7 @@ public class ConnectionLine {
             if ((intersection != null) && (intersection.x == selectionEnd.x)
                     && (intersection.y >= selectionStart.y)
                     && (intersection.y <= selectionEnd.y)
-                    && (getCrossPointAfter(intersection) != -1))
+                    && (getCrossPointAfter(intersection,1) != -1))
                 return true;
 
             // test: top side of the selection
@@ -313,7 +329,7 @@ public class ConnectionLine {
             if ((intersection != null) && (intersection.y == selectionStart.y)
                     && (intersection.x >= selectionStart.x)
                     && (intersection.x <= selectionEnd.x)
-                    && (getCrossPointAfter(intersection) != -1))
+                    && (getCrossPointAfter(intersection,1) != -1))
                 return true;
 
             // test: bottom side of the selection
@@ -322,13 +338,13 @@ public class ConnectionLine {
             if ((intersection != null) && (intersection.y == selectionEnd.y)
                     && (intersection.x >= selectionStart.x)
                     && (intersection.x <= selectionEnd.x)
-                    && (getCrossPointAfter(intersection) != -1))
+                    && (getCrossPointAfter(intersection,1) != -1))
                 return true;
 
             lineStart = lineEnd;
         }
-        lineEnd = new Point(e2.getX() + e2.getWidth()/2,
-                e2.getY() + e2.getHeight()/2);
+        lineEnd = new Point(e2.getX() + arrow2.x,
+                e2.getY() + arrow2.y);
 
         // test: left side of the selection
         Point bottomLeft = new Point(selectionStart.x, selectionEnd.y);
@@ -337,7 +353,7 @@ public class ConnectionLine {
         if ((intersection != null) && (intersection.x == selectionStart.x)
                 && (intersection.y >= selectionStart.y)
                 && (intersection.y <= selectionEnd.y)
-                && (getCrossPointAfter(intersection) != -1))
+                && (getCrossPointAfter(intersection,1) != -1))
             return true;
 
         // test: right side of the selection
@@ -347,7 +363,7 @@ public class ConnectionLine {
         if ((intersection != null) && (intersection.x == selectionEnd.x)
                 && (intersection.y >= selectionStart.y)
                 && (intersection.y <= selectionEnd.y)
-                && (getCrossPointAfter(intersection) != -1))
+                && (getCrossPointAfter(intersection,1) != -1))
             return true;
 
         // test: top side of the selection
@@ -356,7 +372,7 @@ public class ConnectionLine {
         if ((intersection != null) && (intersection.y == selectionStart.y)
                 && (intersection.x >= selectionStart.x)
                 && (intersection.x <= selectionEnd.x)
-                && (getCrossPointAfter(intersection) != -1))
+                && (getCrossPointAfter(intersection,1) != -1))
             return true;
 
         // test: bottom side of the selection
@@ -365,9 +381,17 @@ public class ConnectionLine {
         if ((intersection != null) && (intersection.y == selectionEnd.y)
                 && (intersection.x >= selectionStart.x)
                 && (intersection.x <= selectionEnd.x)
-                && (getCrossPointAfter(intersection) != -1))
+                && (getCrossPointAfter(intersection,1) != -1))
             return true;
 
+        // if there is no intersection, maybe the line lies inside the selection
+        // it is enough if we just compare any point if it lies inside the
+        // selection
+
+        if ((lineStart.x >= selectionStart.x) && (lineStart.x <= selectionEnd.x)
+                && (lineStart.y >= selectionStart.y)
+                && (lineStart.y <= selectionEnd.y))
+            return true;
         return false;
     }
 
@@ -434,7 +458,7 @@ public class ConnectionLine {
         g.drawLine(x1, y1, x2, y2);
 
         // sipky - princip dedenia v UML <---> princip toku udajov => tok!!
-        if (arrow1 != null) {
+        if (arrow1LeftEnd != null) {
             g.drawLine(e1.getX() + arrow1.x,
                     e1.getY() + arrow1.y,
                     e1.getX() + arrow1.x + arrow1LeftEnd.x,
@@ -444,7 +468,7 @@ public class ConnectionLine {
                     e1.getX() + arrow1.x + arrow1RightEnd.x,
                     e1.getY() + arrow1.y + arrow1RightEnd.y);
         }
-        if (arrow2 != null) {
+        if (arrow2LeftEnd != null) {
             g.drawLine(e2.getX() + arrow2.x,
                     e2.getY() + arrow2.y,
                     e2.getX() + arrow2.x + arrow2LeftEnd.x,
@@ -611,15 +635,16 @@ public class ConnectionLine {
      * and if yes, return index of a point of a cross point.
      *
      * @param point point that is checked
+     * @param tolerance the tolerance
      * @return If line doesn't contain any point but point[x,y] is crossing the
      * line; or if point[x,y] is crossing near the beginning of the line, then 0
      * is returned. It means that new point should be added before first point.
      * And if point[x,y] doesn't cross the line, -1 is returned. Otherwise is
      * returned index of point that crosses the line.
      */
-    public int getCrossPointAfter(Point point) {
-        int x1 = e1.getX() + e1.getWidth()/2;
-        int y1 = e1.getY() + e1.getHeight()/2;
+    public int getCrossPointAfter(Point point, int tolerance) {
+        int x1 = e1.getX() + arrow1.x;  // e1.getWidth()/2;
+        int y1 = e1.getY() + arrow1.y;  //e1.getHeight()/2;
         int x2, y2;
         double a,b,c,d;
         
@@ -636,7 +661,7 @@ public class ConnectionLine {
             b = x1-x2;
             c = -a*x1-b*y1; // mam rovnicu
             d = Math.abs(a*point.x + b*point.y + c)/Math.hypot(a, b);
-            if (d < 5) {
+            if (d < tolerance) {
                 double l1 = Math.hypot(x1-point.x, y1-point.y);
                 double l2 = Math.hypot(x2-point.x, y2-point.y);
                 double l = Math.hypot(x2-x1, y2-y1);
@@ -645,8 +670,8 @@ public class ConnectionLine {
             x1 = x2;
             y1 = y2;
         }
-        x2 = e2.getX() + e2.getWidth()/2;
-        y2 = e2.getY() + e2.getHeight()/2;
+        x2 = e2.getX() + arrow2.x;  //+ e2.getWidth()/2;
+        y2 = e2.getY() + arrow2.y; // + e2.getHeight()/2;
         a = y2-y1;
         b = x1-x2;
         c = -a*x1-b*y1; // mam rovnicu

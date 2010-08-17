@@ -546,7 +546,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
             selLine = schema.getCrossingLine(p);
 
             if (selLine != null) {
-                int pi = selLine.getCrossPointAfter(p); // should not be -1
+                int pi = selLine.getCrossPointAfter(p,5); // should not be -1
                 p.setLocation(searchGridPoint(p));
                 Point linePoint = selLine.containsPoint(p, toleranceRadius);
                 selPoint = linePoint;
@@ -739,7 +739,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 if (p.getX() < 0 || p.getY() < 0)
                     return;
                 if (selPoint == null) {
-                    int pi = selLine.getCrossPointAfter(p); // should not be -1
+                    int pi = selLine.getCrossPointAfter(p,5); // should not be -1
+                    if (pi == -1)
+                        return;
                     p.setLocation(searchGridPoint(p));
                     Point linePoint = selLine.containsPoint(p, toleranceRadius);
                     if (linePoint == null) {
