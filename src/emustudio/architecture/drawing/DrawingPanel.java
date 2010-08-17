@@ -183,6 +183,11 @@ public class DrawingPanel extends JPanel implements MouseListener,
      * should be bidirectional, false otherwise.
      */
     private boolean bidirectional;
+
+    /**
+     * Tolerance radius for user point selection, in pixels
+     */
+    private static final int toleranceRadius = 7;
     
     /**
      * Draw tool enum.
@@ -416,9 +421,13 @@ public class DrawingPanel extends JPanel implements MouseListener,
             if (selPoint != null) {
                 int xx = (int)selPoint.getX();
                 int yy = (int)selPoint.getY();
-                g.setColor(Color.BLACK);
+                g.setColor(Color.WHITE);
                 ((Graphics2D)g).setStroke(thickLine);
-                g.fillOval(xx-7, yy-7, 14, 14);
+                g.fillOval(xx-toleranceRadius, yy-toleranceRadius,
+                        toleranceRadius*2, toleranceRadius*2);
+                g.setColor(Color.BLACK);
+                g.drawOval(xx-toleranceRadius-2, yy-toleranceRadius-2,
+                        (toleranceRadius-2)*2, (toleranceRadius-2)*2);
             }
         } else if (panelMode == PanelMode.draw) {
             // if the connection line is being drawn, draw the sketch
@@ -513,7 +522,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
             if (selLine != null) {
                 int pi = selLine.getCrossPointAfter(p); // should not be -1
                 p.setLocation(searchGridPoint(p));
-                Point linePoint = selLine.containsPoint(p);
+                Point linePoint = selLine.containsPoint(p, toleranceRadius);
                 if (linePoint == null) {
                     selLine.addPoint(pi - 1, p);
                     selPoint = p;
@@ -571,7 +580,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
             if (selLine != null && selPoint != null) {
                 if (e.getButton() != MouseEvent.BUTTON3)
                     return;
-                Point linePoint = selLine.containsPoint(p);
+                Point linePoint = selLine.containsPoint(p,toleranceRadius);
                 if ((selLine != schema.getCrossingLine(e.getPoint()))
                         || (selPoint != linePoint)) {
                     selLine = null;

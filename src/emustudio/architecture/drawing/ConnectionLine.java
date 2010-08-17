@@ -304,7 +304,7 @@ public class ConnectionLine {
             }
 
             g.drawLine(x1, y1, x2, y2);
-            g.fillOval(x2-4, y2-4, 8, 8);
+            g.fillOval(x2-3, y2-3, 6, 6);
             x1 = x2;
             y1 = y2;
         }
@@ -369,7 +369,7 @@ public class ConnectionLine {
             }
 
             g.drawLine(x1, y1, x2, y2);
-            g.fillOval(x2-4, y2-4, 8, 8);
+            g.fillOval(x2-3, y2-3, 6, 6);
             x1 = x2;
             y1 = y2;
         }
@@ -421,18 +421,20 @@ public class ConnectionLine {
     }
 
     /**
-     * Test if given point is included within this line. If it is, return
-     * the original Point object, null otherwise.
+     * Test if given point is included within this line (with some tolerance).
+     * If it is, return the original Point object, null otherwise.
      *
      * @param p Point to test
+     * @param tolerance tolerance radius
      * @return original point object of the line, null if the test point is
      * not included
      */
-    public Point containsPoint(Point p) {
+    public Point containsPoint(Point p, int tolerance) {
         int size = points.size();
         for (int i = 0; i < size; i++) {
             Point tmp = points.get(i);
-            if ((tmp.x == p.x) && (tmp.y == p.y))
+            if ((tmp.x >= (p.x-tolerance)) && (tmp.x <= (p.x + tolerance))
+                    && (tmp.y >= (p.y-tolerance)) && (tmp.y <= (p.y+tolerance)))
                 return tmp;
         }
         return null;
