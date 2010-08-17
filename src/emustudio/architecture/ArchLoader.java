@@ -267,6 +267,8 @@ public class ArchLoader {
             for (int i = 0; p.containsKey("connection"+i+".junc0"); i++) {
                 String j0 = p.getProperty("connection"+i+".junc0", "");
                 String j1 = p.getProperty("connection"+i+".junc1", "");
+                boolean bidi = Boolean.parseBoolean(p.getProperty("connection"+
+                        i+".bidirectional", "true"));
                 if (j0.equals("") || j1.equals("")) continue;
                 
                 Element e1=null,e2=null;
@@ -292,6 +294,7 @@ public class ArchLoader {
                 }
                 if ((e1 != null) && (e2 != null)) {
                     ConnectionLine lin = new ConnectionLine(e1,e2,null);
+                    lin.setBidirectional(bidi);
                     for (int j = 0; p.containsKey("connection"+i+".point"+j+".x"); j++) {
                         x = Integer.parseInt(p.getProperty("connection"
                                 + i + ".point" + j + ".x","0"));
@@ -363,6 +366,10 @@ public class ArchLoader {
             ArrayList<ConnectionLine> lines = s.getConnectionLines();
             for (int i = 0; i < lines.size(); i++) {
                 ConnectionLine line = lines.get(i);
+
+                p.put("connection"+i+".bidirectional", 
+                        String.valueOf(line.isBidirectional()));
+
                 Element e = line.getJunc0();
                 if (e instanceof CompilerElement)
                     p.put("connection"+i+".junc0", "compiler");

@@ -115,6 +115,13 @@ public class ConnectionLine {
         return new Point(p_x, p_y);
     }
 
+    /**
+     * This method computes one or bidirectional arrows positions for this 
+     * line ends.
+     * 
+     * @param leftFactor x coordinate correction
+     * @param topFactor  y coordinate correction
+     */
     public void computeArrows(int leftFactor, int topFactor) {
         computeElementArrow(leftFactor, topFactor, false);
         if (bidirectional)
@@ -127,7 +134,12 @@ public class ConnectionLine {
     }
 
     /**
-     * This method computes relative begin points of "arrows" on line ends.
+     * This method computes relative start points of "arrows" on line end.
+     *
+     * @param leftFactor x coordinate correction
+     * @param topFactor  y coordinate correction
+     * @param first whether to compute first direction (e1->e2),
+     * or the other direction (e2->e1).
      */
     public void computeElementArrow(int leftFactor, int topFactor, boolean first) {
         Point p, arrow;
@@ -204,11 +216,12 @@ public class ConnectionLine {
     }
 
     /**
-     * This method computes the connection lines positions of arrows end lines.
+     * This method computes the positions of the arrows end lines.
      *
-     * @param lineStart
-     * @param lineEnd
-     * @param first
+     * @param lineStart start point of this line
+     * @param lineEnd end point of this line
+     * @param first whether to compute the position of the first direction arrow
+     * (e1->e2), or the other direction arrow (e2->e1)
      */
     private void computeArrowEnds(Point lineStart,
            Point lineEnd, boolean first) {

@@ -132,19 +132,29 @@ public class PreviewPanel extends JPanel {
             if (eY + eHeight > height)
                 height = eY + eHeight;
         }
-        leftFactor = minLeft - Element.MIN_LEFT_MARGIN;
-        topFactor = minTop - Element.MIN_TOP_MARGIN;
-        
         for (int i = 0; i < schema.getConnectionLines().size(); i++) {
             ArrayList<Point> ps = schema.getConnectionLines().get(i).getPoints();
             for (int j = 0; j < ps.size(); j++) {
                 Point p = ps.get(j);
+
+                if (minLeft == -1)
+                    minLeft = p.x;
+                else if (minLeft > p.x)
+                    minLeft = p.x;
+
+                if (minTop == -1)
+                    minTop = p.y;
+                else if (minTop > p.y)
+                    minTop = p.y;
+
                 if (p.x > width)
                     width = p.x;
                 if (p.y > height)
                     height = p.y;
             }
         }
+        leftFactor = minLeft - Element.MIN_LEFT_MARGIN;
+        topFactor = minTop - Element.MIN_TOP_MARGIN;
         if (width != 0 && height != 0) {
             this.setSize(width-leftFactor+Element.MIN_LEFT_MARGIN,
                     height-topFactor+Element.MIN_TOP_MARGIN);
