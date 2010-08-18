@@ -328,7 +328,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         if (s == null) {
             return;
         }
-        SchemaEditorDialog d = new SchemaEditorDialog(this, true, s);
+        SchemaEditorFrame d = new SchemaEditorFrame(s);
         d.setVisible(true);
         if (d.getOK()) {
             String old = archName;
@@ -366,7 +366,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_btnDeleteActionPerformed
 
     private void btnAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddActionPerformed
-        SchemaEditorDialog di = new SchemaEditorDialog(null, true);
+        SchemaEditorFrame di = new SchemaEditorFrame();
         di.setVisible(true);
         if (di.getOK()) {
             ArchLoader.saveSchema(di.getSchema());

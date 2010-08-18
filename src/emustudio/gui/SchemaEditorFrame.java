@@ -1,5 +1,5 @@
 /*
- * SchemaEditorDialog.java
+ * SchemaEditorFrame.java
  *
  * KISS, YAGNI
  *
@@ -29,11 +29,11 @@ import emustudio.architecture.drawing.DrawingPanel.PanelDrawTool;
 import emustudio.architecture.drawing.Schema;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dialog.ModalExclusionType;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
 import javax.swing.ComboBoxModel;
-import javax.swing.JDialog;
 import javax.swing.event.ListDataListener;
 import runtime.StaticDialogs;
 
@@ -41,7 +41,7 @@ import runtime.StaticDialogs;
  *
  * @author vbmacher
  */
-public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
+public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener {
 
     /**
      * Schema of created computer.
@@ -116,6 +116,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
      */
     private void constructor() {
         initComponents();
+        setModalExclusionType(ModalExclusionType.APPLICATION_EXCLUDE);
         this.setLocationRelativeTo(null);
         pan = new DrawingPanel(this.schema, true, sliderGridGap.getValue());
         scrollScheme.setViewportView(pan);
@@ -181,8 +182,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
      * @param parent parent GUI - the OpenComputerDialog instance
      * @param modal if the GUI should be modal
      */
-    public SchemaEditorDialog(JDialog parent, boolean modal) {
-        super(parent, modal);
+    public SchemaEditorFrame() {
         this.schema = new Schema();
         this.edit = false;
         constructor();
@@ -193,12 +193,11 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
      * This constructor is used for editing the existing computer. If user
      * changes the configuration name, the origin will be renamed.
      *
-     * @param parent should be the OpenComputerDialog instance
+     * @param parent should be the OpenComputerFrame instance
      * @param modal if the GUI should be modal
      * @param schema Abstract schema of origin computer
      */
-    public SchemaEditorDialog(JDialog parent, boolean modal, Schema schema) {
-        super(parent, modal);
+    public SchemaEditorFrame(Schema schema) {
         this.schema = schema;
         this.edit = true;
         constructor();

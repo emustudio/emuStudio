@@ -123,7 +123,7 @@ public class Main {
             if (odi.getOK())
                 configName = odi.getArchName();
             if (configName == null)
-                return;
+                System.exit(0);
         }
 
         // display splash screen, while loading the virtual computer
