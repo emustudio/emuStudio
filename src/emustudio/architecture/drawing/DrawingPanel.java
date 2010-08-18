@@ -123,6 +123,17 @@ public class DrawingPanel extends JPanel implements MouseListener,
     private Element tmpElem1;
 
     /**
+     * If an element is selected (mouse pressed) and then dragged, this
+     * variable holds true. It is false in all other cases.
+     *
+     * When the mouse is released, the value is tested. If it is true, it means
+     * that the element has been moved and therefore possible selection of
+     * the other elements should not be cleared.
+     *
+     */
+    private boolean elementDragged;
+
+    /**
      * Used when drawing lines. It represents last element that the line
      * is connected to.
      */
@@ -286,6 +297,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
 
         eventListeners = new EventListenerList();
         bidirectional = true;
+        elementDragged = false;
     }
 
     /**
@@ -580,7 +592,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 tmpElem1 = schema.getCrossingElement(p);
                 if (tmpElem1 != null) {
                     selLine = null;
-                    selPoint = null;
+                    elementDragged = false;
                     return;
                 }
             }
@@ -591,10 +603,8 @@ public class DrawingPanel extends JPanel implements MouseListener,
             selLine = null;
             selLine = schema.getCrossingLine(p);
 
-            if (selLine != null) {
-                Point linePoint = selLine.containsPoint(p, toleranceRadius);
-                selPoint = linePoint;
-            }
+            if (selLine != null)
+                selPoint = selLine.containsPoint(p, toleranceRadius);
             repaint(); // because of drawing selected point
 
             // if user press a mouse button on empty area, activate "selection"
@@ -640,6 +650,24 @@ public class DrawingPanel extends JPanel implements MouseListener,
     public void mouseReleased(MouseEvent e) {
         Point p = e.getPoint();
         if (panelMode == PanelMode.move) {
+            // if an element was clicked, select it
+            // if user holds CTRL or SHIFT
+            if (e.getButton() == MouseEvent.BUTTON1) {
+                int ctrl_shift = e.getModifiersEx() & (MouseEvent.SHIFT_DOWN_MASK
+                        | MouseEvent.CTRL_DOWN_MASK);
+                if ((!elementDragged) && (ctrl_shift == 0))
+                    schema.selectElements(-1, -1, 0, 0);
+                Element elem = schema.getCrossingElement(p);
+                if ((tmpElem1 == elem) && (elem != null)) {
+                    elem.setSelected(true);
+                    repaint();
+                    return;
+                }
+                if ((selLine == null) || (selLine != schema.getCrossingLine(p)))
+                    return;
+                selLine.setSelected(true);
+            }
+
             // if a point is selected, remove it if user pressed
             // right mouse button
             if (selLine != null && selPoint != null) {
@@ -804,6 +832,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
                     return;
                 p.setLocation(searchGridPoint(p));
 
+                elementDragged = true;
                 // if the element is selected, we must move all selected elements
                 // either.
                 if (tmpElem1.selected) {

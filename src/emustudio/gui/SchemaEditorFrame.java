@@ -58,6 +58,9 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
      */
     private boolean edit;
 
+    private OpenComputerDialog odialog;
+
+
     @Override
     public void keyTyped(KeyEvent e) {
     }
@@ -114,10 +117,11 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
     /**
      * Perform common initialization used in both constructors.
      */
-    private void constructor() {
+    private void constructor(OpenComputerDialog odialog) {
         initComponents();
         setModalExclusionType(ModalExclusionType.APPLICATION_EXCLUDE);
         this.setLocationRelativeTo(null);
+        this.odialog = odialog;
         pan = new DrawingPanel(this.schema, true, sliderGridGap.getValue());
         scrollScheme.setViewportView(pan);
         scrollScheme.getHorizontalScrollBar().setUnitIncrement(10);
@@ -163,6 +167,8 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
      * @return true if the user pressed OK, false otherwise
      */
     public boolean getOK() {
+                    System.out.println("OK = " + OOK);
+
         return OOK;
     }
 
@@ -179,13 +185,12 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
     /**
      * This constructor is used for creating new virtual configurations.
      *
-     * @param parent parent GUI - the OpenComputerDialog instance
-     * @param modal if the GUI should be modal
+     * @param odialog parent GUI - the OpenComputerDialog instance
      */
-    public SchemaEditorFrame() {
+    public SchemaEditorFrame(OpenComputerDialog odialog) {
         this.schema = new Schema();
         this.edit = false;
-        constructor();
+        constructor(odialog);
         this.setTitle("Computer editor: new computer");
     }
 
@@ -193,14 +198,13 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
      * This constructor is used for editing the existing computer. If user
      * changes the configuration name, the origin will be renamed.
      *
-     * @param parent should be the OpenComputerFrame instance
-     * @param modal if the GUI should be modal
+     * @param odialog should be the OpenComputerFrame instance
      * @param schema Abstract schema of origin computer
      */
-    public SchemaEditorFrame(Schema schema) {
+    public SchemaEditorFrame(OpenComputerDialog odialog, Schema schema) {
         this.schema = schema;
         this.edit = true;
-        constructor();
+        constructor(odialog);
         this.setTitle("Computer editor: " + schema.getConfigName());
     }
 
@@ -603,8 +607,23 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
         if ((name == null) || (name.equals(""))) {
             OOK = false;
         } else {
-            schema.setConfigName(name);
             OOK = true;
+
+            if (edit) {
+                String old = schema.getConfigName();
+                schema.setConfigName(name);
+
+                if (!old.equals(name)) {
+                    ArchLoader.renameConfig(name, old);
+                }
+                ArchLoader.saveSchema(schema);
+                odialog.setArchName(name);
+                odialog.update();
+            } else {
+                schema.setConfigName(name);
+                ArchLoader.saveSchema(schema);
+                odialog.update();
+            }
         }
         dispose();
     }//GEN-LAST:event_btnSaveActionPerformed

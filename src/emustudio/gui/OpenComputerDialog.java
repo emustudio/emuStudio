@@ -112,6 +112,14 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     }
 
     /**
+     * Updates ArchList model
+     */
+    public void update() {
+        amodel.update();
+        lblPreview.setText(archName);
+        lstConfigValueChanged(null);
+    }
+    /**
      * Determine whethe the user pressed "OK" button.
      *
      * @return true if user has pressed OK, false otherwise
@@ -129,6 +137,9 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         return archName;
     }
 
+    public void setArchName(String archName) {
+        this.archName = archName;
+    }
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -328,21 +339,8 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         if (s == null) {
             return;
         }
-        SchemaEditorFrame d = new SchemaEditorFrame(s);
+        SchemaEditorFrame d = new SchemaEditorFrame(this, s);
         d.setVisible(true);
-        if (d.getOK()) {
-            String old = archName;
-            Schema sch = d.getSchema();
-            archName = d.getSchema().getConfigName();
-
-            if (!old.equals(archName)) {
-                ArchLoader.renameConfig(archName, old);
-            }
-            ArchLoader.saveSchema(sch);
-            amodel.update();
-            lblPreview.setText(archName);
-            lstConfigValueChanged(null);
-        }
     }//GEN-LAST:event_btnEditActionPerformed
 
     private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteActionPerformed
@@ -358,7 +356,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
             if (re) {
                 archName = "";
                 lstConfig.setSelectedIndex(-1);
-                amodel.update();
+                update();
             } else {
                 StaticDialogs.showErrorMessage("Computer could not be deleted.");
             }
@@ -366,12 +364,8 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_btnDeleteActionPerformed
 
     private void btnAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddActionPerformed
-        SchemaEditorFrame di = new SchemaEditorFrame();
+        SchemaEditorFrame di = new SchemaEditorFrame(this);
         di.setVisible(true);
-        if (di.getOK()) {
-            ArchLoader.saveSchema(di.getSchema());
-            amodel.update();
-        }
     }//GEN-LAST:event_btnAddActionPerformed
 
     private void lstConfigValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstConfigValueChanged
