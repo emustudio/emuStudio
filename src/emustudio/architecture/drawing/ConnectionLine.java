@@ -310,7 +310,7 @@ public class ConnectionLine {
             if ((intersection != null) && (intersection.x == selectionStart.x)
                     && (intersection.y >= selectionStart.y)
                     && (intersection.y <= selectionEnd.y)
-                    && (getCrossPointAfter(intersection,1) != -1))
+                    && (getCrossPointAfter(intersection,0.1) != -1))
                 return true;
 
             // test: right side of the selection
@@ -320,7 +320,7 @@ public class ConnectionLine {
             if ((intersection != null) && (intersection.x == selectionEnd.x)
                     && (intersection.y >= selectionStart.y)
                     && (intersection.y <= selectionEnd.y)
-                    && (getCrossPointAfter(intersection,1) != -1))
+                    && (getCrossPointAfter(intersection,0.1) != -1))
                 return true;
 
             // test: top side of the selection
@@ -329,7 +329,7 @@ public class ConnectionLine {
             if ((intersection != null) && (intersection.y == selectionStart.y)
                     && (intersection.x >= selectionStart.x)
                     && (intersection.x <= selectionEnd.x)
-                    && (getCrossPointAfter(intersection,1) != -1))
+                    && (getCrossPointAfter(intersection,0.1) != -1))
                 return true;
 
             // test: bottom side of the selection
@@ -338,7 +338,7 @@ public class ConnectionLine {
             if ((intersection != null) && (intersection.y == selectionEnd.y)
                     && (intersection.x >= selectionStart.x)
                     && (intersection.x <= selectionEnd.x)
-                    && (getCrossPointAfter(intersection,1) != -1))
+                    && (getCrossPointAfter(intersection,0.1) != -1))
                 return true;
 
             lineStart = lineEnd;
@@ -353,7 +353,7 @@ public class ConnectionLine {
         if ((intersection != null) && (intersection.x == selectionStart.x)
                 && (intersection.y >= selectionStart.y)
                 && (intersection.y <= selectionEnd.y)
-                && (getCrossPointAfter(intersection,1) != -1))
+                && (getCrossPointAfter(intersection,0.1) != -1))
             return true;
 
         // test: right side of the selection
@@ -363,7 +363,7 @@ public class ConnectionLine {
         if ((intersection != null) && (intersection.x == selectionEnd.x)
                 && (intersection.y >= selectionStart.y)
                 && (intersection.y <= selectionEnd.y)
-                && (getCrossPointAfter(intersection,1) != -1))
+                && (getCrossPointAfter(intersection,0.1) != -1))
             return true;
 
         // test: top side of the selection
@@ -372,7 +372,7 @@ public class ConnectionLine {
         if ((intersection != null) && (intersection.y == selectionStart.y)
                 && (intersection.x >= selectionStart.x)
                 && (intersection.x <= selectionEnd.x)
-                && (getCrossPointAfter(intersection,1) != -1))
+                && (getCrossPointAfter(intersection,0.1) != -1))
             return true;
 
         // test: bottom side of the selection
@@ -381,7 +381,7 @@ public class ConnectionLine {
         if ((intersection != null) && (intersection.y == selectionEnd.y)
                 && (intersection.x >= selectionStart.x)
                 && (intersection.x <= selectionEnd.x)
-                && (getCrossPointAfter(intersection,1) != -1))
+                && (getCrossPointAfter(intersection,0.1) != -1))
             return true;
 
         // if there is no intersection, maybe the line lies inside the selection
@@ -402,6 +402,15 @@ public class ConnectionLine {
      */
     public void setSelected(boolean selected) {
         this.selected = selected;
+    }
+
+    /**
+     * Get the selection status.
+     *
+     * @return true if the line is selected, false otherwise.
+     */
+    public boolean isSelected() {
+        return selected;
     }
 
     /**
@@ -458,7 +467,8 @@ public class ConnectionLine {
         g.drawLine(x1, y1, x2, y2);
 
         // sipky - princip dedenia v UML <---> princip toku udajov => tok!!
-        if (arrow1LeftEnd != null) {
+        if ((arrow1 != null) && (arrow1LeftEnd != null)
+                && (arrow1RightEnd != null)) {
             g.drawLine(e1.getX() + arrow1.x,
                     e1.getY() + arrow1.y,
                     e1.getX() + arrow1.x + arrow1LeftEnd.x,
@@ -468,7 +478,8 @@ public class ConnectionLine {
                     e1.getX() + arrow1.x + arrow1RightEnd.x,
                     e1.getY() + arrow1.y + arrow1RightEnd.y);
         }
-        if (arrow2LeftEnd != null) {
+        if ((arrow2 !=null) && (arrow2LeftEnd != null)
+                && (arrow2RightEnd != null)) {
             g.drawLine(e2.getX() + arrow2.x,
                     e2.getY() + arrow2.y,
                     e2.getX() + arrow2.x + arrow2LeftEnd.x,
@@ -601,6 +612,20 @@ public class ConnectionLine {
     }
 
     /**
+     * Moves all points of this line to a new location. The new location is
+     * computed as: old + diff.
+     *
+     * @param diffX The X difference between new and old location
+     * @param diffY The Y difference between new and old location
+     */
+    public void pointMoveAll(int diffX, int diffY) {
+        for (int i = points.size()-1; i >= 0; i--) {
+            Point p = points.get(i);
+            p.setLocation(p.x + diffX, p.y + diffY);
+        }
+    }
+
+    /**
      * Checks, whether this line is connected (from any side) to the specific
      * element.
      *
@@ -642,7 +667,7 @@ public class ConnectionLine {
      * And if point[x,y] doesn't cross the line, -1 is returned. Otherwise is
      * returned index of point that crosses the line.
      */
-    public int getCrossPointAfter(Point point, int tolerance) {
+    public int getCrossPointAfter(Point point, double tolerance) {
         int x1 = e1.getX() + arrow1.x;  // e1.getWidth()/2;
         int y1 = e1.getY() + arrow1.y;  //e1.getHeight()/2;
         int x2, y2;

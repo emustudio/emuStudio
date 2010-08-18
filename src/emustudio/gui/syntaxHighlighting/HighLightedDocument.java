@@ -31,34 +31,83 @@ import javax.swing.text.DefaultStyledDocument;
  */
 @SuppressWarnings("serial")
 public class HighLightedDocument extends DefaultStyledDocument {
-	private HighlightThread high;
-	private DocumentReader documentReader;
-	
-	public void setDocumentReader(DocumentReader documentReader) {
-		this.documentReader = documentReader;
-	}
-	
-	public void setThread(HighlightThread high) {
-		this.high = high;
-	}
-	
-    public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
-  //      synchronized (HighlightThread.doclock){
-            super.insertString(offs, str, a);
-            if (high != null) 
-            	high.color(offs, str.length());
-            if (documentReader != null) 
-            	documentReader.update(offs, str.length());
-     //   }
+
+    private HighlightThread high;
+    private DocumentReader documentReader;
+
+    /**
+     * Set the document reader object for this syntax highlighter.
+     * The document reader should be initialized by the source code
+     * already.
+     *
+     * @param documentReader the DoucmentReader object
+     */
+    public void setDocumentReader(DocumentReader documentReader) {
+        this.documentReader = documentReader;
     }
 
+    /**
+     * Assign a Thread object that will execute the syntax highlighting
+     * process.
+     *
+     * @param high the syntax highlighting thread
+     */
+    public void setThread(HighlightThread high) {
+        this.high = high;
+    }
+
+    /**
+     * Performs the update of the document reader and re-color needed parts,
+     * when a text is inserted into the document.
+     *
+     * It should be called whenever a text is inserted somewhere into the
+     * source code.
+     *
+     * If the position lies outside of the document, it throws
+     * BadLocationException exception.
+     *
+     * @param offs the begin position of the inserted text
+     * @param str the string that is inserted
+     * @param a attributes of the text
+     * @throws BadLocationException
+     */
+    @Override
+    public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
+        //      synchronized (HighlightThread.doclock){
+        super.insertString(offs, str, a);
+        if (high != null) {
+            high.color(offs, str.length());
+        }
+        if (documentReader != null) {
+            documentReader.update(offs, str.length());
+        }
+        //   }
+    }
+
+    /**
+     * Performs the update of the document reader and re-color needed parts,
+     * when a text is removed from the document.
+     *
+     * It should be called whenever a text is removed from somewhere in the
+     * source code.
+     *
+     * If the position lies outside of the document, it throws
+     * BadLocationException exception.
+     *
+     * @param offs offset of removed text
+     * @param len length of the removed text
+     * @throws BadLocationException
+     */
+    @Override
     public void remove(int offs, int len) throws BadLocationException {
-    //    synchronized (HighlightThread.doclock){
-            super.remove(offs, len);
-            if (high != null)
-            	high.color(offs, -len);
-            if (documentReader != null)
-            	documentReader.update(offs, -len);
-    //    }
+        //    synchronized (HighlightThread.doclock){
+        super.remove(offs, len);
+        if (high != null) {
+            high.color(offs, -len);
+        }
+        if (documentReader != null) {
+            documentReader.update(offs, -len);
+        }
+        //    }
     }
 }

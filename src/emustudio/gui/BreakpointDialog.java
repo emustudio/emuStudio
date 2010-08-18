@@ -34,24 +34,22 @@ import javax.swing.WindowConstants;
 import runtime.StaticDialogs;
 
 /**
+ * The breakpoint dialog - it asks user for the address where should be
+ * set or unset the breakpoint.
  *
  * @author  vbmacher
  */
 @SuppressWarnings("serial")
 public class BreakpointDialog extends JDialog {
-
     private static int adr = -1; // if adr == -1 then it means cancel
     private static boolean set = false;
 
-    public static int getAdr() {
-        return adr;
-    }
-
-    public static boolean getSet() {
-        return set;
-    }
-
-    /** Creates new form BreakpointDialog */
+    /**
+     * Create breakpoint dialog instance.
+     *
+     * @param parent parent frame
+     * @param modal whether this dialog should be modal
+     */
     public BreakpointDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
@@ -59,8 +57,25 @@ public class BreakpointDialog extends JDialog {
         txtAddress.grabFocus();
     }
 
-    private void initComponents() {
+    /**
+     * Return the breakpoint address
+     * @return address or memory location, where the breakpoint should be
+     * set/unset.
+     */
+    public static int getAdr() {
+        return adr;
+    }
 
+    /**
+     * Determine whether the breakpoint should be set or unset.
+     *
+     * @return true whether the breakpoint should be set, false otherwise.
+     */
+    public static boolean getSet() {
+        return set;
+    }
+
+    private void initComponents() {
         lblSetUnset = new JLabel();
         txtAddress = new JTextField();
         btnSet = new NiceButton();

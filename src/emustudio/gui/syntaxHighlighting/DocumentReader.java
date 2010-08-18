@@ -30,13 +30,36 @@ import java.io.Reader;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
+/**
+ * Reader of the source code. It is used by syntax highlighter.
+ *
+ * @author vbmacher
+ */
 public class DocumentReader extends Reader {
+    /* pouziva sa na oznacenie miesta v dokumente, v ktorom je mozne bezpecne
+     * resetovat lex. analyzator  */
+    private long mark = -1;
+    protected long position = 0;
+    protected volatile Document document;
+
+    /**
+     * Create an instance of the document reader.
+     *
+     * @param document the source code document
+     */
+    public DocumentReader(Document document) {
+        this.document = document;
+    }
+
     /**
      * Modifying the document while the reader is working is like
      * pulling the rug out from under the reader.  Alerting the
      * reader with this method (in a nice thread safe way, this
      * should not be called at the same time as a read) allows
      * the reader to compensate.
+     *
+     * @param position the position
+     * @param adjustment the adjustment
      */
     public void update(int position, int adjustment){
         if (position < this.position){
@@ -47,19 +70,12 @@ public class DocumentReader extends Reader {
             }
         }
     }
-	
-	
-	
-    /* pouziva sa na oznacenie miesta v dokumente, v ktorom je mozne bezpecne
-     * resetovat lex. analyzator  */
-    private long mark = -1;
-    protected long position = 0;
-    protected volatile Document document;
 
-    public DocumentReader(Document document) {
-        this.document = document;
-    }
-
+    /**
+     * Get the position within the source code, where the reader points.
+     * 
+     * @return the position within the source code
+     */
     public long getPosition() { return position; }
     
     /**
@@ -67,6 +83,7 @@ public class DocumentReader extends Reader {
      *
      * @return the character or -1 if the end of the document has been reached.
      */
+    @Override
     public int read(){
         if (position < document.getLength()){
             try {
@@ -88,6 +105,7 @@ public class DocumentReader extends Reader {
      * @param cbuf the buffer to fill.
      * @return the number of characters read or -1 if no more characters are available in the document.
      */
+    @Override
     public int read(char[] cbuf) throws IOException {
         return read(cbuf, 0, cbuf.length);
     }
@@ -102,6 +120,7 @@ public class DocumentReader extends Reader {
      * @param len maximum number of characters to put in the buffer.
      * @return the number of characters read or -1 if no more characters are available in the document.
      */
+    @Override
     public int read(char[] cbuf, int off, int len){
         if (position < document.getLength()){
             int length = len;
@@ -127,8 +146,11 @@ public class DocumentReader extends Reader {
     }
 
     /**
+     * Determine if the reader is ready or not.
+     *
      * @return true
      */
+    @Override
     public boolean ready() {
         return true;
     }
@@ -136,6 +158,7 @@ public class DocumentReader extends Reader {
     /**
      * Reset this reader to the last mark, or the beginning of the document if a mark has not been set.
      */
+    @Override
     public void reset(){
         if (mark == -1){
             position = 0;
@@ -153,6 +176,7 @@ public class DocumentReader extends Reader {
      * @param n number of characters to skip.
      * @return the actual number of characters skipped.
      */
+    @Override
     public long skip(long n){
         if (position + n <= document.getLength()){
             position += n;
@@ -181,6 +205,7 @@ public class DocumentReader extends Reader {
      * Has no effect.  This reader can be used even after
      * it has been closed.
      */
+    @Override
     public void close() {
     }
     

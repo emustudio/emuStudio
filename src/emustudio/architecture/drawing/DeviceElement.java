@@ -32,11 +32,26 @@ import java.awt.Point;
  */
 public class DeviceElement extends Element {
 
+    /**
+     * Creates an instance of the DeviceElement class. It needs to know the
+     * location of the element and the description text.
+     *
+     * @param x X location of the element
+     * @param y Y location of the element
+     * @param text description text
+     */
     public DeviceElement(int x, int y, String text) {
         super(Color.WHITE, text, x, y);
         //super(new Color(0xFFFEFF), text, x, y);
     }
-    
+
+    /**
+     * Creates an instance of the DeviceElement class. It needs to know the
+     * location of the element and the description text.
+     *
+     * @param e1 Point representing the location of the new element
+     * @param text description text
+     */
     public DeviceElement(Point e1, String text) {
         this((int)e1.getX(),(int)e1.getY(), text);
     }

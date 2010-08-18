@@ -71,6 +71,13 @@ public class DrawingPanel extends JPanel implements MouseListener,
      * Interface that should be implemented by an event listener.
      */
     public interface DrawEventListener extends EventListener {
+
+        /**
+         * This method is called whenever the user uses any of the
+         * tools available within this DrawingPanel.
+         *
+         * The schema editor then can "turn off" the tool.
+         */
         public void toolUsed();
     }
 
@@ -196,12 +203,39 @@ public class DrawingPanel extends JPanel implements MouseListener,
      * Draw tool enum.
      */
     public enum PanelDrawTool {
+        /**
+         * Compiler drawing tool
+         */
         shapeCompiler,
+
+        /**
+         * CPU drawing tool
+         */
         shapeCPU,
+
+        /**
+         * Memory drawing tool
+         */
         shapeMemory,
+
+        /**
+         * Device drawing tool
+         */
         shapeDevice,
+
+        /**
+         * Connection line drawing tool
+         */
         connectLine,
+
+        /**
+         * The removal tool
+         */
         delete,
+
+        /**
+         * No tool, do nothing
+         */
         nothing
     }
 
@@ -209,8 +243,20 @@ public class DrawingPanel extends JPanel implements MouseListener,
      * Panel mode enum.
      */
     public enum PanelMode {
+
+        /**
+         * Drawing mode
+         */
         draw,
+
+        /**
+         * Move mode
+         */
         move,
+
+        /**
+         * Selection mode
+         */
         select
     }
 
@@ -546,8 +592,6 @@ public class DrawingPanel extends JPanel implements MouseListener,
             selLine = schema.getCrossingLine(p);
 
             if (selLine != null) {
-                int pi = selLine.getCrossPointAfter(p,5); // should not be -1
-                p.setLocation(searchGridPoint(p));
                 Point linePoint = selLine.containsPoint(p, toleranceRadius);
                 selPoint = linePoint;
             }
@@ -595,15 +639,14 @@ public class DrawingPanel extends JPanel implements MouseListener,
     @Override
     public void mouseReleased(MouseEvent e) {
         Point p = e.getPoint();
-        p.setLocation(searchGridPoint(p));
         if (panelMode == PanelMode.move) {
             // if a point is selected, remove it if user pressed
             // right mouse button
             if (selLine != null && selPoint != null) {
                 if (e.getButton() != MouseEvent.BUTTON3)
                     return;
-                Point linePoint = selLine.containsPoint(p,toleranceRadius);
-                if ((selLine != schema.getCrossingLine(e.getPoint()))
+                Point linePoint = selLine.containsPoint(p, toleranceRadius);
+                if ((selLine != schema.getCrossingLine(p))
                         || (selPoint != linePoint)) {
                     selLine = null;
                     selPoint = null;
@@ -645,7 +688,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
                         return;
                     // if the mouse is released upon a point outside a tmpElem1
                     // nothing is done.
-                    if (tmpElem1 != schema.getCrossingElement(e.getPoint())) {
+                    if (tmpElem1 != schema.getCrossingElement(p)) {
                         tmpElem1 = null;
                         return;
                     }
@@ -655,7 +698,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 } else if((tmpElem1 == null) && (selLine != null)) {
                     // if the mouse is released upon a point outside the selLine
                     // nothing is done.
-                    if (selLine != schema.getCrossingLine(e.getPoint())) {
+                    if (selLine != schema.getCrossingLine(p)) {
                         selLine = null;
                         return;
                     }
@@ -664,20 +707,24 @@ public class DrawingPanel extends JPanel implements MouseListener,
                     fireListeners();
                 }
             } else if (drawTool == PanelDrawTool.shapeCompiler) {
+                p.setLocation(searchGridPoint(p));
                 schema.setCompilerElement(new CompilerElement(p, newText));
                 fireListeners();
             } else if(drawTool == PanelDrawTool.shapeCPU) {
+                p.setLocation(searchGridPoint(p));
                 schema.setCpuElement(new CpuElement(p, newText));
                 fireListeners();
             } else if (drawTool == PanelDrawTool.shapeMemory) {
+                p.setLocation(searchGridPoint(p));
                 schema.setMemoryElement(new MemoryElement(p, newText));
                 fireListeners();
             } else if (drawTool == PanelDrawTool.shapeDevice) {
+                p.setLocation(searchGridPoint(p));
                 schema.addDeviceElement(new DeviceElement(p, newText));
                 fireListeners();
             } else if (drawTool == PanelDrawTool.connectLine) {
                 sketchLastPoint = null;
-                Element elem = schema.getCrossingElement(e.getPoint());
+                Element elem = schema.getCrossingElement(p);
 
                 if (elem != null) {
                     if ((tmpElem2 == null) && (tmpElem1 != elem)) {
@@ -756,7 +803,15 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 if (p.getX() < 0 || p.getY() < 0)
                     return;
                 p.setLocation(searchGridPoint(p));
-                tmpElem1.move(p);
+
+                // if the element is selected, we must move all selected elements
+                // either.
+                if (tmpElem1.selected) {
+                    schema.moveSelected(p.x - (tmpElem1.getX()
+                            + tmpElem1.getWidth()/2),
+                            p.y - (tmpElem1.getY() + tmpElem1.getHeight()/2));
+                } else
+                    tmpElem1.move(p);
             }
         } else if (panelMode == PanelMode.select)
             selectionEnd = e.getPoint();

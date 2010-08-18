@@ -34,9 +34,18 @@ import javax.swing.WindowConstants;
 
 import emustudio.main.Main;
 
+/**
+ * This is the dialog form that displays when the emuStudio automatization
+ * is running.
+ * 
+ * @author vbmacher
+ */
 @SuppressWarnings("serial")
 public class AutoDialog extends JDialog {
 
+    /**
+     * Creates the AutoDialog instance.
+     */
     public AutoDialog() {
         super();
         initComponents();
@@ -76,6 +85,13 @@ public class AutoDialog extends JDialog {
         pack();
     }
 
+    /**
+     * Sets abstract action. The abstract action is represented by a state
+     * string and whether to enable the "Stop" button.
+     *
+     * @param action action to show in the dialog
+     * @param enableButton whether to enable the "Stop" button
+     */
     public void setAction(String action, boolean enableButton) {
         lblAction.setText(action);
         lblAction.repaint();

@@ -44,6 +44,7 @@ import javax.swing.event.ListDataListener;
 import runtime.StaticDialogs;
 
 /**
+ * The find dialog. It searches for text within the source code editor.
  *
  * @author  vbmacher
  */
@@ -96,7 +97,14 @@ public class FindDialog extends javax.swing.JDialog {
         }
     }
 
-    /** Creates new form FindDialog */
+    /**
+     * Creates new find dialog instance.
+     *
+     * @param parent parent frame
+     * @param modal whether this dialog should be modal
+     * @param pane an object containing the all text, where the search process
+     * will be executed.
+     */
     public FindDialog(StudioFrame parent, boolean modal, JTextPane pane) {
         super(parent, modal);
         this.textPane = pane;

@@ -28,19 +28,58 @@ package emustudio.interfaces;
 import java.awt.Color;
 
 /**
+ * This class holds Color constants for particular token types.
  *
  * @author vbmacher
  */
 public class ITokenColor {
-    public final static Color COMMENT = new Color(0,128,0); // green 
+    /**
+     * Comment token. Green color.
+     */
+    public final static Color COMMENT = new Color(0,128,0);
+
+    /**
+     * Reserved token. Black color.
+     */
     public final static Color RESERVED = Color.BLACK;
+
+    /**
+     * Identifier token. Black color.
+     */
     public final static Color IDENTIFIER = Color.BLACK;
-    public final static Color LITERAL = new Color(0,0,128); // blue
-    public final static Color LABEL = new Color(0,128,128); // weird blue
-    public final static Color REGISTER = new Color(128,0,0);// brown
-    
-    public final static Color PREPROCESSOR = new Color(80,80,80); // weird gray
+
+    /**
+     * Literal token. Blue color.
+     */
+    public final static Color LITERAL = new Color(0,0,128);
+
+    /**
+     * Label token. "Weird" blue color.
+     */
+    public final static Color LABEL = new Color(0,128,128);
+
+    /**
+     * Register token. Brown color.
+     */
+    public final static Color REGISTER = new Color(128,0,0);
+
+    /**
+     * Preprocessor token. "Weird" gray color.
+     */
+    public final static Color PREPROCESSOR = new Color(80,80,80);
+
+    /**
+     * Separator token. Black color.
+     */
     public final static Color SEPARATOR = Color.BLACK;
+
+    /**
+     * Operator token. Blue color.
+     */
     public final static Color OPERATOR = new Color(0,0,128);
+
+    /**
+     * Error token. Red color.
+     */
     public final static Color ERROR = Color.RED;
 }

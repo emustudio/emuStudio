@@ -61,9 +61,11 @@ public class CompoundUndoManager extends UndoManager {
     long startMillis = 0;
     CompoundEdit comp = null;
 
-    public CompoundUndoManager() {}
-
-
+    /**
+     * 
+     * @param anEdit
+     * @return
+     */
     @Override
     public synchronized boolean addEdit(UndoableEdit anEdit) {
         long now = System.currentTimeMillis();

@@ -28,12 +28,29 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
 /**
+ * This class represents a style used within the syntax highlighting process.
+ *
+ * For each token type an instance of this class is created and used in the
+ * proper places.
  *
  * @author vbmacher
  */
 @SuppressWarnings("serial")
 public class HighlightStyle extends SimpleAttributeSet {
+
+    /**
+     * Creates new instance of the font style.
+     *
+     * @param italic true if the font should be italic, false otherwise
+     * @param bold  true if the font should be bold, false otherwise
+     * @param color color of the font. The color constant is taken from
+     * the ITokenColor interface.
+     */
     public HighlightStyle(boolean italic, boolean bold, Color color) {
+        setStyle(italic, bold, color);
+    }
+
+    private void setStyle(boolean italic, boolean bold, Color color) {
         StyleConstants.setFontFamily(this, "Monospaced");
         StyleConstants.setFontSize(this, 12);
         StyleConstants.setBackground(this, Color.white);

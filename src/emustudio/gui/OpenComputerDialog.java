@@ -29,6 +29,11 @@ import javax.swing.AbstractListModel;
 import runtime.StaticDialogs;
 
 /**
+ * This dialog manages the virtual computers. It offers a list of all
+ * available virtual computers and allows to the user to select one for
+ * emulation.
+ *
+ * It is also available to create a new computer, delete or edit one.
  *
  * @author vbmacher
  */
@@ -38,6 +43,9 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     private ArchListModel amodel;
     private PreviewPanel preview;
 
+    /**
+     * Creates new instance of this dialog.
+     */
     public OpenComputerDialog() {
         super();
         initComponents();
@@ -50,7 +58,12 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         scrollPreview.setViewportView(preview);
     }
 
-    /** Creates new form OpenComputerDialog */
+    /**
+     * Creates new instance of this dialog.
+     *
+     * @param parent parent dialog
+     * @param modal whether this dialog should be modal
+     */
     public OpenComputerDialog(java.awt.Dialog parent, boolean modal) {
         super(parent, modal);
         initComponents();
@@ -98,10 +111,20 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         }
     }
 
+    /**
+     * Determine whethe the user pressed "OK" button.
+     *
+     * @return true if user has pressed OK, false otherwise
+     */
     public boolean getOK() {
         return OOK;
     }
 
+    /**
+     * Get the name of selected virtual computer.
+     *
+     * @return string name of selected virtual configuration
+     */
     public String getArchName() {
         return archName;
     }

@@ -30,7 +30,8 @@ import emustudio.architecture.drawing.PreviewPanel;
 import emustudio.architecture.drawing.Schema;
 
 /**
- *
+ * Preview dialog form of virtual computer.
+ * 
  * @author  vbmacher
  */
 @SuppressWarnings("serial")
@@ -38,7 +39,13 @@ public class ArchPreviewDialog extends JDialog {
 
     private PreviewPanel pan;
 
-    /** Creates new form ArchPreviewDialog */
+    /**
+     * Creates new preview dialog form instance.
+     *
+     * @param parent parent dialog
+     * @param modal whether this dialog should be modal
+     * @param schema virtual computer schema that will be previewed
+     */
     public ArchPreviewDialog(JDialog parent, boolean modal, Schema schema) {
         super(parent, modal);
         pan = new PreviewPanel(schema);

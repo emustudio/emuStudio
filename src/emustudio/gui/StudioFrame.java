@@ -85,16 +85,24 @@ public class StudioFrame extends javax.swing.JFrame {
     private DebugTable tblDebug;
     // emulator
     private DebugTableModel debug_model;
-    private String title;
 
+    /**
+     * Create new instance of the main window frame.
+     *
+     * @param fileName file name to open in the source code editor
+     * @param title title of the main window
+     */
     public StudioFrame(String fileName, String title) {
         this(title);
         txtSource.openFile(fileName);
     }
 
-    /** Creates new form StudioFrame */
+    /**
+     * Creates new instance of the main window frame.
+     *
+     * @param title title of the main window
+     */
     public StudioFrame(String title) {
-        this.title = title;
         // create models and components
         arch = Main.currentArch.getComputer();
         txtSource = new EmuTextPane();

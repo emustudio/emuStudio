@@ -67,7 +67,12 @@ public class ViewArchDialog extends JDialog {
     private Vector<String> devNames;
     private PreviewPanel pan;
 
-    /** Creates new form ViewArchDialog */
+    /**
+     * Creates an instance of this dialog
+     *
+     * @param parent parent frame
+     * @param modal whether this dialog should be modal
+     */
     public ViewArchDialog(JFrame parent, boolean modal) {
         super(parent, modal);
         arch = Main.currentArch;

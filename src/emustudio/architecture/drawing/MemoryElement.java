@@ -32,11 +32,26 @@ import java.awt.Point;
  */
 public class MemoryElement extends Element {
 
+    /**
+     * Creates an instance of the MemoryElement. It needs to know the location
+     * and the description text.
+     *
+     * @param x the X location of this element
+     * @param y the Y location of this element
+     * @param text the description text
+     */
     public MemoryElement(int x, int y, String text) {
         super(Color.WHITE, text, x, y);
         //super(new Color(0xC5C5C5), text, x, y);
     }
-    
+
+    /**
+     * Creates an instance of the MemoryElement. It needs to know the location
+     * and the description text.
+     *
+     * @param e1 Point representing the element location
+     * @param text the description text
+     */
     public MemoryElement(Point e1, String text) {
         this((int)e1.getX(),(int)e1.getY(),text);
     }

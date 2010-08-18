@@ -30,13 +30,19 @@ import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
 
 /**
+ * The About dialog
  *
  * @author  vbmacher
  */
 @SuppressWarnings("serial")
 public class AboutDialog extends javax.swing.JDialog {
 
-    /** Creates new form AboutDialog */
+    /**
+     * Creates new AboutDialog instance.
+     * 
+     * @param parent the parent frame
+     * @param modal whether this dialog should be modal
+     */
     public AboutDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();

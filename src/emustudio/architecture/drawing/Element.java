@@ -36,9 +36,13 @@ import java.awt.geom.Rectangle2D;
  */
 public abstract class Element {
     /**
-     *
+     * Minimal left margin for all elements within the schema
      */
     public final static int MIN_LEFT_MARGIN = 5;
+
+    /**
+     * Minimal top margin for all elements within the schema
+     */
     public final static int MIN_TOP_MARGIN = 5;
 
     /**
@@ -112,6 +116,15 @@ public abstract class Element {
      */
     protected boolean selected;
 
+    /**
+     * Creates the Element instance. The element has a back-ground color,
+     * location and details that represent the plug-in name.
+     *
+     * @param backColor Background color
+     * @param details details text, the plug-in name or description
+     * @param x the X location of the element
+     * @param y the Y location of the element
+     */
     public Element(Color backColor, String details,int x, int y) {
         this.x = x;
         this.y = y;
@@ -144,15 +157,28 @@ public abstract class Element {
 
     /**
      * Move this element to a new location.
-     * The correction is used to simulate (x,y) mouse location when starting to
-     * drag.
      *
      * @param p new point location
      */
     public void move(Point p) {
+        move (p.x, p.y);
+    }
+
+    /**
+     * Move this element to a new location.
+     *
+     * @param x new X location
+     * @param y new Y location
+     */
+    public void move(int x, int y) {
         wasMeasured = false;
-        this.x = p.x;
-        this.y = p.y;
+
+        if (x < MIN_LEFT_MARGIN)
+            x = MIN_LEFT_MARGIN;
+        if (y < MIN_TOP_MARGIN)
+            y = MIN_TOP_MARGIN;
+        this.x = x;
+        this.y = y;
     }
 
     /**
@@ -237,13 +263,36 @@ public abstract class Element {
      * @return height of the element
      */
     public int getHeight() { return (height == 0) ? 50: height; }
+
+    /**
+     * Get the X location of the element.
+     *
+     * @return X location of the element
+     */
     public int getX() { return x; }
+
+    /**
+     * Get the Y location of the element.
+     *
+     * @return Y location of the element
+     */
     public int getY() { return y; }
 
+    /**
+     * Select/deselect this element.
+     *
+     * @param selected if it is true, the element will be selected. If false,
+     * the element will be deselected.
+     */
     public void setSelected(boolean selected) {
         this.selected = selected;
     }
 
+    /**
+     * Determine whether this element is selected.
+     *
+     * @return true, if this element is selected, false otherwise.
+     */
     public boolean isSelected() {
         return selected;
     }

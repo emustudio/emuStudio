@@ -32,15 +32,35 @@ import java.awt.Point;
  */
 public class CpuElement extends Element {
 
+    /**
+     * This constructor creates the CpuElement instance. It needs to know
+     * the element location and description text.
+     *
+     * @param x X location of this element
+     * @param y Y location of this element
+     * @param text description text (name of the plug-in)
+     */
     public CpuElement(int x, int y, String text) {
         super(Color.WHITE, text, x, y);
         //super(new Color(0x6D8471), text, x, y);
     }
 
+    /**
+     * Creates an instance of the CpuElement. It needs to know the element
+     * location and the description text.
+     *
+     * @param e1 Point representing the element location
+     * @param text description text (name of the plug-in)
+     */
     public CpuElement(Point e1, String text) {
         this((int)e1.getX(),(int)e1.getY(), text);
     }
 
+    /**
+     * Get the plug-in type string.
+     *
+     * @return "CPU" string
+     */
     @Override
     protected String getPluginType() {
         return "CPU";

@@ -61,10 +61,18 @@ public class PreviewPanel extends JPanel {
      */
     private boolean panelResized;
 
+    /**
+     * Creates empty PreviewPanel
+     */
     public PreviewPanel() {
         this(null);
     }
 
+    /**
+     * Creates PreviewPanel instance representing given schema.
+     *
+     * @param schema Schema of the virtual computer
+     */
     public PreviewPanel(Schema schema) {
         this.schema = schema;
         this.setBackground(Color.WHITE);

@@ -26,25 +26,34 @@ import java.awt.FontMetrics;
 
 import javax.swing.JButton;
 
+/**
+ * A button with the constant size.
+ *
+ * @author vbmacher
+ */
 @SuppressWarnings("serial")
 public class NiceButton extends JButton {
-	private final static int WIDTH = 95;
-	private static int HEIGHT = 30;
 
-	private void setHeight() {
-		FontMetrics metrics =  this.getFontMetrics(getFont());
-	    HEIGHT = metrics.getHeight() + 9;
-	}
-	
-	public NiceButton() {
-		super();
-		setHeight();
-		Dimension d = getPreferredSize();
-		d.setSize(WIDTH, HEIGHT);
-		this.setPreferredSize(d);
-		this.setSize(WIDTH, HEIGHT);//this.getHeight());
-		this.setMinimumSize(d);
-		this.setMaximumSize(d);
-	}
-	
+    private final static int NB_WIDTH = 95;
+    private static int NB_HEIGHT = 30;
+
+    private void setHeight() {
+        FontMetrics metrics = this.getFontMetrics(getFont());
+        NB_HEIGHT = metrics.getHeight() + 9;
+    }
+
+    /**
+     * Creates an instance of this button.
+     * 
+     */
+    public NiceButton() {
+        super();
+        setHeight();
+        Dimension d = getPreferredSize();
+        d.setSize(NB_WIDTH, NB_HEIGHT);
+        this.setPreferredSize(d);
+        this.setSize(NB_WIDTH, NB_HEIGHT);//this.getHeight());
+        this.setMinimumSize(d);
+        this.setMaximumSize(d);
+    }
 }

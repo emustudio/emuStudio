@@ -156,10 +156,20 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         }
     }
 
+    /**
+     * Determine whether user has pressed the OK button.
+     *
+     * @return true if the user pressed OK, false otherwise
+     */
     public boolean getOK() {
         return OOK;
     }
 
+    /**
+     * Get the schema of edited virtual computer.
+     *
+     * @return the schema that was created or modified by this editor
+     */
     public Schema getSchema() {
         return schema;
     }

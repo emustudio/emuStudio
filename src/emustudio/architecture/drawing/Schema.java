@@ -118,7 +118,18 @@ public class Schema {
                 lines.remove(i);
     }
 
+    /**
+     * Get the virtual configuration name.
+     *
+     * @return virtual computer name
+     */
     public String getConfigName() { return configName; }
+
+    /**
+     * Set the virtual configuration name
+     *
+     * @param cName new virtual computer name
+     */
     public void setConfigName(String cName) { configName = cName; }
 
     /**
@@ -219,6 +230,11 @@ public class Schema {
         deviceElements.remove(device);
     }
 
+    /**
+     * Removes an element from this schema.
+     *
+     * @param elem element to remove
+     */
     public void removeElement(Element elem) {
         if (elem instanceof CompilerElement) {
             setCompilerElement(null);
@@ -314,10 +330,17 @@ public class Schema {
         return null;
     }
 
+    /**
+     * Get a connection line that crosses given point.
+     *
+     * @param p Point that the crossing is checked
+     * @return connection line object if the point is crossing this line,
+     * null otherwise
+     */
     public ConnectionLine getCrossingLine(Point p) {
         for (int i = lines.size() - 1; i >= 0; i--) {
             ConnectionLine l = lines.get(i);
-            if (l.getCrossPointAfter(p,5) != -1)
+            if (l.getCrossPointAfter(p,5.0) != -1)
                 return l;
         }
         return null;
@@ -353,7 +376,29 @@ public class Schema {
             ConnectionLine l = lines.get(i);
             l.setSelected(l.isAreaCrossing(p1, p2));
         }
+    }
 
+    /**
+     * This method moves all selected elements to a new location. The new
+     * location is computed as: old + diff (the parameter).
+     *
+     * @param diffX X difference between the new and old location
+     * @param diffY Y difference between the new and old location
+     */
+    public void moveSelected(int diffX, int diffY) {
+        ArrayList<Element> a = getAllElements();
+
+        for (int i = a.size() - 1; i >= 0; i--) {
+            Element elem = a.get(i);
+            if (elem.isSelected())
+                elem.move(elem.getX() + elem.getWidth()/2 + diffX,
+                        elem.getY() + elem.getHeight()/2 + diffY);
+        }
+        for (int i = lines.size() - 1; i >= 0; i--) {
+            ConnectionLine l = lines.get(i);
+            if (l.isSelected())
+                l.pointMoveAll(diffX, diffY);
+        }
     }
 
 }
