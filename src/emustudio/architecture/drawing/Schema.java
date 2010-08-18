@@ -401,4 +401,22 @@ public class Schema {
         }
     }
 
+    /**
+     * Deletes all selected elements.
+     */
+    public void deleteSelected() {
+        ArrayList<Element> a = getAllElements();
+
+        for (int i = a.size() - 1; i >= 0; i--) {
+            Element elem = a.get(i);
+            if (elem.isSelected())
+                removeElement(elem);
+        }
+        for (int i = lines.size() - 1; i >= 0; i--) {
+            ConnectionLine l = lines.get(i);
+            if (l.isSelected())
+                removeConnectionLine(l);
+        }
+    }
+
 }

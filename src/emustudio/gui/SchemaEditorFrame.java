@@ -67,8 +67,13 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+        int kCode = e.getKeyCode();
+        if (kCode == KeyEvent.VK_ESCAPE) {
             pan.cancelTasks();
+        } else if (kCode == KeyEvent.VK_DELETE) {
+            pan.cancelTasks();
+            schema.deleteSelected();
+            pan.repaint();
         }
     }
 
