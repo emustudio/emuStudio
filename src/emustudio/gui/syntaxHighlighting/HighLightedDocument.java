@@ -21,6 +21,7 @@
  */
 package emustudio.gui.syntaxHighlighting;
 
+import emustudio.gui.utils.EmuTextPane;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
@@ -73,15 +74,15 @@ public class HighLightedDocument extends DefaultStyledDocument {
      */
     @Override
     public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
-        //      synchronized (HighlightThread.doclock){
-        super.insertString(offs, str, a);
-        if (high != null) {
-            high.color(offs, str.length());
+        synchronized (EmuTextPane.docLock) {
+            super.insertString(offs, str, a);
+            if (high != null) {
+                high.color(offs, str.length());
+            }
+            if (documentReader != null) {
+                documentReader.update(offs, str.length());
+            }
         }
-        if (documentReader != null) {
-            documentReader.update(offs, str.length());
-        }
-        //   }
     }
 
     /**
@@ -100,14 +101,14 @@ public class HighLightedDocument extends DefaultStyledDocument {
      */
     @Override
     public void remove(int offs, int len) throws BadLocationException {
-        //    synchronized (HighlightThread.doclock){
-        super.remove(offs, len);
-        if (high != null) {
-            high.color(offs, -len);
+        synchronized (EmuTextPane.docLock) {
+            super.remove(offs, len);
+            if (high != null) {
+                high.color(offs, -len);
+            }
+            if (documentReader != null) {
+                documentReader.update(offs, -len);
+            }
         }
-        if (documentReader != null) {
-            documentReader.update(offs, -len);
-        }
-        //    }
     }
 }

@@ -608,6 +608,7 @@ public class ArchLoader {
                 long pID1 = pluginsReverse.get(p1);
                 long pID2 = pluginsReverse.get(p2);
 
+                // single direction
                 if (connections.containsKey(pID1))
                     connections.get(pID1).add(pID2);
                 else {
@@ -616,6 +617,7 @@ public class ArchLoader {
                     connections.put(pID1, ar);
                 }
                 if (bidi) {
+                    // if bidirectional, then also the other connection
                     if (connections.containsKey(pID2))
                         connections.get(pID2).add(pID1);
                     else {
