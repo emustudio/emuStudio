@@ -21,7 +21,7 @@
  */
 package brainc_brainduck.tree;
 
-import brainc_brainduck.impl.HEXFileHandler;
+import plugins.compiler.HEXFileHandler;
 
 public class Row {
     private Statement stat;

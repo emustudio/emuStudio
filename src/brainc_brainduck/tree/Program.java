@@ -21,9 +21,8 @@
  */
 package brainc_brainduck.tree;
 
-import brainc_brainduck.impl.HEXFileHandler;
-
 import java.util.Vector;
+import plugins.compiler.HEXFileHandler;
 
 public class Program {
     private Vector<Row> list; // zoznam všetkých inštrukcií
@@ -33,10 +32,8 @@ public class Program {
     }
     
     public void addRow(Row node) {
-    	if (node == null) {
-    		System.out.println("null!!");
-    	}
-    	else list.addElement(node);
+    	if (node != null)
+            list.addElement(node);
     }
 
     public int pass1(int addr_start) throws Exception {

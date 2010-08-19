@@ -24,19 +24,19 @@
  */
 
 import java_cup.runtime.Symbol;
-import plugins.compiler.IMessageReporter;
 import plugins.compiler.IToken;
 import brainc_brainduck.tree.*;
+import plugins.compiler.ICompiler;
 
 init with {: errorCount = 0; :}
 parser code {:
-    private IMessageReporter reporter = null;
+    private BrainDuck compiler = null;
     public IToken lastToken;
     public int errorCount = 0;
     
-    public BDParser(java_cup.runtime.Scanner s, IMessageReporter reporter) {
+    public BDParser(java_cup.runtime.Scanner s, BrainDuck compiler) {
         this(s);
-        this.reporter = reporter;
+        this.compiler = compiler;
     }
     	
     public void syntax_error(Symbol current) {
@@ -56,7 +56,8 @@ parser code {:
         IToken t = (IToken)current;
         mes = message + t.getErrorString() + " ('"+t.getText()+"')";
 
-        reporter.report(t.getLine()+1, t.getColumn(),mes, IMessageReporter.TYPE_ERROR);
+        compiler.fireMessage(t.getLine()+1,
+                t.getColumn(), mes, 0, ICompiler.TYPE_ERROR);
     }
 :}
 
