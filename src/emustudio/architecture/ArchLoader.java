@@ -574,6 +574,8 @@ public class ArchLoader {
             	// get i-th connection from settings
                 String j0 = settings.getProperty("connection"+i+".junc0", "");
                 String j1 = settings.getProperty("connection"+i+".junc1", "");
+                boolean bidi = Boolean.parseBoolean(settings
+                        .getProperty("bidirectional", "true"));
                 
                 if (j0.equals("") || j1.equals(""))
                     continue;
@@ -612,6 +614,15 @@ public class ArchLoader {
                     ArrayList<Long> ar = new ArrayList<Long>();
                     ar.add(pID2);
                     connections.put(pID1, ar);
+                }
+                if (bidi) {
+                    if (connections.containsKey(pID2))
+                        connections.get(pID2).add(pID1);
+                    else {
+                        ArrayList<Long> ar = new ArrayList<Long>();
+                        ar.add(pID1);
+                        connections.put(pID2, ar);
+                    }
                 }
             }
             Computer arch = new Computer(cpu, mem, compiler, tmpDevices,

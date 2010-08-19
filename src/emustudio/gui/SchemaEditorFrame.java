@@ -70,6 +70,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
         int kCode = e.getKeyCode();
         if (kCode == KeyEvent.VK_ESCAPE) {
             pan.cancelTasks();
+            schema.selectElements(-1, -1, 0, 0);
         } else if (kCode == KeyEvent.VK_DELETE) {
             pan.cancelTasks();
             schema.deleteSelected();
@@ -172,8 +173,6 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
      * @return true if the user pressed OK, false otherwise
      */
     public boolean getOK() {
-                    System.out.println("OK = " + OOK);
-
         return OOK;
     }
 
@@ -223,21 +222,21 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
     private void initComponents() {
 
         groupDraw = new javax.swing.ButtonGroup();
-        toolDraw = new javax.swing.JToolBar();
-        btnSave = new javax.swing.JButton();
-        jSeparator4 = new javax.swing.JToolBar.Separator();
+        javax.swing.JToolBar toolDraw = new javax.swing.JToolBar();
+        javax.swing.JButton btnSave = new javax.swing.JButton();
+        javax.swing.JToolBar.Separator jSeparator4 = new javax.swing.JToolBar.Separator();
         btnCompiler = new javax.swing.JToggleButton();
         btnCPU = new javax.swing.JToggleButton();
         btnRAM = new javax.swing.JToggleButton();
         btnDevice = new javax.swing.JToggleButton();
-        jSeparator5 = new javax.swing.JToolBar.Separator();
+        javax.swing.JToolBar.Separator jSeparator5 = new javax.swing.JToolBar.Separator();
         btnLine = new javax.swing.JToggleButton();
         btnBidirection = new javax.swing.JToggleButton();
-        jSeparator2 = new javax.swing.JToolBar.Separator();
+        javax.swing.JToolBar.Separator jSeparator2 = new javax.swing.JToolBar.Separator();
         btnDelete = new javax.swing.JToggleButton();
-        jSeparator1 = new javax.swing.JToolBar.Separator();
+        javax.swing.JToolBar.Separator jSeparator1 = new javax.swing.JToolBar.Separator();
         cmbPlugin = new javax.swing.JComboBox();
-        jSeparator3 = new javax.swing.JToolBar.Separator();
+        javax.swing.JToolBar.Separator jSeparator3 = new javax.swing.JToolBar.Separator();
         btnUseGrid = new javax.swing.JToggleButton();
         scrollScheme = new javax.swing.JScrollPane();
         sliderGridGap = new javax.swing.JSlider();
@@ -669,18 +668,11 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
     private javax.swing.JToggleButton btnDevice;
     private javax.swing.JToggleButton btnLine;
     private javax.swing.JToggleButton btnRAM;
-    private javax.swing.JButton btnSave;
     private javax.swing.JToggleButton btnUseGrid;
     private javax.swing.JComboBox cmbPlugin;
     private javax.swing.ButtonGroup groupDraw;
-    private javax.swing.JToolBar.Separator jSeparator1;
-    private javax.swing.JToolBar.Separator jSeparator2;
-    private javax.swing.JToolBar.Separator jSeparator3;
-    private javax.swing.JToolBar.Separator jSeparator4;
-    private javax.swing.JToolBar.Separator jSeparator5;
     private javax.swing.JScrollPane scrollScheme;
     private javax.swing.JSlider sliderGridGap;
-    private javax.swing.JToolBar toolDraw;
     // End of variables declaration//GEN-END:variables
 
 }
