@@ -39,6 +39,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Properties;
@@ -634,9 +635,8 @@ public class ArchLoader {
         }
         catch (IllegalArgumentException e) {
             StaticDialogs.showMessage(e.getMessage(), "Error reading plugins");
-        } finally {
-            return null;
         }
+        return null;
     }
     
     /**
@@ -649,7 +649,7 @@ public class ArchLoader {
     private static long createPluginID() {
     	return nextPluginID++;
     }
-    
+
     /**
      * Method return new instance of a plugin from jar file
      * 
@@ -666,23 +666,29 @@ public class ArchLoader {
                 + File.separator + filename);
             if (classes == null)
                 throw new Exception();
-        
             // find a first class that implements wanted interface
             Class<?>[] conParameters = {};
             for (int i = 0; i < classes.size(); i++) {
                 Class<?> c = (Class<?>)classes.get(i);
+                Class<?> classI = c;
+
+                Class<?> tmp;
+                while (((tmp = c.getSuperclass()) != null)
+                        && (!tmp.isInterface()) && (!tmp.equals(Object.class)))
+                    c = tmp;
                 Class<?>[] intf = c.getInterfaces();
+                
                 for (int j = 0; j < intf.length; j++) {
-                    if (intf[j].equals(interfaceName)) {
-                        Constructor<?> con = c.getDeclaredConstructor(conParameters);
+                    if (intf[j].isInterface() && intf[j].equals(interfaceName)) {
+                        Constructor<?> con = classI
+                                .getDeclaredConstructor(conParameters);
                         return con.newInstance();
                     }
                 }
             }
-        } catch (Exception e) {}
-        finally {
-            return null;
+        } catch (Exception e) {
         }
+        return null;
     }
     
 }
