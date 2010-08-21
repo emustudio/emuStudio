@@ -6,10 +6,6 @@
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
  *
- * This class is extended JTextPane class. Support some awesome features like
- * line numbering or syntax highlighting and other.
- * TODO: add ability to set breakpoints
- *
  * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -63,6 +59,9 @@ import emustudio.interfaces.ITokenColor;
 import runtime.StaticDialogs;
 
 /**
+ * This class is extended JTextPane class. Support some awesome features like
+ * line numbering or syntax highlighting and other.
+ * TODO: add ability to set breakpoints
  *
  * @author vbmacher
  */
@@ -71,8 +70,6 @@ public class EmuTextPane extends JTextPane {
 
     public static final short NUMBERS_WIDTH = 40;
     public static final short NUMBERS_HEIGHT = 4;
-
-    public static final Object docLock = new Object();
 
     private ILexer syntaxLexer = null;
     private DocumentReader reader;
@@ -248,15 +245,15 @@ public class EmuTextPane extends JTextPane {
         super.paint(g);
         int start, end, startline, endline;
 
-        synchronized(docLock) {
+//        synchronized(docLock) {
             start = document.getStartPosition().getOffset();
             end = document.getEndPosition().getOffset();
-        }
+  //      }
         // translate offsets to lines
-        synchronized(docLock) {
+    //    synchronized(docLock) {
             startline = document.getDefaultRootElement().getElementIndex(start);
             endline = document.getDefaultRootElement().getElementIndex(end) + 1;
-        }
+      //  }
         int fontHeight = g.getFontMetrics(getFont()).getHeight(); // font height
 
         g.setColor(Color.RED);

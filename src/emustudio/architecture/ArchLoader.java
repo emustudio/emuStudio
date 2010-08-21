@@ -33,18 +33,19 @@ import emustudio.architecture.drawing.DeviceElement;
 import emustudio.architecture.drawing.Element;
 import emustudio.architecture.drawing.MemoryElement;
 import emustudio.architecture.drawing.Schema;
+import emustudio.main.Main;
 import java.awt.Point;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Properties;
 
 import plugins.IPlugin;
+import plugins.ISettingsHandler;
 import plugins.compiler.ICompiler;
 import plugins.memory.IMemory;
 import plugins.cpu.ICPU;
@@ -182,7 +183,6 @@ public class ArchLoader {
         try {
             return f.delete();
         } catch(Exception e) {
-            e.printStackTrace();
         }
         return false;
     }
@@ -203,7 +203,6 @@ public class ArchLoader {
         try {
             return f.renameTo(new File(newName));
         } catch(Exception e) {
-            e.printStackTrace();
         }
         return false;
     }
@@ -513,13 +512,13 @@ public class ArchLoader {
             ICompiler compiler = null;
 
             if (comName != null) {
+                id = createPluginID();
                 // the compiler is defined in the config file
                 compiler = (ICompiler)loadPlugin(compilersDir,
-                        comName,ICompiler.class);
+                        comName,ICompiler.class, id);
                 if (compiler == null)
                     throw new IllegalArgumentException("Compiler '" + comName
                             + "' cannot be loaded.");
-                id = createPluginID();
                 pluginsReverse.put(compiler, id);
                 plugins.put(id, compiler);
                 pluginNames.put(id, "compiler");
@@ -528,11 +527,11 @@ public class ArchLoader {
             String cpuName = settings.getProperty("cpu");
             if (cpuName == null)
                 throw new IllegalArgumentException("CPU is not defined.");
-            ICPU cpu = (ICPU)loadPlugin(cpusDir, cpuName, ICPU.class);
+            id = createPluginID();
+            ICPU cpu = (ICPU)loadPlugin(cpusDir, cpuName, ICPU.class, id);
             if (cpu == null)
                 throw new IllegalArgumentException("CPU '" + cpuName
                         + "' cannot be loaded.");
-            id = createPluginID();
             pluginsReverse.put(cpu, id);
             plugins.put(id, cpu);
             pluginNames.put(id, "cpu");
@@ -541,11 +540,11 @@ public class ArchLoader {
             IMemory mem = null;
             String memName = settings.getProperty("memory");
             if (memName != null) {
-                mem = (IMemory)loadPlugin(memoriesDir, memName,IMemory.class);
+                id = createPluginID();
+                mem = (IMemory)loadPlugin(memoriesDir, memName,IMemory.class, id);
                 if (mem == null)
                     throw new IllegalArgumentException("Memory '" + memName
                             + "' cannot be loaded.");
-                id = createPluginID();
                 pluginsReverse.put(mem, id);
                 plugins.put(id, mem);
                 pluginNames.put(id, "memory");
@@ -555,9 +554,10 @@ public class ArchLoader {
             Hashtable<IDevice,String> devNames = new Hashtable<IDevice,String>();
             for (int i = 0; settings.containsKey("device"+i); i++) {
             	String devName = settings.getProperty("device"+i);
-                IDevice dev = (IDevice)loadPlugin(devicesDir, devName,IDevice.class);
+                id = createPluginID();
+                IDevice dev = (IDevice)loadPlugin(devicesDir, devName,
+                        IDevice.class, id);
                 if (dev != null) {
-                    id = createPluginID();
                     pluginsReverse.put(dev, id);
                     plugins.put(id, dev);
                     pluginNames.put(id,"device" + i);
@@ -630,6 +630,8 @@ public class ArchLoader {
             }
             Computer arch = new Computer(cpu, mem, compiler, tmpDevices,
                     plugins, pluginsReverse, connections);
+            runtime.Context.getInstance().assignComputer(Main.getPassword(),
+                    arch);
             return new ArchHandler(name, arch, settings, loadSchema(name),
                     pluginNames, verbose);
         }
@@ -651,15 +653,37 @@ public class ArchLoader {
     }
 
     /**
-     * Method return new instance of a plugin from jar file
+     * Test the class for the implementation of the given interface.
+     *
+     * @param classI class that will be tested
+     * @param interfaceName interface that the class should implement
+     * @return true if the class implements given interface, false otherwise
+     */
+    private static boolean testInterface(Class<?> classI, Class<?> interfaceName) {
+        Class<?>[] intf = classI.getInterfaces();
+
+        for (int j = 0; j < intf.length; j++)
+            if (intf[j].isInterface() && intf[j].equals(interfaceName))
+                return true;
+        return false;
+    }
+
+    /**
+     * Method return new instance of a plugin from jar file that implements
+     * given interface.
+     *
+     * Each main class implementing the interface must have two parameters within
+     * the constructor - Long pluginID and ISettingsHandler settings.
      * 
      * @param dirname type of a plugin (compiler, cpu, memory, devices)
      * @param filename name of the plugin
      * @param interfaceName name of a interface that some class in the plugin
      *        has to implement
+     * @param pluginID the plug-in identification number
      * @return instance object of loaded plugin
      */
-    private static Object loadPlugin(String dirname, String filename, Class<?> interfaceName) {
+    private static Object loadPlugin(String dirname, String filename,
+            Class<?> interfaceName, long pluginID) {
         try {
             ArrayList<Class<?>> classes = runtime.Loader.getInstance().loadJAR(
                 System.getProperty("user.dir") + File.separator + dirname
@@ -667,26 +691,31 @@ public class ArchLoader {
             if (classes == null)
                 throw new Exception();
             // find a first class that implements wanted interface
-            Class<?>[] conParameters = {};
+            Class<?>[] conParameters = { Long.class };
             for (int i = 0; i < classes.size(); i++) {
                 Class<?> c = (Class<?>)classes.get(i);
                 Class<?> classI = c;
 
                 Class<?> tmp;
-                while (((tmp = c.getSuperclass()) != null)
+                boolean positive = false;
+                while ((!(positive = testInterface(c, interfaceName)))
+                        && ((tmp = c.getSuperclass()) != null)
                         && (!tmp.isInterface()) && (!tmp.equals(Object.class)))
                     c = tmp;
-                Class<?>[] intf = c.getInterfaces();
-                
-                for (int j = 0; j < intf.length; j++) {
-                    if (intf[j].isInterface() && intf[j].equals(interfaceName)) {
-                        Constructor<?> con = classI
-                                .getDeclaredConstructor(conParameters);
-                        return con.newInstance();
+
+                if (!positive)
+                    positive = testInterface(c, interfaceName);
+
+                if (positive) {
+                    Constructor<?> con = classI
+                            .getDeclaredConstructor(conParameters);
+                    if (con != null) {
+                        return con.newInstance(pluginID);
                     }
                 }
             }
         } catch (Exception e) {
+            e.printStackTrace();
         }
         return null;
     }

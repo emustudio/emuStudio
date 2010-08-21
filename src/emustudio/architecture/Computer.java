@@ -183,20 +183,19 @@ public class Computer implements IConnections {
      */
     public boolean initialize(ISettingsHandler settings) {
         if ((compiler != null) &&
-            (!compiler.initialize(pluginsReverse.get(compiler),
-                    settings)))
+            (!compiler.initialize(settings)))
             return false;
 
         if ((memory != null) &&
-            (!memory.initialize(pluginsReverse.get(memory), settings)))
+            (!memory.initialize(settings)))
             return false;
 
-        if (!cpu.initialize(pluginsReverse.get(cpu), settings))
+        if (!cpu.initialize(settings))
             return false;
 
         int size = devices.length;
         for (int i = 0; i < size; i++)
-            if (!devices[i].initialize(pluginsReverse.get(devices[i]), settings))
+            if (!devices[i].initialize(settings))
                 return false;
 
         // the last operation - reset of all plugins

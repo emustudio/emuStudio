@@ -180,10 +180,10 @@ public class StudioFrame extends javax.swing.JFrame {
             });
             txtSource.setLexer(compiler.getLexer(txtSource.getDocumentReader()));
             if (!compiler.isShowSettingsSupported()) {
-                mnuProjectShowCompiler.setEnabled(false);
+                mnuProjectCompilerSettings.setEnabled(false);
             }
         } else {
-            mnuProjectShowCompiler.setEnabled(false);
+            mnuProjectCompilerSettings.setEnabled(false);
         }
         systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         if (systemClipboard.getContents(null) != null) {
@@ -194,7 +194,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
             @Override
             public void flavorsChanged(FlavorEvent e) {
-                synchronized (EmuTextPane.docLock) {
+//                synchronized (EmuTextPane.docLock) {
                     if (systemClipboard.getContents(null) == null) {
                         btnPaste.setEnabled(false);
                         mnuEditPaste.setEnabled(false);
@@ -202,14 +202,14 @@ public class StudioFrame extends javax.swing.JFrame {
                         btnPaste.setEnabled(true);
                         mnuEditPaste.setEnabled(true);
                     }
-                }
+  //              }
             }
         });
         txtSource.addCaretListener(new CaretListener() {
 
             @Override
             public void caretUpdate(CaretEvent e) {
-                synchronized (EmuTextPane.docLock) {
+        //        synchronized (EmuTextPane.docLock) {
                     if (e.getDot() == e.getMark()) {
                         btnCut.setEnabled(false);
                         mnuEditCut.setEnabled(false);
@@ -221,7 +221,7 @@ public class StudioFrame extends javax.swing.JFrame {
                         btnCopy.setEnabled(true);
                         mnuEditCopy.setEnabled(true);
                     }
-                }
+          //      }
             }
         });
         undoStateListener = new ActionListener() {
@@ -257,6 +257,7 @@ public class StudioFrame extends javax.swing.JFrame {
                     tblDebug.repaint();
                 }
             });
+            btnMemory.setEnabled(memory.isShowSettingsSupported());
         } else {
             btnMemory.setEnabled(false);
         }
@@ -349,7 +350,7 @@ public class StudioFrame extends javax.swing.JFrame {
         JScrollPane paneDevices = new JScrollPane();
         lstDevices = new JList();
         JButton btnShowGUI = new NiceButton();
-        JButton btnShowSettings = new NiceButton();
+        final JButton btnShowSettings = new NiceButton();
         JMenuBar jMenuBar2 = new JMenuBar();
         JMenu mnuFile = new JMenu();
         JMenuItem mnuFileNew = new JMenuItem();
@@ -373,7 +374,7 @@ public class StudioFrame extends javax.swing.JFrame {
         JMenu mnuProject = new JMenu();
         JMenuItem mnuProjectCompile = new JMenuItem();
         JMenuItem mnuProjectViewConfig = new JMenuItem();
-        mnuProjectShowCompiler = new JMenuItem();
+        mnuProjectCompilerSettings = new JMenuItem();
         JMenu mnuHelp = new JMenu();
         JMenuItem mnuHelpAbout = new JMenuItem();
         JSeparator jSeparator7 = new JSeparator();
@@ -761,6 +762,10 @@ public class StudioFrame extends javax.swing.JFrame {
 
             @Override
             public void mouseClicked(MouseEvent e) {
+                int i = lstDevices.getSelectedIndex();
+                if (i >= 0)
+                    btnShowSettings.setEnabled(arch.getDevice(i).isShowSettingsSupported());
+
                 if (e.getClickCount() == 2) {
                     showGUIButtonActionPerformed(new ActionEvent(this, 0, ""));
                 }
@@ -999,15 +1004,15 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         mnuProject.add(mnuProjectViewConfig);
 
-        mnuProjectShowCompiler.setText("Show compiler...");
-        mnuProjectShowCompiler.addActionListener(new java.awt.event.ActionListener() {
+        mnuProjectCompilerSettings.setText("Compiler settings...");
+        mnuProjectCompilerSettings.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuProjectShowCompilerActionPerformed(evt);
+                mnuProjectCompilerSettingsActionPerformed(evt);
             }
         });
-        mnuProject.add(mnuProjectShowCompiler);
+        mnuProject.add(mnuProjectCompilerSettings);
 
         jMenuBar2.add(mnuProject);
 
@@ -1052,8 +1057,8 @@ public class StudioFrame extends javax.swing.JFrame {
             }
             arch.getDevices()[i].showSettings();
         } catch (Exception e) {
-            e.printStackTrace();
-            StaticDialogs.showErrorMessage("Can't show settings of the device:\n " + e.getMessage());
+            StaticDialogs.showErrorMessage("Can't show settings of the device:\n "
+                    + e.getMessage());
         }
     }
 
@@ -1066,16 +1071,16 @@ public class StudioFrame extends javax.swing.JFrame {
             }
             arch.getDevices()[i].showGUI();
         } catch (Exception e) {
-            e.printStackTrace();
             StaticDialogs.showErrorMessage("Can't show GUI of the device:\n "
                     + e.getMessage());
         }
     }
 
     private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {
-        if (memory != null) {
-            memory.showGUI();
-        }
+        if ((memory != null) && (memory.isShowSettingsSupported())) {
+            memory.showSettings();
+        } else
+            StaticDialogs.showMessage("The GUI is not supported");
     }
 
     private void btnStepActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1226,7 +1231,7 @@ public class StudioFrame extends javax.swing.JFrame {
         new ViewArchDialog(this, true).setVisible(true);
     }
 
-    private void mnuProjectShowCompilerActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuProjectCompilerSettingsActionPerformed(java.awt.event.ActionEvent evt) {
         if ((compiler != null) && (compiler.isShowSettingsSupported())) {
             compiler.showSettings();
         }
@@ -1419,6 +1424,6 @@ public class StudioFrame extends javax.swing.JFrame {
     JScrollPane paneDebug;
     JPanel statusWindow;
     JTextArea txtOutput;
-    JMenuItem mnuProjectShowCompiler;
+    JMenuItem mnuProjectCompilerSettings;
     JButton btnMemory;
 }

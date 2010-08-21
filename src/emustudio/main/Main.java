@@ -21,7 +21,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.main;
 
 import emustudio.architecture.ArchHandler;
@@ -30,6 +29,11 @@ import runtime.StaticDialogs;
 import emustudio.gui.LoadingDialog;
 import emustudio.gui.OpenComputerDialog;
 import emustudio.gui.StudioFrame;
+import java.io.File;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Date;
 
 /**
@@ -38,17 +42,23 @@ import java.util.Date;
  * @author vbmacher
  */
 public class Main {
+
     /**
      * Loaded computer.
      */
     public static ArchHandler currentArch = null;
     private static String inputFileName = null;
     private static String outputFileName = null;
-
     private static String configName = null;
     private static boolean auto = false;
-
+    private static boolean checkHash = false;
+    private static String classToHash = null;
+    private static boolean help = false;
     private static String password = null;
+
+    public static String getPassword() {
+        return password;
+    }
 
     /**
      * This method parsers the command line parameters. It sets
@@ -58,72 +68,159 @@ public class Main {
      */
     private static void parseCommandLine(String[] args) {
         // process arguments
-        if (args != null && args.length > 1) {
-            int i = 0;
-            while (i < args.length) {
-                String arg = args[i++].toUpperCase();
-                if (arg.equals("-CONFIG")) {
+        int size = args.length;
+        for (int i = 0; i < size; i++) {
+            String arg = args[i++].toUpperCase();
+            try {
+                if (arg.equals("--CONFIG")) {
                     // what configuration to load
                     if (configName != null) {
-                        System.out.println("Error: Config file already defined!");
-                    } else
+                        System.out.println("Config file already defined,"
+                                + " ignoring this one: " + args[i++]);
+                    } else {
                         configName = args[i++];
-                } else if (arg.equals("-INPUT")) {
+                    }
+                } else if (arg.equals("--INPUT")) {
                     // what input file take to compiler
                     if (inputFileName != null) {
-                        System.out.println("Error: Input file already defined!");
-                    } else
+                        System.out.println("Input file already defined,"
+                                + " ignoring this one: " + args[i++]);
+                    } else {
                         inputFileName = args[i++];
-                } else if (arg.equals("-OUTPUT")) {
+                    }
+                } else if (arg.equals("--OUTPUT")) {
                     // what output file take for emuStudio messages during
                     // automation process. This option has a meaning
                     // only if the "-auto" option is set too.
                     if (outputFileName != null) {
-                        System.out.println("Error: Output file already defined!");
-                    } else
+                        System.out.println("Output file already defined,"
+                                + " ignoring this one: " + args[i++]);
+                    } else {
                         outputFileName = args[i++];
-                } else if (arg.equals("-AUTO")) {
+                    }
+                } else if (arg.equals("--AUTO")) {
                     auto = true;
+                } else if (arg.equals("--HASH")) {
+                    checkHash = true;
+                    if (classToHash != null) {
+                        System.out.println("Class file already defined,"
+                                + " ignoring this one: " + args[i++]);
+                    } else {
+                        classToHash = args[i++];
+                    }
+
+                } else if (arg.equals("--HELP")) {
+                    help = true;
                 } else {
-                    System.out.println("Error: Invalid command line argument " +
-                        "(" + arg + ")!");
+                    System.out.println("Error: Invalid command line argument "
+                            + "(" + arg + ")!");
                 }
+            } catch (ArrayIndexOutOfBoundsException e) {
             }
         }
+
     }
+
+    /**
+     * Compute hash of a plug-in context interface. Uses SHA-1 method.
+     *
+     * @param inter  Interface to computer hash of
+     * @return SHA-1 hash string
+     */
+    private static String computeHash(Class<?> inter) {
+        int i;
+        Method[] methods;
+        String hash = "";
+
+        methods = inter.getMethods();
+        for (i = 0; i < methods.length; i++) {
+            hash += methods[i].getGenericReturnType().toString() + " ";
+            hash += methods[i].getName() + "(";
+            Class<?>[] params = methods[i].getParameterTypes();
+            for (int j = 0; j < params.length; j++)
+                hash += params[j].getName() + ",";
+            hash += ");";
+        }
+        try {
+            return runtime.Context.SHA1(hash);
+        } catch(Exception e) {
+            return null;
+        }
+    }
+
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         try {
-            javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager
-                    .getSystemLookAndFeelClassName());
+            javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
         } catch (javax.swing.UnsupportedLookAndFeelException e) {
         } catch (ClassNotFoundException e) {
         } catch (InstantiationException e) {
         } catch (IllegalAccessException e) {
         }
 
-        password = runtime.Context.SHA1(String.valueOf(Math.random()) +
-                new Date().toString());
+        password = runtime.Context.SHA1(String.valueOf(Math.random())
+                + new Date().toString());
         if (!runtime.Context.assignPassword(password)) {
-            StaticDialogs.showErrorMessage("Error: communication with emuLib failed.");
+            StaticDialogs.showErrorMessage("Error:"
+                    + " communication with emuLib failed.");
             return;
         }
 
-
         // parse command line arguments
         parseCommandLine(args);
+
+        if (help) {
+            // only show help and EXIT (ignore other arguments)
+            System.out.println("emuStudio will accept the following command line"
+                    + " parameters:\n"
+                    + "\n--config name : load configuration with file name"
+                    + "\n--input name  : use the source code given by the file name"
+                    + "\n--output name : output compiler messages into this file name"
+                    + "\n--auto        : run the emulation automatization"
+                    + "\n--hash name   : compute hash for given class or interface name"
+                    + "\n--help        : output this message");
+            return;
+        }
+
+        if (checkHash) {
+            // compute hash of a class and exit
+            // Create a File object on the root of the directory
+            // containing the class file
+            File file = new File(System.getProperty("user.dir"));
+            try {
+                // Convert File to a URL
+                URL url = file.toURI().toURL(); // file:/c:/class/
+                URL[] urls = new URL[]{url};
+
+                // Create a new class loader with the directory
+                ClassLoader loader = new URLClassLoader(urls);
+
+                // Load in the class; Class.childclass should be located in
+                // the directory file:/c:/class/user/information
+                Class cls = loader.loadClass(classToHash);
+                System.out.println(computeHash(cls));
+            } catch (MalformedURLException e) {
+            } catch (ClassNotFoundException e) {
+                System.out.println("Error: Class is not found!");
+            } catch (NullPointerException np) {
+                System.out.println("Error: Class name is not specified!");
+            }
+            return;
+        }
 
         // if configuration name has not been specified, let user
         // to choose the configuration manually
         if (configName == null) {
             OpenComputerDialog odi = new OpenComputerDialog();
             odi.setVisible(true);
-            if (odi.getOK())
+            if (odi.getOK()) {
                 configName = odi.getArchName();
-            if (configName == null)
+            }
+            if (configName == null) {
                 System.exit(0);
+            }
         }
 
         // display splash screen, while loading the virtual computer
@@ -131,8 +228,9 @@ public class Main {
         splash.setVisible(true);
 
         // load the virtual computer
-        try { currentArch = ArchLoader.load(configName, auto); }
-        catch (Error er) {
+        try {
+            currentArch = ArchLoader.load(configName, auto);
+        } catch (Error er) {
             String h = er.getLocalizedMessage();
             if (h == null || h.equals("")) {
                 h = "Unknown error";
@@ -149,21 +247,17 @@ public class Main {
             System.exit(0);
         }
 
-        runtime.Context.getInstance().assignComputer(password, 
-                currentArch.getComputer());
-
         if (!auto) {
             // if the automatization is turned off, start the emuStudio normally
-            if (inputFileName != null)
+            if (inputFileName != null) {
                 new StudioFrame(inputFileName).setVisible(true);
-            else
+            } else {
                 new StudioFrame(configName).setVisible(true);
+            }
         } else {
-            new Automatization(currentArch,inputFileName,outputFileName)
-                    .runAutomatization();
+            new Automatization(currentArch, inputFileName, outputFileName).runAutomatization();
             currentArch.destroy();
             System.exit(0);
         }
     }
 }
-

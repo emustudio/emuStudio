@@ -252,7 +252,7 @@ public class HighlightThread extends Thread {
                     IToken t;
                     boolean done = false;
                     dpEnd = dpStart;
-                    synchronized (EmuTextPane.docLock) {
+         //           synchronized (EmuTextPane.docLock) {
                         // we are playing some games with the lexer for efficiency.
                         // we could just create a new lexer each time here, but instead,
                         // we will just reset it so that it thinks it is starting at the
@@ -269,13 +269,13 @@ public class HighlightThread extends Thread {
                         // the lexer will return null at the end of the document and wee
                         // need to stop there.
                         t = syntaxLexer.getSymbol();
-                    }
+         //           }
                     newPositions.add(dpStart);
                     while (!done && t != null && t.getType() != IToken.TEOF) {
                         // this is the actual command that colors the stuff.
                         // Color stuff with the description of the style matched
                         // to the hash table that has been set up ahead of time.
-                        synchronized (EmuTextPane.docLock) {
+        //                synchronized (EmuTextPane.docLock) {
                             int tEnd = t.getOffset() + t.getLength();
                             if (tEnd <= document.getLength()) {
                                 document.setCharacterAttributes(
@@ -287,7 +287,7 @@ public class HighlightThread extends Thread {
                                 dpEnd = new DocPosition(tEnd);
                             }
                             lastPosition = (tEnd + change);
-                        }
+          //              }
                         // The other more complicated reason for doing no more highlighting
                         // is that all the colors are the same from here on out anyway.
                         // We can detect this by seeing if the place that the lexer returned
@@ -299,7 +299,7 @@ public class HighlightThread extends Thread {
                             //System.out.println(t);
                             // look at all the positions from last time that are less than or
                             // equal to the current position
-                            int tEnd = t.getOffset() + t.getLength();
+                            tEnd = t.getOffset() + t.getLength();
                             while (dp != null && dp.getPosition() <= tEnd) {
                                 if (dp.getPosition() == tEnd && dp.getPosition() >= endRequest.getPosition()) {
                                     // we have found a state that is the same
@@ -319,9 +319,9 @@ public class HighlightThread extends Thread {
                             // initial states from this time.
                             newPositions.add(dpEnd);
                         }
-                        synchronized (EmuTextPane.docLock) {
+             //           synchronized (EmuTextPane.docLock) {
                             t = syntaxLexer.getSymbol();
-                        }
+               //         }
                     }
                     // remove all the old initial positions from the place where
                     // we started doing the highlighting right up through the last
@@ -351,10 +351,10 @@ public class HighlightThread extends Thread {
                     System.out.println("Started: " + dpStart.getPosition() + " Ended: " + dpEnd.getPosition());*/
                 } catch (IOException x) {
                 }
-                synchronized (EmuTextPane.docLock) {
+      //          synchronized (EmuTextPane.docLock) {
                     lastPosition = -1;
                     change = 0;
-                }
+        //        }
                 // since we did something, we should check that there is
                 // nothing else to do before going back to sleep.
                 tryAgain = true;
@@ -382,8 +382,8 @@ public class HighlightThread extends Thread {
      * Color or recolor the entire document
      */
     public void colorAll() {
-        synchronized(EmuTextPane.docLock) {
+   //     synchronized(EmuTextPane.docLock) {
             color(0, document.getLength());
-        }
+     //   }
     }
 }
