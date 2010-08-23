@@ -75,7 +75,7 @@ import runtime.StaticDialogs;
  *
  *
  * # emulator version
- * emu8Version = 3
+ * emu8Version = 4
  * ! CPU name
  * cpu = Intel8080                            ! required
  * cpu.frequency = 2000
