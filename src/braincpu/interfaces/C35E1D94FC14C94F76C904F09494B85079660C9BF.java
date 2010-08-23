@@ -1,5 +1,6 @@
 /*
  * IBrainCPUContext.java
+ * CA94FB669670978583FDAF7D8A43BA801E49447E7.java
  *
  * KISS, YAGNI
  *
@@ -25,7 +26,7 @@ package braincpu.interfaces;
 import plugins.cpu.ICPUContext;
 import plugins.device.IDeviceContext;
 
-public interface IBrainCPUContext extends ICPUContext {
+public interface C35E1D94FC14C94F76C904F09494B85079660C9BF extends ICPUContext {
     public boolean attachDevice(IDeviceContext device);
     public void detachDevice();
 }

@@ -21,35 +21,19 @@
  */
 package braincpu.impl;
 
-import java.util.EventObject;
-import javax.swing.event.EventListenerList;
-import braincpu.interfaces.IBrainCPUContext;
+import braincpu.interfaces.C35E1D94FC14C94F76C904F09494B85079660C9BF;
 import plugins.device.IDeviceContext;
 
-public class BrainCPUContext implements IBrainCPUContext {
-    private EventListenerList listenerList;
-    private EventObject cpuEvt;
+public class BrainCPUContext implements C35E1D94FC14C94F76C904F09494B85079660C9BF {
     private IDeviceContext device;
 
     public BrainCPUContext() {
         device = null;
-        listenerList = new EventListenerList();
-        cpuEvt = new EventObject(this);
     }
     
     @Override
-    public String getID() { return "brain-cpu-context"; }
-    @Override
-    public String getHash() { return "d32e73041bf765d98eea1b8664ef6b5e";}
-
-    @Override
-    public void addCPUListener(ICPUListener listener) {
-        listenerList.add(ICPUListener.class, listener);
-    }
-
-    @Override
-    public void removeCPUListener(ICPUListener listener) {
-        listenerList.remove(ICPUListener.class, listener);
+    public String getID() {
+        return "brain-cpu-context";
     }
 
     /**
@@ -73,42 +57,13 @@ public class BrainCPUContext implements IBrainCPUContext {
     }
     
     /**
-     * Túto metódu zavolá BrainCPU, keď sa zmení
-     * stav behu procesora. Táto metóda potom zavolá
-     * metódu runChanged všetkých listenerov.
-     * 
-     * @param run_state  nový stav behu procesora
-     */
-    public void fireCpuRun(int run_state) {
-        Object[] listeners = listenerList.getListenerList();
-        for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i] == ICPUListener.class)
-                ((ICPUListener)listeners[i+1]).runChanged(cpuEvt, run_state);
-        }
-    }
-
-    /**
-     * Túto metódu zavolá BrainCPU, keď sa zmení
-     * vnútorný stav procesora (zmenia sa registre).
-     * Táto metóda potom zavolá metódu stateUpdated
-     * všetkých listenerov.
-     */
-    public void fireCpuState() {
-        Object[] listeners = listenerList.getListenerList();
-        for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i] == ICPUListener.class)
-                ((ICPUListener)listeners[i+1]).stateUpdated(cpuEvt);
-        }
-    }
-    
-    /**
      * Metóda zapíše do zariadenia hodnotu val. Táto
      * metóda teda priamo komunikuje so zariadením.
      * @param val hodnota, ktorá sa má zapísať do zariadenia
      */
     public void writeToDevice(short val) {
     	if (device == null) return;
-    	device.out(cpuEvt, val);
+    	device.write(val);
     }
     
     /**
@@ -119,7 +74,7 @@ public class BrainCPUContext implements IBrainCPUContext {
      */
     public short readFromDevice() {
     	if (device == null) return 0;
-    	return (Short)device.in(cpuEvt);
+    	return (Short)device.read();
     }
 
 }

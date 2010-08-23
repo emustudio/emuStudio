@@ -33,7 +33,7 @@ import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 
 import plugins.cpu.ICPU;
-import plugins.cpu.ICPUContext.ICPUListener;
+import plugins.cpu.ICPU.ICPUListener;
 import plugins.memory.IMemoryContext;
 
 import braincpu.impl.BrainCPU;
@@ -43,7 +43,7 @@ public class BrainStatusPanel extends JPanel {
 	public BrainStatusPanel(final BrainCPU cpu, final IMemoryContext mem) {
         initComponents();
 
-        cpu.getContext().addCPUListener(new ICPUListener() {
+        cpu.addCPUListener(new ICPUListener() {
 			@Override
 			public void runChanged(EventObject evt, int state) {
 	            switch (state) {
