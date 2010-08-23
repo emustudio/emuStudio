@@ -25,7 +25,7 @@
 package interfaces;
 
 import java.util.EventObject;
-import plugins.cpu.ICPUContext.ICPUListener;
+import plugins.cpu.ICPU.ICPUListener;
 
 /**
  *

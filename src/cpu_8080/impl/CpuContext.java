@@ -23,12 +23,8 @@
 
 package cpu_8080.impl;
 
-import cpu_8080.gui.statusGUI;
 import interfaces.ACpuContext;
-import interfaces.IICpuListener;
-import java.util.EventObject;
 import java.util.Hashtable;
-import javax.swing.event.EventListenerList;
 import plugins.device.IDeviceContext;
 
 
@@ -37,32 +33,17 @@ import plugins.device.IDeviceContext;
  * @author vbmacher
  */
 public class CpuContext implements ACpuContext {
-    private EventListenerList listenerList;
-    private EventObject cpuEvt = new EventObject(this);
     private Hashtable<Integer,IDeviceContext> devicesList;
     private int clockFrequency = 2000; // kHz
     private Cpu8080 cpu;
 
     public CpuContext(Cpu8080 cpu) {
         devicesList = new Hashtable<Integer,IDeviceContext>();
-        listenerList = new EventListenerList();
         this.cpu = cpu;
     }
     
     @Override
-    public String getID() { return "i8080Context"; }
-    @Override
-    public String getHash() { return "4bb574accc0ed96b5ed84b5832127289";}
-
-    @Override
-    public void addCPUListener(ICPUListener listener) {
-        listenerList.add(ICPUListener.class, listener);
-    }
-
-    @Override
-    public void removeCPUListener(ICPUListener listener) {
-        listenerList.remove(ICPUListener.class, listener);
-    }
+    public String getID() { return "i8080_context"; }
 
     // device mapping = only one device can be attached to one port
     @Override
@@ -84,31 +65,6 @@ public class CpuContext implements ACpuContext {
     // frequency in kHz
     public void setFrequency(int freq) { this.clockFrequency = freq; }
     
-    public void fireCpuRun(statusGUI status, int run_state) {
-        Object[] listeners = listenerList.getListenerList();
-        for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i] == ICPUListener.class)
-                ((ICPUListener)listeners[i+1]).runChanged(cpuEvt, run_state);
-        }
-        status.updateGUI();
-    }
-
-    public void fireCpuState() {
-        Object[] listeners = listenerList.getListenerList();
-        for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i] == ICPUListener.class)
-                ((ICPUListener)listeners[i+1]).stateUpdated(cpuEvt);
-        }
-    }
-
-    public void fireFrequencyChanged(float freq) {
-        Object[] listeners = listenerList.getListenerList();
-        for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i+1] instanceof IICpuListener)
-                ((IICpuListener)listeners[i+1]).frequencyChanged(cpuEvt,freq);
-        }
-    }
-
     /**
      * Performs I/O operation.
      * @param port I/O port
@@ -123,8 +79,8 @@ public class CpuContext implements ACpuContext {
             return 0;
         }
         if (read == true) 
-            return (Short)devicesList.get(port).in(cpuEvt);
-        else devicesList.get(port).out(cpuEvt,val);
+            return (Short)devicesList.get(port).read();
+        else devicesList.get(port).write(val);
         return 0;
     }
 
