@@ -22,93 +22,74 @@
 package brainduckmem.impl;
 
 import plugins.ISettingsHandler;
-import plugins.memory.IMemory;
 import plugins.memory.IMemoryContext;
+import plugins.memory.SimpleMemory;
+import runtime.Context;
 import runtime.StaticDialogs;
 
-public class BrainDuckMem implements IMemory {
+public class BrainDuckMem extends SimpleMemory {
+
     private BrainMemContext memContext;
-    private long hash;
-    @SuppressWarnings("unused")
-	private ISettingsHandler settings;
-    private int programStart;
     private int size;
 
-    public BrainDuckMem(Long hash) {
-    	this.hash = hash;
+    public BrainDuckMem(Long pluginID) {
+        super(pluginID);
         memContext = new BrainMemContext();
+        boolean b = Context.getInstance().register(pluginID, memContext,
+                IMemoryContext.class);
+        if (!b)
+            StaticDialogs.showErrorMessage("Could not register memory context");
     }
-    
-    @Override
-    public String getTitle() { return "BrainDuck OM"; }
 
     @Override
-    public String getVersion() { return "0.1-rc1"; }
-    
+    public String getTitle() {
+        return "BrainDuck OM";
+    }
+
+    @Override
+    public String getVersion() {
+        return "0.1-rc2";
+    }
+
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2009, P. Jakubčo";
+        return "\u00A9 Copyright 2009-2010, P. Jakubčo";
     }
+
     @Override
     public String getDescription() {
-        return "BrainDuck operating memory. Don't even have a GUI.";
+        return "BrainDuck operating memory.";
     }
 
     @Override
-    public long getHash() { return hash; }
-
-    /**
-     * Initialize memory:
-     *     1. load settings as: banks count, common boundary
-     *     2. create memory context (create memory with loaded settings)
-     *     3. load images from settings
-     *     4. load these images into memory in order as they appear in config file
-     *     5. load rom ranges from settings
-     *     6. set rom ranges to memory
-     */
-    @Override
-    public boolean initialize(int size, ISettingsHandler sHandler) {
-        this.settings = sHandler;
-        this.size = size;
+    public boolean initialize(ISettingsHandler settings) {
+        super.initialize(settings);
+        this.size = 65536;
         memContext.init(size);
         return true;
     }
 
     @Override
-    public void showGUI() {
-    	// my nemáme GUI
-    	StaticDialogs.showMessage("BrainDuck memory doesn't support GUI.");
+    public void destroy() {
+        memContext.destroy();
+        Context.getInstance().unregister(pluginID, memContext);
+        memContext = null;
     }
 
     @Override
-    public void destroy() { }
-
-    @Override
-    public IMemoryContext getContext() {
-        return memContext;
+    public int getSize() {
+        return size;
     }
 
     @Override
-    public int getProgramStart() {
-    	return programStart;
-    }
-    
-    @Override
-    public int getSize() {	return size; }
-
-    @Override
-    public void reset() {
-    	//memContext.clearMemory();
+    public void showSettings() {
+        // my nemáme GUI
+        StaticDialogs.showMessage("BrainDuck memory doesn't support GUI.");
     }
 
+
     @Override
-    public void setProgramStart(int address) {
-        programStart = address;
+    public boolean isShowSettingsSupported() {
+        return false;
     }
-
-	@Override
-	public void showSettings() {
-		// nemáme ani GUI pre nastavenia
-	}
-
 }
