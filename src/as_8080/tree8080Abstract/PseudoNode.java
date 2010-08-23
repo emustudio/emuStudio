@@ -22,9 +22,7 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_8080.tree8080Abstract;
-
 
 /**
  *
@@ -35,13 +33,16 @@ package as_8080.tree8080Abstract;
  * are treated as local if theyre set in a macro. (see LabelNode class)
  */
 public abstract class PseudoNode extends CodePseudoNode {
+
     @Override
-    public boolean isPseudo() { return true; }
+    public boolean isPseudo() {
+        return true;
+    }
+
     /** Creates a new instance of PseudoNode */
     public PseudoNode(int line, int column) {
-        super(line,column);
+        super(line, column);
     }
-    
+
     public abstract String getName();
-    
 }

@@ -1,5 +1,5 @@
 /*
- * parser8080.cup
+ * Parser8080.java
  *
  * Parser (syntactic analyzer for 8080 compiler)
  *
@@ -26,10 +26,12 @@
 
 import java.util.Vector;
 import java_cup.runtime.Symbol;
-import plugins.compiler.IMessageReporter;
 import plugins.compiler.IToken;
-import tree8080.*;
-import tree8080Abstract.*;
+import plugins.compiler.ICompiler;
+
+import as_8080.tree8080.*;
+import as_8080.tree8080Abstract.*;
+
 
 init with {: errorCount = 0; lastLine = 0; lastColumn = 0; :}
 scan with {:
@@ -39,14 +41,16 @@ scan with {:
     return (Symbol)t;
  :}
 parser code {:
-    private IMessageReporter reporter = null;
+    private Assembler8080 asm = null;
     public int lastLine;
     public int lastColumn;
     public static int errorCount = 0;
+
+    private String reportAppendString = null;
     
-    public parser8080(java_cup.runtime.Scanner s, IMessageReporter reporter) {
+    public Parser8080(java_cup.runtime.Scanner s, Assembler8080 asm) {
         this(s);
-        this.reporter = reporter;
+        this.asm = asm;
     }
     	
     public void syntax_error(Symbol current) {
@@ -63,9 +67,21 @@ parser code {:
 
         IToken t = (IToken)current;
         mes = message + t.getErrorString() + " ('"+t.getText()+"')";
+        
+        if (reportAppendString != null)
+          mes = reportAppendString + mes;
 
-        reporter.report(t.getLine()+1, t.getColumn(),mes, IMessageReporter.TYPE_ERROR);
+        asm.print_text(t.getLine()+1, t.getColumn(), mes, ICompiler.TYPE_ERROR);
     }
+    
+    public void setReportAppendString(String str) {
+        this.reportAppendString = str;
+    }
+    
+    public Assembler8080 getAsm() {
+        return asm;
+    }
+
 :}
 
 terminal RESERVED_STC,RESERVED_CMC,RESERVED_INR,RESERVED_DCR,RESERVED_CMA,
@@ -206,7 +222,7 @@ Pseudocode ::= PREPROCESSOR_ORG Expression:e
  | TIDENTIFIER:name MacroExprOptional:vec
     {: RESULT = new MacroCallPseudo(name, vec,parser.lastLine, parser.lastColumn); :}
  | PREPROCESSOR_INCLUDE LITERAL_STRING:filename
-    {: RESULT = new IncludePseudoNode(filename,parser.lastLine,parser.lastColumn); :};
+    {: RESULT = new IncludePseudoNode(filename,parser.lastLine,parser.lastColumn,parser.getAsm()); :};
 
 MacroOperOptional ::= MOperList:vec {: RESULT = vec; :} | {: RESULT = null; :};
 MOperList ::= TIDENTIFIER:name

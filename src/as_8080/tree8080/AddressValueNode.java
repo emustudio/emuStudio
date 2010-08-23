@@ -25,7 +25,7 @@
 
 package as_8080.tree8080;
 
-import as_8080.impl.compileEnv;
+import as_8080.impl.CompileEnv;
 import as_8080.tree8080Abstract.ExprNode;
 
 /**
@@ -43,7 +43,8 @@ public class AddressValueNode extends ExprNode {
     /// compile time ///
     
     //??
-    public int eval(compileEnv env, int curr_addr) {
+    @Override
+    public int eval(CompileEnv env, int curr_addr) {
         this.setAddress(curr_addr);
         return curr_addr;
     }

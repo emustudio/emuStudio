@@ -22,52 +22,55 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_8080.tree8080;
 
 import as_8080.impl.HEXFileHandler;
-import as_8080.impl.compileEnv;
+import as_8080.impl.CompileEnv;
 import as_8080.tree8080Abstract.ExprNode;
 import as_8080.tree8080Abstract.PseudoNode;
-import plugins.compiler.IMessageReporter;
 
 /**
  *
  * @author vbmacher
  */
 public class EquPseudoNode extends PseudoNode {
+
     private ExprNode expr;
     private String mnemo;
-    
+
     /** Creates a new instance of EquPseudoNode */
     public EquPseudoNode(String id, ExprNode expr, int line, int column) {
-        super(line,column);
+        super(line, column);
         this.mnemo = id;
         this.expr = expr;
     }
-    
-    public String getName() { return mnemo;}
 
-    // this is used in macro expansion for defining macro params
-  //  public void setExpr(ExprNode expr) {
-    //    this.expr = expr;
-    //}
-    
-    public int getValue() { return expr.getValue(); }
+    @Override
+    public String getName() {
+        return mnemo;
+    }
+
+    public int getValue() {
+        return expr.getValue();
+    }
 
     /// compile time ///
-    public int getSize() { return 0; }
-    
-    public void pass1(IMessageReporter r) {}
-    
-    public int pass2(compileEnv env, int addr_start) throws Exception { 
-        if (env.addEquDef(this) == false)
+    @Override
+    public int getSize() {
+        return 0;
+    }
+
+    @Override
+    public int pass2(CompileEnv env, int addr_start) throws Exception {
+        if (env.addEquDef(this) == false) {
             throw new Exception("[" + line + "," + column
                     + "] Constant already defined: " + mnemo);
+        }
         expr.eval(env, addr_start);
         return addr_start;
     }
 
-    public void pass4(HEXFileHandler hex) {}
-
+    @Override
+    public void pass4(HEXFileHandler hex) {
+    }
 }

@@ -26,7 +26,7 @@
 package as_8080.tree8080Abstract;
 
 import as_8080.impl.HEXFileHandler;
-import as_8080.impl.compileEnv;
+import as_8080.impl.CompileEnv;
 
 /**
  *
@@ -43,8 +43,7 @@ public abstract class DataValueNode {
     
     /// compile time ///
     public abstract int getSize();
-    public abstract void pass1() throws Exception;
-    public abstract int pass2(compileEnv env, int addr_start) throws Exception;
+    public abstract int pass2(CompileEnv env, int addr_start) throws Exception;
     public abstract void pass4(HEXFileHandler hex) throws Exception;
     
         // encode string to hex codes

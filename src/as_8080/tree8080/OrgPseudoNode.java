@@ -22,36 +22,38 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_8080.tree8080;
 
 import as_8080.impl.HEXFileHandler;
 import as_8080.impl.NeedMorePassException;
-import as_8080.impl.compileEnv;
+import as_8080.impl.CompileEnv;
 import as_8080.tree8080Abstract.ExprNode;
 import as_8080.tree8080Abstract.PseudoNode;
-import plugins.compiler.IMessageReporter;
 
 /**
  *
  * @author vbmacher
  */
 public class OrgPseudoNode extends PseudoNode {
+
     private ExprNode expr;
-    
+
     /** Creates a new instance of OrgPseudoNode */
     public OrgPseudoNode(ExprNode expr, int line, int column) {
         super(line, column);
         this.expr = expr;
     }
-    
+
     /// compile time ///
+    @Override
+    public int getSize() {
+        return 0;
+    }
 
-    public int getSize() { return 0; }
-
-    public void pass1(IMessageReporter r) {}
-
-    public String getName() { return ""; }
+    @Override
+    public String getName() {
+        return "";
+    }
 
     // org only changes current address
     // if expr isnt valuable, then error exception is thrown
@@ -60,18 +62,20 @@ public class OrgPseudoNode extends PseudoNode {
     // mvi a,50
     // label: hlt
     // label address cant be evaluated
-    public int pass2(compileEnv parentEnv, int addr_start) throws Exception {
+    @Override
+    public int pass2(CompileEnv parentEnv, int addr_start) throws Exception {
         int val = addr_start;
-        try { val = expr.eval(parentEnv, addr_start); }
-        catch(NeedMorePassException e) {
-            throw new Exception("[" + line + "," + column 
+        try {
+            val = expr.eval(parentEnv, addr_start);
+        } catch (NeedMorePassException e) {
+            throw new Exception("[" + line + "," + column
                     + "] ORG expression can't be ambiguous");
         }
         return val;
     }
 
+    @Override
     public void pass4(HEXFileHandler hex) throws Exception {
         hex.setNextAddress(expr.getValue());
     }
-    
 }

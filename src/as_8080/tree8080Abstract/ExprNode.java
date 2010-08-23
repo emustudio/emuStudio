@@ -25,7 +25,7 @@
 
 package as_8080.tree8080Abstract;
 
-import as_8080.impl.compileEnv;
+import as_8080.impl.CompileEnv;
 
 /**
  *
@@ -42,7 +42,7 @@ public abstract class ExprNode {
         else return false;
     }
     
-    public abstract int eval(compileEnv env, int curr_addr) throws Exception;
+    public abstract int eval(CompileEnv env, int curr_addr) throws Exception;
     
     public static String getEncValue(int val, boolean oneByte) {
         if (oneByte) return String.format("%02X",(val & 0xFF));

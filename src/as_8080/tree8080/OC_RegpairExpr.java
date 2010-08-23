@@ -22,14 +22,12 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_8080.tree8080;
 
 import as_8080.impl.HEXFileHandler;
-import as_8080.impl.compileEnv;
+import as_8080.impl.CompileEnv;
 import as_8080.tree8080Abstract.ExprNode;
 import as_8080.tree8080Abstract.OpCodeNode;
-import plugins.compiler.IMessageReporter;
 
 /**
  *
@@ -37,9 +35,10 @@ import plugins.compiler.IMessageReporter;
  */
 // this class uses only lxi instruction
 public class OC_RegpairExpr extends OpCodeNode {
+
     private byte regpair;
     private ExprNode expr;
-    
+
     /** Creates a new instance of OC_RegpairExpr */
     public OC_RegpairExpr(String mnemo, byte regpair, ExprNode expr, int line,
             int column) {
@@ -47,20 +46,23 @@ public class OC_RegpairExpr extends OpCodeNode {
         this.regpair = regpair;
         this.expr = expr;
     }
-    
-    /// compile time ///
-    public int getSize() { return 3; }
-    public void pass1(IMessageReporter r) {}
 
-    public int pass2(compileEnv parentEnv, int addr_start) throws Exception {
+    /// compile time ///
+    @Override
+    public int getSize() {
+        return 3;
+    }
+
+    @Override
+    public int pass2(CompileEnv parentEnv, int addr_start) throws Exception {
         expr.eval(parentEnv, addr_start);
         return addr_start + 3;
     }
 
+    @Override
     public void pass4(HEXFileHandler hex) throws Exception {
         int opCode = 1 | (regpair << 4);
-        hex.putCode(String.format("%1$02X",opCode));
+        hex.putCode(String.format("%1$02X", opCode));
         hex.putCode(expr.getEncValue(false));
     }
-    
 }

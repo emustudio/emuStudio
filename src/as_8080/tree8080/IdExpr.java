@@ -26,7 +26,7 @@
 package as_8080.tree8080;
 
 import as_8080.impl.NeedMorePassException;
-import as_8080.impl.compileEnv;
+import as_8080.impl.CompileEnv;
 import as_8080.tree8080Abstract.ExprNode;
 
 /**
@@ -44,7 +44,7 @@ public class IdExpr extends ExprNode {
     /// compile time ///
     public int getSize() { return 0; }
 
-    public int eval(compileEnv env, int curr_addr) throws Exception {
+    public int eval(CompileEnv env, int curr_addr) throws Exception {
         // identifier in expression can be only label, equ, or set statement. macro NOT
         // search in env for labels
         LabelNode lab = env.getLabel(this.name);

@@ -1,5 +1,5 @@
 /*
- * compileEnv.java
+ * CompileEnv.java
  *
  * Created on Pondelok, 2007, október 8, 18:08
  *
@@ -45,15 +45,15 @@ import as_8080.tree8080.SetPseudoNode;
  * in pass1. This means that if eg. equ wasnt defined before first use
  * error comes.
  */
-public class compileEnv {
+public class CompileEnv {
     private Vector<LabelNode> defLabels;        // labelnode objects
     private Vector<MacroPseudoNode> defMacros;  // all macros
     private Vector<EquPseudoNode> defEqus;      // all equs
     private Vector<SetPseudoNode> defSets;      // all sets
     private Vector<InstructionNode> passNeed;   // objects that need more passes
     
-    /** Creates a new instance of compileEnv */
-    public compileEnv() {
+    /** Creates a new instance of CompileEnv */
+    public CompileEnv() {
         defLabels = new Vector<LabelNode>();
         defMacros = new Vector<MacroPseudoNode>();
         defEqus = new Vector<EquPseudoNode>();
@@ -174,7 +174,7 @@ public class compileEnv {
         }
     }
     
-    public boolean copyTo(compileEnv env) {
+    public boolean copyTo(CompileEnv env) {
         boolean r = true;
         for (int i = 0; i < defLabels.size(); i++)
             r &= env.addLabelDef((LabelNode)defLabels.get(i));

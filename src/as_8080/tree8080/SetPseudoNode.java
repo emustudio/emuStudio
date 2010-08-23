@@ -22,45 +22,55 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_8080.tree8080;
 
 import as_8080.impl.HEXFileHandler;
-import as_8080.impl.compileEnv;
+import as_8080.impl.CompileEnv;
 import as_8080.tree8080Abstract.ExprNode;
 import as_8080.tree8080Abstract.PseudoNode;
-import plugins.compiler.IMessageReporter;
 
 /**
  *
  * @author vbmacher
  */
 public class SetPseudoNode extends PseudoNode {
+
     private ExprNode expr;
     private String mnemo;
-    
+
     /** Creates a new instance of SetPseudoNode */
     public SetPseudoNode(String id, ExprNode expr, int line, int column) {
         super(line, column);
         this.mnemo = id;
         this.expr = expr;
     }
-    
-    public String getName() { return mnemo;}
-    public int getValue() { return expr.getValue(); }
+
+    @Override
+    public String getName() {
+        return mnemo;
+    }
+
+    public int getValue() {
+        return expr.getValue();
+    }
     /// compile time ///
 
-    public int getSize() { return 0; }
-    public void pass1(IMessageReporter r) {}
+    @Override
+    public int getSize() {
+        return 0;
+    }
 
-    public int pass2(compileEnv env, int addr_start) throws Exception { 
-        if (env.addSetDef(this) == false)
+    @Override
+    public int pass2(CompileEnv env, int addr_start) throws Exception {
+        if (env.addSetDef(this) == false) {
             throw new Exception("[" + line + "," + column
                     + "] Variable can't be set (already defined): " + mnemo);
+        }
         expr.eval(env, addr_start);
         return addr_start;
     }
 
-    public void pass4(HEXFileHandler hex) {}
-    
+    @Override
+    public void pass4(HEXFileHandler hex) {
+    }
 }

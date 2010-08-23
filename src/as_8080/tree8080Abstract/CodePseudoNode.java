@@ -22,36 +22,35 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_8080.tree8080Abstract;
 
 import as_8080.impl.HEXFileHandler;
-import as_8080.impl.compileEnv;
-import plugins.compiler.IMessageReporter;
-
+import as_8080.impl.CompileEnv;
 
 /**
  *
  * @author vbmacher
  */
 public abstract class CodePseudoNode {
-   // protected String mnemo;
+    // protected String mnemo;
+
     protected int line;
     protected int column;
-    
+
     public abstract boolean isPseudo();
-    
+
     public CodePseudoNode(int line, int column) {
-       // this.mnemo = mnemo;
+        // this.mnemo = mnemo;
         this.line = line;
         this.column = column;
     }
 
     /// compile time ///
-    
     // return size of compiled code
     public abstract int getSize();
-    public abstract void pass1(IMessageReporter rep) throws Exception;
-    public abstract int pass2(compileEnv parentEnv, int addr_start) throws Exception;
+    //   public abstract void pass1() throws Exception;
+
+    public abstract int pass2(CompileEnv parentEnv, int addr_start) throws Exception;
+
     public abstract void pass4(HEXFileHandler hex) throws Exception;
 }

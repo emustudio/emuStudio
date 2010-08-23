@@ -22,12 +22,11 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_8080.tree8080;
 
 import as_8080.impl.HEXFileHandler;
 import as_8080.impl.NeedMorePassException;
-import as_8080.impl.compileEnv;
+import as_8080.impl.CompileEnv;
 import as_8080.tree8080Abstract.DataValueNode;
 import as_8080.tree8080Abstract.ExprNode;
 
@@ -36,42 +35,46 @@ import as_8080.tree8080Abstract.ExprNode;
  * @author vbmacher
  */
 public class DSDataNode extends DataValueNode {
+
     private ExprNode expression = null;
-    
+
     /** Creates a new instance of DSDataNode */
     public DSDataNode(ExprNode expr, int line, int column) {
-        super(line,column);
+        super(line, column);
         this.expression = expr;
     }
-    
-    /// compile time ///
-    
-    public int getSize() { return expression.getValue(); }
-    
-    public void pass1() {}
 
-    public int pass2(compileEnv env, int addr_start) throws Exception{
-        try { 
+    /// compile time ///
+    @Override
+    public int getSize() {
+        return expression.getValue();
+    }
+
+    @Override
+    public int pass2(CompileEnv env, int addr_start) throws Exception {
+        try {
             int val = expression.eval(env, addr_start);
-            return addr_start+val;
-        }
-        catch(NeedMorePassException e) {
+            return addr_start + val;
+        } catch (NeedMorePassException e) {
             throw new Exception("[" + line + "," + column
-                + "] DS expression can't be ambiguous");
+                    + "] DS expression can't be ambiguous");
         }
     }
 
+    @Override
     public void pass4(HEXFileHandler hex) throws Exception {
         String str = "";
-        
-        if (expression.getEncValue(true).length() > 2)
+
+        if (expression.getEncValue(true).length() > 2) {
             throw new Exception("[" + line + "," + column + "] value too large");
-        if (expression.getValue() < 0)
+        }
+        if (expression.getValue() < 0) {
             throw new Exception("[" + line + "," + column + "] value can't be negative");
-        
-        for (int i = 0; i < expression.getValue(); i++)
+        }
+
+        for (int i = 0; i < expression.getValue(); i++) {
             str += "00";
+        }
         hex.putCode(str);
     }
-
 }

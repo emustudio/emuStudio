@@ -37,5 +37,6 @@ public abstract class CodeNode extends CodePseudoNode {
         super(line, column);
     }
 
+    @Override
     public boolean isPseudo() { return false; }
 }
