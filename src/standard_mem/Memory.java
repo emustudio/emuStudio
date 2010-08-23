@@ -22,41 +22,54 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package standard_mem;
 
+import interfaces.C8359A12CD034D1A0481074BD7AF5C00B4BCEE3A3;
 import java.io.File;
 import java.util.Collections;
 import java.util.Vector;
 
 import standard_mem.gui.frmMemory;
 import plugins.ISettingsHandler;
-import plugins.memory.IMemory;
 import plugins.memory.IMemoryContext;
-
+import plugins.memory.SimpleMemory;
+import runtime.Context;
+import runtime.StaticDialogs;
 
 /**
  *
  * @author vbmacher
  */
-public class Memory implements IMemory {
-    private MemoryContext memContext;
-    private long hash;
-    private frmMemory memGUI;
-    private ISettingsHandler settings;
+public class Memory extends SimpleMemory {
 
-    @Override
-    public String getDescription() {
-        return "Operating memory for most CPUs. Every cell is one byte long." +
-        		"This plugin supports banking" +
-                " controllable via context.";
+    private MemoryContext memContext;
+    private frmMemory memGUI;
+
+    private final static int DEFAULT_MEM_SIZE = 65536;
+
+    /** Creates a new instance of Memory */
+    public Memory(Long pluginID) {
+        super(pluginID);
+        memContext = new MemoryContext();
+        if (!(Context.getInstance().register(pluginID, memContext,
+                C8359A12CD034D1A0481074BD7AF5C00B4BCEE3A3.class)
+                && Context.getInstance().register(pluginID, memContext,
+                IMemoryContext.class))) {
+            StaticDialogs.showMessage("Error: Could not register the memory");
+        }
     }
 
     @Override
-    public String getVersion() { return "0.28-rc1"; }
-    
+    public String getDescription() {
+        return "Operating memory for most CPUs. Every cell is one byte long."
+                + "This plugin supports banking"
+                + " controllable via context.";
+    }
+
     @Override
-    public long getHash() { return hash; }
+    public String getVersion() {
+        return "0.28-rc1";
+    }
 
     @Override
     public String getTitle() {
@@ -65,18 +78,7 @@ public class Memory implements IMemory {
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2009, P. Jakubčo";
-    }
-
-    /** Creates a new instance of Memory */
-    public Memory(Long hash) {
-    	this.hash = hash;
-        memContext = new MemoryContext();
-    }
-
-    @Override
-    public void showGUI() {
-        if (memGUI != null) memGUI.setVisible(true);
+        return "\u00A9 Copyright 2006-2010, P. Jakubčo";
     }
 
     @Override
@@ -84,22 +86,14 @@ public class Memory implements IMemory {
         if (this.memGUI != null) {
             memGUI.dispose();
             this.memGUI = null;
+            memContext.destroy();
+            memContext = null;
         }
     }
 
     @Override
-    public IMemoryContext getContext() {
-        return memContext;
-    }
-
-    @Override
-    public int getProgramStart() {
-        return memContext.getProgramStart();
-    }
-    
-    @Override
     public int getSize() {
-    	return memContext.getSize();
+        return memContext.getSize();
     }
 
     /**
@@ -112,40 +106,69 @@ public class Memory implements IMemory {
      *     6. set rom ranges to memory
      */
     @Override
-    public boolean initialize(int size, ISettingsHandler sHandler) {
-        String s = sHandler.readSetting(hash, "banksCount");
-        int bCount = 0, bCommon = 0;        
-        if (s != null) { try { bCount = Integer.parseInt(s); } catch(Exception e) {} }
-        s = sHandler.readSetting(hash, "commonBoundary");
-        if (s != null) { try { bCommon = Integer.parseInt(s); } catch(Exception e) {} }        
-        this.settings = sHandler;
-        memContext.init(size, bCount,bCommon,memGUI);
-        memGUI = new frmMemory(this,settings);
-    
+    public boolean initialize(ISettingsHandler settings) {
+        super.initialize(settings);
+        String s = settings.readSetting(pluginID, "banksCount");
+        int bCount = 0, bCommon = 0;
+        if (s != null) {
+            try {
+                bCount = Integer.parseInt(s);
+            } catch (Exception e) {
+            }
+        }
+        s = settings.readSetting(pluginID, "commonBoundary");
+        if (s != null) {
+            try {
+                bCommon = Integer.parseInt(s);
+            } catch (Exception e) {
+            }
+        }
+        this.settings = settings;
+        memContext.init(DEFAULT_MEM_SIZE, bCount, bCommon, memGUI);
+        memGUI = new frmMemory(pluginID, this, memContext, settings);
+
         // load images
         int i = 0, adr = 0;
         String r = null;
         while (true) {
-            s = sHandler.readSetting(hash, "imageName" + i);
-            r = sHandler.readSetting(hash, "imageAddress" + i);
-            if (s == null) break;
-            if (new File(s).getName().toUpperCase().endsWith(".HEX"))
+            s = settings.readSetting(pluginID, "imageName" + i);
+            r = settings.readSetting(pluginID, "imageAddress" + i);
+            if (s == null) {
+                break;
+            }
+            if (new File(s).getName().toUpperCase().endsWith(".HEX")) {
                 memContext.loadHex(s, 0);
-            else {
-                if (r != null) try { adr = Integer.decode(r); } catch(Exception e) {}
+            } else {
+                if (r != null) {
+                    try {
+                        adr = Integer.decode(r);
+                    } catch (Exception e) {
+                    }
+                }
                 memContext.loadBin(s, adr, 0);
             }
             i++;
         }
 
         // load rom ranges
-        i = 0; int j,k;
+        i = 0;
+        int j, k;
         while (true) {
-            s = sHandler.readSetting(hash, "ROMfrom" + i);
-            r = sHandler.readSetting(hash, "ROMto" + i);
-            if ((s == null) || (r == null)) break;            
-            try { j = Integer.parseInt(s); } catch(Exception e) { break; }
-            try { k = Integer.parseInt(r); } catch(Exception e) { break; }
+            s = settings.readSetting(pluginID, "ROMfrom" + i);
+            r = settings.readSetting(pluginID, "ROMto" + i);
+            if ((s == null) || (r == null)) {
+                break;
+            }
+            try {
+                j = Integer.parseInt(s);
+            } catch (Exception e) {
+                break;
+            }
+            try {
+                k = Integer.parseInt(r);
+            } catch (Exception e) {
+                break;
+            }
             memContext.setROM(j, k);
             i++;
         }
@@ -157,21 +180,23 @@ public class Memory implements IMemory {
      * after start of the emulator. These settings correspond to
      * tab0 in frmSettings.
      */
-    public void saveSettings0(int banksCount, int commonBoundary, 
+    public void saveSettings0(int banksCount, int commonBoundary,
             Vector<String> imageFullNames, Vector<Integer> imageAddresses) {
-        settings.writeSetting(hash, "banksCount", String.valueOf(banksCount));
-        settings.writeSetting(hash, "commonBoundary", String.valueOf(commonBoundary));
+        settings.writeSetting(pluginID, "banksCount", String.valueOf(banksCount));
+        settings.writeSetting(pluginID, "commonBoundary", String.valueOf(commonBoundary));
 
         int i = 0;
         while (true) {
-            if (settings.readSetting(hash, "imageName"+i) != null) {
-                settings.removeSetting(hash, "imageName"+i);
-                settings.removeSetting(hash, "imageAddress"+i);
-            } else break;
+            if (settings.readSetting(pluginID, "imageName" + i) != null) {
+                settings.removeSetting(pluginID, "imageName" + i);
+                settings.removeSetting(pluginID, "imageAddress" + i);
+            } else {
+                break;
+            }
         }
-        for (i = 0; i < imageFullNames.size(); i++)  {
-            settings.writeSetting(hash, "imageName"+i, imageFullNames.get(i));
-            settings.writeSetting(hash, "imageAddress"+i, String.valueOf(imageAddresses.get(i)));
+        for (i = 0; i < imageFullNames.size(); i++) {
+            settings.writeSetting(pluginID, "imageName" + i, imageFullNames.get(i));
+            settings.writeSetting(pluginID, "imageAddress" + i, String.valueOf(imageAddresses.get(i)));
         }
     }
 
@@ -186,34 +211,34 @@ public class Memory implements IMemory {
         Object[] ar = keys.toArray();
 
         int i = 0;
-        while (settings.readSetting(hash, "ROMfrom"+i) != null) {
-            settings.removeSetting(hash, "ROMfrom"+i);
-            settings.removeSetting(hash, "ROMto"+i);
+        while (settings.readSetting(pluginID, "ROMfrom" + i) != null) {
+            settings.removeSetting(pluginID, "ROMfrom" + i);
+            settings.removeSetting(pluginID, "ROMto" + i);
             i++;
         }
-        
+
         for (i = 0; i < ar.length; i++) {
-            settings.writeSetting(hash, "ROMfrom" + i, String.valueOf(ar[i]));
-            settings.writeSetting(hash, "ROMto" + i, 
+            settings.writeSetting(pluginID, "ROMfrom" + i, String.valueOf(ar[i]));
+            settings.writeSetting(pluginID, "ROMto" + i,
                     String.valueOf(memContext.getROMRanges().get(ar[i])));
         }
     }
-    
-    /**
-     * Clear memory? no ..not.
-     */
-    @Override
-    public void reset() { }
 
     @Override
     public void setProgramStart(int address) {
+        super.setProgramStart(address);
         memContext.lastImageStart = address;
     }
 
-	@Override
-	public void showSettings() {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+    public void showSettings() {
+        if (memGUI != null) {
+            memGUI.setVisible(true);
+        }
+    }
 
+    @Override
+    public boolean isShowSettingsSupported() {
+        return true;
+    }
 }
