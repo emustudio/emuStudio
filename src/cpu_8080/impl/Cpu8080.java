@@ -27,7 +27,7 @@
 package cpu_8080.impl;
 
 import cpu_8080.gui.statusGUI;
-import interfaces.ACpuContext;
+import interfaces.C3C5D7C38F2946670D8947CF70447DF7C28B07F56;
 import interfaces.IICpuListener;
 import java.util.TimerTask;
 import javax.swing.JPanel;
@@ -80,7 +80,7 @@ public class Cpu8080 extends SimpleCPU {
     public Cpu8080(Long pluginID) {
         super(pluginID);
         cpu = new CpuContext(this);
-        if (!Context.getInstance().register(pluginID, cpu, ACpuContext.class)) {
+        if (!Context.getInstance().register(pluginID, cpu, C3C5D7C38F2946670D8947CF70447DF7C28B07F56.class)) {
             StaticDialogs.showMessage("Error: Could not register this CPU!");
         }
         status = new statusGUI(this, cpu);
@@ -116,6 +116,7 @@ public class Cpu8080 extends SimpleCPU {
 
         if (mem == null) {
             StaticDialogs.showErrorMessage("CPU must have access to memory");
+            return false;
         }
         if (mem.getDataType() != Short.class) {
             StaticDialogs.showErrorMessage("Operating memory type is not supported"
