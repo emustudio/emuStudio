@@ -22,7 +22,7 @@
  */
 package standard_mem;
 
-import interfaces.C8359A12CD034D1A0481074BD7AF5C00B4BCEE3A3;
+import interfaces.C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileReader;
@@ -41,7 +41,7 @@ import runtime.StaticDialogs;
  *
  * @author vbmacher
  */
-public class MemoryContext extends SimpleMemoryContext implements C8359A12CD034D1A0481074BD7AF5C00B4BCEE3A3 {
+public class MemoryContext extends SimpleMemoryContext implements C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8 {
 
     public int lastImageStart = 0;
     private boolean lastStartSet = false;

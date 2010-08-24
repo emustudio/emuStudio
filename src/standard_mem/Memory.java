@@ -24,7 +24,7 @@
  */
 package standard_mem;
 
-import interfaces.C8359A12CD034D1A0481074BD7AF5C00B4BCEE3A3;
+import interfaces.C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8;
 import java.io.File;
 import java.util.Collections;
 import java.util.Vector;
@@ -52,7 +52,7 @@ public class Memory extends SimpleMemory {
         super(pluginID);
         memContext = new MemoryContext();
         if (!(Context.getInstance().register(pluginID, memContext,
-                C8359A12CD034D1A0481074BD7AF5C00B4BCEE3A3.class)
+                C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8.class)
                 && Context.getInstance().register(pluginID, memContext,
                 IMemoryContext.class))) {
             StaticDialogs.showMessage("Error: Could not register the memory");

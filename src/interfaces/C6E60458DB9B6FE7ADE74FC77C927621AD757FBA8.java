@@ -33,7 +33,7 @@ import plugins.memory.IMemoryContext;
  * 
  * @author vbmacher
  */
-public interface C8359A12CD034D1A0481074BD7AF5C00B4BCEE3A3 extends IMemoryContext {
+public interface C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8 extends IMemoryContext {
     public boolean isRom(int address);
     public Hashtable<Integer,Integer> getROMRanges();
     public void setRAM(int from, int to);
