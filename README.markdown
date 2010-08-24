@@ -1,13 +1,11 @@
 What's this?
 ------------
 
-This is abstract tape used for abstract machines (such as Turing, RAM,
-RASP, etc.).
+This is abstract tape used by RAM abstract machine (ram-cpu).
 
 Installation
 ------------
 
-Plugin has to be compiled into single "jar" file and then it should be
-inserted in `devices` directory where *emuStudio* is installed.
+Put the plug-in to `devices` directory where the *emuStudio* is installed.
 
 For example: `emuStudio/devices/abstractTape-ram.jar`.
