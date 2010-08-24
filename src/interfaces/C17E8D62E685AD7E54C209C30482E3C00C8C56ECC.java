@@ -31,7 +31,7 @@ import plugins.device.IDeviceContext;
  * CPU context for 8080 processor
  * @author vbmacher
  */
-public interface ACpuContext extends ICPUContext {
+public interface C17E8D62E685AD7E54C209C30482E3C00C8C56ECC extends ICPUContext {
     public boolean attachDevice(IDeviceContext listener, int port);
     public void detachDevice(int port);
     
