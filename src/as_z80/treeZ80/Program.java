@@ -24,10 +24,10 @@
  */
 package as_z80.treeZ80;
 
-import as_z80.impl.HEXFileHandler;
 import as_z80.impl.NeedMorePassException;
 import as_z80.impl.Namespace;
 import java.util.Vector;
+import plugins.compiler.HEXFileHandler;
 
 /**
  *

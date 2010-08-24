@@ -22,39 +22,45 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_z80.treeZ80;
 
-import as_z80.impl.HEXFileHandler;
 import as_z80.impl.Namespace;
 import as_z80.treeZ80Abstract.DataValue;
 import as_z80.treeZ80Abstract.Expression;
+import plugins.compiler.HEXFileHandler;
 
 /**
  *
  * @author vbmacher
  */
-public class DataDW extends DataValue{
+public class DataDW extends DataValue {
+
     private Expression expression = null;
-    
+
     /** Creates a new instance of DataDW */
     public DataDW(Expression expr, int line, int column) {
-        super(line,column);
+        super(line, column);
         this.expression = expr;
     }
-    
-    /// compile time ///
-    public int getSize() { return 2; }
-    
-    public void pass1() {}
 
+    /// compile time ///
+    @Override
+    public int getSize() {
+        return 2;
+    }
+
+    @Override
+    public void pass1() {
+    }
+
+    @Override
     public int pass2(Namespace env, int addr_start) throws Exception {
         expression.eval(env, addr_start);
         return addr_start + 2;
     }
 
+    @Override
     public void pass4(HEXFileHandler hex) throws Exception {
         hex.putCode(expression.encodeValue(2));
     }
-
 }

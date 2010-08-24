@@ -22,43 +22,44 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_z80.treeZ80Abstract;
 
-import as_z80.impl.HEXFileHandler;
 import as_z80.impl.Namespace;
+import plugins.compiler.HEXFileHandler;
 
 /**
  *
  * @author vbmacher
  */
 public abstract class DataValue {
-    
+
     protected int line;
     protected int column;
-    
+
     public DataValue(int line, int column) {
         this.line = line;
         this.column = column;
     }
-    
+
     /// compile time ///
     public abstract int getSize();
+
     public abstract void pass1() throws Exception;
+
     public abstract int pass2(Namespace env, int addr_start) throws Exception;
+
     public abstract void pass4(HEXFileHandler hex) throws Exception;
-    
+
     /**
      * encode string into hex codes
-     */ 
+     */
     protected String encodeValue(String literal) {
         byte[] byts = literal.getBytes();
         String enc = "";
-        
-        for (int i = 0; i < byts.length; i++)
-            enc += Expression.encodeValue((int)byts[i],1);
+
+        for (int i = 0; i < byts.length; i++) {
+            enc += Expression.encodeValue((int) byts[i], 1);
+        }
         return enc;
     }
-
-    
 }

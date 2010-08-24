@@ -24,8 +24,8 @@
  */
 package as_z80.treeZ80Abstract;
 
-import as_z80.impl.HEXFileHandler;
 import as_z80.impl.Namespace;
+import plugins.compiler.HEXFileHandler;
 
 /**
  *

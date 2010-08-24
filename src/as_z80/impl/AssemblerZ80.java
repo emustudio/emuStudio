@@ -30,6 +30,7 @@ import plugins.compiler.ICompiler;
 import plugins.compiler.ILexer;
 import plugins.memory.IMemoryContext;
 import as_z80.treeZ80.Program;
+import plugins.compiler.HEXFileHandler;
 import plugins.compiler.SimpleCompiler;
 import runtime.Context;
 

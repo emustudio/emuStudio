@@ -23,7 +23,6 @@
 package as_z80.treeZ80;
 
 import as_z80.impl.AssemblerZ80;
-import as_z80.impl.HEXFileHandler;
 import as_z80.impl.Namespace;
 import as_z80.impl.LexerZ80;
 import as_z80.impl.ParserZ80;
@@ -32,6 +31,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Vector;
 import as_z80.treeZ80Abstract.Pseudo;
+import plugins.compiler.HEXFileHandler;
 
 /**
  *
