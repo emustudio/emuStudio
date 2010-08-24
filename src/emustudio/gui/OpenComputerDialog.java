@@ -87,7 +87,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         private String[] allModels;
 
         public ArchListModel() {
-            allModels = ArchLoader.getAllNames(ArchLoader.configsDir, ".conf");
+            allModels = ArchLoader.getAllNames(ArchLoader.CONFIGS_DIR, ".conf");
         }
 
         @Override
@@ -105,7 +105,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         }
 
         public void update() {
-            allModels = ArchLoader.getAllNames(ArchLoader.configsDir,
+            allModels = ArchLoader.getAllNames(ArchLoader.CONFIGS_DIR,
                     ".conf");
             this.fireContentsChanged(this, -1, -1);
         }

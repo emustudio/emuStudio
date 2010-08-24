@@ -57,7 +57,7 @@ import runtime.StaticDialogs;
  * @author  vbmacher
  */
 @SuppressWarnings("serial")
-public class ViewArchDialog extends JDialog {
+public class ViewComputerDialog extends JDialog {
 
     private boolean easterClicked = false; // for easterEgg
     private ArchHandler arch;
@@ -73,7 +73,7 @@ public class ViewArchDialog extends JDialog {
      * @param parent parent frame
      * @param modal whether this dialog should be modal
      */
-    public ViewArchDialog(JFrame parent, boolean modal) {
+    public ViewComputerDialog(JFrame parent, boolean modal) {
         super(parent, modal);
         arch = Main.currentArch;
         initComponents();
@@ -89,12 +89,17 @@ public class ViewArchDialog extends JDialog {
         }
 
         try {
-            ICompiler compiler = arch.getComputer().getCompiler();
-
             lblName.setText(arch.getComputerName());
-            lblCompilerFileName.setText(compilerName + ".jar");
 
-            if (compiler != null) {
+            ICompiler compiler = arch.getComputer().getCompiler();
+            if (compiler == null) {
+                lblCompilerFileName.setText("Compiler is not used");
+                lblCompilerName.setText("");
+                lblCompilerVersion.setText("");
+                txtCompilerCopyright.setText("");
+                txtCompilerDescription.setText("");
+            } else {
+                lblCompilerFileName.setText(compilerName + ".jar");
                 lblCompilerName.setText(compiler.getTitle());
                 lblCompilerVersion.setText(compiler.getVersion());
                 txtCompilerCopyright.setText(compiler.getCopyright());
@@ -124,19 +129,22 @@ public class ViewArchDialog extends JDialog {
                 cmbDevice.addItem(devNames.get(i));
             }
         } catch (NullPointerException e) {
-            StaticDialogs.showErrorMessage("Can't get plugins info:" + e.getMessage());
+            StaticDialogs.showErrorMessage("Error: Can't get plug-ins information\n\n"
+                    + e.getMessage());
         }
 
         if (cmbDevice.getItemCount() > 0) {
-            showDevConfig(0);
-        }
+            showDevice(0);
+        } else
+            cmbDevice.setEnabled(false);
+        
         cmbDevice.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
                 int i = cmbDevice.getSelectedIndex();
                 try {
-                    showDevConfig(i);
+                    showDevice(i);
                 } catch (Exception ex) {
                 }
             }
@@ -148,7 +156,12 @@ public class ViewArchDialog extends JDialog {
         this.setLocationRelativeTo(null);
     }
 
-    private void showDevConfig(int i) {
+    /**
+     * Shows i-th device from the combo box.
+     *
+     * @param i the device index to show
+     */
+    private void showDevice(int i) {
         IDevice device = arch.getComputer().getDevice(i);
 
         lblDeviceFileName.setText(devNames.get(i) + ".jar");
@@ -215,7 +228,7 @@ public class ViewArchDialog extends JDialog {
         scrollScheme = new JScrollPane();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("View current configuration");
+        setTitle("View computer");
         setAlwaysOnTop(true);
 
         lblName.setFont(lblName.getFont().deriveFont(lblName.getFont().getStyle() | java.awt.Font.BOLD));

@@ -45,7 +45,6 @@ import java.util.Hashtable;
 import java.util.Properties;
 
 import plugins.IPlugin;
-import plugins.ISettingsHandler;
 import plugins.compiler.ICompiler;
 import plugins.memory.IMemory;
 import plugins.cpu.ICPU;
@@ -112,27 +111,27 @@ public class ArchLoader {
     /**
      * Directory name where the virtual computer configurations are stored.
      */
-    public final static String configsDir = "config";
+    public final static String CONFIGS_DIR = "config";
 
     /**
      * Directory name where CPUs are stored.
      */
-    public final static String cpusDir = "cpu";
+    public final static String CPUS_DIR = "cpu";
 
     /**
      * Directory name where compilers are stored.
      */
-    public final static String compilersDir = "compilers";
+    public final static String COMPILERS_DIR = "compilers";
 
     /**
      * Directory name where memories are stored.
      */
-    public final static String memoriesDir = "mem";
+    public final static String MEMORIES_DIR = "mem";
 
     /**
      * Directory name where devices are stored.
      */
-    public final static String devicesDir = "devices";
+    public final static String DEVICES_DIR = "devices";
 
     private static long nextPluginID = 0;
     
@@ -175,13 +174,13 @@ public class ArchLoader {
      * @return true if the operation was successful, false otherwise
      */
     public static boolean deleteConfig(String configName) {
-        File f = new File(System.getProperty("user.dir") + 
-                File.separator + configsDir + File.separator + configName
+        File file = new File(System.getProperty("user.dir") +
+                File.separator + CONFIGS_DIR + File.separator + configName
                 + ".conf");
-        if (!f.exists())
+        if (!file.exists())
             return false;
         try {
-            return f.delete();
+            return file.delete();
         } catch(Exception e) {
         }
         return false;
@@ -196,7 +195,7 @@ public class ArchLoader {
      */
     public static boolean renameConfig(String newName, String oldName) {
         File f = new File(System.getProperty("user.dir") +
-                File.separator + configsDir + File.separator + oldName
+                File.separator + CONFIGS_DIR + File.separator + oldName
                 + ".conf");
         if (!f.exists())
             return false;
@@ -417,7 +416,7 @@ public class ArchLoader {
         try{
             Properties p = new Properties();
             File f = new File(System.getProperty("user.dir") + 
-                    File.separator + configsDir + File.separator + configName
+                    File.separator + CONFIGS_DIR + File.separator + configName
                     + ".conf");
             if (!f.exists()) return null;
             FileInputStream fin = new FileInputStream(f);
@@ -470,7 +469,7 @@ public class ArchLoader {
     public static void writeConfig(String configName, Properties settings) {
         try {
             String dir = System.getProperty("user.dir") + File.separator
-                    + configsDir;
+                    + CONFIGS_DIR;
             File dirFile = new File(dir);
             if (!dirFile.exists() || (dirFile.exists() && !dirFile.isDirectory())) {
                 if (!dirFile.mkdir())
@@ -514,7 +513,7 @@ public class ArchLoader {
             if (comName != null) {
                 id = createPluginID();
                 // the compiler is defined in the config file
-                compiler = (ICompiler)loadPlugin(compilersDir,
+                compiler = (ICompiler)loadPlugin(COMPILERS_DIR,
                         comName,ICompiler.class, id);
                 if (compiler == null)
                     throw new IllegalArgumentException("Compiler '" + comName
@@ -528,7 +527,7 @@ public class ArchLoader {
             if (cpuName == null)
                 throw new IllegalArgumentException("CPU is not defined.");
             id = createPluginID();
-            ICPU cpu = (ICPU)loadPlugin(cpusDir, cpuName, ICPU.class, id);
+            ICPU cpu = (ICPU)loadPlugin(CPUS_DIR, cpuName, ICPU.class, id);
             if (cpu == null)
                 throw new IllegalArgumentException("CPU '" + cpuName
                         + "' cannot be loaded.");
@@ -541,7 +540,7 @@ public class ArchLoader {
             String memName = settings.getProperty("memory");
             if (memName != null) {
                 id = createPluginID();
-                mem = (IMemory)loadPlugin(memoriesDir, memName,IMemory.class, id);
+                mem = (IMemory)loadPlugin(MEMORIES_DIR, memName,IMemory.class, id);
                 if (mem == null)
                     throw new IllegalArgumentException("Memory '" + memName
                             + "' cannot be loaded.");
@@ -555,7 +554,7 @@ public class ArchLoader {
             for (int i = 0; settings.containsKey("device"+i); i++) {
             	String devName = settings.getProperty("device"+i);
                 id = createPluginID();
-                IDevice dev = (IDevice)loadPlugin(devicesDir, devName,
+                IDevice dev = (IDevice)loadPlugin(DEVICES_DIR, devName,
                         IDevice.class, id);
                 if (dev != null) {
                     pluginsReverse.put(dev, id);
@@ -632,7 +631,7 @@ public class ArchLoader {
                     plugins, pluginsReverse, connections);
             runtime.Context.getInstance().assignComputer(Main.getPassword(),
                     arch);
-            return new ArchHandler(name, arch, settings, loadSchema(name),
+            return new ArchHandler(arch, settings, loadSchema(name),
                     pluginNames, verbose);
         }
         catch (IllegalArgumentException e) {

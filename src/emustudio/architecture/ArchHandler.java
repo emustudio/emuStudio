@@ -47,6 +47,8 @@ public class ArchHandler implements ISettingsHandler {
     private Schema schema;
     private Hashtable<Long, String> pluginNames;
 
+    private static final String EMPTY_STRING = "";
+
     /**
      * Special setting "verbose". If it is
      * set and a plugin asks for "verbose" setting,
@@ -58,7 +60,6 @@ public class ArchHandler implements ISettingsHandler {
     /**
      * Creates new virtual computer architecture and initializes all plug-ins.
      * 
-     * @param name         Name of the architecture
      * @param arch         Virtual computer, handling the structure of plug-ins
      * @param settings     Architecture settings (Properties)
      * @param schema       Abstract schema of the architecture
@@ -67,12 +68,9 @@ public class ArchHandler implements ISettingsHandler {
      *  
      * @throws Error if initialization of the architecture failed.
      */
-    public ArchHandler(String name, Computer arch, Properties settings,
+    public ArchHandler(Computer arch, Properties settings,
             Schema schema, Hashtable<Long, String> pluginNames, boolean verbose)
             throws Error {
-        if (name == null) {
-            name = "";
-        }
         this.computer = arch;
         this.settings = settings;
         this.schema = schema;
@@ -156,15 +154,15 @@ public class ArchHandler implements ISettingsHandler {
         if (plug == null)
             return null;
 
-        if (settingName.toUpperCase().equals("VERBOSE"))
+        if (settingName.equalsIgnoreCase("VERBOSE"))
             return verbose ? "true" : "false";
 
         String prop = pluginNames.get(pluginID);
 
-        if ((prop == null) || prop.equals(""))
+        if ((prop == null) || prop.equals(EMPTY_STRING))
             return null;
         
-        if ((settingName != null) && (!settingName.equals("")))
+        if ((settingName != null) && (!settingName.equals(EMPTY_STRING)))
             prop += "." + settingName;
 
         return settings.getProperty(prop, null);
@@ -217,7 +215,7 @@ public class ArchHandler implements ISettingsHandler {
      */
     @Override
     public void writeSetting(long hash, String settingName, String val) {
-        if (settingName == null || settingName.equals("")) {
+        if (settingName == null || settingName.equals(EMPTY_STRING)) {
             return;
         }
 
@@ -226,7 +224,7 @@ public class ArchHandler implements ISettingsHandler {
             return;
         }
 
-        String prop = "";
+        String prop = EMPTY_STRING;
         if (plug instanceof IDevice) {
             // search for device
             prop = pluginNames.get(hash);
@@ -238,7 +236,7 @@ public class ArchHandler implements ISettingsHandler {
             prop = "compiler";
         }
 
-        if (prop.equals("")) {
+        if (prop.equals(EMPTY_STRING)) {
             return;
         }
         prop += "." + settingName;
@@ -256,7 +254,7 @@ public class ArchHandler implements ISettingsHandler {
      */
     @Override
     public void removeSetting(long hash, String settingName) {
-        if (settingName == null || settingName.equals("")) {
+        if (settingName == null || settingName.equals(EMPTY_STRING)) {
             return;
         }
 
@@ -265,7 +263,7 @@ public class ArchHandler implements ISettingsHandler {
             return;
         }
 
-        String prop = "";
+        String prop = EMPTY_STRING;
 
         if (plug instanceof IDevice) {
             // search for device
@@ -278,7 +276,7 @@ public class ArchHandler implements ISettingsHandler {
             prop = "compiler";
         }
 
-        if (prop.equals("")) {
+        if (prop.equals(EMPTY_STRING)) {
             return;
         }
         prop += "." + settingName;

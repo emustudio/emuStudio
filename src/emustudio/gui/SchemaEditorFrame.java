@@ -280,7 +280,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
         toolDraw.add(btnCompiler);
 
         groupDraw.add(btnCPU);
-        btnCPU.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/cpu_24.gif"))); // NOI18N
+        btnCPU.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/cpu.gif"))); // NOI18N
         btnCPU.setToolTipText("Set CPU");
         btnCPU.setFocusable(false);
         btnCPU.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -316,7 +316,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
         toolDraw.add(btnRAM);
 
         groupDraw.add(btnDevice);
-        btnDevice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/input-gaming.png"))); // NOI18N
+        btnDevice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/device.png"))); // NOI18N
         btnDevice.setToolTipText("Add device");
         btnDevice.setFocusable(false);
         btnDevice.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -335,7 +335,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
         toolDraw.add(jSeparator5);
 
         groupDraw.add(btnLine);
-        btnLine.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/network-wired.png"))); // NOI18N
+        btnLine.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/connection.png"))); // NOI18N
         btnLine.setToolTipText("Add connection");
         btnLine.setFocusable(false);
         btnLine.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -394,7 +394,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
         toolDraw.add(cmbPlugin);
         toolDraw.add(jSeparator3);
 
-        btnUseGrid.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/Memory24.gif"))); // NOI18N
+        btnUseGrid.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/grid_memory.gif"))); // NOI18N
         btnUseGrid.setSelected(true);
         btnUseGrid.setToolTipText("Use grid?");
         btnUseGrid.setFocusable(false);
@@ -463,7 +463,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
             return;
         }
         buttonSelected = true;
-        String[] cpus = ArchLoader.getAllNames(ArchLoader.cpusDir, ".jar");
+        String[] cpus = ArchLoader.getAllNames(ArchLoader.CPUS_DIR, ".jar");
         cmbPlugin.setModel(new pluginModel(cpus));
         try {
             cmbPlugin.setSelectedIndex(0);
@@ -481,7 +481,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
             return;
         }
         buttonSelected = true;
-        String[] mems = ArchLoader.getAllNames(ArchLoader.memoriesDir, ".jar");
+        String[] mems = ArchLoader.getAllNames(ArchLoader.MEMORIES_DIR, ".jar");
         cmbPlugin.setModel(new pluginModel(mems));
         try {
             cmbPlugin.setSelectedIndex(0);
@@ -499,7 +499,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
             return;
         }
         buttonSelected = true;
-        String[] devs = ArchLoader.getAllNames(ArchLoader.devicesDir, ".jar");
+        String[] devs = ArchLoader.getAllNames(ArchLoader.DEVICES_DIR, ".jar");
         cmbPlugin.setModel(new pluginModel(devs));
         try {
             cmbPlugin.setSelectedIndex(0);
@@ -647,7 +647,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
             return;
         }
         buttonSelected = true;
-        String[] compilers = ArchLoader.getAllNames(ArchLoader.compilersDir,
+        String[] compilers = ArchLoader.getAllNames(ArchLoader.COMPILERS_DIR,
                     ".jar");
         cmbPlugin.setModel(new pluginModel(compilers));
         try {

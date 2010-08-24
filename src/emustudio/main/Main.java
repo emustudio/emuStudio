@@ -34,6 +34,9 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 
 /**
@@ -129,10 +132,28 @@ public class Main {
      */
     private static String computeHash(Class<?> inter) {
         int i;
-        Method[] methods;
+        Method[] methods, met;
         String hash = "";
 
-        methods = inter.getMethods();
+        met = inter.getDeclaredMethods(); //  .getMethods();
+        ArrayList me = new ArrayList();
+        for (i = 0; i < met.length; i++)
+            me.add(met[i]);
+        Collections.sort(me, new Comparator() {
+
+            @Override
+            public int compare(Object o1, Object o2) {
+                Method m1 = (Method)o1;
+                Method m2 = (Method)o2;
+
+                return m1.getName().compareTo(m2.getName());
+            }
+
+        });
+        methods = (Method[])me.toArray(new Method[0]);
+        me.clear();
+        me = null;
+
         for (i = 0; i < methods.length; i++) {
             hash += methods[i].getGenericReturnType().toString() + " ";
             hash += methods[i].getName() + "(";
@@ -141,6 +162,7 @@ public class Main {
                 hash += params[j].getName() + ",";
             hash += ");";
         }
+        System.out.println(hash);
         try {
             return runtime.Context.SHA1(hash);
         } catch(Exception e) {

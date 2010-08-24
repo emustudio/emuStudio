@@ -120,6 +120,11 @@ public class StudioFrame extends javax.swing.JFrame {
         memory = arch.getMemory();
         cpu = arch.getCPU();
 
+        if (compiler == null) {
+            btnCompile.setEnabled(false);
+            mnuProjectCompile.setEnabled(false);
+        }
+
         this.setStatusGUI();
         setupListeners();
 
@@ -320,7 +325,7 @@ public class StudioFrame extends javax.swing.JFrame {
         btnUndo = new JButton();
         btnRedo = new JButton();
         JSeparator jSeparator2 = new JSeparator();
-        JButton btnCompile = new JButton();
+        btnCompile = new JButton();
         JSplitPane splitSoure = new JSplitPane();
         jScrollPane1 = new JScrollPane();
         JScrollPane jScrollPane2 = new JScrollPane();
@@ -372,7 +377,7 @@ public class StudioFrame extends javax.swing.JFrame {
         JMenuItem mnuEditFindNext = new JMenuItem();
         JMenuItem mnuEditReplaceNext = new JMenuItem();
         JMenu mnuProject = new JMenu();
-        JMenuItem mnuProjectCompile = new JMenuItem();
+        mnuProjectCompile = new JMenuItem();
         JMenuItem mnuProjectViewConfig = new JMenuItem();
         mnuProjectCompilerSettings = new JMenuItem();
         JMenu mnuHelp = new JMenu();
@@ -584,7 +589,7 @@ public class StudioFrame extends javax.swing.JFrame {
         toolDebug.setBorder(null);
         toolDebug.setBorderPainted(false);
 
-        btnReset.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/view-refresh.png"))); // NOI18N
+        btnReset.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/reset.png"))); // NOI18N
         btnReset.setToolTipText("Reset emulation");
         btnReset.setFocusable(false);
         btnReset.addActionListener(new java.awt.event.ActionListener() {
@@ -683,7 +688,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnBreakpoint.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/preferences-desktop.png"))); // NOI18N
+        btnBreakpoint.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/breakpoints.png"))); // NOI18N
         btnBreakpoint.setToolTipText("Set/unset breakpoint to address...");
         btnBreakpoint.setFocusable(false);
         btnBreakpoint.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -696,7 +701,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
 
-        btnMemory.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/Memory24.gif"))); // NOI18N
+        btnMemory.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/grid_memory.gif"))); // NOI18N
         btnMemory.setToolTipText("Show operating memory");
         btnMemory.setFocusable(false);
         btnMemory.addActionListener(new java.awt.event.ActionListener() {
@@ -994,7 +999,7 @@ public class StudioFrame extends javax.swing.JFrame {
         });
         mnuProject.add(mnuProjectCompile);
 
-        mnuProjectViewConfig.setText("View configuration...");
+        mnuProjectViewConfig.setText("View computer...");
         mnuProjectViewConfig.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -1228,7 +1233,7 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void mnuProjectViewConfigActionPerformed(java.awt.event.ActionEvent evt) {
-        new ViewArchDialog(this, true).setVisible(true);
+        new ViewComputerDialog(this, true).setVisible(true);
     }
 
     private void mnuProjectCompilerSettingsActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1426,4 +1431,6 @@ public class StudioFrame extends javax.swing.JFrame {
     JTextArea txtOutput;
     JMenuItem mnuProjectCompilerSettings;
     JButton btnMemory;
+    JButton btnCompile;
+    JMenuItem mnuProjectCompile;
 }
