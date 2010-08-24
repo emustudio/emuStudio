@@ -23,7 +23,7 @@ package interfaces;
 
 import plugins.device.IDeviceContext;
 
-public interface IAbstractTapeContext extends IDeviceContext {
+public interface C50E67F515A7C87A67947F8FB0F82558196BE0AC7 extends IDeviceContext {
 	/**
 	 * Clear content of the tape leaving only one empty string
 	 * symbol on the position 0.
@@ -74,5 +74,7 @@ public interface IAbstractTapeContext extends IDeviceContext {
 	public void setPosVisible(boolean visible);
 	
 	public void setClearAtReset(boolean clear);
+
+        public void setTitle(String title);
 
 }

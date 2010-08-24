@@ -21,112 +21,96 @@
  */
 package ramcpu.impl;
 
-import interfaces.IAbstractTapeContext;
-import interfaces.IRAMCPUContext;
+import interfaces.C50E67F515A7C87A67947F8FB0F82558196BE0AC7;
+import plugins.cpu.ICPUContext;
 
-import java.util.EventObject;
+import runtime.Context;
+import runtime.StaticDialogs;
 
-import javax.swing.event.EventListenerList;
+public class RAMContext implements ICPUContext {
 
-import plugins.device.IDeviceContext;
-
-public class RAMContext implements IRAMCPUContext {
-    private final static String KNOWN_TAPE = "ea9beaff230249da3c2e71d91c469c2a"; 
-    private EventListenerList listenerList;
-    private EventObject cpuEvt;
     private RAM cpu;
-    
-    private IAbstractTapeContext[] tapes;
+    private C50E67F515A7C87A67947F8FB0F82558196BE0AC7[] tapes;
 
     public RAMContext(RAM cpu) {
-    	this.cpu = cpu;
-        listenerList = new EventListenerList();
-        cpuEvt = new EventObject(this);
-        tapes = new IAbstractTapeContext[3];
+        this.cpu = cpu;
+        tapes = new C50E67F515A7C87A67947F8FB0F82558196BE0AC7[3];
     }
-    
-	@Override
-	public void addCPUListener(ICPUListener listener) {
-        listenerList.add(ICPUListener.class, listener);
-	}
 
-	@Override
-	public void removeCPUListener(ICPUListener listener) {
-        listenerList.remove(ICPUListener.class, listener);
-	}
+    public boolean init(long pluginID) {
+        try {
+            tapes[0] = (C50E67F515A7C87A67947F8FB0F82558196BE0AC7)
+                    Context.getInstance().getDeviceContext(pluginID,
+                    C50E67F515A7C87A67947F8FB0F82558196BE0AC7.class, 0);
+            if (tapes[0] == null) {
+                StaticDialogs.showErrorMessage("Could not get the Registers"
+                        + " (storage tape)");
+                return false;
+            }
+            tapes[0].setBounded(true);
+            tapes[0].setEditable(true);
+            tapes[0].setPosVisible(false);
+            tapes[0].setClearAtReset(true);
+            tapes[0].setTitle("Registers (storage tape)");
 
-	@Override
-	public String getHash() {
-		return "ce861f51295b912a76a7df538655ab0f";
-	}
+            tapes[1] = (C50E67F515A7C87A67947F8FB0F82558196BE0AC7)
+                    Context.getInstance().getDeviceContext(pluginID,
+                    C50E67F515A7C87A67947F8FB0F82558196BE0AC7.class, 1);
+            if (tapes[1] == null) {
+                StaticDialogs.showErrorMessage("Could not get the Input tape");
+                return false;
+            }
+            tapes[1].setBounded(true);
+            tapes[1].setEditable(true);
+            tapes[1].setPosVisible(true);
+            tapes[1].setClearAtReset(false);
+            tapes[1].setTitle("Input tape");
+            cpu.loadTape(tapes[1]);
 
-	@Override
-	public String getID() {
-		return "ram-cpu-context";
-	}
-
-    public void fireCpuRun(int run_state) {
-        Object[] listeners = listenerList.getListenerList();
-        for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i] == ICPUListener.class)
-                ((ICPUListener)listeners[i+1]).runChanged(cpuEvt, run_state);
+            tapes[2] = (C50E67F515A7C87A67947F8FB0F82558196BE0AC7)
+                    Context.getInstance().getDeviceContext(pluginID,
+                    C50E67F515A7C87A67947F8FB0F82558196BE0AC7.class, 2);
+            if (tapes[2] == null) {
+                StaticDialogs.showErrorMessage("Could not get the Output tape");
+                return false;
+            }
+            tapes[2].setBounded(true);
+            tapes[2].setEditable(false);
+            tapes[2].setPosVisible(true);
+            tapes[2].setClearAtReset(true);
+            tapes[2].setTitle("Output tape");
+        } catch (IndexOutOfBoundsException e) {
+            StaticDialogs.showErrorMessage("One or more tapes needs to"
+                    + " be connected to the CPU!");
+            return false;
         }
+        return true;
     }
 
-    public IAbstractTapeContext getStorage() { return tapes[0]; }
-    public IAbstractTapeContext getInput() { return tapes[1]; }
-    public IAbstractTapeContext getOutput() { return tapes[2]; }
-    
-    public void fireCpuState() {
-        Object[] listeners = listenerList.getListenerList();
-        for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i] == ICPUListener.class)
-                ((ICPUListener)listeners[i+1]).stateUpdated(cpuEvt);
-        }
-    }
-    
     @Override
-    public String attachTape(IDeviceContext tape) {
-    	if (tape.getDataType() != String.class ||
-    			!tape.getHash().equals(KNOWN_TAPE) ||
-    			!(tape instanceof IAbstractTapeContext)) 
-    		return null;
-    	for (int i = 0; i < 3; i++) {
-    		if (tapes[i] == null) {
-    			tapes[i] = (IAbstractTapeContext)tape;
-    			switch (i) {
-    			case 0:
-    				tapes[i].setBounded(true);
-    				tapes[i].setEditable(true);
-    				tapes[i].setPosVisible(false);
-    				tapes[i].setClearAtReset(true);
-    				return "Registers (storage tape)";
-    			case 1:
-    				tapes[i].setBounded(true);
-    				tapes[i].setEditable(true);
-    				tapes[i].setPosVisible(true);
-    				tapes[i].setClearAtReset(false);
-    				cpu.loadTape(tapes[i]);
-    				return "Input tape";
-    			case 2:
-    				tapes[i].setBounded(true);
-    				tapes[i].setEditable(false);
-    				tapes[i].setPosVisible(true);
-    				tapes[i].setClearAtReset(true);
-    				return "Output tape";
-    			}
-    			return "Unknown";
-    		}
-    	}
-    	return "?";
+    public String getID() {
+        return "ram-cpu-context";
     }
-    
+
+    public C50E67F515A7C87A67947F8FB0F82558196BE0AC7 getStorage() {
+        return tapes[0];
+    }
+
+    public C50E67F515A7C87A67947F8FB0F82558196BE0AC7 getInput() {
+        return tapes[1];
+    }
+
+    public C50E67F515A7C87A67947F8FB0F82558196BE0AC7 getOutput() {
+        return tapes[2];
+    }
+
+
     public void destroy() {
-    	for (int i = 0; i < 3; i++) 
-    		tapes[i] = null;
-        listenerList = null;
+        for (int i = 0; i < 3; i++) {
+            tapes[i] = null;
+        }
     }
-    
+
     /**
      * Method checks if the machine contains correct all 3 tapes
      *  - input
@@ -135,9 +119,11 @@ public class RAMContext implements IRAMCPUContext {
      * @return true if yes, false otherwise
      */
     public boolean checkTapes() {
-    	for (int i = 0; i < 3; i++) 
-    		if (tapes[i] == null) return false;
-    	return true;
+        for (int i = 0; i < 3; i++) {
+            if (tapes[i] == null) {
+                return false;
+            }
+        }
+        return true;
     }
-    
 }
