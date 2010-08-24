@@ -21,7 +21,9 @@
  */
 package interfaces;
 
-public interface IRAMInstruction {
+import plugins.compiler.ICompilerContext;
+
+public interface C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E extends ICompilerContext {
 	public final static int READ = 1;
 	public final static int WRITE = 2;
 	public final static int LOAD = 3;

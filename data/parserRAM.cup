@@ -25,20 +25,20 @@
 
 import interfaces.IRAMInstruction;
 import java_cup.runtime.Symbol;
-import plugins.compiler.IMessageReporter;
 import plugins.compiler.IToken;
+import plugins.compiler.ICompiler;
 import java.util.Vector;
 import ramc_ram.tree.*;
 
 init with {: errorCount = 0; :}
 parser code {:
-    private IMessageReporter reporter = null;
+    private RAMCompiler ram = null;
     public IToken lastToken;
     public int errorCount = 0;
     
-    public RAMParser(java_cup.runtime.Scanner s, IMessageReporter reporter) {
+    public RAMParser(java_cup.runtime.Scanner s, RAMCompiler ram) {
         this(s);
-        this.reporter = reporter;
+        this.ram = ram;
     }
     	
     public void syntax_error(Symbol current) {
@@ -57,8 +57,8 @@ parser code {:
 
         IToken t = (IToken)current;
         mes = message + t.getErrorString() + " ('"+t.getText()+"')";
-
-        reporter.report(t.getLine()+1, t.getColumn(),mes, IMessageReporter.TYPE_ERROR);
+        
+        ram.print_text(t.getLine()+1, t.getColumn(),mes, ICompiler.TYPE_ERROR);
     }
 :}
 

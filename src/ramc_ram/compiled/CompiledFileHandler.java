@@ -21,31 +21,29 @@
  */
 package ramc_ram.compiled;
 
-import interfaces.IRAMInstruction;
-import interfaces.IRAMMemoryContext;
+import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
+import interfaces.CA93D6D53B2CCE716745DD211F110C6E387C12431;
 
 import java.util.ArrayList;
 
-import plugins.memory.IMemoryContext;
 import ramc_ram.tree.Label;
-import runtime.StaticDialogs;
 
 /**
-*
-* @author vbmacher
-*/
+ *
+ * @author vbmacher
+ */
 public class CompiledFileHandler {
-	private ArrayList<IRAMInstruction> program;
-	private String KNOWN_MEM_HASH = "894da3cf31d433afcee33c22a64d2ed9";
-	
-	public CompiledFileHandler() {
-		program = new ArrayList<IRAMInstruction>();
-	}
 
-    public void addCode(IRAMInstruction code) {
+    private ArrayList<C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E> program;
+
+    public CompiledFileHandler() {
+        program = new ArrayList<C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E>();
+    }
+
+    public void addCode(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E code) {
         program.add(code);
     }
-    
+
     /**
      * Method is similar to generateHex() method in that way, that
      * compiled program is also transformed into chunk of bytes, but
@@ -53,14 +51,8 @@ public class CompiledFileHandler {
      * 
      * @param mem context of operating memory
      */
-    public boolean loadIntoMemory(IMemoryContext mem) {
-        if (!mem.getHash().equals(KNOWN_MEM_HASH)
-                || !(mem instanceof IRAMMemoryContext)) {
-            StaticDialogs.showErrorMessage("Incompatible operating memory type!"
-                    + "\n\nThis compiler can't load file into this memory.");
-            return false;
-        }
-        IRAMMemoryContext rmem = (IRAMMemoryContext) mem;
+    public boolean loadIntoMemory(CA93D6D53B2CCE716745DD211F110C6E387C12431 mem) {
+        CA93D6D53B2CCE716745DD211F110C6E387C12431 rmem = mem;
         // load labels
         Label[] labels = CompilerEnvironment.getLabels();
         for (int i = 0; i < labels.length; i++) {
