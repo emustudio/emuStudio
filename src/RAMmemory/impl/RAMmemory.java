@@ -22,88 +22,100 @@
 package RAMmemory.impl;
 
 import RAMmemory.gui.MemoryWindow;
+import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
+import interfaces.CA93D6D53B2CCE716745DD211F110C6E387C12431;
 import plugins.ISettingsHandler;
-import plugins.memory.IMemory;
-import plugins.memory.IMemoryContext;
+import plugins.memory.SimpleMemory;
+import runtime.Context;
+import runtime.StaticDialogs;
 
-public class RAMmemory implements IMemory {
-	private long hash;
-	@SuppressWarnings("unused")
-	private ISettingsHandler settings;
-	private RAMContext context;
-	private MemoryWindow gui = null;
+public class RAMmemory extends SimpleMemory {
 
-	public RAMmemory(Long hash) {
-		this.hash = hash;
-		context = new RAMContext();
-	}
-	
-	@Override
-	public String getTitle() { return "RAM Memory"; }
+    private RAMContext context;
+    private MemoryWindow gui = null;
 
-	@Override
-	public String getVersion() { return "0.11-rc1"; }
+    public RAMmemory(Long pluginID) {
+        super(pluginID);
+        context = new RAMContext();
+        if (!Context.getInstance().register(pluginID, context,
+                CA93D6D53B2CCE716745DD211F110C6E387C12431.class))
+            StaticDialogs.showErrorMessage("Error: Could not register this memory");
+    }
 
-	@Override
-	public String getCopyright() {
-		return "\u00A9 Copyright 2009-2010, P. Jakubčo"; 
-	}
+    @Override
+    public String getTitle() {
+        return "RAM Memory";
+    }
 
-	@Override
-	public String getDescription() {
-		return "Operating memory for RAM machine. Contains program -" +
-				"tape. User can not manually edit the tape - it is" +
-				"a read only memory (filled once).";
-	}
-	
-	@Override
-	public IMemoryContext getContext() {
-		return context;
-	}
+    @Override
+    public String getVersion() {
+        return "0.11-rc1";
+    }
 
-	@Override
-	public int getProgramStart() { return 0; }
+    @Override
+    public String getCopyright() {
+        return "\u00A9 Copyright 2009-2010, P. Jakubčo";
+    }
 
-	@Override
-	public int getSize() {	return context.getSize(); }
+    @Override
+    public String getDescription() {
+        return "Operating memory for RAM machine. Contains program -"
+                + "tape. User can not manually edit the tape - it is"
+                + "a read only memory (filled once).";
+    }
 
-	@Override
-	public boolean initialize(int size, ISettingsHandler settings) {
-		this.settings = settings;
-		return true;
-	}
+    @Override
+    public boolean initialize(ISettingsHandler settings) {
+        super.initialize(settings);
+        if (Context.getInstance().getCompilerContext(pluginID,
+                C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.class) == null) {
+            StaticDialogs.showErrorMessage("Error: Could not access to the compiler");
+            return false;
+        }
+        return true;
+    }
 
-	@Override
-	// Program start is always 0
-	public void setProgramStart(int pos) { }
+    @Override
+    public int getProgramStart() {
+        return 0;
+    }
 
-	@Override
-	public void showGUI() {
-		if (gui == null) gui = new MemoryWindow(context);
-		gui.setVisible(true);
-	}
+    @Override
+    public int getSize() {
+        return context.getSize();
+    }
 
-	@Override
-	public void destroy() {
-		context.destroy();
-		context = null;
-		if (gui != null) {
-			gui.dispose();
-			gui = null;
-		}
-	}
+    @Override
+    // Program start is always 0
+    public void setProgramStart(int pos) {
+    }
 
-	@Override
-	public long getHash() { return hash; }
+    @Override
+    public void showSettings() {
+        if (gui == null) {
+            gui = new MemoryWindow(context);
+        }
+        gui.setVisible(true);
+    }
 
-	@Override
-	public void reset() { 
-		context.clearInputs();
-	}
+    @Override
+    public void destroy() {
+        context.destroy();
+        context = null;
+        if (gui != null) {
+            gui.dispose();
+            gui = null;
+        }
+    }
 
-	@Override
-	public void showSettings() {
-		// TODO Auto-generated method stub
-	}
+    @Override
+    public void reset() {
+        context.clearInputs();
+    }
+
+    @Override
+    public boolean isShowSettingsSupported() {
+        return true;
+    }
 
 }

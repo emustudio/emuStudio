@@ -25,7 +25,7 @@ import java.util.Vector;
 
 import plugins.memory.IMemoryContext;
 
-public interface IRAMMemoryContext extends IMemoryContext {
+public interface CA93D6D53B2CCE716745DD211F110C6E387C12431 extends IMemoryContext {
 	public void addLabel(int pos, String label);
 	public String getLabel(int pos);
 	
