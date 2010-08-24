@@ -23,7 +23,7 @@
 
 package cpu_8080.impl;
 
-import interfaces.C3C5D7C38F2946670D8947CF70447DF7C28B07F56;
+import interfaces.C17E8D62E685AD7E54C209C30482E3C00C8C56ECC;
 import java.util.Hashtable;
 import plugins.device.IDeviceContext;
 
@@ -32,7 +32,7 @@ import plugins.device.IDeviceContext;
  *
  * @author vbmacher
  */
-public class CpuContext implements C3C5D7C38F2946670D8947CF70447DF7C28B07F56 {
+public class CpuContext implements C17E8D62E685AD7E54C209C30482E3C00C8C56ECC {
     private Hashtable<Integer,IDeviceContext> devicesList;
     private int clockFrequency = 2000; // kHz
     private Cpu8080 cpu;
