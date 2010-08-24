@@ -23,7 +23,6 @@
 package as_8080.tree8080;
 
 import as_8080.impl.Assembler8080;
-import as_8080.impl.HEXFileHandler;
 import as_8080.impl.CompileEnv;
 import as_8080.impl.Lexer8080;
 import as_8080.impl.Parser8080;
@@ -33,6 +32,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Vector;
+import plugins.compiler.HEXFileHandler;
 
 /**
  *
@@ -86,13 +86,13 @@ public class IncludePseudoNode extends PseudoNode {
             Parser8080 par = new Parser8080(lex, asm);
 
             par.setReportAppendString(shortFileName + ": ");
-
             Object s = par.parse().value;
+            par.setReportAppendString(null);
+            
             if (s == null) {
                 throw new Exception("[" + line + "," + column + "] "
                         + "Error: Unexpected end of file (" + shortFileName + ")");
             }
-            par.setReportAppendString(null);
 
             program = (Statement) s;
             program.addIncludeFiles(includefiles);

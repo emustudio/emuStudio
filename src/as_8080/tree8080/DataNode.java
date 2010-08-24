@@ -24,12 +24,12 @@
  */
 package as_8080.tree8080;
 
-import as_8080.impl.HEXFileHandler;
 import as_8080.impl.CompileEnv;
 import as_8080.tree8080Abstract.CodeNode;
 import as_8080.tree8080Abstract.DataValueNode;
 
 import java.util.Vector;
+import plugins.compiler.HEXFileHandler;
 
 /**
  *

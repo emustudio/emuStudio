@@ -27,6 +27,7 @@ package as_8080.impl;
 import as_8080.tree8080.Statement;
 
 import java.io.Reader;
+import plugins.compiler.HEXFileHandler;
 
 import plugins.compiler.ICompiler;
 import plugins.compiler.ILexer;
@@ -48,7 +49,6 @@ public class Assembler8080 extends SimpleCompiler {
         super(pluginID);
         lex = new Lexer8080((Reader) null);
         par = new Parser8080(lex);
-
     }
 
     private void print_text(String mes, int type) {
