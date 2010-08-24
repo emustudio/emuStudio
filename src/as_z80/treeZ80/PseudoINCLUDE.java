@@ -20,9 +20,9 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_z80.treeZ80;
 
+import as_z80.impl.AssemblerZ80;
 import as_z80.impl.HEXFileHandler;
 import as_z80.impl.Namespace;
 import as_z80.impl.LexerZ80;
@@ -31,7 +31,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Vector;
-import plugins.compiler.IMessageReporter;
 import as_z80.treeZ80Abstract.Pseudo;
 
 /**
@@ -39,31 +38,24 @@ import as_z80.treeZ80Abstract.Pseudo;
  * @author vbmacher
  */
 public class PseudoINCLUDE extends Pseudo {
+
     private String filename;
     private String shortFileName;
     private Program program;
     private Namespace namespace;
-    
-    private class MRep implements IMessageReporter {
-        private IMessageReporter old;
-        public MRep(IMessageReporter r) {
-            old = r;
-        }
-        public void report(String message, int type) {
-            old.report(shortFileName + ": " + message, type);
-        }
-        public void report(int row, int col, String message, int type) {
-            old.report(row,col,shortFileName + ": " + message, type);
-        }
-    }
-    
-    public PseudoINCLUDE(String filename, int line, int column) {
-        super(line,column);
+    private AssemblerZ80 asm;
+
+    public PseudoINCLUDE(String filename, int line, int column, AssemblerZ80 asm) {
+        super(line, column);
         this.filename = filename;
         this.shortFileName = new File(filename).getName();
+        this.asm = asm;
     }
-    
-    public int getSize() { return program.getSize(); }
+
+    @Override
+    public int getSize() {
+        return program.getSize();
+    }
 
     /**
      * Method compare filename (in the include statement)
@@ -75,51 +67,61 @@ public class PseudoINCLUDE extends Pseudo {
         File f2 = new File(filename);
         String ff1 = f1.getAbsolutePath();
         String ff2 = f2.getAbsolutePath();
-        
-        if (ff1.equals(ff2)) return true;
-        else return false;
+
+        if (ff1.equals(ff2)) {
+            return true;
+        } else {
+            return false;
+        }
     }
-    
-    public void pass1(IMessageReporter r) throws Exception {}
-    public void pass1(IMessageReporter r, Vector<String> includefiles,
+
+    @Override
+    public void pass1() throws Exception {
+    }
+
+    public void pass1(Vector<String> includefiles,
             Namespace parent) throws Exception {
         try {
-            MRep rep = new MRep(r);
             FileReader f = new FileReader(new File(filename));
             LexerZ80 lex = new LexerZ80(f);
-            ParserZ80 par = new ParserZ80(lex, rep);
-            
+            ParserZ80 par = new ParserZ80(lex, asm);
+
+            par.setReportAppendString(shortFileName + ": ");
             Object s = par.parse().value;
-            if (s == null) 
-                throw new Exception("[" + line + "," + column + "] "+
-                        "Error: Unexpected end of file (" + shortFileName + ")");
-            program = (Program)s;
+            par.setReportAppendString(null);
+            if (s == null) {
+                throw new Exception("[" + line + "," + column + "] "
+                        + "Error: Unexpected end of file (" + shortFileName + ")");
+            }
+            program = (Program) s;
             program.addIncludeFiles(includefiles);
             namespace = parent;
-            
-            if (program.getIncludeLoops(filename))
-                throw new Exception("[" + line + "," + column + "] "+
-                        "Error: Infinite INCLUDE loop (" + shortFileName + ")");
-            program.pass1(namespace,rep); // create symbol table
+
+            if (program.getIncludeLoops(filename)) {
+                throw new Exception("[" + line + "," + column + "] "
+                        + "Error: Infinite INCLUDE loop (" + shortFileName + ")");
+            }
+            program.pass1(namespace); // create symbol table
         } catch (IOException e) {
             throw new Exception(shortFileName + ": I/O Error");
         } catch (Exception e) {
-            throw new Exception("[" + line + "," + column + "] "+
-                    e.getMessage());
+            throw new Exception("[" + line + "," + column + "] "
+                    + e.getMessage());
         }
     }
-  
 
+    @Override
     public int pass2(Namespace parentEnv, int addr_start) throws Exception {
-    	// try to evaluate all expressions + compute relative addresses
-    	return program.pass2(addr_start); 
+        // try to evaluate all expressions + compute relative addresses
+        return program.pass2(addr_start);
     }
 
+    @Override
     public void pass4(HEXFileHandler hex) throws Exception {
-        while (program.pass3(namespace) == true) ;
-        if (namespace.getPassNeedCount() != 0)
+        while (program.pass3(namespace) == true);
+        if (namespace.getPassNeedCount() != 0) {
             throw new Exception("Error: can't evaulate all expressions");
+        }
         program.pass4(hex);
     }
-
 }

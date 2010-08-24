@@ -22,13 +22,11 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_z80.treeZ80;
 
 import as_z80.impl.HEXFileHandler;
 import as_z80.impl.NeedMorePassException;
 import as_z80.impl.Namespace;
-import plugins.compiler.IMessageReporter;
 import as_z80.treeZ80Abstract.Expression;
 import as_z80.treeZ80Abstract.Pseudo;
 
@@ -37,19 +35,24 @@ import as_z80.treeZ80Abstract.Pseudo;
  * @author vbmacher
  */
 public class PseudoORG extends Pseudo {
+
     private Expression expr;
-    
+
     /** Creates a new instance of PseudoORG */
     public PseudoORG(Expression expr, int line, int column) {
         super(line, column);
         this.expr = expr;
     }
-    
+
     /// compile time ///
+    @Override
+    public int getSize() {
+        return 0;
+    }
 
-    public int getSize() { return 0; }
-
-    public void pass1(IMessageReporter rep) {}
+    @Override
+    public void pass1() {
+    }
 
     // org only changes current address
     // if expr isnt valuable, then error exception is thrown
@@ -58,18 +61,20 @@ public class PseudoORG extends Pseudo {
     // mvi a,50
     // label: hlt
     // label address cant be evaluated
+    @Override
     public int pass2(Namespace parentEnv, int addr_start) throws Exception {
         int val = addr_start;
-        try { val = expr.eval(parentEnv, addr_start); }
-        catch(NeedMorePassException e) {
-            throw new Exception("[" + line + "," + column 
+        try {
+            val = expr.eval(parentEnv, addr_start);
+        } catch (NeedMorePassException e) {
+            throw new Exception("[" + line + "," + column
                     + "] Error: ORG expression can't be ambiguous");
         }
         return val;
     }
 
+    @Override
     public void pass4(HEXFileHandler hex) throws Exception {
         hex.setNextAddress(expr.getValue());
     }
-    
 }

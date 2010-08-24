@@ -22,12 +22,10 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_z80.treeZ80;
 
 import as_z80.impl.HEXFileHandler;
 import as_z80.impl.Namespace;
-import plugins.compiler.IMessageReporter;
 import as_z80.treeZ80Abstract.Instruction;
 
 /**
@@ -35,6 +33,7 @@ import as_z80.treeZ80Abstract.Instruction;
  * @author vbmacher
  */
 public class OC_Reg extends Instruction {
+
     public static final int ADC = 0x88; //ADC A,r
     public static final int ADC_HL = 0xED4A; //ADC HL,rr
     public static final int ADD = 0x80; //ADD A,r
@@ -69,23 +68,25 @@ public class OC_Reg extends Instruction {
     public static final int SRL = 0xCB38; // SRL r
     public static final int SUB = 0x90; // SUB r
     public static final int XOR = 0xA8; // XOR r
-        
+
     /** Creates a new instance of OC_RegNode */
     public OC_Reg(int opcode, int reg, int line, int column) {
-        super(opcode+reg, line, column);
+        super(opcode + reg, line, column);
     }
- 
-    /// compile time ///
-    
-    public void pass1(IMessageReporter rep) {}
 
+    /// compile time ///
+    @Override
+    public void pass1() {
+    }
+
+    @Override
     public int pass2(Namespace parentEnv, int addr_start) throws Exception {
         return addr_start + getSize();
     }
 
+    @Override
     public void pass4(HEXFileHandler hex) throws Exception {
         String s = (getSize() == 1) ? "%1$02X" : "%1$04X";
-        hex.putCode(String.format(s,opcode));
+        hex.putCode(String.format(s, opcode));
     }
-    
 }

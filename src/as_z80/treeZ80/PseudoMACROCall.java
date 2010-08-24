@@ -22,14 +22,12 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_z80.treeZ80;
 
 import as_z80.impl.HEXFileHandler;
 import as_z80.impl.NeedMorePassException;
 import as_z80.impl.Namespace;
 import java.util.Vector;
-import plugins.compiler.IMessageReporter;
 import as_z80.treeZ80Abstract.Expression;
 import as_z80.treeZ80Abstract.Pseudo;
 
@@ -38,54 +36,62 @@ import as_z80.treeZ80Abstract.Pseudo;
  * @author vbmacher
  */
 public class PseudoMACROCall extends Pseudo {
+
     private Vector<Expression> params; // vector of expressions
     private PseudoMACRO macro; // only pointer...
     private HEXFileHandler statHex; // hex file for concrete macro
     private String mnemo;
-    
+
     /** Creates a new instance of PseudoMACROCall */
     public PseudoMACROCall(String name, Vector<Expression> params, int line, int column) {
         super(line, column);
         this.mnemo = name;
-        if (params == null) this.params = new Vector<Expression>();
-        else this.params = params;
+        if (params == null) {
+            this.params = new Vector<Expression>();
+        } else {
+            this.params = params;
+        }
         statHex = new HEXFileHandler();
     }
 
     /// compile time ///
-    
+    @Override
     public int getSize() {
         return macro.getStatSize();
     }
 
-    public void pass1(IMessageReporter rep) {}
-    
-    
+    @Override
+    public void pass1() {
+    }
+
     // this is a call for expanding a macro
     // also generate code for pass4
+    @Override
     public int pass2(Namespace env, int addr_start) throws Exception {
         // first find a macro
-        this.macro = env.getMacro(this.mnemo); 
-        if (macro == null)
+        this.macro = env.getMacro(this.mnemo);
+        if (macro == null) {
             throw new Exception("[" + line + "," + column
                     + "] Error: Undefined macro: " + this.mnemo);
+        }
         // do pass2 for expressions (real macro parameters)
         try {
-            for (int i = 0; i < params.size(); i++)
+            for (int i = 0; i < params.size(); i++) {
                 params.get(i).eval(env, addr_start);
+            }
             macro.setCallParams(params);
             int a = macro.pass2(env, addr_start);
             statHex.setNextAddress(addr_start);
             macro.pass4(statHex); // generate code for concrete macro
             return a;
-        } catch(NeedMorePassException e) {
+        } catch (NeedMorePassException e) {
             throw new Exception("[" + line + "," + column
                     + "] Error: MACRO expression can't be ambiguous");
         }
     }
 
+    @Override
     public void pass4(HEXFileHandler hex) {
         hex.addTable(statHex.getTable());
     }
-    
 }

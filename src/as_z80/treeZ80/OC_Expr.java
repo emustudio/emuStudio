@@ -22,12 +22,10 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_z80.treeZ80;
 
 import as_z80.impl.HEXFileHandler;
 import as_z80.impl.Namespace;
-import plugins.compiler.IMessageReporter;
 import as_z80.treeZ80Abstract.Expression;
 import as_z80.treeZ80Abstract.Instruction;
 
@@ -36,6 +34,7 @@ import as_z80.treeZ80Abstract.Instruction;
  * @author vbmacher
  */
 public class OC_Expr extends Instruction {
+
     public static final int ADC = 0xCE00; // ADC A,N
     public static final int ADC_A_IIX_NN = 0xDD8E00; // ADC A, (IX+N)
     public static final int ADC_A_IIY_NN = 0xFD8E00; // ADC A, (IY+N)
@@ -129,94 +128,139 @@ public class OC_Expr extends Instruction {
     public static final int XOR = 0xEE00; // XOR N
     public static final int XOR_IIX_NN = 0xDDAE00; // XOR (IX+N)
     public static final int XOR_IIY_NN = 0xFDAE00; // XOR (IY+N)    
-    
     private Expression expr;
     private boolean oneByte;
     private int old_opcode;
-    
+
     /** Creates a new instance of OC_Expr */
-    public OC_Expr(int opcode, Expression expr,boolean oneByte,int line, int column) {
-        super(opcode,line, column);
+    public OC_Expr(int opcode, Expression expr, boolean oneByte, int line, int column) {
+        super(opcode, line, column);
         this.old_opcode = opcode;
         this.expr = expr;
         this.oneByte = oneByte;
     }
 
     /// compile time ///
-    
-    public void pass1(IMessageReporter rep) {}
+    @Override
+    public void pass1() {
+    }
 
+    @Override
     public int pass2(Namespace parentEnv, int addr_start) throws Exception {
         expr.eval(parentEnv, addr_start);
         int val = expr.getValue();
-        
-        if (oneByte && (Expression.getSize(val) > 1))
-            throw new Exception("[" + line + "," + column 
+
+        if (oneByte && (Expression.getSize(val) > 1)) {
+            throw new Exception("[" + line + "," + column
                     + "] Error: value too large");
+        }
         opcode = old_opcode;
         switch (opcode) {
-            case DJNZ: val--; break;
-            case BIT: case RES: case SET:
-                if ((val > 7) || (val < 0))
-                    throw new Exception("[" + line + "," + column + "]" +
-                            " Error: value can be only in range 0-7");
-                opcode += (8*val);
+            case DJNZ:
+                val--;
+                break;
+            case BIT:
+            case RES:
+            case SET:
+                if ((val > 7) || (val < 0)) {
+                    throw new Exception("[" + line + "," + column + "]"
+                            + " Error: value can be only in range 0-7");
+                }
+                opcode += (8 * val);
                 break;
             case IM:
                 switch (val) {
-                    case 0: opcode += 0x46; break;
-                    case 1: opcode += 0x56; break;
-                    case 2: opcode += 0x5E; break;
+                    case 0:
+                        opcode += 0x46;
+                        break;
+                    case 1:
+                        opcode += 0x56;
+                        break;
+                    case 2:
+                        opcode += 0x5E;
+                        break;
                     default:
-                        throw new Exception("[" + line + "," + column + "]" +
-                                " Error: value can be only 0,1 or 2");
+                        throw new Exception("[" + line + "," + column + "]"
+                                + " Error: value can be only 0,1 or 2");
                 }
                 break;
-            case RL_IIX_NN: case RL_IIY_NN:
-            case RLC_IIX_NN: case RLC_IIY_NN:
-            case RR_IIX_NN: case RR_IIY_NN:
-            case RRC_IIX_NN: case RRC_IIY_NN:
-            case SLA_IIX_NN: case SLA_IIY_NN:
-            case SRA_IIX_NN: case SRA_IIY_NN:
-            case SLL_IIX_NN: case SLL_IIY_NN:
-            case SRL_IIX_NN: case SRL_IIY_NN:
-                opcode += ((val<<8)&0xFF00);
+            case RL_IIX_NN:
+            case RL_IIY_NN:
+            case RLC_IIX_NN:
+            case RLC_IIY_NN:
+            case RR_IIX_NN:
+            case RR_IIY_NN:
+            case RRC_IIX_NN:
+            case RRC_IIY_NN:
+            case SLA_IIX_NN:
+            case SLA_IIY_NN:
+            case SRA_IIX_NN:
+            case SRA_IIY_NN:
+            case SLL_IIX_NN:
+            case SLL_IIY_NN:
+            case SRL_IIX_NN:
+            case SRL_IIY_NN:
+                opcode += ((val << 8) & 0xFF00);
                 break;
             case RST:
                 switch (val) {
-                    case 0: break;
-                    case 8: opcode = 0xCF; break;
-                    case 0x10: opcode = 0xD7; break;
-                    case 0x18: opcode = 0xDF; break;
-                    case 0x20: opcode = 0xE7; break;
-                    case 0x28: opcode = 0xEF; break;
-                    case 0x30: opcode = 0xF7; break;
-                    case 0x38: opcode = 0xFF; break;
+                    case 0:
+                        break;
+                    case 8:
+                        opcode = 0xCF;
+                        break;
+                    case 0x10:
+                        opcode = 0xD7;
+                        break;
+                    case 0x18:
+                        opcode = 0xDF;
+                        break;
+                    case 0x20:
+                        opcode = 0xE7;
+                        break;
+                    case 0x28:
+                        opcode = 0xEF;
+                        break;
+                    case 0x30:
+                        opcode = 0xF7;
+                        break;
+                    case 0x38:
+                        opcode = 0xFF;
+                        break;
                     default:
-                        throw new Exception("[" + line + "," + column + "]" +
-                                " Error: value can be only 0,8h,10h,18h,20h," +
-                                "28h,30h or 38h");
+                        throw new Exception("[" + line + "," + column + "]"
+                                + " Error: value can be only 0,8h,10h,18h,20h,"
+                                + "28h,30h or 38h");
                 }
                 break;
             case JR:
-             //   if (val < 0) val = (0xFF-(val+1))&0xff;
-               // else 
-                val = (val-2)&0xff;
-                opcode += Expression.reverseBytes(val,1);
+                //   if (val < 0) val = (0xFF-(val+1))&0xff;
+                // else
+                val = (val - 2) & 0xff;
+                opcode += Expression.reverseBytes(val, 1);
                 break;
             default:
-                if (oneByte) opcode += Expression.reverseBytes(val,1);
-                else opcode += Expression.reverseBytes(val,2);
+                if (oneByte) {
+                    opcode += Expression.reverseBytes(val, 1);
+                } else {
+                    opcode += Expression.reverseBytes(val, 2);
+                }
         }
         return (addr_start + getSize());
     }
 
+    @Override
     public void pass4(HEXFileHandler hex) throws Exception {
         String s;
-        if (getSize() == 1) s = "%1$02X";
-        else if (getSize() == 2) s = "%1$04X";
-        else if (getSize() == 3) s = "%1$06X";
-        else s = "%1$08X";
-        hex.putCode(String.format(s,opcode));
+        if (getSize() == 1) {
+            s = "%1$02X";
+        } else if (getSize() == 2) {
+            s = "%1$04X";
+        } else if (getSize() == 3) {
+            s = "%1$06X";
+        } else {
+            s = "%1$08X";
+        }
+        hex.putCode(String.format(s, opcode));
     }
 }

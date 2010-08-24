@@ -22,36 +22,36 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_z80.treeZ80Abstract;
 
 import as_z80.impl.HEXFileHandler;
 import as_z80.impl.Namespace;
-import plugins.compiler.IMessageReporter;
-
 
 /**
  *
  * @author vbmacher
  */
 public abstract class Statement {
-   // protected String mnemo;
+    // protected String mnemo;
+
     protected int line;
     protected int column;
-    
+
     public abstract boolean isPseudo();
-    
+
     public Statement(int line, int column) {
-       // this.mnemo = mnemo;
+        // this.mnemo = mnemo;
         this.line = line;
         this.column = column;
     }
 
     /// compile time ///
-    
     // return size of compiled code
     public abstract int getSize();
-    public abstract void pass1(IMessageReporter rep) throws Exception;
+
+    public abstract void pass1() throws Exception;
+
     public abstract int pass2(Namespace parentEnv, int addr_start) throws Exception;
+
     public abstract void pass4(HEXFileHandler hex) throws Exception;
 }

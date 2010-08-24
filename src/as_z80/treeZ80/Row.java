@@ -28,7 +28,6 @@ import as_z80.impl.HEXFileHandler;
 import as_z80.impl.NeedMorePassException;
 import as_z80.impl.Namespace;
 import java.util.Vector;
-import plugins.compiler.IMessageReporter;
 import as_z80.treeZ80Abstract.Statement;
 
 /**
@@ -67,14 +66,14 @@ public class Row {
     }
     
     // do pass1 for all elements
-    public void pass1(IMessageReporter rep)
+    public void pass1()
             throws Exception {
         if (statement != null)
-            statement.pass1(rep);
+            statement.pass1();
     }
-    public void pass1(IMessageReporter rep, Vector<String> inclfiles, 
+    public void pass1(Vector<String> inclfiles, 
             Namespace parent) throws Exception {
-        ((PseudoINCLUDE)statement).pass1(rep, inclfiles, parent);        
+        ((PseudoINCLUDE)statement).pass1(inclfiles, parent);        
     }
     
     public int pass2(Namespace prev_env, int addr_start) throws Exception {

@@ -22,12 +22,10 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_z80.treeZ80;
 
 import as_z80.impl.HEXFileHandler;
 import as_z80.impl.Namespace;
-import plugins.compiler.IMessageReporter;
 import as_z80.treeZ80Abstract.Expression;
 import as_z80.treeZ80Abstract.Instruction;
 
@@ -36,8 +34,8 @@ import as_z80.treeZ80Abstract.Instruction;
  * opcode = (first_byte+reg) expr
  * @author vbmacher
  */
-
 public class OC_RegExpr extends Instruction {
+
     public static final int CALL = 0xC40000; // CALL cc,NN
     public static final int JP = 0xC20000; // JP cc,NN
     public static final int JR = 0x2000; // JR cc,N
@@ -47,12 +45,11 @@ public class OC_RegExpr extends Instruction {
     public static final int BIT = 0xCB40; // BIT b,r
     public static final int RES = 0xCB80; // RES b,r
     public static final int SET = 0xCBC0; // SET b,r
-            
     private Expression expr;
     private boolean oneByte;
     private boolean bitInstr; // bit instruction? (BIT,SET,RES)
     private int old_opcode;
-    
+
     /***
      * Creates a new instance of OC_RegExpr
      * 
@@ -60,22 +57,22 @@ public class OC_RegExpr extends Instruction {
      *        e.g. DD 70+reg XX XX => pos = 1;
      *             C4+reg 00 00    => pos = 0;
      */
-    public OC_RegExpr(int opcode, int reg, int pos,Expression expr, 
+    public OC_RegExpr(int opcode, int reg, int pos, Expression expr,
             boolean oneByte, int line, int column) {
         super(opcode, line, column);
-        this.opcode += (reg<<((getSize()-1-pos)*8));
+        this.opcode += (reg << ((getSize() - 1 - pos) * 8));
         old_opcode = opcode; //this.opcode;
         this.oneByte = oneByte;
         this.expr = expr;
         bitInstr = false;
     }
-    
+
     /**
      * Special constructor for BIT,RES and SET instructions
      */
     public OC_RegExpr(int opcode, Expression bit, int reg,
             int line, int column) {
-        super(opcode,line,column);
+        super(opcode, line, column);
         oneByte = true;
         this.expr = bit;
         this.opcode += reg;
@@ -84,38 +81,51 @@ public class OC_RegExpr extends Instruction {
     }
     /// compile time ///
 
-    public void pass1(IMessageReporter rep) {}
+    @Override
+    public void pass1() {
+    }
 
+    @Override
     public int pass2(Namespace parentEnv, int addr_start) throws Exception {
         expr.eval(parentEnv, addr_start);
         int val = expr.getValue();
-        if (oneByte && (Expression.getSize(val) > 1))
-            throw new Exception("[" + line + "," + column + "] Error:" +
-                    " value too large");
-     //   opcode = old_opcode;
+        if (oneByte && (Expression.getSize(val) > 1)) {
+            throw new Exception("[" + line + "," + column + "] Error:"
+                    + " value too large");
+        }
+        //   opcode = old_opcode;
         if (old_opcode == JR) {
-            val = (val-2)&0xff;
+            val = (val - 2) & 0xff;
         }
         if (bitInstr) {
-            if ((val > 7) || (val < 0))
-                throw new Exception("[" + line + "," + column + "] Error:" +
-                        " value can be only in range 0-7");
-            opcode += (8*val);
+            if ((val > 7) || (val < 0)) {
+                throw new Exception("[" + line + "," + column + "] Error:"
+                        + " value can be only in range 0-7");
+            }
+            opcode += (8 * val);
         } else {
-            if (oneByte) opcode += Expression.reverseBytes(val,1);
-            else opcode += Expression.reverseBytes(val,2);
+            if (oneByte) {
+                opcode += Expression.reverseBytes(val, 1);
+            } else {
+                opcode += Expression.reverseBytes(val, 2);
+            }
         }
         return addr_start + getSize();
     }
 
     // this can be only mvi instr
+    @Override
     public void pass4(HEXFileHandler hex) throws Exception {
         String s;
-        if (getSize() == 1) s = "%1$02X";
-        else if (getSize() == 2) s = "%1$04X";
-        else if (getSize() == 3) s = "%1$06X";
-        else s = "%1$08X";
-        hex.putCode(String.format(s,opcode));
+        if (getSize() == 1) {
+            s = "%1$02X";
+        } else if (getSize() == 2) {
+            s = "%1$04X";
+        } else if (getSize() == 3) {
+            s = "%1$06X";
+        } else {
+            s = "%1$08X";
+        }
+        hex.putCode(String.format(s, opcode));
     }
-    
 }

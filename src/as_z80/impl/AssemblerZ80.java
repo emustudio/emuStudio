@@ -22,155 +22,152 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_z80.impl;
 
 import java.io.Reader;
 
-import plugins.ISettingsHandler;
 import plugins.compiler.ICompiler;
 import plugins.compiler.ILexer;
-import plugins.compiler.IMessageReporter;
 import plugins.memory.IMemoryContext;
 import as_z80.treeZ80.Program;
+import plugins.compiler.SimpleCompiler;
+import runtime.Context;
 
 /**
  *
  * @author vbmacher
  */
-public class AssemblerZ80 implements ICompiler {
-	private long hash;
-    private LexerZ80 lex = null;
+public class AssemblerZ80 extends SimpleCompiler {
+
+    private LexerZ80 lex;
     private ParserZ80 par;
-    private IMessageReporter reporter;
-    @SuppressWarnings("unused")
-	private ISettingsHandler settings;
-    private int programStart = 0; // actualize after compile 
-    
+
     /** Creates a new instance of assemblerZ80 */
-    public AssemblerZ80(Long hash) {
-    	this.hash = hash;
-    	// lex has to be reset WITH a reader object before compile
-    	lex = new LexerZ80((Reader)null);
+    public AssemblerZ80(Long pluginID) {
+        super(pluginID);
+        lex = new LexerZ80((Reader) null);
+        par = new ParserZ80(lex);
     }
-        
+
     private void print_text(String mes, int type) {
-        if (reporter != null) reporter.report(mes, type);
-        else System.out.println(mes);
+        fireMessage(-1,-1,mes,0,type);
     }
-    
-	@Override
-    public String getTitle() { return "Z80 Assembler"; }
-	@Override
-    public String getVersion() { return "0.15rc-1"; }
-	@Override
-    public String getCopyright() { return "\u00A9 Copyright 2008-2009, Peter Jakubčo"; }
-	@Override
+
+    public void print_text(int row, int col, String mes, int type) {
+        fireMessage(row,col,mes,0,type);
+    }
+
+    @Override
+    public String getTitle() {
+        return "Z80 Assembler";
+    }
+
+    @Override
+    public String getVersion() {
+        return "0.15rc-1";
+    }
+
+    @Override
+    public String getCopyright() {
+        return "\u00A9 Copyright 2008-2009, Peter Jakubčo";
+    }
+
+    @Override
     public String getDescription() {
         return "It is my version of Z80 assembler. For syntax look"
                 + " at users manual.";
     }
 
-	@Override
-	public long getHash() { return hash; }
-    
-	@Override
-	public boolean initialize(ISettingsHandler sHandler, IMessageReporter reporter) {
-        this.settings = sHandler;
-        this.reporter = reporter;
-
-        par = new ParserZ80(lex, reporter);
-		return true;
-	}
-
-	@Override
-    public void destroy() {}
-
-	@Override
-    public void reset() {}
-
-	@Override
-    public int getProgramStartAddress() {
-        return programStart;
+    @Override
+    public void destroy() {
+        lex = null;
+        par = null;
     }
 
-	/**
-	 * Compile the source code into HEXFileHadler
-	 * 
-	 * @param in  Reader object of the source code
-	 * @return HEXFileHandler object
-	 */
-    private HEXFileHandler compile(Reader in) throws Exception {
-        if (par == null) return null;
-        if (in == null) return null;
+
+     /**
+     * Compile the source code into HEXFileHadler
+     *
+     * @return HEXFileHandler object
+     */
+    public HEXFileHandler compile(Reader in) throws Exception {
+        if (in == null) {
+            return null;
+        }
 
         Object s = null;
         HEXFileHandler hex = new HEXFileHandler();
 
-        print_text(getTitle()+", version "+getVersion(), IMessageReporter.TYPE_INFO);
-        lex.reset(in,0,0,0);
+        print_text(getTitle() + ", version " + getVersion(), ICompiler.TYPE_INFO);
+        lex.reset(in, 0, 0, 0);
         s = par.parse().value;
 
         if (s == null) {
-            print_text("Unexpected end of file", IMessageReporter.TYPE_ERROR);
+            print_text("Unexpected end of file", ICompiler.TYPE_ERROR);
             return null;
         }
-        if (ParserZ80.errorCount != 0)
+        if (ParserZ80.errorCount != 0) {
             return null;
-        
+        }
+
         // do several passes for compiling
-        Program program = (Program)s;
+        Program stat = (Program) s;
         Namespace env = new Namespace();
-        program.pass1(env,reporter); // create symbol table
-        program.pass2(0); // try to evaluate all expressions + compute relative addresses
-        while (program.pass3(env) == true) ;
+        stat.pass1(env); // create symbol table
+        stat.pass2(0); // try to evaluate all expressions + compute relative addresses
+        while (stat.pass3(env) == true)
+            ;
         if (env.getPassNeedCount() != 0) {
-            print_text("Error: can't evaulate all expressions", IMessageReporter.TYPE_ERROR);
+            print_text("Error: can't evaulate all expressions",
+                    ICompiler.TYPE_ERROR);
             return null;
         }
-        program.pass4(hex,env);
+        stat.pass4(hex, env);
         return hex;
     }
-    
-	@Override
-	public boolean compile(String fileName, Reader in) {
+
+    @Override
+    public boolean compile(String fileName, Reader in) {
         try {
-    		HEXFileHandler hex = compile(in);
-    		if (hex == null) return false;
-			hex.generateFile(fileName);
-	        print_text("Compile was sucessfull. Output: " + fileName, IMessageReporter.TYPE_INFO);
-	        programStart = hex.getProgramStart();
-	        return true;
-		} catch (Exception e) {
-            print_text(e.getMessage(), IMessageReporter.TYPE_ERROR);
+            HEXFileHandler hex = compile(in);
+            if (hex == null) {
+                return false;
+            }
+            hex.generateFile(fileName);
+            print_text("Compile was sucessfull. Output: " + fileName,
+                    ICompiler.TYPE_INFO);
+
+            IMemoryContext mem = Context.getInstance().getMemoryContext(pluginID,
+                    IMemoryContext.class);
+            if (mem != null) {
+                if (hex.loadIntoMemory(mem)) {
+                    print_text("Compiled file was loaded into operating memory.",
+                            ICompiler.TYPE_INFO);
+                } else {
+                    print_text("Compiled file couldn't be loaded into operating"
+                            + "memory due to an error.", ICompiler.TYPE_ERROR);
+                }
+            }
+            programStart = hex.getProgramStart();
+            return true;
+        } catch (Exception e) {
+            print_text(e.getMessage(), ICompiler.TYPE_ERROR);
             return false;
-		}
-	}
+        }
+    }
 
-	@Override
-	public boolean compile(String fileName, Reader in, IMemoryContext mem) {
-        try {
-    		HEXFileHandler hex = compile(in);
-			hex.generateFile(fileName);
-	        print_text("Compile was sucessfull. Output: " + fileName, IMessageReporter.TYPE_INFO);
-	        programStart = hex.getProgramStart();
-	        boolean r = hex.loadIntoMemory(mem);
-	        if (r) print_text("Compiled file was loaded into operating memory.", IMessageReporter.TYPE_INFO);
-	        else print_text("Compiled file couldn't be loaded into operating"
-	                + "memory due to an error.",IMessageReporter.TYPE_ERROR);
-	        return true;
-		} catch (Exception e) {
-            print_text(e.getMessage(), IMessageReporter.TYPE_ERROR);
-            return false;
-		}
-	}
+    @Override
+    public ILexer getLexer(Reader in) {
+        return new LexerZ80(in);
+    }
 
-	@Override
-	public ILexer getLexer(Reader in) { return new LexerZ80(in); }
+    @Override
+    public void showSettings() {
+        // TODO Auto-generated method stub
+    }
 
-	@Override
-	public void showSettings() {
-		// TODO Auto-generated method stub
-	}
-
+    @Override
+    public boolean isShowSettingsSupported() {
+        return false;
+    }
 }

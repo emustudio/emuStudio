@@ -22,7 +22,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_z80.treeZ80;
 
 import as_z80.impl.HEXFileHandler;
@@ -36,60 +35,76 @@ import as_z80.treeZ80Abstract.Instruction;
  * @author vbmacher
  */
 public class DataDB extends DataValue {
+
     private Expression expression = null;
     private String literalString = null;
     private Instruction opcode = null;
-    
+
     /** Creates a new instance of DBData */
     public DataDB(Expression expression, int line, int column) {
         super(line, column);
         this.expression = expression;
     }
-    
+
     public DataDB(String literalString, int line, int column) {
-        super(line,column);
+        super(line, column);
         this.literalString = literalString;
     }
-    
+
     public DataDB(Instruction opcode, int line, int column) {
-        super(line,column);
+        super(line, column);
         this.opcode = opcode;
     }
-    
+
     /// compile time ///
-    public int getSize() { 
-        if (expression != null) return 1;
-        else if (literalString != null) return literalString.length();
-        else if (opcode != null) return opcode.getSize();
+    @Override
+    public int getSize() {
+        if (expression != null) {
+            return 1;
+        } else if (literalString != null) {
+            return literalString.length();
+        } else if (opcode != null) {
+            return opcode.getSize();
+        }
         return 0;
     }
-    
+
+    @Override
     public void pass1() throws Exception {
-        if (opcode != null) opcode.pass1(null);
+        if (opcode != null) {
+            opcode.pass1();
+        }
     }
-    
+
+    @Override
     public int pass2(Namespace env, int addr_start) throws Exception {
         int next;
         if (expression != null) {
-            expression.eval(env,addr_start);
+            expression.eval(env, addr_start);
             next = addr_start + 1;
-        } else if (literalString != null)
+        } else if (literalString != null) {
             next = addr_start + literalString.length();
-        else if (opcode != null) 
-            next = opcode.pass2(env,addr_start);
-        else next = addr_start;
+        } else if (opcode != null) {
+            next = opcode.pass2(env, addr_start);
+        } else {
+            next = addr_start;
+        }
         return next;
     }
 
+    @Override
     public void pass4(HEXFileHandler hex) throws Exception {
         if (expression != null) {
             String s = expression.encodeValue(1);
-            if (s.length() > 2)
-                throw new Exception("[" + line + "," + column 
+            if (s.length() > 2) {
+                throw new Exception("[" + line + "," + column
                         + "] Error: value too large");
+            }
             hex.putCode(s);
-        } else if (literalString != null)
+        } else if (literalString != null) {
             hex.putCode(this.encodeValue(literalString));
-        else if (opcode != null) opcode.pass4(hex);
+        } else if (opcode != null) {
+            opcode.pass4(hex);
+        }
     }
 }

@@ -22,12 +22,10 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package as_z80.treeZ80;
 
 import as_z80.impl.HEXFileHandler;
 import as_z80.impl.Namespace;
-import plugins.compiler.IMessageReporter;
 import as_z80.treeZ80Abstract.Instruction;
 
 /**
@@ -35,6 +33,7 @@ import as_z80.treeZ80Abstract.Instruction;
  * @author vbmacher
  */
 public class OC_NoParams extends Instruction {
+
     public static final int ADC_A_HHLL = 0x8E;
     public static final int ADD_A_HHLL = 0x86;
     public static final int AND_HHLL = 0xA6;
@@ -156,18 +155,20 @@ public class OC_NoParams extends Instruction {
     public OC_NoParams(int opcode, int line, int column) {
         super(opcode, line, column);
     }
-    
+
     /// compile time ///
+    @Override
+    public void pass1() {
+    }
 
-    public void pass1(IMessageReporter rep) {}
-
+    @Override
     public int pass2(Namespace parentEnv, int addr_start) throws Exception {
         return addr_start + getSize();
     }
 
+    @Override
     public void pass4(HEXFileHandler hex) throws Exception {
         String s = (getSize() == 1) ? "%1$02X" : "%1$04X";
-        hex.putCode(String.format(s,opcode));
+        hex.putCode(String.format(s, opcode));
     }
-    
 }

@@ -25,8 +25,8 @@
 
 import java.util.Vector;
 import java_cup.runtime.Symbol;
-import plugins.compiler.IMessageReporter;
 import plugins.compiler.IToken;
+import plugins.compiler.ICompiler;
 import as_z80.treeZ80.*;
 import as_z80.treeZ80Abstract.*;
 
@@ -38,14 +38,19 @@ scan with {:
     return (Symbol)t;
  :}
 parser code {:
-    private IMessageReporter reporter = null;
+    private AssemblerZ80 asm;
     public int lastLine;
     public int lastColumn;
     public static int errorCount = 0;
+    private String reportAppendString = null;
     
-    public ParserZ80(java_cup.runtime.Scanner s, IMessageReporter reporter) {
+    public ParserZ80(java_cup.runtime.Scanner s, AssemblerZ80 asm) {
         this(s);
-        this.reporter = reporter;
+        this.asm = asm;
+    }
+    
+    public AssemblerZ80 getAsm() {
+        return asm;
     }
     	
     public void syntax_error(Symbol current) {
@@ -62,8 +67,15 @@ parser code {:
 
         IToken t = (IToken)current;
         mes = message + t.getErrorString() + " ('"+t.getText()+"')";
+        
+        if (reportAppendString != null)
+            mes = reportAppendString + mes;
 
-        reporter.report(t.getLine()+1, t.getColumn(),mes, IMessageReporter.TYPE_ERROR);
+        asm.print_text(t.getLine()+1, t.getColumn(),mes, ICompiler.TYPE_ERROR);
+    }
+    
+    public void setReportAppendString(String str) {
+        this.reportAppendString = str;
     }
 :}
 
@@ -272,7 +284,7 @@ Pseudo ::= PREPROCESSOR_ORG Expression:e
            TIDENTIFIER:name MacroParameters:params
            {: RESULT = new PseudoMACROCall(name,params,parser.lastLine, parser.lastColumn); :}|
            PREPROCESSOR_INCLUDE LITERAL_STRING:filename
-           {: RESULT = new PseudoINCLUDE(filename,parser.lastLine,parser.lastColumn); :};
+           {: RESULT = new PseudoINCLUDE(filename,parser.lastLine,parser.lastColumn, parser.getAsm()); :};
 
 MacroOperands ::= MacroOperList:operands
                   {: RESULT = operands; :}|

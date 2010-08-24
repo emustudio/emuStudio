@@ -6,7 +6,7 @@
  * KEEP IT SIMPLE STUPID
  * sometimes just: YOU AREN'T GONNA NEED IT
  *
- * Copyright (C) 2008-2010 Peter Jakubèo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2010 Peter Jakubco <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
