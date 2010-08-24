@@ -19,7 +19,16 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * ----------------------------------------------------------------------------
+ */
+package abstracttape.impl;
+
+import interfaces.C50E67F515A7C87A67947F8FB0F82558196BE0AC7;
+
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.EventObject;
+
+/**
  * Moznosti pasky:
  * ---------------
  *   - R
@@ -30,218 +39,242 @@
  *   - smer: dolava aj doprava
  *   Staci, ak tento vyznam paske priradi CPU.. Nemusim to riesit
  *   tu v paske.
- *   
- *   Treba vsak riesit ohranicenost - zabezpecit, aby sa paska vedela 
+ *
+ *   Treba vsak riesit ohranicenost - zabezpecit, aby sa paska vedela
  *   rozmahat dolava, aj doprava ak je neohranicena..
  *   Zabezpecenie ohranicenosti (len z jednej strany) musi byt riesene
  *   tu v paske. Defaultne je paska neohranicena.
- *   
- *   
+ *
+ * @author vbmacher
  */
-package abstracttape.impl;
+public class TapeContext implements C50E67F515A7C87A67947F8FB0F82558196BE0AC7 {
 
-import interfaces.IAbstractTapeContext;
-
-import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.EventObject;
-
-public class TapeContext implements IAbstractTapeContext {
-	private ArrayList<String> tape; // tape is an array of strings
-	private int pos; // actual tape position
-	private boolean bounded; // tape is bounded form the left? 
-	private boolean editable; // if tape is editable by user
-	private TapeListener listener;
+    private ArrayList<String> tape; // tape is an array of strings
+    private int pos; // actual tape position
+    private boolean bounded; // tape is bounded form the left?
+    private boolean editable; // if tape is editable by user
+    private TapeListener listener;
     private EventObject changeEvent;
     private boolean showPos;
     private boolean clearAtReset = true;
-	
-	public interface TapeListener extends EventListener {
-		public void tapeChanged(EventObject evt);
-	}
-	
-	public TapeContext() {
-		changeEvent = new EventObject(this);
-		listener = null;
-		tape = new ArrayList<String>();
-		pos = 0;
-		bounded = false;
-		editable = true;
-		showPos = true;
-	}
-		
-	@Override
-	public Class<?> getDataType() {
-		return String.class;
-	}
+    private AbstractTape abst;
 
-	/**
-	 * Clears tape and set head position to 0
-	 */
-	@Override
-	public void clear() {
-		tape.clear();
-		pos = 0;
-		fireChange();
-	}
-	
-	public void reset() {
-		pos = 0;
-		if (clearAtReset)
-			clear();
-		fireChange();
-	}
-	
-	@Override
-	public void setBounded(boolean bounded) {
-		this.bounded = bounded;
-	}
-	
-	@Override
-	public boolean isBounded() { return bounded; }
-	
-	@Override
-	public boolean moveLeft() {
-		if (pos > 0) {
-			pos--;
-			fireChange();
-			return true;
-		}
-		else if (bounded == false) {
-			pos = 0;
-			tape.add(0, "");
-			fireChange();
-			return true;
-		}
-		return false;
-	}
-	
-	@Override
-	public void moveRight() {
-		pos++;
-		if (pos >= tape.size())
-			tape.add("");
-		fireChange();
+    public TapeContext(AbstractTape abst) {
+        this.abst = abst;
+        changeEvent = new EventObject(this);
+        listener = null;
+        tape = new ArrayList<String>();
+        pos = 0;
+        bounded = false;
+        editable = true;
+        showPos = true;
     }
-	
-	public void addSymbolFirst(String symbol) {
-		if (bounded) return;
-		if (symbol == null) symbol = "";
-		tape.add(0,symbol);
-		pos++;
-		fireChange();
-	}
 
-	public void addSymbolLast(String symbol) {
-		if (symbol == null) symbol = "";
-		tape.add(symbol);
-		fireChange();
-	}
-	
-	public void removeSymbol(int pos) {
-		if (pos >= tape.size()) return;
-		tape.remove(pos);
-		if (this.pos >= pos) this.pos--;
-		fireChange();
-	}
-	
-	public void editSymbol(int pos, String symbol) {
-		if (pos >= tape.size()) return;
-		if (symbol == null) symbol = "";
-		tape.set(pos, symbol);
-		fireChange();
-	}
-	
-	@Override
-	public void setEditable(boolean editable) {
-		this.editable = editable;
-	}
+    @Override
+    public void setTitle(String title) {
+        abst.setGUITitle(title);
+    }
 
-	public boolean getEditable() { return editable; }
+    public interface TapeListener extends EventListener {
 
-	public int getPos() { return pos; }
-	
-	/**
-	 * Used by GUI, too - TapeDialog.
-	 * @param pos
-	 * @return
-	 */
-	@Override
-	public String getSymbolAt(int pos) {
-		if (pos >= tape.size() || (pos < 0))
-			return "";
-		return tape.get(pos);
-	}
+        public void tapeChanged(EventObject evt);
+    }
 
-	/**
-	 * 
-	 * @param pos HAS TO BE > 0
-	 * @param symbol
-	 */
-	@Override
-	public void setSymbolAt(int pos, String symbol) {
-		if (pos >= tape.size()) {
-			while (pos > tape.size()) tape.add("");
-			tape.add(symbol);
-		}
-		else if ((pos < tape.size()) && (pos >= 0))
-			tape.set(pos, symbol);
-		fireChange();
-	}
-	
-	@Override
-	public void setPosVisible(boolean visible) {
-		showPos = visible;
-	}
-	
-	@Override
-	public void setClearAtReset(boolean clear) {
-		this.clearAtReset = clear;
-	}
-	/**
-	 * Used by GUI.
-	 * @return
-	 */
-	public boolean getPosVisible() { return showPos; }
-	
-	public int getSize() {
-		return tape.size();
-	}
-	
-	@Override
-	public Object in(EventObject evt) {
-		if (pos >= tape.size() || (pos < 0))
-			return "";
-		return tape.get(pos);
-	}
+    @Override
+    public Class<?> getDataType() {
+        return String.class;
+    }
 
-	@Override
-	public void out(EventObject evt, Object val) {
-		if (pos >= tape.size()) 
-			tape.add(pos, val.toString());
-		else
-			tape.set(pos, val.toString());
-		fireChange();
-	}
+    /**
+     * Clears tape and set head position to 0
+     */
+    @Override
+    public void clear() {
+        tape.clear();
+        pos = 0;
+        fireChange();
+    }
 
-	@Override
-	public String getHash() {
-		return "ea9beaff230249da3c2e71d91c469c2a";
-	}
+    public void reset() {
+        pos = 0;
+        if (clearAtReset) {
+            clear();
+        }
+        fireChange();
+    }
 
-	@Override
-	public String getID() {
-		return "abstract-tape-context";
-	}
-	
-	public void setListener(TapeListener listener) {
-		this.listener = listener;
-	}
-	
+    @Override
+    public void setBounded(boolean bounded) {
+        this.bounded = bounded;
+    }
+
+    @Override
+    public boolean isBounded() {
+        return bounded;
+    }
+
+    @Override
+    public boolean moveLeft() {
+        if (pos > 0) {
+            pos--;
+            fireChange();
+            return true;
+        } else if (bounded == false) {
+            pos = 0;
+            tape.add(0, "");
+            fireChange();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void moveRight() {
+        pos++;
+        if (pos >= tape.size()) {
+            tape.add("");
+        }
+        fireChange();
+    }
+
+    public void addSymbolFirst(String symbol) {
+        if (bounded) {
+            return;
+        }
+        if (symbol == null) {
+            symbol = "";
+        }
+        tape.add(0, symbol);
+        pos++;
+        fireChange();
+    }
+
+    public void addSymbolLast(String symbol) {
+        if (symbol == null) {
+            symbol = "";
+        }
+        tape.add(symbol);
+        fireChange();
+    }
+
+    public void removeSymbol(int pos) {
+        if (pos >= tape.size()) {
+            return;
+        }
+        tape.remove(pos);
+        if (this.pos >= pos) {
+            this.pos--;
+        }
+        fireChange();
+    }
+
+    public void editSymbol(int pos, String symbol) {
+        if (pos >= tape.size()) {
+            return;
+        }
+        if (symbol == null) {
+            symbol = "";
+        }
+        tape.set(pos, symbol);
+        fireChange();
+    }
+
+    @Override
+    public void setEditable(boolean editable) {
+        this.editable = editable;
+    }
+
+    public boolean getEditable() {
+        return editable;
+    }
+
+    public int getPos() {
+        return pos;
+    }
+
+    /**
+     * Used by GUI, too - TapeDialog.
+     * @param pos
+     * @return
+     */
+    @Override
+    public String getSymbolAt(int pos) {
+        if (pos >= tape.size() || (pos < 0)) {
+            return "";
+        }
+        return tape.get(pos);
+    }
+
+    /**
+     *
+     * @param pos HAS TO BE > 0
+     * @param symbol
+     */
+    @Override
+    public void setSymbolAt(int pos, String symbol) {
+        if (pos >= tape.size()) {
+            while (pos > tape.size()) {
+                tape.add("");
+            }
+            tape.add(symbol);
+        } else if ((pos < tape.size()) && (pos >= 0)) {
+            tape.set(pos, symbol);
+        }
+        fireChange();
+    }
+
+    @Override
+    public void setPosVisible(boolean visible) {
+        showPos = visible;
+    }
+
+    @Override
+    public void setClearAtReset(boolean clear) {
+        this.clearAtReset = clear;
+    }
+
+    /**
+     * Used by GUI.
+     * @return
+     */
+    public boolean getPosVisible() {
+        return showPos;
+    }
+
+    public int getSize() {
+        return tape.size();
+    }
+
+    @Override
+    public Object read() {
+        if (pos >= tape.size() || (pos < 0)) {
+            return "";
+        }
+        return tape.get(pos);
+    }
+
+    @Override
+    public void write(Object val) {
+        if (pos >= tape.size()) {
+            tape.add(pos, val.toString());
+        } else {
+            tape.set(pos, val.toString());
+        }
+        fireChange();
+    }
+
+    @Override
+    public String getID() {
+        return "abstract-tape-context";
+    }
+
+    public void setListener(TapeListener listener) {
+        this.listener = listener;
+    }
+
     private void fireChange() {
-    	if (listener != null)
-    		listener.tapeChanged(changeEvent);
+        if (listener != null) {
+            listener.tapeChanged(changeEvent);
+        }
     }
-	
-
 }

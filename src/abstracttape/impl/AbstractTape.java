@@ -23,116 +23,101 @@ package abstracttape.impl;
 
 import abstracttape.gui.SettingsDialog;
 import abstracttape.gui.TapeDialog;
-import interfaces.IRAMCPUContext;
+import interfaces.C50E67F515A7C87A67947F8FB0F82558196BE0AC7;
 import plugins.ISettingsHandler;
-import plugins.cpu.ICPUContext;
-import plugins.device.IDevice;
-import plugins.device.IDeviceContext;
-import plugins.memory.IMemoryContext;
+import plugins.device.SimpleDevice;
+import runtime.Context;
 import runtime.StaticDialogs;
 
-public class AbstractTape implements IDevice {
-	private final String KNOWN_CPU = "ce861f51295b912a76a7df538655ab0f";  
-	private long hash;
-	private TapeContext context;
-	private ISettingsHandler settings;
-	private IRAMCPUContext cpu;
-	private String title = "Abstract tape"; // can change
-	private TapeDialog gui;
-	
-	public AbstractTape(Long hash) {
-		this.hash = hash;
-		context = new TapeContext();
-	}
-	
-	@Override
-	public String getTitle() {
-		return title;
-	}
+public class AbstractTape extends SimpleDevice {
 
-	@Override
-	public String getVersion() { return "0.2-rc1"; }
- 
-	@Override
-	public String getCopyright() {
-		return "\u00A9 Copyright 2009-2010, P. Jakubčo";
-	}
+    private TapeContext context;
+    private String title = "Abstract tape"; // can change
+    private TapeDialog gui;
 
-	@Override
-	public String getDescription() {
-		return "Abstract tape device is used by abstract machines" +
-				"such as RAM or Turing machine. The mean and purpose" +
-				"of the tape is given by the machine itself. Properties" +
-				"such as read only tape or one-way direction tape is" +
-				"also given by chosen machine. Therefore the tape is" +
-				"universal.";
-	}
-	
-	/**
-	 * Nothing will be connected to the tape.
-	 */
-	@Override
-	public boolean attachDevice(IDeviceContext arg0) {
-		return false;
-	}
+    public AbstractTape(Long pluginID) {
+        super(pluginID);
+        context = new TapeContext(this);
+        if (!Context.getInstance().register(pluginID, context,
+                C50E67F515A7C87A67947F8FB0F82558196BE0AC7.class))
+            StaticDialogs.showErrorMessage("Error: Could not register"
+                    + " the abstract tape");
+    }
 
-	@Override
-	public void detachAll() {}
+    @Override
+    public String getTitle() {
+        return title;
+    }
 
-	@Override
-	public IDeviceContext getNextContext() {
-		return context;
-	}
+    @Override
+    public String getVersion() {
+        return "0.2-rc1";
+    }
 
-	@Override
-	public boolean initialize(ICPUContext cpu, IMemoryContext mem,
-			ISettingsHandler settings) {
-		if (!cpu.getHash().equals(KNOWN_CPU) ||
-				!(cpu instanceof IRAMCPUContext)) {
-			StaticDialogs.showErrorMessage("This device (abstract tape) doesn't support" +
-					"this kind of CPU !");
-			return false;
-		}
-		this.cpu = (IRAMCPUContext)cpu;
-		this.settings = settings;
-		
-        String s = this.cpu.attachTape(context);
-        if (s == null) return false;
-        title = s;
-        
+    @Override
+    public String getCopyright() {
+        return "\u00A9 Copyright 2009-2010, P. Jakubčo";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Abstract tape device is used by abstract machines"
+                + "such as RAM or Turing machine. The mean and purpose"
+                + "of the tape is given by the machine itself. Properties"
+                + "such as read only tape or one-way direction tape is"
+                + "also given by chosen machine. Therefore the tape is"
+                + "universal.";
+    }
+
+    @Override
+    public boolean initialize(ISettingsHandler settings) {
+        super.initialize(settings);
+        this.settings = settings;
+
         // show GUI at startup?        
-		s = settings.readSetting(hash, "showAtStartup");
-		if (s != null && s.toLowerCase().equals("true"))
-			showGUI();
-		return true;
-	}
+        String s = settings.readSetting(pluginID, "showAtStartup");
+        if (s != null && s.toLowerCase().equals("true")) {
+            showGUI();
+        }
+        return true;
+    }
 
-	@Override
-	public void showGUI() {
-		if (gui == null) gui = new TapeDialog(this,settings,hash);
-		gui.setVisible(true);
-	}
+    @Override
+    public void showGUI() {
+        if (gui == null) {
+            gui = new TapeDialog(this, context, settings, pluginID);
+        }
+        gui.setVisible(true);
+    }
 
-	@Override
-	public void destroy() {
-		if (gui != null) gui.dispose();
-		gui = null;
+    public void setGUITitle(String title) {
+        this.title = title;
+        if (gui != null)
+            gui.setTitle(title);
+    }
+    
+    @Override
+    public void destroy() {
+        if (gui != null) {
+            gui.dispose();
+        }
+        gui = null;
         context = null;
-		settings = null;
-	}
+        settings = null;
+    }
 
-	@Override
-	public long getHash() {	return hash; }
+    @Override
+    public void reset() {
+        context.reset();
+    }
 
+    @Override
+    public void showSettings() {
+        new SettingsDialog(settings, pluginID, gui).setVisible(true);
+    }
 
-	@Override
-	public void reset() {
-		context.reset();
-	}
-
-	@Override
-	public void showSettings() {
-		new SettingsDialog(settings,hash,gui).setVisible(true);
-	}
-
+    @Override
+    public boolean isShowSettingsSupported() {
+        return true;
+    }
 }
