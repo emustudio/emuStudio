@@ -4,8 +4,6 @@
  * Created on 28.7.2008, 21:38:02
  * hold to: KISS, YAGNI
  * 
- * Female plug
- *
  * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,10 +20,8 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+package adm3a_terminal;
 
-package terminal;
-
-import java.util.EventObject;
 import plugins.device.IDeviceContext;
 
 /**
@@ -33,30 +29,37 @@ import plugins.device.IDeviceContext;
  * @author vbmacher
  */
 public class TerminalFemale implements IDeviceContext {
+
     private IDeviceContext dev;
-        
-    public void attachDevice(IDeviceContext device) { this.dev = device; }
-    public void detachDevice() { this.dev = null; }
 
-    @Override
-    public Object in(EventObject evt) { return (short)0; }
+    public void attachDevice(IDeviceContext device) {
+        this.dev = device;
+    }
 
-    @Override
-    public void out(EventObject evt, Object val) {
-        if (dev == null) return;
-        dev.out(evt, val);
+    public void detachDevice() {
+        this.dev = null;
     }
 
     @Override
-    public String getID() { return "ADM-3A"; }
-    
-	@Override
-	public Class<?> getDataType() {
-		return Short.class;
-	}
-	@Override
-	public String getHash() {
-		return "4a0411686e1560c765c1d6ea903a9c5f";
-	}
+    public Object read() {
+        return (short) 0;
+    }
 
+    @Override
+    public void write(Object val) {
+        if (dev == null) {
+            return;
+        }
+        dev.write(val);
+    }
+
+    @Override
+    public String getID() {
+        return "ADM-3A-female";
+    }
+
+    @Override
+    public Class<?> getDataType() {
+        return Short.class;
+    }
 }

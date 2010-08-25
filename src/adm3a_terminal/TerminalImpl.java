@@ -20,96 +20,89 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
-package terminal;
+package adm3a_terminal;
 
 import plugins.ISettingsHandler;
-import plugins.cpu.ICPUContext;
-import plugins.device.IDevice;
 import plugins.device.IDeviceContext;
-import plugins.memory.IMemoryContext;
 import adm3a_terminal.gui.ConfigDialog;
 import adm3a_terminal.gui.TerminalWindow;
+import plugins.device.SimpleDevice;
+import runtime.Context;
+import runtime.StaticDialogs;
 
 /**
  *
  * @author vbmacher
  */
-public class TerminalImpl implements IDevice {
-	private long hash;
-	private ISettingsHandler settings;
+public class TerminalImpl extends SimpleDevice {
+
     private TerminalWindow terminalGUI;
     private TerminalDisplay terminal; // male
     private TerminalFemale female;
-    private boolean femaleAttached = false;
-    
-    public TerminalImpl(Long hash) {
-    	this.hash = hash;
-    }
-    
-    @Override
-    public boolean initialize(ICPUContext cpu, IMemoryContext mem, 
-            ISettingsHandler sHandler) {
-        this.settings = sHandler;
-        terminal = new TerminalDisplay(80,25);
+
+    public TerminalImpl(Long pluginID) {
+        super(pluginID);
+        terminal = new TerminalDisplay(80, 25);
+        if (!Context.getInstance().register(pluginID, terminal,
+                IDeviceContext.class))
+            StaticDialogs.showErrorMessage("Could not register the terminal!");
+
         female = new TerminalFemale();
-        terminalGUI = new TerminalWindow(terminal,female);
+    }
+
+    @Override
+    public boolean initialize(ISettingsHandler settings) {
+        super.initialize(settings);
+
+        // try to connect to a serial I/O board
+        IDeviceContext device = Context.getInstance().getDeviceContext(pluginID,
+                IDeviceContext.class, "RS232");
+
+        System.out.println("ADM-3A getting: " + device);
+        if (device != null)
+            female.attachDevice(device);
+
+        terminalGUI = new TerminalWindow(terminal, female);
         readSettings();
         return true;
     }
 
     private void readSettings() {
-    	String s;
-    	
-    	s = settings.readSetting(hash, "verbose");
+        String s;
+
+        s = settings.readSetting(pluginID, "verbose");
         if (s != null && s.toUpperCase().equals("TRUE")) {
-        	terminal.setVerbose(true);
-        	terminalGUI.setVisible(true);
-        } else
-        	terminal.setVerbose(false);
-    	
-    	s = settings.readSetting(hash, "duplex_mode");
-        if (s != null && s.toUpperCase().equals("HALF"))
-        	terminalGUI.setHalfDuplex(true);
-        else terminalGUI.setHalfDuplex(false);
-        
-        s = settings.readSetting(hash, "always_on_top");
-        if (s != null && s.toUpperCase().equals("TRUE"))
-        	terminalGUI.setAlwaysOnTop(true);
-        else terminalGUI.setAlwaysOnTop(false);
-        
-        s = settings.readSetting(hash, "anti_aliasing");
-        if (s != null && s.toUpperCase().equals("TRUE"))
-        	terminal.setAntiAliasing(true);
-        else terminal.setAntiAliasing(false); 
+            terminal.setVerbose(true);
+            terminalGUI.setVisible(true);
+        } else {
+            terminal.setVerbose(false);
+        }
+
+        s = settings.readSetting(pluginID, "duplex_mode");
+        if (s != null && s.toUpperCase().equals("HALF")) {
+            terminalGUI.setHalfDuplex(true);
+        } else {
+            terminalGUI.setHalfDuplex(false);
+        }
+
+        s = settings.readSetting(pluginID, "always_on_top");
+        if (s != null && s.toUpperCase().equals("TRUE")) {
+            terminalGUI.setAlwaysOnTop(true);
+        } else {
+            terminalGUI.setAlwaysOnTop(false);
+        }
+
+        s = settings.readSetting(pluginID, "anti_aliasing");
+        if (s != null && s.toUpperCase().equals("TRUE")) {
+            terminal.setAntiAliasing(true);
+        } else {
+            terminal.setAntiAliasing(false);
+        }
     }
-    
-    
+
     @Override
     public void showGUI() {
         terminalGUI.setVisible(true);
-    }
-
-    /**
-     * This terminal can be connected to any serial RS232 device.
-     */
-    public IDeviceContext getNextContext() { return terminal; }
-
-    @Override
-    public boolean attachDevice(IDeviceContext male) {
-        if (!femaleAttached) {
-            female.attachDevice(male);
-            femaleAttached = true;
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public void detachAll() {
-        if (!femaleAttached) return;
-        female.detachDevice();
-        femaleAttached = false;
     }
 
     @Override
@@ -118,11 +111,15 @@ public class TerminalImpl implements IDevice {
     }
 
     @Override
-    public String getTitle() { return "Terminal ADM-3A"; }
+    public String getTitle() {
+        return "Terminal LSI ADM-3A";
+    }
+
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2007-2009, Peter Jakubčo";
+        return "\u00A9 Copyright 2007-2010, Peter Jakubčo";
     }
+
     @Override
     public String getDescription() {
         return "Implementation of virtual terminal LSI ADM-3A";
@@ -135,16 +132,19 @@ public class TerminalImpl implements IDevice {
 
     @Override
     public void destroy() {
-        if (terminalGUI != null) terminalGUI.destroyMe();
-    	detachAll();
+        if (terminalGUI != null) {
+            terminalGUI.destroyMe();
+        }
     }
 
-	@Override
-	public long getHash() { return hash; }
+    @Override
+    public void showSettings() {
+        new ConfigDialog(settings, pluginID, terminalGUI,
+                terminal).setVisible(true);
+    }
 
-	@Override
-	public void showSettings() {
-		new ConfigDialog(settings,hash, terminalGUI, terminal).setVisible(true);
-	}
-
+    @Override
+    public boolean isShowSettingsSupported() {
+        return true;
+    }
 }

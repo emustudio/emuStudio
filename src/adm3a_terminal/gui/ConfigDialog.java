@@ -19,7 +19,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package adm3a_terminal.gui;
 
 import javax.swing.BorderFactory;
@@ -35,10 +34,8 @@ import javax.swing.WindowConstants;
 
 import plugins.ISettingsHandler;
 
-import terminal.TerminalDisplay;
-import adm3a_terminal.gui.TerminalWindow;
+import adm3a_terminal.TerminalDisplay;
 import adm3a_terminal.gui.utils.NiceButton;
-
 
 /**
  *
@@ -46,57 +43,69 @@ import adm3a_terminal.gui.utils.NiceButton;
  */
 @SuppressWarnings("serial")
 public class ConfigDialog extends JDialog {
-	private ISettingsHandler settings;
-	private long hash;
 
-	private TerminalDisplay terminal;
+    private ISettingsHandler settings;
+    private long pluginID;
+    private TerminalDisplay terminal;
     private TerminalWindow window;
-    
+
     /** Creates new form ConfigDialog */
-    public ConfigDialog(ISettingsHandler settings, long hash, TerminalWindow window, 
-    		TerminalDisplay lblTerminal) {
-    	super((JFrame)null,true);
+    public ConfigDialog(ISettingsHandler settings, long hash, TerminalWindow window,
+            TerminalDisplay lblTerminal) {
+        super((JFrame) null, true);
         initComponents();
-        
+
         this.settings = settings;
-        this.hash = hash;
+        this.pluginID = hash;
         this.terminal = lblTerminal;
         this.window = window;
 
         readSettings();
         this.setLocationRelativeTo(null);
     }
-    
+
     private void readSettings() {
-    	String s;
-    	s = settings.readSetting(hash, "duplex_mode");
-        if (s != null && s.toUpperCase().equals("HALF"))
-        	radioHalf.setSelected(true);
-        else radioFull.setSelected(true);
-        
-        s = settings.readSetting(hash, "always_on_top");
-        if (s != null && s.toUpperCase().equals("TRUE"))
-        	chkAlwaysOnTop.setSelected(true);
-        else chkAlwaysOnTop.setSelected(false);
-        
-        s = settings.readSetting(hash, "anti_aliasing");
-        if (s != null && s.toUpperCase().equals("TRUE"))
-        	chkAntiAliasing.setSelected(true);
-        else chkAntiAliasing.setSelected(false);    	
+        String s;
+        s = settings.readSetting(pluginID, "duplex_mode");
+        if (s != null && s.toUpperCase().equals("HALF")) {
+            radioHalf.setSelected(true);
+        } else {
+            radioFull.setSelected(true);
+        }
+
+        s = settings.readSetting(pluginID, "always_on_top");
+        if (s != null && s.toUpperCase().equals("TRUE")) {
+            chkAlwaysOnTop.setSelected(true);
+        } else {
+            chkAlwaysOnTop.setSelected(false);
+        }
+
+        s = settings.readSetting(pluginID, "anti_aliasing");
+        if (s != null && s.toUpperCase().equals("TRUE")) {
+            chkAntiAliasing.setSelected(true);
+        } else {
+            chkAntiAliasing.setSelected(false);
+        }
     }
-    
+
     private void saveSettings() {
-    	if (radioHalf.isSelected())
-    		settings.writeSetting(hash, "duplex_mode", "half");
-    	else settings.writeSetting(hash, "duplex_mode", "full");
-    	if (chkAlwaysOnTop.isSelected())
-    		settings.writeSetting(hash, "always_on_top", "true");
-    	else settings.writeSetting(hash, "always_on_top", "false");
-    	if (chkAntiAliasing.isSelected())
-    		settings.writeSetting(hash, "anti_aliasing", "true");
-    	else settings.writeSetting(hash, "anti_aliasing", "false");
+        if (radioHalf.isSelected()) {
+            settings.writeSetting(pluginID, "duplex_mode", "half");
+        } else {
+            settings.writeSetting(pluginID, "duplex_mode", "full");
+        }
+        if (chkAlwaysOnTop.isSelected()) {
+            settings.writeSetting(pluginID, "always_on_top", "true");
+        } else {
+            settings.writeSetting(pluginID, "always_on_top", "false");
+        }
+        if (chkAntiAliasing.isSelected()) {
+            settings.writeSetting(pluginID, "anti_aliasing", "true");
+        } else {
+            settings.writeSetting(pluginID, "anti_aliasing", "false");
+        }
     }
-    
+
     private void initComponents() {
         ButtonGroup btnGroup = new ButtonGroup();
         JPanel controlPanel = new JPanel();
@@ -120,6 +129,8 @@ public class ConfigDialog extends JDialog {
         btnClearScreen.setText("Clear");
         btnClearScreen.setFocusable(false);
         btnClearScreen.addActionListener(new java.awt.event.ActionListener() {
+
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnClearScreenActionPerformed(evt);
             }
@@ -128,6 +139,8 @@ public class ConfigDialog extends JDialog {
         btnRollLine.setText("Roll line");
         btnRollLine.setFocusable(false);
         btnRollLine.addActionListener(new java.awt.event.ActionListener() {
+
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnRollLineActionPerformed(evt);
             }
@@ -139,92 +152,55 @@ public class ConfigDialog extends JDialog {
         radioFull.setText("Full duplex mode");
         btnGroup.add(radioHalf);
         radioHalf.setText("Half duplex mode");
-        
+
         chkSaveSettings.setText("Save settings");
         btnOK.setText("OK");
         btnOK.addActionListener(new java.awt.event.ActionListener() {
+
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnOKActionPerformed(evt);
             }
         });
-        
+
         GroupLayout controlPanelLayout = new GroupLayout(controlPanel);
         controlPanel.setLayout(controlPanelLayout);
-        
+
         controlPanelLayout.setHorizontalGroup(
-        		controlPanelLayout.createSequentialGroup()
-        		.addContainerGap()
-        		.addGroup(controlPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        				.addComponent(radioFull)
-        				.addComponent(radioHalf)
-        				.addComponent(chkAlwaysOnTop)
-        				.addComponent(chkAntiAliasing)
-        				.addGroup(controlPanelLayout.createSequentialGroup()
-        						.addComponent(btnClearScreen)
-        						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        						.addComponent(btnRollLine)))
-        		.addContainerGap());
+                controlPanelLayout.createSequentialGroup().addContainerGap().addGroup(controlPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(radioFull).addComponent(radioHalf).addComponent(chkAlwaysOnTop).addComponent(chkAntiAliasing).addGroup(controlPanelLayout.createSequentialGroup().addComponent(btnClearScreen).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnRollLine))).addContainerGap());
         controlPanelLayout.setVerticalGroup(
-        		controlPanelLayout.createSequentialGroup()
-        		.addContainerGap()
-        		.addComponent(radioFull)
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addComponent(radioHalf)
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-        		.addComponent(chkAlwaysOnTop)
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addComponent(chkAntiAliasing)
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-        		.addGroup(controlPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-        				.addComponent(btnClearScreen)
-        				.addComponent(btnRollLine))
-        		.addContainerGap());
-        
+                controlPanelLayout.createSequentialGroup().addContainerGap().addComponent(radioFull).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(radioHalf).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(chkAlwaysOnTop).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(chkAntiAliasing).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(controlPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(btnClearScreen).addComponent(btnRollLine)).addContainerGap());
+
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
-        
+
         layout.setHorizontalGroup(
-        		layout.createSequentialGroup()
-        		.addContainerGap()
-        		.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-        				.addComponent(controlPanel)
-        				.addComponent(chkSaveSettings)
-        				.addGroup(GroupLayout.Alignment.TRAILING,layout.createSequentialGroup()
-        						.addComponent(btnOK)))
-        		.addContainerGap());
+                layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(controlPanel).addComponent(chkSaveSettings).addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup().addComponent(btnOK))).addContainerGap());
         layout.setVerticalGroup(
-        		layout.createSequentialGroup()
-        		.addContainerGap()
-        		.addComponent(controlPanel)
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-        		.addComponent(chkSaveSettings)
-        		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-        		.addComponent(btnOK)
-        		.addContainerGap());
+                layout.createSequentialGroup().addContainerGap().addComponent(controlPanel).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(chkSaveSettings).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnOK).addContainerGap());
         pack();
     }
 
-    private void btnClearScreenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearScreenActionPerformed
+    private void btnClearScreenActionPerformed(java.awt.event.ActionEvent evt) {
         terminal.clear_screen();
-    }//GEN-LAST:event_btnClearScreenActionPerformed
+    }
 
-    private void btnRollLineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRollLineActionPerformed
+    private void btnRollLineActionPerformed(java.awt.event.ActionEvent evt) {
         terminal.roll_line();
-    }//GEN-LAST:event_btnRollLineActionPerformed
+    }
 
     private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {
-    	terminal.setAntiAliasing(chkAntiAliasing.isSelected());
-    	window.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
-    	window.setHalfDuplex(radioHalf.isSelected());
-    	if (chkSaveSettings.isSelected())
-    		saveSettings();
-    	dispose();
+        terminal.setAntiAliasing(chkAntiAliasing.isSelected());
+        window.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
+        window.setHalfDuplex(radioHalf.isSelected());
+        if (chkSaveSettings.isSelected()) {
+            saveSettings();
+        }
+        dispose();
     }
-    
     private JRadioButton radioFull;
     private JRadioButton radioHalf;
     private JCheckBox chkAlwaysOnTop;
     private JCheckBox chkAntiAliasing;
     private JCheckBox chkSaveSettings;
-    
 }
