@@ -37,20 +37,19 @@ import runtime.Context;
  * @author Peter Jakubčo <pjakubco at gmail.com>
  */
 public class BrainDuck extends SimpleCompiler {
-    private BDLexer lex = null;
+    private BDLexer lex;
     private BDParser par;
 
     /**
      * Public constructor.
+     *
+     * @param pluginID plug-in identification number
      */
-    public BrainDuck() {
-        super();
+    public BrainDuck(Long pluginID) {
+        super(pluginID);
         // lex has to be reset WITH a reader object before compile
         lex = new BDLexer((Reader) null);
-    }
-
-    private void print_text(String mes, int type) {
-        this.fireMessage(-1, -1, mes, 0, type);
+        par = new BDParser(lex);
     }
 
     @Override
@@ -79,10 +78,6 @@ public class BrainDuck extends SimpleCompiler {
         this.lex = null;
     }
 
-    @Override
-    public void reset() {
-    }
-
     /**
      * Compile the source code into HEXFileHadler
      * 
@@ -90,22 +85,19 @@ public class BrainDuck extends SimpleCompiler {
      * @return HEXFileHandler object
      */
     private HEXFileHandler compile(Reader in) throws Exception {
-        if (par == null) {
+        if (in == null)
             return null;
-        }
-        if (in == null) {
-            return null;
-        }
 
         Object s = null;
         HEXFileHandler hex = new HEXFileHandler();
 
-        print_text(getTitle() + ", version " + getVersion(), ICompiler.TYPE_INFO);
+        fireMessage(-1,-1,getTitle() + ", version " + getVersion(),
+                0,ICompiler.TYPE_INFO);
         lex.reset(in, 0, 0, 0);
         s = par.parse().value;
 
         if (s == null) {
-            print_text("Unexpected end of file", ICompiler.TYPE_ERROR);
+            fireMessage(-1,-1,"Unexpected end of file", 0,ICompiler.TYPE_ERROR);
             return null;
         }
         if (par.errorCount != 0) {
@@ -127,8 +119,8 @@ public class BrainDuck extends SimpleCompiler {
                 return false;
             }
             hex.generateFile(fileName);
-            print_text("Compile was sucessfull. Output: "
-                    + fileName, ICompiler.TYPE_INFO);
+            fireMessage(-1,-1,"Compile was sucessfull. Output: "
+                    + fileName,0, ICompiler.TYPE_INFO);
             programStart = hex.getProgramStart();
             
             // try to access the memory
@@ -136,16 +128,18 @@ public class BrainDuck extends SimpleCompiler {
                     IMemoryContext.class);
             if (mem != null) {
                 if (hex.loadIntoMemory(mem)) {
-                    print_text("Compiled file was loaded into operating memory.",
+                    fireMessage(-1,-1,
+                            "Compiled file was loaded into operating memory.",0,
                             ICompiler.TYPE_INFO);
                 } else {
-                    print_text("Compiled file couldn't be loaded into operating"
-                            + "memory due to an error.", ICompiler.TYPE_ERROR);
+                    fireMessage(-1,-1,
+                            "Compiled file couldn't be loaded into operating"
+                            + "memory due to an error.", 0,ICompiler.TYPE_ERROR);
                 }
             }
             return true;
         } catch (Exception e) {
-            print_text(e.getMessage(), ICompiler.TYPE_ERROR);
+            fireMessage(-1,-1,e.getMessage(), 0, ICompiler.TYPE_ERROR);
             return false;
         }
     }
