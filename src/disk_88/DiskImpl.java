@@ -35,9 +35,7 @@ import java.util.ArrayList;
 import javax.swing.JOptionPane;
 
 import plugins.ISettingsHandler;
-import plugins.cpu.ICPUContext;
 import plugins.device.SimpleDevice;
-import plugins.memory.IMemoryContext;
 import runtime.Context;
 import runtime.StaticDialogs;
 
@@ -174,6 +172,9 @@ public class DiskImpl extends SimpleDevice {
 
         readSettings();
 
+        if (cpu == null)
+            return true;
+        
         // attach device to CPU
         if (cpu.attachDevice(port1, port1CPU) == false) {
             String p;
