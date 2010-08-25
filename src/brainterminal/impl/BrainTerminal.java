@@ -27,11 +27,11 @@ import plugins.device.IDeviceContext;
 import plugins.device.SimpleDevice;
 import runtime.Context;
 import runtime.StaticDialogs;
-import braincpu.interfaces.C35E1D94FC14C94F76C904F09494B85079660C9BF;
+import braincpu.interfaces.CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F;
 
 public class BrainTerminal extends SimpleDevice {
 
-    private C35E1D94FC14C94F76C904F09494B85079660C9BF cpu;
+    private CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F cpu;
     private BrainTerminalContext terminal;
     private BrainTerminalDialog gui;
 
@@ -66,9 +66,9 @@ public class BrainTerminal extends SimpleDevice {
     public boolean initialize(ISettingsHandler settings) {
         super.initialize(settings);
 
-        cpu = (C35E1D94FC14C94F76C904F09494B85079660C9BF)Context.getInstance()
+        cpu = (CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F)Context.getInstance()
                 .getCPUContext(pluginID,
-                C35E1D94FC14C94F76C904F09494B85079660C9BF.class);
+                CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F.class);
         if (cpu == null) {
             StaticDialogs.showErrorMessage("BrainTerminal needs to be connected"
                     + "to the BrainCPU.");
