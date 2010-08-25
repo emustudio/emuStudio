@@ -23,10 +23,8 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package disk_88;
 
-import java.util.EventObject;
 import plugins.device.IDeviceContext;
 
 /**
@@ -34,35 +32,37 @@ import plugins.device.IDeviceContext;
  * @author vbmacher
  */
 public class Port2 implements IDeviceContext {
+
     private DiskImpl dsk;
-    
+
     public Port2(DiskImpl dsk) {
         this.dsk = dsk;
     }
-    
-    public boolean attachDevice(IDeviceContext device) { return false; }
-    public void detachDevice(IDeviceContext device) {}
 
-    @Override
-    public Object in(EventObject evt) {
-        return ((Drive)dsk.drives.get(dsk.current_drive)).getSectorPos();
+    public boolean attachDevice(IDeviceContext device) {
+        return false;
+    }
+
+    public void detachDevice(IDeviceContext device) {
     }
 
     @Override
-    public void out(EventObject evt, Object val) {
-        ((Drive)dsk.drives.get(dsk.current_drive)).setFlags((Short)val);
+    public Object read() {
+        return ((Drive) dsk.drives.get(dsk.current_drive)).getSectorPos();
     }
 
-    public String getID() { return "88-DISK-PORT2"; }
+    @Override
+    public void write(Object val) {
+        ((Drive) dsk.drives.get(dsk.current_drive)).setFlags((Short) val);
+    }
 
-	@Override
-	public Class<?> getDataType() {
-		return Short.class;
-	}
+    @Override
+    public String getID() {
+        return "88-DISK-PORT2";
+    }
 
-	@Override
-	public String getHash() {
-		return "4a0411686e1560c765c1d6ea903a9c5f";
-	}
-
+    @Override
+    public Class<?> getDataType() {
+        return Short.class;
+    }
 }

@@ -23,10 +23,8 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package disk_88;
 
-import java.util.EventObject;
 import plugins.device.IDeviceContext;
 
 /**
@@ -34,42 +32,46 @@ import plugins.device.IDeviceContext;
  * @author vbmacher
  */
 public class Port1 implements IDeviceContext {
+
     private DiskImpl dsk;
-    
+
     public Port1(DiskImpl dsk) {
         this.dsk = dsk;
     }
-    
-    public boolean attachDevice(IDeviceContext device) { return false; }
-    public void detachDevice(IDeviceContext device) { }
-    
-    @Override
-    public Object in(EventObject evt) {
-        return ((Drive)dsk.drives.get(dsk.current_drive)).getFlags();
+
+    public boolean attachDevice(IDeviceContext device) {
+        return false;
+    }
+
+    public void detachDevice(IDeviceContext device) {
     }
 
     @Override
-    public void out(EventObject evt, Object val) {
-    	short v = (Short)val; 
+    public Object read() {
+        return ((Drive) dsk.drives.get(dsk.current_drive)).getFlags();
+    }
+
+    @Override
+    public void write(Object val) {
+        short v = (Short) val;
         // select device
         dsk.current_drive = v & 0x0F;
         if ((v & 0x80) != 0) {
             // disable device
-            ((Drive)dsk.drives.get(dsk.current_drive)).deselect();
+            ((Drive) dsk.drives.get(dsk.current_drive)).deselect();
             dsk.current_drive = 0xFF;
-        } else
-            ((Drive)dsk.drives.get(dsk.current_drive)).select();
+        } else {
+            ((Drive) dsk.drives.get(dsk.current_drive)).select();
+        }
     }
-    
-    @Override
-    public Class<?> getDataType() { return Short.class; }
 
     @Override
-    public String getID() { return "88-DISK-PORT1"; }
+    public Class<?> getDataType() {
+        return Short.class;
+    }
 
-	@Override
-	public String getHash() {
-		return "4a0411686e1560c765c1d6ea903a9c5f";
-	}
-
+    @Override
+    public String getID() {
+        return "88-DISK-PORT1";
+    }
 }
