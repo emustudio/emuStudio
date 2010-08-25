@@ -21,10 +21,10 @@
  */
 package braincpu.impl;
 
-import braincpu.interfaces.C35E1D94FC14C94F76C904F09494B85079660C9BF;
+import braincpu.interfaces.CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F;
 import plugins.device.IDeviceContext;
 
-public class BrainCPUContext implements C35E1D94FC14C94F76C904F09494B85079660C9BF {
+public class BrainCPUContext implements CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F {
     private IDeviceContext device;
 
     public BrainCPUContext() {

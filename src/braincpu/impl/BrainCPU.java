@@ -25,7 +25,7 @@ import javax.swing.JPanel;
 
 import braincpu.gui.BrainDisassembler;
 import braincpu.gui.BrainStatusPanel;
-import braincpu.interfaces.C35E1D94FC14C94F76C904F09494B85079660C9BF;
+import braincpu.interfaces.CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F;
 
 import plugins.ISettingsHandler;
 import plugins.cpu.ICPU;
@@ -45,7 +45,9 @@ public class BrainCPU extends SimpleCPU {
     public BrainCPU(Long pluginID) {
         super(pluginID);
         cpu = new BrainCPUContext();
-        Context.getInstance().register(pluginID, cpu, C35E1D94FC14C94F76C904F09494B85079660C9BF.class);
+        if (!Context.getInstance().register(pluginID, cpu,
+                CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F.class))
+            StaticDialogs.showErrorMessage("Could not register the CPU");
     }
 
     @Override

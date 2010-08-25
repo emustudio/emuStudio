@@ -26,7 +26,7 @@ package braincpu.interfaces;
 import plugins.cpu.ICPUContext;
 import plugins.device.IDeviceContext;
 
-public interface C35E1D94FC14C94F76C904F09494B85079660C9BF extends ICPUContext {
+public interface CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F extends ICPUContext {
     public boolean attachDevice(IDeviceContext device);
     public void detachDevice();
 }
