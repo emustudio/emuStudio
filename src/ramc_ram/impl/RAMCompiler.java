@@ -148,9 +148,15 @@ public class RAMCompiler extends SimpleCompiler {
 
     @Override
     public boolean compile(String fileName, Reader reader) {
-        StaticDialogs.showErrorMessage("This compiler doesn't support "
-                + "compilation into a file.");
-        return false;
+        print_text("This compiler doesn't support "
+                + "compilation into a file.", ICompiler.TYPE_INFO);
+        try {
+            CompiledFileHandler c = compile(reader);
+        } catch (Exception e) {
+            print_text("Compile failed.", ICompiler.TYPE_ERROR);
+            return false;
+        }
+        return true;
     }
 
     @Override
