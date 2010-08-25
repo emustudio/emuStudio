@@ -22,7 +22,12 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * ----------------------------------------------------------------------------
+ */
+package sio88;
+
+import plugins.device.IDeviceContext;
+
+/**
  * A write to the status port can select
  * some options for the device (0x03 will reset the port).
  * A read of the status port gets the port status:
@@ -35,7 +40,7 @@
  *     on the data port and is ready to be read.
  * O - A 1 in this bit means the port is ready to receive a character
  *     on the data port and transmit it out over the serial line.
- * 
+ *
  * Meaning of all bits:
  * 7. 0 - Output device ready (a ready pulse was sent from device) also causes
  *        a hardware interrupt if is enabled
@@ -50,47 +55,42 @@
  *    1 - framing error (data bit has no valid stop bit)
  * 2. 0 -
  *    1 - parity error (received parity does not agree with selected parity)
- * 1. 0 - 
+ * 1. 0 -
  *    1 - X-mitter buffer empty (the previous data word has been X-mitted and a new data
  *        word may be outputted
  * 0. 0 - Input device ready (a ready pulse has been sent from the device)
- */
-
-package sio88;
-
-import java.util.EventObject;
-import plugins.device.IDeviceContext;
-
-/**
  *
  * @author vbmacher
  */
 public class CpuPort1 implements IDeviceContext {
+
     private Mits88SIO sio;
-    
+
     public CpuPort1(Mits88SIO sio) {
         this.sio = sio;
     }
 
     @Override
-    public Object in(EventObject evt) { return sio.status; }
-    @Override
-    public void out(EventObject evt, Object val) {
-    	short v = (Short)val;
-        if (v == 0x03) sio.reset();
+    public Object read() {
+        return sio.status;
     }
-    
+
+    @Override
+    public void write(Object val) {
+        short v = (Short) val;
+        if (v == 0x03) {
+            sio.reset();
+        }
+    }
+
     @Override
     public Class<?> getDataType() {
-    	return Short.class;
+        return Short.class;
     }
-    
+
     @Override
-    public String getID() { return "88-SIO-PORT1"; }
-    
-    @Override
-    public String getHash() {
-    	return "4a0411686e1560c765c1d6ea903a9c5f";
+    public String getID() {
+        return "88-SIO-PORT1";
     }
 
 }

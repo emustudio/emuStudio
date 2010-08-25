@@ -4,8 +4,6 @@
  * Created on 28.7.2008, 8:22:30
  * hold to: KISS, YAGNI
  *
- * Male plug, RS-232 physical port
- *
  * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,43 +20,41 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package sio88;
 
-import java.util.EventObject;
 import plugins.device.IDeviceContext;
 
 /**
+ * Male plug, RS-232 physical port
  *
  * @author vbmacher
  */
 public class PhysicalPort implements IDeviceContext {
+
     private CpuPort2 port2;
-    
-    public PhysicalPort(CpuPort2 port2) { this.port2 = port2; }
 
-    @Override
-    public Object in(EventObject evt) { 
-    	return port2.in(evt);
+    public PhysicalPort(CpuPort2 port2) {
+        this.port2 = port2;
     }
 
     @Override
-    public void out(EventObject evt, Object val) {
-        short v = (Short)val;
-    	port2.writeBuffer(v);
+    public Object read() {
+        return port2.read();
     }
-    
+
+    @Override
+    public void write(Object val) {
+        short v = (Short) val;
+        port2.writeBuffer(v);
+    }
+
     @Override
     public Class<?> getDataType() {
-    	return Short.class;
+        return Short.class;
     }
 
     @Override
-    public String getID() { return "RS232"; }
-
-	@Override
-	public String getHash() {
-		return "4a0411686e1560c765c1d6ea903a9c5f";
-	}
-
+    public String getID() {
+        return "RS232";
+    }
 }
