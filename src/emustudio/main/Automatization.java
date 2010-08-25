@@ -74,7 +74,7 @@ public class Automatization {
      * @param outw FileWriter object (the opened output file)
      * @throws IOException
      */
-    private void output_message(String message, FileWriter outw)
+    private static void output_message(String message, FileWriter outw)
             throws IOException {
         if (outw != null) {
             outw.write(message + "\n");

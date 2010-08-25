@@ -550,7 +550,7 @@ public class ArchLoader {
             }
 
             // load devices
-            Hashtable<IDevice,String> devNames = new Hashtable<IDevice,String>();
+            Hashtable<String, IDevice> devNames = new Hashtable<String,IDevice>();
             for (int i = 0; settings.containsKey("device"+i); i++) {
             	String devName = settings.getProperty("device"+i);
                 id = createPluginID();
@@ -560,7 +560,7 @@ public class ArchLoader {
                     pluginsReverse.put(dev, id);
                     plugins.put(id, dev);
                     pluginNames.put(id,"device" + i);
-                    devNames.put(dev,"device" + i);
+                    devNames.put("device" + i,dev);
                 } else
                     throw new IllegalArgumentException("Device '" + devName
                             + "' cannot be loaded.");
@@ -569,7 +569,6 @@ public class ArchLoader {
             // load connections
             Hashtable<Long,ArrayList<Long>> connections =
                     new Hashtable<Long,ArrayList<Long>>();
-            IDevice[] tmpDevices = devNames.keySet().toArray(new IDevice[0]);
             for (int i = 0; settings.containsKey("connection"+i+".junc0"); i++) {
             	// get i-th connection from settings
                 String j0 = settings.getProperty("connection"+i+".junc0", "");
@@ -589,26 +588,23 @@ public class ArchLoader {
                     p1 = cpu;
                 else if (j0.equals("memory"))
                     p1 = mem;
-                else if (j0.startsWith("device")) {
-                    int index = Integer.parseInt(j0.substring(6));
-                    p1 = tmpDevices[index];
-                }
+                else if (j0.startsWith("device"))
+                    p1 = devNames.get(j0);
+
                 if (j1.equals("compiler"))
                     p2 = compiler;
                 else if(j1.equals("cpu"))
                     p2 = cpu;
                 else if (j1.equals("memory"))
                     p2 = mem;
-                else if (j1.startsWith("device")) {
-                    int index = Integer.parseInt(j1.substring(6));
-                    p2 = tmpDevices[index];
-                }
+                else if (j1.startsWith("device"))
+                    p2 = devNames.get(j1);
 
                 // note the connection: p1 -> p2  (p1 wants to use p2)
                 long pID1 = pluginsReverse.get(p1);
                 long pID2 = pluginsReverse.get(p2);
 
-                // single direction
+                // the first direction
                 if (connections.containsKey(pID1))
                     connections.get(pID1).add(pID2);
                 else {
@@ -627,7 +623,8 @@ public class ArchLoader {
                     }
                 }
             }
-            Computer arch = new Computer(cpu, mem, compiler, tmpDevices,
+            Computer arch = new Computer(cpu, mem, compiler, 
+                    (IDevice[])devNames.values().toArray(new IDevice[0]),
                     plugins, pluginsReverse, connections);
             runtime.Context.getInstance().assignComputer(Main.getPassword(),
                     arch);
@@ -641,9 +638,14 @@ public class ArchLoader {
     }
     
     /**
-     * Method compute a hash for a plugin identification for one runtime
-     * session. The hash is made from <code>System.nanoTime()</code> and
-     * from <code>Math.random()</code>.
+     * Method compute an ID for a plugin identification for one runtime
+     * session.
+     *
+     * For the security reasons, the ID should be made from
+     * <code>System.nanoTime()</code> and from <code>Math.random()</code>.
+     *
+     * For the safety of correctness, the ID is made only as increased value
+     * of some variable.
      * 
      * @return hash for an identification of the plugin
      */
@@ -714,7 +716,6 @@ public class ArchLoader {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
         }
         return null;
     }
