@@ -294,7 +294,7 @@ public class DiskImpl extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return "0.25-rc1";
+        return "0.26b1";
     }
 
     @Override
