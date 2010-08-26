@@ -19,16 +19,17 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package simh;
 
-import interfaces.ACpuContext;
-import interfaces.SMemoryContext;
+import interfaces.C17E8D62E685AD7E54C209C30482E3C00C8C56ECC;
+import interfaces.C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8;
 import plugins.ISettingsHandler;
 import plugins.cpu.ICPUContext;
 import plugins.device.IDevice;
 import plugins.device.IDeviceContext;
+import plugins.device.SimpleDevice;
 import plugins.memory.IMemoryContext;
+import runtime.Context;
 import runtime.StaticDialogs;
 
 /**
@@ -36,53 +37,40 @@ import runtime.StaticDialogs;
  * 
  * @author vbmacher
  */
-public class SIMHpseudo implements IDevice {
-	private final static String KNOWN_CPU_CONTEXT_HASH = "4bb574accc0ed96b5ed84b5832127289";
-	private final static String KNOWN_MEM_CONTEXT_HASH = "a93730cef0f15c6ea9d6b5e9e5d7f05f";
-	
-	private long hash;
-    private PseudoContext male;
-    private ACpuContext cpu;
-    private SMemoryContext mem;
+public class SIMHpseudo extends SimpleDevice {
 
-    public SIMHpseudo(Long hash) {
-    	this.hash = hash;
+    private PseudoContext context;
+    private C17E8D62E685AD7E54C209C30482E3C00C8C56ECC cpu;
+    private C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8 mem;
+
+    public SIMHpseudo(Long pluginID) {
+        super(pluginID);
+        context = new PseudoContext();
     }
-    
+
     @Override
-    public boolean initialize(ICPUContext cpu, IMemoryContext mem, ISettingsHandler sHandler) {
+    public boolean initialize(ISettingsHandler sHandler) {
+        cpu = (C17E8D62E685AD7E54C209C30482E3C00C8C56ECC)
+                Context.getInstance().getCPUContext(pluginID,
+                C17E8D62E685AD7E54C209C30482E3C00C8C56ECC.class);
         if (cpu == null) {
             StaticDialogs.showErrorMessage("SIMH-pseudo device has to be attached"
                     + " to a CPU");
             return false;
         }
-    	
+
+        mem = (C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8)
+                Context.getInstance().getMemoryContext(pluginID,
+                C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8.class);
         if (mem == null) {
             StaticDialogs.showErrorMessage("SIMH-pseudo device has to be attached"
                     + " to a Memory");
             return false;
         }
-    	
-        // ID of cpu can be ofcourse also else.
-        if (!cpu.getHash().equals(KNOWN_CPU_CONTEXT_HASH)) {
-            StaticDialogs.showErrorMessage("SIMH-pseudo device can not be attached"
-                    + " to this kind of CPU");
-            return false;
-        }
+        context.init(mem);
 
-        if (!mem.getHash().equals(KNOWN_MEM_CONTEXT_HASH)) {
-            StaticDialogs.showErrorMessage("SIMH-pseudo device can't collaborate "
-                    + "with this kind of MEMORY");
-            return false;
-        }
-
-        this.cpu = (ACpuContext) cpu;
-        this.mem = (SMemoryContext) mem;
-        
-        male = new PseudoContext(this.mem);
-        
         // attach IO port
-        if (this.cpu.attachDevice(male, 0xFE) == false) {
+        if (this.cpu.attachDevice(context, 0xFE) == false) {
             StaticDialogs.showErrorMessage("Error: SIMH device can't be"
                     + " attached to CPU (maybe there is a hardware conflict)");
             return false;
@@ -97,45 +85,45 @@ public class SIMHpseudo implements IDevice {
     }
 
     @Override
-    public IDeviceContext getNextContext() { return male; }
-
-    @Override
-    public boolean attachDevice(IDeviceContext male) { return false; }
-
-    @Override
-    public void detachAll() {}
-
-    @Override
     public void reset() {
-        male.reset();
+        context.reset();
     }
 
     @Override
-    public String getTitle() { return "SIMH pseudo device"; }
+    public String getTitle() {
+        return "SIMH pseudo device";
+    }
+
     @Override
     public String getCopyright() {
         return "Copyright (c) 2002-2007, Peter Schorn\n"
-            + "\u00A9 Copyright 2007-2009, Peter Jakubčo";
+                + "\u00A9 Copyright 2007-2010, Peter Jakubčo";
     }
+
     @Override
     public String getDescription() {
-        return "Some of the images taken from SIMH emulator contain Z80 or 8080" +
-                " programs that communicate with the SIMH pseudo device "
+        return "Some of the images taken from SIMH emulator contain Z80 or 8080"
+                + " programs that communicate with the SIMH pseudo device "
                 + "via port 0xfe. The version of the interface is: SIMH003";
     }
-    @Override
-    public String getVersion() { return "0.11-rc1"; }
 
     @Override
-    public void destroy() {}
+    public String getVersion() {
+        return "0.11-rc1";
+    }
 
-	@Override
-	public long getHash() { return hash; }
+    @Override
+    public void destroy() {
+        this.context = null;
+    }
 
-	@Override
-	public void showSettings() {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+    public void showSettings() {
+        // TODO Auto-generated method stub
+    }
 
+    @Override
+    public boolean isShowSettingsSupported() {
+        return false;
+    }
 }
