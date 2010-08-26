@@ -48,7 +48,7 @@ public class BrainDuckMem extends SimpleMemory {
 
     @Override
     public String getVersion() {
-        return "0.1-rc2";
+        return "0.11b";
     }
 
     @Override
