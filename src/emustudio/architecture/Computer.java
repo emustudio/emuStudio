@@ -241,17 +241,12 @@ public class Computer implements IConnections {
     public boolean isConnected(long pluginID, long toPluginID) {
         ArrayList<Long> ar = connections.get(pluginID);
 
-System.out.print("isConnected(" + pluginID + ", " + toPluginID + "): ");
-
         if ((ar == null) || ar.isEmpty()) {
-System.out.println("empty");
             return false;
         }
         if (ar.contains(toPluginID)) {
-System.out.println("true");
             return true;
         }
-System.out.println("false: " + ar.toString());
         return false;
     }
 }

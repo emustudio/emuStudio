@@ -87,13 +87,13 @@ public class AboutDialog extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
-        lblName.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
+        lblName.setFont(new java.awt.Font("Tahoma", 1, 18));
         lblName.setText("emuStudio");
 
         lblCopyright.setText("© Copyright 2006-2010, Peter Jakubčo");
 
         lblVersion.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
-        lblVersion.setText("0.36-rc1");
+        lblVersion.setText("0.37b");
 
         jLabel4.setText("version:");
 
