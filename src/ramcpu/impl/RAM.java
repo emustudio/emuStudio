@@ -67,7 +67,7 @@ public class RAM extends SimpleCPU {
 
     @Override
     public String getVersion() {
-        return "0.1-rc1";
+        return "0.11b";
     }
 
     @Override
