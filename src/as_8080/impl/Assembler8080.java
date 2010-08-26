@@ -66,7 +66,7 @@ public class Assembler8080 extends SimpleCompiler {
 
     @Override
     public String getVersion() {
-        return "0.29b";
+        return "0.30b";
     }
 
     @Override
