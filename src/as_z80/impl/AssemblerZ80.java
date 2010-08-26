@@ -65,12 +65,12 @@ public class AssemblerZ80 extends SimpleCompiler {
 
     @Override
     public String getVersion() {
-        return "0.15rc-1";
+        return "0.16b";
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2008-2009, Peter Jakubčo";
+        return "\u00A9 Copyright 2008-2010, Peter Jakubčo";
     }
 
     @Override
