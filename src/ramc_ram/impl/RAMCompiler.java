@@ -75,7 +75,7 @@ public class RAMCompiler extends SimpleCompiler {
 
     @Override
     public String getVersion() {
-        return "0.12-rc1";
+        return "0.13b";
     }
 
     @Override
