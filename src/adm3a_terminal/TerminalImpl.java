@@ -58,7 +58,6 @@ public class TerminalImpl extends SimpleDevice {
         IDeviceContext device = Context.getInstance().getDeviceContext(pluginID,
                 IDeviceContext.class, "RS232");
 
-        System.out.println("ADM-3A getting: " + device);
         if (device != null)
             female.attachDevice(device);
 
@@ -127,7 +126,7 @@ public class TerminalImpl extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return "0.15-rc1";
+        return "0.16b";
     }
 
     @Override
