@@ -49,7 +49,7 @@ public class BrainTerminal extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return "0.11-rc2";
+        return "0.12b";
     }
 
     @Override
