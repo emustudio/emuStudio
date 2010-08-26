@@ -206,7 +206,7 @@ public class CpuZ80 extends SimpleCPU {
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2008-2009, Peter Jakubčo";
+        return "\u00A9 Copyright 2008-2010, Peter Jakubčo";
     }
 
     @Override
@@ -218,7 +218,7 @@ public class CpuZ80 extends SimpleCPU {
 
     @Override
     public String getVersion() {
-        return "0.15-rc1";
+        return "0.16b";
     }
 
     @Override
