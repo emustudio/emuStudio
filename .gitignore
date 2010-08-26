@@ -1,0 +1,6 @@
+/.gitignore
+nbproject/private
+/outfilename
+*.*~
+*.log
+build.xml
