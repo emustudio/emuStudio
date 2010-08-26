@@ -51,7 +51,7 @@ public class AbstractTape extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return "0.2-rc1";
+        return "0.21b";
     }
 
     @Override
