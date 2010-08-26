@@ -96,7 +96,7 @@ public class Mits88SIO extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return "0.15b";
+        return "0.16b";
     }
 
     @Override
@@ -157,7 +157,6 @@ public class Mits88SIO extends SimpleDevice {
         // try to 'catch' any first connected device
         IDeviceContext device = Context.getInstance().getDeviceContext(pluginID,
                 IDeviceContext.class);
-        System.out.println("88-SIO getting: " + device);
         if (device != null) {
             port2.attachDevice(device);
         }
