@@ -67,7 +67,7 @@ public class BrainCPU extends SimpleCPU {
 
     @Override
     public String getVersion() {
-        return "0.12-rc2";
+        return "0.13b";
     }
 
     @Override
