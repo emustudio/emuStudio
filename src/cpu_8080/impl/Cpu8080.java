@@ -95,7 +95,7 @@ public class Cpu8080 extends SimpleCPU {
 
     @Override
     public String getVersion() {
-        return "0.20-rc1";
+        return "0.21b";
     }
 
     @Override
