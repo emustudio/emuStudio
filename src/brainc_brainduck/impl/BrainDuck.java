@@ -59,7 +59,7 @@ public class BrainDuck extends SimpleCompiler {
 
     @Override
     public String getVersion() {
-        return "0.13b2";
+        return "0.14b";
     }
 
     @Override
