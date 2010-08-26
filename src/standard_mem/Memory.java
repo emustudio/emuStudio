@@ -68,12 +68,12 @@ public class Memory extends SimpleMemory {
 
     @Override
     public String getVersion() {
-        return "0.28-rc1";
+        return "0.29b";
     }
 
     @Override
     public String getTitle() {
-        return "Operating memory";
+        return "Standard Operating memory";
     }
 
     @Override
