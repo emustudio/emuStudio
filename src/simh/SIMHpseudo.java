@@ -109,7 +109,7 @@ public class SIMHpseudo extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return "0.11-rc1";
+        return "0.12b";
     }
 
     @Override
