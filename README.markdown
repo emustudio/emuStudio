@@ -12,7 +12,7 @@ is implemented as independent plug-in (they are available in the other repositor
 
 The whole project is implemented in Java (probably that is not happy surprise for performance
 expectations). But... At first, the *main purpose of the platform is to support education process*.
-The platform has been used at Technical University of Košice (Slovakia) in great success since
+The platform has been used at Technical University of Kosice (Slovakia) in great success since
 year 2007.
 
 Second, I'm trying to develop it for fun. With this project I have learned a lot about programming
@@ -35,11 +35,11 @@ selected CPU.
 Installation
 ------------
 
-For istallation, first download some distribution copy from the url: [emuStudio dev page](http://dev.fei.tuke.sk/projects/emustudio/wiki)
+For istallation, first download some distribution copy from the Download page.
 
 Unpack it, and everything is ready.
 
-Directory tree should look like this:
+Directory tree will look like this:
 
     emuStudio
       |
@@ -57,9 +57,11 @@ Directory tree should look like this:
 License
 -------
 
-This, and following projects are released under GNU GPL v2 license.
+This project is released under GNU GPL v2 license.
 
-* emuStudio
+Related projects
+----------------
+
 * emuLib
 * as-8080
 * as-z80
@@ -78,4 +80,3 @@ This, and following projects are released under GNU GPL v2 license.
 * simhPseudo-z80
 * abstractTape-ram
 * brainduck-terminal
-
