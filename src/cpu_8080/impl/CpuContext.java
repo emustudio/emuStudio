@@ -98,4 +98,19 @@ public class CpuContext implements C17E8D62E685AD7E54C209C30482E3C00C8C56ECC {
         cpu.interrupt(b1, b2, b3);
     }
 
+    @Override
+    public boolean isInterruptSupported() {
+        return true;
+    }
+
+    @Override
+    public void setInterrupt(IDeviceContext device, int mask) {
+
+    }
+
+    @Override
+    public void clearInterrupt(IDeviceContext device, int mask) {
+        
+    }
+
 }
