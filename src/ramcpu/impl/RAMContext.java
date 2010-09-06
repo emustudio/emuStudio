@@ -23,6 +23,7 @@ package ramcpu.impl;
 
 import interfaces.C50E67F515A7C87A67947F8FB0F82558196BE0AC7;
 import plugins.cpu.ICPUContext;
+import plugins.device.IDeviceContext;
 
 import runtime.Context;
 import runtime.StaticDialogs;
@@ -125,5 +126,20 @@ public class RAMContext implements ICPUContext {
             }
         }
         return true;
+    }
+
+    @Override
+    public boolean isInterruptSupported() {
+        return false;
+    }
+
+    @Override
+    public void setInterrupt(IDeviceContext device, int mask) {
+
+    }
+
+    @Override
+    public void clearInterrupt(IDeviceContext device, int mask) {
+        
     }
 }
