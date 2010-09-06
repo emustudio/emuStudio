@@ -31,6 +31,7 @@ import plugins.ISettingsHandler;
 import plugins.cpu.ICPU;
 import plugins.cpu.IDebugColumn;
 import plugins.cpu.SimpleCPU;
+import plugins.device.IDeviceContext;
 import plugins.memory.IMemoryContext;
 import runtime.Context;
 import runtime.StaticDialogs;
@@ -45,21 +46,15 @@ public class CpuZ80 extends SimpleCPU {
     private IMemoryContext mem;
     private CpuContext cpu;
     // 2 sets of 6 GPR
-    public short B, B_S, C, C_S, D, D_S, E, E_S;
-    public short H, H_S, L, L_S;
+    public short B, B1, C, C1, D, D1, E, E1;
+    public short H, H1, L, L1;
     // accumulator and flags
-    public short A, A_S, F, F_S;
+    public short A, A1, F, F1;
     // special registers
     public int PC = 0, SP = 0, IX = 0, IY = 0;
     public short I = 0, R = 0; // interrupt r., refresh r.
-    private boolean[] IFF; // interrupt enable flip-flops
-    @SuppressWarnings("unused")
-    private boolean INTE = false; // interrupts
-    @SuppressWarnings("unused")
-    private boolean isInt = false;
-    @SuppressWarnings("unused")
-    private byte intMode = 0; // interrupt mode (0,1,2)
-    public static final int flagS = 0x80, flagZ = 0x40, flagH = 0x10, flagPV = 0x4, flagN = 0x2, flagC = 0x1;
+    public static final int flagS = 0x80, flagZ = 0x40,
+            flagH = 0x10, flagPV = 0x4, flagN = 0x2, flagC = 0x1;
     // cpu speed
     private long long_cycles = 0; // count of executed cycles for runtime freq. computing
     private java.util.Timer freqScheduler;
@@ -67,6 +62,21 @@ public class CpuZ80 extends SimpleCPU {
     private int sliceCheckTime = 100;
     private volatile int clockFrequency = 20000; // kHz
     private final Object frequencyLock = new Object(); // synchronize lock
+
+    private byte intMode = 0; // interrupt mode (0,1,2)
+    // Interrupt flip-flops
+    private boolean[] IFF; // interrupt enable flip-flops
+    // No-Extra wait for CPC Interrupt?
+    private boolean noWait = false;
+    // Flag to cause an interrupt to execute
+    private boolean isINT = false;
+    // Interrupt Vector
+    private int interruptVector = 0xff;
+    // Interrupt mask
+    private int interruptPending = 0;
+    // device that want to interrupt
+    private IDeviceContext interruptDevice;
+
     /* parityTable[i] = (number of 1's in i is odd) ? 0 : 4, i = 0..255 */
     private final static short parityTable[] = {
         4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4,
@@ -191,7 +201,7 @@ public class CpuZ80 extends SimpleCPU {
     public CpuZ80(Long pluginID) {
         super(pluginID);
         IFF = new boolean[2];
-        cpu = new CpuContext();
+        cpu = new CpuContext(this);
         rfc = new RuntimeFrequencyCalculator();
         freqScheduler = new java.util.Timer();
         if (!Context.getInstance().register(pluginID, cpu, C17E8D62E685AD7E54C209C30482E3C00C8C56ECC.class)) {
@@ -262,12 +272,34 @@ public class CpuZ80 extends SimpleCPU {
         return true;
     }
 
+    public void setInterrupt(IDeviceContext device, int mask) {
+        this.interruptDevice = device;
+        this.interruptPending |= mask;
+    }
+
+    public void clearInterrupt(IDeviceContext device, int mask) {
+        if (interruptDevice == device)
+            this.interruptPending &= ~mask;
+    }
+
+    public void setIntVector(byte[] vector) {
+        if (vector == null)
+            return;
+        if (vector.length == 0)
+            return;
+
+        this.interruptVector = vector[0];
+    }
+
     @Override
     public void step() {
         if (run_state == ICPU.STATE_STOPPED_BREAK) {
             try {
                 run_state = ICPU.STATE_RUNNING;
-                evalStep();
+                boolean oldIFF = IFF[0];
+                noWait = false;
+                evalStep(fetchOpcode());
+                isINT = (interruptPending != 0) && oldIFF && IFF[0];
                 if (PC > 0xffff) {
                     run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
                     PC = 0xffff;
@@ -343,13 +375,15 @@ public class CpuZ80 extends SimpleCPU {
         SP = IX = IY = 0;
         I = R = 0;
         A = B = C = D = E = H = L = 0;
-        A_S = B_S = C_S = D_S = E_S = H_S = L_S = F = F_S = 0;
+        A1 = B1 = C1 = D1 = E1 = H1 = L1 = F = F1 = 0;
         IFF[0] = false;
         IFF[1] = false;
         PC = startPos;
         setRuntimeFreqCounter(false);
         fireCpuRun(run_state);
         fireCpuState();
+        interruptPending = 0;
+        isINT = noWait = false;
     }
 
     @Override
@@ -639,11 +673,56 @@ public class CpuZ80 extends SimpleCPU {
     }
 
     /**
-     * This method evaluates one instruction. It provides all phases:
-     * Fetch, Decode, Execute, Store.
+     * Perform pending interrupt
      */
-    private int evalStep() throws ArrayIndexOutOfBoundsException {
-        short OP;
+    private int doInterrupt() {
+        isINT = false;
+        int cycles = 0;
+
+        if (!noWait)
+            cycles += 14;
+//        if (interruptDevice != null) {
+  //          interruptDevice.setInterrupt(1);
+    //    }
+        IFF[0] = IFF[1] = false;
+        switch (intMode) {
+            case 0:  // rst p (interruptVector)
+                cycles += 11;
+                int old_runstate = run_state;
+                evalStep((short)interruptVector); // must ignore halt
+                if (run_state == ICPU.STATE_STOPPED_NORMAL)
+                    run_state = old_runstate;
+                break;
+            case 1: // rst 0xFF
+                cycles += 12;
+                mem.writeWord(SP - 2, PC);
+                SP = (SP - 2) & 0xffff;
+                PC = 0xFF & 0x38;
+                break;
+            case 2:
+                cycles += 13;
+                mem.writeWord(SP - 2, PC);
+                PC = (Short)mem.readWord((I << 8) | interruptVector);
+                break;
+        }
+        return cycles;
+    }
+
+    /**
+     * Fetches an opcode from memory.
+     * @return opcode
+     */
+    private short fetchOpcode() {
+        return ((Short) mem.read(PC++)).shortValue();
+    }
+
+    /**
+     * This method evaluates one instruction. It provides the following phases:
+     * Decode, Execute, Store.
+     * @param OP the opcode
+     */
+    private int evalStep(short OP) throws ArrayIndexOutOfBoundsException {
+
         int tmp, tmp1, tmp2, tmp3;
         short special = 0; // prefix if available = 0xDD or 0xFD
         byte b;
@@ -652,19 +731,9 @@ public class CpuZ80 extends SimpleCPU {
          * but from one or all of 3 bytes (b1,b2,b3) which represents either
          * rst or call instruction incomed from external peripheral device
          */
-//        if (isINT == true) {
-//            if (INTE == true) {
-//                if ((b1 & 0xC7) == 0xC7) {                      /* RST */
-//                    mem.writeWord(SP-2,PC); SP -= 2; PC = b1 & 0x38; return 11;
-//                } else if (b1 == 0315) {                        /* CALL */
-//                    mem.writeWord(SP-2, PC+2); SP -= 2; 
-//                    PC = (int)(((b3 & 0xFF) << 8) | (b2 & 0xFF));
-//                    return 17;
-//                }
-//            }
-//            isINT = false;
-//        }        
-        OP = ((Short) mem.read(PC++)).shortValue();
+        if (isINT)
+            return doInterrupt();
+        R++;
         if (OP == 0x76) { /* HALT */
             run_state = ICPU.STATE_STOPPED_NORMAL;
             return 4;
@@ -972,11 +1041,11 @@ public class CpuZ80 extends SimpleCPU {
                 return 4;
             case 0x08: /* EX AF,AF' */
                 tmp = A;
-                A = A_S;
-                A_S = (short) tmp;
+                A = A1;
+                A1 = (short) tmp;
                 tmp = F;
-                F = F_S;
-                F_S = (short) tmp;
+                F = F1;
+                F1 = (short) tmp;
                 return 4;
             case 0x0A: /* LD A,(BC) */
                 tmp = (Short) mem.read(getpair(0));
@@ -1053,23 +1122,23 @@ public class CpuZ80 extends SimpleCPU {
                 return 10;
             case 0xD9: /* EXX */
                 tmp = B;
-                B = B_S;
-                B_S = (short) tmp;
+                B = B1;
+                B1 = (short) tmp;
                 tmp = C;
-                C = C_S;
-                C_S = (short) tmp;
+                C = C1;
+                C1 = (short) tmp;
                 tmp = D;
-                D = D_S;
-                D_S = (short) tmp;
+                D = D1;
+                D1 = (short) tmp;
                 tmp = E;
-                E = E_S;
-                E_S = (short) tmp;
+                E = E1;
+                E1 = (short) tmp;
                 tmp = H;
-                H = H_S;
-                H_S = (short) tmp;
+                H = H1;
+                H1 = (short) tmp;
                 tmp = L;
-                L = L_S;
-                L_S = (short) tmp;
+                L = L1;
+                L1 = (short) tmp;
                 return 4;
             case 0xE3: /* EX (SP),HL */
                 tmp = (Short) mem.read(SP);
@@ -2230,7 +2299,7 @@ public class CpuZ80 extends SimpleCPU {
             try {
                 while ((cycles_executed < cycles_to_execute)
                         && (run_state == ICPU.STATE_RUNNING)) {
-                    cycles = evalStep();
+                    cycles = evalStep(fetchOpcode());
                     cycles_executed += cycles;
                     long_cycles += cycles;
                     if (getBreakpoint(PC) == true) {

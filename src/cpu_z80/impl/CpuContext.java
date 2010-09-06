@@ -33,9 +33,11 @@ import plugins.device.IDeviceContext;
 public final class CpuContext implements C17E8D62E685AD7E54C209C30482E3C00C8C56ECC {
 
     private Hashtable<Integer, IDeviceContext> devicesList;
+    private CpuZ80 z80;
 
-    public CpuContext() {
+    public CpuContext(CpuZ80 z80) {
         devicesList = new Hashtable<Integer, IDeviceContext>();
+        this.z80 = z80;
     }
 
     @Override
@@ -93,5 +95,21 @@ public final class CpuContext implements C17E8D62E685AD7E54C209C30482E3C00C8C56E
     // TODO implement, please...
     @Override
     public void interrupt(byte[] instr) {
+        z80.setIntVector(instr);
+    }
+
+    @Override
+    public boolean isInterruptSupported() {
+        return true;
+    }
+
+    @Override
+    public void setInterrupt(IDeviceContext device, int mask) {
+        z80.setInterrupt(device, mask);
+    }
+
+    @Override
+    public void clearInterrupt(IDeviceContext device, int mask) {
+        z80.clearInterrupt(device, mask);
     }
 }

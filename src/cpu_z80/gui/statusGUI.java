@@ -285,7 +285,7 @@ public class StatusGUI extends javax.swing.JPanel {
             if (set == 0) {
                 F = cpu.F;
             } else {
-                F = cpu.F_S;
+                F = cpu.F1;
             }
             flagsI[0] = ((F & CpuZ80.flagS) != 0) ? 1 : 0;
             flagsI[1] = ((F & CpuZ80.flagZ) != 0) ? 1 : 0;
@@ -435,17 +435,17 @@ public class StatusGUI extends javax.swing.JPanel {
         txtRegL.setText(f(cpu.L));
         txtRegHL.setText(f(((cpu.H << 8) | cpu.L) & 0xFFFF));
         flagModel1.fireTableDataChanged();
-        txtRegA1.setText(f(cpu.A_S));
-        txtRegF1.setText(f(cpu.F_S));
-        txtRegB1.setText(f(cpu.B_S));
-        txtRegC1.setText(f(cpu.C_S));
-        txtRegBC1.setText(f(((cpu.B_S << 8) | cpu.C_S) & 0xFFFF));
-        txtRegD1.setText(f(cpu.D_S));
-        txtRegE1.setText(f(cpu.E_S));
-        txtRegDE1.setText(f(((cpu.D_S << 8) | cpu.E_S) & 0xFFFF));
-        txtRegH1.setText(f(cpu.H_S));
-        txtRegL1.setText(f(cpu.L_S));
-        txtRegHL1.setText(f(((cpu.H_S << 8) | cpu.L_S) & 0xFFFF));
+        txtRegA1.setText(f(cpu.A1));
+        txtRegF1.setText(f(cpu.F1));
+        txtRegB1.setText(f(cpu.B1));
+        txtRegC1.setText(f(cpu.C1));
+        txtRegBC1.setText(f(((cpu.B1 << 8) | cpu.C1) & 0xFFFF));
+        txtRegD1.setText(f(cpu.D1));
+        txtRegE1.setText(f(cpu.E1));
+        txtRegDE1.setText(f(((cpu.D1 << 8) | cpu.E1) & 0xFFFF));
+        txtRegH1.setText(f(cpu.H1));
+        txtRegL1.setText(f(cpu.L1));
+        txtRegHL1.setText(f(((cpu.H1 << 8) | cpu.L1) & 0xFFFF));
         flagModel2.fireTableDataChanged();
 
         txtRegSP.setText(String.format("%04X", cpu.SP));
