@@ -29,7 +29,7 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import plugins.memory.SimpleMemoryContext;
+import emuLib8.plugins.memory.SimpleMemoryContext;
 
 public class RAMContext extends SimpleMemoryContext implements CA93D6D53B2CCE716745DD211F110C6E387C12431 {
 

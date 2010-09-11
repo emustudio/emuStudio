@@ -24,10 +24,10 @@ package RAMmemory.impl;
 import RAMmemory.gui.MemoryWindow;
 import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
 import interfaces.CA93D6D53B2CCE716745DD211F110C6E387C12431;
-import plugins.ISettingsHandler;
-import plugins.memory.SimpleMemory;
-import runtime.Context;
-import runtime.StaticDialogs;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.plugins.memory.SimpleMemory;
+import emuLib8.runtime.Context;
+import emuLib8.runtime.StaticDialogs;
 
 public class RAMmemory extends SimpleMemory {
 

@@ -46,7 +46,7 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.table.AbstractTableModel;
 
-import plugins.memory.IMemory.IMemListener;
+import emuLib8.plugins.memory.IMemory.IMemListener;
 
 import RAMmemory.impl.RAMContext;
 
