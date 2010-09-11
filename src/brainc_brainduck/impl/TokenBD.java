@@ -24,7 +24,7 @@
 package brainc_brainduck.impl;
 
 import java_cup.runtime.Symbol;
-import plugins.compiler.IToken;
+import emuLib8.plugins.compiler.IToken;
 
 /**
  *

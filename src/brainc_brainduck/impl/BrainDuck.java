@@ -23,13 +23,13 @@ package brainc_brainduck.impl;
 
 import java.io.Reader;
 
-import plugins.compiler.ICompiler;
-import plugins.compiler.ILexer;
-import plugins.memory.IMemoryContext;
+import emuLib8.plugins.compiler.ICompiler;
+import emuLib8.plugins.compiler.ILexer;
+import emuLib8.plugins.memory.IMemoryContext;
 import brainc_brainduck.tree.Program;
-import plugins.compiler.HEXFileHandler;
-import plugins.compiler.SimpleCompiler;
-import runtime.Context;
+import emuLib8.plugins.compiler.HEXFileHandler;
+import emuLib8.plugins.compiler.SimpleCompiler;
+import emuLib8.runtime.Context;
 
 /**
  * Main class implementing main compiler interface.

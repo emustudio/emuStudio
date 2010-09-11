@@ -24,9 +24,9 @@
  */
 
 import java_cup.runtime.Symbol;
-import plugins.compiler.IToken;
+import emuLib8.plugins.compiler.IToken;
 import brainc_brainduck.tree.*;
-import plugins.compiler.ICompiler;
+import emuLib8.plugins.compiler.ICompiler;
 
 init with {: errorCount = 0; :}
 parser code {:

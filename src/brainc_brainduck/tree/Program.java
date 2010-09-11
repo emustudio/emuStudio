@@ -22,7 +22,7 @@
 package brainc_brainduck.tree;
 
 import java.util.Vector;
-import plugins.compiler.HEXFileHandler;
+import emuLib8.plugins.compiler.HEXFileHandler;
 
 public class Program {
     private Vector<Row> list; // zoznam všetkých inštrukcií

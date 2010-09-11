@@ -26,8 +26,8 @@
 
 package brainc_brainduck.impl;
 
-import plugins.compiler.ILexer;
-import plugins.compiler.IToken;
+import emuLib8.plugins.compiler.ILexer;
+import emuLib8.plugins.compiler.IToken;
 import java.io.Reader;
 import java.io.IOException;
 

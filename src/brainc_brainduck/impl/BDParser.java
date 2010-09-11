@@ -7,9 +7,9 @@
 package brainc_brainduck.impl;
 
 import java_cup.runtime.Symbol;
-import plugins.compiler.IToken;
+import emuLib8.plugins.compiler.IToken;
 import brainc_brainduck.tree.*;
-import plugins.compiler.ICompiler;
+import emuLib8.plugins.compiler.ICompiler;
 
 /** CUP v0.11a beta 20060608 generated parser.
   * @version Thu Aug 19 18:51:45 CEST 2010

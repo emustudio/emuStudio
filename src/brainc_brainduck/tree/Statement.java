@@ -21,7 +21,7 @@
  */
 package brainc_brainduck.tree;
 
-import plugins.compiler.HEXFileHandler;
+import emuLib8.plugins.compiler.HEXFileHandler;
 
 public class Statement {
 
