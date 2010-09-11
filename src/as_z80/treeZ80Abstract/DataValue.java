@@ -25,7 +25,7 @@
 package as_z80.treeZ80Abstract;
 
 import as_z80.impl.Namespace;
-import plugins.compiler.HEXFileHandler;
+import emuLib8.plugins.compiler.HEXFileHandler;
 
 /**
  *

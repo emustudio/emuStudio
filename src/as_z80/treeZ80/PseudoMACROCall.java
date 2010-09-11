@@ -29,7 +29,7 @@ import as_z80.impl.Namespace;
 import java.util.Vector;
 import as_z80.treeZ80Abstract.Expression;
 import as_z80.treeZ80Abstract.Pseudo;
-import plugins.compiler.HEXFileHandler;
+import emuLib8.plugins.compiler.HEXFileHandler;
 
 /**
  *

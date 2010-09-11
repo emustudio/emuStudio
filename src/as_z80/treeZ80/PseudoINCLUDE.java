@@ -31,7 +31,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Vector;
 import as_z80.treeZ80Abstract.Pseudo;
-import plugins.compiler.HEXFileHandler;
+import emuLib8.plugins.compiler.HEXFileHandler;
 
 /**
  *

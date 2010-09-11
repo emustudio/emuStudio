@@ -8,8 +8,8 @@ package as_z80.impl;
 
 import java.util.Vector;
 import java_cup.runtime.Symbol;
-import plugins.compiler.IToken;
-import plugins.compiler.ICompiler;
+import emuLib8.plugins.compiler.IToken;
+import emuLib8.plugins.compiler.ICompiler;
 import as_z80.treeZ80.*;
 import as_z80.treeZ80Abstract.*;
 

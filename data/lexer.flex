@@ -25,7 +25,7 @@
 
 package as_z80.impl;
 
-import plugins.compiler.*;
+import emuLib8.plugins.compiler.*;
 import java.io.*;
 
 %%

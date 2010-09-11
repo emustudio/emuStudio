@@ -37,6 +37,7 @@ public abstract class Instruction extends InstrData {
         this.opcode = opcode;
     }
 
+    @Override
     public int getSize() { 
         return Expression.getSize(opcode);
     }

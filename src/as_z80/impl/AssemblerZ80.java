@@ -26,13 +26,13 @@ package as_z80.impl;
 
 import java.io.Reader;
 
-import plugins.compiler.ICompiler;
-import plugins.compiler.ILexer;
-import plugins.memory.IMemoryContext;
+import emuLib8.plugins.compiler.ICompiler;
+import emuLib8.plugins.compiler.ILexer;
+import emuLib8.plugins.memory.IMemoryContext;
 import as_z80.treeZ80.Program;
-import plugins.compiler.HEXFileHandler;
-import plugins.compiler.SimpleCompiler;
-import runtime.Context;
+import emuLib8.plugins.compiler.HEXFileHandler;
+import emuLib8.plugins.compiler.SimpleCompiler;
+import emuLib8.runtime.Context;
 
 /**
  *

@@ -28,7 +28,7 @@ import as_z80.impl.NeedMorePassException;
 import as_z80.impl.Namespace;
 import java.util.Vector;
 import as_z80.treeZ80Abstract.Statement;
-import plugins.compiler.HEXFileHandler;
+import emuLib8.plugins.compiler.HEXFileHandler;
 
 /**
  *

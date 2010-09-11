@@ -28,7 +28,7 @@ import as_z80.impl.NeedMorePassException;
 import as_z80.impl.Namespace;
 import as_z80.treeZ80Abstract.DataValue;
 import as_z80.treeZ80Abstract.Expression;
-import plugins.compiler.HEXFileHandler;
+import emuLib8.plugins.compiler.HEXFileHandler;
 
 /**
  *
