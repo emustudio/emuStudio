@@ -21,7 +21,7 @@
  */
 package ramcpu.gui;
 
-import plugins.cpu.IDebugColumn;
+import emuLib8.plugins.cpu.IDebugColumn;
 
 public class ColumnInfo implements IDebugColumn {
     private String name;
@@ -34,7 +34,10 @@ public class ColumnInfo implements IDebugColumn {
         this.editable = editable;
     }
 
+    @Override
     public Class<?> getType() { return this.type; }
+    @Override
     public String getName() { return this.name; }
+    @Override
     public boolean isEditable() { return this.editable; }
 }

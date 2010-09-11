@@ -32,9 +32,9 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 
-import plugins.cpu.ICPU;
-import plugins.cpu.ICPU.ICPUListener;
-import plugins.memory.IMemoryContext;
+import emuLib8.plugins.cpu.ICPU;
+import emuLib8.plugins.cpu.ICPU.ICPUListener;
+import emuLib8.plugins.memory.IMemoryContext;
 
 import ramcpu.impl.RAM;
 

@@ -21,7 +21,7 @@
  */
 package interfaces;
 
-import plugins.device.IDeviceContext;
+import emuLib8.plugins.device.IDeviceContext;
 
 public interface C50E67F515A7C87A67947F8FB0F82558196BE0AC7 extends IDeviceContext {
 	/**

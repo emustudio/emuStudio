@@ -22,11 +22,11 @@
 package ramcpu.impl;
 
 import interfaces.C50E67F515A7C87A67947F8FB0F82558196BE0AC7;
-import plugins.cpu.ICPUContext;
-import plugins.device.IDeviceContext;
+import emuLib8.plugins.cpu.ICPUContext;
+import emuLib8.plugins.device.IDeviceContext;
 
-import runtime.Context;
-import runtime.StaticDialogs;
+import emuLib8.runtime.Context;
+import emuLib8.runtime.StaticDialogs;
 
 public class RAMContext implements ICPUContext {
 

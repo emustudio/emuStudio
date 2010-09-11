@@ -24,7 +24,7 @@ package ramcpu.gui;
 import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
 import interfaces.CA93D6D53B2CCE716745DD211F110C6E387C12431;
 import ramcpu.impl.RAM;
-import plugins.cpu.IDebugColumn;
+import emuLib8.plugins.cpu.IDebugColumn;
 
 public class RAMDisassembler {
 

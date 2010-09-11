@@ -29,15 +29,15 @@ import interfaces.CA93D6D53B2CCE716745DD211F110C6E387C12431;
 
 import javax.swing.JPanel;
 
-import plugins.ISettingsHandler;
-import plugins.cpu.ICPU;
-import plugins.cpu.ICPUContext;
-import plugins.cpu.IDebugColumn;
-import plugins.cpu.SimpleCPU;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.plugins.cpu.ICPU;
+import emuLib8.plugins.cpu.ICPUContext;
+import emuLib8.plugins.cpu.IDebugColumn;
+import emuLib8.plugins.cpu.SimpleCPU;
 import ramcpu.gui.RAMDisassembler;
 import ramcpu.gui.RAMStatusPanel;
-import runtime.Context;
-import runtime.StaticDialogs;
+import emuLib8.runtime.Context;
+import emuLib8.runtime.StaticDialogs;
 
 public class RAM extends SimpleCPU {
 
