@@ -21,11 +21,11 @@
  */
 package brainduckmem.impl;
 
-import plugins.ISettingsHandler;
-import plugins.memory.IMemoryContext;
-import plugins.memory.SimpleMemory;
-import runtime.Context;
-import runtime.StaticDialogs;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.plugins.memory.IMemoryContext;
+import emuLib8.plugins.memory.SimpleMemory;
+import emuLib8.runtime.Context;
+import emuLib8.runtime.StaticDialogs;
 
 public class BrainDuckMem extends SimpleMemory {
 

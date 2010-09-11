@@ -21,7 +21,7 @@
  */
 package brainduckmem.impl;
 
-import plugins.memory.SimpleMemoryContext;
+import emuLib8.plugins.memory.SimpleMemoryContext;
 
 public class BrainMemContext extends SimpleMemoryContext {
 
