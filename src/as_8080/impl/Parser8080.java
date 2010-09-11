@@ -8,8 +8,8 @@ package as_8080.impl;
 
 import java.util.Vector;
 import java_cup.runtime.Symbol;
-import plugins.compiler.IToken;
-import plugins.compiler.ICompiler;
+import emuLib8.plugins.compiler.IToken;
+import emuLib8.plugins.compiler.ICompiler;
 import as_8080.tree8080.*;
 import as_8080.tree8080Abstract.*;
 

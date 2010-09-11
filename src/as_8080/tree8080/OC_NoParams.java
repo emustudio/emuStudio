@@ -26,7 +26,7 @@ package as_8080.tree8080;
 
 import as_8080.impl.CompileEnv;
 import as_8080.tree8080Abstract.OpCodeNode;
-import plugins.compiler.HEXFileHandler;
+import emuLib8.plugins.compiler.HEXFileHandler;
 
 /**
  *

@@ -29,7 +29,7 @@ import as_8080.tree8080Abstract.ExprNode;
 import as_8080.tree8080Abstract.PseudoBlock;
 
 import java.util.Vector;
-import plugins.compiler.HEXFileHandler;
+import emuLib8.plugins.compiler.HEXFileHandler;
 
 /**
  *

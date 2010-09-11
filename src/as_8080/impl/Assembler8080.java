@@ -27,13 +27,13 @@ package as_8080.impl;
 import as_8080.tree8080.Statement;
 
 import java.io.Reader;
-import plugins.compiler.HEXFileHandler;
+import emuLib8.plugins.compiler.HEXFileHandler;
 
-import plugins.compiler.ICompiler;
-import plugins.compiler.ILexer;
-import plugins.compiler.SimpleCompiler;
-import plugins.memory.IMemoryContext;
-import runtime.Context;
+import emuLib8.plugins.compiler.ICompiler;
+import emuLib8.plugins.compiler.ILexer;
+import emuLib8.plugins.compiler.SimpleCompiler;
+import emuLib8.plugins.memory.IMemoryContext;
+import emuLib8.runtime.Context;
 
 /**
  * Main implementation class of the plugin (assembler for 8080 processor).

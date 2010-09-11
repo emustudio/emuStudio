@@ -31,7 +31,7 @@ import as_8080.tree8080Abstract.PseudoBlock;
 import as_8080.tree8080Abstract.CodePseudoNode;
 
 import java.util.Vector;
-import plugins.compiler.HEXFileHandler;
+import emuLib8.plugins.compiler.HEXFileHandler;
 
 /**
  *

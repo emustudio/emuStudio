@@ -28,7 +28,7 @@ import as_8080.impl.NeedMorePassException;
 import as_8080.impl.CompileEnv;
 import as_8080.tree8080Abstract.DataValueNode;
 import as_8080.tree8080Abstract.ExprNode;
-import plugins.compiler.HEXFileHandler;
+import emuLib8.plugins.compiler.HEXFileHandler;
 
 /**
  *

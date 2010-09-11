@@ -25,7 +25,7 @@
 package as_8080.impl;
 
 import java_cup.runtime.Symbol;
-import plugins.compiler.IToken;
+import emuLib8.plugins.compiler.IToken;
 
 /**
  *
