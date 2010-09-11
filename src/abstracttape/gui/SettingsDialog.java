@@ -32,7 +32,7 @@ import javax.swing.JDialog;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
 
-import plugins.ISettingsHandler;
+import emuLib8.plugins.ISettingsHandler;
 
 @SuppressWarnings("serial")
 public class SettingsDialog extends JDialog {

@@ -24,10 +24,10 @@ package abstracttape.impl;
 import abstracttape.gui.SettingsDialog;
 import abstracttape.gui.TapeDialog;
 import interfaces.C50E67F515A7C87A67947F8FB0F82558196BE0AC7;
-import plugins.ISettingsHandler;
-import plugins.device.SimpleDevice;
-import runtime.Context;
-import runtime.StaticDialogs;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.plugins.device.SimpleDevice;
+import emuLib8.runtime.Context;
+import emuLib8.runtime.StaticDialogs;
 
 public class AbstractTape extends SimpleDevice {
 
