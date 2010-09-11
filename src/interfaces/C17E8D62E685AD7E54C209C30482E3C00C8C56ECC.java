@@ -24,8 +24,8 @@
 
 package interfaces;
 
-import plugins.cpu.ICPUContext;
-import plugins.device.IDeviceContext;
+import emuLib8.plugins.cpu.ICPUContext;
+import emuLib8.plugins.device.IDeviceContext;
 
 /**
  * CPU context for 8080 processor

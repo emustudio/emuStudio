@@ -25,7 +25,7 @@
 
 package cpu_8080.impl;
 
-import plugins.cpu.*;
+import emuLib8.plugins.cpu.*;
 /**
  *
  * @author vbmacher
