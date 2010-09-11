@@ -8,8 +8,8 @@ package ramc_ram.impl;
 
 import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
 import java_cup.runtime.Symbol;
-import plugins.compiler.IToken;
-import plugins.compiler.ICompiler;
+import emuLib8.plugins.compiler.IToken;
+import emuLib8.plugins.compiler.ICompiler;
 import java.util.Vector;
 import ramc_ram.tree.*;
 

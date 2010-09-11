@@ -25,8 +25,8 @@
 
 import interfaces.IRAMInstruction;
 import java_cup.runtime.Symbol;
-import plugins.compiler.IToken;
-import plugins.compiler.ICompiler;
+import emuLib8.plugins.compiler.IToken;
+import emuLib8.plugins.compiler.ICompiler;
 import java.util.Vector;
 import ramc_ram.tree.*;
 

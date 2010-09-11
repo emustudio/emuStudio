@@ -21,7 +21,7 @@
  */
 package interfaces;
 
-import plugins.compiler.ICompilerContext;
+import emuLib8.plugins.compiler.ICompilerContext;
 
 public interface C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E extends ICompilerContext {
 	public final static int READ = 1;

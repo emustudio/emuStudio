@@ -27,13 +27,13 @@ import java.io.Reader;
 
 import ramc_ram.compiled.CompiledFileHandler;
 import ramc_ram.tree.Program;
-import runtime.StaticDialogs;
-import plugins.ISettingsHandler;
-import plugins.compiler.ICompiler;
-import plugins.compiler.ILexer;
-import plugins.compiler.SimpleCompiler;
+import emuLib8.runtime.StaticDialogs;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.plugins.compiler.ICompiler;
+import emuLib8.plugins.compiler.ILexer;
+import emuLib8.plugins.compiler.SimpleCompiler;
 import ramc_ram.tree.RAMInstruction;
-import runtime.Context;
+import emuLib8.runtime.Context;
 
 public class RAMCompiler extends SimpleCompiler {
 
