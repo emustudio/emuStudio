@@ -59,8 +59,8 @@ import standard_mem.MemoryContext;
 import standard_mem.gui.utils.EmuFileFilter;
 import standard_mem.gui.utils.memoryTableModel;
 import standard_mem.gui.utils.tableMemory;
-import plugins.ISettingsHandler;
-import runtime.StaticDialogs;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.runtime.StaticDialogs;
 import standard_mem.Memory;
 
 /**

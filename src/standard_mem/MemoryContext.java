@@ -32,10 +32,10 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
-import plugins.memory.SimpleMemoryContext;
+import emuLib8.plugins.memory.SimpleMemoryContext;
 
 import standard_mem.gui.frmMemory;
-import runtime.StaticDialogs;
+import emuLib8.runtime.StaticDialogs;
 
 /**
  *
