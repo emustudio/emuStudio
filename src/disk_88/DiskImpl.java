@@ -34,10 +34,10 @@ import java.util.ArrayList;
 
 import javax.swing.JOptionPane;
 
-import plugins.ISettingsHandler;
-import plugins.device.SimpleDevice;
-import runtime.Context;
-import runtime.StaticDialogs;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.plugins.device.SimpleDevice;
+import emuLib8.runtime.Context;
+import emuLib8.runtime.StaticDialogs;
 
 /**
  * MITS 88-DISK Floppy Disk controller with up to eight drives (although I

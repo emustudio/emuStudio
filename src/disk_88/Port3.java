@@ -26,8 +26,8 @@
 package disk_88;
 
 import java.io.IOException;
-import plugins.device.IDeviceContext;
-import runtime.StaticDialogs;
+import emuLib8.plugins.device.IDeviceContext;
+import emuLib8.runtime.StaticDialogs;
 
 /**
  *

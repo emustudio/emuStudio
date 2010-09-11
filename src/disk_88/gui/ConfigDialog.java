@@ -43,8 +43,8 @@ import disk_88.Drive;
 import disk_88.DiskImpl;
 import disk_88.gui.utils.NiceButton;
 
-import plugins.ISettingsHandler;
-import runtime.StaticDialogs;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.runtime.StaticDialogs;
 
 @SuppressWarnings("serial")
 public class ConfigDialog extends JDialog {

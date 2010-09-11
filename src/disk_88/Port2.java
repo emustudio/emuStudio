@@ -25,7 +25,7 @@
  */
 package disk_88;
 
-import plugins.device.IDeviceContext;
+import emuLib8.plugins.device.IDeviceContext;
 
 /**
  *
