@@ -22,11 +22,11 @@
 package brainterminal.impl;
 
 import brainterminal.gui.BrainTerminalDialog;
-import plugins.ISettingsHandler;
-import plugins.device.IDeviceContext;
-import plugins.device.SimpleDevice;
-import runtime.Context;
-import runtime.StaticDialogs;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.plugins.device.IDeviceContext;
+import emuLib8.plugins.device.SimpleDevice;
+import emuLib8.runtime.Context;
+import emuLib8.runtime.StaticDialogs;
 import braincpu.interfaces.CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F;
 
 public class BrainTerminal extends SimpleDevice {

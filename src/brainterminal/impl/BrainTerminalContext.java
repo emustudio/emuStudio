@@ -22,7 +22,7 @@
 package brainterminal.impl;
 
 import brainterminal.gui.BrainTerminalDialog;
-import plugins.device.IDeviceContext;
+import emuLib8.plugins.device.IDeviceContext;
 
 public class BrainTerminalContext implements IDeviceContext {
 
