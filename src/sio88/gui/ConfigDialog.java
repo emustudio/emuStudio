@@ -32,8 +32,8 @@ import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
 
-import plugins.ISettingsHandler;
-import runtime.StaticDialogs;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.runtime.StaticDialogs;
 import sio88.Mits88SIO;
 import sio88.gui.utils.NiceButton;
 

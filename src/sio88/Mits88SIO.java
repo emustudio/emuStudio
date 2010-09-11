@@ -28,11 +28,11 @@ package sio88;
 import javax.swing.JOptionPane;
 
 import interfaces.C17E8D62E685AD7E54C209C30482E3C00C8C56ECC;
-import plugins.ISettingsHandler;
-import plugins.device.IDeviceContext;
-import plugins.device.SimpleDevice;
-import runtime.Context;
-import runtime.StaticDialogs;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.plugins.device.IDeviceContext;
+import emuLib8.plugins.device.SimpleDevice;
+import emuLib8.runtime.Context;
+import emuLib8.runtime.StaticDialogs;
 import sio88.gui.ConfigDialog;
 import sio88.gui.SIODialog;
 
