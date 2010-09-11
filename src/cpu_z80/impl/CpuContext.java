@@ -24,7 +24,7 @@ package cpu_z80.impl;
 
 import interfaces.C17E8D62E685AD7E54C209C30482E3C00C8C56ECC;
 import java.util.Hashtable;
-import plugins.device.IDeviceContext;
+import emuLib8.plugins.device.IDeviceContext;
 
 /**
  *

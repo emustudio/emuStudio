@@ -27,14 +27,14 @@ import interfaces.C17E8D62E685AD7E54C209C30482E3C00C8C56ECC;
 import interfaces.IICpuListener;
 import java.util.TimerTask;
 import javax.swing.JPanel;
-import plugins.ISettingsHandler;
-import plugins.cpu.ICPU;
-import plugins.cpu.IDebugColumn;
-import plugins.cpu.SimpleCPU;
-import plugins.device.IDeviceContext;
-import plugins.memory.IMemoryContext;
-import runtime.Context;
-import runtime.StaticDialogs;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.plugins.cpu.ICPU;
+import emuLib8.plugins.cpu.IDebugColumn;
+import emuLib8.plugins.cpu.SimpleCPU;
+import emuLib8.plugins.device.IDeviceContext;
+import emuLib8.plugins.memory.IMemoryContext;
+import emuLib8.runtime.Context;
+import emuLib8.runtime.StaticDialogs;
 
 /**
  *

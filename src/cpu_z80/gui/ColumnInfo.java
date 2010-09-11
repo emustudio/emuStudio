@@ -25,7 +25,7 @@
 
 package cpu_z80.gui;
 
-import plugins.cpu.*;
+import emuLib8.plugins.cpu.*;
 /**
  *
  * @author vbmacher

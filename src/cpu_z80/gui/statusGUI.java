@@ -44,9 +44,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
 import interfaces.ICPUInstruction;
-import plugins.cpu.ICPU;
-import plugins.cpu.IDebugColumn;
-import plugins.memory.IMemoryContext;
+import emuLib8.plugins.cpu.ICPU;
+import emuLib8.plugins.cpu.IDebugColumn;
+import emuLib8.plugins.memory.IMemoryContext;
 
 /**
  *

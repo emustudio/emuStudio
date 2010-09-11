@@ -25,7 +25,7 @@
 package interfaces;
 
 import java.util.EventObject;
-import plugins.cpu.ICPU.ICPUListener;
+import emuLib8.plugins.cpu.ICPU.ICPUListener;
 
 /**
  *
