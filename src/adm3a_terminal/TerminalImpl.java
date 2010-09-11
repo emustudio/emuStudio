@@ -22,13 +22,13 @@
  */
 package adm3a_terminal;
 
-import plugins.ISettingsHandler;
-import plugins.device.IDeviceContext;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.plugins.device.IDeviceContext;
 import adm3a_terminal.gui.ConfigDialog;
 import adm3a_terminal.gui.TerminalWindow;
-import plugins.device.SimpleDevice;
-import runtime.Context;
-import runtime.StaticDialogs;
+import emuLib8.plugins.device.SimpleDevice;
+import emuLib8.runtime.Context;
+import emuLib8.runtime.StaticDialogs;
 
 /**
  *

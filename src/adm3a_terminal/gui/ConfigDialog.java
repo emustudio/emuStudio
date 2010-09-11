@@ -32,7 +32,7 @@ import javax.swing.JRadioButton;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
 
-import plugins.ISettingsHandler;
+import emuLib8.plugins.ISettingsHandler;
 
 import adm3a_terminal.TerminalDisplay;
 import adm3a_terminal.gui.utils.NiceButton;
