@@ -27,8 +27,8 @@ package emustudio.gui.utils;
 
 import javax.swing.table.*;
 
-import plugins.memory.IMemory;
-import plugins.cpu.ICPU;
+import emuLib8.plugins.memory.IMemory;
+import emuLib8.plugins.cpu.ICPU;
 
 /**
  *

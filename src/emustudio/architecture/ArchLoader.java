@@ -44,12 +44,12 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Properties;
 
-import plugins.IPlugin;
-import plugins.compiler.ICompiler;
-import plugins.memory.IMemory;
-import plugins.cpu.ICPU;
-import plugins.device.IDevice;
-import runtime.StaticDialogs;
+import emuLib8.plugins.IPlugin;
+import emuLib8.plugins.compiler.ICompiler;
+import emuLib8.plugins.memory.IMemory;
+import emuLib8.plugins.cpu.ICPU;
+import emuLib8.plugins.device.IDevice;
+import emuLib8.runtime.StaticDialogs;
 
 /**
  * Class loader for plugins and their resources.
@@ -626,7 +626,7 @@ public class ArchLoader {
             Computer arch = new Computer(cpu, mem, compiler, 
                     (IDevice[])devNames.values().toArray(new IDevice[0]),
                     plugins, pluginsReverse, connections);
-            runtime.Context.getInstance().assignComputer(Main.getPassword(),
+            emuLib8.runtime.Context.getInstance().assignComputer(Main.getPassword(),
                     arch);
             return new ArchHandler(arch, settings, loadSchema(name),
                     pluginNames, verbose);
@@ -686,7 +686,7 @@ public class ArchLoader {
     private static Object loadPlugin(String dirname, String filename,
             Class<?> interfaceName, long pluginID) {
         try {
-            ArrayList<Class<?>> classes = runtime.Loader.getInstance().loadJAR(
+            ArrayList<Class<?>> classes = emuLib8.runtime.Loader.getInstance().loadJAR(
                 System.getProperty("user.dir") + File.separator + dirname
                 + File.separator + filename);
             if (classes == null)

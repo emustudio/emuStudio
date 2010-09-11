@@ -31,7 +31,7 @@ import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
 
-import runtime.StaticDialogs;
+import emuLib8.runtime.StaticDialogs;
 
 /**
  * The breakpoint dialog - it asks user for the address where should be

@@ -45,12 +45,12 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
-import plugins.compiler.ICompiler;
-import plugins.cpu.ICPU;
-import plugins.device.IDevice;
-import plugins.memory.IMemory;
+import emuLib8.plugins.compiler.ICompiler;
+import emuLib8.plugins.cpu.ICPU;
+import emuLib8.plugins.device.IDevice;
+import emuLib8.plugins.memory.IMemory;
 
-import runtime.StaticDialogs;
+import emuLib8.runtime.StaticDialogs;
 
 /**
  *

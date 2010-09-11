@@ -32,13 +32,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Date;
 import java.util.EventObject;
-import plugins.compiler.ICompiler;
-import plugins.compiler.ICompiler.ICompilerListener;
-import plugins.cpu.ICPU;
-import plugins.cpu.ICPU.ICPUListener;
-import plugins.device.IDevice;
-import plugins.memory.IMemory;
-import runtime.StaticDialogs;
+import emuLib8.plugins.compiler.ICompiler;
+import emuLib8.plugins.compiler.ICompiler.ICompilerListener;
+import emuLib8.plugins.cpu.ICPU;
+import emuLib8.plugins.cpu.ICPU.ICPUListener;
+import emuLib8.plugins.device.IDevice;
+import emuLib8.plugins.memory.IMemory;
+import emuLib8.runtime.StaticDialogs;
 
 /**
  * This class manages the emuStudio automatization process. In the process

@@ -53,10 +53,10 @@ import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 
-import plugins.compiler.ILexer;
-import plugins.compiler.IToken;
+import emuLib8.plugins.compiler.ILexer;
+import emuLib8.plugins.compiler.IToken;
 import emustudio.interfaces.ITokenColor;
-import runtime.StaticDialogs;
+import emuLib8.runtime.StaticDialogs;
 
 /**
  * This class is extended JTextPane class. Support some awesome features like

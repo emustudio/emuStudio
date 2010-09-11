@@ -41,7 +41,7 @@ import javax.swing.JTextPane;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
 import javax.swing.event.ListDataListener;
-import runtime.StaticDialogs;
+import emuLib8.runtime.StaticDialogs;
 
 /**
  * The find dialog. It searches for text within the source code editor.

@@ -35,7 +35,7 @@ import java.awt.event.KeyListener;
 import java.io.File;
 import javax.swing.ComboBoxModel;
 import javax.swing.event.ListDataListener;
-import runtime.StaticDialogs;
+import emuLib8.runtime.StaticDialogs;
 
 /**
  *

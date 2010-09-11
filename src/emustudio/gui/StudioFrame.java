@@ -62,13 +62,13 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
-import plugins.compiler.ICompiler;
-import plugins.compiler.ICompiler.ICompilerListener;
-import plugins.cpu.ICPU;
-import plugins.device.IDevice;
-import plugins.memory.IMemory;
-import plugins.memory.IMemory.IMemListener;
-import runtime.StaticDialogs;
+import emuLib8.plugins.compiler.ICompiler;
+import emuLib8.plugins.compiler.ICompiler.ICompilerListener;
+import emuLib8.plugins.cpu.ICPU;
+import emuLib8.plugins.device.IDevice;
+import emuLib8.plugins.memory.IMemory;
+import emuLib8.plugins.memory.IMemory.IMemListener;
+import emuLib8.runtime.StaticDialogs;
 
 /**
  * The main window class

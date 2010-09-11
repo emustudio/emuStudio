@@ -25,7 +25,7 @@ package emustudio.main;
 
 import emustudio.architecture.ArchHandler;
 import emustudio.architecture.ArchLoader;
-import runtime.StaticDialogs;
+import emuLib8.runtime.StaticDialogs;
 import emustudio.gui.LoadingDialog;
 import emustudio.gui.OpenComputerDialog;
 import emustudio.gui.StudioFrame;
@@ -164,7 +164,7 @@ public class Main {
         }
         System.out.println(hash);
         try {
-            return runtime.Context.SHA1(hash);
+            return emuLib8.runtime.Context.SHA1(hash);
         } catch(Exception e) {
             return null;
         }
@@ -182,9 +182,9 @@ public class Main {
         } catch (IllegalAccessException e) {
         }
 
-        password = runtime.Context.SHA1(String.valueOf(Math.random())
+        password = emuLib8.runtime.Context.SHA1(String.valueOf(Math.random())
                 + new Date().toString());
-        if (!runtime.Context.assignPassword(password)) {
+        if (!emuLib8.runtime.Context.assignPassword(password)) {
             StaticDialogs.showErrorMessage("Error:"
                     + " communication with emuLib failed.");
             return;

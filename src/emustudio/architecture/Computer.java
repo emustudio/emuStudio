@@ -26,13 +26,13 @@ import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
 
-import plugins.IPlugin;
-import plugins.ISettingsHandler;
-import plugins.compiler.ICompiler;
-import plugins.cpu.ICPU;
-import plugins.device.IDevice;
-import plugins.memory.IMemory;
-import runtime.interfaces.IConnections;
+import emuLib8.plugins.IPlugin;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.plugins.compiler.ICompiler;
+import emuLib8.plugins.cpu.ICPU;
+import emuLib8.plugins.device.IDevice;
+import emuLib8.plugins.memory.IMemory;
+import emuLib8.runtime.interfaces.IConnections;
 
 /**
  * This class implements virtual computer architecture.

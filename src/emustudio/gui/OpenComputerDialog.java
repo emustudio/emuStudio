@@ -26,7 +26,7 @@ import emustudio.architecture.ArchLoader;
 import emustudio.architecture.drawing.PreviewPanel;
 import emustudio.architecture.drawing.Schema;
 import javax.swing.AbstractListModel;
-import runtime.StaticDialogs;
+import emuLib8.runtime.StaticDialogs;
 
 /**
  * This dialog manages the virtual computers. It offers a list of all

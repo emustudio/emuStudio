@@ -34,8 +34,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.Vector;
 import javax.swing.text.SimpleAttributeSet;
-import plugins.compiler.ILexer;
-import plugins.compiler.IToken;
+import emuLib8.plugins.compiler.ILexer;
+import emuLib8.plugins.compiler.IToken;
 
 /**
  *
