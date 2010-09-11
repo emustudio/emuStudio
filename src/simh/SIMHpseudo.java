@@ -23,14 +23,10 @@ package simh;
 
 import interfaces.C17E8D62E685AD7E54C209C30482E3C00C8C56ECC;
 import interfaces.C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8;
-import plugins.ISettingsHandler;
-import plugins.cpu.ICPUContext;
-import plugins.device.IDevice;
-import plugins.device.IDeviceContext;
-import plugins.device.SimpleDevice;
-import plugins.memory.IMemoryContext;
-import runtime.Context;
-import runtime.StaticDialogs;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.plugins.device.SimpleDevice;
+import emuLib8.runtime.Context;
+import emuLib8.runtime.StaticDialogs;
 
 /**
  * SIMH emulator's pseudo device

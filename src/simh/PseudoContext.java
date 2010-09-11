@@ -23,7 +23,7 @@ package simh;
 import interfaces.C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8;
 import java.io.File;
 import java.util.Calendar;
-import plugins.device.IDeviceContext;
+import emuLib8.plugins.device.IDeviceContext;
 
 /**
  *
