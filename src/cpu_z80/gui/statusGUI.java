@@ -1,5 +1,5 @@
 /*
- * statusGUI.java
+ * StatusGUI.java
  *
  * Created on Nedeľa, 2008, august 24, 10:22
  *
