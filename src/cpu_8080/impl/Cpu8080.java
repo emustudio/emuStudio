@@ -27,7 +27,7 @@
 package cpu_8080.impl;
 
 import cpu_8080.gui.statusGUI;
-import interfaces.C17E8D62E685AD7E54C209C30482E3C00C8C56ECC;
+import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
 import interfaces.IICpuListener;
 import java.util.TimerTask;
 import javax.swing.JPanel;
@@ -80,7 +80,7 @@ public class Cpu8080 extends SimpleCPU {
     public Cpu8080(Long pluginID) {
         super(pluginID);
         cpu = new CpuContext(this);
-        if (!Context.getInstance().register(pluginID, cpu, C17E8D62E685AD7E54C209C30482E3C00C8C56ECC.class)) {
+        if (!Context.getInstance().register(pluginID, cpu, C738039DCA561A49F377859B108A9AD1EE6CBDACB.class)) {
             StaticDialogs.showMessage("Error: Could not register this CPU!");
         }
         status = new statusGUI(this, cpu);
