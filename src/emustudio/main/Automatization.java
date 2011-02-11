@@ -34,8 +34,10 @@ import java.util.Date;
 import java.util.EventObject;
 import emuLib8.plugins.compiler.ICompiler;
 import emuLib8.plugins.compiler.ICompiler.ICompilerListener;
+import emuLib8.plugins.compiler.Message;
 import emuLib8.plugins.cpu.ICPU;
 import emuLib8.plugins.cpu.ICPU.ICPUListener;
+import emuLib8.plugins.cpu.ICPU.RunState;
 import emuLib8.plugins.device.IDevice;
 import emuLib8.plugins.memory.IMemory;
 import emuLib8.runtime.StaticDialogs;
@@ -50,7 +52,7 @@ public class Automatization {
     private ArchHandler currentArch;
     private File outputFile;
     private File inputFile;
-    private int result_state;
+    private RunState result_state;
 
     /**
      * Creates new automatization object.
@@ -64,7 +66,7 @@ public class Automatization {
         this.currentArch = currentArch;
         this.outputFile = new File(outputFileName);
         this.inputFile = new File(inputFileName);
-        result_state = ICPU.STATE_STOPPED_NORMAL;
+        result_state = RunState.STATE_STOPPED_NORMAL;
     }
 
     /**
@@ -128,30 +130,12 @@ public class Automatization {
 
                 ICompilerListener reporter = new ICompilerListener() {
                     @Override
-                    public void onCompileStart(EventObject evt) {}
+                    public void onStart(EventObject evt) {}
 
                     @Override
-                    public void onCompileInfo(EventObject evt, int row,
-                            int col, String message, int errorCode,
-                            int messageType) {
-                        String text = "<p>";
-
-                        switch (messageType) {
-                            case ICompiler.TYPE_ERROR:
-                                text += "<strong>Error:</strong> ";
-                                break;
-                            case ICompiler.TYPE_INFO:
-                                text += "<strong>Info:</strong> ";
-                                break;
-                            case ICompiler.TYPE_WARNING:
-                                text += "<strong>Warning:</strong> ";
-                                break;
-                        }
-                        if (!((row < 0) || (col < 0)))
-                            text += "[" + row + "," + col + "] ";
-                        if (errorCode >= 0)
-                            text += " (" + errorCode + ") ";
-                        text += message + "</p>";
+                    public void onMessage(EventObject evt, Message message) {
+                        String text = "<p>" + message.getForrmattedMessage()
+                                + "</p>";
                         try {
                             output_message(text, outw);
                         } catch (IOException e2) {
@@ -161,7 +145,7 @@ public class Automatization {
                     }
 
                     @Override
-                    public void onCompileFinish(EventObject evt, int errorCode)
+                    public void onFinish(EventObject evt, int errorCode)
                     {}
                 };
 
@@ -197,14 +181,14 @@ public class Automatization {
             final Thread t = new Thread() {
                 @Override
                 public void run() {
-                    result_state = ICPU.STATE_RUNNING;
+                    result_state = RunState.STATE_RUNNING;
                     cpu.execute();
                 }
             };
             cpu.addCPUListener(new ICPUListener() {
                 @Override
-                public void runChanged(EventObject evt, int state) {
-                    if (state != ICPU.STATE_RUNNING) {
+                public void runChanged(EventObject evt, RunState state) {
+                    if (state != RunState.STATE_RUNNING) {
                         result_state = state;
                         t.interrupt();
                     }
@@ -216,16 +200,16 @@ public class Automatization {
             t.join();
 
             switch (result_state) {
-                case ICPU.STATE_STOPPED_ADDR_FALLOUT:
+                case STATE_STOPPED_ADDR_FALLOUT:
                     output_message("<p>FAILED (address fallout)</p>", outw);
                     break;
-                case ICPU.STATE_STOPPED_BAD_INSTR:
+                case STATE_STOPPED_BAD_INSTR:
                     output_message("<p>FAILED (unknown instruction)</p>", outw);
                     break;
-                case ICPU.STATE_STOPPED_BREAK:
+                case STATE_STOPPED_BREAK:
                     output_message("<p>DONE (breakpoint stop)</p>", outw);
                     break;
-                case ICPU.STATE_STOPPED_NORMAL:
+                case STATE_STOPPED_NORMAL:
                     output_message("<p>DONE (normal stop)</p>", outw);
                     break;
                 default:
