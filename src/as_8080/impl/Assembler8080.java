@@ -29,7 +29,6 @@ import as_8080.tree8080.Statement;
 import java.io.Reader;
 import emuLib8.plugins.compiler.HEXFileHandler;
 
-import emuLib8.plugins.compiler.ICompiler;
 import emuLib8.plugins.compiler.ILexer;
 import emuLib8.plugins.compiler.SimpleCompiler;
 import emuLib8.plugins.memory.IMemoryContext;
@@ -43,20 +42,13 @@ import emuLib8.runtime.Context;
 public class Assembler8080 extends SimpleCompiler {
     private Lexer8080 lex;
     private Parser8080 par;
+    private String[] suffixes = {"asm"};
 
     /** Creates a new instance of compiler8080 */
     public Assembler8080(Long pluginID) {
         super(pluginID);
         lex = new Lexer8080((Reader) null);
         par = new Parser8080(lex);
-    }
-
-    private void print_text(String mes, int type) {
-        fireMessage(-1,-1,mes,0,type);
-    }
-
-    public void print_text(int row, int col, String mes, int type) {
-        fireMessage(row,col,mes,0,type);
     }
 
     @Override
@@ -104,12 +96,12 @@ public class Assembler8080 extends SimpleCompiler {
         Object s = null;
         HEXFileHandler hex = new HEXFileHandler();
 
-        print_text(getTitle() + ", version " + getVersion(), ICompiler.TYPE_INFO);
+        printInfo(getTitle() + ", version " + getVersion());
         lex.reset(in, 0, 0, 0);
         s = par.parse().value;
 
         if (s == null) {
-            print_text("Unexpected end of file", ICompiler.TYPE_ERROR);
+            printError("Unexpected end of file");
             return null;
         }
         if (Parser8080.errorCount != 0) {
@@ -124,8 +116,7 @@ public class Assembler8080 extends SimpleCompiler {
         while (stat.pass3(env) == true)
             ;
         if (env.getPassNeedCount() != 0) {
-            print_text("Error: can't evaulate all expressions",
-                    ICompiler.TYPE_ERROR);
+            printError("Error: can't evaulate all expressions");
             return null;
         }
         stat.pass4(hex, env);
@@ -140,24 +131,22 @@ public class Assembler8080 extends SimpleCompiler {
                 return false;
             }
             hex.generateFile(fileName);
-            print_text("Compile was sucessfull. Output: " + fileName,
-                    ICompiler.TYPE_INFO);
+            printInfo("Compile was sucessfull. Output: " + fileName);
 
             IMemoryContext mem = Context.getInstance().getMemoryContext(pluginID,
                     IMemoryContext.class);
             if (mem != null) {
                 if (hex.loadIntoMemory(mem)) {
-                    print_text("Compiled file was loaded into operating memory.",
-                            ICompiler.TYPE_INFO);
+                    printInfo("Compiled file was loaded into operating memory.");
                 } else {
-                    print_text("Compiled file couldn't be loaded into operating"
-                            + "memory due to an error.", ICompiler.TYPE_ERROR);
+                    printError("Compiled file couldn't be loaded into operating"
+                            + "memory due to an error.");
                 }
             }
             programStart = hex.getProgramStart();
             return true;
         } catch (Exception e) {
-            print_text(e.getMessage(), ICompiler.TYPE_ERROR);
+            printError(e.getMessage());
             return false;
         }
     }
@@ -170,5 +159,10 @@ public class Assembler8080 extends SimpleCompiler {
     @Override
     public boolean isShowSettingsSupported() {
         return false;
+    }
+
+    @Override
+    public String[] getSourceSuffixList() {
+        return suffixes;
     }
 }
