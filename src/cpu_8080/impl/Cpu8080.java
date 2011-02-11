@@ -8,7 +8,7 @@
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
  *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,13 +26,17 @@
  */
 package cpu_8080.impl;
 
-import cpu_8080.gui.statusGUI;
+import cpu_8080.gui.Disassembler;
+import cpu_8080.gui.StatusGUI;
+import cpu_8080.gui.columns.ColumnAddress;
+import cpu_8080.gui.columns.ColumnBreakpoint;
+import cpu_8080.gui.columns.ColumnMnemo;
+import cpu_8080.gui.columns.ColumnOpcode;
 import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
 import interfaces.IICpuListener;
 import java.util.TimerTask;
 import javax.swing.JPanel;
 import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.cpu.ICPU;
 import emuLib8.plugins.cpu.IDebugColumn;
 import emuLib8.plugins.cpu.SimpleCPU;
 import emuLib8.plugins.memory.IMemoryContext;
@@ -47,15 +51,17 @@ import emuLib8.runtime.StaticDialogs;
  */
 public class Cpu8080 extends SimpleCPU {
 
-    private statusGUI status;
+    private StatusGUI status;
     private IMemoryContext mem;
     private CpuContext cpu;
+
     // cpu speed
     private long long_cycles = 0; // count of executed cycles for runtime freq. computing
     private java.util.Timer freqScheduler;
     private RuntimeFrequencyCalculator rfc;
     private int sliceCheckTime = 100;
-    // registers are public meant for only statusGUI (didnt want make it thru get() methods)
+
+    // registers are public meant for only StatusGUI (didnt want make it thru get() methods)
     private int PC = 0; // program counter
     public int SP = 0; // stack pointer
     public short B = 0, C = 0, D = 0, E = 0, H = 0, L = 0, Flags = 2, A = 0; // registre
@@ -76,6 +82,9 @@ public class Cpu8080 extends SimpleCPU {
         1, 0, 0, 1
     };
 
+    private IDebugColumn columns[];
+    private Disassembler disasm;
+
     /** Creates a new instance of Cpu8080 */
     public Cpu8080(Long pluginID) {
         super(pluginID);
@@ -83,9 +92,10 @@ public class Cpu8080 extends SimpleCPU {
         if (!Context.getInstance().register(pluginID, cpu, C738039DCA561A49F377859B108A9AD1EE6CBDACB.class)) {
             StaticDialogs.showMessage("Error: Could not register this CPU!");
         }
-        status = new statusGUI(this, cpu);
+        status = new StatusGUI(this, cpu);
         rfc = new RuntimeFrequencyCalculator();
         freqScheduler = new java.util.Timer();
+
     }
 
     @Override
@@ -123,13 +133,21 @@ public class Cpu8080 extends SimpleCPU {
                     + " for this kind of CPU.");
             return false;
         }
-        status.setMem(mem);
+
+        // create disassembler and debug columns
+        disasm = new Disassembler(mem, this);
+        columns = new IDebugColumn[4];
+        columns[0] = new ColumnAddress(disasm);
+        columns[1] = new ColumnBreakpoint(disasm, this);
+        columns[2] = new ColumnMnemo(disasm);
+        columns[3] = new ColumnOpcode(disasm);
+
         return true;
     }
 
     @Override
     public void destroy() {
-        run_state = ICPU.STATE_STOPPED_NORMAL;
+        run_state = RunState.STATE_STOPPED_NORMAL;
         setRuntimeFreqCounter(false);
         cpu.clearDevices();
         cpu = null;
@@ -156,7 +174,7 @@ public class Cpu8080 extends SimpleCPU {
      */
     @Override
     public void pause() {
-        run_state = ICPU.STATE_STOPPED_BREAK;
+        run_state = RunState.STATE_STOPPED_BREAK;
         setRuntimeFreqCounter(false);
         fireCpuRun(run_state);
     }
@@ -166,7 +184,7 @@ public class Cpu8080 extends SimpleCPU {
      */
     @Override
     public void stop() {
-        run_state = ICPU.STATE_STOPPED_NORMAL;
+        run_state = RunState.STATE_STOPPED_NORMAL;
         setRuntimeFreqCounter(false);
         fireCpuRun(run_state);
     }
@@ -174,15 +192,15 @@ public class Cpu8080 extends SimpleCPU {
     // vykona 1 krok - bez merania casov (bez real-time odozvy)
     @Override
     public void step() {
-        if (run_state == ICPU.STATE_STOPPED_BREAK) {
+        if (run_state == RunState.STATE_STOPPED_BREAK) {
             try {
-                run_state = ICPU.STATE_RUNNING;
+                run_state = RunState.STATE_RUNNING;
                 evalStep();
-                if (run_state == ICPU.STATE_RUNNING) {
-                    run_state = ICPU.STATE_STOPPED_BREAK;
+                if (run_state == RunState.STATE_RUNNING) {
+                    run_state = RunState.STATE_STOPPED_BREAK;
                 }
             } catch (IndexOutOfBoundsException e) {
-                run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
+                run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
             fireCpuRun(run_state);
             fireCpuState();
@@ -211,17 +229,7 @@ public class Cpu8080 extends SimpleCPU {
     /* DOWN: GUI interaction */
     @Override
     public IDebugColumn[] getDebugColumns() {
-        return status.getDebugColumns();
-    }
-
-    @Override
-    public void setDebugValue(int index, int col, Object value) {
-        status.setDebugColVal(index, col, value);
-    }
-
-    @Override
-    public Object getDebugValue(int index, int col) {
-        return status.getDebugColVal(index, col);
+        return columns;
     }
 
     @Override
@@ -288,7 +296,7 @@ public class Cpu8080 extends SimpleCPU {
         int cycles;
         long slice;
 
-        run_state = ICPU.STATE_RUNNING;
+        run_state = RunState.STATE_RUNNING;
         fireCpuRun(run_state);
         fireCpuState();
         setRuntimeFreqCounter(true);
@@ -299,13 +307,13 @@ public class Cpu8080 extends SimpleCPU {
         cycles_to_execute = sliceCheckTime * cpu.getFrequency();
         long i = 0;
         slice = sliceCheckTime * 1000000;
-        while (run_state == ICPU.STATE_RUNNING) {
+        while (run_state == RunState.STATE_RUNNING) {
             i++;
             startTime = System.nanoTime();
             cycles_executed = 0;
             try {
                 while ((cycles_executed < cycles_to_execute)
-                        && (run_state == ICPU.STATE_RUNNING)) {
+                        && (run_state == RunState.STATE_RUNNING)) {
                     cycles = evalStep();
                     cycles_executed += cycles;
                     long_cycles += cycles;
@@ -314,10 +322,10 @@ public class Cpu8080 extends SimpleCPU {
                     }
                 }
             } catch (IndexOutOfBoundsException e) {
-                run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
+                run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
                 break;
             } catch (Error er) {
-                run_state = ICPU.STATE_STOPPED_BREAK;
+                run_state = RunState.STATE_STOPPED_BREAK;
                 break;
             }
             endTime = System.nanoTime() - startTime;
@@ -663,7 +671,7 @@ public class Cpu8080 extends SimpleCPU {
         }
         OP = ((Short) mem.read(PC++)).shortValue();
         if (OP == 118) { // hlt?
-            run_state = ICPU.STATE_STOPPED_NORMAL;
+            run_state = RunState.STATE_STOPPED_NORMAL;
             return 7;
         }
 
@@ -1074,20 +1082,13 @@ public class Cpu8080 extends SimpleCPU {
                 cpu.fireIO(DAR, false, A);
                 return 10;
         }
-        run_state = ICPU.STATE_STOPPED_BAD_INSTR;
+        run_state = RunState.STATE_STOPPED_BAD_INSTR;
         return 0;
     }
 
     @Override
     public int getInstrPosition() {
         return PC;
-    }
-
-    // get the address from next instruction
-    // this method exist only from a view of effectivity
-    @Override
-    public int getInstrPosition(int pos) {
-        return status.getNextPosition(pos);
     }
 
     @Override
