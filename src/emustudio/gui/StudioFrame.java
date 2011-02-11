@@ -112,7 +112,7 @@ public class StudioFrame extends javax.swing.JFrame {
         arch = Main.currentArch.getComputer();
         txtSource = new EmuTextPane();
         debug_model = new DebugTableModel(arch.getCPU(), arch.getMemory());
-        tblDebug = new DebugTable(debug_model, arch.getCPU());
+        tblDebug = new DebugTable(debug_model);
         initComponents();
         btnBreakpoint.setEnabled(arch.getCPU().isBreakpointSupported());
         jScrollPane1.setViewportView(txtSource);
@@ -1381,19 +1381,19 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void btnPreviousActionPerformed(java.awt.event.ActionEvent evt) {
-        debug_model.previous();
+        debug_model.previousPage();
         tblDebug.revalidate();
         tblDebug.repaint();
     }
 
     private void btnToPCActionPerformed(java.awt.event.ActionEvent evt) {
-        debug_model.topc();
+        debug_model.gotoPC();
         tblDebug.revalidate();
         tblDebug.repaint();
     }
 
     private void btnNextActionPerformed(java.awt.event.ActionEvent evt) {
-        debug_model.next();
+        debug_model.nextPage();
         tblDebug.revalidate();
         tblDebug.repaint();
     }

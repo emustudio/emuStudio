@@ -6,7 +6,7 @@
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
  *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,6 @@ package emustudio.gui.utils;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import emuLib8.plugins.cpu.ICPU;
 
 /**
  *
@@ -37,31 +36,42 @@ import emuLib8.plugins.cpu.ICPU;
 @SuppressWarnings("serial")
 public class DebugTable extends JTable {
     private DebugTableModel debug_model;
-    private ICPU cpu;
     
     /** Creates a new instance of DebugTable */
-    public DebugTable(DebugTableModel tblModel, ICPU cpu) {
+    public DebugTable(DebugTableModel tblModel) {
         this.debug_model = tblModel;
-        this.cpu = cpu;
         setModel(tblModel);
         setDefaultRenderer(Object.class, new DebugCellRenderer());
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     }
     
-        /* farebnost a zobrazenie buniek v tabulke ladenia programu */
+    /**
+     * This class does the painting of all debug table cells.
+     */
     public class DebugCellRenderer extends JLabel implements TableCellRenderer {
-        public DebugCellRenderer() {  super(); setOpaque(true); }
+
+        /**
+         * The constructor creates the renderer instance.
+         */
+        public DebugCellRenderer() {
+            super();
+            setOpaque(true);
+        }
+
+        @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
                 boolean isSelected, boolean hasFocus, int row, int column) {
-            if (debug_model.getRowAddress(row) == cpu.getInstrPosition()) {
+            if (debug_model.isCurrent(row, column)) {
                 this.setBackground(Color.RED);
                 this.setForeground(Color.WHITE);
             } else { 
                 this.setBackground(Color.WHITE);
                 this.setForeground(Color.BLACK);
             }
-            if (value != null)  setText(" " + value.toString());
-            else setText(" ");
+            if (value != null)
+                setText(" " + value.toString());
+            else
+                setText(" ");
             return this;
         }
     }
