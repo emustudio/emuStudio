@@ -199,34 +199,30 @@ public class StudioFrame extends javax.swing.JFrame {
 
             @Override
             public void flavorsChanged(FlavorEvent e) {
-//                synchronized (EmuTextPane.docLock) {
-                    if (systemClipboard.getContents(null) == null) {
-                        btnPaste.setEnabled(false);
-                        mnuEditPaste.setEnabled(false);
-                    } else {
-                        btnPaste.setEnabled(true);
-                        mnuEditPaste.setEnabled(true);
-                    }
-  //              }
+                if (systemClipboard.getContents(null) == null) {
+                    btnPaste.setEnabled(false);
+                    mnuEditPaste.setEnabled(false);
+                } else {
+                    btnPaste.setEnabled(true);
+                    mnuEditPaste.setEnabled(true);
+                }
             }
         });
         txtSource.addCaretListener(new CaretListener() {
 
             @Override
             public void caretUpdate(CaretEvent e) {
-        //        synchronized (EmuTextPane.docLock) {
-                    if (e.getDot() == e.getMark()) {
-                        btnCut.setEnabled(false);
-                        mnuEditCut.setEnabled(false);
-                        btnCopy.setEnabled(false);
-                        mnuEditCopy.setEnabled(false);
-                    } else {
-                        btnCut.setEnabled(true);
-                        mnuEditCut.setEnabled(true);
-                        btnCopy.setEnabled(true);
-                        mnuEditCopy.setEnabled(true);
-                    }
-          //      }
+                if (e.getDot() == e.getMark()) {
+                    btnCut.setEnabled(false);
+                    mnuEditCut.setEnabled(false);
+                    btnCopy.setEnabled(false);
+                    mnuEditCopy.setEnabled(false);
+                } else {
+                    btnCut.setEnabled(true);
+                    mnuEditCut.setEnabled(true);
+                    btnCopy.setEnabled(true);
+                    mnuEditCopy.setEnabled(true);
+                }
             }
         });
         undoStateListener = new ActionListener() {
