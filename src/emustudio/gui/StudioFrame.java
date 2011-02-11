@@ -64,7 +64,9 @@ import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import emuLib8.plugins.compiler.ICompiler;
 import emuLib8.plugins.compiler.ICompiler.ICompilerListener;
+import emuLib8.plugins.compiler.Message;
 import emuLib8.plugins.cpu.ICPU;
+import emuLib8.plugins.cpu.ICPU.RunState;
 import emuLib8.plugins.device.IDevice;
 import emuLib8.plugins.memory.IMemory;
 import emuLib8.plugins.memory.IMemory.IMemListener;
@@ -81,7 +83,7 @@ public class StudioFrame extends javax.swing.JFrame {
     private Computer arch; // current architecture
     private ActionListener undoStateListener;
     private Clipboard systemClipboard;
-    private int run_state = ICPU.STATE_STOPPED_BREAK;
+    private RunState run_state = RunState.STATE_STOPPED_BREAK;
     private DebugTable tblDebug;
     // emulator
     private DebugTableModel debug_model;
@@ -166,21 +168,16 @@ public class StudioFrame extends javax.swing.JFrame {
             compiler.addCompilerListener(new ICompilerListener() {
 
                 @Override
-                public void onCompileStart(EventObject evt) {
+                public void onStart(EventObject evt) {
                 }
 
                 @Override
-                public void onCompileInfo(EventObject evt, int row, int col,
-                        String message, int errorCode, int messageType) {
-                    if ((row >= 0) && (col >= 0)) {
-                        txtOutput.append("[" + row + ";" + col + "] ");
-                    }
-                    txtOutput.append(message + "\n");
-
+                public void onMessage(EventObject evt, Message message) {
+                    txtOutput.append(message.getForrmattedMessage() + "\n");
                 }
 
                 @Override
-                public void onCompileFinish(EventObject evt, int errorCode) {
+                public void onFinish(EventObject evt, int errorCode) {
                 }
             });
             txtSource.setLexer(compiler.getLexer(txtSource.getDocumentReader()));
@@ -251,7 +248,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
                 @Override
                 public void memChange(EventObject evt, int adr) {
-                    if (run_state == ICPU.STATE_RUNNING) {
+                    if (run_state == RunState.STATE_RUNNING) {
                         return;
                     }
                     tblDebug.revalidate();
@@ -271,9 +268,9 @@ public class StudioFrame extends javax.swing.JFrame {
             }
 
             @Override
-            public void runChanged(EventObject evt, int state) {
+            public void runChanged(EventObject evt, RunState state) {
                 run_state = state;
-                if (state == ICPU.STATE_RUNNING) {
+                if (state == RunState.STATE_RUNNING) {
                     btnStop.setEnabled(true);
                     btnBack.setEnabled(false);
                     btnRun.setEnabled(false);
@@ -283,7 +280,7 @@ public class StudioFrame extends javax.swing.JFrame {
                     btnRunTime.setEnabled(false);
                 } else {
                     btnPause.setEnabled(false);
-                    if (state == ICPU.STATE_STOPPED_BREAK) {
+                    if (state == RunState.STATE_STOPPED_BREAK) {
                         btnStop.setEnabled(true);
                         btnRunTime.setEnabled(true);
                         btnRun.setEnabled(true);
@@ -1102,7 +1099,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
                 @Override
                 public void run() {
-                    while (run_state == ICPU.STATE_STOPPED_BREAK) {
+                    while (run_state == RunState.STATE_STOPPED_BREAK) {
                         cpu.step();
                         try {
                             Thread.sleep(slice);
@@ -1197,7 +1194,7 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void btnCompileActionPerformed(java.awt.event.ActionEvent evt) {
-        if (run_state == ICPU.STATE_RUNNING) {
+        if (run_state == RunState.STATE_RUNNING) {
             StaticDialogs.showErrorMessage("You must first stop running emulation.");
             return;
         }
