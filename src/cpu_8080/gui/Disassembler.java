@@ -1,4 +1,6 @@
 /*
+ *  Disassembler.java
+ *
  *  Copyright (C) 2011 vbmacher
  * 
  *  This program is free software; you can redistribute it and/or
@@ -17,18 +19,18 @@
  */
 package cpu_8080.gui;
 
+import emuLib8.plugins.cpu.CPUInstruction;
 import emuLib8.plugins.cpu.ICPU;
+import emuLib8.plugins.cpu.SimpleDisassembler;
 import emuLib8.plugins.memory.IMemoryContext;
-import interfaces.ICPUInstruction;
 
 /**
  *
  * @author vbmacher
  */
-public class Disassembler {
+public class Disassembler extends SimpleDisassembler {
 
     private IMemoryContext mem;
-    private ICPU cpu;
 
     private final static byte isize[] = {
         1,3,1,1,1,1,2,1,0,1,1,1,1,1,2,1,0,3,1,1,1,1,2,1,0,1,1,1,1,1,2,1,0,3,3,1,
@@ -41,71 +43,19 @@ public class Disassembler {
         3,0,2,1
     };
 
+    private final static String regMnemo[] = {
+      "B", "C", "D", "E", "H", "L", "M", "A"
+    };
+
+
 
     /**
      * The constructor creates an instance of the Disassembler class
      * @param mem memory object
      */
     public Disassembler(IMemoryContext mem, ICPU cpu) {
+        super(cpu);
         this.mem = mem;
-        this.cpu = cpu;
-    }
-
-    /**
-     * This method converts debug table row (in emuStudio) into memory location
-     * @param debugRow row index in the debug table
-     * @return memory location that the row is pointing at
-     * @throws IndexOutOfBoundsException when debug row corresponds to memory
-     * location that exceeds boundaries
-     */
-    public int rowToLocation(int debugRow) throws IndexOutOfBoundsException {
-        int location = 0;
-        int d = 0;
-        
-        while (d < debugRow) {
-            short val = (Short) mem.read(location);
-            location += isize[val];
-            d++;
-        }
-        return location;
-    }
-
-    /**
-     * Determines whether a debug row points at current instruction
-     *
-     * @param debugRow row index in debug table
-     * @return true is the debug row points at current instruction, false
-     * otherwise
-     */
-    public boolean isRowCurrent(int debugRow) {
-        try {
-            int location = rowToLocation(debugRow);
-            if (location == cpu.getInstrPosition())
-                return true;
-        } catch(ArrayIndexOutOfBoundsException e) {}
-        return false;
-    }
-
-    private String getRegMnemo(int reg) {
-        switch (reg) {
-            case 0:
-                return "B";
-            case 1:
-                return "C";
-            case 2:
-                return "D";
-            case 3:
-                return "E";
-            case 4:
-                return "H";
-            case 5:
-                return "L";
-            case 6:
-                return "M";
-            case 7:
-                return "A";
-        }
-        return "";
     }
 
     /**
@@ -116,34 +66,35 @@ public class Disassembler {
      * @return
      *   Object that represents instruction.
      */
-    public ICPUInstruction disassemble(int memLocation) {
+    @Override
+    public CPUInstruction disassemble(int memLocation) {
         short val;
         int addr;
         int pos = memLocation;
-        ICPUInstruction instr;
+
         String mnemo, oper;
 
         val = ((Short) mem.read(pos++)).shortValue();
         oper = String.format("%02X", val);
         if ((val >= 64) && (val <= 127) && (val != 118)) {
-            mnemo = "mov " + getRegMnemo((val & 56) >> 3) + ","
-                    + getRegMnemo((byte) (val & 7));
+            mnemo = "mov " + regMnemo[(val & 56) >> 3] + ","
+                    + regMnemo[(byte) (val & 7)];
         } else if ((val >= 128) && (val <= 135)) {
-            mnemo = "add " + getRegMnemo(val & 7);
+            mnemo = "add " + regMnemo[val & 7];
         } else if ((val >= 136) && (val <= 143)) {
-            mnemo = "adc " + getRegMnemo(val & 7);
+            mnemo = "adc " + regMnemo[val & 7];
         } else if ((val >= 144) && (val <= 151)) {
-            mnemo = "sub " + getRegMnemo(val & 7);
+            mnemo = "sub " + regMnemo[val & 7];
         } else if ((val >= 152) && (val <= 159)) {
-            mnemo = "sbb " + getRegMnemo(val & 7);
+            mnemo = "sbb " + regMnemo[val & 7];
         } else if ((val >= 160) && (val <= 167)) {
-            mnemo = "ana " + getRegMnemo(val & 7);
+            mnemo = "ana " + regMnemo[val & 7];
         } else if ((val >= 168) && (val <= 175)) {
-            mnemo = "xra " + getRegMnemo(val & 7);
+            mnemo = "xra " + regMnemo[val & 7];
         } else if ((val >= 176) && (val <= 183)) {
-            mnemo = "ora " + getRegMnemo(val & 7);
+            mnemo = "ora " + regMnemo[val & 7];
         } else if ((val >= 184) && (val <= 191)) {
-            mnemo = "cmp " + getRegMnemo(val & 7);
+            mnemo = "cmp " + regMnemo[val & 7];
         } else {
             switch (val) {
                 case 58: // lda addr
@@ -616,7 +567,13 @@ public class Disassembler {
                     mnemo = "unknown instruction";
             }
         }
-        instr = new ICPUInstruction(mnemo, oper);
-        return instr;
+        return new CPUInstruction(memLocation, mnemo, oper);
     }
+
+    @Override
+    public int getNextInstructionLocation(int memLocation) throws IndexOutOfBoundsException {
+        return memLocation + isize[(Short)mem.read(memLocation)];
+    }
+
+   
 }

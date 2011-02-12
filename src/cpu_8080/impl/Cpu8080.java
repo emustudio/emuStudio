@@ -28,10 +28,7 @@ package cpu_8080.impl;
 
 import cpu_8080.gui.Disassembler;
 import cpu_8080.gui.StatusGUI;
-import cpu_8080.gui.columns.ColumnAddress;
-import cpu_8080.gui.columns.ColumnBreakpoint;
-import cpu_8080.gui.columns.ColumnMnemo;
-import cpu_8080.gui.columns.ColumnOpcode;
+import emuLib8.plugins.cpu.IDisassembler;
 import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
 import interfaces.IICpuListener;
 import java.util.TimerTask;
@@ -136,11 +133,6 @@ public class Cpu8080 extends SimpleCPU {
 
         // create disassembler and debug columns
         disasm = new Disassembler(mem, this);
-        columns = new IDebugColumn[4];
-        columns[0] = new ColumnAddress(disasm);
-        columns[1] = new ColumnBreakpoint(disasm, this);
-        columns[2] = new ColumnMnemo(disasm);
-        columns[3] = new ColumnOpcode(disasm);
 
         return true;
     }
@@ -227,11 +219,6 @@ public class Cpu8080 extends SimpleCPU {
     }
 
     /* DOWN: GUI interaction */
-    @Override
-    public IDebugColumn[] getDebugColumns() {
-        return columns;
-    }
-
     @Override
     public JPanel getStatusGUI() {
         return status;
@@ -345,6 +332,11 @@ public class Cpu8080 extends SimpleCPU {
     @Override
     public boolean isShowSettingsSupported() {
         return false;
+    }
+
+    @Override
+    public IDisassembler getDisassembler() {
+        return disasm;
     }
 
     /**
