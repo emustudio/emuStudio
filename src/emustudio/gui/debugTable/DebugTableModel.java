@@ -27,7 +27,6 @@ package emustudio.gui.debugTable;
 
 import javax.swing.table.*;
 
-import emuLib8.plugins.memory.IMemory;
 import emuLib8.plugins.cpu.ICPU;
 import emuLib8.plugins.cpu.IDebugColumn;
 import emuLib8.plugins.cpu.IDisassembler;
@@ -41,7 +40,6 @@ public class DebugTableModel extends AbstractTableModel {
     private static final int MAX_ROW_COUNT = 15;
     private IDebugColumn[] columns;
     private ICPU cpu;
-    private IMemory mem;
 
     private int page; // The page of the debug table
 
@@ -53,9 +51,8 @@ public class DebugTableModel extends AbstractTableModel {
     private int gapInstr;
 
     /** Creates a new instance of DebugTableModel */
-    public DebugTableModel(ICPU cpu, IMemory mem) {
+    public DebugTableModel(ICPU cpu) {
         this.cpu = cpu;
-        this.mem = mem;
         page = 0;
 
         IDisassembler dis = cpu.getDisassembler();
@@ -173,7 +170,9 @@ public class DebugTableModel extends AbstractTableModel {
      */
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        columns[columnIndex].setDebugValue(rowToLocation(rowIndex), aValue);
+        try {
+            columns[columnIndex].setDebugValue(rowToLocation(rowIndex), aValue);
+        } catch(IndexOutOfBoundsException e) {}
     }
 
     /**
@@ -196,9 +195,39 @@ public class DebugTableModel extends AbstractTableModel {
      * @return true if the row represents current instruction
      */
     public boolean isCurrent(int rowIndex) {
-        return (cpu.getInstrPosition() == rowToLocation(rowIndex));
+        try {
+            return (cpu.getInstrPosition() == rowToLocation(rowIndex));
+        } catch(IndexOutOfBoundsException e) {
+            return false;
+        }
     }
 
+    /**
+     * Return row index for current instruction.
+     *
+     * The number is not fixed but depends on the fact if the current
+     * instruction number is less than on gapInstr number. If yes, the row is
+     * equal to the current instruction number. Otherwise the row is equal to
+     * gapInstr number.
+     *
+     * @return row index for current instruction
+     */
+    private int computeCurrentRow() {
+        int loc = cpu.getInstrPosition();
+
+        if (loc == 0)
+            return 0;
+
+        int row = 0;
+
+        IDisassembler dis = cpu.getDisassembler();
+        do {
+            row++;
+        } while (((loc = dis.getPreviousInstructionLocation(loc)) > 0)
+                && (row < gapInstr));
+            
+        return row;
+    }
 
     /**
      * This method converts debug table row (in emuStudio) into memory location.
@@ -215,28 +244,22 @@ public class DebugTableModel extends AbstractTableModel {
         int tmp;
         IDisassembler dis = cpu.getDisassembler();
 
-        int rowCurrent = gapInstr + page * MAX_ROW_COUNT;
+        int rowCurrent = computeCurrentRow();
         int rowWanted = row + MAX_ROW_COUNT * page;
 
         while (rowWanted < rowCurrent) {
             // up
             tmp = dis.getPreviousInstructionLocation(location);
-            if (tmp >= 0) {
-                rowCurrent--;
-                location = tmp;
-            }
-            else
-                break;
+            rowCurrent--;
+            location = tmp;
+            if (location < 0)
+                throw new IndexOutOfBoundsException();
         }
         while (rowWanted > rowCurrent) {
             // down
-            try {
-                tmp = dis.getNextInstructionLocation(location);
-                rowCurrent++;
-                location = tmp;
-            } catch(IndexOutOfBoundsException e) {
-                break;
-            }
+            tmp = dis.getNextInstructionLocation(location);
+            rowCurrent++;
+            location = tmp;
         }
         return location;
     }

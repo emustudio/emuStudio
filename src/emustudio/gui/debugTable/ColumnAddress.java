@@ -40,11 +40,7 @@ public class ColumnAddress extends SimpleDebugColumn {
 
     @Override
     public Object getDebugValue(int location) {
-        try {
-            return String.format("%04Xh", location);
-        } catch(IndexOutOfBoundsException e) {
-            return "";
-        }
+        return String.format("%04Xh", location);
     }
 
 }

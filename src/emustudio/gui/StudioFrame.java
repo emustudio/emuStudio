@@ -111,7 +111,7 @@ public class StudioFrame extends javax.swing.JFrame {
         // create models and components
         arch = Main.currentArch.getComputer();
         txtSource = new EmuTextPane();
-        debug_model = new DebugTableModel(arch.getCPU(), arch.getMemory());
+        debug_model = new DebugTableModel(arch.getCPU());
         tblDebug = new DebugTable(debug_model);
         initComponents();
         btnBreakpoint.setEnabled(arch.getCPU().isBreakpointSupported());
