@@ -571,8 +571,14 @@ public class Disassembler extends SimpleDisassembler {
     }
 
     @Override
-    public int getNextInstructionLocation(int memLocation) throws IndexOutOfBoundsException {
-        return memLocation + isize[(Short)mem.read(memLocation)];
+    public int getNextInstructionLocation(int memLocation)
+            throws IndexOutOfBoundsException {
+        int diff = isize[(Short)mem.read(memLocation)];
+
+        // unknown instruction?
+        if (diff == 0)
+            diff = 1;
+        return memLocation + diff;
     }
 
    
