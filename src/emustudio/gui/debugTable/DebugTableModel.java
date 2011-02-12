@@ -121,8 +121,14 @@ public class DebugTableModel extends AbstractTableModel {
      * Go to previous page
      */
     public void previousPage() {
-        // TODO: test for the first page
         page -= 1;
+        try {
+            int loc = rowToLocation(MAX_ROW_COUNT-1);
+            if (loc < 0)
+                page++;
+        } catch(IndexOutOfBoundsException e) {
+            page++; // the first page
+        }
         fireTableDataChanged();
     }
     
@@ -130,8 +136,12 @@ public class DebugTableModel extends AbstractTableModel {
      * Got to nextPage page
      */
     public void nextPage() {
-        // TODO: test for the last page
         page += 1;
+        try {
+            int loc = rowToLocation(0);
+        } catch(IndexOutOfBoundsException e) {
+            page--; // the last page
+        }
         fireTableDataChanged();
     }
 
