@@ -23,7 +23,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package emustudio.gui.utils;
+package emustudio.gui.debugTable;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -61,7 +61,7 @@ public class DebugTable extends JTable {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
                 boolean isSelected, boolean hasFocus, int row, int column) {
-            if (debug_model.isCurrent(row, column)) {
+            if (debug_model.isCurrent(row)) {
                 this.setBackground(Color.RED);
                 this.setForeground(Color.WHITE);
             } else { 

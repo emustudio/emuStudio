@@ -23,8 +23,8 @@ package emustudio.gui;
 
 import emustudio.architecture.Computer;
 import emustudio.main.Main;
-import emustudio.gui.utils.DebugTable;
-import emustudio.gui.utils.DebugTableModel;
+import emustudio.gui.debugTable.DebugTable;
+import emustudio.gui.debugTable.DebugTableModel;
 import emustudio.gui.utils.NiceButton;
 import emustudio.gui.utils.EmuTextPane;
 import emustudio.gui.utils.FindText;

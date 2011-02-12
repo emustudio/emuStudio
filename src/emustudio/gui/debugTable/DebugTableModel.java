@@ -23,13 +23,14 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package emustudio.gui.utils;
+package emustudio.gui.debugTable;
 
 import javax.swing.table.*;
 
 import emuLib8.plugins.memory.IMemory;
 import emuLib8.plugins.cpu.ICPU;
 import emuLib8.plugins.cpu.IDebugColumn;
+import emuLib8.plugins.cpu.IDisassembler;
 
 /**
  *
@@ -37,17 +38,41 @@ import emuLib8.plugins.cpu.IDebugColumn;
  */
 @SuppressWarnings("serial")
 public class DebugTableModel extends AbstractTableModel {
-    private int page; // The page of the debug table
-    private int lastPage; // The last page is determined at runtime
-    
     private static final int MAX_ROW_COUNT = 15;
     private IDebugColumn[] columns;
-    
+    private ICPU cpu;
+    private IMemory mem;
+
+    private int page; // The page of the debug table
+
+    /**
+     * This indicates a number of instructions that will be showed before
+     * current instruction and hopefully after current instruction. It is
+     * dependent on MAX_ROW_COUNT.
+     */
+    private int gapInstr;
+
     /** Creates a new instance of DebugTableModel */
     public DebugTableModel(ICPU cpu, IMemory mem) {
+        this.cpu = cpu;
+        this.mem = mem;
         page = 0;
-        lastPage = mem.getSize()/MAX_ROW_COUNT;
-        columns = cpu.getDebugColumns();
+
+        IDisassembler dis = cpu.getDisassembler();
+
+        if (cpu.isBreakpointSupported()) {
+            columns = new IDebugColumn[4];
+            columns[0] = new ColumnBreakpoint(cpu);
+            columns[1] = new ColumnAddress();
+            columns[2] = new ColumnMnemo(dis);
+            columns[3] = new ColumnOpcode(dis);
+        } else {
+            columns = new IDebugColumn[3];
+            columns[0] = new ColumnAddress();
+            columns[1] = new ColumnMnemo(dis);
+            columns[2] = new ColumnOpcode(dis);
+        }
+        gapInstr = MAX_ROW_COUNT / 2;
     }
 
     /**
@@ -99,27 +124,26 @@ public class DebugTableModel extends AbstractTableModel {
      * Go to previous page
      */
     public void previousPage() {
-        if (page == 0)
-            return;
-
+        // TODO: test for the first page
         page -= 1;
+        fireTableDataChanged();
     }
     
     /**
      * Got to nextPage page
      */
     public void nextPage() {
-        if (page < lastPage)
-            page += 1;
+        // TODO: test for the last page
+        page += 1;
+        fireTableDataChanged();
     }
 
     /**
      * Sets the current page
      */
     public void gotoPC() {
-        if (columns.length > 0)
-
-        page = columns[0].getCurrentDebugRow() / MAX_ROW_COUNT;
+        page = 0;
+        fireTableDataChanged();
     }
 
     /**
@@ -134,9 +158,7 @@ public class DebugTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         try {
-            return columns[columnIndex].getDebugValue(rowIndex
-                    + page * MAX_ROW_COUNT);
-            
+            return columns[columnIndex].getDebugValue(rowToLocation(rowIndex));
         } catch(Exception x) {
             return null;
         }
@@ -151,8 +173,7 @@ public class DebugTableModel extends AbstractTableModel {
      */
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        columns[columnIndex].setDebugValue(rowIndex + page * MAX_ROW_COUNT,
-                aValue);
+        columns[columnIndex].setDebugValue(rowToLocation(rowIndex), aValue);
     }
 
     /**
@@ -168,14 +189,56 @@ public class DebugTableModel extends AbstractTableModel {
     }
     
     /**
-     * Determine if the instruction at rowIndex,columnIndex is current
+     * Determine if the instruction at rowIndex is current
      * instruction.
      * 
      * @param rowIndex The row in the debug table
-     * @param columnIndex
-     * @return
+     * @return true if the row represents current instruction
      */
-    public boolean isCurrent(int rowIndex, int columnIndex) {
-        return columns[columnIndex].isCurrent(rowIndex + page * MAX_ROW_COUNT);
+    public boolean isCurrent(int rowIndex) {
+        return (cpu.getInstrPosition() == rowToLocation(rowIndex));
     }
+
+
+    /**
+     * This method converts debug table row (in emuStudio) into memory location.
+     * Pages are taken into account.
+     *
+     * @param row row index in the debug table
+     * @return memory location that the row is pointing at
+     * @throws IndexOutOfBoundsException when debug row corresponds to memory
+     * location that exceeds boundaries
+     */
+    private int rowToLocation(int row) throws IndexOutOfBoundsException {
+        // the row of current instruction is always gapInstr+1
+        int location = cpu.getInstrPosition();
+        int tmp;
+        IDisassembler dis = cpu.getDisassembler();
+
+        int rowCurrent = gapInstr + page * MAX_ROW_COUNT;
+        int rowWanted = row + MAX_ROW_COUNT * page;
+
+        while (rowWanted < rowCurrent) {
+            // up
+            tmp = dis.getPreviousInstructionLocation(location);
+            if (tmp >= 0) {
+                rowCurrent--;
+                location = tmp;
+            }
+            else
+                break;
+        }
+        while (rowWanted > rowCurrent) {
+            // down
+            try {
+                tmp = dis.getNextInstructionLocation(location);
+                rowCurrent++;
+                location = tmp;
+            } catch(IndexOutOfBoundsException e) {
+                break;
+            }
+        }
+        return location;
+    }
+
 }
