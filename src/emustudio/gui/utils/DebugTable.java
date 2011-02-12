@@ -36,7 +36,7 @@ import java.awt.*;
 @SuppressWarnings("serial")
 public class DebugTable extends JTable {
     private DebugTableModel debug_model;
-    
+  
     /** Creates a new instance of DebugTable */
     public DebugTable(DebugTableModel tblModel) {
         this.debug_model = tblModel;
@@ -44,7 +44,7 @@ public class DebugTable extends JTable {
         setDefaultRenderer(Object.class, new DebugCellRenderer());
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     }
-    
+
     /**
      * This class does the painting of all debug table cells.
      */

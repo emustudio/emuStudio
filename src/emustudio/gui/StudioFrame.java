@@ -319,7 +319,7 @@ public class StudioFrame extends javax.swing.JFrame {
         btnRedo = new JButton();
         JSeparator jSeparator2 = new JSeparator();
         btnCompile = new JButton();
-        JSplitPane splitSoure = new JSplitPane();
+        JSplitPane splitSource = new JSplitPane();
         jScrollPane1 = new JScrollPane();
         JScrollPane jScrollPane2 = new JScrollPane();
         txtOutput = new JTextArea();
@@ -532,11 +532,11 @@ public class StudioFrame extends javax.swing.JFrame {
         toolStandard.add(jSeparator7);
         toolStandard.add(btnCompile);
 
-        splitSoure.setBorder(null);
-        splitSoure.setDividerLocation(260);
-        splitSoure.setOrientation(JSplitPane.VERTICAL_SPLIT);
-        splitSoure.setOneTouchExpandable(true);
-        splitSoure.setLeftComponent(jScrollPane1);
+        splitSource.setBorder(null);
+        splitSource.setDividerLocation(260);
+        splitSource.setOrientation(JSplitPane.VERTICAL_SPLIT);
+        splitSource.setOneTouchExpandable(true);
+        splitSource.setLeftComponent(jScrollPane1);
 
         txtOutput.setColumns(20);
         txtOutput.setEditable(false);
@@ -546,16 +546,16 @@ public class StudioFrame extends javax.swing.JFrame {
         txtOutput.setWrapStyleWord(true);
         jScrollPane2.setViewportView(txtOutput);
 
-        splitSoure.setRightComponent(jScrollPane2);
+        splitSource.setRightComponent(jScrollPane2);
 
         GroupLayout panelSourceLayout = new GroupLayout(panelSource);
         panelSource.setLayout(panelSourceLayout);
         panelSourceLayout.setHorizontalGroup(
                 panelSourceLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(toolStandard) //, GroupLayout.DEFAULT_SIZE, 728, Short.MAX_VALUE)
-                .addGroup(panelSourceLayout.createSequentialGroup().addContainerGap().addComponent(splitSoure) //, GroupLayout.DEFAULT_SIZE, 708, Short.MAX_VALUE)
+                .addGroup(panelSourceLayout.createSequentialGroup().addContainerGap().addComponent(splitSource) //, GroupLayout.DEFAULT_SIZE, 708, Short.MAX_VALUE)
                 .addContainerGap()));
         panelSourceLayout.setVerticalGroup(
-                panelSourceLayout.createSequentialGroup().addComponent(toolStandard, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE).addComponent(splitSoure, 10, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE).addContainerGap());
+                panelSourceLayout.createSequentialGroup().addComponent(toolStandard, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE).addComponent(splitSource, 10, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE).addContainerGap());
 
         tabbedPane.addTab("Source code editor", panelSource);
 
@@ -570,7 +570,7 @@ public class StudioFrame extends javax.swing.JFrame {
         splitLeftRight.setRightComponent(statusWindow);
 
         splitPerDebug.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-        splitPerDebug.setDividerLocation(330);
+        splitPerDebug.setDividerLocation(365);
         splitPerDebug.setOrientation(JSplitPane.VERTICAL_SPLIT);
         splitPerDebug.setAutoscrolls(true);
         splitPerDebug.setContinuousLayout(true);

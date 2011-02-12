@@ -40,8 +40,7 @@ public class DebugTableModel extends AbstractTableModel {
     private int page; // The page of the debug table
     private int lastPage; // The last page is determined at runtime
     
-    private final int MAX_ROW_COUNT = 25;
-
+    private static final int MAX_ROW_COUNT = 15;
     private IDebugColumn[] columns;
     
     /** Creates a new instance of DebugTableModel */
@@ -118,7 +117,9 @@ public class DebugTableModel extends AbstractTableModel {
      * Sets the current page
      */
     public void gotoPC() {
-        page = 0;
+        if (columns.length > 0)
+
+        page = columns[0].getCurrentDebugRow() / MAX_ROW_COUNT;
     }
 
     /**
