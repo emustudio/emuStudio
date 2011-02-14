@@ -31,6 +31,7 @@ import emuLib8.plugins.compiler.HEXFileHandler;
 
 import emuLib8.plugins.compiler.ILexer;
 import emuLib8.plugins.compiler.SimpleCompiler;
+import emuLib8.plugins.compiler.SourceFileExtension;
 import emuLib8.plugins.memory.IMemoryContext;
 import emuLib8.runtime.Context;
 
@@ -42,13 +43,15 @@ import emuLib8.runtime.Context;
 public class Assembler8080 extends SimpleCompiler {
     private Lexer8080 lex;
     private Parser8080 par;
-    private String[] suffixes = {"asm"};
+    private SourceFileExtension[] suffixes;
 
     /** Creates a new instance of compiler8080 */
     public Assembler8080(Long pluginID) {
         super(pluginID);
         lex = new Lexer8080((Reader) null);
         par = new Parser8080(lex);
+        suffixes = new SourceFileExtension[1];
+        suffixes[0] = new SourceFileExtension("asm", "8080 assembler source");
     }
 
     @Override
@@ -162,7 +165,7 @@ public class Assembler8080 extends SimpleCompiler {
     }
 
     @Override
-    public String[] getSourceSuffixList() {
+    public SourceFileExtension[] getSourceSuffixList() {
         return suffixes;
     }
 }
