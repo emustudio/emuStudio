@@ -25,12 +25,7 @@
 package emustudio.gui.editor;
 
 import emustudio.gui.utils.EmuFileFilter;
-import emustudio.gui.editor.CompoundUndoManager;
 import emuLib8.plugins.compiler.ICompiler;
-import emustudio.gui.editor.HighLightedDocument;
-import emustudio.gui.editor.HighlightStyle;
-import emustudio.gui.editor.HighlightThread;
-import emustudio.gui.editor.DocumentReader;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Insets;
@@ -252,15 +247,11 @@ public class EmuTextPane extends JTextPane {
         super.paint(g);
         int start, end, startline, endline;
 
-//        synchronized(docLock) {
-            start = document.getStartPosition().getOffset();
-            end = document.getEndPosition().getOffset();
-  //      }
+        start = document.getStartPosition().getOffset();
+        end = document.getEndPosition().getOffset();
         // translate offsets to lines
-    //    synchronized(docLock) {
-            startline = document.getDefaultRootElement().getElementIndex(start);
-            endline = document.getDefaultRootElement().getElementIndex(end) + 1;
-      //  }
+        startline = document.getDefaultRootElement().getElementIndex(start);
+        endline = document.getDefaultRootElement().getElementIndex(end) + 1;
         int fontHeight = g.getFontMetrics(getFont()).getHeight(); // font height
 
         g.setColor(Color.RED);
@@ -312,9 +303,11 @@ public class EmuTextPane extends JTextPane {
             vstup.close();
             fileSaved = true;
 
-            if (syntaxLexer != null)
+            if (syntaxLexer != null) {
                 highlight = new HighlightThread(syntaxLexer, reader, document,
                     styles);
+                highlight.colorAll();
+            }
         } catch (java.io.FileNotFoundException ex) {
             StaticDialogs.showErrorMessage("File not found: "
                     + fileSource.getPath());
@@ -322,6 +315,7 @@ public class EmuTextPane extends JTextPane {
         } catch (Exception e) {
             StaticDialogs.showErrorMessage("Error opening the file: "
                     + fileSource.getPath());
+            e.printStackTrace();
             return false;
         }
         return true;

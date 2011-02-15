@@ -28,7 +28,6 @@ package emustudio.gui.editor;
 import java.io.IOException;
 import java.io.Reader;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
 
 /**
  * Reader of the source code. It is used by syntax highlighter.
@@ -40,14 +39,14 @@ public class DocumentReader extends Reader {
      * resetovat lex. analyzator  */
     private long mark = -1;
     protected long position = 0;
-    protected volatile Document document;
+    protected HighLightedDocument document;
 
     /**
      * Create an instance of the document reader.
      *
      * @param document the source code document
      */
-    public DocumentReader(Document document) {
+    public DocumentReader(HighLightedDocument document) {
         this.document = document;
     }
 
@@ -85,13 +84,17 @@ public class DocumentReader extends Reader {
      */
     @Override
     public int read(){
+        document.getLength();
         if (position < document.getLength()){
             try {
+                document.readLock();
                 char c = document.getText((int)position, 1).charAt(0);
                 position++;
                 return c;
             } catch (BadLocationException x){
                 return -1;
+            } finally {
+                document.readUnlock();
             }
         } else {
             return -1;
@@ -131,6 +134,7 @@ public class DocumentReader extends Reader {
                 length = cbuf.length - off;
             }
             try {
+                document.readLock();
                 String s = document.getText((int)position, length);
                 position += length;
                 for (int i=0; i<length; i++){
@@ -139,6 +143,8 @@ public class DocumentReader extends Reader {
                 return length;
             } catch (BadLocationException x){
                 return -1;
+            } finally {
+                document.readUnlock();
             }
         } else {
             return -1;

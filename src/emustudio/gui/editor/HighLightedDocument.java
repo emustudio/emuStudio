@@ -73,15 +73,13 @@ public class HighLightedDocument extends DefaultStyledDocument {
      */
     @Override
     public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
-  //      synchronized (EmuTextPane.docLock) {
-            super.insertString(offs, str, a);
-            if (high != null) {
-                high.color(offs, str.length());
-            }
-            if (documentReader != null) {
-                documentReader.update(offs, str.length());
-            }
-    //    }
+        super.insertString(offs, str, a);
+        if (high != null) {
+            high.color(offs, str.length());
+        }
+        if (documentReader != null) {
+            documentReader.update(offs, str.length());
+        }
     }
 
     /**
@@ -100,14 +98,12 @@ public class HighLightedDocument extends DefaultStyledDocument {
      */
     @Override
     public void remove(int offs, int len) throws BadLocationException {
- //       synchronized (EmuTextPane.docLock) {
-            super.remove(offs, len);
-            if (high != null) {
-                high.color(offs, -len);
-            }
-            if (documentReader != null) {
-                documentReader.update(offs, -len);
-            }
-   //     }
+        super.remove(offs, len);
+        if (high != null) {
+            high.color(offs, -len);
+        }
+        if (documentReader != null) {
+            documentReader.update(offs, -len);
+        }
     }
 }

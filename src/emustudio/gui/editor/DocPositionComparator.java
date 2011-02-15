@@ -36,6 +36,7 @@ class DocPositionComparator implements Comparator{
      *
      * @return true for DocPositionComparators, false otherwise.
      */
+    @Override
     public boolean equals(Object obj){
         if (obj instanceof DocPositionComparator){
             return true;
@@ -51,6 +52,7 @@ class DocPositionComparator implements Comparator{
      * @param o2 second DocPosition
      * @return negative if first < second, 0 if equal, positive if first > second
      */
+    @Override
     public int compare(Object o1, Object o2){
         if (o1 instanceof DocPosition && o2 instanceof DocPosition){
             DocPosition d1 = (DocPosition)(o1);

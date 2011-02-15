@@ -252,42 +252,47 @@ public class HighlightThread extends Thread {
                     IToken t;
                     boolean done = false;
                     dpEnd = dpStart;
-         //           synchronized (EmuTextPane.docLock) {
-                        // we are playing some games with the lexer for efficiency.
-                        // we could just create a new lexer each time here, but instead,
-                        // we will just reset it so that it thinks it is starting at the
-                        // beginning of the document but reporting a funny start position.
-                        // Reseting the lexer causes the close() method on the reader
-                        // to be called but because the close() method has no effect on the
-                        // DocumentReader, we can do this.
-                        syntaxLexer.reset(documentReader, 0, dpStart.getPosition(), 0);
-                        // After the lexer has been set up, scroll the reader so that it
-                        // is in the correct spot as well.
-                        documentReader.seek(dpStart.getPosition());
-                        // we will highlight tokens until we reach a good stopping place.
-                        // the first obvious stopping place is the end of the document.
-                        // the lexer will return null at the end of the document and wee
-                        // need to stop there.
-                        t = syntaxLexer.getSymbol();
-         //           }
+                    // we are playing some games with the lexer for efficiency.
+                    // we could just create a new lexer each time here, but instead,
+                    // we will just reset it so that it thinks it is starting at the
+                    // beginning of the document but reporting a funny start position.
+                    // Reseting the lexer causes the close() method on the reader
+                    // to be called but because the close() method has no effect on the
+                    // DocumentReader, we can do this.
+                    syntaxLexer.reset(documentReader, 0, dpStart.getPosition(), 0);
+                    // After the lexer has been set up, scroll the reader so that it
+                    // is in the correct spot as well.
+                    documentReader.seek(dpStart.getPosition());
+                    // we will highlight tokens until we reach a good stopping place.
+                    // the first obvious stopping place is the end of the document.
+                    // the lexer will return null at the end of the document and wee
+                    // need to stop there.
+                    t = syntaxLexer.getSymbol();
                     newPositions.add(dpStart);
                     while (!done && t != null && t.getType() != IToken.TEOF) {
                         // this is the actual command that colors the stuff.
                         // Color stuff with the description of the style matched
                         // to the hash table that has been set up ahead of time.
-        //                synchronized (EmuTextPane.docLock) {
-                            int tEnd = t.getOffset() + t.getLength();
-                            if (tEnd <= document.getLength()) {
+                        int tEnd = t.getOffset() + t.getLength();
+                        if (tEnd <= document.getLength()) {
+                            try {
                                 document.setCharacterAttributes(
                                         t.getOffset() + change,
                                         t.getLength(),
                                         getStyle(t.getType()),
                                         true);
-                                // record the position of the last bit of text that we colored
-                                dpEnd = new DocPosition(tEnd);
+                            } catch(Error w) {
+                                // Interrupted attempt to aquire write lock
+                                w.printStackTrace();
+                                continue;
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                continue;
                             }
-                            lastPosition = (tEnd + change);
-          //              }
+                            // record the position of the last bit of text that we colored
+                            dpEnd = new DocPosition(tEnd);
+                        }
+                        lastPosition = (tEnd + change);
                         // The other more complicated reason for doing no more highlighting
                         // is that all the colors are the same from here on out anyway.
                         // We can detect this by seeing if the place that the lexer returned
@@ -319,9 +324,7 @@ public class HighlightThread extends Thread {
                             // initial states from this time.
                             newPositions.add(dpEnd);
                         }
-             //           synchronized (EmuTextPane.docLock) {
-                            t = syntaxLexer.getSymbol();
-               //         }
+                        t = syntaxLexer.getSymbol();
                     }
                     // remove all the old initial positions from the place where
                     // we started doing the highlighting right up through the last
@@ -351,10 +354,8 @@ public class HighlightThread extends Thread {
                     System.out.println("Started: " + dpStart.getPosition() + " Ended: " + dpEnd.getPosition());*/
                 } catch (IOException x) {
                 }
-      //          synchronized (EmuTextPane.docLock) {
-                    lastPosition = -1;
-                    change = 0;
-        //        }
+                lastPosition = -1;
+                change = 0;
                 // since we did something, we should check that there is
                 // nothing else to do before going back to sleep.
                 tryAgain = true;
@@ -382,8 +383,6 @@ public class HighlightThread extends Thread {
      * Color or recolor the entire document
      */
     public void colorAll() {
-   //     synchronized(EmuTextPane.docLock) {
-            color(0, document.getLength());
-     //   }
+        color(0, document.getLength());
     }
 }
