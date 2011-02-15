@@ -3,7 +3,7 @@
  *
  * Created on Nedeľa, 2007, august 5, 13:43
  *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ import emustudio.main.Main;
 import emustudio.gui.debugTable.DebugTable;
 import emustudio.gui.debugTable.DebugTableModel;
 import emustudio.gui.utils.NiceButton;
-import emustudio.gui.utils.EmuTextPane;
+import emustudio.gui.editor.EmuTextPane;
 import emustudio.gui.utils.FindText;
 import java.awt.Font;
 import java.awt.Toolkit;
@@ -110,17 +110,21 @@ public class StudioFrame extends javax.swing.JFrame {
     public StudioFrame(String title) {
         // create models and components
         arch = Main.currentArch.getComputer();
-        txtSource = new EmuTextPane();
-        debug_model = new DebugTableModel(arch.getCPU());
-        tblDebug = new DebugTable(debug_model);
-        initComponents();
-        btnBreakpoint.setEnabled(arch.getCPU().isBreakpointSupported());
-        jScrollPane1.setViewportView(txtSource);
-        paneDebug.setViewportView(tblDebug);
 
         compiler = arch.getCompiler();
         memory = arch.getMemory();
         cpu = arch.getCPU();
+
+        txtSource = new EmuTextPane(compiler);
+        debug_model = new DebugTableModel(arch.getCPU());
+        tblDebug = new DebugTable(debug_model);
+
+        initComponents();
+
+        btnBreakpoint.setEnabled(arch.getCPU().isBreakpointSupported());
+        jScrollPane1.setViewportView(txtSource);
+        paneDebug.setViewportView(tblDebug);
+
 
         if (compiler == null) {
             btnCompile.setEnabled(false);
@@ -180,8 +184,7 @@ public class StudioFrame extends javax.swing.JFrame {
                 public void onFinish(EventObject evt, int errorCode) {
                 }
             });
-            txtSource.setLexer(compiler.getLexer(txtSource.getDocumentReader()));
-            if (!compiler.isShowSettingsSupported()) {
+            if ((compiler != null) && !compiler.isShowSettingsSupported()) {
                 mnuProjectCompilerSettings.setEnabled(false);
             }
         } else {
@@ -1264,7 +1267,7 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {
-        txtSource.saveFile();
+        txtSource.saveFile(true);
     }
 
     private void mnuFileOpenActionPerformed(java.awt.event.ActionEvent evt) {

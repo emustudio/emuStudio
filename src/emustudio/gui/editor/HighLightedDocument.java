@@ -19,9 +19,8 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package emustudio.gui.syntaxHighlighting;
+package emustudio.gui.editor;
 
-import emustudio.gui.utils.EmuTextPane;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;

@@ -33,6 +33,10 @@ public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
     private String[] exts;
     private String desc;
 
+    public EmuFileFilter() {
+        exts = new String[0];
+    }
+
     public void addExtension(String ext) {
         int l=0;
         String[] tmp;
@@ -44,13 +48,15 @@ public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
     }
 
     public String getFirstExtension() {
-        if (exts != null) return exts[0];
+        if (exts != null)
+            return exts[0];
         return null;
     }
 
+    @Override
     public boolean accept(java.io.File f) {
         if (f.isDirectory()) return true;
-        String ext = this.getExtension(f);
+        String ext = getExtension(f);
         if (ext != null) {
             for (int i = 0; i < exts.length; i++)
                 if (exts[i].equals(ext) || exts[i].equals("*")) return true;
@@ -61,7 +67,14 @@ public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
         return false;
     }
 
-    public String getExtension(java.io.File f) {
+    /**
+     * Retrieve and return file extension.
+     *
+     * @param f Java File object
+     * @return extension of the file. If the file has no extension, null is
+     * returned.
+     */
+    public static String getExtension(java.io.File f) {
         String ext = null;
         String s = f.getName();
         int i = s.lastIndexOf('.');
@@ -70,11 +83,21 @@ public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
         return ext;
     }
 
+    @Override
     public String getDescription() {
         return desc;
     }
 
     public void setDescription(String des) {
         desc = des;
+    }
+
+    /**
+     * Get extensions count within this filter.
+     *
+     * @return number of extensions acceptable by this filter
+     */
+    public int getExtensionsCount() {
+        return exts.length;
     }
 }

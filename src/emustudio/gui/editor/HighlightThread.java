@@ -22,9 +22,8 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package emustudio.gui.syntaxHighlighting;
+package emustudio.gui.editor;
 
-import emustudio.gui.utils.EmuTextPane;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -38,7 +37,8 @@ import emuLib8.plugins.compiler.ILexer;
 import emuLib8.plugins.compiler.IToken;
 
 /**
- *
+ * The syntax highlighting thread.
+ * 
  * @author vbmacher
  */
 public class HighlightThread extends Thread {

@@ -22,12 +22,15 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package emustudio.gui.utils;
+package emustudio.gui.editor;
 
-import emustudio.gui.syntaxHighlighting.HighLightedDocument;
-import emustudio.gui.syntaxHighlighting.HighlightStyle;
-import emustudio.gui.syntaxHighlighting.HighlightThread;
-import emustudio.gui.syntaxHighlighting.DocumentReader;
+import emustudio.gui.utils.EmuFileFilter;
+import emustudio.gui.editor.CompoundUndoManager;
+import emuLib8.plugins.compiler.ICompiler;
+import emustudio.gui.editor.HighLightedDocument;
+import emustudio.gui.editor.HighlightStyle;
+import emustudio.gui.editor.HighlightThread;
+import emustudio.gui.editor.DocumentReader;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Insets;
@@ -55,6 +58,7 @@ import javax.swing.undo.UndoableEdit;
 
 import emuLib8.plugins.compiler.ILexer;
 import emuLib8.plugins.compiler.IToken;
+import emuLib8.plugins.compiler.SourceFileExtension;
 import emustudio.interfaces.ITokenColor;
 import emuLib8.runtime.StaticDialogs;
 
@@ -84,6 +88,8 @@ public class EmuTextPane extends JTextPane {
     private boolean acceptUndo = true;
     private Timer undoTimer;
 
+    private SourceFileExtension[] fileExtensions;
+
     private class UndoUpdater extends TimerTask {
 
         @Override
@@ -101,26 +107,32 @@ public class EmuTextPane extends JTextPane {
         }
     }
 
-    /** Creates a new instance of EmuTextPane */
-    public EmuTextPane() {
-        styles = new Hashtable<Integer, HighlightStyle>();
+    /**
+     * Creates a new instance of EmuTextPane
+     *
+     * @param compiler The chosen compiler.
+     */
+    public EmuTextPane(ICompiler compiler) {
         initStyles();
-        this.setFont(new java.awt.Font("monospaced", 0, 12));
-        this.setMargin(new Insets(NUMBERS_HEIGHT, NUMBERS_WIDTH, 0, 0));
-        this.setBackground(Color.WHITE);
 
         fileSaved = true;
         fileSource = null;
-        undo = new CompoundUndoManager();
-        aevt = new ActionEvent(this, 0, "");
-        undoTimer = null;
 
         document = new HighLightedDocument();
         reader = new DocumentReader(document);
         document.setDocumentReader(reader);
         this.setStyledDocument(document);
-        document.addDocumentListener(new DocumentListener() {
 
+        if (compiler != null) {
+            this.fileExtensions = compiler.getSourceSuffixList();
+            this.syntaxLexer = compiler.getLexer(reader);
+        }
+
+        aevt = new ActionEvent(this, 0, "");
+        undo = new CompoundUndoManager();
+        undoTimer = null;
+
+        document.addDocumentListener(new DocumentListener() {
             @Override
             public void changedUpdate(DocumentEvent e) {
             }
@@ -134,7 +146,8 @@ public class EmuTextPane extends JTextPane {
                     undoTimer.cancel();
                 }
                 undoTimer = new Timer();
-                undoTimer.schedule(new UndoUpdater(), CompoundUndoManager.IDLE_DELAY_MS);
+                undoTimer.schedule(new UndoUpdater(),
+                        CompoundUndoManager.IDLE_DELAY_MS);
             }
 
             @Override
@@ -146,11 +159,11 @@ public class EmuTextPane extends JTextPane {
                     undoTimer.cancel();
                 }
                 undoTimer = new Timer();
-                undoTimer.schedule(new UndoUpdater(), CompoundUndoManager.IDLE_DELAY_MS);
+                undoTimer.schedule(new UndoUpdater(),
+                        CompoundUndoManager.IDLE_DELAY_MS);
             }
         });
         document.addUndoableEditListener(new UndoableEditListener() {
-
             @Override
             public void undoableEditHappened(UndoableEditEvent e) {
                 if (!acceptUndo) {
@@ -166,22 +179,13 @@ public class EmuTextPane extends JTextPane {
                 }
             }
         });
-    }
-
-    public void setLexer(ILexer sLexer) {
-        this.syntaxLexer = sLexer;
-        if (highlight != null) {
-            try {
-                highlight.shouldStop();
-                highlight = null;
-            } catch (Exception e) {
-            }
-        }
-        highlight = new HighlightThread(syntaxLexer, reader, document, styles);
+        if (syntaxLexer != null)
+            highlight = new HighlightThread(syntaxLexer, reader, document,
+                    styles);
     }
 
     private void initStyles() {
-        styles.clear();
+        styles = new Hashtable<Integer, HighlightStyle>();
         styles.put(IToken.COMMENT, new HighlightStyle(true, false, ITokenColor.COMMENT));
         styles.put(IToken.ERROR, new HighlightStyle(false, false, ITokenColor.ERROR));
         styles.put(IToken.IDENTIFIER, new HighlightStyle(false, false, ITokenColor.IDENTIFIER));
@@ -192,6 +196,9 @@ public class EmuTextPane extends JTextPane {
         styles.put(IToken.REGISTER, new HighlightStyle(false, false, ITokenColor.REGISTER));
         styles.put(IToken.RESERVED, new HighlightStyle(false, true, ITokenColor.RESERVED));
         styles.put(IToken.SEPARATOR, new HighlightStyle(false, false, ITokenColor.SEPARATOR));
+        this.setFont(new java.awt.Font("monospaced", 0, 12));
+        this.setMargin(new Insets(NUMBERS_HEIGHT, NUMBERS_WIDTH, 0, 0));
+        this.setBackground(Color.WHITE);
     }
 
     /*** UNDO/REDO IMPLEMENTATION ***/
@@ -268,45 +275,63 @@ public class EmuTextPane extends JTextPane {
     }
 
     /*** OPENING/SAVING FILE ***/
+
+    /**
+     * The method opens the file based on file name given as String.
+     *
+     * @param fileName the name of the file to open
+     * @return true if the file was opened, false otherwise.
+     */
     public boolean openFile(String fileName) {
         return openFile(new File(fileName));
     }
 
-    /***
+    /**
      * Opens a file into text editor.
-     * WARNING: Don't check whether file is saved.
+     * WARNING: This method Doesn't check whether file is saved.
      * 
-     * @param file
-     * @return true if file was successfuly opened.
+     * @param file The file to open
+     * @return true if file was successfuly opened, false otherwise.
      */
     public boolean openFile(File file) {
         fileSource = file;
-        if (fileSource.canRead() == true) {
-            try {
-                FileReader vstup = new FileReader(fileSource.getAbsolutePath());
-                setText("");
-                getEditorKit().read(vstup, document, 0);
-                this.setCaretPosition(0);
-                vstup.close();
-                fileSaved = true;
-            } catch (java.io.FileNotFoundException ex) {
-                StaticDialogs.showErrorMessage("File not found: "
-                        + fileSource.getPath());
-                return false;
-            } catch (Exception e) {
-                StaticDialogs.showErrorMessage("Error opening file: "
-                        + fileSource.getPath());
-                return false;
-            }
-        } else {
+        if (fileSource.canRead() == false) {
             StaticDialogs.showErrorMessage("File " + fileSource.getPath()
-                    + " can't be read.");
+                    + " cannot be read.");
+            return false;
+        }
+        try {
+            if (highlight != null) {
+                highlight.shouldStop();
+                highlight = null;
+            }
+            FileReader vstup = new FileReader(fileSource);
+            setText("");
+            getEditorKit().read(vstup, document, 0);
+            this.setCaretPosition(0);
+            vstup.close();
+            fileSaved = true;
+
+            if (syntaxLexer != null)
+                highlight = new HighlightThread(syntaxLexer, reader, document,
+                    styles);
+        } catch (java.io.FileNotFoundException ex) {
+            StaticDialogs.showErrorMessage("File not found: "
+                    + fileSource.getPath());
+            return false;
+        } catch (Exception e) {
+            StaticDialogs.showErrorMessage("Error opening the file: "
+                    + fileSource.getPath());
             return false;
         }
         return true;
     }
 
-    // returns true if a file was opened
+    /**
+     * Display open-file dialog and opens a file.
+     *
+     * @return true if a file was opened; false otherwise
+     */
     public boolean openFileDialog() {
         JFileChooser f = new JFileChooser();
         EmuFileFilter f1 = new EmuFileFilter();
@@ -316,15 +341,25 @@ public class EmuTextPane extends JTextPane {
             return false;
         }
 
-        f1.addExtension("asm");
-        f1.addExtension("txt");
-        f1.setDescription("Assembler source (*.asm, *.txt)");
+        if ((fileExtensions != null) && (fileExtensions.length > 0)) {
+            String descr = "Source files (";
+            for (int i = 0; i < fileExtensions.length; i++) {
+                f1.addExtension(fileExtensions[i].getExtension());
+                descr += "*." + fileExtensions[i].getExtension() + ",";
+            }
+            descr = descr.substring(0, descr.length()-1);
+            descr += ")";
+            f1.setDescription(descr);
+        }
         f2.addExtension("*");
         f2.setDescription("All files (*.*)");
 
         f.setDialogTitle("Open a file");
         f.setAcceptAllFileFilterUsed(false);
-        f.addChoosableFileFilter(f1);
+        if (f1.getExtensionsCount() > 0) {
+            f.addChoosableFileFilter(f1);
+        } else
+            f1 = f2;
         f.addChoosableFileFilter(f2);
         f.setFileFilter(f1);
         f.setApproveButtonText("Open");
@@ -342,13 +377,19 @@ public class EmuTextPane extends JTextPane {
         return false;
     }
 
-    // return if cancel was pressed
+    /**
+     * Method asks the user if he wants to save a file and performs it when
+     * he confirms.
+     *
+     * @return If the user cancels the confirmation, return true. Otherwise
+     * return false.
+     */
     public boolean confirmSave() {
         if (fileSaved == false) {
             int r = JOptionPane.showConfirmDialog(null,
                     "File is not saved yet. Do you want to save the file ?");
             if (r == JOptionPane.YES_OPTION) {
-                this.saveFile();
+                return (!saveFile(true));
             } else if (r == JOptionPane.CANCEL_OPTION) {
                 return true;
             }
@@ -356,45 +397,64 @@ public class EmuTextPane extends JTextPane {
         return false;
     }
 
-    // return true if file was saved
-    public boolean saveFile() {
-        if (fileSource == null || fileSource.canWrite() == false) {
-            return saveFileDialog();
-        } else {
-            String fn = fileSource.getAbsolutePath();
-            try {
-                FileWriter vystup = new FileWriter(fn);
-                write(vystup);
-                vystup.close();
-                fileSaved = true;
-            } catch (Exception e) {
-                StaticDialogs.showErrorMessage("Can't save file: " + fileSource.getPath());
+    /**
+     * Save the file.
+     *
+     * @param showDialogIfFileIsInvalid the flag indicating if the save
+     * dialog should be shown to select new file if the fileSource is null
+     * or invalid.
+     * @return true if file was saved, false otherwise
+     */
+    public boolean saveFile(boolean showDialogIfFileIsInvalid) {
+        if ((fileSource == null) || (fileSource.canWrite() == false)) {
+            if (showDialogIfFileIsInvalid)
+                return saveFileDialog();
+            else {
+                StaticDialogs.showErrorMessage("Error: Cannot save the file!"
+                        + "\n The selected file is not writable.");
                 return false;
             }
+        }
+        try {
+            FileWriter vystup = new FileWriter(fileSource);
+            write(vystup);
+            vystup.close();
+            fileSaved = true;
             return true;
+        } catch (Exception e) {
+            StaticDialogs.showErrorMessage("Error: Cannot save the file: "
+                    + fileSource.getPath() + "\n" + e.getLocalizedMessage());
+            return false;
         }
     }
 
-    // return true if file was saved
+    /**
+     * Shows file chooser dialog to select the file and save the file.
+     *
+     * @return true if the file was saved, false otherwise.
+     */
     public boolean saveFileDialog() {
         JFileChooser f = new JFileChooser();
-        EmuFileFilter f1 = new EmuFileFilter();
-        EmuFileFilter f2 = new EmuFileFilter();
-        EmuFileFilter f3 = new EmuFileFilter();
-
-        f1.addExtension("asm");
-        f1.setDescription("Assembler source (*.asm)");
-        f2.addExtension("txt");
-        f2.setDescription("Assembler source (*.txt)");
-        f3.addExtension("*");
-        f3.setDescription("All files (*.*)");
-
-        f.setDialogTitle("Save a file");
+        EmuFileFilter[] filters;
+        int tmpLen = (fileExtensions != null) ? fileExtensions.length : 0;
+        
+        f.setDialogTitle("Save the file");
         f.setAcceptAllFileFilterUsed(false);
-        f.addChoosableFileFilter(f1);
-        f.addChoosableFileFilter(f2);
-        f.addChoosableFileFilter(f3);
-        f.setFileFilter(f1);
+
+        filters = new EmuFileFilter[tmpLen + 1];
+        if ((fileExtensions != null) && (fileExtensions.length > 0)) {
+            for (int i = 0; i < fileExtensions.length; i++) {
+                filters[i] = new EmuFileFilter();
+                filters[i].addExtension(fileExtensions[i].getExtension());
+                filters[i].setDescription(fileExtensions[i].getFormattedDescription());
+                f.addChoosableFileFilter(filters[i]);
+            }
+        }
+        filters[filters.length-1] = new EmuFileFilter();
+        filters[filters.length-1].addExtension("*");
+        filters[filters.length-1].setDescription("All files (*.*)");
+        f.addChoosableFileFilter(filters[filters.length-1]);
+        f.setFileFilter(filters[0]);
         f.setApproveButtonText("Save");
         f.setSelectedFile(fileSource);
         if (fileSource == null) {
@@ -402,44 +462,40 @@ public class EmuTextPane extends JTextPane {
         }
 
         int returnVal = f.showSaveDialog(this);
-        f.setVisible(true);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            fileSource = f.getSelectedFile();
-            if (fileSource.canWrite() == true || fileSource.exists() == false) {
-                String fn = fileSource.getAbsolutePath();
-                try {
-                    EmuFileFilter fil = (EmuFileFilter) f.getFileFilter();
-                    if (fil.getExtension(fileSource) == null && fil.getFirstExtension() != null) {
-                        if (!fil.getFirstExtension().equals("*")) {
-                            fn += "." + fil.getFirstExtension();
-                        }
-                    }
-                    fileSource = new java.io.File(fn);
-                    FileWriter vystup = new FileWriter(fn);
-                    write(vystup);
-                    vystup.close();
-                    fileSaved = true;
-                } catch (Exception e) {
-                    StaticDialogs.showErrorMessage("Can't save file: " + fileSource.getPath());
-                    return false;
-                }
-            } else {
-                StaticDialogs.showErrorMessage("Bad file name");
-                return false;
-            }
-            return true;
+        if (returnVal != JFileChooser.APPROVE_OPTION) {
+            return false;
         }
-        return false;
+        fileSource = f.getSelectedFile();
+        String fn = fileSource.getAbsolutePath();
+        EmuFileFilter fil = (EmuFileFilter) f.getFileFilter();
+        if ((EmuFileFilter.getExtension(fileSource) == null)
+                && (fil.getFirstExtension() != null)) {
+            if (!fil.getFirstExtension().equals("*")) {
+                fn += "." + fil.getFirstExtension();
+            }
+        }
+        fileSource = new java.io.File(fn);
+        return saveFile(false);
     }
 
+    /**
+     * Determine if the file was saved - i.e. if it is unmodified from last
+     * save.
+     *
+     * @return true if the file is saved, false otherwise
+     */
     public boolean isFileSaved() {
-        if (this.fileSaved == true && this.fileSource != null) {
+        if (fileSaved  && (fileSource != null)) {
             return true;
         } else {
             return false;
         }
     }
 
+    /**
+     * Return full path of the source file name, if it exists.
+     * @return
+     */
     public String getFileName() {
         if (this.fileSource == null) {
             return null;
@@ -448,7 +504,14 @@ public class EmuTextPane extends JTextPane {
         }
     }
 
-    // return true if new file was created
+    /**
+     * Create new file environment.
+     *
+     * Confirms to save the file when it is not already saved, or is modified.
+     * Clears the environment and the text area.
+     *
+     * @return true if the new file was created, false otherwise
+     */
     public boolean newFile() {
         if (confirmSave() == true) {
             return false;
