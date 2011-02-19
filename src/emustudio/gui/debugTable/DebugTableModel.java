@@ -131,9 +131,17 @@ public class DebugTableModel extends AbstractTableModel {
         }
         fireTableDataChanged();
     }
+
+    /**
+     * Go to the first page in the debug table
+     */
+    public void firstPage() {
+        page = locationToPage(0);
+        fireTableDataChanged();
+    }
     
     /**
-     * Got to nextPage page
+     * Got to next page
      */
     public void nextPage() {
         page += 1;
@@ -146,9 +154,40 @@ public class DebugTableModel extends AbstractTableModel {
     }
 
     /**
+     * Got to the last page
+     *
+     * Fast version.
+     */
+    public void lastPage() {
+        int gap = 100; // empiric value
+        int llocation;
+        do {
+            try {
+                do {
+                    page += gap;
+                    llocation = rowToLocation(0, page);
+                } while (true);
+            } catch (IndexOutOfBoundsException e) {
+                if (gap > 1) {
+                    page -= gap;
+                    gap /= 2;
+                    continue;
+                }
+            }
+            if (gap > 1) {
+                page -= gap;
+                gap /= 2;
+            } else
+                break;
+        } while (true);
+        page--;
+        fireTableDataChanged();
+    }
+
+    /**
      * Sets the current page
      */
-    public void gotoPC() {
+    public void currentPage() {
         page = 0;
         fireTableDataChanged();
     }
@@ -248,14 +287,14 @@ public class DebugTableModel extends AbstractTableModel {
      * @throws IndexOutOfBoundsException when debug row corresponds to memory
      * location that exceeds boundaries
      */
-    private int rowToLocation(int row) throws IndexOutOfBoundsException {
+    private int rowToLocation(int row, int ppage) throws IndexOutOfBoundsException {
         // the row of current instruction is always gapInstr+1
         int location = cpu.getInstrPosition();
         int tmp;
         IDisassembler dis = cpu.getDisassembler();
 
         int rowCurrent = computeCurrentRow();
-        int rowWanted = row + MAX_ROW_COUNT * page;
+        int rowWanted = row + MAX_ROW_COUNT * ppage;
 
         while (rowWanted < rowCurrent) {
             // up
@@ -272,6 +311,76 @@ public class DebugTableModel extends AbstractTableModel {
             location = tmp;
         }
         return location;
+    }
+
+    private int rowToLocation(int row) throws IndexOutOfBoundsException {
+        return rowToLocation(row, page);
+    }
+
+
+    /**
+     * Return the page in the debug table that shows the location
+     *
+     * Fast version.
+     *
+     * @param location the memory location
+     * @return page that shows the instruction on the memory location
+     */
+    public int locationToPage(int location) {
+        int ppage = page;
+        int llocation;
+        int gap = 100;
+
+        try {
+            llocation = rowToLocation(0);
+        } catch (IndexOutOfBoundsException e) {
+            llocation = cpu.getInstrPosition();
+        }
+
+        if (llocation < location) {
+            do {
+                try {
+                    do {
+                        ppage += gap;
+                        llocation = rowToLocation(0,ppage);
+                    } while(llocation <= location);
+                } catch(IndexOutOfBoundsException e) {
+                    if (gap > 1) {
+                        ppage -= gap;
+                        gap /= 2;
+                        continue;
+                    }
+                }
+                if ((llocation > location) && (gap > 1)) {
+                    ppage -= gap;
+                    gap /=2;
+                } else
+                    break;
+            } while (true);
+            ppage--;
+        } else if (llocation > location) {
+            do {
+                try {
+                    do {
+                        ppage -= gap;
+                        llocation = rowToLocation(0,ppage);
+                    } while(llocation >= location);
+                } catch(IndexOutOfBoundsException e) {
+                    if (gap > 1) {
+                        ppage += gap;
+                        gap /= 2;
+                        continue;
+                    }
+                }
+                if ((llocation < location) && (gap > 1)) {
+                    ppage += gap;
+                    gap /=2;
+                } else
+                    break;
+            } while(true);
+            ppage++;
+        }
+        return ppage;
     }
 
 }

@@ -344,9 +344,12 @@ public class StudioFrame extends javax.swing.JFrame {
         btnBreakpoint = new JButton();
         btnMemory = new JButton();
         paneDebug = new JScrollPane();
-        JButton btnPrevious = new NiceButton();
-        JButton btnNext = new NiceButton();
-        JButton btnToPC = new NiceButton();
+        JButton btnFirst =  new JButton();
+        JButton btnBackward = new JButton();
+        JButton btnCurrentPage =  new JButton();
+        JButton btnForward =  new JButton();
+        JButton btnLast =  new JButton();
+
         JPanel peripheralPanel = new JPanel();
         JScrollPane paneDevices = new JScrollPane();
         lstDevices = new JList();
@@ -379,6 +382,7 @@ public class StudioFrame extends javax.swing.JFrame {
         JMenu mnuHelp = new JMenu();
         JMenuItem mnuHelpAbout = new JMenuItem();
         JSeparator jSeparator7 = new JSeparator();
+        JPanel panelPages = new JPanel();
 
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("emuStudio");
@@ -719,40 +723,95 @@ public class StudioFrame extends javax.swing.JFrame {
         toolDebug.add(btnBreakpoint);
         toolDebug.add(btnMemory);
 
-        btnPrevious.setText("< Previous");
-        btnPrevious.addActionListener(new java.awt.event.ActionListener() {
+        btnFirst.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/page-first.png"))); // NOI18N
+        btnFirst.setToolTipText("Go to the first page");
 
+        btnBackward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/page-back.png"))); // NOI18N
+        btnBackward.setToolTipText("Go to the previous page");
+
+        btnCurrentPage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/page-current.png"))); // NOI18N
+        btnCurrentPage.setToolTipText("Go to the current page");
+
+        btnForward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/page-forward.png"))); // NOI18N
+        btnForward.setToolTipText("Go to the next page");
+
+        btnLast.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/page-last.png"))); // NOI18N
+        btnLast.setToolTipText("Go to the last page");
+
+        btnFirst.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnPreviousActionPerformed(evt);
+                btnFirstActionPerformed(evt);
+            }
+        });
+        btnBackward.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnBackwardActionPerformed(evt);
+            }
+        });
+        btnForward.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnForwardActionPerformed(evt);
+            }
+        });
+        btnCurrentPage.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCurrentPageActionPerformed(evt);
+            }
+        });
+        btnLast.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLastActionPerformed(evt);
             }
         });
 
-        btnNext.setText("Next >");
-        btnNext.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnNextActionPerformed(evt);
-            }
-        });
-
-        btnToPC.setText("To PC");
-        btnToPC.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnToPCActionPerformed(evt);
-            }
-        });
+        GroupLayout pagesLayout = new GroupLayout(panelPages);
+        panelPages.setLayout(pagesLayout);
+        pagesLayout.setHorizontalGroup(
+            pagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pagesLayout.createSequentialGroup()
+                .addComponent(btnFirst)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnBackward)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnCurrentPage)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnForward)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnLast))
+        );
+        pagesLayout.setVerticalGroup(
+            pagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pagesLayout.createSequentialGroup()
+                .addGroup(pagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(btnLast)
+                    .addComponent(btnBackward)
+                    .addComponent(btnFirst)
+                    .addComponent(btnCurrentPage)
+                    .addComponent(btnForward)))
+        );
 
         GroupLayout debuggerPanelLayout = new GroupLayout(debuggerPanel);
         debuggerPanel.setLayout(debuggerPanelLayout);
         debuggerPanelLayout.setHorizontalGroup(
                 debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(toolDebug) //, GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
-                .addGroup(debuggerPanelLayout.createSequentialGroup().addComponent(btnPrevious).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnToPC).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 100, Short.MAX_VALUE).addComponent(btnNext)).addComponent(paneDebug, 10, 350, Short.MAX_VALUE));
+                .addGroup(debuggerPanelLayout.createSequentialGroup().addComponent(panelPages))
+//                .addComponent(btnBackward).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+  //              .addComponent(btnCurrentPage).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED,
+    //            100, Short.MAX_VALUE).addComponent(btnForward))
+                .addComponent(paneDebug, 10, 350, Short.MAX_VALUE));
         debuggerPanelLayout.setVerticalGroup(
-                debuggerPanelLayout.createSequentialGroup().addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE).addComponent(paneDebug, GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(btnPrevious).addComponent(btnNext).addComponent(btnToPC)));
+                debuggerPanelLayout.createSequentialGroup()
+                .addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
+                .addComponent(paneDebug, GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(panelPages)));
+                //.addComponent(btnBackward).addComponent(btnForward).addComponent(btnCurrentPage)));
         splitLeftRight.setDividerLocation(1.0);
         splitPerDebug.setTopComponent(debuggerPanel);
 
@@ -1383,20 +1442,31 @@ public class StudioFrame extends javax.swing.JFrame {
         }
     }
 
-    private void btnPreviousActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnFirstActionPerformed(java.awt.event.ActionEvent evt) {
+        debug_model.firstPage();
+        tblDebug.revalidate();
+        tblDebug.repaint();
+    }
+
+    private void btnBackwardActionPerformed(java.awt.event.ActionEvent evt) {
         debug_model.previousPage();
         tblDebug.revalidate();
         tblDebug.repaint();
     }
 
-    private void btnToPCActionPerformed(java.awt.event.ActionEvent evt) {
-        debug_model.gotoPC();
+    private void btnCurrentPageActionPerformed(java.awt.event.ActionEvent evt) {
+        debug_model.currentPage();
         tblDebug.revalidate();
         tblDebug.repaint();
     }
 
-    private void btnNextActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnForwardActionPerformed(java.awt.event.ActionEvent evt) {
         debug_model.nextPage();
+        tblDebug.revalidate();
+        tblDebug.repaint();
+    }
+    private void btnLastActionPerformed(java.awt.event.ActionEvent evt) {
+        debug_model.lastPage();
         tblDebug.revalidate();
         tblDebug.repaint();
     }

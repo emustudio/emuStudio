@@ -134,6 +134,7 @@ public class ViewComputerDialog extends JDialog {
         }
 
         if (cmbDevice.getItemCount() > 0) {
+            cmbDevice.setSelectedIndex(0);
             showDevice(0);
         } else
             cmbDevice.setEnabled(false);
