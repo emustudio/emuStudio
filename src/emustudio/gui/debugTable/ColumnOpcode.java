@@ -49,6 +49,8 @@ public class ColumnOpcode extends SimpleDebugColumn {
             return instr.getOpCode();
         } catch(IndexOutOfBoundsException e) {
             return "";
+        } catch (NullPointerException x) {
+            return "";
         }
     }
 

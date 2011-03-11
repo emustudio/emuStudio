@@ -45,6 +45,8 @@ public class ColumnMnemo extends SimpleDebugColumn {
             return instr.getMnemo();
         } catch(IndexOutOfBoundsException e) {
             return "incomplete instruction";
+        } catch (NullPointerException x) {
+            return "";
         }
     }
 

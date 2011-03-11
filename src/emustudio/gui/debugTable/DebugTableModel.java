@@ -269,12 +269,15 @@ public class DebugTableModel extends AbstractTableModel {
 
         int row = 0;
 
-        IDisassembler dis = cpu.getDisassembler();
-        do {
-            row++;
-        } while (((loc = dis.getPreviousInstructionLocation(loc)) > 0)
-                && (row < gapInstr));
-            
+        try {
+            IDisassembler dis = cpu.getDisassembler();
+            do {
+                row++;
+            } while (((loc = dis.getPreviousInstructionLocation(loc)) > 0)
+                    && (row < gapInstr));
+        } catch (NullPointerException x) {
+            row = 0;
+        }
         return row;
     }
 
@@ -296,19 +299,24 @@ public class DebugTableModel extends AbstractTableModel {
         int rowCurrent = computeCurrentRow();
         int rowWanted = row + MAX_ROW_COUNT * ppage;
 
-        while (rowWanted < rowCurrent) {
-            // up
-            tmp = dis.getPreviousInstructionLocation(location);
-            rowCurrent--;
-            location = tmp;
-            if (location < 0)
-                throw new IndexOutOfBoundsException();
-        }
-        while (rowWanted > rowCurrent) {
-            // down
-            tmp = dis.getNextInstructionLocation(location);
-            rowCurrent++;
-            location = tmp;
+        try {
+            while (rowWanted < rowCurrent) {
+                // up
+                tmp = dis.getPreviousInstructionLocation(location);
+                rowCurrent--;
+                location = tmp;
+                if (location < 0) {
+                    throw new IndexOutOfBoundsException();
+                }
+            }
+            while (rowWanted > rowCurrent) {
+                // down
+                tmp = dis.getNextInstructionLocation(location);
+                rowCurrent++;
+                location = tmp;
+            }
+        } catch (NullPointerException x) {
+            location = cpu.getInstrPosition();
         }
         return location;
     }
