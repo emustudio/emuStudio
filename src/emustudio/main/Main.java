@@ -73,43 +73,56 @@ public class Main {
         // process arguments
         int size = args.length;
         for (int i = 0; i < size; i++) {
-            String arg = args[i++].toUpperCase();
+            String arg = args[i].toUpperCase();
             try {
                 if (arg.equals("--CONFIG")) {
+                    i++;
                     // what configuration to load
                     if (configName != null) {
                         System.out.println("Config file already defined,"
-                                + " ignoring this one: " + args[i++]);
+                                + " ignoring this one: " + args[i]);
                     } else {
-                        configName = args[i++];
+                        configName = args[i];
+                        System.out.println("Loading virtual computer: "
+                                + configName);
                     }
                 } else if (arg.equals("--INPUT")) {
+                    i++;
                     // what input file take to compiler
                     if (inputFileName != null) {
                         System.out.println("Input file already defined,"
-                                + " ignoring this one: " + args[i++]);
+                                + " ignoring this one: " + args[i]);
                     } else {
-                        inputFileName = args[i++];
+                        inputFileName = args[i];
+                        System.out.println("Input file name: "
+                                + inputFileName);
                     }
                 } else if (arg.equals("--OUTPUT")) {
+                    i++;
                     // what output file take for emuStudio messages during
                     // automation process. This option has a meaning
                     // only if the "-auto" option is set too.
                     if (outputFileName != null) {
                         System.out.println("Output file already defined,"
-                                + " ignoring this one: " + args[i++]);
+                                + " ignoring this one: " + args[i]);
                     } else {
-                        outputFileName = args[i++];
+                        outputFileName = args[i];
+                        System.out.println("Output file name: "
+                                + outputFileName);
                     }
                 } else if (arg.equals("--AUTO")) {
                     auto = true;
+                    System.out.println("Turning automatization on.");
                 } else if (arg.equals("--HASH")) {
+                    i++;
                     checkHash = true;
                     if (classToHash != null) {
                         System.out.println("Class file already defined,"
-                                + " ignoring this one: " + args[i++]);
+                                + " ignoring this one: " + args[i]);
                     } else {
-                        classToHash = args[i++];
+                        classToHash = args[i];
+                        System.out.println("Compute hash of class: "
+                                + classToHash);
                     }
 
                 } else if (arg.equals("--HELP")) {
@@ -251,7 +264,7 @@ public class Main {
 
         // load the virtual computer
         try {
-            currentArch = ArchLoader.load(configName);
+            currentArch = ArchLoader.load(configName, auto);
         } catch (Error er) {
             String h = er.getLocalizedMessage();
             if (h == null || h.equals("")) {

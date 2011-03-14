@@ -101,9 +101,6 @@ public class Automatization {
         final ICPU cpu = currentArch.getComputer().getCPU();
         IDevice[] devices = currentArch.getComputer().getDevices();
 
-        // Set "auto" setting to "true" to all plugins
-        currentArch.writeSettingToAll("auto", "true");
-
 	try {
             final FileWriter outw = (outputFile == null) ? null
                     : new FileWriter(outputFile);
@@ -179,26 +176,21 @@ public class Automatization {
             adia.setAction("Running emulation...", true);
             output_message("<h1>Emulation process</h1>", outw);
 
-            final Thread t = new Thread() {
-                @Override
-                public void run() {
-                    result_state = RunState.STATE_RUNNING;
-                    cpu.execute();
-                }
-            };
+            result_state = RunState.STATE_RUNNING;
             cpu.addCPUListener(new ICPUListener() {
                 @Override
                 public void runChanged(EventObject evt, RunState state) {
                     if (state != RunState.STATE_RUNNING) {
                         result_state = state;
-                        t.interrupt();
                     }
                 }
                 @Override
                 public void stateUpdated(EventObject evt) {}
             });
-            t.start();
-            t.join();
+            cpu.execute();
+
+            while (result_state == RunState.STATE_RUNNING)
+                ;
 
             switch (result_state) {
                 case STATE_STOPPED_ADDR_FALLOUT:
@@ -214,7 +206,8 @@ public class Automatization {
                     output_message("<p>DONE (normal stop)</p>", outw);
                     break;
                 default:
-                    output_message("<p>FAILED (invalid state)</p>", outw);
+                    output_message("<p>FAILED (invalid state): " +
+                            result_state + "</p>", outw);
                     break;
             }
             output_message("<p>Instruction postion: " + String.format("%04Xh",
@@ -232,6 +225,9 @@ public class Automatization {
             StaticDialogs.showErrorMessage("Error in compile process:\n"
                     + e.toString());
         }
+        // Set "auto" setting back to "false" to all plugins
+        currentArch.writeSettingToAll("auto", "false");
+
         currentArch.destroy();
         adia.dispose();
         adia = null;

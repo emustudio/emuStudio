@@ -61,14 +61,14 @@ public class ArchHandler implements ISettingsHandler {
      * @throws Error if initialization of the architecture failed.
      */
     public ArchHandler(Computer arch, Properties settings,
-            Schema schema, Hashtable<Long, String> pluginNames)
+            Schema schema, Hashtable<Long, String> pluginNames, boolean auto)
             throws Error {
         this.computer = arch;
         this.settings = settings;
         this.schema = schema;
         this.pluginNames = pluginNames;
 
-        if (initialize() == false) {
+        if (initialize(auto) == false) {
             throw new Error("Initialization of plugins failed");
         }
     }
@@ -79,7 +79,10 @@ public class ArchHandler implements ISettingsHandler {
      * 
      * @return true If the initialization succeeded, false otherwise
      */
-    private boolean initialize() {
+    private boolean initialize(boolean auto) {
+        if (auto)
+           // Set "auto" setting to "true" to all plugins
+           writeSettingToAll("auto", "true");
         return computer.initialize(this);
     }
 

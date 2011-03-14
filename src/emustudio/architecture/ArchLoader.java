@@ -495,7 +495,7 @@ public class ArchLoader {
      * @param name  Name of the configuration
      * @return instance of virtual architecture
      */
-    public static ArchHandler load(String name) {
+    public static ArchHandler load(String name, boolean auto) {
         try {
             Properties settings = readConfig(name,true);
             if (settings == null) return null;
@@ -628,7 +628,7 @@ public class ArchLoader {
             emuLib8.runtime.Context.getInstance().assignComputer(Main.getPassword(),
                     arch);
             return new ArchHandler(arch, settings, loadSchema(name),
-                    pluginNames);
+                    pluginNames, auto);
         }
         catch (IllegalArgumentException e) {
             StaticDialogs.showMessage(e.getMessage(), "Error reading plugins");
