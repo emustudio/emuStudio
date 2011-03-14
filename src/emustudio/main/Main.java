@@ -251,7 +251,7 @@ public class Main {
 
         // load the virtual computer
         try {
-            currentArch = ArchLoader.load(configName, auto);
+            currentArch = ArchLoader.load(configName);
         } catch (Error er) {
             String h = er.getLocalizedMessage();
             if (h == null || h.equals("")) {

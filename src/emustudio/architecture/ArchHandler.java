@@ -34,6 +34,7 @@ import emuLib8.plugins.device.IDevice;
 import emuLib8.plugins.IPlugin;
 import emuLib8.plugins.ISettingsHandler;
 import emuLib8.plugins.compiler.ICompiler;
+import java.util.Enumeration;
 
 /**
  * Class holds actual computer configuration - plugins and settings.
@@ -50,32 +51,22 @@ public class ArchHandler implements ISettingsHandler {
     private static final String EMPTY_STRING = "";
 
     /**
-     * Special setting "verbose". If it is
-     * set and a plugin asks for "verbose" setting,
-     * this will return the set value. The setting
-     * overwrites plugin setting.
-     */
-    private boolean verbose;
-
-    /**
      * Creates new virtual computer architecture and initializes all plug-ins.
      * 
      * @param arch         Virtual computer, handling the structure of plug-ins
      * @param settings     Architecture settings (Properties)
      * @param schema       Abstract schema of the architecture
      * @param pluginNames  Names of all plug-ins
-     * @param verbose      Verbose setting overwrite?
      *  
      * @throws Error if initialization of the architecture failed.
      */
     public ArchHandler(Computer arch, Properties settings,
-            Schema schema, Hashtable<Long, String> pluginNames, boolean verbose)
+            Schema schema, Hashtable<Long, String> pluginNames)
             throws Error {
         this.computer = arch;
         this.settings = settings;
         this.schema = schema;
         this.pluginNames = pluginNames;
-        this.verbose = verbose;
 
         if (initialize() == false) {
             throw new Error("Initialization of plugins failed");
@@ -90,18 +81,6 @@ public class ArchHandler implements ISettingsHandler {
      */
     private boolean initialize() {
         return computer.initialize(this);
-    }
-
-    /**
-     * Set/unset special setting "verbose". If it is
-     * set and a plugin asks for "verbose" setting,
-     * this will return the set value. The setting 
-     * overwrites plugin setting.
-     * 
-     * @param verbose
-     */
-    public void setVerbose(boolean verbose) {
-        this.verbose = verbose;
     }
 
     /**
@@ -153,9 +132,6 @@ public class ArchHandler implements ISettingsHandler {
         
         if (plug == null)
             return null;
-
-        if (settingName.equalsIgnoreCase("VERBOSE"))
-            return verbose ? "true" : "false";
 
         String prop = pluginNames.get(pluginID);
 
@@ -284,4 +260,21 @@ public class ArchHandler implements ISettingsHandler {
         settings.remove(prop);
         ArchLoader.writeConfig(schema.getConfigName(), settings);
     }
+
+    /**
+     * This method is used only by the emuStudio to set some common settings
+     * that should be set for all plugins.
+     *
+     * @param hash
+     * @param settingName
+     * @param val
+     */
+    public void writeSettingToAll(String settingName, String val) {
+        long id;
+        for (Enumeration<Long> e = pluginNames.keys(); e.hasMoreElements();) {
+            id = (Long)e.nextElement();
+            this.writeSetting(id, settingName, val);
+        }
+    }
+
 }

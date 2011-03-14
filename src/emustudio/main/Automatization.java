@@ -101,6 +101,9 @@ public class Automatization {
         final ICPU cpu = currentArch.getComputer().getCPU();
         IDevice[] devices = currentArch.getComputer().getDevices();
 
+        // Set "auto" setting to "true" to all plugins
+        currentArch.writeSettingToAll("auto", "true");
+
 	try {
             final FileWriter outw = (outputFile == null) ? null
                     : new FileWriter(outputFile);
@@ -157,8 +160,6 @@ public class Automatization {
                 BufferedReader r = new BufferedReader(fileR);
 
                 String fn = inputFile.getAbsolutePath();
-                // hex is correct assumption?
-                fn = fn.substring(0, fn.lastIndexOf(".")) + ".hex"; 
 
                 boolean succ = compiler.compile(fn, r);
 

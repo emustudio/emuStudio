@@ -493,10 +493,9 @@ public class ArchLoader {
      * creates virtual architecture.
      * 
      * @param name  Name of the configuration
-     * @param verbose Whether to print verbose output
      * @return instance of virtual architecture
      */
-    public static ArchHandler load(String name, boolean verbose) {
+    public static ArchHandler load(String name) {
         try {
             Properties settings = readConfig(name,true);
             if (settings == null) return null;
@@ -629,7 +628,7 @@ public class ArchLoader {
             emuLib8.runtime.Context.getInstance().assignComputer(Main.getPassword(),
                     arch);
             return new ArchHandler(arch, settings, loadSchema(name),
-                    pluginNames, verbose);
+                    pluginNames);
         }
         catch (IllegalArgumentException e) {
             StaticDialogs.showMessage(e.getMessage(), "Error reading plugins");
