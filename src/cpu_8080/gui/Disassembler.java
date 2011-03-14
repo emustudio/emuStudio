@@ -578,6 +578,10 @@ public class Disassembler extends SimpleDisassembler {
         // unknown instruction?
         if (diff == 0)
             diff = 1;
+
+        // if the address exceeds boundaries, exception will be thrown
+        short test = (Short)mem.read(memLocation + diff);
+
         return memLocation + diff;
     }
 
