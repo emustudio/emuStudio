@@ -68,9 +68,14 @@ public class CpuPort2 implements IDeviceContext {
         //      // get key from terminal (polling)
         //    buffer = gui.getChar();
         // }
-        short v = sio.buffer;
-        sio.status &= 0xFE;
-        sio.buffer = 0;
+        short v = 0;
+        if (sio.buffer.size() > 0)
+            v = sio.buffer.remove(0);
+        
+        if (sio.buffer.size() == 0)
+            sio.status &= 0xFE;
+        else
+            sio.status |= 0x01;
         return v;
     }
 
@@ -81,7 +86,7 @@ public class CpuPort2 implements IDeviceContext {
      */
     public void writeBuffer(short data) {
         sio.status |= 0x01;
-        sio.buffer = data;
+        sio.buffer.add(data);
     }
 
     @Override

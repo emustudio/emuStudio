@@ -27,12 +27,13 @@ package sio88;
 
 import javax.swing.JOptionPane;
 
-import interfaces.C17E8D62E685AD7E54C209C30482E3C00C8C56ECC;
+import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
 import emuLib8.plugins.ISettingsHandler;
 import emuLib8.plugins.device.IDeviceContext;
 import emuLib8.plugins.device.SimpleDevice;
 import emuLib8.runtime.Context;
 import emuLib8.runtime.StaticDialogs;
+import java.util.ArrayList;
 import sio88.gui.ConfigDialog;
 import sio88.gui.SIODialog;
 
@@ -57,7 +58,7 @@ public class Mits88SIO extends SimpleDevice {
 
     public static final int CPU_PORT1 = 0x10;
     public static final int CPU_PORT2 = 0x11;
-    public short buffer;
+    public ArrayList<Short> buffer = new ArrayList<Short>();
     public short status;
     private CpuPort1 port1;
     private CpuPort2 port2;
@@ -67,7 +68,7 @@ public class Mits88SIO extends SimpleDevice {
      * Port where devices are connected
      */
     private PhysicalPort externPort;
-    private C17E8D62E685AD7E54C209C30482E3C00C8C56ECC cpu = null;
+    private C738039DCA561A49F377859B108A9AD1EE6CBDACB cpu = null;
     public SIODialog gui = null;
 
     public Mits88SIO(Long pluginID) {
@@ -109,11 +110,15 @@ public class Mits88SIO extends SimpleDevice {
         return "\u00A9 Copyright 2007-2010, P.Jakubčo";
     }
 
-    /* Reset routine */
+    /* Reset routine
+     * TODO: automatization process messes the reset...
+     */
     @Override
     public void reset() {
-        buffer = 0;    /* Data */
-        status = 0x02; /* Status */
+      //  buffer.clear(); // = 0;    /* Data */
+      //  status = 0x02; /* Status */
+        if (buffer.isEmpty())
+            status = 0x02;
     }
 
     private void readSettings() {
@@ -151,8 +156,8 @@ public class Mits88SIO extends SimpleDevice {
     public boolean initialize(ISettingsHandler settings) {
         super.initialize(settings);
 
-        cpu = (C17E8D62E685AD7E54C209C30482E3C00C8C56ECC) Context.getInstance().getCPUContext(pluginID,
-                C17E8D62E685AD7E54C209C30482E3C00C8C56ECC.class);
+        cpu = (C738039DCA561A49F377859B108A9AD1EE6CBDACB) Context.getInstance().getCPUContext(pluginID,
+                C738039DCA561A49F377859B108A9AD1EE6CBDACB.class);
 
         // try to 'catch' any first connected device
         IDeviceContext device = Context.getInstance().getDeviceContext(pluginID,
