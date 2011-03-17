@@ -57,18 +57,20 @@ public class ArchHandler implements ISettingsHandler {
      * @param settings     Architecture settings (Properties)
      * @param schema       Abstract schema of the architecture
      * @param pluginNames  Names of all plug-ins
+     * @param auto         If the emuStudio is runned in automatization mode
+     * @param nogui        If the "--nogui" parameter was given to emuStudio
      *  
      * @throws Error if initialization of the architecture failed.
      */
     public ArchHandler(Computer arch, Properties settings,
-            Schema schema, Hashtable<Long, String> pluginNames, boolean auto)
-            throws Error {
+            Schema schema, Hashtable<Long, String> pluginNames, boolean auto,
+            boolean nogui) throws Error {
         this.computer = arch;
         this.settings = settings;
         this.schema = schema;
         this.pluginNames = pluginNames;
 
-        if (initialize(auto) == false) {
+        if (initialize(auto, nogui) == false) {
             throw new Error("Initialization of plugins failed");
         }
     }
@@ -79,10 +81,13 @@ public class ArchHandler implements ISettingsHandler {
      * 
      * @return true If the initialization succeeded, false otherwise
      */
-    private boolean initialize(boolean auto) {
+    private boolean initialize(boolean auto, boolean nogui) {
         if (auto)
            // Set "auto" setting to "true" to all plugins
            writeSettingToAll("auto", "true");
+        if (nogui)
+           writeSettingToAll("nogui", "true");
+
         return computer.initialize(this);
     }
 

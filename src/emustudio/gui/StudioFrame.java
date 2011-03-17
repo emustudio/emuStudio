@@ -132,6 +132,8 @@ public class StudioFrame extends javax.swing.JFrame {
         }
 
         this.setStatusGUI();
+        pack();
+
         setupListeners();
 
         btnBreakpoint.setEnabled(cpu.isBreakpointSupported());
@@ -164,7 +166,6 @@ public class StudioFrame extends javax.swing.JFrame {
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(statusPanel));
         layout.setVerticalGroup(
                 layout.createSequentialGroup().addComponent(statusPanel));
-        pack();
     }
 
     private void setupListeners() {
@@ -1101,7 +1102,7 @@ public class StudioFrame extends javax.swing.JFrame {
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
                 GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
 
-        pack();
+//        pack();
     }
 
     private void btnPauseActionPerformed(java.awt.event.ActionEvent evt) {

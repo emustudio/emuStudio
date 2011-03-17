@@ -90,11 +90,14 @@ public class Automatization {
      *
      * All output is saved into output file.
      *
+     * @param nogui if true, GUI will not be shown.
      */
-    public void runAutomatization() {
-        AutoDialog adia = new AutoDialog();
-
-        adia.setVisible(true);
+    public void runAutomatization(boolean nogui) {
+        AutoDialog adia = null;
+        if (!nogui) {
+            adia = new AutoDialog();
+            adia.setVisible(true);
+        }
 
         ICompiler compiler = currentArch.getComputer().getCompiler();
         IMemory memory = currentArch.getComputer().getMemory();
@@ -124,7 +127,11 @@ public class Automatization {
             output_message("</table>", outw);
 
             if ((compiler != null) && (inputFile != null)) {
-                adia.setAction("Compiling input file...", false);
+                if (!nogui)
+                    adia.setAction("Compiling input file...", false);
+                else
+                    System.out.println("Compiling input file...");
+
                 output_message("<h1>Compile process</h1><p><strong>File name:"
                         + "</strong>" + inputFile, outw);
 
@@ -173,7 +180,10 @@ public class Automatization {
                     memory.setProgramStart(programStart);
                 cpu.reset(programStart);
             }
-            adia.setAction("Running emulation...", true);
+            if (!nogui)
+                adia.setAction("Running emulation...", true);
+            else
+                System.out.println("Running emulation...");
             output_message("<h1>Emulation process</h1>", outw);
 
             result_state = RunState.STATE_RUNNING;
@@ -213,7 +223,10 @@ public class Automatization {
             output_message("<p>Instruction postion: " + String.format("%04Xh",
                     cpu.getInstrPosition()) + "</p>", outw);
 
-            adia.setAction("Emulation finished.", false);
+            if (!nogui)
+                adia.setAction("Emulation finished.", false);
+            else
+                System.out.println("Emulation finished.");
 
             output_message("<p>" + new Date().toString() + "</p>", outw);
             outw.close();
@@ -227,10 +240,13 @@ public class Automatization {
         }
         // Set "auto" setting back to "false" to all plugins
         currentArch.writeSettingToAll("auto", "false");
+        currentArch.writeSettingToAll("nogui", "false");
 
         currentArch.destroy();
-        adia.dispose();
-        adia = null;
+        if (!nogui) {
+            adia.dispose();
+            adia = null;
+        }
     }
 
 }

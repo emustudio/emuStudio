@@ -58,6 +58,7 @@ public class Main {
     private static String classToHash = null;
     private static boolean help = false;
     private static String password = null;
+    private static boolean noGUI = false;
 
     public static String getPassword() {
         return password;
@@ -127,6 +128,8 @@ public class Main {
 
                 } else if (arg.equals("--HELP")) {
                     help = true;
+                } else if (arg.equals("--NOGUI")) {
+                    noGUI = true;
                 } else {
                     System.out.println("Error: Invalid command line argument "
                             + "(" + arg + ")!");
@@ -214,6 +217,7 @@ public class Main {
                     + "\n--input name  : use the source code given by the file name"
                     + "\n--output name : output compiler messages into this file name"
                     + "\n--auto        : run the emulation automatization"
+                    + "\n--nogui       : try to not show GUI in automatization"
                     + "\n--hash name   : compute hash for given class or interface name"
                     + "\n--help        : output this message");
             return;
@@ -258,39 +262,54 @@ public class Main {
             }
         }
 
-        // display splash screen, while loading the virtual computer
-        LoadingDialog splash = new LoadingDialog();
-        splash.setVisible(true);
+        LoadingDialog splash = null;
+        if (!noGUI) {
+            // display splash screen, while loading the virtual computer
+            splash = new LoadingDialog();
+            splash.setVisible(true);
+        } else
+            System.out.println("Loading virtual computer: " + configName);
 
         // load the virtual computer
         try {
-            currentArch = ArchLoader.load(configName, auto);
+            currentArch = ArchLoader.load(configName, auto, noGUI);
         } catch (Error er) {
             String h = er.getLocalizedMessage();
             if (h == null || h.equals("")) {
                 h = "Unknown error";
             }
-            StaticDialogs.showErrorMessage("Error with computer loading : " + h);
+            if (!noGUI)
+                StaticDialogs.showErrorMessage("Error with computer loading : " + h);
+            else
+                System.out.println("Error with computer loading : " + h);
             currentArch = null;
         }
 
-        // hide splash screen
-        splash.dispose();
-        splash = null;
+        if (!noGUI) {
+            // hide splash screen
+            splash.dispose();
+            splash = null;
+        }
 
         if (currentArch == null) {
+            System.out.println("Error: Cannot load the virtual computer.");
             System.exit(0);
         }
 
         if (!auto) {
-            // if the automatization is turned off, start the emuStudio normally
-            if (inputFileName != null) {
-                new StudioFrame(inputFileName).setVisible(true);
-            } else {
-                new StudioFrame(configName).setVisible(true);
+            try {
+                // if the automatization is turned off, start the emuStudio normally
+                if (inputFileName != null) {
+                    new StudioFrame(inputFileName,configName).setVisible(true);
+                } else {
+                    new StudioFrame(configName).setVisible(true);
+                }
+            } catch (Exception e) {
+                System.exit(0);
             }
         } else {
-            new Automatization(currentArch, inputFileName, outputFileName).runAutomatization();
+            new Automatization(currentArch, inputFileName, outputFileName)
+                    .runAutomatization(noGUI);
             currentArch.destroy();
             System.exit(0);
         }

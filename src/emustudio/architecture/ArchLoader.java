@@ -493,9 +493,12 @@ public class ArchLoader {
      * creates virtual architecture.
      * 
      * @param name  Name of the configuration
+     * @param auto  If the emuStudio is runned in automatization mode
+     * @param nogui If "--nogui" parameter was passed to emuStudio
+     * 
      * @return instance of virtual architecture
      */
-    public static ArchHandler load(String name, boolean auto) {
+    public static ArchHandler load(String name, boolean auto, boolean nogui) {
         try {
             Properties settings = readConfig(name,true);
             if (settings == null) return null;
@@ -628,7 +631,7 @@ public class ArchLoader {
             emuLib8.runtime.Context.getInstance().assignComputer(Main.getPassword(),
                     arch);
             return new ArchHandler(arch, settings, loadSchema(name),
-                    pluginNames, auto);
+                    pluginNames, auto, nogui);
         }
         catch (IllegalArgumentException e) {
             StaticDialogs.showMessage(e.getMessage(), "Error reading plugins");
