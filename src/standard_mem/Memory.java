@@ -44,6 +44,7 @@ public class Memory extends SimpleMemory {
 
     private MemoryContext memContext;
     private frmMemory memGUI;
+    private boolean noGUI = false; // whether to support GUI
 
     private final static int DEFAULT_MEM_SIZE = 65536;
 
@@ -125,7 +126,9 @@ public class Memory extends SimpleMemory {
         }
         this.settings = settings;
         memContext.init(DEFAULT_MEM_SIZE, bCount, bCommon, memGUI);
-        memGUI = new frmMemory(pluginID, this, memContext, settings);
+        noGUI = Boolean.parseBoolean(settings.readSetting(pluginID, "nogui"));
+        if (!noGUI)
+            memGUI = new frmMemory(pluginID, this, memContext, settings);
 
         // load images
         int i = 0, adr = 0;
