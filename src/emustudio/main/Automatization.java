@@ -186,12 +186,18 @@ public class Automatization {
                 System.out.println("Running emulation...");
             output_message("<h1>Emulation process</h1>", outw);
 
-            result_state = RunState.STATE_RUNNING;
+            final Object lock = new Object();
+
+            synchronized(lock) {
+                result_state = RunState.STATE_RUNNING;
+            }
             cpu.addCPUListener(new ICPUListener() {
                 @Override
                 public void runChanged(EventObject evt, RunState state) {
                     if (state != RunState.STATE_RUNNING) {
-                        result_state = state;
+                        synchronized(lock) {
+                            result_state = state;
+                        }
                     }
                 }
                 @Override
@@ -199,8 +205,13 @@ public class Automatization {
             });
             cpu.execute();
 
-            while (result_state == RunState.STATE_RUNNING)
-                ;
+            boolean stop = false;
+            do {
+                synchronized(lock) {
+                    if (result_state != RunState.STATE_RUNNING)
+                        stop = true ;
+                }
+            } while (!stop);
 
             switch (result_state) {
                 case STATE_STOPPED_ADDR_FALLOUT:
