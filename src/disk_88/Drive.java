@@ -30,6 +30,7 @@ import java.util.EventListener;
 import javax.swing.event.EventListenerList;
 
 /**
+ * This class provides a single drive.
  *
  * @author vbmacher
  */
@@ -134,7 +135,7 @@ public class Drive {
      * Create new image
      */
     public static void createNewImage(String filename) throws IOException {
-        RandomAccessFile fout = new RandomAccessFile(filename,"rw");
+        RandomAccessFile fout = new RandomAccessFile(filename,"w");
         for (int i = 0; i < tracksCount * sectorsCount * sectorLength; i++)
             fout.writeByte(0);
         fout.close();

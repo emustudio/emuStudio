@@ -27,14 +27,13 @@ package disk_88;
 
 import disk_88.gui.ConfigDialog;
 import disk_88.gui.DiskFrame;
-import interfaces.C17E8D62E685AD7E54C209C30482E3C00C8C56ECC;
+import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-import javax.swing.JOptionPane;
-
 import emuLib8.plugins.ISettingsHandler;
+import emuLib8.plugins.device.IDeviceContext;
 import emuLib8.plugins.device.SimpleDevice;
 import emuLib8.runtime.Context;
 import emuLib8.runtime.StaticDialogs;
@@ -136,13 +135,14 @@ public class DiskImpl extends SimpleDevice {
     private int port1CPU;
     private int port2CPU;
     private int port3CPU;
-    private C17E8D62E685AD7E54C209C30482E3C00C8C56ECC cpu;
+    private C738039DCA561A49F377859B108A9AD1EE6CBDACB cpu;
     public ArrayList<Drive> drives;
     private Port1 port1;
     private Port2 port2;
     private Port3 port3;
     public int current_drive;
     private DiskFrame gui;
+    private boolean noGUI = false;
 
     public DiskImpl(Long pluginID) {
         super(pluginID);
@@ -159,71 +159,76 @@ public class DiskImpl extends SimpleDevice {
         port1 = new Port1(this);
         port2 = new Port2(this);
         port3 = new Port3(this);
-        gui = new DiskFrame(drives);
+    }
+
+    /**
+     * Asks the user for new port number and tries to attach given port to this
+     * port number on CPU.
+     *
+     * If a port of the DISK cannot be attached to the CPU, we want to ask
+     * the user to provide another port number. He got only one chance.
+     *
+     * @param DISKport      Port number in 88-DISK (1,2,3)
+     * @param defaultPort   Default port number on CPU
+     * @param port          The 88-DISK port object that needs to be attached
+     * @return new port number if the attachement was successful, -1 otherwise
+     */
+    private int providePort(int DISKport, int defaultPort, IDeviceContext port) {
+        String providedPort = StaticDialogs.inputStringValue("Port " +
+                String.valueOf(DISKport) + " can not be attached to default" +
+                " CPU port, please enter another one: ", "88-DISK", 
+                String.valueOf(defaultPort));
+        int portNumber = 0;
+        try {
+            portNumber = Integer.decode(providedPort);
+            if (cpu.attachDevice(port, portNumber) == false) {
+                StaticDialogs.showErrorMessage("Error: the device still can't be attached");
+                return -1;
+            }
+        } catch (NumberFormatException e) {
+            StaticDialogs.showMessage("Bad number");
+            return -1;
+        }
+        return portNumber;
     }
 
     @Override
     public boolean initialize(ISettingsHandler settings) {
         super.initialize(settings);
 
-        cpu = (C17E8D62E685AD7E54C209C30482E3C00C8C56ECC)
+        cpu = (C738039DCA561A49F377859B108A9AD1EE6CBDACB)
                 Context.getInstance().getCPUContext(pluginID,
-                C17E8D62E685AD7E54C209C30482E3C00C8C56ECC.class);
+                C738039DCA561A49F377859B108A9AD1EE6CBDACB.class);
+
+        if (cpu == null) {
+            StaticDialogs.showErrorMessage("Cannot connect to the CPU", "88-DISK");
+            return false;
+        }
 
         readSettings();
 
-        if (cpu == null)
-            return true;
-        
         // attach device to CPU
         if (cpu.attachDevice(port1, port1CPU) == false) {
-            String p;
-            p = JOptionPane.showInputDialog("88-DISK (port1) can not be attached to"
-                    + " default CPU port, please enter another one: ", port1CPU);
-            try {
-                port1CPU = Integer.decode(p);
-                if (cpu.attachDevice(port1, port1CPU) == false) {
-                    StaticDialogs.showErrorMessage("Error: the device still can't be attached");
-                    return false;
-                }
-            } catch (NumberFormatException e) {
-                StaticDialogs.showMessage("Bad number");
+            port1CPU = providePort(1,port1CPU,port1);
+            if (port1CPU == -1) {
+                StaticDialogs.showErrorMessage("88-DISK (port1) can not be "
+                        + "attached to default CPU port");
                 return false;
             }
         }
         if (cpu.attachDevice(port2, port2CPU) == false) {
-            String p;
-            p = JOptionPane.showInputDialog("88-DISK (port2) can not be attached to"
-                    + " default CPU port, please enter another one: ", port2CPU);
-            try {
-                port2CPU = Integer.decode(p);
-                if (cpu.attachDevice(port2, port2CPU) == false) {
-                    cpu.detachDevice(port1CPU);
-                    StaticDialogs.showErrorMessage("Error: the device still can't be attached");
-                    return false;
-                }
-            } catch (NumberFormatException e) {
-                StaticDialogs.showMessage("Bad number");
-                cpu.detachDevice(port1CPU);
+            port2CPU = providePort(2, port2CPU, port2);
+            if (port2CPU == -1) {
+                StaticDialogs.showErrorMessage("88-DISK (port2) can not be "
+                        + "attached to default CPU port");
                 return false;
             }
         }
         if (cpu.attachDevice(port3, port3CPU) == false) {
-            String p;
-            p = JOptionPane.showInputDialog("88-DISK (port3) can not be attached to"
-                    + " default CPU port, please enter another one: ", port3CPU);
-            try {
-                port3CPU = Integer.decode(p);
-                if (cpu.attachDevice(port3, port3CPU) == false) {
-                    cpu.detachDevice(port1CPU);
-                    cpu.detachDevice(port2CPU);
-                    StaticDialogs.showErrorMessage("Error: the device still can't be attached");
-                    return false;
-                }
-            } catch (NumberFormatException e) {
-                StaticDialogs.showMessage("Bad number");
-                cpu.detachDevice(port1CPU);
-                cpu.detachDevice(port2CPU);
+            port3CPU = providePort(3, port3CPU, port3);
+            if (port3CPU == -1) {
+                StaticDialogs.showErrorMessage("88-DISK (port3) can not be "
+                        + "attached to default CPU port");
                 return false;
             }
         }
@@ -232,11 +237,11 @@ public class DiskImpl extends SimpleDevice {
 
     private void readSettings() {
         String s;
-        s = settings.readSetting(pluginID, "always_on_top");
+        s = settings.readSetting(pluginID, "nogui");
         if (s != null && s.toUpperCase().equals("TRUE")) {
-            gui.setAlwaysOnTop(true);
+            noGUI = true;
         } else {
-            gui.setAlwaysOnTop(false);
+            noGUI = false;
         }
         s = settings.readSetting(pluginID, "port1CPU");
         if (s != null) {
@@ -262,7 +267,6 @@ public class DiskImpl extends SimpleDevice {
                 port3CPU = CPU_PORT3;
             }
         }
-
         for (int i = 0; i < 16; i++) {
             s = settings.readSetting(pluginID, "image" + i);
             if (s != null) {
@@ -273,11 +277,23 @@ public class DiskImpl extends SimpleDevice {
                 }
             }
         }
+        
+        if (noGUI)
+            return;
+
+        gui = new DiskFrame(drives);
+        s = settings.readSetting(pluginID, "always_on_top");
+        if (s != null && s.toUpperCase().equals("TRUE")) {
+            gui.setAlwaysOnTop(true);
+        } else {
+            gui.setAlwaysOnTop(false);
+        }
     }
 
     @Override
     public void showGUI() {
-        gui.setVisible(true);
+        if (gui != null)
+            gui.setVisible(true);
     }
 
     @Override
@@ -299,7 +315,7 @@ public class DiskImpl extends SimpleDevice {
 
     @Override
     public String getTitle() {
-        return "MITS-88 DISK (floppy drive)";
+        return "MITS 88-DISK";
     }
 
     @Override
@@ -322,11 +338,13 @@ public class DiskImpl extends SimpleDevice {
 
     @Override
     public void showSettings() {
+        if (noGUI)
+            return;
         new ConfigDialog(pluginID, settings, drives, gui).setVisible(true);
     }
 
     @Override
     public boolean isShowSettingsSupported() {
-        return true;
+        return !noGUI;
     }
 }
