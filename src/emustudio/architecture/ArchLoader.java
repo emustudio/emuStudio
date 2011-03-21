@@ -50,6 +50,8 @@ import emuLib8.plugins.memory.IMemory;
 import emuLib8.plugins.cpu.ICPU;
 import emuLib8.plugins.device.IDevice;
 import emuLib8.runtime.StaticDialogs;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Class loader for plugins and their resources.
@@ -625,9 +627,14 @@ public class ArchLoader {
                     }
                 }
             }
-            Computer arch = new Computer(cpu, mem, compiler, 
-                    (IDevice[])devNames.values().toArray(new IDevice[0]),
-                    plugins, pluginsReverse, connections);
+            
+            // this creates reversed array..
+            List temp = new ArrayList(devNames.values());
+            Collections.reverse(temp);
+            IDevice[] devices = (IDevice[])temp.toArray(new IDevice[0]);
+
+            Computer arch = new Computer(cpu, mem, compiler, devices, plugins,
+                    pluginsReverse, connections);
             emuLib8.runtime.Context.getInstance().assignComputer(Main.getPassword(),
                     arch);
             return new ArchHandler(arch, settings, loadSchema(name),

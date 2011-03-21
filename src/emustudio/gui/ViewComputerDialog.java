@@ -5,7 +5,7 @@
  * 
  * KISS,YAGNI
  *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,8 +32,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.Vector;
-
 import javax.swing.GroupLayout;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -51,6 +49,7 @@ import emuLib8.plugins.device.IDevice;
 import emuLib8.plugins.memory.IMemory;
 
 import emuLib8.runtime.StaticDialogs;
+import emustudio.architecture.Computer;
 
 /**
  *
@@ -64,7 +63,6 @@ public class ViewComputerDialog extends JDialog {
     private String compilerName;
     private String cpuName;
     private String memoryName;
-    private Vector<String> devNames;
     private PreviewPanel pan;
 
     /**
@@ -81,12 +79,6 @@ public class ViewComputerDialog extends JDialog {
         compilerName = arch.getCompilerName();
         memoryName = arch.getMemoryName();
         cpuName = arch.getCPUName();
-
-        devNames = new Vector<String>();
-        int size = arch.getComputer().getDeviceCount();
-        for (int i = 0; i < size; i++) {
-            devNames.add(arch.getDeviceName(i));
-        }
 
         try {
             lblName.setText(arch.getComputerName());
@@ -125,8 +117,10 @@ public class ViewComputerDialog extends JDialog {
                 txtMemoryDescription.setText(memory.getDescription());
             }
 
-            for (int i = 0; i < devNames.size(); i++) {
-                cmbDevice.addItem(devNames.get(i));
+            int j = arch.getComputer().getDeviceCount();
+            Computer comp = arch.getComputer();
+            for (int i = 0; i < j; i++) {
+                cmbDevice.addItem(comp.getDevice(i).getTitle());
             }
         } catch (NullPointerException e) {
             StaticDialogs.showErrorMessage("Error: Can't get plug-ins information\n\n"
@@ -136,9 +130,10 @@ public class ViewComputerDialog extends JDialog {
         if (cmbDevice.getItemCount() > 0) {
             cmbDevice.setSelectedIndex(0);
             showDevice(0);
-        } else
+        } else {
             cmbDevice.setEnabled(false);
-        
+        }
+
         cmbDevice.addActionListener(new ActionListener() {
 
             @Override
@@ -164,8 +159,7 @@ public class ViewComputerDialog extends JDialog {
      */
     private void showDevice(int i) {
         IDevice device = arch.getComputer().getDevice(i);
-
-        lblDeviceFileName.setText(devNames.get(i) + ".jar");
+        lblDeviceFileName.setText(arch.getDeviceName(i) + ".jar");
         lblDeviceName.setText(device.getTitle());
         lblDeviceVersion.setText(device.getVersion());
         txtDeviceCopyright.setText(device.getCopyright());
