@@ -21,7 +21,7 @@
  */
 package simh;
 
-import interfaces.C17E8D62E685AD7E54C209C30482E3C00C8C56ECC;
+import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
 import interfaces.C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8;
 import emuLib8.plugins.ISettingsHandler;
 import emuLib8.plugins.device.SimpleDevice;
@@ -36,7 +36,7 @@ import emuLib8.runtime.StaticDialogs;
 public class SIMHpseudo extends SimpleDevice {
 
     private PseudoContext context;
-    private C17E8D62E685AD7E54C209C30482E3C00C8C56ECC cpu;
+    private C738039DCA561A49F377859B108A9AD1EE6CBDACB cpu;
     private C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8 mem;
 
     public SIMHpseudo(Long pluginID) {
@@ -46,9 +46,9 @@ public class SIMHpseudo extends SimpleDevice {
 
     @Override
     public boolean initialize(ISettingsHandler sHandler) {
-        cpu = (C17E8D62E685AD7E54C209C30482E3C00C8C56ECC)
+        cpu = (C738039DCA561A49F377859B108A9AD1EE6CBDACB)
                 Context.getInstance().getCPUContext(pluginID,
-                C17E8D62E685AD7E54C209C30482E3C00C8C56ECC.class);
+                C738039DCA561A49F377859B108A9AD1EE6CBDACB.class);
         if (cpu == null) {
             StaticDialogs.showErrorMessage("SIMH-pseudo device has to be attached"
                     + " to a CPU");
