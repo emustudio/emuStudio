@@ -127,6 +127,7 @@ import emuLib8.runtime.StaticDialogs;
  * @author vbmacher
  */
 public class DiskImpl extends SimpleDevice {
+    private final static String VERSION = "0.26b1";
 
     private final static int DRIVES_COUNT = 16;
     public final static int CPU_PORT1 = 0x8;
@@ -310,7 +311,7 @@ public class DiskImpl extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return "0.26b1";
+        return VERSION;
     }
 
     @Override
@@ -346,5 +347,87 @@ public class DiskImpl extends SimpleDevice {
     @Override
     public boolean isShowSettingsSupported() {
         return !noGUI;
+    }
+
+
+    private static boolean ARG_LIST = false;
+    private static String IMAGE_FILE = null;
+    private static boolean ARG_HELP = false;
+    private static boolean ARG_INFO = false;
+
+    /**
+     * This method parsers the command line parameters. It sets
+     * internal class data members accordingly.
+     *
+     * @param args The command line arguments
+     */
+    private static void parseCommandLine(String[] args) {
+        // process arguments
+        int size = args.length;
+        for (int i = 0; i < size; i++) {
+            String arg = args[i].toUpperCase();
+            try {
+                if (arg.equals("--LIST")) {
+                    // list files in the image
+                    ARG_LIST = true;
+                } else if (arg.equals("--IMAGE")) {
+                    i++;
+                    // the image file
+                    if (IMAGE_FILE != null) {
+                        System.out.println("Image file already defined,"
+                                + " ignoring this one: " + args[i]);
+                    } else {
+                        IMAGE_FILE = args[i];
+                        System.out.println("Image file name: " + IMAGE_FILE);
+                    }
+                } else if (arg.equals("--HELP")) {
+                    ARG_HELP = true;
+                } else if (arg.equals("--INFO")) {
+                    ARG_INFO = true;
+                } else {
+                    System.out.println("Error: Invalid command line argument "
+                            + "(" + arg + ")!");
+                }
+            } catch (ArrayIndexOutOfBoundsException e) {
+            }
+        }
+    }
+    
+    /**
+     * The plug-in is able to transfer files from/to CP/M images by command line
+     *
+     * @param args
+     */
+    public static void main(String[] args) {
+        System.out.println("88-DISK plug-in v" + VERSION);
+        parseCommandLine(args);
+
+        if (ARG_HELP) {
+            // only show help and EXIT (ignore other arguments)
+            System.out.println("\nThe 88-DISK will accept the following command line"
+                    + " parameters:\n"
+                    + "\n--list        : list all files in the image"
+                    + "\n--info        : return some drive information"
+                    + "\n--image name  : use the image file given by the file name"
+                    + "\n--help        : output this message");
+            return;
+        }
+
+        if (IMAGE_FILE == null) {
+            System.out.println("Error: Image file cannot be null!");
+            System.exit(0);
+            return;
+        }
+
+        CPMFS cpmfs = new CPMFS(IMAGE_FILE);
+
+        if (ARG_INFO) {
+            System.out.println(cpmfs.getInfo());
+        }
+
+        if (ARG_LIST) {
+            System.out.println(cpmfs.getFiles());
+        }
+
     }
 }

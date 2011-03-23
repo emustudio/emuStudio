@@ -201,6 +201,7 @@ public class Drive {
            // if (track > 76) track = 76;
             sector = sectorsCount;
             sectorOffset = sectorLength;
+            System.out.println("HEAD IN: T " + track + ", S " + sector + " SO " + sectorOffset);
         }
         if ((val & 0x02) != 0) { /* Step head out */
             track--;
@@ -210,22 +211,26 @@ public class Drive {
             }
             sector = sectorsCount;
             sectorOffset = sectorLength;
+            System.out.println("HEAD OUT: T " + track + ", S " + sector + " SO " + sectorOffset);
         }
         if ((val & 0x04) != 0) { /* Head load */
             // 11111011
             flags &= 0xFB; /* turn on head loaded bit */
             flags &= 0x7F; /* turn on 'read data available */
+            System.out.println("HEAD LOAD: T " + track + ", S " + sector + " SO " + sectorOffset);
         }
         if ((val & 0x08) != 0) { /* Head Unload */
             flags |= 0x04; /* turn off 'head loaded' */
             flags |= 0x80; /* turn off 'read data avail */
             sector = sectorsCount;
             sectorOffset = sectorLength;
+            System.out.println("HEAD UNLOAD: T " + track + ", S " + sector + " SO " + sectorOffset);
         }
         /* Interrupts & head current are ignored */
         if ((val & 0x80) != 0) { /* write sequence start */
             sectorOffset = 0; // sectorLength-1;
             flags &= 0xFE; /* enter new write data on */
+            System.out.println("WRITE START: T " + track + ", S " + sector + " SO " + sectorOffset);
         }
         fireListeners(false,true);
     }
@@ -259,6 +264,7 @@ public class Drive {
         long pos = sectorsCount * sectorLength * track
                 + sectorLength * sector + i;
         
+        System.out.println("WRITE: T " + track + ", S " + sector + " SO " + sectorOffset + "; pos=" + pos);
         image.seek(pos);
         image.writeByte(data & 0xFF);
         
@@ -278,6 +284,8 @@ public class Drive {
         long pos = sectorsCount * sectorLength * track
                 + sectorLength * sector + i;
         
+        System.out.println("READ: T " + track + ", S " + sector + " SO " + sectorOffset + ", pos=" + pos);
+
         image.seek(pos);
         fireListeners(false,true);
         try {
@@ -291,4 +299,10 @@ public class Drive {
     public int getTrack() { return track; }
     public int getOffset() { return sectorOffset; }
     public boolean getHeadLoaded() { return ((~flags) & 0x04) != 0; }
+
+    public void setTrack(short track) {
+                    sector = sectorsCount;
+            sectorOffset = sectorLength;
+
+    }
 }
