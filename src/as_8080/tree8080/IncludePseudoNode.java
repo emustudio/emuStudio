@@ -49,7 +49,9 @@ public class IncludePseudoNode extends PseudoNode {
     public IncludePseudoNode(String filename, int line, int column,
             Assembler8080 asm) {
         super(line, column);
-        this.filename = filename;
+
+        // change "\"'s to /'s
+        this.filename = filename.replace("\\", "/");
         this.shortFileName = new File(filename).getName();
         this.asm = asm;
     }
