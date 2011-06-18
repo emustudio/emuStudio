@@ -305,6 +305,7 @@ public class Main {
                     new StudioFrame(configName).setVisible(true);
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 System.exit(0);
             }
         } else {

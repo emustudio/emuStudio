@@ -153,6 +153,16 @@ public class StudioFrame extends javax.swing.JFrame {
         this.setTitle("emuStudio - " + title);
         txtSource.grabFocus();
     }
+    
+    /**
+     * Update values in the debug table, if it is enabled
+     */
+    private void updateDebugTable() {
+        if (tblDebug.isEnabled()) {
+            tblDebug.revalidate();
+            tblDebug.repaint();
+        }
+    }
 
     // get gui panel from CPU plugin and show in main window
     private void setStatusGUI() {
@@ -252,11 +262,9 @@ public class StudioFrame extends javax.swing.JFrame {
 
                 @Override
                 public void memChange(EventObject evt, int adr) {
-                    if (run_state == RunState.STATE_RUNNING) {
-                        return;
+                    if (run_state != RunState.STATE_RUNNING) {
+                        updateDebugTable();
                     }
-                    tblDebug.revalidate();
-                    tblDebug.repaint();
                 }
             });
             btnMemory.setEnabled(memory.isShowSettingsSupported());
@@ -267,8 +275,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
             @Override
             public void stateUpdated(EventObject evt) {
-                tblDebug.revalidate();
-                tblDebug.repaint();
+                updateDebugTable();
             }
 
             @Override
@@ -282,6 +289,9 @@ public class StudioFrame extends javax.swing.JFrame {
                     btnBeginning.setEnabled(false);
                     btnPause.setEnabled(true);
                     btnRunTime.setEnabled(false);
+                    tblDebug.setEnabled(false);
+                    tblDebug.setVisible(false);
+                    paneDebug.setEnabled(false);
                 } else {
                     btnPause.setEnabled(false);
                     if (state == RunState.STATE_STOPPED_BREAK) {
@@ -297,10 +307,10 @@ public class StudioFrame extends javax.swing.JFrame {
                     }
                     btnBack.setEnabled(true);
                     btnBeginning.setEnabled(true);
+                    paneDebug.setEnabled(true);
                     tblDebug.setEnabled(true);
                     tblDebug.setVisible(true);
-                    tblDebug.revalidate();
-                    tblDebug.repaint();
+                    updateDebugTable();
                 }
             }
         });
@@ -1149,10 +1159,10 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void btnRunActionPerformed(java.awt.event.ActionEvent evt) {
-        tblDebug.setVisible(false);
+        tblDebug.setEnabled(false);
         cpu.execute();
     }
-
+    
     private void btnRunTimeActionPerformed(java.awt.event.ActionEvent evt) {
         String sliceText = StaticDialogs.inputStringValue("Enter time slice in milliseconds:",
                 "Run timed emulation", "500");
@@ -1186,10 +1196,7 @@ public class StudioFrame extends javax.swing.JFrame {
             if (pc > 0) {
                 cpu.setInstrPosition(pc - 1);
                 paneDebug.revalidate();
-                if (tblDebug.isVisible()) {
-                    tblDebug.revalidate();
-                    tblDebug.repaint();
-                }
+                updateDebugTable();
             }
         } catch (NullPointerException e) {
         }
@@ -1199,10 +1206,7 @@ public class StudioFrame extends javax.swing.JFrame {
         try {
             cpu.setInstrPosition(0);
             paneDebug.revalidate();
-            if (tblDebug.isVisible()) {
-                tblDebug.revalidate();
-                tblDebug.repaint();
-            }
+            updateDebugTable();
         } catch (NullPointerException e) {
         }
     }
@@ -1242,10 +1246,7 @@ public class StudioFrame extends javax.swing.JFrame {
             return;
         }
         paneDebug.revalidate();
-        if (tblDebug.isVisible()) {
-            tblDebug.revalidate();
-            tblDebug.repaint();
-        }
+        updateDebugTable();
     }
 
     private void mnuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1425,10 +1426,7 @@ public class StudioFrame extends javax.swing.JFrame {
                     BreakpointDialog.getSet());
         }
         paneDebug.revalidate();
-        if (tblDebug.isVisible()) {
-            tblDebug.revalidate();
-            tblDebug.repaint();
-        }
+        updateDebugTable();
     }
 
     private void mnuEditReplaceNextActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1445,31 +1443,26 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void btnFirstActionPerformed(java.awt.event.ActionEvent evt) {
         debug_model.firstPage();
-        tblDebug.revalidate();
-        tblDebug.repaint();
+        updateDebugTable();
     }
 
     private void btnBackwardActionPerformed(java.awt.event.ActionEvent evt) {
         debug_model.previousPage();
-        tblDebug.revalidate();
-        tblDebug.repaint();
+        updateDebugTable();
     }
 
     private void btnCurrentPageActionPerformed(java.awt.event.ActionEvent evt) {
         debug_model.currentPage();
-        tblDebug.revalidate();
-        tblDebug.repaint();
+        updateDebugTable();
     }
 
     private void btnForwardActionPerformed(java.awt.event.ActionEvent evt) {
         debug_model.nextPage();
-        tblDebug.revalidate();
-        tblDebug.repaint();
+        updateDebugTable();
     }
     private void btnLastActionPerformed(java.awt.event.ActionEvent evt) {
         debug_model.lastPage();
-        tblDebug.revalidate();
-        tblDebug.repaint();
+        updateDebugTable();
     }
 
     JButton btnBack;
