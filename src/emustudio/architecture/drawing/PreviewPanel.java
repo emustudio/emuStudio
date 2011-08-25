@@ -208,5 +208,13 @@ public class PreviewPanel extends JPanel {
         panelResized = false;
         this.repaint();
     }
+    
+    /**
+     * Clears the preview panel.
+     */
+    public void clearScreen() {
+        this.schema = null;
+        this.repaint();
+    }
 
 }

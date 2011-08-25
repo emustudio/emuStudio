@@ -369,8 +369,11 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_btnAddActionPerformed
 
     private void lstConfigValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstConfigValueChanged
-        if (lstConfig.getSelectedIndex() == -1)
+        int i = lstConfig.getSelectedIndex();
+        if ((i == -1) || (i >= lstConfig.getModel().getSize())) {
+            preview.clearScreen();
             return;
+        }
 
         archName = (String) lstConfig.getSelectedValue();
         Schema s = ArchLoader.loadSchema(archName);

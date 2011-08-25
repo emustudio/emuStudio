@@ -35,6 +35,7 @@ import java.util.Vector;
 import javax.swing.text.SimpleAttributeSet;
 import emuLib8.plugins.compiler.ILexer;
 import emuLib8.plugins.compiler.IToken;
+import java.util.ArrayList;
 
 /**
  * The syntax highlighting thread.
@@ -78,7 +79,7 @@ public class HighlightThread extends Thread {
     /**
      * Vector that stores the communication between the two threads.
      */
-    private volatile Vector<RecolorEvent> v = new Vector<RecolorEvent>();
+    private volatile ArrayList<RecolorEvent> v = new ArrayList<RecolorEvent>();
     /**
      * The amount of change that has occurred before the place in the
      * document that we are currently highlighting (lastPosition).
@@ -192,8 +193,8 @@ public class HighlightThread extends Thread {
         while (!shouldStop) {  // forever
             synchronized (lock) {
                 if (v.size() > 0) {
-                    RecolorEvent re = (RecolorEvent) (v.elementAt(0));
-                    v.removeElementAt(0);
+                    RecolorEvent re = (RecolorEvent) (v.get(0));
+                    v.remove(0);
                     position = re.position;
                     adjustment = re.adjustment;
                 } else {

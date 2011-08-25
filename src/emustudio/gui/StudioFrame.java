@@ -1283,8 +1283,10 @@ public class StudioFrame extends javax.swing.JFrame {
             }
             cpu.reset(programStart);
         } catch (Exception e) {
+            e.printStackTrace();
             txtOutput.append(e.toString() + "\n");
         } catch (Error ex) {
+            ex.printStackTrace();
             txtOutput.append(ex.toString() + "\n");
         }
     }
