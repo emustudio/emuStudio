@@ -4,7 +4,7 @@
  * Created on 3.7.2008, 8:31:58
  * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,8 +30,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -838,9 +836,11 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 // if the element is selected, we must move all selected elements
                 // either.
                 if (tmpElem1.selected) {
-                    schema.moveSelected(p.x - (tmpElem1.getX()
-                            + tmpElem1.getWidth()/2),
-                            p.y - (tmpElem1.getY() + tmpElem1.getHeight()/2));
+                    int diffX, diffY;
+                    diffX = p.x - tmpElem1.getX();
+                    diffY = p.y - tmpElem1.getY();
+                    System.out.println("diffX = " + diffX + ", diffY = " + diffY);
+                    schema.moveSelected(diffX, diffY);
                 } else
                     tmpElem1.move(p);
             }

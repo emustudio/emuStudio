@@ -319,8 +319,8 @@ public class Schema {
         ArrayList<Element> a = getAllElements();
         for (int i = a.size() - 1; i >= 0; i--) {
             Element elem = a.get(i);
-            int eX = elem.getX();
-            int eY = elem.getY();
+            int eX = elem.getX() - elem.getWidth() / 2;
+            int eY = elem.getY() - elem.getHeight() / 2;
 
             if ((eX <= p.getX()) && (eX + elem.getWidth() >= p.x)
                     && (eY <= p.getY()) && (eY + elem.getHeight() >= p.y)) {
@@ -381,6 +381,8 @@ public class Schema {
     /**
      * This method moves all selected elements to a new location. The new
      * location is computed as: old + diff (the parameter).
+     * 
+     * BUGGY.
      *
      * @param diffX X difference between the new and old location
      * @param diffY Y difference between the new and old location
@@ -390,9 +392,12 @@ public class Schema {
 
         for (int i = a.size() - 1; i >= 0; i--) {
             Element elem = a.get(i);
-            if (elem.isSelected())
-                elem.move(elem.getX() + elem.getWidth()/2 + diffX,
-                        elem.getY() + elem.getHeight()/2 + diffY);
+            if (elem.isSelected()) {
+                elem.move(elem.getX() + diffX,
+                        elem.getY() + diffY);
+                System.out.println(elem.getPluginType() + ": " + (elem.getX() + diffX)
+                        + ", " + (elem.getY() + diffY));
+            }
         }
         for (int i = lines.size() - 1; i >= 0; i--) {
             ConnectionLine l = lines.get(i);

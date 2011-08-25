@@ -26,7 +26,7 @@ package emustudio.architecture;
 
 import emustudio.architecture.drawing.Schema;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Properties;
 import emuLib8.plugins.memory.IMemory;
 import emuLib8.plugins.cpu.ICPU;
@@ -34,7 +34,8 @@ import emuLib8.plugins.device.IDevice;
 import emuLib8.plugins.IPlugin;
 import emuLib8.plugins.ISettingsHandler;
 import emuLib8.plugins.compiler.ICompiler;
-import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Class holds actual computer configuration - plugins and settings.
@@ -46,7 +47,7 @@ public class ArchHandler implements ISettingsHandler {
     private Computer computer;
     private Properties settings;
     private Schema schema;
-    private Hashtable<Long, String> pluginNames;
+    private HashMap<Long, String> pluginNames;
 
     private static final String EMPTY_STRING = "";
 
@@ -63,7 +64,7 @@ public class ArchHandler implements ISettingsHandler {
      * @throws Error if initialization of the architecture failed.
      */
     public ArchHandler(Computer arch, Properties settings,
-            Schema schema, Hashtable<Long, String> pluginNames, boolean auto,
+            Schema schema, HashMap<Long, String> pluginNames, boolean auto,
             boolean nogui) throws Error {
         this.computer = arch;
         this.settings = settings;
@@ -279,8 +280,9 @@ public class ArchHandler implements ISettingsHandler {
      */
     public void writeSettingToAll(String settingName, String val) {
         long id;
-        for (Enumeration<Long> e = pluginNames.keys(); e.hasMoreElements();) {
-            id = (Long)e.nextElement();
+        Set<Long> set = pluginNames.keySet();
+        for (Iterator e = set.iterator(); e.hasNext();) {
+            id = (Long)e.next();
             this.writeSetting(id, settingName, val);
         }
     }

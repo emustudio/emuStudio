@@ -23,7 +23,7 @@ package emustudio.architecture;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
 
 import emuLib8.plugins.IPlugin;
@@ -45,9 +45,9 @@ public class Computer implements IConnections {
     private IMemory memory;
     private IDevice[] devices;
 
-    private Hashtable<Long, ArrayList<Long>> connections;
-    private Hashtable<Long, IPlugin> plugins;
-    private Hashtable<IPlugin, Long> pluginsReverse;
+    private HashMap<Long, ArrayList<Long>> connections;
+    private HashMap<Long, IPlugin> plugins;
+    private HashMap<IPlugin, Long> pluginsReverse;
 
 
     /**
@@ -65,9 +65,9 @@ public class Computer implements IConnections {
      * plug-in IDs.
      */
     public Computer(ICPU cpu, IMemory memory, ICompiler compiler,
-        IDevice[] devices, Hashtable<Long, IPlugin> plugins,
-        Hashtable<IPlugin, Long> pluginsReverse,
-        Hashtable<Long, ArrayList<Long>> connections) {
+        IDevice[] devices, HashMap<Long, IPlugin> plugins,
+        HashMap<IPlugin, Long> pluginsReverse,
+        HashMap<Long, ArrayList<Long>> connections) {
         this.cpu = cpu;
         this.memory = memory;
         this.compiler = compiler;

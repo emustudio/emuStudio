@@ -4,7 +4,7 @@
  * Created on 4.7.2008, 9:43:39
  * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -167,9 +167,9 @@ public class ConnectionLine {
         Point p, arrow;
         int x_left, x_right, y_bottom, y_top;
 
-        int eX = first ? e1.getX(): e2.getX();
+        int eX = first ? e1.getX() - e1.getWidth()/2: e2.getX() - e2.getWidth()/2;
         int eWidth = first ? e1.getWidth() : e2.getWidth();
-        int eY = first ? e1.getY() : e2.getY();
+        int eY = first ? e1.getY() - e1.getHeight()/2 : e2.getY() - e2.getHeight()/2;
         int eHeight = first ? e1.getHeight() : e2.getHeight();
 
         Point lineStart = new Point (eX + eWidth/2, eY + eHeight/2);
@@ -181,9 +181,11 @@ public class ConnectionLine {
         y_top = lineStart.y - eHeight/2;
 
         if (points.isEmpty())
-            lineEnd = new Point ((first ? e2.getX() : e1.getX())
+            lineEnd = new Point ((first ? e2.getX()-e2.getWidth()/2 
+                      : e1.getX()-e1.getWidth()/2)
                     + (first ? e2.getWidth() : e1.getWidth())/2,
-                    (first ? e2.getY(): e1.getY())
+                    (first ? e2.getY() - e2.getHeight()/2
+                      : e1.getY() - e1.getHeight()/2)
                     + (first ? e2.getHeight() : e1.getHeight())/2);
         else {
             lineEnd = first ? points.get(0) : points.get(points.size()-1);
@@ -436,8 +438,8 @@ public class ConnectionLine {
             g.setColor(Color.BLUE);
         else
             g.setColor(Color.black);
-        int x1 = e1.getX() + e1.getWidth()/2;
-        int y1 = e1.getY() + e1.getHeight()/2;
+        int x1 = e1.getX();
+        int y1 = e1.getY();
         int x2, y2;
 
         Stroke ss = g.getStroke();
@@ -462,32 +464,36 @@ public class ConnectionLine {
             x1 = x2;
             y1 = y2;
         }
-        x2 = e2.getX() + e2.getWidth()/2;
-        y2 = e2.getY() + e2.getHeight()/2;
+        x2 = e2.getX();
+        y2 = e2.getY();
         g.drawLine(x1, y1, x2, y2);
 
         // sipky - princip dedenia v UML <---> princip toku udajov => tok!!
         if ((arrow1 != null) && (arrow1LeftEnd != null)
                 && (arrow1RightEnd != null)) {
-            g.drawLine(e1.getX() + arrow1.x,
-                    e1.getY() + arrow1.y,
-                    e1.getX() + arrow1.x + arrow1LeftEnd.x,
-                    e1.getY() + arrow1.y + arrow1LeftEnd.y);
-            g.drawLine(e1.getX() + arrow1.x,
-                    e1.getY() + arrow1.y,
-                    e1.getX() + arrow1.x + arrow1RightEnd.x,
-                    e1.getY() + arrow1.y + arrow1RightEnd.y);
+            x1 = e1.getX() - e1.getWidth()/2;
+            y1 = e1.getY() - e1.getHeight()/2;
+            g.drawLine(x1 + arrow1.x,
+                    y1 + arrow1.y,
+                    x1 + arrow1.x + arrow1LeftEnd.x,
+                    y1 + arrow1.y + arrow1LeftEnd.y);
+            g.drawLine(x1 + arrow1.x,
+                    y1 + arrow1.y,
+                    x1 + arrow1.x + arrow1RightEnd.x,
+                    y1 + arrow1.y + arrow1RightEnd.y);
         }
         if ((arrow2 !=null) && (arrow2LeftEnd != null)
                 && (arrow2RightEnd != null)) {
-            g.drawLine(e2.getX() + arrow2.x,
-                    e2.getY() + arrow2.y,
-                    e2.getX() + arrow2.x + arrow2LeftEnd.x,
-                    e2.getY() + arrow2.y + arrow2LeftEnd.y);
-            g.drawLine(e2.getX() + arrow2.x,
-                    e2.getY() + arrow2.y,
-                    e2.getX() + arrow2.x + arrow2RightEnd.x,
-                    e2.getY() + arrow2.y + arrow2RightEnd.y);
+            x2 = e2.getX() - e2.getWidth()/2;
+            y2 = e2.getY() - e2.getHeight()/2;
+            g.drawLine(x2 + arrow2.x,
+                    y2 + arrow2.y,
+                    x2 + arrow2.x + arrow2LeftEnd.x,
+                    y2 + arrow2.y + arrow2LeftEnd.y);
+            g.drawLine(x2 + arrow2.x,
+                    y2 + arrow2.y,
+                    x2 + arrow2.x + arrow2RightEnd.x,
+                    y2 + arrow2.y + arrow2RightEnd.y);
         }
         g.setStroke(ss);
     }
@@ -508,8 +514,8 @@ public class ConnectionLine {
         Stroke ss = g.getStroke();
         g.setStroke(thickLine);
         g.setColor(Color.GRAY);
-        int x1 = ee1.getX() + ee1.getWidth()/2;
-        int y1 = ee1.getY() + ee1.getHeight()/2;
+        int x1 = ee1.getX();
+        int y1 = ee1.getY();
         int x2, y2;
         
         for (int i = 0; i < ppoints.size(); i++) {
@@ -668,8 +674,8 @@ public class ConnectionLine {
      * returned index of point that crosses the line.
      */
     public int getCrossPointAfter(Point point, double tolerance) {
-        int x1 = e1.getX() + ((arrow1 == null) ? e1.getWidth()/2 : arrow1.x);
-        int y1 = e1.getY() + ((arrow1 == null) ? e1.getHeight()/2 : arrow1.y);
+        int x1 = e1.getX() + ((arrow1 == null) ? 0 : arrow1.x - e1.getWidth()/2);
+        int y1 = e1.getY() + ((arrow1 == null) ? 0 : arrow1.y - e1.getHeight()/2);
         int x2, y2;
         double a,b,c,d;
         
@@ -695,8 +701,8 @@ public class ConnectionLine {
             x1 = x2;
             y1 = y2;
         }
-        x2 = e2.getX() + ((arrow2 != null) ? arrow2.x : e2.getWidth()/2);
-        y2 = e2.getY() + ((arrow2 != null) ? arrow2.y : e2.getHeight()/2);
+        x2 = e2.getX() + ((arrow2 != null) ? arrow2.x - e2.getWidth()/2 : 0);
+        y2 = e2.getY() + ((arrow2 != null) ? arrow2.y - e2.getHeight()/2: 0);
         a = y2-y1;
         b = x1-x2;
         c = -a*x1-b*y1; // mam rovnicu

@@ -4,7 +4,7 @@
  * Created on 3.7.2008, 8:26:22
  * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -62,14 +62,16 @@ public abstract class Element {
     private int height;
 
     /**
-     * The X position of the box.
+     * The center X position of the box.
      */
     private int x;
+    private int leftX;
 
     /**
-     * The Y position of the box.
+     * The center Y position of the box.
      */
     private int y;
+    private int topY;
 
     /**
      * The X position of the plug-in type text
@@ -122,8 +124,8 @@ public abstract class Element {
      *
      * @param backColor Background color
      * @param details details text, the plug-in name or description
-     * @param x the X location of the element
-     * @param y the Y location of the element
+     * @param x the center X location of the element
+     * @param y the center Y location of the element
      */
     public Element(Color backColor, String details,int x, int y) {
         this.x = x;
@@ -143,12 +145,12 @@ public abstract class Element {
         if (!wasMeasured)
             measure(g,0,0);
         g.setColor(backColor);
-        g.fillRect(x, y, getWidth(), getHeight());
+        g.fillRect(leftX, topY, getWidth(), getHeight());
         if (selected)
             g.setColor(Color.BLUE);
         else
             g.setColor(Color.BLACK);
-        g.drawRect(x, y, getWidth(), getHeight());
+        g.drawRect(leftX, topY, getWidth(), getHeight());
         g.setFont(boldFont);
         g.drawString(getPluginType(), textX, textY);
         g.setFont(italicFont);
@@ -232,23 +234,23 @@ public abstract class Element {
         height += (int)r.getHeight() + 20;
 
         // set starting x and y
-        x -= getWidth()/2;
-        y -= getHeight()/2;
+        leftX = x - getWidth()/2;
+        topY = y - getHeight()/2;
 
         // perform the correction, "trim" empty space from the left and top
         if (leftFactor > 0)
-            x -= (leftFactor - getWidth()/2);
+            leftX -= (leftFactor - getWidth()/2);
         if (topFactor > 0)
-            y -= (topFactor - getHeight()/2);
+            topY -= (topFactor - getHeight()/2);
 
-        textX = x + (getWidth() - tW) / 2;
+        textX = leftX + (getWidth() - tW) / 2;
 
         tW = (int)r.getWidth();
         tH = (int)fm.getAscent();
 
-        textY += y;
-        detailsX = x + (getWidth() - tW) / 2;
-        detailsY = y + (getHeight() - tH);
+        textY += topY;
+        detailsX = leftX + (getWidth() - tW) / 2;
+        detailsY = topY + (getHeight() - tH);
         wasMeasured = true;
     }
 
@@ -265,14 +267,14 @@ public abstract class Element {
     public int getHeight() { return (height == 0) ? 50: height; }
 
     /**
-     * Get the X location of the element.
+     * Get the center X location of the element.
      *
      * @return X location of the element
      */
     public int getX() { return x; }
 
     /**
-     * Get the Y location of the element.
+     * Get the center Y location of the element.
      *
      * @return Y location of the element
      */
@@ -312,9 +314,11 @@ public abstract class Element {
      * @return true if the element is crossing
      */
     public boolean isAreaCrossing(Point selectionStart, Point selectionEnd) {
-        int xR = x + getWidth();
-        int yB = y + getHeight();
-        return (selectionStart.x <= xR) && (selectionEnd.x >= x)
-                && (selectionStart.y <= yB) && (selectionEnd.y >= y);
+        if (!wasMeasured)
+            return false;
+        int xR = leftX + getWidth();
+        int yB = topY + getHeight();
+        return (selectionStart.x <= xR) && (selectionEnd.x >= leftX)
+                && (selectionStart.y <= yB) && (selectionEnd.y >= topY);
     }
 }

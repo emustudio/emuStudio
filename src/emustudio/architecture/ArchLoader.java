@@ -41,7 +41,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Properties;
 
 import emuLib8.plugins.IPlugin;
@@ -329,40 +329,32 @@ public class ArchLoader {
             CompilerElement compiler = s.getCompilerElement();
             if (compiler != null) {
                 p.put("compiler", compiler.getDetails());
-                p.put("compiler.point.x", String.valueOf((int)(compiler.getX()
-                        + compiler.getWidth()/2)));
-                p.put("compiler.point.y", String.valueOf((int)(compiler.getY()
-                        + compiler.getHeight()/2)));
+                p.put("compiler.point.x", String.valueOf((int)(compiler.getX())));
+                p.put("compiler.point.y", String.valueOf((int)(compiler.getY())));
             }
             // cpu
             CpuElement cpu = s.getCpuElement();
             if (cpu != null) {
                 p.put("cpu", cpu.getDetails());
-                p.put("cpu.point.x", String.valueOf((int)(cpu.getX()
-                        + cpu.getWidth()/2)));
-                p.put("cpu.point.y", String.valueOf((int)(cpu.getY()
-                        + cpu.getHeight()/2)));
+                p.put("cpu.point.x", String.valueOf((int)(cpu.getX())));
+                p.put("cpu.point.y", String.valueOf((int)(cpu.getY())));
             }
             // memory
             MemoryElement mem = s.getMemoryElement();
             if (mem != null) {
                 p.put("memory", mem.getDetails());
-                p.put("memory.point.x", String.valueOf((int)(mem.getX()
-                        + mem.getWidth()/2)));
-                p.put("memory.point.y", String.valueOf((int)(mem.getY()
-                        + mem.getHeight()/2)));
+                p.put("memory.point.x", String.valueOf((int)(mem.getX())));
+                p.put("memory.point.y", String.valueOf((int)(mem.getY())));
             }
             // devices
             ArrayList<DeviceElement> devs = s.getDeviceElements();
-            Hashtable<DeviceElement, Object> devsHash = new Hashtable<DeviceElement, Object>();
+            HashMap<DeviceElement, Object> devsHash = new HashMap<DeviceElement, Object>();
             for (int i = 0; i < devs.size(); i++) {
                 DeviceElement dev = devs.get(i);
                 devsHash.put(dev, "device" + i);
                 p.put("device"+i, dev.getDetails());
-                p.put("device"+i+".point.x", String.valueOf((int)(dev.getX()
-                        + dev.getWidth()/2)));
-                p.put("device"+i+".point.y", String.valueOf((int)(dev.getY()
-                        + dev.getHeight()/2)));
+                p.put("device"+i+".point.x", String.valueOf((int)(dev.getX())));
+                p.put("device"+i+".point.y", String.valueOf((int)(dev.getY())));
             }
             ArrayList<ConnectionLine> lines = s.getConnectionLines();
             for (int i = 0; i < lines.size(); i++) {
@@ -505,9 +497,9 @@ public class ArchLoader {
             Properties settings = readConfig(name,true);
             if (settings == null) return null;
             
-            Hashtable<IPlugin, Long> pluginsReverse = new Hashtable<IPlugin, Long>();
-            Hashtable<Long, IPlugin> plugins = new Hashtable<Long, IPlugin>();
-            Hashtable<Long,String> pluginNames = new Hashtable<Long, String>();
+            HashMap<IPlugin, Long> pluginsReverse = new HashMap<IPlugin, Long>();
+            HashMap<Long, IPlugin> plugins = new HashMap<Long, IPlugin>();
+            HashMap<Long,String> pluginNames = new HashMap<Long, String>();
 
             // load compiler
             String comName = settings.getProperty("compiler");
@@ -554,7 +546,7 @@ public class ArchLoader {
             }
 
             // load devices
-            Hashtable<String, IDevice> devNames = new Hashtable<String,IDevice>();
+            HashMap<String, IDevice> devNames = new HashMap<String,IDevice>();
             for (int i = 0; settings.containsKey("device"+i); i++) {
             	String devName = settings.getProperty("device"+i);
                 id = createPluginID();
@@ -571,8 +563,8 @@ public class ArchLoader {
             }
 
             // load connections
-            Hashtable<Long,ArrayList<Long>> connections =
-                    new Hashtable<Long,ArrayList<Long>>();
+            HashMap<Long,ArrayList<Long>> connections =
+                    new HashMap<Long,ArrayList<Long>>();
             for (int i = 0; settings.containsKey("connection"+i+".junc0"); i++) {
             	// get i-th connection from settings
                 String j0 = settings.getProperty("connection"+i+".junc0", "");
@@ -640,7 +632,7 @@ public class ArchLoader {
             return new ArchHandler(arch, settings, loadSchema(name),
                     pluginNames, auto, nogui);
         }
-        catch (IllegalArgumentException e) {
+        catch (Exception e) {
             StaticDialogs.showMessage(e.getMessage(), "Error reading plugins");
         }
         return null;

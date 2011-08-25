@@ -4,7 +4,7 @@
  * Created on 9.7.2008, 12:42:32
  * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -120,8 +120,8 @@ public class PreviewPanel extends JPanel {
 
         for (int i = 0; i < a.size(); i++) {
             Element e = a.get(i);
-            int eX = e.getX();
-            int eY = e.getY();
+            int eX = e.getX() - e.getWidth() /2;
+            int eY = e.getY() - e.getHeight()/2;
             int eWidth = e.getWidth();
             int eHeight = e.getHeight();
 
@@ -184,8 +184,7 @@ public class PreviewPanel extends JPanel {
         if (moved == false)
             for (int i = 0; i < a.size(); i++) {
                 Element e = a.get(i);
-                e.move(new Point(e.getX() - (leftFactor - e.getWidth()/2),
-                        e.getY() - (topFactor - e.getHeight()/2)));
+                e.move(new Point(e.getX() - leftFactor, e.getY() - topFactor));
             }
         for (int i = 0; i < schema.getConnectionLines().size(); i++) {
             ConnectionLine l = schema.getConnectionLines().get(i);
