@@ -87,9 +87,9 @@ public class Memory extends SimpleMemory {
         if (this.memGUI != null) {
             memGUI.dispose();
             this.memGUI = null;
-            memContext.destroy();
-            memContext = null;
         }
+        memContext.destroy();
+        memContext = null;
     }
 
     @Override
