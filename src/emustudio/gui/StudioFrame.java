@@ -71,6 +71,8 @@ import emuLib8.plugins.device.IDevice;
 import emuLib8.plugins.memory.IMemory;
 import emuLib8.plugins.memory.IMemory.IMemListener;
 import emuLib8.runtime.StaticDialogs;
+import emuLib8.runtime.Context;
+import emuLib8.runtime.IDebugTable;
 
 /**
  * The main window class
@@ -157,7 +159,7 @@ public class StudioFrame extends javax.swing.JFrame {
     /**
      * Update values in the debug table, if it is enabled
      */
-    private void updateDebugTable() {
+    private void updateDebugTbl() {
         if (tblDebug.isEnabled()) {
             tblDebug.revalidate();
             tblDebug.repaint();
@@ -263,7 +265,7 @@ public class StudioFrame extends javax.swing.JFrame {
                 @Override
                 public void memChange(EventObject evt, int adr) {
                     if (run_state != RunState.STATE_RUNNING) {
-                        updateDebugTable();
+                        updateDebugTbl();
                     }
                 }
             });
@@ -275,7 +277,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
             @Override
             public void stateUpdated(EventObject evt) {
-                updateDebugTable();
+                updateDebugTbl();
             }
 
             @Override
@@ -310,11 +312,18 @@ public class StudioFrame extends javax.swing.JFrame {
                     paneDebug.setEnabled(true);
                     tblDebug.setEnabled(true);
                     tblDebug.setVisible(true);
-                    updateDebugTable();
+                    updateDebugTbl();
                 }
             }
         });
+        Context.getInstance().setDebugTableInterfaceObject(new IDebugTable() {
 
+            @Override
+            public void updateDebugTable() {
+                updateDebugTbl();
+            }
+            
+        }, Main.getPassword());
     }
 
     private void initComponents() {
@@ -1196,7 +1205,7 @@ public class StudioFrame extends javax.swing.JFrame {
             if (pc > 0) {
                 cpu.setInstrPosition(pc - 1);
                 paneDebug.revalidate();
-                updateDebugTable();
+                updateDebugTbl();
             }
         } catch (NullPointerException e) {
         }
@@ -1206,7 +1215,7 @@ public class StudioFrame extends javax.swing.JFrame {
         try {
             cpu.setInstrPosition(0);
             paneDebug.revalidate();
-            updateDebugTable();
+            updateDebugTbl();
         } catch (NullPointerException e) {
         }
     }
@@ -1246,7 +1255,7 @@ public class StudioFrame extends javax.swing.JFrame {
             return;
         }
         paneDebug.revalidate();
-        updateDebugTable();
+        updateDebugTbl();
     }
 
     private void mnuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1428,7 +1437,7 @@ public class StudioFrame extends javax.swing.JFrame {
                     BreakpointDialog.getSet());
         }
         paneDebug.revalidate();
-        updateDebugTable();
+        updateDebugTbl();
     }
 
     private void mnuEditReplaceNextActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1445,26 +1454,26 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void btnFirstActionPerformed(java.awt.event.ActionEvent evt) {
         debug_model.firstPage();
-        updateDebugTable();
+        updateDebugTbl();
     }
 
     private void btnBackwardActionPerformed(java.awt.event.ActionEvent evt) {
         debug_model.previousPage();
-        updateDebugTable();
+        updateDebugTbl();
     }
 
     private void btnCurrentPageActionPerformed(java.awt.event.ActionEvent evt) {
         debug_model.currentPage();
-        updateDebugTable();
+        updateDebugTbl();
     }
 
     private void btnForwardActionPerformed(java.awt.event.ActionEvent evt) {
         debug_model.nextPage();
-        updateDebugTable();
+        updateDebugTbl();
     }
     private void btnLastActionPerformed(java.awt.event.ActionEvent evt) {
         debug_model.lastPage();
-        updateDebugTable();
+        updateDebugTbl();
     }
 
     JButton btnBack;

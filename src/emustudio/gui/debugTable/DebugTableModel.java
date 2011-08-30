@@ -37,7 +37,7 @@ import emuLib8.plugins.cpu.IDisassembler;
  */
 @SuppressWarnings("serial")
 public class DebugTableModel extends AbstractTableModel {
-    private static final int MAX_ROW_COUNT = 15;
+    private static final int MAX_ROW_COUNT = 13;
     private IDebugColumn[] columns;
     private ICPU cpu;
 

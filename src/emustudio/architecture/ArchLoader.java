@@ -633,6 +633,7 @@ public class ArchLoader {
                     pluginNames, auto, nogui);
         }
         catch (Exception e) {
+            e.printStackTrace();
             StaticDialogs.showMessage(e.getMessage(), "Error reading plugins");
         }
         return null;
