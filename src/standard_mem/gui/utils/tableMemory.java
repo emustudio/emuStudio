@@ -87,6 +87,7 @@ public class tableMemory extends JTable {
             this.setPreferredSize(new Dimension(4 * 17,header.getPreferredSize().height));
         }
   
+        @Override
         public Component getListCellRendererComponent(JList list, Object value,
                 int index, boolean isSelected, boolean cellHasFocus) {
             setText((value == null) ? "" : value.toString());
@@ -100,9 +101,11 @@ public class tableMemory extends JTable {
         private String adresses[];
         private int currentPage;
         private tableMemory tm;
+        private Color romColor;
 
         public MemCellRenderer(tableMemory tm) {
             this.tm = tm;
+            romColor = new Color(0xE8, 0x68, 0x50);
             currentPage = memModel.getPage();
             adresses = new String[memModel.getRowCount()];
             for (int i = 0; i < adresses.length; i++)
@@ -134,6 +137,7 @@ public class tableMemory extends JTable {
             rowHeader.setListData(adresses);
         }
 
+        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, 
                 boolean isSelected, boolean hasFocus, int row, int column) {
             if (isSelected) {
@@ -141,7 +145,7 @@ public class tableMemory extends JTable {
                 this.setForeground(tm.getSelectionForeground());
             } else {
                 if (memModel.isROMAt(row,column))
-                    this.setBackground(Color.RED);
+                    this.setBackground(romColor);
                 else if (memModel.isAtBANK(row, column))
                     this.setBackground(Color.decode("0xFFE6BF"));
                 else this.setBackground(Color.WHITE); 
@@ -167,6 +171,7 @@ public class tableMemory extends JTable {
         }
     
         // This method is called when a cell value is edited by the user.
+        @Override
         public Component getTableCellEditorComponent(JTable table, Object value,
                 boolean isSelected, int rowIndex, int vColIndex) {
             // 'value' is value contained in the cell located at (rowIndex, vColIndex)
@@ -174,6 +179,7 @@ public class tableMemory extends JTable {
             component.setText("0x" + (String)value);
             return component;
         }
+        @Override
         public Object getCellEditorValue() {
             return component.getText();
         }
