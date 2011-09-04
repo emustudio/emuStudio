@@ -1,9 +1,9 @@
 /*
  * frmMemory.java
  *
- * Created on Nedeľa, 2007, okt�ber 28, 10:40
+ * Created on Nedeľa, 2007, oktober 28, 10:40
  *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -297,6 +297,7 @@ public class frmMemory extends JFrame {
     private void initComponents() {
         JToolBar toolBar = new JToolBar();
         JButton btnClearMemory = new JButton();
+        JButton btnRefreshMemory = new JButton();
         JButton btnOpenImage = new JButton();
         JButton btnDump = new JButton();
         JButton btnSettings = new JButton();
@@ -347,6 +348,18 @@ public class frmMemory extends JFrame {
             }
         });
         toolBar.add(btnClearMemory);
+
+        btnRefreshMemory.setIcon(new ImageIcon(getClass().getResource("/standard_mem/resources/view-refresh.png"))); // NOI18N
+        btnRefreshMemory.setToolTipText("Refresh memory");
+        btnRefreshMemory.setFocusable(false);
+        btnRefreshMemory.addActionListener(new java.awt.event.ActionListener() {
+
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRefreshMemoryActionPerformed(evt);
+            }
+        });
+        toolBar.add(btnRefreshMemory);
         toolBar.add(jSeparator1);
 
         btnOpenImage.setIcon(new ImageIcon(getClass().getResource("/standard_mem/resources/document-open.png"))); // NOI18N
@@ -504,6 +517,11 @@ public class frmMemory extends JFrame {
 
     private void btnClearMemoryActionPerformed(java.awt.event.ActionEvent evt) {
         memContext.clearMemory();
+        tblMemory.revalidate();
+        tblMemory.repaint();
+    }
+
+    private void btnRefreshMemoryActionPerformed(java.awt.event.ActionEvent evt) {
         tblMemory.revalidate();
         tblMemory.repaint();
     }
