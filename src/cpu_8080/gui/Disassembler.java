@@ -20,7 +20,6 @@
 package cpu_8080.gui;
 
 import emuLib8.plugins.cpu.CPUInstruction;
-import emuLib8.plugins.cpu.ICPU;
 import emuLib8.plugins.cpu.SimpleDisassembler;
 import emuLib8.plugins.memory.IMemoryContext;
 
@@ -53,8 +52,8 @@ public class Disassembler extends SimpleDisassembler {
      * The constructor creates an instance of the Disassembler class
      * @param mem memory object
      */
-    public Disassembler(IMemoryContext mem, ICPU cpu) {
-        super(cpu);
+    public Disassembler(IMemoryContext mem) {
+        super();
         this.mem = mem;
     }
 

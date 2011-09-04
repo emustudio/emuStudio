@@ -24,8 +24,8 @@
 package cpu_8080.impl;
 
 import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
-import java.util.Hashtable;
 import emuLib8.plugins.device.IDeviceContext;
+import java.util.HashMap;
 
 
 /**
@@ -33,12 +33,12 @@ import emuLib8.plugins.device.IDeviceContext;
  * @author vbmacher
  */
 public class CpuContext implements C738039DCA561A49F377859B108A9AD1EE6CBDACB {
-    private Hashtable<Integer,IDeviceContext> devicesList;
+    private HashMap<Integer,IDeviceContext> devicesList;
     private int clockFrequency = 2000; // kHz
     private Cpu8080 cpu;
 
     public CpuContext(Cpu8080 cpu) {
-        devicesList = new Hashtable<Integer,IDeviceContext>();
+        devicesList = new HashMap<Integer,IDeviceContext>();
         this.cpu = cpu;
     }
     

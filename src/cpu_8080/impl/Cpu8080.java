@@ -34,7 +34,6 @@ import interfaces.IICpuListener;
 import java.util.TimerTask;
 import javax.swing.JPanel;
 import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.cpu.IDebugColumn;
 import emuLib8.plugins.cpu.SimpleCPU;
 import emuLib8.plugins.memory.IMemoryContext;
 import emuLib8.runtime.Context;
@@ -78,8 +77,6 @@ public class Cpu8080 extends SimpleCPU {
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0,
         1, 0, 0, 1
     };
-
-    private IDebugColumn columns[];
     private Disassembler disasm;
 
     /** Creates a new instance of Cpu8080 */
@@ -132,7 +129,7 @@ public class Cpu8080 extends SimpleCPU {
         }
 
         // create disassembler and debug columns
-        disasm = new Disassembler(mem, this);
+        disasm = new Disassembler(mem);
 
         return true;
     }
