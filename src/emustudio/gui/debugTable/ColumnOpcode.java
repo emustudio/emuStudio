@@ -34,7 +34,7 @@ public class ColumnOpcode extends SimpleDebugColumn {
     private IDisassembler dis;
 
     public ColumnOpcode(IDisassembler disasm) {
-        super("mnemonics", java.lang.String.class, false);
+        super("opcode", java.lang.String.class, false);
         this.dis = disasm;
     }
 
