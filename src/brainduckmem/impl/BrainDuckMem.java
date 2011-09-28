@@ -3,7 +3,7 @@
  *
  * KISS, YAGNI
  * 
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -72,7 +72,6 @@ public class BrainDuckMem extends SimpleMemory {
     @Override
     public void destroy() {
         memContext.destroy();
-        Context.getInstance().unregister(pluginID, memContext);
         memContext = null;
     }
 
