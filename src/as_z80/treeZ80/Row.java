@@ -6,7 +6,7 @@
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ package as_z80.treeZ80;
 
 import as_z80.impl.NeedMorePassException;
 import as_z80.impl.Namespace;
-import java.util.Vector;
+import java.util.ArrayList;
 import as_z80.treeZ80Abstract.Statement;
 import emuLib8.plugins.compiler.HEXFileHandler;
 
@@ -71,7 +71,7 @@ public class Row {
         if (statement != null)
             statement.pass1();
     }
-    public void pass1(Vector<String> inclfiles, 
+    public void pass1(ArrayList<String> inclfiles, 
             Namespace parent) throws Exception {
         ((PseudoINCLUDE)statement).pass1(inclfiles, parent);        
     }

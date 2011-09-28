@@ -6,7 +6,7 @@
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ package as_z80.treeZ80;
 
 import as_z80.impl.NeedMorePassException;
 import as_z80.impl.Namespace;
-import java.util.Vector;
+import java.util.ArrayList;
 import emuLib8.plugins.compiler.HEXFileHandler;
 
 /**
@@ -35,19 +35,19 @@ import emuLib8.plugins.compiler.HEXFileHandler;
  */
 public class Program {
 
-    private Vector<Row> list; // all instructions
+    private ArrayList<Row> list; // all instructions
     private Namespace namespace; // compile-time environment
-    private Vector<String> includefiles; // list of files that
+    private ArrayList<String> includefiles; // list of files that
     // were checked for include-loops
     // in short: list of included files
 
     public Program() {
-        list = new Vector<Row>();
+        list = new ArrayList<Row>();
         namespace = new Namespace();
-        includefiles = new Vector<String>();
+        includefiles = new ArrayList<String>();
     }
 
-    public void addIncludeFiles(Vector<String> inclfiles) {
+    public void addIncludeFiles(ArrayList<String> inclfiles) {
         includefiles.addAll(inclfiles);
     }
 
@@ -55,13 +55,13 @@ public class Program {
      * Adds one row into program
      */
     public void addRow(Row node) {
-        list.addElement(node);
+        list.add(node);
     }
 
     /**
      * Adds several rows into program
      */
-    public void addRowsVector(Vector<Row> vec) {
+    public void addRowsArrayList(ArrayList<Row> vec) {
         list.addAll(vec);
     }
 
@@ -97,7 +97,7 @@ public class Program {
     public boolean getIncludeLoops(String filename) {
         int i;
         for (i = 0; i < includefiles.size(); i++) {
-            String s = includefiles.elementAt(i);
+            String s = includefiles.get(i);
             if (s.equals(filename)) {
                 return true;
             }

@@ -26,10 +26,10 @@ package as_z80.treeZ80;
 
 import as_z80.impl.NeedMorePassException;
 import as_z80.impl.Namespace;
-import java.util.Vector;
 import as_z80.treeZ80Abstract.Expression;
 import as_z80.treeZ80Abstract.Pseudo;
 import emuLib8.plugins.compiler.HEXFileHandler;
+import java.util.ArrayList;
 
 /**
  *
@@ -37,17 +37,17 @@ import emuLib8.plugins.compiler.HEXFileHandler;
  */
 public class PseudoMACROCall extends Pseudo {
 
-    private Vector<Expression> params; // vector of expressions
+    private ArrayList<Expression> params; // ArrayList of expressions
     private PseudoMACRO macro; // only pointer...
     private HEXFileHandler statHex; // hex file for concrete macro
     private String mnemo;
 
     /** Creates a new instance of PseudoMACROCall */
-    public PseudoMACROCall(String name, Vector<Expression> params, int line, int column) {
+    public PseudoMACROCall(String name, ArrayList<Expression> params, int line, int column) {
         super(line, column);
         this.mnemo = name;
         if (params == null) {
-            this.params = new Vector<Expression>();
+            this.params = new ArrayList<Expression>();
         } else {
             this.params = params;
         }

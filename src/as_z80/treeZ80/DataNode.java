@@ -6,7 +6,7 @@
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 package as_z80.treeZ80;
 
 import as_z80.impl.Namespace;
-import java.util.Vector;
+import java.util.ArrayList;
 import as_z80.treeZ80Abstract.InstrData;
 import as_z80.treeZ80Abstract.DataValue;
 import emuLib8.plugins.compiler.HEXFileHandler;
@@ -36,20 +36,20 @@ import emuLib8.plugins.compiler.HEXFileHandler;
  */
 public class DataNode extends InstrData {
 
-    private Vector<DataValue> list; // this vector stores only data values
+    private ArrayList<DataValue> list; // this ArrayList stores only data values
 
     public void addElement(DataValue node) {
-        list.addElement(node);
+        list.add(node);
     }
 
-    public void addAll(Vector<DataValue> vec) {
+    public void addAll(ArrayList<DataValue> vec) {
         list.addAll(vec);
     }
 
     /** Creates a new instance of DataNode */
     public DataNode(int line, int column) {
         super(line, column);
-        this.list = new Vector<DataValue>();
+        this.list = new ArrayList<DataValue>();
     }
 
     /// compile time ///
@@ -67,7 +67,7 @@ public class DataNode extends InstrData {
     @Override
     public void pass1() throws Exception {
         for (int i = 0; i < list.size(); i++) {
-            DataValue n = (DataValue) list.elementAt(i);
+            DataValue n = (DataValue) list.get(i);
             n.pass1();
         }
     }

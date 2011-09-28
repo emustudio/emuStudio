@@ -4,7 +4,7 @@
  * Created on 14.8.2008, 9:27:10
  * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,9 +29,9 @@ import as_z80.impl.ParserZ80;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Vector;
 import as_z80.treeZ80Abstract.Pseudo;
 import emuLib8.plugins.compiler.HEXFileHandler;
+import java.util.ArrayList;
 
 /**
  *
@@ -79,7 +79,7 @@ public class PseudoINCLUDE extends Pseudo {
     public void pass1() throws Exception {
     }
 
-    public void pass1(Vector<String> includefiles,
+    public void pass1(ArrayList<String> includefiles,
             Namespace parent) throws Exception {
         try {
             FileReader f = new FileReader(new File(filename));
@@ -118,7 +118,9 @@ public class PseudoINCLUDE extends Pseudo {
 
     @Override
     public void pass4(HEXFileHandler hex) throws Exception {
-        while (program.pass3(namespace) == true);
+        while (program.pass3(namespace) == true) {
+            // :-)
+        }
         if (namespace.getPassNeedCount() != 0) {
             throw new Exception("Error: can't evaulate all expressions");
         }

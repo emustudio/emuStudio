@@ -6,7 +6,7 @@
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
  *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,10 +25,10 @@
 package as_z80.treeZ80;
 
 import as_z80.impl.Namespace;
-import java.util.Vector;
 import as_z80.treeZ80Abstract.Expression;
 import as_z80.treeZ80Abstract.Pseudo;
 import emuLib8.plugins.compiler.HEXFileHandler;
+import java.util.ArrayList;
 
 /**
  *
@@ -36,20 +36,20 @@ import emuLib8.plugins.compiler.HEXFileHandler;
  */
 public class PseudoMACRO extends Pseudo {
 
-    private Vector<String> params; // macro parameters
-    private Vector<Expression> call_params; // concrete parameters, they can change
+    private ArrayList<String> params; // macro parameters
+    private ArrayList<Expression> call_params; // concrete parameters, they can change
     private Program subprogram;
     private String mnemo;
     // for pass4
     private Namespace newEnv;
 
     /** Creates a new instance of PseudoMACRO */
-    public PseudoMACRO(String name, Vector<String> params, Program s, int line,
+    public PseudoMACRO(String name, ArrayList<String> params, Program s, int line,
             int column) {
         super(line, column);
         this.mnemo = name;
         if (params == null) {
-            this.params = new Vector<String>();
+            this.params = new ArrayList<String>();
         } else {
             this.params = params;
         }
@@ -60,7 +60,7 @@ public class PseudoMACRO extends Pseudo {
         return mnemo;
     }
 
-    public void setCallParams(Vector<Expression> params) {
+    public void setCallParams(ArrayList<Expression> params) {
         this.call_params = params;
     }
 

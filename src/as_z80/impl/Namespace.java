@@ -28,9 +28,9 @@
 
 package as_z80.impl;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Vector;
+import java.util.ArrayList;
 import as_z80.treeZ80.Label;
 import as_z80.treeZ80.PseudoMACRO;
 import as_z80.treeZ80.PseudoEQU;
@@ -38,28 +38,26 @@ import as_z80.treeZ80.PseudoVAR;
 import as_z80.treeZ80.Row;
 
 /**
- *
- * @author vbmacher
- */
-/*
+ * Namespace is used in compile time.
  * sets, macros and equs are pseudoinstructions that arent added to symbol table
  * in pass1. This means that if eg. equ wasnt defined before first use
  * error comes.
+ * @author vbmacher
  */
 public class Namespace {
-    private Hashtable<String,Label> defLabels;  // labelnode objects
-    private Hashtable<String,PseudoMACRO> defMacros;  // all macros
-    private Hashtable<String,PseudoEQU> defEqus;    // all equs
-    private Hashtable<String,PseudoVAR> defVars;    // all sets
-    private Vector<Row> passNeed;   // objects that need more passes
+    private HashMap<String,Label> defLabels;  // labelnode objects
+    private HashMap<String,PseudoMACRO> defMacros;  // all macros
+    private HashMap<String,PseudoEQU> defEqus;    // all equs
+    private HashMap<String,PseudoVAR> defVars;    // all sets
+    private ArrayList<Row> passNeed;   // objects that need more passes
     
     /** Creates a new instance of Namespace */
     public Namespace() {
-        defLabels = new Hashtable<String,Label>();
-        defMacros = new Hashtable<String,PseudoMACRO>();
-        defEqus = new Hashtable<String,PseudoEQU>();
-        defVars = new Hashtable<String,PseudoVAR>();
-        passNeed = new Vector<Row>();
+        defLabels = new HashMap<String,Label>();
+        defMacros = new HashMap<String,PseudoMACRO>();
+        defEqus = new HashMap<String,PseudoEQU>();
+        defVars = new HashMap<String,PseudoVAR>();
+        passNeed = new ArrayList<Row>();
     }
     
     // check if id is already defined (as whatever)
@@ -148,7 +146,7 @@ public class Namespace {
     //---
     
     public void addPassNeed(Row n) {
-        passNeed.addElement(n);
+        passNeed.add(n);
     }
     public int getPassNeedCount() { return passNeed.size(); }
     
@@ -156,10 +154,10 @@ public class Namespace {
         return (Row)passNeed.get(index);
     }
     public void removePassNeed(Row n) {
-        passNeed.removeElement(n);
+        passNeed.remove(n);
     }
     public void removePassNeed(int index) {
-        passNeed.removeElementAt(index);
+        passNeed.remove(index);
     }
     public void clearPassNeeds() { passNeed.clear(); }
     
