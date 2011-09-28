@@ -26,7 +26,8 @@
 import java_cup.runtime.Symbol;
 import emuLib8.plugins.compiler.IToken;
 import brainc_brainduck.tree.*;
-import emuLib8.plugins.compiler.ICompiler;
+import emuLib8.plugins.compiler.Message;
+import emuLib8.plugins.compiler.Message.MessageType;
 
 init with {: errorCount = 0; :}
 parser code {:
@@ -34,7 +35,7 @@ parser code {:
     public IToken lastToken;
     public int errorCount = 0;
     
-    public BDParser(java_cup.runtime.Scanner s, BrainDuck compiler) {
+    public ParserBD(java_cup.runtime.Scanner s, BrainDuck compiler) {
         this(s);
         this.compiler = compiler;
     }
@@ -56,8 +57,8 @@ parser code {:
         IToken t = (IToken)current;
         mes = message + t.getErrorString() + " ('"+t.getText()+"')";
 
-        compiler.fireMessage(t.getLine()+1,
-                t.getColumn(), mes, 0, ICompiler.TYPE_ERROR);
+        compiler.fireMessage(new Message(MessageType.TYPE_ERROR, mes,
+            t.getLine()+1, t.getColumn(), null, errorCount));
     }
 :}
 

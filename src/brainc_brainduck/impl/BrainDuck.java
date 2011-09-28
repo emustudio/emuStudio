@@ -3,7 +3,7 @@
  *
  * KISS, YAGNI
  * 
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,12 +23,12 @@ package brainc_brainduck.impl;
 
 import java.io.Reader;
 
-import emuLib8.plugins.compiler.ICompiler;
 import emuLib8.plugins.compiler.ILexer;
 import emuLib8.plugins.memory.IMemoryContext;
 import brainc_brainduck.tree.Program;
 import emuLib8.plugins.compiler.HEXFileHandler;
 import emuLib8.plugins.compiler.SimpleCompiler;
+import emuLib8.plugins.compiler.SourceFileExtension;
 import emuLib8.runtime.Context;
 
 /**
@@ -37,8 +37,9 @@ import emuLib8.runtime.Context;
  * @author Peter Jakubčo <pjakubco at gmail.com>
  */
 public class BrainDuck extends SimpleCompiler {
-    private BDLexer lex;
-    private BDParser par;
+    private LexerBD lex;
+    private ParserBD par;
+    private SourceFileExtension[] suffixes;
 
     /**
      * Public constructor.
@@ -48,8 +49,10 @@ public class BrainDuck extends SimpleCompiler {
     public BrainDuck(Long pluginID) {
         super(pluginID);
         // lex has to be reset WITH a reader object before compile
-        lex = new BDLexer((Reader) null);
-        par = new BDParser(lex);
+        lex = new LexerBD((Reader) null);
+        par = new ParserBD(lex);
+        suffixes = new SourceFileExtension[1];
+        suffixes[0] = new SourceFileExtension("asm", "Z80 assembler source");
     }
 
     @Override
@@ -91,13 +94,12 @@ public class BrainDuck extends SimpleCompiler {
         Object s = null;
         HEXFileHandler hex = new HEXFileHandler();
 
-        fireMessage(-1,-1,getTitle() + ", version " + getVersion(),
-                0,ICompiler.TYPE_INFO);
+        printInfo(getTitle() + ", version " + getVersion());
         lex.reset(in, 0, 0, 0);
         s = par.parse().value;
 
         if (s == null) {
-            fireMessage(-1,-1,"Unexpected end of file", 0,ICompiler.TYPE_ERROR);
+            printError("Unexpected end of file");
             return null;
         }
         if (par.errorCount != 0) {
@@ -119,8 +121,7 @@ public class BrainDuck extends SimpleCompiler {
                 return false;
             }
             hex.generateFile(fileName);
-            fireMessage(-1,-1,"Compile was sucessfull. Output: "
-                    + fileName,0, ICompiler.TYPE_INFO);
+            printInfo("Compile was sucessfull. Output: " + fileName);
             programStart = hex.getProgramStart();
             
             // try to access the memory
@@ -128,25 +129,22 @@ public class BrainDuck extends SimpleCompiler {
                     IMemoryContext.class);
             if (mem != null) {
                 if (hex.loadIntoMemory(mem)) {
-                    fireMessage(-1,-1,
-                            "Compiled file was loaded into operating memory.",0,
-                            ICompiler.TYPE_INFO);
+                    printInfo("Compiled file was loaded into operating memory.");
                 } else {
-                    fireMessage(-1,-1,
-                            "Compiled file couldn't be loaded into operating"
-                            + "memory due to an error.", 0,ICompiler.TYPE_ERROR);
+                    printError("Compiled file couldn't be loaded into operating"
+                            + "memory due to an error.");
                 }
             }
             return true;
         } catch (Exception e) {
-            fireMessage(-1,-1,e.getMessage(), 0, ICompiler.TYPE_ERROR);
+            printError(e.getMessage());
             return false;
         }
     }
 
     @Override
     public ILexer getLexer(Reader in) {
-        return new BDLexer(in);
+        return new LexerBD(in);
     }
 
     @Override
@@ -158,4 +156,10 @@ public class BrainDuck extends SimpleCompiler {
     public boolean isShowSettingsSupported() {
         return false;
     }
+    
+    @Override
+    public SourceFileExtension[] getSourceSuffixList() {
+        return suffixes;
+    }
+    
 }

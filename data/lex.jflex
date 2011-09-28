@@ -1,5 +1,5 @@
 /*
- * BDLexer.java
+ * LexerBD.java
  *
  * Lexical analyser for BrainDuck assembler
  *
@@ -32,7 +32,7 @@ import java.io.IOException;
 %%
 
 /* options */
-%class BDLexer
+%class LexerBD
 %cup
 %public
 %implements ILexer

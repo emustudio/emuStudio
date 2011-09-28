@@ -3,7 +3,7 @@
  * 
  * KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,19 +21,19 @@
  */
 package brainc_brainduck.tree;
 
-import java.util.Vector;
+import java.util.ArrayList;
 import emuLib8.plugins.compiler.HEXFileHandler;
 
 public class Program {
-    private Vector<Row> list; // zoznam všetkých inštrukcií
+    private ArrayList<Row> list; // zoznam všetkých inštrukcií
 
     public Program() { 
-        list = new Vector<Row>();
+        list = new ArrayList<Row>();
     }
     
     public void addRow(Row node) {
     	if (node != null)
-            list.addElement(node);
+            list.add(node);
     }
 
     public int pass1(int addr_start) throws Exception {
