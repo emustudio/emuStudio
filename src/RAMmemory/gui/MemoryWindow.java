@@ -3,7 +3,7 @@
  * 
  *  KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,8 +27,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Enumeration;
 import java.util.EventObject;
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
@@ -49,6 +49,7 @@ import javax.swing.table.AbstractTableModel;
 import emuLib8.plugins.memory.IMemory.IMemListener;
 
 import RAMmemory.impl.RAMContext;
+import java.util.Iterator;
 
 @SuppressWarnings("serial")
 public class MemoryWindow extends JFrame {
@@ -113,9 +114,9 @@ public class MemoryWindow extends JFrame {
 
     // TODO: bug: S(n) computation is not always correct
     private void setComplexity() {
-        Hashtable<String, Integer> labels;
-        Hashtable<Integer, Integer> levels = new Hashtable<Integer, Integer>();
-        Vector<Integer> registers = new Vector<Integer>();
+        HashMap<String, Integer> labels;
+        HashMap<Integer, Integer> levels = new HashMap<Integer, Integer>();
+        ArrayList<Integer> registers = new ArrayList<Integer>();
         int memcompl = 0;
 
         labels = mem.getSwitchedLabels();
@@ -171,9 +172,9 @@ public class MemoryWindow extends JFrame {
         String n = "";
         boolean was = false;
         while (true) {
-            Enumeration<Integer> keys = levels.keys();
-            while (keys.hasMoreElements()) {
-                Integer pos = keys.nextElement();
+            Iterator<Integer> keys = levels.keySet().iterator();
+            while (keys.hasNext()) {
+                Integer pos = keys.next();
                 if (levels.get(pos) == i) {
                     was = true;
                     j++;

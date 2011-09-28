@@ -3,7 +3,7 @@
  * 
  *  KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,17 +21,17 @@
  */
 package interfaces;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 import emuLib8.plugins.memory.IMemoryContext;
 
-public interface CA93D6D53B2CCE716745DD211F110C6E387C12431 extends IMemoryContext {
+public interface C8E258161A30C508D5E8ED07CE943EEF7408CA508 extends IMemoryContext {
 	public void addLabel(int pos, String label);
 	public String getLabel(int pos);
 	
 	// from Compiler
-	public void addInputs(Vector<String> inputs);
+	public void addInputs(ArrayList<String> inputs);
 	
 	// for CPU
-	public Vector<String> getInputs();
+	public ArrayList<String> getInputs();
 }

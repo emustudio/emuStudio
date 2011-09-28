@@ -23,7 +23,7 @@ package RAMmemory.impl;
 
 import RAMmemory.gui.MemoryWindow;
 import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
-import interfaces.CA93D6D53B2CCE716745DD211F110C6E387C12431;
+import interfaces.C8E258161A30C508D5E8ED07CE943EEF7408CA508;
 import emuLib8.plugins.ISettingsHandler;
 import emuLib8.plugins.memory.SimpleMemory;
 import emuLib8.runtime.Context;
@@ -38,7 +38,7 @@ public class RAMmemory extends SimpleMemory {
         super(pluginID);
         context = new RAMContext();
         if (!Context.getInstance().register(pluginID, context,
-                CA93D6D53B2CCE716745DD211F110C6E387C12431.class))
+                C8E258161A30C508D5E8ED07CE943EEF7408CA508.class))
             StaticDialogs.showErrorMessage("Error: Could not register this memory");
     }
 

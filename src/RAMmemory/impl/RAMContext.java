@@ -3,7 +3,7 @@
  * 
  *  KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,26 +22,25 @@
 package RAMmemory.impl;
 
 import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
-import interfaces.CA93D6D53B2CCE716745DD211F110C6E387C12431;
+import interfaces.C8E258161A30C508D5E8ED07CE943EEF7408CA508;
 
+import java.util.HashMap;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Vector;
 
 import emuLib8.plugins.memory.SimpleMemoryContext;
+import java.util.Iterator;
 
-public class RAMContext extends SimpleMemoryContext implements CA93D6D53B2CCE716745DD211F110C6E387C12431 {
+public class RAMContext extends SimpleMemoryContext implements C8E258161A30C508D5E8ED07CE943EEF7408CA508 {
 
     private ArrayList<C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E> memory;
-    private Hashtable<Integer, String> labels;
-    private Vector<String> inputs; // not for memory, but for CPU. Memory holds program so...
+    private HashMap<Integer, String> labels;
+    private ArrayList<String> inputs; // not for memory, but for CPU. Memory holds program so...
 
     public RAMContext() {
         super();
         memory = new ArrayList<C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E>();
-        labels = new Hashtable<Integer, String>();
-        inputs = new Vector<String>();
+        labels = new HashMap<Integer, String>();
+        inputs = new ArrayList<String>();
     }
 
     @Override
@@ -112,18 +111,18 @@ public class RAMContext extends SimpleMemoryContext implements CA93D6D53B2CCE716
         return labels.get(pos);
     }
 
-    public Hashtable<String, Integer> getSwitchedLabels() {
-        Hashtable<String, Integer> h = new Hashtable<String, Integer>();
-        Enumeration<Integer> k = labels.keys();
-        while (k.hasMoreElements()) {
-            int pos = k.nextElement();
+    public HashMap<String, Integer> getSwitchedLabels() {
+        HashMap<String, Integer> h = new HashMap<String, Integer>();
+        Iterator<Integer> k = labels.keySet().iterator();
+        while (k.hasNext()) {
+            int pos = k.next();
             h.put(labels.get(pos), pos);
         }
         return h;
     }
 
     @Override
-    public void addInputs(Vector<String> inputs) {
+    public void addInputs(ArrayList<String> inputs) {
         if (inputs == null) {
             return;
         }
@@ -131,7 +130,7 @@ public class RAMContext extends SimpleMemoryContext implements CA93D6D53B2CCE716
     }
 
     @Override
-    public Vector<String> getInputs() {
+    public ArrayList<String> getInputs() {
         return inputs;
     }
 
