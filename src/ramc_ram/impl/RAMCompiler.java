@@ -3,7 +3,7 @@
  * 
  *  KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,16 +22,16 @@
 package ramc_ram.impl;
 
 import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
-import interfaces.CA93D6D53B2CCE716745DD211F110C6E387C12431;
+import interfaces.C8E258161A30C508D5E8ED07CE943EEF7408CA508;
 import java.io.Reader;
 
 import ramc_ram.compiled.CompiledFileHandler;
 import ramc_ram.tree.Program;
 import emuLib8.runtime.StaticDialogs;
 import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.compiler.ICompiler;
 import emuLib8.plugins.compiler.ILexer;
 import emuLib8.plugins.compiler.SimpleCompiler;
+import emuLib8.plugins.compiler.SourceFileExtension;
 import ramc_ram.tree.RAMInstruction;
 import emuLib8.runtime.Context;
 
@@ -39,8 +39,9 @@ public class RAMCompiler extends SimpleCompiler {
 
     private RAMLexer lex = null;
     private RAMParser par;
-    private CA93D6D53B2CCE716745DD211F110C6E387C12431 mem;
+    private C8E258161A30C508D5E8ED07CE943EEF7408CA508 mem;
     private RAMInstruction context; // not needed context for anything, but
+    private SourceFileExtension[] suffixes;
                                     // necessary for the registration
 
     public RAMCompiler(Long pluginID) {
@@ -53,14 +54,6 @@ public class RAMCompiler extends SimpleCompiler {
                 C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.class))
             StaticDialogs.showErrorMessage("Error: Could not register "
                     + "the ramc compiler");
-    }
-
-    private void print_text(String mes, int type) {
-        fireMessage(-1,-1,mes,0,type);
-    }
-
-    public void print_text(int row, int col, String mes, int type) {
-        fireMessage(row,col,mes,0,type);
     }
 
     @Override
@@ -88,9 +81,9 @@ public class RAMCompiler extends SimpleCompiler {
     @Override
     public boolean initialize(ISettingsHandler settings) {
         super.initialize(settings);
-        mem = (CA93D6D53B2CCE716745DD211F110C6E387C12431)Context
+        mem = (C8E258161A30C508D5E8ED07CE943EEF7408CA508)Context
                 .getInstance().getMemoryContext(pluginID,
-                CA93D6D53B2CCE716745DD211F110C6E387C12431.class);
+                C8E258161A30C508D5E8ED07CE943EEF7408CA508.class);
         
         if (mem == null) {
             StaticDialogs.showErrorMessage("Error: Could not connect to memory");
@@ -116,12 +109,12 @@ public class RAMCompiler extends SimpleCompiler {
         Object s = null;
         CompiledFileHandler hex = new CompiledFileHandler();
 
-        print_text(getTitle() + ", version " + getVersion(), ICompiler.TYPE_INFO);
+        printInfo(getTitle() + ", version " + getVersion());
         lex.reset(in, 0, 0, 0);
         s = par.parse().value;
 
         if (s == null) {
-            print_text("Unexpected end of file", ICompiler.TYPE_ERROR);
+            printError("Unexpected end of file");
             return null;
         }
         if (par.errorCount != 0) {
@@ -133,14 +126,13 @@ public class RAMCompiler extends SimpleCompiler {
         program.pass1(0);
         program.pass2(hex);
 
-        print_text("Compile was sucessfull.", ICompiler.TYPE_INFO);
+        printInfo("Compile was sucessfull.");
         if (mem != null) {
             if (hex.loadIntoMemory(mem)) {
-                print_text("Compiled file was loaded into operating memory.",
-                        ICompiler.TYPE_INFO);
+                printInfo("Compiled file was loaded into operating memory.");
             } else {
-                print_text("Compiled file couldn't be loaded into operating"
-                        + " memory due to an error.", ICompiler.TYPE_ERROR);
+                printError("Compiled file couldn't be loaded into operating"
+                        + " memory due to an error.");
             }
         }
         return hex;
@@ -148,12 +140,12 @@ public class RAMCompiler extends SimpleCompiler {
 
     @Override
     public boolean compile(String fileName, Reader reader) {
-        print_text("This compiler doesn't support "
-                + "compilation into a file.", ICompiler.TYPE_INFO);
+        printInfo("This compiler doesn't support "
+                + "compilation into a file.");
         try {
             CompiledFileHandler c = compile(reader);
         } catch (Exception e) {
-            print_text("Compile failed.", ICompiler.TYPE_ERROR);
+            printError("Compile failed.");
             return false;
         }
         return true;
@@ -185,4 +177,10 @@ public class RAMCompiler extends SimpleCompiler {
     public boolean isShowSettingsSupported() {
         return false;
     }
+    
+    @Override
+    public SourceFileExtension[] getSourceSuffixList() {
+        return suffixes;
+    }
+
 }

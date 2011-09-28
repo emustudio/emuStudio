@@ -6,7 +6,7 @@
  * KEEP IT SIMPLE STUPID
  * sometimes just: YOU AREN'T GONNA NEED IT
  *
- * Copyright (C) 2009-2010 Peter Jakubèo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubèo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,12 +23,13 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-import interfaces.IRAMInstruction;
+import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
 import java_cup.runtime.Symbol;
 import emuLib8.plugins.compiler.IToken;
-import emuLib8.plugins.compiler.ICompiler;
-import java.util.Vector;
+import java.util.ArrayList;
 import ramc_ram.tree.*;
+import emuLib8.plugins.compiler.Message;
+import emuLib8.plugins.compiler.Message.MessageType;
 
 init with {: errorCount = 0; :}
 parser code {:
@@ -58,7 +59,8 @@ parser code {:
         IToken t = (IToken)current;
         mes = message + t.getErrorString() + " ('"+t.getText()+"')";
         
-        ram.print_text(t.getLine()+1, t.getColumn(),mes, ICompiler.TYPE_ERROR);
+        ram.fireMessage(new Message(MessageType.TYPE_ERROR, mes,
+            t.getLine()+1, t.getColumn(), null, errorCount));
     }
 :}
 
@@ -74,7 +76,7 @@ non terminal RAMInstruction Statement;
 non terminal Comment;
 non terminal Integer Number;
 non terminal Label LabelOpt;
-non terminal Vector StringVector;
+non terminal ArrayList StringVector;
 
 start with Program;
 
@@ -99,7 +101,7 @@ Row ::= LabelOpt:label Statement:stmt Comment
 
 StringVector ::= STRING:str
                  {: 
-                     Vector<String> v = new Vector<String>();
+                     ArrayList<String> v = new ArrayList<String>();
                      v.add(str);
                      RESULT = v;
                  :}
@@ -116,32 +118,32 @@ LabelOpt ::= LABELL:label {: RESULT = new Label(label); :}
            ;
 
 
-Statement ::= READ Number:num {: RESULT = new RAMInstruction(IRAMInstruction.READ, (char)0, num); :}
-            | READ INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.READ, '*', num); :}
-            | WRITE DIRECT STRING:str {: RESULT = new RAMInstruction(IRAMInstruction.WRITE, '=', str); :}
-            | WRITE Number:num {: RESULT = new RAMInstruction(IRAMInstruction.WRITE, (char)0, num); :}
-            | WRITE INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.WRITE, '*', num); :}
-            | LOAD DIRECT STRING:str {: RESULT = new RAMInstruction(IRAMInstruction.LOAD, '=', str); :}
-            | LOAD Number:num {: RESULT = new RAMInstruction(IRAMInstruction.LOAD, (char)0, num); :}
-            | LOAD INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.LOAD, '*', num); :}
-            | STORE Number:num {: RESULT = new RAMInstruction(IRAMInstruction.STORE, (char)0, num); :}
-            | STORE INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.STORE, '*', num); :}
-            | ADD DIRECT STRING:str {: RESULT = new RAMInstruction(IRAMInstruction.ADD, '=', str); :}
-            | ADD Number:num {: RESULT = new RAMInstruction(IRAMInstruction.ADD, (char)0, num); :}
-            | ADD INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.ADD, '*', num); :}
-            | SUB DIRECT STRING:str {: RESULT = new RAMInstruction(IRAMInstruction.SUB, '=', str); :}
-            | SUB Number:num {: RESULT = new RAMInstruction(IRAMInstruction.SUB, (char)0, num); :}
-            | SUB INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.SUB, '*', num); :}
-            | MUL DIRECT STRING:str {: RESULT = new RAMInstruction(IRAMInstruction.MUL, '=', str); :}
-            | MUL Number:num {: RESULT = new RAMInstruction(IRAMInstruction.MUL, (char)0, num); :}
-            | MUL INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.MUL, '*', num); :}
-            | DIV DIRECT STRING:str {: RESULT = new RAMInstruction(IRAMInstruction.DIV, '=', str); :}
-            | DIV Number:num {: RESULT = new RAMInstruction(IRAMInstruction.DIV, (char)0, num); :}
-            | DIV INDIRECT Number:num {: RESULT = new RAMInstruction(IRAMInstruction.DIV, '*', num); :}
-            | JMP IDENT:label {: RESULT = new RAMInstruction(IRAMInstruction.JMP, label); :}
-            | JZ IDENT:label {: RESULT = new RAMInstruction(IRAMInstruction.JZ, label); :}
-            | JGTZ IDENT:label {: RESULT = new RAMInstruction(IRAMInstruction.JGTZ, label); :}
-            | HALT  {: RESULT = new RAMInstruction(IRAMInstruction.HALT, (char)0,0); :}
+Statement ::= READ Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.READ, (char)0, num); :}
+            | READ INDIRECT Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.READ, '*', num); :}
+            | WRITE DIRECT STRING:str {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.WRITE, '=', str); :}
+            | WRITE Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.WRITE, (char)0, num); :}
+            | WRITE INDIRECT Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.WRITE, '*', num); :}
+            | LOAD DIRECT STRING:str {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.LOAD, '=', str); :}
+            | LOAD Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.LOAD, (char)0, num); :}
+            | LOAD INDIRECT Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.LOAD, '*', num); :}
+            | STORE Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.STORE, (char)0, num); :}
+            | STORE INDIRECT Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.STORE, '*', num); :}
+            | ADD DIRECT STRING:str {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.ADD, '=', str); :}
+            | ADD Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.ADD, (char)0, num); :}
+            | ADD INDIRECT Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.ADD, '*', num); :}
+            | SUB DIRECT STRING:str {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.SUB, '=', str); :}
+            | SUB Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.SUB, (char)0, num); :}
+            | SUB INDIRECT Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.SUB, '*', num); :}
+            | MUL DIRECT STRING:str {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.MUL, '=', str); :}
+            | MUL Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.MUL, (char)0, num); :}
+            | MUL INDIRECT Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.MUL, '*', num); :}
+            | DIV DIRECT STRING:str {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.DIV, '=', str); :}
+            | DIV Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.DIV, (char)0, num); :}
+            | DIV INDIRECT Number:num {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.DIV, '*', num); :}
+            | JMP IDENT:label {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.JMP, label); :}
+            | JZ IDENT:label {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.JZ, label); :}
+            | JGTZ IDENT:label {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.JGTZ, label); :}
+            | HALT  {: RESULT = new RAMInstruction(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.HALT, (char)0,0); :}
             ;
 
 Number ::= NUMBER:num {: RESULT = Integer.parseInt((String)num); :};

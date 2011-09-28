@@ -3,7 +3,7 @@
  *
  * KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 package ramc_ram.compiled;
 
 import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
-import interfaces.CA93D6D53B2CCE716745DD211F110C6E387C12431;
+import interfaces.C8E258161A30C508D5E8ED07CE943EEF7408CA508;
 
 import java.util.ArrayList;
 
@@ -51,8 +51,8 @@ public class CompiledFileHandler {
      * 
      * @param mem context of operating memory
      */
-    public boolean loadIntoMemory(CA93D6D53B2CCE716745DD211F110C6E387C12431 mem) {
-        CA93D6D53B2CCE716745DD211F110C6E387C12431 rmem = mem;
+    public boolean loadIntoMemory(C8E258161A30C508D5E8ED07CE943EEF7408CA508 mem) {
+        C8E258161A30C508D5E8ED07CE943EEF7408CA508 rmem = mem;
         // load labels
         Label[] labels = CompilerEnvironment.getLabels();
         for (int i = 0; i < labels.length; i++) {

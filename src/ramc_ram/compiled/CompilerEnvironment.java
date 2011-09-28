@@ -3,7 +3,7 @@
  * 
  *   KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,13 +21,13 @@
  */
 package ramc_ram.compiled;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 import ramc_ram.tree.Label;
 
 public class CompilerEnvironment {
-    private static Vector<Label> labels = new Vector<Label>();
-    private static Vector<String> inputs = new Vector<String>();
+    private static ArrayList<Label> labels = new ArrayList<Label>();
+    private static ArrayList<String> inputs = new ArrayList<String>();
     
     public static void addLabel(Label label){
     	labels.add(label);
@@ -49,11 +49,11 @@ public class CompilerEnvironment {
     	return labels.toArray(new Label[0]);
     }
     
-    public static void addInputs(Vector<String> inp) {
+    public static void addInputs(ArrayList<String> inp) {
     	inputs.addAll(inp);
     }
     
-    public static Vector<String> getInputs() {
+    public static ArrayList<String> getInputs() {
     	return inputs;
     }
     
