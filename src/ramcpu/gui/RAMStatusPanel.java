@@ -3,7 +3,7 @@
  * 
  * KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,8 +32,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 
-import emuLib8.plugins.cpu.ICPU;
 import emuLib8.plugins.cpu.ICPU.ICPUListener;
+import emuLib8.plugins.cpu.ICPU.RunState;
 import emuLib8.plugins.memory.IMemoryContext;
 
 import ramcpu.impl.RAM;
@@ -47,18 +47,18 @@ public class RAMStatusPanel extends JPanel {
         cpu.addCPUListener(new ICPUListener() {
 
             @Override
-            public void runChanged(EventObject evt, int state) {
+            public void runChanged(EventObject evt, RunState state) {
                 switch (state) {
-                    case ICPU.STATE_STOPPED_NORMAL:
+                    case STATE_STOPPED_NORMAL:
                         lblStatus.setText("stopped (normal)");
                         break;
-                    case ICPU.STATE_STOPPED_BREAK:
+                    case STATE_STOPPED_BREAK:
                         lblStatus.setText("breakpoint");
                         break;
-                    case ICPU.STATE_STOPPED_ADDR_FALLOUT:
+                    case STATE_STOPPED_ADDR_FALLOUT:
                         lblStatus.setText("stopped (address fallout)");
                         break;
-                    case ICPU.STATE_STOPPED_BAD_INSTR:
+                    case STATE_STOPPED_BAD_INSTR:
                         lblStatus.setText("stopped (instruction fallout)");
                         break;
                 }

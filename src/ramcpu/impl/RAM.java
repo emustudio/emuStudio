@@ -3,7 +3,7 @@
  * 
  *  KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,27 +21,25 @@
  */
 package ramcpu.impl;
 
-import java.util.Vector;
-
+import emuLib8.plugins.cpu.IDisassembler;
 import interfaces.C50E67F515A7C87A67947F8FB0F82558196BE0AC7;
 import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
-import interfaces.CA93D6D53B2CCE716745DD211F110C6E387C12431;
+import interfaces.C8E258161A30C508D5E8ED07CE943EEF7408CA508;
 
 import javax.swing.JPanel;
 
 import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.cpu.ICPU;
 import emuLib8.plugins.cpu.ICPUContext;
-import emuLib8.plugins.cpu.IDebugColumn;
 import emuLib8.plugins.cpu.SimpleCPU;
 import ramcpu.gui.RAMDisassembler;
 import ramcpu.gui.RAMStatusPanel;
 import emuLib8.runtime.Context;
 import emuLib8.runtime.StaticDialogs;
+import java.util.ArrayList;
 
 public class RAM extends SimpleCPU {
 
-    private CA93D6D53B2CCE716745DD211F110C6E387C12431 mem;
+    private C8E258161A30C508D5E8ED07CE943EEF7408CA508 mem;
     private RAMContext context;
     private RAMDisassembler dis;     // disassembler
     private int IP; // instruction position
@@ -81,9 +79,9 @@ public class RAM extends SimpleCPU {
     public boolean initialize(ISettingsHandler settings) {
         super.initialize(settings);
 
-        mem = (CA93D6D53B2CCE716745DD211F110C6E387C12431)
+        mem = (C8E258161A30C508D5E8ED07CE943EEF7408CA508)
                 Context.getInstance().getMemoryContext(pluginID,
-                CA93D6D53B2CCE716745DD211F110C6E387C12431.class);
+                C8E258161A30C508D5E8ED07CE943EEF7408CA508.class);
 
         if (mem == null) {
             StaticDialogs.showErrorMessage("This CPU must have access to memory");
@@ -95,7 +93,7 @@ public class RAM extends SimpleCPU {
             return false;
         }
 
-        dis = new RAMDisassembler(this.mem, this);
+        dis = new RAMDisassembler(this.mem);
         if (!context.init(pluginID))
             return false;
         return true;
@@ -103,30 +101,15 @@ public class RAM extends SimpleCPU {
 
     // called from RAMContext after Input tape attachement
     public void loadTape(C50E67F515A7C87A67947F8FB0F82558196BE0AC7 tape) {
-        Vector<String> data = mem.getInputs();
+        ArrayList<String> data = mem.getInputs();
         if (data == null) {
             return;
         }
 
         int j = data.size();
         for (int i = 0; i < j; i++) {
-            tape.setSymbolAt(i, data.elementAt(i));
+            tape.setSymbolAt(i, data.get(i));
         }
-    }
-
-    @Override
-    public IDebugColumn[] getDebugColumns() {
-        return dis.getDebugColumns();
-    }
-
-    @Override
-    public Object getDebugValue(int row, int col) {
-        return dis.getDebugColVal(row, col);
-    }
-
-    @Override
-    public void setDebugValue(int row, int col, Object val) {
-        dis.setDebugColVal(row, col, val);
     }
 
     @Override
@@ -148,11 +131,6 @@ public class RAM extends SimpleCPU {
         return IP;
     }
 
-    @Override
-    public int getInstrPosition(int pos) {
-        return pos + 1;
-    }
-
     public String getR0() {
         if (!context.checkTapes()) {
             return "<empty>";
@@ -162,7 +140,7 @@ public class RAM extends SimpleCPU {
 
     @Override
     public void destroy() {
-        run_state = ICPU.STATE_STOPPED_NORMAL;
+        run_state = RunState.STATE_STOPPED_NORMAL;
         context.destroy();
         context = null;
         breaks.clear();
@@ -183,27 +161,27 @@ public class RAM extends SimpleCPU {
 
     @Override
     public void pause() {
-        run_state = ICPU.STATE_STOPPED_BREAK;
+        run_state = RunState.STATE_STOPPED_BREAK;
         fireCpuRun(run_state);
     }
 
     @Override
     public void stop() {
-        run_state = ICPU.STATE_STOPPED_NORMAL;
+        run_state = RunState.STATE_STOPPED_NORMAL;
         fireCpuRun(run_state);
     }
 
     @Override
     public void step() {
-        if (run_state == ICPU.STATE_STOPPED_BREAK) {
+        if (run_state == RunState.STATE_STOPPED_BREAK) {
             try {
-                run_state = ICPU.STATE_RUNNING;
+                run_state = RunState.STATE_RUNNING;
                 emulateInstruction();
-                if (run_state == ICPU.STATE_RUNNING) {
-                    run_state = ICPU.STATE_STOPPED_BREAK;
+                if (run_state == RunState.STATE_RUNNING) {
+                    run_state = RunState.STATE_STOPPED_BREAK;
                 }
             } catch (IndexOutOfBoundsException e) {
-                run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
+                run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
             fireCpuRun(run_state);
             fireCpuState();
@@ -217,20 +195,20 @@ public class RAM extends SimpleCPU {
 
     @Override
     public void run() {
-        run_state = ICPU.STATE_RUNNING;
+        run_state = RunState.STATE_RUNNING;
         fireCpuRun(run_state);
 
-        while (run_state == ICPU.STATE_RUNNING) {
+        while (run_state == RunState.STATE_RUNNING) {
             try {
                 if (getBreakpoint(IP) == true) {
                     throw new Error();
                 }
                 emulateInstruction();
             } catch (IndexOutOfBoundsException e) {
-                run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
+                run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
                 break;
             } catch (Error er) {
-                run_state = ICPU.STATE_STOPPED_BREAK;
+                run_state = RunState.STATE_STOPPED_BREAK;
                 break;
             }
         }
@@ -240,13 +218,13 @@ public class RAM extends SimpleCPU {
 
     private void emulateInstruction() {
         if (!context.checkTapes()) {
-            run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
+            run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
             return;
         }
 
         C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E in = (C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E) mem.read(IP++);
         if (in == null) {
-            run_state = ICPU.STATE_STOPPED_BAD_INSTR;
+            run_state = RunState.STATE_STOPPED_BAD_INSTR;
             return;
         }
         switch (in.getCode()) {
@@ -668,14 +646,19 @@ public class RAM extends SimpleCPU {
                 }
                 return;
             case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.HALT:
-                run_state = ICPU.STATE_STOPPED_NORMAL;
+                run_state = RunState.STATE_STOPPED_NORMAL;
                 return;
         }
-        run_state = ICPU.STATE_STOPPED_BAD_INSTR;
+        run_state = RunState.STATE_STOPPED_BAD_INSTR;
     }
 
     @Override
     public boolean isShowSettingsSupported() {
         return false;
+    }
+
+    @Override
+    public IDisassembler getDisassembler() {
+        return dis;
     }
 }

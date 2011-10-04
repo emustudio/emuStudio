@@ -3,7 +3,7 @@
  * 
  *  KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,16 +21,14 @@
  */
 package ramcpu.gui;
 
+import emuLib8.plugins.cpu.CPUInstruction;
+import interfaces.C8E258161A30C508D5E8ED07CE943EEF7408CA508;
+import emuLib8.plugins.cpu.SimpleDisassembler;
 import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
-import interfaces.CA93D6D53B2CCE716745DD211F110C6E387C12431;
-import ramcpu.impl.RAM;
-import emuLib8.plugins.cpu.IDebugColumn;
 
-public class RAMDisassembler {
+public class RAMDisassembler extends SimpleDisassembler {
 
-    private CA93D6D53B2CCE716745DD211F110C6E387C12431 mem;
-    private RAM cpu;
-    private IDebugColumn[] columns;
+    private C8E258161A30C508D5E8ED07CE943EEF7408CA508 mem;
 
     /**
      * V konštruktore vytvorím stĺpce ako objekty
@@ -39,77 +37,32 @@ public class RAMDisassembler {
      * @param mem  kontext operačnej pamäte, ktorý bude
      *             potrebný pre dekódovanie inštrukcií
      */
-    public RAMDisassembler(CA93D6D53B2CCE716745DD211F110C6E387C12431 mem, RAM cpu) {
+    public RAMDisassembler(C8E258161A30C508D5E8ED07CE943EEF7408CA508 mem) {
         this.mem = mem;
-        this.cpu = cpu;
-        columns = new IDebugColumn[3];
-        IDebugColumn c1 = new ColumnInfo("breakpoint", Boolean.class, true);
-        IDebugColumn c2 = new ColumnInfo("address", String.class, false);
-        IDebugColumn c3 = new ColumnInfo("mnemonics", String.class, false);
-        columns[0] = c1;
-        columns[1] = c2;
-        columns[2] = c3;
     }
 
-    /**
-     * Metóda vráti stĺpce pre okno debuggera ako pole.
-     *
-     * @return pole stĺpcov
-     */
-    public IDebugColumn[] getDebugColumns() {
-        return columns;
-    }
-
-    public Object getDebugColVal(int row, int col) {
-        try {
-            C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E instr = (C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E) mem.read(row);
-            switch (col) {
-                case 0:
-                    return cpu.getBreakpoint(row);
-                case 1: {
-                    String s = mem.getLabel(row);
-                    if (s != null) {
-                        return String.valueOf(row) + " (" + s + ")";
-                    } else {
-                        return String.valueOf(row);
-                    }
-                }
-                case 2:
-                    if (instr == null) {
-                        return "empty";
-                    }
-                    return instr.getCodeStr() + " " + instr.getOperandStr();
-                default:
-                    return "";
-            }
-        } catch (IndexOutOfBoundsException e) {
-            switch (col) {
-                case 0:
-                    return cpu.getBreakpoint(row);
-                case 1:
-                    String s = mem.getLabel(row);
-                    if (s != null) {
-                        return String.valueOf(row) + " (" + s + ")";
-                    } else {
-                        return String.valueOf(row);
-                    }
-                case 2:
-                    return "incomplete";
-                default:
-                    return "";
-            }
+    @Override
+    public CPUInstruction disassemble(int memLocation) {
+        String mnemo, oper = "";
+        int addr = memLocation;
+    
+        C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E in = 
+                (C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E) mem.read(memLocation++);
+        if (in == null) {
+            mnemo = "unknown instruction";
+            return new CPUInstruction(addr,mnemo,oper);
         }
+        String label = mem.getLabel(addr);
+        if (label == null)
+            label = "";
+        mnemo = label + " " + in.getCodeStr() + " " + in.getOperandStr();
+        return new CPUInstruction(addr,mnemo,oper);
     }
 
-    public void setDebugColVal(int row, int col, Object value) {
-        if (col != 0) {
-            return;
-        }
-        if (value.getClass() != Boolean.class) {
-            return;
-        }
-
-        boolean v = Boolean.valueOf(value.toString());
-        cpu.setBreakpoint(row, v);
+    @Override
+    public int getNextInstructionLocation(int memLocation) throws IndexOutOfBoundsException {
+        return memLocation+1;
     }
+
+   
 }
