@@ -99,7 +99,7 @@ public class Cpu8080 extends SimpleCPU {
 
     @Override
     public String getVersion() {
-        return "0.21b";
+        return "0.22b";
     }
 
     @Override
@@ -109,7 +109,7 @@ public class Cpu8080 extends SimpleCPU {
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2010, P. Jakubčo";
+        return "\u00A9 Copyright 2006-2011, P. Jakubčo";
     }
 
     @Override
