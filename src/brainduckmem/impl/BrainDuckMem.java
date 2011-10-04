@@ -48,12 +48,12 @@ public class BrainDuckMem extends SimpleMemory {
 
     @Override
     public String getVersion() {
-        return "0.11b";
+        return "0.12b";
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2009-2010, P. Jakubčo";
+        return "\u00A9 Copyright 2009-2011, P. Jakubčo";
     }
 
     @Override
