@@ -31,7 +31,7 @@ import emuLib8.plugins.device.IDeviceContext;
  * CPU context for 8080 processor
  * @author vbmacher
  */
-public interface C17E8D62E685AD7E54C209C30482E3C00C8C56ECC extends ICPUContext {
+public interface C738039DCA561A49F377859B108A9AD1EE6CBDACB extends ICPUContext {
     public boolean attachDevice(IDeviceContext listener, int port);
     public void detachDevice(int port);
     

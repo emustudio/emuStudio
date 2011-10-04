@@ -4,7 +4,7 @@
  * Created on 23.8.2008, 12:53:21
  * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,14 +22,14 @@
  */
 package cpu_z80.impl;
 
+import cpu_z80.gui.Disassembler;
 import cpu_z80.gui.StatusGUI;
-import interfaces.C17E8D62E685AD7E54C209C30482E3C00C8C56ECC;
+import emuLib8.plugins.cpu.IDisassembler;
+import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
 import interfaces.IICpuListener;
 import java.util.TimerTask;
 import javax.swing.JPanel;
 import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.cpu.ICPU;
-import emuLib8.plugins.cpu.IDebugColumn;
 import emuLib8.plugins.cpu.SimpleCPU;
 import emuLib8.plugins.device.IDeviceContext;
 import emuLib8.plugins.memory.IMemoryContext;
@@ -43,6 +43,7 @@ import emuLib8.runtime.StaticDialogs;
 public class CpuZ80 extends SimpleCPU {
 
     private StatusGUI status;
+    private Disassembler dis;
     private IMemoryContext mem;
     private CpuContext cpu;
     // 2 sets of 6 GPR
@@ -204,7 +205,7 @@ public class CpuZ80 extends SimpleCPU {
         cpu = new CpuContext(this);
         rfc = new RuntimeFrequencyCalculator();
         freqScheduler = new java.util.Timer();
-        if (!Context.getInstance().register(pluginID, cpu, C17E8D62E685AD7E54C209C30482E3C00C8C56ECC.class)) {
+        if (!Context.getInstance().register(pluginID, cpu, C738039DCA561A49F377859B108A9AD1EE6CBDACB.class)) {
             StaticDialogs.showErrorMessage("Error: Could not register the CPU!");
         }
     }
@@ -237,11 +238,6 @@ public class CpuZ80 extends SimpleCPU {
     }
 
     @Override
-    public int getInstrPosition(int pos) {
-        return getNextPC(pos);
-    }
-
-    @Override
     public boolean setInstrPosition(int pos) {
         return setPC(pos);
     }
@@ -269,6 +265,7 @@ public class CpuZ80 extends SimpleCPU {
             return false;
         }
         status = new StatusGUI(this, mem);
+        dis = new Disassembler(mem);
         return true;
     }
 
@@ -293,21 +290,21 @@ public class CpuZ80 extends SimpleCPU {
 
     @Override
     public void step() {
-        if (run_state == ICPU.STATE_STOPPED_BREAK) {
+        if (run_state == RunState.STATE_STOPPED_BREAK) {
             try {
-                run_state = ICPU.STATE_RUNNING;
+                run_state = RunState.STATE_RUNNING;
                 boolean oldIFF = IFF[0];
                 noWait = false;
                 evalStep(fetchOpcode());
                 isINT = (interruptPending != 0) && oldIFF && IFF[0];
                 if (PC > 0xffff) {
-                    run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
+                    run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
                     PC = 0xffff;
-                } else if (run_state == ICPU.STATE_RUNNING) {
-                    run_state = ICPU.STATE_STOPPED_BREAK;
+                } else if (run_state == RunState.STATE_RUNNING) {
+                    run_state = RunState.STATE_STOPPED_BREAK;
                 }
             } catch (IndexOutOfBoundsException e) {
-                run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
+                run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
             fireCpuRun(run_state);
             fireCpuState();
@@ -319,22 +316,16 @@ public class CpuZ80 extends SimpleCPU {
      */
     @Override
     public void pause() {
-        run_state = ICPU.STATE_STOPPED_BREAK;
+        run_state = RunState.STATE_STOPPED_BREAK;
         setRuntimeFreqCounter(false);
         fireCpuRun(run_state);
     }
 
     @Override
     public void stop() {
-        run_state = ICPU.STATE_STOPPED_NORMAL;
+        run_state = RunState.STATE_STOPPED_NORMAL;
         setRuntimeFreqCounter(false);
         fireCpuRun(run_state);
-    }
-
-    // get the address from next instruction
-    // this method exist only from a view of effectivity
-    public int getNextPC(int memPos) {
-        return status.getNextPosition(memPos);
     }
 
     /**
@@ -346,22 +337,6 @@ public class CpuZ80 extends SimpleCPU {
         }
         PC = memPos & 0xFFFF;
         return true;
-    }
-
-    /* GUI interaction */
-    @Override
-    public IDebugColumn[] getDebugColumns() {
-        return status.getDebugColumns();
-    }
-
-    @Override
-    public void setDebugValue(int index, int col, Object value) {
-        status.setDebugColVal(index, col, value);
-    }
-
-    @Override
-    public Object getDebugValue(int index, int col) {
-        return status.getDebugColVal(index, col);
     }
 
     @Override
@@ -388,7 +363,7 @@ public class CpuZ80 extends SimpleCPU {
 
     @Override
     public void destroy() {
-        run_state = ICPU.STATE_STOPPED_NORMAL;
+        run_state = RunState.STATE_STOPPED_NORMAL;
         setRuntimeFreqCounter(false);
         cpu.clearDevices();
     }
@@ -688,9 +663,9 @@ public class CpuZ80 extends SimpleCPU {
         switch (intMode) {
             case 0:  // rst p (interruptVector)
                 cycles += 11;
-                int old_runstate = run_state;
+                RunState old_runstate = run_state;
                 evalStep((short)interruptVector); // must ignore halt
-                if (run_state == ICPU.STATE_STOPPED_NORMAL)
+                if (run_state == RunState.STATE_STOPPED_NORMAL)
                     run_state = old_runstate;
                 break;
             case 1: // rst 0xFF
@@ -735,7 +710,7 @@ public class CpuZ80 extends SimpleCPU {
             return doInterrupt();
         R++;
         if (OP == 0x76) { /* HALT */
-            run_state = ICPU.STATE_STOPPED_NORMAL;
+            run_state = RunState.STATE_STOPPED_NORMAL;
             return 4;
         }
 
@@ -1962,7 +1937,7 @@ public class CpuZ80 extends SimpleCPU {
                 PC = tmp;
                 return 17;
         }
-        run_state = ICPU.STATE_STOPPED_BAD_INSTR;
+        run_state = RunState.STATE_STOPPED_BAD_INSTR;
         return 0;
     }
 
@@ -1998,6 +1973,11 @@ public class CpuZ80 extends SimpleCPU {
         synchronized (frequencyLock) {
             this.clockFrequency = freq;
         }
+    }
+
+    @Override
+    public IDisassembler getDisassembler() {
+        return dis;
     }
 
     /**
@@ -2059,7 +2039,7 @@ public class CpuZ80 extends SimpleCPU {
         int cycles;
         long slice;
 
-        run_state = ICPU.STATE_RUNNING;
+        run_state = RunState.STATE_RUNNING;
         fireCpuRun(run_state);
         fireCpuState();
         setRuntimeFreqCounter(true);
@@ -2070,13 +2050,13 @@ public class CpuZ80 extends SimpleCPU {
         cycles_to_execute = sliceCheckTime * getFrequency();
         long i = 0;
         slice = sliceCheckTime * 1000000;
-        while (run_state == ICPU.STATE_RUNNING) {
+        while (run_state == RunState.STATE_RUNNING) {
             i++;
             startTime = System.nanoTime();
             cycles_executed = 0;
             try {
                 while ((cycles_executed < cycles_to_execute)
-                        && (run_state == ICPU.STATE_RUNNING)) {
+                        && (run_state == RunState.STATE_RUNNING)) {
                     cycles = evalStep(fetchOpcode());
                     cycles_executed += cycles;
                     long_cycles += cycles;
@@ -2085,13 +2065,13 @@ public class CpuZ80 extends SimpleCPU {
                     }
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
-                run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
+                run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
                 break;
             } catch (IndexOutOfBoundsException e) {
-                run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
+                run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
                 break;
             } catch (Error er) {
-                run_state = ICPU.STATE_STOPPED_BREAK;
+                run_state = RunState.STATE_STOPPED_BREAK;
                 break;
             }
             endTime = System.nanoTime() - startTime;

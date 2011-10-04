@@ -22,7 +22,7 @@
  */
 package cpu_z80.impl;
 
-import interfaces.C17E8D62E685AD7E54C209C30482E3C00C8C56ECC;
+import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
 import java.util.Hashtable;
 import emuLib8.plugins.device.IDeviceContext;
 
@@ -30,7 +30,7 @@ import emuLib8.plugins.device.IDeviceContext;
  *
  * @author vbmacher
  */
-public final class CpuContext implements C17E8D62E685AD7E54C209C30482E3C00C8C56ECC {
+public final class CpuContext implements C738039DCA561A49F377859B108A9AD1EE6CBDACB {
 
     private Hashtable<Integer, IDeviceContext> devicesList;
     private CpuZ80 z80;
