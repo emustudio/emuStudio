@@ -3,7 +3,7 @@
  * 
  *  KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,12 +49,12 @@ public class RAMmemory extends SimpleMemory {
 
     @Override
     public String getVersion() {
-        return "0.12b";
+        return "0.13b";
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2009-2010, P. Jakubčo";
+        return "\u00A9 Copyright 2009-2011, P. Jakubčo";
     }
 
     @Override
