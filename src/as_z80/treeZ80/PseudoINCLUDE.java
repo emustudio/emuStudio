@@ -47,7 +47,9 @@ public class PseudoINCLUDE extends Pseudo {
 
     public PseudoINCLUDE(String filename, int line, int column, AssemblerZ80 asm) {
         super(line, column);
-        this.filename = filename;
+
+        // change "\"'s to /'s
+        this.filename = filename.replace("\\", "/");
         this.shortFileName = new File(filename).getName();
         this.asm = asm;
     }
