@@ -295,23 +295,23 @@ public class Cpu8080 extends SimpleCPU {
             i++;
             startTime = System.nanoTime();
             cycles_executed = 0;
-            try {
                 while ((cycles_executed < cycles_to_execute)
                         && (run_state == RunState.STATE_RUNNING)) {
-                    cycles = evalStep();
+                    try {
+                        cycles = evalStep();
+                    } catch (IndexOutOfBoundsException e) {
+                        run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
+                        break;
+                    } catch (Error er) {
+                        run_state = RunState.STATE_STOPPED_BREAK;
+                        break;
+                    }
                     cycles_executed += cycles;
                     long_cycles += cycles;
                     if (getBreakpoint(PC) == true) {
                         throw new Error();
                     }
                 }
-            } catch (IndexOutOfBoundsException e) {
-                run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
-                break;
-            } catch (Error er) {
-                run_state = RunState.STATE_STOPPED_BREAK;
-                break;
-            }
             endTime = System.nanoTime() - startTime;
             if (endTime < slice) {
                 // time correction
