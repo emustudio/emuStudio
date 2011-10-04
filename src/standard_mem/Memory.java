@@ -6,7 +6,7 @@
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
  *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@ package standard_mem;
 import interfaces.C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8;
 import java.io.File;
 import java.util.Collections;
-import java.util.Vector;
 
 import standard_mem.gui.frmMemory;
 import emuLib8.plugins.ISettingsHandler;
@@ -35,6 +34,7 @@ import emuLib8.plugins.memory.IMemoryContext;
 import emuLib8.plugins.memory.SimpleMemory;
 import emuLib8.runtime.Context;
 import emuLib8.runtime.StaticDialogs;
+import java.util.ArrayList;
 
 /**
  *
@@ -69,7 +69,7 @@ public class Memory extends SimpleMemory {
 
     @Override
     public String getVersion() {
-        return "0.29b";
+        return "0.30b";
     }
 
     @Override
@@ -79,7 +79,7 @@ public class Memory extends SimpleMemory {
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2010, P. Jakubčo";
+        return "\u00A9 Copyright 2006-2011, P. Jakubčo";
     }
 
     @Override
@@ -184,7 +184,7 @@ public class Memory extends SimpleMemory {
      * tab0 in frmSettings.
      */
     public void saveSettings0(int banksCount, int commonBoundary,
-            Vector<String> imageFullNames, Vector<Integer> imageAddresses) {
+            ArrayList<String> imageFullNames, ArrayList<Integer> imageAddresses) {
         settings.writeSetting(pluginID, "banksCount", String.valueOf(banksCount));
         settings.writeSetting(pluginID, "commonBoundary", String.valueOf(commonBoundary));
 
@@ -209,7 +209,7 @@ public class Memory extends SimpleMemory {
      * directly from memory context.
      */
     public void saveSettings1() {
-        Vector<Integer> keys = new Vector<Integer>(memContext.getROMRanges().keySet());
+        ArrayList<Integer> keys = new ArrayList<Integer>(memContext.getROMRanges().keySet());
         Collections.sort(keys);
         Object[] ar = keys.toArray();
 

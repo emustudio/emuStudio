@@ -3,7 +3,7 @@
  *
  * Created on Štvrtok, 2008, september 25, 9:21
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ package standard_mem.gui;
 
 import java.io.File;
 import java.util.Collections;
-import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
@@ -51,6 +50,7 @@ import standard_mem.gui.utils.EmuFileFilter;
 import standard_mem.gui.utils.tableMemory;
 import emuLib8.plugins.ISettingsHandler;
 import emuLib8.runtime.StaticDialogs;
+import java.util.ArrayList;
 import standard_mem.MemoryContext;
 
 /**
@@ -65,9 +65,9 @@ public class frmSettings extends JDialog {
     private ROMmodel rom_model;
     private ImagesModel images_model;
     private tableMemory tblMem;
-    private Vector<String> imageNames = new Vector<String>();
-    private Vector<String> imageFullNames = new Vector<String>();
-    private Vector<Integer> imageAddresses = new Vector<Integer>();
+    private ArrayList<String> imageNames = new ArrayList<String>();
+    private ArrayList<String> imageFullNames = new ArrayList<String>();
+    private ArrayList<Integer> imageAddresses = new ArrayList<Integer>();
 
    /** Creates new form frmSettings */
     public frmSettings(java.awt.Frame parent, boolean modal, long pluginID,
@@ -227,7 +227,7 @@ public class frmSettings extends JDialog {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            Vector<Integer> keys = new Vector<Integer>(memContext.getROMRanges().keySet());
+            ArrayList<Integer> keys = new ArrayList<Integer>(memContext.getROMRanges().keySet());
             Collections.sort(keys);
             Object[] ar = keys.toArray();
             if (columnIndex == 0) {
@@ -387,7 +387,7 @@ public class frmSettings extends JDialog {
             memContext.setROM(Integer.decode(txtFrom.getText()),
                     Integer.decode(txtTo.getText()));
         } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Range (from,to) has to be positive integer vector!");
+            StaticDialogs.showErrorMessage("Range (from,to) has to be positive integer ArrayList!");
             return;
         }
         tblROM.revalidate();
@@ -401,7 +401,7 @@ public class frmSettings extends JDialog {
             memContext.setRAM(Integer.decode(txtFrom.getText()),
                     Integer.decode(txtTo.getText()));
         } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Range (from,to) has to be positive integer vector!");
+            StaticDialogs.showErrorMessage("Range (from,to) has to be positive integer ArrayList!");
             return;
         }
         tblROM.revalidate();
