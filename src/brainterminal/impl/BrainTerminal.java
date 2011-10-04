@@ -3,7 +3,7 @@
  * 
  * KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,11 +27,11 @@ import emuLib8.plugins.device.IDeviceContext;
 import emuLib8.plugins.device.SimpleDevice;
 import emuLib8.runtime.Context;
 import emuLib8.runtime.StaticDialogs;
-import braincpu.interfaces.CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F;
+import interfaces.CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3;
 
 public class BrainTerminal extends SimpleDevice {
 
-    private CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F cpu;
+    private CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3 cpu;
     private BrainTerminalContext terminal;
     private BrainTerminalDialog gui;
 
@@ -66,9 +66,9 @@ public class BrainTerminal extends SimpleDevice {
     public boolean initialize(ISettingsHandler settings) {
         super.initialize(settings);
 
-        cpu = (CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F)Context.getInstance()
+        cpu = (CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3)Context.getInstance()
                 .getCPUContext(pluginID,
-                CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F.class);
+                CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3.class);
         if (cpu == null) {
             StaticDialogs.showErrorMessage("BrainTerminal needs to be connected"
                     + "to the BrainCPU.");
