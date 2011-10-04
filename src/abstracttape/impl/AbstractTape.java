@@ -51,12 +51,12 @@ public class AbstractTape extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return "0.21b";
+        return "0.22b";
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2009-2010, P. Jakubčo";
+        return "\u00A9 Copyright 2009-2011, P. Jakubčo";
     }
 
     @Override
