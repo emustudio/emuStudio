@@ -6,7 +6,7 @@
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
  *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -116,8 +116,9 @@ public class Assembler8080 extends SimpleCompiler {
         CompileEnv env = new CompileEnv();
         stat.pass1(env); // create symbol table
         stat.pass2(0); // try to evaluate all expressions + compute relative addresses
-        while (stat.pass3(env) == true)
-            ;
+        while (stat.pass3(env) == true) {
+            // don't worry about deadlock
+        }
         if (env.getPassNeedCount() != 0) {
             printError("Error: can't evaulate all expressions");
             return null;

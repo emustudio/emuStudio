@@ -801,10 +801,12 @@ public class Parser8080 extends java_cup.runtime.lr_parser {
         this.asm = asm;
     }
     	
+    @Override
     public void syntax_error(Symbol current) {
         report_error("Syntax error: ",current);
     }
 
+    @Override
     public void unrecovered_syntax_error(Symbol current) {
         report_error("Fatal syntax error: ", current);
         done_parsing();
