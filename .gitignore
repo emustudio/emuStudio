@@ -9,3 +9,4 @@ cpu/*.*
 mem/*.*
 config/*.*
 devices/*.*
+examples
