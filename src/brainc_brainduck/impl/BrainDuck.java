@@ -52,7 +52,7 @@ public class BrainDuck extends SimpleCompiler {
         lex = new LexerBD((Reader) null);
         par = new ParserBD(lex);
         suffixes = new SourceFileExtension[1];
-        suffixes[0] = new SourceFileExtension("asm", "Z80 assembler source");
+        suffixes[0] = new SourceFileExtension("asm", "Brainduck assembler source");
     }
 
     @Override
@@ -62,12 +62,12 @@ public class BrainDuck extends SimpleCompiler {
 
     @Override
     public String getVersion() {
-        return "0.14b";
+        return "0.15b";
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2009-2010, P. Jakubčo";
+        return "\u00A9 Copyright 2009-2011, P. Jakubčo";
     }
 
     @Override
