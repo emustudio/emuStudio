@@ -78,7 +78,7 @@ public class BrainTerminal extends SimpleDevice {
 
         // read settings
         String s = settings.readSetting(pluginID, "verbose");
-        if (s.toUpperCase().equals("TRUE")) {
+        if ((s != null) && (s.toUpperCase().equals("TRUE"))) {
             gui.setVerbose(true);
             gui.setVisible(true);
         } else {
