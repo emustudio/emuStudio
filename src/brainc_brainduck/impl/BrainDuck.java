@@ -120,6 +120,14 @@ public class BrainDuck extends SimpleCompiler {
             if (hex == null) {
                 return false;
             }
+            
+            // Remove ".*" suffix and add ".hex" suffix to the filename
+            int i = fileName.lastIndexOf(".");
+            if (i >= 0) {
+                fileName = fileName.substring(0, i);
+            }
+            fileName += ".hex"; // the output suffix
+
             hex.generateFile(fileName);
             printInfo("Compile was sucessfull. Output: " + fileName);
             programStart = hex.getProgramStart();
