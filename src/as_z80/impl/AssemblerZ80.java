@@ -6,7 +6,7 @@
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
  *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -110,8 +110,9 @@ public class AssemblerZ80 extends SimpleCompiler {
         Namespace env = new Namespace();
         stat.pass1(env); // create symbol table
         stat.pass2(0); // try to evaluate all expressions + compute relative addresses
-        while (stat.pass3(env) == true)
-            ;
+        while (stat.pass3(env) == true) {
+            // don't worry about deadlock
+        }
         if (env.getPassNeedCount() != 0) {
             printError("Error: can't evaulate all expressions");
             return null;
@@ -127,6 +128,13 @@ public class AssemblerZ80 extends SimpleCompiler {
             if (hex == null) {
                 return false;
             }
+            // Remove ".*" suffix and add ".hex" suffix to the filename
+            int i = fileName.lastIndexOf(".");
+            if (i >= 0) {
+                fileName = fileName.substring(0, i);
+            }
+            fileName += ".hex"; // the output suffix
+            
             hex.generateFile(fileName);
             printInfo("Compile was sucessfull. Output: " + fileName);
 
