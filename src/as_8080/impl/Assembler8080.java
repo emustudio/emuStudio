@@ -61,12 +61,12 @@ public class Assembler8080 extends SimpleCompiler {
 
     @Override
     public String getVersion() {
-        return "0.30b";
+        return "0.31b";
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2007-2010, P.Jakubčo";
+        return "\u00A9 Copyright 2007-2011, P.Jakubčo";
     }
 
     @Override
