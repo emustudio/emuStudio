@@ -4,7 +4,7 @@
  * Created on 4.7.2008, 8:11:24
  * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,10 +38,10 @@ public class DeviceElement extends Element {
      *
      * @param x X location of the element
      * @param y Y location of the element
-     * @param text description text
+     * @param detials description text
      */
-    public DeviceElement(int x, int y, String text) {
-        super(Color.WHITE, text, x, y);
+    public DeviceElement(int x, int y, String detials) {
+        super("device", detials, Color.WHITE, x, y);
         //super(new Color(0xFFFEFF), text, x, y);
     }
 
@@ -58,7 +58,7 @@ public class DeviceElement extends Element {
 
     @Override
     protected String getPluginType() {
-        return "Device";
+        return "device";
     }
 
 }

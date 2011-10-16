@@ -4,7 +4,7 @@
  * Created on 3.7.2008, 8:28:14
  * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,10 +38,10 @@ public class CpuElement extends Element {
      *
      * @param x X location of this element
      * @param y Y location of this element
-     * @param text description text (name of the plug-in)
+     * @param details description text (name of the plug-in)
      */
-    public CpuElement(int x, int y, String text) {
-        super(Color.WHITE, text, x, y);
+    public CpuElement(int x, int y, String details) {
+        super("cpu", details, Color.WHITE, x, y);
         //super(new Color(0x6D8471), text, x, y);
     }
 
@@ -50,10 +50,10 @@ public class CpuElement extends Element {
      * location and the description text.
      *
      * @param e1 Point representing the element location
-     * @param text description text (name of the plug-in)
+     * @param details description text (name of the plug-in)
      */
-    public CpuElement(Point e1, String text) {
-        this((int)e1.getX(),(int)e1.getY(), text);
+    public CpuElement(Point e1, String details) {
+        this((int)e1.getX(),(int)e1.getY(), details);
     }
 
     /**
@@ -63,7 +63,7 @@ public class CpuElement extends Element {
      */
     @Override
     protected String getPluginType() {
-        return "CPU";
+        return "cpu";
     }
     
 }

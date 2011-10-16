@@ -38,7 +38,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="scrollScheme" pref="614" max="32767" attributes="0"/>
+                      <Component id="scrollScheme" pref="616" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="sliderGridGap" min="-2" pref="31" max="-2" attributes="0"/>
                   </Group>

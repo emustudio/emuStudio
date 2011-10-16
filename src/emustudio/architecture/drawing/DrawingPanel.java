@@ -35,8 +35,9 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.EventListener;
-import javax.swing.JPanel;
 import javax.swing.event.EventListenerList;
+import no.geosoft.cc.graphics.GScene;
+import no.geosoft.cc.graphics.GWindow;
 
 /**
  * This class handles the drawing canvas - panel by which the user can draw
@@ -64,27 +65,9 @@ import javax.swing.event.EventListenerList;
  * @author vbmacher
  */
 @SuppressWarnings("serial")
-public class DrawingPanel extends JPanel implements MouseListener,
+public class DrawingPanel extends GWindow implements MouseListener,
         MouseMotionListener {
-
-    /**
-     * Interface that should be implemented by an event listener.
-     */
-    public interface DrawEventListener extends EventListener {
-
-        /**
-         * This method is called whenever the user uses any of the
-         * tools available within this DrawingPanel.
-         *
-         * The schema editor then can "turn off" the tool.
-         */
-        public void toolUsed();
-    }
-
-    /**
-     * List of event listeners
-     */
-    private EventListenerList eventListeners;
+    private GScene scene;
 
     /**
      * Whether to use and draw grid
@@ -101,92 +84,12 @@ public class DrawingPanel extends JPanel implements MouseListener,
      */
     private Color gridColor;
 
-    /**
-     * A draw tool used by this panel in the time. 
-     */
-    private PanelDrawTool drawTool;
-
-    /**
-     * Mode of the panel. One of the draw, move or select.
-     */
-    private PanelMode panelMode;
-
-    /**
-     * This variable is used when "move" mode is active and user moves
-     * an element. It holds the moving element object.
-     *
-     * If "draw" mode is active and when users draws a line, it represents the
-     * first element that the line is connected to. If it is selected the element
-     * deletion, it represents a shape that should be deleted when mouse is
-     * released.
-     */
-    private Element tmpElem1;
-
-    /**
-     * If an element is selected (mouse pressed) and then dragged, this
-     * variable holds true. It is false in all other cases.
-     *
-     * When the mouse is released, the value is tested. If it is true, it means
-     * that the element has been moved and therefore possible selection of
-     * the other elements should not be cleared.
-     *
-     */
-    private boolean elementDragged;
-
-    /**
-     * Used when drawing lines. It represents last element that the line
-     * is connected to.
-     */
-    private Element tmpElem2;
-
-    /**
-     * Selected line. Used only in "move" mode.
-     *
-     * This variable is used if the user wants to remove or move an existing
-     * connection line point.
-     */
-    private ConnectionLine selLine;
-
-    /**
-     * Holds a point of a connection line.
-     *
-     * This is used in "move" mode for:
-     *   - move of the connection line point
-     *   - add/delete connection line point
-     *
-     * in the "draw" mode, it is used for:
-     *   - holds temporal point that will be added to temporal points array
-     *     when mouse is released, while drawing a line
-     */
-    private Point selPoint;
-
-    /**
-     * This variable contains last sketch point when drawing a connection line.
-     * The last point is variable according to the mouse position. It actually
-     * is the mouse position when drawing a line.
-     *
-     * It is used only in "draw" mode.
-     */
-    private Point sketchLastPoint;
-
-    /**
-     * Point where the selection starts. It is set when the "selection" mode
-     * is activated.
-     */
-    private Point selectionStart;
-
-    /**
-     * Point where the selection ends. It is set when the "selection" mode
-     * is active and mouse released.
-     */
-    private Point selectionEnd;
+    private Schema schema;
 
     private BasicStroke thickLine;
 
     private BasicStroke dashedLine;
-
-    private Schema schema;
-
+    
     /**
      * Temporary points used in the process of connection line drawing.
      * If the line is drawn, these points are saved, they are cleared otherwise.
@@ -195,82 +98,11 @@ public class DrawingPanel extends JPanel implements MouseListener,
     
     private String newText;
 
-    /* double buffering */
-    private Image dbImage;   // second buffer
-    private Graphics2D dbg;  // graphics for double buffering
-
-    /**
-     * Future connection line direction. Holds true, if the drawing line
-     * should be bidirectional, false otherwise.
-     */
-    private boolean bidirectional;
-
     /**
      * Tolerance radius for user point selection, in pixels
      */
     private static final int toleranceRadius = 5;
     
-    /**
-     * Draw tool enum.
-     */
-    public enum PanelDrawTool {
-        /**
-         * Compiler drawing tool
-         */
-        shapeCompiler,
-
-        /**
-         * CPU drawing tool
-         */
-        shapeCPU,
-
-        /**
-         * Memory drawing tool
-         */
-        shapeMemory,
-
-        /**
-         * Device drawing tool
-         */
-        shapeDevice,
-
-        /**
-         * Connection line drawing tool
-         */
-        connectLine,
-
-        /**
-         * The removal tool
-         */
-        delete,
-
-        /**
-         * No tool, do nothing
-         */
-        nothing
-    }
-
-    /**
-     * Panel mode enum.
-     */
-    public enum PanelMode {
-
-        /**
-         * Drawing mode
-         */
-        draw,
-
-        /**
-         * Move mode
-         */
-        move,
-
-        /**
-         * Selection mode
-         */
-        select
-    }
-
     /**
      * Creates new instance of the draw panel.
      *
@@ -279,13 +111,12 @@ public class DrawingPanel extends JPanel implements MouseListener,
      * @param gridGap grid gap in pixels
      */
     public DrawingPanel(Schema schema, boolean useGrid, int gridGap) {
-        this.setBackground(Color.WHITE);
+        super(Color.WHITE);
+        scene = new GScene(this);
+        
         this.schema = schema;
         this.useGrid = useGrid;
         this.gridGap = gridGap;
-
-        panelMode = PanelMode.move;
-        drawTool = PanelDrawTool.nothing;
 
         thickLine = new BasicStroke(2);
         float dash[] = { 10.0f };
@@ -294,39 +125,6 @@ public class DrawingPanel extends JPanel implements MouseListener,
 
         tmpPoints = new ArrayList<Point>();
         gridColor = new Color(0xBFBFBF);
-
-        eventListeners = new EventListenerList();
-        bidirectional = true;
-        elementDragged = false;
-    }
-
-    /**
-     * Adds a DrawEventListener object onto the list of listeners.
-     *
-     * @param listener listener object
-     */
-    public void addEventListener(DrawEventListener listener) {
-        eventListeners.add(DrawEventListener.class, listener);
-    }
-
-    /**
-     * Remove DrawEventListener object from the list of listeners.
-     *
-     * @param listener listener object to remove
-     */
-    public void removeEventListener(DrawEventListener listener) {
-        eventListeners.remove(DrawEventListener.class, listener);
-    }
-
-    /**
-     * Fires the toolUsed() method on all listeners on listeners list
-     */
-    private void fireListeners() {
-        Object[] listenersList = eventListeners.getListenerList();
-        for (int i = listenersList.length-2; i>=0; i-=2) {
-            if (listenersList[i]==DrawEventListener.class)
-                ((DrawEventListener)listenersList[i+1]).toolUsed();
-        }
     }
 
     /**
@@ -352,7 +150,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
      */
     public void setUseGrid(boolean useGrid) {
         this.useGrid = useGrid;
-        repaint();
+  //      repaint();
     }
 
     /**
@@ -362,36 +160,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
      */
     public void setGridGap(int gridGap) {
         this.gridGap = gridGap;
-        repaint();
+//        repaint();
     }
     
-    /**
-     * Override previous update method in order to implement
-     * double-buffering. As a second buffer is used the Image object.
-     *
-     * @param g Graphics object where to paint
-     */
-    @Override
-    public void update(Graphics g) {
-        // initialize buffer if needed
-        if (dbImage == null) {
-            dbImage = createImage (this.getSize().width,
-                    this.getSize().height);
-            dbg = (Graphics2D)dbImage.getGraphics();
-        }
-        // clear screen in background
-        dbg.setColor(getBackground());
-        dbg.fillRect (0, 0, this.getSize().width,
-                this.getSize().height);
-
-        // draw elements in background
-        dbg.setColor(getForeground());
-        paint(dbg);
-
-        // draw image on the screen
-        g.drawImage(dbImage, 0, 0, this);
-    }
-
     /**
      * Perform a correction of the panel size. It means that the panel size
      * will be accomodated to the schema needs.
@@ -428,10 +199,10 @@ public class DrawingPanel extends JPanel implements MouseListener,
                     area.height = (int)p.getY();
             }
         }
-        if (area.width != 0 && area.height != 0) {
-            this.setPreferredSize(area);
-            this.revalidate();
-        }
+//        if (area.width != 0 && area.height != 0) {
+  //          this.setPreferredSize(area);
+    //        this.revalidate();
+      //  }
     }
 
     /**

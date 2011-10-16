@@ -29,6 +29,9 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Stroke;
 import java.util.ArrayList;
+import no.geosoft.cc.graphics.GObject;
+import no.geosoft.cc.graphics.GSegment;
+import no.geosoft.cc.graphics.GStyle;
 
 /**
  * The connection line within the abstract schemas.
@@ -37,7 +40,7 @@ import java.util.ArrayList;
  * 
  * @author vbmacher
  */
-public class ConnectionLine {
+public class ConnectionLine extends GObject {
     /**
      * First element in the connection.
      *
@@ -55,8 +58,6 @@ public class ConnectionLine {
      */
     private Element e2;
     
-
-
     private ArrayList<Point> points;
     private static BasicStroke thickLine = new BasicStroke(2);
 
@@ -90,6 +91,10 @@ public class ConnectionLine {
     private Point arrow2;
     private Point arrow2LeftEnd;
     private Point arrow2RightEnd;
+    
+    private GStyle lineStyle;
+    private GSegment[] lineSegments;
+    
 
     /**
      * Create new ConnectionLine object.
@@ -108,6 +113,12 @@ public class ConnectionLine {
 
         this.bidirectional = true;
         this.selected = false;
+        
+        lineStyle = new GStyle();
+        lineStyle.setBackgroundColor(Color.BLACK);
+        
+        // create line
+        
     }
 
     /**
@@ -420,8 +431,8 @@ public class ConnectionLine {
      *
      * @param g Graphics2D object, where to draw the line
      */
-    public void draw(Graphics2D g) {
-        draw(g,0,0);
+    public void draw() {
+        draw(0,0);
     }
 
     /**
@@ -433,7 +444,7 @@ public class ConnectionLine {
      * @param topFactor correction of the line (line will be moved upward to
      *        the topFactor value, in the Y coordinate)
      */
-    public void draw(Graphics2D g, int leftFactor, int topFactor) {
+    public void draw(int leftFactor, int topFactor) {
         if (selected)
             g.setColor(Color.BLUE);
         else

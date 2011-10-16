@@ -3,7 +3,7 @@
  *
  * KISS, YAGNI
  *
- *  Copyright (C) 2010 vbmacher
+ *  Copyright (C) 2010-2011 vbmacher
  * 
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -39,21 +39,22 @@ public class CompilerElement extends Element {
      *
      * @param x the X coordinate in pixels, in the schema
      * @param y the Y coordinate in pixels, in the schema
-     * @param text name of the compiler
+     * @param details name of the compiler
      */
-    public CompilerElement(int x, int y, String text) {
-        super(Color.WHITE, text, x, y);
+    public CompilerElement(int x, int y, String details) {
 //        super(Color.CYAN, text, x, y);
+        super("compiler", details, Color.WHITE, x, y);
+      //  GText ttext = new GText(text, GPosition.CENTER | GPosition.MIDDLE);
     }
 
     /**
      * Create new Compiler element object.
      *
      * @param shapePoint the point where the compiler is located in the schema
-     * @param newText name of the compiler
+     * @param details name of the compiler
      */
-    public CompilerElement(Point shapePoint, String newText) {
-        this(shapePoint.x, shapePoint.y, newText);
+    public CompilerElement(Point shapePoint, String details) {
+        this(shapePoint.x, shapePoint.y, details);
     }
 
     /**
@@ -63,7 +64,7 @@ public class CompilerElement extends Element {
      */
     @Override
     protected String getPluginType() {
-        return "Compiler";
+        return "compiler";
     }
 
 }

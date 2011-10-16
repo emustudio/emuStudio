@@ -129,7 +129,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
         this.setLocationRelativeTo(null);
         this.odialog = odialog;
         pan = new DrawingPanel(this.schema, true, sliderGridGap.getValue());
-        scrollScheme.setViewportView(pan);
+        scrollScheme.setViewportView(pan.getCanvas());
         scrollScheme.getHorizontalScrollBar().setUnitIncrement(10);
         scrollScheme.getVerticalScrollBar().setUnitIncrement(10);
         pan.addMouseListener(pan);
