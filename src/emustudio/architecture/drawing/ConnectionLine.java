@@ -693,8 +693,8 @@ public class ConnectionLine {
      */
     public void replaceElement(Element e1, Element e2) {
         if (this.e1 == e1)
-            this.e1 = e1;
-        if (this.e2 == e2)
+            this.e1 = e2;
+        if (this.e2 == e1)
             this.e2 = e2;
     }
 
