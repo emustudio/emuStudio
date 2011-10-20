@@ -50,6 +50,7 @@ import emuLib8.plugins.memory.IMemory;
 import emuLib8.plugins.cpu.ICPU;
 import emuLib8.plugins.device.IDevice;
 import emuLib8.runtime.StaticDialogs;
+import emustudio.architecture.drawing.DrawingPanel;
 import java.util.Collections;
 import java.util.List;
 
@@ -222,16 +223,23 @@ public class ArchLoader {
 
             if (p == null)
                 return null;
+            
+            // grid
+            boolean useGrid = Boolean.parseBoolean(p.getProperty("useGrid","false"));
+            int gridGap = Integer.parseInt(p.getProperty("gridGap",
+                    DrawingPanel.DEFAULT_GRID_GAP));
 
             // load compiler
             String elementName = p.getProperty("compiler", null);
-            int x, y;
+            int x, y, width, height;
             CompilerElement compiler = null;
 
             if (elementName != null) {
                 x = Integer.parseInt(p.getProperty("compiler.point.x","0"));
                 y = Integer.parseInt(p.getProperty("compiler.point.y","0"));
-                compiler = new CompilerElement(x,y,elementName);
+                width = Integer.parseInt(p.getProperty("compiler.width","0"));
+                height = Integer.parseInt(p.getProperty("compiler.height","0"));
+                compiler = new CompilerElement(x,y,elementName,width,height);
             }
 
             // load cpu
@@ -242,7 +250,9 @@ public class ArchLoader {
             if (elementName != null) {
                 x = Integer.parseInt(p.getProperty("cpu.point.x","0"));
                 y = Integer.parseInt(p.getProperty("cpu.point.y","0"));
-                cpu = new CpuElement(x,y,elementName);
+                width = Integer.parseInt(p.getProperty("cpu.width","0"));
+                height = Integer.parseInt(p.getProperty("cpu.height","0"));
+                cpu = new CpuElement(x,y,elementName,width, height);
             }
 
             // load memory
@@ -251,7 +261,9 @@ public class ArchLoader {
             if (elementName != null) {
                 x = Integer.parseInt(p.getProperty("memory.point.x","0"));
                 y = Integer.parseInt(p.getProperty("memory.point.y","0"));
-                memory = new MemoryElement(x,y,elementName);
+                width = Integer.parseInt(p.getProperty("memory.width","0"));
+                height = Integer.parseInt(p.getProperty("memory.height","0"));
+                memory = new MemoryElement(x,y,elementName,width,height);
             }
             
             ArrayList<DeviceElement> devices = new ArrayList<DeviceElement>();
@@ -259,7 +271,10 @@ public class ArchLoader {
             for (int i = 0; p.containsKey("device"+i); i++) {
                 x = Integer.parseInt(p.getProperty("device"+i+".point.x","0"));
                 y = Integer.parseInt(p.getProperty("device"+i+".point.y","0"));
-                devices.add(new DeviceElement(x,y,p.getProperty("device"+i,"device"+i)));
+                width = Integer.parseInt(p.getProperty("device"+i+".width","0"));
+                height = Integer.parseInt(p.getProperty("device"+i+".height","0"));
+                devices.add(new DeviceElement(x,y,p.getProperty("device"+i,
+                        "device"+i),width,height));
             }
 
             // load connections
@@ -306,7 +321,8 @@ public class ArchLoader {
                     lines.add(lin);
                 }
             }
-            return new Schema(cpu,memory,devices,lines,configName,compiler);
+            return new Schema(cpu,memory,devices,lines,configName,compiler,
+                    useGrid,gridGap);
         }
         catch (Exception e) {
             StaticDialogs.showErrorMessage("Error reading configuration: "
@@ -325,12 +341,16 @@ public class ArchLoader {
             Properties p = readConfig(s.getConfigName(),false);
             if (p == null)
                 p = new Properties();
+            p.put("useGrid", String.valueOf(s.getUseGrid()));
+            p.put("gridGap", String.valueOf(s.getGridGap()));
             // compiler
             CompilerElement compiler = s.getCompilerElement();
             if (compiler != null) {
                 p.put("compiler", compiler.getDetails());
                 p.put("compiler.point.x", String.valueOf((int)(compiler.getX())));
                 p.put("compiler.point.y", String.valueOf((int)(compiler.getY())));
+                p.put("compiler.width", String.valueOf((int)(compiler.getWidth())));
+                p.put("compiler.height", String.valueOf((int)(compiler.getHeight())));
             }
             // cpu
             CpuElement cpu = s.getCpuElement();
@@ -338,6 +358,8 @@ public class ArchLoader {
                 p.put("cpu", cpu.getDetails());
                 p.put("cpu.point.x", String.valueOf((int)(cpu.getX())));
                 p.put("cpu.point.y", String.valueOf((int)(cpu.getY())));
+                p.put("cpu.width", String.valueOf((int)(cpu.getWidth())));
+                p.put("cpu.height", String.valueOf((int)(cpu.getHeight())));
             }
             // memory
             MemoryElement mem = s.getMemoryElement();
@@ -345,6 +367,8 @@ public class ArchLoader {
                 p.put("memory", mem.getDetails());
                 p.put("memory.point.x", String.valueOf((int)(mem.getX())));
                 p.put("memory.point.y", String.valueOf((int)(mem.getY())));
+                p.put("memory.width", String.valueOf((int)(mem.getWidth())));
+                p.put("memory.height", String.valueOf((int)(mem.getHeight())));
             }
             // devices
             ArrayList<DeviceElement> devs = s.getDeviceElements();
@@ -355,6 +379,8 @@ public class ArchLoader {
                 p.put("device"+i, dev.getDetails());
                 p.put("device"+i+".point.x", String.valueOf((int)(dev.getX())));
                 p.put("device"+i+".point.y", String.valueOf((int)(dev.getY())));
+                p.put("device"+i+".width", String.valueOf((int)(dev.getWidth())));
+                p.put("device"+i+".height", String.valueOf((int)(dev.getHeight())));
             }
             ArrayList<ConnectionLine> lines = s.getConnectionLines();
             for (int i = 0; i < lines.size(); i++) {
@@ -426,16 +452,24 @@ public class ArchLoader {
                 p.remove("compiler");
                 p.remove("compiler.point.x");
                 p.remove("compiler.point.y");
+                p.remove("compiler.width");
+                p.remove("compiler.height");
                 p.remove("cpu");
                 p.remove("cpu.point.x");
                 p.remove("cpu.point.y");
+                p.remove("cpu.width");
+                p.remove("cpu.height");
                 p.remove("memory");
                 p.remove("memory.point.x");
                 p.remove("memory.point.y");
+                p.remove("memory.width");
+                p.remove("memory.height");
                 for (int i = 0; p.containsKey("device"+i); i++) {
                     p.remove("device"+i);
                     p.remove("device"+i+",point.x");
                     p.remove("device"+i+",point.y");
+                    p.remove("device"+i+".width");
+                    p.remove("device"+i+".height");
                 }
                 for (int i = 0; p.containsKey("connection"+i+".junc0"); i++) {
                     p.remove("connection"+i+".junc0");

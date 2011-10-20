@@ -35,61 +35,134 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.EventListener;
+import javax.swing.JPanel;
 import javax.swing.event.EventListenerList;
-import no.geosoft.cc.graphics.GScene;
-import no.geosoft.cc.graphics.GWindow;
 
 /**
- * This class handles the drawing canvas - panel by which the user can draw
+ * This class handles the drawing canvas - panel by which the user can modelling
  * abstract schemas of virtual computers.
  *
  * The drawing is realized by capturing mouse events (motion, clicks).
- *
  * The "picture" is synchronized with the Schema object automatically.
  *
- * The panel has states, or modes.
- * 
- * In "draw" mode, the draw tool is selected and mouse clicks are events causing
- * drawing in the mode.
- * 
- * In "move" mode, no draw tool is selected and elements selection, and drag-n-drop
- * technique are used for elements and points of connection lines by mouse events.
- * Also here it is allowed the movement of a elements selection.
- *
- * Finally in "select" mode, no draw tool is selected neither and user is able
- * to select one or more elements and lines. This mode can be activated only from
- * the "move" mode. When user finishes to select elements, the mode is returned
- * to the "move" mode.
- *
- * The initial mode is "move" mode.
+ * The panel has states, or modes. The initial mode is "moving" mode.
  * @author vbmacher
  */
 @SuppressWarnings("serial")
-public class DrawingPanel extends GWindow implements MouseListener,
+public class DrawingPanel extends JPanel implements MouseListener,
         MouseMotionListener {
-    private GScene scene;
+    public final static String DEFAULT_GRID_GAP = "30";
 
     /**
-     * Whether to use and draw grid
+     * Interface that should be implemented by an event listener.
      */
-    private boolean useGrid;
-    
+    public interface DrawEventListener extends EventListener {
+
+        /**
+         * This method is called whenever the user uses any of the
+         * tools available within this DrawingPanel.
+         *
+         * The schema editor then can "turn off" the tool.
+         */
+        public void toolUsed();
+    }
+
     /**
-     * Gap between vertical and horizontal grid lines
+     * List of event listeners
      */
-    private int gridGap;
+    private EventListenerList eventListeners;
 
     /**
      * Color of the grid
      */
     private Color gridColor;
 
-    private Schema schema;
+    /**
+     * A modelling tool used by this panel in the time. 
+     */
+    private PanelDrawTool drawTool;
+
+    /**
+     * Mode of the panel. One of the modelling, moving or selecting.
+     */
+    private PanelMode panelMode;
+
+    /**
+     * This variable is used when "moving" mode is active and user moves
+     * an element. It holds the moving element object.
+     *
+     * If "modelling" mode is active and when users draws a line, it represents the
+     * first element that the line is connected to. If it is selected the element
+     * deletion, it represents a shape that should be deleted when mouse is
+     * released.
+     */
+    private Element tmpElem1;
+
+    /**
+     * If an element is selected (mouse pressed) and then dragged, this
+     * variable holds true. It is false in all other cases.
+     *
+     * When the mouse is released, the value is tested. If it is true, it means
+     * that the element has been moved and therefore possible selection of
+     * the other elements should not be cleared.
+     *
+     */
+    private boolean elementDragged;
+
+    /**
+     * Used when drawing lines. It represents last element that the line
+     * is connected to.
+     */
+    private Element tmpElem2;
+
+    /**
+     * Selected line. Used only in "moving" mode.
+     *
+     * This variable is used if the user wants to remove or moving an existing
+     * connection line point.
+     */
+    private ConnectionLine selLine;
+
+    /**
+     * Holds a point of a connection line.
+     *
+     * This is used in "moving" mode for:
+     *   - moving of the connection line point
+     *   - add/delete connection line point
+     *
+     * in the "modelling" mode, it is used for:
+     *   - holds temporal point that will be added to temporal points array
+     *     when mouse is released, while drawing a line
+     */
+    private Point selPoint;
+
+    /**
+     * This variable contains last sketch point when drawing a connection line.
+     * The last point is variable according to the mouse position. It actually
+     * is the mouse position when drawing a line.
+     *
+     * It is used only in "modelling" mode.
+     */
+    private Point sketchLastPoint;
+
+    /**
+     * Point where the selection starts. It is set when the "selection" mode
+     * is activated.
+     */
+    private Point selectionStart;
+
+    /**
+     * Point where the selection ends. It is set when the "selection" mode
+     * is active and mouse released.
+     */
+    private Point selectionEnd;
 
     private BasicStroke thickLine;
 
     private BasicStroke dashedLine;
-    
+
+    private Schema schema;
+
     /**
      * Temporary points used in the process of connection line drawing.
      * If the line is drawn, these points are saved, they are cleared otherwise.
@@ -98,25 +171,119 @@ public class DrawingPanel extends GWindow implements MouseListener,
     
     private String newText;
 
+    /* double buffering */
+    private Image dbImage;   // second buffer
+    private Graphics2D dbg;  // graphics for double buffering
+
+    /**
+     * Future connection line direction. Holds true, if the drawing line
+     * should be bidirectional, false otherwise.
+     */
+    private boolean bidirectional;
+
     /**
      * Tolerance radius for user point selection, in pixels
      */
     private static final int toleranceRadius = 5;
     
     /**
-     * Creates new instance of the draw panel.
+     * Draw tool enum.
+     */
+    public enum PanelDrawTool {
+        /**
+         * Compiler drawing tool
+         */
+        shapeCompiler,
+
+        /**
+         * CPU drawing tool
+         */
+        shapeCPU,
+
+        /**
+         * Memory drawing tool
+         */
+        shapeMemory,
+
+        /**
+         * Device drawing tool
+         */
+        shapeDevice,
+
+        /**
+         * Connection line drawing tool
+         */
+        connectLine,
+
+        /**
+         * The removal tool
+         */
+        delete,
+
+        /**
+         * No tool, do nothing
+         */
+        nothing
+    }
+
+    /**
+     * Panel mode enum.
+     */
+    public enum PanelMode {
+
+        /**
+         * Modelling mode. New components are being added or deleted, according
+         * to selected tool. When mouse clicks on the canvas, the component is
+         * created/deleted and mode is switched into "moving" mode.
+         * 
+         * If a user is creating a line, by clicking on an empty area a line point
+         * is created and user continues creating the line - ie. the "modelling" mode
+         * stays.
+         */
+        modelling,
+
+        /**
+         * Moving mode, initial. If no objects are selected, mouse is just
+         * moving - if the mouse hovers over components or line points, they are
+         * highlighted.
+         * 
+         * If a user presses left mouse button over existing selection, selected
+         * components are going to be moved by following mouse moves. The mouse
+         * releasement finishes the movement.
+         * 
+         * If a user presses left mouse button over a line point, it is going to
+         * be moved by following mouse moves. The mouse releasement finishes
+         * the movement.
+         * 
+         * If a user presses left mouse button over a line (not on a line point),
+         * new line point is created on this location and it is immediately
+         * selected for movement.
+         * 
+         * If a user presses left mouse button over empty area, the mode is
+         * switched to "selection" mode.
+         */
+        moving,
+
+        /**
+         * Selecting mode. By mouse movement more/less components are added
+         * into a selection. The mouse releasement switches into "moving" mode.
+         */
+        selecting
+    }
+
+    /**
+     * Creates new instance of the modelling panel.
      *
      * @param schema  Schema object for the panel synchronization
      * @param useGrid whether to use grid
      * @param gridGap grid gap in pixels
      */
-    public DrawingPanel(Schema schema, boolean useGrid, int gridGap) {
-        super(Color.WHITE);
-        scene = new GScene(this);
-        
+    public DrawingPanel(Schema schema) {
+        this.setBackground(Color.WHITE);
         this.schema = schema;
-        this.useGrid = useGrid;
-        this.gridGap = gridGap;
+
+        panelMode = PanelMode.moving;
+        drawTool = PanelDrawTool.nothing;
 
         thickLine = new BasicStroke(2);
         float dash[] = { 10.0f };
@@ -125,6 +292,39 @@ public class DrawingPanel extends GWindow implements MouseListener,
 
         tmpPoints = new ArrayList<Point>();
         gridColor = new Color(0xBFBFBF);
+
+        eventListeners = new EventListenerList();
+        bidirectional = true;
+        elementDragged = false;
+    }
+
+    /**
+     * Adds a DrawEventListener object onto the list of listeners.
+     *
+     * @param listener listener object
+     */
+    public void addEventListener(DrawEventListener listener) {
+        eventListeners.add(DrawEventListener.class, listener);
+    }
+
+    /**
+     * Remove DrawEventListener object from the list of listeners.
+     *
+     * @param listener listener object to remove
+     */
+    public void removeEventListener(DrawEventListener listener) {
+        eventListeners.remove(DrawEventListener.class, listener);
+    }
+
+    /**
+     * Fires the toolUsed() method on all listeners on listeners list
+     */
+    private void fireListeners() {
+        Object[] listenersList = eventListeners.getListenerList();
+        for (int i = listenersList.length-2; i>=0; i-=2) {
+            if (listenersList[i]==DrawEventListener.class)
+                ((DrawEventListener)listenersList[i+1]).toolUsed();
+        }
     }
 
     /**
@@ -136,6 +336,8 @@ public class DrawingPanel extends GWindow implements MouseListener,
      * if grid is not used.
      */
     private Point searchGridPoint(Point old) {
+        boolean useGrid = schema.getUseGrid();
+        int gridGap = schema.getGridGap();
         if (!useGrid || gridGap <= 0)
             return old;
         int dX = (int)Math.round(old.x / (double)gridGap);
@@ -149,8 +351,8 @@ public class DrawingPanel extends GWindow implements MouseListener,
      * @param useGrid whether to use grid or not
      */
     public void setUseGrid(boolean useGrid) {
-        this.useGrid = useGrid;
-  //      repaint();
+        schema.setUseGrid(useGrid);
+        repaint();
     }
 
     /**
@@ -159,10 +361,37 @@ public class DrawingPanel extends GWindow implements MouseListener,
      * @param gridGap grid gap in pixels
      */
     public void setGridGap(int gridGap) {
-        this.gridGap = gridGap;
-//        repaint();
+        schema.setGridGap(gridGap);
+        repaint();
     }
     
+    /**
+     * Override previous update method in order to implement
+     * double-buffering. As a second buffer is used the Image object.
+     *
+     * @param g Graphics object where to paint
+     */
+    @Override
+    public void update(Graphics g) {
+        // initialize buffer if needed
+        if (dbImage == null) {
+            dbImage = createImage (this.getSize().width,
+                    this.getSize().height);
+            dbg = (Graphics2D)dbImage.getGraphics();
+        }
+        // clear screen in background
+        dbg.setColor(getBackground());
+        dbg.fillRect (0, 0, this.getSize().width,
+                this.getSize().height);
+
+        // modelling elements in background
+        dbg.setColor(getForeground());
+        paint(dbg);
+
+        // modelling image on the screen
+        g.drawImage(dbImage, 0, 0, this);
+    }
+
     /**
      * Perform a correction of the panel size. It means that the panel size
      * will be accomodated to the schema needs.
@@ -199,19 +428,21 @@ public class DrawingPanel extends GWindow implements MouseListener,
                     area.height = (int)p.getY();
             }
         }
-//        if (area.width != 0 && area.height != 0) {
-  //          this.setPreferredSize(area);
-    //        this.revalidate();
-      //  }
+        if (area.width != 0 && area.height != 0) {
+            this.setPreferredSize(area);
+            this.revalidate();
+        }
     }
 
     /**
-     * Method paints grid to the draw panel. It should be called first while
+     * Method paints grid to the modelling panel. It should be called first while
      * painting. If the grid is not used, it does nothing.
      *
      * @param g Graphics object, where to paint
      */
     private void paintGrid(Graphics g) {
+        boolean useGrid = schema.getUseGrid();
+        int gridGap = schema.getGridGap();
         if (!useGrid)
             return;
         g.setColor(gridColor);
@@ -239,21 +470,21 @@ public class DrawingPanel extends GWindow implements MouseListener,
         for (int i = 0; i < a.size(); i++)
             a.get(i).measure(g,0,0);
 
-        // then draw connection lines (at the bottom)
+        // then modelling connection lines (at the bottom)
         for (int i = 0; i < schema.getConnectionLines().size(); i++) {
             ConnectionLine l = schema.getConnectionLines().get(i);
             l.computeArrows(0,0);
             l.draw((Graphics2D)g);
         }
 
-        // at least, draw all other elements
+        // at least, modelling all other elements
         for (int i = 0; i < a.size(); i++)
             a.get(i).draw(g);
 
         // ***** HERE BEGINS DRAWING OF TEMPORARY GRAPHICS *****
 
-        if (panelMode == PanelMode.move) {
-            // draw a small red circle around selected connection line point
+        if (panelMode == PanelMode.moving) {
+            // modelling a small red circle around selected connection line point
             if (selPoint != null) {
                 int xx = (int)selPoint.getX();
                 int yy = (int)selPoint.getY();
@@ -265,13 +496,13 @@ public class DrawingPanel extends GWindow implements MouseListener,
                 g.drawOval(xx-toleranceRadius, yy-toleranceRadius,
                         toleranceRadius*2, toleranceRadius*2);
             }
-        } else if (panelMode == PanelMode.draw) {
-            // if the connection line is being drawn, draw the sketch
+        } else if (panelMode == PanelMode.modelling) {
+            // if the connection line is being drawn, modelling the sketch
             if (drawTool == PanelDrawTool.connectLine && tmpElem1 != null) {
                 ConnectionLine.drawSketch((Graphics2D)g, tmpElem1,
                         sketchLastPoint, tmpPoints);
             }
-        } else if (panelMode == PanelMode.select) {
+        } else if (panelMode == PanelMode.selecting) {
             if ((selectionStart != null) && (selectionEnd != null)) {
                 g.setColor(Color.BLUE);
                 ((Graphics2D)g).setStroke(dashedLine);
@@ -293,22 +524,22 @@ public class DrawingPanel extends GWindow implements MouseListener,
                 g.drawRect(x, y, w, h);
             }
         }
-    }
+    }    
 
     /**
-     * Set a draw tool.
+     * Set a modelling tool.
      *
      * It first clear all "tasks" - clear
      * temporary line points, selection and stop drag-n-drop.
      *
-     * If the new draw tool is null, it then sets the panel
-     * mode to "move" mode.
+     * If the new modelling tool is null, it then sets the panel
+     * mode to "moving" mode.
      *
-     * If the tool is not null, the "draw" mode is activated.
-     * The text is used only when the draw tool is some element - cpu, memory
-     * or device. It is not used if the other draw tool is selected.
+     * If the tool is not null, the "modelling" mode is activated.
+     * The text is used only when the modelling tool is some element - cpu, memory
+     * or device. It is not used if the other modelling tool is selected.
      *
-     * @param tool panel draw tool
+     * @param tool panel modelling tool
      * @param text text of the element
      */
     public void setTool(PanelDrawTool tool, String text) {
@@ -318,9 +549,9 @@ public class DrawingPanel extends GWindow implements MouseListener,
         cancelTasks();
 
         if ((tool == null) || (tool == PanelDrawTool.nothing))
-            panelMode = PanelMode.move;
+            panelMode = PanelMode.moving;
         else
-            panelMode = PanelMode.draw;
+            panelMode = PanelMode.modelling;
     }
 
     /**
@@ -358,7 +589,7 @@ public class DrawingPanel extends GWindow implements MouseListener,
     @Override
     public void mousePressed(MouseEvent e) {
         Point p = e.getPoint();
-        if (panelMode == PanelMode.move) {
+        if (panelMode == PanelMode.moving) {
             if (e.getButton() == MouseEvent.BUTTON1) {
                 tmpElem1 = schema.getCrossingElement(p);
                 if (tmpElem1 != null) {
@@ -381,10 +612,10 @@ public class DrawingPanel extends GWindow implements MouseListener,
             // if user press a mouse button on empty area, activate "selection"
             // mode
             if (selLine == null) {
-                panelMode = PanelMode.select;
+                panelMode = PanelMode.selecting;
                 selectionStart = e.getPoint(); // point without grid correction
             }
-        } else if (panelMode == PanelMode.draw) {
+        } else if (panelMode == PanelMode.modelling) {
             if (drawTool == PanelDrawTool.connectLine) {
                 if (e.getButton() != MouseEvent.BUTTON1)
                     return;
@@ -420,8 +651,8 @@ public class DrawingPanel extends GWindow implements MouseListener,
     @Override
     public void mouseReleased(MouseEvent e) {
         Point p = e.getPoint();
-        if (panelMode == PanelMode.move) {
-            // if an element was clicked, select it
+        if (panelMode == PanelMode.moving) {
+            // if an element was clicked, selecting it
             // if user holds CTRL or SHIFT
             if (e.getButton() == MouseEvent.BUTTON1) {
                 int ctrl_shift = e.getModifiersEx() & (MouseEvent.SHIFT_DOWN_MASK
@@ -455,8 +686,8 @@ public class DrawingPanel extends GWindow implements MouseListener,
                 selPoint = null;
                 selLine = null;
             }
-        } else if (panelMode == PanelMode.select) {
-            panelMode = PanelMode.move;
+        } else if (panelMode == PanelMode.selecting) {
+            panelMode = PanelMode.moving;
 
             int x = selectionStart.x;
             int y = selectionStart.y;
@@ -480,7 +711,7 @@ public class DrawingPanel extends GWindow implements MouseListener,
 
             selectionStart = null;
             selectionEnd = null;
-        } else if (panelMode == PanelMode.draw) {
+        } else if (panelMode == PanelMode.modelling) {
             if (drawTool == PanelDrawTool.delete) {
                 if (tmpElem1 != null) {
                     if (e.getButton() != MouseEvent.BUTTON1)
@@ -572,7 +803,7 @@ public class DrawingPanel extends GWindow implements MouseListener,
     @Override
     public void mouseDragged(MouseEvent e) {
         Point p = e.getPoint();
-        if ((panelMode == PanelMode.draw)
+        if ((panelMode == PanelMode.modelling)
                 && (drawTool == PanelDrawTool.connectLine)) {
             if (schema.getCrossingElement(p) == null) {
                 // if user didn't clicked on an element, but on drawing area
@@ -580,7 +811,7 @@ public class DrawingPanel extends GWindow implements MouseListener,
                 p.setLocation(searchGridPoint(p));
                 selPoint = p;
             }
-        } else if (panelMode == PanelMode.move) {
+        } else if (panelMode == PanelMode.moving) {
             if (selLine != null) {
                 if (p.getX() < 0 || p.getY() < 0)
                     return;
@@ -604,18 +835,17 @@ public class DrawingPanel extends GWindow implements MouseListener,
                 p.setLocation(searchGridPoint(p));
 
                 elementDragged = true;
-                // if the element is selected, we must move all selected elements
+                // if the element is selected, we must moving all selected elements
                 // either.
                 if (tmpElem1.selected) {
                     int diffX, diffY;
                     diffX = p.x - tmpElem1.getX();
                     diffY = p.y - tmpElem1.getY();
-                    System.out.println("diffX = " + diffX + ", diffY = " + diffY);
                     schema.moveSelected(diffX, diffY);
                 } else
                     tmpElem1.move(p);
             }
-        } else if (panelMode == PanelMode.select)
+        } else if (panelMode == PanelMode.selecting)
             selectionEnd = e.getPoint();
         panelSizeCorrection();
         repaint();
@@ -623,12 +853,13 @@ public class DrawingPanel extends GWindow implements MouseListener,
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        if (panelMode == PanelMode.move) {
+        if (panelMode == PanelMode.moving) {
             selPoint = null;
             if (selLine != null)  // ???
                 repaint();
             selLine = null;
-
+            
+            // resize mouse pointers
             for (int i = schema.getConnectionLines().size()-1; i >= 0 ; i--) {
                 Point[]ps = schema.getConnectionLines().get(i).getPoints().toArray(new Point[0]);
                 Point p = e.getPoint();
@@ -647,7 +878,7 @@ public class DrawingPanel extends GWindow implements MouseListener,
                 if (out)
                     break;
             }
-        } else if (panelMode == PanelMode.draw)
+        } else if (panelMode == PanelMode.modelling)
             if (drawTool == PanelDrawTool.connectLine && tmpElem1 != null) {
                 sketchLastPoint = e.getPoint();
                 repaint();

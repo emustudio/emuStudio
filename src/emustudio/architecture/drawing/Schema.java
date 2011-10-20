@@ -4,7 +4,7 @@
  * Created on 6.7.2008, 17:08:51
  * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,8 @@ import java.util.ArrayList;
 
 /**
  * This class represents abstract schema of virtual computer configuration.
- * It is created by the schema editor and used by ArchLoader.
+ * It is created by the schema editor and used by ArchLoader. It is a graphics
+ * model of the virtual computer.
  *
  * @author vbmacher
  */
@@ -38,6 +39,16 @@ public class Schema {
     private MemoryElement memoryElement;
     private ArrayList<DeviceElement> deviceElements;
     private ArrayList<ConnectionLine> lines;
+    
+    /**
+     * Whether to use and draw grid
+     */
+    private boolean useGrid;
+
+    /**
+     * Gap between vertical and horizontal grid lines
+     */
+    private int gridGap;
 
     /**
      * Name of the configuration
@@ -47,17 +58,19 @@ public class Schema {
     /**
      * Creates schema by parameters.
      *
-     * @param cpuElement
-     * @param memoryElement
-     * @param deviceElements
-     * @param lines
-     * @param configName
-     * @param compilerElement
+     * @param cpuElement CPU drawing element
+     * @param memoryElement Memory drawing element
+     * @param deviceElements ArrayList of device drawing elements
+     * @param lines ArrayList of lines between elements
+     * @param configName Configuration name (virtual computer name)
+     * @param compilerElement Compiler drawing element
+     * @param useGrid whether to use grid in a schema
+     * @param gridGap the gap between grid cells (i.e. cell size)
      */
     public Schema(CpuElement cpuElement, MemoryElement memoryElement, 
             ArrayList<DeviceElement> deviceElements, 
             ArrayList<ConnectionLine> lines, String configName, CompilerElement
-            compilerElement) {
+            compilerElement, boolean useGrid, int gridGap) {
         this.cpuElement = cpuElement;
         this.memoryElement = memoryElement;
         this.deviceElements = new ArrayList<DeviceElement>();
@@ -66,6 +79,8 @@ public class Schema {
         this.lines.addAll(lines);
         this.configName = configName;
         this.compilerElement = compilerElement;
+        this.useGrid = useGrid;
+        this.gridGap = gridGap;
     }
 
     /**
@@ -329,7 +344,43 @@ public class Schema {
         }
         return null;
     }
+    
+    /**
+     * Return whether use grid in the schema
+     * 
+     * @return true if the schema uses grid, false otherwise
+     */
+    public boolean getUseGrid() {
+        return useGrid;
+    }
 
+    /**
+     * Return grid cells gap (i.e. cell size)
+     * 
+     * @return grid cells gap
+     */
+    public int getGridGap() {
+        return gridGap;
+    }
+
+    /**
+     * Set whether use grid in the schema
+     * 
+     * @param useGrid true if the schema uses grid, false otherwise
+     */
+    public void setUseGrid(boolean useGrid) {
+        this.useGrid = useGrid;
+    }
+
+    /**
+     * Set grid cells gap (i.e. cell size)
+     * 
+     * @param gridGap grid cells gap
+     */
+    public void setGridGap(int gridGap) {
+        this.gridGap = gridGap;
+    }
+    
     /**
      * Get a connection line that crosses given point.
      *
@@ -395,8 +446,8 @@ public class Schema {
             if (elem.isSelected()) {
                 elem.move(elem.getX() + diffX,
                         elem.getY() + diffY);
-                System.out.println(elem.getPluginType() + ": " + (elem.getX() + diffX)
-                        + ", " + (elem.getY() + diffY));
+///                System.out.println(elem.getPluginType() + ": " + (elem.getX() + diffX)
+  //                      + ", " + (elem.getY() + diffY));
             }
         }
         for (int i = lines.size() - 1; i >= 0; i--) {

@@ -4,7 +4,7 @@
  * Created on 4.7.2008, 7:55:56
  * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,9 +39,11 @@ public class MemoryElement extends Element {
      * @param x the X location of this element
      * @param y the Y location of this element
      * @param text the description text
+     * @param width width of the element
+     * @param height height of the element
      */
-    public MemoryElement(int x, int y, String text) {
-        super(Color.WHITE, text, x, y);
+    public MemoryElement(int x, int y, String text, int width, int height) {
+        super(Color.WHITE, text, x, y, width, height);
         //super(new Color(0xC5C5C5), text, x, y);
     }
 
@@ -53,7 +55,7 @@ public class MemoryElement extends Element {
      * @param text the description text
      */
     public MemoryElement(Point e1, String text) {
-        this((int)e1.getX(),(int)e1.getY(),text);
+        this((int)e1.getX(),(int)e1.getY(),text, 0,0);
     }
 
     @Override

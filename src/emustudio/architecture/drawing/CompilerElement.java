@@ -39,22 +39,23 @@ public class CompilerElement extends Element {
      *
      * @param x the X coordinate in pixels, in the schema
      * @param y the Y coordinate in pixels, in the schema
-     * @param details name of the compiler
+     * @param text name of the compiler
+     * @param width width of the element
+     * @param height height of the element
      */
-    public CompilerElement(int x, int y, String details) {
+    public CompilerElement(int x, int y, String text, int width, int height) {
+        super(Color.WHITE, text, x, y, width, height);
 //        super(Color.CYAN, text, x, y);
-        super("compiler", details, Color.WHITE, x, y);
-      //  GText ttext = new GText(text, GPosition.CENTER | GPosition.MIDDLE);
     }
 
     /**
      * Create new Compiler element object.
      *
      * @param shapePoint the point where the compiler is located in the schema
-     * @param details name of the compiler
+     * @param newText name of the compiler
      */
-    public CompilerElement(Point shapePoint, String details) {
-        this(shapePoint.x, shapePoint.y, details);
+    public CompilerElement(Point shapePoint, String newText) {
+        this(shapePoint.x, shapePoint.y, newText, 0,0);
     }
 
     /**
@@ -64,7 +65,7 @@ public class CompilerElement extends Element {
      */
     @Override
     protected String getPluginType() {
-        return "compiler";
+        return "Compiler";
     }
 
 }

@@ -38,10 +38,12 @@ public class CpuElement extends Element {
      *
      * @param x X location of this element
      * @param y Y location of this element
-     * @param details description text (name of the plug-in)
+     * @param text description text (name of the plug-in)
+     * @param width width of the element
+     * @param height height of the element
      */
-    public CpuElement(int x, int y, String details) {
-        super("cpu", details, Color.WHITE, x, y);
+    public CpuElement(int x, int y, String text, int width, int height) {
+        super(Color.WHITE, text, x, y, width, height);
         //super(new Color(0x6D8471), text, x, y);
     }
 
@@ -50,10 +52,10 @@ public class CpuElement extends Element {
      * location and the description text.
      *
      * @param e1 Point representing the element location
-     * @param details description text (name of the plug-in)
+     * @param text description text (name of the plug-in)
      */
-    public CpuElement(Point e1, String details) {
-        this((int)e1.getX(),(int)e1.getY(), details);
+    public CpuElement(Point e1, String text) {
+        this((int)e1.getX(),(int)e1.getY(), text, 0,0);
     }
 
     /**
@@ -63,7 +65,7 @@ public class CpuElement extends Element {
      */
     @Override
     protected String getPluginType() {
-        return "cpu";
+        return "CPU";
     }
     
 }

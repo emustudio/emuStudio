@@ -128,8 +128,9 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
         setModalExclusionType(ModalExclusionType.APPLICATION_EXCLUDE);
         this.setLocationRelativeTo(null);
         this.odialog = odialog;
-        pan = new DrawingPanel(this.schema, true, sliderGridGap.getValue());
-        scrollScheme.setViewportView(pan.getCanvas());
+        btnUseGrid.setSelected(schema.getUseGrid());
+        pan = new DrawingPanel(this.schema);
+        scrollScheme.setViewportView(pan);
         scrollScheme.getHorizontalScrollBar().setUnitIncrement(10);
         scrollScheme.getVerticalScrollBar().setUnitIncrement(10);
         pan.addMouseListener(pan);
@@ -451,6 +452,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
 
     private void sliderGridGapStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderGridGapStateChanged
         pan.setGridGap(sliderGridGap.getValue());
+        schema.setGridGap(sliderGridGap.getValue());
     }//GEN-LAST:event_sliderGridGapStateChanged
 
     private void btnCPUActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCPUActionPerformed
@@ -635,6 +637,8 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
     private void btnUseGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUseGridActionPerformed
         pan.setUseGrid(btnUseGrid.isSelected());
         sliderGridGap.setEnabled(btnUseGrid.isSelected());
+        schema.setUseGrid(btnUseGrid.isSelected());
+        schema.setGridGap(sliderGridGap.getValue());
     }//GEN-LAST:event_btnUseGridActionPerformed
 
     private void btnCompilerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCompilerActionPerformed

@@ -38,10 +38,12 @@ public class DeviceElement extends Element {
      *
      * @param x X location of the element
      * @param y Y location of the element
-     * @param detials description text
+     * @param text description text
+     * @param width width of the element
+     * @param height height of the element
      */
-    public DeviceElement(int x, int y, String detials) {
-        super("device", detials, Color.WHITE, x, y);
+    public DeviceElement(int x, int y, String text, int width, int height) {
+        super(Color.WHITE, text, x, y, width, height);
         //super(new Color(0xFFFEFF), text, x, y);
     }
 
@@ -53,12 +55,12 @@ public class DeviceElement extends Element {
      * @param text description text
      */
     public DeviceElement(Point e1, String text) {
-        this((int)e1.getX(),(int)e1.getY(), text);
+        this((int)e1.getX(),(int)e1.getY(), text, 0,0);
     }
 
     @Override
     protected String getPluginType() {
-        return "device";
+        return "Device";
     }
 
 }
