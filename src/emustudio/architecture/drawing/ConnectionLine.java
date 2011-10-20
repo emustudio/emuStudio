@@ -197,10 +197,10 @@ public class ConnectionLine {
             int x2 = lineEnd.x  - leftFactor;
             int y2 = lineEnd.y  - topFactor;
 
-            if (x2 < Element.MIN_LEFT_MARGIN)
-                x2 = Element.MIN_LEFT_MARGIN;
-            if (y2 < Element.MIN_TOP_MARGIN)
-                y2 = Element.MIN_TOP_MARGIN;
+            if (x2 < Schema.MIN_LEFT_MARGIN)
+                x2 = Schema.MIN_LEFT_MARGIN;
+            if (y2 < Schema.MIN_TOP_MARGIN)
+                y2 = Schema.MIN_TOP_MARGIN;
 
             lineEnd = new Point(x2,y2);
         }
@@ -457,11 +457,11 @@ public class ConnectionLine {
             x2 -= leftFactor;
             y2 -= topFactor;
 
-            if (x2 < Element.MIN_LEFT_MARGIN) {
-                x2 = Element.MIN_LEFT_MARGIN;
+            if (x2 < Schema.MIN_LEFT_MARGIN) {
+                x2 = Schema.MIN_LEFT_MARGIN;
             }
-            if (y2 < Element.MIN_TOP_MARGIN) {
-                y2 = Element.MIN_TOP_MARGIN;
+            if (y2 < Schema.MIN_TOP_MARGIN) {
+                y2 = Schema.MIN_TOP_MARGIN;
             }
 
             g.drawLine(x1, y1, x2, y2);
@@ -528,11 +528,11 @@ public class ConnectionLine {
             x2 = (int)p.getX();
             y2 = (int)p.getY();
 
-            if (x2 < Element.MIN_LEFT_MARGIN) {
-                x2 = Element.MIN_LEFT_MARGIN;
+            if (x2 < Schema.MIN_LEFT_MARGIN) {
+                x2 = Schema.MIN_LEFT_MARGIN;
             }
-            if (y2 < Element.MIN_TOP_MARGIN) {
-                y2 = Element.MIN_TOP_MARGIN;
+            if (y2 < Schema.MIN_TOP_MARGIN) {
+                y2 = Schema.MIN_TOP_MARGIN;
             }
 
             g.drawLine(x1, y1, x2, y2);
@@ -663,10 +663,15 @@ public class ConnectionLine {
     public void pointMoveAll(int diffX, int diffY) {
         for (int i = points.size()-1; i >= 0; i--) {
             Point p = points.get(i);
+            if (!Schema.canMove(p.x + diffX, p.y + diffY))
+                return;
+        }
+        for (int i = points.size()-1; i >= 0; i--) {
+            Point p = points.get(i);
             p.setLocation(p.x + diffX, p.y + diffY);
         }
     }
-
+    
     /**
      * Checks, whether this line is connected (from any side) to the specific
      * element.

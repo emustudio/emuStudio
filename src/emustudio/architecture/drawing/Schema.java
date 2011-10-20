@@ -34,6 +34,16 @@ import java.util.ArrayList;
  * @author vbmacher
  */
 public class Schema {
+    /**
+     * Minimum left margin for all elements and line points within the schema
+     */
+    public final static int MIN_LEFT_MARGIN = 5;
+
+    /**
+     * Minimum top margin for all elements and line points within the schema
+     */
+    public final static int MIN_TOP_MARGIN = 5;
+
     private CompilerElement compilerElement;
     private CpuElement cpuElement;
     private MemoryElement memoryElement;
@@ -460,13 +470,22 @@ public class Schema {
     public void moveSelected(int diffX, int diffY) {
         ArrayList<Element> a = getAllElements();
 
+        // first determine if all elements and lines can be moved
         for (int i = a.size() - 1; i >= 0; i--) {
             Element elem = a.get(i);
+            int x = elem.getX() + diffX;
+            int y = elem.getY() + diffY;
             if (elem.isSelected()) {
-                elem.move(elem.getX() + diffX,
-                        elem.getY() + diffY);
-///                System.out.println(elem.getPluginType() + ": " + (elem.getX() + diffX)
-  //                      + ", " + (elem.getY() + diffY));
+                if (!canMove(x, y))
+                    return;
+            }
+        }
+        for (int i = a.size() - 1; i >= 0; i--) {
+            Element elem = a.get(i);
+            int x = elem.getX() + diffX;
+            int y = elem.getY() + diffY;
+            if (elem.isSelected()) {
+                elem.move(x, y);
             }
         }
         for (int i = lines.size() - 1; i >= 0; i--) {
@@ -494,4 +513,16 @@ public class Schema {
         }
     }
 
+    /**
+     * Determine if given location for the point is valid.
+     * 
+     * @param x new X location
+     * @param y new Y location
+     * @return true if the line point can be moved, false otherwise
+     */
+    public static boolean canMove(int x, int y) {
+        return (x >= MIN_LEFT_MARGIN) &&
+               (y >= MIN_TOP_MARGIN);
+    }
+    
 }

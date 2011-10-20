@@ -45,16 +45,6 @@ public abstract class Element {
      */
     public final static int MIN_HEIGHT = 50;
 
-    /**
-     * Minimum left margin for all elements within the schema
-     */
-    public final static int MIN_LEFT_MARGIN = 5;
-
-    /**
-     * Minimum top margin for all elements within the schema
-     */
-    public final static int MIN_TOP_MARGIN = 5;
-    
     private final static int TOLERANCE = 5;
 
     /**
@@ -180,9 +170,11 @@ public abstract class Element {
      * Move this element to a new location.
      *
      * @param p new point location
+     * @return true if new location is not out of the canvas (less than minimal
+     * margins), false otherwise 
      */
-    public void move(Point p) {
-        move (p.x, p.y);
+    public boolean move(Point p) {
+        return move (p.x, p.y);
     }
 
     /**
@@ -190,18 +182,19 @@ public abstract class Element {
      *
      * @param x new X location
      * @param y new Y location
+     * @return true if new location is not out of the canvas (less than minimal
+     * margins), false otherwise 
      */
-    public void move(int x, int y) {
-        wasMeasured = false;
+    public boolean move(int x, int y) {
+        if (!Schema.canMove(x,y))
+            return false;
 
-        if (x < MIN_LEFT_MARGIN)
-            x = MIN_LEFT_MARGIN;
-        if (y < MIN_TOP_MARGIN)
-            y = MIN_TOP_MARGIN;
+        wasMeasured = false;
         this.x = x;
         this.y = y;
+        return true;
     }
-    
+        
     /**
      * Set new size of this element
      * 
@@ -210,8 +203,8 @@ public abstract class Element {
      */
     public void setSize(int width, int height) {
         wasMeasured = false;
-        this.width = (width <= 0) ? MIN_WIDTH : width;
-        this.height = (height <= 0) ? MIN_HEIGHT : height;
+        this.width = (width <= MIN_WIDTH) ? MIN_WIDTH : width;
+        this.height = (height <= MIN_HEIGHT) ? MIN_HEIGHT : height;
     }
 
     /**

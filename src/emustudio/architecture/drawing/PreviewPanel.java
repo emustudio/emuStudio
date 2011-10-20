@@ -161,11 +161,11 @@ public class PreviewPanel extends JPanel {
                     height = p.y;
             }
         }
-        leftFactor = minLeft - Element.MIN_LEFT_MARGIN;
-        topFactor = minTop - Element.MIN_TOP_MARGIN;
+        leftFactor = minLeft - Schema.MIN_LEFT_MARGIN;
+        topFactor = minTop - Schema.MIN_TOP_MARGIN;
         if (width != 0 && height != 0) {
-            this.setSize(width-leftFactor+Element.MIN_LEFT_MARGIN,
-                    height-topFactor+Element.MIN_TOP_MARGIN);
+            this.setSize(width-leftFactor+Schema.MIN_LEFT_MARGIN,
+                    height-topFactor+Schema.MIN_TOP_MARGIN);
             this.revalidate();
         }
         panelResized = true;
