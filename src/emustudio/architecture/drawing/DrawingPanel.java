@@ -25,6 +25,7 @@ package emustudio.architecture.drawing;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -51,7 +52,15 @@ import javax.swing.event.EventListenerList;
 @SuppressWarnings("serial")
 public class DrawingPanel extends JPanel implements MouseListener,
         MouseMotionListener {
+    /**
+     * Default grid gap. 
+     */
     public final static String DEFAULT_GRID_GAP = "30";
+    
+    private final static int RESIZE_TOP = 0;
+    private final static int RESIZE_LEFT = 1;
+    private final static int RESIZE_BOTTOM = 2;
+    private final static int RESIZE_RIGHT = 3;
 
     /**
      * Interface that should be implemented by an event listener.
@@ -80,7 +89,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
     /**
      * A modelling tool used by this panel in the time. 
      */
-    private PanelDrawTool drawTool;
+    private DrawTool drawTool;
 
     /**
      * Mode of the panel. One of the modelling, moving or selecting.
@@ -108,6 +117,12 @@ public class DrawingPanel extends JPanel implements MouseListener,
      *
      */
     private boolean elementDragged;
+    
+    /**
+     * Resize mode contains a value of one of constants: RESIZE_TOP, RESIZE_BOTTOM,
+     * RESIZE_LEFT, RESIZE_RIGHT. It is used in "resizing" mode.
+     */
+    private int resizeMode;
 
     /**
      * Used when drawing lines. It represents last element that the line
@@ -182,14 +197,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
     private boolean bidirectional;
 
     /**
-     * Tolerance radius for user point selection, in pixels
-     */
-    private static final int toleranceRadius = 5;
-    
-    /**
      * Draw tool enum.
      */
-    public enum PanelDrawTool {
+    public enum DrawTool {
         /**
          * Compiler drawing tool
          */
@@ -263,6 +273,11 @@ public class DrawingPanel extends JPanel implements MouseListener,
          * switched to "selection" mode.
          */
         moving,
+        
+        /**
+         * Resizing mode. In this mode, user resizes elements.
+         */
+        resizing,
 
         /**
          * Selecting mode. By mouse movement more/less components are added
@@ -283,7 +298,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
         this.schema = schema;
 
         panelMode = PanelMode.moving;
-        drawTool = PanelDrawTool.nothing;
+        drawTool = DrawTool.nothing;
 
         thickLine = new BasicStroke(2);
         float dash[] = { 10.0f };
@@ -485,20 +500,11 @@ public class DrawingPanel extends JPanel implements MouseListener,
 
         if (panelMode == PanelMode.moving) {
             // modelling a small red circle around selected connection line point
-            if (selPoint != null) {
-                int xx = (int)selPoint.getX();
-                int yy = (int)selPoint.getY();
-                g.setColor(Color.WHITE);
-                ((Graphics2D)g).setStroke(thickLine);
-                g.fillOval(xx-toleranceRadius-2, yy-toleranceRadius-2,
-                        (toleranceRadius+2)*2, (toleranceRadius+2)*2);
-                g.setColor(Color.BLACK);
-                g.drawOval(xx-toleranceRadius, yy-toleranceRadius,
-                        toleranceRadius*2, toleranceRadius*2);
-            }
+            if (selPoint != null)
+                ConnectionLine.highlightPoint(selPoint, (Graphics2D)g);
         } else if (panelMode == PanelMode.modelling) {
             // if the connection line is being drawn, modelling the sketch
-            if (drawTool == PanelDrawTool.connectLine && tmpElem1 != null) {
+            if (drawTool == DrawTool.connectLine && tmpElem1 != null) {
                 ConnectionLine.drawSketch((Graphics2D)g, tmpElem1,
                         sketchLastPoint, tmpPoints);
             }
@@ -542,13 +548,13 @@ public class DrawingPanel extends JPanel implements MouseListener,
      * @param tool panel modelling tool
      * @param text text of the element
      */
-    public void setTool(PanelDrawTool tool, String text) {
+    public void setTool(DrawTool tool, String text) {
         this.drawTool = tool;
         this.newText = text;
 
         cancelTasks();
 
-        if ((tool == null) || (tool == PanelDrawTool.nothing))
+        if ((tool == null) || (tool == DrawTool.nothing))
             panelMode = PanelMode.moving;
         else
             panelMode = PanelMode.modelling;
@@ -591,6 +597,23 @@ public class DrawingPanel extends JPanel implements MouseListener,
         Point p = e.getPoint();
         if (panelMode == PanelMode.moving) {
             if (e.getButton() == MouseEvent.BUTTON1) {
+                // detect if user wants to resize an element
+                tmpElem1 = schema.getResizeElement(p);
+                if (tmpElem1 != null) {
+                    panelMode = PanelMode.resizing;
+                    if (tmpElem1.isBottomCrossing(p)) {
+                        resizeMode = RESIZE_BOTTOM;
+                    } else if (tmpElem1.isLeftCrossing(p)) {
+                        resizeMode = RESIZE_LEFT;
+                    } else if (tmpElem1.isRightCrossing(p)) {
+                        resizeMode = RESIZE_RIGHT;
+                    } else if (tmpElem1.isTopCrossing(p)) {
+                        resizeMode = RESIZE_TOP;
+                    } else {
+                        resizeMode = -1; // TODO - corners
+                    }
+                    return;
+                }
                 tmpElem1 = schema.getCrossingElement(p);
                 if (tmpElem1 != null) {
                     selLine = null;
@@ -605,8 +628,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
             selLine = null;
             selLine = schema.getCrossingLine(p);
 
-            if (selLine != null)
-                selPoint = selLine.containsPoint(p, toleranceRadius);
+            if (selLine != null) {
+                selPoint = selLine.containsPoint(p);
+            }
             repaint(); // because of drawing selected point
 
             // if user press a mouse button on empty area, activate "selection"
@@ -616,16 +640,18 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 selectionStart = e.getPoint(); // point without grid correction
             }
         } else if (panelMode == PanelMode.modelling) {
-            if (drawTool == PanelDrawTool.connectLine) {
-                if (e.getButton() != MouseEvent.BUTTON1)
+            if (drawTool == DrawTool.connectLine) {
+                if (e.getButton() != MouseEvent.BUTTON1) {
                     return;
+                }
 
                 Element elem = schema.getCrossingElement(e.getPoint());
                 if (elem != null) {
-                    if (tmpElem1 == null)
+                    if (tmpElem1 == null) {
                         tmpElem1 = elem;
-                    else if (tmpElem2 == null)
+                    } else if (tmpElem2 == null) {
                         tmpElem2 = elem;
+                    }
                     return;
                 } else {
                     // if user didn't clicked on an element, but on drawing area
@@ -633,7 +659,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
                     p.setLocation(searchGridPoint(p));
                     selPoint = p;
                 }
-            } else if (drawTool == PanelDrawTool.delete) {
+            } else if (drawTool == DrawTool.delete) {
                 // only left button is accepted
                 if (e.getButton() != MouseEvent.BUTTON1)
                     return;
@@ -651,6 +677,11 @@ public class DrawingPanel extends JPanel implements MouseListener,
     @Override
     public void mouseReleased(MouseEvent e) {
         Point p = e.getPoint();
+        if (panelMode == PanelMode.resizing) {
+            panelMode = PanelMode.moving;
+            resizeMode = -1;
+            return;
+        }
         if (panelMode == PanelMode.moving) {
             // if an element was clicked, selecting it
             // if user holds CTRL or SHIFT
@@ -675,7 +706,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
             if (selLine != null && selPoint != null) {
                 if (e.getButton() != MouseEvent.BUTTON3)
                     return;
-                Point linePoint = selLine.containsPoint(p, toleranceRadius);
+                Point linePoint = selLine.containsPoint(p);
                 if ((selLine != schema.getCrossingLine(p))
                         || (selPoint != linePoint)) {
                     selLine = null;
@@ -712,7 +743,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
             selectionStart = null;
             selectionEnd = null;
         } else if (panelMode == PanelMode.modelling) {
-            if (drawTool == PanelDrawTool.delete) {
+            if (drawTool == DrawTool.delete) {
                 if (tmpElem1 != null) {
                     if (e.getButton() != MouseEvent.BUTTON1)
                         return;
@@ -736,23 +767,23 @@ public class DrawingPanel extends JPanel implements MouseListener,
                     selLine = null;
                     fireListeners();
                 }
-            } else if (drawTool == PanelDrawTool.shapeCompiler) {
+            } else if (drawTool == DrawTool.shapeCompiler) {
                 p.setLocation(searchGridPoint(p));
                 schema.setCompilerElement(new CompilerElement(p, newText));
                 fireListeners();
-            } else if(drawTool == PanelDrawTool.shapeCPU) {
+            } else if(drawTool == DrawTool.shapeCPU) {
                 p.setLocation(searchGridPoint(p));
                 schema.setCpuElement(new CpuElement(p, newText));
                 fireListeners();
-            } else if (drawTool == PanelDrawTool.shapeMemory) {
+            } else if (drawTool == DrawTool.shapeMemory) {
                 p.setLocation(searchGridPoint(p));
                 schema.setMemoryElement(new MemoryElement(p, newText));
                 fireListeners();
-            } else if (drawTool == PanelDrawTool.shapeDevice) {
+            } else if (drawTool == DrawTool.shapeDevice) {
                 p.setLocation(searchGridPoint(p));
                 schema.addDeviceElement(new DeviceElement(p, newText));
                 fireListeners();
-            } else if (drawTool == PanelDrawTool.connectLine) {
+            } else if (drawTool == DrawTool.connectLine) {
                 sketchLastPoint = null;
                 Element elem = schema.getCrossingElement(p);
 
@@ -803,8 +834,30 @@ public class DrawingPanel extends JPanel implements MouseListener,
     @Override
     public void mouseDragged(MouseEvent e) {
         Point p = e.getPoint();
-        if ((panelMode == PanelMode.modelling)
-                && (drawTool == PanelDrawTool.connectLine)) {
+        if (panelMode == PanelMode.resizing) {
+            if (tmpElem1 == null)
+                return;
+            p.setLocation(searchGridPoint(p));
+            switch (resizeMode) {
+                case RESIZE_TOP:
+                    tmpElem1.setSize(tmpElem1.getWidth(), 
+                            (tmpElem1.getY() - p.y)*2);
+                    break;
+                case RESIZE_BOTTOM:
+                    tmpElem1.setSize(tmpElem1.getWidth(), 
+                            (p.y - tmpElem1.getY())*2);
+                    break;
+                case RESIZE_LEFT:
+                    tmpElem1.setSize((tmpElem1.getX() - p.x) * 2, 
+                            tmpElem1.getHeight());
+                    break;
+                case RESIZE_RIGHT:
+                    tmpElem1.setSize((p.x - tmpElem1.getX()) * 2, 
+                            tmpElem1.getHeight());
+                    break;
+            }
+        } else if ((panelMode == PanelMode.modelling)
+                && (drawTool == DrawTool.connectLine)) {
             if (schema.getCrossingElement(p) == null) {
                 // if user didn't clicked on an element, but on drawing area
                 // means that there a new line point should be created.
@@ -816,11 +869,12 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 if (p.getX() < 0 || p.getY() < 0)
                     return;
                 if (selPoint == null) {
-                    int pi = selLine.getCrossPointAfter(p,5); // should not be -1
+                    int pi = selLine.getCrossPointAfter(p,
+                            ConnectionLine.TOLERANCE); // should not be -1
                     if (pi == -1)
                         return;
                     p.setLocation(searchGridPoint(p));
-                    Point linePoint = selLine.containsPoint(p, toleranceRadius);
+                    Point linePoint = selLine.containsPoint(p);
                     if (linePoint == null) {
                         selLine.addPoint(pi - 1, p);
                         selPoint = p;
@@ -855,31 +909,51 @@ public class DrawingPanel extends JPanel implements MouseListener,
     public void mouseMoved(MouseEvent e) {
         if (panelMode == PanelMode.moving) {
             selPoint = null;
-            if (selLine != null)  // ???
+            if (selLine != null) // if a line point was highlighted this will "de-highlight" it
                 repaint();
             selLine = null;
             
             // resize mouse pointers
+            if (drawTool == DrawTool.nothing) {
+                Point p = e.getPoint();
+                tmpElem1 = schema.getResizeElement(p);
+                if (tmpElem1 != null) {
+                    if (tmpElem1.isBottomCrossing(p)) {
+                        this.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
+                    } else if (tmpElem1.isLeftCrossing(p)) {
+                        this.setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
+                    } else if (tmpElem1.isRightCrossing(p)) {
+                        this.setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+                    } else if (tmpElem1.isTopCrossing(p)) {
+                        this.setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
+                    } else {
+                        this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    }
+                } else {
+                    this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                }
+            }
+            
+            // highlight line points
             for (int i = schema.getConnectionLines().size()-1; i >= 0 ; i--) {
                 Point[]ps = schema.getConnectionLines().get(i).getPoints().toArray(new Point[0]);
                 Point p = e.getPoint();
                 boolean out = false;
                 for (int j = 0; j < ps.length; j++) {
-                    double d = Math.hypot(ps[j].getX() - p.getX(), 
-                            ps[j].getY() - p.getY());
-                    if (d < toleranceRadius) {
+                    if (ConnectionLine.isPointSelected(ps[j], p)) {
                         selLine = schema.getConnectionLines().get(i);
                         selPoint  = ps[j];
-                        repaint();
                         out = true;
                         break;
                     } 
                 }
-                if (out)
+                if (out) {
+                    repaint();
                     break;
+                }
             }
         } else if (panelMode == PanelMode.modelling)
-            if (drawTool == PanelDrawTool.connectLine && tmpElem1 != null) {
+            if (drawTool == DrawTool.connectLine && tmpElem1 != null) {
                 sketchLastPoint = e.getPoint();
                 repaint();
             }

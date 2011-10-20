@@ -39,6 +39,11 @@ import java.util.ArrayList;
  */
 public class ConnectionLine {
     /**
+     * Tolerance radius for user point selection, in pixels
+     */
+    public final static int TOLERANCE = 5;
+    
+    /**
      * First element in the connection.
      *
      * If the connection is not bidirectional, then from this element the data
@@ -544,6 +549,25 @@ public class ConnectionLine {
     }
 
     /**
+     * Draws a small red circle around given point
+     * 
+     * @param selPoint the center of the circle 
+     * @param g Graphics2D object
+     */
+    public static void highlightPoint(Point selPoint, Graphics2D g) {
+        int xx = (int) selPoint.getX();
+        int yy = (int) selPoint.getY();
+        g.setColor(Color.WHITE);
+        ((Graphics2D) g).setStroke(thickLine);
+        g.fillOval(xx - TOLERANCE - 2, yy - TOLERANCE - 2,
+                (TOLERANCE + 2) * 2, (TOLERANCE + 2) * 2);
+        g.setColor(Color.BLACK);
+        g.drawOval(xx - TOLERANCE, yy - TOLERANCE,
+                TOLERANCE * 2, TOLERANCE * 2);
+
+    }
+
+    /**
      * Adds a middle-point to this line.
      *
      * @param before index of the point before that a new point will be added
@@ -587,19 +611,31 @@ public class ConnectionLine {
      * If it is, return the original Point object, null otherwise.
      *
      * @param p Point to test
-     * @param tolerance tolerance radius
      * @return original point object of the line, null if the test point is
      * not included
      */
-    public Point containsPoint(Point p, int tolerance) {
+    public Point containsPoint(Point p) {
         int size = points.size();
         for (int i = 0; i < size; i++) {
             Point tmp = points.get(i);
-            if ((tmp.x >= (p.x-tolerance)) && (tmp.x <= (p.x + tolerance))
-                    && (tmp.y >= (p.y-tolerance)) && (tmp.y <= (p.y+tolerance)))
+            if ((tmp.x >= (p.x-TOLERANCE)) && (tmp.x <= (p.x + TOLERANCE))
+                    && (tmp.y >= (p.y-TOLERANCE)) && (tmp.y <= (p.y+TOLERANCE)))
                 return tmp;
         }
         return null;
+    }
+    
+    /**
+     * Determine if two points point to each other (with some tolerance).
+     * 
+     * @param linePoint First point (e.g. a line point)
+     * @param selPoint Second point (e.g. mouse point)
+     * @return true if given points point to each other, false otherwise.
+     */
+    public static boolean isPointSelected(Point linePoint, Point selPoint) {
+        double d = Math.hypot(linePoint.getX() - selPoint.getX(),
+                linePoint.getY() - selPoint.getY());
+        return (d < TOLERANCE);
     }
 
     /**
@@ -659,7 +695,7 @@ public class ConnectionLine {
 
     /**
      * Method determines whether point[x,y] crosses with this line
-     * with some tolerance (5)
+     * (with some tolerance)
      * 
      * d(X, p) = abs(a*x0 + b*y0 + c)/sqrt(a^2 + b^2)
      * 

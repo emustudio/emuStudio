@@ -344,6 +344,25 @@ public class Schema {
         }
         return null;
     }
+
+    /**
+     * Detects an element that wants to be resized. It searches for an element
+     * where the given point is pointing to its border. It is used
+     * in the drawing panel.
+     * 
+     * @param p Point that all elements locations are compared to
+     * @return resize element, or null if it was not found
+     */
+    public Element getResizeElement(Point p) {
+        ArrayList<Element> a = getAllElements();
+        for (int i = a.size() - 1; i >= 0; i--) {
+            Element elem = a.get(i);
+            if (elem.isBottomCrossing(p) || (elem.isLeftCrossing(p))
+                    || elem.isRightCrossing(p) || elem.isTopCrossing(p))
+                return elem;
+        }
+        return null;
+    }
     
     /**
      * Return whether use grid in the schema

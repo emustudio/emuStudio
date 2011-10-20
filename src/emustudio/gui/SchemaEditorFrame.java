@@ -3,7 +3,7 @@
  *
  * KISS, YAGNI
  *
- *  Copyright (C) 2010 vbmacher
+ *  Copyright (C) 2010-2011 vbmacher
  * 
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -25,7 +25,7 @@ package emustudio.gui;
 import emustudio.architecture.ArchLoader;
 import emustudio.architecture.drawing.DrawingPanel;
 import emustudio.architecture.drawing.DrawingPanel.DrawEventListener;
-import emustudio.architecture.drawing.DrawingPanel.PanelDrawTool;
+import emustudio.architecture.drawing.DrawingPanel.DrawTool;
 import emustudio.architecture.drawing.Schema;
 import java.awt.Component;
 import java.awt.Container;
@@ -142,7 +142,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
             @Override
             public void toolUsed() {
                 pan.cancelTasks();
-                pan.setTool(PanelDrawTool.nothing, null);
+                pan.setTool(DrawTool.nothing, null);
                 cmbPlugin.setModel(empty_model);
                 groupDraw.clearSelection();
                 buttonSelected = false;
@@ -460,7 +460,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
             groupDraw.clearSelection();
             cmbPlugin.setModel(empty_model);
             pan.cancelTasks();
-            pan.setTool(PanelDrawTool.nothing, "");
+            pan.setTool(DrawTool.nothing, "");
             buttonSelected = false;
             return;
         }
@@ -478,7 +478,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
             cmbPlugin.setModel(empty_model);
             groupDraw.clearSelection();
             pan.cancelTasks();
-            pan.setTool(PanelDrawTool.nothing, "");
+            pan.setTool(DrawTool.nothing, "");
             buttonSelected = false;
             return;
         }
@@ -496,7 +496,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
             cmbPlugin.setModel(empty_model);
             groupDraw.clearSelection();
             pan.cancelTasks();
-            pan.setTool(PanelDrawTool.nothing, "");
+            pan.setTool(DrawTool.nothing, "");
             buttonSelected = false;
             return;
         }
@@ -511,13 +511,13 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
 
     private void btnLineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLineActionPerformed
         pan.cancelTasks();
-        pan.setTool(PanelDrawTool.nothing, "");
+        pan.setTool(DrawTool.nothing, "");
         cmbPlugin.setModel(empty_model);
         if (buttonSelected) {
             groupDraw.clearSelection();
             return;
         }
-        pan.setTool(PanelDrawTool.connectLine, "");
+        pan.setTool(DrawTool.connectLine, "");
         buttonSelected = true;
     }//GEN-LAST:event_btnLineActionPerformed
 
@@ -528,13 +528,13 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
         }
         String t = (String) cmbPlugin.getSelectedItem();
         if (btnCompiler.isSelected())
-            pan.setTool(PanelDrawTool.shapeCompiler, t);
+            pan.setTool(DrawTool.shapeCompiler, t);
         if (btnCPU.isSelected())
-            pan.setTool(PanelDrawTool.shapeCPU, t);
+            pan.setTool(DrawTool.shapeCPU, t);
         else if (btnRAM.isSelected())
-            pan.setTool(PanelDrawTool.shapeMemory, t);
+            pan.setTool(DrawTool.shapeMemory, t);
         else if (btnDevice.isSelected())
-            pan.setTool(PanelDrawTool.shapeDevice, t);
+            pan.setTool(DrawTool.shapeDevice, t);
     }//GEN-LAST:event_cmbPluginActionPerformed
 
     private void btnCompilerItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnCompilerItemStateChanged
@@ -575,13 +575,13 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
 
     private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteActionPerformed
         pan.cancelTasks();
-        pan.setTool(PanelDrawTool.nothing, "");
+        pan.setTool(DrawTool.nothing, "");
         cmbPlugin.setModel(empty_model);
         if (buttonSelected) {
             groupDraw.clearSelection();
             return;
         }
-        pan.setTool(PanelDrawTool.delete, "");
+        pan.setTool(DrawTool.delete, "");
         buttonSelected = true;
     }//GEN-LAST:event_btnDeleteActionPerformed
 
@@ -647,7 +647,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
             cmbPlugin.setModel(empty_model);
             buttonSelected = false;
             pan.cancelTasks();
-            pan.setTool(PanelDrawTool.nothing, "");
+            pan.setTool(DrawTool.nothing, "");
             return;
         }
         buttonSelected = true;

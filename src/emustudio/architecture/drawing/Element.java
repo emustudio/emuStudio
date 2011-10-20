@@ -54,6 +54,8 @@ public abstract class Element {
      * Minimum top margin for all elements within the schema
      */
     public final static int MIN_TOP_MARGIN = 5;
+    
+    private final static int TOLERANCE = 5;
 
     /**
      * Variable holds details that should be shown inside the element,
@@ -199,7 +201,7 @@ public abstract class Element {
         this.x = x;
         this.y = y;
     }
-
+    
     /**
      * Set new size of this element
      * 
@@ -208,8 +210,8 @@ public abstract class Element {
      */
     public void setSize(int width, int height) {
         wasMeasured = false;
-        this.width = width;
-        this.height = height;
+        this.width = (width <= 0) ? MIN_WIDTH : width;
+        this.height = (height <= 0) ? MIN_HEIGHT : height;
     }
 
     /**
@@ -284,6 +286,15 @@ public abstract class Element {
         detailsY = topY + (getHeight() - tA2);
         wasMeasured = true;
     }
+    
+    /**
+     * Set the default size according to text width and height.
+     */
+    public void setDefaultSize() {
+        width = 0;
+        height = 0;
+        wasMeasured = false;
+    }
 
     /**
      * Get element box width in pixels.
@@ -352,4 +363,71 @@ public abstract class Element {
         return (selectionStart.x <= xR) && (selectionEnd.x >= leftX)
                 && (selectionStart.y <= yB) && (selectionEnd.y >= topY);
     }
+    
+    /**
+     * Determine if a point crosses north (top) line of this element. 
+     * Used for resizing. It uses some tolerance.
+     * 
+     * @return true if mouse is crossing a top line of this element, false
+     * otherwise.
+     */
+    public boolean isTopCrossing(Point p) {
+        if (!wasMeasured)
+            return false;
+        int xR = leftX + getWidth();
+        int yB = topY + TOLERANCE;
+        return ((p.x >= leftX) && (p.x <= xR) && (p.y <= yB) 
+                && (p.y >= topY - TOLERANCE));
+    }
+
+    /**
+     * Determine if a point crosses south (bottom) line of this element. 
+     * Used for resizing. It uses some tolerance.
+     * 
+     * @return true if mouse is crossing a bottom line of this element, false
+     * otherwise.
+     */
+    public boolean isBottomCrossing(Point p) {
+        if (!wasMeasured)
+            return false;
+        int xR = leftX + getWidth();
+        int yT = topY + getHeight() - TOLERANCE;
+        int yB = topY + getHeight() + TOLERANCE;
+        return ((p.x >= leftX) && (p.x <= xR) && (p.y <= yB) 
+                && (p.y >= yT));
+    }
+
+    /**
+     * Determine if a point crosses west (left) line of this element. 
+     * Used for resizing. It uses some tolerance.
+     * 
+     * @return true if mouse is crossing a left line of this element, false
+     * otherwise.
+     */
+    public boolean isLeftCrossing(Point p) {
+        if (!wasMeasured)
+            return false;
+        int xR = leftX + TOLERANCE;
+        int yB = topY + getHeight();
+        return ((p.x >= leftX-TOLERANCE) && (p.x <= xR) && (p.y <= yB) 
+                && (p.y >= topY));
+    }
+
+    /**
+     * Determine if a point crosses east (right) line of this element. 
+     * Used for resizing. It uses some tolerance.
+     * 
+     * @return true if mouse is crossing a right line of this element, false
+     * otherwise.
+     */
+    public boolean isRightCrossing(Point p) {
+        if (!wasMeasured)
+            return false;
+        int xL = leftX + getWidth() - TOLERANCE;
+        int xR = leftX + getWidth() + TOLERANCE;
+        int yB = topY + getHeight();
+        return ((p.x >= xL) && (p.x <= xR) && (p.y <= yB) 
+                && (p.y >= topY));
+    }
+
 }
