@@ -583,6 +583,11 @@ public class DrawingPanel extends JPanel implements MouseListener,
         selLine = null;
         repaint();
     }
+    
+    private void doPop(MouseEvent e, Element elem) {
+        ElementPopUpMenu menu = new ElementPopUpMenu();
+        menu.show(e.getComponent(), e.getX(), e.getY());
+    }
 
 
     @Override
@@ -596,6 +601,12 @@ public class DrawingPanel extends JPanel implements MouseListener,
     public void mousePressed(MouseEvent e) {
         Point p = e.getPoint();
         if (panelMode == PanelMode.moving) {
+            if (e.isPopupTrigger()) {
+                tmpElem1 = schema.getCrossingElement(p);
+                if (tmpElem1 != null)
+                    doPop(e, tmpElem1);
+                tmpElem1 = null;
+            }
             if (e.getButton() == MouseEvent.BUTTON1) {
                 // detect if user wants to resize an element
                 tmpElem1 = schema.getResizeElement(p);
@@ -683,6 +694,12 @@ public class DrawingPanel extends JPanel implements MouseListener,
             return;
         }
         if (panelMode == PanelMode.moving) {
+            if (e.isPopupTrigger()) {
+                tmpElem1 = schema.getCrossingElement(p);
+                if (tmpElem1 != null)
+                    doPop(e, tmpElem1);
+                tmpElem1 = null;
+            }
             // if an element was clicked, selecting it
             // if user holds CTRL or SHIFT
             if (e.getButton() == MouseEvent.BUTTON1) {
