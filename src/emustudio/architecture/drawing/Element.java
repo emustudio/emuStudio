@@ -26,12 +26,16 @@ package emustudio.architecture.drawing;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Rectangle2D;
 
 /**
- *
+ * Element of an abstract schema. Graphical object that represents some
+ * plug-in in the schema.
+ * 
  * @author vbmacher
  */
 public abstract class Element {
@@ -110,12 +114,22 @@ public abstract class Element {
 
     private Font boldFont;
     private Font italicFont;
-
+    
     /**
      * Background color of the element. Each plug-in type can have different
      * background color.
      */
     private Color backColor;
+    
+    /**
+     * Foreground color of the element box. Line color.
+     */
+    private Color foreColor;
+    
+    /**
+     * Element will be drawn with linear gradient from white to backColor
+     */
+    private GradientPaint gradient;
 
     /**
      * Holds true, when this element is selected by user. False otherwise.
@@ -143,6 +157,9 @@ public abstract class Element {
         this.backColor = backColor;
         this.wasMeasured = false;
         this.selected = false;
+        this.foreColor = new Color(0x909090);
+        gradient = new GradientPaint(x, y, Color.WHITE, x, y+height,
+                this.backColor, false);
     }
 
     /**
@@ -153,14 +170,17 @@ public abstract class Element {
     public void draw(Graphics g)  {
         if (!wasMeasured)
             measure(g,0,0);
-        g.setColor(backColor);
-        g.fillRect(leftX, topY, getWidth(), getHeight());
+        ((Graphics2D)g).setPaint(gradient);
+//        g.setColor(backColor);
+        g.fillRect(leftX, topY, getWidth(), getHeight());//,true);
         if (selected)
             g.setColor(Color.BLUE);
         else
-            g.setColor(Color.BLACK);
-        g.drawRect(leftX, topY, getWidth(), getHeight());
+            g.setColor(foreColor);
+        g.draw3DRect(leftX, topY, getWidth(), getHeight(),true);
         g.setFont(boldFont);
+        if (!selected)
+            g.setColor(Color.BLACK);
         g.drawString(getPluginType(), textX, textY);
         g.setFont(italicFont);
         g.drawString(details, detailsX, detailsY);
@@ -208,8 +228,8 @@ public abstract class Element {
     }
 
     /**
-     * 
-     * @return
+     * Get details of the element.
+     * @return details string
      */
     public String getDetails() { return details; }
 
@@ -235,7 +255,7 @@ public abstract class Element {
     public void measure(Graphics g, int leftFactor, int topFactor) {
         Font f = g.getFont();
         boldFont = f.deriveFont(Font.BOLD);
-        italicFont = f.deriveFont(Font.ITALIC);
+        italicFont = f.deriveFont(Font.PLAIN);
 
         // First measure width and height of text
         FontMetrics fm = g.getFontMetrics(boldFont);
@@ -272,6 +292,9 @@ public abstract class Element {
         if (topFactor > 0)
             topY -= (topFactor - getHeight()/2);
 
+        gradient = new GradientPaint(leftX, topY, Color.WHITE, leftX,
+                topY+getHeight(), backColor, true);
+        
         textX = leftX + (getWidth() - tW) / 2;
         textY += topY;
 

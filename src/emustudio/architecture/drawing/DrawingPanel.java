@@ -55,7 +55,8 @@ public class DrawingPanel extends JPanel implements MouseListener,
     /**
      * Default grid gap. 
      */
-    public final static String DEFAULT_GRID_GAP = "30";
+    public final static String DEFAULT_GRID_GAP = "20";
+    public final static int DEFAULT_GRID_GAP_INT = 20;
     
     private final static int RESIZE_TOP = 0;
     private final static int RESIZE_LEFT = 1;
@@ -172,9 +173,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
      */
     private Point selectionEnd;
 
-    private BasicStroke thickLine;
-
     private BasicStroke dashedLine;
+
+    private BasicStroke dottedLine;
 
     private Schema schema;
 
@@ -300,13 +301,16 @@ public class DrawingPanel extends JPanel implements MouseListener,
         panelMode = PanelMode.moving;
         drawTool = DrawTool.nothing;
 
-        thickLine = new BasicStroke(2);
+        //thickLine = new BasicStroke(3);
         float dash[] = { 10.0f };
+        float dot[] = { 1.0f };
         dashedLine = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
-        BasicStroke.JOIN_MITER, 10.0f, dash, 0.0f);
+            BasicStroke.JOIN_MITER, 10.0f, dash, 0.0f);
+        dottedLine = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
+            BasicStroke.JOIN_MITER, 1.0f, dot, 0.0f);
 
         tmpPoints = new ArrayList<Point>();
-        gridColor = new Color(0xBFBFBF);
+        gridColor = new Color(0xDDDDDD);
 
         eventListeners = new EventListenerList();
         bidirectional = true;
@@ -461,6 +465,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
         if (!useGrid)
             return;
         g.setColor(gridColor);
+        ((Graphics2D)g).setStroke(dottedLine);
         for (int xi = 0; xi < this.getWidth(); xi+=gridGap)
             g.drawLine(xi, 0, xi, this.getHeight());
         for (int yi = 0; yi < this.getHeight(); yi+= gridGap)
@@ -489,7 +494,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
         for (int i = 0; i < schema.getConnectionLines().size(); i++) {
             ConnectionLine l = schema.getConnectionLines().get(i);
             l.computeArrows(0,0);
-            l.draw((Graphics2D)g);
+            l.draw((Graphics2D)g,false);
         }
 
         // at least, modelling all other elements

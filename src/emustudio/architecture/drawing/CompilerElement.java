@@ -44,7 +44,7 @@ public class CompilerElement extends Element {
      * @param height height of the element
      */
     public CompilerElement(int x, int y, String text, int width, int height) {
-        super(Color.WHITE, text, x, y, width, height);
+        super(new Color(0xeeefff), text, x, y, width, height);
 //        super(Color.CYAN, text, x, y);
     }
 

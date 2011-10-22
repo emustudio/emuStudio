@@ -43,7 +43,7 @@ public class DeviceElement extends Element {
      * @param height height of the element
      */
     public DeviceElement(int x, int y, String text, int width, int height) {
-        super(Color.WHITE, text, x, y, width, height);
+        super(new Color(0xe0e0e0), text, x, y, width, height);
         //super(new Color(0xFFFEFF), text, x, y);
     }
 

@@ -103,6 +103,8 @@ public class Schema {
         lines = new ArrayList<ConnectionLine>();
         configName = "";
         compilerElement = null;
+        this.useGrid = true;
+        this.gridGap = DrawingPanel.DEFAULT_GRID_GAP_INT;
     }
     
     /**

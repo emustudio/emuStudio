@@ -189,7 +189,7 @@ public class PreviewPanel extends JPanel {
         for (int i = 0; i < schema.getConnectionLines().size(); i++) {
             ConnectionLine l = schema.getConnectionLines().get(i);
             l.computeArrows(leftFactor, topFactor);
-            l.draw((Graphics2D)g, leftFactor, topFactor);
+            l.draw((Graphics2D)g, leftFactor, topFactor,true);
         }
         for (int i = 0; i < a.size(); i++)
             a.get(i).draw(g);

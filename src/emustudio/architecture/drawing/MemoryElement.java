@@ -43,7 +43,7 @@ public class MemoryElement extends Element {
      * @param height height of the element
      */
     public MemoryElement(int x, int y, String text, int width, int height) {
-        super(Color.WHITE, text, x, y, width, height);
+        super(new Color(0xeeeeee), text, x, y, width, height);
         //super(new Color(0xC5C5C5), text, x, y);
     }
 

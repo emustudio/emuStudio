@@ -43,7 +43,7 @@ public class CpuElement extends Element {
      * @param height height of the element
      */
     public CpuElement(int x, int y, String text, int width, int height) {
-        super(Color.WHITE, text, x, y, width, height);
+        super(new Color(0xffeeee), text, x, y, width, height);
         //super(new Color(0x6D8471), text, x, y);
     }
 

@@ -60,10 +60,17 @@ public class ConnectionLine {
      */
     private Element e2;
     
-
-
+    /**
+     * Line points.
+     */
     private ArrayList<Point> points;
+    
     private static BasicStroke thickLine = new BasicStroke(2);
+    
+    /**
+     * Color of the line
+     */
+    private Color lineColor;
 
     /**
      * Whether this line is selected by the user
@@ -87,6 +94,7 @@ public class ConnectionLine {
     private Point arrow1;
     private Point arrow1LeftEnd;
     private Point arrow1RightEnd;
+    private int[] xx1, yy1;
 
     /**
      * Begining arrow point for element2. The x and y values are relative
@@ -95,6 +103,7 @@ public class ConnectionLine {
     private Point arrow2;
     private Point arrow2LeftEnd;
     private Point arrow2RightEnd;
+    private int[] xx2, yy2;
 
     /**
      * Create new ConnectionLine object.
@@ -111,8 +120,14 @@ public class ConnectionLine {
         if (points != null)
             this.points.addAll(points);
 
+        this.lineColor = new Color(0x333333);
         this.bidirectional = true;
         this.selected = false;
+        
+        xx1 = new int[4];
+        yy1 = new int[4];
+        xx2 = new int[4];
+        yy2 = new int[4];
     }
 
     /**
@@ -186,12 +201,8 @@ public class ConnectionLine {
         y_top = lineStart.y - eHeight/2;
 
         if (points.isEmpty())
-            lineEnd = new Point ((first ? e2.getX()-e2.getWidth()/2 
-                      : e1.getX()-e1.getWidth()/2)
-                    + (first ? e2.getWidth() : e1.getWidth())/2,
-                    (first ? e2.getY() - e2.getHeight()/2
-                      : e1.getY() - e1.getHeight()/2)
-                    + (first ? e2.getHeight() : e1.getHeight())/2);
+            lineEnd = new Point (first ? e2.getX() : e1.getX(),
+                    first ? e2.getY() : e1.getY());
         else {
             lineEnd = first ? points.get(0) : points.get(points.size()-1);
             int x2 = lineEnd.x  - leftFactor;
@@ -202,9 +213,19 @@ public class ConnectionLine {
             if (y2 < Schema.MIN_TOP_MARGIN)
                 y2 = Schema.MIN_TOP_MARGIN;
 
-            lineEnd = new Point(x2,y2);
+            lineEnd = new Point(x2, y2);
+            // if the line end is near element, modify line start
+            if (lineEnd.x >= eX && (lineEnd.x <= (eX + eWidth))) {
+                lineStart.x = lineEnd.x;
+            } else if (lineEnd.y >= eY && (lineEnd.y <= (eY + eHeight))) {
+                lineStart.y = lineEnd.y;
+            }
+            x_left = lineStart.x - eWidth / 2;
+            x_right = lineStart.x + eWidth / 2;
+            y_bottom = lineStart.y + eHeight / 2;
+            y_top = lineStart.y - eHeight / 2;
         }
-
+        
         // test: bottom line of element1
         p = intersection(new Point(x_left,y_bottom), new Point(x_right, y_bottom),
                  lineStart, lineEnd);
@@ -424,9 +445,10 @@ public class ConnectionLine {
      * Draws this connection line.
      *
      * @param g Graphics2D object, where to draw the line
+     * @param preview whether to draw line points
      */
-    public void draw(Graphics2D g) {
-        draw(g,0,0);
+    public void draw(Graphics2D g, boolean preview) {
+        draw(g,0,0, preview);
     }
 
     /**
@@ -437,19 +459,21 @@ public class ConnectionLine {
      *        the leftFactor value, in the X coordinate)
      * @param topFactor correction of the line (line will be moved upward to
      *        the topFactor value, in the Y coordinate)
+     * @param preview whether to draw line points
      */
-    public void draw(Graphics2D g, int leftFactor, int topFactor) {
+    public void draw(Graphics2D g, int leftFactor, int topFactor, boolean preview) {
         if (selected)
             g.setColor(Color.BLUE);
         else
-            g.setColor(Color.black);
+            g.setColor(lineColor);
         int x1 = e1.getX();
         int y1 = e1.getY();
         int x2, y2;
 
         Stroke ss = g.getStroke();
         g.setStroke(thickLine);
-        for (int i = 0; i < points.size(); i++) {
+        int j = points.size()-1;
+        for (int i = 0; i <= j; i++) {
             Point p = points.get(i);
             x2 = (int)p.getX();
             y2 = (int)p.getY();
@@ -464,13 +488,42 @@ public class ConnectionLine {
                 y2 = Schema.MIN_TOP_MARGIN;
             }
 
+            // if the line end is near element, modify line start in a wish
+            // that the line was straight
+            if (i == 0) {
+                if (x2 >= (x1 - e1.getWidth()/2) && (x2 <= (x1 + e1.getWidth()/2))) {
+                    x1 = x2;
+                }
+                if (y2 >= (y1 - e1.getHeight()/2) && (y2 <= (y1 + e1.getHeight()/2))) {
+                    y1 = y2;
+                }
+            }
+            
+            if (!preview) {
+                if (!selected) {
+                    g.setColor(Color.GRAY);
+                }
+                g.fillOval(x2 - 4, y2 - 4, 8, 8);
+                if (!selected) {
+                    g.setColor(lineColor);
+                }
+            }
             g.drawLine(x1, y1, x2, y2);
-            g.fillOval(x2-3, y2-3, 6, 6);
             x1 = x2;
             y1 = y2;
         }
         x2 = e2.getX();
         y2 = e2.getY();
+
+        if (j >= 0) { // only if line contains points, modify the line end in a 
+                      // wish that the line was straight
+            if (x1 >= (x2 - e2.getWidth() / 2) && (x1 <= (x2 + e2.getWidth() / 2))) {
+                x2 = x1;
+            }
+            if (y1 >= (y2 - e2.getHeight() / 2) && (y1 <= (y2 + e2.getHeight() / 2))) {
+                y2 = y1;
+            }
+        }
         g.drawLine(x1, y1, x2, y2);
 
         // sipky - princip dedenia v UML <---> princip toku udajov => tok!!
@@ -478,27 +531,50 @@ public class ConnectionLine {
                 && (arrow1RightEnd != null)) {
             x1 = e1.getX() - e1.getWidth()/2;
             y1 = e1.getY() - e1.getHeight()/2;
-            g.drawLine(x1 + arrow1.x,
-                    y1 + arrow1.y,
-                    x1 + arrow1.x + arrow1LeftEnd.x,
-                    y1 + arrow1.y + arrow1LeftEnd.y);
-            g.drawLine(x1 + arrow1.x,
-                    y1 + arrow1.y,
-                    x1 + arrow1.x + arrow1RightEnd.x,
-                    y1 + arrow1.y + arrow1RightEnd.y);
+            
+            // nice arrow ends, filled triangles
+            xx1[0] = x1 + arrow1.x;
+            xx1[1] = x1 + arrow1.x + arrow1LeftEnd.x;
+            xx1[2] = x1 + arrow1.x + arrow1RightEnd.x;
+            xx1[3] = x1 + arrow1.x;
+            yy1[0] = y1 + arrow1.y;
+            yy1[1] = y1 + arrow1.y + arrow1LeftEnd.y;
+            yy1[2] = y1 + arrow1.y + arrow1RightEnd.y;
+            yy1[3] = y1 + arrow1.y;
+            g.fillPolygon(xx1, yy1, 4);
+            
+//            g.drawLine(x1 + arrow1.x,
+  //                  y1 + arrow1.y,
+    //                x1 + arrow1.x + arrow1LeftEnd.x,
+      //              y1 + arrow1.y + arrow1LeftEnd.y);
+        //    g.drawLine(x1 + arrow1.x,
+          //          y1 + arrow1.y,
+            //        x1 + arrow1.x + arrow1RightEnd.x,
+              //      y1 + arrow1.y + arrow1RightEnd.y);
         }
         if ((arrow2 !=null) && (arrow2LeftEnd != null)
                 && (arrow2RightEnd != null)) {
             x2 = e2.getX() - e2.getWidth()/2;
             y2 = e2.getY() - e2.getHeight()/2;
-            g.drawLine(x2 + arrow2.x,
-                    y2 + arrow2.y,
-                    x2 + arrow2.x + arrow2LeftEnd.x,
-                    y2 + arrow2.y + arrow2LeftEnd.y);
-            g.drawLine(x2 + arrow2.x,
-                    y2 + arrow2.y,
-                    x2 + arrow2.x + arrow2RightEnd.x,
-                    y2 + arrow2.y + arrow2RightEnd.y);
+
+            xx2[0] = x2 + arrow2.x;
+            xx2[1] = x2 + arrow2.x + arrow2LeftEnd.x;
+            xx2[2] = x2 + arrow2.x + arrow2RightEnd.x;
+            xx2[3] = x2 + arrow2.x;
+            yy2[0] = y2 + arrow2.y;
+            yy2[1] = y2 + arrow2.y + arrow2LeftEnd.y;
+            yy2[2] = y2 + arrow2.y + arrow2RightEnd.y;
+            yy2[3] = y2 + arrow2.y;
+            g.fillPolygon(xx2, yy2, 4);
+            
+//            g.drawLine(x2 + arrow2.x,
+  //                  y2 + arrow2.y,
+    //                x2 + arrow2.x + arrow2LeftEnd.x,
+      //              y2 + arrow2.y + arrow2LeftEnd.y);
+        //    g.drawLine(x2 + arrow2.x,
+          //          y2 + arrow2.y,
+            //        x2 + arrow2.x + arrow2RightEnd.x,
+              //      y2 + arrow2.y + arrow2RightEnd.y);
         }
         g.setStroke(ss);
     }
@@ -561,6 +637,8 @@ public class ConnectionLine {
         ((Graphics2D) g).setStroke(thickLine);
         g.fillOval(xx - TOLERANCE - 2, yy - TOLERANCE - 2,
                 (TOLERANCE + 2) * 2, (TOLERANCE + 2) * 2);
+  // TODO:     if (selected)
+  //               g.setColor(Color.BLUE);
         g.setColor(Color.BLACK);
         g.drawOval(xx - TOLERANCE, yy - TOLERANCE,
                 TOLERANCE * 2, TOLERANCE * 2);
@@ -704,7 +782,7 @@ public class ConnectionLine {
      * 
      * d(X, p) = abs(a*x0 + b*y0 + c)/sqrt(a^2 + b^2)
      * 
-     * and if yes, return index of a point of a cross point.
+     * and if yes, return index of a point of the cross point.
      *
      * @param point point that is checked
      * @param tolerance the tolerance
