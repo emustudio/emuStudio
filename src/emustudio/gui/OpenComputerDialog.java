@@ -331,9 +331,9 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         archName = (String) lstConfig.getSelectedValue();
         if (r == StaticDialogs.YES_OPTION) {
             boolean re = ArchLoader.deleteConfig(archName);
+            lstConfig.clearSelection();
             if (re) {
                 archName = "";
-                lstConfig.setSelectedIndex(-1);
                 update();
             } else {
                 StaticDialogs.showErrorMessage("Computer could not be deleted.");

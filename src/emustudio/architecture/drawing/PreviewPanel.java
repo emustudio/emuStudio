@@ -115,10 +115,10 @@ public class PreviewPanel extends JPanel {
 
         ArrayList<Element> a = schema.getAllElements();
 
-        for (int i = 0; i < a.size(); i++)
+        for (int i = a.size()-1; i >= 0; i--)
             a.get(i).measure(g,0,0);
 
-        for (int i = 0; i < a.size(); i++) {
+        for (int i = a.size()-1; i >= 0; i--) {
             Element e = a.get(i);
             int eX = e.getX() - e.getWidth() /2;
             int eY = e.getY() - e.getHeight()/2;
@@ -140,9 +140,9 @@ public class PreviewPanel extends JPanel {
             if (eY + eHeight > height)
                 height = eY + eHeight;
         }
-        for (int i = 0; i < schema.getConnectionLines().size(); i++) {
+        for (int i = schema.getConnectionLines().size() -1; i >= 0; i--) {
             ArrayList<Point> ps = schema.getConnectionLines().get(i).getPoints();
-            for (int j = 0; j < ps.size(); j++) {
+            for (int j = ps.size() - 1; j >= 0; j--) {
                 Point p = ps.get(j);
 
                 if (minLeft == -1)

@@ -40,7 +40,7 @@ public class DeviceElement extends Element {
      * @param settings settings of this element from virtual configuration
      * @param schemaName name of this element within virtual configuration file
      */
-    public DeviceElement(Properties settings, String schemaName) {
+    public DeviceElement(Properties settings, String schemaName) throws Exception {
         super(settings, schemaName, BACK_COLOR);
     }
 
@@ -51,7 +51,7 @@ public class DeviceElement extends Element {
      * @param location the point where the compiler is located in the schema
      */
     public DeviceElement(String pluginName, Point location) {
-        super(pluginName, location, BACK_COLOR);
+        super(pluginName, null, location, BACK_COLOR);
     }
 
     @Override

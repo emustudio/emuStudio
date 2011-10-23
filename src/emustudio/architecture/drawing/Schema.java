@@ -103,15 +103,22 @@ public class Schema {
         gridGap = Integer.parseInt(settings.getProperty("gridGap",
                 DrawingPanel.DEFAULT_GRID_GAP));
 
-        compilerElement = new CompilerElement(settings);
-        // if cpu is null here, it does not matter. Maybe user just did not
-        // finish the schema..
-        cpuElement = new CpuElement(settings);
-        memoryElement = new MemoryElement(settings);
-
+        try {
+            compilerElement = new CompilerElement(settings);
+        } catch (Exception e) {}
+        try {
+            // if cpu is null here, it does not matter. Maybe user just did not
+            // finish the schema..
+            cpuElement = new CpuElement(settings);
+        } catch (Exception e) {}
+        try {
+            memoryElement = new MemoryElement(settings);
+        } catch (Exception e) {}
         // load devices
         for (int i = 0; settings.containsKey("device" + i); i++) {
-            deviceElements.add(new DeviceElement(settings, "device" + i));
+            try {
+                deviceElements.add(new DeviceElement(settings, "device" + i));
+            } catch (Exception e) {}
         }
 
         // load line connections

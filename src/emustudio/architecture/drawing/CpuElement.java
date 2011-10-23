@@ -35,24 +35,22 @@ public class CpuElement extends Element {
     private final static Color BACK_COLOR = new Color(0xffeeee);
 
     /**
-     * This constructor creates the CpuElement instance. It needs to know
-     * the element location and description text.
+     * This constructor creates the CpuElement instance. 
      *
      * @param settings settings of this element from virtual configuration
      */
-    public CpuElement(Properties settings) {
+    public CpuElement(Properties settings) throws Exception {
         super(settings, "cpu", BACK_COLOR);
     }
 
     /**
-     * Creates an instance of the CpuElement. It needs to know the element
-     * location and the description text.
+     * Creates an instance of the CpuElement.
      *
      * @param e1 Point representing the element location
      * @param text description text (name of the plug-in)
      */
     public CpuElement(String pluginName, Point location) {
-        super(pluginName, location, BACK_COLOR);
+        super(pluginName, "cpu", location, BACK_COLOR);
     }
 
     /**

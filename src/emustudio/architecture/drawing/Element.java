@@ -150,8 +150,11 @@ public abstract class Element {
      * @param settings settings of virtual computer
      * @param settingsName name of this element within virtual configuration file
      * @param backColor Background color
+     * @throws Exception when plug-in with settingsName does not exist in the
+     *      schema
      */
-    public Element(Properties settings, String settingsName, Color backColor) {
+    public Element(Properties settings, String settingsName, Color backColor) 
+            throws Exception {
         this.settingsName = settingsName;
         this.backColor = backColor;
         this.wasMeasured = false;
@@ -167,14 +170,16 @@ public abstract class Element {
      * parameters are created automatically.
      * 
      * @param pluginName file name of this plug-in, without '.jar' extension.
+     * @param settingsName name of this element within virtual configuration file
      * @param location Location of this element in the abstract schema
      * @param backColor Background color
      */
-    public Element(String pluginName, Point location, Color backColor) {
+    public Element(String pluginName, String settingsName, Point location, 
+            Color backColor) {
         this.pluginName = pluginName;
+        this.settingsName = settingsName;
         this.x = location.x;
         this.y = location.y;
-        this.settingsName = null;
         this.backColor = backColor;
         this.wasMeasured = false;
         this.selected = false;
@@ -183,21 +188,22 @@ public abstract class Element {
                 this.backColor, false);
     }
     
-    private void loadSettings(Properties settings) {
+    private void loadSettings(Properties settings) throws Exception {
         if (settingsName == null)
             return;
         this.pluginName = settings.getProperty(settingsName, null);
-        
-        if (pluginName != null) {
-            x = Integer.parseInt(settings.getProperty(settingsName 
-                    + ".point.x", "0"));
-            y = Integer.parseInt(settings.getProperty(settingsName
-                    + ".point.y", "0"));
-            width = Integer.parseInt(settings.getProperty(settingsName
-                    + ".width", "0"));
-            height = Integer.parseInt(settings.getProperty(settingsName
-                    + ".height", "0"));
-        }
+        if (pluginName == null)
+            throw new Exception("Plug-in name for '" + settingsName 
+                    + "' is null!");
+
+        x = Integer.parseInt(settings.getProperty(settingsName + ".point.x",
+                "0"));
+        y = Integer.parseInt(settings.getProperty(settingsName + ".point.y",
+                "0"));
+        width = Integer.parseInt(settings.getProperty(settingsName + ".width",
+                "0"));
+        height = Integer.parseInt(settings.getProperty(settingsName + ".height",
+                "0"));
     }
     
     /**
@@ -208,6 +214,7 @@ public abstract class Element {
     public Properties saveSettings(Properties settings) {
         if (settingsName == null)
             return null;
+        System.out.println("Saving...");
         settings.put(settingsName, pluginName);
         settings.put(settingsName + ".point.x", String.valueOf(x));
         settings.put(settingsName + ".point.y", String.valueOf(y));

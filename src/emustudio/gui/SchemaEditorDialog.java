@@ -596,6 +596,10 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
                 : "Enter new computer name:", "Save & Close",
                 edit ? schema.getConfigName()
                 : "");
+        if (name.trim().equals("")) {
+            StaticDialogs.showErrorMessage("Computer name can not be empty!");
+            return;
+        }
 
         try {
             File f = new File(name + ".conf");

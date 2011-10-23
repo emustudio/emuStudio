@@ -41,7 +41,7 @@ public class CompilerElement extends Element {
      *
      * @param settings settings of virtual computer
      */
-    public CompilerElement(Properties settings) {
+    public CompilerElement(Properties settings) throws Exception {
         super(settings, "compiler", BACK_COLOR);
     }
 
@@ -52,7 +52,7 @@ public class CompilerElement extends Element {
      * @param location the point where the compiler is located in the schema
      */
     public CompilerElement(String pluginName, Point location) {
-        super(pluginName, location, BACK_COLOR);
+        super(pluginName, "compiler", location, BACK_COLOR);
     }
 
     /**
