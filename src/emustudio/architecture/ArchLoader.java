@@ -6,7 +6,7 @@
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
  *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,15 +26,8 @@
 
 package emustudio.architecture;
 
-import emustudio.architecture.drawing.CompilerElement;
-import emustudio.architecture.drawing.ConnectionLine;
-import emustudio.architecture.drawing.CpuElement;
-import emustudio.architecture.drawing.DeviceElement;
-import emustudio.architecture.drawing.Element;
-import emustudio.architecture.drawing.MemoryElement;
 import emustudio.architecture.drawing.Schema;
 import emustudio.main.Main;
-import java.awt.Point;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -50,15 +43,14 @@ import emuLib8.plugins.memory.IMemory;
 import emuLib8.plugins.cpu.ICPU;
 import emuLib8.plugins.device.IDevice;
 import emuLib8.runtime.StaticDialogs;
-import emustudio.architecture.drawing.DrawingPanel;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * Class loader for plugins and their resources.
+ * Class loader for plugins and their resources (singleton).
  *
  * This class deals with emulator configuration - loads classes, maps devices,
- * etc
+ * etc.
  *
  * A configuration file is Java properties file. It means it is like Windows INI
  * file without [] classes. Settings of specific devices can be accessed via
@@ -139,7 +131,8 @@ public class ArchLoader {
     private static long nextPluginID = 0;
     
     /** 
-     * This forbids of creating the instance of this class.
+     * This forbids of creating the instance of this class. This class is
+     * a singleton.
      */
     private ArchLoader() {
     }
@@ -224,105 +217,7 @@ public class ArchLoader {
             if (p == null)
                 return null;
             
-            // grid
-            boolean useGrid = Boolean.parseBoolean(p.getProperty("useGrid","false"));
-            int gridGap = Integer.parseInt(p.getProperty("gridGap",
-                    DrawingPanel.DEFAULT_GRID_GAP));
-
-            // load compiler
-            String elementName = p.getProperty("compiler", null);
-            int x, y, width, height;
-            CompilerElement compiler = null;
-
-            if (elementName != null) {
-                x = Integer.parseInt(p.getProperty("compiler.point.x","0"));
-                y = Integer.parseInt(p.getProperty("compiler.point.y","0"));
-                width = Integer.parseInt(p.getProperty("compiler.width","0"));
-                height = Integer.parseInt(p.getProperty("compiler.height","0"));
-                compiler = new CompilerElement(x,y,elementName,width,height);
-            }
-
-            // load cpu
-            // if cpu is null here, it does not matter. Maybe user just did not
-            // finish the schema..
-            elementName = p.getProperty("cpu", null);
-            CpuElement cpu = null;
-            if (elementName != null) {
-                x = Integer.parseInt(p.getProperty("cpu.point.x","0"));
-                y = Integer.parseInt(p.getProperty("cpu.point.y","0"));
-                width = Integer.parseInt(p.getProperty("cpu.width","0"));
-                height = Integer.parseInt(p.getProperty("cpu.height","0"));
-                cpu = new CpuElement(x,y,elementName,width, height);
-            }
-
-            // load memory
-            elementName = p.getProperty("memory", null);
-            MemoryElement memory = null;
-            if (elementName != null) {
-                x = Integer.parseInt(p.getProperty("memory.point.x","0"));
-                y = Integer.parseInt(p.getProperty("memory.point.y","0"));
-                width = Integer.parseInt(p.getProperty("memory.width","0"));
-                height = Integer.parseInt(p.getProperty("memory.height","0"));
-                memory = new MemoryElement(x,y,elementName,width,height);
-            }
-            
-            ArrayList<DeviceElement> devices = new ArrayList<DeviceElement>();
-
-            for (int i = 0; p.containsKey("device"+i); i++) {
-                x = Integer.parseInt(p.getProperty("device"+i+".point.x","0"));
-                y = Integer.parseInt(p.getProperty("device"+i+".point.y","0"));
-                width = Integer.parseInt(p.getProperty("device"+i+".width","0"));
-                height = Integer.parseInt(p.getProperty("device"+i+".height","0"));
-                devices.add(new DeviceElement(x,y,p.getProperty("device"+i,
-                        "device"+i),width,height));
-            }
-
-            // load connections
-            ArrayList<ConnectionLine> lines = new ArrayList<ConnectionLine>();
-
-            for (int i = 0; p.containsKey("connection"+i+".junc0"); i++) {
-                String j0 = p.getProperty("connection"+i+".junc0", "");
-                String j1 = p.getProperty("connection"+i+".junc1", "");
-                boolean bidi = Boolean.parseBoolean(p.getProperty("connection"+
-                        i+".bidirectional", "true"));
-                if (j0.equals("") || j1.equals("")) continue;
-                
-                Element e1=null,e2=null;
-                if (j0.equals("cpu"))
-                    e1 = cpu;
-                else if (j0.equals("memory"))
-                    e1 = memory;
-                else if (j0.equals("compiler"))
-                    e1 = compiler;
-                else if (j0.startsWith("device")) {
-                    int index = Integer.parseInt(j0.substring(6));
-                    e1 = devices.get(index);
-                }
-                if (j1.equals("cpu"))
-                    e2 = cpu;
-                else if (j1.equals("memory")) 
-                    e2 = memory;
-                else if (j1.equals("compiler"))
-                    e2 = compiler;
-                else if (j1.startsWith("device")) {
-                    int index = Integer.parseInt(j1.substring(6));
-                    e2 = devices.get(index);
-                }
-                if ((e1 != null) && (e2 != null)) {
-                    ConnectionLine lin = new ConnectionLine(e1,e2,null);
-                    lin.setBidirectional(bidi);
-                    for (int j = 0; p.containsKey("connection"+i+".point"+j+".x"); j++) {
-                        x = Integer.parseInt(p.getProperty("connection"
-                                + i + ".point" + j + ".x","0"));
-                        y = Integer.parseInt(p.getProperty("connection"
-                                + i + ".point" + j + ".y","0"));
-                        lin.addPoint(new Point(x,y));
-                    }
-                    lines.add(lin);
-                }
-            }
-            return new Schema(cpu,memory,devices,lines,configName,compiler,
-                    useGrid,gridGap);
+            return new Schema(configName,p);
         }
         catch (Exception e) {
             StaticDialogs.showErrorMessage("Error reading configuration: "
@@ -334,88 +229,12 @@ public class ArchLoader {
     /**
      * Method saves abstract schema of some configuration into configuration
      * file. 
-     * @param s Schema to save
+     * @param schema Schema to save
      */
-    public static void saveSchema(Schema s) {
+    public static void saveSchema(Schema schema) {
         try {
-            Properties p = readConfig(s.getConfigName(),false);
-            if (p == null)
-                p = new Properties();
-            p.put("useGrid", String.valueOf(s.getUseGrid()));
-            p.put("gridGap", String.valueOf(s.getGridGap()));
-            // compiler
-            CompilerElement compiler = s.getCompilerElement();
-            if (compiler != null) {
-                p.put("compiler", compiler.getDetails());
-                p.put("compiler.point.x", String.valueOf((int)(compiler.getX())));
-                p.put("compiler.point.y", String.valueOf((int)(compiler.getY())));
-                p.put("compiler.width", String.valueOf((int)(compiler.getWidth())));
-                p.put("compiler.height", String.valueOf((int)(compiler.getHeight())));
-            }
-            // cpu
-            CpuElement cpu = s.getCpuElement();
-            if (cpu != null) {
-                p.put("cpu", cpu.getDetails());
-                p.put("cpu.point.x", String.valueOf((int)(cpu.getX())));
-                p.put("cpu.point.y", String.valueOf((int)(cpu.getY())));
-                p.put("cpu.width", String.valueOf((int)(cpu.getWidth())));
-                p.put("cpu.height", String.valueOf((int)(cpu.getHeight())));
-            }
-            // memory
-            MemoryElement mem = s.getMemoryElement();
-            if (mem != null) {
-                p.put("memory", mem.getDetails());
-                p.put("memory.point.x", String.valueOf((int)(mem.getX())));
-                p.put("memory.point.y", String.valueOf((int)(mem.getY())));
-                p.put("memory.width", String.valueOf((int)(mem.getWidth())));
-                p.put("memory.height", String.valueOf((int)(mem.getHeight())));
-            }
-            // devices
-            ArrayList<DeviceElement> devs = s.getDeviceElements();
-            HashMap<DeviceElement, Object> devsHash = new HashMap<DeviceElement, Object>();
-            for (int i = 0; i < devs.size(); i++) {
-                DeviceElement dev = devs.get(i);
-                devsHash.put(dev, "device" + i);
-                p.put("device"+i, dev.getDetails());
-                p.put("device"+i+".point.x", String.valueOf((int)(dev.getX())));
-                p.put("device"+i+".point.y", String.valueOf((int)(dev.getY())));
-                p.put("device"+i+".width", String.valueOf((int)(dev.getWidth())));
-                p.put("device"+i+".height", String.valueOf((int)(dev.getHeight())));
-            }
-            ArrayList<ConnectionLine> lines = s.getConnectionLines();
-            for (int i = 0; i < lines.size(); i++) {
-                ConnectionLine line = lines.get(i);
-
-                p.put("connection"+i+".bidirectional", 
-                        String.valueOf(line.isBidirectional()));
-
-                Element e = line.getJunc0();
-                if (e instanceof CompilerElement)
-                    p.put("connection"+i+".junc0", "compiler");
-                else if(e instanceof CpuElement)
-                    p.put("connection"+i+".junc0", "cpu");
-                else if (e instanceof MemoryElement) 
-                    p.put("connection"+i+".junc0", "memory");
-                else if (e instanceof DeviceElement)
-                    p.put("connection"+i+".junc0", devsHash.get((DeviceElement)e));
-               
-                e = line.getJunc1();
-                if (e instanceof CompilerElement)
-                    p.put("connection"+i+".junc1", "compiler");
-                else if(e instanceof CpuElement)
-                    p.put("connection"+i+".junc1", "cpu");
-                else if (e instanceof MemoryElement) 
-                    p.put("connection"+i+".junc1", "memory");
-                else if (e instanceof DeviceElement)
-                    p.put("connection"+i+".junc1", devsHash.get((DeviceElement)e));
-                ArrayList<Point> points = line.getPoints();
-                for (int j = 0; j < points.size(); j++) {
-                    Point po = points.get(j);
-                    p.put("connection"+i+".point"+j+".x", String.valueOf((int)po.getX()));
-                    p.put("connection"+i+".point"+j+".y", String.valueOf((int)po.getY()));
-                }
-            }
-            writeConfig(s.getConfigName(),p);
+            schema.save();
+            writeConfig(schema.getConfigName(),schema.getSettings());
         }
         catch (Exception e) {
             StaticDialogs.showErrorMessage("Error writing configuration: " 

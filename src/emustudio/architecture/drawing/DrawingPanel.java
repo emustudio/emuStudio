@@ -4,7 +4,7 @@
  * Created on 3.7.2008, 8:31:58
  * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 
 package emustudio.architecture.drawing;
 
+import emustudio.gui.ElementPropertiesDialog;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -36,6 +37,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.EventListener;
+import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.event.EventListenerList;
 
@@ -62,21 +64,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
     private final static int RESIZE_LEFT = 1;
     private final static int RESIZE_BOTTOM = 2;
     private final static int RESIZE_RIGHT = 3;
-
-    /**
-     * Interface that should be implemented by an event listener.
-     */
-    public interface DrawEventListener extends EventListener {
-
-        /**
-         * This method is called whenever the user uses any of the
-         * tools available within this DrawingPanel.
-         *
-         * The schema editor then can "turn off" the tool.
-         */
-        public void toolUsed();
-    }
-
+    
     /**
      * List of event listeners
      */
@@ -185,7 +173,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
      */
     private ArrayList<Point> tmpPoints;
     
-    private String newText;
+    private String newPluginName;
 
     /* double buffering */
     private Image dbImage;   // second buffer
@@ -196,6 +184,22 @@ public class DrawingPanel extends JPanel implements MouseListener,
      * should be bidirectional, false otherwise.
      */
     private boolean bidirectional;
+    
+    private JDialog parent; // for modal showing of pop-up menu Properties dialog
+
+    /**
+     * Interface that should be implemented by an event listener.
+     */
+    public interface DrawEventListener extends EventListener {
+
+        /**
+         * This method is called whenever the user uses any of the
+         * tools available within this DrawingPanel.
+         *
+         * The schema editor then can "turn off" the tool.
+         */
+        public void toolUsed();
+    }
 
     /**
      * Draw tool enum.
@@ -291,17 +295,16 @@ public class DrawingPanel extends JPanel implements MouseListener,
      * Creates new instance of the modelling panel.
      *
      * @param schema  Schema object for the panel synchronization
-     * @param useGrid whether to use grid
-     * @param gridGap grid gap in pixels
+     * @param parent  Parent dialog
      */
-    public DrawingPanel(Schema schema) {
+    public DrawingPanel(Schema schema, JDialog parent) {
+        this.parent = parent;
         this.setBackground(Color.WHITE);
         this.schema = schema;
 
         panelMode = PanelMode.moving;
         drawTool = DrawTool.nothing;
 
-        //thickLine = new BasicStroke(3);
         float dash[] = { 10.0f };
         float dot[] = { 1.0f };
         dashedLine = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
@@ -555,7 +558,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
      */
     public void setTool(DrawTool tool, String text) {
         this.drawTool = tool;
-        this.newText = text;
+        this.newPluginName = text;
 
         cancelTasks();
 
@@ -590,13 +593,19 @@ public class DrawingPanel extends JPanel implements MouseListener,
     }
     
     private void doPop(MouseEvent e, Element elem) {
-        ElementPopUpMenu menu = new ElementPopUpMenu();
+        ElementPopUpMenu menu = new ElementPopUpMenu(elem,parent);
         menu.show(e.getComponent(), e.getX(), e.getY());
     }
 
 
     @Override
-    public void mouseClicked(MouseEvent e) {}
+    public void mouseClicked(MouseEvent e) {
+        if ((panelMode == PanelMode.moving) && (tmpElem1 != null)) {
+            if (e.getClickCount() == 2)
+                new ElementPropertiesDialog(parent,tmpElem1).setVisible(true);
+        }
+    }
+    
     @Override
     public void mouseEntered(MouseEvent e){}
     @Override
@@ -791,19 +800,19 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 }
             } else if (drawTool == DrawTool.shapeCompiler) {
                 p.setLocation(searchGridPoint(p));
-                schema.setCompilerElement(new CompilerElement(p, newText));
+                schema.setCompilerElement(new CompilerElement(newPluginName,p));
                 fireListeners();
             } else if(drawTool == DrawTool.shapeCPU) {
                 p.setLocation(searchGridPoint(p));
-                schema.setCpuElement(new CpuElement(p, newText));
+                schema.setCpuElement(new CpuElement(newPluginName,p));
                 fireListeners();
             } else if (drawTool == DrawTool.shapeMemory) {
                 p.setLocation(searchGridPoint(p));
-                schema.setMemoryElement(new MemoryElement(p, newText));
+                schema.setMemoryElement(new MemoryElement(newPluginName,p));
                 fireListeners();
             } else if (drawTool == DrawTool.shapeDevice) {
                 p.setLocation(searchGridPoint(p));
-                schema.addDeviceElement(new DeviceElement(p, newText));
+                schema.addDeviceElement(new DeviceElement(newPluginName,p));
                 fireListeners();
             } else if (drawTool == DrawTool.connectLine) {
                 sketchLastPoint = null;

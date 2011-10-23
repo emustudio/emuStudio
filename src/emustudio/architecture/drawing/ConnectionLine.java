@@ -501,9 +501,10 @@ public class ConnectionLine {
             
             if (!preview) {
                 if (!selected) {
-                    g.setColor(Color.GRAY);
+                    g.setColor(Color.LIGHT_GRAY);
                 }
-                g.fillOval(x2 - 4, y2 - 4, 8, 8);
+                g.fill3DRect(x2-1, y2-5, 2, 10, false); // .fillOval(x2 - 4, y2 - 4, 8, 8);
+                g.fill3DRect(x2-5, y2-1, 10, 2, false);
                 if (!selected) {
                     g.setColor(lineColor);
                 }

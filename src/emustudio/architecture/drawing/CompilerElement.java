@@ -3,7 +3,7 @@
  *
  * KISS, YAGNI
  *
- *  Copyright (C) 2010-2011 vbmacher
+ *  Copyright (C) 2010-2011 Peter Jakubčo <pjakubco@gmail.com>
  * 
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -24,6 +24,7 @@ package emustudio.architecture.drawing;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.util.Properties;
 
 /**
  * This class represents a compiler element. It is used in the abstract schema
@@ -33,29 +34,25 @@ import java.awt.Point;
  * @author vbmacher
  */
 public class CompilerElement extends Element {
+    private final static Color BACK_COLOR = new Color(0xeeefff);
 
     /**
      * Create new Compiler element object.
      *
-     * @param x the X coordinate in pixels, in the schema
-     * @param y the Y coordinate in pixels, in the schema
-     * @param text name of the compiler
-     * @param width width of the element
-     * @param height height of the element
+     * @param settings settings of virtual computer
      */
-    public CompilerElement(int x, int y, String text, int width, int height) {
-        super(new Color(0xeeefff), text, x, y, width, height);
-//        super(Color.CYAN, text, x, y);
+    public CompilerElement(Properties settings) {
+        super(settings, "compiler", BACK_COLOR);
     }
 
     /**
      * Create new Compiler element object.
      *
-     * @param shapePoint the point where the compiler is located in the schema
-     * @param newText name of the compiler
+     * @param pluginName name of the compiler
+     * @param location the point where the compiler is located in the schema
      */
-    public CompilerElement(Point shapePoint, String newText) {
-        this(shapePoint.x, shapePoint.y, newText, 0,0);
+    public CompilerElement(String pluginName, Point location) {
+        super(pluginName, location, BACK_COLOR);
     }
 
     /**

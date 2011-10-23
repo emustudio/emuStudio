@@ -25,26 +25,23 @@ package emustudio.architecture.drawing;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.util.Properties;
 
 /**
  *
  * @author vbmacher
  */
 public class CpuElement extends Element {
+    private final static Color BACK_COLOR = new Color(0xffeeee);
 
     /**
      * This constructor creates the CpuElement instance. It needs to know
      * the element location and description text.
      *
-     * @param x X location of this element
-     * @param y Y location of this element
-     * @param text description text (name of the plug-in)
-     * @param width width of the element
-     * @param height height of the element
+     * @param settings settings of this element from virtual configuration
      */
-    public CpuElement(int x, int y, String text, int width, int height) {
-        super(new Color(0xffeeee), text, x, y, width, height);
-        //super(new Color(0x6D8471), text, x, y);
+    public CpuElement(Properties settings) {
+        super(settings, "cpu", BACK_COLOR);
     }
 
     /**
@@ -54,8 +51,8 @@ public class CpuElement extends Element {
      * @param e1 Point representing the element location
      * @param text description text (name of the plug-in)
      */
-    public CpuElement(Point e1, String text) {
-        this((int)e1.getX(),(int)e1.getY(), text, 0,0);
+    public CpuElement(String pluginName, Point location) {
+        super(pluginName, location, BACK_COLOR);
     }
 
     /**

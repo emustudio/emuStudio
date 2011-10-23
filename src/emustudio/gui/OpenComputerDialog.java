@@ -3,7 +3,7 @@
  *
  * Created on Streda, 2007, august 8, 8:45
  *
- *  Copyright (C) 2007-2010 vbmacher
+ *  Copyright (C) 2007-2011 Peter Jakubčo <pjakubco@gmail.com>
  * 
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -59,30 +59,8 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     }
 
     /**
-     * Creates new instance of this dialog.
-     *
-     * @param parent parent dialog
-     * @param modal whether this dialog should be modal
+     * Existing configurations list model
      */
-    public OpenComputerDialog(java.awt.Dialog parent, boolean modal) {
-        super(parent, modal);
-        initComponents();
-        amodel = new ArchListModel();
-        lstConfig.setModel(amodel);
-        this.setTitle("Browse for arhitecture names");
-        btnEdit.setEnabled(false);
-        btnEdit.setVisible(false);
-        btnDelete.setEnabled(false);
-        btnDelete.setVisible(false);
-        btnAdd.setEnabled(false);
-        btnAdd.setVisible(false);
-        this.setLocationRelativeTo(parent);
-
-        preview = new PreviewPanel();
-        scrollPreview.setViewportView(preview);
-    }
-
- // existing configurations list model
     private class ArchListModel extends AbstractListModel {
         private String[] allModels;
 
@@ -230,15 +208,15 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         panelConfig.setLayout(panelConfigLayout);
         panelConfigLayout.setHorizontalGroup(
             panelConfigLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(toolConfig, javax.swing.GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
+            .addComponent(toolConfig, javax.swing.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)
         );
         panelConfigLayout.setVerticalGroup(
             panelConfigLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelConfigLayout.createSequentialGroup()
                 .addComponent(toolConfig, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 251, Short.MAX_VALUE))
         );
 
         splitConfig.setLeftComponent(panelConfig);
@@ -270,7 +248,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
             .addGroup(panelPreviewLayout.createSequentialGroup()
                 .addComponent(toolPreview, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollPreview, javax.swing.GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE))
+                .addComponent(scrollPreview, javax.swing.GroupLayout.DEFAULT_SIZE, 251, Short.MAX_VALUE))
         );
 
         splitConfig.setRightComponent(panelPreview);
@@ -339,7 +317,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         if (s == null) {
             return;
         }
-        SchemaEditorFrame d = new SchemaEditorFrame(this, s);
+        SchemaEditorDialog d = new SchemaEditorDialog(this, s);
         d.setVisible(true);
     }//GEN-LAST:event_btnEditActionPerformed
 
@@ -364,7 +342,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_btnDeleteActionPerformed
 
     private void btnAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddActionPerformed
-        SchemaEditorFrame di = new SchemaEditorFrame(this);
+        SchemaEditorDialog di = new SchemaEditorDialog(this);
         di.setVisible(true);
     }//GEN-LAST:event_btnAddActionPerformed
 

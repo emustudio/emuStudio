@@ -1,9 +1,9 @@
 /*
- * SchemaEditorFrame.java
+ * SchemaEditorDialog.java
  *
  * KISS, YAGNI
  *
- *  Copyright (C) 2010-2011 vbmacher
+ *  Copyright (C) 2010-2011 Peter Jakubčo <pjakubco@gmail.com>
  * 
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -19,7 +19,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package emustudio.gui;
 
 import emustudio.architecture.ArchLoader;
@@ -29,7 +28,6 @@ import emustudio.architecture.drawing.DrawingPanel.DrawTool;
 import emustudio.architecture.drawing.Schema;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Dialog.ModalExclusionType;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
@@ -38,10 +36,11 @@ import javax.swing.event.ListDataListener;
 import emuLib8.runtime.StaticDialogs;
 
 /**
- *
+ * Editor of abstract schemas of a virtual computer.
+ * 
  * @author vbmacher
  */
-public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener {
+public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
 
     /**
      * Schema of created computer.
@@ -51,36 +50,12 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
     private DrawingPanel pan;
     private pluginModel empty_model = new pluginModel(null);
     private boolean buttonSelected = false;
-
     /**
      * This variable holds true if the window is for editing an existing
      * computer, false or for creating a new computer.
      */
     private boolean edit;
-
     private OpenComputerDialog odialog;
-
-
-    @Override
-    public void keyTyped(KeyEvent e) {
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        int kCode = e.getKeyCode();
-        if (kCode == KeyEvent.VK_ESCAPE) {
-            pan.cancelTasks();
-            schema.selectElements(-1, -1, 0, 0);
-        } else if (kCode == KeyEvent.VK_DELETE) {
-            pan.cancelTasks();
-            schema.deleteSelected();
-            pan.repaint();
-        }
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-    }
 
     private class pluginModel implements ComboBoxModel {
 
@@ -121,15 +96,43 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
     }
 
     /**
+     * This constructor is used for creating new virtual configurations.
+     *
+     * @param parent parent GUI - the OpenComputerDialog instance
+     */
+    public SchemaEditorDialog(OpenComputerDialog parent) {
+        super(parent, true);
+        this.schema = new Schema();
+        this.edit = false;
+        constructor(parent);
+        this.setTitle("Computer editor: new computer");
+    }
+
+    /**
+     * This constructor is used for editing the existing computer. If user
+     * changes the configuration name, the origin will be renamed.
+     *
+     * @param parent should be the OpenComputerDialog instance
+     * @param schema Abstract schema of origin computer
+     */
+    public SchemaEditorDialog(OpenComputerDialog parent, Schema schema) {
+        super(parent, true);
+        this.schema = schema;
+        this.edit = true;
+        constructor(parent);
+        this.setTitle("Computer editor: " + schema.getConfigName());
+    }
+
+    /**
      * Perform common initialization used in both constructors.
      */
     private void constructor(OpenComputerDialog odialog) {
         initComponents();
-        setModalExclusionType(ModalExclusionType.APPLICATION_EXCLUDE);
+//        setModalExclusionType(ModalExclusionType.APPLICATION_EXCLUDE);
         this.setLocationRelativeTo(null);
         this.odialog = odialog;
         btnUseGrid.setSelected(schema.getUseGrid());
-        pan = new DrawingPanel(this.schema);
+        pan = new DrawingPanel(this.schema, this);
         scrollScheme.setViewportView(pan);
         scrollScheme.getHorizontalScrollBar().setUnitIncrement(10);
         scrollScheme.getVerticalScrollBar().setUnitIncrement(10);
@@ -148,8 +151,28 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
                 groupDraw.clearSelection();
                 buttonSelected = false;
             }
-
         });
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        int kCode = e.getKeyCode();
+        if (kCode == KeyEvent.VK_ESCAPE) {
+            pan.cancelTasks();
+            schema.selectElements(-1, -1, 0, 0);
+        } else if (kCode == KeyEvent.VK_DELETE) {
+            pan.cancelTasks();
+            schema.deleteSelected();
+            pan.repaint();
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
     }
 
     /**
@@ -185,33 +208,6 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
      */
     public Schema getSchema() {
         return schema;
-    }
-
-
-    /**
-     * This constructor is used for creating new virtual configurations.
-     *
-     * @param odialog parent GUI - the OpenComputerDialog instance
-     */
-    public SchemaEditorFrame(OpenComputerDialog odialog) {
-        this.schema = new Schema();
-        this.edit = false;
-        constructor(odialog);
-        this.setTitle("Computer editor: new computer");
-    }
-
-    /**
-     * This constructor is used for editing the existing computer. If user
-     * changes the configuration name, the origin will be renamed.
-     *
-     * @param odialog should be the OpenComputerFrame instance
-     * @param schema Abstract schema of origin computer
-     */
-    public SchemaEditorFrame(OpenComputerDialog odialog, Schema schema) {
-        this.schema = schema;
-        this.edit = true;
-        constructor(odialog);
-        this.setTitle("Computer editor: " + schema.getConfigName());
     }
 
     /** This method is called from within the constructor to
@@ -432,7 +428,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
                         .addComponent(toolDraw, javax.swing.GroupLayout.DEFAULT_SIZE, 641, Short.MAX_VALUE)
                         .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(scrollScheme, javax.swing.GroupLayout.DEFAULT_SIZE, 614, Short.MAX_VALUE)
+                        .addComponent(scrollScheme, javax.swing.GroupLayout.DEFAULT_SIZE, 616, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(sliderGridGap, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))))
         );
@@ -528,14 +524,16 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
             return;
         }
         String t = (String) cmbPlugin.getSelectedItem();
-        if (btnCompiler.isSelected())
+        if (btnCompiler.isSelected()) {
             pan.setTool(DrawTool.shapeCompiler, t);
-        if (btnCPU.isSelected())
+        }
+        if (btnCPU.isSelected()) {
             pan.setTool(DrawTool.shapeCPU, t);
-        else if (btnRAM.isSelected())
+        } else if (btnRAM.isSelected()) {
             pan.setTool(DrawTool.shapeMemory, t);
-        else if (btnDevice.isSelected())
+        } else if (btnDevice.isSelected()) {
             pan.setTool(DrawTool.shapeDevice, t);
+        }
     }//GEN-LAST:event_cmbPluginActionPerformed
 
     private void btnCompilerItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_btnCompilerItemStateChanged
@@ -595,9 +593,9 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
 
         String name = StaticDialogs.inputStringValue(
                 edit ? "Enter computer name (leave for the origin name):"
-                     : "Enter new computer name:", "Save & Close",
+                : "Enter new computer name:", "Save & Close",
                 edit ? schema.getConfigName()
-                     : "");
+                : "");
 
         try {
             File f = new File(name + ".conf");
@@ -605,8 +603,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
         } catch (NullPointerException np) {
             StaticDialogs.showErrorMessage("Computer name can not be empty!");
             return;
-        } 
-        catch(Exception e) {
+        } catch (Exception e) {
             StaticDialogs.showErrorMessage("Computer name is wrong!");
             return;
         }
@@ -653,7 +650,7 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
         }
         buttonSelected = true;
         String[] compilers = ArchLoader.getAllNames(ArchLoader.COMPILERS_DIR,
-                    ".jar");
+                ".jar");
         cmbPlugin.setModel(new pluginModel(compilers));
         try {
             cmbPlugin.setSelectedIndex(0);
@@ -664,7 +661,6 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
     private void btnBidirectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBidirectionActionPerformed
         pan.setFutureLineDirection(btnBidirection.isSelected());
     }//GEN-LAST:event_btnBidirectionActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToggleButton btnBidirection;
     private javax.swing.JToggleButton btnCPU;
@@ -679,5 +675,4 @@ public class SchemaEditorFrame extends javax.swing.JFrame implements KeyListener
     private javax.swing.JScrollPane scrollScheme;
     private javax.swing.JSlider sliderGridGap;
     // End of variables declaration//GEN-END:variables
-
 }

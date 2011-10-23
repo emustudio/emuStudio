@@ -25,37 +25,33 @@ package emustudio.architecture.drawing;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.util.Properties;
 
 /**
  *
  * @author vbmacher
  */
 public class DeviceElement extends Element {
+    private final static Color BACK_COLOR = new Color(0xe0e0e0);
 
     /**
-     * Creates an instance of the DeviceElement class. It needs to know the
-     * location of the element and the description text.
+     * Creates an instance of the DeviceElement class.
      *
-     * @param x X location of the element
-     * @param y Y location of the element
-     * @param text description text
-     * @param width width of the element
-     * @param height height of the element
+     * @param settings settings of this element from virtual configuration
+     * @param schemaName name of this element within virtual configuration file
      */
-    public DeviceElement(int x, int y, String text, int width, int height) {
-        super(new Color(0xe0e0e0), text, x, y, width, height);
-        //super(new Color(0xFFFEFF), text, x, y);
+    public DeviceElement(Properties settings, String schemaName) {
+        super(settings, schemaName, BACK_COLOR);
     }
 
     /**
-     * Creates an instance of the DeviceElement class. It needs to know the
-     * location of the element and the description text.
+     * Creates an instance of the DeviceElement class.
      *
-     * @param e1 Point representing the location of the new element
-     * @param text description text
+     * @param pluginName name of the compiler
+     * @param location the point where the compiler is located in the schema
      */
-    public DeviceElement(Point e1, String text) {
-        this((int)e1.getX(),(int)e1.getY(), text, 0,0);
+    public DeviceElement(String pluginName, Point location) {
+        super(pluginName, location, BACK_COLOR);
     }
 
     @Override

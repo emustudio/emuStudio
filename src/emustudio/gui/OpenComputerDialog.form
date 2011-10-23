@@ -85,8 +85,8 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="toolConfig" alignment="0" pref="199" max="32767" attributes="0"/>
-                  <Component id="jScrollPane1" alignment="0" pref="199" max="32767" attributes="0"/>
+                  <Component id="toolConfig" alignment="0" pref="200" max="32767" attributes="0"/>
+                  <Component id="jScrollPane1" alignment="0" pref="200" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
@@ -94,7 +94,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="toolConfig" min="-2" pref="25" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane1" pref="249" max="32767" attributes="0"/>
+                      <Component id="jScrollPane1" pref="251" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -206,7 +206,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="toolPreview" min="-2" pref="25" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="scrollPreview" pref="249" max="32767" attributes="0"/>
+                      <Component id="scrollPreview" pref="251" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>

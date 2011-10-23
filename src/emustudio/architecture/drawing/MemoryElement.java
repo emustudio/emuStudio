@@ -25,37 +25,32 @@ package emustudio.architecture.drawing;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.util.Properties;
 
 /**
  *
  * @author vbmacher
  */
 public class MemoryElement extends Element {
+    private final static Color BACK_COLOR = new Color(0xeeeeee);
 
     /**
-     * Creates an instance of the MemoryElement. It needs to know the location
-     * and the description text.
+     * Creates an instance of the MemoryElement.
      *
-     * @param x the X location of this element
-     * @param y the Y location of this element
-     * @param text the description text
-     * @param width width of the element
-     * @param height height of the element
+     * @param settings settings of this element from virtual configuration
      */
-    public MemoryElement(int x, int y, String text, int width, int height) {
-        super(new Color(0xeeeeee), text, x, y, width, height);
-        //super(new Color(0xC5C5C5), text, x, y);
+    public MemoryElement(Properties settings) {
+        super(settings, "memory", BACK_COLOR);
     }
 
     /**
-     * Creates an instance of the MemoryElement. It needs to know the location
-     * and the description text.
+     * Creates an instance of the MemoryElement.
      *
-     * @param e1 Point representing the element location
-     * @param text the description text
+     * @param pluginName name of the compiler
+     * @param location the point where the compiler is located in the schema
      */
-    public MemoryElement(Point e1, String text) {
-        this((int)e1.getX(),(int)e1.getY(),text, 0,0);
+    public MemoryElement(String pluginName, Point location) {
+        super(pluginName, location, BACK_COLOR);
     }
 
     @Override

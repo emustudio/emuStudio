@@ -31,6 +31,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Rectangle2D;
+import java.util.Properties;
 
 /**
  * Element of an abstract schema. Graphical object that represents some
@@ -52,10 +53,16 @@ public abstract class Element {
     private final static int TOLERANCE = 5;
 
     /**
-     * Variable holds details that should be shown inside the element,
-     * above the plug-in type.
+     * Name of this element plug-in within virtual configuration plug-in.
+     * If this is new element, this variable holds null.
      */
-    private String details;
+    private String settingsName;
+
+    /**
+     * Variable holds plug-in file name that is shown inside the element,
+     * below the plug-in type.
+     */
+    private String pluginName;
 
     /**
      * Element width - it is measured within the measure() method, or set
@@ -137,29 +144,88 @@ public abstract class Element {
     protected boolean selected;
 
     /**
-     * Creates the Element instance. The element has a back-ground color,
+     * Creates the Element instance. The element has a background color,
      * location and details that represent the plug-in name.
      *
+     * @param settings settings of virtual computer
+     * @param settingsName name of this element within virtual configuration file
      * @param backColor Background color
-     * @param details details text, the plug-in name or description
-     * @param x the center X location of the element
-     * @param y the center Y location of the element
-     * @param width the width of the element
-     * @param height the height of the element
      */
-    public Element(Color backColor, String details,int x, int y, int width, 
-            int height) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-        this.details = details;
+    public Element(Properties settings, String settingsName, Color backColor) {
+        this.settingsName = settingsName;
         this.backColor = backColor;
         this.wasMeasured = false;
         this.selected = false;
         this.foreColor = new Color(0x909090);
         gradient = new GradientPaint(x, y, Color.WHITE, x, y+height,
                 this.backColor, false);
+        loadSettings(settings);
+    }
+
+    /**
+     * Creates the Element instance. The element has a background color, all other
+     * parameters are created automatically.
+     * 
+     * @param pluginName file name of this plug-in, without '.jar' extension.
+     * @param location Location of this element in the abstract schema
+     * @param backColor Background color
+     */
+    public Element(String pluginName, Point location, Color backColor) {
+        this.pluginName = pluginName;
+        this.x = location.x;
+        this.y = location.y;
+        this.settingsName = null;
+        this.backColor = backColor;
+        this.wasMeasured = false;
+        this.selected = false;
+        this.foreColor = new Color(0x909090);
+        gradient = new GradientPaint(x, y, Color.WHITE, x, y+height,
+                this.backColor, false);
+    }
+    
+    private void loadSettings(Properties settings) {
+        if (settingsName == null)
+            return;
+        this.pluginName = settings.getProperty(settingsName, null);
+        
+        if (pluginName != null) {
+            x = Integer.parseInt(settings.getProperty(settingsName 
+                    + ".point.x", "0"));
+            y = Integer.parseInt(settings.getProperty(settingsName
+                    + ".point.y", "0"));
+            width = Integer.parseInt(settings.getProperty(settingsName
+                    + ".width", "0"));
+            height = Integer.parseInt(settings.getProperty(settingsName
+                    + ".height", "0"));
+        }
+    }
+    
+    /**
+     * Saves this element into virtual computer settings.
+     * 
+     * @return saved settings
+     */
+    public Properties saveSettings(Properties settings) {
+        if (settingsName == null)
+            return null;
+        settings.put(settingsName, pluginName);
+        settings.put(settingsName + ".point.x", String.valueOf(x));
+        settings.put(settingsName + ".point.y", String.valueOf(y));
+        settings.put(settingsName + ".width", String.valueOf(getWidth()));
+        settings.put(settingsName + ".height", String.valueOf(getHeight()));
+        return settings;
+    }
+    
+    /**
+     * Saves this element into virtual computer settings.
+     * 
+     * @param settings settings of virtual computer
+     * @param settingsName name of this element in virtual configuration file
+     * @return saved settings
+     */
+    public Properties saveSettings(Properties settings, String settingsName) {
+        this.settingsName = settingsName;
+        return saveSettings(settings);
     }
 
     /**
@@ -171,8 +237,7 @@ public abstract class Element {
         if (!wasMeasured)
             measure(g,0,0);
         ((Graphics2D)g).setPaint(gradient);
-//        g.setColor(backColor);
-        g.fillRect(leftX, topY, getWidth(), getHeight());//,true);
+        g.fillRect(leftX, topY, getWidth(), getHeight());
         if (selected)
             g.setColor(Color.BLUE);
         else
@@ -183,7 +248,7 @@ public abstract class Element {
             g.setColor(Color.BLACK);
         g.drawString(getPluginType(), textX, textY);
         g.setFont(italicFont);
-        g.drawString(details, detailsX, detailsY);
+        g.drawString(pluginName, detailsX, detailsY);
     }
 
     /**
@@ -228,11 +293,18 @@ public abstract class Element {
     }
 
     /**
-     * Get details of the element.
-     * @return details string
+     * Get plug-in name of this element.
+     * @return plug-in name string
      */
-    public String getDetails() { return details; }
+    public String getPluginName() { return pluginName; }
 
+    /**
+     * Get name of this plug-in inside virtual configuration file.
+     * 
+     * @return plug-in name in settings
+     */
+    public String getSettingsName() { return settingsName; }
+    
     /**
      * Get a string represetnation of plug-in type:
      *   CPU, Compiler, Memory or Device.
@@ -265,7 +337,7 @@ public abstract class Element {
         int tA1 = (int)fm.getAscent();
 
         FontMetrics fm1 = g.getFontMetrics(italicFont);
-        Rectangle2D r1 = fm1.getStringBounds(details, g);
+        Rectangle2D r1 = fm1.getStringBounds(pluginName, g);
         int tW2 = (int)r1.getWidth();
         int tH2 = (int)r1.getHeight();
         int tA2 = (int)fm1.getAscent();
