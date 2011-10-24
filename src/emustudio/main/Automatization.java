@@ -3,7 +3,7 @@
  *
  * KISS, YAGNI
  *
- *  Copyright (C) 2010 Peter Jakubčo <pjakubco@gmail.com>
+ *  Copyright (C) 2010-2011 Peter Jakubčo <pjakubco@gmail.com>
  * 
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
