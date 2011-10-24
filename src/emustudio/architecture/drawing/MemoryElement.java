@@ -37,10 +37,11 @@ public class MemoryElement extends Element {
     /**
      * Creates an instance of the MemoryElement.
      *
+     * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param settings settings of this element from virtual configuration
      */
-    public MemoryElement(Properties settings) throws Exception {
-        super(settings, "memory", BACK_COLOR);
+    public MemoryElement(String pluginName, Properties settings) throws Exception {
+        super(pluginName, settings, BACK_COLOR);
     }
 
     /**
@@ -50,7 +51,7 @@ public class MemoryElement extends Element {
      * @param location the point where the compiler is located in the schema
      */
     public MemoryElement(String pluginName, Point location) {
-        super(pluginName, "memory", location, BACK_COLOR);
+        super(pluginName, location, BACK_COLOR);
     }
 
     @Override

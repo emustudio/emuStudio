@@ -37,10 +37,11 @@ public class CpuElement extends Element {
     /**
      * This constructor creates the CpuElement instance. 
      *
+     * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param settings settings of this element from virtual configuration
      */
-    public CpuElement(Properties settings) throws Exception {
-        super(settings, "cpu", BACK_COLOR);
+    public CpuElement(String pluginName, Properties settings) throws Exception {
+        super(pluginName, settings, BACK_COLOR);
     }
 
     /**
@@ -50,7 +51,7 @@ public class CpuElement extends Element {
      * @param text description text (name of the plug-in)
      */
     public CpuElement(String pluginName, Point location) {
-        super(pluginName, "cpu", location, BACK_COLOR);
+        super(pluginName, location, BACK_COLOR);
     }
 
     /**

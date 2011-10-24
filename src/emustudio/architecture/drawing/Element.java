@@ -31,6 +31,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Rectangle2D;
+import java.util.Enumeration;
 import java.util.Properties;
 
 /**
@@ -51,12 +52,11 @@ public abstract class Element {
     public final static int MIN_HEIGHT = 50;
 
     private final static int TOLERANCE = 5;
-
+    
     /**
-     * Name of this element plug-in within virtual configuration plug-in.
-     * If this is new element, this variable holds null.
+     * Element's actual settings.
      */
-    private String settingsName;
+    private Properties mysettings;
 
     /**
      * Variable holds plug-in file name that is shown inside the element,
@@ -147,22 +147,21 @@ public abstract class Element {
      * Creates the Element instance. The element has a background color,
      * location and details that represent the plug-in name.
      *
-     * @param settings settings of virtual computer
-     * @param settingsName name of this element within virtual configuration file
+     * @param pluginName file name of this plug-in, without '.jar' extension.
+     * @param settings settings of this element
      * @param backColor Background color
      * @throws Exception when plug-in with settingsName does not exist in the
      *      schema
      */
-    public Element(Properties settings, String settingsName, Color backColor) 
-            throws Exception {
-        this.settingsName = settingsName;
+    public Element(String pluginName, Properties settings, Color backColor) throws Exception {
+        this.pluginName = pluginName;
         this.backColor = backColor;
-        this.wasMeasured = false;
         this.selected = false;
         this.foreColor = new Color(0x909090);
         gradient = new GradientPaint(x, y, Color.WHITE, x, y+height,
                 this.backColor, false);
-        loadSettings(settings);
+        this.mysettings = settings;
+        loadSettings();
     }
 
     /**
@@ -170,57 +169,51 @@ public abstract class Element {
      * parameters are created automatically.
      * 
      * @param pluginName file name of this plug-in, without '.jar' extension.
-     * @param settingsName name of this element within virtual configuration file
      * @param location Location of this element in the abstract schema
      * @param backColor Background color
      */
-    public Element(String pluginName, String settingsName, Point location, 
-            Color backColor) {
+    public Element(String pluginName, Point location, Color backColor) {
         this.pluginName = pluginName;
-        this.settingsName = settingsName;
         this.x = location.x;
         this.y = location.y;
         this.backColor = backColor;
         this.wasMeasured = false;
         this.selected = false;
         this.foreColor = new Color(0x909090);
+        this.mysettings = new Properties();
         gradient = new GradientPaint(x, y, Color.WHITE, x, y+height,
                 this.backColor, false);
     }
     
-    private void loadSettings(Properties settings) throws Exception {
-        if (settingsName == null)
-            return;
-        this.pluginName = settings.getProperty(settingsName, null);
+    public final void loadSettings() throws Exception {
         if (pluginName == null)
-            throw new Exception("Plug-in name for '" + settingsName 
-                    + "' is null!");
+            throw new Exception("Plug-in name is null!");
 
-        x = Integer.parseInt(settings.getProperty(settingsName + ".point.x",
-                "0"));
-        y = Integer.parseInt(settings.getProperty(settingsName + ".point.y",
-                "0"));
-        width = Integer.parseInt(settings.getProperty(settingsName + ".width",
-                "0"));
-        height = Integer.parseInt(settings.getProperty(settingsName + ".height",
-                "0"));
+        x = Integer.parseInt(mysettings.getProperty("point.x", "0"));
+        y = Integer.parseInt(mysettings.getProperty("point.y", "0"));
+        width = Integer.parseInt(mysettings.getProperty("width", "0"));
+        height = Integer.parseInt(mysettings.getProperty("height", "0"));
+        this.wasMeasured = false;
     }
     
     /**
-     * Saves this element into virtual computer settings.
-     * 
-     * @return saved settings
+     * Update internal settings
      */
-    public Properties saveSettings(Properties settings) {
-        if (settingsName == null)
-            return null;
-        System.out.println("Saving...");
-        settings.put(settingsName, pluginName);
-        settings.put(settingsName + ".point.x", String.valueOf(x));
-        settings.put(settingsName + ".point.y", String.valueOf(y));
-        settings.put(settingsName + ".width", String.valueOf(getWidth()));
-        settings.put(settingsName + ".height", String.valueOf(getHeight()));
-        return settings;
+    private void updateSettings() {
+        mysettings.put("point.x", String.valueOf(x));
+        mysettings.put("point.y", String.valueOf(y));
+        mysettings.put("width", String.valueOf(getWidth()));
+        mysettings.put("height", String.valueOf(getHeight()));
+    }
+    
+    /**
+     * Get actual settings of this element
+     * @return settings for this element
+     */
+    public Properties getSettings() {
+        // actualize current settings
+        updateSettings();
+        return mysettings; 
     }
     
     /**
@@ -231,8 +224,15 @@ public abstract class Element {
      * @return saved settings
      */
     public Properties saveSettings(Properties settings, String settingsName) {
-        this.settingsName = settingsName;
-        return saveSettings(settings);
+        updateSettings();
+        settings.put(settingsName, pluginName);
+        
+        Enumeration e = mysettings.keys();
+        while (e.hasMoreElements()) {
+            String akey = (String)e.nextElement();
+            settings.put(settingsName + "." + akey, mysettings.getProperty(akey));
+        }
+        return settings;
     }
 
     /**
@@ -305,13 +305,6 @@ public abstract class Element {
      */
     public String getPluginName() { return pluginName; }
 
-    /**
-     * Get name of this plug-in inside virtual configuration file.
-     * 
-     * @return plug-in name in settings
-     */
-    public String getSettingsName() { return settingsName; }
-    
     /**
      * Get a string represetnation of plug-in type:
      *   CPU, Compiler, Memory or Device.

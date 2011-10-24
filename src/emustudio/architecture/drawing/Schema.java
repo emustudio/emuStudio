@@ -104,20 +104,24 @@ public class Schema {
                 DrawingPanel.DEFAULT_GRID_GAP));
 
         try {
-            compilerElement = new CompilerElement(settings);
+            compilerElement = new CompilerElement(settings.getProperty("compiler"),
+                    selectSettings("compiler"));
         } catch (Exception e) {}
         try {
             // if cpu is null here, it does not matter. Maybe user just did not
             // finish the schema..
-            cpuElement = new CpuElement(settings);
+            cpuElement = new CpuElement(settings.getProperty("cpu"),
+                    selectSettings("cpu"));
         } catch (Exception e) {}
         try {
-            memoryElement = new MemoryElement(settings);
+            memoryElement = new MemoryElement(settings.getProperty("memory"),
+                    selectSettings("memory"));
         } catch (Exception e) {}
         // load devices
         for (int i = 0; settings.containsKey("device" + i); i++) {
             try {
-                deviceElements.add(new DeviceElement(settings, "device" + i));
+                deviceElements.add(new DeviceElement(settings.getProperty("device"+i),
+                        selectSettings("device"+i)));
             } catch (Exception e) {}
         }
 
@@ -619,29 +623,19 @@ public class Schema {
      * @param key name of the plug-in
      * @return Properties selection of settings for that plug-ing
      */
-    public Properties selectSettings(String key) {
+    private Properties selectSettings(String key) {
         Enumeration e = settings.keys();
         Properties selProps = new Properties();
         while (e.hasMoreElements()) {
             String akey = (String)e.nextElement();
-            if (akey.startsWith(key))
-                selProps.put(akey, settings.getProperty(akey));
+            if (akey.equals(key))
+                continue;
+            else if (akey.startsWith(key)) {
+                selProps.put(akey.substring(key.length()+1),
+                        settings.getProperty(akey));
+            }
         }
         return selProps;
-    }
-    
-    /**
-     * Method incorporates settings in parameter into this virtual computer
-     * settings.
-     * 
-     * @param props settings to incorporate
-     */
-    public void addSettings(Properties props) {
-        Enumeration e = props.keys();
-        while (e.hasMoreElements()) {
-            String akey = (String)e.nextElement();
-            settings.put(akey, props.getProperty(akey));
-        }
     }
 
     /**
@@ -661,15 +655,15 @@ public class Schema {
         settings.put("gridGap", String.valueOf(gridGap));
         // compiler
         if (compilerElement != null) {
-            compilerElement.saveSettings(settings);
+            compilerElement.saveSettings(settings,"compiler");
         }
         // cpu
         if (cpuElement != null) {
-            cpuElement.saveSettings(settings);
+            cpuElement.saveSettings(settings,"cpu");
         }
         // memory
         if (memoryElement != null) {
-            memoryElement.saveSettings(settings);
+            memoryElement.saveSettings(settings,"memory");
         }
         // devices
         HashMap<DeviceElement, Object> devsHash = new HashMap<DeviceElement, Object>();

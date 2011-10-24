@@ -594,8 +594,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         String name = StaticDialogs.inputStringValue(
                 edit ? "Enter computer name (leave for the origin name):"
                 : "Enter new computer name:", "Save & Close",
-                edit ? schema.getConfigName()
-                : "");
+                edit ? schema.getConfigName() : "");
         if (name.trim().equals("")) {
             StaticDialogs.showErrorMessage("Computer name can not be empty!");
             return;

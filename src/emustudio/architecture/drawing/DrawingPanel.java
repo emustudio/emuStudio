@@ -601,8 +601,10 @@ public class DrawingPanel extends JPanel implements MouseListener,
     @Override
     public void mouseClicked(MouseEvent e) {
         if ((panelMode == PanelMode.moving) && (tmpElem1 != null)) {
-            if (e.getClickCount() == 2)
+            if (e.getClickCount() == 2) {
                 new ElementPropertiesDialog(parent,tmpElem1).setVisible(true);
+                this.repaint();
+            }
         }
     }
     

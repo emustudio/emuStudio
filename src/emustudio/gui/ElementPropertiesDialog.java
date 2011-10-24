@@ -27,7 +27,9 @@
  */
 package emustudio.gui;
 
+import emuLib8.runtime.StaticDialogs;
 import emustudio.architecture.drawing.Element;
+import java.util.Enumeration;
 import java.util.Properties;
 import javax.swing.JDialog;
 import javax.swing.table.DefaultTableModel;
@@ -39,22 +41,27 @@ import javax.swing.table.DefaultTableModel;
 public class ElementPropertiesDialog extends javax.swing.JDialog {
     private Element element;
     private Properties settings;
-
+    
     /** Creates new form ElementPropertiesDialog */
     public ElementPropertiesDialog(JDialog parent, Element element) {
         super(parent, true);
         initComponents();
-        
         this.element = element;
+        this.settings = element.getSettings();
         setTitle(element.getPluginName() + " settings");
         setLocationRelativeTo(null);
+        loadTable();
     }
 
     private void loadTable() {
         DefaultTableModel model = (DefaultTableModel)tblSettings.getModel();
+        Enumeration e = settings.keys();
         model.setRowCount(0);
-        //settings.
         
+        while (e.hasMoreElements()) {
+            String key = (String)e.nextElement();
+            model.addRow(new String[]{key, settings.getProperty(key)});
+        }        
     }
     /** This method is called from within the constructor to
      * initialize the form.
@@ -69,18 +76,21 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
         jScrollPane1 = new javax.swing.JScrollPane();
         tblSettings = new javax.swing.JTable();
         btnSave = new javax.swing.JButton();
+        btnNew = new javax.swing.JButton();
+        btnRemove = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Plug-in settings");
 
-        jLabel1.setText("View or edit plug-in settings");
+        jLabel1.setText("Manage plug-in settings");
 
+        tblSettings.setAutoCreateRowSorter(true);
         tblSettings.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "Setting", "Value"
+                "Setting name", "Value"
             }
         ) {
             Class[] types = new Class [] {
@@ -94,6 +104,25 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
         jScrollPane1.setViewportView(tblSettings);
 
         btnSave.setText("Save");
+        btnSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSaveActionPerformed(evt);
+            }
+        });
+
+        btnNew.setText("Add new");
+        btnNew.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNewActionPerformed(evt);
+            }
+        });
+
+        btnRemove.setText("Remove");
+        btnRemove.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRemoveActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -104,7 +133,12 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 357, Short.MAX_VALUE)
                     .addComponent(jLabel1)
-                    .addComponent(btnSave, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(btnNew)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnRemove)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 146, Short.MAX_VALUE)
+                        .addComponent(btnSave, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -115,15 +149,58 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnSave)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnSave)
+                    .addComponent(btnNew)
+                    .addComponent(btnRemove))
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
+        DefaultTableModel model = (DefaultTableModel)tblSettings.getModel();
+        settings.clear();
+        for (int i = 0; i < model.getRowCount(); i++) {
+            settings.put(model.getValueAt(i, 0), model.getValueAt(i, 1));
+        }
+        try { element.loadSettings(); }
+        catch(Exception e) {}
+        dispose();
+    }//GEN-LAST:event_btnSaveActionPerformed
+
+    private void btnNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewActionPerformed
+        DefaultTableModel model = (DefaultTableModel)tblSettings.getModel();
+        String set = StaticDialogs.inputStringValue("Please enter name of the setting:").trim();
+        if (set.equals("")) {
+            StaticDialogs.showErrorMessage("Name of the new setting cannot be null!");
+            return;
+        }
+        String SET = set.toUpperCase();
+        for (int i = 0; i < model.getRowCount(); i++) {
+            if (((String)model.getValueAt(i, 0)).toUpperCase().equals(SET)) {
+                StaticDialogs.showErrorMessage("Name of the setting already exists!");
+                return;
+            }
+        }
+        model.addRow(new String[] {set,"0"});
+    }//GEN-LAST:event_btnNewActionPerformed
+
+    private void btnRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveActionPerformed
+        int i = tblSettings.getSelectedRow();
+        if (i == -1) {
+            StaticDialogs.showErrorMessage("A setting has to be selected!");
+            return;
+        }
+        DefaultTableModel model = (DefaultTableModel)tblSettings.getModel();
+        model.removeRow(i);
+    }//GEN-LAST:event_btnRemoveActionPerformed
+
   
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnNew;
+    private javax.swing.JButton btnRemove;
     private javax.swing.JButton btnSave;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;

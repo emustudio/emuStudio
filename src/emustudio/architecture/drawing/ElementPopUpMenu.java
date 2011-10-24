@@ -24,7 +24,6 @@ package emustudio.architecture.drawing;
 import emustudio.gui.ElementPropertiesDialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Properties;
 import javax.swing.JDialog;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -43,7 +42,7 @@ public class ElementPopUpMenu extends JPopupMenu {
     public ElementPopUpMenu(Element el, JDialog par){
         this.parent = par;
         this.elem = el;
-        anItem = new JMenuItem("Properties...");
+        anItem = new JMenuItem("Settings...");
         add(anItem);
         
         anItem.addActionListener(new ActionListener() {
@@ -51,6 +50,7 @@ public class ElementPopUpMenu extends JPopupMenu {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 new ElementPropertiesDialog(parent,elem).setVisible(true);
+                parent.repaint();
             }
             
         });

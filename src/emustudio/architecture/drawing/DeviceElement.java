@@ -37,11 +37,11 @@ public class DeviceElement extends Element {
     /**
      * Creates an instance of the DeviceElement class.
      *
+     * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param settings settings of this element from virtual configuration
-     * @param schemaName name of this element within virtual configuration file
      */
-    public DeviceElement(Properties settings, String schemaName) throws Exception {
-        super(settings, schemaName, BACK_COLOR);
+    public DeviceElement(String pluginName, Properties settings) throws Exception {
+        super(pluginName, settings, BACK_COLOR);
     }
 
     /**
@@ -51,7 +51,7 @@ public class DeviceElement extends Element {
      * @param location the point where the compiler is located in the schema
      */
     public DeviceElement(String pluginName, Point location) {
-        super(pluginName, null, location, BACK_COLOR);
+        super(pluginName, location, BACK_COLOR);
     }
 
     @Override

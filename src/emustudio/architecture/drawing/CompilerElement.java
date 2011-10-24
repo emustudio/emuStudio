@@ -39,10 +39,11 @@ public class CompilerElement extends Element {
     /**
      * Create new Compiler element object.
      *
+     * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param settings settings of virtual computer
      */
-    public CompilerElement(Properties settings) throws Exception {
-        super(settings, "compiler", BACK_COLOR);
+    public CompilerElement(String pluginName, Properties settings) throws Exception {
+        super(pluginName, settings, BACK_COLOR);
     }
 
     /**
@@ -52,7 +53,7 @@ public class CompilerElement extends Element {
      * @param location the point where the compiler is located in the schema
      */
     public CompilerElement(String pluginName, Point location) {
-        super(pluginName, "compiler", location, BACK_COLOR);
+        super(pluginName, location, BACK_COLOR);
     }
 
     /**
