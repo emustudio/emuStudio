@@ -3,7 +3,7 @@ ZIP = 7z
 DOC = ../doc
 EXPORT = ../export
 BIN = ../bin
-ZIPNAME = `cat zip-name`
+ZIPNAME = 'brainc-brainduck-0.15b'
 BINFILES = $(BIN)/brainc-brainduck.jar ./emuLib
 
 all: src nbproject asmgen
