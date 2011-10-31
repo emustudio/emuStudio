@@ -23,7 +23,7 @@ asmgen: data
 	cd data && ./parser.sh
 	mv data/*.java -t src/as_8080/impl
 
-dist:
+dist: asmgen
 	$(ANT) clean jar
 	rm -f -r $(DIST)
 	mkdir -p $(DIST)
