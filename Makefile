@@ -2,9 +2,11 @@ ANT = /usr/share/netbeans/java/ant/bin/ant
 ZIP = 7z
 DOC = ../doc
 EXPORT = ../export
+DIST = ../dist/compilers
 BIN = ../bin
 ZIPNAME = 'ramc-ram-0.14b'
 BINFILES = $(BIN)/ramc-ram.jar ./emuLib ./ram-mem
+DISTFILES = $(BIN)/ramc-ram.jar
 
 all: src nbproject asmgen
 	$(ANT) clean jar
@@ -20,3 +22,9 @@ asmgen: data
 	cd data && ./lexer.sh
 	cd data && ./parser.sh
 	mv data/*.java -t src/ramc_ram/impl
+
+dist: asmgen
+	$(ANT) clean jar
+	rm -f -r $(DIST)
+	mkdir -p $(DIST)
+	cp $(DISTFILES) -t $(DIST)
