@@ -3,7 +3,7 @@ ZIP = 7z
 DOC = ../doc
 EXPORT = ../export
 BIN = ../bin
-ZIPNAME = `cat zip-name`
+ZIPNAME = '8080-cpu-0.22b'
 BINFILES = $(BIN)/8080-cpu.jar ./emuLib
 
 all: src nbproject
