@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source="parserRAM.cup" # nazov zdrojoveho suboru
+source="parser.cup" # nazov zdrojoveho suboru
 target="RAMParser"     # nazov triedy parsera
 symbols="SymRAM"       # nazov triedy symbolov
 package="ramc_ram.impl"          # aky balik ma mat parser aj symboly
