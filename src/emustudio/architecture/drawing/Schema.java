@@ -69,6 +69,7 @@ public class Schema {
      *
      * @param configName name of the configuration file
      * @param settings configuration file (all settings for all plug-ins)
+     * @throws NumberFormatException when some settings are not well parseable
      */
     public Schema(String configName, Properties settings) throws NumberFormatException {
         this.configName = configName;
@@ -77,7 +78,7 @@ public class Schema {
     }
 
     /**
-     * Creates empty schema.
+     * Creates new instance of empty schema.
      */
     public Schema() {
         cpuElement = null;

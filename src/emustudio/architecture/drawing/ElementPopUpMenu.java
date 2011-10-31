@@ -37,10 +37,16 @@ import javax.swing.JPopupMenu;
 public class ElementPopUpMenu extends JPopupMenu {
     private JMenuItem anItem;
     private Element elem;
-    private JDialog parent;
+    private JDialog par;
     
-    public ElementPopUpMenu(Element el, JDialog par){
-        this.parent = par;
+    /**
+     * Create new instance of the class.
+     * 
+     * @param el element in the abstract schema for what this menu is being created
+     * @param parent parent dialog (schema editor) - for modal show of settings dialog
+     */
+    public ElementPopUpMenu(Element el, JDialog parent){
+        this.par = parent;
         this.elem = el;
         anItem = new JMenuItem("Settings...");
         add(anItem);
@@ -49,8 +55,8 @@ public class ElementPopUpMenu extends JPopupMenu {
 
             @Override
             public void actionPerformed(ActionEvent ae) {
-                new ElementPropertiesDialog(parent,elem).setVisible(true);
-                parent.repaint();
+                new ElementPropertiesDialog(par,elem).setVisible(true);
+                par.repaint();
             }
             
         });

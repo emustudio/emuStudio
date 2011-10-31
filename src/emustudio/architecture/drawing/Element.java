@@ -185,6 +185,10 @@ public abstract class Element {
                 this.backColor, false);
     }
     
+    /**
+     * Updates schema values (x,y,width,height) of the element from the settings.
+     * @throws Exception when some settings are not well parseable.
+     */
     public final void loadSettings() throws Exception {
         if (pluginName == null)
             throw new Exception("Plug-in name is null!");
@@ -456,6 +460,7 @@ public abstract class Element {
      * Determine if a point crosses north (top) line of this element. 
      * Used for resizing. It uses some tolerance.
      * 
+     * @param p the point for the testing
      * @return true if mouse is crossing a top line of this element, false
      * otherwise.
      */
@@ -472,6 +477,7 @@ public abstract class Element {
      * Determine if a point crosses south (bottom) line of this element. 
      * Used for resizing. It uses some tolerance.
      * 
+     * @param p the point for the testing
      * @return true if mouse is crossing a bottom line of this element, false
      * otherwise.
      */
@@ -489,6 +495,7 @@ public abstract class Element {
      * Determine if a point crosses west (left) line of this element. 
      * Used for resizing. It uses some tolerance.
      * 
+     * @param p the point for the testing
      * @return true if mouse is crossing a left line of this element, false
      * otherwise.
      */
@@ -505,6 +512,7 @@ public abstract class Element {
      * Determine if a point crosses east (right) line of this element. 
      * Used for resizing. It uses some tolerance.
      * 
+     * @param p the point for the testing
      * @return true if mouse is crossing a right line of this element, false
      * otherwise.
      */

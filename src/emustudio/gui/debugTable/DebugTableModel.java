@@ -50,7 +50,11 @@ public class DebugTableModel extends AbstractTableModel {
      */
     private int gapInstr;
 
-    /** Creates a new instance of DebugTableModel */
+    /**
+     * Creates a new instance of DebugTableModel
+     * 
+     * @param cpu CPU plug-in
+     */
     public DebugTableModel(ICPU cpu) {
         this.cpu = cpu;
         page = 0;

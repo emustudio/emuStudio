@@ -115,9 +115,15 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         return archName;
     }
 
+    /**
+     * Set the name of selected virtual computer.
+     * 
+     * @param archName new name of the virtual computer
+     */
     public void setArchName(String archName) {
         this.archName = archName;
     }
+    
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is

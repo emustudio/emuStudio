@@ -35,7 +35,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.Reader;
-import java.util.Hashtable;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -56,6 +55,7 @@ import emuLib8.plugins.compiler.IToken;
 import emuLib8.plugins.compiler.SourceFileExtension;
 import emustudio.interfaces.ITokenColor;
 import emuLib8.runtime.StaticDialogs;
+import java.util.HashMap;
 
 /**
  * This class is extended JTextPane class. Support some awesome features like
@@ -67,13 +67,20 @@ import emuLib8.runtime.StaticDialogs;
 @SuppressWarnings("serial")
 public class EmuTextPane extends JTextPane {
 
+    /**
+     * Width of a column in the editor where line numbers are shown
+     */
     public static final short NUMBERS_WIDTH = 40;
+    
+    /**
+     * Height of the line
+     */
     public static final short NUMBERS_HEIGHT = 4;
 
     private ILexer syntaxLexer = null;
     private DocumentReader reader;
     private HighLightedDocument document;
-    private Hashtable<Integer, HighlightStyle> styles; // token styles
+    private HashMap<Integer, HighlightStyle> styles; // token styles
     private HighlightThread highlight;
     private boolean fileSaved; // if is document saved
     private File fileSource;   // opened file
@@ -180,7 +187,7 @@ public class EmuTextPane extends JTextPane {
     }
 
     private void initStyles() {
-        styles = new Hashtable<Integer, HighlightStyle>();
+        styles = new HashMap<Integer, HighlightStyle>();
         styles.put(IToken.COMMENT, new HighlightStyle(true, false, ITokenColor.COMMENT));
         styles.put(IToken.ERROR, new HighlightStyle(false, false, ITokenColor.ERROR));
         styles.put(IToken.IDENTIFIER, new HighlightStyle(false, false, ITokenColor.IDENTIFIER));
@@ -197,18 +204,37 @@ public class EmuTextPane extends JTextPane {
     }
 
     /*** UNDO/REDO IMPLEMENTATION ***/
+    
+    /**
+     * Set up undo/redo listener.
+     * 
+     * @param l The undo listener
+     */
     public void setUndoStateChangedAction(ActionListener l) {
         undoListener = l;
     }
 
+    /**
+     * Determine if the Redo operation can be realized.
+     * 
+     * @return true if Redo can be realized, false otherwise.
+     */
     public boolean canRedo() {
         return undo.canRedo();
     }
 
+    /**
+     * Determine if the Undo operation can be realized.
+     * 
+     * @return true if Undo can be realized, false otherwise.
+     */
     public boolean canUndo() {
         return undo.canUndo();
     }
 
+    /**
+     * Perform Undo operation.
+     */
     public void undo() {
         if (undoTimer != null) {
             undoTimer.cancel();
@@ -223,6 +249,9 @@ public class EmuTextPane extends JTextPane {
         acceptUndo = true;
     }
 
+    /**
+     * Perform Redo operation.
+     */
     public void redo() {
         if (undoTimer != null) {
             undoTimer.cancel();
@@ -236,12 +265,23 @@ public class EmuTextPane extends JTextPane {
     }
 
     /*** SYNTAX HIGHLIGHTING IMPLEMENTATION ***/
+    
+    /**
+     * Get document reader for this editor.
+     * 
+     * @return document reader
+     */
     public Reader getDocumentReader() {
         return reader;
     }
 
     /*** LINE NUMBERS PAINT IMPLEMENTATION ***/
-    // implements view lines numbers
+    
+    /**
+     * Implements view lines numbers
+     * 
+     * @param g Graphics object
+     */
     @Override
     public void paint(Graphics g) {
         super.paint(g);

@@ -25,22 +25,26 @@
 
 package emustudio.gui.debugTable;
 
+import emustudio.main.Main;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 
 /**
- *
+ * Debug table.
+ * 
  * @author vbmacher
  */
 @SuppressWarnings("serial")
 public class DebugTable extends JTable {
     private DebugTableModel debug_model;
   
-    /** Creates a new instance of DebugTable */
-    public DebugTable(DebugTableModel tblModel) {
-        this.debug_model = tblModel;
-        setModel(tblModel);
+    /** 
+     * Creates a new instance of DebugTable
+     */
+    public DebugTable() {
+        debug_model = new DebugTableModel(Main.currentArch.getComputer().getCPU());
+        setModel(debug_model);
         setDefaultRenderer(Object.class, new DebugCellRenderer());
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     }
@@ -58,6 +62,17 @@ public class DebugTable extends JTable {
             setOpaque(true);
         }
 
+        /**
+         * Overrided method. Check Javadoc of the TableCellRenderer.
+         * 
+         * @param table
+         * @param value
+         * @param isSelected
+         * @param hasFocus
+         * @param row
+         * @param column
+         * @return 
+         */
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
                 boolean isSelected, boolean hasFocus, int row, int column) {
@@ -75,6 +90,55 @@ public class DebugTable extends JTable {
             return this;
         }
     }
+    
+    /**
+     * Move to the first page.
+     */
+    public void firstPage() {
+        debug_model.firstPage();
+        update();
+    }
 
+    /**
+     * Move to previous page.
+     */
+    public void previousPage() {
+        debug_model.previousPage();
+        update();
+    }
+
+    /**
+     * Move to the page with actual PC pointer.
+     */
+    public void currentPage() {
+        debug_model.currentPage();
+        update();
+    }
+
+    /**
+     * Move to next page.
+     */
+    public void nextPage() {
+        debug_model.nextPage();
+        update();
+    }
+    
+    /**
+     * Move to the last page.
+     */
+    public void lastPage() {
+        debug_model.lastPage();
+        update();
+    }
+    
+    /**
+     * Update values in the debug table, if it is enabled and repaint it.
+     */
+    public void update() {
+        if (isEnabled()) {
+            revalidate();
+            repaint();
+        }
+    }
     
 }

@@ -23,21 +23,40 @@ import emuLib8.plugins.cpu.IDisassembler;
 import emuLib8.plugins.cpu.SimpleDebugColumn;
 
 /**
- *
+ * This class represents "mnemo" column in the debug table. This column displays
+ * mnemonic representations of instructions.
+ * 
  * @author vbmacher
  */
 public class ColumnMnemo extends SimpleDebugColumn {
     private IDisassembler dis;
 
+    /**
+     * Creates an instance of the column.
+     * 
+     * @param disasm Dissassembler instance
+     */
     public ColumnMnemo(IDisassembler disasm) {
         super("mnemonics", java.lang.String.class, false);
         this.dis = disasm;
     }
 
+    /**
+     * Does nothing, user cannot change the mnemonic represetnation.
+     * 
+     * @param location
+     * @param value 
+     */
     @Override
     public void setDebugValue(int location, Object value) {
     }
 
+    /**
+     * Get mnemonic representation of an instruction on the specified location.
+     * 
+     * @param location address/location in memory
+     * @return a String value representation of an instruction
+     */
     @Override
     public Object getDebugValue(int location) {
         try {

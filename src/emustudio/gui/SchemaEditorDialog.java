@@ -154,10 +154,20 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         });
     }
 
+    /**
+     * Not implemented.
+     * @param e a key event
+     */
     @Override
     public void keyTyped(KeyEvent e) {
     }
 
+    /**
+     * If user presses ESC key, current tool is cancelled. If user presses DELETE
+     * key, selected elements are removed from the schema.
+     * 
+     * @param e a key event
+     */
     @Override
     public void keyPressed(KeyEvent e) {
         int kCode = e.getKeyCode();
@@ -171,6 +181,11 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         }
     }
 
+    /**
+     * Not implemented.
+     * 
+     * @param e a key event
+     */
     @Override
     public void keyReleased(KeyEvent e) {
     }

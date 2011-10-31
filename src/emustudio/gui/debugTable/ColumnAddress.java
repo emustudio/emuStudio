@@ -25,19 +25,34 @@ package emustudio.gui.debugTable;
 import emuLib8.plugins.cpu.SimpleDebugColumn;
 
 /**
- *
+ * This class represents "address" column in the debug table.
+ * 
  * @author vbmacher
  */
 public class ColumnAddress extends SimpleDebugColumn {
 
+    /**
+     * Creates new instance of the address column.
+     */
     public ColumnAddress() {
         super("address", java.lang.String.class, false);
     }
 
+    /**
+     * Does nothing. Address cannot be changed.
+     * @param location the address
+     * @param value new value of the address
+     */
     @Override
     public void setDebugValue(int location, Object value) {
     }
 
+    /**
+     * Gets formatted value of the address.
+     * 
+     * @param location The integer version of the address
+     * @return formatted version of the address in hexadecimal format
+     */
     @Override
     public Object getDebugValue(int location) {
         return String.format("%04Xh", location);

@@ -60,6 +60,11 @@ public class Main {
     private static String password = null;
     private static boolean noGUI = false;
 
+    /**
+     * Get emuStudio password for emuLib identification security mechanism.
+     * 
+     * @return emuStudio password
+     */
     public static String getPassword() {
         return password;
     }

@@ -26,17 +26,29 @@ import emuLib8.plugins.cpu.ICPU;
 import emuLib8.plugins.cpu.SimpleDebugColumn;
 
 /**
+ * This class represents "breakpoint" column in the debug table.
  *
  * @author vbmacher
  */
 public class ColumnBreakpoint extends SimpleDebugColumn {
     private ICPU cpu;
 
+    /**
+     * Creates new instance of the address column.
+     *
+     * @param cpu CPU plug-in
+     */
     public ColumnBreakpoint(ICPU cpu) {
         super("breakpoint", java.lang.Boolean.class, true);
         this.cpu = cpu;
     }
     
+    /**
+     * Set/unset a breakpoint on specified location.
+     * 
+     * @param location the address/location where the breakpoint should be set/unset
+     * @param value the value of the breakpoint (Boolean instance)
+     */
     @Override
     public void setDebugValue(int location, Object value) {
         try {
@@ -46,6 +58,13 @@ public class ColumnBreakpoint extends SimpleDebugColumn {
         }
     }
 
+    /**
+     * Detemine if breakpoint on specified locaion is set.
+     * 
+     * @param location the address/location in memory
+     * @return Boolean instance set to true if a breakpoint is set,
+     * false otherwise
+     */
     @Override
     public Object getDebugValue(int location) {
         try {

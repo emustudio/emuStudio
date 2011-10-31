@@ -42,7 +42,12 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
     private Element element;
     private Properties settings;
     
-    /** Creates new form ElementPropertiesDialog */
+    /** 
+     * Creates new form ElementPropertiesDialog 
+     * 
+     * @param parent Parent dialog - the schema editor
+     * @param element element in the abstract schema
+     */
     public ElementPropertiesDialog(JDialog parent, Element element) {
         super(parent, true);
         initComponents();

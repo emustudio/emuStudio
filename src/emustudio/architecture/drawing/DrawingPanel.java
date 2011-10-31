@@ -55,9 +55,12 @@ import javax.swing.event.EventListenerList;
 public class DrawingPanel extends JPanel implements MouseListener,
         MouseMotionListener {
     /**
-     * Default grid gap. 
+     * Default grid gap - String version. 
      */
     public final static String DEFAULT_GRID_GAP = "20";
+    /**
+     * Default grid gap - integer version
+     */
     public final static int DEFAULT_GRID_GAP_INT = 20;
     
     private final static int RESIZE_TOP = 0;
@@ -598,6 +601,11 @@ public class DrawingPanel extends JPanel implements MouseListener,
     }
 
 
+    /**
+     * Invoked when user clicks on the panel.
+     * 
+     * @param e  a mouse event
+     */
     @Override
     public void mouseClicked(MouseEvent e) {
         if ((panelMode == PanelMode.moving) && (tmpElem1 != null)) {
@@ -608,11 +616,24 @@ public class DrawingPanel extends JPanel implements MouseListener,
         }
     }
     
+    /**
+     * Not implemented.
+     * @param e  a mouse event
+     */
     @Override
     public void mouseEntered(MouseEvent e){}
+    
+    /**
+     * Not implemented.
+     * @param e  a mouse event
+     */
     @Override
     public void mouseExited(MouseEvent e){}
 
+    /**
+     * When user presses a buton over the panel.
+     * @param e  a mouse event
+     */
     @Override
     public void mousePressed(MouseEvent e) {
         Point p = e.getPoint();
@@ -701,6 +722,10 @@ public class DrawingPanel extends JPanel implements MouseListener,
         }
     }
     
+    /**
+     * When user releases the button on the panel.
+     * @param e  a mouse event
+     */
     @Override
     public void mouseReleased(MouseEvent e) {
         Point p = e.getPoint();
@@ -864,6 +889,10 @@ public class DrawingPanel extends JPanel implements MouseListener,
         repaint();
     }
 
+    /**
+     * When user drags the mouse through the panel
+     * @param e  a mouse event
+     */
     @Override
     public void mouseDragged(MouseEvent e) {
         Point p = e.getPoint();
@@ -938,6 +967,10 @@ public class DrawingPanel extends JPanel implements MouseListener,
         repaint();
     }
 
+    /**
+     * When a user moves the mouse over the panel
+     * @param e  a mouse event
+     */
     @Override
     public void mouseMoved(MouseEvent e) {
         if (panelMode == PanelMode.moving) {

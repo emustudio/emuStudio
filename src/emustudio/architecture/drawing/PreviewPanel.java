@@ -84,6 +84,8 @@ public class PreviewPanel extends JPanel {
     /**
      * Override previous update method in order to implement
      * double-buffering. As a second buffer is used Image object.
+     * 
+     * @param g the Graphics object. It is retyped to Graphics2D
      */
     @Override
     public void update(Graphics g) {
@@ -171,7 +173,11 @@ public class PreviewPanel extends JPanel {
         panelResized = true;
     }
     
-    //override panel paint method to draw shapes
+    /**
+     * Override panel paint method to draw shapes.
+     * 
+     * @param g the Graphics object
+     */
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);

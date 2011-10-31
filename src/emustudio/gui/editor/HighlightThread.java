@@ -6,7 +6,7 @@
  *
  * Copyright (C) 2001 Stephen Ostermiller 
  * http://ostermiller.org/contact.pl?regarding=Syntax+Highlighting
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,16 +26,15 @@ package emustudio.gui.editor;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.Vector;
 import javax.swing.text.SimpleAttributeSet;
 import emuLib8.plugins.compiler.ILexer;
 import emuLib8.plugins.compiler.IToken;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * The syntax highlighting thread.
@@ -116,7 +115,7 @@ public class HighlightThread extends Thread {
      * modified.
      */
     //  public static Object doclock = new Object();
-    private Hashtable<Integer, HighlightStyle> styles;
+    private HashMap<Integer, HighlightStyle> styles;
 
     /**
      * Create an instance of the syntax highlighting thread.
@@ -128,7 +127,7 @@ public class HighlightThread extends Thread {
      */
     public HighlightThread(ILexer lex, DocumentReader lexReader,
             HighLightedDocument document,
-            Hashtable<Integer, HighlightStyle> styles) {
+            HashMap<Integer, HighlightStyle> styles) {
         this.syntaxLexer = lex;
         this.document = document;
         this.documentReader = lexReader;
@@ -156,7 +155,10 @@ public class HighlightThread extends Thread {
     /**
      * Tell the Syntax Highlighting thread to take another look at this
      * section of the document.  It will process this as a FIFO.
-     * This method should be done inside a doclock.
+     * This method should be done inside a lock.
+     * 
+     * @param position a starting position in the document
+     * @param adjustment range of the text block
      */
     public void color(int position, int adjustment) {
         // figure out if this adjustment effects the current run.

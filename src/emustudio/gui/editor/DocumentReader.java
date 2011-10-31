@@ -38,7 +38,15 @@ public class DocumentReader extends Reader {
     /* pouziva sa na oznacenie miesta v dokumente, v ktorom je mozne bezpecne
      * resetovat lex. analyzator  */
     private long mark = -1;
+    
+    /**
+     * Position of the reader.
+     */
     protected long position = 0;
+    
+    /**
+     * Document that is read by this reader.
+     */
     protected HighLightedDocument document;
 
     /**
@@ -103,10 +111,12 @@ public class DocumentReader extends Reader {
 
     /**
      * Read and fill the buffer.
-     * This method will always fill the buffer unless the end of the document is reached.
+     * This method will always fill the buffer unless the end of the document
+     * is reached.
      *
      * @param cbuf the buffer to fill.
      * @return the number of characters read or -1 if no more characters are available in the document.
+     * @throws IOException read corresponding Javadoc for Reader
      */
     @Override
     public int read(char[] cbuf) throws IOException {

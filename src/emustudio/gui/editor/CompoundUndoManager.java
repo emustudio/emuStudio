@@ -3,7 +3,7 @@
  *
  * KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,6 +46,7 @@ import javax.swing.undo.UndoableEdit;
  * A simple UndoManager that groups the Edits in each 0.5 second.  If the time 
  * difference between the current undo and the last one is less than 0.5 secs,
  * then the two edits are compound.
+ * 
  * @author Ayman Al-Sairafi
  */
 @SuppressWarnings("serial")
@@ -61,7 +62,7 @@ public class CompoundUndoManager extends UndoManager {
     CompoundEdit comp = null;
 
     /**
-     * 
+     * See corresponding Javadoc for UndoManager.
      * @param anEdit
      * @return
      */
@@ -81,21 +82,31 @@ public class CompoundUndoManager extends UndoManager {
         return true;
     }
 
-
+    /**
+     * Determine if the Redo operation can be realized.
+     * 
+     * @return true if Redo can be realized, false otherwise.
+     */
     @Override
     public synchronized boolean canRedo() {
         commitCompound();
         return super.canRedo();
     }
 
-
+    /**
+     * Determine if the Undo operation can be realized.
+     * 
+     * @return true if Undo can be realized, false otherwise.
+     */
     @Override
     public synchronized boolean canUndo() {
         commitCompound();
         return super.canUndo();
     }
 
-
+    /**
+     * See corresponding Javadoc for UndoManager.
+     */
     @Override
     public synchronized void discardAllEdits() {
         comp = null;
@@ -103,6 +114,12 @@ public class CompoundUndoManager extends UndoManager {
     }
 
 
+    /**
+     * Perform Redo operation. For more information, see corresponding Javadoc
+     * for UndoManager.
+     * 
+     * @throws CannotRedoException 
+     */
     @Override
     public synchronized void redo() throws CannotRedoException {
         commitCompound();
@@ -110,7 +127,12 @@ public class CompoundUndoManager extends UndoManager {
         catch (NullPointerException e) {}
     }
 
-
+    /**
+     * Perform Redo operation. For more information, see corresponding Javadoc
+     * for UndoManager.
+     * 
+     * @throws CannotUndoException 
+     */
     @Override
     public synchronized void undo() throws CannotUndoException {
         commitCompound();

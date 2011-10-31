@@ -195,16 +195,17 @@ public class ArchHandler implements ISettingsHandler {
      * Method writes a value of specified setting to Properties for 
      * specified plugin. Setting has to be fully specified.
      * 
-     * @param hash         plugin hash, identification of a plugin
+     * @param pluginID  plugin ID, identification of a plugin
      * @param settingName name of wanted setting
+     * @param val new value of the setting
      */
     @Override
-    public void writeSetting(long hash, String settingName, String val) {
+    public void writeSetting(long pluginID, String settingName, String val) {
         if (settingName == null || settingName.equals(EMPTY_STRING)) {
             return;
         }
 
-        IPlugin plug = computer.getPlugin(hash);
+        IPlugin plug = computer.getPlugin(pluginID);
         if (plug == null) {
             return;
         }
@@ -212,7 +213,7 @@ public class ArchHandler implements ISettingsHandler {
         String prop = EMPTY_STRING;
         if (plug instanceof IDevice) {
             // search for device
-            prop = pluginNames.get(hash);
+            prop = pluginNames.get(pluginID);
         } else if (plug instanceof ICPU) {
             prop = "cpu";
         } else if (plug instanceof IMemory) {
@@ -274,9 +275,8 @@ public class ArchHandler implements ISettingsHandler {
      * This method is used only by the emuStudio to set some common settings
      * that should be set for all plugins.
      *
-     * @param hash
-     * @param settingName
-     * @param val
+     * @param settingName name of the setting
+     * @param val value of the setting
      */
     public void writeSettingToAll(String settingName, String val) {
         long id;

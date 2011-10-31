@@ -27,21 +27,40 @@ import emuLib8.plugins.cpu.IDisassembler;
 import emuLib8.plugins.cpu.SimpleDebugColumn;
 
 /**
+ * This class represents "opcode" column in the debug table. The opcode means
+ * operating code - the formatted binary representation of the instruction.
  *
  * @author vbmacher
  */
 public class ColumnOpcode extends SimpleDebugColumn {
     private IDisassembler dis;
 
+    /**
+     * Creates an instance of the column.
+     * 
+     * @param disasm Dissassembler instance
+     */
     public ColumnOpcode(IDisassembler disasm) {
         super("opcode", java.lang.String.class, false);
         this.dis = disasm;
     }
 
+    /**
+     * Does nothing, user cannot change the opcode.
+     * 
+     * @param location
+     * @param value 
+     */
     @Override
-    public void setDebugValue(int row, Object value) {
+    public void setDebugValue(int location, Object value) {
     }
 
+    /**
+     * Get formatted opcode of an instruction on the specified location.
+     * 
+     * @param location address/location in memory
+     * @return a String value - formatted representation of an instruction opcode
+     */
     @Override
     public Object getDebugValue(int location) {
         try {

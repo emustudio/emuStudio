@@ -26,17 +26,27 @@
 package emustudio.gui.utils;
 
 /**
- *
+ * File filter used in emuStudio.
+ * 
  * @author vbmacher
  */
 public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
     private String[] exts;
     private String desc;
 
+    /**
+     * Creates new instance of the class.
+     */
     public EmuFileFilter() {
         exts = new String[0];
     }
 
+    /**
+     * Add an extension to be recognized by this file filter. The asterisk ("*")
+     * can be also recognized.
+     * 
+     * @param ext extension string, without the "." (dot)
+     */
     public void addExtension(String ext) {
         int l=0;
         String[] tmp;
@@ -47,12 +57,23 @@ public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
         exts = tmp;
     }
 
+    /**
+     * Get first extension (usually the default one) of this file filter.
+     * 
+     * @return first extension accepted by this file filter
+     */
     public String getFirstExtension() {
         if (exts != null)
             return exts[0];
         return null;
     }
 
+    /**
+     * Determine if given file is accepted by this file filter.
+     * 
+     * @param f a file
+     * @return true if the file is accepted, false otherwise
+     */
     @Override
     public boolean accept(java.io.File f) {
         if (f.isDirectory()) return true;
@@ -83,11 +104,21 @@ public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
         return ext;
     }
 
+    /**
+     * Get description of this file type.
+     * 
+     * @return description of the file type
+     */
     @Override
     public String getDescription() {
         return desc;
     }
 
+    /**
+     * Set description of this file type.
+     * 
+     * @param des description of the file type
+     */
     public void setDescription(String des) {
         desc = des;
     }

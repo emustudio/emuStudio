@@ -24,7 +24,6 @@ package emustudio.gui;
 import emustudio.architecture.Computer;
 import emustudio.main.Main;
 import emustudio.gui.debugTable.DebugTable;
-import emustudio.gui.debugTable.DebugTableModel;
 import emustudio.gui.utils.NiceButton;
 import emustudio.gui.editor.EmuTextPane;
 import emustudio.gui.utils.FindText;
@@ -75,7 +74,7 @@ import emuLib8.runtime.Context;
 import emuLib8.runtime.IDebugTable;
 
 /**
- * The main window class
+ * The main window of the emuStudio.
  *
  * @author  vbmacher
  */
@@ -88,7 +87,6 @@ public class StudioFrame extends javax.swing.JFrame {
     private RunState run_state = RunState.STATE_STOPPED_BREAK;
     private DebugTable tblDebug;
     // emulator
-    private DebugTableModel debug_model;
     private ICompiler compiler;
     private IMemory memory;
     private ICPU cpu;
@@ -118,8 +116,7 @@ public class StudioFrame extends javax.swing.JFrame {
         cpu = arch.getCPU();
 
         txtSource = new EmuTextPane(compiler);
-        debug_model = new DebugTableModel(arch.getCPU());
-        tblDebug = new DebugTable(debug_model);
+        tblDebug = new DebugTable();
 
         initComponents();
 
@@ -156,16 +153,6 @@ public class StudioFrame extends javax.swing.JFrame {
         txtSource.grabFocus();
     }
     
-    /**
-     * Update values in the debug table, if it is enabled
-     */
-    private void updateDebugTbl() {
-        if (tblDebug.isEnabled()) {
-            tblDebug.revalidate();
-            tblDebug.repaint();
-        }
-    }
-
     // get gui panel from CPU plugin and show in main window
     private void setStatusGUI() {
         JPanel statusPanel = cpu.getStatusGUI();
@@ -265,7 +252,7 @@ public class StudioFrame extends javax.swing.JFrame {
                 @Override
                 public void memChange(EventObject evt, int adr) {
                     if (run_state != RunState.STATE_RUNNING) {
-                        updateDebugTbl();
+                        tblDebug.update();
                     }
                 }
             });
@@ -277,7 +264,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
             @Override
             public void stateUpdated(EventObject evt) {
-                updateDebugTbl();
+                tblDebug.update();
             }
 
             @Override
@@ -312,7 +299,7 @@ public class StudioFrame extends javax.swing.JFrame {
                     paneDebug.setEnabled(true);
                     tblDebug.setEnabled(true);
                     tblDebug.setVisible(true);
-                    updateDebugTbl();
+                    tblDebug.update();
                 }
             }
         });
@@ -320,7 +307,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
             @Override
             public void updateDebugTable() {
-                updateDebugTbl();
+                tblDebug.update();
             }
             
         }, Main.getPassword());
@@ -1205,7 +1192,7 @@ public class StudioFrame extends javax.swing.JFrame {
             if (pc > 0) {
                 cpu.setInstrPosition(pc - 1);
                 paneDebug.revalidate();
-                updateDebugTbl();
+                tblDebug.update();
             }
         } catch (NullPointerException e) {
         }
@@ -1215,7 +1202,7 @@ public class StudioFrame extends javax.swing.JFrame {
         try {
             cpu.setInstrPosition(0);
             paneDebug.revalidate();
-            updateDebugTbl();
+            tblDebug.update();
         } catch (NullPointerException e) {
         }
     }
@@ -1255,11 +1242,11 @@ public class StudioFrame extends javax.swing.JFrame {
             return;
         }
         paneDebug.revalidate();
-        updateDebugTbl();
+        tblDebug.update();
     }
 
     private void mnuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {
-        (new AboutDialog(this, true)).setVisible(true);
+        (new AboutDialog(this)).setVisible(true);
     }
 
     private void mnuProjectCompileActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1437,7 +1424,7 @@ public class StudioFrame extends javax.swing.JFrame {
                     BreakpointDialog.getSet());
         }
         paneDebug.revalidate();
-        updateDebugTbl();
+        tblDebug.update();
     }
 
     private void mnuEditReplaceNextActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1453,27 +1440,22 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void btnFirstActionPerformed(java.awt.event.ActionEvent evt) {
-        debug_model.firstPage();
-        updateDebugTbl();
+        tblDebug.firstPage();
     }
 
     private void btnBackwardActionPerformed(java.awt.event.ActionEvent evt) {
-        debug_model.previousPage();
-        updateDebugTbl();
+        tblDebug.previousPage();
     }
 
     private void btnCurrentPageActionPerformed(java.awt.event.ActionEvent evt) {
-        debug_model.currentPage();
-        updateDebugTbl();
+        tblDebug.currentPage();
     }
 
     private void btnForwardActionPerformed(java.awt.event.ActionEvent evt) {
-        debug_model.nextPage();
-        updateDebugTbl();
+        tblDebug.nextPage();
     }
     private void btnLastActionPerformed(java.awt.event.ActionEvent evt) {
-        debug_model.lastPage();
-        updateDebugTbl();
+        tblDebug.lastPage();
     }
 
     JButton btnBack;

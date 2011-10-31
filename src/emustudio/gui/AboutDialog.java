@@ -1,7 +1,7 @@
 /*
  * AboutDialog.java
  *
- *  Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ *  Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  * KISS, YAGNI
  * 
@@ -21,7 +21,7 @@
  */
 
 /*
- * AboutDialogg.java
+ * AboutDialog.java
  *
  * Created on 21.8.2010, 21:42:50
  *
@@ -31,14 +31,19 @@
 package emustudio.gui;
 
 /**
- *
+ * The about dialog. Shows basic information about the emuStudio.
+ * 
  * @author vbmacher
  */
 public class AboutDialog extends javax.swing.JDialog {
 
-    /** Creates new form AboutDialogg */
-    public AboutDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
+    /** 
+     * Creates new form AboutDialog.
+     * 
+     * @param parent The parent frame (emuStudio main window)
+     */
+    public AboutDialog(java.awt.Frame parent) {
+        super(parent, true);
         initComponents();
         setLocationRelativeTo(parent);
     }
