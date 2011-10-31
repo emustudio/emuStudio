@@ -3,7 +3,7 @@
  *
  * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -93,7 +93,7 @@ public class SIMHpseudo extends SimpleDevice {
     @Override
     public String getCopyright() {
         return "Copyright (c) 2002-2007, Peter Schorn\n"
-                + "\u00A9 Copyright 2007-2010, Peter Jakubčo";
+                + "\u00A9 Copyright 2007-2011, Peter Jakubčo";
     }
 
     @Override
@@ -105,7 +105,7 @@ public class SIMHpseudo extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return "0.12b";
+        return "0.13b";
     }
 
     @Override
