@@ -3,7 +3,7 @@ ZIP = 7z
 DOC = ../doc
 EXPORT = ../export
 BIN = ../bin
-ZIPNAME = `cat zip-name`
+ZIPNAME = 'ramc-ram-0.14b'
 BINFILES = $(BIN)/ramc-ram.jar ./emuLib ./ram-mem
 
 all: src nbproject asmgen
