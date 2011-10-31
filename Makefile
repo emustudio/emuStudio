@@ -1,5 +1,3 @@
-# Makefile for as-8080
-
 ANT = /usr/share/netbeans/java/ant/bin/ant
 ZIP = 7z
 DOC = ../doc
