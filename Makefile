@@ -3,7 +3,7 @@ ZIP = 7z
 DOC = ../doc
 EXPORT = ../export
 BIN = ../bin
-ZIPNAME = `cat zip-name`
+ZIPNAME = 'as-8080-0.31b'
 BINFILES = $(BIN)/as-8080.jar ./emuLib
 
 all: src nbproject asmgen
