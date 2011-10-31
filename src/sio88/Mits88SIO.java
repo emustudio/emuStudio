@@ -6,7 +6,7 @@
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
  *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -97,7 +97,7 @@ public class Mits88SIO extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return "0.16b";
+        return "0.17b";
     }
 
     @Override
@@ -107,7 +107,7 @@ public class Mits88SIO extends SimpleDevice {
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2007-2010, P.Jakubčo";
+        return "\u00A9 Copyright 2007-2011, P.Jakubčo";
     }
 
     /* Reset routine
