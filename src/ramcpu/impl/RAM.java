@@ -513,13 +513,14 @@ public class RAM extends SimpleCPU {
                     String sym1 = context.getStorage().getSymbolAt((Integer) in.getOperand());
                     try {
                         int r0 = Integer.decode(sym0);
-                        int ri = Integer.decode(sym0);
+                        int ri = Integer.decode(sym1);
                         if (ri == 0) {
                             break;
                         }
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
                         return;
                     } catch (NumberFormatException e) {
+                        // This really works (tested) for double numbers
                     }
                     try {
                         double r0 = Double.parseDouble(sym0);
