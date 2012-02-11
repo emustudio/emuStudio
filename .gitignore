@@ -1,12 +1,9 @@
-/.gitignore
-nbproject/private
-/outfilename
 *.*~
 *.log
-build.xml
 compilers/*.*
 cpu/*.*
 mem/*.*
 config/*.*
 devices/*.*
-examples
+target/
+examples/
