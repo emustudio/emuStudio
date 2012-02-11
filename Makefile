@@ -6,7 +6,7 @@ DOC = ../doc
 EXPORT = ../export
 DIST = ../dist
 BIN = ../bin
-ZIPNAME = `cat zip-name`
+ZIPNAME = 'emuStudio-0.38b'
 BINFILES = $(BIN)/emuStudio.jar $(BIN)/README.TXT ./emuLib
 DISTFILES = $(BIN)/emuStudio.jar $(BIN)/README.TXT
 
