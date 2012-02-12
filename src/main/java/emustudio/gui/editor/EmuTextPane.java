@@ -24,8 +24,13 @@
  */
 package emustudio.gui.editor;
 
+import emulib.plugins.compiler.ICompiler;
+import emulib.plugins.compiler.ILexer;
+import emulib.plugins.compiler.IToken;
+import emulib.plugins.compiler.SourceFileExtension;
+import emulib.runtime.StaticDialogs;
 import emustudio.gui.utils.EmuFileFilter;
-import emulib8_0.plugins.compiler.ICompiler;
+import emustudio.interfaces.ITokenColor;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Insets;
@@ -35,9 +40,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.Reader;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
@@ -49,12 +55,6 @@ import javax.swing.text.AbstractDocument.DefaultDocumentEvent;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
-
-import emulib8_0.plugins.compiler.ILexer;
-import emulib8_0.plugins.compiler.IToken;
-import emulib8_0.plugins.compiler.SourceFileExtension;
-import emustudio.interfaces.ITokenColor;
-import emulib8_0.runtime.StaticDialogs;
 
 /**
  * This class is extended JTextPane class. Support some awesome features like
@@ -79,7 +79,7 @@ public class EmuTextPane extends JTextPane {
     private ILexer syntaxLexer = null;
     private DocumentReader reader;
     private HighLightedDocument document;
-    private HashMap<Integer, HighlightStyle> styles; // token styles
+    private Map<Integer, HighlightStyle> styles; // token styles
     private HighlightThread highlight;
     private boolean fileSaved; // if is document saved
     private File fileSource;   // opened file

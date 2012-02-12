@@ -22,8 +22,8 @@
 
 package emustudio.gui.debugTable;
 
-import emulib8_0.plugins.cpu.ICPU;
-import emulib8_0.plugins.cpu.SimpleDebugColumn;
+import emulib.plugins.cpu.ICPU;
+import emulib.plugins.cpu.SimpleDebugColumn;
 
 /**
  * This class represents "breakpoint" column in the debug table.

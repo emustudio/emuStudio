@@ -22,26 +22,13 @@
  */
 package emustudio.gui;
 
+import emulib.runtime.StaticDialogs;
 import emustudio.gui.utils.FindText;
 import emustudio.gui.utils.NiceButton;
-
 import java.util.ArrayList;
 import java.util.regex.PatternSyntaxException;
-
-import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
-import javax.swing.ComboBoxModel;
-import javax.swing.GroupLayout;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTextPane;
-import javax.swing.LayoutStyle;
-import javax.swing.WindowConstants;
+import javax.swing.*;
 import javax.swing.event.ListDataListener;
-import emulib8_0.runtime.StaticDialogs;
 
 /**
  * The find dialog. It searches for text within the source code editor.
@@ -243,6 +230,7 @@ public class FindDialog extends javax.swing.JDialog {
         btnSearch.setText("Search");
         btnSearch.addActionListener(new java.awt.event.ActionListener() {
 
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 searchButtonActionPerformed(evt);
             }
@@ -255,6 +243,7 @@ public class FindDialog extends javax.swing.JDialog {
         btnReplace.setText("Replace");
         btnReplace.addActionListener(new java.awt.event.ActionListener() {
 
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 replaceButtonActionPerformed(evt);
             }
@@ -263,6 +252,7 @@ public class FindDialog extends javax.swing.JDialog {
         btnReplaceAll.setText("Replace all");
         btnReplaceAll.addActionListener(new java.awt.event.ActionListener() {
 
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 replaceAllButtonActionPerformed(evt);
             }
@@ -292,7 +282,6 @@ public class FindDialog extends javax.swing.JDialog {
         } catch (PatternSyntaxException e) {
             StaticDialogs.showErrorMessage("Pattern syntax error");
             cmbSearch.grabFocus();
-            return;
         }
     }//GEN-LAST:event_searchButtonActionPerformed
 
@@ -310,7 +299,6 @@ public class FindDialog extends javax.swing.JDialog {
         } catch (PatternSyntaxException e) {
             StaticDialogs.showErrorMessage("Pattern syntax error");
             cmbSearch.grabFocus();
-            return;
         }
     }//GEN-LAST:event_replaceButtonActionPerformed
 
@@ -328,7 +316,6 @@ public class FindDialog extends javax.swing.JDialog {
         } catch (PatternSyntaxException e) {
             StaticDialogs.showErrorMessage("Pattern syntax error");
             cmbSearch.grabFocus();
-            return;
         }
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -22,25 +22,20 @@
 
 package emustudio.main;
 
+import emulib.plugins.compiler.ICompiler;
+import emulib.plugins.compiler.ICompiler.ICompilerListener;
+import emulib.plugins.compiler.Message;
+import emulib.plugins.cpu.ICPU;
+import emulib.plugins.cpu.ICPU.ICPUListener;
+import emulib.plugins.cpu.ICPU.RunState;
+import emulib.plugins.device.IDevice;
+import emulib.plugins.memory.IMemory;
+import emulib.runtime.StaticDialogs;
 import emustudio.architecture.ArchHandler;
 import emustudio.gui.AutoDialog;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.Date;
 import java.util.EventObject;
-import emulib8_0.plugins.compiler.ICompiler;
-import emulib8_0.plugins.compiler.ICompiler.ICompilerListener;
-import emulib8_0.plugins.compiler.Message;
-import emulib8_0.plugins.cpu.ICPU;
-import emulib8_0.plugins.cpu.ICPU.ICPUListener;
-import emulib8_0.plugins.cpu.ICPU.RunState;
-import emulib8_0.plugins.device.IDevice;
-import emulib8_0.plugins.memory.IMemory;
-import emulib8_0.runtime.StaticDialogs;
 
 /**
  * This class manages the emuStudio automatization process. In the process

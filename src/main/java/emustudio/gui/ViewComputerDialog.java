@@ -23,33 +23,17 @@
  */
 package emustudio.gui;
 
+import emulib.plugins.compiler.ICompiler;
+import emulib.plugins.cpu.ICPU;
+import emulib.plugins.device.IDevice;
+import emulib.plugins.memory.IMemory;
+import emulib.runtime.StaticDialogs;
 import emustudio.architecture.ArchHandler;
-import emustudio.main.Main;
-import emustudio.architecture.drawing.PreviewPanel;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import javax.swing.GroupLayout;
-import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextArea;
-import javax.swing.LayoutStyle;
-import javax.swing.WindowConstants;
-import emulib8_0.plugins.compiler.ICompiler;
-import emulib8_0.plugins.cpu.ICPU;
-import emulib8_0.plugins.device.IDevice;
-import emulib8_0.plugins.memory.IMemory;
-
-import emulib8_0.runtime.StaticDialogs;
 import emustudio.architecture.Computer;
+import emustudio.architecture.drawing.PreviewPanel;
+import emustudio.main.Main;
+import java.awt.event.*;
+import javax.swing.*;
 
 /**
  *

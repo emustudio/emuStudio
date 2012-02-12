@@ -22,11 +22,11 @@
 
 package emustudio.gui;
 
+import emulib.runtime.StaticDialogs;
 import emustudio.architecture.ArchLoader;
 import emustudio.architecture.drawing.PreviewPanel;
 import emustudio.architecture.drawing.Schema;
 import javax.swing.AbstractListModel;
-import emulib8_0.runtime.StaticDialogs;
 
 /**
  * This dialog manages the virtual computers. It offers a list of all

@@ -24,17 +24,11 @@
  */
 package emustudio.gui.editor;
 
+import emulib.plugins.compiler.ILexer;
+import emulib.plugins.compiler.IToken;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import javax.swing.text.SimpleAttributeSet;
-import emulib8_0.plugins.compiler.ILexer;
-import emulib8_0.plugins.compiler.IToken;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * The syntax highlighting thread.
@@ -115,7 +109,7 @@ public class HighlightThread extends Thread {
      * modified.
      */
     //  public static Object doclock = new Object();
-    private HashMap<Integer, HighlightStyle> styles;
+    private Map<Integer, HighlightStyle> styles;
 
     /**
      * Create an instance of the syntax highlighting thread.
@@ -127,7 +121,7 @@ public class HighlightThread extends Thread {
      */
     public HighlightThread(ILexer lex, DocumentReader lexReader,
             HighLightedDocument document,
-            HashMap<Integer, HighlightStyle> styles) {
+            Map<Integer, HighlightStyle> styles) {
         this.syntaxLexer = lex;
         this.document = document;
         this.documentReader = lexReader;

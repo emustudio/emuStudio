@@ -26,6 +26,12 @@
 
 package emustudio.architecture;
 
+import emulib.plugins.IPlugin;
+import emulib.plugins.compiler.ICompiler;
+import emulib.plugins.cpu.ICPU;
+import emulib.plugins.device.IDevice;
+import emulib.plugins.memory.IMemory;
+import emulib.runtime.StaticDialogs;
 import emustudio.architecture.drawing.Schema;
 import emustudio.main.Main;
 import java.io.File;
@@ -33,18 +39,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Properties;
-
-import emulib8_0.plugins.IPlugin;
-import emulib8_0.plugins.compiler.ICompiler;
-import emulib8_0.plugins.memory.IMemory;
-import emulib8_0.plugins.cpu.ICPU;
-import emulib8_0.plugins.device.IDevice;
-import emulib8_0.runtime.StaticDialogs;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Class loader for plugins and their resources (singleton).
@@ -480,7 +475,7 @@ public class ArchLoader {
 
             Computer arch = new Computer(cpu, mem, compiler, devices, plugins,
                     pluginsReverse, connections);
-            emulib8_0.runtime.Context.getInstance().assignComputer(Main.getPassword(),
+            emulib.runtime.Context.getInstance().assignComputer(Main.getPassword(),
                     arch);
             return new ArchHandler(arch, settings, loadSchema(name),
                     pluginNames, auto, nogui);
@@ -541,7 +536,7 @@ public class ArchLoader {
     private static Object loadPlugin(String dirname, String filename,
             Class<?> interfaceName, long pluginID) {
         try {
-            ArrayList<Class<?>> classes = emulib8_0.runtime.Loader.getInstance().loadJAR(
+            ArrayList<Class<?>> classes = emulib.runtime.Loader.getInstance().loadJAR(
                 System.getProperty("user.dir") + File.separator + dirname
                 + File.separator + filename);
             if (classes == null)

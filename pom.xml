@@ -36,6 +36,16 @@
     </plugins>
   </build>
 
+  <reporting>
+    <outputDirectory>${basedir}/target/site</outputDirectory>
+    <plugins>
+      <plugin>
+        <groupId>com.soebes.maven.plugins.dmg</groupId>
+        <artifactId>doxygen-maven-plugin</artifactId>
+        <version>1.0.1</version>
+      </plugin>
+    </plugins>
+  </reporting>
 
   <repositories>
     <repository>

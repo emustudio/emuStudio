@@ -22,7 +22,7 @@
 
 package emustudio.gui.debugTable;
 
-import emulib8_0.plugins.cpu.SimpleDebugColumn;
+import emulib.plugins.cpu.SimpleDebugColumn;
 
 /**
  * This class represents "address" column in the debug table.

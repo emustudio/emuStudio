@@ -3,7 +3,7 @@
  * 
  * KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,18 +21,17 @@
  */
 package emustudio.architecture;
 
+import emulib.plugins.IPlugin;
+import emulib.plugins.ISettingsHandler;
+import emulib.plugins.compiler.ICompiler;
+import emulib.plugins.cpu.ICPU;
+import emulib.plugins.device.IDevice;
+import emulib.plugins.memory.IMemory;
+import emulib.runtime.interfaces.IConnections;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
-
-import emulib8_0.plugins.IPlugin;
-import emulib8_0.plugins.ISettingsHandler;
-import emulib8_0.plugins.compiler.ICompiler;
-import emulib8_0.plugins.cpu.ICPU;
-import emulib8_0.plugins.device.IDevice;
-import emulib8_0.plugins.memory.IMemory;
-import emulib8_0.runtime.interfaces.IConnections;
+import java.util.Map;
 
 /**
  * This class implements virtual computer architecture.
@@ -45,9 +44,9 @@ public class Computer implements IConnections {
     private IMemory memory;
     private IDevice[] devices;
 
-    private HashMap<Long, ArrayList<Long>> connections;
-    private HashMap<Long, IPlugin> plugins;
-    private HashMap<IPlugin, Long> pluginsReverse;
+    private Map<Long, ArrayList<Long>> connections;
+    private Map<Long, IPlugin> plugins;
+    private Map<IPlugin, Long> pluginsReverse;
 
 
     /**
@@ -65,9 +64,9 @@ public class Computer implements IConnections {
      * plug-in IDs.
      */
     public Computer(ICPU cpu, IMemory memory, ICompiler compiler,
-        IDevice[] devices, HashMap<Long, IPlugin> plugins,
-        HashMap<IPlugin, Long> pluginsReverse,
-        HashMap<Long, ArrayList<Long>> connections) {
+        IDevice[] devices, Map<Long, IPlugin> plugins,
+        Map<IPlugin, Long> pluginsReverse,
+        Map<Long, ArrayList<Long>> connections) {
         this.cpu = cpu;
         this.memory = memory;
         this.compiler = compiler;

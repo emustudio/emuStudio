@@ -22,9 +22,9 @@
 
 package emustudio.gui.debugTable;
 
-import emulib8_0.plugins.cpu.CPUInstruction;
-import emulib8_0.plugins.cpu.IDisassembler;
-import emulib8_0.plugins.cpu.SimpleDebugColumn;
+import emulib.plugins.cpu.CPUInstruction;
+import emulib.plugins.cpu.IDisassembler;
+import emulib.plugins.cpu.SimpleDebugColumn;
 
 /**
  * This class represents "opcode" column in the debug table. The opcode means

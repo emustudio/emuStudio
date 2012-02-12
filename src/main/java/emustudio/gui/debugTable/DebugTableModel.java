@@ -25,11 +25,10 @@
 
 package emustudio.gui.debugTable;
 
-import javax.swing.table.*;
-
-import emulib8_0.plugins.cpu.ICPU;
-import emulib8_0.plugins.cpu.IDebugColumn;
-import emulib8_0.plugins.cpu.IDisassembler;
+import emulib.plugins.cpu.ICPU;
+import emulib.plugins.cpu.IDebugColumn;
+import emulib.plugins.cpu.IDisassembler;
+import javax.swing.table.AbstractTableModel;
 
 /**
  *

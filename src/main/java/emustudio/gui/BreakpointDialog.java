@@ -22,16 +22,9 @@
  */
 package emustudio.gui;
 
+import emulib.runtime.StaticDialogs;
 import emustudio.gui.utils.NiceButton;
-
-import javax.swing.GroupLayout;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
-import javax.swing.LayoutStyle;
-import javax.swing.WindowConstants;
-
-import emulib8_0.runtime.StaticDialogs;
+import javax.swing.*;
 
 /**
  * The breakpoint dialog - it asks user for the address where should be
@@ -92,6 +85,7 @@ public class BreakpointDialog extends JDialog {
         btnSet.setText("Set");
         btnSet.addActionListener(new java.awt.event.ActionListener() {
 
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnSetActionPerformed(evt);
             }
@@ -100,6 +94,7 @@ public class BreakpointDialog extends JDialog {
         btnUnset.setText("Unset");
         btnUnset.addActionListener(new java.awt.event.ActionListener() {
 
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnUnsetActionPerformed(evt);
             }

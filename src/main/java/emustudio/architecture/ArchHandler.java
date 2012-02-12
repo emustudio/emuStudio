@@ -24,17 +24,16 @@
  */
 package emustudio.architecture;
 
+import emulib.plugins.IPlugin;
+import emulib.plugins.ISettingsHandler;
+import emulib.plugins.compiler.ICompiler;
+import emulib.plugins.cpu.ICPU;
+import emulib.plugins.device.IDevice;
+import emulib.plugins.memory.IMemory;
 import emustudio.architecture.drawing.Schema;
-
 import java.util.HashMap;
-import java.util.Properties;
-import emulib8_0.plugins.memory.IMemory;
-import emulib8_0.plugins.cpu.ICPU;
-import emulib8_0.plugins.device.IDevice;
-import emulib8_0.plugins.IPlugin;
-import emulib8_0.plugins.ISettingsHandler;
-import emulib8_0.plugins.compiler.ICompiler;
 import java.util.Iterator;
+import java.util.Properties;
 import java.util.Set;
 
 /**
