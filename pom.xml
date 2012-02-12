@@ -4,7 +4,7 @@
 
   <groupId>net.sf.emustudio</groupId>
   <artifactId>emustudio</artifactId>
-  <version>0.38.1-SNAPSHOT</version>
+  <version>0.39.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>emustudio</name>
@@ -61,7 +61,7 @@
     <dependency>
       <groupId>net.sf.emustudio</groupId>
       <artifactId>emulib</artifactId>
-      <version>8.0.0-SNAPSHOT</version>
+      <version>9.0.0-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
