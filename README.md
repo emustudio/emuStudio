@@ -9,7 +9,7 @@ The platform supports versatility by categorizing computer components into three
 categorization is reflected by providing standard Java interfaces that plug-ins must implement (see project
  [emuLib](http://github.com/vbmacher/emuLib)).
 
-List of current implemented plug-ins can be found on project's web site (and they can be implemented indepedently by anyone).
+List of currently implemented plug-ins can be found on project's web site (and they can be implemented indepedently by anyone).
 Most of them are available in the other repositories on GitHub.
 
 Main purpose of emuStudio is to allow realization of ideas in early phases of hardware design, and support education process.
