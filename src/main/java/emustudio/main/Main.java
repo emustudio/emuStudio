@@ -203,6 +203,14 @@ public class Main {
         } catch (IllegalAccessException e) {
         }
 
+        // Test if java_cup is loaded
+        try {
+            java_cup.runtime.Scanner d;
+        } catch (NoClassDefFoundError e) {
+            StaticDialogs.showErrorMessage("Error: java_cup library not loaded!");
+            return;
+        }
+        
         password = emulib.runtime.Context.SHA1(String.valueOf(Math.random())
                 + new Date().toString());
         if (!emulib.runtime.Context.assignPassword(password)) {
