@@ -61,7 +61,7 @@ public class AutoDialog extends JDialog {
         setResizable(false);
 
         lblPerforming.setFont(lblPerforming.getFont().deriveFont(lblPerforming.getFont().getStyle() | java.awt.Font.BOLD));
-        lblPerforming.setIcon(new ImageIcon(getClass().getResource("/emustudio/resources/motherboard-icon.gif"))); // NOI18N
+        lblPerforming.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/motherboard-icon.gif"))); // NOI18N
         lblPerforming.setText("Performing emulation, please wait...");
 
         lblAction.setText("Initializing...");

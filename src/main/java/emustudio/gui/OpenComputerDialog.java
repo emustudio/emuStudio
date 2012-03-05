@@ -174,7 +174,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         toolConfig.setFloatable(false);
         toolConfig.setRollover(true);
 
-        btnAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/list-add.png"))); // NOI18N
+        btnAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/list-add.png"))); // NOI18N
         btnAdd.setToolTipText("Create new computer...");
         btnAdd.setFocusable(false);
         btnAdd.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -186,7 +186,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         });
         toolConfig.add(btnAdd);
 
-        btnDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/list-remove.png"))); // NOI18N
+        btnDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/list-remove.png"))); // NOI18N
         btnDelete.setToolTipText("Remove computer");
         btnDelete.setFocusable(false);
         btnDelete.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -198,7 +198,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         });
         toolConfig.add(btnDelete);
 
-        btnEdit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/computer.png"))); // NOI18N
+        btnEdit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/computer.png"))); // NOI18N
         btnEdit.setToolTipText("Edit existing computer...");
         btnEdit.setFocusable(false);
         btnEdit.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);

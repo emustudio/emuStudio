@@ -70,7 +70,7 @@ public class AboutDialog extends javax.swing.JDialog {
         setTitle("About emuStudio");
 
         lblLogo.setBackground(java.awt.Color.white);
-        lblLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/resources/logo.png"))); // NOI18N
+        lblLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/logo.png"))); // NOI18N
         lblLogo.setDoubleBuffered(true);
         lblLogo.setFocusable(false);
         lblLogo.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -92,7 +92,7 @@ public class AboutDialog extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
-        lblName.setFont(new java.awt.Font("Tahoma", 1, 18));
+        lblName.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
         lblName.setText("emuStudio");
 
         lblCopyright.setText("© Copyright 2006-2011, Peter Jakubčo");

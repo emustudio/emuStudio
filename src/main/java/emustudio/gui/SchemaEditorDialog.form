@@ -77,7 +77,7 @@
         <Component class="javax.swing.JButton" name="btnSave">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/emustudio/resources/document-save.png"/>
+              <Image iconType="3" name="/emustudio/gui/document-save.png"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" value="Save &amp; Close"/>
             <Property name="focusable" type="boolean" value="false"/>
@@ -104,7 +104,7 @@
               <ComponentRef name="groupDraw"/>
             </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/emustudio/resources/compile.png"/>
+              <Image iconType="3" name="/emustudio/gui/compile.png"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" value="Set compiler"/>
             <Property name="focusable" type="boolean" value="false"/>
@@ -122,7 +122,7 @@
               <ComponentRef name="groupDraw"/>
             </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/emustudio/resources/cpu.gif"/>
+              <Image iconType="3" name="/emustudio/gui/cpu.gif"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" value="Set CPU"/>
             <Property name="focusable" type="boolean" value="false"/>
@@ -140,7 +140,7 @@
               <ComponentRef name="groupDraw"/>
             </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/emustudio/resources/ram.gif"/>
+              <Image iconType="3" name="/emustudio/gui/ram.gif"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" value="Set main store"/>
             <Property name="focusable" type="boolean" value="false"/>
@@ -158,7 +158,7 @@
               <ComponentRef name="groupDraw"/>
             </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/emustudio/resources/device.png"/>
+              <Image iconType="3" name="/emustudio/gui/device.png"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" value="Add device"/>
             <Property name="focusable" type="boolean" value="false"/>
@@ -182,7 +182,7 @@
               <ComponentRef name="groupDraw"/>
             </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/emustudio/resources/connection.png"/>
+              <Image iconType="3" name="/emustudio/gui/connection.png"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" value="Add connection"/>
             <Property name="focusable" type="boolean" value="false"/>
@@ -197,7 +197,7 @@
         <Component class="javax.swing.JToggleButton" name="btnBidirection">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/emustudio/resources/bidirection.png"/>
+              <Image iconType="3" name="/emustudio/gui/bidirection.png"/>
             </Property>
             <Property name="selected" type="boolean" value="true"/>
             <Property name="toolTipText" type="java.lang.String" value="Bidirectional connection"/>
@@ -221,7 +221,7 @@
               <ComponentRef name="groupDraw"/>
             </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/emustudio/resources/edit-delete.png"/>
+              <Image iconType="3" name="/emustudio/gui/edit-delete.png"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" value="Delete component or connection"/>
             <Property name="focusable" type="boolean" value="false"/>
@@ -259,7 +259,7 @@
         <Component class="javax.swing.JToggleButton" name="btnUseGrid">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/emustudio/resources/grid_memory.gif"/>
+              <Image iconType="3" name="/emustudio/gui/grid_memory.gif"/>
             </Property>
             <Property name="selected" type="boolean" value="true"/>
             <Property name="toolTipText" type="java.lang.String" value="Use grid?"/>
