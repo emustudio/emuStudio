@@ -69,7 +69,7 @@ public class Memory extends SimpleMemory {
 
     @Override
     public String getVersion() {
-        return "0.30b";
+        return getClass().getPackage().getImplementationVersion();
     }
 
     @Override
@@ -79,7 +79,7 @@ public class Memory extends SimpleMemory {
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2006-2011, P. Jakubčo";
+        return "\u00A9 Copyright 2006-2012, P. Jakubčo";
     }
 
     @Override
