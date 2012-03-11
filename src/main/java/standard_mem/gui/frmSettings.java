@@ -47,9 +47,9 @@ import javax.swing.table.AbstractTableModel;
 import standard_mem.Memory;
 import standard_mem.gui.utils.NiceButton;
 import standard_mem.gui.utils.EmuFileFilter;
-import standard_mem.gui.utils.tableMemory;
-import emuLib8.plugins.ISettingsHandler;
-import emuLib8.runtime.StaticDialogs;
+import standard_mem.gui.utils.TableMemory;
+import emulib.plugins.ISettingsHandler;
+import emulib.runtime.StaticDialogs;
 import java.util.ArrayList;
 import standard_mem.MemoryContext;
 
@@ -64,14 +64,14 @@ public class frmSettings extends JDialog {
     private Memory mem;
     private ROMmodel rom_model;
     private ImagesModel images_model;
-    private tableMemory tblMem;
+    private TableMemory tblMem;
     private ArrayList<String> imageNames = new ArrayList<String>();
     private ArrayList<String> imageFullNames = new ArrayList<String>();
     private ArrayList<Integer> imageAddresses = new ArrayList<Integer>();
 
    /** Creates new form frmSettings */
     public frmSettings(java.awt.Frame parent, boolean modal, long pluginID,
-            Memory mem, MemoryContext memContext, tableMemory tblMem,
+            Memory mem, MemoryContext memContext, TableMemory tblMem,
             ISettingsHandler settings) {
         super(parent, modal);
         this.mem = mem;

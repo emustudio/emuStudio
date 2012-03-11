@@ -25,7 +25,7 @@
 package interfaces;
 
 import java.util.Hashtable;
-import emuLib8.plugins.memory.IMemoryContext;
+import emulib.plugins.memory.IMemoryContext;
 
 /**
  * Specific context for this kind of memory.

@@ -1,7 +1,7 @@
 /*
  * Memory.java
  *
- * Created on Sobota, 2007, okt�ber 27, 11:58
+ * Created on Sobota, 2007, october 27, 11:58
  *
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
@@ -29,11 +29,11 @@ import java.io.File;
 import java.util.Collections;
 
 import standard_mem.gui.frmMemory;
-import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.memory.IMemoryContext;
-import emuLib8.plugins.memory.SimpleMemory;
-import emuLib8.runtime.Context;
-import emuLib8.runtime.StaticDialogs;
+import emulib.plugins.ISettingsHandler;
+import emulib.plugins.memory.IMemoryContext;
+import emulib.plugins.memory.SimpleMemory;
+import emulib.runtime.Context;
+import emulib.runtime.StaticDialogs;
 import java.util.ArrayList;
 
 /**
