@@ -12,7 +12,7 @@ Installation
 ------------
 
 The easiest way how to install the plug-in is to use whole emuStudio distribution release. This plug-in is
-included in each release and it will be included in the future as well. However, if you want to install
+included in each release and it will be included in the future as well. However, if you still want to install
 a snapshot version, follow this rule: 
 
 **Put the compiled jar file into subdirectory of emuStudio called `mem`**.
