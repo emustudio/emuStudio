@@ -1,16 +1,44 @@
-What's this?
+Intel 8080 Assembler plug-in
+----------------------------
+
+This project is light modified (enhanced) "clone" of original Intel's 8080 assembler, written in Java.
+It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based computer
+emulation platform\*.
+
+The assembler syntax is taken from manual found at [this](http://www.classiccmp.org/dunfield/r/8080asm.pdf)
+link. The assembler supports following features:
+
+* Support of full instruction set,
+* Support of unlimited nested macros,
+* Support of conditional assembly,
+* Ability to include other source files (using "libraries"),
+* Ability of data definition and data reservation with various sizes,
+* Ability to define labels of relative adresses and use them as forward references,
+* Literals and expressions definition in various radixes,
+* Binary output in Intel HEX format.
+
+Installation
 ------------
 
-It is light modified clone of original Intel's 8080 assembler, written in Java.
-Supports unlimited nested macros, conditional assembly, etc.
-It produces output in Intel HEX format.
+The easiest way how to install the plug-in is to use whole emuStudio distribution release. This plug-in is
+included in each release and it will be included in the future as well. However, if you still want to install
+a snapshot version, follow this rule: 
 
-Install
--------
-
-Put the plug-in into `compilers` directory where the *emuStudio* is installed.
-Don't forget to check plug-in's compatibility with chosen distribution.
+**Put the compiled jar file into subdirectory of emuStudio called `compilers`**.
 
 For example: `emuStudio/compilers/as-8080.jar`
 
+Now you can use the plug-in in abstract schema editor to construct virtual computers. The emuStudio
+will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
+distribution.
 
+For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+
+License
+-------
+
+This project is released under GNU GPL v2 license.
+
+* * *
+
+\* You can find emuStudio repository at [GitHub](http://github.com/vbmacher/emuStudio).
