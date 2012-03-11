@@ -44,7 +44,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
 
-import emuLib8.plugins.cpu.ICPU.RunState;
+import emulib.plugins.cpu.ICPU.RunState;
 
 /**
  *

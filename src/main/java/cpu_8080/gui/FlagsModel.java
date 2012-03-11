@@ -1,4 +1,6 @@
 /*
+ * FlagsModel.java
+ *
  *  Copyright (C) 2011 vbmacher
  * 
  *  This program is free software; you can redistribute it and/or

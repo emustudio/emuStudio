@@ -1,8 +1,8 @@
 /*
- * IICpuListener.java
+ * ACpuContext.java
  * (interface)
  *
- * Created on 18.6.2008, 9:31:16
+ * Created on 18.6.2008, 8:56:44
  * hold to: KISS, YAGNI
  *
  * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
@@ -24,13 +24,16 @@
 
 package interfaces;
 
-import java.util.EventObject;
-import emuLib8.plugins.cpu.ICPU.ICPUListener;
+import emulib.plugins.cpu.ICPUContext;
+import emulib.plugins.device.IDeviceContext;
 
 /**
- *
+ * CPU context for 8080 processor
  * @author vbmacher
  */
-public interface IICpuListener extends ICPUListener {
-    public void frequencyChanged(EventObject evt, float freq);
+public interface C738039DCA561A49F377859B108A9AD1EE6CBDACB extends ICPUContext {
+    public boolean attachDevice(IDeviceContext listener, int port);
+    public void detachDevice(int port);
+    
+    public void interrupt(byte[] instr);
 }

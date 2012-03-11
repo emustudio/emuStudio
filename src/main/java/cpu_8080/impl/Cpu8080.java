@@ -7,6 +7,7 @@
  *
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
+ * DON'T REPEAT YOURSELF
  *
  * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
@@ -28,16 +29,16 @@ package cpu_8080.impl;
 
 import cpu_8080.gui.Disassembler;
 import cpu_8080.gui.StatusGUI;
-import emuLib8.plugins.cpu.IDisassembler;
+import emulib.plugins.cpu.IDisassembler;
 import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
 import interfaces.IICpuListener;
 import java.util.TimerTask;
 import javax.swing.JPanel;
-import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.cpu.SimpleCPU;
-import emuLib8.plugins.memory.IMemoryContext;
-import emuLib8.runtime.Context;
-import emuLib8.runtime.StaticDialogs;
+import emulib.plugins.ISettingsHandler;
+import emulib.plugins.cpu.SimpleCPU;
+import emulib.plugins.memory.IMemoryContext;
+import emulib.runtime.Context;
+import emulib.runtime.StaticDialogs;
 
 /**
  * Main implementation class for CPU emulation

@@ -24,7 +24,7 @@
 package cpu_8080.impl;
 
 import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
-import emuLib8.plugins.device.IDeviceContext;
+import emulib.plugins.device.IDeviceContext;
 import java.util.HashMap;
 
 
