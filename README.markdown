@@ -1,17 +1,45 @@
-What's this?
-------------
+Intel 8080 CPU plug-in
+-----------------------
 
-This is virtual Intel 8080 CPU, written in Java.
-Supports all instructions, correct timing for instructions,
-changing runtime frequency.
-Doesn't support hardware interrupts (in this time). 
+This is another Java-based emulator of 8-bit Intel 8080 CPU. It is implemented as a plug-in for
+[emuStudio](http://emustudio.sf.net), a software-based computer emulation platform\*.
+
+This project has been the first attempt of creating the emuStudio (it was called emu8 in that time).
+After time passed, the emulator was enhanced. The CPU emulator of the Intel 8080 processor was segregated
+to be a first emuStudio plug-in. Features include:
+
+* Interpetation as emulation technique,
+* Correct real timing,
+* Ability to set clock frequency manually at run-time,
+* Emulation of all instructions including interrupts,
+* Disassembler implementation,
+* Support of breakpoints,
+* Ability of communication with up to 256 I/O devices,
+* Status window shows all registers, flags, and run-time frequency.
 
 Installation
 ------------
 
-Plugin has to be compiled into single "jar" file and then it should be
-inserted in `cpu` directory where *emuStudio* is installed.
+The easiest way how to install the plug-in is to use whole emuStudio distribution release. This plug-in is
+included in each release and it will be included in the future as well. However, if you still want to install
+a snapshot version, follow this rule: 
+
+**Put the compiled jar file into subdirectory of emuStudio called `cpu`**.
 
 For example: `emuStudio/cpu/8080-cpu.jar`.
 
+Now you can use the plug-in in abstract schema editor to construct virtual computers. The emuStudio
+will not recognize the plug-in until restart. Don't forget to check the compatibility with chosen
+distribution.
+
+For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+
+License
+-------
+
+This project is released under GNU GPL v2 license.
+
+* * *
+
+\* You can find emuStudio repository at [GitHub](http://github.com/vbmacher/emuStudio).
 
