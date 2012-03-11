@@ -95,10 +95,10 @@ public class AboutDialog extends javax.swing.JDialog {
         lblName.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
         lblName.setText("emuStudio");
 
-        lblCopyright.setText("© Copyright 2006-2011, Peter Jakubčo");
+        lblCopyright.setText("© Copyright 2006-2012 Peter Jakubčo");
 
         lblVersion.setFont(lblVersion.getFont().deriveFont(lblVersion.getFont().getStyle() | java.awt.Font.BOLD));
-        lblVersion.setText("0.38b");
+        lblVersion.setText(getClass().getPackage().getImplementationVersion());
 
         jLabel4.setText("Version:");
 

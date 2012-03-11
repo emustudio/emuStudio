@@ -3,11 +3,11 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>net.sf.emustudio</groupId>
-  <artifactId>emustudio</artifactId>
+  <artifactId>emuStudio</artifactId>
   <version>0.39.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>emustudio</name>
+  <name>emuStudio</name>
   <url>http://emustudio.sf.net</url>
   <description>Free, plugin-based software platform for computer emulation</description>
 
@@ -42,6 +42,8 @@
               <addClasspath>true</addClasspath>
               <classpathPrefix>lib/</classpathPrefix>
               <mainClass>emustudio.main.Main</mainClass>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
             </manifest>
           </archive>
         </configuration>
