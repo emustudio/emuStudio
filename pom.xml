@@ -83,7 +83,7 @@
     </dependency>
     <dependency>
       <groupId>net.sf.emustudio</groupId>
-      <artifactId>emulib</artifactId>
+      <artifactId>emuLib</artifactId>
       <version>9.0.0-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
