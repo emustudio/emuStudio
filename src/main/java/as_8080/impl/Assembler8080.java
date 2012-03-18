@@ -5,8 +5,9 @@
  *
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
+ * DON'T REPEAT YOURSELF
  *
- * Copyright (C) 2007-2012 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,14 +39,14 @@ import emulib.runtime.Context;
 /**
  * Main implementation class of the plugin (assembler for 8080 processor).
  *
- * @author Peter Jakubčo <pjakubco at gmail.com>
+ * @author Peter Jakubčo <pjakubco@gmail.com>
  */
 public class Assembler8080 extends SimpleCompiler {
     private Lexer8080 lex;
     private Parser8080 par;
     private SourceFileExtension[] suffixes;
 
-    /** Creates a new instance of compiler8080 */
+    /** Creates a new instance */
     public Assembler8080(Long pluginID) {
         super(pluginID);
         lex = new Lexer8080((Reader) null);
@@ -61,12 +62,12 @@ public class Assembler8080 extends SimpleCompiler {
 
     @Override
     public String getVersion() {
-        return "0.31b";
+        return getClass().getPackage().getImplementationVersion();
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2007-2011, P.Jakubčo";
+        return "\u00A9 Copyright 2007-2012, P.Jakubčo";
     }
 
     @Override
