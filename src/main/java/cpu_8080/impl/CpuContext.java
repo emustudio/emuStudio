@@ -23,7 +23,7 @@
 
 package cpu_8080.impl;
 
-import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
+import interfaces.C8E98DC5AF7BF51D571C03B7C96324B3066A092EA;
 import emulib.plugins.device.IDeviceContext;
 import java.util.HashMap;
 
@@ -32,7 +32,7 @@ import java.util.HashMap;
  *
  * @author vbmacher
  */
-public class CpuContext implements C738039DCA561A49F377859B108A9AD1EE6CBDACB {
+public class CpuContext implements C8E98DC5AF7BF51D571C03B7C96324B3066A092EA {
     private HashMap<Integer,IDeviceContext> devicesList;
     private int clockFrequency = 2000; // kHz
     private Cpu8080 cpu;
