@@ -6,7 +6,7 @@
  * KEEP IT SIMPLE STUPID
  * sometimes just... YOU AREN'T GONNA NEED IT
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,16 +27,16 @@ package disk_88;
 
 import disk_88.gui.ConfigDialog;
 import disk_88.gui.DiskFrame;
-import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
+import interfaces.C8E98DC5AF7BF51D571C03B7C96324B3066A092EA;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.device.IDeviceContext;
-import emuLib8.plugins.device.SimpleDevice;
-import emuLib8.runtime.Context;
-import emuLib8.runtime.StaticDialogs;
+import emulib.plugins.ISettingsHandler;
+import emulib.plugins.device.IDeviceContext;
+import emulib.plugins.device.SimpleDevice;
+import emulib.runtime.Context;
+import emulib.runtime.StaticDialogs;
 
 /**
  * MITS 88-DISK Floppy Disk controller with up to eight drives (although I
@@ -127,8 +127,6 @@ import emuLib8.runtime.StaticDialogs;
  * @author vbmacher
  */
 public class DiskImpl extends SimpleDevice {
-    private final static String VERSION = "0.26b1";
-
     private final static int DRIVES_COUNT = 16;
     public final static int CPU_PORT1 = 0x8;
     public final static int CPU_PORT2 = 0x9;
@@ -136,7 +134,7 @@ public class DiskImpl extends SimpleDevice {
     private int port1CPU;
     private int port2CPU;
     private int port3CPU;
-    private C738039DCA561A49F377859B108A9AD1EE6CBDACB cpu;
+    private C8E98DC5AF7BF51D571C03B7C96324B3066A092EA cpu;
     public ArrayList<Drive> drives;
     private Port1 port1;
     private Port2 port2;
@@ -197,9 +195,9 @@ public class DiskImpl extends SimpleDevice {
     public boolean initialize(ISettingsHandler settings) {
         super.initialize(settings);
 
-        cpu = (C738039DCA561A49F377859B108A9AD1EE6CBDACB)
+        cpu = (C8E98DC5AF7BF51D571C03B7C96324B3066A092EA)
                 Context.getInstance().getCPUContext(pluginID,
-                C738039DCA561A49F377859B108A9AD1EE6CBDACB.class);
+                C8E98DC5AF7BF51D571C03B7C96324B3066A092EA.class);
 
         if (cpu == null) {
             StaticDialogs.showErrorMessage("Cannot connect to the CPU", "88-DISK");
@@ -311,7 +309,7 @@ public class DiskImpl extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return VERSION;
+        return getClass().getPackage().getImplementationVersion();
     }
 
     @Override
@@ -321,7 +319,7 @@ public class DiskImpl extends SimpleDevice {
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2008-2010, P. Jakubčo";
+        return "\u00A9 Copyright 2008-2012, P. Jakubčo";
     }
 
     @Override

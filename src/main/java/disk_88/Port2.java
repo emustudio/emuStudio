@@ -1,13 +1,13 @@
 /*
- * Port1.java
+ * Port2.java
  *
- * Created on 18.6.2008, 15:01:27
+ * Created on 18.6.2008, 15:10:20
  * hold to: KISS, YAGNI
  *
- * IN:  disk flags
- * OUT: select/unselect drive
+ * IN: sector pos
+ * OUT: set flags
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,17 +25,17 @@
  */
 package disk_88;
 
-import emuLib8.plugins.device.IDeviceContext;
+import emulib.plugins.device.IDeviceContext;
 
 /**
  *
  * @author vbmacher
  */
-public class Port1 implements IDeviceContext {
+public class Port2 implements IDeviceContext {
 
     private DiskImpl dsk;
 
-    public Port1(DiskImpl dsk) {
+    public Port2(DiskImpl dsk) {
         this.dsk = dsk;
     }
 
@@ -48,30 +48,21 @@ public class Port1 implements IDeviceContext {
 
     @Override
     public Object read() {
-        return ((Drive) dsk.drives.get(dsk.current_drive)).getFlags();
+        return ((Drive) dsk.drives.get(dsk.current_drive)).getSectorPos();
     }
 
     @Override
     public void write(Object val) {
-        short v = (Short) val;
-        // select device
-        dsk.current_drive = v & 0x0F;
-        if ((v & 0x80) != 0) {
-            // disable device
-            ((Drive) dsk.drives.get(dsk.current_drive)).deselect();
-            dsk.current_drive = 0xFF;
-        } else {
-            ((Drive) dsk.drives.get(dsk.current_drive)).select();
-        }
+        ((Drive) dsk.drives.get(dsk.current_drive)).setFlags((Short) val);
+    }
+
+    @Override
+    public String getID() {
+        return "88-DISK-PORT2";
     }
 
     @Override
     public Class<?> getDataType() {
         return Short.class;
-    }
-
-    @Override
-    public String getID() {
-        return "88-DISK-PORT1";
     }
 }

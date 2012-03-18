@@ -3,7 +3,7 @@
  *
  * KISS, YAGNI
  *
- *  Copyright (C) 2011 vbmacher
+ *  Copyright (C) 2011-2012 vbmacher
  * 
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 
 package disk_88;
 
-import emuLib8.runtime.StaticDialogs;
+import emulib.runtime.StaticDialogs;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
