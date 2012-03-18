@@ -36,6 +36,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+        <version>2.4</version>
         <configuration>
           <archive>
             <manifest>
@@ -78,7 +79,7 @@
     </dependency>
     <dependency>
       <groupId>cup</groupId>
-      <artifactId>java-cup</artifactId>
+      <artifactId>java-cup-runtime</artifactId>
       <version>0.11a</version>
     </dependency>
     <dependency>
