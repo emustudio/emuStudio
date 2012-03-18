@@ -1,13 +1,13 @@
 /*
- * Port3.java
+ * Port1.java
  *
- * Created on 18.6.2008, 15:13:58
+ * Created on 18.6.2008, 15:01:27
  * hold to: KISS, YAGNI
  *
- * IN: read data
- * OUT: write data
+ * IN:  disk flags
+ * OUT: select/unselect drive
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,19 +25,17 @@
  */
 package disk_88;
 
-import java.io.IOException;
-import emuLib8.plugins.device.IDeviceContext;
-import emuLib8.runtime.StaticDialogs;
+import emulib.plugins.device.IDeviceContext;
 
 /**
  *
  * @author vbmacher
  */
-public class Port3 implements IDeviceContext {
+public class Port1 implements IDeviceContext {
 
     private DiskImpl dsk;
 
-    public Port3(DiskImpl dsk) {
+    public Port1(DiskImpl dsk) {
         this.dsk = dsk;
     }
 
@@ -50,31 +48,30 @@ public class Port3 implements IDeviceContext {
 
     @Override
     public Object read() {
-        short d = 0;
-        try {
-            d = ((Drive) dsk.drives.get(dsk.current_drive)).readData();
-        } catch (IOException e) {
-            StaticDialogs.showErrorMessage("Couldn't read from disk");
-        }
-        return d;
+        return ((Drive) dsk.drives.get(dsk.current_drive)).getFlags();
     }
 
     @Override
     public void write(Object val) {
-        try {
-            ((Drive) dsk.drives.get(dsk.current_drive)).writeData((Short) val);
-        } catch (IOException e) {
-            StaticDialogs.showErrorMessage("Couldn't write to disk");
+        short v = (Short) val;
+        // select device
+        dsk.current_drive = v & 0x0F;
+        if ((v & 0x80) != 0) {
+            // disable device
+            ((Drive) dsk.drives.get(dsk.current_drive)).deselect();
+            dsk.current_drive = 0xFF;
+        } else {
+            ((Drive) dsk.drives.get(dsk.current_drive)).select();
         }
-    }
-
-    @Override
-    public String getID() {
-        return "88-DISK-PORT3";
     }
 
     @Override
     public Class<?> getDataType() {
         return Short.class;
+    }
+
+    @Override
+    public String getID() {
+        return "88-DISK-PORT1";
     }
 }

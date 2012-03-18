@@ -1,13 +1,13 @@
 /*
- * Port2.java
+ * Port3.java
  *
- * Created on 18.6.2008, 15:10:20
+ * Created on 18.6.2008, 15:13:58
  * hold to: KISS, YAGNI
  *
- * IN: sector pos
- * OUT: set flags
+ * IN: read data
+ * OUT: write data
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,17 +25,19 @@
  */
 package disk_88;
 
-import emuLib8.plugins.device.IDeviceContext;
+import java.io.IOException;
+import emulib.plugins.device.IDeviceContext;
+import emulib.runtime.StaticDialogs;
 
 /**
  *
  * @author vbmacher
  */
-public class Port2 implements IDeviceContext {
+public class Port3 implements IDeviceContext {
 
     private DiskImpl dsk;
 
-    public Port2(DiskImpl dsk) {
+    public Port3(DiskImpl dsk) {
         this.dsk = dsk;
     }
 
@@ -48,17 +50,27 @@ public class Port2 implements IDeviceContext {
 
     @Override
     public Object read() {
-        return ((Drive) dsk.drives.get(dsk.current_drive)).getSectorPos();
+        short d = 0;
+        try {
+            d = ((Drive) dsk.drives.get(dsk.current_drive)).readData();
+        } catch (IOException e) {
+            StaticDialogs.showErrorMessage("Couldn't read from disk");
+        }
+        return d;
     }
 
     @Override
     public void write(Object val) {
-        ((Drive) dsk.drives.get(dsk.current_drive)).setFlags((Short) val);
+        try {
+            ((Drive) dsk.drives.get(dsk.current_drive)).writeData((Short) val);
+        } catch (IOException e) {
+            StaticDialogs.showErrorMessage("Couldn't write to disk");
+        }
     }
 
     @Override
     public String getID() {
-        return "88-DISK-PORT2";
+        return "88-DISK-PORT3";
     }
 
     @Override

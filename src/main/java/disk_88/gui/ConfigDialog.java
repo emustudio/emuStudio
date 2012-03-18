@@ -3,7 +3,7 @@
  * 
  * KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,8 +43,8 @@ import disk_88.Drive;
 import disk_88.DiskImpl;
 import disk_88.gui.utils.NiceButton;
 
-import emuLib8.plugins.ISettingsHandler;
-import emuLib8.runtime.StaticDialogs;
+import emulib.plugins.ISettingsHandler;
+import emulib.runtime.StaticDialogs;
 
 @SuppressWarnings("serial")
 public class ConfigDialog extends JDialog {
