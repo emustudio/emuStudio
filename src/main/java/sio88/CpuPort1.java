@@ -25,7 +25,7 @@
  */
 package sio88;
 
-import emuLib8.plugins.device.IDeviceContext;
+import emulib.plugins.device.IDeviceContext;
 
 /**
  * A write to the status port can select

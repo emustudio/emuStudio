@@ -22,7 +22,7 @@
  */
 package sio88;
 
-import emuLib8.plugins.device.IDeviceContext;
+import emulib.plugins.device.IDeviceContext;
 
 /**
  * Male plug, RS-232 physical port

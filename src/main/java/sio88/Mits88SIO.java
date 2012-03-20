@@ -28,11 +28,11 @@ package sio88;
 import javax.swing.JOptionPane;
 
 import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
-import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.device.IDeviceContext;
-import emuLib8.plugins.device.SimpleDevice;
-import emuLib8.runtime.Context;
-import emuLib8.runtime.StaticDialogs;
+import emulib.plugins.ISettingsHandler;
+import emulib.plugins.device.IDeviceContext;
+import emulib.plugins.device.SimpleDevice;
+import emulib.runtime.Context;
+import emulib.runtime.StaticDialogs;
 import java.util.ArrayList;
 import sio88.gui.ConfigDialog;
 import sio88.gui.SIODialog;
@@ -97,17 +97,17 @@ public class Mits88SIO extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return "0.17b";
+        return getClass().getPackage().getImplementationVersion();
     }
 
     @Override
     public String getTitle() {
-        return "MITS-88-SIO serial card";
+        return "MITS-88-SIO Board";
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2007-2011, P.Jakubčo";
+        return "\u00A9 Copyright 2007-2012, P.Jakubčo";
     }
 
     /* Reset routine
