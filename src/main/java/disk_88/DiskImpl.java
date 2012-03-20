@@ -397,7 +397,7 @@ public class DiskImpl extends SimpleDevice {
      * @param args
      */
     public static void main(String[] args) {
-        System.out.println("88-DISK plug-in v" + VERSION);
+        System.out.println("88-DISK plug-in");
         parseCommandLine(args);
 
         if (ARG_HELP) {
