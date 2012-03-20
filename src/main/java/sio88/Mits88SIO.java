@@ -27,7 +27,7 @@ package sio88;
 
 import javax.swing.JOptionPane;
 
-import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
+import interfaces.C8E98DC5AF7BF51D571C03B7C96324B3066A092EA;
 import emulib.plugins.ISettingsHandler;
 import emulib.plugins.device.IDeviceContext;
 import emulib.plugins.device.SimpleDevice;
@@ -68,7 +68,7 @@ public class Mits88SIO extends SimpleDevice {
      * Port where devices are connected
      */
     private PhysicalPort externPort;
-    private C738039DCA561A49F377859B108A9AD1EE6CBDACB cpu = null;
+    private C8E98DC5AF7BF51D571C03B7C96324B3066A092EA cpu = null;
     public SIODialog gui = null;
 
     public Mits88SIO(Long pluginID) {
@@ -156,8 +156,8 @@ public class Mits88SIO extends SimpleDevice {
     public boolean initialize(ISettingsHandler settings) {
         super.initialize(settings);
 
-        cpu = (C738039DCA561A49F377859B108A9AD1EE6CBDACB) Context.getInstance().getCPUContext(pluginID,
-                C738039DCA561A49F377859B108A9AD1EE6CBDACB.class);
+        cpu = (C8E98DC5AF7BF51D571C03B7C96324B3066A092EA) Context.getInstance().getCPUContext(pluginID,
+                C8E98DC5AF7BF51D571C03B7C96324B3066A092EA.class);
 
         // try to 'catch' any first connected device
         IDeviceContext device = Context.getInstance().getDeviceContext(pluginID,
