@@ -22,13 +22,13 @@
  */
 package adm3a_terminal;
 
-import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.device.IDeviceContext;
+import emulib.plugins.ISettingsHandler;
+import emulib.plugins.device.IDeviceContext;
 import adm3a_terminal.gui.ConfigDialog;
 import adm3a_terminal.gui.TerminalWindow;
-import emuLib8.plugins.device.SimpleDevice;
-import emuLib8.runtime.Context;
-import emuLib8.runtime.StaticDialogs;
+import emulib.plugins.device.SimpleDevice;
+import emulib.runtime.Context;
+import emulib.runtime.StaticDialogs;
 
 /**
  *
@@ -116,7 +116,7 @@ public class TerminalImpl extends SimpleDevice {
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2007-2010, Peter Jakubčo";
+        return "\u00A9 Copyright 2007-2012, Peter Jakubčo";
     }
 
     @Override
@@ -126,7 +126,7 @@ public class TerminalImpl extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return "0.16b";
+        return getClass().getPackage().getImplementationVersion();
     }
 
     @Override

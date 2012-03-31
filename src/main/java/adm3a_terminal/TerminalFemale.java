@@ -22,7 +22,7 @@
  */
 package adm3a_terminal;
 
-import emuLib8.plugins.device.IDeviceContext;
+import emulib.plugins.device.IDeviceContext;
 
 /**
  *

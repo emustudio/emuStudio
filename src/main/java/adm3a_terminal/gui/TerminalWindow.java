@@ -71,7 +71,7 @@ public class TerminalWindow extends JFrame {
 
     private void initComponents() {
         JLabel lblBack = new JLabel();
-        ImageIcon img = new ImageIcon(getClass().getResource("/adm3a_terminal/resources/display.gif"));
+        ImageIcon img = new ImageIcon(getClass().getResource("/adm3a_terminal/display.gif"));
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Terminal ADM-3A");
@@ -79,7 +79,7 @@ public class TerminalWindow extends JFrame {
 
         try {
             // load terminal font from resources
-            InputStream fin = this.getClass().getResourceAsStream("/adm3a_terminal/resources/terminal.ttf");
+            InputStream fin = this.getClass().getResourceAsStream("/adm3a_terminal/terminal.ttf");
             this.terminalFont = Font.createFont(Font.TRUETYPE_FONT, fin).deriveFont(12f);
             fin.close();
             terminal.setFont(this.terminalFont);
