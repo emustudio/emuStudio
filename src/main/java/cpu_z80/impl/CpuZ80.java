@@ -25,7 +25,7 @@ package cpu_z80.impl;
 import cpu_z80.gui.Disassembler;
 import cpu_z80.gui.StatusGUI;
 import emulib.plugins.cpu.IDisassembler;
-import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
+import interfaces.C8E98DC5AF7BF51D571C03B7C96324B3066A092EA;
 import interfaces.IICpuListener;
 import java.util.TimerTask;
 import javax.swing.JPanel;
@@ -205,7 +205,7 @@ public class CpuZ80 extends SimpleCPU {
         cpu = new CpuContext(this);
         rfc = new RuntimeFrequencyCalculator();
         freqScheduler = new java.util.Timer();
-        if (!Context.getInstance().register(pluginID, cpu, C738039DCA561A49F377859B108A9AD1EE6CBDACB.class)) {
+        if (!Context.getInstance().register(pluginID, cpu, C8E98DC5AF7BF51D571C03B7C96324B3066A092EA.class)) {
             StaticDialogs.showErrorMessage("Error: Could not register the CPU!");
         }
     }
