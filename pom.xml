@@ -94,6 +94,12 @@
       <version>0.13.1-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>net.sf.emustudio</groupId>
+      <artifactId>abstractTape-ram</artifactId>
+      <version>0.22.1-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
 
   <distributionManagement>
