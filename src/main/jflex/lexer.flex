@@ -3,9 +3,9 @@
  *
  * Lexical analyser for BrainDuck assembler
  *
- * KISS, YAGNI
+ * KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@
 
 package brainc_brainduck.impl;
 
-import emuLib8.plugins.compiler.ILexer;
-import emuLib8.plugins.compiler.IToken;
+import emulib.plugins.compiler.ILexer;
+import emulib.plugins.compiler.IToken;
 import java.io.Reader;
 import java.io.IOException;
 

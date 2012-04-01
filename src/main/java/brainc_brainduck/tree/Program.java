@@ -1,9 +1,9 @@
 /**
  * Program.java
  * 
- * KISS, YAGNI
+ * KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 package brainc_brainduck.tree;
 
 import java.util.ArrayList;
-import emuLib8.plugins.compiler.HEXFileHandler;
+import emulib.plugins.compiler.HEXFileHandler;
 
 public class Program {
     private ArrayList<Row> list; // zoznam všetkých inštrukcií

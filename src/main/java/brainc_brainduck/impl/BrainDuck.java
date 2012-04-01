@@ -1,9 +1,9 @@
 /**
  * BrainDuck.java
  *
- * KISS, YAGNI
+ * KISS, YAGNI, DRY
  * 
- * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,13 +23,13 @@ package brainc_brainduck.impl;
 
 import java.io.Reader;
 
-import emuLib8.plugins.compiler.ILexer;
-import emuLib8.plugins.memory.IMemoryContext;
+import emulib.plugins.compiler.ILexer;
+import emulib.plugins.memory.IMemoryContext;
 import brainc_brainduck.tree.Program;
-import emuLib8.plugins.compiler.HEXFileHandler;
-import emuLib8.plugins.compiler.SimpleCompiler;
-import emuLib8.plugins.compiler.SourceFileExtension;
-import emuLib8.runtime.Context;
+import emulib.plugins.compiler.HEXFileHandler;
+import emulib.plugins.compiler.SimpleCompiler;
+import emulib.plugins.compiler.SourceFileExtension;
+import emulib.runtime.Context;
 
 /**
  * Main class implementing main compiler interface.
@@ -62,12 +62,12 @@ public class BrainDuck extends SimpleCompiler {
 
     @Override
     public String getVersion() {
-        return "0.15b";
+        return getClass().getPackage().getImplementationVersion();
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2009-2011, P. Jakubčo";
+        return "\u00A9 Copyright 2009-2012, P. Jakubčo";
     }
 
     @Override
