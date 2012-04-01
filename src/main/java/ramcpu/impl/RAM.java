@@ -1,9 +1,9 @@
 /**
  * RAM.java
  * 
- *  KISS, YAGNI
+ *  KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,20 +21,20 @@
  */
 package ramcpu.impl;
 
-import emuLib8.plugins.cpu.IDisassembler;
+import emulib.plugins.cpu.IDisassembler;
 import interfaces.C50E67F515A7C87A67947F8FB0F82558196BE0AC7;
 import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
 import interfaces.C8E258161A30C508D5E8ED07CE943EEF7408CA508;
 
 import javax.swing.JPanel;
 
-import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.cpu.ICPUContext;
-import emuLib8.plugins.cpu.SimpleCPU;
+import emulib.plugins.ISettingsHandler;
+import emulib.plugins.cpu.ICPUContext;
+import emulib.plugins.cpu.SimpleCPU;
 import ramcpu.gui.RAMDisassembler;
 import ramcpu.gui.RAMStatusPanel;
-import emuLib8.runtime.Context;
-import emuLib8.runtime.StaticDialogs;
+import emulib.runtime.Context;
+import emulib.runtime.StaticDialogs;
 import java.util.ArrayList;
 
 public class RAM extends SimpleCPU {

@@ -1,9 +1,9 @@
 /**
  * RAMStatusPanel.java
  * 
- * KISS, YAGNI
+ * KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,9 +32,9 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 
-import emuLib8.plugins.cpu.ICPU.ICPUListener;
-import emuLib8.plugins.cpu.ICPU.RunState;
-import emuLib8.plugins.memory.IMemoryContext;
+import emulib.plugins.cpu.ICPU.ICPUListener;
+import emulib.plugins.cpu.ICPU.RunState;
+import emulib.plugins.memory.IMemoryContext;
 
 import ramcpu.impl.RAM;
 

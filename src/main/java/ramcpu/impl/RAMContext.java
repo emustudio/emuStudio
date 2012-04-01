@@ -1,9 +1,9 @@
 /**
  * RAMContext.java
  * 
- *   KISS, YAGNI
+ *   KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,11 +22,11 @@
 package ramcpu.impl;
 
 import interfaces.C50E67F515A7C87A67947F8FB0F82558196BE0AC7;
-import emuLib8.plugins.cpu.ICPUContext;
-import emuLib8.plugins.device.IDeviceContext;
+import emulib.plugins.cpu.ICPUContext;
+import emulib.plugins.device.IDeviceContext;
 
-import emuLib8.runtime.Context;
-import emuLib8.runtime.StaticDialogs;
+import emulib.runtime.Context;
+import emulib.runtime.StaticDialogs;
 
 public class RAMContext implements ICPUContext {
 

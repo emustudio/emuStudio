@@ -1,9 +1,9 @@
 /**
  *  RAMDisassembler.java
  * 
- *  KISS, YAGNI
+ *  KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,9 +21,9 @@
  */
 package ramcpu.gui;
 
-import emuLib8.plugins.cpu.CPUInstruction;
+import emulib.plugins.cpu.CPUInstruction;
 import interfaces.C8E258161A30C508D5E8ED07CE943EEF7408CA508;
-import emuLib8.plugins.cpu.SimpleDisassembler;
+import emulib.plugins.cpu.SimpleDisassembler;
 import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
 
 public class RAMDisassembler extends SimpleDisassembler {
