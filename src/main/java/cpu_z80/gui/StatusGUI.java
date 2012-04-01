@@ -3,9 +3,9 @@
  *
  * Created on Nedeľa, 2008, august 24, 10:22
  *
- * KISS, YAGNI
+ * KISS, YAGNI, DRY
  *
- * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,8 +43,8 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
-import emuLib8.plugins.cpu.ICPU.RunState;
-import emuLib8.plugins.memory.IMemoryContext;
+import emulib.plugins.cpu.ICPU.RunState;
+import emulib.plugins.memory.IMemoryContext;
 
 /**
  *

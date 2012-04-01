@@ -2,9 +2,9 @@
  * CpuZ80.java
  *
  * Created on 23.8.2008, 12:53:21
- * hold to: KISS, YAGNI
+ * hold to: KISS, YAGNI, DRY
  *
- * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,17 +24,17 @@ package cpu_z80.impl;
 
 import cpu_z80.gui.Disassembler;
 import cpu_z80.gui.StatusGUI;
-import emuLib8.plugins.cpu.IDisassembler;
+import emulib.plugins.cpu.IDisassembler;
 import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
 import interfaces.IICpuListener;
 import java.util.TimerTask;
 import javax.swing.JPanel;
-import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.cpu.SimpleCPU;
-import emuLib8.plugins.device.IDeviceContext;
-import emuLib8.plugins.memory.IMemoryContext;
-import emuLib8.runtime.Context;
-import emuLib8.runtime.StaticDialogs;
+import emulib.plugins.ISettingsHandler;
+import emulib.plugins.cpu.SimpleCPU;
+import emulib.plugins.device.IDeviceContext;
+import emulib.plugins.memory.IMemoryContext;
+import emulib.runtime.Context;
+import emulib.runtime.StaticDialogs;
 
 /**
  *
@@ -217,7 +217,7 @@ public class CpuZ80 extends SimpleCPU {
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2008-2011, Peter Jakubčo";
+        return "\u00A9 Copyright 2008-2012, Peter Jakubčo";
     }
 
     @Override
@@ -229,7 +229,7 @@ public class CpuZ80 extends SimpleCPU {
 
     @Override
     public String getVersion() {
-        return "0.17b";
+        return getClass().getPackage().getImplementationVersion();
     }
 
     @Override

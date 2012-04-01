@@ -1,9 +1,9 @@
 /*
  * Disassembler.java
  * 
- * Copyright (C) 2011 vbmacher
+ * Copyright (C) 2011-2012, Peter Jakubčo <pjakubco@gmail.com>
  * 
- * KISS, YAGNI
+ * KISS, YAGNI, DRY
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,9 +21,9 @@
  */
 package cpu_z80.gui;
 
-import emuLib8.plugins.cpu.CPUInstruction;
-import emuLib8.plugins.cpu.SimpleDisassembler;
-import emuLib8.plugins.memory.IMemoryContext;
+import emulib.plugins.cpu.CPUInstruction;
+import emulib.plugins.cpu.SimpleDisassembler;
+import emulib.plugins.memory.IMemoryContext;
 
 /**
  *

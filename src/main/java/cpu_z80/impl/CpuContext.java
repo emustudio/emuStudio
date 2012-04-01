@@ -2,9 +2,9 @@
  * CpuContext.java
  *
  * Created on 18.6.2008, 8:50:11
- * hold to: KISS, YAGNI
+ * hold to: KISS, YAGNI, DRY
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ package cpu_z80.impl;
 
 import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
 import java.util.Hashtable;
-import emuLib8.plugins.device.IDeviceContext;
+import emulib.plugins.device.IDeviceContext;
 
 /**
  *
