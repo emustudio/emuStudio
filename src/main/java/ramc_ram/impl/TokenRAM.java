@@ -3,8 +3,9 @@
  *
  * KEEP IT SIMPLE, STUPID
  * some things just: YOU AREN'T GONNA NEED IT
+ * DON'T REPEAT YOURSELF
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,7 +25,7 @@
 package ramc_ram.impl;
 
 import java_cup.runtime.Symbol;
-import emuLib8.plugins.compiler.IToken;
+import emulib.plugins.compiler.IToken;
 
 /**
  *

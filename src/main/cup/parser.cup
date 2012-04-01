@@ -5,8 +5,9 @@
  *
  * KEEP IT SIMPLE STUPID
  * sometimes just: YOU AREN'T GONNA NEED IT
+ * DON'T REPEAT YOURSELF
  *
- * Copyright (C) 2009-2011 Peter JakubËo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubƒço <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,13 +24,15 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+package ramc_ram.impl;
+
 import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
 import java_cup.runtime.Symbol;
-import emuLib8.plugins.compiler.IToken;
+import emulib.plugins.compiler.IToken;
 import java.util.ArrayList;
 import ramc_ram.tree.*;
-import emuLib8.plugins.compiler.Message;
-import emuLib8.plugins.compiler.Message.MessageType;
+import emulib.plugins.compiler.Message;
+import emulib.plugins.compiler.Message.MessageType;
 
 init with {: errorCount = 0; :}
 parser code {:

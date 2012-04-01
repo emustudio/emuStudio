@@ -1,9 +1,9 @@
 /**
  * RAMCompiler.java
  * 
- *  KISS, YAGNI
+ *  KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,13 +27,13 @@ import java.io.Reader;
 
 import ramc_ram.compiled.CompiledFileHandler;
 import ramc_ram.tree.Program;
-import emuLib8.runtime.StaticDialogs;
-import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.compiler.ILexer;
-import emuLib8.plugins.compiler.SimpleCompiler;
-import emuLib8.plugins.compiler.SourceFileExtension;
+import emulib.runtime.StaticDialogs;
+import emulib.plugins.ISettingsHandler;
+import emulib.plugins.compiler.ILexer;
+import emulib.plugins.compiler.SimpleCompiler;
+import emulib.plugins.compiler.SourceFileExtension;
 import ramc_ram.tree.RAMInstruction;
-import emuLib8.runtime.Context;
+import emulib.runtime.Context;
 
 public class RAMCompiler extends SimpleCompiler {
 
