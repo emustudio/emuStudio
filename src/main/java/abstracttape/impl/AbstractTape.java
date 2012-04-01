@@ -1,9 +1,9 @@
 /**
  * AbstractTape.java
  * 
- *   KISS, YAGNI
+ *   KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,10 +24,10 @@ package abstracttape.impl;
 import abstracttape.gui.SettingsDialog;
 import abstracttape.gui.TapeDialog;
 import interfaces.C50E67F515A7C87A67947F8FB0F82558196BE0AC7;
-import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.device.SimpleDevice;
-import emuLib8.runtime.Context;
-import emuLib8.runtime.StaticDialogs;
+import emulib.plugins.ISettingsHandler;
+import emulib.plugins.device.SimpleDevice;
+import emulib.runtime.Context;
+import emulib.runtime.StaticDialogs;
 
 public class AbstractTape extends SimpleDevice {
 
@@ -51,12 +51,12 @@ public class AbstractTape extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return "0.22b";
+        return getClass().getPackage().getImplementationVersion();
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2009-2011, P. Jakubčo";
+        return "\u00A9 Copyright 2009-2012, P. Jakubčo";
     }
 
     @Override

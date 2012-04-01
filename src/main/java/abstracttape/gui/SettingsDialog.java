@@ -1,9 +1,9 @@
 /**
  * SettingsDialog.java
  * 
- *   KISS, YAGNI
+ *   KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ import javax.swing.JDialog;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
 
-import emuLib8.plugins.ISettingsHandler;
+import emulib.plugins.ISettingsHandler;
 
 @SuppressWarnings("serial")
 public class SettingsDialog extends JDialog {

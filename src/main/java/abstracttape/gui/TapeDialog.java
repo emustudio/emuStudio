@@ -1,9 +1,9 @@
 /**
  * TapeDialog.java
  * 
- *   KISS, YAGNI
+ *   KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,9 +40,9 @@ import javax.swing.LayoutStyle;
 import javax.swing.ListCellRenderer;
 import javax.swing.WindowConstants;
 
-import emuLib8.plugins.ISettingsHandler;
+import emulib.plugins.ISettingsHandler;
 
-import emuLib8.runtime.StaticDialogs;
+import emulib.runtime.StaticDialogs;
 
 import abstracttape.gui.utils.NiceButton;
 import abstracttape.impl.AbstractTape;
@@ -165,7 +165,7 @@ public class TapeDialog extends JDialog {
         //setLocationRelativeTo(null);
         scrollTape.setViewportView(lstTape);
 
-        btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/abstracttape/resources/go-up.png"))); // NOI18N
+        btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/abstracttape/go-up.png"))); // NOI18N
         btnAddFirst.addActionListener(new ActionListener() {
 
             @Override
@@ -175,7 +175,7 @@ public class TapeDialog extends JDialog {
             }
         });
 
-        btnAddLast.setIcon(new ImageIcon(getClass().getResource("/abstracttape/resources/go-down.png"))); // NOI18N
+        btnAddLast.setIcon(new ImageIcon(getClass().getResource("/abstracttape/go-down.png"))); // NOI18N
         btnAddLast.addActionListener(new ActionListener() {
 
             @Override
