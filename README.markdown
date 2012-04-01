@@ -1,7 +1,6 @@
 88-SIO Serial interface plug-in
 -------------------------------
 
-
 This project is an emulator of MITS 88-SIO device (serial card), used mainly in MITS
 Altair8800 computers. The device has been a serial I/O interface card that is plugged into
 S-BUS bus. It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based
@@ -17,7 +16,6 @@ terminal was connected to the MITS Altair8800 computer through serial RS-232 por
 The Altair8800 used two versions of the 88-SIO. First (classical 88-SIO - this plug-in) used only one
 physical port allowing to connect a single device. Second version (88-SIO-2) was enhanced to have two
 physical ports, allowing to connect two devices at the same time.
-
 
 Programming
 -----------
