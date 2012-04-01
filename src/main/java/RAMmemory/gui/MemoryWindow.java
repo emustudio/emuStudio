@@ -1,9 +1,9 @@
 /**
  * MemoryWindow.java
  * 
- *  KISS, YAGNI
+ *  KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.table.AbstractTableModel;
 
-import emuLib8.plugins.memory.IMemory.IMemListener;
+import emulib.plugins.memory.IMemory.IMemListener;
 
 import RAMmemory.impl.RAMContext;
 import java.util.Iterator;
@@ -316,7 +316,7 @@ public class MemoryWindow extends JFrame {
 
         tableProgram.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        btnClear.setIcon(new ImageIcon(getClass().getResource("/RAMmemory/resources/edit-delete.png"))); // NOI18N
+        btnClear.setIcon(new ImageIcon(getClass().getResource("/RAMmemory/edit-delete.png"))); // NOI18N
         btnClear.setFocusable(false);
         btnClear.setHorizontalTextPosition(SwingConstants.CENTER);
         btnClear.setVerticalTextPosition(SwingConstants.BOTTOM);

@@ -1,9 +1,9 @@
-/***
+/**
  * RAMContext.java
  * 
- *  KISS, YAGNI
+ *  KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ import interfaces.C8E258161A30C508D5E8ED07CE943EEF7408CA508;
 import java.util.HashMap;
 import java.util.ArrayList;
 
-import emuLib8.plugins.memory.SimpleMemoryContext;
+import emulib.plugins.memory.SimpleMemoryContext;
 import java.util.Iterator;
 
 public class RAMContext extends SimpleMemoryContext implements C8E258161A30C508D5E8ED07CE943EEF7408CA508 {

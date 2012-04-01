@@ -1,9 +1,9 @@
 /**
  * IRAMMemoryContext.java
  * 
- *  KISS, YAGNI
+ *  KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ package interfaces;
 
 import java.util.ArrayList;
 
-import emuLib8.plugins.memory.IMemoryContext;
+import emulib.plugins.memory.IMemoryContext;
 
 public interface C8E258161A30C508D5E8ED07CE943EEF7408CA508 extends IMemoryContext {
 	public void addLabel(int pos, String label);
