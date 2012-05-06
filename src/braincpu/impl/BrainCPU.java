@@ -3,7 +3,7 @@
  * 
  * KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,21 +21,21 @@
  */
 package braincpu.impl;
 
+import emuLib8.plugins.cpu.IDisassembler;
 import javax.swing.JPanel;
 
 import braincpu.gui.BrainDisassembler;
 import braincpu.gui.BrainStatusPanel;
 import braincpu.interfaces.CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F;
 
-import plugins.ISettingsHandler;
-import plugins.cpu.ICPU;
-import plugins.cpu.IDebugColumn;
-import plugins.cpu.SimpleCPU;
-import plugins.memory.IMemoryContext;
-import runtime.Context;
-import runtime.StaticDialogs;
+import emuLib8.plugins.ISettingsHandler;
+import emuLib8.plugins.cpu.SimpleCPU;
+import emuLib8.plugins.memory.IMemoryContext;
+import emuLib8.runtime.Context;
+import emuLib8.runtime.StaticDialogs;
 
 public class BrainCPU extends SimpleCPU {
+
     private IMemoryContext mem;      // kontext pamäte
     private BrainCPUContext cpu;     // kontext procesora
     private int IP, P;               // registre procesora
@@ -46,8 +46,9 @@ public class BrainCPU extends SimpleCPU {
         super(pluginID);
         cpu = new BrainCPUContext();
         if (!Context.getInstance().register(pluginID, cpu,
-                CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F.class))
+                CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F.class)) {
             StaticDialogs.showErrorMessage("Could not register the CPU");
+        }
     }
 
     @Override
@@ -87,48 +88,14 @@ public class BrainCPU extends SimpleCPU {
                     + " for this kind of CPU.");
             return false;
         }
-        dis = new BrainDisassembler(mem, this);
+        dis = new BrainDisassembler(mem);
         return true;
-    }
-
-    /**** OKNO DEBUGGERA **************************/
-    @Override
-    public IDebugColumn[] getDebugColumns() {
-        return dis.getDebugColumns();
-    }
-
-    @Override
-    public Object getDebugValue(int row, int col) {
-        return dis.getDebugColVal(row, col);
-    }
-
-    @Override
-    public void setDebugValue(int row, int col, Object val) {
-        dis.setDebugColVal(row, col, val);
     }
 
     /**** POZÍCIA INŠTRUKCIE A REGISTRA IP **************************/
     @Override
     public int getInstrPosition() {
         return IP;
-    }
-
-    /**
-     * Vráti adresu nasledujúcej inštruckie od adresy
-     * memPos.
-     * 
-     * @param memPos adresa inštrukcie I1
-     * @return adresa nasledujúcej inštrukcie (po I1)
-     */
-    @Override
-    public int getInstrPosition(int pos) {
-        short op = (Short) mem.read(pos);
-        // LOOP || ENDL
-        if (op == 7 || op == 8) {
-            return pos + 1;
-        } else {
-            return pos + 2;
-        }
     }
 
     @Override
@@ -168,7 +135,8 @@ public class BrainCPU extends SimpleCPU {
         // nájdeme najbližiu "voľnú" adresu,
         // kde sa už nenachádza program
         try {
-            while ((Short) mem.read(adr++) != 0);
+            while ((Short) mem.read(adr++) != 0) {
+            }
         } catch (IndexOutOfBoundsException e) {
             // tu sa dostaneme, ak "adr"
             // už bude ukazovať na neexistujúcu
@@ -187,7 +155,7 @@ public class BrainCPU extends SimpleCPU {
     @Override
     public void run() {
         // zmeníme stav na "running"
-        run_state = ICPU.STATE_RUNNING;
+        run_state = RunState.STATE_RUNNING;
         // oznámime zmenu stavu listenerom
         fireCpuRun(run_state);
 
@@ -195,7 +163,7 @@ public class BrainCPU extends SimpleCPU {
         // emuláciu niečo nezastaví
         // externe: používateľ,
         // interne: chybná inštrukcia, neexistujúca pamäť
-        while (run_state == ICPU.STATE_RUNNING) {
+        while (run_state == RunState.STATE_RUNNING) {
             try {
                 // ak je na adrese IP nastavený breakpoint,
                 // vyhodenie výnimky typu Error
@@ -206,12 +174,12 @@ public class BrainCPU extends SimpleCPU {
             } catch (IndexOutOfBoundsException e) {
                 // tu sa dostaneme, ak IP
                 // ukazuje na neexistujúcu pamäť
-                run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
+                run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
                 break;
             } catch (Error er) {
                 // odchytenie výnimky Error - zmena
                 // stavu na "breakpoint"
-                run_state = ICPU.STATE_STOPPED_BREAK;
+                run_state = RunState.STATE_STOPPED_BREAK;
                 break;
             }
         }
@@ -222,7 +190,7 @@ public class BrainCPU extends SimpleCPU {
     @Override
     public void pause() {
         // zmeníme stav behu na "breakpoint"
-        run_state = ICPU.STATE_STOPPED_BREAK;
+        run_state = RunState.STATE_STOPPED_BREAK;
         // oznámime zmenu stavu listenerom 
         fireCpuRun(run_state);
     }
@@ -230,22 +198,22 @@ public class BrainCPU extends SimpleCPU {
     @Override
     public void step() {
         // ak je stav "breakpoint"
-        if (run_state == ICPU.STATE_STOPPED_BREAK) {
+        if (run_state == RunState.STATE_STOPPED_BREAK) {
             try {
                 // zmeníme stav na "running"
-                run_state = ICPU.STATE_RUNNING;
+                run_state = RunState.STATE_RUNNING;
                 emulateInstruction();
                 // ak by emulácia sponntánne
                 // pokračovala (ak ju externe nič
                 // nezastavilo)
-                if (run_state == ICPU.STATE_RUNNING) // tak zmeníme stav späť na "breakpoint"
+                if (run_state == RunState.STATE_RUNNING) // tak zmeníme stav späť na "breakpoint"
                 {
-                    run_state = ICPU.STATE_STOPPED_BREAK;
+                    run_state = RunState.STATE_STOPPED_BREAK;
                 }
             } catch (IndexOutOfBoundsException e) {
                 // tu sa dostaneme, ak IP
                 // ukazuje na neexistujúcu pamäť
-                run_state = ICPU.STATE_STOPPED_ADDR_FALLOUT;
+                run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
             // oznámime stav procesora listenerom
             fireCpuRun(run_state);
@@ -256,14 +224,14 @@ public class BrainCPU extends SimpleCPU {
     @Override
     public void stop() {
         // zmeníme stav behu na "stopped"
-        run_state = ICPU.STATE_STOPPED_NORMAL;
+        run_state = RunState.STATE_STOPPED_NORMAL;
         // oznámime zmenu stavu listenerom 
         fireCpuRun(run_state);
     }
 
     @Override
     public void destroy() {
-        run_state = ICPU.STATE_STOPPED_NORMAL;
+        run_state = RunState.STATE_STOPPED_NORMAL;
     }
 
     /**
@@ -278,7 +246,7 @@ public class BrainCPU extends SimpleCPU {
         // DECODE
         switch (OP) {
             case 0: /* HALT */
-                run_state = ICPU.STATE_STOPPED_NORMAL;
+                run_state = RunState.STATE_STOPPED_NORMAL;
                 return;
             case 1: /* INC */
                 param = ((Short) mem.read(IP++)).shortValue();
@@ -417,11 +385,16 @@ public class BrainCPU extends SimpleCPU {
             default: /* chybná inštrukcia*/
                 break;
         }
-        run_state = ICPU.STATE_STOPPED_BAD_INSTR;
+        run_state = RunState.STATE_STOPPED_BAD_INSTR;
     }
 
     @Override
     public boolean isShowSettingsSupported() {
         return false;
+    }
+
+    @Override
+    public IDisassembler getDisassembler() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

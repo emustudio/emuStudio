@@ -23,8 +23,8 @@
 
 package braincpu.interfaces;
 
-import plugins.cpu.ICPUContext;
-import plugins.device.IDeviceContext;
+import emuLib8.plugins.cpu.ICPUContext;
+import emuLib8.plugins.device.IDeviceContext;
 
 public interface CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F extends ICPUContext {
     public boolean attachDevice(IDeviceContext device);
