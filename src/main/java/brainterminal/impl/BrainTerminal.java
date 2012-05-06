@@ -3,7 +3,7 @@
  * 
  * KISS, YAGNI
  *
- * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,11 +22,11 @@
 package brainterminal.impl;
 
 import brainterminal.gui.BrainTerminalDialog;
-import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.device.IDeviceContext;
-import emuLib8.plugins.device.SimpleDevice;
-import emuLib8.runtime.Context;
-import emuLib8.runtime.StaticDialogs;
+import emulib.plugins.ISettingsHandler;
+import emulib.plugins.device.IDeviceContext;
+import emulib.plugins.device.SimpleDevice;
+import emulib.runtime.Context;
+import emulib.runtime.StaticDialogs;
 import interfaces.CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3;
 
 public class BrainTerminal extends SimpleDevice {
@@ -49,12 +49,12 @@ public class BrainTerminal extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return "0.13b";
+        return "0.13.1-SNAPSHOT";
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2009-2011, P. Jakubčo";
+        return "\u00A9 Copyright 2009-2012, P. Jakubčo";
     }
 
     @Override
