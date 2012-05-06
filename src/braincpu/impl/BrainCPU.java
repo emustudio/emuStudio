@@ -53,7 +53,7 @@ public class BrainCPU extends SimpleCPU {
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2009-2010, P. Jakubčo";
+        return "\u00A9 Copyright 2009-2011, P. Jakubčo";
     }
 
     @Override
@@ -68,7 +68,7 @@ public class BrainCPU extends SimpleCPU {
 
     @Override
     public String getVersion() {
-        return "0.13b";
+        return "0.14b";
     }
 
     @Override
