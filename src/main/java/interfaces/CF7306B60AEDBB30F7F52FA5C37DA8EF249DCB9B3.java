@@ -4,7 +4,7 @@
  *
  * KISS, YAGNI
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,8 +23,8 @@
 
 package interfaces;
 
-import emuLib8.plugins.cpu.ICPUContext;
-import emuLib8.plugins.device.IDeviceContext;
+import emulib.plugins.cpu.ICPUContext;
+import emulib.plugins.device.IDeviceContext;
 
 public interface CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3 extends ICPUContext {
     public boolean attachDevice(IDeviceContext device);

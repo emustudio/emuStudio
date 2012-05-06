@@ -32,11 +32,11 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 
-import emuLib8.plugins.cpu.ICPU.ICPUListener;
-import emuLib8.plugins.memory.IMemoryContext;
+import emulib.plugins.cpu.ICPU.ICPUListener;
+import emulib.plugins.memory.IMemoryContext;
 
 import braincpu.impl.BrainCPU;
-import emuLib8.plugins.cpu.ICPU.RunState;
+import emulib.plugins.cpu.ICPU.RunState;
 
 @SuppressWarnings("serial")
 public class BrainStatusPanel extends JPanel {

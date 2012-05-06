@@ -21,18 +21,18 @@
  */
 package braincpu.impl;
 
-import emuLib8.plugins.cpu.IDisassembler;
+import emulib.plugins.cpu.IDisassembler;
 import javax.swing.JPanel;
 
 import braincpu.gui.BrainDisassembler;
 import braincpu.gui.BrainStatusPanel;
 import interfaces.CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3;
 
-import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.cpu.SimpleCPU;
-import emuLib8.plugins.memory.IMemoryContext;
-import emuLib8.runtime.Context;
-import emuLib8.runtime.StaticDialogs;
+import emulib.plugins.ISettingsHandler;
+import emulib.plugins.cpu.SimpleCPU;
+import emulib.plugins.memory.IMemoryContext;
+import emulib.runtime.Context;
+import emulib.runtime.StaticDialogs;
 
 public class BrainCPU extends SimpleCPU {
 

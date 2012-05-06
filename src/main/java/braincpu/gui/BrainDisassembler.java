@@ -21,9 +21,9 @@
  */
 package braincpu.gui;
 
-import emuLib8.plugins.cpu.CPUInstruction;
-import emuLib8.plugins.cpu.SimpleDisassembler;
-import emuLib8.plugins.memory.IMemoryContext;
+import emulib.plugins.cpu.CPUInstruction;
+import emulib.plugins.cpu.SimpleDisassembler;
+import emulib.plugins.memory.IMemoryContext;
 
 public class BrainDisassembler extends SimpleDisassembler {
 
