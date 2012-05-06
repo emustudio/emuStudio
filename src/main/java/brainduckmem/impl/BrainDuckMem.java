@@ -3,7 +3,7 @@
  *
  * KISS, YAGNI
  * 
- * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,11 +21,11 @@
  */
 package brainduckmem.impl;
 
-import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.memory.IMemoryContext;
-import emuLib8.plugins.memory.SimpleMemory;
-import emuLib8.runtime.Context;
-import emuLib8.runtime.StaticDialogs;
+import emulib.plugins.ISettingsHandler;
+import emulib.plugins.memory.IMemoryContext;
+import emulib.plugins.memory.SimpleMemory;
+import emulib.runtime.Context;
+import emulib.runtime.StaticDialogs;
 
 public class BrainDuckMem extends SimpleMemory {
 
@@ -48,12 +48,12 @@ public class BrainDuckMem extends SimpleMemory {
 
     @Override
     public String getVersion() {
-        return "0.12b";
+        return "0.12.1-SNAPSHOT";
     }
 
     @Override
     public String getCopyright() {
-        return "\u00A9 Copyright 2009-2011, P. Jakubčo";
+        return "\u00A9 Copyright 2009-2012, P. Jakubčo";
     }
 
     @Override
