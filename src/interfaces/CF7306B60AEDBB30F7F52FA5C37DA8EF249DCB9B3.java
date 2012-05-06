@@ -21,12 +21,12 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package braincpu.interfaces;
+package interfaces;
 
 import emuLib8.plugins.cpu.ICPUContext;
 import emuLib8.plugins.device.IDeviceContext;
 
-public interface CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F extends ICPUContext {
+public interface CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3 extends ICPUContext {
     public boolean attachDevice(IDeviceContext device);
     public void detachDevice();
 }

@@ -21,10 +21,10 @@
  */
 package braincpu.impl;
 
-import braincpu.interfaces.CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F;
+import interfaces.CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3;
 import emuLib8.plugins.device.IDeviceContext;
 
-public class BrainCPUContext implements CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F {
+public class BrainCPUContext implements CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3 {
     private IDeviceContext device;
 
     public BrainCPUContext() {

@@ -26,7 +26,7 @@ import javax.swing.JPanel;
 
 import braincpu.gui.BrainDisassembler;
 import braincpu.gui.BrainStatusPanel;
-import braincpu.interfaces.CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F;
+import interfaces.CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3;
 
 import emuLib8.plugins.ISettingsHandler;
 import emuLib8.plugins.cpu.SimpleCPU;
@@ -46,7 +46,7 @@ public class BrainCPU extends SimpleCPU {
         super(pluginID);
         cpu = new BrainCPUContext();
         if (!Context.getInstance().register(pluginID, cpu,
-                CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26F.class)) {
+                CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3.class)) {
             StaticDialogs.showErrorMessage("Could not register the CPU");
         }
     }
@@ -395,6 +395,6 @@ public class BrainCPU extends SimpleCPU {
 
     @Override
     public IDisassembler getDisassembler() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return dis;
     }
 }

@@ -130,7 +130,7 @@ public class BrainDisassembler extends SimpleDisassembler {
     @Override
     public int getNextInstructionLocation(int memLocation) throws IndexOutOfBoundsException {
         short val,diff=0;
-        val = (short)(((Short) mem.read(memLocation++)).shortValue() & 0xFF);
+        val = (short)(((Short) mem.read(memLocation)).shortValue() & 0xFF);
         
         if (val >= isize.length)
             diff = 1;
