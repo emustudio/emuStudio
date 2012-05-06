@@ -77,4 +77,17 @@ public class BrainCPUContext implements CCCE9E80B38CBADCB7B61244B4DE664A0FEAAD26
     	return (Short)device.read();
     }
 
+    @Override
+    public boolean isInterruptSupported() {
+        return false;
+    }
+
+    @Override
+    public void setInterrupt(IDeviceContext device, int mask) {
+    }
+
+    @Override
+    public void clearInterrupt(IDeviceContext device, int mask) {
+    }
+
 }
