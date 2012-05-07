@@ -27,11 +27,11 @@ import emulib.plugins.device.IDeviceContext;
 import emulib.plugins.device.SimpleDevice;
 import emulib.runtime.Context;
 import emulib.runtime.StaticDialogs;
-import interfaces.CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3;
+import interfaces.C7DC7DAD9D43BACD78DD57E84262789E50BB7D7D8;
 
 public class BrainTerminal extends SimpleDevice {
 
-    private CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3 cpu;
+    private C7DC7DAD9D43BACD78DD57E84262789E50BB7D7D8 cpu;
     private BrainTerminalContext terminal;
     private BrainTerminalDialog gui;
 
@@ -66,9 +66,9 @@ public class BrainTerminal extends SimpleDevice {
     public boolean initialize(ISettingsHandler settings) {
         super.initialize(settings);
 
-        cpu = (CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3)Context.getInstance()
+        cpu = (C7DC7DAD9D43BACD78DD57E84262789E50BB7D7D8)Context.getInstance()
                 .getCPUContext(pluginID,
-                CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3.class);
+                C7DC7DAD9D43BACD78DD57E84262789E50BB7D7D8.class);
         if (cpu == null) {
             StaticDialogs.showErrorMessage("BrainTerminal needs to be connected"
                     + "to the BrainCPU.");
