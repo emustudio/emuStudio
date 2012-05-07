@@ -2,7 +2,7 @@
  * PseudoContext.java
  * 
  * Copyright (C) 2002-2007, Peter Schorn
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ package simh;
 import interfaces.C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8;
 import java.io.File;
 import java.util.Calendar;
-import emuLib8.plugins.device.IDeviceContext;
+import emulib.plugins.device.IDeviceContext;
 
 /**
  *

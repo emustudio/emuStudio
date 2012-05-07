@@ -3,7 +3,7 @@
  *
  * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,12 +21,12 @@
  */
 package simh;
 
-import interfaces.C738039DCA561A49F377859B108A9AD1EE6CBDACB;
+import interfaces.C8E98DC5AF7BF51D571C03B7C96324B3066A092EA;
 import interfaces.C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8;
-import emuLib8.plugins.ISettingsHandler;
-import emuLib8.plugins.device.SimpleDevice;
-import emuLib8.runtime.Context;
-import emuLib8.runtime.StaticDialogs;
+import emulib.plugins.ISettingsHandler;
+import emulib.plugins.device.SimpleDevice;
+import emulib.runtime.Context;
+import emulib.runtime.StaticDialogs;
 
 /**
  * SIMH emulator's pseudo device
@@ -36,7 +36,7 @@ import emuLib8.runtime.StaticDialogs;
 public class SIMHpseudo extends SimpleDevice {
 
     private PseudoContext context;
-    private C738039DCA561A49F377859B108A9AD1EE6CBDACB cpu;
+    private C8E98DC5AF7BF51D571C03B7C96324B3066A092EA cpu;
     private C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8 mem;
 
     public SIMHpseudo(Long pluginID) {
@@ -46,9 +46,9 @@ public class SIMHpseudo extends SimpleDevice {
 
     @Override
     public boolean initialize(ISettingsHandler sHandler) {
-        cpu = (C738039DCA561A49F377859B108A9AD1EE6CBDACB)
+        cpu = (C8E98DC5AF7BF51D571C03B7C96324B3066A092EA)
                 Context.getInstance().getCPUContext(pluginID,
-                C738039DCA561A49F377859B108A9AD1EE6CBDACB.class);
+                C8E98DC5AF7BF51D571C03B7C96324B3066A092EA.class);
         if (cpu == null) {
             StaticDialogs.showErrorMessage("SIMH-pseudo device has to be attached"
                     + " to a CPU");
@@ -93,7 +93,7 @@ public class SIMHpseudo extends SimpleDevice {
     @Override
     public String getCopyright() {
         return "Copyright (c) 2002-2007, Peter Schorn\n"
-                + "\u00A9 Copyright 2007-2011, Peter Jakubčo";
+                + "\u00A9 Copyright 2007-2012, Peter Jakubčo";
     }
 
     @Override
@@ -105,7 +105,7 @@ public class SIMHpseudo extends SimpleDevice {
 
     @Override
     public String getVersion() {
-        return "0.13b";
+        return "0.13.1-SNAPSHOT";
     }
 
     @Override
