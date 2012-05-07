@@ -26,7 +26,7 @@ package interfaces;
 import emulib.plugins.cpu.ICPUContext;
 import emulib.plugins.device.IDeviceContext;
 
-public interface CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3 extends ICPUContext {
+public interface C7DC7DAD9D43BACD78DD57E84262789E50BB7D7D8 extends ICPUContext {
     public boolean attachDevice(IDeviceContext device);
     public void detachDevice();
 }

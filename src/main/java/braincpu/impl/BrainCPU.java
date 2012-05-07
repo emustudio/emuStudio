@@ -26,7 +26,7 @@ import javax.swing.JPanel;
 
 import braincpu.gui.BrainDisassembler;
 import braincpu.gui.BrainStatusPanel;
-import interfaces.CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3;
+import interfaces.C7DC7DAD9D43BACD78DD57E84262789E50BB7D7D8;
 
 import emulib.plugins.ISettingsHandler;
 import emulib.plugins.cpu.SimpleCPU;
@@ -46,7 +46,7 @@ public class BrainCPU extends SimpleCPU {
         super(pluginID);
         cpu = new BrainCPUContext();
         if (!Context.getInstance().register(pluginID, cpu,
-                CF7306B60AEDBB30F7F52FA5C37DA8EF249DCB9B3.class)) {
+                C7DC7DAD9D43BACD78DD57E84262789E50BB7D7D8.class)) {
             StaticDialogs.showErrorMessage("Could not register the CPU");
         }
     }
