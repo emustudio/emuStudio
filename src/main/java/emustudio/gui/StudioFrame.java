@@ -31,6 +31,7 @@ import emulib.plugins.memory.IMemory;
 import emulib.plugins.memory.IMemory.IMemListener;
 import emulib.runtime.Context;
 import emulib.runtime.IDebugTable;
+import emulib.runtime.RadixUtils;
 import emulib.runtime.StaticDialogs;
 import emustudio.architecture.Computer;
 import emustudio.gui.debugTable.DebugTable;
@@ -280,6 +281,7 @@ public class StudioFrame extends javax.swing.JFrame {
                 }
             }
         });
+        btnBreakpoint.setEnabled(cpu.isBreakpointSupported());
         Context.getInstance().setDebugTableInterfaceObject(new IDebugTable() {
 
             @Override
@@ -1135,8 +1137,11 @@ public class StudioFrame extends javax.swing.JFrame {
     private void btnRunTimeActionPerformed(java.awt.event.ActionEvent evt) {
         String sliceText = StaticDialogs.inputStringValue("Enter time slice in milliseconds:",
                 "Run timed emulation", "500");
+        if (sliceText == null) {
+            return;
+        }
         try {
-            final int slice = Integer.parseInt(sliceText);
+            final int slice = RadixUtils.getInstance().parseRadix(sliceText);
             new Thread() {
 
                 @Override
@@ -1151,7 +1156,7 @@ public class StudioFrame extends javax.swing.JFrame {
                 }
             }.start();
         } catch (NumberFormatException e) {
-            StaticDialogs.showErrorMessage("Error: the number has to be integer,");
+            StaticDialogs.showErrorMessage("Error: Wrong number format");
         }
     }
 
@@ -1197,9 +1202,14 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void btnJumpActionPerformed(java.awt.event.ActionEvent evt) {
-        int address = 0;
+        int address;
         try {
-            address = Integer.decode(StaticDialogs.inputStringValue("Jump to address: ", "Jump", "0")).intValue();
+            String number = StaticDialogs.inputStringValue("Jump to address: ",
+                    "Jump", "0");
+            if (number == null) {
+                return;
+            }
+            address = RadixUtils.getInstance().parseRadix(number);
         } catch (Exception e) {
             StaticDialogs.showErrorMessage("The number entered is in"
                     + " inccorret format", "Jump");
@@ -1390,11 +1400,11 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void btnBreakpointActionPerformed(java.awt.event.ActionEvent evt) {
         int address = 0;
-        new BreakpointDialog(this, true).setVisible(true);
-        address = BreakpointDialog.getAdr();
+        BreakpointDialog bDialog = new BreakpointDialog(this, true);
+        bDialog.setVisible(true);
+        address = bDialog.getAddress();
         if ((address != -1) && arch.getCPU().isBreakpointSupported()) {
-            arch.getCPU().setBreakpoint(address,
-                    BreakpointDialog.getSet());
+            arch.getCPU().setBreakpoint(address, bDialog.isSet());
         }
         paneDebug.revalidate();
         tblDebug.update();

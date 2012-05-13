@@ -1,9 +1,9 @@
 /*
  * AboutDialog.java
  *
- *  Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
+ *  Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
- * KISS, YAGNI
+ * KISS, YAGNI, DRY
  * 
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License

@@ -2,9 +2,9 @@
  * BreakpointDialog.java
  *
  * Created on 1.4.2009, 10:04
- * hold to: KISS, YAGNI
+ * hold to: KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
  */
 package emustudio.gui;
 
+import emulib.runtime.RadixUtils;
 import emulib.runtime.StaticDialogs;
 import emustudio.gui.utils.NiceButton;
 import javax.swing.*;
@@ -34,8 +35,8 @@ import javax.swing.*;
  */
 @SuppressWarnings("serial")
 public class BreakpointDialog extends JDialog {
-    private static int adr = -1; // if adr == -1 then it means cancel
-    private static boolean set = false;
+    private int adr = -1; // if adr == -1 then it means cancel
+    private boolean set = false;
 
     /**
      * Create breakpoint dialog instance.
@@ -55,7 +56,7 @@ public class BreakpointDialog extends JDialog {
      * @return address or memory location, where the breakpoint should be
      * set/unset.
      */
-    public static int getAdr() {
+    public int getAddress() {
         return adr;
     }
 
@@ -64,7 +65,7 @@ public class BreakpointDialog extends JDialog {
      *
      * @return true whether the breakpoint should be set, false otherwise.
      */
-    public static boolean getSet() {
+    public boolean isSet() {
         return set;
     }
 
@@ -110,34 +111,32 @@ public class BreakpointDialog extends JDialog {
 
         pack();
     }
-
-    private void btnSetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSetActionPerformed
+    
+    private boolean parseAddress() {
         try {
-            BreakpointDialog.adr = Integer.decode(txtAddress.getText());
+            adr = RadixUtils.getInstance().parseRadix(txtAddress.getText());
         } catch (NumberFormatException e) {
             StaticDialogs.showErrorMessage("Invalid address, try again !");
             txtAddress.grabFocus();
-            return;
+            return false;
         }
-        BreakpointDialog.set = true;
-        dispose();
-    }//GEN-LAST:event_btnSetActionPerformed
+        return true;
+    }
 
-    private void btnUnsetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUnsetActionPerformed
-        try {
-            BreakpointDialog.adr = Integer.decode(txtAddress.getText());
-        } catch (NumberFormatException e) {
-            StaticDialogs.showErrorMessage("Invalid address, try again !");
-            txtAddress.grabFocus();
-            return;
-        }
-        BreakpointDialog.set = false;
+    private void btnSetActionPerformed(java.awt.event.ActionEvent evt) {
+        parseAddress();
+        set = true;
         dispose();
-    }//GEN-LAST:event_btnUnsetActionPerformed
-    // Variables declaration - do not modify//GEN-BEGIN:variables
+    }
+
+    private void btnUnsetActionPerformed(java.awt.event.ActionEvent evt) {
+        parseAddress();
+        set = false;
+        dispose();
+    }
+
     private NiceButton btnSet;
     private NiceButton btnUnset;
     private JLabel lblSetUnset;
     private JTextField txtAddress;
-    // End of variables declaration//GEN-END:variables
 }
