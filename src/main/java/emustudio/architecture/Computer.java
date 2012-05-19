@@ -28,10 +28,8 @@ import emulib.plugins.cpu.ICPU;
 import emulib.plugins.device.IDevice;
 import emulib.plugins.memory.IMemory;
 import emulib.runtime.interfaces.IConnections;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
+import emustudio.architecture.ArchLoader.PluginInfo;
+import java.util.*;
 
 /**
  * This class implements virtual computer architecture.
@@ -46,8 +44,6 @@ public class Computer implements IConnections {
 
     private Map<Long, ArrayList<Long>> connections;
     private Map<Long, IPlugin> plugins;
-    private Map<IPlugin, Long> pluginsReverse;
-
 
     /**
      * Creates new Computer instance.
@@ -56,24 +52,25 @@ public class Computer implements IConnections {
      * @param memory IMemory object
      * @param compiler ICompiler object
      * @param devices array of IDevice objects
-     * @param plugins hashtable with all plug-ins, the keys are plug-in IDs and
-     * values are plug-in objects.
+     * @param plugins collection of all plug-ins` information
      * @param pluginsReverse hashtable with all plug-ins, the keys are plug-in
      * objects, and values are plug-in IDs.
      * @param connections hashtable with all connections. Keys and values are
      * plug-in IDs.
      */
-    public Computer(ICPU cpu, IMemory memory, ICompiler compiler,
-        IDevice[] devices, Map<Long, IPlugin> plugins,
-        Map<IPlugin, Long> pluginsReverse,
-        Map<Long, ArrayList<Long>> connections) {
+    public Computer(ICPU cpu, IMemory memory, ICompiler compiler, 
+            IDevice[] devices, Collection<PluginInfo> plugins,
+            Map<Long, ArrayList<Long>> connections) {
         this.cpu = cpu;
         this.memory = memory;
         this.compiler = compiler;
         this.devices = devices;
         this.connections = connections;
-        this.plugins = plugins;
-        this.pluginsReverse = pluginsReverse;
+        this.plugins = new HashMap<Long, IPlugin>();
+
+        for (PluginInfo plugin : plugins) {
+            this.plugins.put(plugin.pluginId, plugin.plugin);
+        }
     }
 
     /**
@@ -170,7 +167,6 @@ public class Computer implements IConnections {
                 memory.destroy();
 
             plugins.clear();
-            pluginsReverse.clear();
             connections.clear();
         } catch (Exception e) {}
     }

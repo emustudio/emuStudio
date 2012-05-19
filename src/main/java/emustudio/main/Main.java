@@ -26,6 +26,7 @@ package emustudio.main;
 import emulib.runtime.StaticDialogs;
 import emustudio.architecture.ArchHandler;
 import emustudio.architecture.ArchLoader;
+import emustudio.architecture.PluginLoadingException;
 import emustudio.gui.LoadingDialog;
 import emustudio.gui.OpenComputerDialog;
 import emustudio.gui.StudioFrame;
@@ -285,7 +286,17 @@ public class Main {
 
         // load the virtual computer
         try {
-            currentArch = ArchLoader.load(configName, auto, noGUI);
+            currentArch = ArchLoader.getInstance().loadComputer(configName, auto, noGUI);
+        } catch (PluginLoadingException e) {
+            String h = e.getLocalizedMessage();
+            if (h == null || h.equals("")) {
+                h = "Unknown error";
+            }
+            if (!noGUI)
+                StaticDialogs.showErrorMessage("Error with computer loading : " + h);
+            else
+                System.out.println("Error with computer loading : " + h);
+            currentArch = null;
         } catch (Error er) {
             String h = er.getLocalizedMessage();
             if (h == null || h.equals("")) {
@@ -301,7 +312,6 @@ public class Main {
         if (!noGUI) {
             // hide splash screen
             splash.dispose();
-            splash = null;
         }
 
         if (currentArch == null) {

@@ -3,10 +3,9 @@
  *
  * Created on Utorok, 2007, august 7, 11:11
  *
- * KEEP IT SIMPLE, STUPID
- * some things just: YOU AREN'T GONNA NEED IT
- *
- * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * KISS, YAGNI, DRY
+ * 
+ * Copyright (C) 2007-2012 Peter Jakubčo <pjakubco at gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +30,7 @@ import emulib.plugins.compiler.ICompiler;
 import emulib.plugins.cpu.ICPU;
 import emulib.plugins.device.IDevice;
 import emulib.plugins.memory.IMemory;
+import emulib.runtime.PluginLoader;
 import emulib.runtime.StaticDialogs;
 import emustudio.architecture.drawing.Schema;
 import emustudio.main.Main;
@@ -125,11 +125,44 @@ public class ArchLoader {
 
     private static long nextPluginID = 0;
     
-    /** 
+    private static ArchLoader instance;
+
+    class PluginInfo {
+        public String pluginSettingsName;
+        public String pluginName;
+        public Class<?> pluginInterface;
+        public long pluginId;
+        public IPlugin plugin;
+        public String dirName;
+        public Class<IPlugin> mainClass;
+
+        public PluginInfo(String pluginSettingsName, String dirName,
+                String pluginName, Class<?> pluginInterface, long pluginId) {
+            this.dirName = dirName;
+            this.pluginId = pluginId;
+            this.pluginInterface = pluginInterface;
+            this.pluginName = pluginName;
+            this.pluginSettingsName = pluginSettingsName;
+        }
+    }
+
+    /**
      * This forbids of creating the instance of this class. This class is
      * a singleton.
      */
     private ArchLoader() {
+    }
+
+    /**
+     * Get instance of this class.
+     * 
+     * @return always the same instance (singleton)
+     */
+    public static ArchLoader getInstance() {
+        if (instance == null) {
+            instance = new ArchLoader();
+        }
+        return instance;
     }
     
     /**
@@ -205,7 +238,7 @@ public class ArchLoader {
      * @return Schema of the configuration, or null if some error
      *         raises.
      */
-    public static Schema loadSchema(String configName) {
+    public Schema loadSchema(String configName) {
         try{
             Properties p = readConfig(configName,true);
 
@@ -226,7 +259,7 @@ public class ArchLoader {
      * file. 
      * @param schema Schema to save
      */
-    public static void saveSchema(Schema schema) {
+    public void saveSchema(Schema schema) {
         try {
             schema.save();
             writeConfig(schema.getConfigName(),schema.getSettings());
@@ -329,7 +362,7 @@ public class ArchLoader {
             StaticDialogs.showErrorMessage("Error writing configuration: " + e.toString());
         }
     }
-
+    
     /**
      * Method loads virtual configuration from current settings and
      * creates virtual architecture.
@@ -340,151 +373,142 @@ public class ArchLoader {
      * 
      * @return instance of virtual architecture
      */
-    public static ArchHandler load(String name, boolean auto, boolean nogui) {
-        try {
-            Properties settings = readConfig(name,true);
-            if (settings == null) return null;
-            
-            HashMap<IPlugin, Long> pluginsReverse = new HashMap<IPlugin, Long>();
-            HashMap<Long, IPlugin> plugins = new HashMap<Long, IPlugin>();
-            HashMap<Long,String> pluginNames = new HashMap<Long, String>();
-
-            // load compiler
-            String comName = settings.getProperty("compiler");
-            long id;
-            ICompiler compiler = null;
-
-            if (comName != null) {
-                id = createPluginID();
-                // the compiler is defined in the config file
-                compiler = (ICompiler)loadPlugin(COMPILERS_DIR,
-                        comName,ICompiler.class, id);
-                if (compiler == null)
-                    throw new IllegalArgumentException("Compiler '" + comName
-                            + "' cannot be loaded.");
-                pluginsReverse.put(compiler, id);
-                plugins.put(id, compiler);
-                pluginNames.put(id, "compiler");
+    public ArchHandler loadComputer(String name, boolean auto, boolean nogui)
+            throws PluginLoadingException {
+        
+        Properties settings = readConfig(name, true);
+        if (settings == null) {
+            return null;
+        }
+        
+        Map<String, PluginInfo> pluginsToLoad = new HashMap<String, PluginInfo>();
+        
+        String tmp = settings.getProperty("compiler");
+        if (tmp != null) {
+            pluginsToLoad.put("compiler", new PluginInfo("compiler", COMPILERS_DIR,
+                    tmp, ICompiler.class, createPluginID()));
+        }
+        tmp = settings.getProperty("cpu");
+        if (tmp != null) {
+            pluginsToLoad.put("cpu", new PluginInfo("cpu", CPUS_DIR, tmp,
+                    ICPU.class, createPluginID()));
+        }
+        tmp = settings.getProperty("memory");
+        if (tmp != null) {
+            pluginsToLoad.put("memory", new PluginInfo("memory", MEMORIES_DIR,
+                    tmp, IMemory.class, createPluginID()));
+        }
+        for (int i = 0; settings.containsKey("device" + i); i++) {
+            tmp = settings.getProperty("device" + i);
+            if (tmp != null) {
+                pluginsToLoad.put("device" + i, new PluginInfo("device" + i,
+                        DEVICES_DIR, tmp, IDevice.class, createPluginID()));
             }
-            // load cpu
-            String cpuName = settings.getProperty("cpu");
-            if (cpuName == null)
-                throw new IllegalArgumentException("CPU is not defined.");
-            id = createPluginID();
-            ICPU cpu = (ICPU)loadPlugin(CPUS_DIR, cpuName, ICPU.class, id);
-            if (cpu == null)
-                throw new IllegalArgumentException("CPU '" + cpuName
-                        + "' cannot be loaded.");
-            pluginsReverse.put(cpu, id);
-            plugins.put(id, cpu);
-            pluginNames.put(id, "cpu");
-            
-            // load memory
-            IMemory mem = null;
-            String memName = settings.getProperty("memory");
-            if (memName != null) {
-                id = createPluginID();
-                mem = (IMemory)loadPlugin(MEMORIES_DIR, memName,IMemory.class, id);
-                if (mem == null)
-                    throw new IllegalArgumentException("Memory '" + memName
-                            + "' cannot be loaded.");
-                pluginsReverse.put(mem, id);
-                plugins.put(id, mem);
-                pluginNames.put(id, "memory");
+        }
+        
+        PluginLoader pluginLoader = PluginLoader.getInstance();
+        for (PluginInfo plugin : pluginsToLoad.values()) {
+            Class<IPlugin> mainClass = loadPlugin(plugin.dirName, plugin.pluginName);
+            plugin.mainClass = mainClass;
+        }
+        if (pluginLoader.canResolveClasses()) {
+            // Resolve all plug-in classes
+            pluginLoader.resolveLoadedClasses();
+        } else {
+            if (pluginLoader.loadUndoneClasses()) {
+                pluginLoader.resolveLoadedClasses();
+            } else {
+                throw new PluginLoadingException("Cannot load all classes of plug-ins.", "[unknown]", null);
+            }
+        }
+        System.out.println("All plugins are loaded and resolved.");
+        
+        ICompiler compiler = null;
+        ICPU cpu = null;
+        IMemory mem = null;
+        List<IDevice> devList = new ArrayList<IDevice>();
+        for (PluginInfo plugin : pluginsToLoad.values()) {
+            try {
+                plugin.plugin = (IPlugin)newPlugin(plugin.mainClass, plugin.pluginInterface, plugin.pluginId);
+                if (plugin.plugin instanceof ICompiler) {
+                    compiler = (ICompiler)plugin.plugin;
+                } else if (plugin.plugin instanceof ICPU) {
+                    cpu = (ICPU)plugin.plugin;
+                } else if (plugin.plugin instanceof IMemory) {
+                    mem = (IMemory)plugin.plugin;
+                } else if (plugin.plugin instanceof IDevice) {
+                    devList.add((IDevice)plugin.plugin);
+                }
+            } catch (ClassNotFoundException e) {
+                throw new PluginLoadingException("Plugin '" + plugin.pluginName
+                        + "' cannot be loaded.", plugin.pluginName, 
+                        (IPlugin) plugin.plugin);
+            }
+        }
+
+        // load connections
+        Map<Long, ArrayList<Long>> connections = new HashMap<Long,
+                ArrayList<Long>>();
+        for (int i = 0; settings.containsKey("connection" + i + ".junc0"); i++) {
+            // get i-th connection from settings
+            String j0 = settings.getProperty("connection" + i + ".junc0", "");
+            String j1 = settings.getProperty("connection" + i + ".junc1", "");
+            boolean bidi = Boolean.parseBoolean(settings.getProperty("bidirectional", "true"));
+
+            if (j0.equals("") || j1.equals("")) {
+                continue;
             }
 
-            // load devices
-            HashMap<String, IDevice> devNames = new HashMap<String,IDevice>();
-            for (int i = 0; settings.containsKey("device"+i); i++) {
-            	String devName = settings.getProperty("device"+i);
-                id = createPluginID();
-                IDevice dev = (IDevice)loadPlugin(DEVICES_DIR, devName,
-                        IDevice.class, id);
-                if (dev != null) {
-                    pluginsReverse.put(dev, id);
-                    plugins.put(id, dev);
-                    pluginNames.put(id,"device" + i);
-                    devNames.put("device" + i,dev);
-                } else
-                    throw new IllegalArgumentException("Device '" + devName
-                            + "' cannot be loaded.");
+            // map the connection elements to plug-ins: p1 and p2
+            // note the connection: p1 -> p2  (p1 wants to use p2)
+            IPlugin p1 = null, p2 = null;
+            long pID1, pID2;
+
+            PluginInfo pluginInfo = pluginsToLoad.get(j0);
+            if (pluginInfo == null) {
+                System.out.println("Invalid connection, j0=" + j0);
+                continue; // invalid connection
             }
+            p1 = (IPlugin)pluginInfo.plugin;
+            pID1 = pluginInfo.pluginId;
 
-            // load connections
-            HashMap<Long,ArrayList<Long>> connections =
-                    new HashMap<Long,ArrayList<Long>>();
-            for (int i = 0; settings.containsKey("connection"+i+".junc0"); i++) {
-            	// get i-th connection from settings
-                String j0 = settings.getProperty("connection"+i+".junc0", "");
-                String j1 = settings.getProperty("connection"+i+".junc1", "");
-                boolean bidi = Boolean.parseBoolean(settings
-                        .getProperty("bidirectional", "true"));
-                
-                if (j0.equals("") || j1.equals(""))
-                    continue;
+            pluginInfo = pluginsToLoad.get(j1);
+            if (pluginInfo == null) {
+                System.out.println("Invalid connection, j1=" + j1);
+                continue; // invalid connection
+            }
+            p2 = (IPlugin)pluginInfo.plugin;
+            pID2 = pluginInfo.pluginId;
 
-                // map the connection elements to plug-ins: p1 and p2
-                IPlugin p1 = null,p2 = null;
-
-                if (j0.equals("compiler"))
-                    p1 = compiler;
-                else if(j0.equals("cpu"))
-                    p1 = cpu;
-                else if (j0.equals("memory"))
-                    p1 = mem;
-                else if (j0.startsWith("device"))
-                    p1 = devNames.get(j0);
-
-                if (j1.equals("compiler"))
-                    p2 = compiler;
-                else if(j1.equals("cpu"))
-                    p2 = cpu;
-                else if (j1.equals("memory"))
-                    p2 = mem;
-                else if (j1.startsWith("device"))
-                    p2 = devNames.get(j1);
-
-                // note the connection: p1 -> p2  (p1 wants to use p2)
-                long pID1 = pluginsReverse.get(p1);
-                long pID2 = pluginsReverse.get(p2);
-
-                // the first direction
-                if (connections.containsKey(pID1))
-                    connections.get(pID1).add(pID2);
-                else {
+            // the first direction
+            if (connections.containsKey(pID1)) {
+                connections.get(pID1).add(pID2);
+            } else {
+                ArrayList<Long> ar = new ArrayList<Long>();
+                ar.add(pID2);
+                connections.put(pID1, ar);
+            }
+            if (bidi) {
+                // if bidirectional, then also the other connection
+                if (connections.containsKey(pID2)) {
+                    connections.get(pID2).add(pID1);
+                } else {
                     ArrayList<Long> ar = new ArrayList<Long>();
-                    ar.add(pID2);
-                    connections.put(pID1, ar);
-                }
-                if (bidi) {
-                    // if bidirectional, then also the other connection
-                    if (connections.containsKey(pID2))
-                        connections.get(pID2).add(pID1);
-                    else {
-                        ArrayList<Long> ar = new ArrayList<Long>();
-                        ar.add(pID1);
-                        connections.put(pID2, ar);
-                    }
+                    ar.add(pID1);
+                    connections.put(pID2, ar);
                 }
             }
-            
-            // this creates reversed array..
-            List temp = new ArrayList(devNames.values());
-            Collections.reverse(temp);
-            IDevice[] devices = (IDevice[])temp.toArray(new IDevice[0]);
+        }
 
-            Computer arch = new Computer(cpu, mem, compiler, devices, plugins,
-                    pluginsReverse, connections);
-            emulib.runtime.Context.getInstance().assignComputer(Main.getPassword(),
-                    arch);
-            return new ArchHandler(arch, settings, loadSchema(name),
-                    pluginNames, auto, nogui);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            StaticDialogs.showMessage(e.getMessage(), "Error reading plugins");
-        }
-        return null;
+        // this creates reversed array..
+        Collections.reverse(devList);
+        IDevice[] devices = (IDevice[]) devList.toArray(new IDevice[0]);
+        Computer arch = new Computer(cpu, mem, compiler, devices,
+                pluginsToLoad.values(), connections);
+        emulib.runtime.Context.getInstance().assignComputer(Main.getPassword(),
+                arch);
+        return new ArchHandler(arch, settings, loadSchema(name), 
+                pluginsToLoad.values(), auto, nogui);
     }
     
     /**
@@ -499,25 +523,10 @@ public class ArchLoader {
      * 
      * @return hash for an identification of the plugin
      */
-    private static long createPluginID() {
+    private long createPluginID() {
     	return nextPluginID++;
     }
 
-    /**
-     * Test the class for the implementation of the given interface.
-     *
-     * @param classI class that will be tested
-     * @param interfaceName interface that the class should implement
-     * @return true if the class implements given interface, false otherwise
-     */
-    private static boolean testInterface(Class<?> classI, Class<?> interfaceName) {
-        Class<?>[] intf = classI.getInterfaces();
-
-        for (int j = 0; j < intf.length; j++)
-            if (intf[j].isInterface() && intf[j].equals(interfaceName))
-                return true;
-        return false;
-    }
 
     /**
      * Method return new instance of a plugin from jar file that implements
@@ -528,47 +537,52 @@ public class ArchLoader {
      * 
      * @param dirname type of a plugin (compiler, cpu, memory, devices)
      * @param filename name of the plugin
-     * @param interfaceName name of a interface that some class in the plugin
-     *        has to implement
-     * @param pluginID the plug-in identification number
-     * @return instance object of loaded plugin
+     * @return Main class of the plugin. It must be resolved before first use.
      */
-    private static Object loadPlugin(String dirname, String filename,
-            Class<?> interfaceName, long pluginID) {
-        try {
-            ArrayList<Class<?>> classes = emulib.runtime.Loader.getInstance().loadJAR(
+    private Class<IPlugin> loadPlugin(String dirname, String filename) {
+        return emulib.runtime.PluginLoader.getInstance().loadPlugin(
                 System.getProperty("user.dir") + File.separator + dirname
                 + File.separator + filename);
-            if (classes == null)
+    }
+    
+    /**
+     * Creates new instance of class from given list that implements specified
+     * interface.
+     * 
+     * The class implementing the interface is found automatically. The method
+     * takes into account only the first matching class.
+     * 
+     * @param mainClass Main class of the plug-in. It must be already resolved.
+     * @param pluginInterface The interface that main class MUST implement
+     * @param pluginID The plug-in identification number
+     * @return Instance object of loaded plugin
+     * @throws ClassNotFoundException 
+     *     When the main class is null, or the class does not contain proper
+     *     constructor.
+     */
+    private IPlugin newPlugin(Class<IPlugin> mainClass, Class<?> pluginInterface, long pluginID)
+            throws ClassNotFoundException {
+        if (mainClass == null) {
+            throw new ClassNotFoundException("Plug-in main class does not exist");
+        }
+        
+        if (!PluginLoader.getInstance().doesImplement(mainClass, pluginInterface)) {
+            throw new ClassNotFoundException("Plug-in main class does not implement specified interface");
+        }
+
+        // First parameter of constructor is plug-in ID
+        Class<?>[] conParameters = {Long.class};
+
+        try {
+            Constructor<?> con = mainClass.getDeclaredConstructor(conParameters);
+            if (con != null) {
+                return (IPlugin) con.newInstance(pluginID);
+            } else {
                 throw new Exception();
-            // find a first class that implements wanted interface
-            Class<?>[] conParameters = { Long.class };
-            for (int i = 0; i < classes.size(); i++) {
-                Class<?> c = (Class<?>)classes.get(i);
-                Class<?> classI = c;
-
-                Class<?> tmp;
-                boolean positive = false;
-                while ((!(positive = testInterface(c, interfaceName)))
-                        && ((tmp = c.getSuperclass()) != null)
-                        && (!tmp.isInterface()) && (!tmp.equals(Object.class)))
-                    c = tmp;
-
-                if (!positive)
-                    positive = testInterface(c, interfaceName);
-
-                if (positive) {
-                    Constructor<?> con = classI
-                            .getDeclaredConstructor(conParameters);
-                    if (con != null) {
-                        return con.newInstance(pluginID);
-                    }
-                }
             }
         } catch (Exception e) {
             e.printStackTrace();
+            throw new ClassNotFoundException("Plug-in main class does not have proper constructor");
         }
-        return null;
     }
-    
 }

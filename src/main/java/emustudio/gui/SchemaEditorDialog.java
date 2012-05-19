@@ -623,12 +623,12 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
                 if (!old.equals(name)) {
                     ArchLoader.renameConfig(name, old);
                 }
-                ArchLoader.saveSchema(schema);
+                ArchLoader.getInstance().saveSchema(schema);
                 odialog.setArchName(name);
                 odialog.update();
             } else {
                 schema.setConfigName(name);
-                ArchLoader.saveSchema(schema);
+                ArchLoader.getInstance().saveSchema(schema);
                 odialog.update();
             }
         }

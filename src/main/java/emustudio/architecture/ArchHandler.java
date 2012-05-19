@@ -30,11 +30,9 @@ import emulib.plugins.compiler.ICompiler;
 import emulib.plugins.cpu.ICPU;
 import emulib.plugins.device.IDevice;
 import emulib.plugins.memory.IMemory;
+import emustudio.architecture.ArchLoader.PluginInfo;
 import emustudio.architecture.drawing.Schema;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Class holds actual computer configuration - plugins and settings.
@@ -46,7 +44,7 @@ public class ArchHandler implements ISettingsHandler {
     private Computer computer;
     private Properties settings;
     private Schema schema;
-    private HashMap<Long, String> pluginNames;
+    private Map<Long, String> pluginNames;
 
     private static final String EMPTY_STRING = "";
 
@@ -63,12 +61,16 @@ public class ArchHandler implements ISettingsHandler {
      * @throws Error if initialization of the architecture failed.
      */
     public ArchHandler(Computer arch, Properties settings,
-            Schema schema, HashMap<Long, String> pluginNames, boolean auto,
+            Schema schema, Collection<PluginInfo> plugins, boolean auto,
             boolean nogui) throws Error {
         this.computer = arch;
         this.settings = settings;
         this.schema = schema;
-        this.pluginNames = pluginNames;
+        this.pluginNames = new HashMap<Long, String>();
+        
+        for (PluginInfo plugin : plugins) {
+            pluginNames.put(plugin.pluginId, plugin.pluginSettingsName);
+        }
 
         if (initialize(auto, nogui) == false) {
             throw new Error("Initialization of plugins failed");

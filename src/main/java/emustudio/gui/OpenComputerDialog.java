@@ -3,7 +3,9 @@
  *
  * Created on Streda, 2007, august 8, 8:45
  *
- *  Copyright (C) 2007-2011 Peter Jakubčo <pjakubco@gmail.com>
+ * KISS, YAGNI, DRY
+ * 
+ *  Copyright (C) 2007-2012 Peter Jakubčo <pjakubco@gmail.com>
  * 
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -319,7 +321,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
             return;
         }
         archName = (String) lstConfig.getSelectedValue();
-        Schema s = ArchLoader.loadSchema(archName);
+        Schema s = ArchLoader.getInstance().loadSchema(archName);
         if (s == null) {
             return;
         }
@@ -360,7 +362,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         }
 
         archName = (String) lstConfig.getSelectedValue();
-        Schema s = ArchLoader.loadSchema(archName);
+        Schema s = ArchLoader.getInstance().loadSchema(archName);
         if (s == null)
             return;
 
