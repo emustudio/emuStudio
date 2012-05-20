@@ -124,13 +124,17 @@ public class BreakpointDialog extends JDialog {
     }
 
     private void btnSetActionPerformed(java.awt.event.ActionEvent evt) {
-        parseAddress();
+        if (!parseAddress()) {
+            return;
+        }
         set = true;
         dispose();
     }
 
     private void btnUnsetActionPerformed(java.awt.event.ActionEvent evt) {
-        parseAddress();
+        if (!parseAddress()) {
+            return;
+        }
         set = false;
         dispose();
     }

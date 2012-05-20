@@ -1210,7 +1210,7 @@ public class StudioFrame extends javax.swing.JFrame {
                 return;
             }
             address = RadixUtils.getInstance().parseRadix(number);
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             StaticDialogs.showErrorMessage("The number entered is in"
                     + " inccorret format", "Jump");
             return;
