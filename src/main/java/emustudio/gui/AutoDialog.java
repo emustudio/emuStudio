@@ -1,9 +1,9 @@
 /**
  * AutoDialog.java
  * 
- * KISS, YAGNI
+ * KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,18 +21,10 @@
  */
 package emustudio.gui;
 
+import emustudio.main.Main;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import javax.swing.GroupLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.LayoutStyle;
-import javax.swing.WindowConstants;
-
-import emustudio.main.Main;
+import javax.swing.*;
 
 /**
  * This is the dialog form that displays when the emuStudio automatization

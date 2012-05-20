@@ -2,10 +2,9 @@
  * Main.java
  *
  * Created on Nedeľa, 2007, august 5, 13:08
+ * KISS, YAGNI, DRY
  *
- * KISS, YAGNI
- *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -128,8 +127,6 @@ public class Main {
                                 + " ignoring this one: " + args[i]);
                     } else {
                         classToHash = args[i];
-                        System.out.println("Compute hash of class: "
-                                + classToHash);
                     }
 
                 } else if (arg.equals("--HELP")) {
@@ -174,7 +171,6 @@ public class Main {
         });
         methods = (Method[])me.toArray(new Method[0]);
         me.clear();
-        me = null;
 
         for (i = 0; i < methods.length; i++) {
             hash += methods[i].getGenericReturnType().toString() + " ";
@@ -184,7 +180,6 @@ public class Main {
                 hash += params[j].getName() + ",";
             hash += ");";
         }
-        System.out.println(hash);
         try {
             return emulib.runtime.Context.SHA1(hash);
         } catch(Exception e) {

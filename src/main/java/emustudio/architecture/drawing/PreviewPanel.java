@@ -1,11 +1,11 @@
-/*
+/**
  * PreviewPanel.java
  *
  * Created on 9.7.2008, 12:42:32
- * hold to: KISS, YAGNI
+ * KISS, YAGNI, DRY
  *
- * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
- *
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or

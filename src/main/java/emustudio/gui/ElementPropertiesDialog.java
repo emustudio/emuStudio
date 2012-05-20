@@ -1,9 +1,9 @@
-/*
+/**
  * ElementPropertiesDialog.java
  * 
- * Copyright (C) 2011 Peter Jakubčo <pjakubco@gmail.com>
+ * KISS, YAGNI, DRY
  * 
- * KISS, YAGNI
+ * Copyright (C) 2011-2012 Peter Jakubčo
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License

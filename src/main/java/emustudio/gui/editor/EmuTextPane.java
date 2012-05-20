@@ -1,12 +1,10 @@
-/*
+/**
  * EmuTextPane.java
  *
  * Created on Štvrtok, 2007, august 9, 15:05
+ * KISS, YAGNI, DRY
  *
- * KEEP IT SIMPLE, STUPID
- * some things just: YOU AREN'T GONNA NEED IT
- *
- * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

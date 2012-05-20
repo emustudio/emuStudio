@@ -1,12 +1,10 @@
-/*
+/**
  * DocumentReader.java
  *
  * Created on 7.2.2008, 9:59:19
- * hold to: KISS, YAGNI
+ * KISS, YAGNI, DRY
  *
- * It is used for syntax highlighting
- *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,12 +29,13 @@ import javax.swing.text.BadLocationException;
 
 /**
  * Reader of the source code. It is used by syntax highlighter.
- *
+ * 
  * @author vbmacher
  */
 public class DocumentReader extends Reader {
-    /* pouziva sa na oznacenie miesta v dokumente, v ktorom je mozne bezpecne
-     * resetovat lex. analyzator  */
+    /**
+     * Used for marking a place in the document where it is secure to reset lexical analyzer
+     */
     private long mark = -1;
     
     /**

@@ -1,10 +1,10 @@
-/*
+/**
  * DrawingPanel.java
  *
  * Created on 3.7.2008, 8:31:58
- * hold to: KISS, YAGNI
+ * KISS, YAGNI, DRY
  *
- * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

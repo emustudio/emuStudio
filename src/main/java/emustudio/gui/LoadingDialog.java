@@ -1,9 +1,10 @@
-/*
+/**
  * LoadingDialog.java
  *
  * Created on Utorok, 2008, september 16, 15:55
+ * KISS, YAGNI, DRY
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,12 +22,7 @@
  */
 package emustudio.gui;
 
-import javax.swing.GroupLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.LayoutStyle;
-import javax.swing.WindowConstants;
+import javax.swing.*;
 
 /**
  *

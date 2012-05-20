@@ -1,11 +1,10 @@
-/*
+/**
  * ArchLoader.java
  *
  * Created on Utorok, 2007, august 7, 11:11
- *
  * KISS, YAGNI, DRY
  * 
- * Copyright (C) 2007-2012 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

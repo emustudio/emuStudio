@@ -1,9 +1,9 @@
 /**
  * CompoundUndoManager.java
  *
- * KISS, YAGNI
+ * KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
  */
 package emustudio.gui.editor;
 
-/*
+/**
  * Copyright 2008 Ayman Al-Sairafi ayman.alsairafi@gmail.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -35,11 +35,7 @@ package emustudio.gui.editor;
  * limitations under the License.  
  */
 
-import javax.swing.undo.CannotRedoException;
-import javax.swing.undo.CannotUndoException;
-import javax.swing.undo.CompoundEdit;
-import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEdit;
+import javax.swing.undo.*;
 
 
 /**

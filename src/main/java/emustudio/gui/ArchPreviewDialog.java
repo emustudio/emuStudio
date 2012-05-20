@@ -1,10 +1,11 @@
-/*
+/**
  * ArchPreviewDialog.java
  *
  * Created on Piatok, 2008, júl 18, 19:36
+ * KISS, YAGNI, DRY
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
- *
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -21,13 +22,12 @@
  */
 package emustudio.gui;
 
+import emustudio.architecture.drawing.PreviewPanel;
+import emustudio.architecture.drawing.Schema;
 import javax.swing.GroupLayout;
 import javax.swing.JDialog;
 import javax.swing.JScrollPane;
 import javax.swing.WindowConstants;
-
-import emustudio.architecture.drawing.PreviewPanel;
-import emustudio.architecture.drawing.Schema;
 
 /**
  * Preview dialog form of virtual computer.

@@ -1,9 +1,9 @@
 /**
  * NiceButton.java
  * 
- *  KISS, YAGNI
+ * KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ package emustudio.gui.utils;
 
 import java.awt.Dimension;
 import java.awt.FontMetrics;
-
 import javax.swing.JButton;
 
 /**
@@ -52,7 +51,7 @@ public class NiceButton extends JButton {
         Dimension d = getPreferredSize();
         d.setSize(NB_WIDTH, NB_HEIGHT);
         this.setPreferredSize(d);
-        this.setSize(NB_WIDTH, NB_HEIGHT);//this.getHeight());
+        this.setSize(NB_WIDTH, NB_HEIGHT);
         this.setMinimumSize(d);
         this.setMaximumSize(d);
     }

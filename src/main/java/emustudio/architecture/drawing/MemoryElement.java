@@ -1,10 +1,10 @@
-/*
+/**
  * MemoryElement.java
  *
  * Created on 4.7.2008, 7:55:56
- * hold to: KISS, YAGNI
+ * KISS, YAGNI, DRY
  *
- * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

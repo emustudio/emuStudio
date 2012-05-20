@@ -1,12 +1,10 @@
-/*
+/**
  * FindText.java
  *
  * Created on 15.2.2008, 11:40:01
- * hold to: KISS, YAGNI
+ * KISS, YAGNI, DRY
  * 
- * Class for generally matching/replacing a text with pattern
- *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,12 +25,11 @@ package emustudio.gui.utils;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
 import javax.swing.JTextPane;
 import javax.swing.text.BadLocationException;
 
 /**
- * Singleton for finding text.
+ * Singleton class for generally matching/replacing a text with pattern.
  * 
  * @author vbmacher
  */

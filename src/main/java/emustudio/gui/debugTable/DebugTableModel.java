@@ -1,12 +1,10 @@
-/*
+/**
  * DebugTableModel.java
  *
  * Created on Pondelok, 2007, marec 26, 16:29
+ * KISS, YAGNI, DRY
  *
- * KEEP IT SIMPLY STUPID
- * YOU AREN'T GONNA NEED IT
- *
- * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
