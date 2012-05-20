@@ -1,7 +1,7 @@
 /*
  * MainTest.java
  *
- * (c) Copyright 2012, P. Jakubčo <pjakubco@gmail.com>
+ * (c) Copyright 2012, Peter Jakubčo
  */
 package emustudio.main;
 

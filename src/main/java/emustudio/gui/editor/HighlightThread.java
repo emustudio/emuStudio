@@ -1,12 +1,12 @@
-/**
+/*
  * HighlightThread.java
  *
  * Created on 21.8.2008, 8:56:32
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2001 Stephen Ostermiller 
+ * Copyright (C) 2001, Stephen Ostermiller 
  * http://ostermiller.org/contact.pl?regarding=Syntax+Highlighting
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

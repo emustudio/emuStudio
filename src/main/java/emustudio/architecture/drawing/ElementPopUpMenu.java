@@ -1,4 +1,4 @@
-/**
+/*
  * ElementPopUpMenu.java
  * 
  * KISS, YAGNI, DRY

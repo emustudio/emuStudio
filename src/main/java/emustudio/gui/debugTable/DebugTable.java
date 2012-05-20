@@ -1,10 +1,10 @@
-/**
+/*
  * DebugTable.java
  *
  * Created on Piatok, 2007, november 9, 8:20
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

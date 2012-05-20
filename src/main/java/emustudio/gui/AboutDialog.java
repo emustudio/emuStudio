@@ -1,10 +1,10 @@
-/**
+/*
  * AboutDialog.java
  *
  * Created on 21.8.2010, 21:42:50
  * KISS, YAGNI, DRY
  * 
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2012, Peter Jakubčo
  * 
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License

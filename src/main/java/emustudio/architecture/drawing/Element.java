@@ -1,10 +1,10 @@
-/**
+/*
  * Element.java
  *
  * Created on 3.7.2008, 8:26:22
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,13 +23,7 @@
 
 package emustudio.architecture.drawing;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.util.Enumeration;
 import java.util.Properties;

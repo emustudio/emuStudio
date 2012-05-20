@@ -1,10 +1,10 @@
-/**
+/*
  * FindDialog.java
  *
  * Created on 1.4.2009, 11:26
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2012 Peter Jakubčo
+ * Copyright (C) 2009-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

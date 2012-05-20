@@ -1,10 +1,10 @@
-/**
+/*
  * ArchLoader.java
  *
  * Created on Utorok, 2007, august 7, 11:11
  * KISS, YAGNI, DRY
  * 
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -405,7 +405,7 @@ public class ArchLoader {
             }
         }
         
-        PluginLoader pluginLoader = PluginLoader.getInstance();
+        PluginLoader pluginLoader = PluginLoader.getInstance(Main.getPassword());
         for (PluginInfo plugin : pluginsToLoad.values()) {
             Class<IPlugin> mainClass = loadPlugin(plugin.dirName, plugin.pluginName);
             plugin.mainClass = mainClass;
@@ -539,7 +539,7 @@ public class ArchLoader {
      * @return Main class of the plugin. It must be resolved before first use.
      */
     private Class<IPlugin> loadPlugin(String dirname, String filename) {
-        return emulib.runtime.PluginLoader.getInstance().loadPlugin(
+        return emulib.runtime.PluginLoader.getInstance(Main.getPassword()).loadPlugin(
                 System.getProperty("user.dir") + File.separator + dirname
                 + File.separator + filename);
     }
@@ -565,7 +565,7 @@ public class ArchLoader {
             throw new ClassNotFoundException("Plug-in main class does not exist");
         }
         
-        if (!PluginLoader.getInstance().doesImplement(mainClass, pluginInterface)) {
+        if (!PluginLoader.getInstance(Main.getPassword()).doesImplement(mainClass, pluginInterface)) {
             throw new ClassNotFoundException("Plug-in main class does not implement specified interface");
         }
 
