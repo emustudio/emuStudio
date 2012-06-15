@@ -39,9 +39,9 @@ public class DeviceElement extends Element {
      *
      * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param settings settings of this element from virtual configuration
-     * @throws Exception when some settings are not well parseable
+     * @throws NullPointerException when some settings are not well parseable
      */
-    public DeviceElement(String pluginName, Properties settings) throws Exception {
+    public DeviceElement(String pluginName, Properties settings) throws NullPointerException {
         super(pluginName, settings, BACK_COLOR);
     }
 

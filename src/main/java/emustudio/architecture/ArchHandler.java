@@ -31,6 +31,8 @@ import emulib.plugins.memory.IMemory;
 import emustudio.architecture.ArchLoader.PluginInfo;
 import emustudio.architecture.drawing.Schema;
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class holds actual computer configuration - plugins and settings.
@@ -38,6 +40,7 @@ import java.util.*;
  * @author vbmacher
  */
 public class ArchHandler implements ISettingsHandler {
+    private final static Logger logger = LoggerFactory.getLogger(ArchHandler.class);
 
     private Computer computer;
     private Properties settings;
@@ -56,11 +59,11 @@ public class ArchHandler implements ISettingsHandler {
      * @param auto         If the emuStudio is runned in automatization mode
      * @param nogui        If the "--nogui" parameter was given to emuStudio
      *  
-     * @throws Error if initialization of the architecture failed.
+     * @throws PluginInitializationException if initialization of the architecture failed.
      */
     public ArchHandler(Computer arch, Properties settings,
             Schema schema, Collection<PluginInfo> plugins, boolean auto,
-            boolean nogui) throws Error {
+            boolean nogui) throws PluginInitializationException {
         this.computer = arch;
         this.settings = settings;
         this.schema = schema;
@@ -71,7 +74,7 @@ public class ArchHandler implements ISettingsHandler {
         }
 
         if (initialize(auto, nogui) == false) {
-            throw new Error("Initialization of plugins failed");
+            throw new PluginInitializationException("Initialization of plugins failed");
         }
     }
 
@@ -82,11 +85,13 @@ public class ArchHandler implements ISettingsHandler {
      * @return true If the initialization succeeded, false otherwise
      */
     private boolean initialize(boolean auto, boolean nogui) {
-        if (auto)
+        if (auto) {
            // Set "auto" setting to "true" to all plugins
            writeSettingToAll("auto", "true");
-        if (nogui)
+        }
+        if (nogui) {
            writeSettingToAll("nogui", "true");
+        }
 
         return computer.initialize(this);
     }
@@ -227,23 +232,28 @@ public class ArchHandler implements ISettingsHandler {
         prop += "." + settingName;
 
         settings.setProperty(prop, val);
+        try {
         ArchLoader.writeConfig(schema.getConfigName(), settings);
+        } catch (WriteConfigurationException e) {
+            logger.error(new StringBuilder().append("[pluginID=").append(pluginID).append("; ").append(settingName)
+                    .append("=").append(val).append("]").append(" Could not write setting").toString(),e);
+        }
     }
 
     /**
      * Method removes value of specified setting from Properties for 
      * specified plugin. Setting has to be fully specified.
      * 
-     * @param hash         plugin hash, identification of a plugin
+     * @param pluginID    plugin ID, identification of a plugin
      * @param settingName name of wanted setting
      */
     @Override
-    public void removeSetting(long hash, String settingName) {
+    public void removeSetting(long pluginID, String settingName) {
         if (settingName == null || settingName.equals(EMPTY_STRING)) {
             return;
         }
 
-        IPlugin plug = computer.getPlugin(hash);
+        IPlugin plug = computer.getPlugin(pluginID);
         if (plug == null) {
             return;
         }
@@ -252,7 +262,7 @@ public class ArchHandler implements ISettingsHandler {
 
         if (plug instanceof IDevice) {
             // search for device
-            prop = pluginNames.get(hash);
+            prop = pluginNames.get(pluginID);
         } else if (plug instanceof ICPU) {
             prop = "cpu";
         } else if (plug instanceof IMemory) {
@@ -267,7 +277,12 @@ public class ArchHandler implements ISettingsHandler {
         prop += "." + settingName;
 
         settings.remove(prop);
+        try {
         ArchLoader.writeConfig(schema.getConfigName(), settings);
+        } catch (WriteConfigurationException e) {
+            logger.error(new StringBuilder().append("[pluginID=").append(pluginID).append("; ").append(settingName)
+                    .append("] Could not remove setting.").toString(), e);
+        }
     }
 
     /**

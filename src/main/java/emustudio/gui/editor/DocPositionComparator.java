@@ -70,4 +70,10 @@ class DocPositionComparator implements Comparator{
             return 0;
         }
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        return hash;
+    }
 }

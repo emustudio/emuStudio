@@ -23,12 +23,9 @@
 
 package emustudio.architecture.drawing;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Stroke;
+import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The connection line within the abstract schemas.
@@ -63,7 +60,7 @@ public class ConnectionLine {
     /**
      * Line points.
      */
-    private ArrayList<Point> points;
+    private List<Point> points;
     
     private static BasicStroke thickLine = new BasicStroke(2);
     
@@ -112,13 +109,13 @@ public class ConnectionLine {
      * @param e2 last connection element
      * @param points middle-ponits arraylist
      */
-    public ConnectionLine(Element e1, Element e2,
-            ArrayList<Point> points) {
+    public ConnectionLine(Element e1, Element e2, List<Point> points) {
         this.e1 = e1;
         this.e2 = e2;
         this.points = new ArrayList<Point>();
-        if (points != null)
+        if (points != null) {
             this.points.addAll(points);
+        }
 
         this.lineColor = new Color(0x333333);
         this.bidirectional = true;
@@ -131,7 +128,7 @@ public class ConnectionLine {
     }
 
     /**
-     * This method computes an intersection of two lines (not line segments)
+     * This method computes an intersection of two lines (not line segments).
      * 
      * @param l1s Point of the first point of the first line
      * @param l1e Point of the ending point of the first line
@@ -148,8 +145,9 @@ public class ConnectionLine {
                 - (l1s.y - l1e.y) * (l2s.x - l2e.x);
 
         // there is no intersection - lines are parallel
-        if (div == 0)
+        if (div == 0) {
             return null;
+        }
 
         p_x = ((l1s.x * l1e.y - l1s.y * l1e.x) * (l2s.x - l2e.x)
                 - (l1s.x - l1e.x) * (l2s.x * l2e.y - l2s.y * l2e.x))/div;
@@ -322,11 +320,10 @@ public class ConnectionLine {
      * @return true if the line is crossing the selection area
      */
     public boolean isAreaCrossing(Point selectionStart, Point selectionEnd) {
-        Point lineStart = new Point(e1.getX() + arrow1.x,
-                e1.getY() + arrow1.y);
+        Point lineStart = new Point(e1.getX() + arrow1.x, e1.getY() + arrow1.y);
 
         Point lineEnd;
-        Point intersection = null;
+        Point intersection;
 
         for (int i = 0; i < points.size(); i++) {
             lineEnd = points.get(i);
@@ -528,8 +525,7 @@ public class ConnectionLine {
         g.drawLine(x1, y1, x2, y2);
 
         // sipky - princip dedenia v UML <---> princip toku udajov => tok!!
-        if ((arrow1 != null) && (arrow1LeftEnd != null)
-                && (arrow1RightEnd != null)) {
+        if ((arrow1 != null) && (arrow1LeftEnd != null) && (arrow1RightEnd != null)) {
             x1 = e1.getX() - e1.getWidth()/2;
             y1 = e1.getY() - e1.getHeight()/2;
             
@@ -543,18 +539,8 @@ public class ConnectionLine {
             yy1[2] = y1 + arrow1.y + arrow1RightEnd.y;
             yy1[3] = y1 + arrow1.y;
             g.fillPolygon(xx1, yy1, 4);
-            
-//            g.drawLine(x1 + arrow1.x,
-  //                  y1 + arrow1.y,
-    //                x1 + arrow1.x + arrow1LeftEnd.x,
-      //              y1 + arrow1.y + arrow1LeftEnd.y);
-        //    g.drawLine(x1 + arrow1.x,
-          //          y1 + arrow1.y,
-            //        x1 + arrow1.x + arrow1RightEnd.x,
-              //      y1 + arrow1.y + arrow1RightEnd.y);
         }
-        if ((arrow2 !=null) && (arrow2LeftEnd != null)
-                && (arrow2RightEnd != null)) {
+        if ((arrow2 !=null) && (arrow2LeftEnd != null) && (arrow2RightEnd != null)) {
             x2 = e2.getX() - e2.getWidth()/2;
             y2 = e2.getY() - e2.getHeight()/2;
 
@@ -567,15 +553,6 @@ public class ConnectionLine {
             yy2[2] = y2 + arrow2.y + arrow2RightEnd.y;
             yy2[3] = y2 + arrow2.y;
             g.fillPolygon(xx2, yy2, 4);
-            
-//            g.drawLine(x2 + arrow2.x,
-  //                  y2 + arrow2.y,
-    //                x2 + arrow2.x + arrow2LeftEnd.x,
-      //              y2 + arrow2.y + arrow2LeftEnd.y);
-        //    g.drawLine(x2 + arrow2.x,
-          //          y2 + arrow2.y,
-            //        x2 + arrow2.x + arrow2RightEnd.x,
-              //      y2 + arrow2.y + arrow2RightEnd.y);
         }
         g.setStroke(ss);
     }
@@ -591,8 +568,7 @@ public class ConnectionLine {
      * @param ee2 last point
      * @param ppoints array of middle-points
      */
-    public static void drawSketch(Graphics2D g,Element ee1, Point ee2,
-            ArrayList<Point> ppoints) {
+    public static void drawSketch(Graphics2D g,Element ee1, Point ee2, List<Point> ppoints) {
         Stroke ss = g.getStroke();
         g.setStroke(thickLine);
         g.setColor(Color.GRAY);
@@ -681,7 +657,7 @@ public class ConnectionLine {
      *
      * @return arraylist of all middle-points
      */
-    public ArrayList<Point> getPoints() {
+    public List<Point> getPoints() {
         return points;
     }
 

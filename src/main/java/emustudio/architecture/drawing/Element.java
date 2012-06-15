@@ -144,16 +144,14 @@ public abstract class Element {
      * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param settings settings of this element
      * @param backColor Background color
-     * @throws Exception when plug-in with settingsName does not exist in the
-     *      schema
+     * @throws NullPointerException when plug-in with settingsName does not exist in the schema
      */
-    public Element(String pluginName, Properties settings, Color backColor) throws Exception {
+    public Element(String pluginName, Properties settings, Color backColor) throws NullPointerException {
         this.pluginName = pluginName;
         this.backColor = backColor;
         this.selected = false;
         this.foreColor = new Color(0x909090);
-        gradient = new GradientPaint(x, y, Color.WHITE, x, y+height,
-                this.backColor, false);
+        gradient = new GradientPaint(x, y, Color.WHITE, x, y+height, this.backColor, false);
         this.mysettings = settings;
         loadSettings();
     }
@@ -183,9 +181,10 @@ public abstract class Element {
      * Updates schema values (x,y,width,height) of the element from the settings.
      * @throws Exception when some settings are not well parseable.
      */
-    public final void loadSettings() throws Exception {
-        if (pluginName == null)
-            throw new Exception("Plug-in name is null!");
+    public final void loadSettings() throws NullPointerException {
+        if (pluginName == null) {
+            throw new NullPointerException("Plug-in name is null!");
+        }
 
         x = Integer.parseInt(mysettings.getProperty("point.x", "0"));
         y = Integer.parseInt(mysettings.getProperty("point.y", "0"));

@@ -25,6 +25,7 @@ package emustudio.gui;
 import emulib.runtime.StaticDialogs;
 import emustudio.gui.utils.FindText;
 import emustudio.gui.utils.NiceButton;
+import emustudio.main.Main;
 import java.util.ArrayList;
 import java.util.regex.PatternSyntaxException;
 import javax.swing.*;
@@ -277,10 +278,10 @@ public class FindDialog extends javax.swing.JDialog {
                 textPane.grabFocus();
                 dispose();
             } else {
-                StaticDialogs.showMessage("Expression was not found");
+                Main.tryShowMessage("Expression was not found");
             }
         } catch (PatternSyntaxException e) {
-            StaticDialogs.showErrorMessage("Pattern syntax error");
+            Main.tryShowErrorMessage("Pattern syntax error");
             cmbSearch.grabFocus();
         }
     }//GEN-LAST:event_searchButtonActionPerformed
@@ -294,10 +295,10 @@ public class FindDialog extends javax.swing.JDialog {
                 textPane.grabFocus();
                 dispose();
             } else {
-                StaticDialogs.showMessage("Expression was not found");
+                Main.tryShowMessage("Expression was not found");
             }
         } catch (PatternSyntaxException e) {
-            StaticDialogs.showErrorMessage("Pattern syntax error");
+            Main.tryShowErrorMessage("Pattern syntax error");
             cmbSearch.grabFocus();
         }
     }//GEN-LAST:event_replaceButtonActionPerformed
@@ -311,10 +312,10 @@ public class FindDialog extends javax.swing.JDialog {
                 textPane.grabFocus();
                 dispose();
             } else {
-                StaticDialogs.showMessage("Expression was not found");
+                Main.tryShowMessage("Expression was not found");
             }
         } catch (PatternSyntaxException e) {
-            StaticDialogs.showErrorMessage("Pattern syntax error");
+            Main.tryShowErrorMessage("Pattern syntax error");
             cmbSearch.grabFocus();
         }
     }

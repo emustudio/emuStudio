@@ -29,6 +29,7 @@ package emustudio.gui;
 
 import emulib.runtime.StaticDialogs;
 import emustudio.architecture.drawing.Element;
+import emustudio.main.Main;
 import java.util.Enumeration;
 import java.util.Properties;
 import javax.swing.JDialog;
@@ -174,13 +175,13 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
         DefaultTableModel model = (DefaultTableModel)tblSettings.getModel();
         String set = StaticDialogs.inputStringValue("Please enter name of the setting:").trim();
         if (set.equals("")) {
-            StaticDialogs.showErrorMessage("Name of the new setting cannot be null!");
+            Main.tryShowErrorMessage("Name of the new setting cannot be empty!");
             return;
         }
         String SET = set.toUpperCase();
         for (int i = 0; i < model.getRowCount(); i++) {
             if (((String)model.getValueAt(i, 0)).toUpperCase().equals(SET)) {
-                StaticDialogs.showErrorMessage("Name of the setting already exists!");
+                Main.tryShowErrorMessage("Name of the setting already exists!");
                 return;
             }
         }
@@ -190,7 +191,7 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
     private void btnRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveActionPerformed
         int i = tblSettings.getSelectedRow();
         if (i == -1) {
-            StaticDialogs.showErrorMessage("A setting has to be selected!");
+            Main.tryShowErrorMessage("A setting has to be selected!");
             return;
         }
         DefaultTableModel model = (DefaultTableModel)tblSettings.getModel();

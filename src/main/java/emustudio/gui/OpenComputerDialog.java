@@ -25,9 +25,13 @@ package emustudio.gui;
 
 import emulib.runtime.StaticDialogs;
 import emustudio.architecture.ArchLoader;
+import emustudio.architecture.ReadConfigurationException;
 import emustudio.architecture.drawing.PreviewPanel;
 import emustudio.architecture.drawing.Schema;
+import emustudio.main.Main;
 import javax.swing.AbstractListModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This dialog manages the virtual computers. It offers a list of all
@@ -43,7 +47,8 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     private boolean OOK = false;
     private ArchListModel amodel;
     private PreviewPanel preview;
-
+    private final static Logger logger = LoggerFactory.getLogger(OpenComputerDialog.class);
+    
     /**
      * Creates new instance of this dialog.
      */
@@ -84,8 +89,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         }
 
         public void update() {
-            allModels = ArchLoader.getAllNames(ArchLoader.CONFIGS_DIR,
-                    ".conf");
+            allModels = ArchLoader.getAllNames(ArchLoader.CONFIGS_DIR, ".conf");
             this.fireContentsChanged(this, -1, -1);
         }
     }
@@ -306,7 +310,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
 
     private void btnOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOpenActionPerformed
         if (lstConfig.getSelectedIndex() == -1) {
-            StaticDialogs.showErrorMessage("A computer has to be selected!");
+            Main.tryShowErrorMessage("A computer has to be selected!");
             return;
         }
         archName = (String) lstConfig.getSelectedValue();
@@ -316,21 +320,26 @@ public class OpenComputerDialog extends javax.swing.JDialog {
 
     private void btnEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditActionPerformed
         if (lstConfig.getSelectedIndex() == -1) {
-            StaticDialogs.showErrorMessage("A computer has to be selected!");
+            Main.tryShowErrorMessage("A computer has to be selected!");
             return;
         }
         archName = (String) lstConfig.getSelectedValue();
-        Schema s = ArchLoader.getInstance().loadSchema(archName);
-        if (s == null) {
-            return;
+        try {
+            Schema s = ArchLoader.getInstance().loadSchema(archName);
+            if (s == null) {
+                return;
+            }
+            SchemaEditorDialog d = new SchemaEditorDialog(this, s);
+            d.setVisible(true);
+        } catch (ReadConfigurationException e) {
+            logger.error("Could not load computer configuration", e);
+            Main.tryShowErrorMessage("Could not load computer configuration!");
         }
-        SchemaEditorDialog d = new SchemaEditorDialog(this, s);
-        d.setVisible(true);
     }//GEN-LAST:event_btnEditActionPerformed
 
     private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteActionPerformed
         if (lstConfig.getSelectedIndex() == -1) {
-            StaticDialogs.showErrorMessage("A computer has to be selected!");
+            Main.tryShowErrorMessage("A computer has to be selected!");
             return;
         }
         int r = StaticDialogs.confirmMessage("Do you really want to delete"
@@ -343,7 +352,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
                 archName = "";
                 update();
             } else {
-                StaticDialogs.showErrorMessage("Computer could not be deleted.");
+                Main.tryShowErrorMessage("Computer could not be deleted.");
             }
         }
     }//GEN-LAST:event_btnDeleteActionPerformed
@@ -361,12 +370,14 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         }
 
         archName = (String) lstConfig.getSelectedValue();
-        Schema s = ArchLoader.getInstance().loadSchema(archName);
-        if (s == null)
-            return;
+        try {
+            Schema s = ArchLoader.getInstance().loadSchema(archName);
 
-        preview.setSchema(s);
-        preview.repaint();
+            preview.setSchema(s);
+            preview.repaint();
+        } catch (ReadConfigurationException e) {
+            logger.error("Could not update computer preview.", e);
+        }
 
         lblPreview.setText(archName);
     }//GEN-LAST:event_lstConfigValueChanged

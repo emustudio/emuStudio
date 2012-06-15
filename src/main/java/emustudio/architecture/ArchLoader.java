@@ -30,7 +30,6 @@ import emulib.plugins.cpu.ICPU;
 import emulib.plugins.device.IDevice;
 import emulib.plugins.memory.IMemory;
 import emulib.runtime.PluginLoader;
-import emulib.runtime.StaticDialogs;
 import emustudio.architecture.drawing.Schema;
 import emustudio.main.Main;
 import java.io.File;
@@ -39,6 +38,8 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.lang.reflect.Constructor;
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class loader for plugins and their resources (singleton).
@@ -97,6 +98,7 @@ import java.util.*;
  * @author vbmacher
  */
 public class ArchLoader {
+    private final static Logger logger = LoggerFactory.getLogger(ArchLoader.class);
     /**
      * Directory name where the virtual computer configurations are stored.
      */
@@ -126,7 +128,7 @@ public class ArchLoader {
     
     private static ArchLoader instance;
 
-    class PluginInfo {
+    public class PluginInfo {
         public String pluginSettingsName;
         public String pluginName;
         public Class<?> pluginInterface;
@@ -197,14 +199,16 @@ public class ArchLoader {
      * @return true if the operation was successful, false otherwise
      */
     public static boolean deleteConfig(String configName) {
-        File file = new File(System.getProperty("user.dir") +
-                File.separator + CONFIGS_DIR + File.separator + configName
-                + ".conf");
-        if (!file.exists())
+        File file = new File(new StringBuilder().append(System.getProperty("user.dir")).append(File.separator)
+                .append(CONFIGS_DIR).append(File.separator).append(configName).append(".conf").toString());
+        if (!file.exists()) {
             return false;
+        }
         try {
             return file.delete();
         } catch(Exception e) {
+            logger.error(new StringBuilder().append("Could not delete configuration: ")
+                    .append(file.getAbsolutePath()).toString());
         }
         return false;
     }
@@ -217,14 +221,17 @@ public class ArchLoader {
      * @return true if the operation was successful.
      */
     public static boolean renameConfig(String newName, String oldName) {
-        File f = new File(System.getProperty("user.dir") +
-                File.separator + CONFIGS_DIR + File.separator + oldName
-                + ".conf");
-        if (!f.exists())
+        File f = new File(new StringBuilder().append(System.getProperty("user.dir")).append(File.separator)
+                .append(CONFIGS_DIR).append(File.separator).append(oldName).append(".conf").toString());
+        if (!f.exists()) {
             return false;
+        }
         try {
-            return f.renameTo(new File(newName));
+            return f.renameTo(new File(new StringBuilder().append(System.getProperty("user.dir")).append(File.separator)
+                .append(CONFIGS_DIR).append(File.separator).append(newName).append(".conf").toString()));
         } catch(Exception e) {
+            logger.error(new StringBuilder().append("Could not rename configuration: ")
+                    .append(f.getAbsolutePath()).append(" to (thesamepath)/").append(newName).toString());
         }
         return false;
     }
@@ -237,38 +244,26 @@ public class ArchLoader {
      * @return Schema of the configuration, or null if some error
      *         raises.
      */
-    public Schema loadSchema(String configName) {
-        try{
-            Properties p = readConfig(configName,true);
-
-            if (p == null)
-                return null;
-            
-            return new Schema(configName,p);
-        }
-        catch (Exception e) {
-            StaticDialogs.showErrorMessage("Error reading configuration: "
-                    + e.toString());
-            return null;
+    public Schema loadSchema(String configName) throws ReadConfigurationException {
+        try {
+            return new Schema(configName, readConfig(configName, true));
+        } catch (ReadConfigurationException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ReadConfigurationException("Could not load schema", e);
         }
     }
-    
+
     /**
-     * Method saves abstract schema of some configuration into configuration
-     * file. 
+     * Method saves abstract schema of some configuration into configuration file.
+     *
      * @param schema Schema to save
      */
-    public void saveSchema(Schema schema) {
-        try {
-            schema.save();
-            writeConfig(schema.getConfigName(),schema.getSettings());
-        }
-        catch (Exception e) {
-            StaticDialogs.showErrorMessage("Error writing configuration: " 
-                    + e.toString());
-        }
+    public void saveSchema(Schema schema) throws WriteConfigurationException {
+        schema.save();
+        writeConfig(schema.getConfigName(), schema.getSettings());
     }
-    
+
     
     /**
      * Method reads configuration into Properties object.
@@ -277,88 +272,91 @@ public class ArchLoader {
      * @param schema_too whether read schema settings too
      * @return properties object (settings for actual architecture
      * congiguration)
+     * @throws ReadConfigurationException if there is some error with configuration reading
      */
-    private static Properties readConfig(String configName, boolean schema_too) {
-        try{
-            Properties p = new Properties();
-            File f = new File(System.getProperty("user.dir") + 
-                    File.separator + CONFIGS_DIR + File.separator + configName
-                    + ".conf");
-            if (!f.exists()) return null;
+    private static Properties readConfig(String configName, boolean schema_too) throws ReadConfigurationException {
+        Properties p = new Properties();
+        File f = new File(System.getProperty("user.dir")
+                + File.separator + CONFIGS_DIR + File.separator + configName
+                + ".conf");
+        if (!f.exists() || !f.canRead()) {
+            throw new ReadConfigurationException(new StringBuilder().append("Configuration file: ")
+                    .append(f.getAbsolutePath()).append(" does not exist.").toString());
+        }
+        try {
             FileInputStream fin = new FileInputStream(f);
             p.load(fin);
             fin.close();
-            if (!p.getProperty("emu8Version").equals("3")
-                    && !p.getProperty("emu8Version").equals("4")) {
-                StaticDialogs.showErrorMessage("Error reading configuration: " +
-                        "unsupported file version");
-                return null;
-            }
-            if (!schema_too) {
-                p.remove("compiler");
-                p.remove("compiler.point.x");
-                p.remove("compiler.point.y");
-                p.remove("compiler.width");
-                p.remove("compiler.height");
-                p.remove("cpu");
-                p.remove("cpu.point.x");
-                p.remove("cpu.point.y");
-                p.remove("cpu.width");
-                p.remove("cpu.height");
-                p.remove("memory");
-                p.remove("memory.point.x");
-                p.remove("memory.point.y");
-                p.remove("memory.width");
-                p.remove("memory.height");
-                for (int i = 0; p.containsKey("device"+i); i++) {
-                    p.remove("device"+i);
-                    p.remove("device"+i+",point.x");
-                    p.remove("device"+i+",point.y");
-                    p.remove("device"+i+".width");
-                    p.remove("device"+i+".height");
-                }
-                for (int i = 0; p.containsKey("connection"+i+".junc0"); i++) {
-                    p.remove("connection"+i+".junc0");
-                    p.remove("connection"+i+".junc1");
-                    for (int j = 0; p.containsKey("connection"+i+".point"+j+".x"); j++) {
-                        p.remove("connection"+i+".point"+j+".x");
-                        p.remove("connection"+i+".point"+j+".y");
-                    }
-                }
-            }
-            return p;
+        } catch (Exception e) {
+            throw new ReadConfigurationException(new StringBuilder().append("Could not read configuration file: ")
+                    .append(f.getAbsolutePath()).toString(), e);
         }
-        catch (Exception e) {
-            StaticDialogs.showErrorMessage("Error reading configuration: " + e.toString());
-            return null;
+        if (!p.getProperty("emu8Version").equals("3")
+                && !p.getProperty("emu8Version").equals("4")) {
+            throw new ReadConfigurationException(new StringBuilder().append("Could not read configuration: ")
+                    .append(configName).append(". Unsupported file version.").toString());
         }
+        if (!schema_too) {
+            p.remove("compiler");
+            p.remove("compiler.point.x");
+            p.remove("compiler.point.y");
+            p.remove("compiler.width");
+            p.remove("compiler.height");
+            p.remove("cpu");
+            p.remove("cpu.point.x");
+            p.remove("cpu.point.y");
+            p.remove("cpu.width");
+            p.remove("cpu.height");
+            p.remove("memory");
+            p.remove("memory.point.x");
+            p.remove("memory.point.y");
+            p.remove("memory.width");
+            p.remove("memory.height");
+            for (int i = 0; p.containsKey("device" + i); i++) {
+                p.remove("device" + i);
+                p.remove("device" + i + ",point.x");
+                p.remove("device" + i + ",point.y");
+                p.remove("device" + i + ".width");
+                p.remove("device" + i + ".height");
+            }
+            for (int i = 0; p.containsKey("connection" + i + ".junc0"); i++) {
+                p.remove("connection" + i + ".junc0");
+                p.remove("connection" + i + ".junc1");
+                for (int j = 0; p.containsKey("connection" + i + ".point" + j + ".x"); j++) {
+                    p.remove("connection" + i + ".point" + j + ".x");
+                    p.remove("connection" + i + ".point" + j + ".y");
+                }
+            }
+        }
+        return p;
     }
-    
-    /** 
+
+    /**
+     
      * Method save configuration to a file with name configName.
      *
      * @param configName name of configuration
      * @param settings data are taken from
+     * @throws WriteConfigurationException if there is some error with configuration writing
      */
-    public static void writeConfig(String configName, Properties settings) {
-        try {
-            String dir = System.getProperty("user.dir") + File.separator
-                    + CONFIGS_DIR;
-            File dirFile = new File(dir);
-            if (!dirFile.exists() || (dirFile.exists() && !dirFile.isDirectory())) {
-                if (!dirFile.mkdir())
-                    throw new Exception("could not create config directory");
+    public static void writeConfig(String configName, Properties settings) throws WriteConfigurationException {
+        String dir = System.getProperty("user.dir") + File.separator
+                + CONFIGS_DIR;
+        File dirFile = new File(dir);
+        if (!dirFile.exists() || (dirFile.exists() && !dirFile.isDirectory())) {
+            if (!dirFile.mkdir()) {
+                throw new WriteConfigurationException("Could not create config directory");
             }
-
+        }
+        try {
             File f = new File(dir + File.separator + configName + ".conf");
             f.createNewFile();
             FileOutputStream out = new FileOutputStream(f);
             settings.put("emu8Version", "4");
             settings.store(out, configName + " configuration file");
             out.close();
-        }
-        catch (Exception e) {
-            StaticDialogs.showErrorMessage("Error writing configuration: " + e.toString());
+        } catch (Exception e) {
+            throw new WriteConfigurationException("Could not save configuration.", e);
         }
     }
     
@@ -373,39 +371,33 @@ public class ArchLoader {
      * @return instance of virtual architecture
      */
     public ArchHandler loadComputer(String name, boolean auto, boolean nogui)
-            throws PluginLoadingException {
+            throws PluginLoadingException, ReadConfigurationException, PluginInitializationException {
         
         Properties settings = readConfig(name, true);
-        if (settings == null) {
-            return null;
-        }
-        
         Map<String, PluginInfo> pluginsToLoad = new HashMap<String, PluginInfo>();
         
         String tmp = settings.getProperty("compiler");
         if (tmp != null) {
-            pluginsToLoad.put("compiler", new PluginInfo("compiler", COMPILERS_DIR,
-                    tmp, ICompiler.class, createPluginID()));
+            pluginsToLoad.put("compiler", new PluginInfo("compiler", COMPILERS_DIR, tmp, ICompiler.class,
+                    createPluginID()));
         }
         tmp = settings.getProperty("cpu");
         if (tmp != null) {
-            pluginsToLoad.put("cpu", new PluginInfo("cpu", CPUS_DIR, tmp,
-                    ICPU.class, createPluginID()));
+            pluginsToLoad.put("cpu", new PluginInfo("cpu", CPUS_DIR, tmp, ICPU.class, createPluginID()));
         }
         tmp = settings.getProperty("memory");
         if (tmp != null) {
-            pluginsToLoad.put("memory", new PluginInfo("memory", MEMORIES_DIR,
-                    tmp, IMemory.class, createPluginID()));
+            pluginsToLoad.put("memory", new PluginInfo("memory", MEMORIES_DIR, tmp, IMemory.class, createPluginID()));
         }
         for (int i = 0; settings.containsKey("device" + i); i++) {
             tmp = settings.getProperty("device" + i);
             if (tmp != null) {
-                pluginsToLoad.put("device" + i, new PluginInfo("device" + i,
-                        DEVICES_DIR, tmp, IDevice.class, createPluginID()));
+                pluginsToLoad.put("device" + i, new PluginInfo("device" + i, DEVICES_DIR, tmp, IDevice.class,
+                        createPluginID()));
             }
         }
         
-        PluginLoader pluginLoader = PluginLoader.getInstance(Main.getPassword());
+        PluginLoader pluginLoader = PluginLoader.getInstance(Main.password);
         for (PluginInfo plugin : pluginsToLoad.values()) {
             Class<IPlugin> mainClass = loadPlugin(plugin.dirName, plugin.pluginName);
             plugin.mainClass = mainClass;
@@ -420,7 +412,7 @@ public class ArchLoader {
                 throw new PluginLoadingException("Cannot load all classes of plug-ins.", "[unknown]", null);
             }
         }
-        System.out.println("All plugins are loaded and resolved.");
+        logger.info("All plugins are loaded and resolved.");
         
         ICompiler compiler = null;
         ICPU cpu = null;
@@ -439,15 +431,13 @@ public class ArchLoader {
                     devList.add((IDevice)plugin.plugin);
                 }
             } catch (ClassNotFoundException e) {
-                throw new PluginLoadingException("Plugin '" + plugin.pluginName
-                        + "' cannot be loaded.", plugin.pluginName, 
-                        (IPlugin) plugin.plugin);
+                throw new PluginLoadingException(new StringBuilder().append("Plugin ").append(plugin.pluginName)
+                        .append(" cannot be loaded.").toString(), plugin.pluginName, (IPlugin) plugin.plugin);
             }
         }
 
         // load connections
-        Map<Long, ArrayList<Long>> connections = new HashMap<Long,
-                ArrayList<Long>>();
+        Map<Long, List<Long>> connections = new HashMap<Long, List<Long>>();
         for (int i = 0; settings.containsKey("connection" + i + ".junc0"); i++) {
             // get i-th connection from settings
             String j0 = settings.getProperty("connection" + i + ".junc0", "");
@@ -460,30 +450,27 @@ public class ArchLoader {
 
             // map the connection elements to plug-ins: p1 and p2
             // note the connection: p1 -> p2  (p1 wants to use p2)
-            IPlugin p1 = null, p2 = null;
             long pID1, pID2;
 
             PluginInfo pluginInfo = pluginsToLoad.get(j0);
             if (pluginInfo == null) {
-                System.out.println("Invalid connection, j0=" + j0);
+                logger.error(new StringBuilder().append("Invalid connection, j0=").append(j0).toString());
                 continue; // invalid connection
             }
-            p1 = (IPlugin)pluginInfo.plugin;
             pID1 = pluginInfo.pluginId;
 
             pluginInfo = pluginsToLoad.get(j1);
             if (pluginInfo == null) {
-                System.out.println("Invalid connection, j1=" + j1);
+                logger.error(new StringBuilder().append("Invalid connection, j1=").append(j1).toString());
                 continue; // invalid connection
             }
-            p2 = (IPlugin)pluginInfo.plugin;
             pID2 = pluginInfo.pluginId;
 
             // the first direction
             if (connections.containsKey(pID1)) {
                 connections.get(pID1).add(pID2);
             } else {
-                ArrayList<Long> ar = new ArrayList<Long>();
+                List<Long> ar = new ArrayList<Long>();
                 ar.add(pID2);
                 connections.put(pID1, ar);
             }
@@ -492,7 +479,7 @@ public class ArchLoader {
                 if (connections.containsKey(pID2)) {
                     connections.get(pID2).add(pID1);
                 } else {
-                    ArrayList<Long> ar = new ArrayList<Long>();
+                    List<Long> ar = new ArrayList<Long>();
                     ar.add(pID1);
                     connections.put(pID2, ar);
                 }
@@ -502,12 +489,9 @@ public class ArchLoader {
         // this creates reversed array..
         Collections.reverse(devList);
         IDevice[] devices = (IDevice[]) devList.toArray(new IDevice[0]);
-        Computer arch = new Computer(cpu, mem, compiler, devices,
-                pluginsToLoad.values(), connections);
-        emulib.runtime.Context.getInstance().assignComputer(Main.getPassword(),
-                arch);
-        return new ArchHandler(arch, settings, loadSchema(name), 
-                pluginsToLoad.values(), auto, nogui);
+        Computer arch = new Computer(cpu, mem, compiler, devices, pluginsToLoad.values(), connections);
+        emulib.runtime.Context.getInstance().assignComputer(Main.password, arch);
+        return new ArchHandler(arch, settings, loadSchema(name), pluginsToLoad.values(), auto, nogui);
     }
     
     /**
@@ -539,9 +523,9 @@ public class ArchLoader {
      * @return Main class of the plugin. It must be resolved before first use.
      */
     private Class<IPlugin> loadPlugin(String dirname, String filename) {
-        return emulib.runtime.PluginLoader.getInstance(Main.getPassword()).loadPlugin(
-                System.getProperty("user.dir") + File.separator + dirname
-                + File.separator + filename);
+        return emulib.runtime.PluginLoader.getInstance(Main.password).loadPlugin(new StringBuilder()
+                .append(System.getProperty("user.dir")).append(File.separator).append(dirname)
+                .append(File.separator).append(filename).toString());
     }
     
     /**
@@ -565,7 +549,7 @@ public class ArchLoader {
             throw new ClassNotFoundException("Plug-in main class does not exist");
         }
         
-        if (!PluginLoader.getInstance(Main.getPassword()).doesImplement(mainClass, pluginInterface)) {
+        if (!PluginLoader.getInstance(Main.password).doesImplement(mainClass, pluginInterface)) {
             throw new ClassNotFoundException("Plug-in main class does not implement specified interface");
         }
 
@@ -577,11 +561,10 @@ public class ArchLoader {
             if (con != null) {
                 return (IPlugin) con.newInstance(pluginID);
             } else {
-                throw new Exception();
+                throw new Exception("Constructor of the plug-in is null.");
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new ClassNotFoundException("Plug-in main class does not have proper constructor");
+            throw new ClassNotFoundException("Plug-in main class does not have proper constructor", e);
         }
     }
 }

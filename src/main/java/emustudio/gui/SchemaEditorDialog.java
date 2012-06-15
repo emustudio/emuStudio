@@ -23,17 +23,20 @@ package emustudio.gui;
 
 import emulib.runtime.StaticDialogs;
 import emustudio.architecture.ArchLoader;
+import emustudio.architecture.WriteConfigurationException;
 import emustudio.architecture.drawing.DrawingPanel;
 import emustudio.architecture.drawing.DrawingPanel.DrawEventListener;
 import emustudio.architecture.drawing.DrawingPanel.DrawTool;
 import emustudio.architecture.drawing.Schema;
+import emustudio.main.Main;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.File;
 import javax.swing.ComboBoxModel;
 import javax.swing.event.ListDataListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Editor of abstract schemas of a virtual computer.
@@ -41,6 +44,7 @@ import javax.swing.event.ListDataListener;
  * @author vbmacher
  */
 public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
+    private final static Logger logger = LoggerFactory.getLogger(SchemaEditorDialog.class);
 
     /**
      * Schema of created computer.
@@ -62,8 +66,8 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         private String[] pluginNames;
         private Object selectedObject = null;
 
-        public pluginModel(String[] wt) {
-            this.pluginNames = wt;
+        public pluginModel(String[] pluginNames) {
+            this.pluginNames = pluginNames;
         }
 
         @Override
@@ -105,7 +109,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         this.schema = new Schema();
         this.edit = false;
         constructor(parent);
-        this.setTitle("Computer editor: new computer");
+        this.setTitle("New computer editor");
     }
 
     /**
@@ -120,7 +124,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         this.schema = schema;
         this.edit = true;
         constructor(parent);
-        this.setTitle("Computer editor: " + schema.getConfigName());
+        this.setTitle("Computer editor [" + schema.getConfigName() + "]");
     }
 
     /**
@@ -587,7 +591,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
     private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
         // check for correctness of the schema
         if (schema.getCpuElement() == null) {
-            StaticDialogs.showErrorMessage("The computer must contain a CPU!");
+            Main.tryShowErrorMessage("The computer must contain a CPU!");
             return;
         }
 
@@ -596,18 +600,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
                 : "Enter new computer name:", "Save & Close",
                 edit ? schema.getConfigName() : "");
         if (name.trim().equals("")) {
-            StaticDialogs.showErrorMessage("Computer name can not be empty!");
-            return;
-        }
-
-        try {
-            File f = new File(name + ".conf");
-            f = null;
-        } catch (NullPointerException np) {
-            StaticDialogs.showErrorMessage("Computer name can not be empty!");
-            return;
-        } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Computer name is wrong!");
+            Main.tryShowErrorMessage("Computer name can not be empty!");
             return;
         }
 
@@ -623,12 +616,24 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
                 if (!old.equals(name)) {
                     ArchLoader.renameConfig(name, old);
                 }
-                ArchLoader.getInstance().saveSchema(schema);
+                try {
+                    ArchLoader.getInstance().saveSchema(schema);
+                } catch (WriteConfigurationException e) {
+                    String msg = new StringBuilder().append("Could not save schema.").toString();
+                    logger.error(msg, e);
+                    Main.tryShowErrorMessage(msg);
+                }
                 odialog.setArchName(name);
                 odialog.update();
             } else {
                 schema.setConfigName(name);
-                ArchLoader.getInstance().saveSchema(schema);
+                try {
+                    ArchLoader.getInstance().saveSchema(schema);
+                } catch (WriteConfigurationException e) {
+                    String msg = new StringBuilder().append("Could not save schema.").toString();
+                    logger.error(msg, e);
+                    Main.tryShowErrorMessage(msg);
+                }
                 odialog.update();
             }
         }
@@ -652,8 +657,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             return;
         }
         buttonSelected = true;
-        String[] compilers = ArchLoader.getAllNames(ArchLoader.COMPILERS_DIR,
-                ".jar");
+        String[] compilers = ArchLoader.getAllNames(ArchLoader.COMPILERS_DIR, ".jar");
         cmbPlugin.setModel(new pluginModel(compilers));
         try {
             cmbPlugin.setSelectedIndex(0);

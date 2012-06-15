@@ -1,5 +1,5 @@
 /*
- * PluginLoadingException.java
+ * PluginInitializationException.java
  *
  * KISS, YAGNI, DRY
  * 
@@ -22,30 +22,19 @@
  */
 package emustudio.architecture;
 
-import emulib.plugins.IPlugin;
-
 /**
- * This exception is thrown when a plugin could not be loaded.
+ * This exception is thrown when plugins could not be initialized.
  * 
  * @author Peter Jakubco
  */
-public class PluginLoadingException extends Exception {
+public class PluginInitializationException extends Exception {
 
-    private IPlugin source;
-    private String pluginName;
-
-    public PluginLoadingException(String message, String pluginName,
-            IPlugin source) {
+    public PluginInitializationException(String message) {
         super(message);
-        this.pluginName = pluginName;
-        this.source = source;
     }
 
-    public IPlugin getSource() {
-        return source;
+    public PluginInitializationException(String message, Throwable e) {
+        super(message, e);
     }
-    
-    public String getPluginName() {
-        return pluginName;
-    }
+
 }

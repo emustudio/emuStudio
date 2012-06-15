@@ -51,6 +51,8 @@ import java.util.EventObject;
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The main window of the emuStudio.
@@ -59,6 +61,7 @@ import javax.swing.event.CaretListener;
  */
 @SuppressWarnings("serial")
 public class StudioFrame extends javax.swing.JFrame {
+    private final static Logger logger = LoggerFactory.getLogger(StudioFrame.class);
     private EmuTextPane txtSource;
     private Computer arch; // current architecture
     private ActionListener undoStateListener;
@@ -128,7 +131,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
         this.setLocationRelativeTo(null);
-        this.setTitle("emuStudio - " + title);
+        this.setTitle("emuStudio [" + title + "]");
         txtSource.grabFocus();
     }
     
@@ -290,7 +293,7 @@ public class StudioFrame extends javax.swing.JFrame {
                 tblDebug.update();
             }
             
-        }, Main.getPassword());
+        }, Main.password);
     }
 
     private void initComponents() {
@@ -1083,8 +1086,6 @@ public class StudioFrame extends javax.swing.JFrame {
         layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
                 GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
-
-//        pack();
     }
 
     private void btnPauseActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1095,13 +1096,13 @@ public class StudioFrame extends javax.swing.JFrame {
         try {
             int i = lstDevices.getSelectedIndex();
             if (i == -1) {
-                StaticDialogs.showErrorMessage("Device has to be selected!");
+                Main.tryShowErrorMessage("Device has to be selected!");
                 return;
             }
             arch.getDevices()[i].showSettings();
         } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Can't show settings of the device:\n "
-                    + e.getMessage());
+            logger.error("Can't show settings of the device.",e);
+            Main.tryShowErrorMessage("Can't show settings of the device:\n " + e.getMessage());
         }
     }
 
@@ -1109,21 +1110,22 @@ public class StudioFrame extends javax.swing.JFrame {
         try {
             int i = lstDevices.getSelectedIndex();
             if (i == -1) {
-                StaticDialogs.showErrorMessage("Device has to be selected!");
+                Main.tryShowErrorMessage("Device has to be selected!");
                 return;
             }
             arch.getDevices()[i].showGUI();
         } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Can't show GUI of the device:\n "
-                    + e.getMessage());
+            logger.error("Can't show GUI of the device.", e);
+            Main.tryShowErrorMessage("Can't show GUI of the device:\n " + e.getMessage());
         }
     }
 
     private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {
         if ((memory != null) && (memory.isShowSettingsSupported())) {
             memory.showSettings();
-        } else
-            StaticDialogs.showMessage("The GUI is not supported");
+        } else {
+            Main.tryShowMessage("The GUI is not supported");
+        }
     }
 
     private void btnStepActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1152,12 +1154,13 @@ public class StudioFrame extends javax.swing.JFrame {
                         try {
                             Thread.sleep(slice);
                         } catch (InterruptedException e) {
+                            logger.error("Sleeping interrupted while performing timed emulation.", e);
                         }
                     }
                 }
             }.start();
         } catch (NumberFormatException e) {
-            StaticDialogs.showErrorMessage("Error: Wrong number format");
+            Main.tryShowErrorMessage("Error: Wrong number format");
         }
     }
 
@@ -1175,7 +1178,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         } catch (NullPointerException e) {
         }
-    }//GEN-LAST:event_btnBackActionPerformed
+    }
 
     private void btnBeginningActionPerformed(java.awt.event.ActionEvent evt) {
         try {
@@ -1205,24 +1208,20 @@ public class StudioFrame extends javax.swing.JFrame {
     private void btnJumpActionPerformed(java.awt.event.ActionEvent evt) {
         int address;
         try {
-            String number = StaticDialogs.inputStringValue("Jump to address: ",
-                    "Jump", "0");
+            String number = StaticDialogs.inputStringValue("Jump to address: ", "Jump", "0");
             if (number == null) {
                 return;
             }
             address = RadixUtils.getInstance().parseRadix(number);
         } catch (NumberFormatException e) {
-            StaticDialogs.showErrorMessage("The number entered is in"
-                    + " inccorret format", "Jump");
+            Main.tryShowErrorMessage("The number entered is in inccorret format", "Jump");
             return;
         }
         if (cpu.setInstrPosition(address) == false) {
-            String maxSize = (memory != null)
-                    ? "\n (expected range from 0 to "
-                    + String.valueOf(memory.getSize()) + ")"
-                    : "";
-            StaticDialogs.showErrorMessage("Typed address is incorrect !"
-                    + maxSize, "Jump");
+            StringBuilder maxSize = (memory != null) ? new StringBuilder().append("\n (expected range from 0 to ")
+                    .append(String.valueOf(memory.getSize())).append(")") : new StringBuilder();
+            Main.tryShowErrorMessage(new StringBuilder().append("Typed address is incorrect !")
+                    .append(maxSize).toString(), "Jump");
             return;
         }
         paneDebug.revalidate();
@@ -1239,16 +1238,15 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void btnCompileActionPerformed(java.awt.event.ActionEvent evt) {
         if (run_state == RunState.STATE_RUNNING) {
-            StaticDialogs.showErrorMessage("You must first stop running emulation.");
+            Main.tryShowErrorMessage("You must first stop running emulation.", "Compile");
             return;
         }
         if (compiler == null) {
-            StaticDialogs.showErrorMessage("Compiler is not defined.");
+            Main.tryShowErrorMessage("Compiler is not defined.", "Compile");
             return;
         }
         txtOutput.setText("");
         String fn = txtSource.getFileName();
-//        fn = fn.substring(0, fn.lastIndexOf(".")) + ".hex"; // chyba.
 
         try {
             StringReader sourceReader;
@@ -1263,11 +1261,8 @@ public class StudioFrame extends javax.swing.JFrame {
             }
             cpu.reset(programStart);
         } catch (Exception e) {
-            e.printStackTrace();
-            txtOutput.append(e.toString() + "\n");
-        } catch (Error ex) {
-            ex.printStackTrace();
-            txtOutput.append(ex.toString() + "\n");
+            logger.error("Could not compile file.", e);
+            txtOutput.append("Could not compile file: " + e.toString() + "\n");
         }
     }
 
@@ -1349,34 +1344,23 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void btnPasteActionPerformed(java.awt.event.ActionEvent evt) {
-        try {
-            txtSource.paste();
-        } catch (Exception e) {
-        }
+        txtSource.paste();
     }
 
     private void btnCopyActionPerformed(java.awt.event.ActionEvent evt) {
-        try {
-            txtSource.copy();
-        } catch (Exception e) {
-        }
+        txtSource.copy();
     }
 
     private void btnCutActionPerformed(java.awt.event.ActionEvent evt) {
-        try {
-            txtSource.cut();
-        } catch (Exception e) {
-        }
+        txtSource.cut();
     }
 
     private void btnRedoActionPerformed(java.awt.event.ActionEvent evt) {
         txtSource.redo();
-        //undoStateListener.actionPerformed(new ActionEvent(this,0,""));
     }
 
     private void btnUndoActionPerformed(java.awt.event.ActionEvent evt) {
         txtSource.undo();
-        //undoStateListener.actionPerformed(new ActionEvent(this,0,""));
     }
 
     private void mnuEditFindActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1392,7 +1376,7 @@ public class StudioFrame extends javax.swing.JFrame {
                         FindText.getInstance().getMatchEnd());
                 txtSource.grabFocus();
             } else {
-                StaticDialogs.showMessage("Expression was not found");
+                Main.tryShowMessage("Expression was not found", "Find");
             }
         } catch (NullPointerException e) {
             mnuEditFindActionPerformed(evt);
@@ -1400,10 +1384,9 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void btnBreakpointActionPerformed(java.awt.event.ActionEvent evt) {
-        int address = 0;
         BreakpointDialog bDialog = new BreakpointDialog(this, true);
         bDialog.setVisible(true);
-        address = bDialog.getAddress();
+        int address = bDialog.getAddress();
         if ((address != -1) && arch.getCPU().isBreakpointSupported()) {
             arch.getCPU().setBreakpoint(address, bDialog.isSet());
         }
@@ -1416,7 +1399,7 @@ public class StudioFrame extends javax.swing.JFrame {
             if (FindText.getInstance().replaceNext(txtSource)) {
                 txtSource.grabFocus();
             } else {
-                StaticDialogs.showMessage("Expression was not found");
+                Main.tryShowMessage("Expression was not found", "Replace next");
             }
         } catch (NullPointerException e) {
             mnuEditFindActionPerformed(evt);

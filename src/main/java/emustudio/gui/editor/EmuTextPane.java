@@ -29,6 +29,7 @@ import emulib.plugins.compiler.SourceFileExtension;
 import emulib.runtime.StaticDialogs;
 import emustudio.gui.utils.EmuFileFilter;
 import emustudio.interfaces.ITokenColor;
+import emustudio.main.Main;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Insets;
@@ -53,6 +54,8 @@ import javax.swing.text.AbstractDocument.DefaultDocumentEvent;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class is extended JTextPane class. Support some awesome features like
@@ -63,6 +66,7 @@ import javax.swing.undo.UndoableEdit;
  */
 @SuppressWarnings("serial")
 public class EmuTextPane extends JTextPane {
+    private final static Logger logger = LoggerFactory.getLogger(EmuTextPane.class);
 
     /**
      * Width of a column in the editor where line numbers are shown
@@ -324,8 +328,10 @@ public class EmuTextPane extends JTextPane {
     public boolean openFile(File file) {
         fileSource = file;
         if (fileSource.canRead() == false) {
-            StaticDialogs.showErrorMessage("File " + fileSource.getPath()
-                    + " cannot be read.");
+            String msg = new StringBuilder().append("File: ").append(fileSource.getPath()).append(" cannot be read.")
+                    .toString();
+            logger.error(msg);
+            Main.tryShowErrorMessage(msg);
             return false;
         }
         try {
@@ -345,14 +351,13 @@ public class EmuTextPane extends JTextPane {
                     styles);
                 highlight.colorAll();
             }
-        } catch (java.io.FileNotFoundException ex) {
-            StaticDialogs.showErrorMessage("File not found: "
-                    + fileSource.getPath());
+        } catch (java.io.FileNotFoundException e) {
+            logger.error("Could not open file. File not found.", e);
+            Main.tryShowErrorMessage("File not found: " + fileSource.getPath());
             return false;
         } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Error opening the file: "
-                    + fileSource.getPath());
-            e.printStackTrace();
+            logger.error("Could not open file.", e);
+            Main.tryShowErrorMessage("Error opening the file: " + fileSource.getPath());
             return false;
         }
         return true;
@@ -417,8 +422,7 @@ public class EmuTextPane extends JTextPane {
      */
     public boolean confirmSave() {
         if (fileSaved == false) {
-            int r = JOptionPane.showConfirmDialog(null,
-                    "File is not saved yet. Do you want to save the file ?");
+            int r = JOptionPane.showConfirmDialog(null, "File is not saved yet. Do you want to save the file ?");
             if (r == JOptionPane.YES_OPTION) {
                 return (!saveFile(true));
             } else if (r == JOptionPane.CANCEL_OPTION) {
@@ -441,8 +445,8 @@ public class EmuTextPane extends JTextPane {
             if (showDialogIfFileIsInvalid)
                 return saveFileDialog();
             else {
-                StaticDialogs.showErrorMessage("Error: Cannot save the file!"
-                        + "\n The selected file is not writable.");
+                logger.error("Could not save file, the file is not writable: " + fileSource.getPath());
+                Main.tryShowErrorMessage("Error: Cannot save the file!\n The selected file is not writable.");
                 return false;
             }
         }
@@ -453,8 +457,9 @@ public class EmuTextPane extends JTextPane {
             fileSaved = true;
             return true;
         } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Error: Cannot save the file: "
-                    + fileSource.getPath() + "\n" + e.getLocalizedMessage());
+            logger.error("Could not save file: " + fileSource.getPath(), e);
+            Main.tryShowErrorMessage(new StringBuilder().append("Error: Cannot save the file: ")
+                    .append(fileSource.getPath()).append("\n").append(e.getLocalizedMessage()).toString());
             return false;
         }
     }

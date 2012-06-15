@@ -30,6 +30,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.EventListener;
+import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.event.EventListenerList;
@@ -167,7 +168,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
      * Temporary points used in the process of connection line drawing.
      * If the line is drawn, these points are saved, they are cleared otherwise.
      */
-    private ArrayList<Point> tmpPoints;
+    private List<Point> tmpPoints;
     
     private String newPluginName;
 
@@ -428,7 +429,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
 
         area.width=0;
         area.height=0;
-        ArrayList<Element> a = schema.getAllElements();
+        List<Element> a = schema.getAllElements();
         for (int i = 0; i < a.size(); i++) {
             Element e = a.get(i);
             if (e.getX() + e.getWidth() > area.width)
@@ -437,7 +438,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 area.height = e.getY() + e.getHeight();
         }
         for (int i = 0; i < schema.getConnectionLines().size(); i++) {
-            ArrayList<Point> ps = schema.getConnectionLines().get(i).getPoints();
+            List<Point> ps = schema.getConnectionLines().get(i).getPoints();
             for (int j = 0; j < ps.size(); j++) {
                 Point p = ps.get(j);
                 if ((int)p.getX() > area.width)
@@ -480,7 +481,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        ArrayList<Element> a = schema.getAllElements();
+        List<Element> a = schema.getAllElements();
         
         // najprv mriezka
         paintGrid(g);
@@ -693,7 +694,6 @@ public class DrawingPanel extends JPanel implements MouseListener,
                     } else if (tmpElem2 == null) {
                         tmpElem2 = elem;
                     }
-                    return;
                 } else {
                     // if user didn't clicked on an element, but on drawing area
                     // means that there a new line point should be created.

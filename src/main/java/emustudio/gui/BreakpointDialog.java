@@ -25,6 +25,7 @@ package emustudio.gui;
 import emulib.runtime.RadixUtils;
 import emulib.runtime.StaticDialogs;
 import emustudio.gui.utils.NiceButton;
+import emustudio.main.Main;
 import javax.swing.*;
 
 /**
@@ -116,7 +117,7 @@ public class BreakpointDialog extends JDialog {
         try {
             adr = RadixUtils.getInstance().parseRadix(txtAddress.getText());
         } catch (NumberFormatException e) {
-            StaticDialogs.showErrorMessage("Invalid address, try again !");
+            Main.tryShowErrorMessage("Invalid address, try again !");
             txtAddress.grabFocus();
             return false;
         }

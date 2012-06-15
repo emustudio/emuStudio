@@ -30,6 +30,8 @@ import emulib.plugins.memory.IMemory;
 import emulib.runtime.interfaces.IConnections;
 import emustudio.architecture.ArchLoader.PluginInfo;
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class implements virtual computer architecture.
@@ -37,12 +39,13 @@ import java.util.*;
  * @author vbmacher
  */
 public class Computer implements IConnections {
+    private final static Logger logger = LoggerFactory.getLogger(Computer.class);
     private ICPU cpu;
     private ICompiler compiler;
     private IMemory memory;
     private IDevice[] devices;
 
-    private Map<Long, ArrayList<Long>> connections;
+    private Map<Long, List<Long>> connections;
     private Map<Long, IPlugin> plugins;
 
     /**
@@ -58,9 +61,8 @@ public class Computer implements IConnections {
      * @param connections hashtable with all connections. Keys and values are
      * plug-in IDs.
      */
-    public Computer(ICPU cpu, IMemory memory, ICompiler compiler, 
-            IDevice[] devices, Collection<PluginInfo> plugins,
-            Map<Long, ArrayList<Long>> connections) {
+    public Computer(ICPU cpu, IMemory memory, ICompiler compiler, IDevice[] devices, Collection<PluginInfo> plugins,
+            Map<Long, List<Long>> connections) {
         this.cpu = cpu;
         this.memory = memory;
         this.compiler = compiler;
@@ -154,22 +156,38 @@ public class Computer implements IConnections {
      * Destroys this computer
      */
     public void destroy() {
-        try {
-            if (compiler != null)
+        if (compiler != null) {
+            try {
                 compiler.destroy();
-
-            int size = devices.length;
-            for (int i = 0; i < size; i++)
+            } catch (Exception e) {
+                logger.error("Could not destroy compiler.", e);
+            }
+        }
+        int size = devices.length;
+        for (int i = 0; i < size; i++) {
+            try {
                 devices[i].destroy();
+            } catch (Exception e) {
+                logger.error("Could not destroy device.", e);
+            }
+        }
+        try {
             cpu.destroy();
-            
-            if (memory != null)
+        } catch (Exception e) {
+            logger.error("Could not destroy CPU.", e);
+        }
+        if (memory != null) {
+            try {
                 memory.destroy();
+            } catch (Exception e) {
+                logger.error("Could not destroy memory.", e);
+            }
+        }
 
-            plugins.clear();
-            connections.clear();
-        } catch (Exception e) {}
+        plugins.clear();
+        connections.clear();
     }
+
     /**
      * This method initializes all plug-ins
      *
@@ -234,7 +252,7 @@ public class Computer implements IConnections {
      */
     @Override
     public boolean isConnected(long pluginID, long toPluginID) {
-        ArrayList<Long> ar = connections.get(pluginID);
+        List<Long> ar = connections.get(pluginID);
 
         if ((ar == null) || ar.isEmpty()) {
             return false;

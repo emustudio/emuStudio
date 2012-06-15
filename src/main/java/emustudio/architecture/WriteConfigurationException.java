@@ -1,5 +1,5 @@
 /*
- * PluginLoadingException.java
+ * WriteConfigurationException.java
  *
  * KISS, YAGNI, DRY
  * 
@@ -22,30 +22,17 @@
  */
 package emustudio.architecture;
 
-import emulib.plugins.IPlugin;
-
 /**
- * This exception is thrown when a plugin could not be loaded.
+ * This exception is thrown when virtual computer configuration could not be saved.
  * 
- * @author Peter Jakubco
+ * @author vbmacher
  */
-public class PluginLoadingException extends Exception {
-
-    private IPlugin source;
-    private String pluginName;
-
-    public PluginLoadingException(String message, String pluginName,
-            IPlugin source) {
-        super(message);
-        this.pluginName = pluginName;
-        this.source = source;
-    }
-
-    public IPlugin getSource() {
-        return source;
+public class WriteConfigurationException extends Exception {
+    public WriteConfigurationException(String message, Throwable cause) {
+        super(message, cause);
     }
     
-    public String getPluginName() {
-        return pluginName;
+    public WriteConfigurationException(String message) {
+        super(message);
     }
 }

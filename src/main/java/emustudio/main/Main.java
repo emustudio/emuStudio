@@ -23,21 +23,17 @@
 package emustudio.main;
 
 import emulib.runtime.StaticDialogs;
-import emustudio.architecture.ArchHandler;
-import emustudio.architecture.ArchLoader;
-import emustudio.architecture.PluginLoadingException;
+import emustudio.architecture.*;
 import emustudio.gui.LoadingDialog;
 import emustudio.gui.OpenComputerDialog;
 import emustudio.gui.StudioFrame;
 import java.io.File;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main class of the emuStudio platform.
@@ -46,10 +42,15 @@ import java.util.Date;
  */
 public class Main {
 
+    private final static Logger logger = LoggerFactory.getLogger(Main.class);
     /**
      * Loaded computer.
      */
     public static ArchHandler currentArch = null;
+    /**
+     * emuStudio password for emuLib identification security mechanism.
+     */
+    public static String password = null;
     private static String inputFileName = null;
     private static String outputFileName = null;
     private static String configName = null;
@@ -57,22 +58,35 @@ public class Main {
     private static boolean checkHash = false;
     private static String classToHash = null;
     private static boolean help = false;
-    private static String password = null;
     private static boolean noGUI = false;
 
-    /**
-     * Get emuStudio password for emuLib identification security mechanism.
-     * 
-     * @return emuStudio password
-     */
-    public static String getPassword() {
-        return password;
+    public static void tryShowMessage(String message) {
+        if (!noGUI) {
+            StaticDialogs.showMessage(message);
+        }
+    }
+
+    public static void tryShowMessage(String message, String title) {
+        if (!noGUI) {
+            StaticDialogs.showMessage(message, title);
+        }
+    }
+
+    public static void tryShowErrorMessage(String message) {
+        if (!noGUI) {
+            StaticDialogs.showErrorMessage(message);
+        }
+    }
+
+    public static void tryShowErrorMessage(String message, String title) {
+        if (!noGUI) {
+            StaticDialogs.showErrorMessage(message, title);
+        }
     }
 
     /**
-     * This method parsers the command line parameters. It sets
-     * internal class data members accordingly.
-     * 
+     * This method parsers the command line parameters. It sets internal class data members accordingly.
+     *
      * @param args The command line arguments
      */
     private static void parseCommandLine(String[] args) {
@@ -85,23 +99,19 @@ public class Main {
                     i++;
                     // what configuration to load
                     if (configName != null) {
-                        System.out.println("Config file already defined,"
-                                + " ignoring this one: " + args[i]);
+                        logger.warn(new StringBuilder().append("Config file already defined, ignoring this one: ").append(args[i]).toString());
                     } else {
                         configName = args[i];
-                        System.out.println("Loading virtual computer: "
-                                + configName);
+                        logger.info(new StringBuilder().append("Loading virtual computer: ").append(configName).toString());
                     }
                 } else if (arg.equals("--INPUT")) {
                     i++;
                     // what input file take to compiler
                     if (inputFileName != null) {
-                        System.out.println("Input file already defined,"
-                                + " ignoring this one: " + args[i]);
+                        logger.warn(new StringBuilder().append("Input file already defined, ignoring this one: ").append(args[i]).toString());
                     } else {
                         inputFileName = args[i];
-                        System.out.println("Input file name: "
-                                + inputFileName);
+                        logger.info(new StringBuilder().append("Input file name for compiler: ").append(inputFileName).toString());
                     }
                 } else if (arg.equals("--OUTPUT")) {
                     i++;
@@ -109,22 +119,19 @@ public class Main {
                     // automation process. This option has a meaning
                     // only if the "-auto" option is set too.
                     if (outputFileName != null) {
-                        System.out.println("Output file already defined,"
-                                + " ignoring this one: " + args[i]);
+                        logger.warn(new StringBuilder().append("Output file already defined, ignoring this one: ").append(args[i]).toString());
                     } else {
                         outputFileName = args[i];
-                        System.out.println("Output file name: "
-                                + outputFileName);
+                        logger.info(new StringBuilder().append("Output file name: ").append(outputFileName).toString());
                     }
                 } else if (arg.equals("--AUTO")) {
                     auto = true;
-                    System.out.println("Turning automatization on.");
+                    logger.info("Turning automatization on.");
                 } else if (arg.equals("--HASH")) {
                     i++;
                     checkHash = true;
                     if (classToHash != null) {
-                        System.out.println("Class file already defined,"
-                                + " ignoring this one: " + args[i]);
+                        logger.warn(new StringBuilder().append("Class file already defined, ignoring this one: ").append(args[i]).toString());
                     } else {
                         classToHash = args[i];
                     }
@@ -132,61 +139,18 @@ public class Main {
                 } else if (arg.equals("--HELP")) {
                     help = true;
                 } else if (arg.equals("--NOGUI")) {
+                    logger.info("Setting GUI off.");
                     noGUI = true;
                 } else {
-                    System.out.println("Error: Invalid command line argument "
-                            + "(" + arg + ")!");
+                    logger.error(new StringBuilder().append("Invalid command line argument (").append(arg).append(")").toString());
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
+                logger.error(new StringBuilder().append("[").append(arg).append("] Missing argument").toString());
             }
         }
 
     }
-
-    /**
-     * Compute hash of a plug-in context interface. Uses SHA-1 method.
-     *
-     * @param inter  Interface to computer hash of
-     * @return SHA-1 hash string
-     */
-    private static String computeHash(Class<?> inter) {
-        int i;
-        Method[] methods, met;
-        String hash = "";
-
-        met = inter.getDeclaredMethods(); //  .getMethods();
-        ArrayList me = new ArrayList();
-        for (i = 0; i < met.length; i++)
-            me.add(met[i]);
-        Collections.sort(me, new Comparator() {
-
-            @Override
-            public int compare(Object o1, Object o2) {
-                Method m1 = (Method)o1;
-                Method m2 = (Method)o2;
-
-                return m1.getName().compareTo(m2.getName());
-            }
-
-        });
-        methods = (Method[])me.toArray(new Method[0]);
-        me.clear();
-
-        for (i = 0; i < methods.length; i++) {
-            hash += methods[i].getGenericReturnType().toString() + " ";
-            hash += methods[i].getName() + "(";
-            Class<?>[] params = methods[i].getParameterTypes();
-            for (int j = 0; j < params.length; j++)
-                hash += params[j].getName() + ",";
-            hash += ");";
-        }
-        try {
-            return emulib.runtime.Context.SHA1(hash);
-        } catch(Exception e) {
-            return null;
-        }
-    }
-
+    
     /**
      * @param args the command line arguments
      */
@@ -199,24 +163,25 @@ public class Main {
         } catch (IllegalAccessException e) {
         }
 
+        // parse command line arguments
+        parseCommandLine(args);
+
         // Test if java_cup is loaded
         try {
             java_cup.runtime.Scanner d;
         } catch (NoClassDefFoundError e) {
-            StaticDialogs.showErrorMessage("Error: java_cup library not loaded!");
-            return;
-        }
-        
-        password = emulib.runtime.Context.SHA1(String.valueOf(Math.random())
-                + new Date().toString());
-        if (!emulib.runtime.Context.assignPassword(password)) {
-            StaticDialogs.showErrorMessage("Error:"
-                    + " communication with emuLib failed.");
+            logger.error("java_cup library not loaded");
+            tryShowErrorMessage("Error: java_cup library not loaded.");
             return;
         }
 
-        // parse command line arguments
-        parseCommandLine(args);
+        password = emulib.runtime.Context.SHA1(String.valueOf(Math.random())
+                + new Date().toString());
+        if (!emulib.runtime.Context.assignPassword(password)) {
+            logger.error("Communication with emuLib failed.");
+            tryShowErrorMessage("Error: communication with emuLib failed.");
+            return;
+        }
 
         if (help) {
             // only show help and EXIT (ignore other arguments)
@@ -248,12 +213,15 @@ public class Main {
                 // Load in the class; Class.childclass should be located in
                 // the directory file:/c:/class/user/information
                 Class cls = loader.loadClass(classToHash);
-                System.out.println(computeHash(cls));
+
+                // Prints the hash to the console
+                System.out.println(emulib.runtime.Context.getInstance().computeHash(password, cls));
             } catch (MalformedURLException e) {
+                logger.error("Could not compute hash.", e);
             } catch (ClassNotFoundException e) {
-                System.out.println("Error: Class is not found!");
-            } catch (NullPointerException np) {
-                System.out.println("Error: Class name is not specified!");
+                logger.error("Given class is not found.", e);
+            } catch (NullPointerException e) {
+                logger.error("Class name is not specified.", e);
             }
             return;
         }
@@ -261,12 +229,17 @@ public class Main {
         // if configuration name has not been specified, let user
         // to choose the configuration manually
         if (configName == null) {
+            if (noGUI) {
+                logger.error("Configuration was not specified.");
+                System.exit(0);
+            }
             OpenComputerDialog odi = new OpenComputerDialog();
             odi.setVisible(true);
             if (odi.getOK()) {
                 configName = odi.getArchName();
             }
             if (configName == null) {
+                logger.error("Configuration was not specified.");
                 System.exit(0);
             }
         }
@@ -276,32 +249,26 @@ public class Main {
             // display splash screen, while loading the virtual computer
             splash = new LoadingDialog();
             splash.setVisible(true);
-        } else
-            System.out.println("Loading virtual computer: " + configName);
+        } else {
+            logger.info(new StringBuilder().append("Loading virtual computer: ").append(configName).toString());
+        }
 
         // load the virtual computer
         try {
             currentArch = ArchLoader.getInstance().loadComputer(configName, auto, noGUI);
         } catch (PluginLoadingException e) {
-            String h = e.getLocalizedMessage();
-            if (h == null || h.equals("")) {
-                h = "Unknown error";
-            }
-            if (!noGUI)
-                StaticDialogs.showErrorMessage("Error with computer loading : " + h);
-            else
-                System.out.println("Error with computer loading : " + h);
             currentArch = null;
-        } catch (Error er) {
-            String h = er.getLocalizedMessage();
-            if (h == null || h.equals("")) {
-                h = "Unknown error";
-            }
-            if (!noGUI)
-                StaticDialogs.showErrorMessage("Error with computer loading : " + h);
-            else
-                System.out.println("Error with computer loading : " + h);
-            currentArch = null;
+            logger.error("Could not load virtual computer.", e);
+            tryShowErrorMessage(new StringBuilder().append("Could not load virtual computer: ")
+                    .append(e.getLocalizedMessage()).toString());
+        } catch (ReadConfigurationException e) {
+            logger.error("Could not read configuration.", e);
+            tryShowErrorMessage(new StringBuilder().append("Error: Could not read configuration: ")
+                    .append(e.getLocalizedMessage()).toString());
+        } catch (PluginInitializationException e) {
+            logger.error("Could not initialize plug-ins.", e);
+            tryShowErrorMessage(new StringBuilder().append("Error: Could not initialize plug-ins: ")
+                    .append(e.getLocalizedMessage()).toString());
         }
 
         if (!noGUI) {
@@ -310,25 +277,24 @@ public class Main {
         }
 
         if (currentArch == null) {
-            System.out.println("Error: Cannot load the virtual computer.");
-            System.exit(0);
+            System.exit(1);
         }
 
         if (!auto) {
             try {
                 // if the automatization is turned off, start the emuStudio normally
                 if (inputFileName != null) {
-                    new StudioFrame(inputFileName,configName).setVisible(true);
+                    new StudioFrame(inputFileName, configName).setVisible(true);
                 } else {
                     new StudioFrame(configName).setVisible(true);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-                System.exit(0);
+                logger.error("Could not start main window.", e);
+                tryShowErrorMessage("Could not start main window.");
+                System.exit(1);
             }
         } else {
-            new Automatization(currentArch, inputFileName, outputFileName)
-                    .runAutomatization(noGUI);
+            new Automatization(currentArch, inputFileName, outputFileName).runAutomatization(noGUI);
             currentArch.destroy();
             System.exit(0);
         }

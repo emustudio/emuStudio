@@ -16,6 +16,9 @@
       <includes>
         <include>net.sf.emustudio:emuLib</include>
         <include>cup:java-cup-runtime</include>
+        <include>org.slf4j:slf4j-api</include>
+        <include>ch.qos.logback:logback-core</include>
+        <include>ch.qos.logback:logback-classic</include>
       </includes>
     </dependencySet>
     <dependencySet>

@@ -33,6 +33,8 @@ import emustudio.architecture.drawing.PreviewPanel;
 import emustudio.main.Main;
 import java.awt.event.*;
 import javax.swing.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -40,6 +42,7 @@ import javax.swing.*;
  */
 @SuppressWarnings("serial")
 public class ViewComputerDialog extends JDialog {
+    private final static Logger logger = LoggerFactory.getLogger(ViewComputerDialog.class);
 
     private boolean easterClicked = false; // for easterEgg
     private ArchHandler arch;
@@ -106,8 +109,8 @@ public class ViewComputerDialog extends JDialog {
                 cmbDevice.addItem(comp.getDevice(i).getTitle());
             }
         } catch (NullPointerException e) {
-            StaticDialogs.showErrorMessage("Error: Can't get plug-ins information\n\n"
-                    + e.getMessage());
+            logger.error("Couldn't get plug-ins information during viewing computer.", e);
+            Main.tryShowErrorMessage("Error: Can't get plug-ins information\n\n" + e.getMessage());
         }
 
         if (cmbDevice.getItemCount() > 0) {
@@ -272,7 +275,7 @@ public class ViewComputerDialog extends JDialog {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (easterClicked && e.isAltDown() && (e.getKeyCode() == KeyEvent.VK_A)) {
-                    StaticDialogs.showMessage("Easter egg: Welcome, vbmacher!");
+                    Main.tryShowMessage("Easter egg: Welcome, vbmacher!");
                 }
                 e.consume();
             }

@@ -23,12 +23,8 @@
 
 package emustudio.architecture.drawing;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Point;
-import java.util.ArrayList;
+import java.awt.*;
+import java.util.List;
 import javax.swing.JPanel;
 
 /**
@@ -115,7 +111,7 @@ public class PreviewPanel extends JPanel {
         // nemoze byt dalej ako bod)
         int width=0, height=0, minLeft = -1, minTop = -1;
 
-        ArrayList<Element> a = schema.getAllElements();
+        List<Element> a = schema.getAllElements();
 
         for (int i = a.size()-1; i >= 0; i--)
             a.get(i).measure(g,0,0);
@@ -143,7 +139,7 @@ public class PreviewPanel extends JPanel {
                 height = eY + eHeight;
         }
         for (int i = schema.getConnectionLines().size() -1; i >= 0; i--) {
-            ArrayList<Point> ps = schema.getConnectionLines().get(i).getPoints();
+            List<Point> ps = schema.getConnectionLines().get(i).getPoints();
             for (int j = ps.size() - 1; j >= 0; j--) {
                 Point p = ps.get(j);
 
@@ -186,7 +182,7 @@ public class PreviewPanel extends JPanel {
         boolean moved = panelResized;
         if (panelResized == false)
             resizePanel(g);
-        ArrayList<Element> a = schema.getAllElements();
+        List<Element> a = schema.getAllElements();
         if (moved == false)
             for (int i = 0; i < a.size(); i++) {
                 Element e = a.get(i);

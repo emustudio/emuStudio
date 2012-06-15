@@ -23,10 +23,7 @@
 package emustudio.architecture.drawing;
 
 import java.awt.Point;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * This class represents abstract schema of virtual computer configuration.
@@ -48,8 +45,8 @@ public class Schema {
     private CompilerElement compilerElement;
     private CpuElement cpuElement;
     private MemoryElement memoryElement;
-    private ArrayList<DeviceElement> deviceElements;
-    private ArrayList<ConnectionLine> lines;
+    private List<DeviceElement> deviceElements;
+    private List<ConnectionLine> lines;
     private Properties settings;
     /**
      * Whether to use and draw grid
@@ -70,8 +67,9 @@ public class Schema {
      * @param configName name of the configuration file
      * @param settings configuration file (all settings for all plug-ins)
      * @throws NumberFormatException when some settings are not well parseable
+     * @throws NullPointerException when some settings are not well parseable
      */
-    public Schema(String configName, Properties settings) throws NumberFormatException {
+    public Schema(String configName, Properties settings) throws NumberFormatException, NullPointerException {
         this.configName = configName;
         this.settings = settings;
         load();
@@ -95,7 +93,7 @@ public class Schema {
     /**
      * Method loads schema from configuration file (settings).
      */
-    private void load() throws NumberFormatException {
+    private void load() throws NumberFormatException, NullPointerException {
         this.deviceElements = new ArrayList<DeviceElement>();
         this.lines = new ArrayList<ConnectionLine>();
 
@@ -104,34 +102,21 @@ public class Schema {
         gridGap = Integer.parseInt(settings.getProperty("gridGap",
                 DrawingPanel.DEFAULT_GRID_GAP));
 
-        try {
-            compilerElement = new CompilerElement(settings.getProperty("compiler"),
-                    selectSettings("compiler"));
-        } catch (Exception e) {}
-        try {
-            // if cpu is null here, it does not matter. Maybe user just did not
-            // finish the schema..
-            cpuElement = new CpuElement(settings.getProperty("cpu"),
-                    selectSettings("cpu"));
-        } catch (Exception e) {}
-        try {
-            memoryElement = new MemoryElement(settings.getProperty("memory"),
-                    selectSettings("memory"));
-        } catch (Exception e) {}
+        compilerElement = new CompilerElement(settings.getProperty("compiler"), selectSettings("compiler"));
+        // if cpu is null here, it does not matter. Maybe user just did not
+        // finish the schema..
+        cpuElement = new CpuElement(settings.getProperty("cpu"), selectSettings("cpu"));
+        memoryElement = new MemoryElement(settings.getProperty("memory"), selectSettings("memory"));
         // load devices
         for (int i = 0; settings.containsKey("device" + i); i++) {
-            try {
-                deviceElements.add(new DeviceElement(settings.getProperty("device"+i),
-                        selectSettings("device"+i)));
-            } catch (Exception e) {}
+            deviceElements.add(new DeviceElement(settings.getProperty("device"+i), selectSettings("device"+i)));
         }
 
         // load line connections
         for (int i = 0; settings.containsKey("connection" + i + ".junc0"); i++) {
             String j0 = settings.getProperty("connection" + i + ".junc0", "");
             String j1 = settings.getProperty("connection" + i + ".junc1", "");
-            boolean bidi = Boolean.parseBoolean(settings.getProperty("connection"
-                    + i + ".bidirectional", "true"));
+            boolean bidi = Boolean.parseBoolean(settings.getProperty("connection" + i + ".bidirectional", "true"));
             if (j0.equals("") || j1.equals("")) {
                 continue;
             }
@@ -162,10 +147,8 @@ public class Schema {
                 ConnectionLine lin = new ConnectionLine(e1, e2, null);
                 lin.setBidirectional(bidi);
                 for (int j = 0; settings.containsKey("connection" + i + ".point" + j + ".x"); j++) {
-                    x = Integer.parseInt(settings.getProperty("connection"
-                            + i + ".point" + j + ".x", "0"));
-                    y = Integer.parseInt(settings.getProperty("connection"
-                            + i + ".point" + j + ".y", "0"));
+                    x = Integer.parseInt(settings.getProperty("connection" + i + ".point" + j + ".x", "0"));
+                    y = Integer.parseInt(settings.getProperty("connection" + i + ".point" + j + ".y", "0"));
                     lin.addPoint(new Point(x, y));
                 }
                 lines.add(lin);
@@ -319,7 +302,7 @@ public class Schema {
      *
      * @return ArrayList object containing all devices
      */
-    public ArrayList<DeviceElement> getDeviceElements() {
+    public List<DeviceElement> getDeviceElements() {
         return deviceElements;
     }
 
@@ -358,8 +341,8 @@ public class Schema {
      *
      * @return ArrayList object containing all elements within this schema
      */
-    public ArrayList<Element> getAllElements() {
-        ArrayList<Element> a = new ArrayList<Element>();
+    public List<Element> getAllElements() {
+        List<Element> a = new ArrayList<Element>();
         if (cpuElement != null) {
             a.add(cpuElement);
         }
@@ -378,7 +361,7 @@ public class Schema {
      *
      * @return ArrayList object of all connection lines
      */
-    public ArrayList<ConnectionLine> getConnectionLines() {
+    public List<ConnectionLine> getConnectionLines() {
         return lines;
     }
 
@@ -426,7 +409,7 @@ public class Schema {
      * @return crossing element, or null if it was not found
      */
     public Element getCrossingElement(Point p) {
-        ArrayList<Element> a = getAllElements();
+        List<Element> a = getAllElements();
         for (int i = a.size() - 1; i >= 0; i--) {
             Element elem = a.get(i);
             int eX = elem.getX() - elem.getWidth() / 2;
@@ -449,7 +432,7 @@ public class Schema {
      * @return resize element, or null if it was not found
      */
     public Element getResizeElement(Point p) {
-        ArrayList<Element> a = getAllElements();
+        List<Element> a = getAllElements();
         for (int i = a.size() - 1; i >= 0; i--) {
             Element elem = a.get(i);
             if (elem.isBottomCrossing(p) || (elem.isLeftCrossing(p))
@@ -525,7 +508,7 @@ public class Schema {
      * @param height height of the selection
      */
     public void selectElements(int x, int y, int width, int height) {
-        ArrayList<Element> a = getAllElements();
+        List<Element> a = getAllElements();
 
         Point p1 = new Point(x, y);
         Point p2 = new Point(x + width, y + height);
@@ -554,7 +537,7 @@ public class Schema {
      * @param diffY Y difference between the new and old location
      */
     public void moveSelected(int diffX, int diffY) {
-        ArrayList<Element> a = getAllElements();
+        List<Element> a = getAllElements();
 
         // first determine if all elements and lines can be moved
         for (int i = a.size() - 1; i >= 0; i--) {
@@ -587,7 +570,7 @@ public class Schema {
      * Deletes all selected elements.
      */
     public void deleteSelected() {
-        ArrayList<Element> a = getAllElements();
+        List<Element> a = getAllElements();
 
         for (int i = a.size() - 1; i >= 0; i--) {
             Element elem = a.get(i);
@@ -611,8 +594,7 @@ public class Schema {
      * @return true if the line point can be moved, false otherwise
      */
     public static boolean canMove(int x, int y) {
-        return (x >= MIN_LEFT_MARGIN)
-                && (y >= MIN_TOP_MARGIN);
+        return (x >= MIN_LEFT_MARGIN) && (y >= MIN_TOP_MARGIN);
     }
 
     /**
@@ -667,7 +649,7 @@ public class Schema {
             memoryElement.saveSettings(settings,"memory");
         }
         // devices
-        HashMap<DeviceElement, Object> devsHash = new HashMap<DeviceElement, Object>();
+        Map<DeviceElement, String> devsHash = new HashMap<DeviceElement, String>();
         for (int i = 0; i < deviceElements.size(); i++) {
             DeviceElement dev = deviceElements.get(i);
             devsHash.put(dev, "device" + i);
@@ -676,8 +658,7 @@ public class Schema {
         for (int i = 0; i < lines.size(); i++) {
             ConnectionLine line = lines.get(i);
 
-            settings.put("connection" + i + ".bidirectional",
-                    String.valueOf(line.isBidirectional()));
+            settings.put("connection" + i + ".bidirectional", String.valueOf(line.isBidirectional()));
 
             Element e = line.getJunc0();
             if (e instanceof CompilerElement) {
@@ -700,7 +681,7 @@ public class Schema {
             } else if (e instanceof DeviceElement) {
                 settings.put("connection" + i + ".junc1", devsHash.get((DeviceElement) e));
             }
-            ArrayList<Point> points = line.getPoints();
+            List<Point> points = line.getPoints();
             for (int j = 0; j < points.size(); j++) {
                 Point po = points.get(j);
                 settings.put("connection" + i + ".point" + j + ".x", String.valueOf((int) po.getX()));

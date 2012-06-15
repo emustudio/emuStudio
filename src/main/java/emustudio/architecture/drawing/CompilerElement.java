@@ -41,9 +41,9 @@ public class CompilerElement extends Element {
      *
      * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param settings settings of virtual computer
-     * @throws Exception when some settings are not well parseable
+     * @throws NullPointerException when some settings are not well parseable
      */
-    public CompilerElement(String pluginName, Properties settings) throws Exception {
+    public CompilerElement(String pluginName, Properties settings) throws NullPointerException {
         super(pluginName, settings, BACK_COLOR);
     }
 

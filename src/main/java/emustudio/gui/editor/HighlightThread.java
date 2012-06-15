@@ -29,6 +29,8 @@ import emulib.plugins.compiler.IToken;
 import java.io.IOException;
 import java.util.*;
 import javax.swing.text.SimpleAttributeSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The syntax highlighting thread.
@@ -36,6 +38,7 @@ import javax.swing.text.SimpleAttributeSet;
  * @author vbmacher
  */
 public class HighlightThread extends Thread {
+    private final static Logger logger = LoggerFactory.getLogger(HighlightThread.class);
 
     /**
      * Keep a list of places in the file that it is safe to restart the
@@ -180,8 +183,8 @@ public class HighlightThread extends Thread {
      */
     @Override
     public void run() {
-        int position = -1;
-        int adjustment = 0;
+        int position;
+        int adjustment;
         // if we just finish, we can't go to sleep until we
         // ensure there is nothing else for us to do.
         // use try again to keep track of this.
@@ -205,8 +208,8 @@ public class HighlightThread extends Thread {
                 DocPosition startRequest = new DocPosition(position);
                 DocPosition endRequest = new DocPosition(position + ((adjustment >= 0) ? adjustment : -adjustment));
                 DocPosition dp;
-                DocPosition dpStart = null;
-                DocPosition dpEnd = null;
+                DocPosition dpStart;
+                DocPosition dpEnd;
 
                 // find the starting position.  We must start at least one
                 // token before the current position
@@ -278,12 +281,18 @@ public class HighlightThread extends Thread {
                                         t.getLength(),
                                         getStyle(t.getType()),
                                         true);
-                            } catch(Error w) {
+                            } catch(Error e) {
                                 // Interrupted attempt to aquire write lock
-                                w.printStackTrace();
+                                logger.error(new StringBuilder().append("Could not set character attributes [pos=")
+                                        .append(t.getOffset() + change).append(",len=").append(t.getLength())
+                                        .append(",style=").append(getStyle(t.getType()).toString()).append("]")
+                                        .toString(), e);
                                 continue;
                             } catch (Exception e) {
-                                e.printStackTrace();
+                                logger.error(new StringBuilder().append("Could not set character attributes [pos=")
+                                        .append(t.getOffset() + change).append(",len=").append(t.getLength())
+                                        .append(",style=").append(getStyle(t.getType()).toString()).append("]")
+                                        .toString(), e);
                                 continue;
                             }
                             // record the position of the last bit of text that we colored
@@ -346,10 +355,12 @@ public class HighlightThread extends Thread {
                     /*workingIt = iniPositions.iterator();
                     while (workingIt.hasNext()){
                     System.out.println(workingIt.next());
-                    }
+                    }*/
                     
-                    System.out.println("Started: " + dpStart.getPosition() + " Ended: " + dpEnd.getPosition());*/
+                    logger.debug(new StringBuilder().append("Started: ").append(dpStart.getPosition()).append(" Ended: ")
+                            .append(dpEnd.getPosition()).toString());
                 } catch (IOException x) {
+                    logger.error("There was an exception while performing syntax highlighting", x);
                 }
                 lastPosition = -1;
                 change = 0;
