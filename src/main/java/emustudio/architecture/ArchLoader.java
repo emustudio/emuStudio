@@ -489,9 +489,9 @@ public class ArchLoader {
         // this creates reversed array..
         Collections.reverse(devList);
         IDevice[] devices = (IDevice[]) devList.toArray(new IDevice[0]);
-        Computer arch = new Computer(cpu, mem, compiler, devices, pluginsToLoad.values(), connections);
-        emulib.runtime.Context.getInstance().assignComputer(Main.password, arch);
-        return new ArchHandler(arch, settings, loadSchema(name), pluginsToLoad.values(), auto, nogui);
+        Computer computer = new Computer(cpu, mem, compiler, devices, pluginsToLoad.values(), connections);
+        emulib.runtime.Context.getInstance().assignComputer(Main.password, computer);
+        return new ArchHandler(computer, settings, loadSchema(name), pluginsToLoad.values(), auto, nogui);
     }
     
     /**

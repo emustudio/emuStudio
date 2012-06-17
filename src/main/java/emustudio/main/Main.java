@@ -177,7 +177,7 @@ public class Main {
 
         password = emulib.runtime.Context.SHA1(String.valueOf(Math.random())
                 + new Date().toString());
-        if (!emulib.runtime.Context.assignPassword(password)) {
+        if (!emulib.emustudio.API.assignPassword(password)) {
             logger.error("Communication with emuLib failed.");
             tryShowErrorMessage("Error: communication with emuLib failed.");
             return;

@@ -22,6 +22,7 @@
  */
 package emustudio.gui;
 
+import emulib.emustudio.API;
 import emulib.plugins.compiler.ICompiler;
 import emulib.plugins.compiler.ICompiler.ICompilerListener;
 import emulib.plugins.compiler.Message;
@@ -30,7 +31,6 @@ import emulib.plugins.cpu.ICPU.RunState;
 import emulib.plugins.device.IDevice;
 import emulib.plugins.memory.IMemory;
 import emulib.plugins.memory.IMemory.IMemListener;
-import emulib.runtime.Context;
 import emulib.runtime.IDebugTable;
 import emulib.runtime.RadixUtils;
 import emulib.runtime.StaticDialogs;
@@ -286,7 +286,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
         btnBreakpoint.setEnabled(cpu.isBreakpointSupported());
-        Context.getInstance().setDebugTableInterfaceObject(new IDebugTable() {
+        API.getInstance().setDebugTableInterfaceObject(new IDebugTable() {
 
             @Override
             public void updateDebugTable() {
