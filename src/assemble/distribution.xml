@@ -5,7 +5,7 @@
   <formats>
     <format>zip</format>
   </formats>
-  <includeSiteDirectory>true</includeSiteDirectory>
+  <includeSiteDirectory>false</includeSiteDirectory>
   <includeBaseDirectory>true</includeBaseDirectory>
   <dependencySets>
     <dependencySet>
@@ -87,6 +87,10 @@
     </file>
     <file>
       <source>src/assemble/COPYING</source>
+      <outputDirectory>/</outputDirectory>
+    </file>
+    <file>
+      <source>src/assemble/logback.xml</source>
       <outputDirectory>/</outputDirectory>
     </file>
   </files>
