@@ -54,9 +54,9 @@ public class CompoundUndoManager extends UndoManager {
      */
     public static final int IDLE_DELAY_MS = 500;
 
-    long startMillis = 0;
-    CompoundEdit comp = null;
-
+    private long startMillis = 0;
+    private CompoundEdit compoundEdit = null;
+    
     /**
      * See corresponding Javadoc for UndoManager.
      * @param anEdit
@@ -64,18 +64,22 @@ public class CompoundUndoManager extends UndoManager {
      */
     @Override
     public synchronized boolean addEdit(UndoableEdit anEdit) {
+        boolean result = true;
+
         long now = System.currentTimeMillis();
-        if (comp == null) {
-            comp = new CompoundEdit();
-            super.addEdit(comp);
+        if (compoundEdit == null) {
+            compoundEdit = new CompoundEdit();
+            result = super.addEdit(compoundEdit);
         }
-        comp.addEdit(anEdit);
+        if (!result) {
+            return false;
+        }
+        result = compoundEdit.addEdit(anEdit);
         if (now - startMillis > IDLE_DELAY_MS) {
-            comp.end();
-            comp = null;
+            commitCompound();
         }
         startMillis = now;
-        return true;
+        return result;
     }
 
     /**
@@ -105,7 +109,7 @@ public class CompoundUndoManager extends UndoManager {
      */
     @Override
     public synchronized void discardAllEdits() {
-        comp = null;
+        compoundEdit = null;
         super.discardAllEdits();
     }
 
@@ -114,32 +118,30 @@ public class CompoundUndoManager extends UndoManager {
      * Perform Redo operation. For more information, see corresponding Javadoc
      * for UndoManager.
      * 
-     * @throws CannotRedoException 
+     * @throws CannotRedoException
      */
     @Override
     public synchronized void redo() throws CannotRedoException {
         commitCompound();
-        try { super.redo(); }
-        catch (NullPointerException e) {}
+        super.redo();
     }
 
     /**
      * Perform Redo operation. For more information, see corresponding Javadoc
      * for UndoManager.
      * 
-     * @throws CannotUndoException 
+     * @throws CannotUndoException
      */
     @Override
     public synchronized void undo() throws CannotUndoException {
         commitCompound();
-        try { super.undo(); }
-        catch(NullPointerException e) {}
+        super.undo();
     }
 
-    private void commitCompound() {
-        if (comp != null) {
-            comp.end();
-            comp = null;
+    private synchronized void commitCompound() {
+        if (compoundEdit != null) {
+            compoundEdit.end();
+            compoundEdit = null;
         }
     }
 }

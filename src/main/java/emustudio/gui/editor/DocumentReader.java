@@ -67,13 +67,19 @@ public class DocumentReader extends Reader {
      * @param position the position
      * @param adjustment the adjustment
      */
-    public void update(int position, int adjustment){
-        if (position < this.position){
-            if (this.position < position - adjustment){
-                this.position = position;
-            } else {
-                this.position += adjustment;
+    public synchronized void update(int position, int adjustment) {
+        try {
+            document.readLock();
+
+            if (position < this.position) {
+                if (this.position < position - adjustment) {
+                    this.position = position;
+                } else {
+                    this.position += adjustment;
+                }
             }
+        } finally {
+            document.readUnlock();
         }
     }
 
@@ -90,21 +96,22 @@ public class DocumentReader extends Reader {
      * @return the character or -1 if the end of the document has been reached.
      */
     @Override
-    public int read(){
-        document.getLength();
-        if (position < document.getLength()){
-            try {
-                document.readLock();
-                char c = document.getText((int)position, 1).charAt(0);
-                position++;
-                return c;
-            } catch (BadLocationException x){
+    public synchronized int read() {
+        try {
+            document.readLock();
+            if (position < document.getLength()) {
+                try {
+                    char c = document.getText((int) position, 1).charAt(0);
+                    position++;
+                    return c;
+                } catch (BadLocationException x) {
+                    return -1;
+                }
+            } else {
                 return -1;
-            } finally {
-                document.readUnlock();
             }
-        } else {
-            return -1;
+        } finally {
+            document.readUnlock();
         }
     }
 
@@ -118,7 +125,7 @@ public class DocumentReader extends Reader {
      * @throws IOException read corresponding Javadoc for Reader
      */
     @Override
-    public int read(char[] cbuf) throws IOException {
+    public synchronized int read(char[] cbuf) throws IOException {
         return read(cbuf, 0, cbuf.length);
     }
 
@@ -133,30 +140,32 @@ public class DocumentReader extends Reader {
      * @return the number of characters read or -1 if no more characters are available in the document.
      */
     @Override
-    public int read(char[] cbuf, int off, int len){
-        if (position < document.getLength()){
-            int length = len;
-            if (position + length >= document.getLength()){
-                length = document.getLength() - (int)position;
-            }
-            if (off + length >= cbuf.length){
-                length = cbuf.length - off;
-            }
-            try {
-                document.readLock();
-                String s = document.getText((int)position, length);
-                position += length;
-                for (int i=0; i<length; i++){
-                    cbuf[off+i] = s.charAt(i);
+    public synchronized int read(char[] cbuf, int off, int len) {
+        try {
+            document.readLock();
+            if (position < document.getLength()) {
+                int length = len;
+                if (position + length >= document.getLength()) {
+                    length = document.getLength() - (int) position;
                 }
-                return length;
-            } catch (BadLocationException x){
+                if (off + length >= cbuf.length) {
+                    length = cbuf.length - off;
+                }
+                try {
+                    String s = document.getText((int) position, length);
+                    position += length;
+                    for (int i = 0; i < length; i++) {
+                        cbuf[off + i] = s.charAt(i);
+                    }
+                    return length;
+                } catch (BadLocationException x) {
+                    return -1;
+                }
+            } else {
                 return -1;
-            } finally {
-                document.readUnlock();
             }
-        } else {
-            return -1;
+        } finally {
+            document.readUnlock();
         }
     }
 
@@ -174,13 +183,18 @@ public class DocumentReader extends Reader {
      * Reset this reader to the last mark, or the beginning of the document if a mark has not been set.
      */
     @Override
-    public void reset(){
-        if (mark == -1){
-            position = 0;
-        } else {
-            position = mark;
+    public synchronized void reset() {
+        try {
+            document.readLock();
+            if (mark == -1) {
+                position = 0;
+            } else {
+                position = mark;
+            }
+            mark = -1;
+        } finally {
+            document.readUnlock();
         }
-        mark = -1;
     }
 
     /**
@@ -192,14 +206,19 @@ public class DocumentReader extends Reader {
      * @return the actual number of characters skipped.
      */
     @Override
-    public long skip(long n){
-        if (position + n <= document.getLength()){
-            position += n;
-            return n;
-        } else {
-            long oldPos = position;
-            position = document.getLength();
-            return (document.getLength() - oldPos);
+    public synchronized long skip(long n) {
+        try {
+            document.readLock();
+            if (position + n <= document.getLength()) {
+                position += n;
+                return n;
+            } else {
+                long oldPos = position;
+                position = document.getLength();
+                return (document.getLength() - oldPos);
+            }
+        } finally {
+            document.readUnlock();
         }
     }
 
@@ -208,11 +227,16 @@ public class DocumentReader extends Reader {
      *
      * @param n the offset to which to seek.
      */
-    public void seek(long n){
-        if (n <= document.getLength()){
-            position = n;
-        } else {
-            position = document.getLength();
+    public synchronized void seek(long n) {
+        try {
+            document.readLock();
+            if (n <= document.getLength()) {
+                position = n;
+            } else {
+                position = document.getLength();
+            }
+        } finally {
+            document.readUnlock();
         }
     }
     

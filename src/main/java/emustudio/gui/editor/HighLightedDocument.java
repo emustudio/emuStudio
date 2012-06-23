@@ -72,7 +72,7 @@ public class HighLightedDocument extends DefaultStyledDocument {
      * @throws BadLocationException
      */
     @Override
-    public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
+    public synchronized void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
         super.insertString(offs, str, a);
         if (high != null) {
             high.color(offs, str.length());
@@ -97,7 +97,7 @@ public class HighLightedDocument extends DefaultStyledDocument {
      * @throws BadLocationException
      */
     @Override
-    public void remove(int offs, int len) throws BadLocationException {
+    public synchronized void remove(int offs, int len) throws BadLocationException {
         super.remove(offs, len);
         if (high != null) {
             high.color(offs, -len);

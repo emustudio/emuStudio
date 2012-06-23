@@ -210,20 +210,22 @@ public class StudioFrame extends javax.swing.JFrame {
         undoStateListener = new ActionListener() {
 
             @Override
-            public synchronized void actionPerformed(ActionEvent e) {
-                if (txtSource.canUndo() == true) {
-                    mnuEditUndo.setEnabled(true);
-                    btnUndo.setEnabled(true);
-                } else {
-                    mnuEditUndo.setEnabled(false);
-                    btnUndo.setEnabled(false);
-                }
-                if (txtSource.canRedo() == true) {
-                    mnuEditRedo.setEnabled(true);
-                    btnRedo.setEnabled(true);
-                } else {
-                    mnuEditRedo.setEnabled(false);
-                    btnRedo.setEnabled(false);
+            public void actionPerformed(ActionEvent e) {
+                synchronized (StudioFrame.this) {
+                    if (txtSource.canUndo() == true) {
+                        mnuEditUndo.setEnabled(true);
+                        btnUndo.setEnabled(true);
+                    } else {
+                        mnuEditUndo.setEnabled(false);
+                        btnUndo.setEnabled(false);
+                    }
+                    if (txtSource.canRedo() == true) {
+                        mnuEditRedo.setEnabled(true);
+                        btnRedo.setEnabled(true);
+                    } else {
+                        mnuEditRedo.setEnabled(false);
+                        btnRedo.setEnabled(false);
+                    }
                 }
             }
         };
