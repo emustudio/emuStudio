@@ -37,6 +37,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <distribution.fileMapping>${artifact.artifactId}.${artifact.extension}</distribution.fileMapping>
+    <netbeans.hint.license>gpl20</netbeans.hint.license>
   </properties>
 
   <build>
@@ -86,19 +87,41 @@
           </descriptors>
         </configuration>
       </plugin>
-    </plugins>
-  </build>
-
-  <reporting>
-    <outputDirectory>${basedir}/target/site</outputDirectory>
-    <plugins>
       <plugin>
-        <groupId>com.soebes.maven.plugins.dmg</groupId>
-        <artifactId>doxygen-maven-plugin</artifactId>
-        <version>1.0.1</version>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>3.0-beta-3</version>
+        <configuration>
+          <outputDirectory>${basedir}/target/site</outputDirectory>
+          <reportPlugins>
+            <plugin>
+              <groupId>com.soebes.maven.plugins.dmg</groupId>
+              <artifactId>doxygen-maven-plugin</artifactId>
+              <version>1.0.1</version>
+              <configuration>
+                  <!-- <configurationFile>./Doxyfile</configurationFile> -->
+                  <doxyfileEncoding>UTF-8</doxyfileEncoding>
+                  <projectName>${project.name}</projectName>
+                  <projectNumber>${project.version}</projectNumber>
+                  <repeatBrief>true</repeatBrief>
+                  <javadocAutobrief>true</javadocAutobrief>
+                  <optimizeOutputJava>true</optimizeOutputJava>
+                  <idlPropertySupport>false</idlPropertySupport>
+                  <input>./src</input>
+                  <inputEncoding>UTF-8</inputEncoding>
+                  <recursive>true</recursive>
+                  <umlLook>true</umlLook>
+                  <haveDot>true</haveDot>
+                  <callGraph>true</callGraph>
+                  <callerGraph>true</callerGraph>
+                  <dotCleanup>true</dotCleanup>
+              </configuration>
+            </plugin>
+          </reportPlugins>
+        </configuration>
       </plugin>
     </plugins>
-  </reporting>
+  </build>
 
   <repositories>
     <repository>
