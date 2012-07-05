@@ -21,8 +21,7 @@
  */
 package emustudio.gui.editor;
 
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
+import javax.swing.event.DocumentEvent;
 import javax.swing.text.DefaultStyledDocument;
 
 /**
@@ -52,7 +51,7 @@ public class HighLightedDocument extends DefaultStyledDocument {
      *
      * @param high the syntax highlighting thread
      */
-    public void setThread(HighlightThread high) {
+    public synchronized void setThread(HighlightThread high) {
         this.high = high;
     }
 
@@ -63,47 +62,39 @@ public class HighLightedDocument extends DefaultStyledDocument {
      * It should be called whenever a text is inserted somewhere into the
      * source code.
      *
-     * If the position lies outside of the document, it throws
-     * BadLocationException exception.
-     *
-     * @param offs the begin position of the inserted text
-     * @param str the string that is inserted
-     * @param a attributes of the text
-     * @throws BadLocationException
+     * @param evt the change event
      */
     @Override
-    public synchronized void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
-        super.insertString(offs, str, a);
-        if (high != null) {
-            high.color(offs, str.length());
-        }
+    public void fireInsertUpdate(DocumentEvent evt) {
+        super.fireInsertUpdate(evt);
         if (documentReader != null) {
-            documentReader.update(offs, str.length());
+            documentReader.update(evt.getOffset(), evt.getLength());
+        }
+        if (high != null) {
+            high.color(evt.getOffset(), evt.getLength());
         }
     }
-
+    
     /**
      * Performs the update of the document reader and re-color needed parts,
      * when a text is removed from the document.
      *
      * It should be called whenever a text is removed from somewhere in the
      * source code.
-     *
-     * If the position lies outside of the document, it throws
-     * BadLocationException exception.
-     *
-     * @param offs offset of removed text
-     * @param len length of the removed text
-     * @throws BadLocationException
-     */
+     * 
+     * @param evt the change event
+     */ 
     @Override
-    public synchronized void remove(int offs, int len) throws BadLocationException {
-        super.remove(offs, len);
-        if (high != null) {
-            high.color(offs, -len);
-        }
+    public void fireRemoveUpdate(DocumentEvent evt) {
+        super.fireRemoveUpdate(evt);
+        int offs = evt.getOffset();
+        int len = -evt.getLength();
+        
         if (documentReader != null) {
-            documentReader.update(offs, -len);
+            documentReader.update(offs, len);
+        }
+        if (high != null) {
+            high.color(offs, len);
         }
     }
 }

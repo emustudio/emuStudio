@@ -52,7 +52,7 @@ public class CompoundUndoManager extends UndoManager {
      * If the delay is greater than this, then separate undo operations are 
      * done, otherwise they are combined.
      */
-    public static final int IDLE_DELAY_MS = 500;
+    public static final int IDLE_DELAY_MS = 390;
 
     private long startMillis = 0;
     private CompoundEdit compoundEdit = null;
@@ -74,9 +74,11 @@ public class CompoundUndoManager extends UndoManager {
         if (!result) {
             return false;
         }
-        result = compoundEdit.addEdit(anEdit);
-        if (now - startMillis > IDLE_DELAY_MS) {
-            commitCompound();
+        compoundEdit.addEdit(anEdit);
+        
+        if ((startMillis > 0) && (now - startMillis > IDLE_DELAY_MS)) {
+            compoundEdit.end();
+            compoundEdit = null;
         }
         startMillis = now;
         return result;
@@ -89,7 +91,6 @@ public class CompoundUndoManager extends UndoManager {
      */
     @Override
     public synchronized boolean canRedo() {
-        commitCompound();
         return super.canRedo();
     }
 
@@ -100,7 +101,6 @@ public class CompoundUndoManager extends UndoManager {
      */
     @Override
     public synchronized boolean canUndo() {
-        commitCompound();
         return super.canUndo();
     }
 
@@ -138,7 +138,7 @@ public class CompoundUndoManager extends UndoManager {
         super.undo();
     }
 
-    private synchronized void commitCompound() {
+    public synchronized void commitCompound() {
         if (compoundEdit != null) {
             compoundEdit.end();
             compoundEdit = null;

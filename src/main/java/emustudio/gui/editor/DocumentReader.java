@@ -96,9 +96,9 @@ public class DocumentReader extends Reader {
      * @return the character or -1 if the end of the document has been reached.
      */
     @Override
-    public synchronized int read() {
+    public int read() {
+        document.readLock();
         try {
-            document.readLock();
             if (position < document.getLength()) {
                 try {
                     char c = document.getText((int) position, 1).charAt(0);
@@ -140,13 +140,14 @@ public class DocumentReader extends Reader {
      * @return the number of characters read or -1 if no more characters are available in the document.
      */
     @Override
-    public synchronized int read(char[] cbuf, int off, int len) {
+    public int read(char[] cbuf, int off, int len) {
+        document.readLock();
         try {
-            document.readLock();
-            if (position < document.getLength()) {
+            int docLen = document.getLength();
+            if (position < docLen) {
                 int length = len;
-                if (position + length >= document.getLength()) {
-                    length = document.getLength() - (int) position;
+                if (position + length >= docLen) {
+                    length = docLen - (int) position;
                 }
                 if (off + length >= cbuf.length) {
                     length = cbuf.length - off;
@@ -183,17 +184,11 @@ public class DocumentReader extends Reader {
      * Reset this reader to the last mark, or the beginning of the document if a mark has not been set.
      */
     @Override
-    public synchronized void reset() {
-        try {
-            document.readLock();
-            if (mark == -1) {
-                position = 0;
-            } else {
-                position = mark;
-            }
-            mark = -1;
-        } finally {
-            document.readUnlock();
+    public void reset() {
+        if (mark == -1){
+            position = 0;
+        } else {
+            position = mark;
         }
     }
 
@@ -206,19 +201,21 @@ public class DocumentReader extends Reader {
      * @return the actual number of characters skipped.
      */
     @Override
-    public synchronized long skip(long n) {
+    public long skip(long n){
+        document.readLock();
+        int docLen = 0;
         try {
-            document.readLock();
-            if (position + n <= document.getLength()) {
-                position += n;
-                return n;
-            } else {
-                long oldPos = position;
-                position = document.getLength();
-                return (document.getLength() - oldPos);
-            }
+            docLen = document.getLength();
         } finally {
             document.readUnlock();
+        }
+        if (position + n <= docLen){
+            position += n;
+            return n;
+        } else {
+            long oldPos = position;
+            position = docLen;
+            return (docLen - oldPos);
         }
     }
 
@@ -227,16 +224,18 @@ public class DocumentReader extends Reader {
      *
      * @param n the offset to which to seek.
      */
-    public synchronized void seek(long n) {
+    public void seek(long n){
+        document.readLock();
+        int docLen = 0;
         try {
-            document.readLock();
-            if (n <= document.getLength()) {
-                position = n;
-            } else {
-                position = document.getLength();
-            }
+            docLen = document.getLength();
         } finally {
             document.readUnlock();
+        }
+        if (n <= docLen){
+            position = n;
+        } else {
+            position = docLen;
         }
     }
     

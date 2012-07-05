@@ -32,26 +32,23 @@ import emustudio.main.Main;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.Reader;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.text.AbstractDocument.DefaultDocumentEvent;
+import javax.swing.text.*;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
@@ -87,32 +84,60 @@ public class EmuTextPane extends JTextPane {
     private boolean fileSaved; // if is document saved
     private File fileSource;   // opened file
     private CompoundUndoManager undo;
-    private ActionListener undoListener;
-    private ActionEvent aevt;
-    private ReadWriteLock undoTimerLock;
+    private UndoActionListener undoListener;
+    private Timer undoTimer = new Timer("UndoTimer");
     private final Object undoLock = new Object();
-    private Timer undoTimer;
+    private Timer syntaxStartTimer = new Timer("SyntaxStartTimer");
+    private final Object syntaxLock = new Object();
+    private final ViewFactory htmlFactory = new Workaround6606443ViewFactory();
 
     private SourceFileExtension[] fileExtensions;
+    
+    public interface UndoActionListener {
+        public void undoStateChanged(boolean canUndo, String presentationName);
+        public void redoStateChanged(boolean canRedo, String presentationName);
+    }
 
-    private class UndoUpdater extends TimerTask {
+    public static class MyFlowStrategy extends FlowView.FlowStrategy {
 
         @Override
-        public void run() {
-            synchronized (undoLock) {
+        public void layout(FlowView fv) {
+            fv.layoutChanged(fv.getAxis());
+            super.layout(fv);
+        }
+    }
+
+    public static class Workaround6606443ViewFactory implements ViewFactory {
+
+        @Override
+        public View create(Element element) {
+            String name = element.getName();
+            View view = null;
+            if (name.equals(AbstractDocument.ContentElementName)) {
+                view = new LabelView(element);
+            } else if (name.equals(AbstractDocument.ParagraphElementName)) {
+                view = new ParagraphView(element);
+            } else if (name.equals(AbstractDocument.SectionElementName)) {
+                view = new BoxView(element, View.Y_AXIS);
+            } else if (name.equals(StyleConstants.ComponentElementName)) {
+                view = new ComponentView(element);
+            } else if (name.equals(StyleConstants.IconElementName)) {
+                view = new IconView(element);
+            } else {
+                throw new AssertionError("Unknown Element type: "
+                        + element.getClass().getName() + " : "
+                        + name);
+            }
+            if (view instanceof ParagraphView) {
                 try {
-                    undoTimerLock.writeLock().lock();
-                    this.cancel();
-                    undoTimer = null;
-                    if (undoListener != null) {
-                        undoListener.actionPerformed(aevt);
-                    }
+                    Field strategy = FlowView.class.getDeclaredField("strategy");
+                    strategy.setAccessible(true);
+                    strategy.set(view, new MyFlowStrategy());
                 } catch (Exception e) {
-                    logger.error("Error during performing undoable action.", e);
-                } finally {
-                    undoTimerLock.writeLock().unlock();
+                    logger.error("Could not set custom FlowStrategy in editor pane", e);
                 }
             }
+            return view;
         }
     }
 
@@ -127,6 +152,13 @@ public class EmuTextPane extends JTextPane {
         fileSaved = true;
         fileSource = null;
 
+        setEditorKit(new StyledEditorKit() {
+
+            @Override
+            public ViewFactory getViewFactory() {
+                return htmlFactory;
+            }
+        });  
         document = new HighLightedDocument();
         reader = new DocumentReader(document);
         document.setDocumentReader(reader);
@@ -137,63 +169,50 @@ public class EmuTextPane extends JTextPane {
             this.syntaxLexer = compiler.getLexer(reader);
         }
 
-        undoTimerLock = new ReentrantReadWriteLock();
-        aevt = new ActionEvent(this, 0, "");
         undo = new CompoundUndoManager();
 
-        document.addDocumentListener(new DocumentListener() {
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                // Do nothing
-            }
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                try {
-                    undoTimerLock.writeLock().lock();
-                    if (undoTimer == null) {
-                        undoTimer = new Timer();
-                        undoTimer.schedule(new UndoUpdater(), CompoundUndoManager.IDLE_DELAY_MS);
-                    }
-                } finally {
-                    undoTimerLock.writeLock().unlock();
-                }
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                try {
-                    undoTimerLock.writeLock().lock();
-                    if (undoTimer == null) {
-                        undoTimer = new Timer();
-                        undoTimer.schedule(new UndoUpdater(), CompoundUndoManager.IDLE_DELAY_MS);
-                    }
-                } finally {
-                    undoTimerLock.writeLock().unlock();
-                }
-            }
-        });
         document.addUndoableEditListener(new UndoableEditListener() {
 
             @Override
             public void undoableEditHappened(UndoableEditEvent e) {
-                try {
-                    document.readLock();
-                    UndoableEdit ed = e.getEdit();
-                    DefaultDocumentEvent event = (DefaultDocumentEvent) e.getEdit();
-                    if (event.getType().equals(DocumentEvent.EventType.CHANGE)) {
-                        return;
-                    }
-                    if (ed.isSignificant()) {
+                UndoableEdit ed = e.getEdit();
+                DefaultDocumentEvent event = (DefaultDocumentEvent) e.getEdit();
+                if (event.getType().equals(DocumentEvent.EventType.CHANGE)) {
+                    return;
+                }
+                if (ed.isSignificant()) {
+                    synchronized (undoLock) {
                         undo.addEdit(ed);
                     }
-                } finally {
-                    document.readUnlock();
+                    undoTimer.cancel();
+                    undoTimer = new Timer("UndoTimer");
+                    undoTimer.schedule(new TimerTask() {
+
+                        @Override
+                        public void run() {
+                            this.cancel();
+                            boolean canUndo, canRedo;
+                            String undoPresName, redoPresName;
+                            synchronized (undoLock) {
+                                undo.commitCompound();
+                                canUndo = canUndo();
+                                canRedo = canRedo();
+                                undoPresName = undo.getUndoPresentationName();
+                                redoPresName = undo.getRedoPresentationName();
+                            }
+                            if (undoListener != null) {
+                                undoListener.undoStateChanged(canUndo, undoPresName);
+                                undoListener.redoStateChanged(canRedo, undoPresName);
+                            }
+                        }
+                    }, CompoundUndoManager.IDLE_DELAY_MS);
                 }
             }
         });
-        if (syntaxLexer != null) {
-            highlight = new HighlightThread(syntaxLexer, reader, document, styles);
+        synchronized (syntaxLock) {
+            if (syntaxLexer != null) {
+                highlight = new HighlightThread(syntaxLexer, reader, document, styles);
+            }
         }
     }
 
@@ -221,7 +240,7 @@ public class EmuTextPane extends JTextPane {
      * 
      * @param l The undo listener
      */
-    public void setUndoStateChangedAction(ActionListener l) {
+    public void setUndoActionListener(UndoActionListener l) {
         undoListener = l;
     }
 
@@ -230,7 +249,7 @@ public class EmuTextPane extends JTextPane {
      * 
      * @return true if Redo can be realized, false otherwise.
      */
-    public synchronized boolean canRedo() {
+    public boolean canRedo() {
         synchronized (undoLock) {
             return undo.canRedo();
         }
@@ -241,7 +260,7 @@ public class EmuTextPane extends JTextPane {
      *
      * @return true if Undo can be realized, false otherwise.
      */
-    public synchronized boolean canUndo() {
+    public boolean canUndo() {
         synchronized (undoLock) {
             return undo.canUndo();
         }
@@ -251,11 +270,39 @@ public class EmuTextPane extends JTextPane {
      * Perform Undo operation.
      */
     public void undo() {
+        boolean canUndo, canRedo;
+        String undoPresName, redoPresName;
         synchronized (undoLock) {
+            if (highlight != null) {
+                highlight.stopMe();
+                highlight = null;
+            }
             try {
                 undo.undo();
             } catch (CannotUndoException e) {
             }
+            canUndo = canUndo();
+            canRedo = canRedo();
+            undoPresName = undo.getUndoPresentationName();
+            redoPresName = undo.getRedoPresentationName();
+            syntaxStartTimer.cancel();
+            syntaxStartTimer = new Timer("SyntaxStartTimer");
+            syntaxStartTimer.schedule(new TimerTask() {
+
+                @Override
+                public void run() {
+                    synchronized (syntaxLock) {
+                        if (syntaxLexer != null) {
+                            highlight = new HighlightThread(syntaxLexer, reader, document, styles);
+                            highlight.colorAll();
+                        }
+                    }
+                }
+            }, CompoundUndoManager.IDLE_DELAY_MS);
+        }
+        if (undoListener != null) {
+            undoListener.undoStateChanged(canUndo, undoPresName);
+            undoListener.redoStateChanged(canRedo, redoPresName);
         }
     }
 
@@ -263,11 +310,39 @@ public class EmuTextPane extends JTextPane {
      * Perform Redo operation.
      */
     public void redo() {
+        boolean canUndo, canRedo;
+        String undoPresName, redoPresName;
         synchronized (undoLock) {
+            if (highlight != null) {
+                highlight.stopMe();
+                highlight = null;
+            }
             try {
                 undo.redo();
             } catch (CannotRedoException e) {
             }
+            canUndo = canUndo();
+            canRedo = canRedo();
+            undoPresName = undo.getUndoPresentationName();
+            redoPresName = undo.getRedoPresentationName();
+            syntaxStartTimer.cancel();
+            syntaxStartTimer = new Timer("SyntaxStartTimer");
+            syntaxStartTimer.schedule(new TimerTask() {
+
+                @Override
+                public void run() {
+                    synchronized (syntaxLock) {
+                        if (syntaxLexer != null) {
+                            highlight = new HighlightThread(syntaxLexer, reader, document, styles);
+                            highlight.colorAll();
+                        }
+                    }
+                }
+            }, CompoundUndoManager.IDLE_DELAY_MS);
+        }
+        if (undoListener != null) {
+            undoListener.undoStateChanged(canUndo, undoPresName);
+            undoListener.redoStateChanged(canRedo, redoPresName);
         }
     }
 
@@ -310,11 +385,6 @@ public class EmuTextPane extends JTextPane {
         for (int line = startline, y = 0; line <= endline; line++, y += fontHeight) {
             g.drawString(Integer.toString(line), 0, y);
         }
-
-        // paint blue thin lines
-        g.setColor(Color.PINK);
-        g.drawLine(NUMBERS_WIDTH - 5, g.getClipBounds().y, NUMBERS_WIDTH - 5,
-                g.getClipBounds().y + g.getClipBounds().height);
     }
 
     /*** OPENING/SAVING FILE ***/
@@ -347,7 +417,7 @@ public class EmuTextPane extends JTextPane {
         }
         try {
             if (highlight != null) {
-                highlight.shouldStop();
+                highlight.stopMe();
                 highlight = null;
             }
             FileReader vstup = new FileReader(fileSource);
@@ -357,9 +427,12 @@ public class EmuTextPane extends JTextPane {
             vstup.close();
             fileSaved = true;
 
-            if (syntaxLexer != null) {
-                highlight = new HighlightThread(syntaxLexer, reader, document, styles);
-                highlight.colorAll();
+            synchronized (syntaxLock) {
+                if (syntaxLexer != null) {
+                    highlight = new HighlightThread(syntaxLexer, reader, document,
+                            styles);
+                    highlight.colorAll();
+                }
             }
         } catch (java.io.FileNotFoundException e) {
             logger.error("Could not open file. File not found.", e);

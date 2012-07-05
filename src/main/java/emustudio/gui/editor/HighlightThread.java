@@ -80,14 +80,14 @@ public class HighlightThread extends Thread {
      * The amount of change that has occurred before the place in the
      * document that we are currently highlighting (lastPosition).
      */
-    private volatile int change = 0;
+    private int change = 0;
     /**
      * The last position colored
      */
-    private volatile int lastPosition = -1;
+    private int lastPosition = -1;
     private volatile boolean asleep = false;
 
-    private boolean shouldStop;
+    private volatile boolean shouldStop;
     /**
      * When accessing the vector, we need to create a critical section.
      * we will synchronize on this object to ensure that we don't get
@@ -125,6 +125,7 @@ public class HighlightThread extends Thread {
     public HighlightThread(ILexer lex, DocumentReader lexReader,
             HighLightedDocument document,
             Map<Integer, HighlightStyle> styles) {
+        super("HighlightThread");
         this.syntaxLexer = lex;
         this.document = document;
         this.documentReader = lexReader;
@@ -161,14 +162,14 @@ public class HighlightThread extends Thread {
         // figure out if this adjustment effects the current run.
         // if it does, then adjust the place in the document
         // that gets highlighted.
-        if (position < lastPosition) {
-            if (lastPosition < position - adjustment) {
-                change -= lastPosition - position;
-            } else {
-                change += adjustment;
-            }
-        }
         synchronized (lock) {
+            if (position < lastPosition) {
+                if (adjustment < 0) {
+                    change -= lastPosition - position;
+                } else {
+                    change += adjustment;
+                }
+            }
             v.add(new RecolorEvent(position, adjustment));
             if (asleep) {
                 this.interrupt();
@@ -274,23 +275,23 @@ public class HighlightThread extends Thread {
                         // Color stuff with the description of the style matched
                         // to the hash table that has been set up ahead of time.
                         int tEnd = t.getOffset() + t.getLength();
-                        if (tEnd <= document.getLength()) {
+                        
+                        int tBegin = 0;
+                        synchronized (lock) {
+                            tBegin = t.getOffset() + change;
+                        }
+                        int docLen = 0;
+                        document.readLock();
+                        try {
+                            docLen = document.getLength();
+                        } finally {
+                            document.readUnlock();
+                        }
+                        if (tEnd <= docLen) {
                             try {
-                                document.setCharacterAttributes(
-                                        t.getOffset() + change,
-                                        t.getLength(),
-                                        getStyle(t.getType()),
-                                        true);
-                            } catch(Error e) {
-                                // Interrupted attempt to aquire write lock
-                                logger.error(new StringBuilder().append("Could not set character attributes [pos=")
-                                        .append(t.getOffset() + change).append(",len=").append(t.getLength())
-                                        .append(",style=").append(getStyle(t.getType()).toString()).append("]")
-                                        .toString(), e);
-                                continue;
+                                document.setCharacterAttributes(tBegin, t.getLength(), getStyle(t.getType()), true);
                             } catch (Exception e) {
-                                logger.error(new StringBuilder().append("Could not set character attributes [pos=")
-                                        .append(t.getOffset() + change).append(",len=").append(t.getLength())
+                                logger.error(new StringBuilder().append("Could not set character attributes [pos=")                                        .append(tBegin).append(",len=").append(t.getLength())
                                         .append(",style=").append(getStyle(t.getType()).toString()).append("]")
                                         .toString(), e);
                                 continue;
@@ -298,7 +299,9 @@ public class HighlightThread extends Thread {
                             // record the position of the last bit of text that we colored
                             dpEnd = new DocPosition(tEnd);
                         }
-                        lastPosition = (tEnd + change);
+                        synchronized (lock) {
+                            lastPosition = (tEnd + change);
+                        }
                         // The other more complicated reason for doing no more highlighting
                         // is that all the colors are the same from here on out anyway.
                         // We can detect this by seeing if the place that the lexer returned
@@ -342,7 +345,14 @@ public class HighlightThread extends Thread {
                     }
 
                     // Remove all the positions that are after the end of the file.:
-                    workingIt = iniPositions.tailSet(new DocPosition(document.getLength())).iterator();
+                    document.readLock();
+                    int docLen = 0;
+                    try {
+                        docLen = document.getLength();
+                    } finally {
+                        document.readUnlock();
+                    }
+                    workingIt = iniPositions.tailSet(new DocPosition(docLen)).iterator();
                     while (workingIt.hasNext()) {
                         workingIt.next();
                         workingIt.remove();
@@ -357,13 +367,15 @@ public class HighlightThread extends Thread {
                     System.out.println(workingIt.next());
                     }*/
                     
-                    logger.debug(new StringBuilder().append("Started: ").append(dpStart.getPosition()).append(" Ended: ")
-                            .append(dpEnd.getPosition()).toString());
+                    //logger.trace(new StringBuilder().append("Started: ").append(dpStart.getPosition()).append(" Ended: ")
+                      //      .append(dpEnd.getPosition()).toString());
                 } catch (IOException x) {
                     logger.error("There was an exception while performing syntax highlighting", x);
                 }
-                lastPosition = -1;
-                change = 0;
+                synchronized (lock) {
+                    lastPosition = -1;
+                    change = 0;
+                }
                 // since we did something, we should check that there is
                 // nothing else to do before going back to sleep.
                 tryAgain = true;
@@ -383,14 +395,35 @@ public class HighlightThread extends Thread {
     /**
      * Method informs this thread to stop.
      */
-    public void shouldStop() {
+    public void stopMe() {
         shouldStop = true;
+        synchronized (lock) {
+            v.clear();
+            if (asleep) {
+                this.interrupt();
+            }
+            try {
+                this.join();
+            } catch (InterruptedException e) {
+            }
+            document.setThread(null);
+        }
     }
 
     /**
      * Color or recolor the entire document
      */
     public void colorAll() {
-        color(0, document.getLength());
+        synchronized (lock) {
+            v.clear();
+        }
+        int docLen = 0;
+        document.readLock();
+        try {
+            docLen = document.getLength();
+        } finally {
+            document.readUnlock();
+        }
+        color(0, docLen);
     }
 }

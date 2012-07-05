@@ -37,6 +37,7 @@ import emulib.runtime.StaticDialogs;
 import emustudio.architecture.Computer;
 import emustudio.gui.debugTable.DebugTable;
 import emustudio.gui.editor.EmuTextPane;
+import emustudio.gui.editor.EmuTextPane.UndoActionListener;
 import emustudio.gui.utils.FindText;
 import emustudio.gui.utils.NiceButton;
 import emustudio.main.Main;
@@ -45,7 +46,10 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.FlavorEvent;
 import java.awt.datatransfer.FlavorListener;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.WindowEvent;
 import java.io.StringReader;
 import java.util.EventObject;
 import javax.swing.*;
@@ -64,7 +68,7 @@ public class StudioFrame extends javax.swing.JFrame {
     private final static Logger logger = LoggerFactory.getLogger(StudioFrame.class);
     private EmuTextPane txtSource;
     private Computer arch; // current architecture
-    private ActionListener undoStateListener;
+    private UndoActionListener undoStateListener;
     private Clipboard systemClipboard;
     private RunState run_state = RunState.STATE_STOPPED_BREAK;
     private DebugTable tblDebug;
@@ -207,29 +211,23 @@ public class StudioFrame extends javax.swing.JFrame {
                 }
             }
         });
-        undoStateListener = new ActionListener() {
+        undoStateListener = new UndoActionListener() {
 
             @Override
-            public void actionPerformed(ActionEvent e) {
-                synchronized (StudioFrame.this) {
-                    if (txtSource.canUndo() == true) {
-                        mnuEditUndo.setEnabled(true);
-                        btnUndo.setEnabled(true);
-                    } else {
-                        mnuEditUndo.setEnabled(false);
-                        btnUndo.setEnabled(false);
-                    }
-                    if (txtSource.canRedo() == true) {
-                        mnuEditRedo.setEnabled(true);
-                        btnRedo.setEnabled(true);
-                    } else {
-                        mnuEditRedo.setEnabled(false);
-                        btnRedo.setEnabled(false);
-                    }
-                }
+            public void undoStateChanged(boolean canUndo, String presentationName) {
+                mnuEditUndo.setEnabled(canUndo);
+                btnUndo.setEnabled(canUndo);
+                btnUndo.setToolTipText(presentationName);
+            }
+
+            @Override
+            public void redoStateChanged(boolean canRedo, String presentationName) {
+                mnuEditRedo.setEnabled(canRedo);
+                btnRedo.setEnabled(canRedo);
+                btnRedo.setToolTipText(presentationName);
             }
         };
-        txtSource.setUndoStateChangedAction(undoStateListener);
+        txtSource.setUndoActionListener(undoStateListener);
         if (memory != null) {
             memory.addMemoryListener(new IMemListener() {
 
