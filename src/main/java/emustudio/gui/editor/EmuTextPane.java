@@ -385,6 +385,10 @@ public class EmuTextPane extends JTextPane {
         for (int line = startline, y = 0; line <= endline; line++, y += fontHeight) {
             g.drawString(Integer.toString(line), 0, y);
         }
+        // paint thin lines
+        g.setColor(Color.PINK);
+        g.drawLine(NUMBERS_WIDTH - 5, g.getClipBounds().y, NUMBERS_WIDTH - 5,
+            g.getClipBounds().y + g.getClipBounds().height);
     }
 
     /*** OPENING/SAVING FILE ***/
