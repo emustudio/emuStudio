@@ -158,9 +158,13 @@ public class Main {
         try {
             javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
         } catch (javax.swing.UnsupportedLookAndFeelException e) {
+            logger.error("Unable to set system look and feel", e);
         } catch (ClassNotFoundException e) {
+            logger.error("Unable to set system look and feel", e);
         } catch (InstantiationException e) {
+            logger.error("Unable to set system look and feel", e);
         } catch (IllegalAccessException e) {
+            logger.error("Unable to set system look and feel", e);
         }
 
         // parse command line arguments

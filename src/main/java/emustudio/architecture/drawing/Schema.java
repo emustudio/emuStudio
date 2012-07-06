@@ -86,7 +86,7 @@ public class Schema {
         configName = "";
         compilerElement = null;
         this.useGrid = true;
-        this.gridGap = DrawingPanel.DEFAULT_GRID_GAP_INT;
+        this.gridGap = DrawingPanel.DEFAULT_GRID_GAP;
         this.settings = new Properties();
     }
 
@@ -100,7 +100,7 @@ public class Schema {
         // grid
         useGrid = Boolean.parseBoolean(settings.getProperty("useGrid", "false"));
         gridGap = Integer.parseInt(settings.getProperty("gridGap",
-                DrawingPanel.DEFAULT_GRID_GAP));
+                DrawingPanel.DEFAULT_GRID_GAP.toString()));
 
         compilerElement = new CompilerElement(settings.getProperty("compiler"), selectSettings("compiler"));
         // if cpu is null here, it does not matter. Maybe user just did not

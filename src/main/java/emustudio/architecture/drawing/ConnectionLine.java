@@ -320,7 +320,12 @@ public class ConnectionLine {
      * @return true if the line is crossing the selection area
      */
     public boolean isAreaCrossing(Point selectionStart, Point selectionEnd) {
-        Point lineStart = new Point(e1.getX() + arrow1.x, e1.getY() + arrow1.y);
+        Point lineStart;
+        if (arrow1 == null) {
+           lineStart = new Point(e1.getX(), e1.getY());
+        } else {
+           lineStart = new Point(e1.getX() + arrow1.x, e1.getY() + arrow1.y);
+        }
 
         Point lineEnd;
         Point intersection;
@@ -368,8 +373,11 @@ public class ConnectionLine {
 
             lineStart = lineEnd;
         }
-        lineEnd = new Point(e2.getX() + arrow2.x,
-                e2.getY() + arrow2.y);
+        if (arrow2 == null) {
+            lineEnd = new Point(e2.getX(), e2.getY());
+        } else {
+            lineEnd = new Point(e2.getX() + arrow2.x, e2.getY() + arrow2.y);
+        }
 
         // test: left side of the selection
         Point bottomLeft = new Point(selectionStart.x, selectionEnd.y);
@@ -388,8 +396,9 @@ public class ConnectionLine {
         if ((intersection != null) && (intersection.x == selectionEnd.x)
                 && (intersection.y >= selectionStart.y)
                 && (intersection.y <= selectionEnd.y)
-                && (getCrossPointAfter(intersection,1) != -1))
+                && (getCrossPointAfter(intersection,1) != -1)) {
             return true;
+        }
 
         // test: top side of the selection
         intersection = intersection(selectionStart, topRight, lineStart,
@@ -397,8 +406,9 @@ public class ConnectionLine {
         if ((intersection != null) && (intersection.y == selectionStart.y)
                 && (intersection.x >= selectionStart.x)
                 && (intersection.x <= selectionEnd.x)
-                && (getCrossPointAfter(intersection,1) != -1))
+                && (getCrossPointAfter(intersection,1) != -1)) {
             return true;
+        }
 
         // test: bottom side of the selection
         intersection = intersection(bottomLeft, selectionEnd, lineStart,
@@ -406,17 +416,18 @@ public class ConnectionLine {
         if ((intersection != null) && (intersection.y == selectionEnd.y)
                 && (intersection.x >= selectionStart.x)
                 && (intersection.x <= selectionEnd.x)
-                && (getCrossPointAfter(intersection,1) != -1))
+                && (getCrossPointAfter(intersection,1) != -1)) {
             return true;
+        }
 
         // if there is no intersection, maybe the line lies inside the selection
         // it is enough if we just compare any point if it lies inside the
         // selection
-
         if ((lineStart.x >= selectionStart.x) && (lineStart.x <= selectionEnd.x)
                 && (lineStart.y >= selectionStart.y)
-                && (lineStart.y <= selectionEnd.y))
+                && (lineStart.y <= selectionEnd.y)) {
             return true;
+        }
         return false;
     }
 

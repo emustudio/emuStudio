@@ -26,7 +26,6 @@ import emulib.plugins.compiler.ICompiler;
 import emulib.plugins.cpu.ICPU;
 import emulib.plugins.device.IDevice;
 import emulib.plugins.memory.IMemory;
-import emulib.runtime.StaticDialogs;
 import emustudio.architecture.ArchHandler;
 import emustudio.architecture.Computer;
 import emustudio.architecture.drawing.PreviewPanel;
@@ -72,10 +71,10 @@ public class ViewComputerDialog extends JDialog {
             ICompiler compiler = arch.getComputer().getCompiler();
             if (compiler == null) {
                 lblCompilerFileName.setText("Compiler is not used");
-                lblCompilerName.setText("");
-                lblCompilerVersion.setText("");
-                txtCompilerCopyright.setText("");
-                txtCompilerDescription.setText("");
+                vanishComponent(lblCompilerName);
+                vanishComponent(lblCompilerVersion);
+                vanishComponent(txtCompilerCopyright);
+                vanishComponent(txtCompilerDescription);
             } else {
                 lblCompilerFileName.setText(compilerName + ".jar");
                 lblCompilerName.setText(compiler.getTitle());
@@ -136,6 +135,10 @@ public class ViewComputerDialog extends JDialog {
         scrollScheme.getHorizontalScrollBar().setUnitIncrement(10);
         scrollScheme.getVerticalScrollBar().setUnitIncrement(10);
         this.setLocationRelativeTo(null);
+    }
+    
+    private void vanishComponent(JComponent component) {
+        component.setVisible(false);
     }
 
     /**

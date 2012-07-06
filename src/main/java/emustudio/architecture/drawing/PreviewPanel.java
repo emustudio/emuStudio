@@ -23,9 +23,18 @@
 
 package emustudio.architecture.drawing;
 
+import emustudio.main.Main;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import javax.imageio.ImageIO;
+import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import javax.swing.filechooser.FileFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -33,7 +42,11 @@ import javax.swing.JPanel;
  */
 @SuppressWarnings("serial")
 public class PreviewPanel extends JPanel {
+    private final static Logger logger = LoggerFactory.getLogger(PreviewPanel.class);
     private Schema schema;
+    private int schemaWidth;
+    private int schemaHeight;
+    private File lastImageFile;
     
     /**
      * Left factor is a constant used in panel resizing. It is a distance
@@ -166,7 +179,27 @@ public class PreviewPanel extends JPanel {
                     height-topFactor+Schema.MIN_TOP_MARGIN);
             this.revalidate();
         }
+        schemaWidth = width;
+        schemaHeight = height;
         panelResized = true;
+    }
+    
+    /**
+     * Get schema real width.
+     * 
+     * @return schema width
+     */
+    public int getSchemaWidth() {
+        return schemaWidth;
+    }
+    
+    /**
+     * Get schema real height.
+     * 
+     * @return schema height
+     */
+    public int getSchemaHeight() {
+        return schemaHeight;
     }
     
     /**
@@ -218,4 +251,93 @@ public class PreviewPanel extends JPanel {
         this.repaint();
     }
 
+    public void saveSchemaImage() {
+        JFileChooser f = new JFileChooser();
+
+        f.setDialogTitle("Save schema image");
+        f.setAcceptAllFileFilterUsed(false);
+
+        ImageIO.scanForPlugins();
+        FileFilter defaultFilter = null;
+        String suffixes[] = ImageIO.getWriterFileSuffixes();
+        String formatNames[] = ImageIO.getWriterFormatNames();
+
+        class ImageFileFilter extends FileFilter {
+
+            private String formatName;
+            private String suffix;
+
+            public ImageFileFilter(String formatName, String suffix) {
+                this.formatName = formatName;
+                this.suffix = suffix;
+            }
+
+            @Override
+            public boolean accept(File f) {
+                if (f.isDirectory()) {
+                    return true;
+                }
+                return f.getName().toUpperCase().endsWith("." + suffix.toUpperCase());
+            }
+
+            @Override
+            public String getDescription() {
+                return formatName + " image";
+            }
+
+            public String getFormatName() {
+                return formatName;
+            }
+
+            public String getSuffix() {
+                return suffix;
+            }
+        }
+    
+        for (int i = 0; i < suffixes.length; i++) {
+            FileFilter filter = new ImageFileFilter(suffixes[i], formatNames[i]);
+            f.addChoosableFileFilter(filter);
+            if (defaultFilter == null) {
+                defaultFilter = filter;
+            }
+        }
+        if (defaultFilter == null) {
+            String msg = "Could not save schema image - no image writers are available.";
+            logger.error(msg);
+            Main.tryShowErrorMessage(msg);
+        }
+        f.setFileFilter(defaultFilter);
+        f.setApproveButtonText("Save");
+        if (lastImageFile != null) {
+            f.setCurrentDirectory(lastImageFile.getParentFile());
+        } else {
+            f.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        }
+        f.setSelectedFile(null);
+
+        int returnVal = f.showSaveDialog(this);
+        if (returnVal != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        File selectedFile = f.getSelectedFile();
+        ImageFileFilter selectedFileFilter = (ImageFileFilter) f.getFileFilter();
+
+        String suffix = selectedFileFilter.getSuffix();
+        if (selectedFile.getName().toLowerCase().endsWith("." + suffix.toLowerCase())) {
+            lastImageFile = selectedFile;
+        } else {
+            lastImageFile = new File(selectedFile.getAbsolutePath() + "." + suffix.toLowerCase());
+        }
+
+        // Save the image
+        BufferedImage bi = new BufferedImage(getSchemaWidth(), getSchemaHeight(),
+                BufferedImage.TYPE_INT_RGB);
+        paint(bi.createGraphics());
+        try {
+            ImageIO.write(bi, selectedFileFilter.getFormatName(), lastImageFile);
+        } catch (IOException e) {
+            logger.error("Could not save schema image.", e);
+            Main.tryShowErrorMessage("Could not save schema image. See log file for details.");
+        }
+    }
 }

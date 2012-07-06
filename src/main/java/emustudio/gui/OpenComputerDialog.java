@@ -29,7 +29,13 @@ import emustudio.architecture.ReadConfigurationException;
 import emustudio.architecture.drawing.PreviewPanel;
 import emustudio.architecture.drawing.Schema;
 import emustudio.main.Main;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 import javax.swing.AbstractListModel;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -146,6 +152,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         btnAdd = new javax.swing.JButton();
         btnDelete = new javax.swing.JButton();
         btnEdit = new javax.swing.JButton();
+        btnSaveSchemaImage = new javax.swing.JButton();
         javax.swing.JPanel panelPreview = new javax.swing.JPanel();
         scrollPreview = new javax.swing.JScrollPane();
         javax.swing.JToolBar toolPreview = new javax.swing.JToolBar();
@@ -215,19 +222,30 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         });
         toolConfig.add(btnEdit);
 
+        btnSaveSchemaImage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/document-save.png"))); // NOI18N
+        btnSaveSchemaImage.setFocusable(false);
+        btnSaveSchemaImage.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnSaveSchemaImage.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnSaveSchemaImage.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSaveSchemaImageActionPerformed(evt);
+            }
+        });
+        toolConfig.add(btnSaveSchemaImage);
+
         javax.swing.GroupLayout panelConfigLayout = new javax.swing.GroupLayout(panelConfig);
         panelConfig.setLayout(panelConfigLayout);
         panelConfigLayout.setHorizontalGroup(
             panelConfigLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(toolConfig, javax.swing.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)
+            .addComponent(toolConfig, javax.swing.GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
         );
         panelConfigLayout.setVerticalGroup(
             panelConfigLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelConfigLayout.createSequentialGroup()
-                .addComponent(toolConfig, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(toolConfig, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 251, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 295, Short.MAX_VALUE))
         );
 
         splitConfig.setLeftComponent(panelConfig);
@@ -236,7 +254,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         toolPreview.setRollover(true);
 
         jLabel2.setFont(jLabel2.getFont());
-        jLabel2.setText("Computer preview");
+        jLabel2.setText("Computer preview:");
         toolPreview.add(jLabel2);
 
         jSeparator1.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -249,17 +267,17 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         panelPreview.setLayout(panelPreviewLayout);
         panelPreviewLayout.setHorizontalGroup(
             panelPreviewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(scrollPreview, javax.swing.GroupLayout.DEFAULT_SIZE, 478, Short.MAX_VALUE)
+            .addComponent(scrollPreview, javax.swing.GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
             .addGroup(panelPreviewLayout.createSequentialGroup()
                 .addGap(10, 10, 10)
-                .addComponent(toolPreview, javax.swing.GroupLayout.DEFAULT_SIZE, 468, Short.MAX_VALUE))
+                .addComponent(toolPreview, javax.swing.GroupLayout.DEFAULT_SIZE, 576, Short.MAX_VALUE))
         );
         panelPreviewLayout.setVerticalGroup(
             panelPreviewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelPreviewLayout.createSequentialGroup()
                 .addComponent(toolPreview, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollPreview, javax.swing.GroupLayout.DEFAULT_SIZE, 251, Short.MAX_VALUE))
+                .addComponent(scrollPreview, javax.swing.GroupLayout.DEFAULT_SIZE, 308, Short.MAX_VALUE))
         );
 
         splitConfig.setRightComponent(panelPreview);
@@ -282,7 +300,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(splitConfig, javax.swing.GroupLayout.DEFAULT_SIZE, 684, Short.MAX_VALUE)
+                    .addComponent(splitConfig, javax.swing.GroupLayout.DEFAULT_SIZE, 797, Short.MAX_VALUE)
                     .addComponent(jLabel1)
                     .addComponent(btnOpen, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
@@ -293,7 +311,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(splitConfig, javax.swing.GroupLayout.DEFAULT_SIZE, 282, Short.MAX_VALUE)
+                .addComponent(splitConfig, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnOpen)
                 .addContainerGap())
@@ -382,11 +400,20 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         lblPreview.setText(archName);
     }//GEN-LAST:event_lstConfigValueChanged
 
+    private void btnSaveSchemaImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveSchemaImageActionPerformed
+        if (lstConfig.getSelectedIndex() == -1) {
+            Main.tryShowErrorMessage("A computer has to be selected!");
+            return;
+        }
+        preview.saveSchemaImage();
+    }//GEN-LAST:event_btnSaveSchemaImageActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAdd;
     private javax.swing.JButton btnDelete;
     private javax.swing.JButton btnEdit;
+    private javax.swing.JButton btnSaveSchemaImage;
     private javax.swing.JLabel lblPreview;
     private javax.swing.JList lstConfig;
     private javax.swing.JScrollPane scrollPreview;

@@ -49,13 +49,9 @@ import javax.swing.event.EventListenerList;
 public class DrawingPanel extends JPanel implements MouseListener,
         MouseMotionListener {
     /**
-     * Default grid gap - String version. 
+     * Default grid gap
      */
-    public final static String DEFAULT_GRID_GAP = "20";
-    /**
-     * Default grid gap - integer version
-     */
-    public final static int DEFAULT_GRID_GAP_INT = 20;
+    public final static Integer DEFAULT_GRID_GAP = 20;
     
     private final static int RESIZE_TOP = 0;
     private final static int RESIZE_LEFT = 1;

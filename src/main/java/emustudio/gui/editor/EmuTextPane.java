@@ -559,10 +559,11 @@ public class EmuTextPane extends JTextPane {
      */
     public boolean saveFileDialog() {
         JFileChooser f = new JFileChooser();
+
         EmuFileFilter[] filters;
         int tmpLen = (fileExtensions != null) ? fileExtensions.length : 0;
         
-        f.setDialogTitle("Save the file");
+        f.setDialogTitle("Save file");
         f.setAcceptAllFileFilterUsed(false);
 
         filters = new EmuFileFilter[tmpLen + 1];
@@ -581,24 +582,27 @@ public class EmuTextPane extends JTextPane {
         f.setFileFilter(filters[0]);
         f.setApproveButtonText("Save");
         f.setSelectedFile(fileSource);
-        if (fileSource == null) {
+        if (fileSource != null) {
+            f.setCurrentDirectory(fileSource.getParentFile()); 
+        } else {
             f.setCurrentDirectory(new File(System.getProperty("user.dir")));
         }
+        f.setSelectedFile(null);
 
         int returnVal = f.showSaveDialog(this);
         if (returnVal != JFileChooser.APPROVE_OPTION) {
             return false;
         }
-        fileSource = f.getSelectedFile();
-        String fn = fileSource.getAbsolutePath();
-        EmuFileFilter fil = (EmuFileFilter) f.getFileFilter();
-        if ((EmuFileFilter.getExtension(fileSource) == null)
-                && (fil.getFirstExtension() != null)) {
-            if (!fil.getFirstExtension().equals("*")) {
-                fn += "." + fil.getFirstExtension();
-            }
+        File selectedFile = f.getSelectedFile();
+        EmuFileFilter selectedFileFilter = (EmuFileFilter)f.getFileFilter();
+        
+        String suffix = selectedFileFilter.getFirstExtension();
+        if (!suffix.equals("*") &&
+                selectedFile.getName().toLowerCase().endsWith("." + suffix.toLowerCase())) {
+            fileSource = selectedFile;
+        } else {
+            fileSource = new File(selectedFile.getAbsolutePath() + "." + suffix.toLowerCase());
         }
-        fileSource = new java.io.File(fn);
         return saveFile(false);
     }
 
