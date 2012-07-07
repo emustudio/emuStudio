@@ -24,9 +24,14 @@
 package emustudio.gui.debugTable;
 
 import emustudio.main.Main;
-import javax.swing.*;
-import javax.swing.table.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.table.TableCellRenderer;
 
 /**
  * Debug table.
@@ -36,21 +41,26 @@ import java.awt.*;
 @SuppressWarnings("serial")
 public class DebugTable extends JTable {
     private DebugTableModel debug_model;
+    private DebugCellRenderer debug_renderer;
   
     /** 
      * Creates a new instance of DebugTable
      */
     public DebugTable() {
+        super();
         debug_model = new DebugTableModel(Main.currentArch.getComputer().getCPU());
         setModel(debug_model);
-        setDefaultRenderer(Object.class, new DebugCellRenderer());
+        debug_renderer = new DebugCellRenderer();
+        setDefaultRenderer(Object.class, debug_renderer);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        debug_model.setRowCount(debug_renderer.estimateRowCount(getPreferredSize().height));
     }
 
     /**
      * This class does the painting of all debug table cells.
      */
     public class DebugCellRenderer extends JLabel implements TableCellRenderer {
+        public int height = 17;
 
         /**
          * The constructor creates the renderer instance.
@@ -76,18 +86,37 @@ public class DebugTable extends JTable {
         public Component getTableCellRendererComponent(JTable table, Object value,
                 boolean isSelected, boolean hasFocus, int row, int column) {
             if (debug_model.isCurrent(row)) {
-                this.setBackground(Color.RED);
-                this.setForeground(Color.WHITE);
+                setBackground(Color.RED);
+                setForeground(Color.WHITE);
             } else { 
-                this.setBackground(Color.WHITE);
-                this.setForeground(Color.BLACK);
+                setBackground(Color.WHITE);
+                setForeground(Color.BLACK);
             }
-            if (value != null)
+            if (value != null) {
                 setText(" " + value.toString());
-            else
+            } else {
                 setText(" ");
+            }
+            height = getPreferredSize().height + 1;
             return this;
         }
+        
+        /**
+         * Estimates maximal number of rows that would fit in the debug table without using scrolls.
+         * @return estimated row count in the debug table
+         */
+        public int estimateRowCount(int height) {
+            int result = (height / this.height) - 2;
+            if (result <= 0) {
+                result = 1;
+            }
+            return result;
+        }
+    }
+    
+    public void fireResized(int height) {
+        debug_model.setRowCount(debug_renderer.estimateRowCount(height));
+        repaint();
     }
     
     /**
@@ -97,7 +126,7 @@ public class DebugTable extends JTable {
         debug_model.firstPage();
         update();
     }
-
+    
     /**
      * Move to previous page.
      */

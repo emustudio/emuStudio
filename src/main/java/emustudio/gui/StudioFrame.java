@@ -46,10 +46,7 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.FlavorEvent;
 import java.awt.datatransfer.FlavorListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.StringReader;
 import java.util.EventObject;
 import javax.swing.*;
@@ -109,6 +106,27 @@ public class StudioFrame extends javax.swing.JFrame {
         btnBreakpoint.setEnabled(arch.getCPU().isBreakpointSupported());
         jScrollPane1.setViewportView(txtSource);
         paneDebug.setViewportView(tblDebug);
+        paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        paneDebug.addComponentListener(new ComponentListener() {
+
+            @Override
+            public void componentResized(ComponentEvent e) {
+                tblDebug.fireResized(paneDebug.getHeight());
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent e) {
+            }
+
+            @Override
+            public void componentShown(ComponentEvent e) {
+            }
+
+            @Override
+            public void componentHidden(ComponentEvent e) {
+            }
+            
+        });
 
 
         if (compiler == null) {
@@ -118,6 +136,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
         this.setStatusGUI();
         pack();
+        tblDebug.fireResized(paneDebug.getHeight());
 
         setupListeners();
 

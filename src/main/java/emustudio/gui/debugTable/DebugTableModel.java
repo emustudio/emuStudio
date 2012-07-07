@@ -39,11 +39,12 @@ public class DebugTableModel extends AbstractTableModel {
     private ICPU cpu;
 
     private int page; // The page of the debug table
+    private int rowCount; // actual row count
 
     /**
      * This indicates a number of instructions that will be showed before
      * current instruction and hopefully after current instruction. It is
-     * dependent on MAX_ROW_COUNT.
+     * dependent on rowCount.
      */
     private int gapInstr;
 
@@ -55,6 +56,7 @@ public class DebugTableModel extends AbstractTableModel {
     public DebugTableModel(ICPU cpu) {
         this.cpu = cpu;
         page = 0;
+        rowCount = MAX_ROW_COUNT;
 
         IDisassembler dis = cpu.getDisassembler();
 
@@ -70,7 +72,7 @@ public class DebugTableModel extends AbstractTableModel {
             columns[1] = new ColumnMnemo(dis);
             columns[2] = new ColumnOpcode(dis);
         }
-        gapInstr = MAX_ROW_COUNT / 2;
+        gapInstr = rowCount / 2;
     }
 
     /**
@@ -79,7 +81,16 @@ public class DebugTableModel extends AbstractTableModel {
      */
     @Override
     public int getRowCount() {
-        return MAX_ROW_COUNT;
+        return rowCount;
+    }
+    
+    /**
+     * Set number of rows in the debug table.
+     * 
+     * @param row_count count of rows
+     */
+    public void setRowCount(int row_count) {
+        this.rowCount = row_count;
     }
 
     /**
@@ -124,7 +135,7 @@ public class DebugTableModel extends AbstractTableModel {
     public void previousPage() {
         page -= 1;
         try {
-            int loc = rowToLocation(MAX_ROW_COUNT-1);
+            int loc = rowToLocation(rowCount-1);
             if (loc < 0)
                 page++;
         } catch(IndexOutOfBoundsException e) {
@@ -161,12 +172,11 @@ public class DebugTableModel extends AbstractTableModel {
      */
     public void lastPage() {
         int gap = 100; // empiric value
-        int llocation;
         do {
             try {
                 do {
                     page += gap;
-                    llocation = rowToLocation(0, page);
+                    rowToLocation(0, page);
                 } while (true);
             } catch (IndexOutOfBoundsException e) {
                 if (gap > 1) {
@@ -298,7 +308,7 @@ public class DebugTableModel extends AbstractTableModel {
         IDisassembler dis = cpu.getDisassembler();
 
         int rowCurrent = computeCurrentRow();
-        int rowWanted = row + MAX_ROW_COUNT * ppage;
+        int rowWanted = row + rowCount * ppage;
 
         try {
             while (rowWanted < rowCurrent) {
