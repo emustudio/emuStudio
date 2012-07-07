@@ -22,7 +22,6 @@
  */
 package emustudio.gui;
 
-import emulib.runtime.StaticDialogs;
 import emustudio.gui.utils.FindText;
 import emustudio.gui.utils.NiceButton;
 import emustudio.main.Main;
@@ -185,7 +184,7 @@ public class FindDialog extends javax.swing.JDialog {
         JLabel lblReplaceWith = new JLabel();
         cmbReplace = new JComboBox();
         NiceButton btnReplace = new NiceButton();
-        NiceButton btnReplaceAll = new NiceButton();
+        JButton btnReplaceAll = new JButton();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Find/replace text");
@@ -193,14 +192,18 @@ public class FindDialog extends javax.swing.JDialog {
         setResizable(false);
 
         lblSearchFor.setText("Search for:");
+        lblSearchFor.setFont(lblSearchFor.getFont().deriveFont(lblSearchFor.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         cmbSearch.setEditable(true);
+        cmbSearch.setFont(cmbSearch.getFont().deriveFont(cmbSearch.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         panelOptions.setBorder(BorderFactory.createTitledBorder("Options"));
 
         caseCheck.setText("Case sensitive");
+        caseCheck.setFont(caseCheck.getFont().deriveFont(caseCheck.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         wholeCheck.setText("Whole words");
+        wholeCheck.setFont(wholeCheck.getFont().deriveFont(wholeCheck.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         GroupLayout panelOptionsLayout = new GroupLayout(panelOptions);
         panelOptions.setLayout(panelOptionsLayout);
@@ -214,12 +217,15 @@ public class FindDialog extends javax.swing.JDialog {
         buttonGroup1.add(endRadio);
         endRadio.setSelected(true);
         endRadio.setText("To end of document");
+        endRadio.setFont(endRadio.getFont().deriveFont(endRadio.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         buttonGroup1.add(startRadio);
         startRadio.setText("To start of document");
+        startRadio.setFont(startRadio.getFont().deriveFont(startRadio.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         buttonGroup1.add(allRadio);
         allRadio.setText("All document");
+        allRadio.setFont(allRadio.getFont().deriveFont(allRadio.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         GroupLayout panelDirectionLayout = new GroupLayout(panelDirection);
         panelDirection.setLayout(panelDirectionLayout);
@@ -229,6 +235,7 @@ public class FindDialog extends javax.swing.JDialog {
                 panelDirectionLayout.createSequentialGroup().addComponent(endRadio).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(startRadio).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(allRadio).addContainerGap());
 
         btnSearch.setText("Search");
+        btnSearch.setFont(btnSearch.getFont().deriveFont(btnSearch.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnSearch.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -238,10 +245,13 @@ public class FindDialog extends javax.swing.JDialog {
         });
 
         lblReplaceWith.setText("Replace with:");
+        lblReplaceWith.setFont(lblReplaceWith.getFont().deriveFont(lblReplaceWith.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         cmbReplace.setEditable(true);
+        cmbReplace.setFont(cmbReplace.getFont().deriveFont(cmbReplace.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         btnReplace.setText("Replace");
+        btnReplace.setFont(btnReplace.getFont().deriveFont(btnReplace.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnReplace.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -251,6 +261,7 @@ public class FindDialog extends javax.swing.JDialog {
         });
 
         btnReplaceAll.setText("Replace all");
+        btnReplaceAll.setFont(btnReplaceAll.getFont().deriveFont(btnReplaceAll.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnReplaceAll.addActionListener(new java.awt.event.ActionListener() {
 
             @Override

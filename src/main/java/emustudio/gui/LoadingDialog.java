@@ -52,8 +52,8 @@ public class LoadingDialog extends JDialog {
                 .getResource("/emustudio/gui/loading.gif"))); // NOI18N
         lblLoading.setText("Loading computer, please wait...");
 
-        lblWarning.setText("<html>If you see some errors during the loading, "
-                + "check your abstract scheme or plugins.");
+        lblWarning.setFont(lblWarning.getFont().deriveFont(java.awt.Font.PLAIN));
+        lblWarning.setText("If you see some errors, please look at the emustudio.log.");
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

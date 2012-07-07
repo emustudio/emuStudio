@@ -83,6 +83,7 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Plug-in settings");
 
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel1.setText("Manage plug-in settings");
 
         tblSettings.setAutoCreateRowSorter(true);
@@ -104,6 +105,7 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
         });
         jScrollPane1.setViewportView(tblSettings);
 
+        btnSave.setFont(btnSave.getFont().deriveFont(btnSave.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnSave.setText("Save");
         btnSave.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -111,6 +113,7 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
             }
         });
 
+        btnNew.setFont(btnNew.getFont().deriveFont(btnNew.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnNew.setText("Add new");
         btnNew.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -118,6 +121,7 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
             }
         });
 
+        btnRemove.setFont(btnRemove.getFont().deriveFont(btnRemove.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnRemove.setText("Remove");
         btnRemove.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -138,7 +142,7 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
                         .addComponent(btnNew)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnRemove)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 146, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 160, Short.MAX_VALUE)
                         .addComponent(btnSave, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );

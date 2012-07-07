@@ -1,444 +1,627 @@
 /*
- * ViewArchDialog.java
- *
- * Created on Utorok, 2007, september 11, 15:42
+ * ViewComputerDialog.java
+ * 
+ * Copyright (C) 2012, Peter Jakubčo
+ * 
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2007-2012, Peter Jakubčo
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 package emustudio.gui;
 
-import emulib.plugins.compiler.ICompiler;
-import emulib.plugins.cpu.ICPU;
-import emulib.plugins.device.IDevice;
-import emulib.plugins.memory.IMemory;
-import emustudio.architecture.ArchHandler;
+import emulib.plugins.IPlugin;
+import emustudio.architecture.ArchLoader;
 import emustudio.architecture.Computer;
 import emustudio.architecture.drawing.PreviewPanel;
 import emustudio.main.Main;
-import java.awt.event.*;
-import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.filechooser.FileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author vbmacher
+ * Swing dialog showing informations about all plug-ins and abstract schema.
+ * 
+ * @author Peter Jakubčo
  */
-@SuppressWarnings("serial")
-public class ViewComputerDialog extends JDialog {
+public class ViewComputerDialog extends javax.swing.JDialog {
     private final static Logger logger = LoggerFactory.getLogger(ViewComputerDialog.class);
-
-    private boolean easterClicked = false; // for easterEgg
-    private ArchHandler arch;
-    private String compilerName;
-    private String cpuName;
-    private String memoryName;
-    private PreviewPanel pan;
-
+    private final static String CPU_CONFIG_DIR = ArchLoader.CPUS_DIR + File.separator;
+    private final static String COMPILER_CONFIG_DIR = ArchLoader.COMPILERS_DIR + File.separator;
+    private final static String MEMORY_CONFIG_DIR = ArchLoader.MEMORIES_DIR + File.separator;
+    private final static String DEVICE_CONFIG_DIR = ArchLoader.DEVICES_DIR + File.separator;
+    
+    private Computer computer;
+    private PreviewPanel panelSchema;
+    
+    private File fileComputerInfo;
+    
     /**
-     * Creates an instance of this dialog
-     *
-     * @param parent parent frame
-     * @param modal whether this dialog should be modal
+     * Creates new form ViewComputerDialog
      */
-    public ViewComputerDialog(JFrame parent, boolean modal) {
-        super(parent, modal);
-        arch = Main.currentArch;
+    public ViewComputerDialog(JFrame parent) {
+        super(parent, true);
         initComponents();
+        setLocationRelativeTo(parent);
+        lblComputerName.setText(Main.currentArch.getComputerName());
+        this.computer = Main.currentArch.getComputer();
 
-        compilerName = arch.getCompilerName();
-        memoryName = arch.getMemoryName();
-        cpuName = arch.getCPUName();
-
-        try {
-            lblName.setText(arch.getComputerName());
-
-            ICompiler compiler = arch.getComputer().getCompiler();
-            if (compiler == null) {
-                lblCompilerFileName.setText("Compiler is not used");
-                vanishComponent(lblCompilerName);
-                vanishComponent(lblCompilerVersion);
-                vanishComponent(txtCompilerCopyright);
-                vanishComponent(txtCompilerDescription);
-            } else {
-                lblCompilerFileName.setText(compilerName + ".jar");
-                lblCompilerName.setText(compiler.getTitle());
-                lblCompilerVersion.setText(compiler.getVersion());
-                txtCompilerCopyright.setText(compiler.getCopyright());
-                txtCompilerDescription.setText(compiler.getDescription());
-            }
-
-            ICPU cpu = arch.getComputer().getCPU();
-
-            lblCPUFileName.setText(cpuName + ".jar");
-            lblCPUName.setText(cpu.getTitle());
-            lblCPUVersion.setText(cpu.getVersion());
-            txtCPUCopyright.setText(cpu.getCopyright());
-            txtCPUDescription.setText(cpu.getDescription());
-
-            lblMemoryFileName.setText(memoryName + ".jar");
-
-            IMemory memory = arch.getComputer().getMemory();
-
-            if (memory != null) {
-                lblMemoryName.setText(memory.getTitle());
-                lblMemoryVersion.setText(memory.getVersion());
-                txtMemoryCopyright.setText(memory.getCopyright());
-                txtMemoryDescription.setText(memory.getDescription());
-            }
-
-            int j = arch.getComputer().getDeviceCount();
-            Computer comp = arch.getComputer();
-            for (int i = 0; i < j; i++) {
-                cmbDevice.addItem(comp.getDevice(i).getTitle());
-            }
-        } catch (NullPointerException e) {
-            logger.error("Couldn't get plug-ins information during viewing computer.", e);
-            Main.tryShowErrorMessage("Error: Can't get plug-ins information\n\n" + e.getMessage());
+        // load devices
+        int j = computer.getDeviceCount();
+        for (int i = 0; i < j; i++) {
+            cmbDevice.addItem(Main.currentArch.getDeviceName(i));
         }
-
-        if (cmbDevice.getItemCount() > 0) {
-            cmbDevice.setSelectedIndex(0);
-            showDevice(0);
-        } else {
-            cmbDevice.setEnabled(false);
-        }
-
+        
         cmbDevice.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
                 int i = cmbDevice.getSelectedIndex();
+                if (i < 0) {
+                    setVisibleInfo(false);
+                    return;
+                }
                 try {
-                    showDevice(i);
+                    setInfo(computer.getDevice(i), DEVICE_CONFIG_DIR + Main.currentArch.getDeviceName(i));
                 } catch (Exception ex) {
                 }
             }
+            
         });
-        pan = new PreviewPanel(arch.getSchema());
-        scrollScheme.setViewportView(pan);
-        scrollScheme.getHorizontalScrollBar().setUnitIncrement(10);
-        scrollScheme.getVerticalScrollBar().setUnitIncrement(10);
-        this.setLocationRelativeTo(null);
+        panelSchema = new PreviewPanel(Main.currentArch.getSchema());
+        scrollPane.setViewportView(panelSchema);
+        scrollPane.getHorizontalScrollBar().setUnitIncrement(10);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(10);
+        
+        if (computer.getCompiler() == null) {
+            btnCompiler.setEnabled(false);
+        }
+        if (computer.getMemory() == null) {
+            btnMemory.setEnabled(false);
+        }
+        if (computer.getDeviceCount() == 0) {
+            btnDevice.setEnabled(false);
+        }
+        
+        // Select default info
+        lblSelectDevice.setVisible(false);
+        cmbDevice.setVisible(false);
+        setInfo(computer.getCPU(), CPU_CONFIG_DIR + Main.currentArch.getCPUName());
     }
     
-    private void vanishComponent(JComponent component) {
-        component.setVisible(false);
+    private void setInfo(IPlugin plugin, String fileName) {
+        if (plugin == null) {
+            setVisibleInfo(false);
+            return;
+        } else {
+            setVisibleInfo(true);
+        }
+        try {
+            lblName.setText(plugin.getTitle());
+        } catch (Exception e) {
+            lblName.setText("Plug-in title is invalid");
+            logger.error("Could not retrieve plug-in title", e);
+        }
+        lblFileName.setText(fileName + ".jar");
+        try {
+            lblCopyright.setText(plugin.getCopyright());
+        } catch (Exception e) {
+            lblCopyright.setText("Plug-in title is invalid");
+            logger.error("Could not retrieve plug-in's copyright", e);
+        }
+        try {
+            lblVersion.setText(plugin.getVersion());
+        } catch (Exception e) {
+            lblVersion.setText("Plug-in version is invalid");
+            logger.error("Could not retrieve plug-in's version", e);
+        }
+        try {
+            txtDescription.setText(plugin.getDescription());
+        } catch (Exception e) {
+            txtDescription.setText("Plug-in description is invalid");
+            logger.error("Could not retrieve plug-in's description", e);
+        }
+    }
+    
+    private void setVisibleInfo(boolean visible) {
+        if (!visible) {
+            lblName.setText("Plug-in is not available. Please select another one.");
+        }
+        lblCopyright.setVisible(visible);
+        lblVersion.setVisible(visible);
+        lblFileName.setVisible(visible);
+        txtDescription.setVisible(visible);
     }
 
     /**
-     * Shows i-th device from the combo box.
-     *
-     * @param i the device index to show
+     * This method is called from within the constructor to initialize the form. WARNING: Do NOT modify this code. The
+     * content of this method is always regenerated by the Form Editor.
      */
-    private void showDevice(int i) {
-        IDevice device = arch.getComputer().getDevice(i);
-        lblDeviceFileName.setText(arch.getDeviceName(i) + ".jar");
-        lblDeviceName.setText(device.getTitle());
-        lblDeviceVersion.setText(device.getVersion());
-        txtDeviceCopyright.setText(device.getCopyright());
-        txtDeviceDescription.setText(device.getDescription());
-    }
-
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        lblName = new JLabel();
-        JTabbedPane tabbedPane = new JTabbedPane();
-        final JPanel panelCompiler = new JPanel();
-        JLabel lblFileNameLBL1 = new JLabel();
-        JLabel lblPluginNameLBL1 = new JLabel();
-        JLabel lblVersionLBL1 = new JLabel();
-        JLabel lblDescriptionLBL1 = new JLabel();
-        lblCompilerVersion = new JLabel();
-        lblCompilerName = new JLabel();
-        JLabel lblCopyrightLBL1 = new JLabel();
-        txtCompilerCopyright = new JTextArea();
-        lblCompilerFileName = new JLabel();
-        JScrollPane scrollCompilerDescription = new JScrollPane();
-        txtCompilerDescription = new JTextArea();
-        JPanel panelCPU = new JPanel();
-        JLabel lblFileNameLBL2 = new JLabel();
-        JLabel lblPluginNameLBL2 = new JLabel();
-        JLabel lblVersionLBL2 = new JLabel();
-        JLabel lblDescriptionLBL2 = new JLabel();
-        lblCPUVersion = new JLabel();
-        lblCPUName = new JLabel();
-        JLabel lblCopyrightLBL2 = new JLabel();
-        txtCPUCopyright = new JTextArea();
-        lblCPUFileName = new JLabel();
-        JScrollPane scrollCpuDescription = new JScrollPane();
-        txtCPUDescription = new JTextArea();
-        JPanel panelMemory = new JPanel();
-        JLabel lblFileNameLBL3 = new JLabel();
-        JLabel lblPluginNameLBL3 = new JLabel();
-        JLabel lblVersionLBL3 = new JLabel();
-        JLabel lblDescriptionLBL3 = new JLabel();
-        lblMemoryFileName = new JLabel();
-        lblMemoryName = new JLabel();
-        JLabel lblCopyrightLBL3 = new JLabel();
-        txtMemoryCopyright = new JTextArea();
-        lblMemoryVersion = new JLabel();
-        JScrollPane scrollMemoryDescription = new JScrollPane();
-        txtMemoryDescription = new JTextArea();
-        JPanel panelDevices = new JPanel();
-        JLabel lblFileNameLBL4 = new JLabel();
-        JLabel lblPluginNameLBL4 = new JLabel();
-        JLabel lblVersionLBL4 = new JLabel();
-        JLabel lblDescriptionLBL4 = new JLabel();
-        lblDeviceFileName = new JLabel();
-        lblDeviceName = new JLabel();
-        JLabel lblCopyrightLBL4 = new JLabel();
-        txtDeviceCopyright = new JTextArea();
-        lblDeviceVersion = new JLabel();
-        JScrollPane scrollDeviceDescription = new JScrollPane();
-        txtDeviceDescription = new JTextArea();
-        JLabel lblDeviceLBL = new JLabel();
-        cmbDevice = new JComboBox();
-        JPanel panelScheme = new JPanel();
-        scrollScheme = new JScrollPane();
 
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("View computer");
-        setAlwaysOnTop(true);
+        javax.swing.ButtonGroup buttonGroup1 = new javax.swing.ButtonGroup();
+        lblComputerName = new javax.swing.JLabel();
+        javax.swing.JTabbedPane jTabbedPane1 = new javax.swing.JTabbedPane();
+        javax.swing.JPanel panelTabInfo = new javax.swing.JPanel();
+        javax.swing.JToolBar jToolBar1 = new javax.swing.JToolBar();
+        btnCompiler = new javax.swing.JToggleButton();
+        btnCPU = new javax.swing.JToggleButton();
+        btnMemory = new javax.swing.JToggleButton();
+        btnDevice = new javax.swing.JToggleButton();
+        javax.swing.JToolBar.Separator jSeparator1 = new javax.swing.JToolBar.Separator();
+        javax.swing.JButton btnExport = new javax.swing.JButton();
+        javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
+        lblSelectDevice = new javax.swing.JLabel();
+        cmbDevice = new javax.swing.JComboBox();
+        lblName = new javax.swing.JLabel();
+        lblFileName = new javax.swing.JLabel();
+        lblVersion = new javax.swing.JLabel();
+        lblCopyright = new javax.swing.JLabel();
+        javax.swing.JPanel panelDescription = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        txtDescription = new javax.swing.JTextArea();
+        javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
+        javax.swing.JToolBar jToolBar2 = new javax.swing.JToolBar();
+        javax.swing.JButton btnSaveSchema = new javax.swing.JButton();
+        scrollPane = new javax.swing.JScrollPane();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Computer information preview");
+
+        lblComputerName.setFont(lblComputerName.getFont().deriveFont(lblComputerName.getFont().getStyle() | java.awt.Font.BOLD, lblComputerName.getFont().getSize()+3));
+        lblComputerName.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblComputerName.setText("computer_name");
+
+        jTabbedPane1.setFont(jTabbedPane1.getFont().deriveFont(jTabbedPane1.getFont().getStyle() & ~java.awt.Font.BOLD));
+
+        jToolBar1.setFloatable(false);
+        jToolBar1.setOrientation(javax.swing.SwingConstants.VERTICAL);
+        jToolBar1.setRollover(true);
+        jToolBar1.setDoubleBuffered(true);
+
+        buttonGroup1.add(btnCompiler);
+        btnCompiler.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/compile.png"))); // NOI18N
+        btnCompiler.setToolTipText("Compiler information");
+        btnCompiler.setFocusable(false);
+        btnCompiler.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnCompiler.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnCompiler.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCompilerActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(btnCompiler);
+
+        buttonGroup1.add(btnCPU);
+        btnCPU.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/cpu.gif"))); // NOI18N
+        btnCPU.setSelected(true);
+        btnCPU.setToolTipText("CPU information");
+        btnCPU.setFocusable(false);
+        btnCPU.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnCPU.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnCPU.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCPUActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(btnCPU);
+
+        buttonGroup1.add(btnMemory);
+        btnMemory.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/ram.gif"))); // NOI18N
+        btnMemory.setToolTipText("Memory information");
+        btnMemory.setFocusable(false);
+        btnMemory.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnMemory.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnMemory.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnMemoryActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(btnMemory);
+
+        buttonGroup1.add(btnDevice);
+        btnDevice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/device.png"))); // NOI18N
+        btnDevice.setToolTipText("Devices information");
+        btnDevice.setFocusable(false);
+        btnDevice.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnDevice.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnDevice.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDeviceActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(btnDevice);
+        jToolBar1.add(jSeparator1);
+
+        btnExport.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/document-save.png"))); // NOI18N
+        btnExport.setToolTipText("Export information to a file");
+        btnExport.setFocusable(false);
+        btnExport.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnExport.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnExport.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnExportActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(btnExport);
+
+        lblSelectDevice.setFont(lblSelectDevice.getFont().deriveFont(lblSelectDevice.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblSelectDevice.setText("Select device:");
+
+        cmbDevice.setFont(cmbDevice.getFont().deriveFont(cmbDevice.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         lblName.setFont(lblName.getFont().deriveFont(lblName.getFont().getStyle() | java.awt.Font.BOLD));
-        lblName.setText(null);
-        lblName.addMouseListener(new MouseListener() {
+        lblName.setText("plugin_name");
 
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if ((e.getButton() == MouseEvent.BUTTON1) && (e.getClickCount() == 2)) {
-                    easterClicked = !easterClicked;
-                    if (easterClicked) {
-                        panelCompiler.grabFocus();
-                    }
-                }
-                e.consume();
-            }
+        lblFileName.setFont(lblFileName.getFont().deriveFont(lblFileName.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblFileName.setText("plugin_file_name");
 
-            @Override
-            public void mouseEntered(MouseEvent e) {
-            }
+        lblVersion.setFont(lblVersion.getFont().deriveFont(lblVersion.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblVersion.setText("plugin_version");
 
-            @Override
-            public void mouseExited(MouseEvent e) {
-            }
+        lblCopyright.setFont(lblCopyright.getFont().deriveFont(lblCopyright.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblCopyright.setText("plugin_copyright");
 
-            @Override
-            public void mousePressed(MouseEvent e) {
-            }
+        panelDescription.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Short description", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 0, 12))); // NOI18N
 
-            @Override
-            public void mouseReleased(MouseEvent e) {
+        txtDescription.setColumns(20);
+        txtDescription.setEditable(false);
+        txtDescription.setLineWrap(true);
+        txtDescription.setRows(5);
+        txtDescription.setWrapStyleWord(true);
+        jScrollPane1.setViewportView(txtDescription);
+
+        javax.swing.GroupLayout panelDescriptionLayout = new javax.swing.GroupLayout(panelDescription);
+        panelDescription.setLayout(panelDescriptionLayout);
+        panelDescriptionLayout.setHorizontalGroup(
+            panelDescriptionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelDescriptionLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1)
+                .addContainerGap())
+        );
+        panelDescriptionLayout.setVerticalGroup(
+            panelDescriptionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelDescriptionLayout.createSequentialGroup()
+                .addComponent(jScrollPane1)
+                .addContainerGap())
+        );
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(panelDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(lblSelectDevice)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmbDevice, 0, 377, Short.MAX_VALUE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblName)
+                            .addComponent(lblVersion)
+                            .addComponent(lblCopyright)
+                            .addComponent(lblFileName))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblSelectDevice)
+                    .addComponent(cmbDevice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addComponent(lblName)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblFileName)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lblVersion)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblCopyright)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(panelDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        javax.swing.GroupLayout panelTabInfoLayout = new javax.swing.GroupLayout(panelTabInfo);
+        panelTabInfo.setLayout(panelTabInfoLayout);
+        panelTabInfoLayout.setHorizontalGroup(
+            panelTabInfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelTabInfoLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        panelTabInfoLayout.setVerticalGroup(
+            panelTabInfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelTabInfoLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(panelTabInfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("Computer info", panelTabInfo);
+
+        jToolBar2.setFloatable(false);
+        jToolBar2.setOrientation(javax.swing.SwingConstants.VERTICAL);
+        jToolBar2.setRollover(true);
+
+        btnSaveSchema.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/document-save.png"))); // NOI18N
+        btnSaveSchema.setToolTipText("Save schema image");
+        btnSaveSchema.setFocusable(false);
+        btnSaveSchema.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnSaveSchema.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnSaveSchema.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSaveSchemaActionPerformed(evt);
             }
         });
+        jToolBar2.add(btnSaveSchema);
 
-        tabbedPane.setFocusable(false);
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jToolBar2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 505, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(scrollPane)
+                    .addComponent(jToolBar2, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE))
+                .addContainerGap())
+        );
 
-        lblFileNameLBL1.setText("File name:");
-        lblPluginNameLBL1.setText("Plugin name:");
-        lblVersionLBL1.setText("Version:");
-        lblDescriptionLBL1.setText("Description:");
-        lblCopyrightLBL1.setText("Copyright:");
+        jTabbedPane1.addTab("Abstract schema", jPanel1);
 
-        lblCompilerVersion.setFont(lblCompilerVersion.getFont().deriveFont(lblCompilerVersion.getFont().getStyle() | java.awt.Font.BOLD));
-        lblCompilerName.setFont(lblCompilerName.getFont().deriveFont(lblCompilerName.getFont().getStyle() | java.awt.Font.BOLD));
-        lblCompilerFileName.setFont(lblCompilerFileName.getFont().deriveFont(lblCompilerFileName.getFont().getStyle() | java.awt.Font.BOLD));
-
-        txtCompilerCopyright.setFont(new java.awt.Font("Monospaced", 0, 12));
-        txtCompilerCopyright.setEditable(false);
-        txtCompilerCopyright.setLineWrap(true);
-        txtCompilerCopyright.setRows(3);
-        txtCompilerCopyright.setWrapStyleWord(true);
-
-        txtCompilerDescription.setEditable(false);
-        txtCompilerDescription.setFont(new java.awt.Font("Monospaced", 0, 12));
-        txtCompilerDescription.setLineWrap(true);
-        txtCompilerDescription.setRows(5);
-        txtCompilerDescription.setWrapStyleWord(true);
-        txtCompilerDescription.setOpaque(false);
-        scrollCompilerDescription.setViewportView(txtCompilerDescription);
-
-        panelCompiler.addKeyListener(new KeyListener() {
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (easterClicked && e.isAltDown() && (e.getKeyCode() == KeyEvent.VK_A)) {
-                    Main.tryShowMessage("Easter egg: Welcome, vbmacher!");
-                }
-                e.consume();
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-            }
-
-            @Override
-            public void keyTyped(KeyEvent e) {
-            }
-        });
-        GroupLayout compilerLayout = new GroupLayout(panelCompiler);
-        panelCompiler.setLayout(compilerLayout);
-
-        compilerLayout.setHorizontalGroup(compilerLayout.createSequentialGroup().addContainerGap().addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblFileNameLBL1).addComponent(lblPluginNameLBL1).addComponent(lblVersionLBL1).addComponent(lblCopyrightLBL1).addComponent(lblDescriptionLBL1)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblCompilerFileName).addComponent(lblCompilerName).addComponent(lblCompilerVersion).addComponent(txtCompilerCopyright).addComponent(scrollCompilerDescription)).addContainerGap());
-        compilerLayout.setVerticalGroup(
-                compilerLayout.createSequentialGroup().addContainerGap().addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblFileNameLBL1).addComponent(lblCompilerFileName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblPluginNameLBL1).addComponent(lblCompilerName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblVersionLBL1).addComponent(lblCompilerVersion)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblCopyrightLBL1).addComponent(txtCompilerCopyright)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(compilerLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblDescriptionLBL1).addComponent(scrollCompilerDescription)).addContainerGap());
-
-        tabbedPane.addTab("Compiler", panelCompiler);
-        lblFileNameLBL2.setText("File name:");
-        lblPluginNameLBL2.setText("Plugin name:");
-        lblVersionLBL2.setText("Version:");
-        lblDescriptionLBL2.setText("Description:");
-        lblCopyrightLBL2.setText("Copyright:");
-
-        lblCPUVersion.setFont(lblCPUVersion.getFont().deriveFont(lblCPUVersion.getFont().getStyle() | java.awt.Font.BOLD));
-        lblCPUName.setFont(lblCPUName.getFont().deriveFont(lblCPUName.getFont().getStyle() | java.awt.Font.BOLD));
-        lblCPUFileName.setFont(lblCPUFileName.getFont().deriveFont(lblCPUFileName.getFont().getStyle() | java.awt.Font.BOLD));
-
-        txtCPUCopyright.setFont(new java.awt.Font("Monospaced", 0, 12));
-        txtCPUCopyright.setEditable(false);
-        txtCPUCopyright.setLineWrap(true);
-        txtCPUCopyright.setRows(3);
-        txtCPUCopyright.setWrapStyleWord(true);
-
-        txtCPUDescription.setEditable(false);
-        txtCPUDescription.setFont(new java.awt.Font("Monospaced", 0, 12));
-        txtCPUDescription.setLineWrap(true);
-        txtCPUDescription.setRows(5);
-        txtCPUDescription.setWrapStyleWord(true);
-        txtCPUDescription.setOpaque(false);
-        scrollCpuDescription.setViewportView(txtCPUDescription);
-
-        GroupLayout cpuLayout = new GroupLayout(panelCPU);
-        panelCPU.setLayout(cpuLayout);
-        cpuLayout.setHorizontalGroup(cpuLayout.createSequentialGroup().addContainerGap().addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblFileNameLBL2).addComponent(lblPluginNameLBL2).addComponent(lblVersionLBL2).addComponent(lblCopyrightLBL2).addComponent(lblDescriptionLBL2)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblCPUFileName).addComponent(lblCPUName).addComponent(lblCPUVersion).addComponent(txtCPUCopyright).addComponent(scrollCpuDescription)).addContainerGap());
-        cpuLayout.setVerticalGroup(
-                cpuLayout.createSequentialGroup().addContainerGap().addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblFileNameLBL2).addComponent(lblCPUFileName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblPluginNameLBL2).addComponent(lblCPUName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblVersionLBL2).addComponent(lblCPUVersion)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblCopyrightLBL2).addComponent(txtCPUCopyright)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(cpuLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblDescriptionLBL2).addComponent(scrollCpuDescription)).addContainerGap());
-
-        tabbedPane.addTab("CPU", panelCPU);
-        lblFileNameLBL3.setText("File name:");
-        lblPluginNameLBL3.setText("Plugin name:");
-        lblVersionLBL3.setText("Version:");
-        lblDescriptionLBL3.setText("Description:");
-        lblCopyrightLBL3.setText("Copyright:");
-
-        lblMemoryFileName.setFont(lblMemoryFileName.getFont().deriveFont(lblMemoryFileName.getFont().getStyle() | java.awt.Font.BOLD));
-        lblMemoryName.setFont(lblMemoryName.getFont().deriveFont(lblMemoryName.getFont().getStyle() | java.awt.Font.BOLD));
-        lblMemoryVersion.setFont(lblMemoryVersion.getFont().deriveFont(lblMemoryVersion.getFont().getStyle() | java.awt.Font.BOLD));
-
-        txtMemoryCopyright.setFont(new java.awt.Font("Monospaced", 0, 12));
-        txtMemoryCopyright.setEditable(false);
-        txtMemoryCopyright.setLineWrap(true);
-        txtMemoryCopyright.setRows(3);
-        txtMemoryCopyright.setWrapStyleWord(true);
-
-        txtMemoryDescription.setEditable(false);
-        txtMemoryDescription.setFont(new java.awt.Font("Monospaced", 0, 12));
-        txtMemoryDescription.setLineWrap(true);
-        txtMemoryDescription.setRows(5);
-        txtMemoryDescription.setWrapStyleWord(true);
-        txtMemoryDescription.setOpaque(false);
-        scrollMemoryDescription.setViewportView(txtMemoryDescription);
-
-        GroupLayout memoryLayout = new GroupLayout(panelMemory);
-        panelMemory.setLayout(memoryLayout);
-        memoryLayout.setHorizontalGroup(memoryLayout.createSequentialGroup().addContainerGap().addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblFileNameLBL3).addComponent(lblPluginNameLBL3).addComponent(lblVersionLBL3).addComponent(lblCopyrightLBL3).addComponent(lblDescriptionLBL3)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblMemoryFileName).addComponent(lblMemoryName).addComponent(lblMemoryVersion).addComponent(txtMemoryCopyright).addComponent(scrollMemoryDescription)).addContainerGap());
-        memoryLayout.setVerticalGroup(
-                memoryLayout.createSequentialGroup().addContainerGap().addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblFileNameLBL3).addComponent(lblMemoryFileName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblPluginNameLBL3).addComponent(lblMemoryName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblVersionLBL3).addComponent(lblMemoryVersion)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblCopyrightLBL3).addComponent(txtMemoryCopyright)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(memoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblDescriptionLBL3).addComponent(scrollMemoryDescription)).addContainerGap());
-
-        tabbedPane.addTab("Memory", panelMemory);
-        lblFileNameLBL4.setText("File name:");
-        lblPluginNameLBL4.setText("Plugin name:");
-        lblVersionLBL4.setText("Version:");
-        lblDescriptionLBL4.setText("Description:");
-        lblCopyrightLBL4.setText("Copyright:");
-
-        lblDeviceFileName.setFont(lblDeviceFileName.getFont().deriveFont(lblDeviceFileName.getFont().getStyle() | java.awt.Font.BOLD));
-        lblDeviceName.setFont(lblDeviceName.getFont().deriveFont(lblDeviceName.getFont().getStyle() | java.awt.Font.BOLD));
-        lblDeviceVersion.setFont(lblDeviceVersion.getFont().deriveFont(lblDeviceVersion.getFont().getStyle() | java.awt.Font.BOLD));
-
-        txtDeviceCopyright.setFont(new java.awt.Font("Monospaced", 0, 12));
-        txtDeviceCopyright.setEditable(false);
-        txtDeviceCopyright.setLineWrap(true);
-        txtDeviceCopyright.setRows(3);
-        txtDeviceCopyright.setWrapStyleWord(true);
-
-        txtDeviceDescription.setEditable(false);
-        txtDeviceDescription.setFont(new java.awt.Font("Monospaced", 0, 12));
-        txtDeviceDescription.setLineWrap(true);
-        txtDeviceDescription.setRows(5);
-        txtDeviceDescription.setWrapStyleWord(true);
-        txtDeviceDescription.setOpaque(false);
-        scrollDeviceDescription.setViewportView(txtDeviceDescription);
-
-        lblDeviceLBL.setText("Device:");
-
-        GroupLayout deviceLayout = new GroupLayout(panelDevices);
-        panelDevices.setLayout(deviceLayout);
-
-        deviceLayout.setHorizontalGroup(deviceLayout.createSequentialGroup().addContainerGap().addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblDeviceLBL).addComponent(lblFileNameLBL4).addComponent(lblPluginNameLBL4).addComponent(lblVersionLBL4).addComponent(lblCopyrightLBL4).addComponent(lblDescriptionLBL4)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(cmbDevice).addComponent(lblDeviceFileName).addComponent(lblDeviceName).addComponent(lblDeviceVersion).addComponent(txtDeviceCopyright).addComponent(scrollDeviceDescription)).addContainerGap());
-        deviceLayout.setVerticalGroup(
-                deviceLayout.createSequentialGroup().addContainerGap().addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblDeviceLBL).addComponent(cmbDevice)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblFileNameLBL4).addComponent(lblDeviceFileName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblPluginNameLBL4).addComponent(lblDeviceName)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblVersionLBL4).addComponent(lblDeviceVersion)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblCopyrightLBL4).addComponent(txtDeviceCopyright)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(deviceLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblDescriptionLBL4).addComponent(scrollDeviceDescription)).addContainerGap());
-
-        tabbedPane.addTab("Devices", panelDevices);
-
-        GroupLayout schemeLayout = new GroupLayout(panelScheme);
-        panelScheme.setLayout(schemeLayout);
-        schemeLayout.setHorizontalGroup(
-                schemeLayout.createSequentialGroup().addContainerGap().addComponent(scrollScheme) //, GroupLayout.DEFAULT_SIZE, 567, Short.MAX_VALUE)
-                .addContainerGap());
-        schemeLayout.setVerticalGroup(
-                schemeLayout.createSequentialGroup().addContainerGap().addComponent(scrollScheme) //, GroupLayout.DEFAULT_SIZE, 283, Short.MAX_VALUE)
-                .addContainerGap());
-
-        tabbedPane.addTab("Abstract schema", panelScheme);
-
-        GroupLayout layout = new GroupLayout(getContentPane());
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-                layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, 100, 500, Short.MAX_VALUE).addComponent(lblName)).addContainerGap());
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jTabbedPane1)
+                    .addComponent(lblComputerName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
         layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addContainerGap().addComponent(lblName).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE).addContainerGap()));
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGap(6, 6, 6)
+                .addComponent(lblComputerName)
+                .addGap(18, 18, 18)
+                .addComponent(jTabbedPane1)
+                .addContainerGap())
+        );
 
         pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void btnCompilerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCompilerActionPerformed
+        lblSelectDevice.setVisible(false);
+        cmbDevice.setVisible(false);
+        setInfo(computer.getCompiler(), COMPILER_CONFIG_DIR + Main.currentArch.getCompilerName());        
+    }//GEN-LAST:event_btnCompilerActionPerformed
+
+    private void btnCPUActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCPUActionPerformed
+        lblSelectDevice.setVisible(false);
+        cmbDevice.setVisible(false);
+        setInfo(computer.getCPU(), CPU_CONFIG_DIR + Main.currentArch.getCPUName());
+    }//GEN-LAST:event_btnCPUActionPerformed
+
+    private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMemoryActionPerformed
+        lblSelectDevice.setVisible(false);
+        cmbDevice.setVisible(false);
+        setInfo(computer.getMemory(), MEMORY_CONFIG_DIR + Main.currentArch.getMemoryName());
+    }//GEN-LAST:event_btnMemoryActionPerformed
+
+    private void btnDeviceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeviceActionPerformed
+        lblSelectDevice.setVisible(true);
+        cmbDevice.setVisible(true);
+        setVisibleInfo(false);
+        if (cmbDevice.getItemCount() > 0) {
+            cmbDevice.setSelectedIndex(0);
+            setInfo(computer.getDevice(0), DEVICE_CONFIG_DIR + Main.currentArch.getDeviceName(0));
+        } else {
+            cmbDevice.setEnabled(false);
+        }
+    }//GEN-LAST:event_btnDeviceActionPerformed
+
+    private void btnSaveSchemaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveSchemaActionPerformed
+        panelSchema.saveSchemaImage();
+    }//GEN-LAST:event_btnSaveSchemaActionPerformed
+
+    private void btnExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExportActionPerformed
+        JFileChooser f = new JFileChooser();
+
+        f.setDialogTitle("Save computer information");
+        f.setAcceptAllFileFilterUsed(false);
+
+        FileFilter filter = new FileFilter() {
+
+            @Override
+            public boolean accept(File f) {
+                if (f.isDirectory()) {
+                    return true;
+                }
+                return f.getName().toLowerCase().endsWith(".txt");
+            }
+
+            @Override
+            public String getDescription() {
+                return "Text files (*.txt)";
+            }
+            
+        };
+        f.addChoosableFileFilter(filter);
+        f.addChoosableFileFilter(f.getAcceptAllFileFilter());
+        f.setFileFilter(filter);
+        f.setSelectedFile(fileComputerInfo);
+        if (fileComputerInfo != null) {
+            f.setCurrentDirectory(fileComputerInfo.getParentFile()); 
+        } else {
+            f.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        }
+        f.setSelectedFile(null);
+
+        int returnVal = f.showSaveDialog(this);
+        if (returnVal != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        File selectedFile = f.getSelectedFile();
+        FileFilter selectedFileFilter = (FileFilter)f.getFileFilter();
+        
+        if (selectedFileFilter != filter) {
+            fileComputerInfo = selectedFile;
+        } else {
+            if (!selectedFile.getName().toLowerCase().endsWith(".txt")) {
+                fileComputerInfo = new File(selectedFile.getAbsolutePath() + ".txt");
+            }
+        }
+        saveComputerInfo();
+    }//GEN-LAST:event_btnExportActionPerformed
+
+    private void savePluginInfo(PrintWriter out, IPlugin plugin) {
+        String title;
+        try {
+            title = plugin.getTitle();
+        } catch (Exception e) {
+            title = "Invalid title";
+        }
+        String version;
+        try {
+            version = plugin.getVersion();
+        } catch (Exception e) {
+            version = "Invalid version";
+        }
+        String copyright;
+        try {
+            copyright = plugin.getCopyright();
+        } catch (Exception e) {
+            copyright = "Invalid copyright";
+        }
+        String description;
+        try {
+            description = plugin.getDescription();
+        } catch (Exception e) {
+            description = "Invalid description";
+        }
+        out.print(title);
+        out.print(", version: ");
+        out.println(version);
+        out.println(copyright);
+        out.println(description);
+        out.println();
     }
+    
+    private void saveComputerInfo() {
+        if (fileComputerInfo == null) {
+            return;
+        }
+        try {
+            FileWriter outFile = new FileWriter(fileComputerInfo);
+            PrintWriter out = new PrintWriter(outFile);
+            
+            out.println("Computer name: " + Main.currentArch.getComputerName() + "\n");
+            IPlugin plugin = computer.getCompiler();
+            if (plugin != null) {
+                out.println("Compiler\n########\n");
+                out.print("File name: ");
+                out.print("[");
+                out.print(COMPILER_CONFIG_DIR);
+                out.print(Main.currentArch.getCompilerName());
+                out.println(".jar]");
+                savePluginInfo(out, plugin);
+            }
+            out.println("CPU\n###\n");
+            out.print("File name: ");
+            out.print("[");
+            out.print(CPU_CONFIG_DIR);
+            out.print(Main.currentArch.getCPUName());
+            out.println(".jar]");
+            savePluginInfo(out, computer.getCPU());
+    
+            plugin = computer.getMemory();
+            if (plugin != null) {
+                out.println("Memory\n######\n");
+                out.print("File name: ");
+                out.print("[");
+                out.print(MEMORY_CONFIG_DIR);
+                out.print(Main.currentArch.getMemoryName());
+                out.println(".jar]");
+                savePluginInfo(out, plugin);
+            }
+            int j = computer.getDeviceCount();
+            for (int i = 0; i < j; i++) {
+                plugin = computer.getDevice(i);
+                out.println("Device [" + i + "]\n###########\n");
+                out.print("File name: ");
+                out.print("[");
+                out.print(DEVICE_CONFIG_DIR);
+                out.print(Main.currentArch.getDeviceName(i));
+                out.println(".jar]");
+                savePluginInfo(out, plugin);
+            }
+
+            out.close();
+        } catch (IOException e) {
+            logger.error("Could not save computer information", e);
+            Main.tryShowErrorMessage("Could not save computer information. For details, please see log file.");
+        }
+    }
+  
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    JComboBox cmbDevice;
-    JTextArea txtCPUCopyright;
-    JLabel lblCPUFileName;
-    JLabel lblCPUName;
-    JLabel lblCPUVersion;
-    JTextArea txtCompilerCopyright;
-    JLabel lblCompilerFileName;
-    JLabel lblCompilerName;
-    JLabel lblCompilerVersion;
-    JTextArea txtDeviceCopyright;
-    JLabel lblDeviceFileName;
-    JLabel lblDeviceName;
-    JLabel lblDeviceVersion;
-    JTextArea txtMemoryCopyright;
-    JLabel lblMemoryFileName;
-    JLabel lblMemoryName;
-    JLabel lblMemoryVersion;
-    JLabel lblName;
-    JScrollPane scrollScheme;
-    JTextArea txtCPUDescription;
-    JTextArea txtCompilerDescription;
-    JTextArea txtDeviceDescription;
-    JTextArea txtMemoryDescription;
+    private javax.swing.JToggleButton btnCPU;
+    private javax.swing.JToggleButton btnCompiler;
+    private javax.swing.JToggleButton btnDevice;
+    private javax.swing.JToggleButton btnMemory;
+    private javax.swing.JComboBox cmbDevice;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblComputerName;
+    private javax.swing.JLabel lblCopyright;
+    private javax.swing.JLabel lblFileName;
+    private javax.swing.JLabel lblName;
+    private javax.swing.JLabel lblSelectDevice;
+    private javax.swing.JLabel lblVersion;
+    private javax.swing.JScrollPane scrollPane;
+    private javax.swing.JTextArea txtDescription;
     // End of variables declaration//GEN-END:variables
 }

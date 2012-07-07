@@ -63,10 +63,13 @@ public class AboutDialog extends javax.swing.JDialog {
         setTitle("About emuStudio");
 
         lblLogo.setBackground(java.awt.Color.white);
+        lblLogo.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/logo.png"))); // NOI18N
+        lblLogo.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         lblLogo.setDoubleBuffered(true);
         lblLogo.setFocusable(false);
         lblLogo.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        lblLogo.setIconTextGap(0);
         lblLogo.setOpaque(true);
 
         javax.swing.GroupLayout panelLogoLayout = new javax.swing.GroupLayout(panelLogo);
@@ -88,13 +91,16 @@ public class AboutDialog extends javax.swing.JDialog {
         lblName.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
         lblName.setText("emuStudio");
 
+        lblCopyright.setFont(lblCopyright.getFont().deriveFont(lblCopyright.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblCopyright.setText("© Copyright 2006-2012 Peter Jakubčo");
 
         lblVersion.setFont(lblVersion.getFont().deriveFont(lblVersion.getFont().getStyle() | java.awt.Font.BOLD));
         lblVersion.setText(getClass().getPackage().getImplementationVersion());
 
-        jLabel4.setText("Version:");
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel4.setText("Version");
 
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel1.setText("<html>This software is released under GNU GPL license, version 2. For more information, please visit project web page at <a href=\"http://emustudio.sf.net\">http://emustudio.sf.net</a>.");
 
         javax.swing.GroupLayout panelInfoLayout = new javax.swing.GroupLayout(panelInfo);
@@ -104,15 +110,13 @@ public class AboutDialog extends javax.swing.JDialog {
             .addGroup(panelInfoLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(panelInfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(panelInfoLayout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(lblCopyright))
                     .addComponent(lblName)
                     .addGroup(panelInfoLayout.createSequentialGroup()
                         .addComponent(jLabel4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblVersion))
-                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 340, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 340, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblCopyright))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         panelInfoLayout.setVerticalGroup(

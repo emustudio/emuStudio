@@ -50,11 +50,11 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="toolDraw" min="-2" pref="28" max="-2" attributes="0"/>
+              <Component id="toolDraw" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
-                  <Component id="sliderGridGap" pref="353" max="32767" attributes="0"/>
-                  <Component id="scrollScheme" alignment="1" pref="353" max="32767" attributes="0"/>
+                  <Component id="sliderGridGap" pref="341" max="32767" attributes="0"/>
+                  <Component id="scrollScheme" alignment="1" pref="341" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -197,7 +197,7 @@
         <Component class="javax.swing.JToggleButton" name="btnBidirection">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/emustudio/gui/bidirection.png"/>
+              <Image iconType="3" name="/emustudio/gui/bidirection.gif"/>
             </Property>
             <Property name="selected" type="boolean" value="true"/>
             <Property name="toolTipText" type="java.lang.String" value="Bidirectional connection"/>

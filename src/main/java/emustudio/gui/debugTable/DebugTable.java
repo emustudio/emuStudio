@@ -58,6 +58,7 @@ public class DebugTable extends JTable {
         public DebugCellRenderer() {
             super();
             setOpaque(true);
+            setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD));
         }
 
         /**

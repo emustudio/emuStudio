@@ -385,6 +385,7 @@ public class StudioFrame extends javax.swing.JFrame {
         });
 
         tabbedPane.setFocusable(false);
+        tabbedPane.setFont(tabbedPane.getFont().deriveFont(tabbedPane.getFont().getStyle() & ~java.awt.Font.BOLD));
         panelSource.setOpaque(false);
 
         toolStandard.setFloatable(false);
@@ -804,6 +805,7 @@ public class StudioFrame extends javax.swing.JFrame {
         peripheralPanel.setBorder(BorderFactory.createTitledBorder("Peripheral devices"));
 
         paneDevices.setViewportView(lstDevices);
+        lstDevices.setFont(lstDevices.getFont().deriveFont(lstDevices.getFont().getStyle() & ~java.awt.Font.BOLD));
         lstDevices.addMouseListener(new MouseListener() {
 
             @Override
@@ -835,6 +837,7 @@ public class StudioFrame extends javax.swing.JFrame {
         });
 
         btnShowSettings.setText("Settings");
+        btnShowSettings.setFont(btnShowSettings.getFont().deriveFont(btnShowSettings.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnShowSettings.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -844,6 +847,7 @@ public class StudioFrame extends javax.swing.JFrame {
         });
 
         btnShowGUI.setText("Show");
+        btnShowGUI.setFont(btnShowGUI.getFont().deriveFont(btnShowGUI.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnShowGUI.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -871,9 +875,13 @@ public class StudioFrame extends javax.swing.JFrame {
         tabbedPane.addTab("Emulator", panelEmulator);
 
         mnuFile.setText("File");
+        mnuFile.setFont(mnuFile.getFont().deriveFont(mnuFile.getFont().getStyle() & ~java.awt.Font.BOLD));
+
 
         mnuFileNew.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.CTRL_MASK));
         mnuFileNew.setText("New");
+        mnuFile.setFont(mnuFile.getFont().deriveFont(mnuFile.getFont().getStyle() & ~java.awt.Font.BOLD));
+        mnuFileNew.setFont(mnuFileNew.getFont().deriveFont(mnuFileNew.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuFileNew.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -885,6 +893,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
         mnuFileOpen.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
         mnuFileOpen.setText("Open...");
+        mnuFileOpen.setFont(mnuFileOpen.getFont().deriveFont(mnuFileOpen.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuFileOpen.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -897,6 +906,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
         mnuFileSave.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
         mnuFileSave.setText("Save");
+        mnuFileSave.setFont(mnuFileSave.getFont().deriveFont(mnuFileSave.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuFileSave.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -907,6 +917,7 @@ public class StudioFrame extends javax.swing.JFrame {
         mnuFile.add(mnuFileSave);
 
         mnuFileSaveAs.setText("Save As...");
+        mnuFileSaveAs.setFont(mnuFileSaveAs.getFont().deriveFont(mnuFileSaveAs.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuFileSaveAs.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -918,6 +929,7 @@ public class StudioFrame extends javax.swing.JFrame {
         mnuFile.add(jSeparator4);
 
         mnuFileExit.setText("Exit");
+        mnuFileExit.setFont(mnuFileExit.getFont().deriveFont(mnuFileExit.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuFileExit.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -930,9 +942,11 @@ public class StudioFrame extends javax.swing.JFrame {
         jMenuBar2.add(mnuFile);
 
         mnuEdit.setText("Edit");
+        mnuEdit.setFont(mnuEdit.getFont().deriveFont(mnuEdit.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         mnuEditUndo.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, java.awt.event.InputEvent.CTRL_MASK));
         mnuEditUndo.setText("Undo");
+        mnuEditUndo.setFont(mnuEditUndo.getFont().deriveFont(mnuEditUndo.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuEditUndo.setEnabled(false);
         mnuEditUndo.addActionListener(new java.awt.event.ActionListener() {
 
@@ -946,6 +960,7 @@ public class StudioFrame extends javax.swing.JFrame {
         mnuEditRedo.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Y, java.awt.event.InputEvent.CTRL_MASK));
         mnuEditRedo.setText("Redo");
         mnuEditRedo.setEnabled(false);
+        mnuEditRedo.setFont(mnuEditRedo.getFont().deriveFont(mnuEditRedo.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuEditRedo.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -959,6 +974,7 @@ public class StudioFrame extends javax.swing.JFrame {
         mnuEditCut.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_X, java.awt.event.InputEvent.CTRL_MASK));
         mnuEditCut.setText("Cut selection");
         mnuEditCut.setEnabled(false);
+        mnuEditCut.setFont(mnuEditCut.getFont().deriveFont(mnuEditCut.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuEditCut.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -971,6 +987,7 @@ public class StudioFrame extends javax.swing.JFrame {
         mnuEditCopy.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.CTRL_MASK));
         mnuEditCopy.setText("Copy selection");
         mnuEditCopy.setEnabled(false);
+        mnuEditCopy.setFont(mnuEditCopy.getFont().deriveFont(mnuEditCopy.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuEditCopy.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -983,6 +1000,7 @@ public class StudioFrame extends javax.swing.JFrame {
         mnuEditPaste.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_V, java.awt.event.InputEvent.CTRL_MASK));
         mnuEditPaste.setText("Paste selection");
         mnuEditPaste.setEnabled(false);
+        mnuEditPaste.setFont(mnuEditPaste.getFont().deriveFont(mnuEditPaste.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuEditPaste.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -995,6 +1013,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
         mnuEditFind.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F, java.awt.event.InputEvent.CTRL_MASK));
         mnuEditFind.setText("Find/replace text...");
+        mnuEditFind.setFont(mnuEditFind.getFont().deriveFont(mnuEditFind.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuEditFind.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -1006,6 +1025,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
         mnuEditFindNext.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F3, 0));
         mnuEditFindNext.setText("Find next");
+        mnuEditFindNext.setFont(mnuEditFindNext.getFont().deriveFont(mnuEditFindNext.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuEditFindNext.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -1017,6 +1037,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
         mnuEditReplaceNext.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4, 0));
         mnuEditReplaceNext.setText("Replace next");
+        mnuEditReplaceNext.setFont(mnuEditReplaceNext.getFont().deriveFont(mnuEditReplaceNext.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuEditReplaceNext.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -1029,8 +1050,10 @@ public class StudioFrame extends javax.swing.JFrame {
         jMenuBar2.add(mnuEdit);
 
         mnuProject.setText("Project");
+        mnuProject.setFont(mnuProject.getFont().deriveFont(mnuProject.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         mnuProjectCompile.setText("Compile source...");
+        mnuProjectCompile.setFont(mnuProjectCompile.getFont().deriveFont(mnuProjectCompile.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuProjectCompile.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -1041,6 +1064,7 @@ public class StudioFrame extends javax.swing.JFrame {
         mnuProject.add(mnuProjectCompile);
 
         mnuProjectViewConfig.setText("View computer...");
+        mnuProjectViewConfig.setFont(mnuProjectViewConfig.getFont().deriveFont(mnuProjectViewConfig.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuProjectViewConfig.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -1051,6 +1075,7 @@ public class StudioFrame extends javax.swing.JFrame {
         mnuProject.add(mnuProjectViewConfig);
 
         mnuProjectCompilerSettings.setText("Compiler settings...");
+        mnuProjectCompilerSettings.setFont(mnuProjectCompilerSettings.getFont().deriveFont(mnuProjectCompilerSettings.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuProjectCompilerSettings.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -1063,8 +1088,10 @@ public class StudioFrame extends javax.swing.JFrame {
         jMenuBar2.add(mnuProject);
 
         mnuHelp.setText("Help");
+        mnuHelp.setFont(mnuHelp.getFont().deriveFont(mnuHelp.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         mnuHelpAbout.setText("About...");
+        mnuHelpAbout.setFont(mnuHelpAbout.getFont().deriveFont(mnuHelpAbout.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuHelpAbout.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -1267,7 +1294,7 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void mnuProjectViewConfigActionPerformed(java.awt.event.ActionEvent evt) {
-        new ViewComputerDialog(this, true).setVisible(true);
+        new ViewComputerDialog(this).setVisible(true);
     }
 
     private void mnuProjectCompilerSettingsActionPerformed(java.awt.event.ActionEvent evt) {

@@ -354,7 +354,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         });
         toolDraw.add(btnLine);
 
-        btnBidirection.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/bidirection.png"))); // NOI18N
+        btnBidirection.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/bidirection.gif"))); // NOI18N
         btnBidirection.setSelected(true);
         btnBidirection.setToolTipText("Bidirectional connection");
         btnBidirection.setFocusable(false);
@@ -440,11 +440,11 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(toolDraw, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(toolDraw, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(sliderGridGap, javax.swing.GroupLayout.DEFAULT_SIZE, 353, Short.MAX_VALUE)
-                    .addComponent(scrollScheme, javax.swing.GroupLayout.DEFAULT_SIZE, 353, Short.MAX_VALUE))
+                    .addComponent(sliderGridGap, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
+                    .addComponent(scrollScheme, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
