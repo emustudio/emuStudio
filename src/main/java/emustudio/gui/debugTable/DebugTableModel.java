@@ -47,6 +47,8 @@ public class DebugTableModel extends AbstractTableModel {
      * dependent on rowCount.
      */
     private int gapInstr;
+    
+    private int breakpointColumnIndex;
 
     /**
      * Creates a new instance of DebugTableModel
@@ -66,11 +68,13 @@ public class DebugTableModel extends AbstractTableModel {
             columns[1] = new ColumnAddress();
             columns[2] = new ColumnMnemo(dis);
             columns[3] = new ColumnOpcode(dis);
+            breakpointColumnIndex = 0;
         } else {
             columns = new IDebugColumn[3];
             columns[0] = new ColumnAddress();
             columns[1] = new ColumnMnemo(dis);
             columns[2] = new ColumnOpcode(dis);
+            breakpointColumnIndex = -1;
         }
         gapInstr = rowCount / 2;
     }
@@ -82,6 +86,15 @@ public class DebugTableModel extends AbstractTableModel {
     @Override
     public int getRowCount() {
         return rowCount;
+    }
+    
+    /**
+     * Get breakpoint column index.
+     * 
+     * @return index of breakpoint column, or -1 if it does not exist
+     */
+    public int getBreakpointColumnIndex() {
+        return breakpointColumnIndex;
     }
     
     /**
@@ -145,6 +158,23 @@ public class DebugTableModel extends AbstractTableModel {
     }
 
     /**
+     * Seeks the page backward by specified number of pages.
+     * 
+     * @param value number of pages to backward
+     */
+    public void seekBackwardPage(int value) {
+        page -= value;
+        while (true) {
+            try {
+                int loc = rowToLocation(0);
+                break;
+            } catch (IndexOutOfBoundsException e) {
+                page++;
+            }
+        }
+    }
+
+    /**
      * Go to the first page in the debug table
      */
     public void firstPage() {
@@ -164,6 +194,23 @@ public class DebugTableModel extends AbstractTableModel {
         }
         fireTableDataChanged();
     }
+    
+    /**
+     * Seeks the page forward by specified number of pages.
+     * 
+     * @param value number of pages to forward
+     */
+    public void seekForwardPage(int value) {
+        page += value;
+        while (true) {
+            try {
+                int loc = rowToLocation(0);
+                break;
+            } catch (IndexOutOfBoundsException e) {
+                page--;
+            }
+        }
+    }
 
     /**
      * Got to the last page
@@ -171,27 +218,29 @@ public class DebugTableModel extends AbstractTableModel {
      * Fast version.
      */
     public void lastPage() {
-        int gap = 100; // empiric value
+        int gap = 150; // empiric value
+        boolean fastQuicken = true; // if we should try to be faster
         do {
             try {
                 do {
                     page += gap;
                     rowToLocation(0, page);
+                    if (fastQuicken) {
+                        gap *= 1.5;
+                    } else {
+                        gap += 10;
+                    }
                 } while (true);
             } catch (IndexOutOfBoundsException e) {
+                page -= gap;
+                fastQuicken = false;
                 if (gap > 1) {
-                    page -= gap;
                     gap /= 2;
                     continue;
                 }
             }
-            if (gap > 1) {
-                page -= gap;
-                gap /= 2;
-            } else
-                break;
+            break;
         } while (true);
-        page--;
         fireTableDataChanged();
     }
 

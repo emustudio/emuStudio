@@ -39,7 +39,7 @@ public class ColumnBreakpoint extends SimpleDebugColumn {
      * @param cpu CPU plug-in
      */
     public ColumnBreakpoint(ICPU cpu) {
-        super("breakpoint", java.lang.Boolean.class, true);
+        super("bp", java.lang.Boolean.class, true);
         this.cpu = cpu;
     }
     

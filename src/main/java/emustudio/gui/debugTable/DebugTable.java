@@ -26,11 +26,9 @@ package emustudio.gui.debugTable;
 import emustudio.main.Main;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import javax.swing.JLabel;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 
 /**
@@ -41,31 +39,55 @@ import javax.swing.table.TableCellRenderer;
 @SuppressWarnings("serial")
 public class DebugTable extends JTable {
     private DebugTableModel debug_model;
-    private DebugCellRenderer debug_renderer;
-  
-    /** 
-     * Creates a new instance of DebugTable
-     */
-    public DebugTable() {
-        super();
-        debug_model = new DebugTableModel(Main.currentArch.getComputer().getCPU());
-        setModel(debug_model);
-        debug_renderer = new DebugCellRenderer();
-        setDefaultRenderer(Object.class, debug_renderer);
-        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        debug_model.setRowCount(debug_renderer.estimateRowCount(getPreferredSize().height));
+    private TextCellRenderer text_renderer;
+    private BooleanCellRenderer bool_renderer;
+
+    private static final Color EVEN_ROW_COLOR = new Color(241, 245, 250);
+    private static final Color TABLE_GRID_COLOR = new Color(0xd9d9d9);    
+
+    private class BooleanCellRenderer extends JLabel implements TableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                boolean hasFocus, int row, int column) {
+            boolean boolValue = (value == null) ? false : (Boolean)value;
+            
+            if (boolValue) {
+                setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/breakpoint.png")));
+            } else {
+                setIcon(null);
+            }
+            setBackground((row % 2 == 0) ? Color.WHITE : EVEN_ROW_COLOR);
+            setText(" ");
+            this.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+            return this;
+        }
+        
+        @Override
+        public void paint(Graphics g) {
+            g.setColor(Color.WHITE);
+            g.fillRect(0, 0, getWidth(), getHeight());
+            super.paint(g);
+        }
+    }
+
+    private class BooleanEditComponent extends JCheckBox {
+
+        @Override
+        public void paint(Graphics g) {
+        }
     }
 
     /**
-     * This class does the painting of all debug table cells.
+     * This class does the painting of all text/numbers debug table cells.
      */
-    public class DebugCellRenderer extends JLabel implements TableCellRenderer {
+    private class TextCellRenderer extends JLabel implements TableCellRenderer {
         public int height = 17;
 
         /**
          * The constructor creates the renderer instance.
          */
-        public DebugCellRenderer() {
+        public TextCellRenderer() {
             super();
             setOpaque(true);
             setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD));
@@ -89,7 +111,7 @@ public class DebugTable extends JTable {
                 setBackground(Color.RED);
                 setForeground(Color.WHITE);
             } else { 
-                setBackground(Color.WHITE);
+                setBackground((row % 2 == 0) ? Color.WHITE : EVEN_ROW_COLOR);
                 setForeground(Color.BLACK);
             }
             if (value != null) {
@@ -106,7 +128,7 @@ public class DebugTable extends JTable {
          * @return estimated row count in the debug table
          */
         public int estimateRowCount(int height) {
-            int result = (height / this.height) - 2;
+            int result = (height / this.height) - 1;
             if (result <= 0) {
                 result = 1;
             }
@@ -114,8 +136,45 @@ public class DebugTable extends JTable {
         }
     }
     
+    /** 
+     * Creates a new instance of DebugTable
+     */
+    public DebugTable() {
+        super();
+        debug_model = new DebugTableModel(Main.currentArch.getComputer().getCPU());
+        setModel(debug_model);
+        text_renderer = new TextCellRenderer();
+        bool_renderer = new BooleanCellRenderer();
+        setDefaultRenderer(Boolean.class, bool_renderer);
+        setDefaultRenderer(Object.class, text_renderer);
+        
+        setAllBooleanCellEditor();
+        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        debug_model.setRowCount(text_renderer.estimateRowCount(getPreferredSize().height));
+        int breakIndex = debug_model.getBreakpointColumnIndex();
+        if (breakIndex >= 0) {
+            getColumn(getColumnName(breakIndex)).setPreferredWidth(20);
+        }
+        setOpaque(false);
+        setGridColor(TABLE_GRID_COLOR);
+        setIntercellSpacing(new Dimension(0, 0));
+        // turn off grid painting as we'll handle this manually in order to paint
+        // grid lines over the entire viewport.
+        setShowGrid(false);
+    }
+    
+    private void setAllBooleanCellEditor() {
+        int j = debug_model.getColumnCount();
+        for (int i = 0; i < j; i++) {
+            if (debug_model.getColumnClass(i) == Boolean.class) {
+                this.getColumn(this.getColumnName(i)).setCellEditor(
+                        new DefaultCellEditor(new BooleanEditComponent()));
+            }
+        }
+    }
+
     public void fireResized(int height) {
-        debug_model.setRowCount(debug_renderer.estimateRowCount(height));
+        debug_model.setRowCount(text_renderer.estimateRowCount(height));
         repaint();
     }
     
@@ -124,6 +183,16 @@ public class DebugTable extends JTable {
      */
     public void firstPage() {
         debug_model.firstPage();
+        update();
+    }
+
+    /**
+     * Seeks the page backward by specified number of pages.
+     * 
+     * @param value number of pages to backward
+     */
+    public void pageSeekBackward(int value) {
+        debug_model.seekBackwardPage(value);
         update();
     }
     
@@ -148,6 +217,16 @@ public class DebugTable extends JTable {
      */
     public void nextPage() {
         debug_model.nextPage();
+        update();
+    }
+    
+    /**
+     * Seeks the page forward by specified number of pages.
+     * 
+     * @param value number of pages to forward
+     */
+    public void pageSeekForward(int value) {
+        debug_model.seekForwardPage(value);
         update();
     }
     

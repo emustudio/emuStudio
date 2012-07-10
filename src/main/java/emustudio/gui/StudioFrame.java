@@ -73,6 +73,7 @@ public class StudioFrame extends javax.swing.JFrame {
     private ICompiler compiler;
     private IMemory memory;
     private ICPU cpu;
+    private int pageSeekLastValue = 10;
 
     /**
      * Create new instance of the main window frame.
@@ -358,6 +359,8 @@ public class StudioFrame extends javax.swing.JFrame {
         JButton btnCurrentPage =  new JButton();
         JButton btnForward =  new JButton();
         JButton btnLast =  new JButton();
+        JButton btnSeekBackward =  new JButton();
+        JButton btnSeekForward =  new JButton();
 
         JPanel peripheralPanel = new JPanel();
         JScrollPane paneDevices = new JScrollPane();
@@ -748,6 +751,12 @@ public class StudioFrame extends javax.swing.JFrame {
         btnLast.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/page-last.png"))); // NOI18N
         btnLast.setToolTipText("Go to the last page");
 
+        btnSeekBackward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/page-seek-backward.png"))); // NOI18N
+        btnSeekBackward.setToolTipText("Go to the current page");
+        
+        btnSeekForward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/page-seek-forward.png"))); // NOI18N
+        btnSeekForward.setToolTipText("Go to the current page");
+        
         btnFirst.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -778,13 +787,27 @@ public class StudioFrame extends javax.swing.JFrame {
                 btnLastActionPerformed(evt);
             }
         });
+        btnSeekBackward.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSeekBackwardActionPerformed(evt);
+            }
+        });
+        btnSeekForward.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSeekForwardActionPerformed(evt);
+            }
+        });
 
         GroupLayout pagesLayout = new GroupLayout(panelPages);
         panelPages.setLayout(pagesLayout);
         pagesLayout.setHorizontalGroup(
-            pagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            pagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
             .addGroup(pagesLayout.createSequentialGroup()
                 .addComponent(btnFirst)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnSeekBackward)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnBackward)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -792,23 +815,27 @@ public class StudioFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnForward)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnSeekForward)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnLast))
         );
         pagesLayout.setVerticalGroup(
-            pagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            pagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
             .addGroup(pagesLayout.createSequentialGroup()
-                .addGroup(pagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(pagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(btnLast)
+                    .addComponent(btnSeekBackward)
                     .addComponent(btnBackward)
                     .addComponent(btnFirst)
                     .addComponent(btnCurrentPage)
+                    .addComponent(btnSeekForward)
                     .addComponent(btnForward)))
         );
 
         GroupLayout debuggerPanelLayout = new GroupLayout(debuggerPanel);
         debuggerPanel.setLayout(debuggerPanelLayout);
         debuggerPanelLayout.setHorizontalGroup(
-                debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(toolDebug) //, GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
+                debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.CENTER).addComponent(toolDebug) //, GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
                 .addGroup(debuggerPanelLayout.createSequentialGroup().addComponent(panelPages))
                 .addComponent(paneDebug, 10, 350, Short.MAX_VALUE));
         debuggerPanelLayout.setVerticalGroup(
@@ -1471,6 +1498,17 @@ public class StudioFrame extends javax.swing.JFrame {
         tblDebug.lastPage();
     }
 
+    private void btnSeekBackwardActionPerformed(java.awt.event.ActionEvent evt) {
+        String res = JOptionPane.showInputDialog(this, "Please enter number of pages to backward", pageSeekLastValue);
+        pageSeekLastValue = Integer.decode(res);
+        tblDebug.pageSeekBackward(pageSeekLastValue);
+    }
+
+    private void btnSeekForwardActionPerformed(java.awt.event.ActionEvent evt) {
+        String res = JOptionPane.showInputDialog(this, "Please enter number of pages to forward", pageSeekLastValue);
+        pageSeekLastValue = Integer.decode(res);
+        tblDebug.pageSeekForward(pageSeekLastValue);
+    }
     JButton btnBack;
     JButton btnBeginning;
     JButton btnBreakpoint;

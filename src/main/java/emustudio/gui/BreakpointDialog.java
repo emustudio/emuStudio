@@ -23,7 +23,6 @@
 package emustudio.gui;
 
 import emulib.runtime.RadixUtils;
-import emulib.runtime.StaticDialogs;
 import emustudio.gui.utils.NiceButton;
 import emustudio.main.Main;
 import javax.swing.*;
@@ -81,10 +80,12 @@ public class BreakpointDialog extends JDialog {
         setResizable(false);
 
         lblSetUnset.setText("Set/unset breakpoint to address:");
+        lblSetUnset.setFont(lblSetUnset.getFont().deriveFont(lblSetUnset.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         txtAddress.setText("0");
 
         btnSet.setText("Set");
+        btnSet.setFont(btnSet.getFont().deriveFont(btnSet.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnSet.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -94,6 +95,7 @@ public class BreakpointDialog extends JDialog {
         });
 
         btnUnset.setText("Unset");
+        btnUnset.setFont(btnUnset.getFont().deriveFont(btnUnset.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnUnset.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -105,9 +107,19 @@ public class BreakpointDialog extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
 
-        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblSetUnset).addComponent(txtAddress).addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup().addComponent(btnUnset).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnSet).addContainerGap()));
-        layout.setVerticalGroup(layout.createSequentialGroup().addContainerGap().addComponent(lblSetUnset).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(txtAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
-                GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(btnUnset).addComponent(btnSet)));
+        layout.setHorizontalGroup(layout.createSequentialGroup().addContainerGap()
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addComponent(lblSetUnset).addComponent(txtAddress)
+                .addGroup(GroupLayout.Alignment.CENTER, layout.createSequentialGroup()
+                .addComponent(btnUnset).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnSet))).addContainerGap());
+        layout.setVerticalGroup(layout.createSequentialGroup().addContainerGap().addComponent(lblSetUnset)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
+                GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(btnUnset).addComponent(btnSet)).addContainerGap());
 
 
         pack();
