@@ -45,7 +45,10 @@ public abstract class Element {
      */
     public final static int MIN_HEIGHT = 50;
 
-    private final static int TOLERANCE = 5;
+    /**
+     * Mouse tolerance of element border
+     */
+    public final static int TOLERANCE = 5;
     
     /**
      * Element's actual settings.
@@ -136,6 +139,8 @@ public abstract class Element {
      * Holds true, when this element is selected by user. False otherwise.
      */
     protected boolean selected;
+    
+    protected Schema schema;
 
     /**
      * Creates the Element instance. The element has a background color,
@@ -144,15 +149,17 @@ public abstract class Element {
      * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param settings settings of this element
      * @param backColor Background color
-     * @throws NullPointerException when plug-in with settingsName does not exist in the schema
+     * @param schema Schema object of the element
+     * @throws NumberFormatException when plug-in with settingsName does not exist in the schema
      */
-    public Element(String pluginName, Properties settings, Color backColor) throws NullPointerException {
+    public Element(String pluginName, Properties settings, Color backColor, Schema schema) throws NumberFormatException {
         this.pluginName = pluginName;
         this.backColor = backColor;
         this.selected = false;
         this.foreColor = new Color(0x909090);
         gradient = new GradientPaint(x, y, Color.WHITE, x, y+height, this.backColor, false);
         this.mysettings = settings;
+        this.schema = schema;
         loadSettings();
     }
 
@@ -163,8 +170,9 @@ public abstract class Element {
      * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param location Location of this element in the abstract schema
      * @param backColor Background color
+     * @param schema Schema object of the element
      */
-    public Element(String pluginName, Point location, Color backColor) {
+    public Element(String pluginName, Point location, Color backColor, Schema schema) {
         this.pluginName = pluginName;
         this.x = location.x;
         this.y = location.y;
@@ -173,17 +181,19 @@ public abstract class Element {
         this.selected = false;
         this.foreColor = new Color(0x909090);
         this.mysettings = new Properties();
+        this.schema = schema;
         gradient = new GradientPaint(x, y, Color.WHITE, x, y+height,
                 this.backColor, false);
     }
     
     /**
      * Updates schema values (x,y,width,height) of the element from the settings.
-     * @throws Exception when some settings are not well parseable.
+     * 
+     * @throws NumberFormatException when some settings are not well parseable.
      */
-    public final void loadSettings() throws NullPointerException {
-        if (pluginName == null) {
-            throw new NullPointerException("Plug-in name is null!");
+    public final void loadSettings() throws NumberFormatException {
+        if ((pluginName == null) || (pluginName.isEmpty())) {
+            pluginName = "unknown";
         }
 
         x = Integer.parseInt(mysettings.getProperty("point.x", "0"));
@@ -238,18 +248,22 @@ public abstract class Element {
      * @param g graphics, where to draw
      */
     public void draw(Graphics g)  {
-        if (!wasMeasured)
-            measure(g,0,0);
+        if (!wasMeasured) {
+            measure(g);
+        }
         ((Graphics2D)g).setPaint(gradient);
         g.fillRect(leftX, topY, getWidth(), getHeight());
-        if (selected)
+        if (selected) {
             g.setColor(Color.BLUE);
-        else
+        }
+        else {
             g.setColor(foreColor);
+        }
         g.draw3DRect(leftX, topY, getWidth(), getHeight(),true);
         g.setFont(boldFont);
-        if (!selected)
+        if (!selected) {
             g.setColor(Color.BLACK);
+        }
         g.drawString(getPluginType(), textX, textY);
         g.setFont(italicFont);
         g.drawString(pluginName, detailsX, detailsY);
@@ -271,21 +285,38 @@ public abstract class Element {
      *
      * @param x new X location
      * @param y new Y location
-     * @return true if new location is not out of the canvas (less than minimal
-     * margins), false otherwise 
+     * @return true if the element moved; false if it couldn't either due to new location is out of the canvas (less
+     * than minimal margins), or other elements/line points are in the way.
      */
     public boolean move(int x, int y) {
-        if (!Schema.canMove(x,y))
+        if (!wasMeasured) {
             return false;
+        }
+        if (!schema.canMoveElement(x, y, this)) {
+            return false;
+        }
+        int diffX = this.x - x;
+        int diffY = this.y - y;
 
-        wasMeasured = false;
         this.x = x;
         this.y = y;
+        
+        // do not break internal state of the element
+        leftX += diffX;
+        topY += diffY;
+        
+        textX += diffX;
+        textY += diffY;
+
+        detailsX += diffX;
+        detailsY += diffY;
+        gradient = new GradientPaint(leftX, topY, Color.WHITE, leftX, topY+getHeight(), backColor, true);
+        
         return true;
     }
         
     /**
-     * Set new size of this element
+     * Set new size of this element.
      * 
      * @param width new width
      * @param height new height
@@ -314,14 +345,11 @@ public abstract class Element {
      * Perform a measurement of the box, based on given graphics. Before
      * the element can be drawn, it has to be measured out. It means, that
      * the width and height are computed (based on font sizes that depend on
-     * the Graphics object) and the x and y correction is performed (based on
-     * the leftFactor and topFactor).
+     * the Graphics object).
      *
      * @param g Graphics object
-     * @param leftFactor the correction value for X
-     * @param topFactor the correction value for Y
      */
-    public void measure(Graphics g, int leftFactor, int topFactor) {
+    public void measure(Graphics g) {
         Font f = g.getFont();
         boldFont = f.deriveFont(Font.BOLD);
         italicFont = f.deriveFont(Font.PLAIN);
@@ -344,25 +372,20 @@ public abstract class Element {
         int tH = (tH1 > tH2) ? tH1 : tH2;
 
         // compute width and height
-        if (width == 0)
+        if (width == 0) {
             width = tW + 20;
+        }
         
-        if (height == 0)
+        if (height == 0) {
             height = 2 * tH + 20;
+        }
 
         textY = height/2 + 10 - tA1;
         // set starting x and y
         leftX = x - getWidth()/2;
         topY = y - getHeight()/2;
 
-        // perform the correction, "trim" empty space from the left and top
-        if (leftFactor > 0)
-            leftX -= (leftFactor - getWidth()/2);
-        if (topFactor > 0)
-            topY -= (topFactor - getHeight()/2);
-
-        gradient = new GradientPaint(leftX, topY, Color.WHITE, leftX,
-                topY+getHeight(), backColor, true);
+        gradient = new GradientPaint(leftX, topY, Color.WHITE, leftX, topY+getHeight(), backColor, true);
         
         textX = leftX + (getWidth() - tW) / 2;
         textY += topY;
@@ -441,8 +464,9 @@ public abstract class Element {
      * @return true if the element is crossing
      */
     public boolean isAreaCrossing(Point selectionStart, Point selectionEnd) {
-        if (!wasMeasured)
+        if (!wasMeasured) {
             return false;
+        }
         int xR = leftX + getWidth();
         int yB = topY + getHeight();
         return (selectionStart.x <= xR) && (selectionEnd.x >= leftX)
@@ -458,12 +482,12 @@ public abstract class Element {
      * otherwise.
      */
     public boolean isTopCrossing(Point p) {
-        if (!wasMeasured)
+        if ((!wasMeasured) || (p == null)) {
             return false;
+        }
         int xR = leftX + getWidth();
         int yB = topY + TOLERANCE;
-        return ((p.x >= leftX) && (p.x <= xR) && (p.y <= yB) 
-                && (p.y >= topY - TOLERANCE));
+        return ((p.x >= leftX) && (p.x <= xR) && (p.y <= yB) && (p.y >= topY - TOLERANCE));
     }
 
     /**
@@ -475,13 +499,13 @@ public abstract class Element {
      * otherwise.
      */
     public boolean isBottomCrossing(Point p) {
-        if (!wasMeasured)
+        if (!wasMeasured || (p == null)) {
             return false;
+        }
         int xR = leftX + getWidth();
         int yT = topY + getHeight() - TOLERANCE;
         int yB = topY + getHeight() + TOLERANCE;
-        return ((p.x >= leftX) && (p.x <= xR) && (p.y <= yB) 
-                && (p.y >= yT));
+        return ((p.x >= leftX) && (p.x <= xR) && (p.y <= yB) && (p.y >= yT));
     }
 
     /**
@@ -493,12 +517,12 @@ public abstract class Element {
      * otherwise.
      */
     public boolean isLeftCrossing(Point p) {
-        if (!wasMeasured)
+        if ((!wasMeasured) || (p == null)) {
             return false;
+        }
         int xR = leftX + TOLERANCE;
         int yB = topY + getHeight();
-        return ((p.x >= leftX-TOLERANCE) && (p.x <= xR) && (p.y <= yB) 
-                && (p.y >= topY));
+        return ((p.x >= leftX-TOLERANCE) && (p.x <= xR) && (p.y <= yB) && (p.y >= topY));
     }
 
     /**
@@ -510,13 +534,13 @@ public abstract class Element {
      * otherwise.
      */
     public boolean isRightCrossing(Point p) {
-        if (!wasMeasured)
+        if ((!wasMeasured) || (p == null)) {
             return false;
+        }
         int xL = leftX + getWidth() - TOLERANCE;
         int xR = leftX + getWidth() + TOLERANCE;
         int yB = topY + getHeight();
-        return ((p.x >= xL) && (p.x <= xR) && (p.y <= yB) 
-                && (p.y >= topY));
+        return ((p.x >= xL) && (p.x <= xR) && (p.y <= yB) && (p.y >= topY));
     }
 
 }

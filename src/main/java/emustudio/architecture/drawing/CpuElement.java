@@ -33,16 +33,17 @@ import java.util.Properties;
  */
 public class CpuElement extends Element {
     private final static Color BACK_COLOR = new Color(0xffeeee);
-
+    
     /**
      * This constructor creates the CpuElement instance. 
      *
      * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param settings settings of this element from virtual configuration
-     * @throws NullPointerException when some settings are not well parseable
+     * @param schema Schema object for this element
+     * @throws NumberFormatException when some settings are not well parseable
      */
-    public CpuElement(String pluginName, Properties settings) throws NullPointerException {
-        super(pluginName, settings, BACK_COLOR);
+    public CpuElement(String pluginName, Properties settings, Schema schema) throws NumberFormatException {
+        super(pluginName, settings, BACK_COLOR, schema);
     }
 
     /**
@@ -50,9 +51,10 @@ public class CpuElement extends Element {
      *
      * @param pluginName name of the cpu
      * @param location the point where the cpu is located in the schema
+     * @param schema Schema object for this element
      */
-    public CpuElement(String pluginName, Point location) {
-        super(pluginName, location, BACK_COLOR);
+    public CpuElement(String pluginName, Point location, Schema schema) {
+        super(pluginName, location, BACK_COLOR, schema);
     }
 
     /**

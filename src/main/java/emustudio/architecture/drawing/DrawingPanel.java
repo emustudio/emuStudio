@@ -337,8 +337,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
     private void fireListeners() {
         Object[] listenersList = eventListeners.getListenerList();
         for (int i = listenersList.length-2; i>=0; i-=2) {
-            if (listenersList[i]==DrawEventListener.class)
+            if (listenersList[i]==DrawEventListener.class) {
                 ((DrawEventListener)listenersList[i+1]).toolUsed();
+            }
         }
     }
 
@@ -353,8 +354,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
     private Point searchGridPoint(Point old) {
         boolean useGrid = schema.getUseGrid();
         int gridGap = schema.getGridGap();
-        if (!useGrid || gridGap <= 0)
+        if (!useGrid || gridGap <= 0) {
             return old;
+        }
         int dX = (int)Math.round(old.x / (double)gridGap);
         int dY = (int)Math.round(old.y / (double)gridGap);
         return new Point(dX * gridGap, dY * gridGap);
@@ -428,19 +430,23 @@ public class DrawingPanel extends JPanel implements MouseListener,
         List<Element> a = schema.getAllElements();
         for (int i = 0; i < a.size(); i++) {
             Element e = a.get(i);
-            if (e.getX() + e.getWidth() > area.width)
+            if (e.getX() + e.getWidth() > area.width) {
                 area.width = e.getX() + e.getWidth();
-            if (e.getY() + e.getHeight() > area.height)
+            }
+            if (e.getY() + e.getHeight() > area.height) {
                 area.height = e.getY() + e.getHeight();
+            }
         }
         for (int i = 0; i < schema.getConnectionLines().size(); i++) {
             List<Point> ps = schema.getConnectionLines().get(i).getPoints();
             for (int j = 0; j < ps.size(); j++) {
                 Point p = ps.get(j);
-                if ((int)p.getX() > area.width)
+                if ((int)p.getX() > area.width) {
                     area.width = (int)p.getX();
-                if ((int)p.getY() > area.height)
+                }
+                if ((int)p.getY() > area.height) {
                     area.height = (int)p.getY();
+                }
             }
         }
         if (area.width != 0 && area.height != 0) {
@@ -458,14 +464,17 @@ public class DrawingPanel extends JPanel implements MouseListener,
     private void paintGrid(Graphics g) {
         boolean useGrid = schema.getUseGrid();
         int gridGap = schema.getGridGap();
-        if (!useGrid)
+        if (!useGrid) {
             return;
+        }
         g.setColor(gridColor);
         ((Graphics2D)g).setStroke(dottedLine);
-        for (int xi = 0; xi < this.getWidth(); xi+=gridGap)
+        for (int xi = 0; xi < this.getWidth(); xi+=gridGap) {
             g.drawLine(xi, 0, xi, this.getHeight());
-        for (int yi = 0; yi < this.getHeight(); yi+= gridGap)
+        }
+        for (int yi = 0; yi < this.getHeight(); yi+= gridGap) {
             g.drawLine(0, yi, this.getWidth(), yi);
+        }
     }
 
     /**
@@ -479,30 +488,31 @@ public class DrawingPanel extends JPanel implements MouseListener,
         super.paintComponent(g);
         List<Element> a = schema.getAllElements();
         
-        // najprv mriezka
+        // the grid goes first
         paintGrid(g);
 
-        // at first, measure objects
-        for (int i = 0; i < a.size(); i++)
-            a.get(i).measure(g,0,0);
+        // then measure objects
+        for (Element elem : schema.getAllElements()) {
+            elem.measure(g);
+        }
 
         // then modelling connection lines (at the bottom)
-        for (int i = 0; i < schema.getConnectionLines().size(); i++) {
-            ConnectionLine l = schema.getConnectionLines().get(i);
-            l.computeArrows(0,0);
-            l.draw((Graphics2D)g,false);
+        for (ConnectionLine line : schema.getConnectionLines()) {
+            line.draw((Graphics2D)g,false);
         }
 
         // at least, modelling all other elements
-        for (int i = 0; i < a.size(); i++)
-            a.get(i).draw(g);
+        for (Element elem : schema.getAllElements()) {
+            elem.draw(g);
+        }
 
         // ***** HERE BEGINS DRAWING OF TEMPORARY GRAPHICS *****
 
         if (panelMode == PanelMode.moving) {
             // modelling a small red circle around selected connection line point
-            if (selPoint != null)
+            if (selPoint != null) {
                 ConnectionLine.highlightPoint(selPoint, (Graphics2D)g);
+            }
         } else if (panelMode == PanelMode.modelling) {
             // if the connection line is being drawn, modelling the sketch
             if (drawTool == DrawTool.connectLine && tmpElem1 != null) {
@@ -517,17 +527,21 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 int x = selectionStart.x;
                 int y = selectionStart.y;
 
-                if (selectionEnd.x < x)
+                if (selectionEnd.x < x) {
                     x = selectionEnd.x;
-                if (selectionEnd.y < y)
+                }
+                if (selectionEnd.y < y) {
                     y = selectionEnd.y;
+                }
                 int w = selectionEnd.x - selectionStart.x;
                 int h = selectionEnd.y - selectionStart.y;
 
-                if (w < 0)
+                if (w < 0) {
                     w = -w;
-                if (h < 0)
+                }
+                if (h < 0) {
                     h = -h;
+                }
                 g.drawRect(x, y, w, h);
             }
         }
@@ -555,10 +569,11 @@ public class DrawingPanel extends JPanel implements MouseListener,
 
         cancelTasks();
 
-        if ((tool == null) || (tool == DrawTool.nothing))
+        if ((tool == null) || (tool == DrawTool.nothing)) {
             panelMode = PanelMode.moving;
-        else
+        } else {
             panelMode = PanelMode.modelling;
+        }
     }
 
     /**
@@ -630,8 +645,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
         if (panelMode == PanelMode.moving) {
             if (e.isPopupTrigger()) {
                 tmpElem1 = schema.getCrossingElement(p);
-                if (tmpElem1 != null)
+                if (tmpElem1 != null) {
                     doPop(e, tmpElem1);
+                }
                 tmpElem1 = null;
             }
             if (e.getButton() == MouseEvent.BUTTON1) {
@@ -667,7 +683,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
             selLine = schema.getCrossingLine(p);
 
             if (selLine != null) {
-                selPoint = selLine.containsPoint(p);
+                selPoint = selLine.containsPoint(p, ConnectionLine.TOLERANCE);
             }
             repaint(); // because of drawing selected point
 
@@ -698,15 +714,17 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 }
             } else if (drawTool == DrawTool.delete) {
                 // only left button is accepted
-                if (e.getButton() != MouseEvent.BUTTON1)
+                if (e.getButton() != MouseEvent.BUTTON1) {
                     return;
+                }
 
                 Element elem = schema.getCrossingElement(e.getPoint());
                 tmpElem1 = elem;
 
                 // delete line?
-                if (elem == null)
+                if (elem == null) {
                     selLine = schema.getCrossingLine(p);
+                }
             }
         }
     }
@@ -726,8 +744,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
         if (panelMode == PanelMode.moving) {
             if (e.isPopupTrigger()) {
                 tmpElem1 = schema.getCrossingElement(p);
-                if (tmpElem1 != null)
+                if (tmpElem1 != null) {
                     doPop(e, tmpElem1);
+                }
                 tmpElem1 = null;
             }
             // if an element was clicked, selecting it
@@ -735,25 +754,28 @@ public class DrawingPanel extends JPanel implements MouseListener,
             if (e.getButton() == MouseEvent.BUTTON1) {
                 int ctrl_shift = e.getModifiersEx() & (MouseEvent.SHIFT_DOWN_MASK
                         | MouseEvent.CTRL_DOWN_MASK);
-                if ((!elementDragged) && (ctrl_shift == 0))
+                if ((!elementDragged) && (ctrl_shift == 0)) {
                     schema.selectElements(-1, -1, 0, 0);
+                }
                 Element elem = schema.getCrossingElement(p);
-                if ((tmpElem1 == elem) && (elem != null)) {
+                if ((tmpElem1 == elem) && (elem != null) && (!elementDragged)) {
                     elem.setSelected(true);
                     repaint();
                     return;
                 }
-                if ((selLine == null) || (selLine != schema.getCrossingLine(p)))
+                if ((selLine == null) || (selLine != schema.getCrossingLine(p))) {
                     return;
+                }
                 selLine.setSelected(true);
             }
 
             // if a point is selected, remove it if user pressed
             // right mouse button
             if (selLine != null && selPoint != null) {
-                if (e.getButton() != MouseEvent.BUTTON3)
+                if (e.getButton() != MouseEvent.BUTTON3) {
                     return;
-                Point linePoint = selLine.containsPoint(p);
+                }
+                Point linePoint = selLine.containsPoint(p, ConnectionLine.TOLERANCE);
                 if ((selLine != schema.getCrossingLine(p))
                         || (selPoint != linePoint)) {
                     selLine = null;
@@ -770,20 +792,25 @@ public class DrawingPanel extends JPanel implements MouseListener,
             int x = selectionStart.x;
             int y = selectionStart.y;
 
-            if (selectionEnd == null)
+            if (selectionEnd == null) {
                 selectionEnd = p;
+            }
 
-            if (selectionEnd.x < x)
+            if (selectionEnd.x < x) {
                 x = selectionEnd.x;
-            if (selectionEnd.y < y)
+            }
+            if (selectionEnd.y < y) {
                 y = selectionEnd.y;
+            }
             int w = selectionEnd.x - selectionStart.x;
             int h = selectionEnd.y - selectionStart.y;
 
-            if (w < 0)
+            if (w < 0) {
                 w = -w;
-            if (h < 0)
+            }
+            if (h < 0) {
                 h = -h;
+            }
 
             schema.selectElements(x,y,w,h);
 
@@ -792,8 +819,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
         } else if (panelMode == PanelMode.modelling) {
             if (drawTool == DrawTool.delete) {
                 if (tmpElem1 != null) {
-                    if (e.getButton() != MouseEvent.BUTTON1)
+                    if (e.getButton() != MouseEvent.BUTTON1) {
                         return;
+                    }
                     // if the mouse is released upon a point outside a tmpElem1
                     // nothing is done.
                     if (tmpElem1 != schema.getCrossingElement(p)) {
@@ -816,19 +844,19 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 }
             } else if (drawTool == DrawTool.shapeCompiler) {
                 p.setLocation(searchGridPoint(p));
-                schema.setCompilerElement(new CompilerElement(newPluginName,p));
+                schema.setCompilerElement(new CompilerElement(newPluginName,p, schema));
                 fireListeners();
             } else if(drawTool == DrawTool.shapeCPU) {
                 p.setLocation(searchGridPoint(p));
-                schema.setCpuElement(new CpuElement(newPluginName,p));
+                schema.setCpuElement(new CpuElement(newPluginName,p, schema));
                 fireListeners();
             } else if (drawTool == DrawTool.shapeMemory) {
                 p.setLocation(searchGridPoint(p));
-                schema.setMemoryElement(new MemoryElement(newPluginName,p));
+                schema.setMemoryElement(new MemoryElement(newPluginName,p, schema));
                 fireListeners();
             } else if (drawTool == DrawTool.shapeDevice) {
                 p.setLocation(searchGridPoint(p));
-                schema.addDeviceElement(new DeviceElement(newPluginName,p));
+                schema.addDeviceElement(new DeviceElement(newPluginName,p, schema));
                 fireListeners();
             } else if (drawTool == DrawTool.connectLine) {
                 sketchLastPoint = null;
@@ -863,7 +891,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
                     }
                     if (!b && (tmpElem1 != tmpElem2)) {
                         ConnectionLine l = new ConnectionLine(tmpElem1,
-                                tmpElem2, tmpPoints);
+                                tmpElem2, tmpPoints, schema);
                         l.setBidirectional(bidirectional);
                         schema.getConnectionLines().add(l);
                     }
@@ -886,8 +914,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
     public void mouseDragged(MouseEvent e) {
         Point p = e.getPoint();
         if (panelMode == PanelMode.resizing) {
-            if (tmpElem1 == null)
+            if (tmpElem1 == null) {
                 return;
+            }
             p.setLocation(searchGridPoint(p));
             switch (resizeMode) {
                 case RESIZE_TOP:
@@ -917,26 +946,31 @@ public class DrawingPanel extends JPanel implements MouseListener,
             }
         } else if (panelMode == PanelMode.moving) {
             if (selLine != null) {
-                if (p.getX() < 0 || p.getY() < 0)
+                if (p.getX() < 0 || p.getY() < 0) {
                     return;
-                if (selPoint == null) {
-                    int pi = selLine.getCrossPointAfter(p,
-                            ConnectionLine.TOLERANCE); // should not be -1
-                    if (pi == -1)
-                        return;
-                    p.setLocation(searchGridPoint(p));
-                    Point linePoint = selLine.containsPoint(p);
-                    if (linePoint == null) {
-                        selLine.addPoint(pi - 1, p);
-                        selPoint = p;
-                    } else if (selPoint != linePoint)
-                        return;
                 }
-                p.setLocation(searchGridPoint(p));
-                selLine.pointMove(selPoint, p);
+                Point gridPoint = searchGridPoint(p);
+                if (selPoint == null) {
+                    int pi = selLine.getCrossPoint(p, ConnectionLine.TOLERANCE); // should not be -1
+                    if (pi == -1) {
+                        return;
+                    }
+                    p.setLocation(gridPoint);
+                    Point linePoint = selLine.containsPoint(p, ConnectionLine.TOLERANCE);
+                    if (linePoint == null) {
+                        selLine.addPoint(pi, p);
+                        selPoint = p;
+//                    } else if (p != linePoint) {
+  //                      return;
+                    }
+                } else {
+                    p.setLocation(gridPoint);
+                    selLine.movePoint(selPoint, p);
+                }
             } else if (tmpElem1 != null) {
-                if (p.getX() < 0 || p.getY() < 0)
+                if (p.getX() < 0 || p.getY() < 0) {
                     return;
+                }
                 p.setLocation(searchGridPoint(p));
 
                 elementDragged = true;
@@ -946,12 +980,14 @@ public class DrawingPanel extends JPanel implements MouseListener,
                     int diffX, diffY;
                     diffX = p.x - tmpElem1.getX();
                     diffY = p.y - tmpElem1.getY();
-                    schema.moveSelected(diffX, diffY);
-                } else
+                    schema.moveSelection(diffX, diffY);
+                } else {
                     tmpElem1.move(p);
+                }
             }
-        } else if (panelMode == PanelMode.selecting)
+        } else if (panelMode == PanelMode.selecting) {
             selectionEnd = e.getPoint();
+        }
         panelSizeCorrection();
         repaint();
     }
@@ -964,8 +1000,9 @@ public class DrawingPanel extends JPanel implements MouseListener,
     public void mouseMoved(MouseEvent e) {
         if (panelMode == PanelMode.moving) {
             selPoint = null;
-            if (selLine != null) // if a line point was highlighted this will "de-highlight" it
+            if (selLine != null) {
                 repaint();
+            }
             selLine = null;
             
             // resize mouse pointers
@@ -995,7 +1032,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
                 Point p = e.getPoint();
                 boolean out = false;
                 for (int j = 0; j < ps.length; j++) {
-                    if (ConnectionLine.isPointSelected(ps[j], p)) {
+                    if (ConnectionLine.doPointsEqual(ps[j], p)) {
                         selLine = schema.getConnectionLines().get(i);
                         selPoint  = ps[j];
                         out = true;
@@ -1007,11 +1044,12 @@ public class DrawingPanel extends JPanel implements MouseListener,
                     break;
                 }
             }
-        } else if (panelMode == PanelMode.modelling)
+        } else if (panelMode == PanelMode.modelling) {
             if (drawTool == DrawTool.connectLine && tmpElem1 != null) {
                 sketchLastPoint = e.getPoint();
                 repaint();
             }
+        }
     }
 
 }

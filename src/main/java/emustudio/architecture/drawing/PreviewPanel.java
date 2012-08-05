@@ -20,7 +20,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.architecture.drawing;
 
 import emustudio.main.Main;
@@ -42,29 +41,25 @@ import org.slf4j.LoggerFactory;
  */
 @SuppressWarnings("serial")
 public class PreviewPanel extends JPanel {
+
     private final static Logger logger = LoggerFactory.getLogger(PreviewPanel.class);
     private Schema schema;
     private int schemaWidth;
     private int schemaHeight;
     private File lastImageFile;
-    
     /**
-     * Left factor is a constant used in panel resizing. It is a distance
-     * between panel left and the x position of the nearest point in the
-     * schema.
+     * Left factor is a constant used in panel resizing. It is a distance between panel left and the x position of the
+     * nearest point in the schema.
      */
     private int leftFactor;
     /**
-     * Top factor is a constant used in panel resizing. It is a distance
-     * between panel top and the y position of the nearest point in the
-     * schema.
+     * Top factor is a constant used in panel resizing. It is a distance between panel top and the y position of the
+     * nearest point in the schema.
      */
     private int topFactor;
-    
     /* double buffering */
     private Image dbImage;   // second buffer
     private Graphics2D dbg;  // graphics for double buffering
-
     /**
      * Holds true when this PreviewPanel was resized, false otherwise
      */
@@ -89,24 +84,23 @@ public class PreviewPanel extends JPanel {
         panelResized = false;
         this.setDoubleBuffered(true);
     }
-    
+
     /**
-     * Override previous update method in order to implement
-     * double-buffering. As a second buffer is used Image object.
-     * 
+     * Override previous update method in order to implement double-buffering. As a second buffer is used Image object.
+     *
      * @param g the Graphics object. It is retyped to Graphics2D
      */
     @Override
     public void update(Graphics g) {
         // initialize buffer if needed
         if (dbImage == null) {
-            dbImage = createImage (this.getSize().width,
+            dbImage = createImage(this.getSize().width,
                     this.getSize().height);
-            dbg = (Graphics2D)dbImage.getGraphics();
+            dbg = (Graphics2D) dbImage.getGraphics();
         }
         // clear screen in background
         dbg.setColor(getBackground());
-        dbg.fillRect (0, 0, this.getSize().width,
+        dbg.fillRect(0, 0, this.getSize().width,
                 this.getSize().height);
 
         // draw elements in background
@@ -116,118 +110,128 @@ public class PreviewPanel extends JPanel {
         // draw image on the screen
         g.drawImage(dbImage, 0, 0, this);
     }
-    
+
     private void resizePanel(Graphics g) {
-        if (schema == null)
+        if (schema == null) {
             return;
+        }
         // hladanie najvzdialenejsich elementov (alebo bodov lebo ciara
         // nemoze byt dalej ako bod)
-        int width=0, height=0, minLeft = -1, minTop = -1;
+        int width = 0, height = 0, minLeft = -1, minTop = -1;
 
-        List<Element> a = schema.getAllElements();
-
-        for (int i = a.size()-1; i >= 0; i--)
-            a.get(i).measure(g,0,0);
-
-        for (int i = a.size()-1; i >= 0; i--) {
-            Element e = a.get(i);
-            int eX = e.getX() - e.getWidth() /2;
-            int eY = e.getY() - e.getHeight()/2;
-            int eWidth = e.getWidth();
-            int eHeight = e.getHeight();
-
-            if (minLeft == -1)
-                minLeft = eX;
-            else if (minLeft > eX)
-                minLeft = eX;
-
-            if (minTop == -1)
-                minTop = eY;
-            else if (minTop > eY)
-                minTop = eY;
-
-            if (eX + eWidth > width)
-                width = eX + eWidth;
-            if (eY + eHeight > height)
-                height = eY + eHeight;
+        for (Element elem : schema.getAllElements()) {
+            elem.measure(g);
         }
-        for (int i = schema.getConnectionLines().size() -1; i >= 0; i--) {
+
+        for (Element elem : schema.getAllElements()) {
+            int eX = elem.getX() - elem.getWidth() / 2;
+            int eY = elem.getY() - elem.getHeight() / 2;
+            int eWidth = elem.getWidth();
+            int eHeight = elem.getHeight();
+
+            if (minLeft == -1) {
+                minLeft = eX;
+            } else if (minLeft > eX) {
+                minLeft = eX;
+            }
+
+            if (minTop == -1) {
+                minTop = eY;
+            } else if (minTop > eY) {
+                minTop = eY;
+            }
+
+            if (eX + eWidth > width) {
+                width = eX + eWidth;
+            }
+            if (eY + eHeight > height) {
+                height = eY + eHeight;
+            }
+        }
+        for (int i = schema.getConnectionLines().size() - 1; i >= 0; i--) {
             List<Point> ps = schema.getConnectionLines().get(i).getPoints();
             for (int j = ps.size() - 1; j >= 0; j--) {
                 Point p = ps.get(j);
 
-                if (minLeft == -1)
+                if (minLeft == -1) {
                     minLeft = p.x;
-                else if (minLeft > p.x)
+                } else if (minLeft > p.x) {
                     minLeft = p.x;
+                }
 
-                if (minTop == -1)
+                if (minTop == -1) {
                     minTop = p.y;
-                else if (minTop > p.y)
+                } else if (minTop > p.y) {
                     minTop = p.y;
+                }
 
-                if (p.x > width)
+                if (p.x > width) {
                     width = p.x;
-                if (p.y > height)
+                }
+                if (p.y > height) {
                     height = p.y;
+                }
             }
         }
         leftFactor = minLeft - Schema.MIN_LEFT_MARGIN;
         topFactor = minTop - Schema.MIN_TOP_MARGIN;
         if (width != 0 && height != 0) {
-            this.setSize(width-leftFactor+Schema.MIN_LEFT_MARGIN,
-                    height-topFactor+Schema.MIN_TOP_MARGIN);
+            this.setSize(width - leftFactor + Schema.MIN_LEFT_MARGIN,
+                    height - topFactor + Schema.MIN_TOP_MARGIN);
             this.revalidate();
         }
         schemaWidth = width;
         schemaHeight = height;
         panelResized = true;
     }
-    
+
     /**
      * Get schema real width.
-     * 
+     *
      * @return schema width
      */
     public int getSchemaWidth() {
         return schemaWidth;
     }
-    
+
     /**
      * Get schema real height.
-     * 
+     *
      * @return schema height
      */
     public int getSchemaHeight() {
         return schemaHeight;
     }
-    
+
     /**
      * Override panel paint method to draw shapes.
-     * 
+     *
      * @param g the Graphics object
      */
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (schema == null)
+        if (schema == null) {
             return;
-        boolean moved = panelResized;
-        if (panelResized == false)
-            resizePanel(g);
-        List<Element> a = schema.getAllElements();
-        if (moved == false)
-            for (int i = 0; i < a.size(); i++) {
-                Element e = a.get(i);
-                e.move(new Point(e.getX() - leftFactor, e.getY() - topFactor));
-            }
-        for (int i = 0; i < schema.getConnectionLines().size(); i++) {
-            ConnectionLine l = schema.getConnectionLines().get(i);
-            l.computeArrows(leftFactor, topFactor);
-            l.draw((Graphics2D)g, leftFactor, topFactor,true);
         }
-        for (int i = 0; i < a.size(); i++)
-            a.get(i).draw(g);
+        boolean moved = panelResized;
+        if (panelResized == false) {
+            resizePanel(g);
+        }
+        if (moved == false) {
+            schema.selectAll();
+            schema.moveSelection(-leftFactor, -topFactor);
+            schema.deselectAll();
+            for (Element elem : schema.getAllElements()) {
+                elem.measure(g);
+            }
+        }
+        for (ConnectionLine line : schema.getConnectionLines()) {
+            line.draw((Graphics2D) g, true);
+        }
+        for (Element element : schema.getAllElements()) {
+            element.draw(g);
+        }
     }
 
     /**
@@ -236,13 +240,14 @@ public class PreviewPanel extends JPanel {
      * @param s new abstract schema
      */
     public void setSchema(Schema s) {
-        if (s == null)
+        if (s == null) {
             return;
+        }
         this.schema = s;
         panelResized = false;
         this.repaint();
     }
-    
+
     /**
      * Clears the preview panel.
      */
@@ -293,7 +298,7 @@ public class PreviewPanel extends JPanel {
                 return suffix;
             }
         }
-    
+
         for (int i = 0; i < suffixes.length; i++) {
             FileFilter filter = new ImageFileFilter(suffixes[i], formatNames[i]);
             f.addChoosableFileFilter(filter);

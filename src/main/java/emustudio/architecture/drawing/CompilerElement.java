@@ -41,10 +41,11 @@ public class CompilerElement extends Element {
      *
      * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param settings settings of virtual computer
+     * @param schema Schema object for this element
      * @throws NullPointerException when some settings are not well parseable
      */
-    public CompilerElement(String pluginName, Properties settings) throws NullPointerException {
-        super(pluginName, settings, BACK_COLOR);
+    public CompilerElement(String pluginName, Properties settings, Schema schema) throws NumberFormatException {
+        super(pluginName, settings, BACK_COLOR, schema);
     }
 
     /**
@@ -52,9 +53,10 @@ public class CompilerElement extends Element {
      *
      * @param pluginName name of the compiler
      * @param location the point where the compiler is located in the schema
+     * @param schema Schema object for this element
      */
-    public CompilerElement(String pluginName, Point location) {
-        super(pluginName, location, BACK_COLOR);
+    public CompilerElement(String pluginName, Point location, Schema schema) {
+        super(pluginName, location, BACK_COLOR, schema);
     }
 
     /**

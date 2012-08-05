@@ -26,9 +26,8 @@ import java.awt.Point;
 import java.util.*;
 
 /**
- * This class represents abstract schema of virtual computer configuration.
- * It is created by the schema editor and used by ArchLoader. It is a graphics
- * model of the virtual computer.
+ * This class represents abstract schema of virtual computer configuration. It is created by the schema editor and used
+ * by ArchLoader. It is a graphics model of the virtual computer.
  *
  * @author vbmacher
  */
@@ -102,14 +101,14 @@ public class Schema {
         gridGap = Integer.parseInt(settings.getProperty("gridGap",
                 DrawingPanel.DEFAULT_GRID_GAP.toString()));
 
-        compilerElement = new CompilerElement(settings.getProperty("compiler"), selectSettings("compiler"));
+        compilerElement = new CompilerElement(settings.getProperty("compiler"), selectSettings("compiler"), this);
         // if cpu is null here, it does not matter. Maybe user just did not
         // finish the schema..
-        cpuElement = new CpuElement(settings.getProperty("cpu"), selectSettings("cpu"));
-        memoryElement = new MemoryElement(settings.getProperty("memory"), selectSettings("memory"));
+        cpuElement = new CpuElement(settings.getProperty("cpu"), selectSettings("cpu"), this);
+        memoryElement = new MemoryElement(settings.getProperty("memory"), selectSettings("memory"), this);
         // load devices
         for (int i = 0; settings.containsKey("device" + i); i++) {
-            deviceElements.add(new DeviceElement(settings.getProperty("device"+i), selectSettings("device"+i)));
+            deviceElements.add(new DeviceElement(settings.getProperty("device" + i), selectSettings("device" + i), this));
         }
 
         // load line connections
@@ -142,9 +141,9 @@ public class Schema {
                 int index = Integer.parseInt(j1.substring(6));
                 e2 = deviceElements.get(index);
             }
-            int x,y;
+            int x, y;
             if ((e1 != null) && (e2 != null)) {
-                ConnectionLine lin = new ConnectionLine(e1, e2, null);
+                ConnectionLine lin = new ConnectionLine(e1, e2, null, this);
                 lin.setBidirectional(bidi);
                 for (int j = 0; settings.containsKey("connection" + i + ".point" + j + ".x"); j++) {
                     x = Integer.parseInt(settings.getProperty("connection" + i + ".point" + j + ".x", "0"));
@@ -157,8 +156,7 @@ public class Schema {
     }
 
     /**
-     * Destroys the schema. It means - clear all arrays and
-     * free memory holding by variables.
+     * Destroys the schema. It means - clear all arrays and free memory holding by variables.
      */
     public void destroy() {
         cpuElement = null;
@@ -171,10 +169,9 @@ public class Schema {
 
     /**
      * Update all lines connections.
-     * 
-     * This method will replace an element e1 that a line is connected to in at
-     * least one point to new element e2.
-     * 
+     *
+     * This method will replace an element e1 that a line is connected to in at least one point to new element e2.
+     *
      * @param e1 old element
      * @param e2 new element
      */
@@ -216,8 +213,8 @@ public class Schema {
     }
 
     /**
-     * Set compiler element to this schema. If the origin compiler is not
-     * null and it is connected to something, the connections are kept.
+     * Set compiler element to this schema. If the origin compiler is not null and it is connected to something, the
+     * connections are kept.
      *
      * @param compiler new compiler element.
      */
@@ -232,6 +229,7 @@ public class Schema {
 
     /**
      * Get compiler element.
+     *
      * @return Compiler element. Null if unset.
      */
     public CompilerElement getCompilerElement() {
@@ -239,8 +237,8 @@ public class Schema {
     }
 
     /**
-     * Set cpu element to this schema. If the origin cpu is not
-     * null and it is connected to something, the connections are kept.
+     * Set cpu element to this schema. If the origin cpu is not null and it is connected to something, the connections
+     * are kept.
      *
      * @param cpuElement new cpu element.
      */
@@ -255,6 +253,7 @@ public class Schema {
 
     /**
      * Get cpu element.
+     *
      * @return CPU element. Null if unset.
      */
     public CpuElement getCpuElement() {
@@ -262,8 +261,8 @@ public class Schema {
     }
 
     /**
-     * Set memory element to this schema. If the origin memory is not
-     * null and it is connected to something, the connections are kept.
+     * Set memory element to this schema. If the origin memory is not null and it is connected to something, the
+     * connections are kept.
      *
      * @param memoryElement new memory element.
      */
@@ -278,6 +277,7 @@ public class Schema {
 
     /**
      * Get memory element.
+     *
      * @return Memory element. Null if unset.
      */
     public MemoryElement getMemoryElement() {
@@ -285,8 +285,7 @@ public class Schema {
     }
 
     /**
-     * Add device element. The method does nothing if the deviceElement
-     * is null.
+     * Add device element. The method does nothing if the deviceElement is null.
      *
      * @param deviceElement the device element.
      */
@@ -307,8 +306,7 @@ public class Schema {
     }
 
     /**
-     * Removes specified device element. If the device is not included in the
-     * schema, nothing is done.
+     * Removes specified device element. If the device is not included in the schema, nothing is done.
      *
      * @param device the device element to remove
      */
@@ -335,9 +333,8 @@ public class Schema {
     }
 
     /**
-     * This method gets the list of all elements within this schema.
-     * CPU, Memory, Compiler and devices are joined into a single ArrayList
-     * object and returned.
+     * This method gets the list of all elements within this schema. CPU, Memory, Compiler and devices are joined into a
+     * single ArrayList object and returned.
      *
      * @return ArrayList object containing all elements within this schema
      */
@@ -366,8 +363,7 @@ public class Schema {
     }
 
     /**
-     * Method adds new connection line to this schema. If it is null,
-     * nothing is done.
+     * Method adds new connection line to this schema. If it is null, nothing is done.
      *
      * @param conLine connection line to add
      */
@@ -379,8 +375,7 @@ public class Schema {
     }
 
     /**
-     * Removes specified connection line. If the index is out of the boundaries,
-     * nothing is done.
+     * Removes specified connection line. If the index is out of the boundaries, nothing is done.
      *
      * @param index index to an array of connection lines
      */
@@ -392,8 +387,7 @@ public class Schema {
     }
 
     /**
-     * Removes specified connection line. If the line is not included in the
-     * schema, nothing is done.
+     * Removes specified connection line. If the line is not included in the schema, nothing is done.
      *
      * @param line the connection line to remove
      */
@@ -402,16 +396,16 @@ public class Schema {
     }
 
     /**
-     * Gets an element that is located under the given point. It is used
-     * in the drawing panel.
-     * 
+     * Gets an element that is located under the given point. It is used in the drawing panel.
+     *
      * @param p Point that all elements locations are compared to
      * @return crossing element, or null if it was not found
      */
     public Element getCrossingElement(Point p) {
-        List<Element> a = getAllElements();
-        for (int i = a.size() - 1; i >= 0; i--) {
-            Element elem = a.get(i);
+        if (p == null) {
+            return null;
+        }
+        for (Element elem : getAllElements()) {
             int eX = elem.getX() - elem.getWidth() / 2;
             int eY = elem.getY() - elem.getHeight() / 2;
 
@@ -424,10 +418,9 @@ public class Schema {
     }
 
     /**
-     * Detects an element that wants to be resized. It searches for an element
-     * where the given point is pointing to its border. It is used
-     * in the drawing panel.
-     * 
+     * Detects an element that wants to be resized. It searches for an element where the given point is pointing to its
+     * border. It is used in the drawing panel.
+     *
      * @param p Point that all elements locations are compared to
      * @return resize element, or null if it was not found
      */
@@ -445,7 +438,7 @@ public class Schema {
 
     /**
      * Return whether use grid in the schema
-     * 
+     *
      * @return true if the schema uses grid, false otherwise
      */
     public boolean getUseGrid() {
@@ -454,7 +447,7 @@ public class Schema {
 
     /**
      * Return grid cells gap (i.e. cell size)
-     * 
+     *
      * @return grid cells gap
      */
     public int getGridGap() {
@@ -463,7 +456,7 @@ public class Schema {
 
     /**
      * Set whether use grid in the schema
-     * 
+     *
      * @param useGrid true if the schema uses grid, false otherwise
      */
     public void setUseGrid(boolean useGrid) {
@@ -472,7 +465,7 @@ public class Schema {
 
     /**
      * Set grid cells gap (i.e. cell size)
-     * 
+     *
      * @param gridGap grid cells gap
      */
     public void setGridGap(int gridGap) {
@@ -483,22 +476,36 @@ public class Schema {
      * Get a connection line that crosses given point.
      *
      * @param p Point that the crossing is checked
-     * @return connection line object if the point is crossing this line,
-     * null otherwise
+     * @return connection line object if the point is crossing this line, null otherwise
      */
     public ConnectionLine getCrossingLine(Point p) {
-        for (int i = lines.size() - 1; i >= 0; i--) {
-            ConnectionLine l = lines.get(i);
-            if (l.getCrossPointAfter(p, 5.0) != -1) {
-                return l;
+        for (ConnectionLine line : lines) {
+            if (line.getCrossPoint(p, ConnectionLine.TOLERANCE) != -1) {
+                return line;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Get a connection line that crosses given selection area.
+     * 
+     * Line is considered only if it has line points, and only those are considered.
+     *
+     * @param p Point that the crossing is checked
+     * @return connection line object if the point is crossing this line, null otherwise
+     */
+    public ConnectionLine getCrossingLine(Point selectionStart, Point selectionEnd) {
+        for (ConnectionLine line : lines) {
+            if (line.isAreaCrossingPoint(selectionStart, selectionEnd)) {
+                return line;
             }
         }
         return null;
     }
 
     /**
-     * This method selects all elements and connection lines that
-     * crosses or lies inside the selection area.
+     * This method selects all elements and connection lines that crosses or lies inside the selection area.
      *
      * If the area is empty (or null), nothing is done.
      *
@@ -508,101 +515,208 @@ public class Schema {
      * @param height height of the selection
      */
     public void selectElements(int x, int y, int width, int height) {
-        List<Element> a = getAllElements();
-
         Point p1 = new Point(x, y);
         Point p2 = new Point(x + width, y + height);
 
-        for (int i = a.size() - 1; i >= 0; i--) {
-            Element elem = a.get(i);
-
+        for (Element elem : getAllElements()) {
             if (elem.isAreaCrossing(p1, p2)) {
                 elem.setSelected(true);
             } else {
                 elem.setSelected(false);
             }
         }
-
-        for (int i = lines.size() - 1; i >= 0; i--) {
-            ConnectionLine l = lines.get(i);
-            l.setSelected(l.isAreaCrossing(p1, p2));
+        for (ConnectionLine line : lines) {
+            line.setSelected(line.isAreaCrossing(p1, p2));
+        }
+    }
+    
+    /**
+     * Select all elements and lines.
+     */
+    public void selectAll() {
+        for (Element elem : getAllElements()) {
+            elem.setSelected(true);
+        }
+        for (ConnectionLine line : lines) {
+            line.setSelected(true);
         }
     }
 
     /**
-     * This method moves all selected elements to a new location. The new
-     * location is computed as: old + diff (the parameter).
-     * 
+     * Deselects all elements and lines.
+     */
+    public void deselectAll() {
+        for (Element elem : getAllElements()) {
+            elem.setSelected(false);
+        }
+        for (ConnectionLine line : lines) {
+            line.setSelected(false);
+        }
+    }
+    
+    /**
+     * This method moves all selected elements to a new location. The new location is computed as: old + diff (the
+     * parameter).
+     *
      * @param diffX X difference between the new and old location
      * @param diffY Y difference between the new and old location
+     * @return true if the selection was moved; false otherwise (either due margin violations or other elements conflict)
      */
-    public void moveSelected(int diffX, int diffY) {
-        List<Element> a = getAllElements();
+    public boolean moveSelection(int diffX, int diffY) {
+        List<Element> allElements = getAllElements();
 
-        // first determine if all elements and lines can be moved
-        for (int i = a.size() - 1; i >= 0; i--) {
-            Element elem = a.get(i);
+        // TODO: test only not selected element
+        
+        // test for movement of all elements and line points first
+        for (Element elem : allElements) {
             int x = elem.getX() + diffX;
             int y = elem.getY() + diffY;
-            if (elem.isSelected()) {
-                if (!canMove(x, y)) {
-                    return;
-                }
+            if (elem.isSelected() && !canMoveElement(x, y, elem)) {
+                return false;
             }
         }
-        for (int i = a.size() - 1; i >= 0; i--) {
-            Element elem = a.get(i);
+        for (ConnectionLine line : lines) {
+            if (line.isSelected() && !line.canMoveAllPoints(diffY, diffY)) {
+                return false;
+            }
+        }
+        
+        // actual movement
+        for (Element elem : allElements) {
             int x = elem.getX() + diffX;
             int y = elem.getY() + diffY;
             if (elem.isSelected()) {
                 elem.move(x, y);
             }
         }
-        for (int i = lines.size() - 1; i >= 0; i--) {
-            ConnectionLine l = lines.get(i);
-            if (l.isSelected()) {
-                l.pointMoveAll(diffX, diffY);
+        for (ConnectionLine line : lines) {
+            if (line.isSelected()) {
+                line.moveAllPoints(diffX, diffY);
             }
         }
+        return true;
     }
 
     /**
      * Deletes all selected elements.
      */
     public void deleteSelected() {
-        List<Element> a = getAllElements();
+        List<Element> allElements = getAllElements();
 
-        for (int i = a.size() - 1; i >= 0; i--) {
-            Element elem = a.get(i);
+        for (int i = allElements.size() - 1; i >= 0; i--) {
+            Element elem = allElements.get(i);
             if (elem.isSelected()) {
                 removeElement(elem);
             }
         }
         for (int i = lines.size() - 1; i >= 0; i--) {
-            ConnectionLine l = lines.get(i);
-            if (l.isSelected()) {
-                removeConnectionLine(l);
+            ConnectionLine line = lines.get(i);
+            if (line.isSelected()) {
+                removeConnectionLine(line);
             }
         }
     }
 
     /**
-     * Determine if given location for the point is valid.
-     * 
+     * Determine if point fits to margins.
+     *
      * @param x new X location
      * @param y new Y location
      * @return true if the line point can be moved, false otherwise
      */
-    public static boolean canMove(int x, int y) {
+    private static boolean fitToMargins(int x, int y) {
         return (x >= MIN_LEFT_MARGIN) && (y >= MIN_TOP_MARGIN);
     }
 
     /**
-     * This method selects all settings that belong to specific plug-in.
-     * The plug-in name is specified in format as in configuration file (eg.
-     * CPU plug-in name is 'cpu', compiler plug-in is called 'compiler',
-     * memory plug-in is 'memory', devices are 'device0', 'device1', etc.).
+     * Determine if an element can be moved to new location.
+     *
+     * @param newX new X location of the center point
+     * @param newY new Y location of the center point
+     * @param elem the element
+     * @return
+     */
+    public boolean canMoveElement(int newX, int newY, Element element) {
+        int eW = element.getWidth()/2;
+        int eH = element.getHeight()/2;
+        
+        Point elementStart = new Point(newX - eW, newY - eH);
+        Point elementEnd = new Point(newX + eW, newY + eH);
+        if (!fitToMargins(elementStart.x, elementStart.y)) {
+            return false;
+        }
+        if (getCrossingLine(elementStart, elementEnd) != null) {
+            return false;
+        }
+
+        // Test all points of the line
+        for (Element elem : getAllElements()) {
+            if (elem == element) {
+                continue;
+            }
+            if (elem.isSelected()) {
+                continue;
+            }
+            int elemW = elem.getWidth()/2;
+            int elemH = elem.getHeight()/2;
+            
+            // test left line
+            if (ConnectionLine.isAreaCrossing(new Point(elem.getX()-elemW, elem.getY()-elemH),
+                    new Point(elem.getX()-elemW, elem.getY()+elemH), elementStart, elementEnd, 0)) {
+                return false;
+            }
+
+            // test right line
+            if (ConnectionLine.isAreaCrossing(new Point(elem.getX()+elemW, elem.getY()-elemH),
+                    new Point(elem.getX()+elemW, elem.getY()+elemH), elementStart, elementEnd, 0)) {
+                return false;
+            }
+            
+            // test top line
+            if (ConnectionLine.isAreaCrossing(new Point(elem.getX()-elemW, elem.getY()-elemH),
+                    new Point(elem.getX()+elemW, elem.getY()-elemH), elementStart, elementEnd, 0)) {
+                return false;
+            }
+            
+            // test bottom line
+            if (ConnectionLine.isAreaCrossing(new Point(elem.getX()-elemW, elem.getY()+elemH),
+                    new Point(elem.getX()+elemW, elem.getY()+elemH), elementStart, elementEnd, 0)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Determines if a point can be moved to given location.
      * 
+     * @param newX new X location for the point
+     * @param newY new Y location for the point
+     * @return true if the point can be moved, false otherwise (out of margins, or some element is in the way).
+     */
+    public boolean canMovePoint(int newX, int newY) {
+        if (!fitToMargins(newX, newY)) {
+            return false;
+        }
+        // Test all points of the line
+        for (Element elem : getAllElements()) {
+            if (elem.isSelected()) {
+                continue;
+            }
+            Point elementStart = new Point(elem.getX() - elem.getWidth()/2, elem.getY()- elem.getHeight()/2);
+            Point elementEnd = new Point(elem.getX() + elem.getWidth()/2, elem.getY() + elem.getHeight()/2);
+            if (ConnectionLine.isAreaCrossingPoint(elementStart, elementEnd, new Point(newX, newY))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * This method selects all settings that belong to specific plug-in. The plug-in name is specified in format as in
+     * configuration file (eg. CPU plug-in name is 'cpu', compiler plug-in is called 'compiler', memory plug-in is
+     * 'memory', devices are 'device0', 'device1', etc.).
+     *
      * @param key name of the plug-in
      * @return Properties selection of settings for that plug-ing
      */
@@ -610,12 +724,11 @@ public class Schema {
         Enumeration e = settings.keys();
         Properties selProps = new Properties();
         while (e.hasMoreElements()) {
-            String akey = (String)e.nextElement();
-            if (akey.equals(key))
+            String akey = (String) e.nextElement();
+            if (akey.equals(key)) {
                 continue;
-            else if (akey.startsWith(key)) {
-                selProps.put(akey.substring(key.length()+1),
-                        settings.getProperty(akey));
+            } else if (akey.startsWith(key)) {
+                selProps.put(akey.substring(key.length() + 1), settings.getProperty(akey));
             }
         }
         return selProps;
@@ -623,12 +736,13 @@ public class Schema {
 
     /**
      * Get all settings of the virtual computer.
+     *
      * @return all plug-ins' settings
      */
     public Properties getSettings() {
         return settings;
     }
-    
+
     /**
      * This method saves this schema into configuration (settings).
      */
@@ -638,22 +752,22 @@ public class Schema {
         settings.put("gridGap", String.valueOf(gridGap));
         // compiler
         if (compilerElement != null) {
-            compilerElement.saveSettings(settings,"compiler");
+            compilerElement.saveSettings(settings, "compiler");
         }
         // cpu
         if (cpuElement != null) {
-            cpuElement.saveSettings(settings,"cpu");
+            cpuElement.saveSettings(settings, "cpu");
         }
         // memory
         if (memoryElement != null) {
-            memoryElement.saveSettings(settings,"memory");
+            memoryElement.saveSettings(settings, "memory");
         }
         // devices
         Map<DeviceElement, String> devsHash = new HashMap<DeviceElement, String>();
         for (int i = 0; i < deviceElements.size(); i++) {
             DeviceElement dev = deviceElements.get(i);
             devsHash.put(dev, "device" + i);
-            dev.saveSettings(settings,"device" + i);
+            dev.saveSettings(settings, "device" + i);
         }
         for (int i = 0; i < lines.size(); i++) {
             ConnectionLine line = lines.get(i);

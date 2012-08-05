@@ -1,0 +1,1176 @@
+/*
+ * SchemaTest.java
+ * 
+ * Copyright (C) 2012, Peter Jakubčo
+ * 
+ * KISS, YAGNI, DRY
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+package emustudio.architecture.drawing;
+
+import java.awt.*;
+import java.awt.image.ImageObserver;
+import java.text.AttributedCharacterIterator;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import junit.framework.TestCase;
+
+/**
+ *
+ * @author vbmacher
+ */
+public class SchemaTest extends TestCase {
+
+    private class MyGraphics extends Graphics {
+
+        public MyGraphics() {
+        }
+
+        @Override
+        public Graphics create() {
+            return this;
+        }
+
+        @Override
+        public void translate(int x, int y) {
+        }
+
+        @Override
+        public Color getColor() {
+            return Color.WHITE;
+        }
+
+        @Override
+        public void setColor(Color c) {
+        }
+
+        @Override
+        public void setPaintMode() {
+        }
+
+        @Override
+        public void setXORMode(Color c1) {
+        }
+
+        @Override
+        public Font getFont() {
+            return new Font("Sans", Font.PLAIN, 12);
+        }
+
+        @Override
+        public void setFont(Font font) {
+        }
+
+        @Override
+        public FontMetrics getFontMetrics(Font f) {
+            return new FontMetrics(f) {
+            };
+        }
+
+        @Override
+        public Rectangle getClipBounds() {
+            return new Rectangle(0, 10, 10, 10);
+        }
+
+        @Override
+        public void clipRect(int x, int y, int width, int height) {
+        }
+
+        @Override
+        public void setClip(int x, int y, int width, int height) {
+        }
+
+        @Override
+        public Shape getClip() {
+            return null;
+        }
+
+        @Override
+        public void setClip(Shape clip) {
+        }
+
+        @Override
+        public void copyArea(int x, int y, int width, int height, int dx, int dy) {
+        }
+
+        @Override
+        public void drawLine(int x1, int y1, int x2, int y2) {
+        }
+
+        @Override
+        public void fillRect(int x, int y, int width, int height) {
+        }
+
+        @Override
+        public void clearRect(int x, int y, int width, int height) {
+        }
+
+        @Override
+        public void drawRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
+        }
+
+        @Override
+        public void fillRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
+        }
+
+        @Override
+        public void drawOval(int x, int y, int width, int height) {
+        }
+
+        @Override
+        public void fillOval(int x, int y, int width, int height) {
+        }
+
+        @Override
+        public void drawArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
+        }
+
+        @Override
+        public void fillArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
+        }
+
+        @Override
+        public void drawPolyline(int[] xPoints, int[] yPoints, int nPoints) {
+        }
+
+        @Override
+        public void drawPolygon(int[] xPoints, int[] yPoints, int nPoints) {
+        }
+
+        @Override
+        public void fillPolygon(int[] xPoints, int[] yPoints, int nPoints) {
+        }
+
+        @Override
+        public void drawString(String str, int x, int y) {
+        }
+
+        @Override
+        public void drawString(AttributedCharacterIterator iterator, int x, int y) {
+        }
+
+        @Override
+        public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
+            return true;
+        }
+
+        @Override
+        public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
+            return true;
+        }
+
+        @Override
+        public boolean drawImage(Image img, int x, int y, Color bgcolor, ImageObserver observer) {
+            return true;
+        }
+
+        @Override
+        public boolean drawImage(Image img, int x, int y, int width, int height, Color bgcolor, ImageObserver observer) {
+            return true;
+        }
+
+        @Override
+        public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, ImageObserver observer) {
+            return true;
+        }
+
+        @Override
+        public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, Color bgcolor, ImageObserver observer) {
+            return true;
+        }
+
+        @Override
+        public void dispose() {
+        }
+    }
+
+    /**
+     * Test of getConfigName method, of class Schema.
+     */
+    public void testGetConfigName() {
+        Schema instance = new Schema("test", new Properties());
+        String expResult = "test";
+        String result = instance.getConfigName();
+        assertEquals(expResult, result);
+    }
+
+    /**
+     * Test of setConfigName method, of class Schema.
+     */
+    public void testSetConfigName() {
+        String cName = "test";
+        Schema instance = new Schema();
+        instance.setConfigName(cName);
+        assertEquals(cName, instance.getConfigName());
+    }
+
+    /**
+     * Test of getCompilerElement method, of class Schema.
+     */
+    public void testGetCompilerElement() {
+        Schema instance = new Schema();
+        CompilerElement expResult = new CompilerElement("compiler", new Properties(), instance);
+        instance.setCompilerElement(expResult);
+        CompilerElement result = instance.getCompilerElement();
+        assertSame(expResult, result);
+    }
+
+    /**
+     * Test of getCpuElement method, of class Schema.
+     */
+    public void testGetCpuElement() {
+        Schema instance = new Schema();
+        CpuElement expResult = new CpuElement("cpu", new Properties(), instance);
+        instance.setCpuElement(expResult);
+        CpuElement result = instance.getCpuElement();
+        assertSame(expResult, result);
+    }
+
+    /**
+     * Test of getMemoryElement method, of class Schema.
+     */
+    public void testGetMemoryElement() {
+        Schema instance = new Schema();
+        MemoryElement expResult = new MemoryElement("mem", new Properties(), instance);
+        instance.setMemoryElement(expResult);
+        MemoryElement result = instance.getMemoryElement();
+        assertSame(expResult, result);
+    }
+
+    /**
+     * Test of addDeviceElement method, of class Schema.
+     */
+    public void testAddDeviceElement() {
+        DeviceElement deviceElement = null;
+        Schema instance = new Schema();
+        instance.addDeviceElement(deviceElement);
+        assertEquals(0, instance.getDeviceElements().size());
+
+        for (int i = 0; i < 10; i++) {
+            deviceElement = new DeviceElement("dev-" + i, new Properties(), instance);
+            instance.addDeviceElement(deviceElement);
+            assertEquals(i + 1, instance.getDeviceElements().size());
+        }
+    }
+
+    /**
+     * Test of getDeviceElements method, of class Schema.
+     */
+    public void testGetDeviceElements() {
+        Schema instance = new Schema();
+        DeviceElement deviceElement = new DeviceElement("dev-0", new Properties(), instance);
+
+        instance.addDeviceElement(deviceElement);
+        deviceElement = new DeviceElement("dev-1", new Properties(), instance);
+        instance.addDeviceElement(deviceElement);
+        deviceElement = new DeviceElement("dev-2", new Properties(), instance);
+        instance.addDeviceElement(deviceElement);
+
+        List<DeviceElement> result = instance.getDeviceElements();
+        assertEquals(3, result.size());
+        assertEquals("dev-0", result.get(0).getPluginName());
+        assertEquals("dev-1", result.get(1).getPluginName());
+        assertEquals("dev-2", result.get(2).getPluginName());
+    }
+
+    /**
+     * Test of removeDeviceElement method, of class Schema.
+     */
+    public void testRemoveDeviceElement() {
+        Schema instance = new Schema();
+        DeviceElement device = new DeviceElement("dev-0", new Properties(), instance);
+        instance.addDeviceElement(device);
+        assertEquals(1, instance.getDeviceElements().size());
+        instance.removeDeviceElement(device);
+        assertEquals(0, instance.getDeviceElements().size());
+    }
+
+    /**
+     * Test of removeElement method, of class Schema.
+     */
+    public void testRemoveElement() {
+        Schema instance = new Schema();
+        CompilerElement elem = new CompilerElement("compiler", new Properties(), instance);
+        DeviceElement elem2 = new DeviceElement("dev-0", new Properties(), instance);
+        instance.setCompilerElement(elem);
+        assertSame(elem, instance.getCompilerElement());
+        instance.addDeviceElement(elem2);
+        assertEquals(1, instance.getDeviceElements().size());
+        assertSame(elem2, instance.getDeviceElements().get(0));
+        instance.removeElement(elem);
+        assertNull(instance.getCompilerElement());
+        assertEquals(1, instance.getDeviceElements().size());
+        instance.removeElement(elem2);
+        assertEquals(0, instance.getDeviceElements().size());
+    }
+
+    /**
+     * Test of getAllElements method, of class Schema.
+     */
+    public void testGetAllElements() {
+        Schema instance = new Schema();
+        CompilerElement elem = new CompilerElement("compiler", new Properties(), instance);
+        DeviceElement elem2 = new DeviceElement("dev-0", new Properties(), instance);
+        instance.setCompilerElement(elem);
+        instance.addDeviceElement(elem2);
+
+        List<Element> result = instance.getAllElements();
+        assertEquals(2, result.size());
+        assertTrue(result.contains(elem));
+        assertTrue(result.contains(elem2));
+    }
+
+    /**
+     * Test of getConnectionLines method, of class Schema.
+     */
+    public void testAddGetRemoveConnectionLines() {
+        Schema instance = new Schema();
+        CompilerElement elem = new CompilerElement("compiler", new Properties(), instance);
+        DeviceElement elem2 = new DeviceElement("dev-0", new Properties(), instance);
+        MemoryElement elem3 = new MemoryElement("memory", new Properties(), instance);
+        instance.setCompilerElement(elem);
+        instance.addDeviceElement(elem2);
+        instance.setMemoryElement(elem3);
+        ConnectionLine lin0 = new ConnectionLine(elem, elem2, new ArrayList<Point>(), instance);
+        ConnectionLine lin1 = new ConnectionLine(elem, elem3, new ArrayList<Point>(), instance);
+        instance.addConnectionLine(lin0);
+        instance.addConnectionLine(lin1);
+        List<ConnectionLine> result = instance.getConnectionLines();
+        assertEquals(2, result.size());
+        assertTrue(result.contains(lin0));
+        assertTrue(result.contains(lin1));
+
+        instance.removeConnectionLine(lin1);
+        assertTrue(instance.getConnectionLines().contains(lin0));
+        assertFalse(instance.getConnectionLines().contains(lin1));
+
+        instance.removeConnectionLine(0);
+        assertFalse(instance.getConnectionLines().contains(lin0));
+
+        assertEquals(0, instance.getConnectionLines().size());
+    }
+
+    /**
+     * Test of getCrossingElement method, of class Schema.
+     */
+    public void testGetCrossingElement() {
+        Schema instance = new Schema();
+        Properties props = new Properties();
+        props.setProperty("compiler", "compiler");
+        props.setProperty("point.x", "100");
+        props.setProperty("point.y", "100");
+        props.setProperty("width", "100");
+        props.setProperty("height", "30");
+
+        CompilerElement elem = new CompilerElement("compiler", props, instance);
+        instance.setCompilerElement(elem);
+        assertSame(elem, instance.getCompilerElement());
+
+        Point p = null;
+        Element result = instance.getCrossingElement(p);
+        assertNull(result);
+
+        p = new Point(110, 110); // somewhere in the middle
+        Element expResult = elem;
+        result = instance.getCrossingElement(p);
+        assertSame(expResult, result);
+
+        p = new Point(50, 85); // left upper corner
+        expResult = elem;
+        result = instance.getCrossingElement(p);
+        assertSame(expResult, result);
+
+        p = new Point(49, 85); // one pixel left from left upper corner
+        result = instance.getCrossingElement(p);
+        assertNull(result);
+
+        p = new Point(150, 85); // right upper corner
+        expResult = elem;
+        result = instance.getCrossingElement(p);
+        assertSame(expResult, result);
+
+        p = new Point(150, 84); // one pixel above right upper corner
+        result = instance.getCrossingElement(p);
+        assertNull(result);
+
+        p = new Point(50, 115); // left bottom corner
+        expResult = elem;
+        result = instance.getCrossingElement(p);
+        assertSame(expResult, result);
+
+        p = new Point(49, 115); // one pixel left from left bottom corner
+        expResult = null;
+        result = instance.getCrossingElement(p);
+        assertSame(expResult, result);
+
+        p = new Point(150, 115); // right bottom corner
+        expResult = elem;
+        result = instance.getCrossingElement(p);
+        assertSame(expResult, result);
+
+        p = new Point(151, 115); // one pixel right from right bottom corner
+        result = instance.getCrossingElement(p);
+        assertNull(result);
+    }
+
+    /**
+     * Test of getResizeElement method, of class Schema.
+     */
+    public void testGetResizeElement() {
+        Schema instance = new Schema();
+        Properties props = new Properties();
+        props.setProperty("compiler", "compiler");
+        props.setProperty("point.x", "100");
+        props.setProperty("point.y", "100");
+        props.setProperty("width", "100");
+        props.setProperty("height", "30");
+
+        CompilerElement elem = new CompilerElement("compiler", props, instance);
+        elem.measure(new MyGraphics());
+        instance.setCompilerElement(elem);
+        assertSame(elem, instance.getCompilerElement());
+
+        Point p = null;
+        Element result = instance.getResizeElement(p);
+        assertNull(result);
+
+        p = new Point(50, 100); // left border
+        Element expResult = elem;
+        result = instance.getResizeElement(p);
+        assertSame(expResult, result);
+
+        p = new Point(50 - Element.TOLERANCE, 100); // left border with tolerance
+        expResult = elem;
+        result = instance.getResizeElement(p);
+        assertSame(expResult, result);
+
+        p = new Point(50 + Element.TOLERANCE, 100); // left border with tolerance
+        expResult = elem;
+        result = instance.getResizeElement(p);
+        assertSame(expResult, result);
+
+        p = new Point(50 + Element.TOLERANCE + 1, 100); // left border with tolerance
+        result = instance.getResizeElement(p);
+        assertNull(result);
+        
+        p = new Point(150 + Element.TOLERANCE, 100); // right border with tolerance
+        expResult = elem;
+        result = instance.getResizeElement(p);
+        assertSame(expResult, result);
+
+        p = new Point(150 - Element.TOLERANCE, 100); // right border with tolerance
+        expResult = elem;
+        result = instance.getResizeElement(p);
+        assertSame(expResult, result);
+        
+        p = new Point(150 + Element.TOLERANCE + 1, 100); // right border with tolerance
+        result = instance.getResizeElement(p);
+        assertNull(result);
+        
+        p = new Point(150 - Element.TOLERANCE - 1, 100); // right border with tolerance
+        result = instance.getResizeElement(p);
+        assertNull(result);
+        
+        p = new Point(100, 85 - Element.TOLERANCE); // upper border with tolerance
+        expResult = elem;
+        result = instance.getResizeElement(p);
+        assertSame(expResult, result);
+
+        p = new Point(100, 85 + Element.TOLERANCE); // upper border with tolerance
+        expResult = elem;
+        result = instance.getResizeElement(p);
+        assertSame(expResult, result);
+
+        p = new Point(100, 85 - Element.TOLERANCE - 1); // upper border with tolerance
+        result = instance.getResizeElement(p);
+        assertNull(result);
+
+        p = new Point(100, 85 + Element.TOLERANCE + 1); // upper border with tolerance
+        result = instance.getResizeElement(p);
+        assertNull(result);
+    
+        p = new Point(100, 115 - Element.TOLERANCE); // bottom border with tolerance
+        expResult = elem;
+        result = instance.getResizeElement(p);
+        assertSame(expResult, result);
+        
+        p = new Point(100, 115 + Element.TOLERANCE); // bottom border with tolerance
+        expResult = elem;
+        result = instance.getResizeElement(p);
+        assertSame(expResult, result);
+        
+        p = new Point(100, 115 - Element.TOLERANCE - 1); // bottom border with tolerance
+        result = instance.getResizeElement(p);
+        assertNull(result);
+
+        p = new Point(100, 115 + Element.TOLERANCE + 1); // bottom border with tolerance
+        result = instance.getResizeElement(p);
+        assertNull(result);
+    }
+    
+    /**
+     * Test of getUseGrid method, of class Schema.
+     */
+    public void testGetSetUseGrid() {
+        Schema instance = new Schema();
+        boolean expResult = true;
+        boolean result = instance.getUseGrid();
+        assertEquals(expResult, result);
+        
+        instance.setUseGrid(false);
+        assertEquals(false, instance.getUseGrid());
+    }
+     
+    /**
+     * Test of getGridGap method, of class Schema.
+     */
+    public void testSetGetGridGap() {
+        Schema instance = new Schema();
+        int expResult = 40;
+        instance.setGridGap(expResult);
+        int result = instance.getGridGap();
+        assertEquals(expResult, result);
+        
+        expResult = 23;
+        instance.setGridGap(expResult);
+        result = instance.getGridGap();
+        assertEquals(expResult, result);
+    }
+    
+    /**
+     * Test of getCrossingLine method, of class Schema.
+     */
+    public void testGetCrossingLine() {
+        Schema instance = new Schema();
+        Properties compilerProps = new Properties();
+        compilerProps.setProperty("compiler", "compiler");
+        compilerProps.setProperty("point.x", "100");
+        compilerProps.setProperty("point.y", "100");
+        compilerProps.setProperty("width", "100");
+        compilerProps.setProperty("height", "30");
+        CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
+        elem.measure(new MyGraphics());
+        instance.setCompilerElement(elem);
+
+        Properties deviceProps = new Properties();
+        deviceProps.setProperty("dev-0", "dev-0");
+        deviceProps.setProperty("point.x", "250");
+        deviceProps.setProperty("point.y", "100");
+        deviceProps.setProperty("width", "100");
+        deviceProps.setProperty("height", "30");
+        
+        DeviceElement elem2 = new DeviceElement("dev-0", deviceProps, instance);
+        elem2.measure(new MyGraphics());
+        instance.addDeviceElement(elem2);
+
+        Properties memProps = new Properties();
+        memProps.setProperty("memory", "memory");
+        memProps.setProperty("point.x", "150");
+        memProps.setProperty("point.y", "200");
+        memProps.setProperty("width", "100");
+        memProps.setProperty("height", "30");
+        MemoryElement elem3 = new MemoryElement("memory", memProps, instance);
+        elem3.measure(new MyGraphics());
+        instance.setMemoryElement(elem3);
+        
+        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList(), instance);
+        instance.addConnectionLine(line0);
+        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList(), instance);
+        instance.addConnectionLine(line1);
+        
+        List<Point> points = new ArrayList<Point>();
+        points.add(new Point(250,200));
+        ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
+        instance.addConnectionLine(line2);
+        
+        Point p = null;
+        ConnectionLine expResult = null;
+        ConnectionLine result = instance.getCrossingLine(p);
+        assertSame(expResult, result);
+        
+        
+       /*             l
+        *             i                 width  = 100
+        * +---------+ n  +---------+    height = 30
+        * |   [A]   | e1 |   [B]   |
+        * |    x    |<-->|    x    |
+        * | 100,100 |    | 250,100 |
+        * +---------+    +---------+   AC = C - A = (50, 100) = (1,2)
+        *       ^.[P]         ^         P = A + AC/2 = [125, 150]; AC' = (-150, 125) = (-2,1)
+        *   line0 v           |         P'= P + AC' = [123, 151]
+        *      +---------+    |         d(P,P') = sqrt(4 + 1) = sqrt(5) < 5 (tolerance)
+        *      |   [C]   |    |
+        *      |    x    |<---+ line2
+        *      | 150,200 | 250,200
+        *      +---------+
+        */
+        p = new Point(125, 150); 
+        expResult = line0;
+        result = instance.getCrossingLine(p);
+        assertSame(expResult, result);
+        
+        p = new Point(123, 151);
+        expResult = line0;
+        result = instance.getCrossingLine(p);
+        assertSame(expResult, result);
+
+        /*
+         * toleranceFactor = TOLERANCE / sqrt(x^2 + y^2); where AC' = (x,y)
+         */
+        int maxT = (int)(ConnectionLine.TOLERANCE / Math.sqrt(5)+20);
+        for (int toleranceFactor = -20; toleranceFactor < maxT; toleranceFactor++) {
+            p = new Point((int) (125 + toleranceFactor * (-2)), (int) (150 + toleranceFactor * 1));
+
+            double a = 200 - 100;
+            double b = 100 - 150;
+            double c = -a * 100 - b * 100;
+            double d = Math.abs(a * p.x + b * p.y + c) / Math.hypot(a, b);
+
+            if (d <= ConnectionLine.TOLERANCE) {
+                expResult = line0;
+            } else {
+                expResult = null;
+            }
+            result = instance.getCrossingLine(p);
+            assertEquals(expResult, result);
+        }
+        
+        p = new Point(175, 100);
+        expResult = line1;
+        result = instance.getCrossingLine(p);
+        assertSame(expResult, result);
+        
+        p = new Point(175, 100 + ConnectionLine.TOLERANCE);
+        expResult = line1;
+        result = instance.getCrossingLine(p);
+        assertSame(expResult, result);
+        
+        p = new Point(175, 100 - ConnectionLine.TOLERANCE);
+        expResult = line1;
+        result = instance.getCrossingLine(p);
+        assertSame(expResult, result);
+
+        p = new Point(250 + ConnectionLine.TOLERANCE, 200);
+        expResult = line2;
+        result = instance.getCrossingLine(p);
+        assertSame(expResult, result);
+        
+        p = new Point(250 + ConnectionLine.TOLERANCE + 1, 200);
+        result = instance.getCrossingLine(p);
+        assertNull(result);
+
+        p = new Point(250 + ConnectionLine.TOLERANCE + 20, 200);
+        result = instance.getCrossingLine(p);
+        assertNull(result);
+        
+        instance.destroy();
+        assertEquals(0, instance.getAllElements().size());
+        assertNull(instance.getCompilerElement());
+        assertNull(instance.getMemoryElement());
+        assertNull(instance.getCpuElement());
+        assertEquals(0, instance.getConnectionLines().size());
+        
+    }
+     
+    /**
+     * Test of selectElements method, of class Schema.
+     */
+    public void testSelectElements() {
+        Schema instance = new Schema();
+        Properties compilerProps = new Properties();
+        compilerProps.setProperty("compiler", "compiler");
+        compilerProps.setProperty("point.x", "100");
+        compilerProps.setProperty("point.y", "100");
+        compilerProps.setProperty("width", "100");
+        compilerProps.setProperty("height", "30");
+        CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
+        elem.measure(new MyGraphics());
+        instance.setCompilerElement(elem);
+
+        Properties deviceProps = new Properties();
+        deviceProps.setProperty("dev-0", "dev-0");
+        deviceProps.setProperty("point.x", "250");
+        deviceProps.setProperty("point.y", "100");
+        deviceProps.setProperty("width", "100");
+        deviceProps.setProperty("height", "30");
+        
+        DeviceElement elem2 = new DeviceElement("dev-0", deviceProps, instance);
+        elem2.measure(new MyGraphics());
+        instance.addDeviceElement(elem2);
+
+        Properties memProps = new Properties();
+        memProps.setProperty("memory", "memory");
+        memProps.setProperty("point.x", "150");
+        memProps.setProperty("point.y", "200");
+        memProps.setProperty("width", "100");
+        memProps.setProperty("height", "30");
+        MemoryElement elem3 = new MemoryElement("memory", memProps, instance);
+        elem3.measure(new MyGraphics());
+        instance.setMemoryElement(elem3);
+        
+        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList(), instance);
+        instance.addConnectionLine(line0);
+        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList(), instance);
+        instance.addConnectionLine(line1);
+        
+        List<Point> points = new ArrayList<Point>();
+        points.add(new Point(250,200));
+        ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
+        instance.addConnectionLine(line2);
+        
+        int x = 50;
+        int y = 20;
+        int width = 300;
+        int height = 60;
+        instance.selectElements(x, y, width, height);
+        assertFalse(elem.isSelected());
+        assertFalse(elem2.isSelected());
+        assertFalse(elem3.isSelected());
+        assertFalse(line0.isSelected());
+        assertFalse(line1.isSelected());
+        assertFalse(line2.isSelected());
+
+        x = 50;
+        y = 20;
+        width = 300;
+        height = 65;
+        instance.selectElements(x, y, width, height);
+        assertTrue(elem.isSelected());
+        assertTrue(elem2.isSelected());
+        assertFalse(elem3.isSelected());
+        assertFalse(line0.isSelected());
+        assertFalse(line1.isSelected());
+        assertFalse(line2.isSelected());
+        
+        x = 0;
+        y = 100;
+        width = 49;
+        height = 100;
+        instance.selectElements(x, y, width, height);
+        assertFalse(elem.isSelected());
+        assertFalse(elem2.isSelected());
+        assertFalse(elem3.isSelected());
+        assertFalse(line0.isSelected());
+        assertFalse(line1.isSelected());
+        assertFalse(line2.isSelected());
+        
+        x = 0;
+        y = 100;
+        width = 50;
+        height = 100;
+        instance.selectElements(x, y, width, height);
+        assertTrue(elem.isSelected());
+        assertFalse(elem2.isSelected());
+        assertFalse(elem3.isSelected());
+        assertFalse(line0.isSelected());
+        assertFalse(line1.isSelected());
+        assertFalse(line2.isSelected());
+
+        x = 0;
+        y = 100;
+        width = 99;
+        height = 100;
+        instance.selectElements(x, y, width, height);
+        assertTrue(elem.isSelected());
+        assertFalse(elem2.isSelected());
+        assertFalse(elem3.isSelected());
+        assertFalse(line0.isSelected());
+        assertFalse(line1.isSelected());
+        assertFalse(line2.isSelected());
+        
+        x = 0;
+        y = 100;
+        width = 100;
+        height = 100;
+        instance.selectElements(x, y, width, height);
+        assertTrue(elem.isSelected());
+        assertFalse(elem2.isSelected());
+        assertTrue(elem3.isSelected());
+        assertFalse(line0.isSelected());
+        assertFalse(line1.isSelected());
+        assertFalse(line2.isSelected());
+        
+        x = 0;
+        y = 100;
+        width = 100;
+        height = 100;
+        instance.selectElements(x, y, width, height);
+        assertTrue(elem.isSelected());
+        assertFalse(elem2.isSelected());
+        assertTrue(elem3.isSelected());
+        assertFalse(line0.isSelected());
+        assertFalse(line1.isSelected());
+        assertFalse(line2.isSelected());
+
+        x = 230;
+        y = 190;
+        width = 25;
+        height = 20;
+        instance.selectElements(x, y, width, height);
+        assertFalse(elem.isSelected());
+        assertFalse(elem2.isSelected());
+        assertFalse(elem3.isSelected());
+        assertFalse(line0.isSelected());
+        assertFalse(line1.isSelected());
+        assertTrue(line2.isSelected());
+        
+        x = 230;
+        y = 190;
+        width = 19;
+        height = 20;
+        instance.selectElements(x, y, width, height);
+        assertFalse(elem.isSelected());
+        assertFalse(elem2.isSelected());
+        assertFalse(elem3.isSelected());
+        assertFalse(line0.isSelected());
+        assertFalse(line1.isSelected());
+        assertTrue(line2.isSelected());
+
+        x = 230;
+        y = 190;
+        width = 20;
+        height = 20;
+        instance.selectElements(x, y, width, height);
+        assertFalse(elem.isSelected());
+        assertFalse(elem2.isSelected());
+        assertFalse(elem3.isSelected());
+        assertFalse(line0.isSelected());
+        assertFalse(line1.isSelected());
+        assertTrue(line2.isSelected());
+
+        x = 0;
+        y = 0;
+        width = 300;
+        height = 200;
+        instance.selectElements(x, y, width, height);
+        assertTrue(elem.isSelected());
+        assertTrue(elem2.isSelected());
+        assertTrue(elem3.isSelected());
+        assertTrue(line0.isSelected());
+        assertTrue(line1.isSelected());
+        assertTrue(line2.isSelected());
+
+        x = 160;
+        y = 90;
+        width = 10;
+        height = 11;
+        instance.selectElements(x, y, width, height);
+        assertFalse(elem.isSelected());
+        assertFalse(elem2.isSelected());
+        assertFalse(elem3.isSelected());
+        assertFalse(line0.isSelected());
+        assertTrue(line1.isSelected());
+        assertFalse(line2.isSelected());
+    }
+    
+    /**
+     * Test of moveSelection method, of class Schema.
+     */
+    public void testMoveSelection() {
+        Schema instance = new Schema();
+        Properties compilerProps = new Properties();
+        compilerProps.setProperty("compiler", "compiler");
+        compilerProps.setProperty("point.x", "100");
+        compilerProps.setProperty("point.y", "100");
+        compilerProps.setProperty("width", "100");
+        compilerProps.setProperty("height", "30");
+        CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
+        elem.measure(new MyGraphics());
+        instance.setCompilerElement(elem);
+
+        Properties deviceProps = new Properties();
+        deviceProps.setProperty("dev-0", "dev-0");
+        deviceProps.setProperty("point.x", "250");
+        deviceProps.setProperty("point.y", "100");
+        deviceProps.setProperty("width", "100");
+        deviceProps.setProperty("height", "30");
+        
+        DeviceElement elem2 = new DeviceElement("dev-0", deviceProps, instance);
+        elem2.measure(new MyGraphics());
+        instance.addDeviceElement(elem2);
+
+        Properties memProps = new Properties();
+        memProps.setProperty("memory", "memory");
+        memProps.setProperty("point.x", "150");
+        memProps.setProperty("point.y", "200");
+        memProps.setProperty("width", "100");
+        memProps.setProperty("height", "30");
+        MemoryElement elem3 = new MemoryElement("memory", memProps, instance);
+        elem3.measure(new MyGraphics());
+        instance.setMemoryElement(elem3);
+        
+        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList(), instance);
+        instance.addConnectionLine(line0);
+        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList(), instance);
+        instance.addConnectionLine(line1);
+        
+        List<Point> points = new ArrayList<Point>();
+        points.add(new Point(250,200));
+        ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
+        instance.addConnectionLine(line2);
+        
+        int x = 0;
+        int y = 90;
+        int width = 100;
+        int height = 30;
+        instance.selectElements(x, y, width, height);
+        assertTrue(elem.isSelected());
+        assertFalse(elem2.isSelected());
+        assertFalse(elem3.isSelected());
+        assertFalse(line0.isSelected());
+        assertFalse(line1.isSelected());
+        assertFalse(line2.isSelected());
+        
+        // left
+        instance.moveSelection(-10, 0);
+        assertEquals(90, elem.getX());
+
+        // right
+        assertTrue(instance.moveSelection(10, 0));
+        assertEquals(100, elem.getX());
+        assertFalse(instance.moveSelection(51, 0));
+        assertEquals(100, elem.getX()); // move fails
+        assertFalse(instance.moveSelection(50, 0));
+        assertEquals(100, elem.getX()); // move fails
+        assertTrue(instance.moveSelection(49, 0));
+        assertEquals(149, elem.getX()); // move succeeds
+        
+        // down
+        assertFalse(instance.moveSelection(0, 70));
+        assertEquals(100, elem.getY());
+        assertTrue(instance.moveSelection(0, 69));
+        assertEquals(169, elem.getY());
+        
+        // up
+        assertTrue(instance.moveSelection(0, -69));
+        assertEquals(100, elem.getY());
+        
+        // back left
+        assertTrue(instance.moveSelection(-49, 0));
+        assertEquals(100, elem.getX());
+        
+        // test left boundary
+        assertTrue(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN + 1, 0));
+        assertEquals(50 + Schema.MIN_LEFT_MARGIN + 1, elem.getX());
+        assertTrue(instance.moveSelection(50 - Schema.MIN_LEFT_MARGIN - 1, 0));
+        assertEquals(100, elem.getX());
+        assertTrue(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN, 0));
+        assertEquals(50 + Schema.MIN_LEFT_MARGIN, elem.getX());
+        assertTrue(instance.moveSelection(50 - Schema.MIN_LEFT_MARGIN, 0));
+        assertEquals(100, elem.getX());
+        assertFalse(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN - 1, 0));
+        assertEquals(100, elem.getX());
+        
+        // test top boundary
+        assertTrue(instance.moveSelection(0, -85 + Schema.MIN_TOP_MARGIN + 1));
+        assertEquals(15 + Schema.MIN_TOP_MARGIN + 1, elem.getY());
+        assertTrue(instance.moveSelection(0, 85 - Schema.MIN_TOP_MARGIN - 1));
+        assertEquals(100, elem.getY());
+        assertTrue(instance.moveSelection(0, -85 + Schema.MIN_TOP_MARGIN));
+        assertEquals(15 + Schema.MIN_TOP_MARGIN, elem.getY());
+        assertTrue(instance.moveSelection(0, 85 - Schema.MIN_TOP_MARGIN));
+        assertEquals(100, elem.getY());
+        assertFalse(instance.moveSelection(0, -85 + Schema.MIN_TOP_MARGIN - 1));
+        assertEquals(100, elem.getY());
+        
+       /*             l
+        *             i                 width  = 100
+        * +---------+ n  +---------+    height = 30
+        * |   [A]   | e1 |   [B]   |
+        * |    x    |<-->|    x    |
+        * | 100,100 |    | 250,100 |
+        * +---------+    +---------+   AC = C - A = (50, 100) = (1,2)
+        *       ^.[P]         ^         P = A + AC/2 = [125, 150]; AC' = (-150, 125) = (-2,1)
+        *   line0 v           |         P'= P + AC' = [123, 151]
+        *      +---------+    |         d(P,P') = sqrt(4 + 1) = sqrt(5) < 5 (tolerance)
+        *      |   [C]   |    |
+        *      |    x    |<---+ line2
+        *      | 150,200 | 250,200
+        *      +---------+
+        */
+        
+        // now test elem3
+        
+        // selection
+        x = 80;
+        y = 180;
+        width = 100;
+        height = 50;
+        instance.selectElements(x, y, width, height);
+        assertFalse(elem.isSelected());
+        assertFalse(elem2.isSelected());
+        assertTrue(elem3.isSelected());
+        assertTrue(line0.isSelected());
+        assertFalse(line1.isSelected());
+        assertFalse(line2.isSelected());
+        
+        // down
+        assertTrue(instance.moveSelection(0, 100));
+        assertEquals(300, elem3.getY());
+        
+        // up
+        assertTrue(instance.moveSelection(0, -100));
+        assertEquals(200, elem3.getY());
+        
+        // right
+        assertTrue(instance.moveSelection(49, 0));
+        assertEquals(199, elem3.getX());
+        assertFalse(instance.moveSelection(1, 0));
+        assertEquals(199, elem3.getX()); // move failed
+        assertFalse(instance.moveSelection(20, 0));
+        assertEquals(199, elem3.getX()); // move failed
+        assertTrue(instance.moveSelection(-1, 0));
+        assertEquals(198, elem3.getX()); 
+        assertTrue(instance.moveSelection(-48, 0));
+        assertEquals(150, elem3.getX());
+        
+        // up
+        assertFalse(instance.moveSelection(0, -100));
+        assertEquals(200, elem3.getY()); // move failed
+        assertFalse(instance.moveSelection(0, -80));
+        assertEquals(200, elem3.getY()); // move failed
+        assertFalse(instance.moveSelection(100, 0));
+        assertEquals(150, elem3.getX()); // move failed
+        assertTrue(instance.moveSelection(1, 0));
+        assertEquals(151, elem3.getX());
+        assertTrue(instance.moveSelection(-1, 0));
+        assertEquals(150, elem3.getX());
+        
+        // test multiple selection
+        x = 0;
+        y = 0;
+        width = 149;
+        height = 200;
+        instance.selectElements(x, y, width, height);
+        assertTrue(elem.isSelected());
+        assertFalse(elem2.isSelected());
+        assertTrue(elem3.isSelected());
+        assertTrue(line0.isSelected());
+        assertFalse(line1.isSelected());
+        assertFalse(line2.isSelected());
+        
+        assertTrue(instance.moveSelection(10, 0));
+        assertEquals(110, elem.getX());
+        assertEquals(160, elem3.getX());
+
+        assertTrue(instance.moveSelection(-10, 0));
+        assertEquals(100, elem.getX());
+        assertEquals(150, elem3.getX());
+        
+        assertTrue(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN, 0));
+        assertEquals(50 + Schema.MIN_LEFT_MARGIN, elem.getX());
+        assertEquals(100 + Schema.MIN_LEFT_MARGIN, elem3.getX());
+
+        assertFalse(instance.moveSelection(-1, 0));
+        assertEquals(50 + Schema.MIN_LEFT_MARGIN, elem.getX());
+        assertEquals(100 + Schema.MIN_LEFT_MARGIN, elem3.getX());
+    
+    }
+    
+    /**
+     * Test of deleteSelected method, of class Schema.
+     */
+    public void testDeleteSelected() {
+        Schema instance = new Schema();
+        Properties compilerProps = new Properties();
+        compilerProps.setProperty("compiler", "compiler");
+        compilerProps.setProperty("point.x", "100");
+        compilerProps.setProperty("point.y", "100");
+        compilerProps.setProperty("width", "100");
+        compilerProps.setProperty("height", "30");
+        CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
+        elem.measure(new MyGraphics());
+        instance.setCompilerElement(elem);
+
+        Properties deviceProps = new Properties();
+        deviceProps.setProperty("dev-0", "dev-0");
+        deviceProps.setProperty("point.x", "250");
+        deviceProps.setProperty("point.y", "100");
+        deviceProps.setProperty("width", "100");
+        deviceProps.setProperty("height", "30");
+
+        DeviceElement elem2 = new DeviceElement("dev-0", deviceProps, instance);
+        elem2.measure(new MyGraphics());
+        instance.addDeviceElement(elem2);
+
+        Properties memProps = new Properties();
+        memProps.setProperty("memory", "memory");
+        memProps.setProperty("point.x", "150");
+        memProps.setProperty("point.y", "200");
+        memProps.setProperty("width", "100");
+        memProps.setProperty("height", "30");
+        MemoryElement elem3 = new MemoryElement("memory", memProps, instance);
+        elem3.measure(new MyGraphics());
+        instance.setMemoryElement(elem3);
+
+        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList(), instance);
+        instance.addConnectionLine(line0);
+        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList(), instance);
+        instance.addConnectionLine(line1);
+
+        List<Point> points = new ArrayList<Point>();
+        points.add(new Point(250, 200));
+        ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
+        instance.addConnectionLine(line2);
+        
+        int x = 150;
+        int y = 200;
+        int width = 10;
+        int height = 10;
+        instance.selectElements(x, y, width, height);
+        assertFalse(elem.isSelected());
+        assertFalse(elem2.isSelected());
+        assertTrue(elem3.isSelected());
+        assertFalse(line0.isSelected());
+        assertFalse(line1.isSelected());
+        assertFalse(line2.isSelected());
+        
+        instance.deleteSelected();
+        assertEquals(1, instance.getConnectionLines().size());
+        assertEquals(2, instance.getAllElements().size());
+        assertSame(line1, instance.getConnectionLines().get(0));
+        assertSame(elem, instance.getCompilerElement());
+        assertNull(instance.getMemoryElement());
+        assertSame(elem2, instance.getDeviceElements().get(0));
+    }
+
+    /**
+     * Test of getSettings method, of class Schema.
+     */
+    public void testSaveAndGetSettings() {
+        Schema instance = new Schema();
+        Properties result = instance.getSettings();
+        assertNotNull(result);
+        
+        Properties compilerProps = new Properties();
+        compilerProps.setProperty("compiler", "compiler");
+        compilerProps.setProperty("point.x", "100");
+        compilerProps.setProperty("point.y", "100");
+        compilerProps.setProperty("width", "100");
+        compilerProps.setProperty("height", "30");
+        CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
+        instance.setCompilerElement(elem);
+        
+        assertNull(instance.getSettings().getProperty("compiler"));
+        instance.save();
+        assertEquals("compiler", instance.getSettings().getProperty("compiler"));
+        assertEquals("100", instance.getSettings().getProperty("compiler.point.x"));
+        assertEquals("100", instance.getSettings().getProperty("compiler.point.y"));
+        assertEquals("100", instance.getSettings().getProperty("compiler.width"));
+        assertEquals("30", instance.getSettings().getProperty("compiler.height"));
+    }
+}

@@ -24,6 +24,7 @@
 package emustudio.architecture.drawing;
 
 import java.awt.*;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +36,11 @@ import java.util.List;
  * @author vbmacher
  */
 public class ConnectionLine {
+    /**
+     * The length of arrow arm
+     */
+    private final static int ARROW_LENGTH = 10;
+    
     /**
      * Tolerance radius for user point selection, in pixels
      */
@@ -80,11 +86,6 @@ public class ConnectionLine {
     private boolean bidirectional;
 
     /**
-     * The length of arrow arm
-     */
-    private final static int arrow_length = 10;
-
-    /**
      * Begining arrow point for element1. The x and y values are relative
      * to the element middle-point.
      */
@@ -101,6 +102,8 @@ public class ConnectionLine {
     private Point arrow2LeftEnd;
     private Point arrow2RightEnd;
     private int[] xx2, yy2;
+    
+    private Schema schema;
 
     /**
      * Create new ConnectionLine object.
@@ -109,7 +112,7 @@ public class ConnectionLine {
      * @param e2 last connection element
      * @param points middle-ponits arraylist
      */
-    public ConnectionLine(Element e1, Element e2, List<Point> points) {
+    public ConnectionLine(Element e1, Element e2, List<Point> points, Schema schema) {
         this.e1 = e1;
         this.e2 = e2;
         this.points = new ArrayList<Point>();
@@ -125,6 +128,8 @@ public class ConnectionLine {
         yy1 = new int[4];
         xx2 = new int[4];
         yy2 = new int[4];
+        
+        this.schema = schema;
     }
 
     /**
@@ -137,145 +142,136 @@ public class ConnectionLine {
      * @return the intersection point of two lines if they have one; null
      * instead
      */
-    private Point intersection(Point l1s, Point l1e, Point l2s, Point l2e) {
+    private static Point intersection(Point l1s, Point l1e, Point l2s, Point l2e) {
         int div;
         int p_x, p_y;
 
-        div = (l1s.x - l1e.x) * (l2s.y - l2e.y)
-                - (l1s.y - l1e.y) * (l2s.x - l2e.x);
+        div = (l1s.x - l1e.x) * (l2s.y - l2e.y) - (l1s.y - l1e.y) * (l2s.x - l2e.x);
 
         // there is no intersection - lines are parallel
         if (div == 0) {
             return null;
         }
 
-        p_x = ((l1s.x * l1e.y - l1s.y * l1e.x) * (l2s.x - l2e.x)
-                - (l1s.x - l1e.x) * (l2s.x * l2e.y - l2s.y * l2e.x))/div;
-        p_y = ((l1s.x * l1e.y - l1s.y * l1e.x) * (l2s.y - l2e.y)
-                - (l1s.y - l1e.y) * (l2s.x * l2e.y - l2s.y * l2e.x))/div;
+        p_x = ((l1s.x * l1e.y - l1s.y * l1e.x) * (l2s.x - l2e.x)- (l1s.x - l1e.x) * (l2s.x * l2e.y - l2s.y * l2e.x))/div;
+        p_y = ((l1s.x * l1e.y - l1s.y * l1e.x) * (l2s.y - l2e.y)- (l1s.y - l1e.y) * (l2s.x * l2e.y - l2s.y * l2e.x))/div;
 
         return new Point(p_x, p_y);
     }
 
     /**
-     * This method computes one or bidirectional arrows positions for this 
-     * line ends.
+     * This method computes one or bidirectional arrows positions.
      * 
-     * @param leftFactor x coordinate correction
-     * @param topFactor  y coordinate correction
      */
-    public void computeArrows(int leftFactor, int topFactor) {
-        computeElementArrow(leftFactor, topFactor, false);
-        computeElementArrow(leftFactor, topFactor, true);
+    private void computeArrows() {
+        computeElementArrow(e2, e1);
+        computeElementArrow(e1, e2);
         if (!bidirectional) {
             arrow1LeftEnd = null;
             arrow1RightEnd = null;
         }
     }
-
+    
     /**
      * This method computes relative start points of "arrows" on line end.
+     * 
+     * The direction is meant to be firstE -> secondE.
      *
-     * @param leftFactor x coordinate correction
-     * @param topFactor  y coordinate correction
-     * @param first whether to compute first direction (e1->e2),
-     * or the other direction (e2->e1).
+     * @param firstE first (starting) element
+     * @param secondE second (ending) element
      */
-    public void computeElementArrow(int leftFactor, int topFactor, boolean first) {
+    private void computeElementArrow(Element firstE, Element secondE) {
         Point p, arrow;
         int x_left, x_right, y_bottom, y_top;
 
-        int eX = first ? e1.getX() - e1.getWidth()/2: e2.getX() - e2.getWidth()/2;
-        int eWidth = first ? e1.getWidth() : e2.getWidth();
-        int eY = first ? e1.getY() - e1.getHeight()/2 : e2.getY() - e2.getHeight()/2;
-        int eHeight = first ? e1.getHeight() : e2.getHeight();
-
-        Point lineStart = new Point (eX + eWidth/2, eY + eHeight/2);
+        Point lineStart = new Point (firstE.getX(), firstE.getY());
         Point lineEnd;
+        
+        int widthHalf = firstE.getWidth()/2;
+        int heightHalf = firstE.getHeight()/2;
 
-        x_left = lineStart.x - eWidth/2;
-        x_right = lineStart.x + eWidth/2;
-        y_bottom = lineStart.y + eHeight/2;
-        y_top = lineStart.y - eHeight/2;
+        x_left = lineStart.x -  widthHalf;
+        x_right = lineStart.x + widthHalf;
+        y_bottom = lineStart.y + heightHalf;
+        y_top = lineStart.y - heightHalf;
 
-        if (points.isEmpty())
-            lineEnd = new Point (first ? e2.getX() : e1.getX(),
-                    first ? e2.getY() : e1.getY());
-        else {
-            lineEnd = first ? points.get(0) : points.get(points.size()-1);
-            int x2 = lineEnd.x  - leftFactor;
-            int y2 = lineEnd.y  - topFactor;
+        if (points.isEmpty()) {
+            lineEnd = new Point (secondE.getX(), secondE.getY());
+        } else {
+            lineEnd = (firstE == e1) ? points.get(0) : points.get(points.size()-1);
+            int x2 = lineEnd.x;
+            int y2 = lineEnd.y;
 
-            if (x2 < Schema.MIN_LEFT_MARGIN)
+            if (x2 < Schema.MIN_LEFT_MARGIN) {
                 x2 = Schema.MIN_LEFT_MARGIN;
-            if (y2 < Schema.MIN_TOP_MARGIN)
+            }
+            if (y2 < Schema.MIN_TOP_MARGIN) {
                 y2 = Schema.MIN_TOP_MARGIN;
+            }
 
             lineEnd = new Point(x2, y2);
             // if the line end is near element, modify line start
-            if (lineEnd.x >= eX && (lineEnd.x <= (eX + eWidth))) {
+            if (lineEnd.x >= x_left && (lineEnd.x <= x_right)) {
                 lineStart.x = lineEnd.x;
-            } else if (lineEnd.y >= eY && (lineEnd.y <= (eY + eHeight))) {
+            }
+            if (lineEnd.y >= y_top && (lineEnd.y <= y_bottom)) {
                 lineStart.y = lineEnd.y;
             }
-            x_left = lineStart.x - eWidth / 2;
-            x_right = lineStart.x + eWidth / 2;
-            y_bottom = lineStart.y + eHeight / 2;
-            y_top = lineStart.y - eHeight / 2;
+            x_left = lineStart.x - widthHalf;
+            x_right = lineStart.x + widthHalf;
+            y_bottom = lineStart.y + heightHalf;
+            y_top = lineStart.y - heightHalf;
         }
         
         // test: bottom line of element1
-        p = intersection(new Point(x_left,y_bottom), new Point(x_right, y_bottom),
-                 lineStart, lineEnd);
+        p = intersection(new Point(x_left,y_bottom), new Point(x_right, y_bottom), lineStart, lineEnd);
         arrow = null;
-        if ((p != null) && (lineEnd.y > p.y) && (p.y == y_bottom)
-                && (p.x >= x_left) && (p.x <= x_right))
-            arrow = new Point(p.x-eX, p.y - eY);
+        if ((p != null) && (lineEnd.y > p.y) && (p.y == y_bottom) && (p.x >= x_left) && (p.x <= x_right)) {
+            arrow = new Point(p.x, p.y);
+        }
 
         if (arrow == null) {
             // test: top line of element1
-            p = intersection(new Point(x_left,y_top), new Point(x_right, y_top),
-                     lineStart, lineEnd);
-            if ((p != null) && (lineEnd.y < p.y) && (p.y == y_top)
-                    && (p.x >= x_left) && (p.x <= x_right))
-                arrow = new Point(p.x-eX, p.y - eY);
+            p = intersection(new Point(x_left,y_top), new Point(x_right, y_top), lineStart, lineEnd);
+            if ((p != null) && (lineEnd.y < p.y) && (p.y == y_top) && (p.x >= x_left) && (p.x <= x_right)) {
+                arrow = new Point(p.x, p.y);
+            }
         }
         if (arrow == null) {
             // test: left line of element1
-            p = intersection(new Point(x_left,y_bottom), new Point(x_left, y_top),
-                     lineStart, lineEnd);
-            if ((p != null) && (lineEnd.x < p.x) && (p.x == x_left)
-                    && (p.y >= y_top) && (p.y <= y_bottom))
-                arrow = new Point(p.x-eX, p.y - eY);
+            p = intersection(new Point(x_left,y_bottom), new Point(x_left, y_top), lineStart, lineEnd);
+            if ((p != null) && (lineEnd.x < p.x) && (p.x == x_left) && (p.y >= y_top) && (p.y <= y_bottom)) {
+                arrow = new Point(p.x, p.y);
+            }
         }
         if (arrow == null) {
             // test: right line of element1
-            p = intersection(new Point(x_right,y_bottom), new Point(x_right, y_top),
-                     lineStart, lineEnd);
-            if ((p != null) && (lineEnd.x > p.x) && (p.x == x_right)
-                    && (p.y >= y_top) && (p.y <= y_bottom))
-                arrow = new Point(p.x-eX, p.y - eY);
+            p = intersection(new Point(x_right,y_bottom), new Point(x_right, y_top), lineStart, lineEnd);
+            if ((p != null) && (lineEnd.x > p.x) && (p.x == x_right) && (p.y >= y_top) && (p.y <= y_bottom)) {
+                arrow = new Point(p.x, p.y);
+            }
         }
-        if (first)
+        if (firstE == e1) {
             arrow1 = arrow;
-        else
+        } else {
             arrow2 = arrow;
-        computeArrowEnds(lineStart, lineEnd, first);
+        }
+        computeArrowEnds(lineStart, lineEnd, firstE, secondE);
     }
 
     /**
      * This method computes the positions of the arrows end lines.
      *
+     * The direction is meant to be firstE -> secondE.
+     * 
      * @param lineStart start point of this line
      * @param lineEnd end point of this line
-     * @param first whether to compute the position of the first direction arrow
-     * (e1->e2), or the other direction arrow (e2->e1)
+     * @param firstE first (starting) element
+     * @param secondE second (ending) element
      */
-    private void computeArrowEnds(Point lineStart,
-           Point lineEnd, boolean first) {
+    private void computeArrowEnds(Point lineStart, Point lineEnd, Element firstE, Element secondE) {
 
-        double delta = Math.atan2(lineEnd.x - lineStart.x,
-                lineEnd.y-lineStart.y);
+        double delta = Math.atan2(lineEnd.x - lineStart.x, lineEnd.y-lineStart.y);
 
         /*
            |*
@@ -296,12 +292,10 @@ public class ConnectionLine {
         double radians = Math.toRadians(30) + delta;
         double mRadians = Math.toRadians(-30) + delta;
 
-        Point a_left = new Point((int)(arrow_length * Math.sin(radians)),
-                (int)(arrow_length * Math.cos(radians)));
-        Point a_right = new Point((int)(arrow_length * Math.sin(mRadians)),
-                (int)(arrow_length * Math.cos(mRadians)));
+        Point a_left = new Point((int)(ARROW_LENGTH * Math.sin(radians)), (int)(ARROW_LENGTH * Math.cos(radians)));
+        Point a_right = new Point((int)(ARROW_LENGTH * Math.sin(mRadians)), (int)(ARROW_LENGTH * Math.cos(mRadians)));
 
-        if (first) {
+        if (firstE == e1) {
             arrow1LeftEnd = a_left;
             arrow1RightEnd = a_right;
         } else {
@@ -320,117 +314,265 @@ public class ConnectionLine {
      * @return true if the line is crossing the selection area
      */
     public boolean isAreaCrossing(Point selectionStart, Point selectionEnd) {
-        Point lineStart;
-        if (arrow1 == null) {
-           lineStart = new Point(e1.getX(), e1.getY());
-        } else {
-           lineStart = new Point(e1.getX() + arrow1.x, e1.getY() + arrow1.y);
+        return isAreaCrossing(selectionStart, selectionEnd, 0);
+    }
+    
+    /**
+     * Determine if some line point crosses given area.
+     * 
+     * @param selectionStart Left-top point of the area
+     * @param selectionEnd Bottom-right point of the area
+     * @return true if the area covers some line point, false otherwise (or if line doesn't have points)
+     */
+    public boolean isAreaCrossingPoint(Point selectionStart, Point selectionEnd) {
+        if (points.isEmpty()) {
+            return false;
         }
-
-        Point lineEnd;
-        Point intersection;
-
-        for (int i = 0; i < points.size(); i++) {
-            lineEnd = points.get(i);
-
-            // test: left side of the selection
-            Point bottomLeft = new Point(selectionStart.x, selectionEnd.y);
-            intersection = intersection(selectionStart, bottomLeft, lineStart,
-                    lineEnd);
-            if ((intersection != null) && (intersection.x == selectionStart.x)
-                    && (intersection.y >= selectionStart.y)
-                    && (intersection.y <= selectionEnd.y)
-                    && (getCrossPointAfter(intersection,1) != -1))
+        for (Point p : points) {
+            if ((p.x >= selectionStart.x) && (p.x <= selectionEnd.x) 
+                    && (p.y >= selectionStart.y) && (p.y <= selectionEnd.y)) {
                 return true;
-
-            // test: right side of the selection
-            Point topRight = new Point(selectionEnd.x, selectionStart.y);
-            intersection = intersection(topRight, selectionEnd, lineStart,
-                    lineEnd);
-            if ((intersection != null) && (intersection.x == selectionEnd.x)
-                    && (intersection.y >= selectionStart.y)
-                    && (intersection.y <= selectionEnd.y)
-                    && (getCrossPointAfter(intersection,1) != -1))
-                return true;
-
-            // test: top side of the selection
-            intersection = intersection(selectionStart, topRight, lineStart,
-                    lineEnd);
-            if ((intersection != null) && (intersection.y == selectionStart.y)
-                    && (intersection.x >= selectionStart.x)
-                    && (intersection.x <= selectionEnd.x)
-                    && (getCrossPointAfter(intersection,1) != -1))
-                return true;
-
-            // test: bottom side of the selection
-            intersection = intersection(bottomLeft, selectionEnd, lineStart,
-                    lineEnd);
-            if ((intersection != null) && (intersection.y == selectionEnd.y)
-                    && (intersection.x >= selectionStart.x)
-                    && (intersection.x <= selectionEnd.x)
-                    && (getCrossPointAfter(intersection,1) != -1))
-                return true;
-
-            lineStart = lineEnd;
-        }
-        if (arrow2 == null) {
-            lineEnd = new Point(e2.getX(), e2.getY());
-        } else {
-            lineEnd = new Point(e2.getX() + arrow2.x, e2.getY() + arrow2.y);
-        }
-
-        // test: left side of the selection
-        Point bottomLeft = new Point(selectionStart.x, selectionEnd.y);
-        intersection = intersection(selectionStart, bottomLeft, lineStart,
-                lineEnd);
-        if ((intersection != null) && (intersection.x == selectionStart.x)
-                && (intersection.y >= selectionStart.y)
-                && (intersection.y <= selectionEnd.y)
-                && (getCrossPointAfter(intersection,1) != -1))
-            return true;
-
-        // test: right side of the selection
-        Point topRight = new Point(selectionEnd.x, selectionStart.y);
-        intersection = intersection(topRight, selectionEnd, lineStart,
-                lineEnd);
-        if ((intersection != null) && (intersection.x == selectionEnd.x)
-                && (intersection.y >= selectionStart.y)
-                && (intersection.y <= selectionEnd.y)
-                && (getCrossPointAfter(intersection,1) != -1)) {
-            return true;
-        }
-
-        // test: top side of the selection
-        intersection = intersection(selectionStart, topRight, lineStart,
-                lineEnd);
-        if ((intersection != null) && (intersection.y == selectionStart.y)
-                && (intersection.x >= selectionStart.x)
-                && (intersection.x <= selectionEnd.x)
-                && (getCrossPointAfter(intersection,1) != -1)) {
-            return true;
-        }
-
-        // test: bottom side of the selection
-        intersection = intersection(bottomLeft, selectionEnd, lineStart,
-                lineEnd);
-        if ((intersection != null) && (intersection.y == selectionEnd.y)
-                && (intersection.x >= selectionStart.x)
-                && (intersection.x <= selectionEnd.x)
-                && (getCrossPointAfter(intersection,1) != -1)) {
-            return true;
-        }
-
-        // if there is no intersection, maybe the line lies inside the selection
-        // it is enough if we just compare any point if it lies inside the
-        // selection
-        if ((lineStart.x >= selectionStart.x) && (lineStart.x <= selectionEnd.x)
-                && (lineStart.y >= selectionStart.y)
-                && (lineStart.y <= selectionEnd.y)) {
-            return true;
+            }
         }
         return false;
     }
 
+    /**
+     * Determine if given point crosses given area.
+     * 
+     * @param selectionStart Left-top point of the area
+     * @param selectionEnd Bottom-right point of the area
+     * @param point The point
+     * @return true if the area covers the point, false otherwise
+     */
+    public static boolean isAreaCrossingPoint(Point selectionStart, Point selectionEnd, Point point) {
+        return ((point.x >= selectionStart.x) && (point.x <= selectionEnd.x)
+                && (point.y >= selectionStart.y) && (point.y <= selectionEnd.y));
+    }
+
+    private static double dot(Point v0, Point v1) {
+        return (v0.x * v1.x) + (v0.y * v1.y);
+    }
+    
+    private static boolean liesInTriangle(Point P, Point A, Point B, Point C) {
+        // Compute vectors        
+        Point v0 = new Point(C.x - A.x, C.y - A.y);
+        Point v1 = new Point(B.x - A.x, B.y - A.y);
+        Point v2 = new Point(P.x - A.x, P.y - A.y);
+
+        // Compute dot products
+        double dot00 = dot(v0, v0);
+        double dot01 = dot(v0, v1);
+        double dot02 = dot(v0, v2);
+        double dot11 = dot(v1, v1);
+        double dot12 = dot(v1, v2);
+
+        // Compute barycentric coordinates
+        double invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+        double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+        double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+        // Check if point is in triangle
+        return (u >= 0) && (v >= 0) && (u + v < 1);
+    }
+
+
+    /**
+     * Determine whether a line segment P1P2 crosses a triangle ABC.
+     * 
+     * @param P1 start point of the line segment
+     * @param P2 end point of the line segment
+     * @param A first point of the triangle
+     * @param B second point of the triangle
+     * @param C third point of the triangle
+     * @return true if the line segment crosses the triangle; false otherwise
+     */
+    private static boolean liesInTriangle(Point P1, Point P2, Point A, Point B, Point C) {
+        int a = P2.y - P1.y;
+        int b = P1.x - P2.x;
+        int c = -a * P1.x - b * P1.y; // general line equation
+        
+        byte sign;
+        boolean is = false;
+        
+        int result = a * A.x + b * A.y + c;
+        if (result > 0) {
+            sign = 1;
+        } else if (result == 0) {
+            sign = 0;
+        } else {
+            sign = -1;
+        }
+        result = a * B.x + b * B.y + c;
+        if ((result > 0) && (sign != 1)) {
+            is = true;
+        } else if ((result == 0) && (sign != 0)) {
+            is = true;
+        } else if ((result < 0) && (sign != -1)) {
+            is = true;
+        }
+        if (!is) {
+            result = a * C.x + b * C.y + c;
+            if ((result > 0) && (sign != 1)) {
+                is = true;
+            } else if ((result == 0) && (sign != 0)) {
+                is = true;
+            } else if ((result < 0) && (sign != -1)) {
+                is = true;
+            }
+        }
+        
+        if (is) {
+            // now we know that line is crossing the triangle.
+            // we must check if the line segment crosses the triangle
+            
+            // A point is always left-top, B is always right, C is always under A
+            if ((Math.min(P1.y, P2.y) <= C.y) && (Math.max(P1.y, P2.y) >= A.y)
+                    && (Math.min(P1.x, P2.x) <= B.x) && (Math.max(P1.x, P2.x) >= A.x)) {
+                return true;
+            }
+        } else {
+            // last check if the line segment lies inside the triangle and does not cross it
+            if (liesInTriangle(P1, A, B, C) && liesInTriangle(P2, A, B, C)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Determines whether a selection area crosses or overlays this line.
+     * 
+     * If at least one intersection is found, then true is returned.
+     * The algorithm is based on:
+     * http://stackoverflow.com/questions/4497841/optimal-algorithm-if-line-intersects-convex-polygon
+     *
+     * @param selectionStart the selection start point
+     * @param selectionEnd the selection end point
+     * @param tolerance Tolerance of boundaries
+     * @return true if the line is crossing the selection area
+     */
+    public boolean isAreaCrossing(Point selectionStart, Point selectionEnd, int tolerance) {
+        Point v0 = selectionStart;
+        Point v1 = new Point(selectionEnd.x, selectionStart.y);
+        Point v2 = selectionEnd;
+        Point v3 = new Point(selectionStart.x, selectionEnd.y);
+        
+        if ((arrow1 == null) || (arrow2 == null)) {
+            computeArrows();
+        }
+        if ((arrow1 == null) || (arrow2 == null)) {
+            return false;
+        }
+        Point lineStart = new Point(arrow1.x, arrow1.y);
+        Point lineEnd;
+        Point intersection;
+
+        for (Point p : points) {
+            lineEnd = p;
+            
+            intersection = intersection(v0, v2, lineStart, lineEnd);
+            if (intersection != null) {
+                if ((intersection.x < v0.x) || (intersection.x > v2.x) 
+                        || (intersection.y < v0.y) || (intersection.y > v2.y)){
+                    intersection = null;
+                } else if (intersection.x < Math.min(lineStart.x, lineEnd.x)
+                        || (intersection.x > Math.max(lineStart.x, lineEnd.x))
+                        || (intersection.y < Math.min(lineStart.y, lineEnd.y))
+                        || (intersection.y > Math.max(lineStart.y, lineEnd.y))) {
+                    intersection = null;
+                }
+            }
+            if (intersection == null) {
+                // possible crossing (or overlay) can be on triangle (v0, v2, v3)
+                if (liesInTriangle(lineStart, lineEnd, v0, v2, v3)) {
+                    return true;
+                }
+                // possible crossing (or overlay) can be on triangle (v0, v1, v2)
+                if (liesInTriangle(lineStart, lineEnd, v0, v1, v2)) {
+                    return true;
+                }
+            } else {
+                return true;
+            }
+            lineStart = lineEnd;
+        }
+        lineEnd = new Point(arrow2.x, arrow2.y);
+
+        intersection = intersection(v0, v2, lineStart, lineEnd);
+        if (intersection != null) {
+            if ((intersection.x < v0.x) || (intersection.x > v2.x)
+                    || (intersection.y < v0.y) || (intersection.y > v2.y)) {
+                intersection = null;
+            } else if (intersection.x < Math.min(lineStart.x, lineEnd.x)
+                    || (intersection.x > Math.max(lineStart.x, lineEnd.x))
+                    || (intersection.y < Math.min(lineStart.y, lineEnd.y))
+                    || (intersection.y > Math.max(lineStart.y, lineEnd.y))) {
+                intersection = null;
+            }
+        }
+        if (intersection == null) {
+            // possible crossing (or overlay) can be on triangle (v0, v2, v3)
+            if (liesInTriangle(lineStart, lineEnd, v0, v2, v3)) {
+                return true;
+            }
+            // possible crossing (or overlay) can be on triangle (v0, v1, v2)
+            if (liesInTriangle(lineStart, lineEnd, v0, v1, v2)) {
+                return true;
+            }
+        } else {
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Determines whether a selection area crosses or overlays a line segment.
+     * 
+     * If at least one intersection is found, then true is returned.
+     *
+     * @param lineStart Start point of the line segment
+     * @param lineEnd End point of the line segment
+     * @param selectionStart the selection start point
+     * @param selectionEnd the selection end point
+     * @param tolerance Tolerance of boundaries
+     * @return true if the line segment is crossing the selection area; false otherwise
+     */
+    public static boolean isAreaCrossing(Point lineStart, Point lineEnd, Point selectionStart, Point selectionEnd,
+            int tolerance) {
+        Point v0 = selectionStart;
+        Point v1 = new Point(selectionEnd.x, selectionStart.y);
+        Point v2 = selectionEnd;
+        Point v3 = new Point(selectionStart.x, selectionEnd.y);
+        
+        Point intersection = intersection(v0, v2, lineStart, lineEnd);
+        if (intersection != null) {
+            if ((intersection.x < v0.x) || (intersection.x > v2.x)
+                    || (intersection.y < v0.y) || (intersection.y > v2.y)) {
+                intersection = null;
+            } else if (intersection.x < Math.min(lineStart.x, lineEnd.x)
+                    || (intersection.x > Math.max(lineStart.x, lineEnd.x))
+                    || (intersection.y < Math.min(lineStart.y, lineEnd.y))
+                    || (intersection.y > Math.max(lineStart.y, lineEnd.y))) {
+                intersection = null;
+            }
+        }
+        if (intersection == null) {
+            // possible crossing can be on triangle (v0, v2, v3)
+            if (liesInTriangle(lineStart, lineEnd, v0, v2, v3)) {
+                return true;
+            } 
+            // possible crossing can be on triangle (v0, v1, v2)
+            if (liesInTriangle(lineStart, lineEnd, v0, v1, v2)) {
+                return true;
+            }
+        } else {
+            return true;
+        }
+        return false;        
+    }
+    
     /**
      * Select or deselect this line.
      *
@@ -456,27 +598,17 @@ public class ConnectionLine {
      * @param preview whether to draw line points
      */
     public void draw(Graphics2D g, boolean preview) {
-        draw(g,0,0, preview);
-    }
-
-    /**
-     * Draws this connection line.
-     *
-     * @param g Graphics2D object, where to draw the line
-     * @param leftFactor correction of the line (line will be moved backward to
-     *        the leftFactor value, in the X coordinate)
-     * @param topFactor correction of the line (line will be moved upward to
-     *        the topFactor value, in the Y coordinate)
-     * @param preview whether to draw line points
-     */
-    public void draw(Graphics2D g, int leftFactor, int topFactor, boolean preview) {
-        if (selected)
+        if (selected) {
             g.setColor(Color.BLUE);
-        else
+        } else {
             g.setColor(lineColor);
+        }
         int x1 = e1.getX();
         int y1 = e1.getY();
         int x2, y2;
+        
+        int widthHalf1 = e1.getWidth()/2;
+        int heightHalf1 = e1.getHeight()/2;
 
         Stroke ss = g.getStroke();
         g.setStroke(thickLine);
@@ -485,9 +617,6 @@ public class ConnectionLine {
             Point p = points.get(i);
             x2 = (int)p.getX();
             y2 = (int)p.getY();
-
-            x2 -= leftFactor;
-            y2 -= topFactor;
 
             if (x2 < Schema.MIN_LEFT_MARGIN) {
                 x2 = Schema.MIN_LEFT_MARGIN;
@@ -499,10 +628,10 @@ public class ConnectionLine {
             // if the line end is near element, modify line start in a wish
             // that the line was straight
             if (i == 0) {
-                if (x2 >= (x1 - e1.getWidth()/2) && (x2 <= (x1 + e1.getWidth()/2))) {
+                if (x2 >= (x1 - widthHalf1) && (x2 <= (x1 + widthHalf1))) {
                     x1 = x2;
                 }
-                if (y2 >= (y1 - e1.getHeight()/2) && (y2 <= (y1 + e1.getHeight()/2))) {
+                if (y2 >= (y1 - heightHalf1) && (y2 <= (y1 + heightHalf1))) {
                     y1 = y2;
                 }
             }
@@ -524,45 +653,43 @@ public class ConnectionLine {
         x2 = e2.getX();
         y2 = e2.getY();
 
+        int widthHalf2 = e2.getWidth()/2;
+        int heightHalf2 = e2.getHeight()/2;
+        
         if (j >= 0) { // only if line contains points, modify the line end in a 
                       // wish that the line was straight
-            if (x1 >= (x2 - e2.getWidth() / 2) && (x1 <= (x2 + e2.getWidth() / 2))) {
+            if (x1 >= (x2 - widthHalf2) && (x1 <= (x2 + widthHalf2))) {
                 x2 = x1;
             }
-            if (y1 >= (y2 - e2.getHeight() / 2) && (y1 <= (y2 + e2.getHeight() / 2))) {
+            if (y1 >= (y2 - heightHalf2) && (y1 <= (y2 + heightHalf2))) {
                 y2 = y1;
             }
         }
         g.drawLine(x1, y1, x2, y2);
 
         // sipky - princip dedenia v UML <---> princip toku udajov => tok!!
+        computeArrows();
         if ((arrow1 != null) && (arrow1LeftEnd != null) && (arrow1RightEnd != null)) {
-            x1 = e1.getX() - e1.getWidth()/2;
-            y1 = e1.getY() - e1.getHeight()/2;
-            
             // nice arrow ends, filled triangles
-            xx1[0] = x1 + arrow1.x;
-            xx1[1] = x1 + arrow1.x + arrow1LeftEnd.x;
-            xx1[2] = x1 + arrow1.x + arrow1RightEnd.x;
-            xx1[3] = x1 + arrow1.x;
-            yy1[0] = y1 + arrow1.y;
-            yy1[1] = y1 + arrow1.y + arrow1LeftEnd.y;
-            yy1[2] = y1 + arrow1.y + arrow1RightEnd.y;
-            yy1[3] = y1 + arrow1.y;
+            xx1[0] = arrow1.x;
+            xx1[1] = arrow1.x + arrow1LeftEnd.x;
+            xx1[2] = arrow1.x + arrow1RightEnd.x;
+            xx1[3] = arrow1.x;
+            yy1[0] = arrow1.y;
+            yy1[1] = arrow1.y + arrow1LeftEnd.y;
+            yy1[2] = arrow1.y + arrow1RightEnd.y;
+            yy1[3] = arrow1.y;
             g.fillPolygon(xx1, yy1, 4);
         }
         if ((arrow2 !=null) && (arrow2LeftEnd != null) && (arrow2RightEnd != null)) {
-            x2 = e2.getX() - e2.getWidth()/2;
-            y2 = e2.getY() - e2.getHeight()/2;
-
-            xx2[0] = x2 + arrow2.x;
-            xx2[1] = x2 + arrow2.x + arrow2LeftEnd.x;
-            xx2[2] = x2 + arrow2.x + arrow2RightEnd.x;
-            xx2[3] = x2 + arrow2.x;
-            yy2[0] = y2 + arrow2.y;
-            yy2[1] = y2 + arrow2.y + arrow2LeftEnd.y;
-            yy2[2] = y2 + arrow2.y + arrow2RightEnd.y;
-            yy2[3] = y2 + arrow2.y;
+            xx2[0] = arrow2.x;
+            xx2[1] = arrow2.x + arrow2LeftEnd.x;
+            xx2[2] = arrow2.x + arrow2RightEnd.x;
+            xx2[3] = arrow2.x;
+            yy2[0] = arrow2.y;
+            yy2[1] = arrow2.y + arrow2LeftEnd.y;
+            yy2[2] = arrow2.y + arrow2RightEnd.y;
+            yy2[3] = arrow2.y;
             g.fillPolygon(xx2, yy2, 4);
         }
         g.setStroke(ss);
@@ -623,13 +750,11 @@ public class ConnectionLine {
         int yy = (int) selPoint.getY();
         g.setColor(Color.WHITE);
         ((Graphics2D) g).setStroke(thickLine);
-        g.fillOval(xx - TOLERANCE - 2, yy - TOLERANCE - 2,
-                (TOLERANCE + 2) * 2, (TOLERANCE + 2) * 2);
+        g.fillOval(xx - TOLERANCE - 2, yy - TOLERANCE - 2, (TOLERANCE + 2) * 2, (TOLERANCE + 2) * 2);
   // TODO:     if (selected)
   //               g.setColor(Color.BLUE);
         g.setColor(Color.BLACK);
-        g.drawOval(xx - TOLERANCE, yy - TOLERANCE,
-                TOLERANCE * 2, TOLERANCE * 2);
+        g.drawOval(xx - TOLERANCE, yy - TOLERANCE, TOLERANCE * 2, TOLERANCE * 2);
 
     }
 
@@ -640,7 +765,7 @@ public class ConnectionLine {
      * @param p the point that will be added
      */
     public void addPoint(int before, Point p) {
-        points.add(before+1, p);
+        points.add(before, p);
     }
     
     /**
@@ -677,16 +802,18 @@ public class ConnectionLine {
      * If it is, return the original Point object, null otherwise.
      *
      * @param p Point to test
+     * @param tolerance Tolerance
      * @return original point object of the line, null if the test point is
      * not included
      */
-    public Point containsPoint(Point p) {
+    public Point containsPoint(Point p, int tolerance) {
         int size = points.size();
         for (int i = 0; i < size; i++) {
             Point tmp = points.get(i);
-            if ((tmp.x >= (p.x-TOLERANCE)) && (tmp.x <= (p.x + TOLERANCE))
-                    && (tmp.y >= (p.y-TOLERANCE)) && (tmp.y <= (p.y+TOLERANCE)))
+            if ((tmp.x >= (p.x-tolerance)) && (tmp.x <= (p.x + tolerance))
+                    && (tmp.y >= (p.y-tolerance)) && (tmp.y <= (p.y+tolerance))) {
                 return tmp;
+            }
         }
         return null;
     }
@@ -698,25 +825,32 @@ public class ConnectionLine {
      * @param selPoint Second point (e.g. mouse point)
      * @return true if given points point to each other, false otherwise.
      */
-    public static boolean isPointSelected(Point linePoint, Point selPoint) {
+    public static boolean doPointsEqual(Point linePoint, Point selPoint) {
         double d = Math.hypot(linePoint.getX() - selPoint.getX(),
                 linePoint.getY() - selPoint.getY());
         return (d < TOLERANCE);
     }
 
     /**
-     * Moves specific middle-point to a new location.
+     * Moves specific line point to a new location.
      *
      * If the point is not found, nothing is done.
      *
      * @param p the point that will be moved
      * @param newLocation new location of the point
+     * @return true if the point was moved; false if the position was not valid or line point was not found.
      */
-    public void pointMove(Point p, Point newLocation) {
+    public boolean movePoint(Point p, Point newLocation) {
+        if (!schema.canMovePoint(newLocation.x, newLocation.y)) {
+            return false;
+        }
+        
         int i = points.indexOf(p);
-        if (i == -1)
-            return;
+        if (i == -1) {
+            return false;
+        }
         points.get(i).setLocation(newLocation);
+        return true;
     }
 
     /**
@@ -726,16 +860,31 @@ public class ConnectionLine {
      * @param diffX The X difference between new and old location
      * @param diffY The Y difference between new and old location
      */
-    public void pointMoveAll(int diffX, int diffY) {
-        for (int i = points.size()-1; i >= 0; i--) {
-            Point p = points.get(i);
-            if (!Schema.canMove(p.x + diffX, p.y + diffY))
-                return;
+    public void moveAllPoints(int diffX, int diffY) {
+        if (!canMoveAllPoints(diffX, diffY)) {
+            return;
         }
-        for (int i = points.size()-1; i >= 0; i--) {
-            Point p = points.get(i);
-            p.setLocation(p.x + diffX, p.y + diffY);
+        for (Point point : points) {
+            point.setLocation(point.x + diffX, point.y + diffY);
         }
+        computeArrows();
+    }
+    
+    /**
+     * Determines if all points of this line can be moved to a new location.
+     * The new location is computed as: old + diff.
+     *
+     * @param diffX The X difference between new and old location
+     * @param diffY The Y difference between new and old location
+     * @return true if all the points can be moved; false otherwise
+     */
+    public boolean canMoveAllPoints(int diffX, int diffY) {
+        for (Point point : points) {
+            if (!schema.canMovePoint(point.x + diffX, point.y + diffY)) {
+                return false;
+            }
+        }
+        return true;
     }
     
     /**
@@ -746,7 +895,9 @@ public class ConnectionLine {
      * @return true, if the line is connected to the element; false otherwise
      */
     public boolean containsElement(Element e) {
-        if (e1 == e || e2 == e) return true;
+        if (e1 == e || e2 == e) {
+            return true;
+        }
         return false;
     }
 
@@ -754,71 +905,96 @@ public class ConnectionLine {
      * If the line is connected (from any side) to the first element, then
      * this method will replace it with new element.
      *
-     * @param e1 first, origin element
-     * @param e2 replacement for the first element
+     * @param origin first, origin element
+     * @param replacement replacement for the first element
      */
-    public void replaceElement(Element e1, Element e2) {
-        if (this.e1 == e1)
-            this.e1 = e2;
-        if (this.e2 == e1)
-            this.e2 = e2;
+    public void replaceElement(Element origin, Element replacement) {
+        if (this.e1 == origin) {
+            this.e1 = replacement;
+        }
+        if (this.e2 == origin) {
+            this.e2 = replacement;
+        }
     }
 
     /**
-     * Method determines whether point[x,y] crosses with this line
-     * (with some tolerance)
+     * Method determines whether point[x,y] crosses with this line.
      * 
-     * d(X, p) = abs(a*x0 + b*y0 + c)/sqrt(a^2 + b^2)
-     * 
-     * and if yes, return index of a point of the cross point.
+     * If yes, return index of a nearest cross point. If new point is
+     * going to be added, it should be added to replace returned point index.
      *
      * @param point point that is checked
      * @param tolerance the tolerance
-     * @return If line doesn't contain any point but point[x,y] is crossing the
-     * line; or if point[x,y] is crossing near the beginning of the line, then 0
-     * is returned. It means that new point should be added before first point.
-     * And if point[x,y] doesn't cross the line, -1 is returned. Otherwise is
-     * returned index of point that crosses the line.
+     * @return 
+     *     0 - if line doesn't contain any point, but point[x,y] is crossing the
+     *         line; or if point[x,y] crosses the line near the beginning of it
+     *  
+     *    -1 - if point[x,y] doesn't cross the line at all
+     * 
+     *    points count - if point crosses line after last point, or before ending point of the line.
+     *
+     * Nearest point index of the line that the point crosses otherwise.
      */
-    public int getCrossPointAfter(Point point, double tolerance) {
-        int x1 = e1.getX() + ((arrow1 == null) ? 0 : arrow1.x - e1.getWidth()/2);
-        int y1 = e1.getY() + ((arrow1 == null) ? 0 : arrow1.y - e1.getHeight()/2);
-        int x2, y2;
-        double a,b,c,d;
-        
-        for (int i = 0; i < points.size(); i++) {
-            Point p = points.get(i);
-            x2 = (int)p.getX();
-            y2 = (int)p.getY();
-            
-            // ciel: vseobecna rovnica priamky
-            // smerovy vektor: s = (-b,a)
-            // -b = x2-x1
-            // a = y2-y1
-            a = y2-y1;
-            b = x1-x2;
-            c = -a*x1-b*y1; // mam rovnicu
-            d = Math.abs(a*point.x + b*point.y + c)/Math.hypot(a, b);
-            if (d < tolerance) {
-                double l1 = Math.hypot(x1-point.x, y1-point.y);
-                double l2 = Math.hypot(x2-point.x, y2-point.y);
-                double l = Math.hypot(x2-x1, y2-y1);
-                if ((l > l1) && (l > l2)) return i;
-            }
-            x1 = x2;
-            y1 = y2;
+    public int getCrossPoint(Point point, int tolerance) {
+        if (point == null) {
+            return -1;
         }
-        x2 = e2.getX() + ((arrow2 != null) ? arrow2.x - e2.getWidth()/2 : 0);
-        y2 = e2.getY() + ((arrow2 != null) ? arrow2.y - e2.getHeight()/2: 0);
-        a = y2-y1;
-        b = x1-x2;
-        c = -a*x1-b*y1; // mam rovnicu
-        d = Math.abs(a*point.x + b*point.y + c)/Math.hypot(a, b);
-        if (d < 5) {
-            double l1 = Math.hypot(x1-point.x, y1-point.y);
-            double l2 = Math.hypot(x2-point.x, y2-point.y);
-            double l = Math.hypot(x2-x1, y2-y1);
-            if ((l > l1) && (l > l2)) return points.size();
+        if ((arrow1 == null) || (arrow2 == null)) {
+            computeArrows();
+        }
+        if ((arrow1 == null) || (arrow2 == null)) {
+            return -1;
+        }
+        Point X1 = new Point(arrow1.x, arrow1.y);
+        Point X2;
+
+        int pointsSize = points.size();
+        for (int i = 0; i < pointsSize; i++) {
+            X2 = points.get(i);
+            double len = Math.hypot(X2.x - X1.x, X2.y - X1.y);
+            Point2D.Double vector1 = new Point2D.Double((X2.x - X1.x) / len, (X2.y - X1.y) / len); // normalized vector
+            Point2D.Double vector2 = new Point2D.Double((point.x - X1.x) / len, (point.y - X1.y) / len);
+
+            /*
+             * Cross product is an area of parallelogram with sides vector1 and vector2
+             * The area is similar to area of original vectors.
+             * 
+             * S  = a  * b  * sin(alfa)
+             * S' = a' * b' * sin(alfa)
+             * 
+             * a' = k * a
+             * b' = k * b
+             * S' = k^2 * a * b * sin(alfa)
+             * S' = k^2 * S
+             * ============================
+             * b*sin(alfa) = S/a = S' / (k^2 * a)
+             * 
+             * but k = 1/a, therefore
+             * 
+             * b*sin(alfa) = distance = S * a (= crossproduct * len)
+             * 
+             */
+            double crossproduct = vector2.y * vector1.x - vector2.x * vector1.y;
+            if ((Math.abs(crossproduct) * len <= tolerance)
+                    && (Math.min(X1.x - tolerance, X2.x - tolerance) <= point.x)
+                    && (point.x <= Math.max(X1.x + tolerance, X2.x + tolerance))
+                    && (Math.min(X1.y - tolerance, X2.y - tolerance) <= point.y)
+                    && (point.y <= Math.max(X1.y + tolerance, X2.y + tolerance))) {
+                return i;
+            }
+            X1 = X2;
+        }
+        X2 = new Point(arrow2.x, arrow2.y);
+        double len = Math.hypot(X2.x - X1.x, X2.y - X1.y);
+        Point2D.Double vector1 = new Point2D.Double((X2.x - X1.x) / len, (X2.y - X1.y) / len); // normalized vector
+        Point2D.Double vector2 = new Point2D.Double((point.x - X1.x) / len, (point.y - X1.y) / len);
+        double crossproduct = vector2.y * vector1.x - vector2.x * vector1.y;
+        if ((Math.abs(crossproduct) * len <= tolerance)
+                && (Math.min(X1.x - tolerance, X2.x - tolerance) <= point.x)
+                && (point.x <= Math.max(X1.x + tolerance, X2.x + tolerance))
+                && (Math.min(X1.y - tolerance, X2.y - tolerance) <= point.y)
+                && (point.y <= Math.max(X1.y + tolerance, X2.y + tolerance))) {
+            return pointsSize; // as new point index
         }
         return -1;
     }
@@ -828,14 +1004,18 @@ public class ConnectionLine {
      *
      * @return first connection element
      */
-    public Element getJunc0() { return e1; }
+    public Element getJunc0() {
+        return e1;
+    }
 
     /**
      * Get the last connection element of the line
      *
      * @return last connection element
      */
-    public Element getJunc1() { return e2; }
+    public Element getJunc1() {
+        return e2;
+    }
 
     /**
      * Returns the direction of the elements connection. The connection
@@ -862,8 +1042,9 @@ public class ConnectionLine {
      * with the value returned from a call to getJunc1() method.
      */
     public void switchDirection() {
-        if (isBidirectional())
+        if (isBidirectional()) {
             return;
+        }
         Element e = e1;
         e1 = e2;
         e2 = e;

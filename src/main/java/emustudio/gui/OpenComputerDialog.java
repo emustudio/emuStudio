@@ -29,13 +29,7 @@ import emustudio.architecture.ReadConfigurationException;
 import emustudio.architecture.drawing.PreviewPanel;
 import emustudio.architecture.drawing.Schema;
 import emustudio.main.Main;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import javax.imageio.ImageIO;
 import javax.swing.AbstractListModel;
-import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -345,11 +339,11 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         }
         archName = (String) lstConfig.getSelectedValue();
         try {
-            Schema s = ArchLoader.getInstance().loadSchema(archName);
-            if (s == null) {
+            Schema schema = ArchLoader.getInstance().loadSchema(archName);
+            if (schema == null) {
                 return;
             }
-            SchemaEditorDialog d = new SchemaEditorDialog(this, s);
+            SchemaEditorDialog d = new SchemaEditorDialog(this, schema);
             d.setVisible(true);
         } catch (ReadConfigurationException e) {
             logger.error("Could not load computer configuration", e);
