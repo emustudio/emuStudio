@@ -27,13 +27,14 @@ import java.text.AttributedCharacterIterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import junit.framework.TestCase;
+import org.junit.Test;
+import org.junit.Assert;
 
 /**
  *
  * @author vbmacher
  */
-public class SchemaTest extends TestCase {
+public class SchemaTest {
 
     private class MyGraphics extends Graphics {
 
@@ -201,75 +202,82 @@ public class SchemaTest extends TestCase {
     /**
      * Test of getConfigName method, of class Schema.
      */
+    @Test
     public void testGetConfigName() {
         Schema instance = new Schema("test", new Properties());
         String expResult = "test";
         String result = instance.getConfigName();
-        assertEquals(expResult, result);
+        Assert.assertEquals(expResult, result);
     }
 
     /**
      * Test of setConfigName method, of class Schema.
      */
+    @Test
     public void testSetConfigName() {
         String cName = "test";
         Schema instance = new Schema();
         instance.setConfigName(cName);
-        assertEquals(cName, instance.getConfigName());
+        Assert.assertEquals(cName, instance.getConfigName());
     }
 
     /**
      * Test of getCompilerElement method, of class Schema.
      */
+    @Test
     public void testGetCompilerElement() {
         Schema instance = new Schema();
         CompilerElement expResult = new CompilerElement("compiler", new Properties(), instance);
         instance.setCompilerElement(expResult);
         CompilerElement result = instance.getCompilerElement();
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
     }
 
     /**
      * Test of getCpuElement method, of class Schema.
      */
+    @Test
     public void testGetCpuElement() {
         Schema instance = new Schema();
         CpuElement expResult = new CpuElement("cpu", new Properties(), instance);
         instance.setCpuElement(expResult);
         CpuElement result = instance.getCpuElement();
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
     }
 
     /**
      * Test of getMemoryElement method, of class Schema.
      */
+    @Test
     public void testGetMemoryElement() {
         Schema instance = new Schema();
         MemoryElement expResult = new MemoryElement("mem", new Properties(), instance);
         instance.setMemoryElement(expResult);
         MemoryElement result = instance.getMemoryElement();
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
     }
 
     /**
      * Test of addDeviceElement method, of class Schema.
      */
+    @Test
     public void testAddDeviceElement() {
         DeviceElement deviceElement = null;
         Schema instance = new Schema();
         instance.addDeviceElement(deviceElement);
-        assertEquals(0, instance.getDeviceElements().size());
+        Assert.assertEquals(0, instance.getDeviceElements().size());
 
         for (int i = 0; i < 10; i++) {
             deviceElement = new DeviceElement("dev-" + i, new Properties(), instance);
             instance.addDeviceElement(deviceElement);
-            assertEquals(i + 1, instance.getDeviceElements().size());
+            Assert.assertEquals(i + 1, instance.getDeviceElements().size());
         }
     }
 
     /**
      * Test of getDeviceElements method, of class Schema.
      */
+    @Test
     public void testGetDeviceElements() {
         Schema instance = new Schema();
         DeviceElement deviceElement = new DeviceElement("dev-0", new Properties(), instance);
@@ -281,46 +289,49 @@ public class SchemaTest extends TestCase {
         instance.addDeviceElement(deviceElement);
 
         List<DeviceElement> result = instance.getDeviceElements();
-        assertEquals(3, result.size());
-        assertEquals("dev-0", result.get(0).getPluginName());
-        assertEquals("dev-1", result.get(1).getPluginName());
-        assertEquals("dev-2", result.get(2).getPluginName());
+        Assert.assertEquals(3, result.size());
+        Assert.assertEquals("dev-0", result.get(0).getPluginName());
+        Assert.assertEquals("dev-1", result.get(1).getPluginName());
+        Assert.assertEquals("dev-2", result.get(2).getPluginName());
     }
 
     /**
      * Test of removeDeviceElement method, of class Schema.
      */
+    @Test
     public void testRemoveDeviceElement() {
         Schema instance = new Schema();
         DeviceElement device = new DeviceElement("dev-0", new Properties(), instance);
         instance.addDeviceElement(device);
-        assertEquals(1, instance.getDeviceElements().size());
+        Assert.assertEquals(1, instance.getDeviceElements().size());
         instance.removeDeviceElement(device);
-        assertEquals(0, instance.getDeviceElements().size());
+        Assert.assertEquals(0, instance.getDeviceElements().size());
     }
 
     /**
      * Test of removeElement method, of class Schema.
      */
+    @Test
     public void testRemoveElement() {
         Schema instance = new Schema();
         CompilerElement elem = new CompilerElement("compiler", new Properties(), instance);
         DeviceElement elem2 = new DeviceElement("dev-0", new Properties(), instance);
         instance.setCompilerElement(elem);
-        assertSame(elem, instance.getCompilerElement());
+        Assert.assertSame(elem, instance.getCompilerElement());
         instance.addDeviceElement(elem2);
-        assertEquals(1, instance.getDeviceElements().size());
-        assertSame(elem2, instance.getDeviceElements().get(0));
+        Assert.assertEquals(1, instance.getDeviceElements().size());
+        Assert.assertSame(elem2, instance.getDeviceElements().get(0));
         instance.removeElement(elem);
-        assertNull(instance.getCompilerElement());
-        assertEquals(1, instance.getDeviceElements().size());
+        Assert.assertNull(instance.getCompilerElement());
+        Assert.assertEquals(1, instance.getDeviceElements().size());
         instance.removeElement(elem2);
-        assertEquals(0, instance.getDeviceElements().size());
+        Assert.assertEquals(0, instance.getDeviceElements().size());
     }
 
     /**
      * Test of getAllElements method, of class Schema.
      */
+    @Test
     public void testGetAllElements() {
         Schema instance = new Schema();
         CompilerElement elem = new CompilerElement("compiler", new Properties(), instance);
@@ -329,14 +340,15 @@ public class SchemaTest extends TestCase {
         instance.addDeviceElement(elem2);
 
         List<Element> result = instance.getAllElements();
-        assertEquals(2, result.size());
-        assertTrue(result.contains(elem));
-        assertTrue(result.contains(elem2));
+        Assert.assertEquals(2, result.size());
+        Assert.assertTrue(result.contains(elem));
+        Assert.assertTrue(result.contains(elem2));
     }
 
     /**
      * Test of getConnectionLines method, of class Schema.
      */
+    @Test
     public void testAddGetRemoveConnectionLines() {
         Schema instance = new Schema();
         CompilerElement elem = new CompilerElement("compiler", new Properties(), instance);
@@ -350,23 +362,24 @@ public class SchemaTest extends TestCase {
         instance.addConnectionLine(lin0);
         instance.addConnectionLine(lin1);
         List<ConnectionLine> result = instance.getConnectionLines();
-        assertEquals(2, result.size());
-        assertTrue(result.contains(lin0));
-        assertTrue(result.contains(lin1));
+        Assert.assertEquals(2, result.size());
+        Assert.assertTrue(result.contains(lin0));
+        Assert.assertTrue(result.contains(lin1));
 
         instance.removeConnectionLine(lin1);
-        assertTrue(instance.getConnectionLines().contains(lin0));
-        assertFalse(instance.getConnectionLines().contains(lin1));
+        Assert.assertTrue(instance.getConnectionLines().contains(lin0));
+        Assert.assertFalse(instance.getConnectionLines().contains(lin1));
 
         instance.removeConnectionLine(0);
-        assertFalse(instance.getConnectionLines().contains(lin0));
+        Assert.assertFalse(instance.getConnectionLines().contains(lin0));
 
-        assertEquals(0, instance.getConnectionLines().size());
+        Assert.assertEquals(0, instance.getConnectionLines().size());
     }
 
     /**
      * Test of getCrossingElement method, of class Schema.
      */
+    @Test
     public void testGetCrossingElement() {
         Schema instance = new Schema();
         Properties props = new Properties();
@@ -378,58 +391,59 @@ public class SchemaTest extends TestCase {
 
         CompilerElement elem = new CompilerElement("compiler", props, instance);
         instance.setCompilerElement(elem);
-        assertSame(elem, instance.getCompilerElement());
+        Assert.assertSame(elem, instance.getCompilerElement());
 
         Point p = null;
         Element result = instance.getCrossingElement(p);
-        assertNull(result);
+        Assert.assertNull(result);
 
         p = new Point(110, 110); // somewhere in the middle
         Element expResult = elem;
         result = instance.getCrossingElement(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
 
         p = new Point(50, 85); // left upper corner
         expResult = elem;
         result = instance.getCrossingElement(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
 
         p = new Point(49, 85); // one pixel left from left upper corner
         result = instance.getCrossingElement(p);
-        assertNull(result);
+        Assert.assertNull(result);
 
         p = new Point(150, 85); // right upper corner
         expResult = elem;
         result = instance.getCrossingElement(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
 
         p = new Point(150, 84); // one pixel above right upper corner
         result = instance.getCrossingElement(p);
-        assertNull(result);
+        Assert.assertNull(result);
 
         p = new Point(50, 115); // left bottom corner
         expResult = elem;
         result = instance.getCrossingElement(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
 
         p = new Point(49, 115); // one pixel left from left bottom corner
         expResult = null;
         result = instance.getCrossingElement(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
 
         p = new Point(150, 115); // right bottom corner
         expResult = elem;
         result = instance.getCrossingElement(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
 
         p = new Point(151, 115); // one pixel right from right bottom corner
         result = instance.getCrossingElement(p);
-        assertNull(result);
+        Assert.assertNull(result);
     }
 
     /**
      * Test of getResizeElement method, of class Schema.
      */
+    @Test
     public void testGetResizeElement() {
         Schema instance = new Schema();
         Properties props = new Properties();
@@ -442,118 +456,121 @@ public class SchemaTest extends TestCase {
         CompilerElement elem = new CompilerElement("compiler", props, instance);
         elem.measure(new MyGraphics());
         instance.setCompilerElement(elem);
-        assertSame(elem, instance.getCompilerElement());
+        Assert.assertSame(elem, instance.getCompilerElement());
 
         Point p = null;
         Element result = instance.getResizeElement(p);
-        assertNull(result);
+        Assert.assertNull(result);
 
         p = new Point(50, 100); // left border
         Element expResult = elem;
         result = instance.getResizeElement(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
 
         p = new Point(50 - Element.TOLERANCE, 100); // left border with tolerance
         expResult = elem;
         result = instance.getResizeElement(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
 
         p = new Point(50 + Element.TOLERANCE, 100); // left border with tolerance
         expResult = elem;
         result = instance.getResizeElement(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
 
         p = new Point(50 + Element.TOLERANCE + 1, 100); // left border with tolerance
         result = instance.getResizeElement(p);
-        assertNull(result);
+        Assert.assertNull(result);
         
         p = new Point(150 + Element.TOLERANCE, 100); // right border with tolerance
         expResult = elem;
         result = instance.getResizeElement(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
 
         p = new Point(150 - Element.TOLERANCE, 100); // right border with tolerance
         expResult = elem;
         result = instance.getResizeElement(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
         
         p = new Point(150 + Element.TOLERANCE + 1, 100); // right border with tolerance
         result = instance.getResizeElement(p);
-        assertNull(result);
+        Assert.assertNull(result);
         
         p = new Point(150 - Element.TOLERANCE - 1, 100); // right border with tolerance
         result = instance.getResizeElement(p);
-        assertNull(result);
+        Assert.assertNull(result);
         
         p = new Point(100, 85 - Element.TOLERANCE); // upper border with tolerance
         expResult = elem;
         result = instance.getResizeElement(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
 
         p = new Point(100, 85 + Element.TOLERANCE); // upper border with tolerance
         expResult = elem;
         result = instance.getResizeElement(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
 
         p = new Point(100, 85 - Element.TOLERANCE - 1); // upper border with tolerance
         result = instance.getResizeElement(p);
-        assertNull(result);
+        Assert.assertNull(result);
 
         p = new Point(100, 85 + Element.TOLERANCE + 1); // upper border with tolerance
         result = instance.getResizeElement(p);
-        assertNull(result);
+        Assert.assertNull(result);
     
         p = new Point(100, 115 - Element.TOLERANCE); // bottom border with tolerance
         expResult = elem;
         result = instance.getResizeElement(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
         
         p = new Point(100, 115 + Element.TOLERANCE); // bottom border with tolerance
         expResult = elem;
         result = instance.getResizeElement(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
         
         p = new Point(100, 115 - Element.TOLERANCE - 1); // bottom border with tolerance
         result = instance.getResizeElement(p);
-        assertNull(result);
+        Assert.assertNull(result);
 
         p = new Point(100, 115 + Element.TOLERANCE + 1); // bottom border with tolerance
         result = instance.getResizeElement(p);
-        assertNull(result);
+        Assert.assertNull(result);
     }
     
     /**
      * Test of getUseGrid method, of class Schema.
      */
+    @Test
     public void testGetSetUseGrid() {
         Schema instance = new Schema();
         boolean expResult = true;
         boolean result = instance.getUseGrid();
-        assertEquals(expResult, result);
+        Assert.assertEquals(expResult, result);
         
         instance.setUseGrid(false);
-        assertEquals(false, instance.getUseGrid());
+        Assert.assertEquals(false, instance.getUseGrid());
     }
      
     /**
      * Test of getGridGap method, of class Schema.
      */
+    @Test
     public void testSetGetGridGap() {
         Schema instance = new Schema();
         int expResult = 40;
         instance.setGridGap(expResult);
         int result = instance.getGridGap();
-        assertEquals(expResult, result);
+        Assert.assertEquals(expResult, result);
         
         expResult = 23;
         instance.setGridGap(expResult);
         result = instance.getGridGap();
-        assertEquals(expResult, result);
+        Assert.assertEquals(expResult, result);
     }
     
     /**
      * Test of getCrossingLine method, of class Schema.
      */
+    @Test
     public void testGetCrossingLine() {
         Schema instance = new Schema();
         Properties compilerProps = new Properties();
@@ -600,7 +617,7 @@ public class SchemaTest extends TestCase {
         Point p = null;
         ConnectionLine expResult = null;
         ConnectionLine result = instance.getCrossingLine(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
         
         
        /*             l
@@ -621,12 +638,12 @@ public class SchemaTest extends TestCase {
         p = new Point(125, 150); 
         expResult = line0;
         result = instance.getCrossingLine(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
         
         p = new Point(123, 151);
         expResult = line0;
         result = instance.getCrossingLine(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
 
         /*
          * toleranceFactor = TOLERANCE / sqrt(x^2 + y^2); where AC' = (x,y)
@@ -646,49 +663,50 @@ public class SchemaTest extends TestCase {
                 expResult = null;
             }
             result = instance.getCrossingLine(p);
-            assertEquals(expResult, result);
+            Assert.assertEquals(expResult, result);
         }
         
         p = new Point(175, 100);
         expResult = line1;
         result = instance.getCrossingLine(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
         
         p = new Point(175, 100 + ConnectionLine.TOLERANCE);
         expResult = line1;
         result = instance.getCrossingLine(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
         
         p = new Point(175, 100 - ConnectionLine.TOLERANCE);
         expResult = line1;
         result = instance.getCrossingLine(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
 
         p = new Point(250 + ConnectionLine.TOLERANCE, 200);
         expResult = line2;
         result = instance.getCrossingLine(p);
-        assertSame(expResult, result);
+        Assert.assertSame(expResult, result);
         
         p = new Point(250 + ConnectionLine.TOLERANCE + 1, 200);
         result = instance.getCrossingLine(p);
-        assertNull(result);
+        Assert.assertNull(result);
 
         p = new Point(250 + ConnectionLine.TOLERANCE + 20, 200);
         result = instance.getCrossingLine(p);
-        assertNull(result);
+        Assert.assertNull(result);
         
         instance.destroy();
-        assertEquals(0, instance.getAllElements().size());
-        assertNull(instance.getCompilerElement());
-        assertNull(instance.getMemoryElement());
-        assertNull(instance.getCpuElement());
-        assertEquals(0, instance.getConnectionLines().size());
+        Assert.assertEquals(0, instance.getAllElements().size());
+        Assert.assertNull(instance.getCompilerElement());
+        Assert.assertNull(instance.getMemoryElement());
+        Assert.assertNull(instance.getCpuElement());
+        Assert.assertEquals(0, instance.getConnectionLines().size());
         
     }
      
     /**
      * Test of selectElements method, of class Schema.
      */
+    @Test
     public void testSelectElements() {
         Schema instance = new Schema();
         Properties compilerProps = new Properties();
@@ -737,149 +755,150 @@ public class SchemaTest extends TestCase {
         int width = 300;
         int height = 60;
         instance.selectElements(x, y, width, height);
-        assertFalse(elem.isSelected());
-        assertFalse(elem2.isSelected());
-        assertFalse(elem3.isSelected());
-        assertFalse(line0.isSelected());
-        assertFalse(line1.isSelected());
-        assertFalse(line2.isSelected());
+        Assert.assertFalse(elem.isSelected());
+        Assert.assertFalse(elem2.isSelected());
+        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(line0.isSelected());
+        Assert.assertFalse(line1.isSelected());
+        Assert.assertFalse(line2.isSelected());
 
         x = 50;
         y = 20;
         width = 300;
         height = 65;
         instance.selectElements(x, y, width, height);
-        assertTrue(elem.isSelected());
-        assertTrue(elem2.isSelected());
-        assertFalse(elem3.isSelected());
-        assertFalse(line0.isSelected());
-        assertFalse(line1.isSelected());
-        assertFalse(line2.isSelected());
+        Assert.assertTrue(elem.isSelected());
+        Assert.assertTrue(elem2.isSelected());
+        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(line0.isSelected());
+        Assert.assertFalse(line1.isSelected());
+        Assert.assertFalse(line2.isSelected());
         
         x = 0;
         y = 100;
         width = 49;
         height = 100;
         instance.selectElements(x, y, width, height);
-        assertFalse(elem.isSelected());
-        assertFalse(elem2.isSelected());
-        assertFalse(elem3.isSelected());
-        assertFalse(line0.isSelected());
-        assertFalse(line1.isSelected());
-        assertFalse(line2.isSelected());
+        Assert.assertFalse(elem.isSelected());
+        Assert.assertFalse(elem2.isSelected());
+        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(line0.isSelected());
+        Assert.assertFalse(line1.isSelected());
+        Assert.assertFalse(line2.isSelected());
         
         x = 0;
         y = 100;
         width = 50;
         height = 100;
         instance.selectElements(x, y, width, height);
-        assertTrue(elem.isSelected());
-        assertFalse(elem2.isSelected());
-        assertFalse(elem3.isSelected());
-        assertFalse(line0.isSelected());
-        assertFalse(line1.isSelected());
-        assertFalse(line2.isSelected());
+        Assert.assertTrue(elem.isSelected());
+        Assert.assertFalse(elem2.isSelected());
+        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(line0.isSelected());
+        Assert.assertFalse(line1.isSelected());
+        Assert.assertFalse(line2.isSelected());
 
         x = 0;
         y = 100;
         width = 99;
         height = 100;
         instance.selectElements(x, y, width, height);
-        assertTrue(elem.isSelected());
-        assertFalse(elem2.isSelected());
-        assertFalse(elem3.isSelected());
-        assertFalse(line0.isSelected());
-        assertFalse(line1.isSelected());
-        assertFalse(line2.isSelected());
+        Assert.assertTrue(elem.isSelected());
+        Assert.assertFalse(elem2.isSelected());
+        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(line0.isSelected());
+        Assert.assertFalse(line1.isSelected());
+        Assert.assertFalse(line2.isSelected());
         
         x = 0;
         y = 100;
         width = 100;
         height = 100;
         instance.selectElements(x, y, width, height);
-        assertTrue(elem.isSelected());
-        assertFalse(elem2.isSelected());
-        assertTrue(elem3.isSelected());
-        assertFalse(line0.isSelected());
-        assertFalse(line1.isSelected());
-        assertFalse(line2.isSelected());
+        Assert.assertTrue(elem.isSelected());
+        Assert.assertFalse(elem2.isSelected());
+        Assert.assertTrue(elem3.isSelected());
+        Assert.assertFalse(line0.isSelected());
+        Assert.assertFalse(line1.isSelected());
+        Assert.assertFalse(line2.isSelected());
         
         x = 0;
         y = 100;
         width = 100;
         height = 100;
         instance.selectElements(x, y, width, height);
-        assertTrue(elem.isSelected());
-        assertFalse(elem2.isSelected());
-        assertTrue(elem3.isSelected());
-        assertFalse(line0.isSelected());
-        assertFalse(line1.isSelected());
-        assertFalse(line2.isSelected());
+        Assert.assertTrue(elem.isSelected());
+        Assert.assertFalse(elem2.isSelected());
+        Assert.assertTrue(elem3.isSelected());
+        Assert.assertFalse(line0.isSelected());
+        Assert.assertFalse(line1.isSelected());
+        Assert.assertFalse(line2.isSelected());
 
         x = 230;
         y = 190;
         width = 25;
         height = 20;
         instance.selectElements(x, y, width, height);
-        assertFalse(elem.isSelected());
-        assertFalse(elem2.isSelected());
-        assertFalse(elem3.isSelected());
-        assertFalse(line0.isSelected());
-        assertFalse(line1.isSelected());
-        assertTrue(line2.isSelected());
+        Assert.assertFalse(elem.isSelected());
+        Assert.assertFalse(elem2.isSelected());
+        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(line0.isSelected());
+        Assert.assertFalse(line1.isSelected());
+        Assert.assertTrue(line2.isSelected());
         
         x = 230;
         y = 190;
         width = 19;
         height = 20;
         instance.selectElements(x, y, width, height);
-        assertFalse(elem.isSelected());
-        assertFalse(elem2.isSelected());
-        assertFalse(elem3.isSelected());
-        assertFalse(line0.isSelected());
-        assertFalse(line1.isSelected());
-        assertTrue(line2.isSelected());
+        Assert.assertFalse(elem.isSelected());
+        Assert.assertFalse(elem2.isSelected());
+        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(line0.isSelected());
+        Assert.assertFalse(line1.isSelected());
+        Assert.assertTrue(line2.isSelected());
 
         x = 230;
         y = 190;
         width = 20;
         height = 20;
         instance.selectElements(x, y, width, height);
-        assertFalse(elem.isSelected());
-        assertFalse(elem2.isSelected());
-        assertFalse(elem3.isSelected());
-        assertFalse(line0.isSelected());
-        assertFalse(line1.isSelected());
-        assertTrue(line2.isSelected());
+        Assert.assertFalse(elem.isSelected());
+        Assert.assertFalse(elem2.isSelected());
+        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(line0.isSelected());
+        Assert.assertFalse(line1.isSelected());
+        Assert.assertTrue(line2.isSelected());
 
         x = 0;
         y = 0;
         width = 300;
         height = 200;
         instance.selectElements(x, y, width, height);
-        assertTrue(elem.isSelected());
-        assertTrue(elem2.isSelected());
-        assertTrue(elem3.isSelected());
-        assertTrue(line0.isSelected());
-        assertTrue(line1.isSelected());
-        assertTrue(line2.isSelected());
+        Assert.assertTrue(elem.isSelected());
+        Assert.assertTrue(elem2.isSelected());
+        Assert.assertTrue(elem3.isSelected());
+        Assert.assertTrue(line0.isSelected());
+        Assert.assertTrue(line1.isSelected());
+        Assert.assertTrue(line2.isSelected());
 
         x = 160;
         y = 90;
         width = 10;
         height = 11;
         instance.selectElements(x, y, width, height);
-        assertFalse(elem.isSelected());
-        assertFalse(elem2.isSelected());
-        assertFalse(elem3.isSelected());
-        assertFalse(line0.isSelected());
-        assertTrue(line1.isSelected());
-        assertFalse(line2.isSelected());
+        Assert.assertFalse(elem.isSelected());
+        Assert.assertFalse(elem2.isSelected());
+        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(line0.isSelected());
+        Assert.assertTrue(line1.isSelected());
+        Assert.assertFalse(line2.isSelected());
     }
     
     /**
      * Test of moveSelection method, of class Schema.
      */
+    @Test
     public void testMoveSelection() {
         Schema instance = new Schema();
         Properties compilerProps = new Properties();
@@ -928,64 +947,64 @@ public class SchemaTest extends TestCase {
         int width = 100;
         int height = 30;
         instance.selectElements(x, y, width, height);
-        assertTrue(elem.isSelected());
-        assertFalse(elem2.isSelected());
-        assertFalse(elem3.isSelected());
-        assertFalse(line0.isSelected());
-        assertFalse(line1.isSelected());
-        assertFalse(line2.isSelected());
+        Assert.assertTrue(elem.isSelected());
+        Assert.assertFalse(elem2.isSelected());
+        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(line0.isSelected());
+        Assert.assertFalse(line1.isSelected());
+        Assert.assertFalse(line2.isSelected());
         
         // left
         instance.moveSelection(-10, 0);
-        assertEquals(90, elem.getX());
+        Assert.assertEquals(90, elem.getX());
 
         // right
-        assertTrue(instance.moveSelection(10, 0));
-        assertEquals(100, elem.getX());
-        assertFalse(instance.moveSelection(51, 0));
-        assertEquals(100, elem.getX()); // move fails
-        assertFalse(instance.moveSelection(50, 0));
-        assertEquals(100, elem.getX()); // move fails
-        assertTrue(instance.moveSelection(49, 0));
-        assertEquals(149, elem.getX()); // move succeeds
+        Assert.assertTrue(instance.moveSelection(10, 0));
+        Assert.assertEquals(100, elem.getX());
+        Assert.assertFalse(instance.moveSelection(51, 0));
+        Assert.assertEquals(100, elem.getX()); // move fails
+        Assert.assertFalse(instance.moveSelection(50, 0));
+        Assert.assertEquals(100, elem.getX()); // move fails
+        Assert.assertTrue(instance.moveSelection(49, 0));
+        Assert.assertEquals(149, elem.getX()); // move succeeds
         
         // down
-        assertFalse(instance.moveSelection(0, 70));
-        assertEquals(100, elem.getY());
-        assertTrue(instance.moveSelection(0, 69));
-        assertEquals(169, elem.getY());
+        Assert.assertFalse(instance.moveSelection(0, 70));
+        Assert.assertEquals(100, elem.getY());
+        Assert.assertTrue(instance.moveSelection(0, 69));
+        Assert.assertEquals(169, elem.getY());
         
         // up
-        assertTrue(instance.moveSelection(0, -69));
-        assertEquals(100, elem.getY());
+        Assert.assertTrue(instance.moveSelection(0, -69));
+        Assert.assertEquals(100, elem.getY());
         
         // back left
-        assertTrue(instance.moveSelection(-49, 0));
-        assertEquals(100, elem.getX());
+        Assert.assertTrue(instance.moveSelection(-49, 0));
+        Assert.assertEquals(100, elem.getX());
         
         // test left boundary
-        assertTrue(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN + 1, 0));
-        assertEquals(50 + Schema.MIN_LEFT_MARGIN + 1, elem.getX());
-        assertTrue(instance.moveSelection(50 - Schema.MIN_LEFT_MARGIN - 1, 0));
-        assertEquals(100, elem.getX());
-        assertTrue(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN, 0));
-        assertEquals(50 + Schema.MIN_LEFT_MARGIN, elem.getX());
-        assertTrue(instance.moveSelection(50 - Schema.MIN_LEFT_MARGIN, 0));
-        assertEquals(100, elem.getX());
-        assertFalse(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN - 1, 0));
-        assertEquals(100, elem.getX());
+        Assert.assertTrue(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN + 1, 0));
+        Assert.assertEquals(50 + Schema.MIN_LEFT_MARGIN + 1, elem.getX());
+        Assert.assertTrue(instance.moveSelection(50 - Schema.MIN_LEFT_MARGIN - 1, 0));
+        Assert.assertEquals(100, elem.getX());
+        Assert.assertTrue(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN, 0));
+        Assert.assertEquals(50 + Schema.MIN_LEFT_MARGIN, elem.getX());
+        Assert.assertTrue(instance.moveSelection(50 - Schema.MIN_LEFT_MARGIN, 0));
+        Assert.assertEquals(100, elem.getX());
+        Assert.assertFalse(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN - 1, 0));
+        Assert.assertEquals(100, elem.getX());
         
         // test top boundary
-        assertTrue(instance.moveSelection(0, -85 + Schema.MIN_TOP_MARGIN + 1));
-        assertEquals(15 + Schema.MIN_TOP_MARGIN + 1, elem.getY());
-        assertTrue(instance.moveSelection(0, 85 - Schema.MIN_TOP_MARGIN - 1));
-        assertEquals(100, elem.getY());
-        assertTrue(instance.moveSelection(0, -85 + Schema.MIN_TOP_MARGIN));
-        assertEquals(15 + Schema.MIN_TOP_MARGIN, elem.getY());
-        assertTrue(instance.moveSelection(0, 85 - Schema.MIN_TOP_MARGIN));
-        assertEquals(100, elem.getY());
-        assertFalse(instance.moveSelection(0, -85 + Schema.MIN_TOP_MARGIN - 1));
-        assertEquals(100, elem.getY());
+        Assert.assertTrue(instance.moveSelection(0, -85 + Schema.MIN_TOP_MARGIN + 1));
+        Assert.assertEquals(15 + Schema.MIN_TOP_MARGIN + 1, elem.getY());
+        Assert.assertTrue(instance.moveSelection(0, 85 - Schema.MIN_TOP_MARGIN - 1));
+        Assert.assertEquals(100, elem.getY());
+        Assert.assertTrue(instance.moveSelection(0, -85 + Schema.MIN_TOP_MARGIN));
+        Assert.assertEquals(15 + Schema.MIN_TOP_MARGIN, elem.getY());
+        Assert.assertTrue(instance.moveSelection(0, 85 - Schema.MIN_TOP_MARGIN));
+        Assert.assertEquals(100, elem.getY());
+        Assert.assertFalse(instance.moveSelection(0, -85 + Schema.MIN_TOP_MARGIN - 1));
+        Assert.assertEquals(100, elem.getY());
         
        /*             l
         *             i                 width  = 100
@@ -1011,44 +1030,44 @@ public class SchemaTest extends TestCase {
         width = 100;
         height = 50;
         instance.selectElements(x, y, width, height);
-        assertFalse(elem.isSelected());
-        assertFalse(elem2.isSelected());
-        assertTrue(elem3.isSelected());
-        assertTrue(line0.isSelected());
-        assertFalse(line1.isSelected());
-        assertFalse(line2.isSelected());
+        Assert.assertFalse(elem.isSelected());
+        Assert.assertFalse(elem2.isSelected());
+        Assert.assertTrue(elem3.isSelected());
+        Assert.assertTrue(line0.isSelected());
+        Assert.assertFalse(line1.isSelected());
+        Assert.assertFalse(line2.isSelected());
         
         // down
-        assertTrue(instance.moveSelection(0, 100));
-        assertEquals(300, elem3.getY());
+        Assert.assertTrue(instance.moveSelection(0, 100));
+        Assert.assertEquals(300, elem3.getY());
         
         // up
-        assertTrue(instance.moveSelection(0, -100));
-        assertEquals(200, elem3.getY());
+        Assert.assertTrue(instance.moveSelection(0, -100));
+        Assert.assertEquals(200, elem3.getY());
         
         // right
-        assertTrue(instance.moveSelection(49, 0));
-        assertEquals(199, elem3.getX());
-        assertFalse(instance.moveSelection(1, 0));
-        assertEquals(199, elem3.getX()); // move failed
-        assertFalse(instance.moveSelection(20, 0));
-        assertEquals(199, elem3.getX()); // move failed
-        assertTrue(instance.moveSelection(-1, 0));
-        assertEquals(198, elem3.getX()); 
-        assertTrue(instance.moveSelection(-48, 0));
-        assertEquals(150, elem3.getX());
+        Assert.assertTrue(instance.moveSelection(49, 0));
+        Assert.assertEquals(199, elem3.getX());
+        Assert.assertFalse(instance.moveSelection(1, 0));
+        Assert.assertEquals(199, elem3.getX()); // move failed
+        Assert.assertFalse(instance.moveSelection(20, 0));
+        Assert.assertEquals(199, elem3.getX()); // move failed
+        Assert.assertTrue(instance.moveSelection(-1, 0));
+        Assert.assertEquals(198, elem3.getX()); 
+        Assert.assertTrue(instance.moveSelection(-48, 0));
+        Assert.assertEquals(150, elem3.getX());
         
         // up
-        assertFalse(instance.moveSelection(0, -100));
-        assertEquals(200, elem3.getY()); // move failed
-        assertFalse(instance.moveSelection(0, -80));
-        assertEquals(200, elem3.getY()); // move failed
-        assertFalse(instance.moveSelection(100, 0));
-        assertEquals(150, elem3.getX()); // move failed
-        assertTrue(instance.moveSelection(1, 0));
-        assertEquals(151, elem3.getX());
-        assertTrue(instance.moveSelection(-1, 0));
-        assertEquals(150, elem3.getX());
+        Assert.assertFalse(instance.moveSelection(0, -100));
+        Assert.assertEquals(200, elem3.getY()); // move failed
+        Assert.assertFalse(instance.moveSelection(0, -80));
+        Assert.assertEquals(200, elem3.getY()); // move failed
+        Assert.assertFalse(instance.moveSelection(100, 0));
+        Assert.assertEquals(150, elem3.getX()); // move failed
+        Assert.assertTrue(instance.moveSelection(1, 0));
+        Assert.assertEquals(151, elem3.getX());
+        Assert.assertTrue(instance.moveSelection(-1, 0));
+        Assert.assertEquals(150, elem3.getX());
         
         // test multiple selection
         x = 0;
@@ -1056,34 +1075,35 @@ public class SchemaTest extends TestCase {
         width = 149;
         height = 200;
         instance.selectElements(x, y, width, height);
-        assertTrue(elem.isSelected());
-        assertFalse(elem2.isSelected());
-        assertTrue(elem3.isSelected());
-        assertTrue(line0.isSelected());
-        assertFalse(line1.isSelected());
-        assertFalse(line2.isSelected());
+        Assert.assertTrue(elem.isSelected());
+        Assert.assertFalse(elem2.isSelected());
+        Assert.assertTrue(elem3.isSelected());
+        Assert.assertTrue(line0.isSelected());
+        Assert.assertFalse(line1.isSelected());
+        Assert.assertFalse(line2.isSelected());
         
-        assertTrue(instance.moveSelection(10, 0));
-        assertEquals(110, elem.getX());
-        assertEquals(160, elem3.getX());
+        Assert.assertTrue(instance.moveSelection(10, 0));
+        Assert.assertEquals(110, elem.getX());
+        Assert.assertEquals(160, elem3.getX());
 
-        assertTrue(instance.moveSelection(-10, 0));
-        assertEquals(100, elem.getX());
-        assertEquals(150, elem3.getX());
+        Assert.assertTrue(instance.moveSelection(-10, 0));
+        Assert.assertEquals(100, elem.getX());
+        Assert.assertEquals(150, elem3.getX());
         
-        assertTrue(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN, 0));
-        assertEquals(50 + Schema.MIN_LEFT_MARGIN, elem.getX());
-        assertEquals(100 + Schema.MIN_LEFT_MARGIN, elem3.getX());
+        Assert.assertTrue(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN, 0));
+        Assert.assertEquals(50 + Schema.MIN_LEFT_MARGIN, elem.getX());
+        Assert.assertEquals(100 + Schema.MIN_LEFT_MARGIN, elem3.getX());
 
-        assertFalse(instance.moveSelection(-1, 0));
-        assertEquals(50 + Schema.MIN_LEFT_MARGIN, elem.getX());
-        assertEquals(100 + Schema.MIN_LEFT_MARGIN, elem3.getX());
+        Assert.assertFalse(instance.moveSelection(-1, 0));
+        Assert.assertEquals(50 + Schema.MIN_LEFT_MARGIN, elem.getX());
+        Assert.assertEquals(100 + Schema.MIN_LEFT_MARGIN, elem3.getX());
     
     }
     
     /**
      * Test of deleteSelected method, of class Schema.
      */
+    @Test
     public void testDeleteSelected() {
         Schema instance = new Schema();
         Properties compilerProps = new Properties();
@@ -1132,29 +1152,30 @@ public class SchemaTest extends TestCase {
         int width = 10;
         int height = 10;
         instance.selectElements(x, y, width, height);
-        assertFalse(elem.isSelected());
-        assertFalse(elem2.isSelected());
-        assertTrue(elem3.isSelected());
-        assertFalse(line0.isSelected());
-        assertFalse(line1.isSelected());
-        assertFalse(line2.isSelected());
+        Assert.assertFalse(elem.isSelected());
+        Assert.assertFalse(elem2.isSelected());
+        Assert.assertTrue(elem3.isSelected());
+        Assert.assertFalse(line0.isSelected());
+        Assert.assertFalse(line1.isSelected());
+        Assert.assertFalse(line2.isSelected());
         
         instance.deleteSelected();
-        assertEquals(1, instance.getConnectionLines().size());
-        assertEquals(2, instance.getAllElements().size());
-        assertSame(line1, instance.getConnectionLines().get(0));
-        assertSame(elem, instance.getCompilerElement());
-        assertNull(instance.getMemoryElement());
-        assertSame(elem2, instance.getDeviceElements().get(0));
+        Assert.assertEquals(1, instance.getConnectionLines().size());
+        Assert.assertEquals(2, instance.getAllElements().size());
+        Assert.assertSame(line1, instance.getConnectionLines().get(0));
+        Assert.assertSame(elem, instance.getCompilerElement());
+        Assert.assertNull(instance.getMemoryElement());
+        Assert.assertSame(elem2, instance.getDeviceElements().get(0));
     }
 
     /**
      * Test of getSettings method, of class Schema.
      */
+    @Test
     public void testSaveAndGetSettings() {
         Schema instance = new Schema();
         Properties result = instance.getSettings();
-        assertNotNull(result);
+        Assert.assertNotNull(result);
         
         Properties compilerProps = new Properties();
         compilerProps.setProperty("compiler", "compiler");
@@ -1165,12 +1186,12 @@ public class SchemaTest extends TestCase {
         CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
         instance.setCompilerElement(elem);
         
-        assertNull(instance.getSettings().getProperty("compiler"));
+        Assert.assertNull(instance.getSettings().getProperty("compiler"));
         instance.save();
-        assertEquals("compiler", instance.getSettings().getProperty("compiler"));
-        assertEquals("100", instance.getSettings().getProperty("compiler.point.x"));
-        assertEquals("100", instance.getSettings().getProperty("compiler.point.y"));
-        assertEquals("100", instance.getSettings().getProperty("compiler.width"));
-        assertEquals("30", instance.getSettings().getProperty("compiler.height"));
+        Assert.assertEquals("compiler", instance.getSettings().getProperty("compiler"));
+        Assert.assertEquals("100", instance.getSettings().getProperty("compiler.point.x"));
+        Assert.assertEquals("100", instance.getSettings().getProperty("compiler.point.y"));
+        Assert.assertEquals("100", instance.getSettings().getProperty("compiler.width"));
+        Assert.assertEquals("30", instance.getSettings().getProperty("compiler.height"));
     }
 }

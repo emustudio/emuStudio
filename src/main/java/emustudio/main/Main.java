@@ -27,6 +27,7 @@ import emustudio.architecture.*;
 import emustudio.gui.LoadingDialog;
 import emustudio.gui.OpenComputerDialog;
 import emustudio.gui.StudioFrame;
+import emustudio.main.CommandLineFactory.CommandLine;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -51,106 +52,40 @@ public class Main {
      * emuStudio password for emuLib identification security mechanism.
      */
     public static String password = null;
-    private static String inputFileName = null;
-    private static String outputFileName = null;
-    private static String configName = null;
-    private static boolean auto = false;
-    private static boolean checkHash = false;
-    private static String classToHash = null;
-    private static boolean help = false;
-    private static boolean noGUI = false;
+    public static CommandLine commandLine;
 
     public static void tryShowMessage(String message) {
-        if (!noGUI) {
+        if (!commandLine.noGUIWanted()) {
             StaticDialogs.showMessage(message);
+        } else {
+            System.out.println(message);
         }
     }
 
     public static void tryShowMessage(String message, String title) {
-        if (!noGUI) {
+        if (!commandLine.noGUIWanted()) {
             StaticDialogs.showMessage(message, title);
+        } else {
+            System.out.println("[" + title + "] " + message);
         }
     }
 
     public static void tryShowErrorMessage(String message) {
-        if (!noGUI) {
+        if (!commandLine.noGUIWanted()) {
             StaticDialogs.showErrorMessage(message);
+        } else {
+            System.out.println("Error: " + message);
         }
     }
 
     public static void tryShowErrorMessage(String message, String title) {
-        if (!noGUI) {
+        if (!commandLine.noGUIWanted()) {
             StaticDialogs.showErrorMessage(message, title);
+        } else {
+            System.out.println("[" + title + "] Error: " + message);
         }
     }
 
-    /**
-     * This method parsers the command line parameters. It sets internal class data members accordingly.
-     *
-     * @param args The command line arguments
-     */
-    private static void parseCommandLine(String[] args) {
-        // process arguments
-        int size = args.length;
-        for (int i = 0; i < size; i++) {
-            String arg = args[i].toUpperCase();
-            try {
-                if (arg.equals("--CONFIG")) {
-                    i++;
-                    // what configuration to load
-                    if (configName != null) {
-                        logger.warn(new StringBuilder().append("Config file already defined, ignoring this one: ").append(args[i]).toString());
-                    } else {
-                        configName = args[i];
-                        logger.info(new StringBuilder().append("Loading virtual computer: ").append(configName).toString());
-                    }
-                } else if (arg.equals("--INPUT")) {
-                    i++;
-                    // what input file take to compiler
-                    if (inputFileName != null) {
-                        logger.warn(new StringBuilder().append("Input file already defined, ignoring this one: ").append(args[i]).toString());
-                    } else {
-                        inputFileName = args[i];
-                        logger.info(new StringBuilder().append("Input file name for compiler: ").append(inputFileName).toString());
-                    }
-                } else if (arg.equals("--OUTPUT")) {
-                    i++;
-                    // what output file take for emuStudio messages during
-                    // automation process. This option has a meaning
-                    // only if the "-auto" option is set too.
-                    if (outputFileName != null) {
-                        logger.warn(new StringBuilder().append("Output file already defined, ignoring this one: ").append(args[i]).toString());
-                    } else {
-                        outputFileName = args[i];
-                        logger.info(new StringBuilder().append("Output file name: ").append(outputFileName).toString());
-                    }
-                } else if (arg.equals("--AUTO")) {
-                    auto = true;
-                    logger.info("Turning automatization on.");
-                } else if (arg.equals("--HASH")) {
-                    i++;
-                    checkHash = true;
-                    if (classToHash != null) {
-                        logger.warn(new StringBuilder().append("Class file already defined, ignoring this one: ").append(args[i]).toString());
-                    } else {
-                        classToHash = args[i];
-                    }
-
-                } else if (arg.equals("--HELP")) {
-                    help = true;
-                } else if (arg.equals("--NOGUI")) {
-                    logger.info("Setting GUI off.");
-                    noGUI = true;
-                } else {
-                    logger.error(new StringBuilder().append("Invalid command line argument (").append(arg).append(")").toString());
-                }
-            } catch (ArrayIndexOutOfBoundsException e) {
-                logger.error(new StringBuilder().append("[").append(arg).append("] Missing argument").toString());
-            }
-        }
-
-    }
-    
     /**
      * @param args the command line arguments
      */
@@ -168,7 +103,13 @@ public class Main {
         }
 
         // parse command line arguments
-        parseCommandLine(args);
+        try {
+            commandLine = CommandLineFactory.parseCommandLine(args);
+        } catch (InvalidCommandLineException e) {
+            tryShowErrorMessage("Invalid command line");
+            logger.error("Invalid command line.", e);
+            return;
+        }
 
         // Test if java_cup is loaded
         try {
@@ -179,15 +120,14 @@ public class Main {
             return;
         }
 
-        password = emulib.runtime.Context.SHA1(String.valueOf(Math.random())
-                + new Date().toString());
+        password = emulib.runtime.Context.SHA1(String.valueOf(Math.random()) + new Date().toString());
         if (!emulib.emustudio.API.assignPassword(password)) {
             logger.error("Communication with emuLib failed.");
             tryShowErrorMessage("Error: communication with emuLib failed.");
             return;
         }
 
-        if (help) {
+        if (commandLine.helpWanted()) {
             // only show help and EXIT (ignore other arguments)
             System.out.println("emuStudio will accept the following command line"
                     + " parameters:\n"
@@ -201,7 +141,7 @@ public class Main {
             return;
         }
 
-        if (checkHash) {
+        if (commandLine.getClassNameForHash() != null) {
             // compute hash of a class and exit
             // Create a File object on the root of the directory
             // containing the class file
@@ -214,10 +154,17 @@ public class Main {
                 // Create a new class loader with the directory
                 ClassLoader loader = new URLClassLoader(urls);
 
-                // Load in the class; Class.childclass should be located in
-                // the directory file:/c:/class/user/information
-                Class cls = loader.loadClass(classToHash);
-
+                // Load the class.
+                Class cls;
+                try {
+                    cls = loader.loadClass(commandLine.getClassNameForHash());
+                } catch (Exception e) {
+                    String correctName = commandLine.getClassNameForHash();
+                    if (correctName.endsWith(".class")) {
+                        correctName = correctName.substring(0, correctName.length()-6);
+                    }
+                    cls = loader.loadClass(correctName.replace(File.separatorChar, '.'));
+                }
                 // Prints the hash to the console
                 System.out.println(emulib.runtime.Context.getInstance().computeHash(password, cls));
             } catch (MalformedURLException e) {
@@ -232,34 +179,36 @@ public class Main {
 
         // if configuration name has not been specified, let user
         // to choose the configuration manually
-        if (configName == null) {
-            if (noGUI) {
+        if (commandLine.getConfigName() == null) {
+            if (commandLine.noGUIWanted()) {
                 logger.error("Configuration was not specified.");
                 System.exit(0);
             }
             OpenComputerDialog odi = new OpenComputerDialog();
             odi.setVisible(true);
             if (odi.getOK()) {
-                configName = odi.getArchName();
+                commandLine.setConfigName(odi.getArchName());
             }
-            if (configName == null) {
+            if (commandLine.getConfigName() == null) {
                 logger.error("Configuration was not specified.");
                 System.exit(0);
             }
         }
 
         LoadingDialog splash = null;
-        if (!noGUI) {
+        if (!commandLine.noGUIWanted()) {
             // display splash screen, while loading the virtual computer
             splash = new LoadingDialog();
             splash.setVisible(true);
         } else {
-            logger.info(new StringBuilder().append("Loading virtual computer: ").append(configName).toString());
+            logger.info(new StringBuilder().append("Loading virtual computer: ").append(commandLine.getConfigName())
+                    .toString());
         }
 
         // load the virtual computer
         try {
-            currentArch = ArchLoader.getInstance().loadComputer(configName, auto, noGUI);
+            currentArch = ArchLoader.getInstance().loadComputer(commandLine.getConfigName(), commandLine.autoWanted(),
+                    commandLine.noGUIWanted());
         } catch (PluginLoadingException e) {
             currentArch = null;
             logger.error("Could not load virtual computer.", e);
@@ -275,7 +224,7 @@ public class Main {
                     .append(e.getLocalizedMessage()).toString());
         }
 
-        if (!noGUI) {
+        if (!commandLine.noGUIWanted()) {
             // hide splash screen
             splash.dispose();
         }
@@ -284,13 +233,13 @@ public class Main {
             System.exit(1);
         }
 
-        if (!auto) {
+        if (!commandLine.autoWanted()) {
             try {
                 // if the automatization is turned off, start the emuStudio normally
-                if (inputFileName != null) {
-                    new StudioFrame(inputFileName, configName).setVisible(true);
+                if (commandLine.getInputFileName() != null) {
+                    new StudioFrame(commandLine.getInputFileName(), commandLine.getConfigName()).setVisible(true);
                 } else {
-                    new StudioFrame(configName).setVisible(true);
+                    new StudioFrame(commandLine.getConfigName()).setVisible(true);
                 }
             } catch (Exception e) {
                 logger.error("Could not start main window.", e);
@@ -298,7 +247,8 @@ public class Main {
                 System.exit(1);
             }
         } else {
-            new Automatization(currentArch, inputFileName, outputFileName).runAutomatization(noGUI);
+            new Automatization(currentArch, commandLine.getInputFileName(), commandLine.getOutputFileName())
+                    .runAutomatization(commandLine.noGUIWanted());
             currentArch.destroy();
             System.exit(0);
         }
