@@ -23,9 +23,9 @@
 
 package emustudio.gui.debugTable;
 
-import emulib.plugins.cpu.ICPU;
-import emulib.plugins.cpu.IDebugColumn;
-import emulib.plugins.cpu.IDisassembler;
+import emulib.plugins.cpu.CPU;
+import emulib.plugins.cpu.DebugColumn;
+import emulib.plugins.cpu.Disassembler;
 import javax.swing.table.AbstractTableModel;
 
 /**
@@ -35,18 +35,18 @@ import javax.swing.table.AbstractTableModel;
 @SuppressWarnings("serial")
 public class DebugTableModel extends AbstractTableModel {
     private static final int MAX_ROW_COUNT = 13;
-    private IDebugColumn[] columns;
-    private ICPU cpu;
+    private DebugColumn[] columns;
+    private CPU cpu;
 
     private int page; // The page of the debug table
     private int rowCount; // actual row count
 
     /**
-     * This indicates a number of instructions that will be showed before
+     * This indicates a number of instructions that will be shown before
      * current instruction and hopefully after current instruction. It is
      * dependent on rowCount.
      */
-    private int gapInstr;
+    private int gapInstructionsCount;
     
     private int breakpointColumnIndex;
 
@@ -55,28 +55,28 @@ public class DebugTableModel extends AbstractTableModel {
      * 
      * @param cpu CPU plug-in
      */
-    public DebugTableModel(ICPU cpu) {
+    public DebugTableModel(CPU cpu) {
         this.cpu = cpu;
         page = 0;
         rowCount = MAX_ROW_COUNT;
 
-        IDisassembler dis = cpu.getDisassembler();
+        Disassembler dis = cpu.getDisassembler();
 
         if (cpu.isBreakpointSupported()) {
-            columns = new IDebugColumn[4];
-            columns[0] = new ColumnBreakpoint(cpu);
-            columns[1] = new ColumnAddress();
-            columns[2] = new ColumnMnemo(dis);
-            columns[3] = new ColumnOpcode(dis);
+            columns = new DebugColumn[4];
+            columns[0] = new BreakpointColumn(cpu);
+            columns[1] = new AddressColumn();
+            columns[2] = new MnemoColumn(dis);
+            columns[3] = new OpcodeColumn(dis);
             breakpointColumnIndex = 0;
         } else {
-            columns = new IDebugColumn[3];
-            columns[0] = new ColumnAddress();
-            columns[1] = new ColumnMnemo(dis);
-            columns[2] = new ColumnOpcode(dis);
+            columns = new DebugColumn[3];
+            columns[0] = new AddressColumn();
+            columns[1] = new MnemoColumn(dis);
+            columns[2] = new OpcodeColumn(dis);
             breakpointColumnIndex = -1;
         }
-        gapInstr = rowCount / 2;
+        gapInstructionsCount = rowCount / 2;
     }
 
     /**
@@ -148,9 +148,10 @@ public class DebugTableModel extends AbstractTableModel {
     public void previousPage() {
         page -= 1;
         try {
-            int loc = rowToLocation(rowCount-1);
-            if (loc < 0)
+            int location = rowToLocation(rowCount-1);
+            if (location < 0) {
                 page++;
+            }
         } catch(IndexOutOfBoundsException e) {
             page++; // the first page
         }
@@ -321,20 +322,21 @@ public class DebugTableModel extends AbstractTableModel {
      *
      * @return row index for current instruction
      */
-    private int computeCurrentRow() {
-        int loc = cpu.getInstrPosition();
+    private int getCurrentRow() {
+        int position = cpu.getInstrPosition();
 
-        if (loc == 0)
+        if (position == 0) {
             return 0;
+        }
 
         int row = 0;
 
         try {
-            IDisassembler dis = cpu.getDisassembler();
+            Disassembler dis = cpu.getDisassembler();
             do {
                 row++;
-            } while (((loc = dis.getPreviousInstructionLocation(loc)) > 0)
-                    && (row < gapInstr));
+            } while (((position = dis.getPreviousInstructionPosition(position)) > 0)
+                    && (row < gapInstructionsCount));
         } catch (NullPointerException x) {
             row = 0;
         }
@@ -342,43 +344,43 @@ public class DebugTableModel extends AbstractTableModel {
     }
 
     /**
-     * This method converts debug table row (in emuStudio) into memory location.
+     * Converts debug table row into memory location.
      * Pages are taken into account.
      *
      * @param row row index in the debug table
+     * @param ppage page in the debug table
      * @return memory location that the row is pointing at
-     * @throws IndexOutOfBoundsException when debug row corresponds to memory
-     * location that exceeds boundaries
+     * @throws IndexOutOfBoundsException when debug row corresponds to memory location that exceeds boundaries
      */
     private int rowToLocation(int row, int ppage) throws IndexOutOfBoundsException {
         // the row of current instruction is always gapInstr+1
-        int location = cpu.getInstrPosition();
+        int position = cpu.getInstrPosition();
         int tmp;
-        IDisassembler dis = cpu.getDisassembler();
+        Disassembler dis = cpu.getDisassembler();
 
-        int rowCurrent = computeCurrentRow();
-        int rowWanted = row + rowCount * ppage;
+        int currentRow = getCurrentRow();
+        int wantedRow = row + rowCount * ppage;
 
         try {
-            while (rowWanted < rowCurrent) {
+            while (wantedRow < currentRow) {
                 // up
-                tmp = dis.getPreviousInstructionLocation(location);
-                rowCurrent--;
-                location = tmp;
-                if (location < 0) {
+                tmp = dis.getPreviousInstructionPosition(position);
+                currentRow--;
+                position = tmp;
+                if (position < 0) {
                     throw new IndexOutOfBoundsException();
                 }
             }
-            while (rowWanted > rowCurrent) {
+            while (wantedRow > currentRow) {
                 // down
-                tmp = dis.getNextInstructionLocation(location);
-                rowCurrent++;
-                location = tmp;
+                tmp = dis.getNextInstructionPosition(position);
+                currentRow++;
+                position = tmp;
             }
         } catch (NullPointerException x) {
-            location = cpu.getInstrPosition();
+            position = cpu.getInstrPosition();
         }
-        return location;
+        return position;
     }
 
     private int rowToLocation(int row) throws IndexOutOfBoundsException {
@@ -422,8 +424,9 @@ public class DebugTableModel extends AbstractTableModel {
                 if ((llocation > location) && (gap > 1)) {
                     ppage -= gap;
                     gap /=2;
-                } else
+                } else {
                     break;
+                }
             } while (true);
             ppage--;
         } else if (llocation > location) {
@@ -443,8 +446,9 @@ public class DebugTableModel extends AbstractTableModel {
                 if ((llocation < location) && (gap > 1)) {
                     ppage += gap;
                     gap /=2;
-                } else
+                } else {
                     break;
+                }
             } while(true);
             ppage++;
         }

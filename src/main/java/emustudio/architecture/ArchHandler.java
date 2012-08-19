@@ -22,12 +22,12 @@
  */
 package emustudio.architecture;
 
-import emulib.plugins.IPlugin;
-import emulib.plugins.ISettingsHandler;
-import emulib.plugins.compiler.ICompiler;
-import emulib.plugins.cpu.ICPU;
-import emulib.plugins.device.IDevice;
-import emulib.plugins.memory.IMemory;
+import emulib.plugins.Plugin;
+import emulib.plugins.SettingsManipulator;
+import emulib.plugins.compiler.Compiler;
+import emulib.plugins.cpu.CPU;
+import emulib.plugins.device.Device;
+import emulib.plugins.memory.Memory;
 import emustudio.architecture.ArchLoader.PluginInfo;
 import emustudio.architecture.drawing.Schema;
 import java.util.*;
@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author vbmacher
  */
-public class ArchHandler implements ISettingsHandler {
+public class ArchHandler implements SettingsManipulator {
     private final static Logger logger = LoggerFactory.getLogger(ArchHandler.class);
 
     private Computer computer;
@@ -141,7 +141,7 @@ public class ArchHandler implements ISettingsHandler {
      */
     @Override
     public String readSetting(long pluginID, String settingName) {
-        IPlugin plug = computer.getPlugin(pluginID);
+        Plugin plug = computer.getPlugin(pluginID);
         
         if (plug == null)
             return null;
@@ -209,20 +209,20 @@ public class ArchHandler implements ISettingsHandler {
             return;
         }
 
-        IPlugin plug = computer.getPlugin(pluginID);
+        Plugin plug = computer.getPlugin(pluginID);
         if (plug == null) {
             return;
         }
 
         String prop = EMPTY_STRING;
-        if (plug instanceof IDevice) {
+        if (plug instanceof Device) {
             // search for device
             prop = pluginNames.get(pluginID);
-        } else if (plug instanceof ICPU) {
+        } else if (plug instanceof CPU) {
             prop = "cpu";
-        } else if (plug instanceof IMemory) {
+        } else if (plug instanceof Memory) {
             prop = "memory";
-        } else if (plug instanceof ICompiler) {
+        } else if (plug instanceof Compiler) {
             prop = "compiler";
         }
 
@@ -253,21 +253,21 @@ public class ArchHandler implements ISettingsHandler {
             return;
         }
 
-        IPlugin plug = computer.getPlugin(pluginID);
+        Plugin plug = computer.getPlugin(pluginID);
         if (plug == null) {
             return;
         }
 
         String prop = EMPTY_STRING;
 
-        if (plug instanceof IDevice) {
+        if (plug instanceof Device) {
             // search for device
             prop = pluginNames.get(pluginID);
-        } else if (plug instanceof ICPU) {
+        } else if (plug instanceof CPU) {
             prop = "cpu";
-        } else if (plug instanceof IMemory) {
+        } else if (plug instanceof Memory) {
             prop = "memory";
-        } else if (plug instanceof ICompiler) {
+        } else if (plug instanceof Compiler) {
             prop = "compiler";
         }
 

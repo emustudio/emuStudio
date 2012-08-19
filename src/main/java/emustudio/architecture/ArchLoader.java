@@ -24,11 +24,11 @@
 
 package emustudio.architecture;
 
-import emulib.plugins.IPlugin;
-import emulib.plugins.compiler.ICompiler;
-import emulib.plugins.cpu.ICPU;
-import emulib.plugins.device.IDevice;
-import emulib.plugins.memory.IMemory;
+import emulib.plugins.Plugin;
+import emulib.plugins.compiler.Compiler;
+import emulib.plugins.cpu.CPU;
+import emulib.plugins.device.Device;
+import emulib.plugins.memory.Memory;
 import emulib.runtime.PluginLoader;
 import emustudio.architecture.drawing.Schema;
 import emustudio.main.Main;
@@ -133,9 +133,9 @@ public class ArchLoader {
         public String pluginName;
         public Class<?> pluginInterface;
         public long pluginId;
-        public IPlugin plugin;
+        public Plugin plugin;
         public String dirName;
-        public Class<IPlugin> mainClass;
+        public Class<Plugin> mainClass;
 
         public PluginInfo(String pluginSettingsName, String dirName,
                 String pluginName, Class<?> pluginInterface, long pluginId) {
@@ -378,61 +378,61 @@ public class ArchLoader {
         
         String tmp = settings.getProperty("compiler");
         if (tmp != null) {
-            pluginsToLoad.put("compiler", new PluginInfo("compiler", COMPILERS_DIR, tmp, ICompiler.class,
+            pluginsToLoad.put("compiler", new PluginInfo("compiler", COMPILERS_DIR, tmp, Compiler.class,
                     createPluginID()));
         }
         tmp = settings.getProperty("cpu");
         if (tmp != null) {
-            pluginsToLoad.put("cpu", new PluginInfo("cpu", CPUS_DIR, tmp, ICPU.class, createPluginID()));
+            pluginsToLoad.put("cpu", new PluginInfo("cpu", CPUS_DIR, tmp, CPU.class, createPluginID()));
         }
         tmp = settings.getProperty("memory");
         if (tmp != null) {
-            pluginsToLoad.put("memory", new PluginInfo("memory", MEMORIES_DIR, tmp, IMemory.class, createPluginID()));
+            pluginsToLoad.put("memory", new PluginInfo("memory", MEMORIES_DIR, tmp, Memory.class, createPluginID()));
         }
         for (int i = 0; settings.containsKey("device" + i); i++) {
             tmp = settings.getProperty("device" + i);
             if (tmp != null) {
-                pluginsToLoad.put("device" + i, new PluginInfo("device" + i, DEVICES_DIR, tmp, IDevice.class,
+                pluginsToLoad.put("device" + i, new PluginInfo("device" + i, DEVICES_DIR, tmp, Device.class,
                         createPluginID()));
             }
         }
         
-        PluginLoader pluginLoader = PluginLoader.getInstance(Main.password);
+        PluginLoader pluginLoader = PluginLoader.getInstance();
         for (PluginInfo plugin : pluginsToLoad.values()) {
-            Class<IPlugin> mainClass = loadPlugin(plugin.dirName, plugin.pluginName);
+            Class<Plugin> mainClass = loadPlugin(plugin.dirName, plugin.pluginName);
             plugin.mainClass = mainClass;
         }
-        if (pluginLoader.canResolveClasses()) {
+        if (pluginLoader.canResolveClasses(Main.password)) {
             // Resolve all plug-in classes
-            pluginLoader.resolveLoadedClasses();
+            pluginLoader.resolveLoadedClasses(Main.password);
         } else {
-            if (pluginLoader.loadUndoneClasses()) {
-                pluginLoader.resolveLoadedClasses();
+            if (pluginLoader.loadUndoneClasses(Main.password)) {
+                pluginLoader.resolveLoadedClasses(Main.password);
             } else {
                 throw new PluginLoadingException("Cannot load all classes of plug-ins.", "[unknown]", null);
             }
         }
         logger.info("All plugins are loaded and resolved.");
         
-        ICompiler compiler = null;
-        ICPU cpu = null;
-        IMemory mem = null;
-        List<IDevice> devList = new ArrayList<IDevice>();
+        Compiler compiler = null;
+        CPU cpu = null;
+        Memory mem = null;
+        List<Device> devList = new ArrayList<Device>();
         for (PluginInfo plugin : pluginsToLoad.values()) {
             try {
-                plugin.plugin = (IPlugin)newPlugin(plugin.mainClass, plugin.pluginInterface, plugin.pluginId);
-                if (plugin.plugin instanceof ICompiler) {
-                    compiler = (ICompiler)plugin.plugin;
-                } else if (plugin.plugin instanceof ICPU) {
-                    cpu = (ICPU)plugin.plugin;
-                } else if (plugin.plugin instanceof IMemory) {
-                    mem = (IMemory)plugin.plugin;
-                } else if (plugin.plugin instanceof IDevice) {
-                    devList.add((IDevice)plugin.plugin);
+                plugin.plugin = (Plugin)newPlugin(plugin.mainClass, plugin.pluginInterface, plugin.pluginId);
+                if (plugin.plugin instanceof Compiler) {
+                    compiler = (Compiler)plugin.plugin;
+                } else if (plugin.plugin instanceof CPU) {
+                    cpu = (CPU)plugin.plugin;
+                } else if (plugin.plugin instanceof Memory) {
+                    mem = (Memory)plugin.plugin;
+                } else if (plugin.plugin instanceof Device) {
+                    devList.add((Device)plugin.plugin);
                 }
             } catch (ClassNotFoundException e) {
                 throw new PluginLoadingException(new StringBuilder().append("Plugin ").append(plugin.pluginName)
-                        .append(" cannot be loaded.").toString(), plugin.pluginName, (IPlugin) plugin.plugin);
+                        .append(" cannot be loaded.").toString(), plugin.pluginName, (Plugin) plugin.plugin);
             }
         }
 
@@ -488,9 +488,9 @@ public class ArchLoader {
 
         // this creates reversed array..
         Collections.reverse(devList);
-        IDevice[] devices = (IDevice[]) devList.toArray(new IDevice[0]);
+        Device[] devices = (Device[]) devList.toArray(new Device[0]);
         Computer computer = new Computer(cpu, mem, compiler, devices, pluginsToLoad.values(), connections);
-        emulib.runtime.Context.getInstance().assignComputer(Main.password, computer);
+        emulib.runtime.ContextPool.getInstance().setComputer(Main.password, computer);
         return new ArchHandler(computer, settings, loadSchema(name), pluginsToLoad.values(), auto, nogui);
     }
     
@@ -522,10 +522,10 @@ public class ArchLoader {
      * @param filename name of the plugin
      * @return Main class of the plugin. It must be resolved before first use.
      */
-    private Class<IPlugin> loadPlugin(String dirname, String filename) {
-        return emulib.runtime.PluginLoader.getInstance(Main.password).loadPlugin(new StringBuilder()
+    private Class<Plugin> loadPlugin(String dirname, String filename) {
+        return emulib.runtime.PluginLoader.getInstance().loadPlugin(new StringBuilder()
                 .append(System.getProperty("user.dir")).append(File.separator).append(dirname)
-                .append(File.separator).append(filename).toString());
+                .append(File.separator).append(filename).toString(), Main.password);
     }
     
     /**
@@ -543,13 +543,13 @@ public class ArchLoader {
      *     When the main class is null, or the class does not contain proper
      *     constructor.
      */
-    private IPlugin newPlugin(Class<IPlugin> mainClass, Class<?> pluginInterface, long pluginID)
+    private Plugin newPlugin(Class<Plugin> mainClass, Class<?> pluginInterface, long pluginID)
             throws ClassNotFoundException {
         if (mainClass == null) {
             throw new ClassNotFoundException("Plug-in main class does not exist");
         }
         
-        if (!PluginLoader.getInstance(Main.password).doesImplement(mainClass, pluginInterface)) {
+        if (!PluginLoader.doesImplement(mainClass, pluginInterface)) {
             throw new ClassNotFoundException("Plug-in main class does not implement specified interface");
         }
 
@@ -559,7 +559,7 @@ public class ArchLoader {
         try {
             Constructor<?> con = mainClass.getDeclaredConstructor(conParameters);
             if (con != null) {
-                return (IPlugin) con.newInstance(pluginID);
+                return (Plugin) con.newInstance(pluginID);
             } else {
                 throw new Exception("Constructor of the plug-in is null.");
             }

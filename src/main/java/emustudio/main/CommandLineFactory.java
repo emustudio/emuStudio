@@ -37,7 +37,6 @@ class CommandLineFactory {
         private String outputFileName = null;
         private String configName = null;
         private boolean auto = false;
-        private String classToHash = null;
         private boolean help = false;
         private boolean noGUI = false;
         
@@ -53,11 +52,10 @@ class CommandLineFactory {
          * @param noGUI whether to not use GUI during automatization
          */
         public CommandLine(String inputFileName, String outputFileName, String configName, boolean auto,
-                String classToHash, boolean help, boolean noGUI) {
+                boolean help, boolean noGUI) {
             this.inputFileName = inputFileName;
             this.outputFileName = outputFileName;
             this.auto = auto;
-            this.classToHash = classToHash;
             this.help = help;
             this.noGUI = noGUI;
             this.configName = configName;
@@ -87,10 +85,6 @@ class CommandLineFactory {
             return outputFileName;
         }
 
-        public String getClassNameForHash() {
-            return classToHash;
-        }
-
         public boolean autoWanted() {
             return auto;
         }
@@ -111,7 +105,6 @@ class CommandLineFactory {
         boolean auto = false;
         boolean noGUI = false;
         boolean help = false;
-        String classToHash = null;
         
         // process arguments
         int size = args.length;
@@ -154,15 +147,6 @@ class CommandLineFactory {
                 } else if (arg.equals("--AUTO")) {
                     auto = true;
                     logger.info("Turning automatization on.");
-                } else if (arg.equals("--HASH")) {
-                    i++;
-                    if (classToHash != null) {
-                        logger.warn(new StringBuilder().append("Class file already defined, ignoring this one: ")
-                                .append(args[i]).toString());
-                    } else {
-                        classToHash = args[i];
-                    }
-
                 } else if (arg.equals("--HELP")) {
                     help = true;
                 } else if (arg.equals("--NOGUI")) {
@@ -177,6 +161,6 @@ class CommandLineFactory {
                         .append("] Missing argument").toString());
             }
         }
-        return new CommandLine(inputFileName, outputFileName, configName, auto, classToHash, help, noGUI);
+        return new CommandLine(inputFileName, outputFileName, configName, auto, help, noGUI);
     }
 }

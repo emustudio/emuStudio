@@ -1,6 +1,6 @@
 /*
- * ColumnMnemo.java
- * 
+ * BreakpointColumn.java
+ *
  * KISS, YAGNI, DRY
  * 
  * Copyright (C) 2011-2012, Peter Jakubčo
@@ -22,54 +22,55 @@
 
 package emustudio.gui.debugTable;
 
-import emulib.plugins.cpu.CPUInstruction;
-import emulib.plugins.cpu.IDisassembler;
-import emulib.plugins.cpu.SimpleDebugColumn;
+import emulib.plugins.cpu.AbstractDebugColumn;
+import emulib.plugins.cpu.CPU;
 
 /**
- * This class represents "mnemo" column in the debug table. This column displays
- * mnemonic representations of instructions.
- * 
+ * This class represents "breakpoint" column in the debug table.
+ *
  * @author vbmacher
  */
-public class ColumnMnemo extends SimpleDebugColumn {
-    private IDisassembler dis;
+public class BreakpointColumn extends AbstractDebugColumn {
+    private CPU cpu;
 
     /**
-     * Creates an instance of the column.
-     * 
-     * @param disasm Dissassembler instance
+     * Creates new instance of the address column.
+     *
+     * @param cpu CPU plug-in
      */
-    public ColumnMnemo(IDisassembler disasm) {
-        super("mnemonics", java.lang.String.class, false);
-        this.dis = disasm;
+    public BreakpointColumn(CPU cpu) {
+        super("bp", java.lang.Boolean.class, true);
+        this.cpu = cpu;
     }
-
+    
     /**
-     * Does nothing, user cannot change the mnemonic represetnation.
+     * Set/unset a breakpoint on specified location.
      * 
-     * @param location
-     * @param value 
+     * @param location the address/location where the breakpoint should be set/unset
+     * @param value the value of the breakpoint (Boolean instance)
      */
     @Override
     public void setDebugValue(int location, Object value) {
+        try {
+            boolean v = Boolean.valueOf(value.toString());
+            cpu.setBreakpoint(location, v);
+        } catch(IndexOutOfBoundsException e) {
+        }
     }
 
     /**
-     * Get mnemonic representation of an instruction on the specified location.
+     * Detemine if breakpoint on specified locaion is set.
      * 
-     * @param location address/location in memory
-     * @return a String value representation of an instruction
+     * @param location the address/location in memory
+     * @return Boolean instance set to true if a breakpoint is set,
+     * false otherwise
      */
     @Override
     public Object getDebugValue(int location) {
         try {
-            CPUInstruction instr = dis.disassemble(location);
-            return instr.getMnemo();
+            return cpu.getBreakpoint(location);
         } catch(IndexOutOfBoundsException e) {
-            return "incomplete instruction";
-        } catch (NullPointerException x) {
-            return "";
+            return false;
         }
     }
 

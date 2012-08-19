@@ -24,8 +24,8 @@
  */
 package emustudio.gui.editor;
 
-import emulib.plugins.compiler.ILexer;
-import emulib.plugins.compiler.IToken;
+import emulib.plugins.compiler.LexicalAnalyzer;
+import emulib.plugins.compiler.Token;
 import java.io.IOException;
 import java.util.*;
 import javax.swing.text.SimpleAttributeSet;
@@ -105,7 +105,7 @@ public class HighlightThread extends Thread {
     /**
      * Lexical analyzer object
      */
-    protected ILexer syntaxLexer;
+    protected LexicalAnalyzer syntaxLexer;
     /**
      * A lock for modifying the document, or for
      * actions that depend on the document not being
@@ -122,7 +122,7 @@ public class HighlightThread extends Thread {
      * @param document the document containing the source code
      * @param styles styles for particular token types
      */
-    public HighlightThread(ILexer lex, DocumentReader lexReader,
+    public HighlightThread(LexicalAnalyzer lex, DocumentReader lexReader,
             HighLightedDocument document,
             Map<Integer, HighlightStyle> styles) {
         super("HighlightThread");
@@ -250,7 +250,7 @@ public class HighlightThread extends Thread {
                     dp = (DocPosition) workingIt.next();
                 }
                 try {
-                    IToken t;
+                    Token t;
                     boolean done = false;
                     dpEnd = dpStart;
                     // we are playing some games with the lexer for efficiency.
@@ -270,7 +270,7 @@ public class HighlightThread extends Thread {
                     // need to stop there.
                     t = syntaxLexer.getSymbol();
                     newPositions.add(dpStart);
-                    while (!done && t != null && t.getType() != IToken.TEOF) {
+                    while (!done && t != null && t.getType() != Token.TEOF) {
                         // this is the actual command that colors the stuff.
                         // Color stuff with the description of the style matched
                         // to the hash table that has been set up ahead of time.

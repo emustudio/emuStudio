@@ -120,7 +120,7 @@ public class Main {
             return;
         }
 
-        password = emulib.runtime.Context.SHA1(String.valueOf(Math.random()) + new Date().toString());
+        password = emulib.runtime.ContextPool.SHA1(String.valueOf(Math.random()) + new Date().toString());
         if (!emulib.emustudio.API.assignPassword(password)) {
             logger.error("Communication with emuLib failed.");
             tryShowErrorMessage("Error: communication with emuLib failed.");
@@ -136,44 +136,7 @@ public class Main {
                     + "\n--output name : output compiler messages into this file name"
                     + "\n--auto        : run the emulation automatization"
                     + "\n--nogui       : try to not show GUI in automatization"
-                    + "\n--hash name   : compute hash for given class or interface name"
                     + "\n--help        : output this message");
-            return;
-        }
-
-        if (commandLine.getClassNameForHash() != null) {
-            // compute hash of a class and exit
-            // Create a File object on the root of the directory
-            // containing the class file
-            File file = new File(System.getProperty("user.dir"));
-            try {
-                // Convert File to a URL
-                URL url = file.toURI().toURL(); // file:/c:/class/
-                URL[] urls = new URL[]{url};
-
-                // Create a new class loader with the directory
-                ClassLoader loader = new URLClassLoader(urls);
-
-                // Load the class.
-                Class cls;
-                try {
-                    cls = loader.loadClass(commandLine.getClassNameForHash());
-                } catch (Exception e) {
-                    String correctName = commandLine.getClassNameForHash();
-                    if (correctName.endsWith(".class")) {
-                        correctName = correctName.substring(0, correctName.length()-6);
-                    }
-                    cls = loader.loadClass(correctName.replace(File.separatorChar, '.'));
-                }
-                // Prints the hash to the console
-                System.out.println(emulib.runtime.Context.getInstance().computeHash(password, cls));
-            } catch (MalformedURLException e) {
-                logger.error("Could not compute hash.", e);
-            } catch (ClassNotFoundException e) {
-                logger.error("Given class is not found.", e);
-            } catch (NullPointerException e) {
-                logger.error("Class name is not specified.", e);
-            }
             return;
         }
 

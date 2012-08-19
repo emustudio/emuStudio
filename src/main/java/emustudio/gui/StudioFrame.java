@@ -22,20 +22,20 @@
  */
 package emustudio.gui;
 
+import emulib.annotations.PluginType;
 import emulib.emustudio.API;
-import emulib.plugins.compiler.ICompiler;
-import emulib.plugins.compiler.ICompiler.ICompilerListener;
+import emulib.plugins.compiler.Compiler;
+import emulib.plugins.compiler.Compiler.CompilerListener;
 import emulib.plugins.compiler.Message;
-import emulib.plugins.cpu.ICPU;
-import emulib.plugins.cpu.ICPU.RunState;
-import emulib.plugins.device.IDevice;
-import emulib.plugins.memory.IMemory;
-import emulib.plugins.memory.IMemory.IMemListener;
-import emulib.runtime.IDebugTable;
+import emulib.plugins.cpu.CPU;
+import emulib.plugins.cpu.CPU.RunState;
+import emulib.plugins.device.Device;
+import emulib.plugins.memory.Memory;
+import emulib.plugins.memory.Memory.MemoryListener;
 import emulib.runtime.RadixUtils;
 import emulib.runtime.StaticDialogs;
 import emustudio.architecture.Computer;
-import emustudio.gui.debugTable.DebugTable;
+import emustudio.gui.debugTable.DebugTableImpl;
 import emustudio.gui.editor.EmuTextPane;
 import emustudio.gui.editor.EmuTextPane.UndoActionListener;
 import emustudio.gui.utils.FindText;
@@ -48,7 +48,6 @@ import java.awt.datatransfer.FlavorEvent;
 import java.awt.datatransfer.FlavorListener;
 import java.awt.event.*;
 import java.io.StringReader;
-import java.util.EventObject;
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
@@ -68,11 +67,11 @@ public class StudioFrame extends javax.swing.JFrame {
     private UndoActionListener undoStateListener;
     private Clipboard systemClipboard;
     private RunState run_state = RunState.STATE_STOPPED_BREAK;
-    private DebugTable tblDebug;
+    private DebugTableImpl tblDebug;
     // emulator
-    private ICompiler compiler;
-    private IMemory memory;
-    private ICPU cpu;
+    private Compiler compiler;
+    private Memory memory;
+    private CPU cpu;
     private int pageSeekLastValue = 10;
 
     /**
@@ -100,7 +99,7 @@ public class StudioFrame extends javax.swing.JFrame {
         cpu = arch.getCPU();
 
         txtSource = new EmuTextPane(compiler);
-        tblDebug = new DebugTable();
+        tblDebug = new DebugTableImpl();
 
         initComponents();
 
@@ -151,7 +150,8 @@ public class StudioFrame extends javax.swing.JFrame {
 
             @Override
             public Object getElementAt(int index) {
-                return arch.getDevices()[index].getTitle();
+                PluginType pluginType = arch.getDevices()[index].getClass().getAnnotation(PluginType.class);
+                return pluginType.title();                        
             }
         });
         this.setLocationRelativeTo(null);
@@ -175,19 +175,19 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void setupListeners() {
         if (compiler != null) {
-            compiler.addCompilerListener(new ICompilerListener() {
+            compiler.addCompilerListener(new CompilerListener() {
 
                 @Override
-                public void onStart(EventObject evt) {
+                public void onStart() {
                 }
 
                 @Override
-                public void onMessage(EventObject evt, Message message) {
+                public void onMessage(Message message) {
                     txtOutput.append(message.getForrmattedMessage() + "\n");
                 }
 
                 @Override
-                public void onFinish(EventObject evt, int errorCode) {
+                public void onFinish(int errorCode) {
                 }
             });
             if ((compiler != null) && !compiler.isShowSettingsSupported()) {
@@ -249,12 +249,12 @@ public class StudioFrame extends javax.swing.JFrame {
         };
         txtSource.setUndoActionListener(undoStateListener);
         if (memory != null) {
-            memory.addMemoryListener(new IMemListener() {
+            memory.addMemoryListener(new MemoryListener() {
 
                 @Override
-                public void memChange(EventObject evt, int adr) {
+                public void memoryChanged(int adr) {
                     if (run_state != RunState.STATE_RUNNING) {
-                        tblDebug.update();
+                        tblDebug.refresh();
                     }
                 }
             });
@@ -262,15 +262,15 @@ public class StudioFrame extends javax.swing.JFrame {
         } else {
             btnMemory.setEnabled(false);
         }
-        cpu.addCPUListener(new ICPU.ICPUListener() {
+        cpu.addCPUListener(new CPU.CPUListener() {
 
             @Override
-            public void stateUpdated(EventObject evt) {
-                tblDebug.update();
+            public void stateUpdated() {
+                tblDebug.refresh();
             }
 
             @Override
-            public void runChanged(EventObject evt, RunState state) {
+            public void runChanged(RunState state) {
                 run_state = state;
                 if (state == RunState.STATE_RUNNING) {
                     btnStop.setEnabled(true);
@@ -301,19 +301,12 @@ public class StudioFrame extends javax.swing.JFrame {
                     paneDebug.setEnabled(true);
                     tblDebug.setEnabled(true);
                     tblDebug.setVisible(true);
-                    tblDebug.update();
+                    tblDebug.refresh();
                 }
             }
         });
         btnBreakpoint.setEnabled(cpu.isBreakpointSupported());
-        API.getInstance().setDebugTableInterfaceObject(new IDebugTable() {
-
-            @Override
-            public void updateDebugTable() {
-                tblDebug.update();
-            }
-            
-        }, Main.password);
+        API.getInstance().setDebugTable(tblDebug, Main.password);
     }
 
     private void initComponents() {
@@ -857,8 +850,9 @@ public class StudioFrame extends javax.swing.JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int i = lstDevices.getSelectedIndex();
-                if (i >= 0)
+                if (i >= 0) {
                     btnShowSettings.setEnabled(arch.getDevice(i).isShowSettingsSupported());
+                }
 
                 if (e.getClickCount() == 2) {
                     showGUIButtonActionPerformed(new ActionEvent(this, 0, ""));
@@ -1247,7 +1241,7 @@ public class StudioFrame extends javax.swing.JFrame {
             if (pc > 0) {
                 cpu.setInstrPosition(pc - 1);
                 paneDebug.revalidate();
-                tblDebug.update();
+                tblDebug.refresh();
             }
         } catch (NullPointerException e) {
         }
@@ -1257,7 +1251,7 @@ public class StudioFrame extends javax.swing.JFrame {
         try {
             cpu.setInstrPosition(0);
             paneDebug.revalidate();
-            tblDebug.update();
+            tblDebug.refresh();
         } catch (NullPointerException e) {
         }
     }
@@ -1269,7 +1263,7 @@ public class StudioFrame extends javax.swing.JFrame {
         } else {
             cpu.reset();
         }
-        IDevice dev[] = arch.getDevices();
+        Device dev[] = arch.getDevices();
         if (dev != null) {
             for (int i = 0; i < dev.length; i++) {
                 dev[i].reset();
@@ -1298,7 +1292,7 @@ public class StudioFrame extends javax.swing.JFrame {
             return;
         }
         paneDebug.revalidate();
-        tblDebug.update();
+        tblDebug.refresh();
     }
 
     private void mnuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1464,7 +1458,7 @@ public class StudioFrame extends javax.swing.JFrame {
             arch.getCPU().setBreakpoint(address, bDialog.isSet());
         }
         paneDebug.revalidate();
-        tblDebug.update();
+        tblDebug.refresh();
     }
 
     private void mnuEditReplaceNextActionPerformed(java.awt.event.ActionEvent evt) {

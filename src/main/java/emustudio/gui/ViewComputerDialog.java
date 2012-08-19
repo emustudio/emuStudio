@@ -21,7 +21,8 @@
  */
 package emustudio.gui;
 
-import emulib.plugins.IPlugin;
+import emulib.annotations.PluginType;
+import emulib.plugins.Plugin;
 import emustudio.architecture.ArchLoader;
 import emustudio.architecture.Computer;
 import emustudio.architecture.drawing.PreviewPanel;
@@ -108,38 +109,20 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         setInfo(computer.getCPU(), CPU_CONFIG_DIR + Main.currentArch.getCPUName());
     }
     
-    private void setInfo(IPlugin plugin, String fileName) {
+    private void setInfo(Plugin plugin, String fileName) {
         if (plugin == null) {
             setVisibleInfo(false);
             return;
         } else {
             setVisibleInfo(true);
         }
-        try {
-            lblName.setText(plugin.getTitle());
-        } catch (Exception e) {
-            lblName.setText("Plug-in title is invalid");
-            logger.error("Could not retrieve plug-in title", e);
-        }
+        PluginType pluginType = plugin.getClass().getAnnotation(PluginType.class);
+        
+        lblName.setText(pluginType.title());
         lblFileName.setText(fileName + ".jar");
-        try {
-            lblCopyright.setText(plugin.getCopyright());
-        } catch (Exception e) {
-            lblCopyright.setText("Plug-in title is invalid");
-            logger.error("Could not retrieve plug-in's copyright", e);
-        }
-        try {
-            lblVersion.setText(plugin.getVersion());
-        } catch (Exception e) {
-            lblVersion.setText("Plug-in version is invalid");
-            logger.error("Could not retrieve plug-in's version", e);
-        }
-        try {
-            txtDescription.setText(plugin.getDescription());
-        } catch (Exception e) {
-            txtDescription.setText("Plug-in description is invalid");
-            logger.error("Could not retrieve plug-in's description", e);
-        }
+        lblCopyright.setText(pluginType.copyright());
+        lblVersion.setText(pluginType.version());
+        txtDescription.setText(pluginType.description());
     }
     
     private void setVisibleInfo(boolean visible) {
@@ -519,31 +502,13 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         saveComputerInfo();
     }//GEN-LAST:event_btnExportActionPerformed
 
-    private void savePluginInfo(PrintWriter out, IPlugin plugin) {
-        String title;
-        try {
-            title = plugin.getTitle();
-        } catch (Exception e) {
-            title = "Invalid title";
-        }
-        String version;
-        try {
-            version = plugin.getVersion();
-        } catch (Exception e) {
-            version = "Invalid version";
-        }
-        String copyright;
-        try {
-            copyright = plugin.getCopyright();
-        } catch (Exception e) {
-            copyright = "Invalid copyright";
-        }
-        String description;
-        try {
-            description = plugin.getDescription();
-        } catch (Exception e) {
-            description = "Invalid description";
-        }
+    private void savePluginInfo(PrintWriter out, Plugin plugin) {
+        PluginType pluginType = plugin.getClass().getAnnotation(PluginType.class);
+
+        String title = pluginType.title();
+        String version = pluginType.version();
+        String copyright = pluginType.copyright();
+        String description = pluginType.description();
         out.print(title);
         out.print(", version: ");
         out.println(version);
@@ -561,7 +526,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
             PrintWriter out = new PrintWriter(outFile);
             
             out.println("Computer name: " + Main.currentArch.getComputerName() + "\n");
-            IPlugin plugin = computer.getCompiler();
+            Plugin plugin = computer.getCompiler();
             if (plugin != null) {
                 out.println("Compiler\n########\n");
                 out.print("File name: ");

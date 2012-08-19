@@ -1,5 +1,5 @@
 /*
- * DebugTable.java
+ * DebugTableImpl.java
  *
  * Created on Piatok, 2007, november 9, 8:20
  * KISS, YAGNI, DRY
@@ -23,6 +23,7 @@
 
 package emustudio.gui.debugTable;
 
+import emulib.emustudio.DebugTable;
 import emustudio.main.Main;
 import java.awt.Color;
 import java.awt.Component;
@@ -37,7 +38,7 @@ import javax.swing.table.TableCellRenderer;
  * @author vbmacher
  */
 @SuppressWarnings("serial")
-public class DebugTable extends JTable {
+public class DebugTableImpl extends JTable  implements DebugTable {
     private DebugTableModel debug_model;
     private TextCellRenderer text_renderer;
     private BooleanCellRenderer bool_renderer;
@@ -137,9 +138,9 @@ public class DebugTable extends JTable {
     }
     
     /** 
-     * Creates a new instance of DebugTable
+     * Creates a new instance of DebugTableImpl
      */
-    public DebugTable() {
+    public DebugTableImpl() {
         super();
         debug_model = new DebugTableModel(Main.currentArch.getComputer().getCPU());
         setModel(debug_model);
@@ -183,7 +184,7 @@ public class DebugTable extends JTable {
      */
     public void firstPage() {
         debug_model.firstPage();
-        update();
+        refresh();
     }
 
     /**
@@ -193,7 +194,7 @@ public class DebugTable extends JTable {
      */
     public void pageSeekBackward(int value) {
         debug_model.seekBackwardPage(value);
-        update();
+        refresh();
     }
     
     /**
@@ -201,7 +202,7 @@ public class DebugTable extends JTable {
      */
     public void previousPage() {
         debug_model.previousPage();
-        update();
+        refresh();
     }
 
     /**
@@ -209,7 +210,7 @@ public class DebugTable extends JTable {
      */
     public void currentPage() {
         debug_model.currentPage();
-        update();
+        refresh();
     }
 
     /**
@@ -217,7 +218,7 @@ public class DebugTable extends JTable {
      */
     public void nextPage() {
         debug_model.nextPage();
-        update();
+        refresh();
     }
     
     /**
@@ -227,7 +228,7 @@ public class DebugTable extends JTable {
      */
     public void pageSeekForward(int value) {
         debug_model.seekForwardPage(value);
-        update();
+        refresh();
     }
     
     /**
@@ -235,13 +236,16 @@ public class DebugTable extends JTable {
      */
     public void lastPage() {
         debug_model.lastPage();
-        update();
+        refresh();
     }
     
     /**
-     * Update values in the debug table, if it is enabled and repaint it.
+     * Refresh the debug table.
+     * 
+     * If it is enabled, the method updates values and repaints it.
      */
-    public void update() {
+    @Override
+    public void refresh() {
         if (isEnabled()) {
             revalidate();
             repaint();

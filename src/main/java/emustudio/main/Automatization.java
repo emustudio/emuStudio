@@ -22,19 +22,19 @@
 
 package emustudio.main;
 
-import emulib.plugins.compiler.ICompiler;
-import emulib.plugins.compiler.ICompiler.ICompilerListener;
+import emulib.annotations.PluginType;
+import emulib.plugins.compiler.Compiler;
+import emulib.plugins.compiler.Compiler.CompilerListener;
 import emulib.plugins.compiler.Message;
-import emulib.plugins.cpu.ICPU;
-import emulib.plugins.cpu.ICPU.ICPUListener;
-import emulib.plugins.cpu.ICPU.RunState;
-import emulib.plugins.device.IDevice;
-import emulib.plugins.memory.IMemory;
+import emulib.plugins.cpu.CPU;
+import emulib.plugins.cpu.CPU.CPUListener;
+import emulib.plugins.cpu.CPU.RunState;
+import emulib.plugins.device.Device;
+import emulib.plugins.memory.Memory;
 import emustudio.architecture.ArchHandler;
 import emustudio.gui.AutoDialog;
 import java.io.*;
 import java.util.Date;
-import java.util.EventObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +49,7 @@ public class Automatization {
     private ArchHandler currentArch;
     private File outputFile;
     private File inputFile;
-    private RunState result_state;
+    private RunState resultState;
 
     /**
      * Creates new automatization object.
@@ -63,7 +63,7 @@ public class Automatization {
         this.currentArch = currentArch;
         this.outputFile = new File(outputFileName);
         this.inputFile = new File(inputFileName);
-        result_state = RunState.STATE_STOPPED_NORMAL;
+        resultState = RunState.STATE_STOPPED_NORMAL;
     }
 
     /**
@@ -99,28 +99,33 @@ public class Automatization {
             adia.setVisible(true);
         }
 
-        ICompiler compiler = currentArch.getComputer().getCompiler();
-        IMemory memory = currentArch.getComputer().getMemory();
-        final ICPU cpu = currentArch.getComputer().getCPU();
-        IDevice[] devices = currentArch.getComputer().getDevices();
+        Compiler compiler = currentArch.getComputer().getCompiler();
+        Memory memory = currentArch.getComputer().getMemory();
+        final CPU cpu = currentArch.getComputer().getCPU();
+        Device[] devices = currentArch.getComputer().getDevices();
 
 	try {
             final FileWriter outw = (outputFile == null) ? null : new FileWriter(outputFile);
             String currentDate = new Date().toString();
+            
+            PluginType compilerType = compiler.getClass().getAnnotation(PluginType.class);
+            PluginType cpuType = cpu.getClass().getAnnotation(PluginType.class);
+            PluginType memoryType = memory.getClass().getAnnotation(PluginType.class);
 
             output_message("<html><head><title>Emulation report</title></head>"
                     + "<body><h1>Configuration</h1><p>" + currentDate + "</p>"
                     + "<table><tr><th>Compiler</th><td>" + 
-                    ((compiler == null) ? "none" : compiler.getTitle())
-                    + "</td></tr><tr><th>CPU</th><td>" + cpu.getTitle()
+                    ((compiler == null) ? "none" : compilerType.title())
+                    + "</td></tr><tr><th>CPU</th><td>" + cpuType.title()
                     + "</td></tr><th>Memory</th><td>" +
-                    ((memory == null) ? "none" : memory.getTitle())
+                    ((memory == null) ? "none" : memoryType.title())
                     + "</td></tr>", outw);
 
             int size = devices.length;
             for (int i = 0; i < size; i++) {
+                PluginType deviceType = devices[i].getClass().getAnnotation(PluginType.class);
                 output_message("<tr><th>Device #" + String.format("%02d", i)
-                        + "</th><td>" + devices[i].getTitle()
+                        + "</th><td>" + deviceType.title()
                         + "</td></tr>", outw);
             }
             output_message("</table>", outw);
@@ -134,18 +139,18 @@ public class Automatization {
                 output_message("<h1>Compile process</h1><p><strong>File name:"
                         + "</strong>" + inputFile, outw);
 
-                ICompilerListener reporter = new ICompilerListener() {
+                CompilerListener reporter = new CompilerListener() {
                     @Override
-                    public void onStart(EventObject evt) {}
+                    public void onStart() {}
 
                     @Override
-                    public void onMessage(EventObject evt, Message message) {
+                    public void onMessage(Message message) {
                         String text = "<p>" + message.getForrmattedMessage() + "</p>";
                         output_message(text, outw);
                     }
 
                     @Override
-                    public void onFinish(EventObject evt, int errorCode)
+                    public void onFinish(int errorCode)
                     {}
                 };
 
@@ -184,32 +189,33 @@ public class Automatization {
             logger.info("Running emulation...");
             output_message("<h1>Emulation process</h1>", outw);
 
-            final Object lock = new Object();
+            final Object resultStateLock = new Object();
 
-            result_state = RunState.STATE_RUNNING;
-            cpu.addCPUListener(new ICPUListener() {
+            resultState = RunState.STATE_RUNNING;
+            cpu.addCPUListener(new CPUListener() {
                 @Override
-                public void runChanged(EventObject evt, RunState state) {
+                public void runChanged(RunState state) {
                     if (state != RunState.STATE_RUNNING) {
-                        synchronized(lock) {
-                            result_state = state;
+                        synchronized(resultStateLock) {
+                            resultState = state;
                         }
                     }
                 }
                 @Override
-                public void stateUpdated(EventObject evt) {}
+                public void stateUpdated() {}
             });
             cpu.execute();
 
             boolean stop = false;
             do {
-                synchronized(lock) {
-                    if (result_state != RunState.STATE_RUNNING)
+                synchronized(resultStateLock) {
+                    if (resultState != RunState.STATE_RUNNING) {
                         stop = true ;
+                    }
                 }
             } while (!stop);
 
-            switch (result_state) {
+            switch (resultState) {
                 case STATE_STOPPED_ADDR_FALLOUT:
                     logger.error("CPU run failed: Address fallout.");
                     output_message("<p>FAILED (address fallout)</p>", outw);
@@ -227,9 +233,9 @@ public class Automatization {
                     output_message("<p>DONE (normal stop)</p>", outw);
                     break;
                 default:
-                    logger.error("CPU run failed: Invalid state: " + result_state);
+                    logger.error("CPU run failed: Invalid state: " + resultState);
                     output_message("<p>FAILED (invalid state): " +
-                            result_state + "</p>", outw);
+                            resultState + "</p>", outw);
                     break;
             }
             logger.info("Current instruction position: " + String.format("%04Xh",

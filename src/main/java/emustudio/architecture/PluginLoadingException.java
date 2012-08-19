@@ -22,7 +22,7 @@
  */
 package emustudio.architecture;
 
-import emulib.plugins.IPlugin;
+import emulib.plugins.Plugin;
 
 /**
  * This exception is thrown when a plugin could not be loaded.
@@ -31,17 +31,17 @@ import emulib.plugins.IPlugin;
  */
 public class PluginLoadingException extends Exception {
 
-    private IPlugin source;
+    private Plugin source;
     private String pluginName;
 
     public PluginLoadingException(String message, String pluginName,
-            IPlugin source) {
+            Plugin source) {
         super(message);
         this.pluginName = pluginName;
         this.source = source;
     }
 
-    public IPlugin getSource() {
+    public Plugin getSource() {
         return source;
     }
     

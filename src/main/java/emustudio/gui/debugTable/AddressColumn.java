@@ -1,5 +1,5 @@
 /*
- * ColumnAddress.java
+ * AddressColumn.java
  *
  * KISS, YAGNI, DRY
  * 
@@ -22,19 +22,19 @@
 
 package emustudio.gui.debugTable;
 
-import emulib.plugins.cpu.SimpleDebugColumn;
+import emulib.plugins.cpu.AbstractDebugColumn;
 
 /**
  * This class represents "address" column in the debug table.
  * 
  * @author vbmacher
  */
-public class ColumnAddress extends SimpleDebugColumn {
+public class AddressColumn extends AbstractDebugColumn {
 
     /**
      * Creates new instance of the address column.
      */
-    public ColumnAddress() {
+    public AddressColumn() {
         super("address", java.lang.String.class, false);
     }
 

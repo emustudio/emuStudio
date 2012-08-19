@@ -1,5 +1,5 @@
 /*
- * ColumnOpcode.java
+ * OpcodeColumn.java
  *
  * KISS, YAGNI, DRY
  * 
@@ -22,27 +22,28 @@
 
 package emustudio.gui.debugTable;
 
-import emulib.plugins.cpu.CPUInstruction;
-import emulib.plugins.cpu.IDisassembler;
-import emulib.plugins.cpu.SimpleDebugColumn;
+import emulib.plugins.cpu.AbstractDebugColumn;
+import emulib.plugins.cpu.DisassembledInstruction;
+import emulib.plugins.cpu.Disassembler;
+import emulib.plugins.cpu.InvalidInstructionException;
 
 /**
- * This class represents "opcode" column in the debug table. The opcode means
- * operating code - the formatted binary representation of the instruction.
+ * This class represents "opcode" column in the debug table.
+ * 
+ * The opcode means operating code - the formatted binary representation of the instruction.
  *
- * @author vbmacher
  */
-public class ColumnOpcode extends SimpleDebugColumn {
-    private IDisassembler dis;
+public class OpcodeColumn extends AbstractDebugColumn {
+    private Disassembler disassembler;
 
     /**
      * Creates an instance of the column.
      * 
-     * @param disasm Dissassembler instance
+     * @param disassembler Dissassembler object
      */
-    public ColumnOpcode(IDisassembler disasm) {
+    public OpcodeColumn(Disassembler disassembler) {
         super("opcode", java.lang.String.class, false);
-        this.dis = disasm;
+        this.disassembler = disassembler;
     }
 
     /**
@@ -64,8 +65,10 @@ public class ColumnOpcode extends SimpleDebugColumn {
     @Override
     public Object getDebugValue(int location) {
         try {
-            CPUInstruction instr = dis.disassemble(location);
+            DisassembledInstruction instr = disassembler.disassemble(location);
             return instr.getOpCode();
+        } catch (InvalidInstructionException e) {
+            return "";
         } catch(IndexOutOfBoundsException e) {
             return "";
         } catch (NullPointerException x) {

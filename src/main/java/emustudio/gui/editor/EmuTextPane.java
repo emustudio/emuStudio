@@ -22,9 +22,9 @@
  */
 package emustudio.gui.editor;
 
-import emulib.plugins.compiler.ICompiler;
-import emulib.plugins.compiler.ILexer;
-import emulib.plugins.compiler.IToken;
+import emulib.plugins.compiler.Compiler;
+import emulib.plugins.compiler.LexicalAnalyzer;
+import emulib.plugins.compiler.Token;
 import emulib.plugins.compiler.SourceFileExtension;
 import emustudio.gui.utils.EmuFileFilter;
 import emustudio.interfaces.ITokenColor;
@@ -76,7 +76,7 @@ public class EmuTextPane extends JTextPane {
      */
     public static final short NUMBERS_HEIGHT = 4;
 
-    private ILexer syntaxLexer = null;
+    private LexicalAnalyzer syntaxLexer = null;
     private DocumentReader reader;
     private HighLightedDocument document;
     private Map<Integer, HighlightStyle> styles; // token styles
@@ -146,7 +146,7 @@ public class EmuTextPane extends JTextPane {
      *
      * @param compiler The chosen compiler.
      */
-    public EmuTextPane(ICompiler compiler) {
+    public EmuTextPane(Compiler compiler) {
         initStyles();
 
         fileSaved = true;
@@ -218,16 +218,16 @@ public class EmuTextPane extends JTextPane {
 
     private void initStyles() {
         styles = new HashMap<Integer, HighlightStyle>();
-        styles.put(IToken.COMMENT, new HighlightStyle(true, false, ITokenColor.COMMENT));
-        styles.put(IToken.ERROR, new HighlightStyle(false, false, ITokenColor.ERROR));
-        styles.put(IToken.IDENTIFIER, new HighlightStyle(false, false, ITokenColor.IDENTIFIER));
-        styles.put(IToken.LABEL, new HighlightStyle(false, false, ITokenColor.LABEL));
-        styles.put(IToken.LITERAL, new HighlightStyle(false, false, ITokenColor.LITERAL));
-        styles.put(IToken.OPERATOR, new HighlightStyle(false, true, ITokenColor.OPERATOR));
-        styles.put(IToken.PREPROCESSOR, new HighlightStyle(false, true, ITokenColor.PREPROCESSOR));
-        styles.put(IToken.REGISTER, new HighlightStyle(false, false, ITokenColor.REGISTER));
-        styles.put(IToken.RESERVED, new HighlightStyle(false, true, ITokenColor.RESERVED));
-        styles.put(IToken.SEPARATOR, new HighlightStyle(false, false, ITokenColor.SEPARATOR));
+        styles.put(Token.COMMENT, new HighlightStyle(true, false, ITokenColor.COMMENT));
+        styles.put(Token.ERROR, new HighlightStyle(false, false, ITokenColor.ERROR));
+        styles.put(Token.IDENTIFIER, new HighlightStyle(false, false, ITokenColor.IDENTIFIER));
+        styles.put(Token.LABEL, new HighlightStyle(false, false, ITokenColor.LABEL));
+        styles.put(Token.LITERAL, new HighlightStyle(false, false, ITokenColor.LITERAL));
+        styles.put(Token.OPERATOR, new HighlightStyle(false, true, ITokenColor.OPERATOR));
+        styles.put(Token.PREPROCESSOR, new HighlightStyle(false, true, ITokenColor.PREPROCESSOR));
+        styles.put(Token.REGISTER, new HighlightStyle(false, false, ITokenColor.REGISTER));
+        styles.put(Token.RESERVED, new HighlightStyle(false, true, ITokenColor.RESERVED));
+        styles.put(Token.SEPARATOR, new HighlightStyle(false, false, ITokenColor.SEPARATOR));
         this.setFont(new java.awt.Font("monospaced", 0, 12));
         this.setMargin(new Insets(NUMBERS_HEIGHT, NUMBERS_WIDTH, 0, 0));
         this.setBackground(Color.WHITE);

@@ -21,13 +21,13 @@
  */
 package emustudio.architecture;
 
-import emulib.plugins.IPlugin;
-import emulib.plugins.ISettingsHandler;
-import emulib.plugins.compiler.ICompiler;
-import emulib.plugins.cpu.ICPU;
-import emulib.plugins.device.IDevice;
-import emulib.plugins.memory.IMemory;
-import emulib.runtime.interfaces.IConnections;
+import emulib.plugins.Plugin;
+import emulib.plugins.SettingsManipulator;
+import emulib.plugins.compiler.Compiler;
+import emulib.plugins.cpu.CPU;
+import emulib.plugins.device.Device;
+import emulib.plugins.memory.Memory;
+import emulib.runtime.interfaces.PluginConnections;
 import emustudio.architecture.ArchLoader.PluginInfo;
 import java.util.*;
 import org.slf4j.Logger;
@@ -38,37 +38,37 @@ import org.slf4j.LoggerFactory;
  * 
  * @author vbmacher
  */
-public class Computer implements IConnections {
+public class Computer implements PluginConnections {
     private final static Logger logger = LoggerFactory.getLogger(Computer.class);
-    private ICPU cpu;
-    private ICompiler compiler;
-    private IMemory memory;
-    private IDevice[] devices;
+    private CPU cpu;
+    private Compiler compiler;
+    private Memory memory;
+    private Device[] devices;
 
     private Map<Long, List<Long>> connections;
-    private Map<Long, IPlugin> plugins;
+    private Map<Long, Plugin> plugins;
 
     /**
      * Creates new Computer instance.
      *
-     * @param cpu ICPU object
-     * @param memory IMemory object
-     * @param compiler ICompiler object
-     * @param devices array of IDevice objects
+     * @param cpu CPU object
+     * @param memory Memory object
+     * @param compiler Compiler object
+     * @param devices array of Device objects
      * @param plugins collection of all plug-ins` information
      * @param pluginsReverse hashtable with all plug-ins, the keys are plug-in
      * objects, and values are plug-in IDs.
      * @param connections hashtable with all connections. Keys and values are
      * plug-in IDs.
      */
-    public Computer(ICPU cpu, IMemory memory, ICompiler compiler, IDevice[] devices, Collection<PluginInfo> plugins,
+    public Computer(CPU cpu, Memory memory, Compiler compiler, Device[] devices, Collection<PluginInfo> plugins,
             Map<Long, List<Long>> connections) {
         this.cpu = cpu;
         this.memory = memory;
         this.compiler = compiler;
         this.devices = devices;
         this.connections = connections;
-        this.plugins = new HashMap<Long, IPlugin>();
+        this.plugins = new HashMap<Long, Plugin>();
 
         for (PluginInfo plugin : plugins) {
             this.plugins.put(plugin.pluginId, plugin.plugin);
@@ -81,43 +81,43 @@ public class Computer implements IConnections {
      * @param pluginID ID of requested plug-in
      * @return plug-in object
      */
-    public IPlugin getPlugin(long pluginID) {
+    public Plugin getPlugin(long pluginID) {
         return plugins.get(pluginID);
     }
 
     /**
      * Get CPU plug-in.
      *
-     * @return ICPU plug-in object
+     * @return CPU plug-in object
      */
-    public ICPU getCPU() {
+    public CPU getCPU() {
         return cpu;
     }
 
     /**
      * Get compiler plug-in.
      *
-     * @return ICompiler plug-in object
+     * @return Compiler plug-in object
      */
-    public ICompiler getCompiler() {
+    public Compiler getCompiler() {
         return compiler;
     }
 
     /**
      * Get memory plug-in.
      *
-     * @return IMemory plug-in object
+     * @return Memory plug-in object
      */
-    public IMemory getMemory() {
+    public Memory getMemory() {
         return memory;
     }
 
     /**
      * Get array of device plug-ins.
      *
-     * @return array of IDevice plug-in object
+     * @return array of Device plug-in object
      */
-    public IDevice[] getDevices() {
+    public Device[] getDevices() {
         return devices;
     }
 
@@ -125,9 +125,9 @@ public class Computer implements IConnections {
      * Get a device plug-in by specific position.
      *
      * @param index position of the device in the devices array
-     * @return IDevice plug-in object
+     * @return Device plug-in object
      */
-    public IDevice getDevice(int index) {
+    public Device getDevice(int index) {
         return devices[index];
     }
 
@@ -144,10 +144,10 @@ public class Computer implements IConnections {
      * Perform reset of all plugins 
      */
     public void resetPlugins() {
-        Collection<IPlugin> p = plugins.values();
-        Iterator<IPlugin> i = p.iterator();
+        Collection<Plugin> p = plugins.values();
+        Iterator<Plugin> i = p.iterator();
         while (i.hasNext()) {
-            IPlugin pl = i.next();
+            Plugin pl = i.next();
             pl.reset();
         }
     }
@@ -194,7 +194,7 @@ public class Computer implements IConnections {
      * @param settings settings manipulation object
      * @return true if initialization was successful, false otherwise
      */
-    public boolean initialize(ISettingsHandler settings) {
+    public boolean initialize(SettingsManipulator settings) {
         if ((compiler != null) &&
             (!compiler.initialize(settings)))
             return false;
@@ -225,16 +225,16 @@ public class Computer implements IConnections {
      */
     @Override
     public int getPluginType(long pluginID) {
-        IPlugin p = plugins.get(pluginID);
+        Plugin p = plugins.get(pluginID);
         if (p == null)
             return TYPE_UNKNOWN;
-        if (p instanceof ICPU)
+        if (p instanceof CPU)
             return TYPE_CPU;
-        else if (p instanceof IMemory)
+        else if (p instanceof Memory)
             return TYPE_MEMORY;
-        else if (p instanceof IDevice)
+        else if (p instanceof Device)
             return TYPE_DEVICE;
-        else if (p instanceof ICompiler)
+        else if (p instanceof Compiler)
             return TYPE_COMPILER;
         return TYPE_UNKNOWN;
     }
