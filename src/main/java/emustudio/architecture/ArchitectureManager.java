@@ -1,5 +1,5 @@
 /*
- * ArchHandler.java
+ * ArchitectureManager.java
  * 
  * Created on Friday, 28.1.2008 22:31
  * KISS, YAGNI, DRY
@@ -22,14 +22,10 @@
  */
 package emustudio.architecture;
 
-import emulib.plugins.Plugin;
-import emulib.plugins.SettingsManipulator;
-import emulib.plugins.compiler.Compiler;
-import emulib.plugins.cpu.CPU;
-import emulib.plugins.device.Device;
-import emulib.plugins.memory.Memory;
-import emustudio.architecture.ArchLoader.PluginInfo;
+import emulib.emustudio.SettingsManager;
+import emustudio.architecture.ArchitectureLoader.PluginInfo;
 import emustudio.architecture.drawing.Schema;
+import emustudio.main.Main;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,41 +35,37 @@ import org.slf4j.LoggerFactory;
  *
  * @author vbmacher
  */
-public class ArchHandler implements SettingsManipulator {
-    private final static Logger logger = LoggerFactory.getLogger(ArchHandler.class);
+public class ArchitectureManager implements SettingsManager {
+    private final static Logger logger = LoggerFactory.getLogger(ArchitectureManager.class);
 
     private Computer computer;
     private Properties settings;
     private Schema schema;
     private Map<Long, String> pluginNames;
-
-    private static final String EMPTY_STRING = "";
+    private ConfigurationManager configurationManager = null;
 
     /**
      * Creates new virtual computer architecture and initializes all plug-ins.
      * 
-     * @param arch         Virtual computer, handling the structure of plug-ins
-     * @param settings     Architecture settings (Properties)
-     * @param schema       Abstract schema of the architecture
-     * @param pluginNames  Names of all plug-ins
-     * @param auto         If the emuStudio is runned in automatization mode
-     * @param nogui        If the "--nogui" parameter was given to emuStudio
+     * @param computer Virtual computer, handling the structure of plug-ins
+     * @param settings ArchitectureManager settings (Properties)
+     * @param schema   Abstract schema of the architecture
      *  
      * @throws PluginInitializationException if initialization of the architecture failed.
      */
-    public ArchHandler(Computer arch, Properties settings,
-            Schema schema, Collection<PluginInfo> plugins, boolean auto,
-            boolean nogui) throws PluginInitializationException {
-        this.computer = arch;
+    public ArchitectureManager(Computer computer, Properties settings, Schema schema,
+            ConfigurationManager configurationManager) throws PluginInitializationException {
+        this.computer = computer;
         this.settings = settings;
         this.schema = schema;
         this.pluginNames = new HashMap<Long, String>();
-        
-        for (PluginInfo plugin : plugins) {
+        this.configurationManager = configurationManager;
+
+        for (PluginInfo plugin : computer.getPluginsInfo()) {
             pluginNames.put(plugin.pluginId, plugin.pluginSettingsName);
         }
 
-        if (initialize(auto, nogui) == false) {
+        if (initialize() == false) {
             throw new PluginInitializationException("Initialization of plugins failed");
         }
     }
@@ -84,13 +76,13 @@ public class ArchHandler implements SettingsManipulator {
      * 
      * @return true If the initialization succeeded, false otherwise
      */
-    private boolean initialize(boolean auto, boolean nogui) {
-        if (auto) {
+    private boolean initialize() {
+        if (Main.commandLine.autoWanted()) {
            // Set "auto" setting to "true" to all plugins
-           writeSettingToAll("auto", "true");
+           writeSetting("auto", "true");
         }
-        if (nogui) {
-           writeSettingToAll("nogui", "true");
+        if (Main.commandLine.noGUIWanted()) {
+           writeSetting("nogui", "true");
         }
 
         return computer.initialize(this);
@@ -141,18 +133,15 @@ public class ArchHandler implements SettingsManipulator {
      */
     @Override
     public String readSetting(long pluginID, String settingName) {
-        Plugin plug = computer.getPlugin(pluginID);
-        
-        if (plug == null)
-            return null;
-
         String prop = pluginNames.get(pluginID);
-
-        if ((prop == null) || prop.equals(EMPTY_STRING))
-            return null;
         
-        if ((settingName != null) && (!settingName.equals(EMPTY_STRING)))
+        if ((prop == null) || prop.isEmpty()) {
+            return null;
+        }
+        
+        if ((settingName != null) && !settingName.isEmpty()) {
             prop += "." + settingName;
+        }
 
         return settings.getProperty(prop, null);
     }
@@ -202,42 +191,33 @@ public class ArchHandler implements SettingsManipulator {
      * @param pluginID  plugin ID, identification of a plugin
      * @param settingName name of wanted setting
      * @param val new value of the setting
+     * @return true if the setting was successfully saved. It returns false if pluginID wasn't recognized or some error
+     *         happened.
      */
     @Override
-    public void writeSetting(long pluginID, String settingName, String val) {
-        if (settingName == null || settingName.equals(EMPTY_STRING)) {
-            return;
+    public boolean writeSetting(long pluginID, String settingName, String val) {
+        String prop = pluginNames.get(pluginID);
+        
+        if ((prop == null) || prop.isEmpty()) {
+            return false;
         }
-
-        Plugin plug = computer.getPlugin(pluginID);
-        if (plug == null) {
-            return;
+        
+        if ((settingName != null) && !settingName.isEmpty()) {
+            prop += "." + settingName;
         }
-
-        String prop = EMPTY_STRING;
-        if (plug instanceof Device) {
-            // search for device
-            prop = pluginNames.get(pluginID);
-        } else if (plug instanceof CPU) {
-            prop = "cpu";
-        } else if (plug instanceof Memory) {
-            prop = "memory";
-        } else if (plug instanceof Compiler) {
-            prop = "compiler";
-        }
-
-        if (prop.equals(EMPTY_STRING)) {
-            return;
-        }
-        prop += "." + settingName;
 
         settings.setProperty(prop, val);
-        try {
-        ArchLoader.writeConfig(schema.getConfigName(), settings);
-        } catch (WriteConfigurationException e) {
-            logger.error(new StringBuilder().append("[pluginID=").append(pluginID).append("; ").append(settingName)
-                    .append("=").append(val).append("]").append(" Could not write setting").toString(),e);
+        if (configurationManager != null) {
+            try {
+                configurationManager.writeConfiguration(schema.getConfigName(), settings);
+            } catch (WriteConfigurationException e) {
+                logger.error("[pluginID=" + pluginID + "; " + settingName + "=" + val + "] Could not write setting", e);
+                return false;
+            }
+        } else {
+            logger.debug("ConfigurationManager is null. Setting is not saved.");
         }
+        return true;
     }
 
     /**
@@ -246,59 +226,50 @@ public class ArchHandler implements SettingsManipulator {
      * 
      * @param pluginID    plugin ID, identification of a plugin
      * @param settingName name of wanted setting
+     * @return true if the setting was removed, or it didn't exist so far. It returns false if pluginID wasn't recognized
+     *         or some error happened.
      */
     @Override
-    public void removeSetting(long pluginID, String settingName) {
-        if (settingName == null || settingName.equals(EMPTY_STRING)) {
-            return;
+    public boolean removeSetting(long pluginID, String settingName) {
+        String prop = pluginNames.get(pluginID);
+        
+        if ((prop == null) || prop.isEmpty()) {
+            return false;
         }
-
-        Plugin plug = computer.getPlugin(pluginID);
-        if (plug == null) {
-            return;
+        
+        if ((settingName != null) && !settingName.isEmpty()) {
+            prop += "." + settingName;
         }
-
-        String prop = EMPTY_STRING;
-
-        if (plug instanceof Device) {
-            // search for device
-            prop = pluginNames.get(pluginID);
-        } else if (plug instanceof CPU) {
-            prop = "cpu";
-        } else if (plug instanceof Memory) {
-            prop = "memory";
-        } else if (plug instanceof Compiler) {
-            prop = "compiler";
-        }
-
-        if (prop.equals(EMPTY_STRING)) {
-            return;
-        }
-        prop += "." + settingName;
 
         settings.remove(prop);
-        try {
-        ArchLoader.writeConfig(schema.getConfigName(), settings);
-        } catch (WriteConfigurationException e) {
-            logger.error(new StringBuilder().append("[pluginID=").append(pluginID).append("; ").append(settingName)
-                    .append("] Could not remove setting.").toString(), e);
+        if (configurationManager != null) {
+            try {
+                configurationManager.writeConfiguration(schema.getConfigName(), settings);
+            } catch (WriteConfigurationException e) {
+                logger.error("[pluginID=" + pluginID + "; " + settingName + "] Could not remove setting", e);
+                return false;
+            }
+        } else {
+            logger.debug("ConfigurationManager is null. Setting removal is not saved.");
         }
+        return true;
     }
 
     /**
-     * This method is used only by the emuStudio to set some common settings
-     * that should be set for all plugins.
+     * Set a setting for all plugins.
      *
+     * This method should be used only by the emuStudio. It does not override any of the SettingsManager method.
+     * 
      * @param settingName name of the setting
-     * @param val value of the setting
+     * @param value value of the setting
+     * @return true if at least one setting was successfully saved; false otherwise.
      */
-    public void writeSettingToAll(String settingName, String val) {
-        long id;
-        Set<Long> set = pluginNames.keySet();
-        for (Iterator e = set.iterator(); e.hasNext();) {
-            id = (Long)e.next();
-            this.writeSetting(id, settingName, val);
+    public boolean writeSetting(String settingName, String value) {
+        boolean result = true;
+        for (Long pluginID : pluginNames.keySet()) {
+            result = result && writeSetting(pluginID, settingName, value);
         }
+        return result;
     }
 
 }

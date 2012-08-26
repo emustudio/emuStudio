@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author vbmacher
  */
-class CommandLineFactory {
+public class CommandLineFactory {
     private final static Logger logger = LoggerFactory.getLogger(CommandLineFactory.class);
 
     public static class CommandLine {

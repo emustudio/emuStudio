@@ -92,7 +92,7 @@ public class StudioFrame extends javax.swing.JFrame {
      */
     public StudioFrame(String title) {
         // create models and components
-        arch = Main.currentArch.getComputer();
+        arch = Main.architecture.getComputer();
 
         compiler = arch.getCompiler();
         memory = arch.getMemory();
@@ -184,6 +184,7 @@ public class StudioFrame extends javax.swing.JFrame {
                 @Override
                 public void onMessage(Message message) {
                     txtOutput.append(message.getForrmattedMessage() + "\n");
+//                    if (Main.commandLine.getOutputFileName() != null)
                 }
 
                 @Override

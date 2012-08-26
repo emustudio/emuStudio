@@ -24,7 +24,7 @@
 package emustudio.gui;
 
 import emulib.runtime.StaticDialogs;
-import emustudio.architecture.ArchLoader;
+import emustudio.architecture.ArchitectureLoader;
 import emustudio.architecture.ReadConfigurationException;
 import emustudio.architecture.drawing.PreviewPanel;
 import emustudio.architecture.drawing.Schema;
@@ -71,7 +71,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         private String[] allModels;
 
         public ArchListModel() {
-            allModels = ArchLoader.getAllNames(ArchLoader.CONFIGS_DIR, ".conf");
+            allModels = ArchitectureLoader.getAllFileNames(ArchitectureLoader.CONFIGS_DIR, ".conf");
         }
 
         @Override
@@ -89,7 +89,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         }
 
         public void update() {
-            allModels = ArchLoader.getAllNames(ArchLoader.CONFIGS_DIR, ".conf");
+            allModels = ArchitectureLoader.getAllFileNames(ArchitectureLoader.CONFIGS_DIR, ".conf");
             this.fireContentsChanged(this, -1, -1);
         }
     }
@@ -339,7 +339,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         }
         archName = (String) lstConfig.getSelectedValue();
         try {
-            Schema schema = ArchLoader.getInstance().loadSchema(archName);
+            Schema schema = ArchitectureLoader.getInstance().loadSchema(archName);
             if (schema == null) {
                 return;
             }
@@ -360,7 +360,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
                 + " selected computer?", "Delete architecture");
         archName = (String) lstConfig.getSelectedValue();
         if (r == StaticDialogs.YES_OPTION) {
-            boolean re = ArchLoader.deleteConfig(archName);
+            boolean re = ArchitectureLoader.getInstance().deleteConfiguration(archName);
             lstConfig.clearSelection();
             if (re) {
                 archName = "";
@@ -385,7 +385,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
 
         archName = (String) lstConfig.getSelectedValue();
         try {
-            Schema s = ArchLoader.getInstance().loadSchema(archName);
+            Schema s = ArchitectureLoader.getInstance().loadSchema(archName);
 
             preview.setSchema(s);
             preview.repaint();

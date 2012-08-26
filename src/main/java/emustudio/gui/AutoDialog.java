@@ -82,16 +82,16 @@ public class AutoDialog extends JDialog {
      * string and whether to enable the "Stop" button.
      *
      * @param action action to show in the dialog
-     * @param enableButton whether to enable the "Stop" button
+     * @param enableStopButton whether to enable the "Stop" button
      */
-    public void setAction(String action, boolean enableButton) {
+    public void setAction(String action, boolean enableStopButton) {
         lblAction.setText(action);
         lblAction.repaint();
-        btnStop.setEnabled(enableButton);
+        btnStop.setEnabled(enableStopButton);
     }
 
     private void btnStopActionPerformed(ActionEvent e) {
-        Main.currentArch.getComputer().getCPU().stop();
+        Main.architecture.getComputer().getCPU().stop();
     }
     private JLabel lblAction;
     private JButton btnStop;

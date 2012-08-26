@@ -8,7 +8,21 @@
     </encoder>
   </appender>
 
+  <appender name="AUTOMATIZATION" class="ch.qos.logback.core.FileAppender">
+    <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+      <layout class="ch.qos.logback.classic.html.HTMLLayout">
+        <pattern>%date%relative%level%msg</pattern>
+      </layout>
+    </encoder>
+    <file>automatization.html</file>
+  </appender>
+
   <root level="debug">
     <appender-ref ref="FILE" />
   </root>
+
+  <logger name="automatization" level="debug">
+    <appender-ref ref="AUTOMATIZATION" />
+  </logger>
+
 </configuration>

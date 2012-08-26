@@ -28,10 +28,6 @@ import emustudio.gui.LoadingDialog;
 import emustudio.gui.OpenComputerDialog;
 import emustudio.gui.StudioFrame;
 import emustudio.main.CommandLineFactory.CommandLine;
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +43,7 @@ public class Main {
     /**
      * Loaded computer.
      */
-    public static ArchHandler currentArch = null;
+    public static ArchitectureManager architecture = null;
     /**
      * emuStudio password for emuLib identification security mechanism.
      */
@@ -170,10 +166,9 @@ public class Main {
 
         // load the virtual computer
         try {
-            currentArch = ArchLoader.getInstance().loadComputer(commandLine.getConfigName(), commandLine.autoWanted(),
-                    commandLine.noGUIWanted());
+            architecture = ArchitectureLoader.getInstance().createArchitecture(commandLine.getConfigName());
         } catch (PluginLoadingException e) {
-            currentArch = null;
+            architecture = null;
             logger.error("Could not load virtual computer.", e);
             tryShowErrorMessage(new StringBuilder().append("Could not load virtual computer: ")
                     .append(e.getLocalizedMessage()).toString());
@@ -192,7 +187,7 @@ public class Main {
             splash.dispose();
         }
 
-        if (currentArch == null) {
+        if (architecture == null) {
             System.exit(1);
         }
 
@@ -210,9 +205,8 @@ public class Main {
                 System.exit(1);
             }
         } else {
-            new Automatization(currentArch, commandLine.getInputFileName(), commandLine.getOutputFileName())
-                    .runAutomatization(commandLine.noGUIWanted());
-            currentArch.destroy();
+            new Automatization(architecture, commandLine.getInputFileName(), commandLine.noGUIWanted()).run();
+            architecture.destroy();
             System.exit(0);
         }
     }

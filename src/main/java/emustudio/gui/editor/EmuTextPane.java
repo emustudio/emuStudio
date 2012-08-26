@@ -24,8 +24,8 @@ package emustudio.gui.editor;
 
 import emulib.plugins.compiler.Compiler;
 import emulib.plugins.compiler.LexicalAnalyzer;
-import emulib.plugins.compiler.Token;
 import emulib.plugins.compiler.SourceFileExtension;
+import emulib.plugins.compiler.Token;
 import emustudio.gui.utils.EmuFileFilter;
 import emustudio.interfaces.ITokenColor;
 import emustudio.main.Main;
@@ -47,8 +47,8 @@ import javax.swing.JTextPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
-import javax.swing.text.AbstractDocument.DefaultDocumentEvent;
 import javax.swing.text.*;
+import javax.swing.text.AbstractDocument.DefaultDocumentEvent;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
@@ -530,8 +530,9 @@ public class EmuTextPane extends JTextPane {
      */
     public boolean saveFile(boolean showDialogIfFileIsInvalid) {
         if ((fileSource == null) || (fileSource.exists() && (fileSource.canWrite() == false))) {
-            if (showDialogIfFileIsInvalid)
+            if (showDialogIfFileIsInvalid) {
                 return saveFileDialog();
+            }
             else {
                 logger.error("Could not save file, the file is not writable: " + fileSource.getPath());
                 Main.tryShowErrorMessage("Error: Cannot save the file!\n The selected file is not writable.");

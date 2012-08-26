@@ -23,7 +23,7 @@ package emustudio.gui;
 
 import emulib.annotations.PluginType;
 import emulib.plugins.Plugin;
-import emustudio.architecture.ArchLoader;
+import emustudio.architecture.ArchitectureLoader;
 import emustudio.architecture.Computer;
 import emustudio.architecture.drawing.PreviewPanel;
 import emustudio.main.Main;
@@ -46,10 +46,10 @@ import org.slf4j.LoggerFactory;
  */
 public class ViewComputerDialog extends javax.swing.JDialog {
     private final static Logger logger = LoggerFactory.getLogger(ViewComputerDialog.class);
-    private final static String CPU_CONFIG_DIR = ArchLoader.CPUS_DIR + File.separator;
-    private final static String COMPILER_CONFIG_DIR = ArchLoader.COMPILERS_DIR + File.separator;
-    private final static String MEMORY_CONFIG_DIR = ArchLoader.MEMORIES_DIR + File.separator;
-    private final static String DEVICE_CONFIG_DIR = ArchLoader.DEVICES_DIR + File.separator;
+    private final static String CPU_CONFIG_DIR = ArchitectureLoader.CPUS_DIR + File.separator;
+    private final static String COMPILER_CONFIG_DIR = ArchitectureLoader.COMPILERS_DIR + File.separator;
+    private final static String MEMORY_CONFIG_DIR = ArchitectureLoader.MEMORIES_DIR + File.separator;
+    private final static String DEVICE_CONFIG_DIR = ArchitectureLoader.DEVICES_DIR + File.separator;
     
     private Computer computer;
     private PreviewPanel panelSchema;
@@ -63,13 +63,13 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         super(parent, true);
         initComponents();
         setLocationRelativeTo(parent);
-        lblComputerName.setText(Main.currentArch.getComputerName());
-        this.computer = Main.currentArch.getComputer();
+        lblComputerName.setText(Main.architecture.getComputerName());
+        this.computer = Main.architecture.getComputer();
 
         // load devices
         int j = computer.getDeviceCount();
         for (int i = 0; i < j; i++) {
-            cmbDevice.addItem(Main.currentArch.getDeviceName(i));
+            cmbDevice.addItem(Main.architecture.getDeviceName(i));
         }
         
         cmbDevice.addActionListener(new ActionListener() {
@@ -82,13 +82,13 @@ public class ViewComputerDialog extends javax.swing.JDialog {
                     return;
                 }
                 try {
-                    setInfo(computer.getDevice(i), DEVICE_CONFIG_DIR + Main.currentArch.getDeviceName(i));
+                    setInfo(computer.getDevice(i), DEVICE_CONFIG_DIR + Main.architecture.getDeviceName(i));
                 } catch (Exception ex) {
                 }
             }
             
         });
-        panelSchema = new PreviewPanel(Main.currentArch.getSchema());
+        panelSchema = new PreviewPanel(Main.architecture.getSchema());
         scrollPane.setViewportView(panelSchema);
         scrollPane.getHorizontalScrollBar().setUnitIncrement(10);
         scrollPane.getVerticalScrollBar().setUnitIncrement(10);
@@ -106,7 +106,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         // Select default info
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        setInfo(computer.getCPU(), CPU_CONFIG_DIR + Main.currentArch.getCPUName());
+        setInfo(computer.getCPU(), CPU_CONFIG_DIR + Main.architecture.getCPUName());
     }
     
     private void setInfo(Plugin plugin, String fileName) {
@@ -421,19 +421,19 @@ public class ViewComputerDialog extends javax.swing.JDialog {
     private void btnCompilerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCompilerActionPerformed
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        setInfo(computer.getCompiler(), COMPILER_CONFIG_DIR + Main.currentArch.getCompilerName());        
+        setInfo(computer.getCompiler(), COMPILER_CONFIG_DIR + Main.architecture.getCompilerName());        
     }//GEN-LAST:event_btnCompilerActionPerformed
 
     private void btnCPUActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCPUActionPerformed
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        setInfo(computer.getCPU(), CPU_CONFIG_DIR + Main.currentArch.getCPUName());
+        setInfo(computer.getCPU(), CPU_CONFIG_DIR + Main.architecture.getCPUName());
     }//GEN-LAST:event_btnCPUActionPerformed
 
     private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMemoryActionPerformed
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        setInfo(computer.getMemory(), MEMORY_CONFIG_DIR + Main.currentArch.getMemoryName());
+        setInfo(computer.getMemory(), MEMORY_CONFIG_DIR + Main.architecture.getMemoryName());
     }//GEN-LAST:event_btnMemoryActionPerformed
 
     private void btnDeviceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeviceActionPerformed
@@ -442,7 +442,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         setVisibleInfo(false);
         if (cmbDevice.getItemCount() > 0) {
             cmbDevice.setSelectedIndex(0);
-            setInfo(computer.getDevice(0), DEVICE_CONFIG_DIR + Main.currentArch.getDeviceName(0));
+            setInfo(computer.getDevice(0), DEVICE_CONFIG_DIR + Main.architecture.getDeviceName(0));
         } else {
             cmbDevice.setEnabled(false);
         }
@@ -525,14 +525,14 @@ public class ViewComputerDialog extends javax.swing.JDialog {
             FileWriter outFile = new FileWriter(fileComputerInfo);
             PrintWriter out = new PrintWriter(outFile);
             
-            out.println("Computer name: " + Main.currentArch.getComputerName() + "\n");
+            out.println("Computer name: " + Main.architecture.getComputerName() + "\n");
             Plugin plugin = computer.getCompiler();
             if (plugin != null) {
                 out.println("Compiler\n########\n");
                 out.print("File name: ");
                 out.print("[");
                 out.print(COMPILER_CONFIG_DIR);
-                out.print(Main.currentArch.getCompilerName());
+                out.print(Main.architecture.getCompilerName());
                 out.println(".jar]");
                 savePluginInfo(out, plugin);
             }
@@ -540,7 +540,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
             out.print("File name: ");
             out.print("[");
             out.print(CPU_CONFIG_DIR);
-            out.print(Main.currentArch.getCPUName());
+            out.print(Main.architecture.getCPUName());
             out.println(".jar]");
             savePluginInfo(out, computer.getCPU());
     
@@ -550,7 +550,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
                 out.print("File name: ");
                 out.print("[");
                 out.print(MEMORY_CONFIG_DIR);
-                out.print(Main.currentArch.getMemoryName());
+                out.print(Main.architecture.getMemoryName());
                 out.println(".jar]");
                 savePluginInfo(out, plugin);
             }
@@ -561,7 +561,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
                 out.print("File name: ");
                 out.print("[");
                 out.print(DEVICE_CONFIG_DIR);
-                out.print(Main.currentArch.getDeviceName(i));
+                out.print(Main.architecture.getDeviceName(i));
                 out.println(".jar]");
                 savePluginInfo(out, plugin);
             }

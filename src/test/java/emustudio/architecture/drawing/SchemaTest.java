@@ -22,12 +22,13 @@
 package emustudio.architecture.drawing;
 
 import java.awt.*;
-import java.awt.image.ImageObserver;
-import java.text.AttributedCharacterIterator;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import org.easymock.EasyMock;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -35,168 +36,24 @@ import org.junit.Test;
  * @author vbmacher
  */
 public class SchemaTest {
+    
+    private static Graphics graphicsMock;
+    
+    @BeforeClass
+    public static void setUpClass() {
+        graphicsMock = EasyMock.createNiceMock(Graphics.class);
+        FontMetrics fontMetricsMock = EasyMock.createNiceMock(FontMetrics.class);
+        Rectangle2D rect = EasyMock.createNiceMock(Rectangle2D.class);
+        EasyMock.expect(rect.getWidth()).andReturn(0.0);
+        EasyMock.expect(fontMetricsMock.getStringBounds(EasyMock.anyObject(String.class),
+                EasyMock.eq(graphicsMock))).andReturn(rect).anyTimes();
+        Font fontMock = EasyMock.createNiceMock(Font.class);
+        EasyMock.expect(fontMock.deriveFont(EasyMock.anyInt())).andReturn(fontMock).anyTimes();
+        EasyMock.expect(graphicsMock.getFont()).andReturn(fontMock).anyTimes();
 
-    private class MyGraphics extends Graphics {
-
-        public MyGraphics() {
-        }
-
-        @Override
-        public Graphics create() {
-            return this;
-        }
-
-        @Override
-        public void translate(int x, int y) {
-        }
-
-        @Override
-        public Color getColor() {
-            return Color.WHITE;
-        }
-
-        @Override
-        public void setColor(Color c) {
-        }
-
-        @Override
-        public void setPaintMode() {
-        }
-
-        @Override
-        public void setXORMode(Color c1) {
-        }
-
-        @Override
-        public Font getFont() {
-            return new Font("Sans", Font.PLAIN, 12);
-        }
-
-        @Override
-        public void setFont(Font font) {
-        }
-
-        @Override
-        public FontMetrics getFontMetrics(Font f) {
-            return new FontMetrics(f) {
-            };
-        }
-
-        @Override
-        public Rectangle getClipBounds() {
-            return new Rectangle(0, 10, 10, 10);
-        }
-
-        @Override
-        public void clipRect(int x, int y, int width, int height) {
-        }
-
-        @Override
-        public void setClip(int x, int y, int width, int height) {
-        }
-
-        @Override
-        public Shape getClip() {
-            return null;
-        }
-
-        @Override
-        public void setClip(Shape clip) {
-        }
-
-        @Override
-        public void copyArea(int x, int y, int width, int height, int dx, int dy) {
-        }
-
-        @Override
-        public void drawLine(int x1, int y1, int x2, int y2) {
-        }
-
-        @Override
-        public void fillRect(int x, int y, int width, int height) {
-        }
-
-        @Override
-        public void clearRect(int x, int y, int width, int height) {
-        }
-
-        @Override
-        public void drawRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
-        }
-
-        @Override
-        public void fillRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
-        }
-
-        @Override
-        public void drawOval(int x, int y, int width, int height) {
-        }
-
-        @Override
-        public void fillOval(int x, int y, int width, int height) {
-        }
-
-        @Override
-        public void drawArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
-        }
-
-        @Override
-        public void fillArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
-        }
-
-        @Override
-        public void drawPolyline(int[] xPoints, int[] yPoints, int nPoints) {
-        }
-
-        @Override
-        public void drawPolygon(int[] xPoints, int[] yPoints, int nPoints) {
-        }
-
-        @Override
-        public void fillPolygon(int[] xPoints, int[] yPoints, int nPoints) {
-        }
-
-        @Override
-        public void drawString(String str, int x, int y) {
-        }
-
-        @Override
-        public void drawString(AttributedCharacterIterator iterator, int x, int y) {
-        }
-
-        @Override
-        public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
-            return true;
-        }
-
-        @Override
-        public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
-            return true;
-        }
-
-        @Override
-        public boolean drawImage(Image img, int x, int y, Color bgcolor, ImageObserver observer) {
-            return true;
-        }
-
-        @Override
-        public boolean drawImage(Image img, int x, int y, int width, int height, Color bgcolor, ImageObserver observer) {
-            return true;
-        }
-
-        @Override
-        public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, ImageObserver observer) {
-            return true;
-        }
-
-        @Override
-        public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, Color bgcolor, ImageObserver observer) {
-            return true;
-        }
-
-        @Override
-        public void dispose() {
-        }
+        EasyMock.expect(graphicsMock.getFontMetrics(EasyMock.anyObject(Font.class))).andReturn(fontMetricsMock).anyTimes();
+        
+        EasyMock.replay(rect, fontMetricsMock, fontMock, graphicsMock);
     }
 
     /**
@@ -454,7 +311,7 @@ public class SchemaTest {
         props.setProperty("height", "30");
 
         CompilerElement elem = new CompilerElement("compiler", props, instance);
-        elem.measure(new MyGraphics());
+        elem.measure(graphicsMock);
         instance.setCompilerElement(elem);
         Assert.assertSame(elem, instance.getCompilerElement());
 
@@ -580,7 +437,7 @@ public class SchemaTest {
         compilerProps.setProperty("width", "100");
         compilerProps.setProperty("height", "30");
         CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
-        elem.measure(new MyGraphics());
+        elem.measure(graphicsMock);
         instance.setCompilerElement(elem);
 
         Properties deviceProps = new Properties();
@@ -591,7 +448,7 @@ public class SchemaTest {
         deviceProps.setProperty("height", "30");
         
         DeviceElement elem2 = new DeviceElement("dev-0", deviceProps, instance);
-        elem2.measure(new MyGraphics());
+        elem2.measure(graphicsMock);
         instance.addDeviceElement(elem2);
 
         Properties memProps = new Properties();
@@ -601,7 +458,7 @@ public class SchemaTest {
         memProps.setProperty("width", "100");
         memProps.setProperty("height", "30");
         MemoryElement elem3 = new MemoryElement("memory", memProps, instance);
-        elem3.measure(new MyGraphics());
+        elem3.measure(graphicsMock);
         instance.setMemoryElement(elem3);
         
         ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList(), instance);
@@ -716,7 +573,7 @@ public class SchemaTest {
         compilerProps.setProperty("width", "100");
         compilerProps.setProperty("height", "30");
         CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
-        elem.measure(new MyGraphics());
+        elem.measure(graphicsMock);
         instance.setCompilerElement(elem);
 
         Properties deviceProps = new Properties();
@@ -727,7 +584,7 @@ public class SchemaTest {
         deviceProps.setProperty("height", "30");
         
         DeviceElement elem2 = new DeviceElement("dev-0", deviceProps, instance);
-        elem2.measure(new MyGraphics());
+        elem2.measure(graphicsMock);
         instance.addDeviceElement(elem2);
 
         Properties memProps = new Properties();
@@ -737,7 +594,7 @@ public class SchemaTest {
         memProps.setProperty("width", "100");
         memProps.setProperty("height", "30");
         MemoryElement elem3 = new MemoryElement("memory", memProps, instance);
-        elem3.measure(new MyGraphics());
+        elem3.measure(graphicsMock);
         instance.setMemoryElement(elem3);
         
         ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList(), instance);
@@ -908,7 +765,7 @@ public class SchemaTest {
         compilerProps.setProperty("width", "100");
         compilerProps.setProperty("height", "30");
         CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
-        elem.measure(new MyGraphics());
+        elem.measure(graphicsMock);
         instance.setCompilerElement(elem);
 
         Properties deviceProps = new Properties();
@@ -919,7 +776,7 @@ public class SchemaTest {
         deviceProps.setProperty("height", "30");
         
         DeviceElement elem2 = new DeviceElement("dev-0", deviceProps, instance);
-        elem2.measure(new MyGraphics());
+        elem2.measure(graphicsMock);
         instance.addDeviceElement(elem2);
 
         Properties memProps = new Properties();
@@ -929,7 +786,7 @@ public class SchemaTest {
         memProps.setProperty("width", "100");
         memProps.setProperty("height", "30");
         MemoryElement elem3 = new MemoryElement("memory", memProps, instance);
-        elem3.measure(new MyGraphics());
+        elem3.measure(graphicsMock);
         instance.setMemoryElement(elem3);
         
         ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList(), instance);
@@ -1113,7 +970,7 @@ public class SchemaTest {
         compilerProps.setProperty("width", "100");
         compilerProps.setProperty("height", "30");
         CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
-        elem.measure(new MyGraphics());
+        elem.measure(graphicsMock);
         instance.setCompilerElement(elem);
 
         Properties deviceProps = new Properties();
@@ -1124,7 +981,7 @@ public class SchemaTest {
         deviceProps.setProperty("height", "30");
 
         DeviceElement elem2 = new DeviceElement("dev-0", deviceProps, instance);
-        elem2.measure(new MyGraphics());
+        elem2.measure(graphicsMock);
         instance.addDeviceElement(elem2);
 
         Properties memProps = new Properties();
@@ -1134,7 +991,7 @@ public class SchemaTest {
         memProps.setProperty("width", "100");
         memProps.setProperty("height", "30");
         MemoryElement elem3 = new MemoryElement("memory", memProps, instance);
-        elem3.measure(new MyGraphics());
+        elem3.measure(graphicsMock);
         instance.setMemoryElement(elem3);
 
         ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList(), instance);

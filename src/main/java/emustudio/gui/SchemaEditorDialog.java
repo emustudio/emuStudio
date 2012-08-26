@@ -22,7 +22,7 @@
 package emustudio.gui;
 
 import emulib.runtime.StaticDialogs;
-import emustudio.architecture.ArchLoader;
+import emustudio.architecture.ArchitectureLoader;
 import emustudio.architecture.WriteConfigurationException;
 import emustudio.architecture.drawing.DrawingPanel;
 import emustudio.architecture.drawing.DrawingPanel.DrawEventListener;
@@ -466,7 +466,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             return;
         }
         buttonSelected = true;
-        String[] cpus = ArchLoader.getAllNames(ArchLoader.CPUS_DIR, ".jar");
+        String[] cpus = ArchitectureLoader.getAllFileNames(ArchitectureLoader.CPUS_DIR, ".jar");
         cmbPlugin.setModel(new pluginModel(cpus));
         try {
             cmbPlugin.setSelectedIndex(0);
@@ -484,7 +484,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             return;
         }
         buttonSelected = true;
-        String[] mems = ArchLoader.getAllNames(ArchLoader.MEMORIES_DIR, ".jar");
+        String[] mems = ArchitectureLoader.getAllFileNames(ArchitectureLoader.MEMORIES_DIR, ".jar");
         cmbPlugin.setModel(new pluginModel(mems));
         try {
             cmbPlugin.setSelectedIndex(0);
@@ -502,7 +502,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             return;
         }
         buttonSelected = true;
-        String[] devs = ArchLoader.getAllNames(ArchLoader.DEVICES_DIR, ".jar");
+        String[] devs = ArchitectureLoader.getAllFileNames(ArchitectureLoader.DEVICES_DIR, ".jar");
         cmbPlugin.setModel(new pluginModel(devs));
         try {
             cmbPlugin.setSelectedIndex(0);
@@ -614,10 +614,10 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
                 schema.setConfigName(name);
 
                 if (!old.equals(name)) {
-                    ArchLoader.renameConfig(name, old);
+                    ArchitectureLoader.getInstance().renameConfiguration(name, old);
                 }
                 try {
-                    ArchLoader.getInstance().saveSchema(schema);
+                    ArchitectureLoader.getInstance().saveSchema(schema);
                 } catch (WriteConfigurationException e) {
                     String msg = new StringBuilder().append("Could not save schema.").toString();
                     logger.error(msg, e);
@@ -628,7 +628,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             } else {
                 schema.setConfigName(name);
                 try {
-                    ArchLoader.getInstance().saveSchema(schema);
+                    ArchitectureLoader.getInstance().saveSchema(schema);
                 } catch (WriteConfigurationException e) {
                     String msg = new StringBuilder().append("Could not save schema.").toString();
                     logger.error(msg, e);
@@ -657,7 +657,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             return;
         }
         buttonSelected = true;
-        String[] compilers = ArchLoader.getAllNames(ArchLoader.COMPILERS_DIR, ".jar");
+        String[] compilers = ArchitectureLoader.getAllFileNames(ArchitectureLoader.COMPILERS_DIR, ".jar");
         cmbPlugin.setModel(new pluginModel(compilers));
         try {
             cmbPlugin.setSelectedIndex(0);

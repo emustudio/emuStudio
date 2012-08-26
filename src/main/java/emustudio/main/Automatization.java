@@ -31,10 +31,9 @@ import emulib.plugins.cpu.CPU.CPUListener;
 import emulib.plugins.cpu.CPU.RunState;
 import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
-import emustudio.architecture.ArchHandler;
+import emustudio.architecture.ArchitectureManager;
 import emustudio.gui.AutoDialog;
 import java.io.*;
-import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,59 +43,40 @@ import org.slf4j.LoggerFactory;
  *
  * @author vbmacher
  */
-public class Automatization {
-    private final static Logger logger = LoggerFactory.getLogger(Automatization.class);
-    private ArchHandler currentArch;
-    private File outputFile;
+public class Automatization implements Runnable {
+    private final static Logger logger = LoggerFactory.getLogger("automatization");
+    private ArchitectureManager currentArch;
     private File inputFile;
     private RunState resultState;
+    private boolean nogui;
 
     /**
      * Creates new automatization object.
      *
      * @param currentArch loaded computer
      * @param inputFileName input source code file name
-     * @param outputFileName output log file name
-     */
-    public Automatization(ArchHandler currentArch, String inputFileName,
-            String outputFileName) {
-        this.currentArch = currentArch;
-        this.outputFile = new File(outputFileName);
-        this.inputFile = new File(inputFileName);
-        resultState = RunState.STATE_STOPPED_NORMAL;
-    }
-
-    /**
-     * This method outputs a message to the output file, if it is opened.
-     *
-     * @param message message to output
-     * @param outw FileWriter object (the opened output file)
-     * @throws IOException
-     */
-    private static void output_message(String message, FileWriter outw) {
-        if (outw != null) {
-            try {
-            outw.write(message + "\n");
-            outw.flush();
-            } catch (IOException e) {
-                logger.error("Could not write message to report:" + message, e);
-            }
-        }
-    }
-
-    /**
-     * Method performs emulation automatization. It supposes that the virtual
-     * configuration is loaded.
-     *
-     * All output is saved into output file.
-     *
      * @param nogui if true, GUI will not be shown.
      */
-    public void runAutomatization(boolean nogui) {
-        AutoDialog adia = null;
+    public Automatization(ArchitectureManager currentArch, String inputFileName, boolean nogui) {
+        this.currentArch = currentArch;
+        this.inputFile = new File(inputFileName);
+        resultState = RunState.STATE_STOPPED_NORMAL;
+        this.nogui = nogui;
+    }
+
+    /**
+     * Executes automatic emulation.
+     * 
+     * It assumes that the virtual computer is loaded.
+     *
+     * All output is saved into output file.
+     */
+    @Override
+    public void run() {
+        AutoDialog progressGUI = null;
         if (!nogui) {
-            adia = new AutoDialog();
-            adia.setVisible(true);
+            progressGUI = new AutoDialog();
+            progressGUI.setVisible(true);
         }
 
         Compiler compiler = currentArch.getComputer().getCompiler();
@@ -104,54 +84,58 @@ public class Automatization {
         final CPU cpu = currentArch.getComputer().getCPU();
         Device[] devices = currentArch.getComputer().getDevices();
 
+        PluginType compilerType = (compiler != null) ? compiler.getClass().getAnnotation(PluginType.class) : null;
+        PluginType cpuType = (cpu != null) ? cpu.getClass().getAnnotation(PluginType.class) : null;
+        PluginType memoryType = (memory != null) ? memory.getClass().getAnnotation(PluginType.class) : null;
+        
 	try {
-            final FileWriter outw = (outputFile == null) ? null : new FileWriter(outputFile);
-            String currentDate = new Date().toString();
-            
-            PluginType compilerType = compiler.getClass().getAnnotation(PluginType.class);
-            PluginType cpuType = cpu.getClass().getAnnotation(PluginType.class);
-            PluginType memoryType = memory.getClass().getAnnotation(PluginType.class);
-
-            output_message("<html><head><title>Emulation report</title></head>"
-                    + "<body><h1>Configuration</h1><p>" + currentDate + "</p>"
-                    + "<table><tr><th>Compiler</th><td>" + 
-                    ((compiler == null) ? "none" : compilerType.title())
-                    + "</td></tr><tr><th>CPU</th><td>" + cpuType.title()
-                    + "</td></tr><th>Memory</th><td>" +
-                    ((memory == null) ? "none" : memoryType.title())
-                    + "</td></tr>", outw);
+            logger.info("Emulation automatization started");
+            logger.info("Compiler: " + ((compilerType == null) ? "none" : compilerType.title()));
+            logger.info("CPU: " + ((cpuType == null) ? "none" : cpuType.title()));
+            logger.info("Memory: " + ((memoryType == null) ? "none" : memoryType.title()));
 
             int size = devices.length;
             for (int i = 0; i < size; i++) {
                 PluginType deviceType = devices[i].getClass().getAnnotation(PluginType.class);
-                output_message("<tr><th>Device #" + String.format("%02d", i)
-                        + "</th><td>" + deviceType.title()
-                        + "</td></tr>", outw);
+                logger.info("Device #" + String.format("%02d", i)  + ": " + deviceType.title());
             }
-            output_message("</table>", outw);
 
             if ((compiler != null) && (inputFile != null)) {
-                if (!nogui) {
-                    adia.setAction("Compiling input file...", false);
-                }
                 logger.info("Compiling input file: " + inputFile);
-
-                output_message("<h1>Compile process</h1><p><strong>File name:"
-                        + "</strong>" + inputFile, outw);
+                if (!nogui) {
+                    progressGUI.setAction("Compiling input file...", false);
+                }
 
                 CompilerListener reporter = new CompilerListener() {
                     @Override
-                    public void onStart() {}
+                    public void onStart() {
+                        logger.info("Compiler started working.");
+                    }
 
                     @Override
                     public void onMessage(Message message) {
-                        String text = "<p>" + message.getForrmattedMessage() + "</p>";
-                        output_message(text, outw);
+                        
+                        switch (message.getMessageType()) {
+                            case TYPE_INFO:
+                                logger.info(message.getForrmattedMessage());
+                            case TYPE_ERROR:
+                                logger.error(message.getForrmattedMessage());
+                            case TYPE_WARNING:
+                                logger.warn(message.getForrmattedMessage());
+                            default:
+                                logger.info(message.getForrmattedMessage());
+                        }
                     }
 
                     @Override
                     public void onFinish(int errorCode)
-                    {}
+                    {
+                        if (errorCode != 0) {
+                            logger.error("Compiler finished with error code: " + errorCode);
+                            return;
+                        }
+                        logger.info("Compiler finished successfully.");
+                    }
                 };
 
                 // Initialize compiler
@@ -159,35 +143,39 @@ public class Automatization {
 
                 FileReader fileR;
                 fileR = new FileReader(inputFile);
-                BufferedReader r = new BufferedReader(fileR);
+                BufferedReader bufferedReader = new BufferedReader(fileR);
 
-                String fn = inputFile.getAbsolutePath();
+                String fileName = inputFile.getAbsolutePath();
 
-                boolean succ = compiler.compile(fn, r);
+                boolean succ = compiler.compile(fileName, bufferedReader);
 
                 if (succ == false) {
-                    logger.error("Compile process failed.");
-                    Main.tryShowErrorMessage("Error: compile process failed!");
-                    output_message("<p>Compilation failed.</p>", outw);
+                    logger.error("Compile process failed. Emulation process cannot continue.");
+                    Main.tryShowErrorMessage("Error: compile process failed. Emulation process cannot continue.");
                     return;
                 } else {
                     logger.info("Source code was compiled successfully.");
-                    output_message("<p>Source code was compiled successfully.</p>", outw);
                 }
 
                 int programStart = compiler.getProgramStartAddress();
                 if (memory != null) {
-                    logger.info("Setting program start to: " + programStart);
-                    output_message("<p>Setting program start to: " + programStart + ".</p>", outw);
+                    logger.info("Setting program start to: " + String.format("%04Xh", programStart));
                     memory.setProgramStart(programStart);
+                } else {
+                    if (programStart > 0) {
+                        logger.warn("Ignoring program start: " + String.format("%04Xh", programStart));
+                    }
                 }
+                logger.info("Resetting CPU...");
+                if (!nogui) {
+                    progressGUI.setAction("Resetting CPU...", false);
+                } 
                 cpu.reset(programStart);
             }
             if (!nogui) {
-                adia.setAction("Running emulation...", true);
+                progressGUI.setAction("Running emulation...", true);
             } 
-            logger.info("Running emulation...");
-            output_message("<h1>Emulation process</h1>", outw);
+            logger.info("Running automatic emulation (executing CPU)...");
 
             final Object resultStateLock = new Object();
 
@@ -198,6 +186,7 @@ public class Automatization {
                     if (state != RunState.STATE_RUNNING) {
                         synchronized(resultStateLock) {
                             resultState = state;
+                            resultStateLock.notify();
                         }
                     }
                 }
@@ -206,66 +195,49 @@ public class Automatization {
             });
             cpu.execute();
 
-            boolean stop = false;
-            do {
-                synchronized(resultStateLock) {
-                    if (resultState != RunState.STATE_RUNNING) {
-                        stop = true ;
-                    }
-                }
-            } while (!stop);
+            synchronized(resultStateLock) {
+                try {
+                    resultStateLock.wait();
+                } catch (InterruptedException e) {}
+            }
 
             switch (resultState) {
                 case STATE_STOPPED_ADDR_FALLOUT:
-                    logger.error("CPU run failed: Address fallout.");
-                    output_message("<p>FAILED (address fallout)</p>", outw);
+                    logger.error("FAILED: Address fallout.");
                     break;
                 case STATE_STOPPED_BAD_INSTR:
-                    logger.error("CPU run failed: Unknown instruction.");
-                    output_message("<p>FAILED (unknown instruction)</p>", outw);
+                    logger.error("FAILED: Unknown instruction.");
                     break;
                 case STATE_STOPPED_BREAK:
-                    logger.info("CPU stop: Breakpoint.");
-                    output_message("<p>DONE (breakpoint stop)</p>", outw);
+                    logger.info("SUCCESS: Breakpoint.");
                     break;
                 case STATE_STOPPED_NORMAL:
-                    logger.info("CPU stop: Normal stop.");
-                    output_message("<p>DONE (normal stop)</p>", outw);
+                    logger.info("SUCCESS: Normal stop.");
                     break;
                 default:
-                    logger.error("CPU run failed: Invalid state: " + resultState);
-                    output_message("<p>FAILED (invalid state): " +
-                            resultState + "</p>", outw);
+                    logger.error("FAILED: Invalid state. (" + resultState + ")");
                     break;
             }
-            logger.info("Current instruction position: " + String.format("%04Xh",
-                    cpu.getInstrPosition()));
-            output_message("<p>Instruction postion: " + String.format("%04Xh",
-                    cpu.getInstrPosition()) + "</p>", outw);
-
+            logger.info("Instruction position after finish = " + String.format("%04Xh", cpu.getInstrPosition()));
+            
             if (!nogui) {
-                adia.setAction("Emulation finished.", false);
+                progressGUI.setAction("Emulation finished.", false);
             }
             logger.info("Emulation finished.");
-            output_message("<p>" + new Date().toString() + "</p>", outw);
-            outw.close();
         } catch (FileNotFoundException e) {
             logger.error("Input file not found", e);
             Main.tryShowErrorMessage("Error: Input file not found!");
-        } catch (IOException e) {
-            logger.error("Could not write to report file", e);
-            Main.tryShowErrorMessage("Could not write to report file");
         } catch (Exception e) {
             logger.error("Unknown error during emulation.", e);
             Main.tryShowErrorMessage("Error in compile process:\n" + e.toString());
         }
         // Set "auto" setting back to "false" to all plugins
-        currentArch.writeSettingToAll("auto", "false");
-        currentArch.writeSettingToAll("nogui", "false");
+        currentArch.writeSetting("auto", "false");
+        currentArch.writeSetting("nogui", "false");
 
         currentArch.destroy();
         if (!nogui) {
-            adia.dispose();
+            progressGUI.dispose();
         }
     }
 

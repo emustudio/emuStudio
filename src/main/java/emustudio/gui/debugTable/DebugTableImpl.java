@@ -142,7 +142,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
      */
     public DebugTableImpl() {
         super();
-        debug_model = new DebugTableModel(Main.currentArch.getComputer().getCPU());
+        debug_model = new DebugTableModel(Main.architecture.getComputer().getCPU());
         setModel(debug_model);
         text_renderer = new TextCellRenderer();
         bool_renderer = new BooleanCellRenderer();

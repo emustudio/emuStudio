@@ -138,6 +138,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymock</artifactId>
+      <version>3.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>cup</groupId>
       <artifactId>java-cup-runtime</artifactId>
       <version>0.11a</version>

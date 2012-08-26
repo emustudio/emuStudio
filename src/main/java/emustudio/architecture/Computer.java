@@ -22,13 +22,13 @@
 package emustudio.architecture;
 
 import emulib.plugins.Plugin;
-import emulib.plugins.SettingsManipulator;
+import emulib.emustudio.SettingsManager;
 import emulib.plugins.compiler.Compiler;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
 import emulib.runtime.interfaces.PluginConnections;
-import emustudio.architecture.ArchLoader.PluginInfo;
+import emustudio.architecture.ArchitectureLoader.PluginInfo;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +47,7 @@ public class Computer implements PluginConnections {
 
     private Map<Long, List<Long>> connections;
     private Map<Long, Plugin> plugins;
+    private Collection<PluginInfo> pluginsInfo;
 
     /**
      * Creates new Computer instance.
@@ -56,10 +57,7 @@ public class Computer implements PluginConnections {
      * @param compiler Compiler object
      * @param devices array of Device objects
      * @param plugins collection of all plug-ins` information
-     * @param pluginsReverse hashtable with all plug-ins, the keys are plug-in
-     * objects, and values are plug-in IDs.
-     * @param connections hashtable with all connections. Keys and values are
-     * plug-in IDs.
+     * @param connections hashtable with all connections. Keys and values are plug-in IDs.
      */
     public Computer(CPU cpu, Memory memory, Compiler compiler, Device[] devices, Collection<PluginInfo> plugins,
             Map<Long, List<Long>> connections) {
@@ -70,6 +68,7 @@ public class Computer implements PluginConnections {
         this.connections = connections;
         this.plugins = new HashMap<Long, Plugin>();
 
+        this.pluginsInfo = plugins;
         for (PluginInfo plugin : plugins) {
             this.plugins.put(plugin.pluginId, plugin.plugin);
         }
@@ -83,6 +82,15 @@ public class Computer implements PluginConnections {
      */
     public Plugin getPlugin(long pluginID) {
         return plugins.get(pluginID);
+    }
+    
+    /**
+     * Get all plugins information
+     * 
+     * @return collection of PluginInfo objects
+     */
+    public Collection<PluginInfo> getPluginsInfo() {
+        return pluginsInfo;
     }
 
     /**
@@ -144,11 +152,11 @@ public class Computer implements PluginConnections {
      * Perform reset of all plugins 
      */
     public void resetPlugins() {
-        Collection<Plugin> p = plugins.values();
-        Iterator<Plugin> i = p.iterator();
-        while (i.hasNext()) {
-            Plugin pl = i.next();
-            pl.reset();
+        Collection<Plugin> pluginObjects = plugins.values();
+        Iterator<Plugin> iterator = pluginObjects.iterator();
+        while (iterator.hasNext()) {
+            Plugin plugin = iterator.next();
+            plugin.reset();
         }
     }
 
@@ -194,22 +202,25 @@ public class Computer implements PluginConnections {
      * @param settings settings manipulation object
      * @return true if initialization was successful, false otherwise
      */
-    public boolean initialize(SettingsManipulator settings) {
-        if ((compiler != null) &&
-            (!compiler.initialize(settings)))
+    public boolean initialize(SettingsManager settings) {
+        if ((compiler != null) && (!compiler.initialize(settings))) {
             return false;
+        }
 
-        if ((memory != null) &&
-            (!memory.initialize(settings)))
+        if ((memory != null) && (!memory.initialize(settings))) {
             return false;
+        }
 
-        if (!cpu.initialize(settings))
+        if (!cpu.initialize(settings)) {
             return false;
+        }
 
         int size = devices.length;
-        for (int i = 0; i < size; i++)
-            if (!devices[i].initialize(settings))
+        for (int i = 0; i < size; i++) {
+            if (!devices[i].initialize(settings)) {
                 return false;
+            }
+        }
 
         // the last operation - reset of all plugins
         resetPlugins();
@@ -226,16 +237,21 @@ public class Computer implements PluginConnections {
     @Override
     public int getPluginType(long pluginID) {
         Plugin p = plugins.get(pluginID);
-        if (p == null)
+        if (p == null) {
             return TYPE_UNKNOWN;
-        if (p instanceof CPU)
+        }
+        if (p instanceof CPU) {
             return TYPE_CPU;
-        else if (p instanceof Memory)
+        }
+        else if (p instanceof Memory) {
             return TYPE_MEMORY;
-        else if (p instanceof Device)
+        }
+        else if (p instanceof Device) {
             return TYPE_DEVICE;
-        else if (p instanceof Compiler)
+        }
+        else if (p instanceof Compiler) {
             return TYPE_COMPILER;
+        }
         return TYPE_UNKNOWN;
     }
 
@@ -252,14 +268,11 @@ public class Computer implements PluginConnections {
      */
     @Override
     public boolean isConnected(long pluginID, long toPluginID) {
-        List<Long> ar = connections.get(pluginID);
+        List<Long> connection = connections.get(pluginID);
 
-        if ((ar == null) || ar.isEmpty()) {
+        if ((connection == null) || connection.isEmpty()) {
             return false;
         }
-        if (ar.contains(toPluginID)) {
-            return true;
-        }
-        return false;
+        return connection.contains(toPluginID);
     }
 }

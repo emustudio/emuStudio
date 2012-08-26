@@ -1,5 +1,5 @@
 /*
- * ArchLoader.java
+ * ArchitectureLoader.java
  *
  * Created on Utorok, 2007, august 7, 11:11
  * KISS, YAGNI, DRY
@@ -95,10 +95,9 @@ import org.slf4j.LoggerFactory;
  * connection0.point0.y = 400
  * ...
  * 
- * @author vbmacher
  */
-public class ArchLoader {
-    private final static Logger logger = LoggerFactory.getLogger(ArchLoader.class);
+public class ArchitectureLoader implements ConfigurationManager {
+    private final static Logger logger = LoggerFactory.getLogger(ArchitectureLoader.class);
     /**
      * Directory name where the virtual computer configurations are stored.
      */
@@ -126,7 +125,7 @@ public class ArchLoader {
 
     private static long nextPluginID = 0;
     
-    private static ArchLoader instance;
+    private static ArchitectureLoader instance;
 
     public class PluginInfo {
         public String pluginSettingsName;
@@ -151,7 +150,7 @@ public class ArchLoader {
      * This forbids of creating the instance of this class. This class is
      * a singleton.
      */
-    private ArchLoader() {
+    private ArchitectureLoader() {
     }
 
     /**
@@ -159,9 +158,9 @@ public class ArchLoader {
      * 
      * @return always the same instance (singleton)
      */
-    public static ArchLoader getInstance() {
+    public static ArchitectureLoader getInstance() {
         if (instance == null) {
-            instance = new ArchLoader();
+            instance = new ArchitectureLoader();
         }
         return instance;
     }
@@ -174,8 +173,7 @@ public class ArchLoader {
      * @param postfix
      * @return String array of names
      */
-    public static String[] getAllNames(String dirname, 
-            final String postfix) {
+    public static String[] getAllFileNames(String dirname, final String postfix) {
         String[] allNames = null;
         File dir = new File(System.getProperty("user.dir") + File.separator + dirname);
         if (dir.exists() && dir.isDirectory()) {
@@ -185,9 +183,9 @@ public class ArchLoader {
                     return name.endsWith(postfix);
                 }
             });
-            for (int i = 0; i < allNames.length; i++)
-                allNames[i] = allNames[i].substring(0, 
-                        allNames[i].lastIndexOf(postfix));
+            for (int i = 0; i < allNames.length; i++) {
+                allNames[i] = allNames[i].substring(0, allNames[i].lastIndexOf(postfix));
+            }
         }
         return allNames;
     }
@@ -198,7 +196,8 @@ public class ArchLoader {
      * @param configName Name of the configuration
      * @return true if the operation was successful, false otherwise
      */
-    public static boolean deleteConfig(String configName) {
+    @Override
+    public boolean deleteConfiguration(String configName) {
         File file = new File(new StringBuilder().append(System.getProperty("user.dir")).append(File.separator)
                 .append(CONFIGS_DIR).append(File.separator).append(configName).append(".conf").toString());
         if (!file.exists()) {
@@ -220,7 +219,8 @@ public class ArchLoader {
      * @param oldName old, origin name
      * @return true if the operation was successful.
      */
-    public static boolean renameConfig(String newName, String oldName) {
+    @Override
+    public boolean renameConfiguration(String newName, String oldName) {
         File f = new File(new StringBuilder().append(System.getProperty("user.dir")).append(File.separator)
                 .append(CONFIGS_DIR).append(File.separator).append(oldName).append(".conf").toString());
         if (!f.exists()) {
@@ -244,9 +244,10 @@ public class ArchLoader {
      * @return Schema of the configuration, or null if some error
      *         raises.
      */
+    @Override
     public Schema loadSchema(String configName) throws ReadConfigurationException {
         try {
-            return new Schema(configName, readConfig(configName, true));
+            return new Schema(configName, readConfiguration(configName, true));
         } catch (ReadConfigurationException e) {
             throw e;
         } catch (Exception e) {
@@ -259,11 +260,11 @@ public class ArchLoader {
      *
      * @param schema Schema to save
      */
+    @Override
     public void saveSchema(Schema schema) throws WriteConfigurationException {
         schema.save();
-        writeConfig(schema.getConfigName(), schema.getSettings());
+        writeConfiguration(schema.getConfigName(), schema.getSettings());
     }
-
     
     /**
      * Method reads configuration into Properties object.
@@ -274,7 +275,8 @@ public class ArchLoader {
      * congiguration)
      * @throws ReadConfigurationException if there is some error with configuration reading
      */
-    private static Properties readConfig(String configName, boolean schema_too) throws ReadConfigurationException {
+    @Override
+    public Properties readConfiguration(String configName, boolean schema_too) throws ReadConfigurationException {
         Properties p = new Properties();
         File f = new File(System.getProperty("user.dir")
                 + File.separator + CONFIGS_DIR + File.separator + configName
@@ -339,7 +341,11 @@ public class ArchLoader {
      * @param settings data are taken from
      * @throws WriteConfigurationException if there is some error with configuration writing
      */
-    public static void writeConfig(String configName, Properties settings) throws WriteConfigurationException {
+    @Override
+    public void writeConfiguration(String configName, Properties settings) throws WriteConfigurationException {
+        if ((configName == null) || configName.isEmpty()) {
+            throw new WriteConfigurationException("Configuration name is not set");
+        }
         String dir = System.getProperty("user.dir") + File.separator
                 + CONFIGS_DIR;
         File dirFile = new File(dir);
@@ -361,19 +367,16 @@ public class ArchLoader {
     }
     
     /**
-     * Method loads virtual configuration from current settings and
-     * creates virtual architecture.
+     * Loads virtual configuration from current settings and creates virtual architecture.
      * 
-     * @param name  Name of the configuration
-     * @param auto  If the emuStudio is runned in automatization mode
-     * @param nogui If "--nogui" parameter was passed to emuStudio
+     * @param configName  Name of the configuration
      * 
      * @return instance of virtual architecture
      */
-    public ArchHandler loadComputer(String name, boolean auto, boolean nogui)
+    public ArchitectureManager createArchitecture(String configName)
             throws PluginLoadingException, ReadConfigurationException, PluginInitializationException {
         
-        Properties settings = readConfig(name, true);
+        Properties settings = readConfiguration(configName, true);
         Map<String, PluginInfo> pluginsToLoad = new HashMap<String, PluginInfo>();
         
         String tmp = settings.getProperty("compiler");
@@ -491,7 +494,7 @@ public class ArchLoader {
         Device[] devices = (Device[]) devList.toArray(new Device[0]);
         Computer computer = new Computer(cpu, mem, compiler, devices, pluginsToLoad.values(), connections);
         emulib.runtime.ContextPool.getInstance().setComputer(Main.password, computer);
-        return new ArchHandler(computer, settings, loadSchema(name), pluginsToLoad.values(), auto, nogui);
+        return new ArchitectureManager(computer, settings, loadSchema(configName), this);
     }
     
     /**
