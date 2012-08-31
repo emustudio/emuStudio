@@ -83,6 +83,13 @@ class DocPosition {
         }
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 61 * hash + this.position;
+        return hash;
+    }
+
     /**
      * A string representation useful for debugging.
      *

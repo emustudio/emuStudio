@@ -418,30 +418,30 @@ public class Schema {
     }
 
     /**
-     * Detects an element that wants to be resized. It searches for an element where the given point is pointing to its
-     * border. It is used in the drawing panel.
+     * Get an element where at least one its border is crossing a point.
+     * 
+     * It is used in the drawing panel.
      *
-     * @param p Point that all elements locations are compared to
-     * @return resize element, or null if it was not found
+     * @param borderPoint Point that is checked for pointing at some element's border
+     * @return an element if the given point points to its border; null otherwise
      */
-    public Element getResizeElement(Point p) {
-        List<Element> a = getAllElements();
-        for (int i = a.size() - 1; i >= 0; i--) {
-            Element elem = a.get(i);
-            if (elem.isBottomCrossing(p) || (elem.isLeftCrossing(p))
-                    || elem.isRightCrossing(p) || elem.isTopCrossing(p)) {
-                return elem;
+    public Element getElementByBorderPoint(Point borderPoint) {
+        List<Element> allElements = getAllElements();
+        for (Element element : allElements) {
+            if (element.crossesBottomBorder(borderPoint) || (element.crossesLeftBorder(borderPoint))
+                    || element.crossesRightBorder(borderPoint) || element.crossesTopBorder(borderPoint)) {
+                return element;
             }
         }
         return null;
     }
 
     /**
-     * Return whether use grid in the schema
+     * Determine if the grid is used within the schema.
      *
      * @return true if the schema uses grid, false otherwise
      */
-    public boolean getUseGrid() {
+    public boolean isGridUsed() {
         return useGrid;
     }
 
@@ -455,11 +455,11 @@ public class Schema {
     }
 
     /**
-     * Set whether use grid in the schema
+     * Set whether to use grid in the schema.
      *
      * @param useGrid true if the schema uses grid, false otherwise
      */
-    public void setUseGrid(boolean useGrid) {
+    public void setGridUsed(boolean useGrid) {
         this.useGrid = useGrid;
     }
 
@@ -519,7 +519,7 @@ public class Schema {
         Point p2 = new Point(x + width, y + height);
 
         for (Element elem : getAllElements()) {
-            if (elem.isAreaCrossing(p1, p2)) {
+            if (elem.crossesArea(p1, p2)) {
                 elem.setSelected(true);
             } else {
                 elem.setSelected(false);
@@ -752,24 +752,26 @@ public class Schema {
         settings.put("gridGap", String.valueOf(gridGap));
         // compiler
         if (compilerElement != null) {
-            compilerElement.saveSettings(settings, "compiler");
+            compilerElement.saveProperties(settings, "compiler");
         }
         // cpu
         if (cpuElement != null) {
-            cpuElement.saveSettings(settings, "cpu");
+            cpuElement.saveProperties(settings, "cpu");
         }
         // memory
         if (memoryElement != null) {
-            memoryElement.saveSettings(settings, "memory");
+            memoryElement.saveProperties(settings, "memory");
         }
         // devices
         Map<DeviceElement, String> devsHash = new HashMap<DeviceElement, String>();
-        for (int i = 0; i < deviceElements.size(); i++) {
+        int devicesCount = deviceElements.size();
+        for (int i = 0; i < devicesCount; i++) {
             DeviceElement dev = deviceElements.get(i);
             devsHash.put(dev, "device" + i);
-            dev.saveSettings(settings, "device" + i);
+            dev.saveProperties(settings, "device" + i);
         }
-        for (int i = 0; i < lines.size(); i++) {
+        int linesCount = lines.size();
+        for (int i = 0; i < linesCount; i++) {
             ConnectionLine line = lines.get(i);
 
             settings.put("connection" + i + ".bidirectional", String.valueOf(line.isBidirectional()));
@@ -796,7 +798,8 @@ public class Schema {
                 settings.put("connection" + i + ".junc1", devsHash.get((DeviceElement) e));
             }
             List<Point> points = line.getPoints();
-            for (int j = 0; j < points.size(); j++) {
+            int pointsCount = points.size();
+            for (int j = 0; j < pointsCount; j++) {
                 Point po = points.get(j);
                 settings.put("connection" + i + ".point" + j + ".x", String.valueOf((int) po.getX()));
                 settings.put("connection" + i + ".point" + j + ".y", String.valueOf((int) po.getY()));

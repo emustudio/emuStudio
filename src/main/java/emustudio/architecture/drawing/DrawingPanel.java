@@ -352,7 +352,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
      * if grid is not used.
      */
     private Point searchGridPoint(Point old) {
-        boolean useGrid = schema.getUseGrid();
+        boolean useGrid = schema.isGridUsed();
         int gridGap = schema.getGridGap();
         if (!useGrid || gridGap <= 0) {
             return old;
@@ -368,7 +368,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
      * @param useGrid whether to use grid or not
      */
     public void setUseGrid(boolean useGrid) {
-        schema.setUseGrid(useGrid);
+        schema.setGridUsed(useGrid);
         repaint();
     }
 
@@ -462,7 +462,7 @@ public class DrawingPanel extends JPanel implements MouseListener,
      * @param g Graphics object, where to paint
      */
     private void paintGrid(Graphics g) {
-        boolean useGrid = schema.getUseGrid();
+        boolean useGrid = schema.isGridUsed();
         int gridGap = schema.getGridGap();
         if (!useGrid) {
             return;
@@ -652,16 +652,16 @@ public class DrawingPanel extends JPanel implements MouseListener,
             }
             if (e.getButton() == MouseEvent.BUTTON1) {
                 // detect if user wants to resize an element
-                tmpElem1 = schema.getResizeElement(p);
+                tmpElem1 = schema.getElementByBorderPoint(p);
                 if (tmpElem1 != null) {
                     panelMode = PanelMode.resizing;
-                    if (tmpElem1.isBottomCrossing(p)) {
+                    if (tmpElem1.crossesBottomBorder(p)) {
                         resizeMode = RESIZE_BOTTOM;
-                    } else if (tmpElem1.isLeftCrossing(p)) {
+                    } else if (tmpElem1.crossesLeftBorder(p)) {
                         resizeMode = RESIZE_LEFT;
-                    } else if (tmpElem1.isRightCrossing(p)) {
+                    } else if (tmpElem1.crossesRightBorder(p)) {
                         resizeMode = RESIZE_RIGHT;
-                    } else if (tmpElem1.isTopCrossing(p)) {
+                    } else if (tmpElem1.crossesTopBorder(p)) {
                         resizeMode = RESIZE_TOP;
                     } else {
                         resizeMode = -1; // TODO - corners
@@ -1008,15 +1008,15 @@ public class DrawingPanel extends JPanel implements MouseListener,
             // resize mouse pointers
             if (drawTool == DrawTool.nothing) {
                 Point p = e.getPoint();
-                tmpElem1 = schema.getResizeElement(p);
+                tmpElem1 = schema.getElementByBorderPoint(p);
                 if (tmpElem1 != null) {
-                    if (tmpElem1.isBottomCrossing(p)) {
+                    if (tmpElem1.crossesBottomBorder(p)) {
                         this.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
-                    } else if (tmpElem1.isLeftCrossing(p)) {
+                    } else if (tmpElem1.crossesLeftBorder(p)) {
                         this.setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
-                    } else if (tmpElem1.isRightCrossing(p)) {
+                    } else if (tmpElem1.crossesRightBorder(p)) {
                         this.setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
-                    } else if (tmpElem1.isTopCrossing(p)) {
+                    } else if (tmpElem1.crossesTopBorder(p)) {
                         this.setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
                     } else {
                         this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));

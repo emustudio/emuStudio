@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
 public class OpenComputerDialog extends javax.swing.JDialog {
     private String archName;
     private boolean OOK = false;
-    private ArchListModel amodel;
+    private ConfigurationsListModel amodel;
     private PreviewPanel preview;
     private final static Logger logger = LoggerFactory.getLogger(OpenComputerDialog.class);
     
@@ -55,7 +55,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     public OpenComputerDialog() {
         super();
         initComponents();
-        amodel = new ArchListModel();
+        amodel = new ConfigurationsListModel();
         lstConfig.setModel(amodel);
         this.setModal(true);
         this.setLocationRelativeTo(null);
@@ -67,10 +67,10 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     /**
      * Existing configurations list model
      */
-    private class ArchListModel extends AbstractListModel {
+    private class ConfigurationsListModel extends AbstractListModel {
         private String[] allModels;
 
-        public ArchListModel() {
+        public ConfigurationsListModel() {
             allModels = ArchitectureLoader.getAllFileNames(ArchitectureLoader.CONFIGS_DIR, ".conf");
         }
 
@@ -81,11 +81,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
 
         @Override
         public int getSize() {
-            if (allModels != null) {
-                return allModels.length;
-            } else {
-                return 0;
-            }
+            return allModels.length;
         }
 
         public void update() {

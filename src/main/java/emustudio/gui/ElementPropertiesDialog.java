@@ -48,7 +48,7 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
         super(parent, true);
         initComponents();
         this.element = element;
-        this.settings = element.getSettings();
+        this.settings = element.getProperties();
         setTitle(element.getPluginName() + " settings");
         setLocationRelativeTo(null);
         loadTable();
@@ -170,7 +170,7 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
         for (int i = 0; i < model.getRowCount(); i++) {
             settings.put(model.getValueAt(i, 0), model.getValueAt(i, 1));
         }
-        try { element.loadSettings(); }
+        try { element.refreshSettings(); }
         catch(Exception e) {}
         dispose();
     }//GEN-LAST:event_btnSaveActionPerformed

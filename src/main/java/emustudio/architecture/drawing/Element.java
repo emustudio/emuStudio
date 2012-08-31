@@ -29,8 +29,9 @@ import java.util.Enumeration;
 import java.util.Properties;
 
 /**
- * Element of an abstract schema. Graphical object that represents some
- * plug-in in the schema.
+ * Element used by abstract schema of virtual computer.
+ * 
+ * It is a graphical object representing a plug-in.
  * 
  * @author vbmacher
  */
@@ -51,9 +52,9 @@ public abstract class Element {
     public final static int TOLERANCE = 5;
     
     /**
-     * Element's actual settings.
+     * Element's actual properties.
      */
-    private Properties mysettings;
+    private Properties myProperties;
 
     /**
      * Variable holds plug-in file name that is shown inside the element,
@@ -158,9 +159,9 @@ public abstract class Element {
         this.selected = false;
         this.foreColor = new Color(0x909090);
         gradient = new GradientPaint(x, y, Color.WHITE, x, y+height, this.backColor, false);
-        this.mysettings = settings;
+        this.myProperties = settings;
         this.schema = schema;
-        loadSettings();
+        refreshSettings();
     }
 
     /**
@@ -180,66 +181,65 @@ public abstract class Element {
         this.wasMeasured = false;
         this.selected = false;
         this.foreColor = new Color(0x909090);
-        this.mysettings = new Properties();
+        this.myProperties = new Properties();
         this.schema = schema;
-        gradient = new GradientPaint(x, y, Color.WHITE, x, y+height,
-                this.backColor, false);
+        gradient = new GradientPaint(x, y, Color.WHITE, x, y+height, this.backColor, false);
     }
     
     /**
-     * Updates schema values (x,y,width,height) of the element from the settings.
+     * Updates settings of the element from internal properties.
      * 
-     * @throws NumberFormatException when some settings are not well parseable.
+     * @throws NumberFormatException when some properties are not well parseable.
      */
-    public final void loadSettings() throws NumberFormatException {
+    public final void refreshSettings() throws NumberFormatException {
         if ((pluginName == null) || (pluginName.isEmpty())) {
             pluginName = "unknown";
         }
 
-        x = Integer.parseInt(mysettings.getProperty("point.x", "0"));
-        y = Integer.parseInt(mysettings.getProperty("point.y", "0"));
-        width = Integer.parseInt(mysettings.getProperty("width", "0"));
-        height = Integer.parseInt(mysettings.getProperty("height", "0"));
+        x = Integer.parseInt(myProperties.getProperty("point.x", "0"));
+        y = Integer.parseInt(myProperties.getProperty("point.y", "0"));
+        width = Integer.parseInt(myProperties.getProperty("width", "0"));
+        height = Integer.parseInt(myProperties.getProperty("height", "0"));
         this.wasMeasured = false;
     }
     
     /**
-     * Update internal settings
+     * Update internal properties
      */
-    private void updateSettings() {
-        mysettings.put("point.x", String.valueOf(x));
-        mysettings.put("point.y", String.valueOf(y));
-        mysettings.put("width", String.valueOf(getWidth()));
-        mysettings.put("height", String.valueOf(getHeight()));
+    private void updateProperties() {
+        myProperties.put("point.x", String.valueOf(x));
+        myProperties.put("point.y", String.valueOf(y));
+        myProperties.put("width", String.valueOf(getWidth()));
+        myProperties.put("height", String.valueOf(getHeight()));
     }
     
     /**
-     * Get actual settings of this element
-     * @return settings for this element
-     */
-    public Properties getSettings() {
-        // actualize current settings
-        updateSettings();
-        return mysettings; 
-    }
-    
-    /**
-     * Saves this element into virtual computer settings.
+     * Get actual properties of this element.
      * 
-     * @param settings settings of virtual computer
-     * @param settingsName name of this element in virtual configuration file
+     * @return properties for this element
+     */
+    public Properties getProperties() {
+        // actualize internal properties
+        updateProperties();
+        return myProperties; 
+    }
+    
+    /**
+     * Saves all the element's settings into given properties.
+     * 
+     * @param properties properties of virtual computer
+     * @param elementName key setting name of this element within the properies
      * @return saved settings
      */
-    public Properties saveSettings(Properties settings, String settingsName) {
-        updateSettings();
-        settings.put(settingsName, pluginName);
+    public void saveProperties(Properties properties, String elementName) {
+        updateProperties();
+        properties.put(elementName, pluginName);
         
-        Enumeration e = mysettings.keys();
-        while (e.hasMoreElements()) {
-            String akey = (String)e.nextElement();
-            settings.put(settingsName + "." + akey, mysettings.getProperty(akey));
+        Enumeration keys = myProperties.keys();
+        while (keys.hasMoreElements()) {
+            String elementSetting = (String)keys.nextElement();
+            properties.put(elementName + "." + elementSetting, myProperties.getProperty(elementSetting));
         }
-        return settings;
     }
 
     /**
@@ -463,7 +463,7 @@ public abstract class Element {
      * @param selectionEnd the selection end point
      * @return true if the element is crossing
      */
-    public boolean isAreaCrossing(Point selectionStart, Point selectionEnd) {
+    public boolean crossesArea(Point selectionStart, Point selectionEnd) {
         if (!wasMeasured) {
             return false;
         }
@@ -474,73 +474,75 @@ public abstract class Element {
     }
     
     /**
-     * Determine if a point crosses north (top) line of this element. 
-     * Used for resizing. It uses some tolerance.
+     * Determine if a point crosses north (top) border of this element. 
      * 
-     * @param p the point for the testing
-     * @return true if mouse is crossing a top line of this element, false
+     * Used for resizing. It uses a tolerance.
+     * 
+     * @param borderPoint the point for the testing
+     * @return true if mouse is crossing a top border of this element, false
      * otherwise.
      */
-    public boolean isTopCrossing(Point p) {
-        if ((!wasMeasured) || (p == null)) {
+    public boolean crossesTopBorder(Point borderPoint) {
+        if ((!wasMeasured) || (borderPoint == null)) {
             return false;
         }
         int xR = leftX + getWidth();
         int yB = topY + TOLERANCE;
-        return ((p.x >= leftX) && (p.x <= xR) && (p.y <= yB) && (p.y >= topY - TOLERANCE));
+        return ((borderPoint.x >= leftX) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= topY - TOLERANCE));
     }
 
     /**
-     * Determine if a point crosses south (bottom) line of this element. 
-     * Used for resizing. It uses some tolerance.
+     * Determine if a point crosses south (bottom) border of this element. 
      * 
-     * @param p the point for the testing
-     * @return true if mouse is crossing a bottom line of this element, false
+     * Used for resizing. It uses a tolerance.
+     * 
+     * @param borderPoint the point for the testing
+     * @return true if mouse is crossing a bottom border of this element, false
      * otherwise.
      */
-    public boolean isBottomCrossing(Point p) {
-        if (!wasMeasured || (p == null)) {
+    public boolean crossesBottomBorder(Point borderPoint) {
+        if (!wasMeasured || (borderPoint == null)) {
             return false;
         }
         int xR = leftX + getWidth();
         int yT = topY + getHeight() - TOLERANCE;
         int yB = topY + getHeight() + TOLERANCE;
-        return ((p.x >= leftX) && (p.x <= xR) && (p.y <= yB) && (p.y >= yT));
+        return ((borderPoint.x >= leftX) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= yT));
     }
 
     /**
-     * Determine if a point crosses west (left) line of this element. 
-     * Used for resizing. It uses some tolerance.
+     * Determine if a point crosses west (left) border of this element. 
      * 
-     * @param p the point for the testing
-     * @return true if mouse is crossing a left line of this element, false
-     * otherwise.
+     * Used for resizing. It uses a tolerance.
+     * 
+     * @param borderPoint the point for the testing
+     * @return true if mouse is crossing a left border of this element; false otherwise.
      */
-    public boolean isLeftCrossing(Point p) {
-        if ((!wasMeasured) || (p == null)) {
+    public boolean crossesLeftBorder(Point borderPoint) {
+        if ((!wasMeasured) || (borderPoint == null)) {
             return false;
         }
         int xR = leftX + TOLERANCE;
         int yB = topY + getHeight();
-        return ((p.x >= leftX-TOLERANCE) && (p.x <= xR) && (p.y <= yB) && (p.y >= topY));
+        return ((borderPoint.x >= leftX-TOLERANCE) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= topY));
     }
 
     /**
-     * Determine if a point crosses east (right) line of this element. 
-     * Used for resizing. It uses some tolerance.
+     * Determine if a point crosses east (right) border of this element. 
      * 
-     * @param p the point for the testing
-     * @return true if mouse is crossing a right line of this element, false
-     * otherwise.
+     * Used for resizing. It uses a tolerance.
+     * 
+     * @param borderPoint the point for the testing
+     * @return true if mouse is crossing a right border of this element; false otherwise.
      */
-    public boolean isRightCrossing(Point p) {
-        if ((!wasMeasured) || (p == null)) {
+    public boolean crossesRightBorder(Point borderPoint) {
+        if ((!wasMeasured) || (borderPoint == null)) {
             return false;
         }
         int xL = leftX + getWidth() - TOLERANCE;
         int xR = leftX + getWidth() + TOLERANCE;
         int yB = topY + getHeight();
-        return ((p.x >= xL) && (p.x <= xR) && (p.y <= yB) && (p.y >= topY));
+        return ((borderPoint.x >= xL) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= topY));
     }
 
 }

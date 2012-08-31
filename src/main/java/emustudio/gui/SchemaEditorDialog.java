@@ -52,7 +52,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
     private Schema schema;
     private boolean OOK = false;
     private DrawingPanel pan;
-    private pluginModel empty_model = new pluginModel(null);
+    private PluginModel empty_model = new PluginModel(null);
     private boolean buttonSelected = false;
     /**
      * This variable holds true if the window is for editing an existing
@@ -61,12 +61,12 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
     private boolean edit;
     private OpenComputerDialog odialog;
 
-    private class pluginModel implements ComboBoxModel {
+    private class PluginModel implements ComboBoxModel {
 
         private String[] pluginNames;
         private Object selectedObject = null;
 
-        public pluginModel(String[] pluginNames) {
+        public PluginModel(String[] pluginNames) {
             this.pluginNames = pluginNames;
         }
 
@@ -82,7 +82,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
 
         @Override
         public int getSize() {
-            return (pluginNames == null) ? 0 : pluginNames.length;
+            return pluginNames.length;
         }
 
         @Override
@@ -135,7 +135,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
 //        setModalExclusionType(ModalExclusionType.APPLICATION_EXCLUDE);
         this.setLocationRelativeTo(null);
         this.odialog = odialog;
-        btnUseGrid.setSelected(schema.getUseGrid());
+        btnUseGrid.setSelected(schema.isGridUsed());
         pan = new DrawingPanel(this.schema, this);
         scrollScheme.setViewportView(pan);
         scrollScheme.getHorizontalScrollBar().setUnitIncrement(10);
@@ -467,7 +467,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         }
         buttonSelected = true;
         String[] cpus = ArchitectureLoader.getAllFileNames(ArchitectureLoader.CPUS_DIR, ".jar");
-        cmbPlugin.setModel(new pluginModel(cpus));
+        cmbPlugin.setModel(new PluginModel(cpus));
         try {
             cmbPlugin.setSelectedIndex(0);
         } catch (IllegalArgumentException e) {
@@ -485,7 +485,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         }
         buttonSelected = true;
         String[] mems = ArchitectureLoader.getAllFileNames(ArchitectureLoader.MEMORIES_DIR, ".jar");
-        cmbPlugin.setModel(new pluginModel(mems));
+        cmbPlugin.setModel(new PluginModel(mems));
         try {
             cmbPlugin.setSelectedIndex(0);
         } catch (IllegalArgumentException e) {
@@ -503,7 +503,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         }
         buttonSelected = true;
         String[] devs = ArchitectureLoader.getAllFileNames(ArchitectureLoader.DEVICES_DIR, ".jar");
-        cmbPlugin.setModel(new pluginModel(devs));
+        cmbPlugin.setModel(new PluginModel(devs));
         try {
             cmbPlugin.setSelectedIndex(0);
         } catch (IllegalArgumentException e) {
@@ -643,7 +643,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
     private void btnUseGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUseGridActionPerformed
         pan.setUseGrid(btnUseGrid.isSelected());
         sliderGridGap.setEnabled(btnUseGrid.isSelected());
-        schema.setUseGrid(btnUseGrid.isSelected());
+        schema.setGridUsed(btnUseGrid.isSelected());
         schema.setGridGap(sliderGridGap.getValue());
     }//GEN-LAST:event_btnUseGridActionPerformed
 
@@ -658,7 +658,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         }
         buttonSelected = true;
         String[] compilers = ArchitectureLoader.getAllFileNames(ArchitectureLoader.COMPILERS_DIR, ".jar");
-        cmbPlugin.setModel(new pluginModel(compilers));
+        cmbPlugin.setModel(new PluginModel(compilers));
         try {
             cmbPlugin.setSelectedIndex(0);
         } catch (IllegalArgumentException e) {

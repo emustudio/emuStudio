@@ -122,6 +122,8 @@ public class ArchitectureLoader implements ConfigurationManager {
      * Directory name where devices are stored.
      */
     public final static String DEVICES_DIR = "devices";
+    
+    private static String configurationBaseDirectory = System.getProperty("user.dir");
 
     private static long nextPluginID = 0;
     
@@ -166,16 +168,15 @@ public class ArchitectureLoader implements ConfigurationManager {
     }
     
     /**
-     * Method returns all file names from a dir that ends with specified
-     * postfix.
+     * Get all file names from a directory ending with specified postfix.
      * 
      * @param dirname directory to get files from
-     * @param postfix
+     * @param postfix file name postfix, e.g. ".png"
      * @return String array of names
      */
     public static String[] getAllFileNames(String dirname, final String postfix) {
         String[] allNames = null;
-        File dir = new File(System.getProperty("user.dir") + File.separator + dirname);
+        File dir = new File(configurationBaseDirectory + File.separator + dirname);
         if (dir.exists() && dir.isDirectory()) {
             allNames = dir.list(new FilenameFilter() {
                 @Override
@@ -187,7 +188,16 @@ public class ArchitectureLoader implements ConfigurationManager {
                 allNames[i] = allNames[i].substring(0, allNames[i].lastIndexOf(postfix));
             }
         }
-        return allNames;
+        return (allNames == null) ? new String[0] : allNames;
+    }
+    
+    /**
+     * Set base directory for locating configuration files.
+     * 
+     * @param baseDirectory Absolute path of the base directory for the configurations
+     */
+    public static void setConfigurationBaseDirectory(String baseDirectory) {
+        configurationBaseDirectory = baseDirectory;
     }
     
     /**
@@ -198,9 +208,10 @@ public class ArchitectureLoader implements ConfigurationManager {
      */
     @Override
     public boolean deleteConfiguration(String configName) {
-        File file = new File(new StringBuilder().append(System.getProperty("user.dir")).append(File.separator)
-                .append(CONFIGS_DIR).append(File.separator).append(configName).append(".conf").toString());
+        File file = new File(configurationBaseDirectory + File.separator + CONFIGS_DIR + File.separator
+                + configName + ".conf");
         if (!file.exists()) {
+            logger.error("Could not delete configuration: " + file.getAbsolutePath() + ". The file does not exist.");
             return false;
         }
         try {
@@ -221,17 +232,17 @@ public class ArchitectureLoader implements ConfigurationManager {
      */
     @Override
     public boolean renameConfiguration(String newName, String oldName) {
-        File f = new File(new StringBuilder().append(System.getProperty("user.dir")).append(File.separator)
-                .append(CONFIGS_DIR).append(File.separator).append(oldName).append(".conf").toString());
-        if (!f.exists()) {
+        File oldConfig = new File(configurationBaseDirectory + File.separator + CONFIGS_DIR + File.separator + oldName + ".conf");
+        if (!oldConfig.exists()) {
+            logger.error("Could not rename configuration: " + oldConfig.getAbsolutePath() + ". The file does not exist.");
             return false;
         }
         try {
-            return f.renameTo(new File(new StringBuilder().append(System.getProperty("user.dir")).append(File.separator)
-                .append(CONFIGS_DIR).append(File.separator).append(newName).append(".conf").toString()));
+            return oldConfig.renameTo(new File(configurationBaseDirectory + File.separator + CONFIGS_DIR + File.separator
+                    + newName + ".conf"));
         } catch(Exception e) {
             logger.error(new StringBuilder().append("Could not rename configuration: ")
-                    .append(f.getAbsolutePath()).append(" to (thesamepath)/").append(newName).toString());
+                    .append(oldConfig.getAbsolutePath()).append(" to (thesamepath)/").append(newName).toString());
         }
         return false;
     }
@@ -278,20 +289,19 @@ public class ArchitectureLoader implements ConfigurationManager {
     @Override
     public Properties readConfiguration(String configName, boolean schema_too) throws ReadConfigurationException {
         Properties p = new Properties();
-        File f = new File(System.getProperty("user.dir")
-                + File.separator + CONFIGS_DIR + File.separator + configName
+        File configFile = new File(configurationBaseDirectory + File.separator + CONFIGS_DIR + File.separator + configName
                 + ".conf");
-        if (!f.exists() || !f.canRead()) {
+        if (!configFile.exists() || !configFile.canRead()) {
             throw new ReadConfigurationException(new StringBuilder().append("Configuration file: ")
-                    .append(f.getAbsolutePath()).append(" does not exist.").toString());
+                    .append(configFile.getAbsolutePath()).append(" does not exist.").toString());
         }
         try {
-            FileInputStream fin = new FileInputStream(f);
+            FileInputStream fin = new FileInputStream(configFile);
             p.load(fin);
             fin.close();
         } catch (Exception e) {
             throw new ReadConfigurationException(new StringBuilder().append("Could not read configuration file: ")
-                    .append(f.getAbsolutePath()).toString(), e);
+                    .append(configFile.getAbsolutePath()).toString(), e);
         }
         if (!p.getProperty("emu8Version").equals("3")
                 && !p.getProperty("emu8Version").equals("4")) {
@@ -346,8 +356,7 @@ public class ArchitectureLoader implements ConfigurationManager {
         if ((configName == null) || configName.isEmpty()) {
             throw new WriteConfigurationException("Configuration name is not set");
         }
-        String dir = System.getProperty("user.dir") + File.separator
-                + CONFIGS_DIR;
+        String dir = configurationBaseDirectory + File.separator + CONFIGS_DIR;
         File dirFile = new File(dir);
         if (!dirFile.exists() || (dirFile.exists() && !dirFile.isDirectory())) {
             if (!dirFile.mkdir()) {
@@ -355,9 +364,9 @@ public class ArchitectureLoader implements ConfigurationManager {
             }
         }
         try {
-            File f = new File(dir + File.separator + configName + ".conf");
-            f.createNewFile();
-            FileOutputStream out = new FileOutputStream(f);
+            File configFile = new File(dir + File.separator + configName + ".conf");
+            configFile.createNewFile();
+            FileOutputStream out = new FileOutputStream(configFile);
             settings.put("emu8Version", "4");
             settings.store(out, configName + " configuration file");
             out.close();
@@ -526,9 +535,9 @@ public class ArchitectureLoader implements ConfigurationManager {
      * @return Main class of the plugin. It must be resolved before first use.
      */
     private Class<Plugin> loadPlugin(String dirname, String filename) {
-        return emulib.runtime.PluginLoader.getInstance().loadPlugin(new StringBuilder()
-                .append(System.getProperty("user.dir")).append(File.separator).append(dirname)
-                .append(File.separator).append(filename).toString(), Main.password);
+        
+        return emulib.runtime.PluginLoader.getInstance().loadPlugin(configurationBaseDirectory + File.separator 
+                + dirname + File.separator + filename, Main.password);
     }
     
     /**

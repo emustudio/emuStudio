@@ -298,7 +298,7 @@ public class SchemaTest {
     }
 
     /**
-     * Test of getResizeElement method, of class Schema.
+     * Test of getElementByBorderPoint method, of class Schema.
      */
     @Test
     public void testGetResizeElement() {
@@ -316,95 +316,95 @@ public class SchemaTest {
         Assert.assertSame(elem, instance.getCompilerElement());
 
         Point p = null;
-        Element result = instance.getResizeElement(p);
+        Element result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
 
         p = new Point(50, 100); // left border
         Element expResult = elem;
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
 
         p = new Point(50 - Element.TOLERANCE, 100); // left border with tolerance
         expResult = elem;
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
 
         p = new Point(50 + Element.TOLERANCE, 100); // left border with tolerance
         expResult = elem;
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
 
         p = new Point(50 + Element.TOLERANCE + 1, 100); // left border with tolerance
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
         
         p = new Point(150 + Element.TOLERANCE, 100); // right border with tolerance
         expResult = elem;
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
 
         p = new Point(150 - Element.TOLERANCE, 100); // right border with tolerance
         expResult = elem;
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
         
         p = new Point(150 + Element.TOLERANCE + 1, 100); // right border with tolerance
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
         
         p = new Point(150 - Element.TOLERANCE - 1, 100); // right border with tolerance
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
         
         p = new Point(100, 85 - Element.TOLERANCE); // upper border with tolerance
         expResult = elem;
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
 
         p = new Point(100, 85 + Element.TOLERANCE); // upper border with tolerance
         expResult = elem;
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
 
         p = new Point(100, 85 - Element.TOLERANCE - 1); // upper border with tolerance
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
 
         p = new Point(100, 85 + Element.TOLERANCE + 1); // upper border with tolerance
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
     
         p = new Point(100, 115 - Element.TOLERANCE); // bottom border with tolerance
         expResult = elem;
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
         
         p = new Point(100, 115 + Element.TOLERANCE); // bottom border with tolerance
         expResult = elem;
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
         
         p = new Point(100, 115 - Element.TOLERANCE - 1); // bottom border with tolerance
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
 
         p = new Point(100, 115 + Element.TOLERANCE + 1); // bottom border with tolerance
-        result = instance.getResizeElement(p);
+        result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
     }
     
     /**
-     * Test of getUseGrid method, of class Schema.
+     * Test of isGridUsed method, of class Schema.
      */
     @Test
     public void testGetSetUseGrid() {
         Schema instance = new Schema();
         boolean expResult = true;
-        boolean result = instance.getUseGrid();
+        boolean result = instance.isGridUsed();
         Assert.assertEquals(expResult, result);
         
-        instance.setUseGrid(false);
-        Assert.assertEquals(false, instance.getUseGrid());
+        instance.setGridUsed(false);
+        Assert.assertEquals(false, instance.isGridUsed());
     }
      
     /**
@@ -1026,7 +1026,7 @@ public class SchemaTest {
     }
 
     /**
-     * Test of getSettings method, of class Schema.
+     * Test of getProperties method, of class Schema.
      */
     @Test
     public void testSaveAndGetSettings() {

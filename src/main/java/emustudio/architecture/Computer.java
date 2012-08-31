@@ -21,6 +21,8 @@
  */
 package emustudio.architecture;
 
+import emulib.annotations.PLUGIN_TYPE;
+import emulib.annotations.PluginType;
 import emulib.plugins.Plugin;
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.compiler.Compiler;
@@ -231,28 +233,16 @@ public class Computer implements PluginConnections {
      * Get plug-in type.
      *
      * @param pluginID plugin ID
-     * @return plug-in type (TYPE_CPU, TYPE_MEMORY, TYPE_DEVICE, TYPE_COMPILER).
-     *         If the plug-in is of unknown type, return TYPE_UNKNOWN.
+     * @return plug-in type. If the plug-in doesn't exist, return null.
      */
     @Override
-    public int getPluginType(long pluginID) {
-        Plugin p = plugins.get(pluginID);
-        if (p == null) {
-            return TYPE_UNKNOWN;
+    public PLUGIN_TYPE getPluginType(long pluginID) {
+        Plugin plugin = plugins.get(pluginID);
+        if (plugin == null) {
+            return null;
         }
-        if (p instanceof CPU) {
-            return TYPE_CPU;
-        }
-        else if (p instanceof Memory) {
-            return TYPE_MEMORY;
-        }
-        else if (p instanceof Device) {
-            return TYPE_DEVICE;
-        }
-        else if (p instanceof Compiler) {
-            return TYPE_COMPILER;
-        }
-        return TYPE_UNKNOWN;
+        PluginType pluginType = plugin.getClass().getAnnotation(PluginType.class);
+        return pluginType.type();
     }
 
     /**
