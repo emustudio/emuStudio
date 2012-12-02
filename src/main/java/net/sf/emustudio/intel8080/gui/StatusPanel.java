@@ -1,12 +1,10 @@
 /*
- * StatusGUI.java
+ * StatusPanel.java
  *
  * Created on Pondelok, 2007, december 31, 10:59
- * 
- * KEEP IT SIMPLE, STUPID
- * some things just: YOU AREN'T GONNA NEED IT
  *
- * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,15 +20,11 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package cpu_8080.gui;
+package net.sf.emustudio.intel8080.gui;
 
-import cpu_8080.impl.Cpu8080;
-import cpu_8080.impl.CpuContext;
-import interfaces.IICpuListener;
-
+import emulib.plugins.cpu.CPU.RunState;
+import static emulib.runtime.RadixUtils.*;
 import java.awt.Color;
-import java.util.EventObject;
-
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.JLabel;
@@ -43,44 +37,45 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
-
-import emulib.plugins.cpu.ICPU.RunState;
+import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.intel8080.FrequencyChangedListener;
+import net.sf.emustudio.intel8080.impl.EmulatorImpl;
 
 /**
  *
  * @author  vbmacher
  */
 @SuppressWarnings("serial")
-public class StatusGUI extends JPanel {
-
-    private Cpu8080 cpu;
-    private CpuContext cpuC;
+public class StatusPanel extends JPanel {
+    private EmulatorImpl cpu;
+    private ExtendedContext context;
     private RunState run_state;
     private AbstractTableModel flagModel;
 
-    public StatusGUI(final Cpu8080 cpu, final CpuContext cpuC) {
+    public StatusPanel(EmulatorImpl cpu, ExtendedContext context) {
         this.cpu = cpu;
-        this.cpuC = cpuC;
+        this.context = context;
 
         run_state = RunState.STATE_STOPPED_NORMAL;
 
         initComponents();
-        cpu.addCPUListener(new IICpuListener() {
+        cpu.addCPUListener(new FrequencyChangedListener() {
 
             @Override
-            public void runChanged(EventObject evt, RunState state) {
+            public void runChanged(RunState state) {
                 run_state = state;
             }
 
             @Override
-            public void stateUpdated(EventObject evt) {
+            public void stateUpdated() {
                 updateGUI();
             }
 
             @Override
-            public void frequencyChanged(EventObject evt, float frequency) {
+            public void frequencyChanged(float frequency) {
                 lblFrequency.setText(String.format("%.2f kHz", frequency));
             }
+
         });
         spnFrequency.addChangeListener(new ChangeListener() {
 
@@ -88,9 +83,9 @@ public class StatusGUI extends JPanel {
             public void stateChanged(ChangeEvent e) {
                 int i = (Integer) ((SpinnerNumberModel) spnFrequency.getModel()).getValue();
                 try {
-                    setCPUFreq(i);
+                    StatusPanel.this.context.setCPUFrequency(i);
                 } catch (IndexOutOfBoundsException ex) {
-                    ((SpinnerNumberModel) spnFrequency.getModel()).setValue(cpuC.getFrequency());
+                    ((SpinnerNumberModel) spnFrequency.getModel()).setValue(StatusPanel.this.context.getCPUFrequency());
                 }
             }
         });
@@ -100,9 +95,9 @@ public class StatusGUI extends JPanel {
             public void stateChanged(ChangeEvent e) {
                 int i = (Integer) ((SpinnerNumberModel) spnTestPeriode.getModel()).getValue();
                 try {
-                    cpu.setSliceTime(i);
+                    StatusPanel.this.cpu.setSliceTime(i);
                 } catch (IndexOutOfBoundsException ex) {
-                    ((SpinnerNumberModel) spnTestPeriode.getModel()).setValue(cpu.getSliceTime());
+                    ((SpinnerNumberModel) spnTestPeriode.getModel()).setValue(StatusPanel.this.cpu.getSliceTime());
                 }
             }
         });
@@ -110,25 +105,21 @@ public class StatusGUI extends JPanel {
         tblFlags.setModel(flagModel);
     }
 
-    private void setCPUFreq(int f) {
-        cpuC.setFrequency(f);
-    }
-
     public void updateGUI() {
-        txtRegA.setText(String.format("%02X", cpu.A));
-        txtRegB.setText(String.format("%02X", cpu.B));
-        txtRegC.setText(String.format("%02X", cpu.C));
-        txtRegBC.setText(String.format("%04X", ((cpu.B << 8) | cpu.C) & 0xFFFF));
-        txtRegD.setText(String.format("%02X", cpu.D));
-        txtRegE.setText(String.format("%02X", cpu.E));
-        txtRegDE.setText(String.format("%04X", ((cpu.D << 8) | cpu.E) & 0xFFFF));
-        txtRegH.setText(String.format("%02X", cpu.H));
-        txtRegL.setText(String.format("%02X", cpu.L));
-        txtRegHL.setText(String.format("%04X", ((cpu.H << 8) | cpu.L) & 0xFFFF));
-        txtRegSP.setText(String.format("%04X", cpu.SP));
-        txtRegPC.setText(String.format("%04X", cpu.getPC()));
+        txtRegA.setText(getByteHexString(cpu.A));
+        txtRegB.setText(getByteHexString(cpu.B));
+        txtRegC.setText(getByteHexString(cpu.C));
+        txtRegBC.setText(getWordHexString(((cpu.B << 8) | cpu.C) & 0xFFFF));
+        txtRegD.setText(getByteHexString(cpu.D));
+        txtRegE.setText(getByteHexString(cpu.E));
+        txtRegDE.setText(getWordHexString(((cpu.D << 8) | cpu.E) & 0xFFFF));
+        txtRegH.setText(getByteHexString(cpu.H));
+        txtRegL.setText(getByteHexString(cpu.L));
+        txtRegHL.setText(getWordHexString(((cpu.H << 8) | cpu.L) & 0xFFFF));
+        txtRegSP.setText(getWordHexString(cpu.SP));
+        txtRegPC.setText(getWordHexString(cpu.getInstructionPosition()));
 
-        txtFlags.setText(String.format("%02X", cpu.Flags));
+        txtFlags.setText(getByteHexString(cpu.Flags));
         flagModel.fireTableDataChanged();
 
         if (run_state == RunState.STATE_RUNNING) {

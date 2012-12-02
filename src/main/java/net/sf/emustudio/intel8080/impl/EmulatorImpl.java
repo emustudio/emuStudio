@@ -1,15 +1,12 @@
 /*
- * Cpu8080.java
+ * EmulatorImpl.java
  *
  * Implementation of CPU emulation
  * 
  * Created on Piatok, 2007, oktober 26, 10:45
  *
- * KEEP IT SIMPLE, STUPID
- * some things just: YOU AREN'T GONNA NEED IT
- * DON'T REPEAT YOURSELF
- *
- * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,20 +22,26 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package cpu_8080.impl;
+package net.sf.emustudio.intel8080.impl;
 
-import cpu_8080.gui.Disassembler;
-import cpu_8080.gui.StatusGUI;
-import emulib.plugins.cpu.IDisassembler;
-import interfaces.C8E98DC5AF7BF51D571C03B7C96324B3066A092EA;
-import interfaces.IICpuListener;
+import emulib.annotations.PLUGIN_TYPE;
+import emulib.annotations.PluginType;
+import emulib.emustudio.SettingsManager;
+import emulib.plugins.cpu.AbstractCPU;
+import emulib.plugins.cpu.Disassembler;
+import emulib.plugins.memory.MemoryContext;
+import emulib.runtime.ContextPool;
+import emulib.runtime.StaticDialogs;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.JPanel;
-import emulib.plugins.ISettingsHandler;
-import emulib.plugins.cpu.SimpleCPU;
-import emulib.plugins.memory.IMemoryContext;
-import emulib.runtime.Context;
-import emulib.runtime.StaticDialogs;
+import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.intel8080.FrequencyChangedListener;
+import net.sf.emustudio.intel8080.gui.DecoderImpl;
+import net.sf.emustudio.intel8080.gui.DisassemblerImpl;
+import net.sf.emustudio.intel8080.gui.StatusPanel;
 
 /**
  * Main implementation class for CPU emulation
@@ -46,29 +49,12 @@ import emulib.runtime.StaticDialogs;
  * 
  * @author vbmacher
  */
-public class Cpu8080 extends SimpleCPU {
-
-    private StatusGUI status;
-    private IMemoryContext mem;
-    private CpuContext cpu;
-
-    // cpu speed
-    private long long_cycles = 0; // count of executed cycles for runtime freq. computing
-    private java.util.Timer freqScheduler;
-    private RuntimeFrequencyCalculator rfc;
-    private int sliceCheckTime = 100;
-
-    // registers are public meant for only StatusGUI (didnt want make it thru get() methods)
-    private int PC = 0; // program counter
-    public int SP = 0; // stack pointer
-    public short B = 0, C = 0, D = 0, E = 0, H = 0, L = 0, Flags = 2, A = 0; // registre
-    public static final int flagS = 0x80, flagZ = 0x40, flagAC = 0x10, flagP = 0x4, flagC = 0x1;
-    private boolean INTE = false; // povolenie / zakazanie preruseni
-    private boolean isINT = false;
-    private short b1 = 0; // interrupt instruction
-    private short b2 = 0;
-    private short b3 = 0;
-    private byte parity_table[] = {
+@PluginType(type=PLUGIN_TYPE.CPU,
+        title="Intel 8080 CPU",
+        copyright="\u00A9 Copyright 2007-2012, Peter Jakubčo",
+        description="Emulator of Intel 8080 CPU")
+public class EmulatorImpl extends AbstractCPU {
+    private static final byte PARITY[] = {
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0,
         1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1,
         1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0,
@@ -78,59 +64,108 @@ public class Cpu8080 extends SimpleCPU {
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0,
         1, 0, 0, 1
     };
+
+    private StatusPanel statusPanel;
+    private MemoryContext memory;
+    private ContextImpl context;
     private Disassembler disasm;
 
-    /** Creates a new instance of Cpu8080 */
-    public Cpu8080(Long pluginID) {
-        super(pluginID);
-        cpu = new CpuContext(this);
-        if (!Context.getInstance().register(pluginID, cpu, C8E98DC5AF7BF51D571C03B7C96324B3066A092EA.class)) {
-            StaticDialogs.showMessage("Error: Could not register this CPU!");
+    // cpu speed
+    private long executedCycles = 0; // count of executed cycles for frequency calculation
+    private java.util.Timer frequencyScheduler;
+    private FrequencyUpdater frequencyUpdater;
+    private int checkTimeSlice = 100;
+
+    // registers are public meant for only StatusPanel (didnt want make it thru getters)
+    private int PC = 0; // program counter
+    public int SP = 0; // stack pointer
+    public short B = 0, C = 0, D = 0, E = 0, H = 0, L = 0, Flags = 2, A = 0; // registers
+    public static final int flagS = 0x80, flagZ = 0x40, flagAC = 0x10, flagP = 0x4, flagC = 0x1;
+    private boolean INTE = false; // enabling / disabling of interrupts
+    private boolean isINT = false;
+    private short b1 = 0; // the raw interrupt instruction
+    private short b2 = 0;
+    private short b3 = 0;
+
+    /**
+     * This class performs runtime frequency calculation and updating.
+     * 
+     * Given: time, executed cycles count
+     * Frequency is defined as number of something by some period of time.
+     * Hz = 1/s, kHz = 1000/s
+     * time has to be in seconds
+     * 
+     * CC ..by.. time[s]
+     * XX ..by.. 1 [s] ?
+     * ---------------
+     * XX:CC = 1:time
+     * XX = CC / time [Hz]
+     */
+    private class FrequencyUpdater extends TimerTask {
+        private long startTimeSaved = 0;
+        private float frequency;
+
+        @Override
+        public void run() {
+            double endTime = System.nanoTime();
+            double time = endTime - startTimeSaved;
+
+            if (executedCycles == 0) {
+                return;
+            }
+            frequency = (float) (executedCycles / (time / 1000000.0));
+            startTimeSaved = (long) endTime;
+            executedCycles = 0;
+            fireFrequencyChanged(frequency);
         }
-        status = new StatusGUI(this, cpu);
-        rfc = new RuntimeFrequencyCalculator();
-        freqScheduler = new java.util.Timer();
-
     }
-
-    @Override
-    public String getDescription() {
-        return "Modified for use as CPU for MITS Altair 8800 computer";
+    
+    
+    /** 
+     * Creates a new instance of EmulatorImpl.
+     * 
+     * @param pluginID plugin unique ID
+     */
+    public EmulatorImpl(Long pluginID) {
+        super(pluginID);
+        context = new ContextImpl(this);
+        try {
+            ContextPool.getInstance().register(pluginID, context, ExtendedContext.class);
+        } catch (RuntimeException e) {
+            StaticDialogs.showErrorMessage("Could not register CPU Context", 
+                    EmulatorImpl.class.getAnnotation(PluginType.class).title());
+        }
+        statusPanel = new StatusPanel(this, context);
+        frequencyUpdater = new FrequencyUpdater();
+        frequencyScheduler = new Timer();
     }
 
     @Override
     public String getVersion() {
-        return getClass().getPackage().getImplementationVersion();
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.intel8080.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            return "(unknown)";
+        }
     }
 
     @Override
-    public String getTitle() {
-        return "Intel 8080 CPU";
-    }
-
-    @Override
-    public String getCopyright() {
-        return "\u00A9 Copyright 2006-2012, P. Jakubčo";
-    }
-
-    @Override
-    public boolean initialize(ISettingsHandler settings) {
+    public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
-        this.mem = Context.getInstance().getMemoryContext(pluginID,
-                IMemoryContext.class);
+        this.memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
 
-        if (mem == null) {
+        if (memory == null) {
             StaticDialogs.showErrorMessage("CPU must have access to memory");
             return false;
         }
-        if (mem.getDataType() != Short.class) {
-            StaticDialogs.showErrorMessage("Operating memory type is not supported"
-                    + " for this kind of CPU.");
+        if (memory.getDataType() != Short.class) {
+            StaticDialogs.showErrorMessage("Operating memory type is not supported for this kind of CPU.");
             return false;
         }
 
         // create disassembler and debug columns
-        disasm = new Disassembler(mem);
+        disasm = new DisassemblerImpl(memory, new DecoderImpl(memory));
 
         return true;
     }
@@ -138,9 +173,9 @@ public class Cpu8080 extends SimpleCPU {
     @Override
     public void destroy() {
         run_state = RunState.STATE_STOPPED_NORMAL;
-        setRuntimeFreqCounter(false);
-        cpu.clearDevices();
-        cpu = null;
+        setupFrequencyUpdater(false);
+        context.clearDevices();
+        context = null;
     }
 
     @Override
@@ -150,13 +185,9 @@ public class Cpu8080 extends SimpleCPU {
         Flags = 2; //0000 0010b
         PC = startPos;
         INTE = false;
-        setRuntimeFreqCounter(false);
+        setupFrequencyUpdater(false);
         fireCpuRun(run_state);
         fireCpuState();
-    }
-
-    public int getPC() {
-        return PC;
     }
 
     /**
@@ -165,7 +196,7 @@ public class Cpu8080 extends SimpleCPU {
     @Override
     public void pause() {
         run_state = RunState.STATE_STOPPED_BREAK;
-        setRuntimeFreqCounter(false);
+        setupFrequencyUpdater(false);
         fireCpuRun(run_state);
     }
 
@@ -175,7 +206,7 @@ public class Cpu8080 extends SimpleCPU {
     @Override
     public void stop() {
         run_state = RunState.STATE_STOPPED_NORMAL;
-        setRuntimeFreqCounter(false);
+        setupFrequencyUpdater(false);
         fireCpuRun(run_state);
     }
 
@@ -207,11 +238,10 @@ public class Cpu8080 extends SimpleCPU {
         this.b3 = b3;
     }
 
-    public void fireFrequencyChanged(float freq) {
-        Object[] listeners = listenerList.getListenerList();
-        for (int i = 0; i < listeners.length; i += 2) {
-            if (listeners[i + 1] instanceof IICpuListener) {
-                ((IICpuListener) listeners[i + 1]).frequencyChanged(cpuEvt, freq);
+    private void fireFrequencyChanged(float freq) {
+        for (CPUListener listener : cpuListeners) {
+            if (listener instanceof FrequencyChangedListener) {
+                ((FrequencyChangedListener) listener).frequencyChanged(freq);
             }
         }
     }
@@ -219,39 +249,29 @@ public class Cpu8080 extends SimpleCPU {
     /* DOWN: GUI interaction */
     @Override
     public JPanel getStatusGUI() {
-        return status;
-    }
-
-    /* DOWN: CPU Context */
-//    public int getPC() { return PC; }
-    public boolean setPC(int memPos) {
-        if (memPos < 0) {
-            return false;
-        }
-        PC = memPos;
-        return true;
+        return statusPanel;
     }
 
     /* DOWN: other */
     public int getSliceTime() {
-        return sliceCheckTime;
+        return checkTimeSlice;
     }
 
     public void setSliceTime(int t) {
-        sliceCheckTime = t;
+        checkTimeSlice = t;
     }
 
-    private void setRuntimeFreqCounter(boolean run) {
+    private void setupFrequencyUpdater(boolean run) {
         if (run) {
             try {
-                freqScheduler.purge();
-                freqScheduler.scheduleAtFixedRate(rfc, 0, sliceCheckTime);
+                frequencyScheduler.purge();
+                frequencyScheduler.scheduleAtFixedRate(frequencyUpdater, 0, checkTimeSlice);
             } catch (Exception e) {
             }
         } else {
             try {
-                rfc.cancel();
-                rfc = new RuntimeFrequencyCalculator();
+                frequencyUpdater.cancel();
+                frequencyUpdater = new FrequencyUpdater();
             } catch (Exception e) {
             }
         }
@@ -284,14 +304,14 @@ public class Cpu8080 extends SimpleCPU {
         run_state = RunState.STATE_RUNNING;
         fireCpuRun(run_state);
         fireCpuState();
-        setRuntimeFreqCounter(true);
+        setupFrequencyUpdater(true);
         /* 1 Hz  .... 1 tState per second
          * 1 kHz .... 1000 tStates per second
          * clockFrequency is in kHz it have to be multiplied with 1000
          */
-        cycles_to_execute = sliceCheckTime * cpu.getFrequency();
+        cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
         long i = 0;
-        slice = sliceCheckTime * 1000000;
+        slice = checkTimeSlice * 1000000;
         while (run_state == RunState.STATE_RUNNING) {
             i++;
             startTime = System.nanoTime();
@@ -308,7 +328,7 @@ public class Cpu8080 extends SimpleCPU {
                         break;
                     }
                     cycles_executed += cycles;
-                    long_cycles += cycles;
+                    executedCycles += cycles;
                     if (getBreakpoint(PC) == true) {
                         throw new Error();
                     }
@@ -322,7 +342,7 @@ public class Cpu8080 extends SimpleCPU {
                 }
             }
         }
-        setRuntimeFreqCounter(false);
+        setupFrequencyUpdater(false);
         fireCpuRun(run_state);
         fireCpuState();
     }
@@ -333,41 +353,22 @@ public class Cpu8080 extends SimpleCPU {
     }
 
     @Override
-    public IDisassembler getDisassembler() {
+    public Disassembler getDisassembler() {
         return disasm;
     }
 
-    /**
-     * This class perform runtime frequency calculation
-     * 
-     * Given: time, executed cycles count
-     * Frequency is defined as number of something by some period of time.
-     * Hz = 1/s, kHz = 1000/s
-     * time has to be in seconds
-     * 
-     * CC ..by.. time[s]
-     * XX ..by.. 1 [s] ?
-     * ---------------
-     * XX:CC = 1:time
-     * XX = CC / time [Hz]
-     */
-    private class RuntimeFrequencyCalculator extends TimerTask {
+    @Override
+    public int getInstructionPosition() {
+        return PC;
+    }
 
-        private long startTimeSaved = 0;
-
-        @Override
-        public void run() {
-            double endTime = System.nanoTime();
-            double time = endTime - startTimeSaved;
-
-            if (long_cycles == 0) {
-                return;
-            }
-            double freq = (double) long_cycles / (time / 1000000.0);
-            startTimeSaved = (long) endTime;
-            long_cycles = 0;
-            fireFrequencyChanged((float) freq);
+    @Override
+    public boolean setInstructionPosition(int pos) {
+        if (pos < 0) {
+            return false;
         }
+        PC = pos;
+        return true;
     }
 
     /* Get an 8080 register and return it */
@@ -386,7 +387,7 @@ public class Cpu8080 extends SimpleCPU {
             case 5:
                 return L;
             case 6:
-                return ((Short) mem.read((H << 8) | L)).shortValue();
+                return ((Short) memory.read((H << 8) | L)).shortValue();
             case 7:
                 return A;
         }
@@ -415,7 +416,7 @@ public class Cpu8080 extends SimpleCPU {
                 L = val;
                 break;
             case 6:
-                mem.write((H << 8) | L, val);
+                memory.write((H << 8) | L, val);
                 break;
             case 7:
                 A = val;
@@ -581,7 +582,7 @@ public class Cpu8080 extends SimpleCPU {
     of bits on even: P=0200000, else P=0
      */
     private void parity(int reg) {
-        if (parity_table[reg & 0xFF] == 1) {
+        if (PARITY[reg & 0xFF] == 1) {
             Flags |= flagP;
         } else {
             Flags &= (~flagP);
@@ -589,50 +590,26 @@ public class Cpu8080 extends SimpleCPU {
     }
 
     /* Test an 8080 flag condition and return 1 if true, 0 if false */
-    private int cond(int con) {
+    private boolean checkCondition(int con) {
         switch (con) {
             case 0:
-                if ((Flags & flagZ) == 0) {
-                    return 1;
-                }
-                break;
+                return ((Flags & flagZ) == 0);
             case 1:
-                if ((Flags & flagZ) != 0) {
-                    return 1;
-                }
-                break;
+                return ((Flags & flagZ) != 0);
             case 2:
-                if ((Flags & flagC) == 0) {
-                    return 1;
-                }
-                break;
+                return ((Flags & flagC) == 0);
             case 3:
-                if ((Flags & flagC) != 0) {
-                    return 1;
-                }
-                break;
+                return ((Flags & flagC) != 0);
             case 4:
-                if ((Flags & flagP) == 0) {
-                    return 1;
-                }
-                break;
+                return ((Flags & flagP) == 0);
             case 5:
-                if ((Flags & flagP) != 0) {
-                    return 1;
-                }
-                break;
+                return ((Flags & flagP) != 0);
             case 6:
-                if ((Flags & flagS) == 0) {
-                    return 1;
-                }
-                break;
+                return ((Flags & flagS) == 0);
             case 7:
-                if ((Flags & flagS) != 0) {
-                    return 1;
-                }
-                break;
+                return ((Flags & flagS) != 0);
         }
-        return 0;
+        return false;
     }
 
     private int evalStep() {
@@ -646,12 +623,12 @@ public class Cpu8080 extends SimpleCPU {
         if (isINT == true) {
             if (INTE == true) {
                 if ((b1 & 0xC7) == 0xC7) {                      /* RST */
-                    mem.writeWord(SP - 2, PC);
+                    memory.writeWord(SP - 2, PC);
                     SP -= 2;
                     PC = b1 & 0x38;
                     return 11;
                 } else if (b1 == 0315) {                        /* CALL */
-                    mem.writeWord(SP - 2, PC + 2);
+                    memory.writeWord(SP - 2, PC + 2);
                     SP -= 2;
                     PC = (int) (((b3 & 0xFF) << 8) | (b2 & 0xFF));
                     return 17;
@@ -659,7 +636,7 @@ public class Cpu8080 extends SimpleCPU {
             }
             isINT = false;
         }
-        OP = ((Short) mem.read(PC++)).shortValue();
+        OP = ((Short) memory.read(PC++)).shortValue();
         if (OP == 118) { // hlt?
             run_state = RunState.STATE_STOPPED_NORMAL;
             return 7;
@@ -675,21 +652,21 @@ public class Cpu8080 extends SimpleCPU {
                 return 5;
             }
         } else if ((OP & 0xC7) == 0x06) {                      /* MVI */
-            putreg((OP >>> 3) & 0x07, ((Short) mem.read(PC++)).shortValue());
+            putreg((OP >>> 3) & 0x07, ((Short) memory.read(PC++)).shortValue());
             if (((OP >>> 3) & 0x07) == 6) {
                 return 10;
             } else {
                 return 7;
             }
         } else if ((OP & 0xCF) == 0x01) {                      /* LXI */
-            putpair((OP >>> 4) & 0x03, (Integer) mem.readWord(PC));
+            putpair((OP >>> 4) & 0x03, (Integer) memory.readWord(PC));
             PC += 2;
             return 10;
         } else if ((OP & 0xEF) == 0x0A) {                      /* LDAX */
-            putreg(7, ((Short) mem.read(getpair((OP >>> 4) & 0x03))).shortValue());
+            putreg(7, ((Short) memory.read(getpair((OP >>> 4) & 0x03))).shortValue());
             return 7;
         } else if ((OP & 0xEF) == 0x02) {                      /* STAX */
-            mem.write(getpair((OP >>> 4) & 0x03), getreg(7));
+            memory.write(getpair((OP >>> 4) & 0x03), getreg(7));
             return 7;
         } else if ((OP & 0xF8) == 0xB8) {                      /* CMP */
             int X = A;
@@ -702,17 +679,17 @@ public class Cpu8080 extends SimpleCPU {
                 return 4;
             }
         } else if ((OP & 0xC7) == 0xC2) {                      /* JMP <condition> */
-            if (cond((OP >>> 3) & 0x07) == 1) {
-                PC = (Integer) mem.readWord(PC);
+            if (checkCondition((OP >>> 3) & 0x07)) {
+                PC = (Integer) memory.readWord(PC);
             } else {
                 PC += 2;
             }
             return 10;
         } else if ((OP & 0xC7) == 0xC4) {                      /* CALL <condition> */
-            if (cond((OP >>> 3) & 0x07) == 1) {
-                DAR = (Integer) mem.readWord(PC);
+            if (checkCondition((OP >>> 3) & 0x07)) {
+                DAR = (Integer) memory.readWord(PC);
                 PC += 2;
-                mem.writeWord(SP - 2, PC);
+                memory.writeWord(SP - 2, PC);
                 SP -= 2;
                 PC = DAR;
                 return 17;
@@ -721,29 +698,28 @@ public class Cpu8080 extends SimpleCPU {
                 return 11;
             }
         } else if ((OP & 0xC7) == 0xC0) {                      /* RET <condition> */
-            if (cond((OP >>> 3) & 0x07) == 1) {
-                PC = (Integer) mem.readWord(SP);
+            if (checkCondition((OP >>> 3) & 0x07)) {
+                PC = (Integer) memory.readWord(SP);
                 SP += 2;
             }
             return 10;
         } else if ((OP & 0xC7) == 0xC7) {                      /* RST */
-            mem.writeWord(SP - 2, PC);
+            memory.writeWord(SP - 2, PC);
             SP -= 2;
             PC = OP & 0x38;
             return 11;
         } else if ((OP & 0xCF) == 0xC5) {                      /* PUSH */
             DAR = getpush((OP >>> 4) & 0x03);
-            mem.writeWord(SP - 2, DAR);
+            memory.writeWord(SP - 2, DAR);
             SP -= 2;
             return 11;
         } else if ((OP & 0xCF) == 0xC1) {                      /*POP */
-            DAR = (Integer) mem.readWord(SP);
+            DAR = (Integer) memory.readWord(SP);
             SP += 2;
             putpush((OP >>> 4) & 0x03, DAR);
             return 10;
         } else if ((OP & 0xF8) == 0x80) {                      /* ADD */
             int X = A;
-            DAR = A & 0xF0;
             A += getreg(OP & 0x07);
             setarith(A, X);
             A = (short) (A & 0xFF);
@@ -839,25 +815,25 @@ public class Cpu8080 extends SimpleCPU {
             case 0376:                                     /* CPI */
                 int X = A;
                 DAR = A & 0xFF;
-                DAR -= ((Short) mem.read(PC++)).shortValue();
+                DAR -= ((Short) memory.read(PC++)).shortValue();
                 setarith(DAR, X);
                 return 7;
             case 0346:                                     /* ANI */
-                A &= ((Short) mem.read(PC++)).shortValue();
+                A &= ((Short) memory.read(PC++)).shortValue();
                 Flags &= (~flagC);
                 Flags &= (~flagAC);
                 setlogical(A);
                 A &= 0xFF;
                 return 7;
             case 0356:                                     /* XRI */
-                A ^= ((Short) mem.read(PC++)).shortValue();
+                A ^= ((Short) memory.read(PC++)).shortValue();
                 Flags &= (~flagC);
                 Flags &= (~flagAC);
                 setlogical(A);
                 A &= 0xFF;
                 return 7;
             case 0366:                                     /* ORI */
-                A |= ((Short) mem.read(PC++)).shortValue();
+                A |= ((Short) memory.read(PC++)).shortValue();
                 Flags &= (~flagC);
                 Flags &= (~flagAC);
                 setlogical(A);
@@ -865,41 +841,41 @@ public class Cpu8080 extends SimpleCPU {
                 return 7;
             /* Jump instructions */
             case 0303:                                     /* JMP */
-                PC = (Integer) mem.readWord(PC);
+                PC = (Integer) memory.readWord(PC);
                 return 10;
             case 0351:                                     /* PCHL */
                 PC = (H << 8) | L;
                 return 5;
             case 0315:                                     /* CALL */
-                mem.writeWord(SP - 2, PC + 2);
+                memory.writeWord(SP - 2, PC + 2);
                 SP -= 2;
-                PC = (Integer) mem.readWord(PC);
+                PC = (Integer) memory.readWord(PC);
                 return 17;
             case 0311:                                     /* RET */
-                PC = (Integer) mem.readWord(SP);
+                PC = (Integer) memory.readWord(SP);
                 SP += 2;
                 return 10;
             /* Data Transfer Group */
             case 062:                                      /* STA */
-                DAR = (Integer) mem.readWord(PC);
+                DAR = (Integer) memory.readWord(PC);
                 PC += 2;
-                mem.write(DAR, A);
+                memory.write(DAR, A);
                 return 13;
             case 072:                                      /* LDA */
-                DAR = (Integer) mem.readWord(PC);
+                DAR = (Integer) memory.readWord(PC);
                 PC += 2;
-                A = ((Short) mem.read(DAR)).shortValue();
+                A = ((Short) memory.read(DAR)).shortValue();
                 return 13;
             case 042:                                      /* SHLD */
-                DAR = (Integer) mem.readWord(PC);
+                DAR = (Integer) memory.readWord(PC);
                 PC += 2;
-                mem.writeWord(DAR, (H << 8) | L);
+                memory.writeWord(DAR, (H << 8) | L);
                 return 16;
             case 052:                                      /* LHLD BUG !*/
-                DAR = (Integer) mem.readWord(PC);
+                DAR = (Integer) memory.readWord(PC);
                 PC += 2;
-                L = ((Short) mem.read(DAR)).shortValue();
-                H = ((Short) mem.read(DAR + 1)).shortValue();
+                L = ((Short) memory.read(DAR)).shortValue();
+                H = ((Short) memory.read(DAR + 1)).shortValue();
                 return 16;
             case 0353:                                     /* XCHG */
                 short x = H,
@@ -912,13 +888,13 @@ public class Cpu8080 extends SimpleCPU {
             /* Arithmetic Group */
             case 0306:                                     /* ADI */
                 DAR = A;
-                A += ((Short) mem.read(PC++)).shortValue();
+                A += ((Short) memory.read(PC++)).shortValue();
                 setarith(A, DAR);
                 A = (short) (A & 0xFF);
                 return 7;
             case 0316:                                     /* ACI */
                 DAR = A;
-                A += ((Short) mem.read(PC++)).shortValue();
+                A += ((Short) memory.read(PC++)).shortValue();
                 if ((Flags & flagC) != 0) {
                     A++;
                 }
@@ -927,13 +903,13 @@ public class Cpu8080 extends SimpleCPU {
                 return 7;
             case 0326:                                     /* SUI */
                 DAR = A;
-                A -= ((Short) mem.read(PC++)).shortValue();
+                A -= ((Short) memory.read(PC++)).shortValue();
                 setarith(A, DAR);
                 A = (short) (A & 0xFF);
                 return 7;
             case 0336:                                     /* SBI */
                 DAR = A;
-                A -= ((Short) mem.read(PC++)).shortValue();
+                A -= ((Short) memory.read(PC++)).shortValue();
                 if ((Flags & flagC) != 0) {
                     A--;
                 }
@@ -1049,8 +1025,8 @@ public class Cpu8080 extends SimpleCPU {
             case 0:                                        /* NOP */
                 return 4;
             case 0343:                                     /* XTHL */
-                DAR = (Integer) mem.readWord(SP);
-                mem.writeWord(SP, (H << 8) | L);
+                DAR = (Integer) memory.readWord(SP);
+                memory.writeWord(SP, (H << 8) | L);
                 H = (short) ((DAR >>> 8) & 0xFF);
                 L = (short) (DAR & 0xFF);
                 return 18;
@@ -1064,26 +1040,16 @@ public class Cpu8080 extends SimpleCPU {
                 INTE = false;
                 return 4;
             case 0333:                                     /* IN */
-                DAR = ((Short) mem.read(PC++)).shortValue();
-                A = cpu.fireIO(DAR, true, (short) 0);
+                DAR = ((Short) memory.read(PC++)).shortValue();
+                A = context.fireIO(DAR, true, (short) 0);
                 return 10;
             case 0323:                                     /* OUT */
-                DAR = ((Short) mem.read(PC++)).shortValue();
-                cpu.fireIO(DAR, false, A);
+                DAR = ((Short) memory.read(PC++)).shortValue();
+                context.fireIO(DAR, false, A);
                 return 10;
         }
         run_state = RunState.STATE_STOPPED_BAD_INSTR;
         return 0;
-    }
-
-    @Override
-    public int getInstrPosition() {
-        return PC;
-    }
-
-    @Override
-    public boolean setInstrPosition(int pos) {
-        return setPC(pos);
     }
 
     @Override

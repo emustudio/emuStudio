@@ -1,0 +1,67 @@
+instruction = "nop": 00000000 | "xchg": 0xEB | "sphl": 0xF9 | "xthl": 0xE3 | "daa": 0x27 | "cma": 0x2F | "rlc": 00000111 | "rrc": 00001111 | "ral": 0x17 | "rar": 0x1F | "stc": 0x37 | "cmc": 0x3F |
+              "pchl": 0xE9 | "ret": 0xC9 | "rnz": 0xC0 | "rz": 0xC8 | "rnc": 0xD0 | "rc": 0xD8 | "rpo": 0xE0 | "rpe": 0xE8 | "rp": 0xF0 | "rm": 0xF8 | "ei": 0xFB | "di": 0xF3 | "hlt": 0x76 |
+
+              "ldax": 000 BCDE(1) 1010 | "stax": 000 BCDE(1) 0010 | "pop": 110 BCDE(1) 0001 | "push": 110 BCDE(1) 0101 | "dad": 000 BCDE(1) 1001 | "inx": 000 BCDE(1) 0011 | "dcx": 000 BCDE(1) 1011 |
+
+              "dad": 001 HLSP(1) 1001 | "inx": 001 HLSP(1) 0011 | "dcx": 001 HLSP(1) 1011 |
+
+              "pop": 111 HLPSW(1) 0001 | "push": 111 HLPSW(1) 0101 |
+
+              "lxi": 000 BCDE(1) 0001 imm16 |
+
+              "lxi": 001 HLSP(1) 0001 imm16 |
+
+              "lda": 0x3A imm16 | "sta": 0x32 imm16 | "lhld": 0x2A imm16 | "shld": 0x22 imm16 | "jmp": 0xC3 imm16 | "jnz": 0xC2 imm16 | "jz": 0xCA imm16 | "jnc": 0xD2 imm16 | "jc": 0xDA imm16 |
+              "jpo": 0xE2 imm16 | "jpe": 0xEA imm16 | "jp": 0xF2 imm16 | "jm": 0xFA imm16 | "call": 0xCD imm16 | "cnz": 0xC4 imm16 | "cz": 0xCC imm16 | "cnc": 0xD4 imm16 | "cc": 0xDC imm16 |
+              "cpo": 0xE4 imm16 | "cpe": 0xEC imm16 | "cp": 0xF4 imm16 | "cm": 0xFC imm16 |
+
+              "mvi": 00 REG(3) 110 imm8 |
+
+              "inr": 00 REG(3) 100 | "dcr": 00 REG(3) 101 | "add": 0x8 0 REG | "adc": 0x8 1 REG | "sub": 0x9 0 REG | "sbb": 0x9 1 REG | "ana": 0xA 0 REG | "xra": 0xA 1 REG | "ora": 0xB 0 REG |
+              "cmp": 0xB 1 REG |
+
+              "in": 0xDB imm8 | "out": 0xD3 imm8 | "adi": 0xC6 imm8 | "aci": 0xCE imm8 | "sui": 0xD6 imm8 | "sbi": 0xDE imm8 | "cpi": 0xFE imm8 | "ani": 0xE6 imm8 | "ori": 0xF6 imm8 | "xri": 0xEE imm8 |
+
+              "rst": 11 NUMBER(3) 111 |
+
+              "mov": 010 REG_BCDE(2) REG |
+              "mov": 0110 REG_HL(1) REG |
+              "mov": 01 REG_A[111](3) REG |
+
+              "mov": 011100 REG_BCDE |
+              "mov": 0111010 REG_HL |
+              "mov": 01110 REG_A[111](3);
+
+BCDE = "BC" : 0 | "DE" : 1;
+HLSP = "HL" : 0 | "SP" : 1;
+HLPSW = "HL" : 0 | "PSW" : 1;
+REG = "B": 000 | "C": 001 | "D": 010 | "E": 011 | "H": 100 | "L": 101 | "M": 110 | "A": 111;
+
+REG_BCDE = "B": 00 | "C": 01 | "D": 10 | "E": 11;
+REG_HL = "H": 0 | "L": 1;
+REG_A = "A": 111;
+
+NUMBER = number: number(3);
+imm8 = imm8: imm8(8);
+imm16 = imm16: imm16(16);
+
+%%
+
+"%s %s, %s" = instruction REG_BCDE REG;
+"%s %s, %s" = instruction REG_HL REG;
+"%s %s, %s" = instruction REG_A REG;
+"%s M, %s" = instruction REG_BCDE;
+"%s M, %s" = instruction REG_HL;
+"%s M, %s" = instruction REG_A;
+"%s %d" = instruction NUMBER;
+"%s %s, %X" = instruction REG imm8;
+"%s %s" = instruction REG;
+"%s %X" = instruction imm8;
+"%s %s, %X" = instruction BCDE imm16;
+"%s %s, %X" = instruction HLSP imm16;
+"%s %s" = instruction HLPSW;
+"%s %s" = instruction HLSP;
+"%s %s" = instruction BCDE;
+"%s %X" = instruction imm16;
+"%s" = instruction;
+

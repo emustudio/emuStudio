@@ -1,11 +1,10 @@
 /*
- * ACpuContext.java
- * (interface)
+ * FrequencyChangedListener.java
  *
- * Created on 18.6.2008, 8:56:44
- * hold to: KISS, YAGNI
+ * Created on 18.6.2008, 9:31:16
+ * hold to: KISS, YAGNI, DRY
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,18 +21,21 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package interfaces;
+package net.sf.emustudio.intel8080;
 
-import emulib.plugins.cpu.ICPUContext;
-import emulib.plugins.device.IDeviceContext;
+import emulib.plugins.cpu.CPU.CPUListener;
 
 /**
- * CPU context for 8080 processor
- * @author vbmacher
+ * Listener of frequency changes
+ * 
+ * @author Peter Jakubčo
  */
-public interface C8E98DC5AF7BF51D571C03B7C96324B3066A092EA extends ICPUContext {
-    public boolean attachDevice(IDeviceContext listener, int port);
-    public void detachDevice(int port);
+public interface FrequencyChangedListener extends CPUListener {
     
-    public void interrupt(byte[] instr);
+    /**
+     * Handle frequency changes of the CPU.
+     * 
+     * @param newFrequency new Frequency in kHz
+     */
+    public void frequencyChanged(float newFrequency);
 }

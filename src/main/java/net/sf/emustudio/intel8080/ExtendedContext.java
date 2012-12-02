@@ -1,11 +1,10 @@
 /*
- * IICpuListener.java
- * (interface)
+ * ExtendedContext.java
  *
- * Created on 18.6.2008, 9:31:16
- * hold to: KISS, YAGNI
+ * Created on 18.6.2008, 8:56:44
+ * hold to: KISS, YAGNI, DRY
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,15 +21,19 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package interfaces;
+package net.sf.emustudio.intel8080;
 
-import java.util.EventObject;
-import emulib.plugins.cpu.ICPU.ICPUListener;
+import emulib.plugins.cpu.CPUContext;
+import emulib.plugins.device.DeviceContext;
 
 /**
- *
- * @author vbmacher
+ * Extended CPU context for 8080 processor.
+ * 
+ * @author Peter Jakubčo
  */
-public interface IICpuListener extends ICPUListener {
-    public void frequencyChanged(EventObject evt, float freq);
+public interface ExtendedContext extends CPUContext {
+    public boolean attachDevice(DeviceContext<Short> listener, int port);
+    public void detachDevice(int port);
+    
+    public void setCPUFrequency(int freq);
 }
