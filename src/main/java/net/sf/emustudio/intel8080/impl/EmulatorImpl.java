@@ -248,7 +248,7 @@ public class EmulatorImpl extends AbstractCPU {
 
     /* DOWN: GUI interaction */
     @Override
-    public JPanel getStatusGUI() {
+    public JPanel getStatusPanel() {
         return statusPanel;
     }
 
@@ -329,7 +329,7 @@ public class EmulatorImpl extends AbstractCPU {
                     }
                     cycles_executed += cycles;
                     executedCycles += cycles;
-                    if (getBreakpoint(PC) == true) {
+                    if (isBreakpointSet(PC) == true) {
                         throw new Error();
                     }
                 }
