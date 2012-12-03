@@ -218,7 +218,7 @@ public class Automatization implements Runnable {
                     logger.error("FAILED: Invalid state. (" + resultState + ")");
                     break;
             }
-            logger.info("Instruction position after finish = " + String.format("%04Xh", cpu.getInstrPosition()));
+            logger.info("Instruction position after finish = " + String.format("%04Xh", cpu.getInstructionPosition()));
             
             if (!nogui) {
                 progressGUI.setAction("Emulation finished.", false);

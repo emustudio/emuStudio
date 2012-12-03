@@ -121,7 +121,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         lblName.setText(pluginType.title());
         lblFileName.setText(fileName + ".jar");
         lblCopyright.setText(pluginType.copyright());
-        lblVersion.setText(pluginType.version());
+        lblVersion.setText(plugin.getVersion());
         txtDescription.setText(pluginType.description());
     }
     
@@ -506,7 +506,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         PluginType pluginType = plugin.getClass().getAnnotation(PluginType.class);
 
         String title = pluginType.title();
-        String version = pluginType.version();
+        String version = plugin.getVersion();
         String copyright = pluginType.copyright();
         String description = pluginType.description();
         out.print(title);

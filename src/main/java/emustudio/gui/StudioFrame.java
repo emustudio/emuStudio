@@ -161,7 +161,7 @@ public class StudioFrame extends javax.swing.JFrame {
     
     // get gui panel from CPU plugin and show in main window
     private void setStatusGUI() {
-        JPanel statusPanel = cpu.getStatusGUI();
+        JPanel statusPanel = cpu.getStatusPanel();
         if (statusPanel == null) {
             return;
         }
@@ -1238,9 +1238,9 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void btnBackActionPerformed(java.awt.event.ActionEvent evt) {
         try {
-            int pc = cpu.getInstrPosition();
+            int pc = cpu.getInstructionPosition();
             if (pc > 0) {
-                cpu.setInstrPosition(pc - 1);
+                cpu.setInstructionPosition(pc - 1);
                 paneDebug.revalidate();
                 tblDebug.refresh();
             }
@@ -1250,7 +1250,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void btnBeginningActionPerformed(java.awt.event.ActionEvent evt) {
         try {
-            cpu.setInstrPosition(0);
+            cpu.setInstructionPosition(0);
             paneDebug.revalidate();
             tblDebug.refresh();
         } catch (NullPointerException e) {
@@ -1285,7 +1285,7 @@ public class StudioFrame extends javax.swing.JFrame {
             Main.tryShowErrorMessage("The number entered is in inccorret format", "Jump");
             return;
         }
-        if (cpu.setInstrPosition(address) == false) {
+        if (cpu.setInstructionPosition(address) == false) {
             StringBuilder maxSize = (memory != null) ? new StringBuilder().append("\n (expected range from 0 to ")
                     .append(String.valueOf(memory.getSize())).append(")") : new StringBuilder();
             Main.tryShowErrorMessage(new StringBuilder().append("Typed address is incorrect !")
@@ -1456,7 +1456,11 @@ public class StudioFrame extends javax.swing.JFrame {
         bDialog.setVisible(true);
         int address = bDialog.getAddress();
         if ((address != -1) && arch.getCPU().isBreakpointSupported()) {
-            arch.getCPU().setBreakpoint(address, bDialog.isSet());
+            if (bDialog.isSet()) {
+                arch.getCPU().setBreakpoint(address);
+            } else {
+                arch.getCPU().unsetBreakpoint(address);
+            }
         }
         paneDebug.revalidate();
         tblDebug.refresh();

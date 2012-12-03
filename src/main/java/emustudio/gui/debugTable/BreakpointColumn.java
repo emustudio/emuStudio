@@ -52,8 +52,12 @@ public class BreakpointColumn extends AbstractDebugColumn {
     @Override
     public void setDebugValue(int location, Object value) {
         try {
-            boolean v = Boolean.valueOf(value.toString());
-            cpu.setBreakpoint(location, v);
+            boolean shouldSet = Boolean.valueOf(value.toString());
+            if (shouldSet) {
+                cpu.setBreakpoint(location);
+            } else {
+                cpu.unsetBreakpoint(location);
+            }
         } catch(IndexOutOfBoundsException e) {
         }
     }
@@ -68,7 +72,7 @@ public class BreakpointColumn extends AbstractDebugColumn {
     @Override
     public Object getDebugValue(int location) {
         try {
-            return cpu.getBreakpoint(location);
+            return cpu.isBreakpointSet(location);
         } catch(IndexOutOfBoundsException e) {
             return false;
         }

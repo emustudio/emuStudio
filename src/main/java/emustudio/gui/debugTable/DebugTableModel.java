@@ -306,7 +306,7 @@ public class DebugTableModel extends AbstractTableModel {
      */
     public boolean isCurrent(int rowIndex) {
         try {
-            return (cpu.getInstrPosition() == rowToLocation(rowIndex));
+            return (cpu.getInstructionPosition() == rowToLocation(rowIndex));
         } catch(IndexOutOfBoundsException e) {
             return false;
         }
@@ -323,7 +323,7 @@ public class DebugTableModel extends AbstractTableModel {
      * @return row index for current instruction
      */
     private int getCurrentRow() {
-        int position = cpu.getInstrPosition();
+        int position = cpu.getInstructionPosition();
 
         if (position == 0) {
             return 0;
@@ -354,7 +354,7 @@ public class DebugTableModel extends AbstractTableModel {
      */
     private int rowToLocation(int row, int ppage) throws IndexOutOfBoundsException {
         // the row of current instruction is always gapInstr+1
-        int position = cpu.getInstrPosition();
+        int position = cpu.getInstructionPosition();
         int tmp;
         Disassembler dis = cpu.getDisassembler();
 
@@ -378,7 +378,7 @@ public class DebugTableModel extends AbstractTableModel {
                 position = tmp;
             }
         } catch (NullPointerException x) {
-            position = cpu.getInstrPosition();
+            position = cpu.getInstructionPosition();
         }
         return position;
     }
@@ -404,7 +404,7 @@ public class DebugTableModel extends AbstractTableModel {
         try {
             llocation = rowToLocation(0);
         } catch (IndexOutOfBoundsException e) {
-            llocation = cpu.getInstrPosition();
+            llocation = cpu.getInstructionPosition();
         }
 
         if (llocation < location) {
