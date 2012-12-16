@@ -3,10 +3,8 @@
  *
  * Parser (syntactic analyzer for 8080 compiler)
  *
- * KEEP IT SIMPLE STUPID
- * sometimes just: YOU AREN'T GONNA NEED IT
- *
- * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,34 +22,34 @@
  *
  */
 
-package as_8080.impl;
+package net.sf.emustudio.intel8080.assembler.impl;
 
 import java.util.Vector;
 import java_cup.runtime.Symbol;
-import emulib.plugins.compiler.IToken;
+import emulib.plugins.compiler.Token;
 import emulib.plugins.compiler.Message;
 import emulib.plugins.compiler.Message.MessageType;
 
-import as_8080.tree8080.*;
-import as_8080.tree8080Abstract.*;
+import net.sf.emustudio.intel8080.assembler.tree.*;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.*;
 
 
 init with {: errorCount = 0; lastLine = 0; lastColumn = 0; :}
 scan with {:
-    IToken t = (IToken)this.getScanner().next_token();
+    Token t = (Token)this.getScanner().next_token();
     this.lastLine = t.getLine()+1;
     this.lastColumn = t.getColumn()+1;
     return (Symbol)t;
  :}
 parser code {:
-    private Assembler8080 asm;
+    private CompilerImpl asm;
     public int lastLine;
     public int lastColumn;
     public static int errorCount = 0;
 
     private String reportAppendString = null;
     
-    public Parser8080(java_cup.runtime.Scanner s, Assembler8080 asm) {
+    public Parser8080(java_cup.runtime.Scanner s, CompilerImpl asm) {
         this(s);
         this.asm = asm;
     }
@@ -68,7 +66,7 @@ parser code {:
     public void report_error(String message, Symbol current) {
         String mes;
 
-        IToken t = (IToken)current;
+        Token t = (Token)current;
         mes = message + t.getErrorString() + " ('"+t.getText()+"')";
         
         if (reportAppendString != null)
@@ -82,7 +80,7 @@ parser code {:
         this.reportAppendString = str;
     }
     
-    public Assembler8080 getAsm() {
+    public CompilerImpl getAsm() {
         return asm;
     }
 
