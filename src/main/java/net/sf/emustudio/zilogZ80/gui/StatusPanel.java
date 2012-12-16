@@ -1,11 +1,10 @@
 /*
- * StatusGUI.java
+ * StatusPanel.java
  *
  * Created on Nedeľa, 2008, august 24, 10:22
  *
+ * Copyright (C) 2008-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,15 +20,12 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package cpu_z80.gui;
+package net.sf.emustudio.zilogZ80.gui;
 
-import cpu_z80.impl.CpuZ80;
-import interfaces.IICpuListener;
-
+import emulib.plugins.cpu.CPU.RunState;
+import static emulib.runtime.RadixUtils.*;
 import java.awt.Color;
 import java.awt.Font;
-import java.util.EventObject;
-
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.JLabel;
@@ -43,100 +39,48 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
-import emulib.plugins.cpu.ICPU.RunState;
-import emulib.plugins.memory.IMemoryContext;
+import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.zilogZ80.impl.EmulatorImpl;
+import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
 
 /**
- *
- * @author  vbmacher
+ * Status panel for the CPU.
+ * 
+ * @author Peter Jakubčo
  */
-public class StatusGUI extends javax.swing.JPanel {
+public class StatusPanel extends javax.swing.JPanel {
 
     private RunState run_state;
-    private CpuZ80 cpu;
-    private IMemoryContext mem = null;
+    private EmulatorImpl cpu;
+    private ExtendedContext context;
     private AbstractTableModel flagModel1;
     private AbstractTableModel flagModel2;
 
-    private class FlagsModel extends AbstractTableModel {
-
-        private String[] flags = {"S", "Z", "H", "P/V", "N", "C"};
-        private int[] flagsI = {0, 0, 0, 0, 0, 0};
-        private int set;
-
-        public FlagsModel(int set) {
-            this.set = set;
-        }
-
-        @Override
-        public int getRowCount() {
-            return 2;
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 6;
-        }
-
-        @Override
-        public String getColumnName(int columnIndex) {
-            return flags[columnIndex];
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            switch (rowIndex) {
-                case 0:
-                    return flags[columnIndex];
-                case 1:
-                    return flagsI[columnIndex];
-            }
-            return null;
-        }
-
-        @Override
-        public void fireTableDataChanged() {
-            short F = 0;
-            if (set == 0) {
-                F = cpu.F;
-            } else {
-                F = cpu.F1;
-            }
-            flagsI[0] = ((F & CpuZ80.flagS) != 0) ? 1 : 0;
-            flagsI[1] = ((F & CpuZ80.flagZ) != 0) ? 1 : 0;
-            flagsI[2] = ((F & CpuZ80.flagH) != 0) ? 1 : 0;
-            flagsI[3] = ((F & CpuZ80.flagPV) != 0) ? 1 : 0;
-            flagsI[4] = ((F & CpuZ80.flagN) != 0) ? 1 : 0;
-            flagsI[5] = ((F & CpuZ80.flagC) != 0) ? 1 : 0;
-            super.fireTableDataChanged();
-        }
-    }
-
     /** Creates new form statusGUI */
-    public StatusGUI(final CpuZ80 cpu, IMemoryContext mem) {
-        initComponents();
-
+    public StatusPanel(EmulatorImpl cpu, ExtendedContext context) {
         this.cpu = cpu;
-        this.mem = mem;
-//        this.cpuC = (CpuContext) cpu.getContext();
+        this.context = context;
 
         run_state = RunState.STATE_STOPPED_NORMAL;
-        cpu.addCPUListener(new IICpuListener() {
+        
+        initComponents();
+        cpu.addCPUListener(new FrequencyChangedListener() {
 
             @Override
-            public void stateUpdated(EventObject evt) {
+            public void runChanged(RunState state) {
+                run_state = state;
+            }
+
+            @Override
+            public void stateUpdated() {
                 updateGUI();
             }
 
             @Override
-            public void frequencyChanged(EventObject evt, float frequency) {
+            public void frequencyChanged(float frequency) {
                 lblFrequency.setText(String.format("%.2f kHz", frequency));
             }
 
-            @Override
-            public void runChanged(EventObject evt, RunState runState) {
-                run_state = runState;
-            }
         });
         spnFrequency.addChangeListener(new ChangeListener() {
 
@@ -144,9 +88,9 @@ public class StatusGUI extends javax.swing.JPanel {
             public void stateChanged(ChangeEvent e) {
                 int i = (Integer) ((SpinnerNumberModel) spnFrequency.getModel()).getValue();
                 try {
-                    setCPUFreq(i);
+                    StatusPanel.this.context.setCPUFrequency(i);
                 } catch (IndexOutOfBoundsException ex) {
-                    ((SpinnerNumberModel) spnFrequency.getModel()).setValue(cpu.getFrequency());
+                    ((SpinnerNumberModel) spnFrequency.getModel()).setValue(StatusPanel.this.context.getCPUFrequency());
                 }
             }
         });
@@ -156,30 +100,31 @@ public class StatusGUI extends javax.swing.JPanel {
             public void stateChanged(ChangeEvent e) {
                 int i = (Integer) ((SpinnerNumberModel) spnTestPeriode.getModel()).getValue();
                 try {
-                    cpu.setSliceTime(i);
+                    StatusPanel.this.cpu.setSliceTime(i);
                 } catch (IndexOutOfBoundsException ex) {
-                    ((SpinnerNumberModel) spnTestPeriode.getModel()).setValue(cpu.getSliceTime());
+                    ((SpinnerNumberModel) spnTestPeriode.getModel()).setValue(StatusPanel.this.cpu.getSliceTime());
                 }
             }
         });
-        flagModel1 = new FlagsModel(0);
-        flagModel2 = new FlagsModel(1);
+        flagModel1 = new FlagsModel(0, cpu);
+        flagModel2 = new FlagsModel(1, cpu);
         tblFlags.setModel(flagModel1);
         tblFlags2.setModel(flagModel2);
     }
 
-    // user set frequency (must be synchronized inside)
+    // user set frequency
     private void setCPUFreq(int f) {
-        cpu.setFrequency(f);
+        context.setCPUFrequency(f);
     }
 
 
     private String f(int what) {
-        return String.format("%04X", what);
+        return getWordHexString(what);
     }
 
     private String f(short what) {
-        return String.format("%02X", what);
+        return getByteHexString(what);
+
     }
 
     public void updateGUI() {
@@ -208,12 +153,12 @@ public class StatusGUI extends javax.swing.JPanel {
         txtRegHL1.setText(f(((cpu.H1 << 8) | cpu.L1) & 0xFFFF));
         flagModel2.fireTableDataChanged();
 
-        txtRegSP.setText(String.format("%04X", cpu.SP));
-        txtRegPC.setText(String.format("%04X", cpu.PC));
-        txtRegIX.setText(String.format("%04X", cpu.IX));
-        txtRegIY.setText(String.format("%04X", cpu.IY));
-        txtRegI.setText(String.format("%02X", cpu.I));
-        txtRegR.setText(String.format("%02X", cpu.R));
+        txtRegSP.setText(getWordHexString(cpu.SP));
+        txtRegPC.setText(getWordHexString(cpu.PC));
+        txtRegIX.setText(getWordHexString(cpu.IX));
+        txtRegIY.setText(getWordHexString(cpu.IY));
+        txtRegI.setText(getByteHexString(cpu.I));
+        txtRegR.setText(getByteHexString(cpu.R));
 
         if (run_state == RunState.STATE_RUNNING) {
             lblRun.setText("running");

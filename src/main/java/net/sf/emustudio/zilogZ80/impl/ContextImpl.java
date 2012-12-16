@@ -1,10 +1,10 @@
 /*
- * CpuContext.java
+ * ContextImpl.java
  *
  * Created on 18.6.2008, 8:50:11
- * hold to: KISS, YAGNI, DRY
  *
- * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,53 +20,51 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package cpu_z80.impl;
+package net.sf.emustudio.zilogZ80.impl;
 
-import interfaces.C8E98DC5AF7BF51D571C03B7C96324B3066A092EA;
-import java.util.Hashtable;
-import emulib.plugins.device.IDeviceContext;
+import emulib.annotations.ContextType;
+import emulib.plugins.device.DeviceContext;
+import java.util.HashMap;
+import java.util.Map;
+import net.sf.emustudio.intel8080.ExtendedContext;
 
 /**
- *
- * @author vbmacher
+ * Context of Z80 CPU emulator.
+ * 
  */
-public final class CpuContext implements C8E98DC5AF7BF51D571C03B7C96324B3066A092EA {
+@ContextType
+public final class ContextImpl implements ExtendedContext {
+    private Map<Integer, DeviceContext> devices;
+    private EmulatorImpl cpu;
+    private int clockFrequency = 20000; // kHz
 
-    private Hashtable<Integer, IDeviceContext> devicesList;
-    private CpuZ80 z80;
-
-    public CpuContext(CpuZ80 z80) {
-        devicesList = new Hashtable<Integer, IDeviceContext>();
-        this.z80 = z80;
-    }
-
-    @Override
-    public String getID() {
-        return "Z80Context";
+    public ContextImpl(EmulatorImpl cpu) {
+        devices = new HashMap<Integer, DeviceContext>();
+        this.cpu = cpu;
     }
 
     // device mapping = only one device can be attached to one port
     @Override
-    public boolean attachDevice(IDeviceContext device, int port) {
-        if (devicesList.containsKey(port)) {
+    public boolean attachDevice(DeviceContext<Short> device, int port) {
+        if (devices.containsKey(port)) {
             return false;
         }
         if (!device.getDataType().equals(Short.class)) {
             return false;
         }
-        devicesList.put(port, device);
+        devices.put(port, device);
         return true;
     }
 
     @Override
     public void detachDevice(int port) {
-        if (devicesList.containsKey(port)) {
-            devicesList.remove(port);
+        if (devices.containsKey(port)) {
+            devices.remove(port);
         }
     }
 
     public void clearDevices() {
-        devicesList.clear();
+        devices.clear();
     }
 
     /**
@@ -78,24 +76,18 @@ public final class CpuContext implements C8E98DC5AF7BF51D571C03B7C96324B3066A092
      * @return value from the port if read is true, otherwise 0
      */
     public short fireIO(int port, boolean read, short val) {
-        if (devicesList.containsKey(port) == false) {
+        if (devices.containsKey(port) == false) {
             // this behavior isn't constant for all situations...
             // on ALTAIR computer it depends on setting of one switch on front
             // panel (called IR or what..)
             return 0;
         }
         if (read == true) {
-            return (Short) devicesList.get(port).read();
+            return (Short) devices.get(port).read();
         } else {
-            devicesList.get(port).write(val);
+            devices.get(port).write(val);
         }
         return 0;
-    }
-
-    // TODO implement, please...
-    @Override
-    public void interrupt(byte[] instr) {
-        z80.setIntVector(instr);
     }
 
     @Override
@@ -104,12 +96,32 @@ public final class CpuContext implements C8E98DC5AF7BF51D571C03B7C96324B3066A092
     }
 
     @Override
-    public void setInterrupt(IDeviceContext device, int mask) {
-        z80.setInterrupt(device, mask);
+    public void setCPUFrequency(int frequency) {
+        clockFrequency = frequency;
     }
 
     @Override
-    public void clearInterrupt(IDeviceContext device, int mask) {
-        z80.clearInterrupt(device, mask);
+    public boolean isRawInterruptSupported() {
+        return true;
+    }
+
+    @Override
+    public void signalRawInterrupt(DeviceContext device, byte[] data) {
+        cpu.setInterruptVector(data);
+    }
+
+    @Override
+    public void signalInterrupt(DeviceContext device, int mask) {
+        cpu.setInterrupt(device, mask);
+    }
+
+    @Override
+    public void clearInterrupt(DeviceContext device, int mask) {
+        cpu.clearInterrupt(device, mask);
+    }
+
+    @Override
+    public int getCPUFrequency() {
+        return clockFrequency;
     }
 }

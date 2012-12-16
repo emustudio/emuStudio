@@ -1,10 +1,10 @@
 /*
- * CpuZ80.java
+ * EmulatorImpl.java
  *
  * Created on 23.8.2008, 12:53:21
- * hold to: KISS, YAGNI, DRY
  *
- * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,32 +20,43 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package cpu_z80.impl;
+package net.sf.emustudio.zilogZ80.impl;
 
-import cpu_z80.gui.Disassembler;
-import cpu_z80.gui.StatusGUI;
-import emulib.plugins.cpu.IDisassembler;
-import interfaces.C8E98DC5AF7BF51D571C03B7C96324B3066A092EA;
-import interfaces.IICpuListener;
+import net.sf.emustudio.zilogZ80.gui.StatusPanel;
+import emulib.annotations.PLUGIN_TYPE;
+import emulib.annotations.PluginType;
+import emulib.emustudio.SettingsManager;
+import emulib.plugins.cpu.AbstractCPU;
+import emulib.plugins.cpu.Disassembler;
+import emulib.plugins.device.DeviceContext;
+import emulib.plugins.memory.MemoryContext;
+import emulib.runtime.ContextPool;
+import emulib.runtime.StaticDialogs;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.JPanel;
-import emulib.plugins.ISettingsHandler;
-import emulib.plugins.cpu.SimpleCPU;
-import emulib.plugins.device.IDeviceContext;
-import emulib.plugins.memory.IMemoryContext;
-import emulib.runtime.Context;
-import emulib.runtime.StaticDialogs;
+import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.zilogZ80.gui.DecoderImpl;
+import net.sf.emustudio.zilogZ80.gui.DisassemblerImpl;
+import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
 
 /**
+ * Main implementation class for CPU emulation CPU works in a separate thread (parallel with other hardware)
  *
  * @author vbmacher
  */
-public class CpuZ80 extends SimpleCPU {
+@PluginType(type = PLUGIN_TYPE.CPU,
+title = "Zilog Z80 CPU",
+copyright = "\u00A9 Copyright 2008-2012, Peter Jakubčo",
+description = "Emulator of Zilog Z80 CPU")
+public class EmulatorImpl extends AbstractCPU {
 
-    private StatusGUI status;
-    private Disassembler dis;
-    private IMemoryContext mem;
-    private CpuContext cpu;
+    private StatusPanel statusPanel;
+    private Disassembler disassembler;
+    private MemoryContext memory;
+    private ContextImpl context;
     // 2 sets of 6 GPR
     public short B, B1, C, C1, D, D1, E, E1;
     public short H, H1, L, L1;
@@ -58,15 +69,13 @@ public class CpuZ80 extends SimpleCPU {
             flagH = 0x10, flagPV = 0x4, flagN = 0x2, flagC = 0x1;
     // cpu speed
     private long long_cycles = 0; // count of executed cycles for runtime freq. computing
-    private java.util.Timer freqScheduler;
-    private RuntimeFrequencyCalculator rfc;
-    private int sliceCheckTime = 100;
-    private volatile int clockFrequency = 20000; // kHz
-    private final Object frequencyLock = new Object(); // synchronize lock
-
+    private java.util.Timer frequencyScheduler;
+    private FrequencyUpdater frequencyUpdater;
+    private int checkTimeSlice = 100;
+    
     private byte intMode = 0; // interrupt mode (0,1,2)
     // Interrupt flip-flops
-    private boolean[] IFF; // interrupt enable flip-flops
+    private boolean[] IFF = new boolean[2]; // interrupt enable flip-flops
     // No-Extra wait for CPC Interrupt?
     private boolean noWait = false;
     // Flag to cause an interrupt to execute
@@ -76,17 +85,17 @@ public class CpuZ80 extends SimpleCPU {
     // Interrupt mask
     private int interruptPending = 0;
     // device that want to interrupt
-    private IDeviceContext interruptDevice;
+    private DeviceContext interruptDevice;
 
     /* parityTable[i] = (number of 1's in i is odd) ? 0 : 4, i = 0..255 */
-    private final static short parityTable[] = {
+    private final static short PARITY_TABLE[] = {
         4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4,
         0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0,
         0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0,
         4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4
     };
     // incTable[i] = (i & 0x28) | ((!i) << 6) | ((!(i&0xf))<<4) | (((i&0x80) > 0)<<7) | ((i==0x80)<<2);
-    private final static short incTable[] = {
+    private final static short INC_TABLE[] = {
         80, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8, 16, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8,
         48, 32, 32, 32, 32, 32, 32, 32, 40, 40, 40, 40, 40, 40, 40, 40, 48, 32, 32, 32, 32, 32, 32, 32, 40, 40, 40, 40, 40, 40, 40, 40,
         16, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8, 16, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8,
@@ -97,7 +106,7 @@ public class CpuZ80 extends SimpleCPU {
         176, 160, 160, 160, 160, 160, 160, 160, 168, 168, 168, 168, 168, 168, 168, 168, 176, 160, 160, 160, 160, 160, 160, 160, 168, 168, 168, 168, 168, 168, 168, 168, 80
     };
     // decTable[i] = (i & 0x28) | ((!i) << 6) | (((i&0xf) == 0xf)<<4) | (((i&0x80) > 0)<<7) | ((i==0x7f)<<2) | 2;
-    private final static short decTable[] = {
+    private final static short DEC_TABLE[] = {
         66, 2, 2, 2, 2, 2, 2, 2, 10, 10, 10, 10, 10, 10, 10, 26, 2, 2, 2, 2, 2, 2, 2, 2, 10, 10, 10, 10, 10, 10, 10, 26,
         34, 34, 34, 34, 34, 34, 34, 34, 42, 42, 42, 42, 42, 42, 42, 58, 34, 34, 34, 34, 34, 34, 34, 34, 42, 42, 42, 42, 42, 42, 42, 58,
         2, 2, 2, 2, 2, 2, 2, 2, 10, 10, 10, 10, 10, 10, 10, 26, 2, 2, 2, 2, 2, 2, 2, 2, 10, 10, 10, 10, 10, 10, 10, 26,
@@ -109,7 +118,7 @@ public class CpuZ80 extends SimpleCPU {
     };
     // used for add - determines carry and half-carry
     // cbitsTable[i] = (i & 0x10) | ((i >> 8) & 1), i = 0..511
-    private final static short cbitsTable[] = {
+    private final static short CBITS_TABLE[] = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
@@ -119,7 +128,7 @@ public class CpuZ80 extends SimpleCPU {
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,};
     // rrcaTable[i] = ((i & 1) << 7)|(i>>1);
-    private final static short rrcaTable[] = {
+    private final static short RRCA_TABLE[] = {
         0, 128, 1, 129, 2, 130, 3, 131, 4, 132, 5, 133, 6, 134, 7, 135, 8, 136, 9, 137, 10, 138, 11, 139, 12, 140, 13, 141, 14, 142, 15, 143, 16, 144, 17, 145, 18, 146, 19, 147, 20, 148, 21, 149, 22, 150,
         23, 151, 24, 152, 25, 153, 26, 154, 27, 155, 28, 156, 29, 157, 30, 158, 31, 159, 32, 160, 33, 161, 34, 162, 35, 163, 36, 164, 37, 165, 38, 166, 39, 167, 40, 168, 41, 169, 42, 170, 43, 171, 44, 172, 45,
         173, 46, 174, 47, 175, 48, 176, 49, 177, 50, 178, 51, 179, 52, 180, 53, 181, 54, 182, 55, 183, 56, 184, 57, 185, 58, 186, 59, 187, 60, 188, 61, 189, 62, 190, 63, 191, 64, 192, 65, 193, 66, 194, 67, 195,
@@ -128,7 +137,7 @@ public class CpuZ80 extends SimpleCPU {
         113, 241, 114, 242, 115, 243, 116, 244, 117, 245, 118, 246, 119, 247, 120, 248, 121, 249, 122, 250, 123, 251, 124, 252, 125, 253, 126, 254, 127, 255
     };
     // daaTable[i] = (i & 0x80)|((i==0) << 6)|parityTable[i]
-    private final static short daaTable[] = {
+    private final static short DAA_TABLE[] = {
         68, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4,
         0, 0, 4, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 0, 0, 4, 0, 4, 4, 0, 4, 0, 0, 4, 4,
         0, 0, 4, 0, 4, 4, 0, 128, 132, 132, 128, 132, 128, 128, 132, 132, 128, 128, 132, 128, 132, 132, 128, 132, 128, 128, 132, 128, 132, 132, 128, 128, 132, 132, 128, 132, 128, 128, 132, 132, 128, 128, 132, 128, 132,
@@ -136,7 +145,7 @@ public class CpuZ80 extends SimpleCPU {
         128, 132, 132, 128, 128, 132, 132, 128, 132, 128, 128, 132, 128, 132, 132, 128, 132, 128, 128, 132, 132, 128, 128, 132, 128, 132, 132, 128, 128, 132,
         132, 128, 132, 128, 128, 132, 132, 128, 128, 132, 128, 132, 132, 128, 132, 128, 128, 132, 128, 132, 132, 128, 128, 132, 132, 128, 132, 128, 128, 132,};
     // cbits2Z80Table[i]       0..511  (i & 0x10) | (((i >> 6) ^ (i >> 5)) & 4) | ((i >> 8) & 1) | 2
-    private static final short cbits2Z80Table[] = {
+    private static final short CBITS2Z80_TABLE[] = {
         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18,
         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22,
         6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,
@@ -145,7 +154,7 @@ public class CpuZ80 extends SimpleCPU {
         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19
     };
     // negTable[i] = (i&0x80)|((i==0)<<6)|2|((i==0x80)<<2)|(i!=0)|(((i&0x0f)!=0)<<4)
-    private static final short negTable[] = {
+    private static final short NEG_TABLE[] = {
         66, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 3, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 3, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19,
         19, 19, 3, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 3, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 3, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19,
         19, 19, 19, 19, 19, 3, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 3, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 135, 147, 147, 147, 147, 147, 147, 147,
@@ -153,7 +162,7 @@ public class CpuZ80 extends SimpleCPU {
         147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 131, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 131, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 131, 147,
         147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 131, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147,};
     // cbitsZ80Table[i] = (i & 0x10) | (((i >> 6) ^ (i >> 5)) & 4) | ((i >> 8) & 1), i = 0..511
-    private static final short cbitsZ80Table[] = {
+    private static final short CBITSZ80_TABLE[] = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
         4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
@@ -165,7 +174,7 @@ public class CpuZ80 extends SimpleCPU {
     };
 
     /* incZ80Table[i] = (i & 0xa8) | (((i & 0xff) == 0) << 6) |(((i & 0xf) == 0) << 4) | ((i == 0x80) << 2), i = 0..256 */
-    private static final short incZ80Table[] = {
+    private static final short INCZ80_TABLE[] = {
         80, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8, 16, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8,
         48, 32, 32, 32, 32, 32, 32, 32, 40, 40, 40, 40, 40, 40, 40, 40, 48, 32, 32, 32, 32, 32, 32, 32, 40, 40, 40, 40, 40, 40, 40, 40,
         16, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8, 16, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8,
@@ -175,7 +184,7 @@ public class CpuZ80 extends SimpleCPU {
         144, 128, 128, 128, 128, 128, 128, 128, 136, 136, 136, 136, 136, 136, 136, 136, 144, 128, 128, 128, 128, 128, 128, 128, 136, 136, 136, 136, 136, 136, 136, 136,
         176, 160, 160, 160, 160, 160, 160, 160, 168, 168, 168, 168, 168, 168, 168, 168, 176, 160, 160, 160, 160, 160, 160, 160, 168, 168, 168, 168, 168, 168, 168, 168, 80,};
     /* decZ80Table[i] = (i & 0xa8) | (((i & 0xff) == 0) << 6)|(((i & 0xf) == 0xf) << 4) | ((i == 0x7f) << 2) | 2, i = 0..255 */
-    private static final short decZ80Table[] = {
+    private static final short DECZ80_TABLE[] = {
         66, 2, 2, 2, 2, 2, 2, 2, 10, 10, 10, 10, 10, 10, 10, 26, 2, 2, 2, 2, 2, 2, 2, 2, 10, 10, 10, 10, 10, 10, 10, 26, 34, 34, 34, 34, 34, 34, 34, 34, 42, 42, 42, 42, 42, 42, 42, 58, 34, 34, 34, 34, 34, 34, 34, 34, 42, 42, 42, 42, 42, 42, 42, 58,
         2, 2, 2, 2, 2, 2, 2, 2, 10, 10, 10, 10, 10, 10, 10, 26, 2, 2, 2, 2, 2, 2, 2, 2, 10, 10, 10, 10, 10, 10, 10, 26, 34, 34, 34, 34, 34, 34, 34, 34, 42, 42, 42, 42, 42, 42, 42, 58,
         34, 34, 34, 34, 34, 34, 34, 34, 42, 42, 42, 42, 42, 42, 42, 62, 130, 130, 130, 130, 130, 130, 130, 130, 138, 138, 138, 138, 138, 138, 138, 154, 130, 130, 130, 130, 130, 130, 130, 130, 138, 138, 138, 138, 138, 138, 138, 154,
@@ -183,108 +192,141 @@ public class CpuZ80 extends SimpleCPU {
         130, 130, 130, 130, 130, 130, 130, 130, 138, 138, 138, 138, 138, 138, 138, 154, 162, 162, 162, 162, 162, 162, 162, 162, 170, 170, 170, 170, 170, 170, 170, 186, 162, 162, 162, 162, 162, 162, 162, 162, 170, 170, 170, 170, 170, 170, 170, 186
     };
     // andTable[i] = (i&0x80)|((i==0)<<6)|0x10|parityTable[i];
-    private static final short andTable[] = {
+    private static final short AND_TABLE[] = {
         84, 16, 16, 20, 16, 20, 20, 16, 16, 20, 20, 16, 20, 16, 16, 20, 16, 20, 20, 16, 20, 16, 16, 20, 20, 16, 16, 20, 16, 20, 20, 16, 16, 20, 20, 16, 20, 16, 16, 20, 20, 16, 16, 20, 16, 20, 20, 16, 20, 16, 16, 20, 16, 20, 20, 16, 16, 20, 20, 16, 20, 16, 16, 20, 16, 20, 20, 16, 20, 16, 16, 20, 20, 16, 16, 20,
         16, 20, 20, 16, 20, 16, 16, 20, 16, 20, 20, 16, 16, 20, 20, 16, 20, 16, 16, 20, 20, 16, 16, 20, 16, 20, 20, 16, 16, 20, 20, 16, 20, 16, 16, 20, 16, 20, 20, 16, 20, 16, 16, 20, 20,
         16, 16, 20, 16, 20, 20, 16, 144, 148, 148, 144, 148, 144, 144, 148, 148, 144, 144, 148, 144, 148, 148, 144, 148, 144, 144, 148, 144, 148, 148, 144, 144, 148, 148, 144, 148, 144, 144, 148, 148, 144, 144, 148, 144, 148,
         148, 144, 144, 148, 148, 144, 148, 144, 144, 148, 144, 148, 148, 144, 148, 144, 144, 148, 148, 144, 144, 148, 144, 148, 148, 144, 148, 144, 144, 148, 144, 148, 148, 144, 144, 148, 148, 144, 148, 144, 144, 148, 144, 148, 148,
         144, 148, 144, 144, 148, 148, 144, 144, 148, 144, 148, 148, 144, 144, 148, 148, 144, 148, 144, 144, 148, 148, 144, 144, 148, 144, 148, 148, 144, 148, 144, 144, 148, 144, 148, 148, 144, 144, 148, 148, 144, 148, 144, 144, 148,};
     // cpTable[i] = (i&0x80)|((i==0)<<6)|2
-    private static final short cpTable[] = {
+    private static final short CP_TABLE[] = {
         66, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
         2, 2, 2, 2, 2, 2, 2, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130,
         130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130,
         130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130,};
 
     /**
+     * This class perform runtime frequency calculation
+     *
+     * Given: time, executed cycles count Frequency is defined as number of something by some period of time. Hz = 1/s,
+     * kHz = 1000/s time has to be in seconds
+     *
+     * CC ..by.. time[s] XX ..by.. 1 [s] ? --------------- XX:CC = 1:time XX = CC / time [Hz]
+     *
+     * @author vbmacher
+     */
+    private class FrequencyUpdater extends TimerTask {
+
+        private long startTimeSaved = 0;
+
+        @Override
+        public void run() {
+            double endTime = System.nanoTime();
+            double time = endTime - startTimeSaved;
+
+            if (long_cycles == 0) {
+                return;
+            }
+            double freq = (double) long_cycles / (time / 1000000.0);
+            startTimeSaved = (long) endTime;
+            long_cycles = 0;
+            fireFrequencyChanged((float) freq);
+        }
+    }
+
+    /**
      * Constructor
      */
-    public CpuZ80(Long pluginID) {
+    public EmulatorImpl(Long pluginID) {
         super(pluginID);
-        IFF = new boolean[2];
-        cpu = new CpuContext(this);
-        rfc = new RuntimeFrequencyCalculator();
-        freqScheduler = new java.util.Timer();
-        if (!Context.getInstance().register(pluginID, cpu, C8E98DC5AF7BF51D571C03B7C96324B3066A092EA.class)) {
-            StaticDialogs.showErrorMessage("Error: Could not register the CPU!");
+
+        context = new ContextImpl(this);
+        try {
+            ContextPool.getInstance().register(pluginID, context, ExtendedContext.class);
+        } catch (RuntimeException e) {
+            StaticDialogs.showErrorMessage("Could not register CPU Context",
+                    EmulatorImpl.class.getAnnotation(PluginType.class).title());
         }
-    }
-
-    @Override
-    public String getTitle() {
-        return "Zilog Z80";
-    }
-
-    @Override
-    public String getCopyright() {
-        return "\u00A9 Copyright 2008-2012, Peter Jakubčo";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Implementation of Zilog Z80 8bit CPU. With its architecture"
-                + " it is similar to Intel's 8080 but something is modified and"
-                + " extended.";
-    }
-
-    @Override
-    public String getVersion() {
-        return getClass().getPackage().getImplementationVersion();
-    }
-
-    @Override
-    public int getInstrPosition() {
-        return PC;
-    }
-
-    @Override
-    public boolean setInstrPosition(int pos) {
-        return setPC(pos);
-    }
-
-    public void fireFrequencyChanged(float freq) {
-        Object[] listeners = listenerList.getListenerList();
-        for (int i = 0; i < listeners.length; i += 2) {
-            if (listeners[i + 1] instanceof IICpuListener) {
-                ((IICpuListener) listeners[i + 1]).frequencyChanged(cpuEvt, freq);
-            }
-        }
+        statusPanel = new StatusPanel(this, context);
+        frequencyUpdater = new FrequencyUpdater();
+        frequencyScheduler = new Timer();
     }
 
     /**
      * Should be called only once
      */
     @Override
-    public boolean initialize(ISettingsHandler settings) {
+    public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
-        this.mem = Context.getInstance().getMemoryContext(pluginID,
-                IMemoryContext.class);
-        if (mem == null) {
-            StaticDialogs.showErrorMessage("Error: CPU must have access"
-                    + " to memory!");
+        this.memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
+
+        if (memory == null) {
+            StaticDialogs.showErrorMessage("CPU must have access to memory");
             return false;
         }
-        status = new StatusGUI(this, mem);
-        dis = new Disassembler(mem);
+        if (memory.getDataType() != Short.class) {
+            StaticDialogs.showErrorMessage("Operating memory type is not supported for this kind of CPU.");
+            return false;
+        }
+        disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         return true;
     }
 
-    public void setInterrupt(IDeviceContext device, int mask) {
+    @Override
+    public void destroy() {
+        run_state = RunState.STATE_STOPPED_NORMAL;
+        stopFrequencyUpdater();
+        context.clearDevices();
+        context = null;
+    }
+
+    @Override
+    public String getVersion() {
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.zilogZ80.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            return "(unknown)";
+        }
+    }
+
+    @Override
+    public int getInstructionPosition() {
+        return PC;
+    }
+
+    @Override
+    public boolean setInstructionPosition(int position) {
+        if (position < 0) {
+            return false;
+        }
+        PC = position & 0xFFFF;
+        return true;
+    }
+
+    public void fireFrequencyChanged(float newFrequency) {
+        for (CPUListener listener : cpuListeners) {
+            if (listener instanceof FrequencyChangedListener) {
+                ((FrequencyChangedListener) listener).frequencyChanged(newFrequency);
+            }
+        }
+    }
+
+    public void setInterrupt(DeviceContext device, int mask) {
         this.interruptDevice = device;
         this.interruptPending |= mask;
     }
 
-    public void clearInterrupt(IDeviceContext device, int mask) {
-        if (interruptDevice == device)
+    public void clearInterrupt(DeviceContext device, int mask) {
+        if (interruptDevice == device) {
             this.interruptPending &= ~mask;
+        }
     }
 
-    public void setIntVector(byte[] vector) {
-        if (vector == null)
+    public void setInterruptVector(byte[] vector) {
+        if ((vector == null) || (vector.length == 0)) {
             return;
-        if (vector.length == 0)
-            return;
-
+        }
         this.interruptVector = vector[0];
     }
 
@@ -317,31 +359,20 @@ public class CpuZ80 extends SimpleCPU {
     @Override
     public void pause() {
         run_state = RunState.STATE_STOPPED_BREAK;
-        setRuntimeFreqCounter(false);
+        stopFrequencyUpdater();
         fireCpuRun(run_state);
     }
 
     @Override
     public void stop() {
         run_state = RunState.STATE_STOPPED_NORMAL;
-        setRuntimeFreqCounter(false);
+        stopFrequencyUpdater();
         fireCpuRun(run_state);
     }
 
-    /**
-     * Sets program counter to specific value
-     */
-    public boolean setPC(int memPos) {
-        if (memPos < 0) {
-            return false;
-        }
-        PC = memPos & 0xFFFF;
-        return true;
-    }
-
     @Override
-    public JPanel getStatusGUI() {
-        return status;
+    public JPanel getStatusPanel() {
+        return statusPanel;
     }
 
     @Override
@@ -354,26 +385,19 @@ public class CpuZ80 extends SimpleCPU {
         IFF[0] = false;
         IFF[1] = false;
         PC = startPos;
-        setRuntimeFreqCounter(false);
+        stopFrequencyUpdater();
         fireCpuRun(run_state);
         fireCpuState();
         interruptPending = 0;
         isINT = noWait = false;
     }
 
-    @Override
-    public void destroy() {
-        run_state = RunState.STATE_STOPPED_NORMAL;
-        setRuntimeFreqCounter(false);
-        cpu.clearDevices();
-    }
-
     public int getSliceTime() {
-        return sliceCheckTime;
+        return checkTimeSlice;
     }
 
     public void setSliceTime(int t) {
-        sliceCheckTime = t;
+        checkTimeSlice = t;
     }
 
     /* Get an GPR register and return it */
@@ -392,7 +416,7 @@ public class CpuZ80 extends SimpleCPU {
             case 5:
                 return L;
             case 6:
-                return ((Short) mem.read((H << 8) | L)).shortValue();
+                return ((Short) memory.read((H << 8) | L)).shortValue();
             case 7:
                 return A;
         }
@@ -443,7 +467,7 @@ public class CpuZ80 extends SimpleCPU {
                 L = val;
                 break;
             case 6:
-                mem.write((H << 8) | L, val);
+                memory.write((H << 8) | L, val);
                 break;
             case 7:
                 A = val;
@@ -627,10 +651,10 @@ public class CpuZ80 extends SimpleCPU {
         switch (spec) {
             case 0xDD:
                 IX = val;
-                return;
+                break;
             case 0xFD:
                 IY = val;
-                return;
+                break;
         }
     }
 
@@ -654,30 +678,32 @@ public class CpuZ80 extends SimpleCPU {
         isINT = false;
         int cycles = 0;
 
-        if (!noWait)
+        if (!noWait) {
             cycles += 14;
+        }
 //        if (interruptDevice != null) {
-  //          interruptDevice.setInterrupt(1);
-    //    }
+        //          interruptDevice.setInterrupt(1);
+        //    }
         IFF[0] = IFF[1] = false;
         switch (intMode) {
             case 0:  // rst p (interruptVector)
                 cycles += 11;
                 RunState old_runstate = run_state;
-                evalStep((short)interruptVector); // must ignore halt
-                if (run_state == RunState.STATE_STOPPED_NORMAL)
+                evalStep((short) interruptVector); // must ignore halt
+                if (run_state == RunState.STATE_STOPPED_NORMAL) {
                     run_state = old_runstate;
+                }
                 break;
             case 1: // rst 0xFF
                 cycles += 12;
-                mem.writeWord(SP - 2, PC);
+                memory.writeWord(SP - 2, PC);
                 SP = (SP - 2) & 0xffff;
                 PC = 0xFF & 0x38;
                 break;
             case 2:
                 cycles += 13;
-                mem.writeWord(SP - 2, PC);
-                PC = (Short)mem.readWord((I << 8) | interruptVector);
+                memory.writeWord(SP - 2, PC);
+                PC = (Short) memory.readWord((I << 8) | interruptVector);
                 break;
         }
         return cycles;
@@ -685,15 +711,16 @@ public class CpuZ80 extends SimpleCPU {
 
     /**
      * Fetches an opcode from memory.
+     *
      * @return opcode
      */
     private short fetchOpcode() {
-        return ((Short) mem.read(PC++)).shortValue();
+        return ((Short) memory.read(PC++)).shortValue();
     }
 
     /**
-     * This method evaluates one instruction. It provides the following phases:
-     * Decode, Execute, Store.
+     * This method evaluates one instruction. It provides the following phases: Decode, Execute, Store.
+     *
      * @param OP the opcode
      */
     private int evalStep(short OP) throws ArrayIndexOutOfBoundsException {
@@ -706,8 +733,9 @@ public class CpuZ80 extends SimpleCPU {
          * but from one or all of 3 bytes (b1,b2,b3) which represents either
          * rst or call instruction incomed from external peripheral device
          */
-        if (isINT)
+        if (isINT) {
             return doInterrupt();
+        }
         R++;
         if (OP == 0x76) { /* HALT */
             run_state = RunState.STATE_STOPPED_NORMAL;
@@ -715,7 +743,7 @@ public class CpuZ80 extends SimpleCPU {
         }
 
         /* Handle below all operations which refer to registers or register pairs.
-        After that, a large switch statement takes care of all other opcodes */
+         After that, a large switch statement takes care of all other opcodes */
         switch (OP & 0xC0) {
             case 0x40: /* LD r,r' */
                 tmp = (OP >>> 3) & 0x07;
@@ -731,101 +759,152 @@ public class CpuZ80 extends SimpleCPU {
             case 0x00: /* NOP */
                 return 4;
             case 0x02: /* LD (BC),A */
-                mem.write(getpair(0), A);
+                memory.write(getpair(0), A);
                 return 7;
             /* INC ss */
-            case 0x03: case 0x13: case 0x23: case 0x33:
+            case 0x03:
+            case 0x13:
+            case 0x23:
+            case 0x33:
                 tmp = (OP >>> 4) & 0x03;
                 tmp1 = getpair(tmp) + 1;
                 putpair(tmp, tmp1);
                 return 6;
             /* ADD HL, ss*/
-            case 0x09: case 0x19: case 0x29: case 0x39:
+            case 0x09:
+            case 0x19:
+            case 0x29:
+            case 0x39:
                 tmp = (OP >>> 4) & 0x03;
                 tmp1 = getpair(tmp);
                 tmp2 = getpair(2);
                 tmp3 = tmp1 + tmp2;
                 putpair(2, tmp3);
-                F = (short) ((F & 0xEC) | cbitsTable[((tmp1 ^ tmp2 ^ tmp3) >>> 8) & 0x1ff]);
+                F = (short) ((F & 0xEC) | CBITS_TABLE[((tmp1 ^ tmp2 ^ tmp3) >>> 8) & 0x1ff]);
                 return 11;
             /* DEC ss*/
-            case 0x0B: case 0x1B: case 0x2B: case 0x3B:
+            case 0x0B:
+            case 0x1B:
+            case 0x2B:
+            case 0x3B:
                 tmp = (OP >>> 4) & 0x03;
                 tmp1 = getpair(tmp) - 1;
                 putpair(tmp, tmp1);
                 return 6;
             /* POP qq */
-            case 0xC1: case 0xD1: case 0xE1: case 0xF1:
+            case 0xC1:
+            case 0xD1:
+            case 0xE1:
+            case 0xF1:
                 tmp = (OP >>> 4) & 0x03;
-                tmp1 = (Integer) mem.readWord(SP);
+                tmp1 = (Integer) memory.readWord(SP);
                 SP = (SP + 2) & 0xffff;
                 putpair2(tmp, tmp1);
                 return 10;
             /* PUSH qq */
-            case 0xC5: case 0xD5: case 0xE5: case 0xF5:
+            case 0xC5:
+            case 0xD5:
+            case 0xE5:
+            case 0xF5:
                 tmp = (OP >>> 4) & 0x03;
                 tmp1 = getpair2(tmp);
                 SP = (SP - 2) & 0xffff;
-                mem.writeWord(SP, tmp1);
+                memory.writeWord(SP, tmp1);
                 return 11;
             /* LD r,n */
-            case 0x06: case 0x0E: case 0x16: case 0x1E: case 0x26: case 0x2E:
-            case 0x36: case 0x3E:
+            case 0x06:
+            case 0x0E:
+            case 0x16:
+            case 0x1E:
+            case 0x26:
+            case 0x2E:
+            case 0x36:
+            case 0x3E:
                 tmp = (OP >>> 3) & 0x07;
-                putreg(tmp, ((Short) mem.read(PC++)).shortValue());
+                putreg(tmp, ((Short) memory.read(PC++)).shortValue());
                 if (tmp == 6) {
                     return 10;
                 } else {
                     return 7;
                 }
             /* INC r */
-            case 0x04: case 0x0C: case 0x14: case 0x1C: case 0x24: case 0x2C:
-            case 0x34: case 0x3C:
+            case 0x04:
+            case 0x0C:
+            case 0x14:
+            case 0x1C:
+            case 0x24:
+            case 0x2C:
+            case 0x34:
+            case 0x3C:
                 tmp = (OP >>> 3) & 0x07;
                 tmp1 = (getreg(tmp) + 1) & 0xff;
                 putreg(tmp, (short) tmp1);
-                F = (short) ((F & 1) | incTable[tmp1]);
+                F = (short) ((F & 1) | INC_TABLE[tmp1]);
                 if (tmp == 6) {
                     return 11;
                 } else {
                     return 4;
                 }
             /* DEC r */
-            case 0x05: case 0x0D: case 0x15: case 0x1D: case 0x25: case 0x2D:
-            case 0x35: case 0x3D:
+            case 0x05:
+            case 0x0D:
+            case 0x15:
+            case 0x1D:
+            case 0x25:
+            case 0x2D:
+            case 0x35:
+            case 0x3D:
                 tmp = (OP >>> 3) & 0x07;
                 tmp1 = (getreg(tmp) - 1) & 0xff;
                 putreg(tmp, (short) tmp1);
-                F = (short) ((F & 1) | decTable[tmp1]);
+                F = (short) ((F & 1) | DEC_TABLE[tmp1]);
                 if (tmp == 6) {
                     return 11;
                 } else {
                     return 4;
                 }
             /* RET cc */
-            case 0xC0: case 0xC8: case 0xD0: case 0xD8: case 0xE0: case 0xE8:
-            case 0xF0: case 0xF8:
+            case 0xC0:
+            case 0xC8:
+            case 0xD0:
+            case 0xD8:
+            case 0xE0:
+            case 0xE8:
+            case 0xF0:
+            case 0xF8:
                 tmp = (OP >>> 3) & 7;
                 if (getCC(tmp)) {
-                    PC = (Integer) mem.readWord(SP);
+                    PC = (Integer) memory.readWord(SP);
                     SP = (SP + 2) & 0xffff;
                     return 11;
                 }
                 return 5;
             /* RST p */
-            case 0xC7: case 0xCF: case 0xD7: case 0xDF: case 0xE7: case 0xEF:
-            case 0xF7: case 0xFF:
-                mem.writeWord(SP - 2, PC);
+            case 0xC7:
+            case 0xCF:
+            case 0xD7:
+            case 0xDF:
+            case 0xE7:
+            case 0xEF:
+            case 0xF7:
+            case 0xFF:
+                memory.writeWord(SP - 2, PC);
                 SP = (SP - 2) & 0xffff;
                 PC = OP & 0x38;
                 return 11;
             /* ADD A,r */
-            case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85:
-            case 0x86: case 0x87:
+            case 0x80:
+            case 0x81:
+            case 0x82:
+            case 0x83:
+            case 0x84:
+            case 0x85:
+            case 0x86:
+            case 0x87:
                 tmp = getreg(OP & 7);
                 tmp1 = A + tmp;
                 tmp2 = A ^ tmp1 ^ tmp;
-                F = (short) ((tmp1 & 0x80) | ((tmp1 == 0) ? flagZ : 0) | cbitsTable[tmp2]
+                F = (short) ((tmp1 & 0x80) | ((tmp1 == 0) ? flagZ : 0) | CBITS_TABLE[tmp2]
                         | (((tmp2 >> 6) ^ (tmp2 >> 5)) & 4));
                 A = (short) (tmp1 & 0xff);
                 if (OP == 0x86) {
@@ -834,12 +913,18 @@ public class CpuZ80 extends SimpleCPU {
                     return 4;
                 }
             /* ADC A,r */
-            case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D:
-            case 0x8E: case 0x8F:
+            case 0x88:
+            case 0x89:
+            case 0x8A:
+            case 0x8B:
+            case 0x8C:
+            case 0x8D:
+            case 0x8E:
+            case 0x8F:
                 tmp3 = getreg(OP & 7);
                 tmp1 = A + tmp3 + (F & 1);
                 tmp2 = A ^ tmp1 ^ tmp3;
-                F = (short) ((tmp1 & 0x80) | ((tmp1 == 0) ? flagZ : 0) | cbitsTable[tmp2]
+                F = (short) ((tmp1 & 0x80) | ((tmp1 == 0) ? flagZ : 0) | CBITS_TABLE[tmp2]
                         | (((tmp2 >> 6) ^ (tmp2 >> 5)) & 4));
                 A = (short) (tmp1 & 0xff);
                 if (OP == 0x8E) {
@@ -848,12 +933,18 @@ public class CpuZ80 extends SimpleCPU {
                     return 4;
                 }
             /* SUB r */
-            case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95:
-            case 0x96: case 0x97:
+            case 0x90:
+            case 0x91:
+            case 0x92:
+            case 0x93:
+            case 0x94:
+            case 0x95:
+            case 0x96:
+            case 0x97:
                 tmp3 = getreg(OP & 7);
                 tmp1 = A - tmp3;
                 tmp2 = A ^ tmp1 ^ tmp3;
-                F = (short) ((tmp1 & 0x80) | ((tmp1 == 0) ? flagZ : 0) | cbitsTable[tmp2 & 0x1ff]
+                F = (short) ((tmp1 & 0x80) | ((tmp1 == 0) ? flagZ : 0) | CBITS_TABLE[tmp2 & 0x1ff]
                         | (((tmp2 >> 6) ^ (tmp2 >> 5)) & 4) | flagN);
                 A = (short) (tmp1 & 0xff);
                 if (OP == 0x96) {
@@ -862,11 +953,17 @@ public class CpuZ80 extends SimpleCPU {
                     return 4;
                 }
             /* SBC A,r */
-            case 0x98: case 0x99: case 0x9A: case 0x9B: case 0x9C: case 0x9D:
-            case 0x9E: case 0x9F:
+            case 0x98:
+            case 0x99:
+            case 0x9A:
+            case 0x9B:
+            case 0x9C:
+            case 0x9D:
+            case 0x9E:
+            case 0x9F:
                 tmp = getreg(OP & 7);
                 tmp2 = A - tmp - (F & 1);
-                F = (short) (cbits2Z80Table[(A ^ tmp ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
+                F = (short) (CBITS2Z80_TABLE[(A ^ tmp ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
                         | (((tmp2 & 0xff) == 0) ? flagZ : 0) | flagN);
                 A = (short) (tmp2 & 0xff);
                 if (OP == 0x9E) {
@@ -875,42 +972,66 @@ public class CpuZ80 extends SimpleCPU {
                     return 4;
                 }
             /* AND r */
-            case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5:
-            case 0xA6: case 0xA7:
+            case 0xA0:
+            case 0xA1:
+            case 0xA2:
+            case 0xA3:
+            case 0xA4:
+            case 0xA5:
+            case 0xA6:
+            case 0xA7:
                 A = (short) ((A & getreg(OP & 7)) & 0xff);
-                F = andTable[A];
+                F = AND_TABLE[A];
                 if (OP == 0xA6) {
                     return 7;
                 } else {
                     return 4;
                 }
             /* XOR r */
-            case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD:
-            case 0xAE: case 0xAF:
+            case 0xA8:
+            case 0xA9:
+            case 0xAA:
+            case 0xAB:
+            case 0xAC:
+            case 0xAD:
+            case 0xAE:
+            case 0xAF:
                 A = (short) ((A ^ getreg(OP & 7)) & 0xff);
-                F = daaTable[A];
+                F = DAA_TABLE[A];
                 if (OP == 0xAE) {
                     return 7;
                 } else {
                     return 4;
                 }
             /* OR r */
-            case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5:
-            case 0xB6: case 0xB7:
+            case 0xB0:
+            case 0xB1:
+            case 0xB2:
+            case 0xB3:
+            case 0xB4:
+            case 0xB5:
+            case 0xB6:
+            case 0xB7:
                 A = (short) ((A | getreg(OP & 7)) & 0xff);
-                F = daaTable[A];
+                F = DAA_TABLE[A];
                 if (OP == 0xB6) {
                     return 7;
                 } else {
                     return 4;
                 }
             /* CP r */
-            case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD:
-            case 0xBE: case 0xBF:
+            case 0xB8:
+            case 0xB9:
+            case 0xBA:
+            case 0xBB:
+            case 0xBC:
+            case 0xBD:
+            case 0xBE:
+            case 0xBF:
                 tmp3 = getreg(OP & 7);
                 tmp2 = A - tmp3;
-                F = (short) (cpTable[tmp2 & 0xff]
-                        | cbits2Z80Table[(A ^ tmp3 ^ tmp2) & 0x1ff]);
+                F = (short) (CP_TABLE[tmp2 & 0xff]
+                        | CBITS2Z80_TABLE[(A ^ tmp3 ^ tmp2) & 0x1ff]);
                 if (OP == 0xBE) {
                     return 7;
                 } else {
@@ -930,15 +1051,15 @@ public class CpuZ80 extends SimpleCPU {
                 F1 = (short) tmp;
                 return 4;
             case 0x0A: /* LD A,(BC) */
-                tmp = (Short) mem.read(getpair(0));
+                tmp = (Short) memory.read(getpair(0));
                 A = (short) tmp;
                 return 7;
             case 0x0F: /* RRCA */
                 F = (short) ((F & 0xFE) | (A & 1));
-                A = rrcaTable[A];
+                A = RRCA_TABLE[A];
                 return 4;
             case 0x10: /* DJNZ e */
-                tmp = (Short) mem.read(PC++);
+                tmp = (Short) memory.read(PC++);
                 B--;
                 B &= 0xFF;
                 if (B != 0) {
@@ -947,7 +1068,7 @@ public class CpuZ80 extends SimpleCPU {
                 }
                 return 8;
             case 0x12: /* LD (DE), A */
-                mem.write(getpair(1), A);
+                memory.write(getpair(1), A);
                 return 7;
             case 0x17: /* RLA */
                 tmp = A >>> 7;
@@ -955,7 +1076,7 @@ public class CpuZ80 extends SimpleCPU {
                 F = (short) ((F & 0xEC) | tmp);
                 return 4;
             case 0x1A: /* LD A,(DE) */
-                tmp = (Short) mem.read(getpair(1));
+                tmp = (Short) memory.read(getpair(1));
                 A = (short) (tmp & 0xff);
                 return 7;
             case 0x1F: /* RRA */
@@ -984,7 +1105,7 @@ public class CpuZ80 extends SimpleCPU {
                         tmp += 0x60;
                     }
                 }
-                F = (short) ((F & 3) | daaTable[tmp & 0xff] | ((A > 0x99) ? 1 : 0) | ((A ^ tmp) & 0x10));
+                F = (short) ((F & 3) | DAA_TABLE[tmp & 0xff] | ((A > 0x99) ? 1 : 0) | ((A ^ tmp) & 0x10));
                 A = (short) (tmp & 0xff);
                 return 4;
             case 0x2F: /* CPL */
@@ -999,7 +1120,7 @@ public class CpuZ80 extends SimpleCPU {
                 F = (short) ((F & 0xEC) | (tmp << 4) | ((~tmp) & 1));
                 return 4;
             case 0xC9: /* RET */
-                PC = (Integer) mem.readWord(SP);
+                PC = (Integer) memory.readWord(SP);
                 SP += 2;
                 return 10;
             case 0xD9: /* EXX */
@@ -1023,10 +1144,10 @@ public class CpuZ80 extends SimpleCPU {
                 L1 = (short) tmp;
                 return 4;
             case 0xE3: /* EX (SP),HL */
-                tmp = (Short) mem.read(SP);
-                tmp1 = (Short) mem.read(SP + 1);
-                mem.write(SP, L);
-                mem.write(SP + 1, H);
+                tmp = (Short) memory.read(SP);
+                tmp1 = (Short) memory.read(SP + 1);
+                memory.write(SP, L);
+                memory.write(SP + 1, H);
                 L = (short) (tmp & 0xff);
                 H = (short) (tmp1 & 0xff);
                 return 19;
@@ -1051,51 +1172,67 @@ public class CpuZ80 extends SimpleCPU {
                 IFF[0] = IFF[1] = true;
                 return 4;
             case 0xED:
-                OP = ((Short) mem.read(PC++)).shortValue();
+                OP = ((Short) memory.read(PC++)).shortValue();
                 switch (OP) {
                     /* IN r,(C) */
-                    case 0x40: case 0x48: case 0x50: case 0x58: case 0x60:
-                    case 0x68: case 0x78:
+                    case 0x40:
+                    case 0x48:
+                    case 0x50:
+                    case 0x58:
+                    case 0x60:
+                    case 0x68:
+                    case 0x78:
                         tmp = (OP >>> 3) & 0x7;
-                        putreg(tmp, cpu.fireIO(C, true, (short) 0));
-                        F = (short) ((F & 1) | daaTable[tmp]);
+                        putreg(tmp, context.fireIO(C, true, (short) 0));
+                        F = (short) ((F & 1) | DAA_TABLE[tmp]);
                         return 12;
                     /* OUT (C),r */
-                    case 0x41: case 0x49: case 0x51: case 0x59: case 0x61:
-                    case 0x69: case 0x79:
+                    case 0x41:
+                    case 0x49:
+                    case 0x51:
+                    case 0x59:
+                    case 0x61:
+                    case 0x69:
+                    case 0x79:
                         tmp = (OP >>> 3) & 0x7;
-                        cpu.fireIO(C, false, getreg(tmp));
+                        context.fireIO(C, false, getreg(tmp));
                         return 12;
                     /* SBC HL, ss */
-                    case 0x42: case 0x52: case 0x62: case 0x72:
+                    case 0x42:
+                    case 0x52:
+                    case 0x62:
+                    case 0x72:
                         tmp = (OP >>> 4) & 3;
                         tmp2 = (H << 8) | L;
                         tmp3 = getpair(tmp);
                         tmp1 = (tmp2 - tmp3 - (F & 1)) & 0xFFFF;
                         // this code taken from: simh
                         F = (short) (((tmp1 == 0) ? flagZ : 0)
-                                | cbits2Z80Table[((tmp2 ^ tmp3 ^ tmp1) >>> 8) & 0x1ff]);
+                                | CBITS2Z80_TABLE[((tmp2 ^ tmp3 ^ tmp1) >>> 8) & 0x1ff]);
                         H = (short) ((tmp1 >>> 8) & 0xff);
                         L = (short) (tmp1 & 0xFF);
                         return 15;
                     /* ADC HL,ss */
-                    case 0x4A: case 0x5A: case 0x6A: case 0x7A:
+                    case 0x4A:
+                    case 0x5A:
+                    case 0x6A:
+                    case 0x7A:
                         tmp = (OP >>> 4) & 3;
                         tmp2 = (H << 8) | L;
                         tmp3 = getpair(tmp);
                         tmp1 = (tmp2 + tmp3 + (F & 1)) & 0xFFFF;
                         F = (short) (((tmp1 >>> 8) & 0x80) | ((tmp1 == 0) ? flagZ : 0)
-                                | cbitsZ80Table[(tmp2 ^ tmp3 ^ tmp1) >>> 8]);
+                                | CBITSZ80_TABLE[(tmp2 ^ tmp3 ^ tmp1) >>> 8]);
                         H = (short) ((tmp1 >>> 8) & 0xff);
                         L = (short) (tmp1 & 0xFF);
                         return 11;
                     case 0x44: /* NEG */
                         A = (short) ((0 - A) & 0xFF);
-                        F = negTable[A];
+                        F = NEG_TABLE[A];
                         return 8;
                     case 0x45: /* RETN */
                         IFF[0] = IFF[1];
-                        PC = (Integer) mem.readWord(SP);
+                        PC = (Integer) memory.readWord(SP);
                         SP = (SP + 2) & 0xffff;
                         return 14;
                     case 0x46: /* IM 0 */
@@ -1106,7 +1243,7 @@ public class CpuZ80 extends SimpleCPU {
                         return 9;
                     case 0x4D: /* RETI - weird.. */
                         IFF[0] = IFF[1];
-                        PC = (Integer) mem.readWord(SP);
+                        PC = (Integer) memory.readWord(SP);
                         SP = (SP + 2) & 0xffff;
                         return 14;
                     case 0x4F: /* LD R,A */
@@ -1128,31 +1265,31 @@ public class CpuZ80 extends SimpleCPU {
                         return 9;
                     case 0x67: /* RRD */
                         tmp = A & 0x0F;
-                        tmp1 = (Short) mem.read((H << 8) | L);
+                        tmp1 = (Short) memory.read((H << 8) | L);
                         A = (short) ((A & 0xF0) | (tmp1 & 0x0F));
                         tmp1 = ((tmp1 >>> 4) & 0x0F) | (tmp << 4);
-                        mem.write(((H << 8) | L), (short) tmp1 & 0xff);
-                        F = (short) (daaTable[A] | (F & flagC));
+                        memory.write(((H << 8) | L), (short) tmp1 & 0xff);
+                        F = (short) (DAA_TABLE[A] | (F & flagC));
                         return 18;
                     case 0x6F: /* RLD */
-                        tmp = (Short) mem.read((H << 8) | L);
+                        tmp = (Short) memory.read((H << 8) | L);
                         tmp1 = (tmp >>> 4) & 0x0F;
                         tmp = ((tmp << 4) & 0xF0) | (A & 0x0F);
                         A = (short) ((A & 0xF0) | tmp1);
-                        mem.write((H << 8) | L, (short) tmp & 0xff);
-                        F = (short) (daaTable[A] | (F & flagC));
+                        memory.write((H << 8) | L, (short) tmp & 0xff);
+                        F = (short) (DAA_TABLE[A] | (F & flagC));
                         return 18;
                     case 0x70: /* IN (C) - unsupported */
-                        tmp = (cpu.fireIO(C, true, (short) 0) & 0xFF);
-                        F = (short) ((F & 1) | daaTable[tmp]);
+                        tmp = (context.fireIO(C, true, (short) 0) & 0xFF);
+                        F = (short) ((F & 1) | DAA_TABLE[tmp]);
                         return 12;
                     case 0x71: /* OUT (C),0 - unsupported */
-                        cpu.fireIO(C, false, (short) 0);
+                        context.fireIO(C, false, (short) 0);
                         return 12;
                     case 0xA0: /* LDI */
                         tmp1 = (H << 8) | L;
                         tmp2 = (D << 8) | E;
-                        mem.write(tmp2, (Short) mem.read(tmp1));
+                        memory.write(tmp2, (Short) memory.read(tmp1));
                         tmp1 = (tmp1 + 1) & 0xFFFF;
                         tmp2 = (tmp2 + 1) & 0xFFFF;
                         tmp = (((B << 8) | C) - 1) & 0xFFFF;
@@ -1165,7 +1302,7 @@ public class CpuZ80 extends SimpleCPU {
                         F = (short) ((F & 0xE9) | ((tmp != 0) ? flagPV : 0));
                         return 16;
                     case 0xA1: /* CPI */
-                        tmp2 = (Short) mem.read((H << 8) | L);
+                        tmp2 = (Short) memory.read((H << 8) | L);
                         tmp = (A - tmp2) & 0xFF;
                         tmp1 = (((B << 8) | C) - 1) & 0xFFFF;
                         tmp3 = tmp ^ tmp2 ^ A;
@@ -1184,9 +1321,9 @@ public class CpuZ80 extends SimpleCPU {
                         L = (short) (tmp & 0xFF);
                         return 16;
                     case 0xA2: /* INI */
-                        tmp = (cpu.fireIO(C, true, (short) 0) & 0xFF);
+                        tmp = (context.fireIO(C, true, (short) 0) & 0xFF);
                         tmp1 = (H << 8) | L;
-                        mem.write(tmp1, (short) tmp);
+                        memory.write(tmp1, (short) tmp);
                         tmp1 = (tmp1 + 1) & 0xFFFF;
                         H = (short) ((tmp1 >>> 8) & 0xff);
                         L = (short) (tmp1 & 0xFF);
@@ -1195,7 +1332,7 @@ public class CpuZ80 extends SimpleCPU {
                         return 16;
                     case 0xA3: /* OUTI */
                         tmp1 = (H << 8) | L;
-                        cpu.fireIO(C, false, (Short) mem.read(tmp1));
+                        context.fireIO(C, false, (Short) memory.read(tmp1));
                         tmp1 = (tmp1 + 1) & 0xFFFF;
                         H = (short) ((tmp1 >>> 8) & 0xff);
                         L = (short) (tmp1 & 0xFF);
@@ -1205,7 +1342,7 @@ public class CpuZ80 extends SimpleCPU {
                     case 0xA8: /* LDD */
                         tmp1 = (H << 8) | L;
                         tmp2 = (D << 8) | E;
-                        mem.write(tmp2, (Short) mem.read(tmp1));
+                        memory.write(tmp2, (Short) memory.read(tmp1));
                         tmp1 = (tmp1 - 1) & 0xFFFF;
                         tmp2 = (tmp2 - 1) & 0xFFFF;
                         tmp = (((B << 8) | C) - 1) & 0xFFFF;
@@ -1218,7 +1355,7 @@ public class CpuZ80 extends SimpleCPU {
                         F = (short) ((F & 0xE9) | ((tmp != 0) ? flagPV : 0));
                         return 16;
                     case 0xA9: /* CPD */
-                        tmp2 = (Short) mem.read((H << 8) | L);
+                        tmp2 = (Short) memory.read((H << 8) | L);
                         tmp = (A - tmp2) & 0xFF;
                         tmp1 = (((B << 8) | C) - 1) & 0xFFFF;
                         tmp3 = tmp ^ tmp2 ^ A;
@@ -1237,9 +1374,9 @@ public class CpuZ80 extends SimpleCPU {
                         L = (short) (tmp & 0xFF);
                         return 16;
                     case 0xAA: /* IND */
-                        tmp = (cpu.fireIO(C, true, (short) 0) & 0xFF);
+                        tmp = (context.fireIO(C, true, (short) 0) & 0xFF);
                         tmp1 = (H << 8) | L;
-                        mem.write(tmp1, (short) tmp);
+                        memory.write(tmp1, (short) tmp);
                         tmp1 = (tmp1 - 1) & 0xFFFF;
                         H = (short) ((tmp1 >>> 8) & 0xff);
                         L = (short) (tmp1 & 0xFF);
@@ -1248,7 +1385,7 @@ public class CpuZ80 extends SimpleCPU {
                         return 16;
                     case 0xAB: /* OUTD */
                         tmp1 = (H << 8) | L;
-                        cpu.fireIO(C, false, (Short) mem.read((short) tmp1));
+                        context.fireIO(C, false, (Short) memory.read((short) tmp1));
                         tmp1 = (tmp1 - 1) & 0xFFFF;
                         H = (short) ((tmp1 >>> 8) & 0xff);
                         L = (short) (tmp1 & 0xFF);
@@ -1258,7 +1395,7 @@ public class CpuZ80 extends SimpleCPU {
                     case 0xB0: /* LDIR */
                         tmp1 = (H << 8) | L;
                         tmp2 = (D << 8) | E;
-                        mem.write(tmp2, (Short) mem.read(tmp1));
+                        memory.write(tmp2, (Short) memory.read(tmp1));
                         tmp1 = (tmp1 + 1) & 0xFFFF;
                         tmp2 = (tmp2 + 1) & 0xFFFF;
                         H = (short) ((tmp1 >>> 8) & 0xff);
@@ -1275,7 +1412,7 @@ public class CpuZ80 extends SimpleCPU {
                         PC -= 2;
                         return 21;
                     case 0xB1: /* CPIR */
-                        tmp2 = (Short) mem.read((H << 8) | L);
+                        tmp2 = (Short) memory.read((H << 8) | L);
                         tmp = (A - tmp2) & 0xFF;
                         tmp1 = (((B << 8) | C) - 1) & 0xFFFF;
                         tmp3 = tmp ^ tmp2 ^ A;
@@ -1300,9 +1437,9 @@ public class CpuZ80 extends SimpleCPU {
                         PC -= 2;
                         return 21;
                     case 0xB2: /* INIR */
-                        tmp = (cpu.fireIO(C, true, (short) 0) & 0xFF);
+                        tmp = (context.fireIO(C, true, (short) 0) & 0xFF);
                         tmp1 = (H << 8) | L;
-                        mem.write(tmp1, (short) tmp);
+                        memory.write(tmp1, (short) tmp);
                         tmp1 = (tmp1 + 1) & 0xFFFF;
                         H = (short) ((tmp1 >>> 8) & 0xff);
                         L = (short) (tmp1 & 0xFF);
@@ -1315,7 +1452,7 @@ public class CpuZ80 extends SimpleCPU {
                         return 21;
                     case 0xB3: /* OTIR */
                         tmp1 = (H << 8) | L;
-                        cpu.fireIO(C, false, (Short) mem.read(tmp1));
+                        context.fireIO(C, false, (Short) memory.read(tmp1));
                         tmp1 = (tmp1 + 1) & 0xFFFF;
                         H = (short) ((tmp1 >>> 8) & 0xff);
                         L = (short) (tmp1 & 0xFF);
@@ -1329,7 +1466,7 @@ public class CpuZ80 extends SimpleCPU {
                     case 0xB8: /* LDDR */
                         tmp1 = (H << 8) | L;
                         tmp2 = (D << 8) | E;
-                        mem.write(tmp2, (Short) mem.read(tmp1));
+                        memory.write(tmp2, (Short) memory.read(tmp1));
                         tmp1 = (tmp1 - 1) & 0xFFFF;
                         tmp2 = (tmp2 - 1) & 0xFFFF;
                         tmp = (((B << 8) | C) - 1) & 0xFFFF;
@@ -1346,7 +1483,7 @@ public class CpuZ80 extends SimpleCPU {
                         PC -= 2;
                         return 21;
                     case 0xB9: /* CPDR */
-                        tmp2 = (Short) mem.read((H << 8) | L);
+                        tmp2 = (Short) memory.read((H << 8) | L);
                         tmp = (A - tmp2) & 0xFF;
                         tmp1 = (((B << 8) | C) - 1) & 0xFFFF;
                         tmp3 = tmp ^ tmp2 ^ A;
@@ -1371,9 +1508,9 @@ public class CpuZ80 extends SimpleCPU {
                         PC -= 2;
                         return 21;
                     case 0xBA: /* INDR */
-                        tmp = (cpu.fireIO(C, true, (short) 0) & 0xFF);
+                        tmp = (context.fireIO(C, true, (short) 0) & 0xFF);
                         tmp1 = (H << 8) | L;
-                        mem.write(tmp1, (short) tmp);
+                        memory.write(tmp1, (short) tmp);
                         tmp1 = (tmp1 - 1) & 0xFFFF;
                         H = (short) (tmp1 >>> 8);
                         L = (short) (tmp1 & 0xFF);
@@ -1386,7 +1523,7 @@ public class CpuZ80 extends SimpleCPU {
                         return 21;
                     case 0xBB: /* OTDR */
                         tmp1 = (H << 8) | L;
-                        cpu.fireIO(C, false, (Short) mem.read((short) tmp1));
+                        context.fireIO(C, false, (Short) memory.read((short) tmp1));
                         tmp1 = (tmp1 - 1) & 0xFFFF;
                         H = (short) (tmp1 >>> 8);
                         L = (short) (tmp1 & 0xFF);
@@ -1398,17 +1535,23 @@ public class CpuZ80 extends SimpleCPU {
                         PC -= 2;
                         return 21;
                 }
-                tmp = (Integer) mem.readWord(PC);
+                tmp = (Integer) memory.readWord(PC);
                 PC += 2;
                 switch (OP) {
                     /* LD (nn), ss */
-                    case 0x43: case 0x53: case 0x63: case 0x73:
+                    case 0x43:
+                    case 0x53:
+                    case 0x63:
+                    case 0x73:
                         tmp1 = getpair((OP >>> 4) & 3);
-                        mem.writeWord(tmp, tmp1);
+                        memory.writeWord(tmp, tmp1);
                         return 20;
                     /* LD ss,(nn) */
-                    case 0x4B: case 0x5B: case 0x6B: case 0x7B:
-                        tmp1 = (Integer) mem.readWord(tmp);
+                    case 0x4B:
+                    case 0x5B:
+                    case 0x6B:
+                    case 0x7B:
+                        tmp1 = (Integer) memory.readWord(tmp);
                         putpair((OP >>> 4) & 3, tmp1);
                         return 20;
                 }
@@ -1418,36 +1561,42 @@ public class CpuZ80 extends SimpleCPU {
                 if (OP == 0xFD) {
                     special = 0xFD;
                 }
-                OP = ((Short) mem.read(PC++)).shortValue();
+                OP = ((Short) memory.read(PC++)).shortValue();
                 switch (OP) {
                     /* ADD ii,pp */
-                    case 0x09: case 0x19: case 0x29: case 0x39:
+                    case 0x09:
+                    case 0x19:
+                    case 0x29:
+                    case 0x39:
                         tmp1 = getpair(special, (OP >>> 4) & 3);
                         tmp = getspecial(special) + tmp1;
-                        F = (short) ((F & 0xEC) | cbitsTable[(IX ^ tmp1 ^ tmp) >> 8]);
+                        F = (short) ((F & 0xEC) | CBITS_TABLE[(IX ^ tmp1 ^ tmp) >> 8]);
                         putspecial(special, tmp);
                         return 15;
                     case 0x23: /* INC ii */
-                        if (special == 0xDD)
+                        if (special == 0xDD) {
                             IX++;
-                        else 
+                        } else {
                             IY++;
+                        }
                         return 10;
                     case 0x2B: /* DEC ii */
-                        if (special == 0xDD)
+                        if (special == 0xDD) {
                             IX--;
-                        else
+                        } else {
                             IY--;
+                        }
                         return 10;
                     case 0xE1: /* POP ii */
-                        if (special == 0xDD)
-                            IX = (Integer) mem.readWord(SP);
-                        else
-                            IY = (Integer) mem.readWord(SP);
+                        if (special == 0xDD) {
+                            IX = (Integer) memory.readWord(SP);
+                        } else {
+                            IY = (Integer) memory.readWord(SP);
+                        }
                         SP += 2;
                         return 14;
                     case 0xE3: /* EX (SP),ii */
-                        tmp = (Integer) mem.readWord(SP);
+                        tmp = (Integer) memory.readWord(SP);
                         if (special == 0xDD) {
                             tmp1 = IX;
                             IX = tmp;
@@ -1455,257 +1604,306 @@ public class CpuZ80 extends SimpleCPU {
                             tmp1 = IY;
                             IY = tmp;
                         }
-                        mem.writeWord(SP, tmp1);
+                        memory.writeWord(SP, tmp1);
                         return 23;
                     case 0xE5: /* PUSH ii */
                         SP -= 2;
-                        if (special == 0xDD)
-                            mem.writeWord(SP, IX);
-                        else
-                            mem.writeWord(SP, IY);
+                        if (special == 0xDD) {
+                            memory.writeWord(SP, IX);
+                        } else {
+                            memory.writeWord(SP, IY);
+                        }
                         return 15;
                     case 0xE9: /* JP (ii) */
-                        if (special == 0xDD)
+                        if (special == 0xDD) {
                             PC = IX;
-                        else
+                        } else {
                             PC = IY;
+                        }
                         return 8;
                     case 0xF9: /* LD SP,ii */
                         SP = (special == 0xDD) ? IX : IY;
                         return 10;
                 }
-                tmp = ((Short) mem.read(PC++)).shortValue();
+                tmp = ((Short) memory.read(PC++)).shortValue();
                 switch (OP) {
                     case 0x76:
                         break;
                     /* LD r,(ii+d) */
-                    case 0x46: case 0x4E: case 0x56: case 0x5E: case 0x66:
-                    case 0x6E: case 0x7E:
+                    case 0x46:
+                    case 0x4E:
+                    case 0x56:
+                    case 0x5E:
+                    case 0x66:
+                    case 0x6E:
+                    case 0x7E:
                         tmp1 = (OP >>> 3) & 7;
-                        putreg2(tmp1, (Short) mem.read((getspecial(special) + tmp) & 0xffff));
+                        putreg2(tmp1, (Short) memory.read((getspecial(special) + tmp) & 0xffff));
                         return 19;
                     /* LD (ii+d),r */
-                    case 0x70: case 0x71: case 0x72: case 0x73: case 0x74:
-                    case 0x75: case 0x77:
+                    case 0x70:
+                    case 0x71:
+                    case 0x72:
+                    case 0x73:
+                    case 0x74:
+                    case 0x75:
+                    case 0x77:
                         tmp1 = (OP & 7);
                         tmp2 = (getspecial(special) + tmp) & 0xffff;
-                        mem.write(tmp2, getreg2(tmp1));
+                        memory.write(tmp2, getreg2(tmp1));
                         return 19;
                     case 0x34: /* INC (ii+d) */
                         tmp1 = (getspecial(special) + tmp) & 0xffff;
-                        tmp2 = ((Short) mem.read(tmp1) + 1) & 0xff;
-                        mem.write(tmp1, tmp2);
-                        F = (short) ((F & 1) | incZ80Table[tmp2]);
+                        tmp2 = ((Short) memory.read(tmp1) + 1) & 0xff;
+                        memory.write(tmp1, tmp2);
+                        F = (short) ((F & 1) | INCZ80_TABLE[tmp2]);
                         return 23;
                     case 0x35: /* DEC (ii+d) */
                         tmp1 = (getspecial(special) + tmp) & 0xffff;
-                        tmp2 = ((Short) mem.read(tmp1) - 1) & 0xff;
-                        F = (short) ((F & 1) | decZ80Table[tmp2]);
+                        tmp2 = ((Short) memory.read(tmp1) - 1) & 0xff;
+                        F = (short) ((F & 1) | DECZ80_TABLE[tmp2]);
                         return 23;
                     case 0x86: /* ADD A,(ii+d) */
-                        tmp1 = (Short) mem.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
                         tmp2 = A + tmp1;
-                        F = (short) (cbitsZ80Table[tmp1 ^ tmp2 ^ A] | (tmp2 & 0x80)
+                        F = (short) (CBITSZ80_TABLE[tmp1 ^ tmp2 ^ A] | (tmp2 & 0x80)
                                 | (((tmp2 & 0xff) == 0) ? flagZ : 0));
                         A = (short) (tmp2 & 0xff);
                         return 19;
                     case 0x8E: /* ADC A,(ii+d) */
-                        tmp1 = (Short) mem.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
                         tmp2 = A + tmp1 + (F & 1);
-                        F = (short) (cbitsZ80Table[tmp1 ^ tmp2 ^ A] | (tmp2 & 0x80)
+                        F = (short) (CBITSZ80_TABLE[tmp1 ^ tmp2 ^ A] | (tmp2 & 0x80)
                                 | (((tmp2 & 0xff) == 0) ? flagZ : 0));
                         A = (short) (tmp2 & 0xff);
                         return 19;
                     case 0x96: /* SUB (ii+d) */
-                        tmp1 = (Short) mem.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
                         tmp2 = A - tmp1;
-                        F = (short) (cbits2Z80Table[(A ^ tmp1 ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
+                        F = (short) (CBITS2Z80_TABLE[(A ^ tmp1 ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
                                 | (((tmp2 & 0xff) == 0) ? flagZ : 0) | flagN);
                         A = (short) (tmp2 & 0xff);
                         return 19;
                     case 0x9E: /* SBC A,(ii+d) */
-                        tmp1 = (Short) mem.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
                         tmp2 = A - tmp1 - (F & 1);
-                        F = (short) (cbits2Z80Table[(A ^ tmp1 ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
+                        F = (short) (CBITS2Z80_TABLE[(A ^ tmp1 ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
                                 | (((tmp2 & 0xff) == 0) ? flagZ : 0) | flagN);
                         A = (short) (tmp2 & 0xff);
                         return 19;
                     case 0xA6: /* AND (ii+d) */
-                        tmp1 = (Short) mem.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
                         A = (short) ((A & tmp1) & 0xff);
-                        F = andTable[A];
+                        F = AND_TABLE[A];
                         return 19;
                     case 0xAE: /* XOR (ii+d) */
-                        tmp1 = (Short) mem.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
                         A = (short) ((A ^ tmp1) & 0xff);
-                        F = daaTable[A];
+                        F = DAA_TABLE[A];
                         return 19;
                     case 0xB6: /* OR (ii+d) */
-                        tmp1 = (Short) mem.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
                         A = (short) ((A | tmp1) & 0xff);
-                        F = daaTable[A];
+                        F = DAA_TABLE[A];
                         return 19;
                     case 0xBE: /* CP (ii+d) */
-                        tmp1 = (Short) mem.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
                         tmp2 = A - tmp1;
-                        F = (short) (cpTable[tmp2 & 0xff] | cbits2Z80Table[(A ^ tmp1 ^ tmp2) & 0x1ff]);
+                        F = (short) (CP_TABLE[tmp2 & 0xff] | CBITS2Z80_TABLE[(A ^ tmp1 ^ tmp2) & 0x1ff]);
                         return 19;
                 }
-                tmp |= (((Short) mem.read(PC++)).shortValue() << 8);
+                tmp |= (((Short) memory.read(PC++)).shortValue() << 8);
                 switch (OP) {
                     case 0x21: /* LD ii,nn */
                         putspecial(special, tmp);
                         return 14;
                     case 0x22: /* LD (nn),ii */
-                        mem.writeWord(tmp, getspecial(special));
+                        memory.writeWord(tmp, getspecial(special));
                         return 16;
                     case 0x2A: /* LD ii,(nn) */
-                        tmp1 = (Integer) mem.readWord(tmp);
+                        tmp1 = (Integer) memory.readWord(tmp);
                         putspecial(special, tmp1);
                         return 20;
                     case 0x36: /* LD (ii+d),d */
-                        mem.write(getspecial(special) + (tmp & 0xff), (tmp >>> 8) & 0xff);
+                        memory.write(getspecial(special) + (tmp & 0xff), (tmp >>> 8) & 0xff);
                         return 19;
                     case 0xCB:
                         OP = (short) ((tmp >>> 8) & 0xff);
                         tmp &= 0xff;
                         switch (OP) {
                             /* BIT b,(ii+d) */
-                            case 0x46: case 0x4E: case 0x56: case 0x5E: case 0x66:
-                            case 0x6E: case 0x76: case 0x7E:
+                            case 0x46:
+                            case 0x4E:
+                            case 0x56:
+                            case 0x5E:
+                            case 0x66:
+                            case 0x6E:
+                            case 0x76:
+                            case 0x7E:
                                 tmp2 = (OP >>> 3) & 7;
-                                tmp1 = (Short) mem.read((getspecial(special) + tmp) & 0xffff);
+                                tmp1 = (Short) memory.read((getspecial(special) + tmp) & 0xffff);
                                 F = (short) ((F & 0x95) | flagH | (((tmp1 & (1 << tmp2)) == 0) ? flagZ : 0));
                                 return 20;
                             /* RES b,(ii+d) */
-                            case 0x86: case 0x8E: case 0x96: case 0x9E: case 0xA6:
-                            case 0xAE: case 0xB6: case 0xBE:
+                            case 0x86:
+                            case 0x8E:
+                            case 0x96:
+                            case 0x9E:
+                            case 0xA6:
+                            case 0xAE:
+                            case 0xB6:
+                            case 0xBE:
                                 tmp2 = (OP >>> 3) & 7;
                                 tmp3 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) mem.read(tmp3);
+                                tmp1 = (Short) memory.read(tmp3);
                                 tmp1 = (tmp1 & (~(1 << tmp2)));
-                                mem.write(tmp3, tmp1 & 0xff);
+                                memory.write(tmp3, tmp1 & 0xff);
                                 return 23;
                             /* SET b,(ii+d) */
-                            case 0xC6: case 0xCE: case 0xD6: case 0xDE: case 0xE6:
-                            case 0xEE: case 0xF6: case 0xFE:
+                            case 0xC6:
+                            case 0xCE:
+                            case 0xD6:
+                            case 0xDE:
+                            case 0xE6:
+                            case 0xEE:
+                            case 0xF6:
+                            case 0xFE:
                                 tmp2 = (OP >>> 3) & 7;
                                 tmp3 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) mem.read(tmp3);
+                                tmp1 = (Short) memory.read(tmp3);
                                 tmp1 = (tmp1 | (1 << tmp2));
-                                mem.write(tmp3, tmp1 & 0xff);
+                                memory.write(tmp3, tmp1 & 0xff);
                                 return 23;
                             case 0x06: /* RLC (ii+d) */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) mem.read(tmp2);
+                                tmp1 = (Short) memory.read(tmp2);
                                 F = (short) ((tmp1 >>> 7) & 0xff);
                                 tmp1 <<= 1;
                                 tmp1 |= (F & 1);
-                                mem.write(tmp2, tmp1 & 0xff);
-                                F |= daaTable[tmp1 & 0xff];
+                                memory.write(tmp2, tmp1 & 0xff);
+                                F |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x0E: /* RRC (ii+d) */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) mem.read(tmp2);
+                                tmp1 = (Short) memory.read(tmp2);
                                 F = (short) (tmp1 & 1);
                                 tmp1 >>>= 1;
                                 tmp1 |= ((F & 1) << 7);
-                                mem.write(tmp2, tmp1 & 0xff);
-                                F |= daaTable[tmp1 & 0xff];
+                                memory.write(tmp2, tmp1 & 0xff);
+                                F |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x16: /* RL (ii+d) */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
                                 tmp3 = F & 1;
-                                tmp1 = (Short) mem.read(tmp2);
+                                tmp1 = (Short) memory.read(tmp2);
                                 F = (short) ((tmp1 >>> 7) & 0xff);
                                 tmp1 <<= 1;
                                 tmp1 |= tmp3;
-                                mem.write(tmp2, tmp1 & 0xff);
-                                F |= daaTable[tmp1 & 0xff];
+                                memory.write(tmp2, tmp1 & 0xff);
+                                F |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x1E: /* RR (ii+d) */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) mem.read(tmp2);
+                                tmp1 = (Short) memory.read(tmp2);
                                 tmp3 = F & 1;
                                 F = (short) (tmp1 & 1);
                                 tmp1 >>>= 1;
                                 tmp1 |= (tmp3 << 7);
-                                mem.write(tmp2, tmp1 & 0xff);
-                                F |= daaTable[tmp1 & 0xff];
+                                memory.write(tmp2, tmp1 & 0xff);
+                                F |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x26: /* SLA (ii+d) */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) mem.read(tmp2);
+                                tmp1 = (Short) memory.read(tmp2);
                                 F = (short) ((tmp1 >>> 7) & 0xff);
                                 tmp1 <<= 1;
-                                mem.write(tmp2, tmp1 & 0xff);
-                                F |= daaTable[tmp1 & 0xff];
+                                memory.write(tmp2, tmp1 & 0xff);
+                                F |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x2E: /* SRA (ii+d) */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) mem.read(tmp2);
+                                tmp1 = (Short) memory.read(tmp2);
                                 tmp3 = tmp1 & 0x80;
                                 F = (short) (tmp1 & 1);
                                 tmp1 >>>= 1;
                                 tmp1 |= tmp3;
-                                mem.write(tmp2, tmp1 & 0xff);
-                                F |= daaTable[tmp1];
+                                memory.write(tmp2, tmp1 & 0xff);
+                                F |= DAA_TABLE[tmp1];
                                 return 23;
                             case 0x36: /* SLL (ii+d) unsupported */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) mem.read(tmp2);
+                                tmp1 = (Short) memory.read(tmp2);
                                 F = (short) ((tmp1 >>> 7) & 0xff);
                                 tmp3 = tmp1 & 1;
                                 tmp1 <<= 1;
                                 tmp1 |= tmp3;
-                                mem.write(tmp2, tmp1 & 0xff);
-                                F |= daaTable[tmp1 & 0xff];
+                                memory.write(tmp2, tmp1 & 0xff);
+                                F |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x3E: /* SRL (ii+d) */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) mem.read(tmp2);
+                                tmp1 = (Short) memory.read(tmp2);
                                 F = (short) (tmp1 & 1);
                                 tmp1 >>>= 1;
-                                mem.write(tmp2, tmp1 & 0xff);
-                                F |= ((tmp1 == 0) ? flagZ : 0) | parityTable[tmp1];
+                                memory.write(tmp2, tmp1 & 0xff);
+                                F |= ((tmp1 == 0) ? flagZ : 0) | PARITY_TABLE[tmp1];
                                 return 23;
                         }
                 }
             case 0xCB:
-                OP = (Short) mem.read(PC++);
+                OP = (Short) memory.read(PC++);
                 switch (OP) {
                     /* RLC r */
-                    case 0x00: case 0x01: case 0x02: case 0x03: case 0x04:
-                    case 0x05: case 0x06: case 0x07:
+                    case 0x00:
+                    case 0x01:
+                    case 0x02:
+                    case 0x03:
+                    case 0x04:
+                    case 0x05:
+                    case 0x06:
+                    case 0x07:
                         tmp = OP & 7;
                         tmp1 = getreg(tmp);
                         F = (short) (tmp1 >>> 7);
                         tmp1 <<= 1;
                         tmp1 |= (F & 1);
-                        F |= daaTable[tmp1 & 0xff];
+                        F |= DAA_TABLE[tmp1 & 0xff];
                         putreg(tmp, (short) tmp1);
-                        if (tmp == 6)
+                        if (tmp == 6) {
                             return 15;
-                        else
+                        } else {
                             return 8;
+                        }
                     /* RRC r */
-                    case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C:
-                    case 0x0D: case 0x0E: case 0x0F:
+                    case 0x08:
+                    case 0x09:
+                    case 0x0A:
+                    case 0x0B:
+                    case 0x0C:
+                    case 0x0D:
+                    case 0x0E:
+                    case 0x0F:
                         tmp = OP & 7;
                         tmp1 = getreg(tmp);
                         F = (short) (tmp1 & 1);
                         tmp1 >>>= 1;
                         tmp1 |= ((F & 1) << 7);
                         putreg(tmp, (short) tmp1);
-                        F |= daaTable[tmp1 & 0xff];
+                        F |= DAA_TABLE[tmp1 & 0xff];
                         if (tmp == 6) {
                             return 15;
                         } else {
                             return 8;
                         }
                     /* RL r */
-                    case 0x10: case 0x11: case 0x12: case 0x13: case 0x14:
-                    case 0x15: case 0x16: case 0x17:
+                    case 0x10:
+                    case 0x11:
+                    case 0x12:
+                    case 0x13:
+                    case 0x14:
+                    case 0x15:
+                    case 0x16:
+                    case 0x17:
                         tmp = OP & 7;
                         tmp1 = getreg(tmp);
                         tmp2 = F & 1;
@@ -1713,14 +1911,21 @@ public class CpuZ80 extends SimpleCPU {
                         tmp1 <<= 1;
                         tmp1 |= tmp2;
                         putreg(tmp, (short) tmp1);
-                        F |= daaTable[tmp1 & 0xff];
-                        if (tmp == 6)
+                        F |= DAA_TABLE[tmp1 & 0xff];
+                        if (tmp == 6) {
                             return 15;
-                        else
+                        } else {
                             return 8;
+                        }
                     /* RR r */
-                    case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C:
-                    case 0x1D: case 0x1E: case 0x1F:
+                    case 0x18:
+                    case 0x19:
+                    case 0x1A:
+                    case 0x1B:
+                    case 0x1C:
+                    case 0x1D:
+                    case 0x1E:
+                    case 0x1F:
                         tmp = OP & 7;
                         tmp1 = getreg(tmp);
                         tmp2 = F & 1;
@@ -1728,27 +1933,41 @@ public class CpuZ80 extends SimpleCPU {
                         tmp1 >>>= 1;
                         tmp1 |= (tmp2 << 7);
                         putreg(tmp, (short) tmp1);
-                        F |= daaTable[tmp1 & 0xff];
-                        if (tmp == 6)
+                        F |= DAA_TABLE[tmp1 & 0xff];
+                        if (tmp == 6) {
                             return 15;
-                        else
+                        } else {
                             return 8;
+                        }
                     /* SLA r */
-                    case 0x20: case 0x21: case 0x22: case 0x23: case 0x24:
-                    case 0x25: case 0x26: case 0x27:
+                    case 0x20:
+                    case 0x21:
+                    case 0x22:
+                    case 0x23:
+                    case 0x24:
+                    case 0x25:
+                    case 0x26:
+                    case 0x27:
                         tmp = OP & 7;
                         tmp1 = getreg(tmp);
                         F = (short) (tmp1 >>> 7);
                         tmp1 <<= 1;
                         putreg(tmp, (short) tmp1);
-                        F |= daaTable[tmp1 & 0xff];
-                        if (tmp == 6)
+                        F |= DAA_TABLE[tmp1 & 0xff];
+                        if (tmp == 6) {
                             return 15;
-                        else
+                        } else {
                             return 8;
+                        }
                     /* SRA r */
-                    case 0x28: case 0x29: case 0x2A: case 0x2B: case 0x2C:
-                    case 0x2D: case 0x2E: case 0x2F:
+                    case 0x28:
+                    case 0x29:
+                    case 0x2A:
+                    case 0x2B:
+                    case 0x2C:
+                    case 0x2D:
+                    case 0x2E:
+                    case 0x2F:
                         tmp = OP & 7;
                         tmp1 = getreg(tmp);
                         tmp2 = tmp1 & 0x80;
@@ -1756,15 +1975,21 @@ public class CpuZ80 extends SimpleCPU {
                         tmp1 >>>= 1;
                         tmp1 |= tmp2;
                         putreg(tmp, (short) tmp1);
-                        F |= daaTable[tmp1];
+                        F |= DAA_TABLE[tmp1];
                         if (tmp == 6) {
                             return 15;
                         } else {
                             return 8;
                         }
                     /* SLL r - unsupported */
-                    case 0x30: case 0x31: case 0x32: case 0x33: case 0x34:
-                    case 0x35: case 0x36: case 0x37:
+                    case 0x30:
+                    case 0x31:
+                    case 0x32:
+                    case 0x33:
+                    case 0x34:
+                    case 0x35:
+                    case 0x36:
+                    case 0x37:
                         tmp = OP & 7;
                         tmp1 = getreg(tmp);
                         F = (short) (tmp1 >>> 7);
@@ -1772,25 +1997,32 @@ public class CpuZ80 extends SimpleCPU {
                         tmp1 <<= 1;
                         tmp1 |= tmp2;
                         putreg(tmp, (short) tmp1);
-                        F |= daaTable[tmp1 & 0xff];
+                        F |= DAA_TABLE[tmp1 & 0xff];
                         if (tmp == 6) {
                             return 15;
                         } else {
                             return 8;
                         }
                     /* SRL r */
-                    case 0x38: case 0x39: case 0x3A: case 0x3B: case 0x3C:
-                    case 0x3D: case 0x3E: case 0x3F:
+                    case 0x38:
+                    case 0x39:
+                    case 0x3A:
+                    case 0x3B:
+                    case 0x3C:
+                    case 0x3D:
+                    case 0x3E:
+                    case 0x3F:
                         tmp = OP & 7;
                         tmp1 = getreg(tmp);
                         F = (short) (tmp1 & 1);
                         tmp1 >>>= 1;
                         putreg(tmp, (short) tmp1);
-                        F |= ((tmp1 == 0) ? flagZ : 0) | parityTable[tmp1];
-                        if (tmp == 6)
+                        F |= ((tmp1 == 0) ? flagZ : 0) | PARITY_TABLE[tmp1];
+                        if (tmp == 6) {
                             return 15;
-                        else
+                        } else {
                             return 8;
+                        }
                 }
                 switch (OP & 0xC0) {
                     case 0x40: /* BIT b,r */
@@ -1827,10 +2059,13 @@ public class CpuZ80 extends SimpleCPU {
                         }
                 }
         }
-        tmp = (Short) mem.read(PC++);
+        tmp = (Short) memory.read(PC++);
         switch (OP) {
             /* JR cc,d */
-            case 0x20: case 0x28: case 0x30: case 0x38:
+            case 0x20:
+            case 0x28:
+            case 0x30:
+            case 0x38:
                 if (getCC1((OP >>> 3) & 3)) {
                     b = (byte) tmp;
                     PC += b;
@@ -1844,192 +2079,156 @@ public class CpuZ80 extends SimpleCPU {
             case 0xC6: /* ADD A,d */
                 tmp1 = A + tmp;
                 tmp2 = A ^ tmp1 ^ tmp;
-                F = (short) ((tmp1 & 0x80) | ((tmp1 == 0) ? flagZ : 0) | cbitsTable[tmp2]
+                F = (short) ((tmp1 & 0x80) | ((tmp1 == 0) ? flagZ : 0) | CBITS_TABLE[tmp2]
                         | (((tmp2 >> 6) ^ (tmp2 >> 5)) & 4));
                 A = (short) (tmp1 & 0xff);
                 return 7;
             case 0xCE: /* ADC A,d */
                 tmp1 = A + tmp + (F & 1);
                 tmp2 = A ^ tmp1 ^ tmp;
-                F = (short) ((tmp1 & 0x80) | ((tmp1 == 0) ? flagZ : 0) | cbitsTable[tmp2]
+                F = (short) ((tmp1 & 0x80) | ((tmp1 == 0) ? flagZ : 0) | CBITS_TABLE[tmp2]
                         | (((tmp2 >> 6) ^ (tmp2 >> 5)) & 4));
                 A = (short) (tmp1 & 0xff);
                 return 7;
             case 0xD3: /* OUT (d),A */
-                cpu.fireIO(tmp, false, A);
+                context.fireIO(tmp, false, A);
                 return 11;
             case 0xD6: /* SUB d */
                 tmp1 = A - tmp;
                 tmp2 = A ^ tmp1 ^ tmp;
-                F = (short) ((tmp1 & 0x80) | ((tmp1 == 0) ? flagZ : 0) | cbitsTable[tmp2 & 0x1ff]
+                F = (short) ((tmp1 & 0x80) | ((tmp1 == 0) ? flagZ : 0) | CBITS_TABLE[tmp2 & 0x1ff]
                         | (((tmp2 >> 6) ^ (tmp2 >> 5)) & 4) | flagN);
                 A = (short) (tmp1 & 0xff);
                 return 7;
             case 0xDB: /* IN A,(d) */
-                A = (short) (cpu.fireIO(tmp, true, (short) 0) & 0xFF);
+                A = (short) (context.fireIO(tmp, true, (short) 0) & 0xFF);
                 return 11;
             case 0xDE: /* SBC A,d */
                 tmp2 = A - tmp - (F & 1);
-                F = (short) (cbits2Z80Table[(A ^ tmp ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
+                F = (short) (CBITS2Z80_TABLE[(A ^ tmp ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
                         | (((tmp2 & 0xff) == 0) ? flagZ : 0) | flagN);
                 A = (short) (tmp2 & 0xff);
                 return 7;
             case 0xE6: /* AND d */
                 A = (short) ((A & tmp) & 0xff);
-                F = andTable[A];
+                F = AND_TABLE[A];
                 return 7;
             case 0xEE: /* XOR d */
                 A = (short) ((A ^ tmp) & 0xff);
-                F = daaTable[A];
+                F = DAA_TABLE[A];
                 return 7;
             case 0xF6: /* OR d */
                 A = (short) ((A | tmp) & 0xff);
-                F = daaTable[A];
+                F = DAA_TABLE[A];
                 return 7;
             case 0xFE: /* CP d */
                 tmp2 = A - tmp;
-                F = (short) (cpTable[tmp2 & 0xff] | cbits2Z80Table[(A ^ tmp ^ tmp2) & 0x1ff]);
+                F = (short) (CP_TABLE[tmp2 & 0xff] | CBITS2Z80_TABLE[(A ^ tmp ^ tmp2) & 0x1ff]);
                 return 7;
         }
-        tmp += ((Short) mem.read(PC++) << 8);
+        tmp += ((Short) memory.read(PC++) << 8);
         switch (OP) {
             /* LD ss, nn */
-            case 0x01: case 0x11: case 0x21: case 0x31:
+            case 0x01:
+            case 0x11:
+            case 0x21:
+            case 0x31:
                 putpair((OP >>> 4) & 3, tmp);
                 return 10;
             /* JP cc,nn */
-            case 0xC2: case 0xCA: case 0xD2: case 0xDA: case 0xE2: case 0xEA:
-            case 0xF2: case 0xFA:
+            case 0xC2:
+            case 0xCA:
+            case 0xD2:
+            case 0xDA:
+            case 0xE2:
+            case 0xEA:
+            case 0xF2:
+            case 0xFA:
                 if (getCC((OP >>> 3) & 7)) {
                     PC = tmp;
                 }
                 return 10;
             /* CALL cc,nn */
-            case 0xC4: case 0xCC: case 0xD4: case 0xDC: case 0xE4: case 0xEC:
-            case 0xF4: case 0xFC:
+            case 0xC4:
+            case 0xCC:
+            case 0xD4:
+            case 0xDC:
+            case 0xE4:
+            case 0xEC:
+            case 0xF4:
+            case 0xFC:
                 if (getCC((OP >>> 3) & 7)) {
                     SP = (SP - 2) & 0xffff;
-                    mem.writeWord(SP, PC);
+                    memory.writeWord(SP, PC);
                     PC = tmp;
                     return 17;
                 }
                 return 10;
             case 0x22: /* LD (nn),HL */
                 tmp1 = getpair(2);
-                mem.writeWord(tmp, tmp1);
+                memory.writeWord(tmp, tmp1);
                 return 16;
             case 0x2A: /* LD HL,(nn) */
-                tmp1 = (Integer) mem.readWord(tmp);
+                tmp1 = (Integer) memory.readWord(tmp);
                 putpair(2, tmp1);
                 return 16;
             case 0x32: /* LD (nn),A */
-                mem.write(tmp, A);
+                memory.write(tmp, A);
                 return 13;
             case 0x3A: /* LD A,(nn) */
-                A = (short) ((Short) mem.read(tmp) & 0xff);
+                A = (short) ((Short) memory.read(tmp) & 0xff);
                 return 13;
             case 0xC3: /* JP nn */
                 PC = tmp;
                 return 10;
             case 0xCD: /* CALL nn */
                 SP = (SP - 2) & 0xffff;
-                mem.writeWord(SP, PC);
+                memory.writeWord(SP, PC);
                 PC = tmp;
                 return 17;
         }
         run_state = RunState.STATE_STOPPED_BAD_INSTR;
         return 0;
     }
-
-    private void setRuntimeFreqCounter(boolean run) {
-        if (run) {
-            try {
-                freqScheduler.purge();
-                freqScheduler.scheduleAtFixedRate(rfc, 0, sliceCheckTime);
-            } catch (Exception e) {
-            }
-        } else {
-            try {
-                rfc.cancel();
-                rfc = new RuntimeFrequencyCalculator();
-            } catch (Exception e) {
-            }
+    
+    private void stopFrequencyUpdater() {
+        try {
+            frequencyUpdater.cancel();
+            frequencyUpdater = new FrequencyUpdater();
+        } catch (Exception e) {
         }
     }
 
+    private void runFrequencyUpdater() {
+        try {
+            frequencyScheduler.purge();
+            frequencyScheduler.scheduleAtFixedRate(frequencyUpdater, 0, checkTimeSlice);
+        } catch (Exception e) {
+        }
+    }
+    
     @Override
     public boolean isShowSettingsSupported() {
         return false;
     }
 
-    public int getFrequency() {
-        synchronized (frequencyLock) {
-            return this.clockFrequency;
-        }
-    }
-
-    // frequency in kHz
-    public void setFrequency(int freq) {
-        synchronized (frequencyLock) {
-            this.clockFrequency = freq;
-        }
-    }
-
     @Override
-    public IDisassembler getDisassembler() {
-        return dis;
-    }
-
-    /**
-     * This class perform runtime frequency calculation
-     * 
-     * Given: time, executed cycles count
-     * Frequency is defined as number of something by some period of time.
-     * Hz = 1/s, kHz = 1000/s
-     * time has to be in seconds
-     * 
-     * CC ..by.. time[s]
-     * XX ..by.. 1 [s] ?
-     * ---------------
-     * XX:CC = 1:time
-     * XX = CC / time [Hz]
-     * 
-     * @author vbmacher
-     */
-    private class RuntimeFrequencyCalculator extends TimerTask {
-
-        private long startTimeSaved = 0;
-
-        @Override
-        public void run() {
-            double endTime = System.nanoTime();
-            double time = endTime - startTimeSaved;
-
-            if (long_cycles == 0) {
-                return;
-            }
-            double freq = (double) long_cycles / (time / 1000000.0);
-            startTimeSaved = (long) endTime;
-            long_cycles = 0;
-            fireFrequencyChanged((float) freq);
-        }
+    public Disassembler getDisassembler() {
+        return disassembler;
     }
 
     /**
      * Run a CPU execution (thread).
-     * 
-     * Real-time CPU frequency balancing
-     * *********************************
-     * 
-     * 1 cycle is performed in 1 periode of CPU frequency.
-     * CPU_PERIODE = 1 / CPU_FREQ [micros]
+     *
+     * Real-time CPU frequency balancing *********************************
+     *
+     * 1 cycle is performed in 1 periode of CPU frequency. CPU_PERIODE = 1 / CPU_FREQ [micros]
      * cycles_to_execute_per_second = 1000 / CPU_PERIODE
-     * 
-     * cycles_to_execute_per_second = 1000 / (1/CPU_FREQ)
-     * cycles_to_execute_per_second = 1000 * CPU_FREQ
-     * 
+     *
+     * cycles_to_execute_per_second = 1000 / (1/CPU_FREQ) cycles_to_execute_per_second = 1000 * CPU_FREQ
+     *
      * 1000 s = 1 micros => slice_length (can vary)
-     * 
+     *
      */
     @Override
     public void run() {
@@ -2042,14 +2241,14 @@ public class CpuZ80 extends SimpleCPU {
         run_state = RunState.STATE_RUNNING;
         fireCpuRun(run_state);
         fireCpuState();
-        setRuntimeFreqCounter(true);
+        runFrequencyUpdater();
         /* 1 Hz  .... 1 tState per second
          * 1 kHz .... 1000 tStates per second
          * clockFrequency is in kHz it have to be multiplied with 1000
          */
-        cycles_to_execute = sliceCheckTime * getFrequency();
+        cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
         long i = 0;
-        slice = sliceCheckTime * 1000000;
+        slice = checkTimeSlice * 1000000;
         while (run_state == RunState.STATE_RUNNING) {
             i++;
             startTime = System.nanoTime();
@@ -2060,7 +2259,7 @@ public class CpuZ80 extends SimpleCPU {
                     cycles = evalStep(fetchOpcode());
                     cycles_executed += cycles;
                     long_cycles += cycles;
-                    if (getBreakpoint(PC) == true) {
+                    if (isBreakpointSet(PC) == true) {
                         throw new Error();
                     }
                 }
@@ -2083,7 +2282,7 @@ public class CpuZ80 extends SimpleCPU {
                 }
             }
         }
-        setRuntimeFreqCounter(false);
+        stopFrequencyUpdater();
         fireCpuState();
         fireCpuRun(run_state);
     }

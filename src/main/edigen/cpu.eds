@@ -1,0 +1,244 @@
+instruction = "nop": 00000000 | "ex (SP),HL": 0xE3 | "ex DE,HL": 0xEB | "ld SP,HL": 0xF9 | "ei": 0xFB | "di": 0xF3 |
+              "hlt": 0x76 | "daa": 0x27 | "cpl": 0x2F | "scf": 0x37 | "ccf": 0x3F | "ret": 0xC9 | "rlca": 0x07 |
+              "rrca": 0x0F | "rla": 0x17 | "rra": 0x1F | "jp (HL)": 0xE9 | "ret NZ": 0xC0 | "ret Z": 0xC8 |
+              "ret NC": 0xD0 | "ret C": 0xD8 | "ret PO": 0xE0 | "ret PE": 0xE8 | "ret P": 0xF0 | "ret M": 0xF8 |
+              "ex AF,AF'": 00001000 | "exx": 0xD9 |
+
+              "inc": 000 BCDE(1) 0011 | "dec": 000 BCDE(1) 1011 | "add HL,": 000 BCDE(1) 1001 |
+              "pop": 110 BCDE(1) 0001 | "push": 110 BCDE(1) 0101 |  
+
+              "inc": 001 HLSP(1) 0011 | "dec": 001 HLSP(1) 1011 | "add HL,": 001 HLSP(1) 1001 |
+
+              "pop": 111 HLPSW(1) 0001 | "push": 111 HLPSW(1) 0101 |
+
+              "inc": 00 REG(3) 100 | "dec": 00 REG(3) 101 | "add": 0x8 0 REG | "adc": 0x8 1 REG | "sub": 0x9 0 REG |
+              "sbc": 0x9 1 REG | "and": 0xA 0 REG | "xor": 0xA 1 REG | "or": 0xB 0 REG | "cp": 0xB 1 REG |
+
+              "sbc": 0xDE imm8 | "add A,": 0xC6 imm8 | "adc A,": 0xCE imm8 | "sub": 0xD6 imm8 | "and": 0xE6 imm8 |
+              "or": 0xF6 imm8 | "xor": 0xEE imm8 | "cp": 0xFE imm8 | "in A,": 0xDB imm8 | "jr": 0x18 imm8 |
+              "djnz": 0x10 imm8 | "jr NZ,": 0x20 imm8 | "jr Z,": 0x28 imm8 | "jr NC,": 0x30 imm8 | "jr C,": 0x38 imm8 |
+
+              "jp": 0xC3 address | "jp NZ,": 0xC2 address | "jp Z,": 0xCA address | "jp NC,": 0xD2 address |
+              "jp C,": 0xDA address | "jp PO,": 0xE2 address | "jp PE,": 0xEA address | "jp P,": 0xF2 address |
+              "jp M,": 0xFA address | "call": 0xCD address | "call NZ,": 0xC4 address | "call Z,": 0xCC address |
+              "call NC,": 0xD4 address | "call C,": 0xDC address | "call PO,": 0xE4 address | "call PE,": 0xEC address |
+              "call P,": 0xF4 address | "call M,": 0xFC address |
+
+              "rst": 11 NUMBER(3) 111 |
+
+              "out": 0xD3 imm8_OUT |
+
+              "ld": 00101010 imm16_LHLD |
+
+              "ld": 00100010 imm16_SHLD |
+
+              "ld": 000 BCDE(1) 0001 imm16 |
+
+              "ld": 001 HLSP(1) 0001 imm16 |
+
+              "ld": 00 REG(3) 110 imm8 |
+
+              "ld": 000 BCDE_LDAX(1) 1010 |
+
+              "ld": 000 BCDE_STAX(1) 0010 |
+
+              "ld": 00111010 imm16_LDA |
+
+              "ld": 00110010 imm16_STA |
+
+              "ld": 010 REG_BCDE(2) REG |
+
+              "ld": 0110 REG_HL(1) REG |
+
+              "ld": 01 REG_A[111](3) REG |
+
+              "ld": 011100 REG_BCDE |
+
+              "ld": 0111010 REG_HL |
+
+              "ld": 01110 REG_A[111](3) |
+
+              0xDD ddINSTR | 0xFD fdINSTR | 0xCB cbINSTR | 0xED edINSTR;
+
+cbINSTR = "rlc": 00000 REG | "rl": 00010 REG | "rrc": 00001 REG | "rr": 00011 REG | "bit": 01 BIT(3) REG |
+          "res": 10 BIT(3) REG | "set": 11 BIT(3) REG | "sla": 00100 REG | "sra": 00101 REG | "srl": 00111 REG;
+
+ddINSTR = "ld": 010 REG_BCDE(2) 110 index |
+
+          "ld": 0110 REG_HL(1) 110 index |
+
+          "ld": 01 REG_A[111](3) 110 index |
+
+          "ld": 01 M[110](3) 0 REG_BCDE(2) index |
+
+          "ld": 01 M[110](3) 10 REG_HL(1) index |
+
+          "ld": 01 M[110](3) REG_A[111](3) index |
+
+          "ld": 0x36 index(8) imm8 |
+
+          "ld": 00100001 imm16 |
+
+          "ld": 00101010 address |
+
+          "ld": 00100010 address_LDIX |
+
+          "ld SP,IX": 0xF9 | "ex (SP),IX": 0xE3 | "inc IX" : 0x23 | "dec IX": 0x2B | "jp (IX)": 0xE9 | "push IX": 0xE5 |
+          "pop IX": 0xE1 |
+
+          "add": 0x86 index | "adc": 0x8E index | "sub": 0x96 index | "sbc": 0x9E index | "inc": 0x34 index |
+          "dec": 0x35 index | "and": 0xA6 index | "xor": 0xAE index | "or": 0xB6 index | "cp": 0xBE index | 
+
+          "add": 00 BCDEIXSP(2) 1001 | 
+
+          "ld": 0x76 index(8) imm8 |
+
+          0xCB index(8) ddcbINSTR;
+
+
+fdINSTR = "ld": 010 REG_BCDE(2) 110 index |
+
+          "ld": 0110 REG_HL(1) 110 index |
+
+          "ld": 01 REG_A[111](3) 110 index |
+
+          "ld": 01 M[110](3) 0 REG_BCDE(2) index |
+
+          "ld": 01 M[110](3) 10 REG_HL(1) index |
+
+          "ld": 01 M[110](3) REG_A[111](3) index |
+
+          "ld": 0x36 index(8) imm8 |
+
+          "ld": 00100001 imm16 |
+
+          "ld": 00101010 address |
+
+          "ld": 00100010 address_LDIX |
+
+          "ld SP,IY": 0xF9 | "ex (SP),IY": 0xE3 | "inc IY" : 0x23 | "dec IY": 0x2B | "jp (IY)": 0xE9 | "push IY": 0xE5 |
+          "pop IY": 0xE1 |
+
+          "add": 0x86 index | "adc": 0x8E index | "sub": 0x96 index | "sbc": 0x9E index | "inc": 0x34 index |
+          "dec": 0x35 index | "and": 0xA6 index | "xor": 0xAE index | "or": 0xB6 index | "cp": 0xBE index | 
+
+          "add": 00 BCDEIYSP(2) 1001 | 
+
+          "ld": 0x76 index(8) imm8 |
+
+          0xCB index(8) fdcbINSTR;
+
+
+ddcbINSTR = "rlc": 00000110 | "rl": 00010110 | "rrc": 00001110 | "rr": 00011110 | "sla": 0x26 | "sra": 0x2E |
+            "srl": 0x3E | "bit": 01 BIT(3) 110 | "res": 10 BIT(3) 110 | "set": 11 BIT(3) 110;
+
+fdcbINSTR = "rlc": 00000110 | "rl": 00010110 | "rrc": 00001110 | "rr": 00011110 | "sla": 0x26 | "sra": 0x2E |
+            "srl": 0x3E | "bit": 01 BIT(3) 110 | "res": 10 BIT(3) 110 | "set": 11 BIT(3) 110;
+
+edINSTR = "ld": 010 BCDE(1) 1011 imm16 | "ld": 011 HLSP(1) 1011 imm16 |
+
+          "ld": 010 BCDE(1) 0011 address | "ld": 011 HLSP(1) 0011 address |
+
+          "adc HL,": 010 BCDE(1) 1010 | "sbc HL,": 010 BCDE(1) 0010 |
+
+          "adc HL,": 011 HLSP(1) 1010 | "sbc HL,": 011 HLSP(1) 0010 |
+
+          "im 0": 0x46 | "im 1": 0x56 | "im 2": 0x5E | "ld A,I": 0x57 | "ld I,A": 0x47 | "ld A,R": 0x5F |
+          "ld R,A": 0x4F | "neg": 0x44 | "rld": 0x6F | "rrd": 0x67 | "cpi": 0xA1 | "cpir": 0xB1 | "cpd": 0xA9 |
+          "cpdr": 0xB9 | "reti": 0x4D | "retn": 0x45 | "ini": 0xA2 | "inir": 0xB2 | "ind": 0xAA | "indr": 0xBA |
+          "outi": 0xA3 | "otir": 0xB3 | "outd": 0xAB | "otdr": 0xBB | "ldi": 0xA0 | "ldir": 0xB0 | "ldd": 0xA8 |
+          "lddr": 0xB8 |
+
+          "in": 01 REG(3) 000 | "out": 01 REG_OUT(3) 001;
+
+BCDEIXSP = "BC": 00 | "DE": 01 | "IX": 10 | "SP": 11;
+BCDEIYSP = "BC": 00 | "DE": 01 | "IY": 10 | "SP": 11;
+
+BCDE_STAX,BCDE_LDAX,BCDE = "BC" : 0 | "DE" : 1;
+HLSP = "HL" : 0 | "SP" : 1;
+HLPSW = "HL" : 0 | "AF" : 1;
+REG,REG_OUT = "B": 000 | "C": 001 | "D": 010 | "E": 011 | "H": 100 | "L": 101 | "(HL)": 110 | "A": 111;
+
+REG_BCDE = "B": 00 | "C": 01 | "D": 10 | "E": 11;
+REG_HL = "H": 0 | "L": 1;
+REG_A = "A": 111;
+
+M = "(HL)": 110;
+
+NUMBER = "00": 000 | "08": 001 | "10": 010 | "18": 011 | "20": 100 | "28": 101 | "30": 110 | "38": 111;
+imm8,index,imm8_OUT = imm8: imm8(8);
+BIT = bit: bit(3);
+imm16,address,address_LDIX,imm16_SHLD,imm16_LHLD,imm16_LDA,imm16_STA = imm16: imm16(16);
+
+%%
+
+"%s %s, %s" = instruction REG_BCDE REG;
+"%s %s, %s" = instruction REG_HL REG;
+"%s %s, %s" = instruction REG_A REG;
+"%s (HL), %s" = instruction REG_BCDE;
+"%s (HL), %s" = instruction REG_HL;
+"%s (HL), %s" = instruction REG_A;
+"%s A,(%4X)" = instruction imm16_LDA;
+"%s (%4X),A" = instruction imm16_STA;
+"%s A, (%s)" = instruction BCDE_LDAX;
+"%s (%s), A" = instruction BCDE_STAX;
+"%s %s, %4X" = instruction BCDE imm16;
+"%s %s, %4X" = instruction HLSP imm16;
+"%s (%4X),HL" = instruction imm16_SHLD;
+"%s HL,(%4X)" = instruction imm16_LHLD;
+"%s %s, %2X" = instruction REG imm8;
+"%s (%2X),A" = instruction imm8_OUT;
+"%s %s" = instruction NUMBER;
+"%s %4X" = instruction address;
+"%s %s" = instruction REG;
+"%s %s" = instruction HLPSW;
+"%s %s" = instruction HLSP;
+"%s %s" = instruction BCDE;
+"%s %2X" = instruction imm8;
+
+"%s %s,(IX+%2X)" = ddINSTR REG_BCDE index;
+"%s %s,(IX+%2X)" = ddINSTR REG_HL index;
+"%s A,(IX+%2X)" = ddINSTR REG_A index;
+"%s (IX+%2X),%s" = ddINSTR index REG_BCDE M;
+"%s (IX+%2X),%s" = ddINSTR index REG_HL M;
+"%s (IX+%2X),A" = ddINSTR index REG_A M;
+"%s (IX+%2X),%2X" = ddINSTR index imm8;
+"%s (IX+%2X)" = ddcbINSTR index;
+"%s (IX+%2X)" = ddINSTR index;
+"%s IX,%s" = ddINSTR BCDEIXSP;
+"%s IX,%4X" = ddINSTR imm16;
+"%s IX,(%4X)" = ddINSTR address;
+"%s (%4X),IX" = ddINSTR address_LDIX;
+"%s %d,(IX+%2X)" = ddcbINSTR BIT index;
+"%s" = ddINSTR;
+
+"%s %s,(IY+%2X)" = fdINSTR REG_BCDE index;
+"%s %s,(IY+%2X)" = fdINSTR REG_HL index;
+"%s A,(IY+%2X)" = fdINSTR REG_A index;
+"%s (IY+%2X),%s" = fdINSTR index REG_BCDE M;
+"%s (IY+%2X),%s" = fdINSTR index REG_HL M;
+"%s (IY+%2X),A" = fdINSTR index REG_A M;
+"%s (IY+%2X),%2X" = fdINSTR index imm8;
+"%s (IY+%2X)" = fdcbINSTR index;
+"%s (IY+%2X)" = fdINSTR index;
+"%s IY,%s" = fdINSTR BCDEIYSP;
+"%s IY,%4X" = fdINSTR imm16;
+"%s IY,(%4X)" = fdINSTR address;
+"%s (%4X),IY" = fdINSTR address_LDIX;
+"%s %d,(IY+%2X)" = fdcbINSTR BIT index;
+"%s" = fdINSTR;
+
+"%s %s" = cbINSTR REG;
+"%s %d, %s" = cbINSTR BIT REG;
+
+"%s %s,%4X" = edINSTR BCDE imm16;
+"%s %s,%4X" = edINSTR HLSP imm16;
+"%s (%4X),%s" = edINSTR BCDE address;
+"%s (%4X),%s" = edINSTR HLSP address;
+"%s%s" = edINSTR BCDE;
+"%s%s" = edINSTR HLSP;
+"%s %s,(C)" = edINSTR REG;
+"%s (C),%s" = edINSTR REG_OUT;
+"%s" = edINSTR;
+
+"%s" = instruction;
