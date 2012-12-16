@@ -173,7 +173,7 @@ public class EmulatorImpl extends AbstractCPU {
     @Override
     public void destroy() {
         run_state = RunState.STATE_STOPPED_NORMAL;
-        setupFrequencyUpdater(false);
+        stopFrequencyUpdater();
         context.clearDevices();
         context = null;
     }
@@ -185,7 +185,7 @@ public class EmulatorImpl extends AbstractCPU {
         Flags = 2; //0000 0010b
         PC = startPos;
         INTE = false;
-        setupFrequencyUpdater(false);
+        stopFrequencyUpdater();
         fireCpuRun(run_state);
         fireCpuState();
     }
@@ -196,7 +196,7 @@ public class EmulatorImpl extends AbstractCPU {
     @Override
     public void pause() {
         run_state = RunState.STATE_STOPPED_BREAK;
-        setupFrequencyUpdater(false);
+        stopFrequencyUpdater();
         fireCpuRun(run_state);
     }
 
@@ -206,7 +206,7 @@ public class EmulatorImpl extends AbstractCPU {
     @Override
     public void stop() {
         run_state = RunState.STATE_STOPPED_NORMAL;
-        setupFrequencyUpdater(false);
+        stopFrequencyUpdater();
         fireCpuRun(run_state);
     }
 
@@ -238,10 +238,10 @@ public class EmulatorImpl extends AbstractCPU {
         this.b3 = b3;
     }
 
-    private void fireFrequencyChanged(float freq) {
+    private void fireFrequencyChanged(float newFrequency) {
         for (CPUListener listener : cpuListeners) {
             if (listener instanceof FrequencyChangedListener) {
-                ((FrequencyChangedListener) listener).frequencyChanged(freq);
+                ((FrequencyChangedListener) listener).frequencyChanged(newFrequency);
             }
         }
     }
@@ -261,22 +261,22 @@ public class EmulatorImpl extends AbstractCPU {
         checkTimeSlice = t;
     }
 
-    private void setupFrequencyUpdater(boolean run) {
-        if (run) {
-            try {
-                frequencyScheduler.purge();
-                frequencyScheduler.scheduleAtFixedRate(frequencyUpdater, 0, checkTimeSlice);
-            } catch (Exception e) {
-            }
-        } else {
-            try {
-                frequencyUpdater.cancel();
-                frequencyUpdater = new FrequencyUpdater();
-            } catch (Exception e) {
-            }
+    private void stopFrequencyUpdater() {
+        try {
+            frequencyUpdater.cancel();
+            frequencyUpdater = new FrequencyUpdater();
+        } catch (Exception e) {
         }
     }
 
+    private void runFrequencyUpdater() {
+        try {
+            frequencyScheduler.purge();
+            frequencyScheduler.scheduleAtFixedRate(frequencyUpdater, 0, checkTimeSlice);
+        } catch (Exception e) {
+        }
+    }
+    
     /**
      * Run a CPU execution (thread).
      * 
@@ -304,7 +304,7 @@ public class EmulatorImpl extends AbstractCPU {
         run_state = RunState.STATE_RUNNING;
         fireCpuRun(run_state);
         fireCpuState();
-        setupFrequencyUpdater(true);
+        runFrequencyUpdater();
         /* 1 Hz  .... 1 tState per second
          * 1 kHz .... 1000 tStates per second
          * clockFrequency is in kHz it have to be multiplied with 1000
@@ -342,7 +342,7 @@ public class EmulatorImpl extends AbstractCPU {
                 }
             }
         }
-        setupFrequencyUpdater(false);
+        stopFrequencyUpdater();
         fireCpuRun(run_state);
         fireCpuState();
     }
@@ -363,11 +363,11 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    public boolean setInstructionPosition(int pos) {
-        if (pos < 0) {
+    public boolean setInstructionPosition(int position) {
+        if (position < 0) {
             return false;
         }
-        PC = pos;
+        PC = position;
         return true;
     }
 

@@ -42,8 +42,8 @@ import net.sf.emustudio.intel8080.FrequencyChangedListener;
 import net.sf.emustudio.intel8080.impl.EmulatorImpl;
 
 /**
- *
- * @author  vbmacher
+ * Status panel for the CPU.
+ * 
  */
 @SuppressWarnings("serial")
 public class StatusPanel extends JPanel {

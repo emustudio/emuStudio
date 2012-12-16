@@ -36,33 +36,37 @@ import net.sf.emustudio.intel8080.ExtendedContext;
  */
 @ContextType
 public class ContextImpl implements ExtendedContext {
-    private Map<Integer,DeviceContext<Short>> devicesList;
+    private Map<Integer,DeviceContext<Short>> devices;
     private int clockFrequency = 2000; // kHz
     private EmulatorImpl cpu;
 
     public ContextImpl(EmulatorImpl cpu) {
-        devicesList = new HashMap<Integer,DeviceContext<Short>>();
+        devices = new HashMap<Integer,DeviceContext<Short>>();
         this.cpu = cpu;
     }
     
     // device mapping = only one device can be attached to one port
     @Override
-    public boolean attachDevice(DeviceContext<Short> listener, int port) {
-        if (devicesList.containsKey(port)) {
+    public boolean attachDevice(DeviceContext<Short> device, int port) {
+        if (devices.containsKey(port)) {
             return false;
         }
-        devicesList.put(port, listener);
+        if (!device.getDataType().equals(Short.class)) {
+            return false;
+        }
+        devices.put(port, device);
         return true;
     }
+
     @Override
     public void detachDevice(int port) {
-        if (devicesList.containsKey(port)) {
-            devicesList.remove(port);
+        if (devices.containsKey(port)) {
+            devices.remove(port);
         }
     }
     
     public void clearDevices() {
-        devicesList.clear();
+        devices.clear();
     }
 
     /**
@@ -74,15 +78,15 @@ public class ContextImpl implements ExtendedContext {
      * @return value from the port if read is true, otherwise 0
      */
     public short fireIO(int port, boolean read, short val) {
-        if (devicesList.containsKey(port) == false) {
+        if (devices.containsKey(port) == false) {
             // this behavior isn't constant for all situations...
             return 0;
         }
         if (read == true) { 
-            return (Short)devicesList.get(port).read();
+            return (Short)devices.get(port).read();
         }
         else {
-            devicesList.get(port).write(val);
+            devices.get(port).write(val);
         }
         return 0;
     }
