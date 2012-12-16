@@ -1,6 +1,6 @@
 /* InvalidCommandLineException.java
  * 
- * Copyright (C) 2012 vbmacher
+ * Copyright (C) 2012, Peter Jakubčo
  * 
  * KISS, YAGNI, DRY
  *
