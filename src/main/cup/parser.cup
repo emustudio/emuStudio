@@ -3,11 +3,8 @@
  *
  * Parser (syntactic analyzer for Z80 assembler)
  *
- * KEEP IT SIMPLE STUPID
- * sometimes just: YOU AREN'T GONNA NEED IT
- * DON'T REPEAT YOURSELF
- *
- * Copyright (C) 2008-2012 Peter Jakubco <pjakubco@gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubco
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,36 +21,36 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package as_z80.impl;
+package net.sf.emustudio.zilogZ80.assembler.impl;
 
 import java.util.ArrayList;
 import java_cup.runtime.Symbol;
-import emulib.plugins.compiler.IToken;
-import as_z80.treeZ80.*;
-import as_z80.treeZ80Abstract.*;
+import emulib.plugins.compiler.Token;
+import net.sf.emustudio.zilogZ80.assembler.tree.*;
+import net.sf.emustudio.zilogZ80.assembler.treeAbstract.*;
 import emulib.plugins.compiler.Message;
 import emulib.plugins.compiler.Message.MessageType;
 
 init with {: errorCount = 0; lastLine = 0; lastColumn = 0; :}
 scan with {:
-    IToken t = (IToken)this.getScanner().next_token();
+    Token t = (Token)this.getScanner().next_token();
     this.lastLine = t.getLine()+1;
     this.lastColumn = t.getColumn()+1;
     return (Symbol)t;
  :}
 parser code {:
-    private AssemblerZ80 asm;
+    private CompilerImpl asm;
     public int lastLine;
     public int lastColumn;
     public static int errorCount = 0;
     private String reportAppendString = null;
     
-    public ParserZ80(java_cup.runtime.Scanner s, AssemblerZ80 asm) {
+    public ParserZ80(java_cup.runtime.Scanner s, CompilerImpl asm) {
         this(s);
         this.asm = asm;
     }
     
-    public AssemblerZ80 getAsm() {
+    public CompilerImpl getAsm() {
         return asm;
     }
     	
@@ -69,7 +66,7 @@ parser code {:
     public void report_error(String message, Symbol current) {
         String mes;
 
-        IToken t = (IToken)current;
+        Token t = (Token)current;
         mes = message + t.getErrorString() + " ('"+t.getText()+"')";
         
         if (reportAppendString != null)
