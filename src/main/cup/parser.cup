@@ -3,11 +3,8 @@
  *
  * Parser (syntactic analyzer for BrainDuck)
  *
- * KEEP IT SIMPLE STUPID
- * sometimes just: YOU AREN'T GONNA NEED IT
- * DON'T REPEAT YOURSELF
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,21 +21,21 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package brainc_brainduck.impl;
+package net.sf.emustudio.brainduck.brainc.impl;
 
 import java_cup.runtime.Symbol;
-import emulib.plugins.compiler.IToken;
-import brainc_brainduck.tree.*;
+import emulib.plugins.compiler.Token;
+import net.sf.emustudio.brainduck.brainc.tree.*;
 import emulib.plugins.compiler.Message;
 import emulib.plugins.compiler.Message.MessageType;
 
 init with {: errorCount = 0; :}
 parser code {:
-    private BrainDuck compiler = null;
-    public IToken lastToken;
+    private CompilerImpl compiler = null;
+    public Token lastToken;
     public int errorCount = 0;
     
-    public ParserBD(java_cup.runtime.Scanner s, BrainDuck compiler) {
+    public ParserBD(java_cup.runtime.Scanner s, CompilerImpl compiler) {
         this(s);
         this.compiler = compiler;
     }
@@ -57,7 +54,7 @@ parser code {:
     public void report_error(String message, Symbol current) {
         String mes;
 
-        IToken t = (IToken)current;
+        Token t = (Token)current;
         mes = message + t.getErrorString() + " ('"+t.getText()+"')";
 
         compiler.fireMessage(new Message(MessageType.TYPE_ERROR, mes,

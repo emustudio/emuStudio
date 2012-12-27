@@ -1,9 +1,8 @@
-/**
- * BrainDuck.java
+/*
+ * CompilerImpl.java
  *
+ * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
- * 
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,24 +18,31 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package brainc_brainduck.impl;
+package net.sf.emustudio.brainduck.brainc.impl;
 
-import java.io.Reader;
-
-import emulib.plugins.compiler.ILexer;
-import emulib.plugins.memory.IMemoryContext;
-import brainc_brainduck.tree.Program;
+import emulib.annotations.PLUGIN_TYPE;
+import emulib.annotations.PluginType;
+import emulib.plugins.compiler.AbstractCompiler;
 import emulib.plugins.compiler.HEXFileHandler;
-import emulib.plugins.compiler.SimpleCompiler;
+import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
-import emulib.runtime.Context;
+import emulib.plugins.memory.MemoryContext;
+import emulib.runtime.ContextPool;
+import java.io.Reader;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import net.sf.emustudio.brainduck.brainc.tree.Program;
 
 /**
- * Main class implementing main compiler interface.
+ * Main class implementing the compiler.
  *
- * @author Peter Jakubčo <pjakubco at gmail.com>
+ * @author Peter Jakubčo
  */
-public class BrainDuck extends SimpleCompiler {
+@PluginType(type=PLUGIN_TYPE.COMPILER,
+        title="BrainDuck Compiler",
+        copyright="\u00A9 Copyright 2009-2012, Peter Jakubčo",
+        description="Compiler for esoteric architecture called BrainDuck.")
+public class CompilerImpl extends AbstractCompiler {
     private LexerBD lex;
     private ParserBD par;
     private SourceFileExtension[] suffixes;
@@ -46,7 +52,7 @@ public class BrainDuck extends SimpleCompiler {
      *
      * @param pluginID plug-in identification number
      */
-    public BrainDuck(Long pluginID) {
+    public CompilerImpl(Long pluginID) {
         super(pluginID);
         // lex has to be reset WITH a reader object before compile
         lex = new LexerBD((Reader) null);
@@ -56,23 +62,13 @@ public class BrainDuck extends SimpleCompiler {
     }
 
     @Override
-    public String getTitle() {
-        return "BrainDuck Compiler";
-    }
-
-    @Override
     public String getVersion() {
-        return getClass().getPackage().getImplementationVersion();
-    }
-
-    @Override
-    public String getCopyright() {
-        return "\u00A9 Copyright 2009-2012, P. Jakubčo";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Compiler for esoteric language called BrainDuck.";
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.brainduck.brainc.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            return "(unknown)";
+        }
     }
 
     @Override
@@ -88,17 +84,18 @@ public class BrainDuck extends SimpleCompiler {
      * @return HEXFileHandler object
      */
     private HEXFileHandler compile(Reader in) throws Exception {
-        if (in == null)
+        if (in == null) {
             return null;
+        }
 
-        Object s = null;
+        Object parsedProgram;
         HEXFileHandler hex = new HEXFileHandler();
 
-        printInfo(getTitle() + ", version " + getVersion());
+        printInfo(CompilerImpl.class.getAnnotation(PluginType.class).title() + ", version " + getVersion());
         lex.reset(in, 0, 0, 0);
-        s = par.parse().value;
+        parsedProgram = par.parse().value;
 
-        if (s == null) {
+        if (parsedProgram == null) {
             printError("Unexpected end of file");
             return null;
         }
@@ -107,7 +104,7 @@ public class BrainDuck extends SimpleCompiler {
         }
 
         // do several passes for compiling
-        Program program = (Program) s;
+        Program program = (Program) parsedProgram;
         program.pass1(0);
         program.pass2(hex);
         return hex;
@@ -133,10 +130,9 @@ public class BrainDuck extends SimpleCompiler {
             programStart = hex.getProgramStart();
             
             // try to access the memory
-            IMemoryContext mem = Context.getInstance().getMemoryContext(pluginID,
-                    IMemoryContext.class);
-            if (mem != null) {
-                if (hex.loadIntoMemory(mem)) {
+            MemoryContext memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
+            if (memory != null) {
+                if (hex.loadIntoMemory(memory)) {
                     printInfo("Compiled file was loaded into operating memory.");
                 } else {
                     printError("Compiled file couldn't be loaded into operating"
@@ -151,7 +147,7 @@ public class BrainDuck extends SimpleCompiler {
     }
 
     @Override
-    public ILexer getLexer(Reader in) {
+    public LexicalAnalyzer getLexer(Reader in) {
         return new LexerBD(in);
     }
 

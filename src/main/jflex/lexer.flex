@@ -3,9 +3,8 @@
  *
  * Lexical analyser for BrainDuck assembler
  *
+ * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,10 +21,10 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package brainc_brainduck.impl;
+package net.sf.emustudio.brainduck.brainc.impl;
 
-import emulib.plugins.compiler.ILexer;
-import emulib.plugins.compiler.IToken;
+import emulib.plugins.compiler.LexicalAnalyzer;
+import emulib.plugins.compiler.Token;
 import java.io.Reader;
 import java.io.IOException;
 
@@ -35,7 +34,7 @@ import java.io.IOException;
 %class LexerBD
 %cup
 %public
-%implements ILexer
+%implements LexicalAnalyzer
 %line
 %column
 %char
@@ -69,7 +68,7 @@ import java.io.IOException;
 %}
 
 %eofval{
-  return token(TokenBD.EOF, IToken.TEOF,null,false);
+  return token(TokenBD.EOF, Token.TEOF,null,false);
 %eofval}
 
 
@@ -80,20 +79,20 @@ Number     = [0-9]+
 
 %%
 
-"halt"  { return token(TokenBD.HALT, IToken.RESERVED,null,true); }
-"inc"   { return token(TokenBD.INC,  IToken.RESERVED,null,true); }
-"dec"   { return token(TokenBD.DEC,  IToken.RESERVED,null,true); }
-"incv"  { return token(TokenBD.INCV, IToken.RESERVED,null,true); }
-"decv"  { return token(TokenBD.DECV, IToken.RESERVED,null,true); }
-"print" { return token(TokenBD.PRINT,IToken.RESERVED,null,true); }
-"load"  { return token(TokenBD.LOAD, IToken.RESERVED,null,true); }
-"loop"  { return token(TokenBD.LOOP, IToken.RESERVED,null,true); }
-"endl"  { return token(TokenBD.ENDL, IToken.RESERVED,null,true); }
+"halt"  { return token(TokenBD.HALT, Token.RESERVED,null,true); }
+"inc"   { return token(TokenBD.INC,  Token.RESERVED,null,true); }
+"dec"   { return token(TokenBD.DEC,  Token.RESERVED,null,true); }
+"incv"  { return token(TokenBD.INCV, Token.RESERVED,null,true); }
+"decv"  { return token(TokenBD.DECV, Token.RESERVED,null,true); }
+"print" { return token(TokenBD.PRINT,Token.RESERVED,null,true); }
+"load"  { return token(TokenBD.LOAD, Token.RESERVED,null,true); }
+"loop"  { return token(TokenBD.LOOP, Token.RESERVED,null,true); }
+"endl"  { return token(TokenBD.ENDL, Token.RESERVED,null,true); }
 
 {WhiteSpace}   { }
-{Eol}          { return token(TokenBD.EOL, IToken.SEPARATOR,null,true); }
-{Comment}      { return token(TokenBD.TCOMMENT, IToken.COMMENT,null,true); }
-{Number}       { return token(TokenBD.NUMBER, IToken.LITERAL,yytext(),true); }
+{Eol}          { return token(TokenBD.EOL, Token.SEPARATOR,null,true); }
+{Comment}      { return token(TokenBD.TCOMMENT, Token.COMMENT,null,true); }
+{Number}       { return token(TokenBD.NUMBER, Token.LITERAL,yytext(),true); }
 
 //[^\n\r\ \t\f]+ { return token(TokenBD.error, TokenBD.ERROR); }
 .              { return token(TokenBD.error, TokenBD.ERROR,null,false); }
