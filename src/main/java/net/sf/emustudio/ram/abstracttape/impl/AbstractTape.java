@@ -1,9 +1,8 @@
-/**
+/*
  * AbstractTape.java
  * 
- *   KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,58 +18,52 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package abstracttape.impl;
+package net.sf.emustudio.ram.abstracttape.impl;
 
-import abstracttape.gui.SettingsDialog;
-import abstracttape.gui.TapeDialog;
-import interfaces.C50E67F515A7C87A67947F8FB0F82558196BE0AC7;
-import emulib.plugins.ISettingsHandler;
-import emulib.plugins.device.SimpleDevice;
-import emulib.runtime.Context;
+import emulib.annotations.PLUGIN_TYPE;
+import emulib.annotations.PluginType;
+import emulib.emustudio.SettingsManager;
+import emulib.plugins.device.AbstractDevice;
+import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
+import net.sf.emustudio.ram.abstracttape.gui.SettingsDialog;
+import net.sf.emustudio.ram.abstracttape.gui.TapeDialog;
 
-public class AbstractTape extends SimpleDevice {
-
-    private TapeContext context;
-    private String title = "Abstract tape"; // can change
+@PluginType(type = PLUGIN_TYPE.CPU,
+title = "Abstract tape",
+copyright = "\u00A9 Copyright 2008-2012, Peter Jakubčo",
+description = "Abstract tape device is used by abstract machines such as RAM or Turing machine")
+public class AbstractTape extends AbstractDevice {
+    private String guiTitle;
+    private AbstractTapeContextImpl context;
     private TapeDialog gui;
 
     public AbstractTape(Long pluginID) {
         super(pluginID);
-        context = new TapeContext(this);
-        if (!Context.getInstance().register(pluginID, context,
-                C50E67F515A7C87A67947F8FB0F82558196BE0AC7.class))
-            StaticDialogs.showErrorMessage("Error: Could not register"
-                    + " the abstract tape");
-    }
-
-    @Override
-    public String getTitle() {
-        return title;
+        context = new AbstractTapeContextImpl(this);
+        try {
+            ContextPool.getInstance().register(pluginID, context, AbstractTapeContext.class);
+        } catch (RuntimeException e) {
+            StaticDialogs.showErrorMessage("Could not register Tape Context",
+                    AbstractTape.class.getAnnotation(PluginType.class).title());
+        }
     }
 
     @Override
     public String getVersion() {
-        return getClass().getPackage().getImplementationVersion();
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.ram.abstracttape.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            return "(unknown)";
+        }
     }
 
     @Override
-    public String getCopyright() {
-        return "\u00A9 Copyright 2009-2012, P. Jakubčo";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Abstract tape device is used by abstract machines"
-                + "such as RAM or Turing machine. The mean and purpose"
-                + "of the tape is given by the machine itself. Properties"
-                + "such as read only tape or one-way direction tape is"
-                + "also given by chosen machine. Therefore the tape is"
-                + "universal.";
-    }
-
-    @Override
-    public boolean initialize(ISettingsHandler settings) {
+    public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
         this.settings = settings;
 
@@ -91,9 +84,16 @@ public class AbstractTape extends SimpleDevice {
     }
 
     public void setGUITitle(String title) {
-        this.title = title;
-        if (gui != null)
+        this.guiTitle = title;
+        if (gui != null) {
             gui.setTitle(title);
+        }
+    }
+    
+    public String getGUITitle() {
+        return (guiTitle == null) ?
+                AbstractTape.class.getAnnotation(PluginType.class).title() 
+                : guiTitle;
     }
     
     @Override

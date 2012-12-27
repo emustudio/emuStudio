@@ -1,9 +1,8 @@
-/**
- * TapeContext.java
+/*
+ * AbstractTapeContextImpl.java
  *
- *   KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,48 +19,51 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
-package abstracttape.impl;
+package net.sf.emustudio.ram.abstracttape.impl;
 
-import interfaces.C50E67F515A7C87A67947F8FB0F82558196BE0AC7;
-
+import emulib.annotations.ContextType;
 import java.util.ArrayList;
 import java.util.EventListener;
-import java.util.EventObject;
+import java.util.List;
+import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
 
 /**
- * Moznosti pasky:
- * ---------------
- *   - R
- *   - RW
- *   - W
- *   - smer: len dolava
- *   - smer: len doprava
- *   - smer: dolava aj doprava
- *   Staci, ak tento vyznam paske priradi CPU.. Nemusim to riesit
- *   tu v paske.
+ * Tape used by abstract machines.
+ * 
+ * Tape options are:
+ *   - (R)ead
+ *   - (R)ead (W)rite
+ *   - (W)rite
+ *   - direction:
+ *     - only left
+ *     - only right
+ *     - both
+ * 
+ * The CPU must assign all the details to this tape using the tape context.
  *
- *   Treba vsak riesit ohranicenost - zabezpecit, aby sa paska vedela
- *   rozmahat dolava, aj doprava ak je neohranicena..
- *   Zabezpecenie ohranicenosti (len z jednej strany) musi byt riesene
- *   tu v paske. Defaultne je paska neohranicena.
+ * By default, the tape is unbounded. However, it is possible to change.
  *
- * @author vbmacher
+ * @author Peter Jakubčo
  */
-public class TapeContext implements C50E67F515A7C87A67947F8FB0F82558196BE0AC7 {
+@ContextType
+public class AbstractTapeContextImpl implements AbstractTapeContext {
 
-    private ArrayList<String> tape; // tape is an array of strings
+    private List<String> tape; // tape is an array of strings
     private int pos; // actual tape position
     private boolean bounded; // tape is bounded form the left?
     private boolean editable; // if tape is editable by user
     private TapeListener listener;
-    private EventObject changeEvent;
     private boolean showPos;
     private boolean clearAtReset = true;
     private AbstractTape abst;
 
-    public TapeContext(AbstractTape abst) {
+    public interface TapeListener extends EventListener {
+
+        public void tapeChanged();
+    }
+    
+    public AbstractTapeContextImpl(AbstractTape abst) {
         this.abst = abst;
-        changeEvent = new EventObject(this);
         listener = null;
         tape = new ArrayList<String>();
         pos = 0;
@@ -73,11 +75,6 @@ public class TapeContext implements C50E67F515A7C87A67947F8FB0F82558196BE0AC7 {
     @Override
     public void setTitle(String title) {
         abst.setGUITitle(title);
-    }
-
-    public interface TapeListener extends EventListener {
-
-        public void tapeChanged(EventObject evt);
     }
 
     @Override
@@ -263,18 +260,13 @@ public class TapeContext implements C50E67F515A7C87A67947F8FB0F82558196BE0AC7 {
         fireChange();
     }
 
-    @Override
-    public String getID() {
-        return "abstract-tape-context";
-    }
-
     public void setListener(TapeListener listener) {
         this.listener = listener;
     }
 
     private void fireChange() {
         if (listener != null) {
-            listener.tapeChanged(changeEvent);
+            listener.tapeChanged();
         }
     }
 }

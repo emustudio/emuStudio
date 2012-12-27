@@ -1,9 +1,8 @@
-/**
- * IAbstractTapeContext.java
+/*
+ * AbstractTapeContext.java
  * 
- *   KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,11 +18,11 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package interfaces;
+package net.sf.emustudio.ram.abstracttape;
 
-import emulib.plugins.device.IDeviceContext;
+import emulib.plugins.device.DeviceContext;
 
-public interface C50E67F515A7C87A67947F8FB0F82558196BE0AC7 extends IDeviceContext {
+public interface AbstractTapeContext extends DeviceContext {
 	/**
 	 * Clear content of the tape leaving only one empty string
 	 * symbol on the position 0.

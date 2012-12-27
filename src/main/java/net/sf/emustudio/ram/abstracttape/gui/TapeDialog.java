@@ -1,9 +1,8 @@
-/**
+/*
  * TapeDialog.java
  * 
- *   KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,15 +18,15 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package abstracttape.gui;
+package net.sf.emustudio.ram.abstracttape.gui;
 
+import emulib.emustudio.SettingsManager;
+import emulib.runtime.StaticDialogs;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.EventObject;
-
 import javax.swing.AbstractListModel;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
@@ -39,37 +38,31 @@ import javax.swing.JScrollPane;
 import javax.swing.LayoutStyle;
 import javax.swing.ListCellRenderer;
 import javax.swing.WindowConstants;
-
-import emulib.plugins.ISettingsHandler;
-
-import emulib.runtime.StaticDialogs;
-
-import abstracttape.gui.utils.NiceButton;
-import abstracttape.impl.AbstractTape;
-import abstracttape.impl.TapeContext;
-import abstracttape.impl.TapeContext.TapeListener;
+import net.sf.emustudio.ram.abstracttape.impl.AbstractTape;
+import net.sf.emustudio.ram.abstracttape.impl.AbstractTapeContextImpl;
+import net.sf.emustudio.ram.abstracttape.impl.AbstractTapeContextImpl.TapeListener;
 
 @SuppressWarnings("serial")
 public class TapeDialog extends JDialog {
 
-    private TapeContext tape;
+    private AbstractTapeContextImpl tapeContext;
     private TapeListModel listModel;
 
-    public TapeDialog(AbstractTape atape, final TapeContext tape,
-            ISettingsHandler settings, long pluginID) {
+    public TapeDialog(AbstractTape tape, final AbstractTapeContextImpl tapeContext,
+            SettingsManager settings, long pluginID) {
         super();
-        this.tape = tape;
+        this.tapeContext = tapeContext;
         this.listModel = new TapeListModel();
         initComponents();
-        this.setTitle(atape.getTitle());
+        this.setTitle(tape.getGUITitle());
         lstTape.setModel(listModel);
         lstTape.setCellRenderer(new TapeCellRenderer());
-        this.tape.setListener(new TapeListener() {
+        this.tapeContext.setListener(new TapeListener() {
 
             @Override
-            public void tapeChanged(EventObject evt) {
+            public void tapeChanged() {
                 listModel.fireChange();
-                lstTape.ensureIndexIsVisible(tape.getPos());
+                lstTape.ensureIndexIsVisible(tapeContext.getPos());
             }
         });
         String s = settings.readSetting(pluginID, "alwaysOnTop");
@@ -85,17 +78,17 @@ public class TapeDialog extends JDialog {
 
         @Override
         public Object getElementAt(int index) {
-            String s = tape.getSymbolAt(index);
+            String s = tapeContext.getSymbolAt(index);
             return (s == null || s.equals("")) ? "<empty>" : s;
         }
 
         @Override
         public int getSize() {
-            return tape.getSize();
+            return tapeContext.getSize();
         }
 
         public void fireChange() {
-            this.fireContentsChanged(this, 0, tape.getSize() - 1);
+            this.fireContentsChanged(this, 0, tapeContext.getSize() - 1);
         }
     }
 
@@ -115,13 +108,13 @@ public class TapeDialog extends JDialog {
         public Component getListCellRendererComponent(JList list,
                 Object value, int index, boolean isSelected,
                 boolean cellHasFocus) {
-            if (tape.getPosVisible() && (tape.getPos() == index)) {
+            if (tapeContext.getPosVisible() && (tapeContext.getPos() == index)) {
                 this.setBackground(Color.BLUE);
                 this.setForeground(Color.WHITE);
             } else {
                 this.setBackground(Color.WHITE);
 
-                String s = tape.getSymbolAt(index);
+                String s = tapeContext.getSymbolAt(index);
                 if (s == null || s.equals("")) {
                     this.setForeground(Color.LIGHT_GRAY);
                 } else {
@@ -144,8 +137,8 @@ public class TapeDialog extends JDialog {
     }
 
     public final void changeEditable() {
-        boolean b = tape.getEditable();
-        btnAddFirst.setEnabled(b && !tape.isBounded());
+        boolean b = tapeContext.getEditable();
+        btnAddFirst.setEnabled(b && !tapeContext.isBounded());
         btnAddLast.setEnabled(b);
         btnRemove.setEnabled(b);
         btnEdit.setEnabled(b);
@@ -165,23 +158,23 @@ public class TapeDialog extends JDialog {
         //setLocationRelativeTo(null);
         scrollTape.setViewportView(lstTape);
 
-        btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/abstracttape/go-up.png"))); // NOI18N
+        btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/ram/abstracttape/gui/go-up.png"))); // NOI18N
         btnAddFirst.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
                 String s = JOptionPane.showInputDialog("Enter symbol value:");
-                tape.addSymbolFirst(s);
+                tapeContext.addSymbolFirst(s);
             }
         });
 
-        btnAddLast.setIcon(new ImageIcon(getClass().getResource("/abstracttape/go-down.png"))); // NOI18N
+        btnAddLast.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/ram/abstracttape/gui/go-down.png"))); // NOI18N
         btnAddLast.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
                 String s = JOptionPane.showInputDialog("Enter symbol value:");
-                tape.addSymbolLast(s);
+                tapeContext.addSymbolLast(s);
             }
         });
 
@@ -195,7 +188,7 @@ public class TapeDialog extends JDialog {
                     return;
                 }
                 String s = JOptionPane.showInputDialog("Enter symbol value:");
-                tape.editSymbol(i, s);
+                tapeContext.editSymbol(i, s);
             }
         });
         btnRemove.addActionListener(new ActionListener() {
@@ -207,14 +200,14 @@ public class TapeDialog extends JDialog {
                     StaticDialogs.showErrorMessage("A symbol must be selected !");
                     return;
                 }
-                tape.removeSymbol(i);
+                tapeContext.removeSymbol(i);
             }
         });
         btnClear.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                tape.clear();
+                tapeContext.clear();
             }
         });
 
