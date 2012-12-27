@@ -1,12 +1,10 @@
 /*
- * CpuPort2.java
+ * DataPort.java
  *
  * Created on 18.6.2008, 14:30:59
- * hold to: KISS, YAGNI
  *
- * This is the data port of 88-SIO card.
- *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,26 +21,30 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
-package sio88;
+package net.sf.emustudio.devices.mits88sio.impl;
 
-import emulib.plugins.device.IDeviceContext;
+import emulib.annotations.ContextType;
+import emulib.plugins.device.DeviceContext;
 
 /**
- * A read to the data port gets the buffered character, a write
- * to the data port writes the character to the device.
- * 
- * @author vbmacher
+ * This is the data port of 88-SIO card.
+ *
+ * A read to the data port gets the buffered character, a write to the data port
+ * writes the character to the device.
+ *
+ * @author Peter Jakubčo
  */
-public class CpuPort2 implements IDeviceContext {
+@ContextType(id = "Data port")
+public class DataPort implements DeviceContext<Short> {
 
     private Mits88SIO sio;
-    private IDeviceContext dev;
+    private DeviceContext dev;
 
-    public CpuPort2(Mits88SIO sio) {
+    public DataPort(Mits88SIO sio) {
         this.sio = sio;
     }
 
-    public void attachDevice(IDeviceContext device) {
+    public void attachDevice(DeviceContext device) {
         this.dev = device;
     }
 
@@ -50,12 +52,12 @@ public class CpuPort2 implements IDeviceContext {
         this.dev = null;
     }
 
-    public IDeviceContext getAttachedDevice() {
+    public DeviceContext getAttachedDevice() {
         return dev;
     }
 
     @Override
-    public void write(Object data) {
+    public void write(Short data) {
         if (dev == null) {
             return;
         }
@@ -63,35 +65,32 @@ public class CpuPort2 implements IDeviceContext {
     }
 
     @Override
-    public Object read() {
+    public Short read() {
         //    if (buffer == 0 && gui != null) {
         //      // get key from terminal (polling)
         //    buffer = gui.getChar();
         // }
-        short v = 0;
-        if (sio.buffer.size() > 0)
-            v = sio.buffer.remove(0);
-        
-        if (sio.buffer.size() == 0)
+        short result = 0;
+        if (sio.buffer.size() > 0) {
+            result = sio.buffer.remove(0);
+        }
+
+        if (sio.buffer.isEmpty()) {
             sio.status &= 0xFE;
-        else
+        } else {
             sio.status |= 0x01;
-        return v;
+        }
+        return result;
     }
 
     /**
-     * This is communication method between device and
-     * SIO. For terminal: If user pressed a key, then it is
-     * sent from terminal to SIO device via this method.
+     * This is communication method between device and SIO. For terminal: If
+     * user pressed a key, then it is sent from terminal to SIO device via this
+     * method.
      */
     public void writeBuffer(short data) {
         sio.status |= 0x01;
         sio.buffer.add(data);
-    }
-
-    @Override
-    public String getID() {
-        return "88-SIO-PORT2";
     }
 
     @Override

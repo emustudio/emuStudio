@@ -2,10 +2,9 @@
  * SIODialog.java
  *
  * Created on Nedeľa, 2008, júl 27, 19:52
- * 
- * KISS, YAGNI
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,8 +20,7 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
-package sio88.gui;
+package net.sf.emustudio.devices.mits88sio.gui;
 
 import javax.swing.GroupLayout;
 import javax.swing.JDialog;
@@ -32,13 +30,16 @@ import javax.swing.WindowConstants;
 
 /**
  *
- * @author  vbmacher
+ * @author vbmacher
  */
 @SuppressWarnings("serial")
 public class SIODialog extends JDialog {
-    /** Creates new form SIODialog */
-    public SIODialog(java.awt.Frame parent, boolean modal, String devName, 
-    		int port1CPU, int port2CPU) {
+
+    /**
+     * Creates new form SIODialog
+     */
+    public SIODialog(java.awt.Frame parent, boolean modal, String devName,
+            int port1CPU, int port2CPU) {
         super(parent, modal);
         initComponents();
         lblDev.setText(devName);
@@ -48,9 +49,9 @@ public class SIODialog extends JDialog {
     }
 
     private void initComponents() {
-        JLabel lblAttached = new JLabel("Attached device:");;
-        JLabel lblPort1LBL = new JLabel("CPU port1: ");;
-        JLabel lblPort2LBL = new JLabel("CPU port2: ");;
+        JLabel lblAttached = new JLabel("Attached device:");
+        JLabel lblPort1LBL = new JLabel("CPU port1: ");
+        JLabel lblPort2LBL = new JLabel("CPU port2: ");
 
         lblDev = new JLabel("none");
         lblPort1 = new JLabel("0x10");
@@ -66,45 +67,42 @@ public class SIODialog extends JDialog {
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createSequentialGroup()
-            .addContainerGap()
-            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            		.addGroup(layout.createSequentialGroup()
-            				.addComponent(lblAttached)
-            				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-            				.addComponent(lblDev))
-            		.addGroup(layout.createSequentialGroup()
-            				.addComponent(lblPort1LBL)
-            				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-            				.addComponent(lblPort1))
-            		.addGroup(layout.createSequentialGroup()
-            				.addComponent(lblPort2LBL)
-            				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-            				.addComponent(lblPort2)))
-            .addContainerGap());
+                layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                .addComponent(lblAttached)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblDev))
+                .addGroup(layout.createSequentialGroup()
+                .addComponent(lblPort1LBL)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblPort1))
+                .addGroup(layout.createSequentialGroup()
+                .addComponent(lblPort2LBL)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblPort2)))
+                .addContainerGap());
         layout.setVerticalGroup(
-            layout.createSequentialGroup()
+                layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblAttached)
-                    .addComponent(lblDev))
+                .addComponent(lblAttached)
+                .addComponent(lblDev))
                 .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblPort1LBL)
-                    .addComponent(lblPort1))
+                .addComponent(lblPort1LBL)
+                .addComponent(lblPort1))
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblPort2LBL)
-                    .addComponent(lblPort2))
+                .addComponent(lblPort2LBL)
+                .addComponent(lblPort2))
                 .addContainerGap());
         pack();
     }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private JLabel lblDev;
     private JLabel lblPort1;
     private JLabel lblPort2;
-
     // End of variables declaration//GEN-END:variables
-
 }

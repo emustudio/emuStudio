@@ -1,12 +1,10 @@
 /*
- * CpuPort1.java
+ * StatusPort.java
  *
  * Created on 18.6.2008, 14:27:23
- * hold to: KISS, YAGNI
  *
- * This is the status port of 88-SIO card.
- *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,11 +21,14 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
-package sio88;
+package net.sf.emustudio.devices.mits88sio.impl;
 
-import emulib.plugins.device.IDeviceContext;
+import emulib.annotations.ContextType;
+import emulib.plugins.device.DeviceContext;
 
 /**
+ * This is the status port of 88-SIO card.
+ * 
  * A write to the status port can select
  * some options for the device (0x03 will reset the port).
  * A read of the status port gets the port status:
@@ -60,25 +61,25 @@ import emulib.plugins.device.IDeviceContext;
  *        word may be outputted
  * 0. 0 - Input device ready (a ready pulse has been sent from the device)
  *
- * @author vbmacher
+ * @author Peter Jakubčo
  */
-public class CpuPort1 implements IDeviceContext {
+@ContextType(id = "Status port")
+public class StatusPort implements DeviceContext<Short> {
 
     private Mits88SIO sio;
 
-    public CpuPort1(Mits88SIO sio) {
+    public StatusPort(Mits88SIO sio) {
         this.sio = sio;
     }
 
     @Override
-    public Object read() {
+    public Short read() {
         return sio.status;
     }
 
     @Override
-    public void write(Object val) {
-        short v = (Short) val;
-        if (v == 0x03) {
+    public void write(Short val) {
+        if (val == 0x03) {
             sio.reset();
         }
     }
@@ -86,11 +87,6 @@ public class CpuPort1 implements IDeviceContext {
     @Override
     public Class<?> getDataType() {
         return Short.class;
-    }
-
-    @Override
-    public String getID() {
-        return "88-SIO-PORT1";
     }
 
 }

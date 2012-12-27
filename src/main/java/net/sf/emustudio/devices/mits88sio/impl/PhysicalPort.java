@@ -2,9 +2,9 @@
  * PhysicalPort.java
  *
  * Created on 28.7.2008, 8:22:30
- * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,32 +20,33 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package sio88;
+package net.sf.emustudio.devices.mits88sio.impl;
 
-import emulib.plugins.device.IDeviceContext;
+import emulib.annotations.ContextType;
+import emulib.plugins.device.DeviceContext;
 
 /**
  * Male plug, RS-232 physical port
  *
- * @author vbmacher
+ * @author Peter Jakubčo
  */
-public class PhysicalPort implements IDeviceContext {
+@ContextType(id = "Physical port")
+public class PhysicalPort implements DeviceContext<Short> {
 
-    private CpuPort2 port2;
+    private DataPort port2;
 
-    public PhysicalPort(CpuPort2 port2) {
+    public PhysicalPort(DataPort port2) {
         this.port2 = port2;
     }
 
     @Override
-    public Object read() {
+    public Short read() {
         return port2.read();
     }
 
     @Override
-    public void write(Object val) {
-        short v = (Short) val;
-        port2.writeBuffer(v);
+    public void write(Short val) {
+        port2.writeBuffer(val);
     }
 
     @Override
@@ -53,8 +54,4 @@ public class PhysicalPort implements IDeviceContext {
         return Short.class;
     }
 
-    @Override
-    public String getID() {
-        return "RS232";
-    }
 }
