@@ -32,6 +32,8 @@ import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import java.io.FileReader;
 import java.io.Reader;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 import net.sf.emustudio.zilogZ80.assembler.tree.Program;
 
 /**
@@ -58,7 +60,12 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public String getVersion() {
-        return getClass().getPackage().getImplementationVersion();
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.zilogZ80.assembler.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            return "(unknown)";
+        }
     }
 
     @Override

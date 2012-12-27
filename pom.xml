@@ -46,6 +46,22 @@
   </repositories>
 
   <build>
+    <resources>
+      <resource>
+        <directory>${project.build.resourceDirectory}</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>**/*.properties</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>${project.build.resourceDirectory}</directory>
+        <filtering>false</filtering>
+        <excludes>
+          <exclude>**/*.properties</exclude>
+        </excludes>
+      </resource>
+    </resources>
     <extensions>
       <extension>
         <groupId>org.apache.maven.wagon</groupId>
