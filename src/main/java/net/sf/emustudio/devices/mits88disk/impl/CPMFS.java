@@ -1,9 +1,8 @@
 /*
  * CPMFS.java
  *
- * KISS, YAGNI
- *
- *  Copyright (C) 2011-2012 vbmacher
+ * Copyright (C) 2011-2012, Peter Jakubčo
+ * KISS, YAGNI, DRY
  * 
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -20,8 +19,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-
-package disk_88;
+package net.sf.emustudio.devices.mits88disk.impl;
 
 import emulib.runtime.StaticDialogs;
 import java.io.File;
@@ -127,8 +125,9 @@ public class CPMFS {
             do {
                 int x = readSector(raf);
                 nextSector();
-                if (x <= 0)
+                if (x <= 0) {
                     break;
+                }
 
                 // search for files
                 int i = 3;
@@ -172,8 +171,9 @@ public class CPMFS {
             do {
                 int x = readSector(raf);
                 nextSector();
-                if (x <= 0)
+                if (x <= 0) {
                     break;
+                }
 
                 // search for files
                 int i = 3;
@@ -249,7 +249,5 @@ public class CPMFS {
         }
         return -1;
     }
-
-
 
 }

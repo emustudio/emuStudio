@@ -2,12 +2,9 @@
  * Port3.java
  *
  * Created on 18.6.2008, 15:13:58
- * hold to: KISS, YAGNI
  *
- * IN: read data
- * OUT: write data
- *
- * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,17 +20,21 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package disk_88;
+package net.sf.emustudio.devices.mits88disk.impl;
 
-import java.io.IOException;
-import emulib.plugins.device.IDeviceContext;
+import emulib.annotations.ContextType;
+import emulib.plugins.device.DeviceContext;
 import emulib.runtime.StaticDialogs;
+import java.io.IOException;
 
 /**
+ * IN: read data
+ * OUT: write data
  *
- * @author vbmacher
+ * @author Peter Jakubčo
  */
-public class Port3 implements IDeviceContext {
+@ContextType
+public class Port3 implements DeviceContext {
 
     private DiskImpl dsk;
 
@@ -41,11 +42,11 @@ public class Port3 implements IDeviceContext {
         this.dsk = dsk;
     }
 
-    public boolean attachDevice(IDeviceContext device) {
+    public boolean attachDevice(DeviceContext device) {
         return false;
     }
 
-    public void detachDevice(IDeviceContext device) {
+    public void detachDevice(DeviceContext device) {
     }
 
     @Override
@@ -66,11 +67,6 @@ public class Port3 implements IDeviceContext {
         } catch (IOException e) {
             StaticDialogs.showErrorMessage("Couldn't write to disk");
         }
-    }
-
-    @Override
-    public String getID() {
-        return "88-DISK-PORT3";
     }
 
     @Override
