@@ -1,13 +1,10 @@
 /*
- * Port2.java
+ * Port1.java
  *
- * Created on 18.6.2008, 15:10:20
- * hold to: KISS, YAGNI
+ * Created on 18.6.2008, 15:01:27
  *
- * IN: sector pos
- * OUT: set flags
- *
- * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,42 +20,50 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package disk_88;
+package net.sf.emustudio.devices.mits88disk.impl;
 
-import emulib.plugins.device.IDeviceContext;
+import emulib.annotations.ContextType;
+import emulib.plugins.device.DeviceContext;
 
 /**
- *
- * @author vbmacher
+ * IN:  disk flags
+ * OUT: select/unselect drive
+ * 
+ * @author Peter Jakubčo
  */
-public class Port2 implements IDeviceContext {
+@ContextType
+public class Port1 implements DeviceContext {
 
     private DiskImpl dsk;
 
-    public Port2(DiskImpl dsk) {
+    public Port1(DiskImpl dsk) {
         this.dsk = dsk;
     }
 
-    public boolean attachDevice(IDeviceContext device) {
+    public boolean attachDevice(DeviceContext device) {
         return false;
     }
 
-    public void detachDevice(IDeviceContext device) {
+    public void detachDevice(DeviceContext device) {
     }
 
     @Override
     public Object read() {
-        return ((Drive) dsk.drives.get(dsk.current_drive)).getSectorPos();
+        return ((Drive) dsk.drives.get(dsk.current_drive)).getFlags();
     }
 
     @Override
     public void write(Object val) {
-        ((Drive) dsk.drives.get(dsk.current_drive)).setFlags((Short) val);
-    }
-
-    @Override
-    public String getID() {
-        return "88-DISK-PORT2";
+        short v = (Short) val;
+        // select device
+        dsk.current_drive = v & 0x0F;
+        if ((v & 0x80) != 0) {
+            // disable device
+            ((Drive) dsk.drives.get(dsk.current_drive)).deselect();
+            dsk.current_drive = 0xFF;
+        } else {
+            ((Drive) dsk.drives.get(dsk.current_drive)).select();
+        }
     }
 
     @Override

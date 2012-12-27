@@ -3,9 +3,8 @@
  *
  * Created on Streda, 2008, február 6, 8:01
  * 
- * KISS, YAGNI
- *
- * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,11 +20,10 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package disk_88.gui;
+package net.sf.emustudio.devices.mits88disk.gui;
 
-import disk_88.Drive;
+import java.io.File;
 import java.util.ArrayList;
-
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
@@ -37,8 +35,7 @@ import javax.swing.JTextArea;
 import javax.swing.JToggleButton;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
-
-import java.io.File;
+import net.sf.emustudio.devices.mits88disk.impl.Drive;
 
 /**
  *
@@ -46,6 +43,7 @@ import java.io.File;
  */
 @SuppressWarnings("serial")
 public class DiskFrame extends JFrame {
+    private final static String GUI_PATH = "/net/sf/emustudio/devices/mits88disk/gui/";
 
     private ArrayList<Drive> drives;
     private int driveInfoIndex = -1; // drive that wants to show current params
@@ -96,9 +94,9 @@ public class DiskFrame extends JFrame {
         String fil;
         int drive = drives.indexOf(dr);
         if (sel) {
-            fil = "/disk_88/on.gif";
+            fil = GUI_PATH + "on.gif";
         } else {
-            fil = "/disk_88/off.gif";
+            fil = GUI_PATH + "off.gif";
         }
         switch (drive) {
             case 0:
@@ -189,7 +187,7 @@ public class DiskFrame extends JFrame {
         panelSelectedDrives.setBorder(BorderFactory.createTitledBorder("Selected drives"));
 
         drivesGroup.add(btn0);
-        btn0.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn0.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn0.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -199,7 +197,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn1);
-        btn1.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn1.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn1.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -209,7 +207,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn2);
-        btn2.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn2.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn2.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -219,7 +217,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn3);
-        btn3.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn3.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn3.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -229,7 +227,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn4);
-        btn4.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn4.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn4.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -239,7 +237,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn5);
-        btn5.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn5.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn5.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -249,7 +247,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn6);
-        btn6.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn6.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn6.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -259,7 +257,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn7);
-        btn7.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn7.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn7.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -269,7 +267,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn8);
-        btn8.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn8.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn8.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -279,7 +277,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn9);
-        btn9.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn9.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn9.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -289,7 +287,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn10);
-        btn10.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn10.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn10.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -299,7 +297,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn11);
-        btn11.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn11.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn11.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -309,7 +307,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn12);
-        btn12.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn12.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn12.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -319,7 +317,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn13);
-        btn13.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn13.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn13.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -329,7 +327,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn14);
-        btn14.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn14.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn14.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -339,7 +337,7 @@ public class DiskFrame extends JFrame {
         });
 
         drivesGroup.add(btn15);
-        btn15.setIcon(new ImageIcon(getClass().getResource("/disk_88/off.gif"))); // NOI18N
+        btn15.setIcon(new ImageIcon(getClass().getResource(GUI_PATH + "off.gif"))); // NOI18N
         btn15.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
