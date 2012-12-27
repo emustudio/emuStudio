@@ -30,6 +30,7 @@ import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
+import java.io.FileReader;
 import java.io.Reader;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -167,5 +168,52 @@ public class CompilerImpl extends AbstractCompiler {
     @Override
     public SourceFileExtension[] getSourceSuffixList() {
         return suffixes;
+    }
+    
+    private static void printHelp() {
+        System.out.println("Syntax: as-8080 [-o outputFile] inputFile\nOptions:");
+        System.out.println("\t--output, -o\tfile: name of the output file");
+        System.out.println("\t--version, -v\t: print version");
+        System.out.println("\t--help, -h\t: this help");
+    }
+    
+    public static void main(String[] args) {
+        System.out.println(CompilerImpl.class.getAnnotation(PluginType.class).title());
+      
+        String inputFile;
+        String outputFile = null;
+      
+        int i;
+        for (i = 0; i < args.length; i++) {
+            String arg = args[i].toLowerCase();
+            if ((arg.equals("--output") || arg.equals("-o")) && ((i+1) < args.length)) {
+                outputFile = args[++i];
+            } else if (arg.equals("--help") || arg.equals("-h")) {
+                printHelp();
+                return;
+            } else if (arg.equals("--version") || arg.equals("-v")) {
+                System.out.println(new CompilerImpl(0L).getVersion());
+                return;
+            } else {
+              break;
+            }
+        }
+        if (i >= args.length) {
+            System.out.println("Error: expected input file name");
+            return;
+        }
+        inputFile = args[i];
+        if (outputFile == null) {
+          outputFile = inputFile.substring(0, inputFile.lastIndexOf('.')) + ".hex";
+        }
+        
+        CompilerImpl compiler = new CompilerImpl(0L);
+        try {
+          HEXFileHandler hex = compiler.compile(new FileReader(inputFile));
+          hex.generateFile(outputFile);
+          System.out.println("Output saved to: " + outputFile);
+        } catch (Exception e) {
+          System.out.println(e.getMessage());
+        }
     }
 }
