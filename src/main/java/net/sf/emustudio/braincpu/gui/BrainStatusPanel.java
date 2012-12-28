@@ -1,9 +1,8 @@
-/**
+/*
  * BrainStatusPanel.java
  * 
- * KISS, YAGNI
- *
- * Copyright (C) 2009-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,35 +18,31 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package braincpu.gui;
+package net.sf.emustudio.braincpu.gui;
 
+import emulib.plugins.cpu.CPU.CPUListener;
+import emulib.plugins.cpu.CPU.RunState;
+import emulib.plugins.memory.MemoryContext;
 import java.awt.Color;
 import java.awt.Font;
-import java.util.EventObject;
-
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
-
-import emulib.plugins.cpu.ICPU.ICPUListener;
-import emulib.plugins.memory.IMemoryContext;
-
-import braincpu.impl.BrainCPU;
-import emulib.plugins.cpu.ICPU.RunState;
+import net.sf.emustudio.braincpu.impl.EmulatorImpl;
 
 @SuppressWarnings("serial")
 public class BrainStatusPanel extends JPanel {
 
-    public BrainStatusPanel(final BrainCPU cpu, final IMemoryContext mem) {
+    public BrainStatusPanel(final EmulatorImpl cpu, final MemoryContext mem) {
         initComponents();
 
-        cpu.addCPUListener(new ICPUListener() {
+        cpu.addCPUListener(new CPUListener() {
 
             @Override
-            public void runChanged(EventObject evt, RunState state) {
+            public void runChanged(RunState state) {
                 switch (state) {
                     case STATE_STOPPED_NORMAL:
                         lblStatus.setText("stopped (normal)");
@@ -66,7 +61,7 @@ public class BrainStatusPanel extends JPanel {
             }
 
             @Override
-            public void stateUpdated(EventObject evt) {
+            public void stateUpdated() {
                 txtP.setText(String.format("%04X", cpu.getP()));
                 txtIP.setText(String.format("%04X", cpu.getIP()));
                 txtMemP.setText(String.format("%02X", (Short) mem.read(cpu.getP())));

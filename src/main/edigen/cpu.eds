@@ -1,0 +1,12 @@
+instruction = "halt": 00000000 | "loop": 00000111 | "endl": 00001000 |
+
+              "inc": 00000001 imm8 | "dec": 00000010 imm8 | "incv": 00000011 imm8 |
+              "decv": 00000100 imm8 | "print": 00000101 imm8 | "load": 00000110 imm8;
+
+imm8 = imm8: imm8(8);
+
+%%
+
+"%s %2X" = instruction imm8;
+"%s" = instruction;
+

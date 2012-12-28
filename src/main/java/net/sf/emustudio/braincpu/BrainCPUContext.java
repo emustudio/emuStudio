@@ -1,10 +1,8 @@
 /*
- * IBrainCPUContext.java
- * CA94FB669670978583FDAF7D8A43BA801E49447E7.java
+ * BrainCPUContext.java
  *
- * KISS, YAGNI
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,12 +19,14 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package interfaces;
+package net.sf.emustudio.braincpu;
 
-import emulib.plugins.cpu.ICPUContext;
-import emulib.plugins.device.IDeviceContext;
+import emulib.annotations.ContextType;
+import emulib.plugins.cpu.CPUContext;
+import emulib.plugins.device.DeviceContext;
 
-public interface C7DC7DAD9D43BACD78DD57E84262789E50BB7D7D8 extends ICPUContext {
-    public boolean attachDevice(IDeviceContext device);
+@ContextType
+public interface BrainCPUContext extends CPUContext {
+    public boolean attachDevice(DeviceContext device);
     public void detachDevice();
 }
