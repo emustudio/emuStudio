@@ -172,7 +172,7 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public void destroy() {
-        run_state = RunState.STATE_STOPPED_NORMAL;
+        runState = RunState.STATE_STOPPED_NORMAL;
         stopFrequencyUpdater();
         context.clearDevices();
         context = null;
@@ -186,8 +186,8 @@ public class EmulatorImpl extends AbstractCPU {
         PC = startPos;
         INTE = false;
         stopFrequencyUpdater();
-        fireCpuRun(run_state);
-        fireCpuState();
+        notifyCPURunState(runState);
+        notifyCPUState();
     }
 
     /**
@@ -195,9 +195,9 @@ public class EmulatorImpl extends AbstractCPU {
      */
     @Override
     public void pause() {
-        run_state = RunState.STATE_STOPPED_BREAK;
+        runState = RunState.STATE_STOPPED_BREAK;
         stopFrequencyUpdater();
-        fireCpuRun(run_state);
+        notifyCPURunState(runState);
     }
 
     /**
@@ -205,26 +205,26 @@ public class EmulatorImpl extends AbstractCPU {
      */
     @Override
     public void stop() {
-        run_state = RunState.STATE_STOPPED_NORMAL;
+        runState = RunState.STATE_STOPPED_NORMAL;
         stopFrequencyUpdater();
-        fireCpuRun(run_state);
+        notifyCPURunState(runState);
     }
 
     // vykona 1 krok - bez merania casov (bez real-time odozvy)
     @Override
     public void step() {
-        if (run_state == RunState.STATE_STOPPED_BREAK) {
+        if (runState == RunState.STATE_STOPPED_BREAK) {
             try {
-                run_state = RunState.STATE_RUNNING;
+                runState = RunState.STATE_RUNNING;
                 evalStep();
-                if (run_state == RunState.STATE_RUNNING) {
-                    run_state = RunState.STATE_STOPPED_BREAK;
+                if (runState == RunState.STATE_RUNNING) {
+                    runState = RunState.STATE_STOPPED_BREAK;
                 }
             } catch (IndexOutOfBoundsException e) {
-                run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
+                runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
-            fireCpuRun(run_state);
-            fireCpuState();
+            notifyCPURunState(runState);
+            notifyCPUState();
         }
     }
 
@@ -301,9 +301,9 @@ public class EmulatorImpl extends AbstractCPU {
         int cycles;
         long slice;
 
-        run_state = RunState.STATE_RUNNING;
-        fireCpuRun(run_state);
-        fireCpuState();
+        runState = RunState.STATE_RUNNING;
+        notifyCPURunState(runState);
+        notifyCPUState();
         runFrequencyUpdater();
         /* 1 Hz  .... 1 tState per second
          * 1 kHz .... 1000 tStates per second
@@ -312,19 +312,19 @@ public class EmulatorImpl extends AbstractCPU {
         cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
         long i = 0;
         slice = checkTimeSlice * 1000000;
-        while (run_state == RunState.STATE_RUNNING) {
+        while (runState == RunState.STATE_RUNNING) {
             i++;
             startTime = System.nanoTime();
             cycles_executed = 0;
                 while ((cycles_executed < cycles_to_execute)
-                        && (run_state == RunState.STATE_RUNNING)) {
+                        && (runState == RunState.STATE_RUNNING)) {
                     try {
                         cycles = evalStep();
                     } catch (IndexOutOfBoundsException e) {
-                        run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
+                        runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
                         break;
                     } catch (Error er) {
-                        run_state = RunState.STATE_STOPPED_BREAK;
+                        runState = RunState.STATE_STOPPED_BREAK;
                         break;
                     }
                     cycles_executed += cycles;
@@ -343,8 +343,8 @@ public class EmulatorImpl extends AbstractCPU {
             }
         }
         stopFrequencyUpdater();
-        fireCpuRun(run_state);
-        fireCpuState();
+        notifyCPURunState(runState);
+        notifyCPUState();
     }
 
     @Override
@@ -638,7 +638,7 @@ public class EmulatorImpl extends AbstractCPU {
         }
         OP = ((Short) memory.read(PC++)).shortValue();
         if (OP == 118) { // hlt?
-            run_state = RunState.STATE_STOPPED_NORMAL;
+            runState = RunState.STATE_STOPPED_NORMAL;
             return 7;
         }
 
@@ -1048,7 +1048,7 @@ public class EmulatorImpl extends AbstractCPU {
                 context.fireIO(DAR, false, A);
                 return 10;
         }
-        run_state = RunState.STATE_STOPPED_BAD_INSTR;
+        runState = RunState.STATE_STOPPED_BAD_INSTR;
         return 0;
     }
 
