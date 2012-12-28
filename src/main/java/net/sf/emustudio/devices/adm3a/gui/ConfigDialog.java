@@ -3,7 +3,8 @@
  *
  * Created on Streda, 2008, január 2, 13:32
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,8 +20,9 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package adm3a_terminal.gui;
+package net.sf.emustudio.devices.adm3a.gui;
 
+import emulib.emustudio.SettingsManager;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
@@ -31,26 +33,16 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
+import net.sf.emustudio.devices.adm3a.impl.TerminalDisplay;
 
-import emulib.plugins.ISettingsHandler;
-
-import adm3a_terminal.TerminalDisplay;
-import adm3a_terminal.gui.utils.NiceButton;
-
-/**
- *
- * @author  vbmacher
- */
 @SuppressWarnings("serial")
 public class ConfigDialog extends JDialog {
-
-    private ISettingsHandler settings;
     private long pluginID;
+    private SettingsManager settings;
     private TerminalDisplay terminal;
     private TerminalWindow window;
 
-    /** Creates new form ConfigDialog */
-    public ConfigDialog(ISettingsHandler settings, long hash, TerminalWindow window,
+    public ConfigDialog(SettingsManager settings, long hash, TerminalWindow window,
             TerminalDisplay lblTerminal) {
         super((JFrame) null, true);
         initComponents();
@@ -182,7 +174,7 @@ public class ConfigDialog extends JDialog {
     }
 
     private void btnClearScreenActionPerformed(java.awt.event.ActionEvent evt) {
-        terminal.clear_screen();
+        terminal.clearScreen();
     }
 
     private void btnRollLineActionPerformed(java.awt.event.ActionEvent evt) {

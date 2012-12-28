@@ -3,10 +3,8 @@
  *
  * Created on Utorok, 2007, november 20, 20:15
  *
- * KEEP IT SIMPLE, STUPID
- * some things just: YOU AREN'T GONNA NEED IT
- *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,8 +21,10 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
-package adm3a_terminal;
+package net.sf.emustudio.devices.adm3a.impl;
 
+import emulib.annotations.ContextType;
+import emulib.plugins.device.DeviceContext;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -39,7 +39,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
-import emulib.plugins.device.IDeviceContext;
 
 /**
  * This class provides emulation of CRT display. It supports double buffering
@@ -55,10 +54,10 @@ import emulib.plugins.device.IDeviceContext;
  * @author vbmacher
  */
 @SuppressWarnings("serial")
-public class TerminalDisplay extends Canvas implements IDeviceContext {
-
+@ContextType
+public class TerminalDisplay extends Canvas implements DeviceContext {
     private final static String VERBOSE_FILE_NAME = "terminalADM-3A.out";
-    private final char[] video_memory;
+    private final char[] videoMemory;
     private int col_count; // column count in CRT
     private int row_count; // row count in CRT
     private int line_height; // height of the font = height of the line
@@ -82,8 +81,8 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
     public TerminalDisplay(int cols, int rows) {
         this.col_count = cols;
         this.row_count = rows;
-        video_memory = new char[rows * cols];
-        clear_screen();
+        videoMemory = new char[rows * cols];
+        clearScreen();
         cursorTimer = new Timer();
         cursorPainter = new CursorPainter();
         cursorTimer.scheduleAtFixedRate(cursorPainter, 0, 800);
@@ -129,7 +128,7 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
     }
 
     protected void measure() {
-        FontMetrics fm = null;
+        FontMetrics fm;
         try {
             fm = getFontMetrics(getFont());
         } catch (Exception e) {
@@ -188,10 +187,10 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
     /**
      * Method clears screen of emulated CRT
      */
-    public final void clear_screen() {
-        synchronized (video_memory) {
+    public final void clearScreen() {
+        synchronized (videoMemory) {
             for (int i = 0; i < (row_count * col_count); i++) {
-                video_memory[i] = ' ';
+                videoMemory[i] = ' ';
             }
         }
         cursor_x = 0;
@@ -204,8 +203,8 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
      * @param c char to insert
      */
     private void insert_char(char c) {
-        synchronized (video_memory) {
-            video_memory[cursor_y * col_count + cursor_x] = c;
+        synchronized (videoMemory) {
+            videoMemory[cursor_y * col_count + cursor_x] = c;
         }
     }
 
@@ -241,12 +240,12 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
      * line 0, and previous value of line 0 will be lost.
      */
     public void roll_line() {
-        synchronized (video_memory) {
+        synchronized (videoMemory) {
             for (int i = col_count; i < (col_count * row_count); i++) {
-                video_memory[i - col_count] = video_memory[i];
+                videoMemory[i - col_count] = videoMemory[i];
             }
             for (int i = col_count * row_count - col_count; i < (col_count * row_count); i++) {
-                video_memory[i] = ' ';
+                videoMemory[i] = ' ';
             }
         }
         repaint();
@@ -296,7 +295,7 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
     public void paint(Graphics g) {
         int t_y;
         int x, y;
-        int temp = 0;
+        int temp;
         String sLine = "";
 
         Graphics2D g2d = (Graphics2D) g;
@@ -304,8 +303,8 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
             t_y = start_y + y * line_height;
             temp = y * col_count;
             for (x = 0; x < col_count; x++) {
-                synchronized (video_memory) {
-                    sLine += (char) video_memory[temp + x];
+                synchronized (videoMemory) {
+                    sLine += (char) videoMemory[temp + x];
                 }
             }
             g2d.drawString(sLine, 1, t_y);
@@ -315,6 +314,7 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
 
     private class CursorPainter extends TimerTask {
 
+        @Override
         public void run() {
             Graphics g = getGraphics();
             if (g == null) {
@@ -388,11 +388,6 @@ public class TerminalDisplay extends Canvas implements IDeviceContext {
         insert_char((char) val);
         move_cursor();
         repaint();
-    }
-
-    @Override
-    public String getID() {
-        return "ADM-3A";
     }
 
     @Override

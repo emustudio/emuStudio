@@ -1,9 +1,8 @@
-/**
- * TerminalKeyboard.java
+/*
+ * Keyboard.java
  *
- * KISS, YAGNI
- *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,18 +18,17 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package adm3a_terminal.gui.utils;
+package net.sf.emustudio.devices.adm3a.gui;
 
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.awt.event.KeyEvent;
+import net.sf.emustudio.devices.adm3a.impl.TerminalDisplay;
+import net.sf.emustudio.devices.adm3a.impl.TerminalFemale;
 
-import adm3a_terminal.TerminalDisplay;
-import adm3a_terminal.TerminalFemale;
-
-public class TerminalKeyboard extends java.awt.event.KeyAdapter implements ContainerListener {
+public class Keyboard extends java.awt.event.KeyAdapter implements ContainerListener {
 
     private TerminalFemale female;
     private boolean halfDuplex = false;
@@ -38,7 +36,7 @@ public class TerminalKeyboard extends java.awt.event.KeyAdapter implements Conta
     private int keyCode = 0;
     private TerminalDisplay terminal;
 
-    public TerminalKeyboard(TerminalDisplay terminal, TerminalFemale female) {
+    public Keyboard(TerminalDisplay terminal, TerminalFemale female) {
         keyLock = new Object();
         this.terminal = terminal;
         this.female = female;

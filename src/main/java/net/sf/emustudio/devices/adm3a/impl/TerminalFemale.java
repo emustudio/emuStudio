@@ -2,9 +2,9 @@
  * TerminalFemale.java
  *
  * Created on 28.7.2008, 21:38:02
- * hold to: KISS, YAGNI
  * 
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,19 +20,16 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package adm3a_terminal;
+package net.sf.emustudio.devices.adm3a.impl;
 
-import emulib.plugins.device.IDeviceContext;
+import emulib.annotations.ContextType;
+import emulib.plugins.device.DeviceContext;
 
-/**
- *
- * @author vbmacher
- */
-public class TerminalFemale implements IDeviceContext {
+@ContextType
+public class TerminalFemale implements DeviceContext {
+    private DeviceContext dev;
 
-    private IDeviceContext dev;
-
-    public void attachDevice(IDeviceContext device) {
+    public void attachDevice(DeviceContext device) {
         this.dev = device;
     }
 
@@ -51,11 +48,6 @@ public class TerminalFemale implements IDeviceContext {
             return;
         }
         dev.write(val);
-    }
-
-    @Override
-    public String getID() {
-        return "ADM-3A-female";
     }
 
     @Override

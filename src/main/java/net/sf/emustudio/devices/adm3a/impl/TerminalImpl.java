@@ -2,9 +2,9 @@
  * TerminalImpl.java
  *
  * Created on 28.7.2008, 19:12:19
- * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,21 +20,25 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package adm3a_terminal;
+package net.sf.emustudio.devices.adm3a.impl;
 
-import emulib.plugins.ISettingsHandler;
-import emulib.plugins.device.IDeviceContext;
-import adm3a_terminal.gui.ConfigDialog;
-import adm3a_terminal.gui.TerminalWindow;
-import emulib.plugins.device.SimpleDevice;
-import emulib.runtime.Context;
+import emulib.annotations.PLUGIN_TYPE;
+import emulib.annotations.PluginType;
+import emulib.emustudio.SettingsManager;
+import emulib.plugins.device.AbstractDevice;
+import emulib.plugins.device.DeviceContext;
+import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import net.sf.emustudio.devices.adm3a.gui.ConfigDialog;
+import net.sf.emustudio.devices.adm3a.gui.TerminalWindow;
 
-/**
- *
- * @author vbmacher
- */
-public class TerminalImpl extends SimpleDevice {
+@PluginType(type = PLUGIN_TYPE.DEVICE,
+title = "LSI ADM-3A terminal",
+copyright = "\u00A9 Copyright 2007-2012, Peter Jakubčo",
+description = "Custom implementation of terminal ADM-3A from LSI")
+public class TerminalImpl extends AbstractDevice {
 
     private TerminalWindow terminalGUI;
     private TerminalDisplay terminal; // male
@@ -43,23 +47,26 @@ public class TerminalImpl extends SimpleDevice {
     public TerminalImpl(Long pluginID) {
         super(pluginID);
         terminal = new TerminalDisplay(80, 25);
-        if (!Context.getInstance().register(pluginID, terminal,
-                IDeviceContext.class))
-            StaticDialogs.showErrorMessage("Could not register the terminal!");
-
+        try {
+            ContextPool.getInstance().register(pluginID, terminal, DeviceContext.class);
+        } catch (RuntimeException e) {
+            StaticDialogs.showErrorMessage("Could not register ADM-3A terminal",
+                    TerminalImpl.class.getAnnotation(PluginType.class).title());
+        }
         female = new TerminalFemale();
     }
 
     @Override
-    public boolean initialize(ISettingsHandler settings) {
+    public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
 
         // try to connect to a serial I/O board
-        IDeviceContext device = Context.getInstance().getDeviceContext(pluginID,
-                IDeviceContext.class, "RS232");
+        DeviceContext device = ContextPool.getInstance().getDeviceContext(pluginID,
+                DeviceContext.class);
 
-        if (device != null)
+        if (device != null) {
             female.attachDevice(device);
+        }
 
         terminalGUI = new TerminalWindow(terminal, female);
         readSettings();
@@ -106,27 +113,18 @@ public class TerminalImpl extends SimpleDevice {
 
     @Override
     public void reset() {
-        terminal.clear_screen();
+        terminal.clearScreen();
     }
 
-    @Override
-    public String getTitle() {
-        return "Terminal LSI ADM-3A";
-    }
-
-    @Override
-    public String getCopyright() {
-        return "\u00A9 Copyright 2007-2012, Peter Jakubčo";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Implementation of virtual terminal LSI ADM-3A";
-    }
 
     @Override
     public String getVersion() {
-        return getClass().getPackage().getImplementationVersion();
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.devices.adm3a.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            return "(unknown)";
+        }
     }
 
     @Override

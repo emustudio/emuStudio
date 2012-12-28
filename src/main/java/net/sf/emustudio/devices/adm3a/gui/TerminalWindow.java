@@ -3,7 +3,8 @@
  *
  * Created on Piatok, 2007, november 16, 11:42
  *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,40 +20,34 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package adm3a_terminal.gui;
+package net.sf.emustudio.devices.adm3a.gui;
 
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Font;
 import java.io.InputStream;
-
-
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.WindowConstants;
-
-
-import adm3a_terminal.TerminalDisplay;
-import adm3a_terminal.TerminalFemale;
-import adm3a_terminal.gui.utils.TerminalKeyboard;
+import net.sf.emustudio.devices.adm3a.impl.TerminalDisplay;
+import net.sf.emustudio.devices.adm3a.impl.TerminalFemale;
 
 /**
  * Window (JFrame) implementation of interactive display terminal LSI ADM-3A
  *
- * @author  vbmacher
+ * @author Peter Jakubčo
  */
 @SuppressWarnings("serial")
 public class TerminalWindow extends JFrame {
 
     private TerminalDisplay terminal;
     private Font terminalFont;
-    private TerminalKeyboard keyboard;
+    private Keyboard keyboard;
 
-    /** Creates new form TerminalWindow */
     public TerminalWindow(TerminalDisplay lblTerminal, TerminalFemale female) {
         this.terminal = lblTerminal;
-        keyboard = new TerminalKeyboard(terminal, female);
+        keyboard = new Keyboard(terminal, female);
         setVisible(false);
         initComponents();
 
@@ -71,7 +66,7 @@ public class TerminalWindow extends JFrame {
 
     private void initComponents() {
         JLabel lblBack = new JLabel();
-        ImageIcon img = new ImageIcon(getClass().getResource("/adm3a_terminal/display.gif"));
+        ImageIcon img = new ImageIcon(getClass().getResource("/net/sf/emustudio/devices/adm3a/gui/display.gif"));
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Terminal ADM-3A");
@@ -79,7 +74,7 @@ public class TerminalWindow extends JFrame {
 
         try {
             // load terminal font from resources
-            InputStream fin = this.getClass().getResourceAsStream("/adm3a_terminal/terminal.ttf");
+            InputStream fin = this.getClass().getResourceAsStream("/net/sf/emustudio/devices/adm3a/gui/terminal.ttf");
             this.terminalFont = Font.createFont(Font.TRUETYPE_FONT, fin).deriveFont(12f);
             fin.close();
             terminal.setFont(this.terminalFont);
