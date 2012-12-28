@@ -22,7 +22,6 @@
  */
 package net.sf.emustudio.zilogZ80.impl;
 
-import net.sf.emustudio.zilogZ80.gui.StatusPanel;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
@@ -38,9 +37,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.JPanel;
 import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
 import net.sf.emustudio.zilogZ80.gui.DecoderImpl;
 import net.sf.emustudio.zilogZ80.gui.DisassemblerImpl;
-import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
+import net.sf.emustudio.zilogZ80.gui.StatusPanel;
 
 /**
  * Main implementation class for CPU emulation CPU works in a separate thread (parallel with other hardware)
@@ -274,7 +274,7 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public void destroy() {
-        run_state = RunState.STATE_STOPPED_NORMAL;
+        runState = RunState.STATE_STOPPED_NORMAL;
         stopFrequencyUpdater();
         context.clearDevices();
         context = null;
@@ -332,24 +332,24 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public void step() {
-        if (run_state == RunState.STATE_STOPPED_BREAK) {
+        if (runState == RunState.STATE_STOPPED_BREAK) {
             try {
-                run_state = RunState.STATE_RUNNING;
+                runState = RunState.STATE_RUNNING;
                 boolean oldIFF = IFF[0];
                 noWait = false;
                 evalStep(fetchOpcode());
                 isINT = (interruptPending != 0) && oldIFF && IFF[0];
                 if (PC > 0xffff) {
-                    run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
+                    runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
                     PC = 0xffff;
-                } else if (run_state == RunState.STATE_RUNNING) {
-                    run_state = RunState.STATE_STOPPED_BREAK;
+                } else if (runState == RunState.STATE_RUNNING) {
+                    runState = RunState.STATE_STOPPED_BREAK;
                 }
             } catch (IndexOutOfBoundsException e) {
-                run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
+                runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
-            fireCpuRun(run_state);
-            fireCpuState();
+            notifyCPURunState(runState);
+            notifyCPUState();
         }
     }
 
@@ -358,16 +358,16 @@ public class EmulatorImpl extends AbstractCPU {
      */
     @Override
     public void pause() {
-        run_state = RunState.STATE_STOPPED_BREAK;
+        runState = RunState.STATE_STOPPED_BREAK;
         stopFrequencyUpdater();
-        fireCpuRun(run_state);
+        notifyCPURunState(runState);
     }
 
     @Override
     public void stop() {
-        run_state = RunState.STATE_STOPPED_NORMAL;
+        runState = RunState.STATE_STOPPED_NORMAL;
         stopFrequencyUpdater();
-        fireCpuRun(run_state);
+        notifyCPURunState(runState);
     }
 
     @Override
@@ -386,8 +386,8 @@ public class EmulatorImpl extends AbstractCPU {
         IFF[1] = false;
         PC = startPos;
         stopFrequencyUpdater();
-        fireCpuRun(run_state);
-        fireCpuState();
+        notifyCPURunState(runState);
+        notifyCPUState();
         interruptPending = 0;
         isINT = noWait = false;
     }
@@ -688,10 +688,10 @@ public class EmulatorImpl extends AbstractCPU {
         switch (intMode) {
             case 0:  // rst p (interruptVector)
                 cycles += 11;
-                RunState old_runstate = run_state;
+                RunState old_runstate = runState;
                 evalStep((short) interruptVector); // must ignore halt
-                if (run_state == RunState.STATE_STOPPED_NORMAL) {
-                    run_state = old_runstate;
+                if (runState == RunState.STATE_STOPPED_NORMAL) {
+                    runState = old_runstate;
                 }
                 break;
             case 1: // rst 0xFF
@@ -738,7 +738,7 @@ public class EmulatorImpl extends AbstractCPU {
         }
         R++;
         if (OP == 0x76) { /* HALT */
-            run_state = RunState.STATE_STOPPED_NORMAL;
+            runState = RunState.STATE_STOPPED_NORMAL;
             return 4;
         }
 
@@ -2187,7 +2187,7 @@ public class EmulatorImpl extends AbstractCPU {
                 PC = tmp;
                 return 17;
         }
-        run_state = RunState.STATE_STOPPED_BAD_INSTR;
+        runState = RunState.STATE_STOPPED_BAD_INSTR;
         return 0;
     }
     
@@ -2238,9 +2238,9 @@ public class EmulatorImpl extends AbstractCPU {
         int cycles;
         long slice;
 
-        run_state = RunState.STATE_RUNNING;
-        fireCpuRun(run_state);
-        fireCpuState();
+        runState = RunState.STATE_RUNNING;
+        notifyCPURunState(runState);
+        notifyCPUState();
         runFrequencyUpdater();
         /* 1 Hz  .... 1 tState per second
          * 1 kHz .... 1000 tStates per second
@@ -2249,13 +2249,13 @@ public class EmulatorImpl extends AbstractCPU {
         cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
         long i = 0;
         slice = checkTimeSlice * 1000000;
-        while (run_state == RunState.STATE_RUNNING) {
+        while (runState == RunState.STATE_RUNNING) {
             i++;
             startTime = System.nanoTime();
             cycles_executed = 0;
             try {
                 while ((cycles_executed < cycles_to_execute)
-                        && (run_state == RunState.STATE_RUNNING)) {
+                        && (runState == RunState.STATE_RUNNING)) {
                     cycles = evalStep(fetchOpcode());
                     cycles_executed += cycles;
                     long_cycles += cycles;
@@ -2264,13 +2264,13 @@ public class EmulatorImpl extends AbstractCPU {
                     }
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
-                run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
+                runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
                 break;
             } catch (IndexOutOfBoundsException e) {
-                run_state = RunState.STATE_STOPPED_ADDR_FALLOUT;
+                runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
                 break;
             } catch (Error er) {
-                run_state = RunState.STATE_STOPPED_BREAK;
+                runState = RunState.STATE_STOPPED_BREAK;
                 break;
             }
             endTime = System.nanoTime() - startTime;
@@ -2283,8 +2283,8 @@ public class EmulatorImpl extends AbstractCPU {
             }
         }
         stopFrequencyUpdater();
-        fireCpuState();
-        fireCpuRun(run_state);
+        notifyCPUState();
+        notifyCPURunState(runState);
     }
 
     @Override
