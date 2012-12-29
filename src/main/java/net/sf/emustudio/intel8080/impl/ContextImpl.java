@@ -23,7 +23,6 @@
 
 package net.sf.emustudio.intel8080.impl;
 
-import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,7 +33,6 @@ import net.sf.emustudio.intel8080.ExtendedContext;
  * Implementation of extended context of Intel8080 CPU.
  * 
  */
-@ContextType
 public class ContextImpl implements ExtendedContext {
     private Map<Integer,DeviceContext<Short>> devices;
     private int clockFrequency = 2000; // kHz

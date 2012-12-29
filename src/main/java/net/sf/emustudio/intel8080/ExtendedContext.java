@@ -2,9 +2,9 @@
  * ExtendedContext.java
  *
  * Created on 18.6.2008, 8:56:44
- * hold to: KISS, YAGNI, DRY
  *
  * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 
 package net.sf.emustudio.intel8080;
 
+import emulib.annotations.ContextType;
 import emulib.plugins.cpu.CPUContext;
 import emulib.plugins.device.DeviceContext;
 
@@ -31,8 +32,23 @@ import emulib.plugins.device.DeviceContext;
  * 
  * @author Peter Jakubčo
  */
+@ContextType
 public interface ExtendedContext extends CPUContext {
-    public boolean attachDevice(DeviceContext<Short> listener, int port);
+    
+    /**
+     * Attach a device into the CPU.
+     * 
+     * @param device the device
+     * @param port CPU port where the device should be attached
+     * @return true on success, false otherwise
+     */
+    public boolean attachDevice(DeviceContext<Short> device, int port);
+    
+    /**
+     * Detach a device from the CPU.
+     * 
+     * @param port the CPU port number which will be freed.
+     */
     public void detachDevice(int port);
     
     public void setCPUFrequency(int freq);
