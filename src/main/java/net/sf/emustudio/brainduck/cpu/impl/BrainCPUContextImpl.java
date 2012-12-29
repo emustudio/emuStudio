@@ -18,10 +18,10 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.braincpu.impl;
+package net.sf.emustudio.brainduck.cpu.impl;
 
 import emulib.plugins.device.DeviceContext;
-import net.sf.emustudio.braincpu.BrainCPUContext;
+import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
 
 public class BrainCPUContextImpl implements BrainCPUContext {
 

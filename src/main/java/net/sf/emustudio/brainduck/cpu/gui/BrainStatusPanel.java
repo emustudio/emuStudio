@@ -18,7 +18,7 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.braincpu.gui;
+package net.sf.emustudio.brainduck.cpu.gui;
 
 import emulib.plugins.cpu.CPU.CPUListener;
 import emulib.plugins.cpu.CPU.RunState;
@@ -31,7 +31,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
-import net.sf.emustudio.braincpu.impl.EmulatorImpl;
+import net.sf.emustudio.brainduck.cpu.impl.EmulatorImpl;
 
 @SuppressWarnings("serial")
 public class BrainStatusPanel extends JPanel {

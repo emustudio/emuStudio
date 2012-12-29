@@ -18,7 +18,7 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.braincpu.impl;
+package net.sf.emustudio.brainduck.cpu.impl;
 
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
@@ -31,8 +31,8 @@ import emulib.runtime.StaticDialogs;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import javax.swing.JPanel;
-import net.sf.emustudio.braincpu.BrainCPUContext;
-import net.sf.emustudio.braincpu.gui.BrainStatusPanel;
+import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
+import net.sf.emustudio.brainduck.cpu.gui.BrainStatusPanel;
 import net.sf.emustudio.braincpu.gui.DecoderImpl;
 import net.sf.emustudio.braincpu.gui.DisassemblerImpl;
 

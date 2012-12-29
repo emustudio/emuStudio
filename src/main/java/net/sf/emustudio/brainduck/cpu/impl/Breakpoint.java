@@ -1,5 +1,5 @@
 /*
- * BrainCPUContext.java
+ * Breakpoint.java
  *
  * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
@@ -18,15 +18,8 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+package net.sf.emustudio.brainduck.cpu.impl;
 
-package net.sf.emustudio.braincpu;
-
-import emulib.annotations.ContextType;
-import emulib.plugins.cpu.CPUContext;
-import emulib.plugins.device.DeviceContext;
-
-@ContextType
-public interface BrainCPUContext extends CPUContext {
-    public boolean attachDevice(DeviceContext<Short> device);
-    public void detachDevice();
+public class Breakpoint extends Exception {
+    
 }
