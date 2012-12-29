@@ -22,39 +22,38 @@
  */
 package net.sf.emustudio.devices.mits88disk.impl;
 
-import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
 
 /**
+ * Port 2.
+ * 
  * IN: sector pos
  * OUT: set flags
- * 
+ *
  * @author Peter Jakubčo
  */
-@ContextType
-public class Port2 implements DeviceContext {
+public class Port2 implements DeviceContext<Short> {
+    private DiskImpl disk;
 
-    private DiskImpl dsk;
-
-    public Port2(DiskImpl dsk) {
-        this.dsk = dsk;
-    }
-
-    public boolean attachDevice(DeviceContext device) {
-        return false;
-    }
-
-    public void detachDevice(DeviceContext device) {
+    public Port2(DiskImpl disk) {
+        this.disk = disk;
     }
 
     @Override
-    public Object read() {
-        return ((Drive) dsk.drives.get(dsk.current_drive)).getSectorPos();
+    public Short read() {
+        try {
+            return disk.getCurrentDrive().getSectorPos();
+        } catch (IndexOutOfBoundsException e) {
+        }
+        return 0;
     }
 
     @Override
-    public void write(Object val) {
-        ((Drive) dsk.drives.get(dsk.current_drive)).setFlags((Short) val);
+    public void write(Short val) {
+        try {
+            disk.getCurrentDrive().setFlags(val);
+        } catch (IndexOutOfBoundsException e) {
+        }
     }
 
     @Override

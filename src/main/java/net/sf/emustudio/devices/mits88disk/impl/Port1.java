@@ -22,47 +22,49 @@
  */
 package net.sf.emustudio.devices.mits88disk.impl;
 
-import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
 
 /**
- * IN:  disk flags
- * OUT: select/unselect drive
+ * Port 1.
  * 
+ * IN: disk flags
+ * OUT: select/unselect drive
+ *
  * @author Peter Jakubčo
  */
-@ContextType
-public class Port1 implements DeviceContext {
+public class Port1 implements DeviceContext<Short> {
 
-    private DiskImpl dsk;
+    private DiskImpl disk;
 
-    public Port1(DiskImpl dsk) {
-        this.dsk = dsk;
-    }
-
-    public boolean attachDevice(DeviceContext device) {
-        return false;
-    }
-
-    public void detachDevice(DeviceContext device) {
+    public Port1(DiskImpl disk) {
+        this.disk = disk;
     }
 
     @Override
-    public Object read() {
-        return ((Drive) dsk.drives.get(dsk.current_drive)).getFlags();
+    public Short read() {
+        try {
+            return disk.getCurrentDrive().getFlags();
+        } catch (Exception e) {
+        }
+        return 0;
     }
 
     @Override
-    public void write(Object val) {
-        short v = (Short) val;
+    public void write(Short value) {
         // select device
-        dsk.current_drive = v & 0x0F;
-        if ((v & 0x80) != 0) {
+        disk.setCurrentDrive(value & 0x0F);
+        if ((value & 0x80) != 0) {
             // disable device
-            ((Drive) dsk.drives.get(dsk.current_drive)).deselect();
-            dsk.current_drive = 0xFF;
+            try {
+                disk.getCurrentDrive().deselect();
+            } catch (IndexOutOfBoundsException e) {
+            }
+            disk.setCurrentDrive(0xFF);
         } else {
-            ((Drive) dsk.drives.get(dsk.current_drive)).select();
+            try {
+                disk.getCurrentDrive().select();
+            } catch (IndexOutOfBoundsException e) {
+            }
         }
     }
 
