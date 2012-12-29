@@ -23,7 +23,6 @@
  */
 package net.sf.emustudio.devices.adm3a.impl;
 
-import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
 import java.awt.Canvas;
 import java.awt.Color;
@@ -51,11 +50,9 @@ import java.util.TimerTask;
  * Terminal can interpret ASCII codes from 0-127. Some have special
  * functionality (0-31)
  *
- * @author vbmacher
+ * @author Peter Jakubčo
  */
-@SuppressWarnings("serial")
-@ContextType
-public class TerminalDisplay extends Canvas implements DeviceContext {
+public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
     private final static String VERBOSE_FILE_NAME = "terminalADM-3A.out";
     private final char[] videoMemory;
     private int col_count; // column count in CRT
@@ -338,8 +335,8 @@ public class TerminalDisplay extends Canvas implements DeviceContext {
      * @return 0
      */
     @Override
-    public Object read() {
-        return 0;
+    public Short read() {
+        return (short)0;
     }
 
     private void verbose_char(short val) {
@@ -356,16 +353,15 @@ public class TerminalDisplay extends Canvas implements DeviceContext {
      * This method is called from serial I/O card (by OUT instruction)
      */
     @Override
-    public void write(Object value) {
-        short val = (Short) value;
+    public void write(Short data) {
         measure();
 
-        verbose_char(val);
+        verbose_char(data);
         /*
          * if it is special char, interpret it. else just add
          * to "video memory"
          */
-        switch (val) {
+        switch (data) {
             case 7:
                 return; /* bell */
             case 8:
@@ -385,7 +381,7 @@ public class TerminalDisplay extends Canvas implements DeviceContext {
                 cursor_x = 0;
                 return; /* carriage return */
         }
-        insert_char((char) val);
+        insert_char((char)(short) data);
         move_cursor();
         repaint();
     }

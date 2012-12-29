@@ -22,32 +22,30 @@
  */
 package net.sf.emustudio.devices.adm3a.impl;
 
-import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
 
-@ContextType
-public class TerminalFemale implements DeviceContext {
-    private DeviceContext dev;
+public class TerminalFemale implements DeviceContext<Short> {
+    private DeviceContext device;
 
-    public void attachDevice(DeviceContext device) {
-        this.dev = device;
+    public void attachDevice(DeviceContext<Short> device) {
+        this.device = device;
     }
 
     public void detachDevice() {
-        this.dev = null;
+        this.device = null;
     }
 
     @Override
-    public Object read() {
+    public Short read() {
         return (short) 0;
     }
 
     @Override
-    public void write(Object val) {
-        if (dev == null) {
+    public void write(Short val) {
+        if (device == null) {
             return;
         }
-        dev.write(val);
+        device.write(val);
     }
 
     @Override
