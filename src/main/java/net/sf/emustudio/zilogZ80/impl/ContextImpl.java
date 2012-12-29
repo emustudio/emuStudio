@@ -22,7 +22,6 @@
  */
 package net.sf.emustudio.zilogZ80.impl;
 
-import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,14 +31,13 @@ import net.sf.emustudio.intel8080.ExtendedContext;
  * Context of Z80 CPU emulator.
  * 
  */
-@ContextType
 public final class ContextImpl implements ExtendedContext {
-    private Map<Integer, DeviceContext> devices;
+    private Map<Integer, DeviceContext<Short>> devices;
     private EmulatorImpl cpu;
     private int clockFrequency = 20000; // kHz
 
     public ContextImpl(EmulatorImpl cpu) {
-        devices = new HashMap<Integer, DeviceContext>();
+        devices = new HashMap<Integer, DeviceContext<Short>>();
         this.cpu = cpu;
     }
 
