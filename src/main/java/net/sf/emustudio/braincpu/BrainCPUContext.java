@@ -27,6 +27,6 @@ import emulib.plugins.device.DeviceContext;
 
 @ContextType
 public interface BrainCPUContext extends CPUContext {
-    public boolean attachDevice(DeviceContext device);
+    public boolean attachDevice(DeviceContext<Short> device);
     public void detachDevice();
 }

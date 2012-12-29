@@ -25,7 +25,7 @@ import net.sf.emustudio.braincpu.BrainCPUContext;
 
 public class BrainCPUContextImpl implements BrainCPUContext {
 
-    private DeviceContext device;
+    private DeviceContext<Short> device;
 
     public BrainCPUContextImpl() {
         device = null;
@@ -40,11 +40,8 @@ public class BrainCPUContextImpl implements BrainCPUContext {
      * @return
      */
     @Override
-    public boolean attachDevice(DeviceContext device) {
+    public boolean attachDevice(DeviceContext<Short> device) {
         if (this.device != null) {
-            return false;
-        }
-        if (device.getDataType() != Short.class) {
             return false;
         }
         this.device = device;
