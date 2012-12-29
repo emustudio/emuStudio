@@ -23,7 +23,7 @@
   <developers>
     <developer>
       <id>vbmacher</id>
-      <name>Peter Jakubèo</name>
+      <name>Peter JakubÄo</name>
       <roles>
         <role>architect</role>
         <role>developer</role>
@@ -151,7 +151,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.1</version>
+      <version>4.11</version>
       <scope>test</scope>
     </dependency>
     <dependency>
