@@ -11,11 +11,49 @@
   <url>https://github.com/vbmacher/brainduck-mem</url>
   <description>Operating memory for the BrainDuck architecture, plug-in for emuStudio.</description>
 
+  <licenses>
+    <license>
+      <name>GNU GPL 2</name>
+      <url>http://www.gnu.org/licenses/gpl-2.0.txt</url>
+      <distribution>manual</distribution>
+      <comments>Free software license</comments>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>vbmacher</id>
+      <name>Peter Jakubèo</name>
+      <roles>
+        <role>architect</role>
+        <role>developer</role>
+      </roles>
+      <timezone>+1</timezone>
+    </developer>
+  </developers>
+  
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.build.resourceDirectory>${basedir}/src/main/resources</project.build.resourceDirectory>
   </properties>
 
   <build>
+    <resources>
+      <resource>
+        <directory>${project.build.resourceDirectory}</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>**/*.properties</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>${project.build.resourceDirectory}</directory>
+        <filtering>false</filtering>
+        <excludes>
+          <exclude>**/*.properties</exclude>
+        </excludes>
+      </resource>
+    </resources>
     <extensions>
       <extension>
         <groupId>org.apache.maven.wagon</groupId>
@@ -48,6 +86,30 @@
           </archive>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.6</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.6</version>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>install</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/lib</outputDirectory>
+              <overWriteReleases>false</overWriteReleases>
+              <overWriteSnapshots>false</overWriteSnapshots>
+              <overWriteIfNewer>true</overWriteIfNewer>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>      
     </plugins>
   </build>
 
@@ -73,7 +135,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.1</version>
+      <version>4.11</version>
       <scope>test</scope>
     </dependency>
     <dependency>
