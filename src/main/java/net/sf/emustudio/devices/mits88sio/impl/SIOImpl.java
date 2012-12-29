@@ -23,7 +23,6 @@
  */
 package net.sf.emustudio.devices.mits88sio.impl;
 
-import emulib.annotations.ContextType;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
@@ -31,8 +30,6 @@ import emulib.plugins.device.AbstractDevice;
 import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import javax.swing.JOptionPane;
@@ -56,42 +53,35 @@ import net.sf.emustudio.intel8080.ExtendedContext;
  * and 22Q-23Q for the second. The second port of the 2SIO is "connected" to a
  * virtual line printer and the paper tape reader/punch for support under CP/M.
  *
- * @author vbmacher
+ * @author Peter Jakubčo
  */
 @PluginType(type = PLUGIN_TYPE.DEVICE,
 title = "MITS 88-SIO Board",
 copyright = "\u00A9 Copyright 2007-2012, Peter Jakubčo",
 description = "Custom implementation of MITS 88-SIO serial card.")
-public class Mits88SIO extends AbstractDevice {
-
+public class SIOImpl extends AbstractDevice {
     public static final int CPU_PORT1 = 0x10;
     public static final int CPU_PORT2 = 0x11;
-    public List<Short> buffer = new ArrayList<Short>();
-    public short status;
-    private StatusPort port1;
-    private DataPort port2;
-    private int port1Number;
-    private int port2Number;
-    /**
-     * Port where devices are connected
-     */
-    private PhysicalPort externPort;
-    private ExtendedContext cpu = null;
-    public SIODialog gui = null;
+    
+    private StatusPort statusPort;
+    private DataPort dataPort;
+    private int statusPortNumber;
+    private int dataPortNumber;
+    private ExtendedContext cpu;
+    private SIODialog gui;
 
-    public Mits88SIO(Long pluginID) {
+    public SIOImpl(Long pluginID) {
         super(pluginID);
-        port1 = new StatusPort(this);
-        port2 = new DataPort(this);
-        port1Number = CPU_PORT1;
-        port2Number = CPU_PORT2;
-        externPort = new PhysicalPort(port2);
+        statusPort = new StatusPort(this);
+        dataPort = new DataPort(this);
+        statusPortNumber = CPU_PORT1;
+        dataPortNumber = CPU_PORT2;
 
         try {
-            ContextPool.getInstance().register(pluginID, externPort, DeviceContext.class);
+            ContextPool.getInstance().register(pluginID, dataPort, DeviceContext.class);
         } catch (RuntimeException e) {
             StaticDialogs.showErrorMessage("Could not register MITS 88-SIO context",
-                    Mits88SIO.class.getAnnotation(PluginType.class).title());
+                    SIOImpl.class.getAnnotation(PluginType.class).title());
         }
     }
 
@@ -110,11 +100,17 @@ public class Mits88SIO extends AbstractDevice {
      */
     @Override
     public void reset() {
-      //  buffer.clear(); // = 0;    /* Data */
-      //  status = 0x02; /* Status */
-        if (buffer.isEmpty()) {
-            status = 0x02;
+        if (dataPort.isEmpty()) {
+            statusPort.setStatus((short)0x02);
         }
+    }
+    
+    public void setStatus(short status) {
+        statusPort.setStatus(status);
+    }
+    
+    public short getStatus() {
+        return statusPort.read();
     }
 
     private void readSettings() {
@@ -122,25 +118,21 @@ public class Mits88SIO extends AbstractDevice {
         s = settings.readSetting(pluginID, "port1");
         if (s != null) {
             try {
-                port1Number = Integer.decode(s);
+                statusPortNumber = Integer.decode(s);
             } catch (NumberFormatException e) {
-                port1Number = CPU_PORT1;
+                statusPortNumber = CPU_PORT1;
             }
         }
         s = settings.readSetting(pluginID, "port2");
         if (s != null) {
             try {
-                port2Number = Integer.decode(s);
+                dataPortNumber = Integer.decode(s);
             } catch (NumberFormatException e) {
-                port2Number = CPU_PORT2;
+                dataPortNumber = CPU_PORT2;
             }
         }
     }
     
-    private String getTitle() {
-        return Mits88SIO.class.getAnnotation(PluginType.class).title();
-    }
-
     /**
      * I/O instruction handlers, called from the CPU module when an IN or OUT
      * instruction is issued.
@@ -155,14 +147,6 @@ public class Mits88SIO extends AbstractDevice {
     @Override
     public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
-
-        // try to 'catch' any first connected device
-        DeviceContext device = ContextPool.getInstance().getDeviceContext(pluginID,
-                DeviceContext.class);
-        if (device != null) {
-            port2.attachDevice(device);
-        }
-
         readSettings();
 
         cpu = (ExtendedContext) ContextPool.getInstance().getCPUContext(pluginID,
@@ -172,35 +156,35 @@ public class Mits88SIO extends AbstractDevice {
         }
 
         // attach IO ports
-        if (cpu.attachDevice(port1, port1Number) == false) {
+        if (cpu.attachDevice(statusPort, statusPortNumber) == false) {
             String p;
             p = JOptionPane.showInputDialog(getTitle() + " (port1) can not be"
                     + " attached to default CPU port, please enter another one: ",
                     CPU_PORT1);
             try {
-                port1Number = Integer.decode(p);
+                statusPortNumber = Integer.decode(p);
             } catch (NumberFormatException e) {
                 StaticDialogs.showErrorMessage("Error: wrong port number");
                 return false;
             }
-            if (cpu.attachDevice(port1, port1Number) == false) {
+            if (cpu.attachDevice(statusPort, statusPortNumber) == false) {
                 StaticDialogs.showErrorMessage("Error: " + getTitle()
                         + " (port1) still can't be attached");
                 return false;
             }
         }
-        if (cpu.attachDevice(port2, port2Number) == false) {
+        if (cpu.attachDevice(dataPort, dataPortNumber) == false) {
             String p;
             p = JOptionPane.showInputDialog(getTitle() + " (port2) can not be"
                     + " attached to default CPU port, please enter another one: ",
                     CPU_PORT2);
             try {
-                port2Number = Integer.decode(p);
+                dataPortNumber = Integer.decode(p);
             } catch (NumberFormatException e) {
                 StaticDialogs.showErrorMessage("Error: wrong port number");
                 return false;
             }
-            if (cpu.attachDevice(port2, port2Number) == false) {
+            if (cpu.attachDevice(dataPort, dataPortNumber) == false) {
                 StaticDialogs.showErrorMessage("Error: " + getTitle()
                         + " (port2) still can't be attached");
                 return false;
@@ -212,17 +196,15 @@ public class Mits88SIO extends AbstractDevice {
     @Override
     public void showGUI() {
         if (gui == null) {
-            String name = (port2.getAttachedDevice() == null) ? "none"
-                    : port2.getAttachedDevice().getClass().getAnnotation(ContextType.class).id();
-            gui = new SIODialog(null, false, name, port1Number, port2Number);
+            gui = new SIODialog(statusPortNumber, dataPortNumber);
         }
         gui.setVisible(true);
     }
 
     @Override
     public void destroy() {
-        cpu.detachDevice(port1Number);
-        cpu.detachDevice(port2Number);
+        cpu.detachDevice(statusPortNumber);
+        cpu.detachDevice(dataPortNumber);
         if (gui != null) {
             gui.dispose();
         }

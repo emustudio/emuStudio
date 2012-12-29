@@ -65,16 +65,16 @@ import emulib.plugins.device.DeviceContext;
  */
 @ContextType(id = "Status port")
 public class StatusPort implements DeviceContext<Short> {
+    private SIOImpl sio;
+    private short status;
 
-    private Mits88SIO sio;
-
-    public StatusPort(Mits88SIO sio) {
+    public StatusPort(SIOImpl sio) {
         this.sio = sio;
     }
 
     @Override
     public Short read() {
-        return sio.status;
+        return status;
     }
 
     @Override
@@ -82,6 +82,10 @@ public class StatusPort implements DeviceContext<Short> {
         if (val == 0x03) {
             sio.reset();
         }
+    }
+    
+    public void setStatus(short status) {
+        this.status = status;
     }
 
     @Override

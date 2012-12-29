@@ -31,7 +31,7 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
-import net.sf.emustudio.devices.mits88sio.impl.Mits88SIO;
+import net.sf.emustudio.devices.mits88sio.impl.SIOImpl;
 import net.sf.emustudio.devices.mits88sio.impl.NiceButton;
 
 @SuppressWarnings("serial")
@@ -56,13 +56,13 @@ public class ConfigDialog extends JDialog {
         if (s != null) {
             txtPort1.setText(s);
         } else {
-            txtPort1.setText(String.valueOf(Mits88SIO.CPU_PORT1));
+            txtPort1.setText(String.valueOf(SIOImpl.CPU_PORT1));
         }
         s = settings.readSetting(pluginId, "port2");
         if (s != null) {
             txtPort2.setText(s);
         } else {
-            txtPort2.setText(String.valueOf(Mits88SIO.CPU_PORT2));
+            txtPort2.setText(String.valueOf(SIOImpl.CPU_PORT2));
         }
     }
 
@@ -168,8 +168,8 @@ public class ConfigDialog extends JDialog {
     }
 
     private void btnDefaultActionPerformed(java.awt.event.ActionEvent evt) {
-        txtPort1.setText(String.valueOf(Mits88SIO.CPU_PORT1));
-        txtPort2.setText(String.valueOf(Mits88SIO.CPU_PORT2));
+        txtPort1.setText(String.valueOf(SIOImpl.CPU_PORT1));
+        txtPort2.setText(String.valueOf(SIOImpl.CPU_PORT2));
     }
     private JTextField txtPort1;
     private JTextField txtPort2;

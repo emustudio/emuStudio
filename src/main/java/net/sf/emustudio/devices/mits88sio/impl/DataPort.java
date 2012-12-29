@@ -23,64 +23,29 @@
  */
 package net.sf.emustudio.devices.mits88sio.impl;
 
-import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This is the data port of 88-SIO card.
- *
+ * It's a male plug, RS-232 physical port.
+ * 
  * A read to the data port gets the buffered character, a write to the data port
  * writes the character to the device.
  *
  * @author Peter Jakubčo
  */
-@ContextType(id = "Data port")
 public class DataPort implements DeviceContext<Short> {
+    private SIOImpl sio;
+    private List<Short> buffer = new ArrayList<Short>();
 
-    private Mits88SIO sio;
-    private DeviceContext dev;
-
-    public DataPort(Mits88SIO sio) {
+    public DataPort(SIOImpl sio) {
         this.sio = sio;
     }
 
-    public void attachDevice(DeviceContext device) {
-        this.dev = device;
-    }
-
-    public void detachDevice() {
-        this.dev = null;
-    }
-
-    public DeviceContext getAttachedDevice() {
-        return dev;
-    }
-
-    @Override
-    public void write(Short data) {
-        if (dev == null) {
-            return;
-        }
-        dev.write(data);
-    }
-
-    @Override
-    public Short read() {
-        //    if (buffer == 0 && gui != null) {
-        //      // get key from terminal (polling)
-        //    buffer = gui.getChar();
-        // }
-        short result = 0;
-        if (sio.buffer.size() > 0) {
-            result = sio.buffer.remove(0);
-        }
-
-        if (sio.buffer.isEmpty()) {
-            sio.status &= 0xFE;
-        } else {
-            sio.status |= 0x01;
-        }
-        return result;
+    public boolean isEmpty() {
+        return buffer.isEmpty();
     }
 
     /**
@@ -88,9 +53,25 @@ public class DataPort implements DeviceContext<Short> {
      * user pressed a key, then it is sent from terminal to SIO device via this
      * method.
      */
-    public void writeBuffer(short data) {
-        sio.status |= 0x01;
-        sio.buffer.add(data);
+    @Override
+    public void write(Short data) {
+        sio.setStatus((short) (sio.getStatus() | 0x01));
+        buffer.add(data);
+    }
+
+    @Override
+    public Short read() {
+        short result = 0;
+        if (buffer.size() > 0) {
+            result = buffer.remove(0);
+        }
+
+        if (buffer.isEmpty()) {
+            sio.setStatus((short) (sio.getStatus() & 0xFE));
+        } else {
+            sio.setStatus((short) (sio.getStatus() | 0x01));
+        }
+        return result;
     }
 
     @Override

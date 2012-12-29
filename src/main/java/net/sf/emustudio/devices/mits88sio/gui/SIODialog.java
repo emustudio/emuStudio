@@ -35,17 +35,11 @@ import javax.swing.WindowConstants;
 @SuppressWarnings("serial")
 public class SIODialog extends JDialog {
 
-    /**
-     * Creates new form SIODialog
-     */
-    public SIODialog(java.awt.Frame parent, boolean modal, String devName,
-            int port1CPU, int port2CPU) {
-        super(parent, modal);
+    public SIODialog(int port1CPU, int port2CPU) {
         initComponents();
-        lblDev.setText(devName);
         lblPort1.setText(String.format("0x%X", port1CPU));
         lblPort2.setText(String.format("0x%X", port2CPU));
-        this.setLocationRelativeTo(parent);
+        setLocationRelativeTo(null);
     }
 
     private void initComponents() {
@@ -53,7 +47,6 @@ public class SIODialog extends JDialog {
         JLabel lblPort1LBL = new JLabel("CPU port1: ");
         JLabel lblPort2LBL = new JLabel("CPU port2: ");
 
-        lblDev = new JLabel("none");
         lblPort1 = new JLabel("0x10");
         lblPort2 = new JLabel("0x11");
 
@@ -62,7 +55,6 @@ public class SIODialog extends JDialog {
 
         lblPort1.setFont(lblPort1.getFont().deriveFont(lblPort1.getFont().getStyle() | java.awt.Font.BOLD));
         lblPort2.setFont(lblPort2.getFont().deriveFont(lblPort2.getFont().getStyle() | java.awt.Font.BOLD));
-        lblDev.setFont(lblDev.getFont().deriveFont(lblDev.getFont().getStyle() | java.awt.Font.BOLD));
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -72,8 +64,7 @@ public class SIODialog extends JDialog {
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                 .addComponent(lblAttached)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblDev))
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED))
                 .addGroup(layout.createSequentialGroup()
                 .addComponent(lblPort1LBL)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
@@ -87,8 +78,7 @@ public class SIODialog extends JDialog {
                 layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(lblAttached)
-                .addComponent(lblDev))
+                .addComponent(lblAttached))
                 .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                 .addComponent(lblPort1LBL)
@@ -101,7 +91,6 @@ public class SIODialog extends JDialog {
         pack();
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private JLabel lblDev;
     private JLabel lblPort1;
     private JLabel lblPort2;
     // End of variables declaration//GEN-END:variables
