@@ -1,9 +1,8 @@
-/**
+/*
  * BrainTerminal.java
  * 
- * KISS, YAGNI
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,19 +18,26 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package brainterminal.impl;
+package net.sf.emustudio.brainduck.terminal.impl;
 
-import brainterminal.gui.BrainTerminalDialog;
-import emulib.plugins.ISettingsHandler;
-import emulib.plugins.device.IDeviceContext;
-import emulib.plugins.device.SimpleDevice;
-import emulib.runtime.Context;
+import emulib.annotations.PLUGIN_TYPE;
+import emulib.annotations.PluginType;
+import emulib.emustudio.SettingsManager;
+import emulib.plugins.device.AbstractDevice;
+import emulib.plugins.device.DeviceContext;
+import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
-import interfaces.C7DC7DAD9D43BACD78DD57E84262789E50BB7D7D8;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
+import net.sf.emustudio.brainduck.terminal.gui.BrainTerminalDialog;
 
-public class BrainTerminal extends SimpleDevice {
-
-    private C7DC7DAD9D43BACD78DD57E84262789E50BB7D7D8 cpu;
+@PluginType(type = PLUGIN_TYPE.DEVICE,
+title = "BrainDuck terminal",
+copyright = "\u00A9 Copyright 2009-2012, Peter Jakubčo",
+description = "Terminal device for abstract BrainDuck architecture.")
+public class BrainTerminal extends AbstractDevice {
+    private BrainCPUContext cpu;
     private BrainTerminalContext terminal;
     private BrainTerminalDialog gui;
 
@@ -39,39 +45,33 @@ public class BrainTerminal extends SimpleDevice {
         super(pluginID);
         gui = new BrainTerminalDialog();
         terminal = new BrainTerminalContext(gui);
-        Context.getInstance().register(pluginID, terminal, IDeviceContext.class);
-    }
-
-    @Override
-    public String getTitle() {
-        return "BrainDuck terminal";
+        
+        try {
+            ContextPool.getInstance().register(pluginID, terminal, DeviceContext.class);
+        } catch (RuntimeException e) {
+            StaticDialogs.showErrorMessage("Could not register CPU Context",
+                    getTitle());
+        }
     }
 
     @Override
     public String getVersion() {
-        return "0.13.1-SNAPSHOT";
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.brainduck.terminal.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            return "(unknown)";
+        }
     }
 
     @Override
-    public String getCopyright() {
-        return "\u00A9 Copyright 2009-2012, P. Jakubčo";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Simple terminal device for BrainDuck architecture";
-    }
-
-    @Override
-    public boolean initialize(ISettingsHandler settings) {
+    public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
 
-        cpu = (C7DC7DAD9D43BACD78DD57E84262789E50BB7D7D8)Context.getInstance()
-                .getCPUContext(pluginID,
-                C7DC7DAD9D43BACD78DD57E84262789E50BB7D7D8.class);
+        cpu = (BrainCPUContext)ContextPool.getInstance()
+                .getCPUContext(pluginID, BrainCPUContext.class);
         if (cpu == null) {
-            StaticDialogs.showErrorMessage("BrainTerminal needs to be connected"
-                    + "to the BrainCPU.");
+            StaticDialogs.showErrorMessage("BrainTerminal needs to be connected to the BrainCPU.");
             return false;
         }
         cpu.attachDevice(terminal);
@@ -89,7 +89,6 @@ public class BrainTerminal extends SimpleDevice {
 
     @Override
     public void reset() {
-        // zmažeme obrazovku
         gui.clearScreen();
     }
 
@@ -107,7 +106,7 @@ public class BrainTerminal extends SimpleDevice {
 
     @Override
     public void showSettings() {
-        // nemáme GUI s nastaveniami
+        // we don't have settings GUI
     }
 
     @Override

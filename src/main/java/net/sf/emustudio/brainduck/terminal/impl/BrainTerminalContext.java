@@ -1,9 +1,8 @@
-/**
+/*
  * BrainTerminalContext.java
  * 
- * KISS, YAGNI
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,12 +18,12 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package brainterminal.impl;
+package net.sf.emustudio.brainduck.terminal.impl;
 
-import brainterminal.gui.BrainTerminalDialog;
-import emulib.plugins.device.IDeviceContext;
+import emulib.plugins.device.DeviceContext;
+import net.sf.emustudio.brainduck.terminal.gui.BrainTerminalDialog;
 
-public class BrainTerminalContext implements IDeviceContext {
+public class BrainTerminalContext implements DeviceContext<Short> {
 
     private BrainTerminalDialog gui;
 
@@ -38,19 +37,13 @@ public class BrainTerminalContext implements IDeviceContext {
     }
 
     @Override
-    public Object read() {
+    public Short read() {
         return (short) gui.getChar();
     }
 
     @Override
-    public void write(Object val) {
-        short s = (Short) val;
-        char c = (char) s;
-        gui.putChar(c);
+    public void write(Short val) {
+        gui.putChar((char)(short)val);
     }
 
-    @Override
-    public String getID() {
-        return "brain-terminal-context";
-    }
 }

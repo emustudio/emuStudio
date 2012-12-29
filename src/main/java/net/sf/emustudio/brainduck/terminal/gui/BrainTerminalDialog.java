@@ -1,9 +1,8 @@
-/**
+/*
  * BrainTerminalDialog.java
  * 
- * KISS, YAGNI
- *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,12 +18,11 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package brainterminal.gui;
+package net.sf.emustudio.brainduck.terminal.gui;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-
 import javax.swing.GroupLayout;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
@@ -71,7 +69,7 @@ public class BrainTerminalDialog extends JDialog {
     }
 
     /**
-     * Metóda "zmaže" obrazovku
+     * Clears termianl screen.
      */
     public void clearScreen() {
         txtTerminal.setText("");
@@ -88,9 +86,9 @@ public class BrainTerminalDialog extends JDialog {
     }
 
     /**
-     * Metóda vypíše znak na obrazovku
+     * Writes a char to the screen.
      *
-     * @param c znak, ktorý sa má vypísať
+     * @param c the character to be written
      */
     public void putChar(char c) {
         txtTerminal.append(String.valueOf(c));
@@ -98,14 +96,13 @@ public class BrainTerminalDialog extends JDialog {
     }
 
     /**
-     * Metóda vráti jeden znak zo vstupného
-     * buffra. Ak je prázdny, naplní ho.
+     * Get a char from the input buffer. If it is empty, waits for user input.
      *
-     * @return znak z buffra
+     * @return char from the input buffer
      */
     public char getChar() {
         if (inputBuffer.equals("")) {
-            inputBuffer += JOptionPane.showInputDialog("Zadaj vstupný znak (alebo reťazec):");
+            inputBuffer += JOptionPane.showInputDialog("Enter input character (or a string):");
         }
         try {
             char c = inputBuffer.charAt(0);
@@ -113,8 +110,7 @@ public class BrainTerminalDialog extends JDialog {
             putChar(c);
             return c;
         } catch (Exception e) {
-            // ak náhodou používateľ zadal prázdny
-            // reťazec
+            // if the user returns empty string
             return 0;
         }
     }
