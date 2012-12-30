@@ -23,10 +23,10 @@
 package net.sf.emustudio.memory.standard.impl;
 
 import emulib.plugins.memory.AbstractMemoryContext;
+import emulib.runtime.HEXFileManager;
 import emulib.runtime.StaticDialogs;
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -155,7 +155,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
     }
 
     // this can parse classic old data
-    // line beginning with ; is ignored
     @Override
     public boolean loadHex(String filename, int bank) {
         if (sizeSet == false) {
@@ -163,124 +162,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         }
         lastStartSet = false;
         try {
-            FileReader vstup = new FileReader(filename);
-            int i, j;
-            while ((i = vstup.read()) != -1) {
-                while ((char) i == ' ') {
-                    i = (char) vstup.read();
-                }
-                if ((char) i == ';') {
-                    while ((i = vstup.read()) != -1) {
-                        if ((char) i == '\n' || i == 0x0D) {
-                            break;
-                        }
-                    }
-                    continue;
-                }
-                char c = (char) i;
-                if (c == ':') {
-                    i = vstup.read();
-                }
-                if (i == -1) {
-                    vstup.close();
-                    return false;
-                }
-                c = (char) i;
-                j = vstup.read();
-                if (j == -1) {
-                    vstup.close();
-                    return false;
-                }
-                char d = (char) j;
-                // data bytes count
-                int byteCount = Integer.decode(String.format("0x%c%c", c, d));
-                if (byteCount == 0) {
-                    while ((i = vstup.read()) != -1) {
-                        if ((char) i == '\n' || i == 0x0D) {
-                            break;
-                        }
-                    }
-                    continue;
-                }
-                // address
-                i = vstup.read();
-                if (i == -1) {
-                    vstup.close();
-                    return false;
-                }
-                c = (char) i;
-                j = vstup.read();
-                if (j == -1) {
-                    vstup.close();
-                    return false;
-                }
-                d = (char) j;
-                int k = vstup.read();
-                if (k == -1) {
-                    vstup.close();
-                    return false;
-                }
-                char e = (char) k;
-                int l = vstup.read();
-                if (l == -1) {
-                    vstup.close();
-                    return false;
-                }
-                char f = (char) l;
-                int address = Integer.decode(String.format("0x%c%c%c%c", c, d, e, f));
-                if (lastStartSet == false) {
-                    lastImageStart = address;
-                    lastStartSet = true;
-                }
-
-                // data type
-                i = vstup.read();
-                if (i == -1) {
-                    vstup.close();
-                    return false;
-                }
-                c = (char) i;
-                j = vstup.read();
-                if (j == -1) {
-                    vstup.close();
-                    return false;
-                }
-                d = (char) j;
-                int dataType = Integer.decode(String.format("0x%c%c", c, d));
-                if (dataType == 1) {
-                    vstup.close();
-                    return true;
-                }
-                if (dataType != 0) {
-                    vstup.close();
-                    return false;
-                } // doesnt support other data types
-
-                // data...
-                for (int y = 0; y < byteCount; y++) {
-                    i = vstup.read();
-                    if (i == -1) {
-                        vstup.close();
-                        return false;
-                    }
-                    c = (char) i;
-                    j = vstup.read();
-                    if (j == -1) {
-                        vstup.close();
-                        return false;
-                    }
-                    d = (char) j;
-                    short data = Short.decode(String.format("0x%c%c", c, d));
-                    mem[address++][bank] = data;
-                }
-                // checksum - dont care..
-                while ((i = vstup.read()) != -1) {
-                    if ((char) i == '\n' || i == 0x0D) {
-                        break;
-                    }
-                }
-            }
-            vstup.close();
+            lastImageStart = HEXFileManager.loadIntoMemory(filename, this);
         } catch (java.io.FileNotFoundException ex) {
             StaticDialogs.showErrorMessage("File not found: " + filename);
             notifyMemoryChanged(-1);
