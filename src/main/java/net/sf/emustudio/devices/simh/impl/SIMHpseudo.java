@@ -1,9 +1,8 @@
 /*
  * SIMHpseudo.java
  *
- * hold to: KISS, YAGNI
- *
- * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,25 +18,34 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package simh;
+package net.sf.emustudio.devices.simh.impl;
 
-import interfaces.C8E98DC5AF7BF51D571C03B7C96324B3066A092EA;
-import interfaces.C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8;
-import emulib.plugins.ISettingsHandler;
-import emulib.plugins.device.SimpleDevice;
-import emulib.runtime.Context;
+import emulib.annotations.PLUGIN_TYPE;
+import emulib.annotations.PluginType;
+import emulib.emustudio.SettingsManager;
+import emulib.plugins.device.AbstractDevice;
+import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.memory.standard.StandardMemoryContext;
 
 /**
- * SIMH emulator's pseudo device
+ * SIMH emulator's pseudo device.
  * 
- * @author vbmacher
+ * @author Peter Jakubčo
  */
-public class SIMHpseudo extends SimpleDevice {
+@PluginType(type=PLUGIN_TYPE.DEVICE,
+        title="SIMH pseudo device",
+        copyright="Copyright (c) 2002-2007, Peter Schorn\n"
+            + "\u00A9 Copyright 2007-2012, Peter Jakubčo",
+        description="Overtaken implementation of simh pseudo device, used in simh emulator. Version is SIMH003.")
+public class SIMHpseudo extends AbstractDevice {
 
     private PseudoContext context;
-    private C8E98DC5AF7BF51D571C03B7C96324B3066A092EA cpu;
-    private C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8 mem;
+    private ExtendedContext cpu;
+    private StandardMemoryContext mem;
 
     public SIMHpseudo(Long pluginID) {
         super(pluginID);
@@ -45,25 +53,24 @@ public class SIMHpseudo extends SimpleDevice {
     }
 
     @Override
-    public boolean initialize(ISettingsHandler sHandler) {
-        cpu = (C8E98DC5AF7BF51D571C03B7C96324B3066A092EA)
-                Context.getInstance().getCPUContext(pluginID,
-                C8E98DC5AF7BF51D571C03B7C96324B3066A092EA.class);
+    public boolean initialize(SettingsManager settings) {
+        super.initialize(settings);
+        cpu = (ExtendedContext)ContextPool.getInstance().getCPUContext(pluginID,
+                ExtendedContext.class);
         if (cpu == null) {
             StaticDialogs.showErrorMessage("SIMH-pseudo device has to be attached"
                     + " to a CPU");
             return false;
         }
 
-        mem = (C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8)
-                Context.getInstance().getMemoryContext(pluginID,
-                C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8.class);
+        mem = (StandardMemoryContext)ContextPool.getInstance().getMemoryContext(pluginID,
+                StandardMemoryContext.class);
         if (mem == null) {
             StaticDialogs.showErrorMessage("SIMH-pseudo device has to be attached"
                     + " to a Memory");
             return false;
         }
-        context.init(mem);
+        context.setMemory(mem);
 
         // attach IO port
         if (this.cpu.attachDevice(context, 0xFE) == false) {
@@ -86,26 +93,13 @@ public class SIMHpseudo extends SimpleDevice {
     }
 
     @Override
-    public String getTitle() {
-        return "SIMH pseudo device";
-    }
-
-    @Override
-    public String getCopyright() {
-        return "Copyright (c) 2002-2007, Peter Schorn\n"
-                + "\u00A9 Copyright 2007-2012, Peter Jakubčo";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Some of the images taken from SIMH emulator contain Z80 or 8080"
-                + " programs that communicate with the SIMH pseudo device "
-                + "via port 0xfe. The version of the interface is: SIMH003";
-    }
-
-    @Override
     public String getVersion() {
-        return "0.13.1-SNAPSHOT";
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.devices.simh.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            return "(unknown)";
+        }
     }
 
     @Override
@@ -115,7 +109,6 @@ public class SIMHpseudo extends SimpleDevice {
 
     @Override
     public void showSettings() {
-        // TODO Auto-generated method stub
     }
 
     @Override

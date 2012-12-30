@@ -2,7 +2,8 @@
  * PseudoContext.java
  * 
  * Copyright (C) 2002-2007, Peter Schorn
- * Copyright (C) 2008-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,20 +19,16 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package simh;
+package net.sf.emustudio.devices.simh.impl;
 
-import interfaces.C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8;
+import emulib.plugins.device.DeviceContext;
 import java.io.File;
 import java.util.Calendar;
-import emulib.plugins.device.IDeviceContext;
+import net.sf.emustudio.memory.standard.StandardMemoryContext;
 
-/**
- *
- * @author vbmacher
- */
-public class PseudoContext implements IDeviceContext {
+public class PseudoContext implements DeviceContext<Short> {
 
-    private C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8 mem;
+    private StandardMemoryContext mem;
 
     /* SIMH pseudo device status registers                                                                          */
     /* ZSDOS clock definitions                                                                                      */
@@ -92,7 +89,7 @@ public class PseudoContext implements IDeviceContext {
     private final static int SECONDS_PER_HOUR = (60 * SECONDS_PER_MINUTE);
     private final static int SECONDS_PER_DAY = (24 * SECONDS_PER_HOUR);
 
-    public void init(C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8 mem) {
+    public void setMemory(StandardMemoryContext mem) {
         this.mem = mem;
     }
     /*  Z80 or 8080 programs communicate with the SIMH pseudo device via port 0xfe.
@@ -301,7 +298,7 @@ public class PseudoContext implements IDeviceContext {
             year -= 1;
             month += 12;
         }
-        result = (short) (((year - 1970) * 365 + (year - 1969) / 4 + m_to_d[month]) & 0xffff);
+        //result = (short) (((year - 1970) * 365 + (year - 1969) / 4 + m_to_d[month]) & 0xffff);
         result = (short) (((year - 1970) * 365 + m_to_d[month]) & 0xffff);
         if (month <= 1) {
             year -= 1;
@@ -335,7 +332,7 @@ public class PseudoContext implements IDeviceContext {
     }
 
     @Override
-    public Object read() {
+    public Short read() {
         short result = 0;
         switch (lastCommand) {
             case getHostFilenames:
@@ -479,55 +476,54 @@ public class PseudoContext implements IDeviceContext {
     }
 
     @Override
-    public void write(Object value) {
-        short val = (Short) value;
+    public void write(Short value) {
         long now;
         switch (lastCommand) {
             case setClockZSDOSCmd:
                 if (setClockZSDOSPos == 0) {
-                    setClockZSDOSAdr = val;
+                    setClockZSDOSAdr = value;
                     setClockZSDOSPos = 1;
                 } else {
-                    setClockZSDOSAdr |= (val << 8);
+                    setClockZSDOSAdr |= (value << 8);
                     setClockZSDOS();
                     setClockZSDOSPos = lastCommand = 0;
                 }
                 break;
             case setClockCPM3Cmd:
                 if (setClockCPM3Pos == 0) {
-                    setClockCPM3Adr = val;
+                    setClockCPM3Adr = value;
                     setClockCPM3Pos = 1;
                 } else {
-                    setClockCPM3Adr |= (val << 8);
+                    setClockCPM3Adr |= (value << 8);
                     setClockCPM3();
                     setClockCPM3Pos = lastCommand = 0;
                 }
                 break;
             case setBankSelectCmd:
-                mem.setSeletedBank((short) (val & 0xff));
+                mem.selectBank((short) (value & 0xff));
                 lastCommand = 0;
                 break;
             case setTimerDeltaCmd:
                 if (setTimerDeltaPos == 0) {
-                    timerDelta = val;
+                    timerDelta = value;
                     setTimerDeltaPos = 1;
                 } else {
-                    timerDelta |= (val << 8);
+                    timerDelta |= (value << 8);
                     setTimerDeltaPos = lastCommand = 0;
                 }
                 break;
             case setTimerInterruptAdrCmd:
                 if (setTimerInterruptAdrPos == 0) {
-                    timerInterruptHandler = val;
+                    timerInterruptHandler = value;
                     setTimerInterruptAdrPos = 1;
                 } else {
-                    timerInterruptHandler |= (val << 8);
+                    timerInterruptHandler |= (value << 8);
                     setTimerInterruptAdrPos = lastCommand = 0;
                 }
                 break;
             default:
-                lastCommand = val;
-                switch (val) {
+                lastCommand = value;
+                switch (value) {
                     case getHostFilenames:
 //#if UNIX_PLATFORM
 //                    if (!globValid) {
@@ -716,11 +712,6 @@ public class PseudoContext implements IDeviceContext {
 //                    }
                 }
         }
-    }
-
-    @Override
-    public String getID() {
-        return "SIMH-PSEUDO";
     }
 
     @Override
