@@ -1,10 +1,10 @@
 /*
- * MemoryContext.java
+ * MemoryContextImpl.java
  *
  * Created on 18.6.2008, 8:00:16
- * hold to: KISS, YAGNI
  *
- * Copyright (C) 2008-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,28 +20,22 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package standard_mem;
+package net.sf.emustudio.memory.standard.impl;
 
-import interfaces.C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8;
+import emulib.plugins.memory.AbstractMemoryContext;
+import emulib.runtime.StaticDialogs;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Vector;
-import emulib.plugins.memory.SimpleMemoryContext;
+import java.util.List;
+import net.sf.emustudio.memory.standard.StandardMemoryContext;
+import net.sf.emustudio.memory.standard.gui.MemoryFrame;
 
-import standard_mem.gui.frmMemory;
-import emulib.runtime.StaticDialogs;
-
-/**
- *
- * @author vbmacher
- */
-public class MemoryContext extends SimpleMemoryContext implements C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8 {
+public class MemoryContextImpl extends AbstractMemoryContext<Short> implements StandardMemoryContext {
 
     public int lastImageStart = 0;
     private boolean lastStartSet = false;
@@ -50,18 +44,52 @@ public class MemoryContext extends SimpleMemoryContext implements C6E60458DB9B6F
     private int banksCount;
     private short bankSelect = 0;
     private int bankCommon = 0;
-    private int b;
-    private frmMemory gui;
-    // this table contains ROM parts of memory
-    private Hashtable<Integer, Integer> romBitmap; // keys: low boundary (limit); values: upper boundary
+    private int activeBank;
+    private MemoryFrame gui;
+    private List<AddressRange> romList;
 
-    public MemoryContext() {
-        super();
-        sizeSet = false;
-        romBitmap = new Hashtable<Integer, Integer>();
+    public static class AddressRangeImpl implements AddressRange {
+
+        private int startAddress;
+        private int stopAddress;
+
+        public AddressRangeImpl(int startAddress, int stopAddress) {
+            this.startAddress = startAddress;
+            this.stopAddress = stopAddress;
+        }
+
+        @Override
+        public int getStartAddress() {
+            return startAddress;
+        }
+
+        @Override
+        public int getStopAddress() {
+            return stopAddress;
+        }
+
+        @Override
+        public int compareTo(AddressRange o) {
+            if (o == this) {
+                return 0;
+            }
+            if (startAddress < o.getStartAddress()) {
+                return -1;
+            } else if (startAddress > o.getStartAddress()) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
     }
 
-    public boolean init(int size, int banks, int bankCommon, frmMemory gui) {
+    public MemoryContextImpl() {
+        super();
+        sizeSet = false;
+        romList = new ArrayList<AddressRange>();
+    }
+
+    public boolean init(int size, int banks, int bankCommon, MemoryFrame gui) {
         this.gui = gui;
         if (sizeSet == true) {
             return false;
@@ -76,16 +104,11 @@ public class MemoryContext extends SimpleMemoryContext implements C6E60458DB9B6F
         return true;
     }
 
-    @Override
-    public String getID() {
-        return "byte_simple_variable";
-    }
-
     /**
      * Clears memory content.
      */
     @Override
-    public void clearMemory() {
+    public void clear() {
         if (sizeSet == false) {
             return;
         }
@@ -95,12 +118,15 @@ public class MemoryContext extends SimpleMemoryContext implements C6E60458DB9B6F
             }
         }
         lastImageStart = 0;
-        fireChange(-1);
+        notifyMemoryChanged(-1);
     }
 
     public void destroy() {
-        clearMemory();
+        clear();
         mem = null;
+        activeBank = 0;
+        banksCount = 0;
+        sizeSet = false;
     }
 
     @Override
@@ -114,7 +140,7 @@ public class MemoryContext extends SimpleMemoryContext implements C6E60458DB9B6F
     }
 
     @Override
-    public void setSeletedBank(short bankSelect) {
+    public void selectBank(short bankSelect) {
         if (bankSelect < banksCount) {
             this.bankSelect = bankSelect;
             if (gui != null) {
@@ -138,7 +164,7 @@ public class MemoryContext extends SimpleMemoryContext implements C6E60458DB9B6F
         lastStartSet = false;
         try {
             FileReader vstup = new FileReader(filename);
-            int i = 0, j = 0;
+            int i, j;
             while ((i = vstup.read()) != -1) {
                 while ((char) i == ' ') {
                     i = (char) vstup.read();
@@ -257,19 +283,20 @@ public class MemoryContext extends SimpleMemoryContext implements C6E60458DB9B6F
             vstup.close();
         } catch (java.io.FileNotFoundException ex) {
             StaticDialogs.showErrorMessage("File not found: " + filename);
-            fireChange(-1);
+            notifyMemoryChanged(-1);
             return false;
         } catch (Exception e) {
             StaticDialogs.showErrorMessage("Error opening file: " + filename);
-            fireChange(-1);
+            notifyMemoryChanged(-1);
             return false;
         }
-        fireChange(-1);
+        notifyMemoryChanged(-1);
         return true;
     }
 
     /**
      * Method loads a binary file into memory.
+     *
      * @param filename Binary file name (has to be readable and has to exist)
      * @param address an address where the file should be loaded.
      * @return true if file was successfully loaded, false if not.
@@ -287,7 +314,7 @@ public class MemoryContext extends SimpleMemoryContext implements C6E60458DB9B6F
                 throw new IOException("Specified file name doesn't point to a file");
             }
             RandomAccessFile vstup = new RandomAccessFile(f, "r");
-            int i = 0;
+            int i;
             long r = 0, l = vstup.length();
             while (r < l) {
                 i = vstup.readUnsignedByte();
@@ -298,19 +325,19 @@ public class MemoryContext extends SimpleMemoryContext implements C6E60458DB9B6F
         } catch (EOFException ex) {
         } catch (java.io.FileNotFoundException ex) {
             StaticDialogs.showErrorMessage("File not found: " + filename);
-            fireChange(-1);
+            notifyMemoryChanged(-1);
             return false;
         } catch (Exception e) {
             StaticDialogs.showErrorMessage("Error opening file: " + filename);
-            fireChange(-1);
+            notifyMemoryChanged(-1);
             return false;
         }
-        fireChange(-1);
+        notifyMemoryChanged(-1);
         return true;
     }
 
     @Override
-    public Object read(int from) {
+    public Short read(int from) {
         if (from < bankCommon) {
             return mem[from][bankSelect];
         } else {
@@ -328,55 +355,51 @@ public class MemoryContext extends SimpleMemoryContext implements C6E60458DB9B6F
 
     @Override
     public Object readWord(int from) {
-        b = (from < bankCommon) ? bankSelect : 0;
+        activeBank = (from < bankCommon) ? bankSelect : 0;
         if (from == mem.length - 1) {
-            return mem[from][b];
+            return mem[from][activeBank];
         }
-        int low = mem[from][b] & 0xFF;
-        int high = mem[from + 1][b];
+        int low = mem[from][activeBank] & 0xFF;
+        int high = mem[from + 1][activeBank];
         return (int) ((high << 8) | low);
     }
 
     @Override
-    public void write(int to, Object val) {
-        if (isRom(to) == true) {
+    public void write(int to, Short val) {
+        if (isROM(to) == true) {
             return;
         }
-        b = (to < bankCommon) ? bankSelect : 0;
-        if (val instanceof Integer) {
-            mem[to][b] = (short) ((Integer) val & 0xFF);
-        } else {
-            mem[to][b] = (short) ((Short) val & 0xFF);
-        }
-        fireChange(to);
+        activeBank = (to < bankCommon) ? bankSelect : 0;
+        mem[to][activeBank] = (short) (val & 0xFF);
+        notifyMemoryChanged(to);
     }
 
     public void write(int to, Object val, int bank) {
-        if (isRom(to) == true) {
+        if (isROM(to) == true) {
             return;
         }
-        b = (to < bankCommon) ? bank : 0;
+        activeBank = (to < bankCommon) ? bank : 0;
         if (val instanceof Integer) {
-            mem[to][b] = (short) ((Integer) val & 0xFF);
+            mem[to][activeBank] = (short) ((Integer) val & 0xFF);
         } else {
-            mem[to][b] = (short) ((Short) val & 0xFF);
+            mem[to][activeBank] = (short) ((Short) val & 0xFF);
         }
-        fireChange(to);
+        notifyMemoryChanged(to);
     }
 
     @Override
     public void writeWord(int to, Object val) {
-        if (isRom(to) == true) {
+        if (isROM(to) == true) {
             return;
         }
-        b = (to < bankCommon) ? bankSelect : 0;
+        activeBank = (to < bankCommon) ? bankSelect : 0;
         short low = (short) ((Integer) val & 0xFF);
-        mem[to][b] = low;
-        fireChange(to);
+        mem[to][activeBank] = low;
+        notifyMemoryChanged(to);
         if (to < mem.length - 1) {
             short high = (short) (((Integer) val >>> 8) & 0xFF);
-            mem[to + 1][b] = high;
-            fireChange(to + 1);
+            mem[to + 1][activeBank] = high;
+            notifyMemoryChanged(to + 1);
         }
     }
 
@@ -387,97 +410,98 @@ public class MemoryContext extends SimpleMemoryContext implements C6E60458DB9B6F
         return mem.length;
     }
 
-    /* ROM */
-    // merges all continuous ranges to one
+    /**
+     * Merges all continuous ranges into one.
+     */
     private void mergeRanges() {
-        Vector<Integer> keys = new Vector<Integer>(romBitmap.keySet());
-        Collections.sort(keys);
-
-        Enumeration<Integer> e = keys.elements();
-        if (e.hasMoreElements() == false) {
+        if (romList.isEmpty()) {
             return;
         }
-        int key1 = (Integer) e.nextElement();
-        int value1 = (Integer) romBitmap.get(key1);
+        Collections.sort(romList);
 
-        for (; e.hasMoreElements();) {
-            int key2 = (Integer) e.nextElement();
-            int value2 = (Integer) romBitmap.get(key2);
-            if (value1 == key2 + 1) {
+        AddressRange range = romList.get(0);
+        for (int i = 1; i < romList.size(); i++) {
+            AddressRange otherRange = romList.get(i);
+            if (range.getStopAddress() == otherRange.getStartAddress() + 1) {
                 // merge
-                romBitmap.remove(key1);
-                romBitmap.remove(key2);
-                romBitmap.put(key1, value2);
-                value1 = value2;
+                romList.remove(range);
+                romList.remove(otherRange);
+                range = new AddressRangeImpl(range.getStartAddress(), otherRange.getStopAddress());
+                romList.add(range);
             } else {
-                key1 = key2;
-                value1 = value2;
+                range = otherRange;
             }
         }
     }
 
-    private void removeRomRange(int from, int to) {
-        for (Enumeration<Integer> e = romBitmap.keys(); e.hasMoreElements();) {
-            int key = e.nextElement();
-            int value = romBitmap.get(key);
+    private void removeROMRange(AddressRange rangeToRemove) {
+        if (rangeToRemove == null) {
+            return;
+        }
+        int removeStartAddr = rangeToRemove.getStartAddress();
+        int removeStopAddr = rangeToRemove.getStopAddress();
 
-            if ((key >= from) && (value <= to)) {
-                romBitmap.remove(key);
+        for (AddressRange range : romList) {
+            int startAddr = range.getStartAddress();
+            int stopAddr = range.getStopAddress();
+
+            if ((startAddr >= removeStartAddr) && (stopAddr <= removeStopAddr)) {
+                romList.remove(range);
                 continue;
             }
-            if ((key < from) && (value >= from) && (value <= to)) {
-                romBitmap.remove(key);
-                romBitmap.put(key, from - 1);
+            if ((startAddr < removeStartAddr) && (stopAddr >= removeStartAddr) && (stopAddr <= removeStopAddr)) {
+                romList.remove(range);
+                romList.add(new AddressRangeImpl(startAddr, removeStartAddr - 1));
                 continue;
             }
-            if ((key >= from) && (key <= to) && (value > to)) {
-                romBitmap.remove(key);
-                romBitmap.put(to + 1, value);
+            if ((startAddr >= removeStartAddr) && (startAddr <= removeStopAddr) && (stopAddr > removeStopAddr)) {
+                romList.remove(range);
+                romList.add(new AddressRangeImpl(removeStopAddr + 1, stopAddr));
                 continue;
             }
-            if ((key < from) && (value > to)) {
-                romBitmap.remove(key);
-                romBitmap.put(key, from - 1);
-                romBitmap.put(to + 1, value);
+            if ((startAddr < removeStartAddr) && (stopAddr > removeStopAddr)) {
+                romList.remove(range);
+                romList.add(new AddressRangeImpl(startAddr, removeStartAddr - 1));
+                romList.add(new AddressRangeImpl(removeStopAddr + 1, stopAddr));
             }
         }
         mergeRanges();
     }
 
-    private void addRomRange(int from, int to) {
-        removeRomRange(from, to);
-        romBitmap.put(from, to);
+    private void addRomRange(AddressRange range) {
+        removeROMRange(range);
+        romList.add(range);
     }
 
     // remove range from romBitmap
     @Override
-    public void setRAM(int from, int to) {
+    public void setRAM(AddressRange range) {
         if (sizeSet == false) {
             return;
         }
-        if (from > to) {
+        if (range.getStartAddress() > range.getStopAddress()) {
             return;
         }
-        removeRomRange(from, to);
+        removeROMRange(range);
     }
 
     @Override
-    public void setROM(int from, int to) {
+    public void setROM(AddressRange range) {
         if (sizeSet == false) {
             return;
         }
-        if (from > to) {
+        if (range.getStartAddress() > range.getStopAddress()) {
             return;
         }
-        addRomRange(from, to);
+        addRomRange(range);
     }
 
     @Override
-    public boolean isRom(int address) {
-        for (Enumeration<Integer> e = romBitmap.keys(); e.hasMoreElements();) {
-            int key = e.nextElement();
-            int value = romBitmap.get(key);
-            if ((key <= address) && (address <= value)) {
+    public boolean isROM(int address) {
+        for (AddressRange range : romList) {
+            int startAddress = range.getStartAddress();
+            int stopAddress = range.getStopAddress();
+            if ((startAddress <= address) && (address <= stopAddress)) {
                 return true;
             }
         }
@@ -486,8 +510,8 @@ public class MemoryContext extends SimpleMemoryContext implements C6E60458DB9B6F
 
     // only for GUI purposes, this have nothing to do with memory emulation
     @Override
-    public Hashtable<Integer, Integer> getROMRanges() {
-        return romBitmap;
+    public List<AddressRange> getROMRanges() {
+        return romList;
     }
 
     @Override

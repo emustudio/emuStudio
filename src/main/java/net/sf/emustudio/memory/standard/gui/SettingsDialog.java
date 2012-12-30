@@ -1,9 +1,10 @@
 /*
- * frmSettings.java
+ * SettingsDialog.java
  *
  * Created on Štvrtok, 2008, september 25, 9:21
  *
- * Copyright (C) 2008-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2008-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,11 +20,13 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package standard_mem.gui;
+package net.sf.emustudio.memory.standard.gui;
 
+import emulib.emustudio.SettingsManager;
+import emulib.runtime.StaticDialogs;
 import java.io.File;
-import java.util.Collections;
-
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.InputVerifier;
@@ -44,37 +47,29 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-import standard_mem.Memory;
-import standard_mem.gui.utils.NiceButton;
-import standard_mem.gui.utils.EmuFileFilter;
-import standard_mem.gui.utils.TableMemory;
-import emulib.plugins.ISettingsHandler;
-import emulib.runtime.StaticDialogs;
-import java.util.ArrayList;
-import standard_mem.MemoryContext;
+import net.sf.emustudio.memory.standard.StandardMemoryContext.AddressRange;
+import net.sf.emustudio.memory.standard.gui.utils.EmuFileFilter;
+import net.sf.emustudio.memory.standard.gui.utils.NiceButton;
+import net.sf.emustudio.memory.standard.gui.utils.TableMemory;
+import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
+import net.sf.emustudio.memory.standard.impl.MemoryImpl;
 
-/**
- *
- * @author  vbmacher
- */
-@SuppressWarnings("serial")
-public class frmSettings extends JDialog {
+public class SettingsDialog extends JDialog {
 
-    private MemoryContext memContext;
-    private Memory mem;
-    private ROMmodel rom_model;
-    private ImagesModel images_model;
+    private MemoryContextImpl memContext;
+    private MemoryImpl memory;
+    private ROMmodel romModel;
+    private ImagesModel imagesModel;
     private TableMemory tblMem;
-    private ArrayList<String> imageNames = new ArrayList<String>();
-    private ArrayList<String> imageFullNames = new ArrayList<String>();
-    private ArrayList<Integer> imageAddresses = new ArrayList<Integer>();
+    private List<String> imageNames = new ArrayList<String>();
+    private List<String> imageFullNames = new ArrayList<String>();
+    private List<Integer> imageAddresses = new ArrayList<Integer>();
 
-   /** Creates new form frmSettings */
-    public frmSettings(java.awt.Frame parent, boolean modal, long pluginID,
-            Memory mem, MemoryContext memContext, TableMemory tblMem,
-            ISettingsHandler settings) {
-        super(parent, modal);
-        this.mem = mem;
+    public SettingsDialog(java.awt.Frame parent, long pluginID,
+            MemoryImpl mem, MemoryContextImpl memContext, TableMemory tblMem,
+            SettingsManager settings) {
+        super(parent, true);
+        this.memory = mem;
         this.memContext = memContext;
         this.tblMem = tblMem;
         initComponents();
@@ -95,7 +90,7 @@ public class frmSettings extends JDialog {
         }
 
         int i = 0;
-        String r = null;
+        String r;
         while (true) {
             s = settings.readSetting(pluginID, "imageName" + i);
             r = settings.readSetting(pluginID, "imageAddress" + i);
@@ -115,15 +110,14 @@ public class frmSettings extends JDialog {
             }
             i++;
         }
-        images_model = new ImagesModel();
-        tblImages.setModel(images_model);
+        imagesModel = new ImagesModel();
+        tblImages.setModel(imagesModel);
 
         // second tab (ROM ranges)
-        rom_model = new ROMmodel();
-        tblROM.setModel(rom_model);
+        romModel = new ROMmodel();
+        tblROM.setModel(romModel);
         this.setLocationRelativeTo(null);
         InputVerifier vf = new InputVerifier() {
-
             @Override
             public boolean verify(JComponent input) {
                 JTextField tf = (JTextField) input;
@@ -139,7 +133,6 @@ public class frmSettings extends JDialog {
         txtTo.setInputVerifier(vf);
         tblROM.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tblROM.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 int i = tblROM.getSelectedRow();
@@ -227,14 +220,14 @@ public class frmSettings extends JDialog {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            ArrayList<Integer> keys = new ArrayList<Integer>(memContext.getROMRanges().keySet());
-            Collections.sort(keys);
-            Object[] ar = keys.toArray();
-            if (columnIndex == 0) {
-                return String.format("%04X", ar[rowIndex]);
-            } else {
-                return String.format("%04X", memContext.getROMRanges().get(ar[rowIndex]));
+            for (AddressRange range : memContext.getROMRanges()) {
+                if (columnIndex == 0) {
+                    return String.format("%04X", range.getStartAddress());
+                } else {
+                    return String.format("%04X", range.getStopAddress());
+                }
             }
+            return "";
         }
 
         public void setValueAt(int r, int c) {
@@ -289,7 +282,6 @@ public class frmSettings extends JDialog {
         scrollImages.setViewportView(tblImages);
 
         btnAddImage.addActionListener(new java.awt.event.ActionListener() {
-
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnAddImageActionPerformed(evt);
@@ -297,7 +289,6 @@ public class frmSettings extends JDialog {
         });
 
         btnRemoveImage.addActionListener(new java.awt.event.ActionListener() {
-
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnRemoveImageActionPerformed(evt);
@@ -328,7 +319,6 @@ public class frmSettings extends JDialog {
         panelROM.setBorder(BorderFactory.createTitledBorder("Edit ROM ranges"));
 
         btnAddRange.addActionListener(new java.awt.event.ActionListener() {
-
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnAddRangeActionPerformed(evt);
@@ -336,7 +326,6 @@ public class frmSettings extends JDialog {
         });
 
         btnRemoveRange.addActionListener(new java.awt.event.ActionListener() {
-
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnRemoveRangeActionPerformed(evt);
@@ -362,7 +351,6 @@ public class frmSettings extends JDialog {
         paneTabs.addTab("ROM ranges", panelROMRanges);
 
         btnOK.addActionListener(new java.awt.event.ActionListener() {
-
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnOKActionPerformed(evt);
@@ -384,8 +372,8 @@ public class frmSettings extends JDialog {
 
     private void btnAddRangeActionPerformed(java.awt.event.ActionEvent evt) {
         try {
-            memContext.setROM(Integer.decode(txtFrom.getText()),
-                    Integer.decode(txtTo.getText()));
+            memContext.setROM(new MemoryContextImpl.AddressRangeImpl(Integer.decode(txtFrom.getText()),
+                    Integer.decode(txtTo.getText())));
         } catch (Exception e) {
             StaticDialogs.showErrorMessage("Range (from,to) has to be positive integer ArrayList!");
             return;
@@ -398,8 +386,8 @@ public class frmSettings extends JDialog {
 
     private void btnRemoveRangeActionPerformed(java.awt.event.ActionEvent evt) {
         try {
-            memContext.setRAM(Integer.decode(txtFrom.getText()),
-                    Integer.decode(txtTo.getText()));
+            memContext.setRAM(new MemoryContextImpl.AddressRangeImpl(Integer.decode(txtFrom.getText()),
+                    Integer.decode(txtTo.getText())));
         } catch (Exception e) {
             StaticDialogs.showErrorMessage("Range (from,to) has to be positive integer ArrayList!");
             return;
@@ -412,7 +400,7 @@ public class frmSettings extends JDialog {
 
     private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {
         if (paneTabs.getSelectedIndex() == 0) { // tab0
-            int bCount = 0, bCommon = 0;
+            int bCount, bCommon;
             try {
                 bCount = Integer.parseInt(txtBanksCount.getText());
             } catch (Exception e) {
@@ -433,10 +421,10 @@ public class frmSettings extends JDialog {
                 StaticDialogs.showErrorMessage("Common boundary has to be positive integer !");
                 return;
             }
-            mem.saveSettings0(bCount, bCommon, imageFullNames, imageAddresses);
+            memory.saveCoreSettings(bCount, bCommon, imageFullNames, imageAddresses);
         } else { // tab1
             if (chkSave.isSelected()) {
-                mem.saveSettings1();
+                memory.saveROMRanges();
             }
         }
         dispose();
@@ -502,7 +490,6 @@ public class frmSettings extends JDialog {
             tblImages.repaint();
         }
     }
-
     JCheckBox chkSave;
     JTabbedPane paneTabs;
     JTable tblImages;

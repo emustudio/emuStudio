@@ -28,10 +28,10 @@
  *
  */
 
-package standard_mem.gui.utils;
+package net.sf.emustudio.memory.standard.gui.utils;
 
 import javax.swing.table.AbstractTableModel;
-import standard_mem.MemoryContext;
+import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
 
 
 /**
@@ -45,14 +45,14 @@ import standard_mem.MemoryContext;
  */
 @SuppressWarnings("serial")
 public class MemoryTableModel extends AbstractTableModel {
-    private MemoryContext mem;
+    private MemoryContextImpl mem;
     private int currentPage=0;
     private int currentBank =0;
     private final int ROW_COUNT = 16;
     private final int COLUMN_COUNT = 16;
 
     /** Creates a new instance of memoryTableModel */
-    public MemoryTableModel(MemoryContext mem) {
+    public MemoryTableModel(MemoryContextImpl mem) {
         this.mem = mem;
         currentPage = 0;
     }
@@ -70,7 +70,7 @@ public class MemoryTableModel extends AbstractTableModel {
     
     public boolean isROMAt(int rowIndex, int columnIndex) {
         int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
-        return mem.isRom(pos);
+        return mem.isROM(pos);
     }
     
     public boolean isAtBANK(int rowIndex, int columnIndex) {

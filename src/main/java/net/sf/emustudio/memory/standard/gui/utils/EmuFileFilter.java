@@ -23,7 +23,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package standard_mem.gui.utils;
+package net.sf.emustudio.memory.standard.gui.utils;
 
 /**
  *

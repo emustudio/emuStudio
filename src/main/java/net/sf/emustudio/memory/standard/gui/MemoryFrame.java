@@ -1,9 +1,10 @@
 /*
- * frmMemory.java
+ * MemoryFrame.java
  *
  * Created on Nedeľa, 2007, oktober 28, 10:40
  *
- * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,8 +20,10 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package standard_mem.gui;
+package net.sf.emustudio.memory.standard.gui;
 
+import emulib.emustudio.SettingsManager;
+import emulib.runtime.StaticDialogs;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -33,7 +36,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
@@ -55,31 +57,24 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import standard_mem.MemoryContext;
-import standard_mem.gui.utils.EmuFileFilter;
-import standard_mem.gui.utils.MemoryTableModel;
-import standard_mem.gui.utils.TableMemory;
-import emulib.plugins.ISettingsHandler;
-import emulib.runtime.StaticDialogs;
-import standard_mem.Memory;
+import net.sf.emustudio.memory.standard.gui.utils.EmuFileFilter;
+import net.sf.emustudio.memory.standard.gui.utils.MemoryTableModel;
+import net.sf.emustudio.memory.standard.gui.utils.TableMemory;
+import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
+import net.sf.emustudio.memory.standard.impl.MemoryImpl;
 
-/**
- *
- * @author  vbmacher
- */
-@SuppressWarnings("serial")
-public class frmMemory extends JFrame {
+public class MemoryFrame extends JFrame {
 
-    private MemoryContext memContext;
-    private Memory mem;
+    private MemoryContextImpl memContext;
+    private MemoryImpl mem;
     private long pluginID;
     private TableMemory tblMemory;
     private MemoryTableModel memModel;
-    private ISettingsHandler settings;
+    private SettingsManager settings;
 
-    /** Creates new form frmMemory */
-    public frmMemory(long pluginID, Memory mem, MemoryContext memContext,
-            ISettingsHandler settings) {
+    /** Creates new form MemoryFrame */
+    public MemoryFrame(long pluginID, MemoryImpl mem, MemoryContextImpl memContext,
+            SettingsManager settings) {
         this.memContext = memContext;
         this.mem = mem;
         this.pluginID = pluginID;
@@ -337,7 +332,7 @@ public class frmMemory extends JFrame {
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
 
-        btnClearMemory.setIcon(new ImageIcon(getClass().getResource("/standard_mem/edit-delete.png"))); // NOI18N
+        btnClearMemory.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/edit-delete.png"))); // NOI18N
         btnClearMemory.setToolTipText("Clear memory");
         btnClearMemory.setFocusable(false);
         btnClearMemory.addActionListener(new java.awt.event.ActionListener() {
@@ -349,7 +344,7 @@ public class frmMemory extends JFrame {
         });
         toolBar.add(btnClearMemory);
 
-        btnRefreshMemory.setIcon(new ImageIcon(getClass().getResource("/standard_mem/view-refresh.png"))); // NOI18N
+        btnRefreshMemory.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/view-refresh.png"))); // NOI18N
         btnRefreshMemory.setToolTipText("Refresh memory");
         btnRefreshMemory.setFocusable(false);
         btnRefreshMemory.addActionListener(new java.awt.event.ActionListener() {
@@ -362,7 +357,7 @@ public class frmMemory extends JFrame {
         toolBar.add(btnRefreshMemory);
         toolBar.add(jSeparator1);
 
-        btnOpenImage.setIcon(new ImageIcon(getClass().getResource("/standard_mem/document-open.png"))); // NOI18N
+        btnOpenImage.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/document-open.png"))); // NOI18N
         btnOpenImage.setToolTipText("Load image");
         btnOpenImage.setFocusable(false);
         btnOpenImage.addActionListener(new java.awt.event.ActionListener() {
@@ -374,7 +369,7 @@ public class frmMemory extends JFrame {
         });
         toolBar.add(btnOpenImage);
 
-        btnDump.setIcon(new ImageIcon(getClass().getResource("/standard_mem/document-save.png"))); // NOI18N
+        btnDump.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/document-save.png"))); // NOI18N
         btnDump.setToolTipText("Dump memory...");
         btnDump.setFocusable(false);
         btnDump.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -388,7 +383,7 @@ public class frmMemory extends JFrame {
         });
         toolBar.add(btnDump);
 
-        btnSettings.setIcon(new ImageIcon(getClass().getResource("/standard_mem/preferences-system.png"))); // NOI18N
+        btnSettings.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/preferences-system.png"))); // NOI18N
         btnSettings.setToolTipText("Settings...");
         btnSettings.setFocusable(false);
         btnSettings.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -403,7 +398,7 @@ public class frmMemory extends JFrame {
         toolBar.add(btnSettings);
         toolBar.add(jSeparator2);
 
-        btnFindAddress.setIcon(new ImageIcon(getClass().getResource("/standard_mem/edit-find.png"))); // NOI18N
+        btnFindAddress.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/edit-find.png"))); // NOI18N
         btnFindAddress.setToolTipText("Find address");
         btnFindAddress.setFocusable(false);
         btnFindAddress.addActionListener(new java.awt.event.ActionListener() {
@@ -516,7 +511,7 @@ public class frmMemory extends JFrame {
     }
 
     private void btnClearMemoryActionPerformed(java.awt.event.ActionEvent evt) {
-        memContext.clearMemory();
+        memContext.clear();
         tblMemory.revalidate();
         tblMemory.repaint();
     }
@@ -527,7 +522,7 @@ public class frmMemory extends JFrame {
     }
 
     private void btnFindAddressActionPerformed(java.awt.event.ActionEvent evt) {
-        int address = 0;
+        int address;
         try {
             address = Integer.decode(JOptionPane.showInputDialog(this,
                     "Find address:", "Find Address",
@@ -555,7 +550,7 @@ public class frmMemory extends JFrame {
     }
 
     private void btnSettingsActionPerformed(java.awt.event.ActionEvent evt) {
-        new frmSettings(this, true, pluginID, mem, memContext, tblMemory,
+        new SettingsDialog(this, pluginID, mem, memContext, tblMemory,
                 settings).setVisible(true);
     }
 

@@ -1,12 +1,10 @@
 /*
- * Memory.java
+ * MemoryImpl.java
  *
  * Created on Sobota, 2007, october 27, 11:58
  *
- * KEEP IT SIMPLE, STUPID
- * some things just: YOU AREN'T GONNA NEED IT
- *
- * Copyright (C) 2007-2011 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,64 +20,55 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package standard_mem;
+package net.sf.emustudio.memory.standard.impl;
 
-import interfaces.C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8;
-import java.io.File;
-import java.util.Collections;
-
-import standard_mem.gui.frmMemory;
-import emulib.plugins.ISettingsHandler;
-import emulib.plugins.memory.IMemoryContext;
-import emulib.plugins.memory.SimpleMemory;
-import emulib.runtime.Context;
+import emulib.annotations.PLUGIN_TYPE;
+import emulib.annotations.PluginType;
+import emulib.emustudio.SettingsManager;
+import emulib.plugins.memory.AbstractMemory;
+import emulib.plugins.memory.MemoryContext;
+import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
-import java.util.ArrayList;
+import java.io.File;
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import net.sf.emustudio.memory.standard.StandardMemoryContext;
+import net.sf.emustudio.memory.standard.StandardMemoryContext.AddressRange;
+import net.sf.emustudio.memory.standard.gui.MemoryFrame;
+import net.sf.emustudio.memory.standard.impl.MemoryContextImpl.AddressRangeImpl;
 
-/**
- *
- * @author vbmacher
- */
-public class Memory extends SimpleMemory {
-
-    private MemoryContext memContext;
-    private frmMemory memGUI;
+@PluginType(type=PLUGIN_TYPE.MEMORY,
+        title="Standard operating memory",
+        copyright="\u00A9 Copyright 2006-2012, Peter Jakubčo",
+        description="Operating memory suitable for most of CPUs")
+public class MemoryImpl extends AbstractMemory {
+    private MemoryContextImpl context;
+    private MemoryFrame memGUI;
     private boolean noGUI = false; // whether to support GUI
 
     private final static int DEFAULT_MEM_SIZE = 65536;
 
-    /** Creates a new instance of Memory */
-    public Memory(Long pluginID) {
+    public MemoryImpl(Long pluginID) {
         super(pluginID);
-        memContext = new MemoryContext();
-        if (!(Context.getInstance().register(pluginID, memContext,
-                C6E60458DB9B6FE7ADE74FC77C927621AD757FBA8.class)
-                && Context.getInstance().register(pluginID, memContext,
-                IMemoryContext.class))) {
-            StaticDialogs.showMessage("Error: Could not register the memory");
+        context = new MemoryContextImpl();
+        try {
+            ContextPool.getInstance().register(pluginID, context, StandardMemoryContext.class);
+            ContextPool.getInstance().register(pluginID, context, MemoryContext.class);
+        } catch (RuntimeException e) {
+            StaticDialogs.showErrorMessage("Could not register the memory", 
+                    MemoryImpl.class.getAnnotation(PluginType.class).title());
         }
     }
 
     @Override
-    public String getDescription() {
-        return "Operating memory for most CPUs. Every cell is one byte long."
-                + "This plugin supports banking"
-                + " controllable via context.";
-    }
-
-    @Override
     public String getVersion() {
-        return getClass().getPackage().getImplementationVersion();
-    }
-
-    @Override
-    public String getTitle() {
-        return "Standard Operating memory";
-    }
-
-    @Override
-    public String getCopyright() {
-        return "\u00A9 Copyright 2006-2012, P. Jakubčo";
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.memory.standard.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            return "(unknown)";
+        }
     }
 
     @Override
@@ -88,13 +77,13 @@ public class Memory extends SimpleMemory {
             memGUI.dispose();
             this.memGUI = null;
         }
-        memContext.destroy();
-        memContext = null;
+        context.destroy();
+        context = null;
     }
 
     @Override
     public int getSize() {
-        return memContext.getSize();
+        return context.getSize();
     }
 
     /**
@@ -107,7 +96,7 @@ public class Memory extends SimpleMemory {
      *     6. set rom ranges to memory
      */
     @Override
-    public boolean initialize(ISettingsHandler settings) {
+    public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
         String s = settings.readSetting(pluginID, "banksCount");
         int bCount = 0, bCommon = 0;
@@ -125,14 +114,15 @@ public class Memory extends SimpleMemory {
             }
         }
         this.settings = settings;
-        memContext.init(DEFAULT_MEM_SIZE, bCount, bCommon, memGUI);
+        context.init(DEFAULT_MEM_SIZE, bCount, bCommon, memGUI);
         noGUI = Boolean.parseBoolean(settings.readSetting(pluginID, "nogui"));
-        if (!noGUI)
-            memGUI = new frmMemory(pluginID, this, memContext, settings);
+        if (!noGUI) {
+            memGUI = new MemoryFrame(pluginID, this, context, settings);
+        }
 
         // load images
         int i = 0, adr = 0;
-        String r = null;
+        String r;
         while (true) {
             s = settings.readSetting(pluginID, "imageName" + i);
             r = settings.readSetting(pluginID, "imageAddress" + i);
@@ -140,7 +130,7 @@ public class Memory extends SimpleMemory {
                 break;
             }
             if (new File(s).getName().toUpperCase().endsWith(".HEX")) {
-                memContext.loadHex(s, 0);
+                context.loadHex(s, 0);
             } else {
                 if (r != null) {
                     try {
@@ -148,7 +138,7 @@ public class Memory extends SimpleMemory {
                     } catch (Exception e) {
                     }
                 }
-                memContext.loadBin(s, adr, 0);
+                context.loadBin(s, adr, 0);
             }
             i++;
         }
@@ -172,7 +162,7 @@ public class Memory extends SimpleMemory {
             } catch (Exception e) {
                 break;
             }
-            memContext.setROM(j, k);
+            context.setROM(new AddressRangeImpl(j, k));
             i++;
         }
         return true;
@@ -183,8 +173,8 @@ public class Memory extends SimpleMemory {
      * after start of the emulator. These settings correspond to
      * tab0 in frmSettings.
      */
-    public void saveSettings0(int banksCount, int commonBoundary,
-            ArrayList<String> imageFullNames, ArrayList<Integer> imageAddresses) {
+    public void saveCoreSettings(int banksCount, int commonBoundary,
+            List<String> imageFullNames, List<Integer> imageAddresses) {
         settings.writeSetting(pluginID, "banksCount", String.valueOf(banksCount));
         settings.writeSetting(pluginID, "commonBoundary", String.valueOf(commonBoundary));
 
@@ -208,29 +198,20 @@ public class Memory extends SimpleMemory {
      * settings correspond to tab1 in frmSettings. ROM ranges are taken
      * directly from memory context.
      */
-    public void saveSettings1() {
-        ArrayList<Integer> keys = new ArrayList<Integer>(memContext.getROMRanges().keySet());
-        Collections.sort(keys);
-        Object[] ar = keys.toArray();
-
+    public void saveROMRanges() {
         int i = 0;
-        while (settings.readSetting(pluginID, "ROMfrom" + i) != null) {
+        for (AddressRange range : context.getROMRanges()) {
             settings.removeSetting(pluginID, "ROMfrom" + i);
             settings.removeSetting(pluginID, "ROMto" + i);
-            i++;
-        }
-
-        for (i = 0; i < ar.length; i++) {
-            settings.writeSetting(pluginID, "ROMfrom" + i, String.valueOf(ar[i]));
-            settings.writeSetting(pluginID, "ROMto" + i,
-                    String.valueOf(memContext.getROMRanges().get(ar[i])));
+            settings.writeSetting(pluginID, "ROMfrom" + i, String.valueOf(range.getStartAddress()));
+            settings.writeSetting(pluginID, "ROMto" + i, String.valueOf(range.getStopAddress()));
         }
     }
 
     @Override
     public void setProgramStart(int address) {
         super.setProgramStart(address);
-        memContext.lastImageStart = address;
+        context.lastImageStart = address;
     }
 
     @Override
