@@ -3,10 +3,8 @@
  *
  * Created on Streda, 2007, august 8, 8:58
  *
- * KEEP IT SIMPLE, STUPID
- * some things just: YOU AREN'T GONNA NEED IT
- *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,63 +20,74 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package net.sf.emustudio.memory.standard.gui.utils;
 
-/**
- *
- * @author vbmacher
- */
-public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
-    private String[] exts;
-    private String desc;
-    
-    /** Creates a new instance of emuFileFilter */
-    public EmuFileFilter() {
-    }
-    
-    public void addExtension(String ext) {
-        int l=0;
+import java.io.File;
+import javax.swing.filechooser.FileFilter;
+
+public class EmuFileFilter extends FileFilter {
+    private String[] extensions;
+    private String description;
+
+    public void addExtension(String extension) {
+        int length = 0;
         String[] tmp;
-        if (exts != null) l = exts.length;
-        tmp = new String[l+1];
-        if (exts != null) System.arraycopy(exts,0,tmp,0,l);
-        tmp[l] = ext;
-        exts = tmp;
+        if (extensions != null) {
+            length = extensions.length;
+        }
+        tmp = new String[length + 1];
+        if (extensions != null) {
+            System.arraycopy(extensions, 0, tmp, 0, length);
+        }
+        tmp[length] = extension;
+        extensions = tmp;
     }
 
     public String getFirstExtension() {
-        if (exts != null) return exts[0];
+        if (extensions != null) {
+            return extensions[0];
+        }
         return null;
     }
 
-    public boolean accept(java.io.File f) {
-        if (f.isDirectory()) return true;
+    @Override
+    public boolean accept(File f) {
+        if (f.isDirectory()) {
+            return true;
+        }
         String ext = this.getExtension(f);
         if (ext != null) {
-            for (int i = 0; i < exts.length; i++)
-                if (exts[i].equals(ext) || exts[i] == "*") return true;
+            for (String extension : extensions) {
+                if (extension.equals(ext) || extension.equals("*")) {
+                    return true;
+                }
+            }
         } else {
-            for (int i = 0; i < exts.length; i++)
-                if (exts[i] == "*") return true;
+            for (String extension : extensions) {
+                if (extension.equals("*")) {
+                    return true;
+                }
+            }
         }
         return false;
     }
 
-    public String getExtension(java.io.File f) {
-        String ext = null;
-        String s = f.getName();
+    public String getExtension(File file) {
+        String extension = null;
+        String s = file.getName();
         int i = s.lastIndexOf('.');
-        if (i > 0 &&  i < s.length() - 1) 
-            ext = s.substring(i+1).toLowerCase();
-        return ext;
+        if (i > 0 && i < s.length() - 1) {
+            extension = s.substring(i + 1).toLowerCase();
+        }
+        return extension;
     }
 
+    @Override
     public String getDescription() {
-        return desc;
+        return description;
     }
 
-    public void setDescription(String des) {
-        desc = des;
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

@@ -256,16 +256,12 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         notifyMemoryChanged(to);
     }
 
-    public void write(int to, Object val, int bank) {
+    public void write(int to, short val, int bank) {
         if (isROM(to) == true) {
             return;
         }
         activeBank = (to < bankCommon) ? bank : 0;
-        if (val instanceof Integer) {
-            mem[to][activeBank] = (short) ((Integer) val & 0xFF);
-        } else {
-            mem[to][activeBank] = (short) ((Short) val & 0xFF);
-        }
+        mem[to][activeBank] = (short)(val & 0xFF);
         notifyMemoryChanged(to);
     }
 
