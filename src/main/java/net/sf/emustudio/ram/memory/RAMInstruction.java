@@ -1,9 +1,8 @@
-/**
- * IRAMInstruction.java
+/*
+ * RAMInstruction.java
  * 
- *  KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,11 +18,18 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package interfaces;
+package net.sf.emustudio.ram.memory;
 
-import emulib.plugins.compiler.ICompilerContext;
+import emulib.annotations.ContextType;
+import emulib.plugins.compiler.CompilerContext;
 
-public interface C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E extends ICompilerContext {
+/**
+ * This context will be registered by RAM compiler.
+ * 
+ * @author Peter Jakubčo
+ */
+@ContextType
+public interface RAMInstruction extends CompilerContext {
 	public final static int READ = 1;
 	public final static int WRITE = 2;
 	public final static int LOAD = 3;
@@ -38,43 +44,46 @@ public interface C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E extends ICompilerCont
 	public final static int HALT = 12;
 	
 	/**
-	 * Method returns binary code of RAM instruction. 
-	 * @return code of instruction
+	 * Get machine code of the RAM instruction. 
+	 * @return code of the instruction
 	 */
 	public int getCode();
 	
 	/**
-	 * Method returns direction of instruction
+	 * Get direction of the RAM instruction:
+         * 
 	 * 0   - register
 	 * '=' - direct
 	 * '*' - indirect
-	 * @return direction
+	 * @return direction of the instruction
 	 */
 	public char getDirection();
 	
 	/**
-	 * Method returns operand of the instruction. Also
-	 * for JMP/JZ instructions. If the operand is direct,
-	 * it returns String. Otherwise Integer.
-	 * @return operand (number or address, or string)
+	 * Get operand of the RAM instruction.
+         * 
+	 * @return operand (number or address, or string). If the operand is direct,
+         * it returns a String. Otherwise Integer.
 	 */
 	public Object getOperand();
 	
 	/**
-	 * Method returns string representation of label
-	 * operand (meaningful only for JMP/JZ instructions)
-	 * @return label operand
+	 * Get a string representation of label operand (meaningful only for
+         * JMP/JZ instructions)
+         * @return label operand
 	 */
 	public String getOperandLabel();
 	
 	/**
-	 * Return string representation of RAM instruction.
-	 * @return RAM instruction
+	 * Get string representation of the RAM instruction (mnemonic code).
+         * 
+	 * @return string representation of the instruction
 	 */
 	public String getCodeStr();
 	
 	/**
-	 * Method returns string representation of operand.
+	 * Get string representation of the operand.
+         * 
 	 * It includes labels, direction and integer operands.
 	 * @return String representation of operand
 	 */

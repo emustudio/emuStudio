@@ -1,9 +1,8 @@
-/**
- * IRAMMemoryContext.java
+/*
+ * RAMMemoryContext.java
  * 
- *  KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,19 +18,28 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package interfaces;
+package net.sf.emustudio.ram.memory;
 
-import java.util.ArrayList;
+import emulib.annotations.ContextType;
+import emulib.plugins.memory.MemoryContext;
+import java.util.List;
 
-import emulib.plugins.memory.IMemoryContext;
-
-public interface C8E258161A30C508D5E8ED07CE943EEF7408CA508 extends IMemoryContext {
+@ContextType
+public interface RAMMemoryContext extends MemoryContext<RAMInstruction> {
 	public void addLabel(int pos, String label);
 	public String getLabel(int pos);
 	
 	// from Compiler
-	public void addInputs(ArrayList<String> inputs);
+	public void addInputs(List<String> inputs);
 	
 	// for CPU
-	public ArrayList<String> getInputs();
+	public List<String> getInputs();
+        
+        /**
+         * Get memory size.
+         * 
+         * @return memory size
+         */
+        public int getSize();
+        
 }

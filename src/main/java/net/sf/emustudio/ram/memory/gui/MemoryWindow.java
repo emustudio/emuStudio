@@ -1,9 +1,8 @@
-/**
+/*
  * MemoryWindow.java
  * 
- *  KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,16 +18,16 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package RAMmemory.gui;
+package net.sf.emustudio.ram.memory.gui;
 
-import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
-
+import emulib.plugins.memory.Memory.MemoryListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.EventObject;
-import java.util.HashMap;
 import java.util.ArrayList;
-
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
@@ -43,83 +42,37 @@ import javax.swing.LayoutStyle;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
-import javax.swing.table.AbstractTableModel;
+import net.sf.emustudio.ram.memory.RAMInstruction;
+import net.sf.emustudio.ram.memory.impl.RAMMemoryContextImpl;
 
-import emulib.plugins.memory.IMemory.IMemListener;
-
-import RAMmemory.impl.RAMContext;
-import java.util.Iterator;
-
-@SuppressWarnings("serial")
 public class MemoryWindow extends JFrame {
-
-    private RAMContext mem;
+    private RAMMemoryContextImpl memory;
     private RAMTableModel ram;
 
-    private class RAMTableModel extends AbstractTableModel {
-
-        @Override
-        public int getColumnCount() {
-            return 2;
-        }
-
-        @Override
-        public int getRowCount() {
-            return mem.getSize();
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            if (columnIndex == 0) {
-                String label = mem.getLabel(rowIndex);
-                if (label != null) {
-                    return String.valueOf(rowIndex) + " (" + label + ")";
-                } else {
-                    return String.valueOf(rowIndex);
-                }
-            } else {
-                C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E i =
-                        (C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E) mem.read(rowIndex);
-                return i.getCodeStr() + " " + i.getOperandStr();
-            }
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            return String.class;
-        }
-
-        @Override
-        public String getColumnName(int col) {
-            return (col == 0) ? "Addr" : "Instruction";
-        }
-    }
-
-    public MemoryWindow(RAMContext mem) {
-        this.mem = mem;
+    public MemoryWindow(RAMMemoryContextImpl mem) {
+        this.memory = mem;
         initComponents();
         setLocationRelativeTo(null);
-        ram = new RAMTableModel();
+        ram = new RAMTableModel(mem);
         tableProgram.setModel(ram);
         refillTable();
-        mem.addMemoryListener(new IMemListener() {
-
+        mem.addMemoryListener(new MemoryListener() {
             @Override
-            public void memChange(EventObject evt, int pos) {
+            public void memoryChanged(int memoryPosition) {
                 refillTable();
             }
         });
     }
 
     // TODO: bug: S(n) computation is not always correct
-    private void setComplexity() {
-        HashMap<String, Integer> labels;
-        HashMap<Integer, Integer> levels = new HashMap<Integer, Integer>();
-        ArrayList<Integer> registers = new ArrayList<Integer>();
+    private void computeComplexity() {
+        Map<String, Integer> labels;
+        Map<Integer, Integer> levels = new HashMap<Integer, Integer>();
+        List<Integer> registers = new ArrayList<Integer>();
         int memcompl = 0;
 
-        labels = mem.getSwitchedLabels();
-        int j = mem.getSize();
+        labels = memory.getSwitchedLabels();
+        int j = memory.getSize();
         int i;
         for (i = 0; i < j; i++) {
             levels.put(i, 0);
@@ -127,12 +80,11 @@ public class MemoryWindow extends JFrame {
 
         // bottom-up cycles search
         for (i = j - 1; i >= 0; i--) {
-            C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E in =
-                    (C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E) mem.read(i);
+            RAMInstruction in = (RAMInstruction) memory.read(i);
             switch (in.getCode()) {
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.JMP:
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.JGTZ:
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.JZ:
+                case RAMInstruction.JMP:
+                case RAMInstruction.JGTZ:
+                case RAMInstruction.JZ:
                     String lab = in.getOperandLabel();
                     Integer pos = labels.get(lab.toUpperCase() + ":");
                     if (pos != null && (pos <= i)) {
@@ -145,8 +97,8 @@ public class MemoryWindow extends JFrame {
                         }
                     }
                     break;
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.LOAD:
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.STORE:
+                case RAMInstruction.LOAD:
+                case RAMInstruction.STORE:
                     if (!registers.contains(0)) {
                         memcompl++;
                         registers.add(0);
@@ -154,7 +106,7 @@ public class MemoryWindow extends JFrame {
                 default:
                     // other instructions has parameters - registers or
                     // direct values
-                    if ((in.getCode() != C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.HALT)
+                    if ((in.getCode() != RAMInstruction.HALT)
                             && (in.getDirection() != '=')) {
                         int operand = (Integer) in.getOperand();
                         if (!registers.contains(operand)) {
@@ -209,44 +161,44 @@ public class MemoryWindow extends JFrame {
 
         ram.fireTableDataChanged();
 
-        j = mem.getSize();
+        j = memory.getSize();
         for (i = 0; i < j; i++) {
             count++;
-            switch (((C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E) mem.read(i)).getCode()) {
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.LOAD:
+            switch (((RAMInstruction) memory.read(i)).getCode()) {
+                case RAMInstruction.LOAD:
                     load++;
                     break;
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.STORE:
+                case RAMInstruction.STORE:
                     store++;
                     break;
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.READ:
+                case RAMInstruction.READ:
                     read++;
                     break;
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.WRITE:
+                case RAMInstruction.WRITE:
                     write++;
                     break;
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.ADD:
+                case RAMInstruction.ADD:
                     add++;
                     break;
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.SUB:
+                case RAMInstruction.SUB:
                     sub++;
                     break;
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.MUL:
+                case RAMInstruction.MUL:
                     mul++;
                     break;
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.DIV:
+                case RAMInstruction.DIV:
                     div++;
                     break;
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.JMP:
+                case RAMInstruction.JMP:
                     jmp++;
                     break;
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.JGTZ:
+                case RAMInstruction.JGTZ:
                     jgtz++;
                     break;
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.JZ:
+                case RAMInstruction.JZ:
                     jz++;
                     break;
-                case C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.HALT:
+                case RAMInstruction.HALT:
                     halt++;
                     break;
             }
@@ -265,7 +217,7 @@ public class MemoryWindow extends JFrame {
         lblJZ.setText(String.valueOf(jz));
         lblHALT.setText(String.valueOf(halt));
 
-        setComplexity();
+        computeComplexity();
     }
 
     public final void initComponents() {
@@ -316,15 +268,14 @@ public class MemoryWindow extends JFrame {
 
         tableProgram.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        btnClear.setIcon(new ImageIcon(getClass().getResource("/RAMmemory/edit-delete.png"))); // NOI18N
+        btnClear.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/ram/memory/gui/edit-delete.png"))); // NOI18N
         btnClear.setFocusable(false);
         btnClear.setHorizontalTextPosition(SwingConstants.CENTER);
         btnClear.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnClear.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
-                mem.clearMemory();
+                memory.clear();
             }
         });
         toolMemory.add(btnClear);

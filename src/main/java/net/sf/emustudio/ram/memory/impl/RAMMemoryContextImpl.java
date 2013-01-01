@@ -1,9 +1,8 @@
-/**
- * RAMContext.java
+/*
+ * RAMMemoryContextImpl.java
  * 
- *  KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,41 +18,34 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package RAMmemory.impl;
+package net.sf.emustudio.ram.memory.impl;
 
-import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
-import interfaces.C8E258161A30C508D5E8ED07CE943EEF7408CA508;
-
-import java.util.HashMap;
+import emulib.plugins.memory.AbstractMemoryContext;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import net.sf.emustudio.ram.memory.RAMInstruction;
+import net.sf.emustudio.ram.memory.RAMMemoryContext;
 
-import emulib.plugins.memory.SimpleMemoryContext;
-import java.util.Iterator;
+public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction> implements RAMMemoryContext {
+    private List<RAMInstruction> memory;
+    private Map<Integer, String> labels;
+    private List<String> inputs; // not for memory, but for CPU. Memory holds program so...
 
-public class RAMContext extends SimpleMemoryContext implements C8E258161A30C508D5E8ED07CE943EEF7408CA508 {
-
-    private ArrayList<C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E> memory;
-    private HashMap<Integer, String> labels;
-    private ArrayList<String> inputs; // not for memory, but for CPU. Memory holds program so...
-
-    public RAMContext() {
+    public RAMMemoryContextImpl() {
         super();
-        memory = new ArrayList<C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E>();
+        memory = new ArrayList<RAMInstruction>();
         labels = new HashMap<Integer, String>();
         inputs = new ArrayList<String>();
     }
 
     @Override
-    public String getID() {
-        return "ram-memory-context";
-    }
-
-    @Override
-    public void clearMemory() {
+    public void clear() {
         memory.clear();
         labels.clear();
         inputs.clear();
-        fireChange(-1);
+        notifyMemoryChanged(-1);
     }
 
     public void clearInputs() {
@@ -62,15 +54,16 @@ public class RAMContext extends SimpleMemoryContext implements C8E258161A30C508D
 
     @Override
     public Class<?> getDataType() {
-        return C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.class;
+        return RAMInstruction.class;
     }
 
+    @Override
     public int getSize() {
         return memory.size();
     }
 
     @Override
-    public Object read(int pos) {
+    public RAMInstruction read(int pos) {
         if (pos >= memory.size()) {
             return null;
         }
@@ -87,13 +80,13 @@ public class RAMContext extends SimpleMemoryContext implements C8E258161A30C508D
 
     // This method is not and won't be implemented.
     @Override
-    public void write(int pos, Object instr) {
+    public void write(int pos, RAMInstruction instr) {
         if (pos >= memory.size()) {
-            memory.add(pos, (C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E) instr);
+            memory.add(pos, instr);
         } else {
-            memory.set(pos, (C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E) instr);
+            memory.set(pos, instr);
         }
-        fireChange(pos);
+        notifyMemoryChanged(pos);
     }
 
     // This method is not and won't be implemented.
@@ -111,18 +104,16 @@ public class RAMContext extends SimpleMemoryContext implements C8E258161A30C508D
         return labels.get(pos);
     }
 
-    public HashMap<String, Integer> getSwitchedLabels() {
-        HashMap<String, Integer> h = new HashMap<String, Integer>();
-        Iterator<Integer> k = labels.keySet().iterator();
-        while (k.hasNext()) {
-            int pos = k.next();
-            h.put(labels.get(pos), pos);
+    public Map<String, Integer> getSwitchedLabels() {
+        Map<String, Integer> h = new HashMap<String, Integer>();
+        for (Map.Entry<Integer, String> entry : labels.entrySet()) {
+            h.put(entry.getValue(), entry.getKey());
         }
         return h;
     }
 
     @Override
-    public void addInputs(ArrayList<String> inputs) {
+    public void addInputs(List<String> inputs) {
         if (inputs == null) {
             return;
         }
@@ -130,7 +121,7 @@ public class RAMContext extends SimpleMemoryContext implements C8E258161A30C508D
     }
 
     @Override
-    public ArrayList<String> getInputs() {
+    public List<String> getInputs() {
         return inputs;
     }
 

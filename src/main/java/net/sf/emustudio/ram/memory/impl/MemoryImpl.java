@@ -1,9 +1,8 @@
-/**
- * RAMmemory.java
+/*
+ * MemoryImpl.java
  * 
- *  KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,56 +18,54 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package RAMmemory.impl;
+package net.sf.emustudio.ram.memory.impl;
 
-import RAMmemory.gui.MemoryWindow;
-import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
-import interfaces.C8E258161A30C508D5E8ED07CE943EEF7408CA508;
-import emulib.plugins.ISettingsHandler;
-import emulib.plugins.memory.SimpleMemory;
-import emulib.runtime.Context;
+import emulib.annotations.PLUGIN_TYPE;
+import emulib.annotations.PluginType;
+import emulib.emustudio.SettingsManager;
+import emulib.plugins.memory.AbstractMemory;
+import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import net.sf.emustudio.ram.memory.RAMInstruction;
+import net.sf.emustudio.ram.memory.RAMMemoryContext;
+import net.sf.emustudio.ram.memory.gui.MemoryWindow;
 
-public class RAMmemory extends SimpleMemory {
-
-    private RAMContext context;
+@PluginType(type=PLUGIN_TYPE.MEMORY,
+        title="RAM Program Tape",
+        copyright="\u00A9 Copyright 2009-2012, Peter Jakubčo",
+        description="Read-only program tape for abstract RAM machine.")
+public class MemoryImpl extends AbstractMemory {
+    private RAMMemoryContextImpl context;
     private MemoryWindow gui = null;
 
-    public RAMmemory(Long pluginID) {
+    public MemoryImpl(Long pluginID) {
         super(pluginID);
-        context = new RAMContext();
-        if (!Context.getInstance().register(pluginID, context,
-                C8E258161A30C508D5E8ED07CE943EEF7408CA508.class))
-            StaticDialogs.showErrorMessage("Error: Could not register this memory");
-    }
-
-    @Override
-    public String getTitle() {
-        return "RAM Memory";
+        context = new RAMMemoryContextImpl();
+        try {
+            ContextPool.getInstance().register(pluginID, context, RAMMemoryContext.class);
+        } catch (RuntimeException e) {
+            StaticDialogs.showErrorMessage("Could not register Program tape context", 
+                    MemoryImpl.class.getAnnotation(PluginType.class).title());
+        }
     }
 
     @Override
     public String getVersion() {
-        return getClass().getPackage().getImplementationVersion();
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.ram.memory.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            return "(unknown)";
+        }
     }
 
     @Override
-    public String getCopyright() {
-        return "\u00A9 Copyright 2009-2012, P. Jakubčo";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Operating memory for RAM machine. Contains program -"
-                + "tape. User can not manually edit the tape - it is"
-                + "a read only memory (filled once).";
-    }
-
-    @Override
-    public boolean initialize(ISettingsHandler settings) {
+    public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
-        if (Context.getInstance().getCompilerContext(pluginID,
-                C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.class) == null) {
+        if (ContextPool.getInstance().getCompilerContext(pluginID,
+                RAMInstruction.class) == null) {
             StaticDialogs.showErrorMessage("Error: Could not access to the compiler");
             return false;
         }
@@ -86,8 +83,8 @@ public class RAMmemory extends SimpleMemory {
     }
 
     @Override
-    // Program start is always 0
     public void setProgramStart(int pos) {
+        // Program start is always 0
     }
 
     @Override
