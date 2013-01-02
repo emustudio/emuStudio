@@ -22,26 +22,19 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
+import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.DataValueNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
-import emulib.plugins.compiler.HEXFileHandler;
-import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 
-/**
- *
- * @author vbmacher
- */
 public class DWDataNode extends DataValueNode {
-
     private ExprNode expression = null;
 
-    /** Creates a new instance of DWDataNode */
     public DWDataNode(ExprNode expr, int line, int column) {
         super(line, column);
         this.expression = expr;
     }
 
-    /// compile time ///
     @Override
     public int getSize() {
         return 2;
@@ -54,7 +47,7 @@ public class DWDataNode extends DataValueNode {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         hex.putCode(expression.getEncValue(false));
     }
 }

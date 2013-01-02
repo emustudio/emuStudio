@@ -3,10 +3,8 @@
  *
  * Created on Sobota, 2007, september 29, 8:54
  *
- * KEEP IT SIMPLE, STUPID
- * some things just: YOU AREN'T GONNA NEED IT
- *
- * Copyright (C) 2007-2012 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,13 +23,9 @@
 
 package net.sf.emustudio.intel8080.assembler.treeAbstract;
 
+import emulib.runtime.HEXFileManager;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
-import emulib.plugins.compiler.HEXFileHandler;
 
-/**
- *
- * @author vbmacher
- */
 public abstract class DataValueNode {
     protected int line;
     protected int column;
@@ -44,15 +38,16 @@ public abstract class DataValueNode {
     /// compile time ///
     public abstract int getSize();
     public abstract int pass2(CompileEnv env, int addr_start) throws Exception;
-    public abstract void pass4(HEXFileHandler hex) throws Exception;
+    public abstract void pass4(HEXFileManager hex) throws Exception;
     
         // encode string to hex codes
     protected String getEncString(String literal) {
         byte[] byts = literal.getBytes();
         String enc = "";
         
-        for (int i = 0; i < byts.length; i++)
+        for (int i = 0; i < byts.length; i++) {
             enc += ExprNode.getEncValue((int)byts[i],true);
+        }
         return enc;
     }
 

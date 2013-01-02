@@ -3,7 +3,7 @@
  *
  * Created on Streda, 2007, október 10, 15:50
  *
- * Copyright (C) 2007-2010 Peter Jakubčo
+ * Copyright (C) 2007-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,27 +20,22 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package net.sf.emustudio.intel8080.assembler.tree;
 
-import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.impl.NeedMorePassException;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 
-/**
- *
- * @author vbmacher
- */
 public class IdExpr extends ExprNode {
     private String name;
-    
-    /** Creates a new instance of IdExpr */
+
     public IdExpr(String name) {
         this.name = name;
     }
 
-    /// compile time ///
-    public int getSize() { return 0; }
+    public int getSize() {
+        return 0;
+    }
 
     @Override
     public int eval(CompileEnv env, int curr_addr) throws Exception {
@@ -59,7 +54,7 @@ public class IdExpr extends ExprNode {
             this.value = equ.getValue();
             return this.value;
         }
-        
+
         SetPseudoNode set = env.getSet(this.name);
         if (set != null) {
             this.value = set.getValue();
@@ -68,5 +63,4 @@ public class IdExpr extends ExprNode {
             throw new Exception("Unknown identifier (" + this.name + ")");
         }
     }
-    
 }

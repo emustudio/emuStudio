@@ -3,10 +3,8 @@
  *
  * Created on Sobota, 2007, september 22, 8:30
  *
- * KEEP IT SIMPLE, STUPID
- * some things just: YOU AREN'T GONNA NEED IT
- *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,36 +20,44 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package net.sf.emustudio.intel8080.assembler.treeAbstract;
 
+import emulib.runtime.RadixUtils;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 
-/**
- *
- * @author vbmacher
- */
 public abstract class ExprNode {
+
     protected int value;
-    
-    /// compile time ///
-    public int getValue() { return value; }
-    
-    public boolean is8Bit() {
-        if (value <= 255 && value >= -128) return true;
-        else return false;
-    }
-    
-    public abstract int eval(CompileEnv env, int curr_addr) throws Exception;
-    
-    public static String getEncValue(int val, boolean oneByte) {
-        if (oneByte) return String.format("%02X",(val & 0xFF));
-        else return String.format("%02X%02X",(val & 0xFF),((val>>8)&0xFF));
-    };
-    
-    public String getEncValue(boolean oneByte) {
-        if (oneByte) return String.format("%02X",(value & 0xFF));
-        else return String.format("%02X%02X",(value & 0xFF),((value>>8)&0xFF));
+
+    public int getValue() {
+        return value;
     }
 
+    public boolean is8Bit() {
+        if (value <= 255 && value >= -128) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public abstract int eval(CompileEnv env, int curr_addr) throws Exception;
+
+    public static String getEncValue(int val, boolean oneByte) {
+        if (oneByte) {
+            return RadixUtils.getByteHexString(val & 0xFF);
+        } else {
+            return String.format("%02X%02X", (val & 0xFF), ((val >> 8) & 0xFF));
+        }
+    }
+
+    ;
+    
+    public String getEncValue(boolean oneByte) {
+        if (oneByte) {
+            return String.format("%02X", (value & 0xFF));
+        } else {
+            return String.format("%02X%02X", (value & 0xFF), ((value >> 8) & 0xFF));
+        }
+    }
 }

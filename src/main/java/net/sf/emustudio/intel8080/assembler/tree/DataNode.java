@@ -22,17 +22,13 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
-import net.sf.emustudio.intel8080.assembler.treeAbstract.CodeNode;
-import net.sf.emustudio.intel8080.assembler.treeAbstract.DataValueNode;
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import java.util.ArrayList;
 import java.util.List;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.CodeNode;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.DataValueNode;
 
-/**
- *
- * @author vbmacher
- */
 public class DataNode extends CodeNode {
     private List<DataValueNode> list; // this vector stores only data values
 
@@ -44,13 +40,11 @@ public class DataNode extends CodeNode {
         list.addAll(vec);
     }
 
-    /** Creates a new instance of DataNode */
     public DataNode(int line, int column) {
         super(line, column);
         this.list = new ArrayList<DataValueNode>();
     }
 
-    /// compile time ///
     @Override
     public int getSize() {
         DataValueNode dv;
@@ -73,7 +67,7 @@ public class DataNode extends CodeNode {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         DataValueNode dv;
         for (int i = 0; i < list.size(); i++) {
             dv = (DataValueNode) list.get(i);

@@ -3,10 +3,8 @@
  *
  * Created on Piatok, 2007, september 21, 8:56
  *
- * KEEP IT SIMPLE, STUPID
- * some things just: YOU AREN'T GONNA NEED IT
- *
- * Copyright (C) 2007-2012 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,33 +22,28 @@
  */
 package net.sf.emustudio.intel8080.assembler.treeAbstract;
 
+import emulib.runtime.HEXFileManager;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
-import emulib.plugins.compiler.HEXFileHandler;
 
-/**
- *
- * @author vbmacher
- */
 public abstract class CodePseudoNode {
-    // protected String mnemo;
-
     protected int line;
     protected int column;
 
     public abstract boolean isPseudo();
 
     public CodePseudoNode(int line, int column) {
-        // this.mnemo = mnemo;
         this.line = line;
         this.column = column;
     }
 
-    /// compile time ///
-    // return size of compiled code
+    /**
+     * Get size of compiled code.
+     * 
+     * @return size in bytes
+     */ 
     public abstract int getSize();
-    //   public abstract void pass1() throws Exception;
 
     public abstract int pass2(CompileEnv parentEnv, int addr_start) throws Exception;
 
-    public abstract void pass4(HEXFileHandler hex) throws Exception;
+    public abstract void pass4(HEXFileManager hex) throws Exception;
 }

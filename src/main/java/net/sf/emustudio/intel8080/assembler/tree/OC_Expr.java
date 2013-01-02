@@ -22,15 +22,11 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
+import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.OpCodeNode;
-import emulib.plugins.compiler.HEXFileHandler;
-import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 
-/**
- *
- * @author vbmacher
- */
 public class OC_Expr extends OpCodeNode {
 
     private ExprNode expr;
@@ -42,7 +38,6 @@ public class OC_Expr extends OpCodeNode {
         this.expr = expr;
     }
 
-    /// compile time ///
     @Override
     public int getSize() {
         int rval;
@@ -107,7 +102,7 @@ public class OC_Expr extends OpCodeNode {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         short opCode = 198; // opcode for adi: 11 (000adi) 110
         boolean oneDataByte = true; // how many data bytes
         boolean insertAfter = true; // if expression have to be written after opcode
@@ -240,7 +235,6 @@ public class OC_Expr extends OpCodeNode {
         if ((found == false) && mnemo.equals("out")) {
             opCode = 211;
             oneDataByte = true;
-            found = true;
         }
 
         code = String.format("%02X", opCode);

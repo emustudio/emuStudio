@@ -22,27 +22,20 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
-import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
-import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoNode;
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.impl.NeedMorePassException;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoNode;
 
-/**
- *
- * @author vbmacher
- */
 public class OrgPseudoNode extends PseudoNode {
-
     private ExprNode expr;
 
-    /** Creates a new instance of OrgPseudoNode */
     public OrgPseudoNode(ExprNode expr, int line, int column) {
         super(line, column);
         this.expr = expr;
     }
 
-    /// compile time ///
     @Override
     public int getSize() {
         return 0;
@@ -72,7 +65,7 @@ public class OrgPseudoNode extends PseudoNode {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         hex.setNextAddress(expr.getValue());
     }
 }

@@ -20,33 +20,39 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package net.sf.emustudio.intel8080.assembler.tree;
 
-/**
- *
- * @author vbmacher
- */
 public class LabelNode {
     private String name;
     private Integer address;
-    
     private int line;
     private int column;
-    
-    /** Creates a new instance of LabelNode */
+
     public LabelNode(String name, int line, int column) {
         this.name = name;
         this.address = null;
-        
+
         this.line = line;
         this.column = column;
     }
-    
-    public void setAddress(Integer address) { this.address = address; }
-    public Integer getAddress() { return this.address; }
-    public int getLine() { return line; }
-    public int getColumn() { return column; }
-    
-    public String getName() { return name; }
+
+    public void setAddress(Integer address) {
+        this.address = address;
+    }
+
+    public Integer getAddress() {
+        return this.address;
+    }
+
+    public int getLine() {
+        return line;
+    }
+
+    public int getColumn() {
+        return column;
+    }
+
+    public String getName() {
+        return name;
+    }
 }

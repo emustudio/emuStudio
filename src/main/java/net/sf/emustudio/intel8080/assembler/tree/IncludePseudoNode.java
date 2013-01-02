@@ -22,7 +22,7 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -33,10 +33,6 @@ import net.sf.emustudio.intel8080.assembler.impl.Lexer8080;
 import net.sf.emustudio.intel8080.assembler.impl.Parser8080;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoNode;
 
-/**
- *
- * @author vbmacher
- */
 public class IncludePseudoNode extends PseudoNode {
     private String filename;
     private String shortFileName;
@@ -114,9 +110,9 @@ public class IncludePseudoNode extends PseudoNode {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
-        while (program.pass3(namespace) == true)
-            ;
+    public void pass4(HEXFileManager hex) throws Exception {
+        while (program.pass3(namespace) == true) {
+        }
         if (namespace.getPassNeedCount() != 0) {
             throw new Exception("Error: can't evaulate all expressions");
         }

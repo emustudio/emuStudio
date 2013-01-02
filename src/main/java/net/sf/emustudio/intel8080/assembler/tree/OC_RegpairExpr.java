@@ -22,22 +22,16 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
+import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.OpCodeNode;
-import emulib.plugins.compiler.HEXFileHandler;
-import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 
-/**
- *
- * @author vbmacher
- */
 // this class uses only lxi instruction
 public class OC_RegpairExpr extends OpCodeNode {
-
     private byte regpair;
     private ExprNode expr;
 
-    /** Creates a new instance of OC_RegpairExpr */
     public OC_RegpairExpr(String mnemo, byte regpair, ExprNode expr, int line,
             int column) {
         super(mnemo, line, column);
@@ -45,7 +39,6 @@ public class OC_RegpairExpr extends OpCodeNode {
         this.expr = expr;
     }
 
-    /// compile time ///
     @Override
     public int getSize() {
         return 3;
@@ -58,7 +51,7 @@ public class OC_RegpairExpr extends OpCodeNode {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         int opCode = 1 | (regpair << 4);
         hex.putCode(String.format("%1$02X", opCode));
         hex.putCode(expr.getEncValue(false));

@@ -22,22 +22,16 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
-import net.sf.emustudio.intel8080.assembler.treeAbstract.OpCodeNode;
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.OpCodeNode;
 
-/**
- *
- * @author vbmacher
- */
 public class OC_NoParams extends OpCodeNode {
 
-    /** Creates a new instance of OpcodeWParamsNode */
     public OC_NoParams(String mnemo, int line, int column) {
         super(mnemo, line, column);
     }
 
-    /// compile time ///
     @Override
     public int getSize() {
         return 1;
@@ -49,7 +43,7 @@ public class OC_NoParams extends OpCodeNode {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         short opCode = 0; // nop
 
         if (mnemo.equals("stc")) {

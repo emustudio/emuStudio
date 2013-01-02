@@ -23,13 +23,9 @@
 
 package net.sf.emustudio.intel8080.assembler.tree;
 
-import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 
-/**
- *
- * @author vbmacher
- */
 public class AddressValueNode extends ExprNode {
 
     public void setAddress(int address) {
@@ -40,8 +36,6 @@ public class AddressValueNode extends ExprNode {
         return value;
     }
 
-    /// compile time ///
-    //??
     @Override
     public int eval(CompileEnv env, int curr_addr) {
         this.setAddress(curr_addr);

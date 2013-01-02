@@ -22,25 +22,20 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
-import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
-import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoBlock;
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import java.util.ArrayList;
 import java.util.List;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoBlock;
 
-/**
- *
- * @author vbmacher
- */
 public class MacroPseudoNode extends PseudoBlock {
-
+    private CompileEnv newEnv;
     private List<String> params; // macro parameters
     private List<ExprNode> call_params; // concrete parameters, they can change
     private Statement stat;
     private String mnemo;
 
-    /** Creates a new instance of MacroPseudoNode */
     public MacroPseudoNode(String name, List<String> params, Statement s, int line, int column) {
         super(line, column);
         this.mnemo = name;
@@ -61,7 +56,6 @@ public class MacroPseudoNode extends PseudoBlock {
         this.call_params = params;
     }
 
-    /// compile time /// 
     @Override
     public int getSize() {
         return 0;
@@ -75,11 +69,9 @@ public class MacroPseudoNode extends PseudoBlock {
     public void pass1() throws Exception {
         stat.pass1(); // pass1 creates block symbol table (local for block)
     }
-    // for pass4
-    private CompileEnv newEnv;
+    
     // this is macro expansion ! can be called only in MacroCallPseudo class
     // call parameters have to be set
-
     @Override
     public int pass2(CompileEnv env, int addr_start) throws Exception {
         newEnv = new CompileEnv();
@@ -108,7 +100,7 @@ public class MacroPseudoNode extends PseudoBlock {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         stat.pass4(hex, newEnv);
     }
 }

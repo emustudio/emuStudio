@@ -3,10 +3,8 @@
  *
  * Created on Piatok, 2007, september 21, 11:17
  *
- * KEEP IT SIMPLE, STUPID
- * some things just: YOU AREN'T GONNA NEED IT
- *
- * Copyright (C) 2007-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2007-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,10 +22,6 @@
  */
 package net.sf.emustudio.intel8080.assembler.treeAbstract;
 
-/**
- *
- * @author vbmacher
- */
 /*
  * pseudocodes like: set,equ
  * are treated as local if theyre set in a macro. (see LabelNode class)
@@ -39,7 +33,6 @@ public abstract class PseudoNode extends CodePseudoNode {
         return true;
     }
 
-    /** Creates a new instance of PseudoNode */
     public PseudoNode(int line, int column) {
         super(line, column);
     }

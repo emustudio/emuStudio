@@ -22,21 +22,15 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
-import net.sf.emustudio.intel8080.assembler.treeAbstract.OpCodeNode;
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.OpCodeNode;
 
-/**
- *
- * @author vbmacher
- */
 // only for mov instruction
 public class OC_RegReg extends OpCodeNode {
-
     private byte reg_src;
     private byte reg_dst;
 
-    /** Creates a new instance of OC_RegReg */
     public OC_RegReg(String mnemo, byte reg_dst, byte reg_src, int line,
             int column) {
         super(mnemo, line, column);
@@ -44,7 +38,6 @@ public class OC_RegReg extends OpCodeNode {
         this.reg_src = reg_src;
     }
 
-    /// compile time ///
     @Override
     public int getSize() {
         return 1;
@@ -59,7 +52,7 @@ public class OC_RegReg extends OpCodeNode {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         int opCode = 64;
         opCode |= (reg_dst << 3);
         opCode |= reg_src;

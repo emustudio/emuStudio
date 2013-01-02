@@ -23,17 +23,13 @@
 
 package net.sf.emustudio.intel8080.assembler.tree;
 
-import net.sf.emustudio.intel8080.assembler.treeAbstract.CodePseudoNode;
-import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoBlock;
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import java.util.List;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.impl.NeedMorePassException;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.CodePseudoNode;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoBlock;
 
-/**
- *
- * @author vbmacher
- */
 public class InstructionNode {
     protected LabelNode label;
     protected CodePseudoNode codePseudo;
@@ -49,8 +45,6 @@ public class InstructionNode {
         this.codePseudo = codePseudo;
     }
     
-
-    /// compile time ///
     public int getSize() { 
         if (codePseudo !=null) {
             return codePseudo.getSize();
@@ -98,7 +92,7 @@ public class InstructionNode {
     }
     
     // code generation
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         if (codePseudo != null) { 
             if ((codePseudo instanceof MacroPseudoNode) == false) {
                 codePseudo.pass4(hex);

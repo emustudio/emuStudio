@@ -22,16 +22,12 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
+import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.DataValueNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.OpCodeNode;
-import emulib.plugins.compiler.HEXFileHandler;
-import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 
-/**
- *
- * @author vbmacher
- */
 public class DBDataNode extends DataValueNode {
 
     private ExprNode expression = null;
@@ -81,7 +77,7 @@ public class DBDataNode extends DataValueNode {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         if (expression != null) {
             if (expression.getEncValue(true).length() > 2) {
                 throw new Exception("[" + line + "," + column + "] value too large");

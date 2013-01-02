@@ -22,18 +22,19 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
-import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoBlock;
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import java.util.ArrayList;
 import java.util.List;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.impl.NeedMorePassException;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoBlock;
 
-/**
- *
- * @author vbmacher
- */
 public class Statement {
+    /* PASS1 = symbol table
+     * 1. get all label definitions
+     * 2. get all macro definitions
+     */
+    private CompileEnv env;
     private List<InstructionNode> list; // all instructions
     private List<String> includefiles; // list of files that
     // were checked for include-loops
@@ -53,7 +54,6 @@ public class Statement {
         list.addAll(vec);
     }
 
-    /// compile time ///
     public int getSize() {
         InstructionNode in;
         int size = 0;
@@ -63,11 +63,6 @@ public class Statement {
         }
         return size;
     }
-    /* PASS1 = symbol table
-     * 1. get all label definitions
-     * 2. get all macro definitions
-     */
-    private CompileEnv env;
 
     public CompileEnv getCompileEnv() {
         return env;
@@ -140,14 +135,14 @@ public class Statement {
         }
     }
 
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         for (int i = 0; i < list.size(); i++) {
             InstructionNode in = (InstructionNode) list.get(i);
             in.pass4(hex);
         }
     }
 
-    public void pass4(HEXFileHandler hex, CompileEnv env) throws Exception {
+    public void pass4(HEXFileManager hex, CompileEnv env) throws Exception {
         this.env = env;
         pass4(hex);
     }

@@ -22,21 +22,15 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
+import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoNode;
-import emulib.plugins.compiler.HEXFileHandler;
-import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 
-/**
- *
- * @author vbmacher
- */
 public class SetPseudoNode extends PseudoNode {
-
     private ExprNode expr;
     private String mnemo;
 
-    /** Creates a new instance of SetPseudoNode */
     public SetPseudoNode(String id, ExprNode expr, int line, int column) {
         super(line, column);
         this.mnemo = id;
@@ -51,7 +45,6 @@ public class SetPseudoNode extends PseudoNode {
     public int getValue() {
         return expr.getValue();
     }
-    /// compile time ///
 
     @Override
     public int getSize() {
@@ -68,6 +61,6 @@ public class SetPseudoNode extends PseudoNode {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) {
+    public void pass4(HEXFileManager hex) {
     }
 }

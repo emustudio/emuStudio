@@ -23,13 +23,9 @@
 
 package net.sf.emustudio.intel8080.assembler.tree;
 
-import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 
-/**
- *
- * @author vbmacher
- */
 public class ArithNode extends ExprNode {
     private ExprNode left;
     private ExprNode right;
@@ -42,8 +38,6 @@ public class ArithNode extends ExprNode {
         this.operator = operator;
     }
     
-    /// compile time ///
-       
     @Override
     public int eval(CompileEnv env, int curr_addr) throws Exception {
         int lv = left.eval(env,curr_addr);

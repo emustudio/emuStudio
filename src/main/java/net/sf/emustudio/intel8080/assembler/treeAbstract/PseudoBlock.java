@@ -1,9 +1,9 @@
 /*
  * PseudoBlock.java
  *
- *  Copyright (C) 2010 P. Jakubco <pjakubco@gmail.com>
+ * Copyright (C) 2012 P. Jakubco
  *
- * KISS, YAGNI
+ * KISS, YAGNI, DRY
  * 
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -21,13 +21,8 @@
  */
 package net.sf.emustudio.intel8080.assembler.treeAbstract;
 
-/**
- *
- * @author vbmacher
- */
 public abstract class PseudoBlock extends PseudoNode {
 
-    /** Creates a new instance of PseudoNode */
     public PseudoBlock(int line, int column) {
         super(line, column);
     }

@@ -22,27 +22,21 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
-import net.sf.emustudio.intel8080.assembler.treeAbstract.DataValueNode;
-import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.impl.NeedMorePassException;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.DataValueNode;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 
-/**
- *
- * @author vbmacher
- */
 public class DSDataNode extends DataValueNode {
 
     private ExprNode expression = null;
 
-    /** Creates a new instance of DSDataNode */
     public DSDataNode(ExprNode expr, int line, int column) {
         super(line, column);
         this.expression = expr;
     }
 
-    /// compile time ///
     @Override
     public int getSize() {
         return expression.getValue();
@@ -60,7 +54,7 @@ public class DSDataNode extends DataValueNode {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         String str = "";
 
         if (expression.getEncValue(true).length() > 2) {

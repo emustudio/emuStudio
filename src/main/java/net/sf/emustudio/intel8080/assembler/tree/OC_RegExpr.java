@@ -22,22 +22,16 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
+import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.OpCodeNode;
-import emulib.plugins.compiler.HEXFileHandler;
-import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 
-/**
- *
- * @author vbmacher
- */
 // this class uses only mvi instruction
 public class OC_RegExpr extends OpCodeNode {
-
     private byte reg;
     private ExprNode expr;
 
-    /** Creates a new instance of OC_RegExpr */
     public OC_RegExpr(String mnemo, byte reg, ExprNode expr,
             int line, int column) {
         super(mnemo, line, column);
@@ -45,7 +39,6 @@ public class OC_RegExpr extends OpCodeNode {
         this.expr = expr;
     }
 
-    /// compile time ///
     @Override
     public int getSize() {
         return 2;
@@ -63,7 +56,7 @@ public class OC_RegExpr extends OpCodeNode {
 
     // this can be only mvi instr
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         int opCode = 6;
 
         if (expr.getEncValue(true).length() > 2) {

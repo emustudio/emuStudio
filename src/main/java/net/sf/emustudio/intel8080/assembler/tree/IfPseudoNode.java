@@ -22,23 +22,17 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
-import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
-import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoBlock;
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.impl.NeedMorePassException;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoBlock;
 
-/**
- *
- * @author vbmacher
- */
 public class IfPseudoNode extends PseudoBlock {
-
     private ExprNode expr;
     private Statement stat;
     private boolean condTrue; // for pass4
 
-    /** Creates a new instance of IfPseudoNode */
     public IfPseudoNode(ExprNode expr, Statement stat, int line, int column) {
         super(line, column);
         this.expr = expr;
@@ -52,7 +46,6 @@ public class IfPseudoNode extends PseudoBlock {
         return "";
     }
 
-    /// compile time ///
     @Override
     public int getSize() {
         if (expr.getValue() != 0) {
@@ -84,7 +77,7 @@ public class IfPseudoNode extends PseudoBlock {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         if (condTrue) {
             stat.pass4(hex);
         }

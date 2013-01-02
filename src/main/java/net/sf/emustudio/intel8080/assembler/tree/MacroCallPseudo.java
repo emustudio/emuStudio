@@ -22,26 +22,21 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
-import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
-import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoNode;
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import java.util.ArrayList;
 import java.util.List;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.impl.NeedMorePassException;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoNode;
 
-/**
- *
- * @author vbmacher
- */
 public class MacroCallPseudo extends PseudoNode {
 
     private List<ExprNode> params; // vector of expressions
     private MacroPseudoNode macro; // only pointer...
-    private HEXFileHandler statHex; // hex file for concrete macro
+    private HEXFileManager statHex; // hex file for concrete macro
     private String mnemo;
 
-    /** Creates a new instance of MacroCallPseudo */
     public MacroCallPseudo(String name, List<ExprNode> params, int line, int column) {
         super(line, column);
         this.mnemo = name;
@@ -50,10 +45,9 @@ public class MacroCallPseudo extends PseudoNode {
         } else {
             this.params = params;
         }
-        statHex = new HEXFileHandler();
+        statHex = new HEXFileManager();
     }
 
-    /// compile time ///
     @Override
     public int getSize() {
         return macro.getStatSize();
@@ -89,7 +83,7 @@ public class MacroCallPseudo extends PseudoNode {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) {
+    public void pass4(HEXFileManager hex) {
         hex.addTable(statHex.getTable());
     }
 }
