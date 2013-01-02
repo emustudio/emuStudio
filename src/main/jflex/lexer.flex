@@ -3,9 +3,8 @@
  *
  * Lexical analyser for RAM compiler
  *
+ * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,10 +21,10 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package ramc_ram.impl;
+package net.sf.emustudio.ram.compiler.impl;
 
-import emulib.plugins.compiler.ILexer;
-import emulib.plugins.compiler.IToken;
+import emulib.plugins.compiler.LexicalAnalyzer;
+import emulib.plugins.compiler.Token;
 import java.io.Reader;
 import java.io.IOException;
 
@@ -35,7 +34,7 @@ import java.io.IOException;
 %class RAMLexer
 %cup
 %public
-%implements ILexer
+%implements LexicalAnalyzer
 %line
 %column
 %char
@@ -72,7 +71,7 @@ import java.io.IOException;
 %}
 
 %eofval{
-  return token(TokenRAM.EOF, IToken.TEOF,null,false);
+  return token(TokenRAM.EOF, Token.TEOF,null,false);
 %eofval}
 
 
@@ -87,38 +86,38 @@ String = [^\ \t\f\n\r;]+
 
 %%
 
-<YYINITIAL> "halt"  { return token(TokenRAM.HALT, IToken.RESERVED,null,true); }
-<YYINITIAL> "read"  { return token(TokenRAM.READ,  IToken.RESERVED,null,true); }
-<YYINITIAL> "write" { return token(TokenRAM.WRITE,  IToken.RESERVED,null,true); }
-<YYINITIAL> "load"  { return token(TokenRAM.LOAD, IToken.RESERVED,null,true); }
-<YYINITIAL> "store" { return token(TokenRAM.STORE, IToken.RESERVED,null,true); }
-<YYINITIAL> "add"   { return token(TokenRAM.ADD,IToken.RESERVED,null,true); }
-<YYINITIAL> "sub"   { return token(TokenRAM.SUB, IToken.RESERVED,null,true); }
-<YYINITIAL> "mul"   { return token(TokenRAM.MUL, IToken.RESERVED,null,true); }
-<YYINITIAL> "div"   { return token(TokenRAM.DIV, IToken.RESERVED,null,true); }
-<YYINITIAL> "jmp"   { yybegin(IDENTIFIER); return token(TokenRAM.JMP, IToken.RESERVED,null,true); }
-<YYINITIAL> "jgtz"  { yybegin(IDENTIFIER); return token(TokenRAM.JGTZ, IToken.RESERVED,null,true); }
-<YYINITIAL> "jz"    { yybegin(IDENTIFIER); return token(TokenRAM.JZ, IToken.RESERVED,null,true); }
+<YYINITIAL> "halt"  { return token(TokenRAM.HALT, Token.RESERVED,null,true); }
+<YYINITIAL> "read"  { return token(TokenRAM.READ,  Token.RESERVED,null,true); }
+<YYINITIAL> "write" { return token(TokenRAM.WRITE,  Token.RESERVED,null,true); }
+<YYINITIAL> "load"  { return token(TokenRAM.LOAD, Token.RESERVED,null,true); }
+<YYINITIAL> "store" { return token(TokenRAM.STORE, Token.RESERVED,null,true); }
+<YYINITIAL> "add"   { return token(TokenRAM.ADD,Token.RESERVED,null,true); }
+<YYINITIAL> "sub"   { return token(TokenRAM.SUB, Token.RESERVED,null,true); }
+<YYINITIAL> "mul"   { return token(TokenRAM.MUL, Token.RESERVED,null,true); }
+<YYINITIAL> "div"   { return token(TokenRAM.DIV, Token.RESERVED,null,true); }
+<YYINITIAL> "jmp"   { yybegin(IDENTIFIER); return token(TokenRAM.JMP, Token.RESERVED,null,true); }
+<YYINITIAL> "jgtz"  { yybegin(IDENTIFIER); return token(TokenRAM.JGTZ, Token.RESERVED,null,true); }
+<YYINITIAL> "jz"    { yybegin(IDENTIFIER); return token(TokenRAM.JZ, Token.RESERVED,null,true); }
 
-<YYINITIAL> "="     { yybegin(STRING); return token(TokenRAM.DIRECT, IToken.OPERATOR,null,true); }
-<YYINITIAL> "*"     { return token(TokenRAM.INDIRECT, IToken.OPERATOR,null,true); }
+<YYINITIAL> "="     { yybegin(STRING); return token(TokenRAM.DIRECT, Token.OPERATOR,null,true); }
+<YYINITIAL> "*"     { return token(TokenRAM.INDIRECT, Token.OPERATOR,null,true); }
 
-<YYINITIAL> "<input>" { yybegin(INPUT); return token(TokenRAM.INPUT, IToken.PREPROCESSOR, null,true); }
+<YYINITIAL> "<input>" { yybegin(INPUT); return token(TokenRAM.INPUT, Token.PREPROCESSOR, null,true); }
 
 {WhiteSpace}   { }
-<YYINITIAL> {Eol} { return token(TokenRAM.EOL, IToken.SEPARATOR,null,true); }
-{Eol} { yybegin(YYINITIAL); return token(TokenRAM.EOL, IToken.SEPARATOR,null,false); }
+<YYINITIAL> {Eol} { return token(TokenRAM.EOL, Token.SEPARATOR,null,true); }
+{Eol} { yybegin(YYINITIAL); return token(TokenRAM.EOL, Token.SEPARATOR,null,false); }
 
-<YYINITIAL> {Comment} { yybegin(YYINITIAL); return token(TokenRAM.TCOMMENT, IToken.COMMENT,null,true); }
-{Comment}             { yybegin(YYINITIAL); return token(TokenRAM.TCOMMENT, IToken.COMMENT,null,false); }
+<YYINITIAL> {Comment} { yybegin(YYINITIAL); return token(TokenRAM.TCOMMENT, Token.COMMENT,null,true); }
+{Comment}             { yybegin(YYINITIAL); return token(TokenRAM.TCOMMENT, Token.COMMENT,null,false); }
 
-<YYINITIAL> {Number} { return token(TokenRAM.NUMBER, IToken.LITERAL,yytext(),true); }
-<YYINITIAL> {Label} { return token(TokenRAM.LABELL, IToken.LABEL,yytext(),true); }
-<IDENTIFIER> {Identifier} { yybegin(YYINITIAL); return token(TokenRAM.IDENT, IToken.IDENTIFIER,yytext(),false); }
+<YYINITIAL> {Number} { return token(TokenRAM.NUMBER, Token.LITERAL,yytext(),true); }
+<YYINITIAL> {Label} { return token(TokenRAM.LABELL, Token.LABEL,yytext(),true); }
+<IDENTIFIER> {Identifier} { yybegin(YYINITIAL); return token(TokenRAM.IDENT, Token.IDENTIFIER,yytext(),false); }
 
-<STRING> {String} { yybegin(YYINITIAL); return token(TokenRAM.STRING, IToken.LITERAL,yytext(),false); }
+<STRING> {String} { yybegin(YYINITIAL); return token(TokenRAM.STRING, Token.LITERAL,yytext(),false); }
 
-<INPUT> {String} { return token(TokenRAM.STRING, IToken.PREPROCESSOR,yytext(),false); }
+<INPUT> {String} { return token(TokenRAM.STRING, Token.PREPROCESSOR,yytext(),false); }
 
 
 //[^\n\r\ \t\f]+ { return token(TokenRAM.error, TokenRAM.ERROR); }

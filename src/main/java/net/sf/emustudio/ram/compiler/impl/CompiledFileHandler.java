@@ -1,9 +1,8 @@
-/**
+/*
  * CompiledFileHandler.java
  *
+ * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,28 +18,22 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package ramc_ram.compiled;
-
-import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
-import interfaces.C8E258161A30C508D5E8ED07CE943EEF7408CA508;
+package net.sf.emustudio.ram.compiler.impl;
 
 import java.util.ArrayList;
+import java.util.List;
+import net.sf.emustudio.ram.compiler.tree.Label;
+import net.sf.emustudio.ram.memory.RAMInstruction;
+import net.sf.emustudio.ram.memory.RAMMemoryContext;
 
-import ramc_ram.tree.Label;
-
-/**
- *
- * @author vbmacher
- */
 public class CompiledFileHandler {
-
-    private ArrayList<C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E> program;
+    private List<RAMInstruction> program;
 
     public CompiledFileHandler() {
-        program = new ArrayList<C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E>();
+        program = new ArrayList<RAMInstruction>();
     }
 
-    public void addCode(C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E code) {
+    public void addCode(RAMInstruction code) {
         program.add(code);
     }
 
@@ -51,8 +44,8 @@ public class CompiledFileHandler {
      * 
      * @param mem context of operating memory
      */
-    public boolean loadIntoMemory(C8E258161A30C508D5E8ED07CE943EEF7408CA508 mem) {
-        C8E258161A30C508D5E8ED07CE943EEF7408CA508 rmem = mem;
+    public boolean loadIntoMemory(RAMMemoryContext mem) {
+        RAMMemoryContext rmem = mem;
         // load labels
         Label[] labels = CompilerEnvironment.getLabels();
         for (int i = 0; i < labels.length; i++) {

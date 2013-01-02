@@ -1,9 +1,8 @@
-/**
+/*
  * Row.java
  * 
+ * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,19 +18,17 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package ramc_ram.tree;
+package net.sf.emustudio.ram.compiler.tree;
 
-import java.util.ArrayList;
-
-import ramc_ram.compiled.CompiledFileHandler;
-import ramc_ram.compiled.CompilerEnvironment;
+import java.util.List;
+import net.sf.emustudio.ram.compiler.impl.CompiledFileHandler;
+import net.sf.emustudio.ram.compiler.impl.CompilerEnvironment;
 
 public class Row {
-
-    private RAMInstruction stat;
+    private RAMInstructionImpl stat;
     private Label label;
 
-    public Row(RAMInstruction stat, Label label) {
+    public Row(RAMInstructionImpl stat, Label label) {
         this.stat = stat;
         if (label != null) {
             this.label = label;
@@ -47,7 +44,7 @@ public class Row {
         }
     }
 
-    public Row(ArrayList<String> inputs) {
+    public Row(List<String> inputs) {
         this.stat = null;
         this.label = null;
         CompilerEnvironment.addInputs(inputs);

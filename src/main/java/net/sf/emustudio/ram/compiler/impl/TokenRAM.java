@@ -1,11 +1,8 @@
 /*
  * TokenRAM.java
  *
- * KEEP IT SIMPLE, STUPID
- * some things just: YOU AREN'T GONNA NEED IT
- * DON'T REPEAT YOURSELF
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,19 +18,13 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+package net.sf.emustudio.ram.compiler.impl;
 
-package ramc_ram.impl;
-
+import emulib.plugins.compiler.Token;
 import java_cup.runtime.Symbol;
-import emulib.plugins.compiler.IToken;
 
-/**
- *
- * @author Peter Jakubčo <pjakubco at gmail.com>
- */
-public class TokenRAM extends Symbol implements IToken,SymRAM {
+public class TokenRAM extends Symbol implements Token, SymRAM {
     public final static int ERROR_UNKNOWN_TOKEN = 0xA05;
-
     private String text; // hodnota tokenu
     private int row;     // číslo riadka
     private int col;     // číslo stĺpca
@@ -41,32 +32,65 @@ public class TokenRAM extends Symbol implements IToken,SymRAM {
     private int length;  // dĺžka tokenu
     private int type;    // typ tokenu
     private boolean initial;
- 
+
     public TokenRAM(int ID, int type, String text,
-    		int line, int column, int offset, Object val, boolean initial) {
-        super(ID,val);
+            int line, int column, int offset, Object val, boolean initial) {
+        super(ID, val);
         this.type = type;
         this.text = text;
         this.row = line;
         this.col = column;
         this.offset = offset;
         this.initial = initial;
-        this.length = (text==null)?0:text.length();
+        this.length = (text == null) ? 0 : text.length();
     }
 
-    public int getID() { return super.sym; }
-    public int getType() { return type; }
+    @Override
+    public int getID() {
+        return super.sym;
+    }
 
-    public String getText() { return text; }
+    @Override
+    public int getType() {
+        return type;
+    }
+
+    @Override
+    public String getText() {
+        return text;
+    }
+
+    @Override
     public String getErrorString() {
         switch (super.sym) {
-            case ERROR_UNKNOWN_TOKEN: return "Unknown token";
+            case ERROR_UNKNOWN_TOKEN:
+                return "Unknown token";
         }
         return "";
     }
-    public int getLine() { return row; }
-    public int getColumn() { return col; }
-    public int getOffset() { return offset; }
-    public int getLength() { return length; }
-    public boolean isInitialLexicalState() { return initial; }
+
+    @Override
+    public int getLine() {
+        return row;
+    }
+
+    @Override
+    public int getColumn() {
+        return col;
+    }
+
+    @Override
+    public int getOffset() {
+        return offset;
+    }
+
+    @Override
+    public int getLength() {
+        return length;
+    }
+
+    @Override
+    public boolean isInitialLexicalState() {
+        return initial;
+    }
 }

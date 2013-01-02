@@ -1,9 +1,8 @@
-/**
+/*
  * RAMCompiler.java
  * 
- *  KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,83 +18,76 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package ramc_ram.impl;
+package net.sf.emustudio.ram.compiler.impl;
 
-import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
-import interfaces.C8E258161A30C508D5E8ED07CE943EEF7408CA508;
-import java.io.Reader;
-
-import ramc_ram.compiled.CompiledFileHandler;
-import ramc_ram.tree.Program;
-import emulib.runtime.StaticDialogs;
-import emulib.plugins.ISettingsHandler;
-import emulib.plugins.compiler.ILexer;
-import emulib.plugins.compiler.SimpleCompiler;
+import emulib.annotations.PLUGIN_TYPE;
+import emulib.annotations.PluginType;
+import emulib.emustudio.SettingsManager;
+import emulib.plugins.compiler.AbstractCompiler;
+import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
-import ramc_ram.tree.RAMInstruction;
-import emulib.runtime.Context;
+import emulib.runtime.ContextPool;
+import emulib.runtime.StaticDialogs;
+import java.io.Reader;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import net.sf.emustudio.ram.compiler.tree.Program;
+import net.sf.emustudio.ram.compiler.tree.RAMInstructionImpl;
+import net.sf.emustudio.ram.memory.RAMInstruction;
+import net.sf.emustudio.ram.memory.RAMMemoryContext;
 
-public class RAMCompiler extends SimpleCompiler {
-
+@PluginType(type = PLUGIN_TYPE.COMPILER,
+title = "RAM Compiler",
+copyright = "\u00A9 Copyright 2009-2012, Peter Jakubčo",
+description = "Custom compiler for RAM abstract machine")
+public class RAMCompiler extends AbstractCompiler {
     private RAMLexer lex = null;
     private RAMParser par;
-    private C8E258161A30C508D5E8ED07CE943EEF7408CA508 mem;
-    private RAMInstruction context; // not needed context for anything, but
-    private SourceFileExtension[] suffixes;
-                                    // necessary for the registration
+    private RAMMemoryContext memory;
+    private RAMInstructionImpl context; // not needed context for anything, but
+    private SourceFileExtension[] suffixes; // necessary for the registration
 
     public RAMCompiler(Long pluginID) {
         super(pluginID);
         // lex has to be reset WITH a reader object before compile
         lex = new RAMLexer((Reader) null);
         par = new RAMParser(lex, this);
-        context = new RAMInstruction(0,null);
-        if (!Context.getInstance().register(pluginID, context,
-                C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E.class))
-            StaticDialogs.showErrorMessage("Error: Could not register "
-                    + "the ramc compiler");
-    }
-
-    @Override
-    public String getTitle() {
-        return "RAM compiler";
-    }
-
-    @Override
-    public String getCopyright() {
-        return "\u00A9 Copyright 2009-2011, P. Jakubčo";
+        context = new RAMInstructionImpl(0, null);
+        try {
+            ContextPool.getInstance().register(pluginID, context, RAMInstruction.class);
+        } catch (RuntimeException e) {
+            StaticDialogs.showErrorMessage("Could not register RAM instruction context",
+                    RAMCompiler.class.getAnnotation(PluginType.class).title());
+        }
     }
 
     @Override
     public String getVersion() {
-        return "0.14b";
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.ram.compiler.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            return "(unknown)";
+        }
     }
 
     @Override
-    public String getDescription() {
-        return "This is a compiler of Random Access Machine. It uses syntax"
-                + "and semantics of instructions that is used in the book:\n\n"
-                + "\"HUDÁK, Š.: Strojovo orientované jazyky, ISBN 80-969071-3-1\".";
-    }
-
-    @Override
-    public boolean initialize(ISettingsHandler settings) {
+    public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
-        mem = (C8E258161A30C508D5E8ED07CE943EEF7408CA508)Context
-                .getInstance().getMemoryContext(pluginID,
-                C8E258161A30C508D5E8ED07CE943EEF7408CA508.class);
-        
-        if (mem == null) {
-            StaticDialogs.showErrorMessage("Error: Could not connect to memory");
+        memory = (RAMMemoryContext) ContextPool.getInstance().getMemoryContext(pluginID,
+                RAMMemoryContext.class);
+
+        if (memory == null) {
+            StaticDialogs.showErrorMessage("Error: Could not access RAM program memory");
             return false;
         }
         return true;
     }
-    
+
     /**
      * Compile the source code into HEXFileHadler
-     * 
-     * @param in  Reader object of the source code
+     *
+     * @param in Reader object of the source code
      * @return HEXFileHandler object
      */
     private CompiledFileHandler compile(Reader in) throws Exception {
@@ -106,14 +98,14 @@ public class RAMCompiler extends SimpleCompiler {
             return null;
         }
 
-        Object s = null;
+        Object parsedProgram;
         CompiledFileHandler hex = new CompiledFileHandler();
 
         printInfo(getTitle() + ", version " + getVersion());
         lex.reset(in, 0, 0, 0);
-        s = par.parse().value;
+        parsedProgram = par.parse().value;
 
-        if (s == null) {
+        if (parsedProgram == null) {
             printError("Unexpected end of file");
             return null;
         }
@@ -122,13 +114,13 @@ public class RAMCompiler extends SimpleCompiler {
         }
 
         // do several passes for compiling
-        Program program = (Program) s;
+        Program program = (Program) parsedProgram;
         program.pass1(0);
         program.pass2(hex);
 
         printInfo("Compile was sucessfull.");
-        if (mem != null) {
-            if (hex.loadIntoMemory(mem)) {
+        if (memory != null) {
+            if (hex.loadIntoMemory(memory)) {
                 printInfo("Compiled file was loaded into operating memory.");
             } else {
                 printError("Compiled file couldn't be loaded into operating"
@@ -140,8 +132,7 @@ public class RAMCompiler extends SimpleCompiler {
 
     @Override
     public boolean compile(String fileName, Reader reader) {
-        printInfo("This compiler doesn't support "
-                + "compilation into a file.");
+        printInfo("This compiler doesn't support compilation into a file.");
         try {
             CompiledFileHandler c = compile(reader);
         } catch (Exception e) {
@@ -152,7 +143,7 @@ public class RAMCompiler extends SimpleCompiler {
     }
 
     @Override
-    public ILexer getLexer(Reader reader) {
+    public LexicalAnalyzer getLexer(Reader reader) {
         return new RAMLexer(reader);
     }
 
@@ -170,17 +161,16 @@ public class RAMCompiler extends SimpleCompiler {
 
     @Override
     public void showSettings() {
-        // TODO Auto-generated method stub
+        // We do not support settings GUI
     }
 
     @Override
     public boolean isShowSettingsSupported() {
         return false;
     }
-    
+
     @Override
     public SourceFileExtension[] getSourceSuffixList() {
         return suffixes;
     }
-
 }

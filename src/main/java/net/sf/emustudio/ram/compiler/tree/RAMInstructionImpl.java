@@ -1,9 +1,8 @@
-/**
- * RAMInstruction.java
+/*
+ * RAMInstructionImpl.java
  * 
+ * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,13 +18,16 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package ramc_ram.tree;
+package net.sf.emustudio.ram.compiler.tree;
 
-import ramc_ram.compiled.CompilerEnvironment;
-import interfaces.C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E;
+import net.sf.emustudio.ram.compiler.impl.CompilerEnvironment;
+import net.sf.emustudio.ram.memory.RAMInstruction;
 
-public class RAMInstruction implements C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E {
-
+/**
+ * Implementation of interface which is defined in RAM Memory.
+ * @author Peter Jakubčo
+ */
+public class RAMInstructionImpl implements RAMInstruction {
     private int instr;      // instruction code
     private char direction; // 0 - register, '=' - direct, '*' - indirect
     private Object operand; // operand
@@ -33,13 +35,13 @@ public class RAMInstruction implements C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E
     private boolean eval = false;
 
     // constructor not for jmp/jz
-    public RAMInstruction(int in, char direction, Object operand) {
+    public RAMInstructionImpl(int in, char direction, Object operand) {
         instr = in;
         this.direction = direction;
         this.operand = operand;
     }
 
-    public RAMInstruction(int in, String label) {
+    public RAMInstructionImpl(int in, String label) {
         this.instr = in;
         this.direction = 0;
         this.operand = -1;
@@ -129,8 +131,4 @@ public class RAMInstruction implements C451E861E4A4CCDA8E08442AB068DE18DEE56ED8E
         return true;
     }
 
-    @Override
-    public String getID() {
-        return "ramc-instruction";
-    }
 }

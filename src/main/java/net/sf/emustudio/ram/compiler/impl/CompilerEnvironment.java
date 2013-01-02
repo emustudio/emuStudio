@@ -1,9 +1,8 @@
-/**
+/*
  * CompilerEnvironment.java
  * 
- *   KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,46 +18,47 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package ramc_ram.compiled;
+package net.sf.emustudio.ram.compiler.impl;
 
 import java.util.ArrayList;
-
-import ramc_ram.tree.Label;
+import java.util.List;
+import net.sf.emustudio.ram.compiler.tree.Label;
 
 public class CompilerEnvironment {
-    private static ArrayList<Label> labels = new ArrayList<Label>();
-    private static ArrayList<String> inputs = new ArrayList<String>();
-    
-    public static void addLabel(Label label){
-    	labels.add(label);
+    private static List<Label> labels = new ArrayList<Label>();
+    private static List<String> inputs = new ArrayList<String>();
+
+    public static void addLabel(Label label) {
+        labels.add(label);
     }
-    
+
     public static int getLabelAddr(String label) {
-    	String l = label.toUpperCase() + ":";
-    	for (int i = 0; i < labels.size(); i++) {
-    		Label lab = labels.get(i);
-    		String ll = lab.getValue().toUpperCase();
-    		if (ll.equals(l))
-    			return lab.getAddress();
-    	}
-    	// throw new ...label undefined
-    	return -1;
+        String l = label.toUpperCase() + ":";
+        for (int i = 0; i < labels.size(); i++) {
+            Label lab = labels.get(i);
+            String ll = lab.getValue().toUpperCase();
+            if (ll.equals(l)) {
+                return lab.getAddress();
+            }
+        }
+        // throw new ...label undefined
+        return -1;
     }
-    
+
     public static Label[] getLabels() {
-    	return labels.toArray(new Label[0]);
+        return labels.toArray(new Label[0]);
     }
-    
-    public static void addInputs(ArrayList<String> inp) {
-    	inputs.addAll(inp);
+
+    public static void addInputs(List<String> inp) {
+        inputs.addAll(inp);
     }
-    
-    public static ArrayList<String> getInputs() {
-    	return inputs;
+
+    public static List<String> getInputs() {
+        return inputs;
     }
-    
+
     public static void clear() {
-    	inputs.clear();
-    	labels.clear();
+        inputs.clear();
+        labels.clear();
     }
 }
