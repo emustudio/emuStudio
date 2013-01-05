@@ -22,7 +22,7 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import java.util.ArrayList;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.impl.NeedMorePassException;
@@ -173,14 +173,14 @@ public class Program {
         }
     }
 
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         for (int i = 0; i < list.size(); i++) {
             Row in = (Row) list.get(i);
             in.pass4(hex);
         }
     }
 
-    public void pass4(HEXFileHandler hex, Namespace env) throws Exception {
+    public void pass4(HEXFileManager hex, Namespace env) throws Exception {
         this.namespace = env;
         pass4(hex);
     }

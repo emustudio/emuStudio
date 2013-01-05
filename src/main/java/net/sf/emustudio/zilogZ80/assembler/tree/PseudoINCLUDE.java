@@ -22,7 +22,7 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -33,10 +33,6 @@ import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.impl.ParserZ80;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Pseudo;
 
-/**
- *
- * @author vbmacher
- */
 public class PseudoINCLUDE extends Pseudo {
 
     private String filename;
@@ -119,7 +115,7 @@ public class PseudoINCLUDE extends Pseudo {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         while (program.pass3(namespace) == true) {
             // :-)
         }

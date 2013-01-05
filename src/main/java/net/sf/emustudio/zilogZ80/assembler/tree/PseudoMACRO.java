@@ -22,7 +22,7 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import java.util.ArrayList;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
@@ -101,7 +101,7 @@ public class PseudoMACRO extends Pseudo {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         subprogram.pass4(hex, newEnv);
     }
 }

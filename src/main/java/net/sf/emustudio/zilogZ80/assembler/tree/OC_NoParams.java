@@ -22,7 +22,7 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Instruction;
 
@@ -161,7 +161,7 @@ public class OC_NoParams extends Instruction {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         String s = (getSize() == 1) ? "%1$02X" : "%1$04X";
         hex.putCode(String.format(s, opcode));
     }

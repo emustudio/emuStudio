@@ -22,7 +22,7 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.impl.NeedMorePassException;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
@@ -73,7 +73,7 @@ public class PseudoIF extends Pseudo {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         if (condTrue) {
             subprogram.pass4(hex);
         }

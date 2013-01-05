@@ -22,7 +22,7 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import java.util.ArrayList;
 import java.util.List;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
@@ -82,7 +82,7 @@ public class DataNode extends InstrData {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         DataValue dv;
         for (int i = 0; i < list.size(); i++) {
             dv = (DataValue) list.get(i);

@@ -22,7 +22,7 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.DataValue;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
@@ -53,7 +53,7 @@ public class DataDW extends DataValue {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) throws Exception {
+    public void pass4(HEXFileManager hex) throws Exception {
         hex.putCode(expression.encodeValue(2));
     }
 }

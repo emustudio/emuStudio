@@ -22,7 +22,7 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Pseudo;
@@ -67,6 +67,6 @@ public class PseudoVAR extends Pseudo {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) {
+    public void pass4(HEXFileManager hex) {
     }
 }

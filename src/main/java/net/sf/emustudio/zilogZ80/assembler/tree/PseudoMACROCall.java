@@ -22,7 +22,7 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import java.util.ArrayList;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.impl.NeedMorePassException;
@@ -33,7 +33,7 @@ public class PseudoMACROCall extends Pseudo {
 
     private ArrayList<Expression> params; // ArrayList of expressions
     private PseudoMACRO macro; // only pointer...
-    private HEXFileHandler statHex; // hex file for concrete macro
+    private HEXFileManager statHex; // hex file for concrete macro
     private String mnemo;
 
     public PseudoMACROCall(String name, ArrayList<Expression> params, int line, int column) {
@@ -44,7 +44,7 @@ public class PseudoMACROCall extends Pseudo {
         } else {
             this.params = params;
         }
-        statHex = new HEXFileHandler();
+        statHex = new HEXFileManager();
     }
 
     @Override
@@ -83,7 +83,7 @@ public class PseudoMACROCall extends Pseudo {
     }
 
     @Override
-    public void pass4(HEXFileHandler hex) {
+    public void pass4(HEXFileManager hex) {
         hex.addTable(statHex.getTable());
     }
 }

@@ -25,11 +25,11 @@ package net.sf.emustudio.zilogZ80.assembler.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.plugins.compiler.AbstractCompiler;
-import emulib.plugins.compiler.HEXFileHandler;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
+import emulib.runtime.HEXFileManager;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.MissingResourceException;
@@ -77,15 +77,15 @@ public class CompilerImpl extends AbstractCompiler {
      /**
      * Compile the source code into HEXFileHadler
      *
-     * @return HEXFileHandler object
+     * @return HEXFileManager object
      */
-    public HEXFileHandler compile(Reader in) throws Exception {
+    public HEXFileManager compile(Reader in) throws Exception {
         if (in == null) {
             return null;
         }
 
         Object parsedProgram;
-        HEXFileHandler hex = new HEXFileHandler();
+        HEXFileManager hex = new HEXFileManager();
 
         printInfo(CompilerImpl.class.getAnnotation(PluginType.class).title() + ", version " + getVersion());
         lex.reset(in, 0, 0, 0);
@@ -118,7 +118,7 @@ public class CompilerImpl extends AbstractCompiler {
     @Override
     public boolean compile(String fileName, Reader in) {
         try {
-            HEXFileHandler hex = compile(in);
+            HEXFileManager hex = compile(in);
             if (hex == null) {
                 return false;
             }
@@ -208,7 +208,7 @@ public class CompilerImpl extends AbstractCompiler {
         
         CompilerImpl compiler = new CompilerImpl(0L);
         try {
-          HEXFileHandler hex = compiler.compile(new FileReader(inputFile));
+          HEXFileManager hex = compiler.compile(new FileReader(inputFile));
           hex.generateFile(outputFile);
           System.out.println("Output saved to: " + outputFile);
         } catch (Exception e) {

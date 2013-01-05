@@ -22,7 +22,7 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.treeAbstract;
 
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 
 public abstract class DataValue {
@@ -41,7 +41,7 @@ public abstract class DataValue {
 
     public abstract int pass2(Namespace env, int addr_start) throws Exception;
 
-    public abstract void pass4(HEXFileHandler hex) throws Exception;
+    public abstract void pass4(HEXFileManager hex) throws Exception;
 
     /**
      * encode string into hex codes
