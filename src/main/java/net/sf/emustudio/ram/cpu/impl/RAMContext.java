@@ -1,9 +1,8 @@
-/**
+/*
  * RAMContext.java
  * 
- *   KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,30 +18,28 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package ramcpu.impl;
+package net.sf.emustudio.ram.cpu.impl;
 
-import interfaces.C50E67F515A7C87A67947F8FB0F82558196BE0AC7;
-import emulib.plugins.cpu.ICPUContext;
-import emulib.plugins.device.IDeviceContext;
-
-import emulib.runtime.Context;
+import emulib.plugins.cpu.CPUContext;
+import emulib.plugins.device.DeviceContext;
+import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
+import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
 
-public class RAMContext implements ICPUContext {
+public class RAMContext implements CPUContext {
+    private EmulatorImpl cpu;
+    private AbstractTapeContext[] tapes;
 
-    private RAM cpu;
-    private C50E67F515A7C87A67947F8FB0F82558196BE0AC7[] tapes;
-
-    public RAMContext(RAM cpu) {
+    public RAMContext(EmulatorImpl cpu) {
         this.cpu = cpu;
-        tapes = new C50E67F515A7C87A67947F8FB0F82558196BE0AC7[3];
+        tapes = new AbstractTapeContext[3];
     }
 
     public boolean init(long pluginID) {
         try {
-            tapes[0] = (C50E67F515A7C87A67947F8FB0F82558196BE0AC7)
-                    Context.getInstance().getDeviceContext(pluginID,
-                    C50E67F515A7C87A67947F8FB0F82558196BE0AC7.class, 0);
+            tapes[0] = (AbstractTapeContext)
+                    ContextPool.getInstance().getDeviceContext(pluginID,
+                    AbstractTapeContext.class, 0);
             if (tapes[0] == null) {
                 StaticDialogs.showErrorMessage("Could not get the Registers"
                         + " (storage tape)");
@@ -54,9 +51,9 @@ public class RAMContext implements ICPUContext {
             tapes[0].setClearAtReset(true);
             tapes[0].setTitle("Registers (storage tape)");
 
-            tapes[1] = (C50E67F515A7C87A67947F8FB0F82558196BE0AC7)
-                    Context.getInstance().getDeviceContext(pluginID,
-                    C50E67F515A7C87A67947F8FB0F82558196BE0AC7.class, 1);
+            tapes[1] = (AbstractTapeContext)
+                    ContextPool.getInstance().getDeviceContext(pluginID,
+                    AbstractTapeContext.class, 1);
             if (tapes[1] == null) {
                 StaticDialogs.showErrorMessage("Could not get the Input tape");
                 return false;
@@ -68,9 +65,9 @@ public class RAMContext implements ICPUContext {
             tapes[1].setTitle("Input tape");
             cpu.loadTape(tapes[1]);
 
-            tapes[2] = (C50E67F515A7C87A67947F8FB0F82558196BE0AC7)
-                    Context.getInstance().getDeviceContext(pluginID,
-                    C50E67F515A7C87A67947F8FB0F82558196BE0AC7.class, 2);
+            tapes[2] = (AbstractTapeContext)
+                    ContextPool.getInstance().getDeviceContext(pluginID,
+                    AbstractTapeContext.class, 2);
             if (tapes[2] == null) {
                 StaticDialogs.showErrorMessage("Could not get the Output tape");
                 return false;
@@ -88,20 +85,15 @@ public class RAMContext implements ICPUContext {
         return true;
     }
 
-    @Override
-    public String getID() {
-        return "ram-cpu-context";
-    }
-
-    public C50E67F515A7C87A67947F8FB0F82558196BE0AC7 getStorage() {
+    public AbstractTapeContext getStorage() {
         return tapes[0];
     }
 
-    public C50E67F515A7C87A67947F8FB0F82558196BE0AC7 getInput() {
+    public AbstractTapeContext getInput() {
         return tapes[1];
     }
 
-    public C50E67F515A7C87A67947F8FB0F82558196BE0AC7 getOutput() {
+    public AbstractTapeContext getOutput() {
         return tapes[2];
     }
 
@@ -134,12 +126,27 @@ public class RAMContext implements ICPUContext {
     }
 
     @Override
-    public void setInterrupt(IDeviceContext device, int mask) {
+    public void signalInterrupt(DeviceContext device, int mask) {
 
     }
 
     @Override
-    public void clearInterrupt(IDeviceContext device, int mask) {
+    public void clearInterrupt(DeviceContext device, int mask) {
         
+    }
+
+    @Override
+    public boolean isRawInterruptSupported() {
+        return false;
+    }
+
+    @Override
+    public void signalRawInterrupt(DeviceContext device, byte[] data) {
+        
+    }
+
+    @Override
+    public int getCPUFrequency() {
+        return 0;
     }
 }

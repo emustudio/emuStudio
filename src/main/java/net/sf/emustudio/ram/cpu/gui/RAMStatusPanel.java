@@ -1,9 +1,8 @@
-/**
+/*
  * RAMStatusPanel.java
  * 
+ * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012 Peter Jakubčo <pjakubco@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,35 +18,30 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package ramcpu.gui;
+package net.sf.emustudio.ram.cpu.gui;
 
+import emulib.plugins.cpu.CPU.CPUListener;
+import emulib.plugins.cpu.CPU.RunState;
+import emulib.plugins.memory.MemoryContext;
 import java.awt.Color;
 import java.awt.Font;
-import java.util.EventObject;
-
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
+import net.sf.emustudio.ram.cpu.impl.EmulatorImpl;
 
-import emulib.plugins.cpu.ICPU.ICPUListener;
-import emulib.plugins.cpu.ICPU.RunState;
-import emulib.plugins.memory.IMemoryContext;
-
-import ramcpu.impl.RAM;
-
-@SuppressWarnings("serial")
 public class RAMStatusPanel extends JPanel {
 
-    public RAMStatusPanel(final RAM cpu, final IMemoryContext mem) {
+    public RAMStatusPanel(final EmulatorImpl cpu, final MemoryContext mem) {
         initComponents();
 
-        cpu.addCPUListener(new ICPUListener() {
+        cpu.addCPUListener(new CPUListener() {
 
             @Override
-            public void runChanged(EventObject evt, RunState state) {
+            public void runChanged(RunState state) {
                 switch (state) {
                     case STATE_STOPPED_NORMAL:
                         lblStatus.setText("stopped (normal)");
@@ -66,13 +60,13 @@ public class RAMStatusPanel extends JPanel {
             }
 
             @Override
-            public void stateUpdated(EventObject evt) {
+            public void stateUpdated() {
                 String s = cpu.getR0();
                 if (s == null || s.equals("")) {
                     s = "<empty>";
                 }
                 txtR0.setText(s);
-                txtIP.setText(String.format("%04d", cpu.getInstrPosition()));
+                txtIP.setText(String.format("%04d", cpu.getInstructionPosition()));
             }
         });
     }
