@@ -31,17 +31,17 @@ import emulib.runtime.StaticDialogs;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import javax.swing.JPanel;
-import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
-import net.sf.emustudio.brainduck.cpu.gui.BrainStatusPanel;
 import net.sf.emustudio.braincpu.gui.DecoderImpl;
 import net.sf.emustudio.braincpu.gui.DisassemblerImpl;
+import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
+import net.sf.emustudio.brainduck.cpu.gui.BrainStatusPanel;
 
 @PluginType(type = PLUGIN_TYPE.CPU,
 title = "BrainCPU",
 copyright = "\u00A9 Copyright 2009-2012, Peter Jakubčo",
 description = "Emulator of CPU for abstract BrainDuck architecture")
 public class EmulatorImpl extends AbstractCPU {
-    private MemoryContext memory;
+    private MemoryContext<Short> memory;
     private BrainCPUContextImpl context;
     private int IP, P; // registers of the CPU
     private Disassembler disassembler;
@@ -255,10 +255,10 @@ public class EmulatorImpl extends AbstractCPU {
             case 3: /* INCV */
                 param = ((Short) memory.read(IP++)).shortValue();
                 if (param == 0xff) {
-                    memory.write(P, (Short) memory.read(P) + 1);
+                    memory.write(P, (short)(memory.read(P) + 1));
                 } else {
                     while (param > 0) {
-                        memory.write(P, (Short) memory.read(P) + 1);
+                        memory.write(P, (short)(memory.read(P) + 1));
                         param--;
                     }
                 }
@@ -266,10 +266,10 @@ public class EmulatorImpl extends AbstractCPU {
             case 4: /* DECV */
                 param = ((Short) memory.read(IP++)).shortValue();
                 if (param == 0xff) {
-                    memory.write(P, (Short) memory.read(P) - 1);
+                    memory.write(P, (short)(memory.read(P) - 1));
                 } else {
                     while (param > 0) {
-                        memory.write(P, (Short) memory.read(P) - 1);
+                        memory.write(P, (short)(memory.read(P) - 1));
                         param--;
                     }
                 }
