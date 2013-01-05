@@ -29,6 +29,8 @@ import emulib.plugins.cpu.Disassembler;
 import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
 import java.util.List;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 import javax.swing.JPanel;
 import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
 import net.sf.emustudio.ram.cpu.gui.RAMDisassembler;
@@ -59,7 +61,12 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public String getVersion() {
-        return "0.12b1";
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.ram.cpu.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            return "(unknown)";
+        }
     }
 
     @Override
@@ -74,8 +81,7 @@ public class EmulatorImpl extends AbstractCPU {
             return false;
         }
         if (mem.getDataType() != RAMInstruction.class) {
-            StaticDialogs.showErrorMessage("The RAM machine doesn't support"
-                    + " this kind of memory!");
+            StaticDialogs.showErrorMessage("The RAM machine doesn't support this kind of program memory!");
             return false;
         }
 
