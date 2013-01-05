@@ -20,7 +20,7 @@
  */
 package net.sf.emustudio.brainduck.brainc.tree;
 
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 
 public class Statement {
 
@@ -51,7 +51,7 @@ public class Statement {
         }
     }
 
-    public void pass2(HEXFileHandler hex) {
+    public void pass2(HEXFileManager hex) {
         if (instr == LOOP || instr == ENDL) {
             hex.putCode(String.format("%1$02X", instr));
         } else {

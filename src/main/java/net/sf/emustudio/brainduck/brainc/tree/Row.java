@@ -20,7 +20,7 @@
  */
 package net.sf.emustudio.brainduck.brainc.tree;
 
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 
 public class Row {
 
@@ -37,7 +37,7 @@ public class Row {
         return addr_start;
     }
 
-    public void pass2(HEXFileHandler hex) throws Exception {
+    public void pass2(HEXFileManager hex) throws Exception {
         if (stat != null) {
             stat.pass2(hex);
         }

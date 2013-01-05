@@ -20,7 +20,7 @@
  */
 package net.sf.emustudio.brainduck.brainc.tree;
 
-import emulib.plugins.compiler.HEXFileHandler;
+import emulib.runtime.HEXFileManager;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,7 +47,7 @@ public class Program {
         return curr_addr;
     }
 
-    public void pass2(HEXFileHandler hex) throws Exception {
+    public void pass2(HEXFileManager hex) throws Exception {
         for (int i = 0; i < list.size(); i++) {
             list.get(i).pass2(hex);
         }
