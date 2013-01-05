@@ -82,6 +82,9 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
 
         @Override
         public int getSize() {
+            if (pluginNames == null) {
+              return 0;
+            }
             return pluginNames.length;
         }
 

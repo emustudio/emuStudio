@@ -9,7 +9,7 @@
   <includeBaseDirectory>true</includeBaseDirectory>
   <dependencySets>
     <dependencySet>
-      <outputFileNameMapping>${artifact.artifactId}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
+      <outputFileNameMapping>${artifact.artifactId}-${artifact.version}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
       <outputDirectory>/lib</outputDirectory>
       <useProjectArtifact>false</useProjectArtifact>
       <useTransitiveDependencies>false</useTransitiveDependencies>
