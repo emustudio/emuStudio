@@ -30,6 +30,7 @@ import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.device.DeviceContext;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
+import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -55,7 +56,7 @@ public class EmulatorImpl extends AbstractCPU {
 
     private StatusPanel statusPanel;
     private Disassembler disassembler;
-    private MemoryContext memory;
+    private MemoryContext<Short> memory;
     private ContextImpl context;
     // 2 sets of 6 GPR
     public short B, B1, C, C1, D, D1, E, E1;
@@ -243,7 +244,7 @@ public class EmulatorImpl extends AbstractCPU {
         context = new ContextImpl(this);
         try {
             ContextPool.getInstance().register(pluginID, context, ExtendedContext.class);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             StaticDialogs.showErrorMessage("Could not register CPU Context",
                     EmulatorImpl.class.getAnnotation(PluginType.class).title());
         }
@@ -258,7 +259,13 @@ public class EmulatorImpl extends AbstractCPU {
     @Override
     public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
-        this.memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
+        
+        try {
+            this.memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
+        } catch (InvalidContextException e) {
+            // Will be processed
+        }
+        
 
         if (memory == null) {
             StaticDialogs.showErrorMessage("CPU must have access to memory");
@@ -1268,7 +1275,7 @@ public class EmulatorImpl extends AbstractCPU {
                         tmp1 = (Short) memory.read((H << 8) | L);
                         A = (short) ((A & 0xF0) | (tmp1 & 0x0F));
                         tmp1 = ((tmp1 >>> 4) & 0x0F) | (tmp << 4);
-                        memory.write(((H << 8) | L), (short) tmp1 & 0xff);
+                        memory.write(((H << 8) | L), (short)(tmp1 & 0xff));
                         F = (short) (DAA_TABLE[A] | (F & flagC));
                         return 18;
                     case 0x6F: /* RLD */
@@ -1276,7 +1283,7 @@ public class EmulatorImpl extends AbstractCPU {
                         tmp1 = (tmp >>> 4) & 0x0F;
                         tmp = ((tmp << 4) & 0xF0) | (A & 0x0F);
                         A = (short) ((A & 0xF0) | tmp1);
-                        memory.write((H << 8) | L, (short) tmp & 0xff);
+                        memory.write((H << 8) | L, (short)(tmp & 0xff));
                         F = (short) (DAA_TABLE[A] | (F & flagC));
                         return 18;
                     case 0x70: /* IN (C) - unsupported */
@@ -1654,8 +1661,8 @@ public class EmulatorImpl extends AbstractCPU {
                         return 19;
                     case 0x34: /* INC (ii+d) */
                         tmp1 = (getspecial(special) + tmp) & 0xffff;
-                        tmp2 = ((Short) memory.read(tmp1) + 1) & 0xff;
-                        memory.write(tmp1, tmp2);
+                        tmp2 = (memory.read(tmp1) + 1) & 0xff;
+                        memory.write(tmp1, (short)tmp2);
                         F = (short) ((F & 1) | INCZ80_TABLE[tmp2]);
                         return 23;
                     case 0x35: /* DEC (ii+d) */
@@ -1725,7 +1732,7 @@ public class EmulatorImpl extends AbstractCPU {
                         putspecial(special, tmp1);
                         return 20;
                     case 0x36: /* LD (ii+d),d */
-                        memory.write(getspecial(special) + (tmp & 0xff), (tmp >>> 8) & 0xff);
+                        memory.write(getspecial(special) + (tmp & 0xff), (short)((tmp >>> 8) & 0xff));
                         return 19;
                     case 0xCB:
                         OP = (short) ((tmp >>> 8) & 0xff);
@@ -1755,9 +1762,9 @@ public class EmulatorImpl extends AbstractCPU {
                             case 0xBE:
                                 tmp2 = (OP >>> 3) & 7;
                                 tmp3 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) memory.read(tmp3);
+                                tmp1 = memory.read(tmp3);
                                 tmp1 = (tmp1 & (~(1 << tmp2)));
-                                memory.write(tmp3, tmp1 & 0xff);
+                                memory.write(tmp3, (short)(tmp1 & 0xff));
                                 return 23;
                             /* SET b,(ii+d) */
                             case 0xC6:
@@ -1772,7 +1779,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 tmp3 = (getspecial(special) + tmp) & 0xffff;
                                 tmp1 = (Short) memory.read(tmp3);
                                 tmp1 = (tmp1 | (1 << tmp2));
-                                memory.write(tmp3, tmp1 & 0xff);
+                                memory.write(tmp3, (short)(tmp1 & 0xff));
                                 return 23;
                             case 0x06: /* RLC (ii+d) */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
@@ -1780,7 +1787,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 F = (short) ((tmp1 >>> 7) & 0xff);
                                 tmp1 <<= 1;
                                 tmp1 |= (F & 1);
-                                memory.write(tmp2, tmp1 & 0xff);
+                                memory.write(tmp2, (short)(tmp1 & 0xff));
                                 F |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x0E: /* RRC (ii+d) */
@@ -1789,7 +1796,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 F = (short) (tmp1 & 1);
                                 tmp1 >>>= 1;
                                 tmp1 |= ((F & 1) << 7);
-                                memory.write(tmp2, tmp1 & 0xff);
+                                memory.write(tmp2, (short)(tmp1 & 0xff));
                                 F |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x16: /* RL (ii+d) */
@@ -1799,7 +1806,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 F = (short) ((tmp1 >>> 7) & 0xff);
                                 tmp1 <<= 1;
                                 tmp1 |= tmp3;
-                                memory.write(tmp2, tmp1 & 0xff);
+                                memory.write(tmp2, (short)(tmp1 & 0xff));
                                 F |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x1E: /* RR (ii+d) */
@@ -1809,7 +1816,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 F = (short) (tmp1 & 1);
                                 tmp1 >>>= 1;
                                 tmp1 |= (tmp3 << 7);
-                                memory.write(tmp2, tmp1 & 0xff);
+                                memory.write(tmp2, (short)(tmp1 & 0xff));
                                 F |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x26: /* SLA (ii+d) */
@@ -1817,7 +1824,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 tmp1 = (Short) memory.read(tmp2);
                                 F = (short) ((tmp1 >>> 7) & 0xff);
                                 tmp1 <<= 1;
-                                memory.write(tmp2, tmp1 & 0xff);
+                                memory.write(tmp2, (short)(tmp1 & 0xff));
                                 F |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x2E: /* SRA (ii+d) */
@@ -1827,7 +1834,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 F = (short) (tmp1 & 1);
                                 tmp1 >>>= 1;
                                 tmp1 |= tmp3;
-                                memory.write(tmp2, tmp1 & 0xff);
+                                memory.write(tmp2, (short)(tmp1 & 0xff));
                                 F |= DAA_TABLE[tmp1];
                                 return 23;
                             case 0x36: /* SLL (ii+d) unsupported */
@@ -1837,7 +1844,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 tmp3 = tmp1 & 1;
                                 tmp1 <<= 1;
                                 tmp1 |= tmp3;
-                                memory.write(tmp2, tmp1 & 0xff);
+                                memory.write(tmp2, (short)(tmp1 & 0xff));
                                 F |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x3E: /* SRL (ii+d) */
@@ -1845,7 +1852,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 tmp1 = (Short) memory.read(tmp2);
                                 F = (short) (tmp1 & 1);
                                 tmp1 >>>= 1;
-                                memory.write(tmp2, tmp1 & 0xff);
+                                memory.write(tmp2, (short)(tmp1 & 0xff));
                                 F |= ((tmp1 == 0) ? flagZ : 0) | PARITY_TABLE[tmp1];
                                 return 23;
                         }
