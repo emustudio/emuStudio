@@ -31,6 +31,7 @@ import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
+import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -131,7 +132,7 @@ public class EmulatorImpl extends AbstractCPU {
         context = new ContextImpl(this);
         try {
             ContextPool.getInstance().register(pluginID, context, ExtendedContext.class);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             StaticDialogs.showErrorMessage("Could not register CPU Context", 
                     EmulatorImpl.class.getAnnotation(PluginType.class).title());
         }
@@ -153,21 +154,27 @@ public class EmulatorImpl extends AbstractCPU {
     @Override
     public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
-        this.memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
+        try {
+            this.memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
 
-        if (memory == null) {
-            StaticDialogs.showErrorMessage("CPU must have access to memory");
+            if (memory == null) {
+                StaticDialogs.showErrorMessage("CPU must have access to memory");
+                return false;
+            }
+            if (memory.getDataType() != Short.class) {
+                StaticDialogs.showErrorMessage("Operating memory type is not supported for this kind of CPU.");
+                return false;
+            }
+
+            // create disassembler and debug columns
+            disasm = new DisassemblerImpl(memory, new DecoderImpl(memory));
+
+            return true;
+        } catch (InvalidContextException e) {
+            StaticDialogs.showErrorMessage("Could not get memory context",
+                    EmulatorImpl.class.getAnnotation(PluginType.class).title());
             return false;
         }
-        if (memory.getDataType() != Short.class) {
-            StaticDialogs.showErrorMessage("Operating memory type is not supported for this kind of CPU.");
-            return false;
-        }
-
-        // create disassembler and debug columns
-        disasm = new DisassemblerImpl(memory, new DecoderImpl(memory));
-
-        return true;
     }
 
     @Override
