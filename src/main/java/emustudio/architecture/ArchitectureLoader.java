@@ -29,6 +29,8 @@ import emulib.plugins.compiler.Compiler;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
+import emulib.runtime.InvalidPasswordException;
+import emulib.runtime.InvalidPluginException;
 import emulib.runtime.PluginLoader;
 import emustudio.architecture.drawing.Schema;
 import emustudio.main.Main;
@@ -383,7 +385,8 @@ public class ArchitectureLoader implements ConfigurationManager {
      * @return instance of virtual architecture
      */
     public ArchitectureManager createArchitecture(String configName)
-            throws PluginLoadingException, ReadConfigurationException, PluginInitializationException {
+            throws PluginLoadingException, ReadConfigurationException, PluginInitializationException,
+            InvalidPasswordException, InvalidPluginException {
         
         Properties settings = readConfiguration(configName, true);
         Map<String, PluginInfo> pluginsToLoad = new HashMap<String, PluginInfo>();
@@ -421,7 +424,8 @@ public class ArchitectureLoader implements ConfigurationManager {
             if (pluginLoader.loadUndoneClasses(Main.password)) {
                 pluginLoader.resolveLoadedClasses(Main.password);
             } else {
-                throw new PluginLoadingException("Cannot load all classes of plug-ins.", "[unknown]", null);
+                throw new PluginLoadingException("Cannot load all classes of plug-ins:" 
+                        + Arrays.toString(pluginLoader.getUnloadedClassesList(Main.password)), "[unknown]", null);
             }
         }
         logger.info("All plugins are loaded and resolved.");
@@ -531,13 +535,12 @@ public class ArchitectureLoader implements ConfigurationManager {
      * the constructor - Long pluginID and ISettingsHandler settings.
      * 
      * @param dirname type of a plugin (compiler, cpu, memory, devices)
-     * @param filename name of the plugin
+     * @param pluginName name of the plugin
      * @return Main class of the plugin. It must be resolved before first use.
      */
-    private Class<Plugin> loadPlugin(String dirname, String filename) {
-        
+    private Class<Plugin> loadPlugin(String dirname, String pluginName) throws InvalidPasswordException, InvalidPluginException {
         return emulib.runtime.PluginLoader.getInstance().loadPlugin(configurationBaseDirectory + File.separator 
-                + dirname + File.separator + filename, Main.password);
+                + dirname + File.separator + pluginName + ".jar", Main.password);
     }
     
     /**

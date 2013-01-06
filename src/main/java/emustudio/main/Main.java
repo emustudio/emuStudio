@@ -22,6 +22,8 @@
  */
 package emustudio.main;
 
+import emulib.runtime.InvalidPasswordException;
+import emulib.runtime.InvalidPluginException;
 import emulib.runtime.StaticDialogs;
 import emustudio.architecture.*;
 import emustudio.gui.LoadingDialog;
@@ -167,19 +169,24 @@ public class Main {
         // load the virtual computer
         try {
             architecture = ArchitectureLoader.getInstance().createArchitecture(commandLine.getConfigName());
+        } catch (InvalidPasswordException e) {
+            logger.error("Wrong emuLib.", e);
+            tryShowErrorMessage("Wrong emuLib. Please see log file for details.");
+        } catch (InvalidPluginException e) {
+            logger.error("Could not load plugin.", e);
+            tryShowErrorMessage("Could not load plugin. Please see log file for details.");
         } catch (PluginLoadingException e) {
-            architecture = null;
             logger.error("Could not load virtual computer.", e);
-            tryShowErrorMessage(new StringBuilder().append("Could not load virtual computer: ")
-                    .append(e.getLocalizedMessage()).toString());
+            tryShowErrorMessage("Could not load virtual computer. Please see log file for details.");
         } catch (ReadConfigurationException e) {
             logger.error("Could not read configuration.", e);
-            tryShowErrorMessage(new StringBuilder().append("Error: Could not read configuration: ")
-                    .append(e.getLocalizedMessage()).toString());
+            tryShowErrorMessage("Error: Could not read configuration. Please see log file for details.");
         } catch (PluginInitializationException e) {
             logger.error("Could not initialize plug-ins.", e);
-            tryShowErrorMessage(new StringBuilder().append("Error: Could not initialize plug-ins: ")
-                    .append(e.getLocalizedMessage()).toString());
+            tryShowErrorMessage("Error: Could not initialize plug-ins. Please see log file for details.");
+        } catch (Exception e) {
+            logger.error("Could not load virtual computer. Unexpected error.", e);
+            tryShowErrorMessage("Could not load virtual computer. Please see log file for details.");
         }
 
         if (!commandLine.noGUIWanted()) {
