@@ -46,7 +46,7 @@ public class AbstractTape extends AbstractDevice {
         context = new AbstractTapeContextImpl(this);
         try {
             ContextPool.getInstance().register(pluginID, context, AbstractTapeContext.class);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             StaticDialogs.showErrorMessage("Could not register Tape Context",
                     AbstractTape.class.getAnnotation(PluginType.class).title());
         }
