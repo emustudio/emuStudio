@@ -29,6 +29,7 @@ import emulib.emustudio.SettingsManager;
 import emulib.plugins.device.AbstractDevice;
 import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
+import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -79,7 +80,7 @@ public class SIOImpl extends AbstractDevice {
 
         try {
             ContextPool.getInstance().register(pluginID, dataPort, DeviceContext.class);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             StaticDialogs.showErrorMessage("Could not register MITS 88-SIO context",
                     SIOImpl.class.getAnnotation(PluginType.class).title());
         }
@@ -149,8 +150,14 @@ public class SIOImpl extends AbstractDevice {
         super.initialize(settings);
         readSettings();
 
-        cpu = (ExtendedContext) ContextPool.getInstance().getCPUContext(pluginID,
-                ExtendedContext.class);
+        try {
+            cpu = (ExtendedContext) ContextPool.getInstance().getCPUContext(pluginID,
+                    ExtendedContext.class);
+        } catch (InvalidContextException e) {
+            StaticDialogs.showErrorMessage("Warning: Could not connect to CPU",
+                    SIOImpl.class.getAnnotation(PluginType.class).title());
+        }
+        
         if (cpu == null) {
             return true;
         }
