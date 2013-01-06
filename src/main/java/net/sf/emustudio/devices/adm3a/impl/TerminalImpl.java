@@ -28,6 +28,7 @@ import emulib.emustudio.SettingsManager;
 import emulib.plugins.device.AbstractDevice;
 import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
+import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -49,7 +50,7 @@ public class TerminalImpl extends AbstractDevice {
         terminal = new TerminalDisplay(80, 25);
         try {
             ContextPool.getInstance().register(pluginID, terminal, DeviceContext.class);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             StaticDialogs.showErrorMessage("Could not register ADM-3A terminal",
                     TerminalImpl.class.getAnnotation(PluginType.class).title());
         }
@@ -60,17 +61,23 @@ public class TerminalImpl extends AbstractDevice {
     public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
 
-        // try to connect to a serial I/O board
-        DeviceContext device = ContextPool.getInstance().getDeviceContext(pluginID,
-                DeviceContext.class);
+        try {
+            // try to connect to a serial I/O board
+            DeviceContext device = ContextPool.getInstance().getDeviceContext(pluginID,
+                    DeviceContext.class);
 
-        if (device != null) {
-            female.attachDevice(device);
+            if (device != null) {
+                female.attachDevice(device);
+            }
+
+            terminalGUI = new TerminalWindow(terminal, female);
+            readSettings();
+            return true;
+        } catch (InvalidContextException e) {
+            StaticDialogs.showErrorMessage("Could not get serial I/O board Context",
+                    TerminalImpl.class.getAnnotation(PluginType.class).title());
+            return false;
         }
-
-        terminalGUI = new TerminalWindow(terminal, female);
-        readSettings();
-        return true;
     }
 
     private void readSettings() {
