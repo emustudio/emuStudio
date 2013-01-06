@@ -27,6 +27,7 @@ import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.CPUContext;
 import emulib.plugins.cpu.Disassembler;
 import emulib.runtime.ContextPool;
+import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -53,7 +54,7 @@ public class EmulatorImpl extends AbstractCPU {
         context = new RAMContext(this);
         try {
             ContextPool.getInstance().register(pluginID, context, CPUContext.class);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             StaticDialogs.showErrorMessage("Could not register RAM CPU Context",
                     EmulatorImpl.class.getAnnotation(PluginType.class).title());
         }
@@ -73,8 +74,12 @@ public class EmulatorImpl extends AbstractCPU {
     public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
 
-        mem = (RAMMemoryContext) ContextPool.getInstance().getMemoryContext(pluginID,
-                RAMMemoryContext.class);
+        try {
+            mem = (RAMMemoryContext) ContextPool.getInstance().getMemoryContext(pluginID,
+                    RAMMemoryContext.class);
+        } catch (InvalidContextException e) {
+            // Will be processed later on
+        }
 
         if (mem == null) {
             StaticDialogs.showErrorMessage("RAM must have access to program memory");

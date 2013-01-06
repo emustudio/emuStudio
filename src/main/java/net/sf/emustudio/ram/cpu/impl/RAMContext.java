@@ -38,11 +38,9 @@ public class RAMContext implements CPUContext {
     public boolean init(long pluginID) {
         try {
             tapes[0] = (AbstractTapeContext)
-                    ContextPool.getInstance().getDeviceContext(pluginID,
-                    AbstractTapeContext.class, 0);
+                    ContextPool.getInstance().getDeviceContext(pluginID, AbstractTapeContext.class, 0);
             if (tapes[0] == null) {
-                StaticDialogs.showErrorMessage("Could not get the Registers"
-                        + " (storage tape)");
+                StaticDialogs.showErrorMessage("Could not get the Registers (storage tape)");
                 return false;
             }
             tapes[0].setBounded(true);
@@ -52,8 +50,7 @@ public class RAMContext implements CPUContext {
             tapes[0].setTitle("Registers (storage tape)");
 
             tapes[1] = (AbstractTapeContext)
-                    ContextPool.getInstance().getDeviceContext(pluginID,
-                    AbstractTapeContext.class, 1);
+                    ContextPool.getInstance().getDeviceContext(pluginID, AbstractTapeContext.class, 1);
             if (tapes[1] == null) {
                 StaticDialogs.showErrorMessage("Could not get the Input tape");
                 return false;
@@ -66,8 +63,7 @@ public class RAMContext implements CPUContext {
             cpu.loadTape(tapes[1]);
 
             tapes[2] = (AbstractTapeContext)
-                    ContextPool.getInstance().getDeviceContext(pluginID,
-                    AbstractTapeContext.class, 2);
+                    ContextPool.getInstance().getDeviceContext(pluginID, AbstractTapeContext.class, 2);
             if (tapes[2] == null) {
                 StaticDialogs.showErrorMessage("Could not get the Output tape");
                 return false;
@@ -77,9 +73,8 @@ public class RAMContext implements CPUContext {
             tapes[2].setPosVisible(true);
             tapes[2].setClearAtReset(true);
             tapes[2].setTitle("Output tape");
-        } catch (IndexOutOfBoundsException e) {
-            StaticDialogs.showErrorMessage("One or more tapes needs to"
-                    + " be connected to the CPU!");
+        } catch (Exception e) {
+            StaticDialogs.showErrorMessage("One or more tapes needs to be connected to the CPU!");
             return false;
         }
         return true;
