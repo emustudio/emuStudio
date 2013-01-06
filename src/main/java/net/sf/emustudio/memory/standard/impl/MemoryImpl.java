@@ -55,7 +55,7 @@ public class MemoryImpl extends AbstractMemory {
         try {
             ContextPool.getInstance().register(pluginID, context, StandardMemoryContext.class);
             ContextPool.getInstance().register(pluginID, context, MemoryContext.class);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             StaticDialogs.showErrorMessage("Could not register the memory", 
                     MemoryImpl.class.getAnnotation(PluginType.class).title());
         }
