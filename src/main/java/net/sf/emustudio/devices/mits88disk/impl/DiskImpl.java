@@ -29,6 +29,7 @@ import emulib.emustudio.SettingsManager;
 import emulib.plugins.device.AbstractDevice;
 import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
+import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -183,8 +184,12 @@ public class DiskImpl extends AbstractDevice {
     public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
 
-        cpuContext = (ExtendedContext) ContextPool.getInstance()
-                .getCPUContext(pluginID, ExtendedContext.class);
+        try {
+            cpuContext = (ExtendedContext) ContextPool.getInstance()
+                    .getCPUContext(pluginID, ExtendedContext.class);
+        } catch (InvalidContextException e) {
+            // Error will be reported later on
+        }
 
         if (cpuContext == null) {
             StaticDialogs.showErrorMessage("Cannot connect to the CPU", "88-DISK");
