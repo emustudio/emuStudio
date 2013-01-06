@@ -25,6 +25,7 @@ import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.device.AbstractDevice;
 import emulib.runtime.ContextPool;
+import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -55,16 +56,24 @@ public class SIMHpseudo extends AbstractDevice {
     @Override
     public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
-        cpu = (ExtendedContext)ContextPool.getInstance().getCPUContext(pluginID,
-                ExtendedContext.class);
+        try {
+        cpu = (ExtendedContext)ContextPool.getInstance().getCPUContext(pluginID, ExtendedContext.class);
+        } catch (InvalidContextException e) {
+            // Will be processed 
+        }
+        
         if (cpu == null) {
             StaticDialogs.showErrorMessage("SIMH-pseudo device has to be attached"
                     + " to a CPU");
             return false;
         }
 
-        mem = (StandardMemoryContext)ContextPool.getInstance().getMemoryContext(pluginID,
-                StandardMemoryContext.class);
+        try {
+            mem = (StandardMemoryContext) ContextPool.getInstance().getMemoryContext(pluginID, StandardMemoryContext.class);
+        } catch (InvalidContextException e) {
+            // Will be processed later
+        }
+
         if (mem == null) {
             StaticDialogs.showErrorMessage("SIMH-pseudo device has to be attached"
                     + " to a Memory");
