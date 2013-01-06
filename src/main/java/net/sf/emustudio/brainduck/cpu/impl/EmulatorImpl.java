@@ -86,11 +86,12 @@ public class EmulatorImpl extends AbstractCPU {
                 return false;
             }
             disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
+            return true;
         } catch (InvalidContextException e) {
-            StaticDialogs.showErrorMessage("Could not get memory Context",
+            StaticDialogs.showErrorMessage("Could not get memory context",
                     EmulatorImpl.class.getAnnotation(PluginType.class).title());
+            return false;
         }
-        return true;
     }
 
     @Override
