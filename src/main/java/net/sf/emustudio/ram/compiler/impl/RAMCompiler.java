@@ -27,6 +27,7 @@ import emulib.plugins.compiler.AbstractCompiler;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
 import emulib.runtime.ContextPool;
+import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.io.Reader;
 import java.util.MissingResourceException;
@@ -55,7 +56,7 @@ public class RAMCompiler extends AbstractCompiler {
         context = new RAMInstructionImpl(0, null);
         try {
             ContextPool.getInstance().register(pluginID, context, RAMInstruction.class);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             StaticDialogs.showErrorMessage("Could not register RAM instruction context",
                     RAMCompiler.class.getAnnotation(PluginType.class).title());
         }
@@ -74,8 +75,12 @@ public class RAMCompiler extends AbstractCompiler {
     @Override
     public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
-        memory = (RAMMemoryContext) ContextPool.getInstance().getMemoryContext(pluginID,
-                RAMMemoryContext.class);
+        try {
+            memory = (RAMMemoryContext) ContextPool.getInstance().getMemoryContext(pluginID,
+                    RAMMemoryContext.class);
+        } catch (InvalidContextException e) {
+            // Will be processed
+        }
 
         if (memory == null) {
             StaticDialogs.showErrorMessage("Error: Could not access RAM program memory");
