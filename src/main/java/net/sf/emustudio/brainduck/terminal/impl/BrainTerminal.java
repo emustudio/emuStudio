@@ -26,6 +26,7 @@ import emulib.emustudio.SettingsManager;
 import emulib.plugins.device.AbstractDevice;
 import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
+import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -48,7 +49,7 @@ public class BrainTerminal extends AbstractDevice {
         
         try {
             ContextPool.getInstance().register(pluginID, terminal, DeviceContext.class);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             StaticDialogs.showErrorMessage("Could not register CPU Context",
                     getTitle());
         }
@@ -68,8 +69,12 @@ public class BrainTerminal extends AbstractDevice {
     public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
 
-        cpu = (BrainCPUContext)ContextPool.getInstance()
-                .getCPUContext(pluginID, BrainCPUContext.class);
+        try {
+            cpu = (BrainCPUContext)ContextPool.getInstance().getCPUContext(pluginID, BrainCPUContext.class);
+        } catch (InvalidContextException e) {
+            // Will be processed
+        }
+        
         if (cpu == null) {
             StaticDialogs.showErrorMessage("BrainTerminal needs to be connected to the BrainCPU.");
             return false;
