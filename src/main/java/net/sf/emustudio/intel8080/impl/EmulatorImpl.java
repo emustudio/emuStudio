@@ -45,16 +45,16 @@ import net.sf.emustudio.intel8080.gui.DisassemblerImpl;
 import net.sf.emustudio.intel8080.gui.StatusPanel;
 
 /**
- * Main implementation class for CPU emulation
- * CPU works in a separate thread (parallel with other hardware)
- * 
- * @author vbmacher
+ * Main implementation class for CPU emulation CPU works in a separate thread (parallel with other hardware)
+ *
+ * @author Peter Jakubčo
  */
-@PluginType(type=PLUGIN_TYPE.CPU,
-        title="Intel 8080 CPU",
-        copyright="\u00A9 Copyright 2007-2012, Peter Jakubčo",
-        description="Emulator of Intel 8080 CPU")
+@PluginType(type = PLUGIN_TYPE.CPU,
+title = "Intel 8080 CPU",
+copyright = "\u00A9 Copyright 2007-2012, Peter Jakubčo",
+description = "Emulator of Intel 8080 CPU")
 public class EmulatorImpl extends AbstractCPU {
+
     private static final byte PARITY[] = {
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0,
         1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1,
@@ -65,18 +65,15 @@ public class EmulatorImpl extends AbstractCPU {
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0,
         1, 0, 0, 1
     };
-
     private StatusPanel statusPanel;
     private MemoryContext<Short> memory;
     private ContextImpl context;
     private Disassembler disasm;
-
     // cpu speed
     private long executedCycles = 0; // count of executed cycles for frequency calculation
     private java.util.Timer frequencyScheduler;
     private FrequencyUpdater frequencyUpdater;
     private int checkTimeSlice = 100;
-
     // registers are public meant for only StatusPanel (didnt want make it thru getters)
     private int PC = 0; // program counter
     public int SP = 0; // stack pointer
@@ -90,19 +87,14 @@ public class EmulatorImpl extends AbstractCPU {
 
     /**
      * This class performs runtime frequency calculation and updating.
-     * 
-     * Given: time, executed cycles count
-     * Frequency is defined as number of something by some period of time.
-     * Hz = 1/s, kHz = 1000/s
-     * time has to be in seconds
-     * 
-     * CC ..by.. time[s]
-     * XX ..by.. 1 [s] ?
-     * ---------------
-     * XX:CC = 1:time
-     * XX = CC / time [Hz]
+     *
+     * Given: time, executed cycles count Frequency is defined as number of something by some period of time. Hz = 1/s,
+     * kHz = 1000/s time has to be in seconds
+     *
+     * CC ..by.. time[s] XX ..by.. 1 [s] ? --------------- XX:CC = 1:time XX = CC / time [Hz]
      */
     private class FrequencyUpdater extends TimerTask {
+
         private long startTimeSaved = 0;
         private float frequency;
 
@@ -120,11 +112,10 @@ public class EmulatorImpl extends AbstractCPU {
             fireFrequencyChanged(frequency);
         }
     }
-    
-    
-    /** 
+
+    /**
      * Creates a new instance of EmulatorImpl.
-     * 
+     *
      * @param pluginID plugin unique ID
      */
     public EmulatorImpl(Long pluginID) {
@@ -133,7 +124,7 @@ public class EmulatorImpl extends AbstractCPU {
         try {
             ContextPool.getInstance().register(pluginID, context, ExtendedContext.class);
         } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Could not register CPU Context", 
+            StaticDialogs.showErrorMessage("Could not register CPU Context",
                     EmulatorImpl.class.getAnnotation(PluginType.class).title());
         }
         statusPanel = new StatusPanel(this, context);
@@ -208,7 +199,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     /**
-     *  Stops an emulation
+     * Stops an emulation
      */
     @Override
     public void stop() {
@@ -283,22 +274,19 @@ public class EmulatorImpl extends AbstractCPU {
         } catch (Exception e) {
         }
     }
-    
+
     /**
      * Run a CPU execution (thread).
-     * 
-     * Real-time CPU frequency balancing
-     * *********************************
-     * 
-     * 1 cycle is performed in 1 periode of CPU frequency.
-     * CPU_PERIODE = 1 / CPU_FREQ [micros]
+     *
+     * Real-time CPU frequency balancing *********************************
+     *
+     * 1 cycle is performed in 1 periode of CPU frequency. CPU_PERIODE = 1 / CPU_FREQ [micros]
      * cycles_to_execute_per_second = 1000 / CPU_PERIODE
-     * 
-     * cycles_to_execute_per_second = 1000 / (1/CPU_FREQ)
-     * cycles_to_execute_per_second = 1000 * CPU_FREQ
-     * 
+     *
+     * cycles_to_execute_per_second = 1000 / (1/CPU_FREQ) cycles_to_execute_per_second = 1000 * CPU_FREQ
+     *
      * 1000 s = 1 micros => slice_length (can vary)
-     * 
+     *
      */
     @Override
     public void run() {
@@ -323,23 +311,23 @@ public class EmulatorImpl extends AbstractCPU {
             i++;
             startTime = System.nanoTime();
             cycles_executed = 0;
-                while ((cycles_executed < cycles_to_execute)
-                        && (runState == RunState.STATE_RUNNING)) {
-                    try {
-                        cycles = evalStep();
-                    } catch (IndexOutOfBoundsException e) {
-                        runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
-                        break;
-                    } catch (Error er) {
-                        runState = RunState.STATE_STOPPED_BREAK;
-                        break;
-                    }
+            while ((cycles_executed < cycles_to_execute)
+                    && (runState == RunState.STATE_RUNNING)) {
+                try {
+                    cycles = evalStep();
                     cycles_executed += cycles;
                     executedCycles += cycles;
                     if (isBreakpointSet(PC) == true) {
                         throw new Error();
                     }
+                } catch (IndexOutOfBoundsException e) {
+                    runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
+                    break;
+                } catch (Error er) {
+                    runState = RunState.STATE_STOPPED_BREAK;
+                    break;
                 }
+            }
             endTime = System.nanoTime() - startTime;
             if (endTime < slice) {
                 // time correction
@@ -470,7 +458,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     /* Return the value of a selected register pair, in PUSH
-    format where 3 means A& flags, not SP
+     format where 3 means A& flags, not SP
      */
     private int getpush(int reg) {
         int stat;
@@ -490,7 +478,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     /* Place data into the indicated register pair, in PUSH
-    format where 3 means A& flags, not SP
+     format where 3 means A& flags, not SP
      */
     private void putpush(int reg, int val) {
         short high, low;
@@ -517,7 +505,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     /* Set the <C>arry, <S>ign, <Z>ero and <P>arity flags following
-    an arithmetic operation on 'reg'. 8080 changes AC flag
+     an arithmetic operation on 'reg'. 8080 changes AC flag
      */
     private void setarith(int reg, int before) {
         if ((reg & 0x100) != 0) {
@@ -545,7 +533,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     /* Set the <S>ign, <Z>ero amd <P>arity flags following
-    an INR/DCR operation on 'reg'.
+     an INR/DCR operation on 'reg'.
      */
     private void setinc(int reg, int before) {
         if ((reg & 0x80) != 0) {
@@ -567,7 +555,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     /* Set the <C>arry, <S>ign, <Z>ero amd <P>arity flags following
-    a logical (bitwise) operation on 'reg'.
+     a logical (bitwise) operation on 'reg'.
      */
     private void setlogical(int reg) {
         Flags &= (~flagC);
@@ -586,7 +574,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     /* Set the Parity (P) flag based on parity of 'reg', i.e., number
-    of bits on even: P=0200000, else P=0
+     of bits on even: P=0200000, else P=0
      */
     private void parity(int reg) {
         if (PARITY[reg & 0xFF] == 1) {
@@ -650,7 +638,7 @@ public class EmulatorImpl extends AbstractCPU {
         }
 
         /* Handle below all operations which refer to registers or register pairs.
-        After that, a large switch statement takes care of all other opcodes */
+         After that, a large switch statement takes care of all other opcodes */
         if ((OP & 0xC0) == 0x40) {                             /* MOV */
             putreg((OP >>> 3) & 0x07, getreg(OP & 0x07));
             if (((OP & 0x07) == 6) || (((OP >>> 3) & 0x07) == 6)) {
