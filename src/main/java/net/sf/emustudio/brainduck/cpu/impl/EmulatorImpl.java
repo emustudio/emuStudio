@@ -27,6 +27,7 @@ import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
+import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -41,6 +42,7 @@ title = "BrainCPU",
 copyright = "\u00A9 Copyright 2009-2012, Peter Jakubčo",
 description = "Emulator of CPU for abstract BrainDuck architecture")
 public class EmulatorImpl extends AbstractCPU {
+
     private MemoryContext<Short> memory;
     private BrainCPUContextImpl context;
     private int IP, P; // registers of the CPU
@@ -51,7 +53,7 @@ public class EmulatorImpl extends AbstractCPU {
         context = new BrainCPUContextImpl();
         try {
             ContextPool.getInstance().register(pluginID, context, BrainCPUContext.class);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             StaticDialogs.showErrorMessage("Could not register CPU Context",
                     EmulatorImpl.class.getAnnotation(PluginType.class).title());
         }
@@ -70,19 +72,24 @@ public class EmulatorImpl extends AbstractCPU {
     @Override
     public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
-        memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
+        try {
+            memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
 
-        if (memory == null) {
-            StaticDialogs.showErrorMessage("BrainCPU must have access to memory");
-            return false;
-        }
+            if (memory == null) {
+                StaticDialogs.showErrorMessage("BrainCPU must have access to memory");
+                return false;
+            }
 
-        if (memory.getDataType() != Short.class) {
-            StaticDialogs.showErrorMessage("Operating memory type is not supported"
-                    + " for this kind of CPU.");
-            return false;
+            if (memory.getDataType() != Short.class) {
+                StaticDialogs.showErrorMessage("Operating memory type is not supported"
+                        + " for this kind of CPU.");
+                return false;
+            }
+            disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
+        } catch (InvalidContextException e) {
+            StaticDialogs.showErrorMessage("Could not get memory Context",
+                    EmulatorImpl.class.getAnnotation(PluginType.class).title());
         }
-        disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         return true;
     }
 
@@ -255,10 +262,10 @@ public class EmulatorImpl extends AbstractCPU {
             case 3: /* INCV */
                 param = ((Short) memory.read(IP++)).shortValue();
                 if (param == 0xff) {
-                    memory.write(P, (short)(memory.read(P) + 1));
+                    memory.write(P, (short) (memory.read(P) + 1));
                 } else {
                     while (param > 0) {
-                        memory.write(P, (short)(memory.read(P) + 1));
+                        memory.write(P, (short) (memory.read(P) + 1));
                         param--;
                     }
                 }
@@ -266,10 +273,10 @@ public class EmulatorImpl extends AbstractCPU {
             case 4: /* DECV */
                 param = ((Short) memory.read(IP++)).shortValue();
                 if (param == 0xff) {
-                    memory.write(P, (short)(memory.read(P) - 1));
+                    memory.write(P, (short) (memory.read(P) - 1));
                 } else {
                     while (param > 0) {
-                        memory.write(P, (short)(memory.read(P) - 1));
+                        memory.write(P, (short) (memory.read(P) - 1));
                         param--;
                     }
                 }
@@ -302,7 +309,7 @@ public class EmulatorImpl extends AbstractCPU {
                     return;
                 }
                 byte loop_count = 0; // loop nesting level counter
-                
+
                 // We might have only 127 nesting levels at max.
                 // If this is broken, then we start to look for "endl" instruction
                 // on the same nesting level (according to loop_count value)
