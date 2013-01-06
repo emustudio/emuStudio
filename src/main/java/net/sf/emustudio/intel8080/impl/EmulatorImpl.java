@@ -67,7 +67,7 @@ public class EmulatorImpl extends AbstractCPU {
     };
 
     private StatusPanel statusPanel;
-    private MemoryContext memory;
+    private MemoryContext<Short> memory;
     private ContextImpl context;
     private Disassembler disasm;
 
