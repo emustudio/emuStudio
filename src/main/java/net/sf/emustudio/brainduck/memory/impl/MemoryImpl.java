@@ -43,7 +43,7 @@ public class MemoryImpl extends AbstractMemory {
         memContext = new MemoryContextImpl();
         try {
             ContextPool.getInstance().register(pluginID, memContext, MemoryContext.class);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             StaticDialogs.showErrorMessage("Could not register Brainduck memory",
                     MemoryImpl.class.getAnnotation(PluginType.class).title());
         }
