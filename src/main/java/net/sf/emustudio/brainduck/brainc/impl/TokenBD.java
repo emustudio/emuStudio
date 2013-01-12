@@ -23,19 +23,15 @@ package net.sf.emustudio.brainduck.brainc.impl;
 import emulib.plugins.compiler.Token;
 import java_cup.runtime.Symbol;
 
-/**
- *
- * @author vbmacher
- */
 public class TokenBD extends Symbol implements Token, SymBD {
 
     public final static int ERROR_UNKNOWN_TOKEN = 0xA05;
-    private String text; // hodnota tokenu
-    private int row;     // číslo riadka
-    private int col;     // číslo stĺpca
-    private int offset;  // pozícia tokenu
-    private int length;  // dĺžka tokenu
-    private int type;    // typ tokenu
+    private String text; // token value
+    private int row;     // row index
+    private int col;     // column index
+    private int offset;  // token offset
+    private int length;  // token length
+    private int type;    // token type
     private boolean initial;
 
     public TokenBD(int ID, int type, String text,

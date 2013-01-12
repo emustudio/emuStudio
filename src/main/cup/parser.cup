@@ -68,48 +68,51 @@ terminal String NUMBER;
 terminal TCOMMENT;
 
 non terminal Program Program;
-non terminal Row Row;
-non terminal Statement Statement;
+non terminal Instruction Instruction, Row;
 non terminal Comment;
-non terminal Integer NumberOpt;
+non terminal Integer Number;
 
 start with Program;
 
 Program ::= Row:row
             {:
                 Program program = new Program();
-                if (row != null) program.addRow(row);
+                if (row != null) {
+                    program.add(row);
+                }
                 RESULT = program;
-            :}
-          | Program:program EOL Row:row
+            :} |
+            Program:program EOL Row:row
             {:
-                if (row != null) program.addRow(row);
+                if (row != null) {
+                    program.add(row);
+                }
                 RESULT = program;
             :};
 
-Row ::= Statement:stmt Comment
-        {: RESULT = new Row(stmt); :}
-      | Comment
+Row ::= Instruction:instruction Comment
+        {: RESULT = instruction; :} |
+        Comment
         {: RESULT = null; :};
          
 Comment ::= TCOMMENT | ;
 
-Statement ::= INC NumberOpt:num  {: RESULT = new Statement(Statement.INC, num); :}
-            | DEC NumberOpt:num  {: RESULT = new Statement(Statement.DEC, num); :}
-            | INCV NumberOpt:num {: RESULT = new Statement(Statement.INCV, num); :}
-            | DECV NumberOpt:num {: RESULT = new Statement(Statement.DECV, num); :}
-            | PRINT NumberOpt:num {: RESULT = new Statement(Statement.PRINT, num); :}
-            | LOAD NumberOpt:num {: RESULT = new Statement(Statement.LOAD, num); :}
-            | LOOP  {: RESULT = new Statement(Statement.LOOP, 0); :}
-            | ENDL  {: RESULT = new Statement(Statement.ENDL, 0); :}
-            | HALT  {: RESULT = new Statement(Statement.HALT, 0); :}
+Instruction ::=
+            INC Number:num   {: RESULT = new InstructionWithOperand(InstructionWithOperand.INC, num);   :} |
+            DEC Number:num   {: RESULT = new InstructionWithOperand(InstructionWithOperand.DEC, num);   :} |
+            INCV Number:num  {: RESULT = new InstructionWithOperand(InstructionWithOperand.INCV, num);  :} |
+            DECV Number:num  {: RESULT = new InstructionWithOperand(InstructionWithOperand.DECV, num);  :} |
+            PRINT Number:num {: RESULT = new InstructionWithOperand(InstructionWithOperand.PRINT, num); :} |
+            LOAD Number:num  {: RESULT = new InstructionWithOperand(InstructionWithOperand.LOAD, num);  :} |
+
+            INC   {: RESULT = new InstructionNoOperands(InstructionNoOperands.INC);  :} |
+            DEC   {: RESULT = new InstructionNoOperands(InstructionNoOperands.DEC);  :} |
+            INCV  {: RESULT = new InstructionNoOperands(InstructionNoOperands.INCV); :} |
+            DECV  {: RESULT = new InstructionNoOperands(InstructionNoOperands.DECV); :} |
+            LOOP  {: RESULT = new InstructionNoOperands(InstructionNoOperands.LOOP); :} |
+            ENDL  {: RESULT = new InstructionNoOperands(InstructionNoOperands.ENDL); :} |
+            HALT  {: RESULT = new InstructionNoOperands(InstructionNoOperands.HALT); :}
             ;
 
-NumberOpt ::= NUMBER:num {: 
-
-RESULT = Integer.parseInt((String)num)&0xFF;
-                            
-                         :}
-            |            {: RESULT = 0xFF;   :}
-            ;
+Number ::= NUMBER:num {: RESULT = Integer.parseInt((String)num)&0xFF; :};
 

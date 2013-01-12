@@ -106,8 +106,8 @@ public class CompilerImpl extends AbstractCompiler {
 
         // do several passes for compiling
         Program program = (Program) parsedProgram;
-        program.pass1(0);
-        program.pass2(hex);
+        program.firstPass(0);
+        program.secondPass(hex);
         return hex;
     }
 

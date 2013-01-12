@@ -1,5 +1,5 @@
 /*
- * Statement.java
+ * InstructionWithOperand.java
  * 
  * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
@@ -22,40 +22,28 @@ package net.sf.emustudio.brainduck.brainc.tree;
 
 import emulib.runtime.HEXFileManager;
 
-public class Statement {
-
-    public final static int HALT = 0;
-    public final static int INC = 1;
-    public final static int DEC = 2;
-    public final static int INCV = 3;
-    public final static int DECV = 4;
+public class InstructionWithOperand implements Instruction {
     public final static int PRINT = 5;
     public final static int LOAD = 6;
-    public final static int LOOP = 7;
-    public final static int ENDL = 8;
+    public final static int INC = 9;
+    public final static int DEC = 10;
+    public final static int INCV = 11;
+    public final static int DECV = 12;
     private int instr;
     private int param;
-
-    public Statement(int instr, int param) {
+    
+    public InstructionWithOperand(int instr, int param) {
         this.instr = instr;
         this.param = param;
     }
 
-    // prvá fáza vracia nasledujúcu adresu
-    // od adresy addr_start
-    public int pass1(int addr_start) throws Exception {
-        if (instr == LOOP || instr == ENDL) {
-            return addr_start + 1;
-        } else {
-            return addr_start + 2;
-        }
+    @Override
+    public int firstPass(int addressStart) throws Exception {
+        return addressStart + 2;
     }
 
-    public void pass2(HEXFileManager hex) {
-        if (instr == LOOP || instr == ENDL) {
-            hex.putCode(String.format("%1$02X", instr));
-        } else {
-            hex.putCode(String.format("%1$02X%2$02X", instr, param));
-        }
+    @Override
+    public void secondPass(HEXFileManager hex) {
+        hex.putCode(String.format("%1$02X%2$02X", instr, param));
     }
 }

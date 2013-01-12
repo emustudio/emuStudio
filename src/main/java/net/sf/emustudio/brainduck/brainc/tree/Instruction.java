@@ -1,5 +1,5 @@
 /*
- * Row.java
+ * Instruction.java
  * 
  * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
@@ -22,24 +22,8 @@ package net.sf.emustudio.brainduck.brainc.tree;
 
 import emulib.runtime.HEXFileManager;
 
-public class Row {
-
-    private Statement stat;
-
-    public Row(Statement stat) {
-        this.stat = stat;
-    }
-
-    public int pass1(int addr_start) throws Exception {
-        if (stat != null) {
-            addr_start = stat.pass1(addr_start);
-        }
-        return addr_start;
-    }
-
-    public void pass2(HEXFileManager hex) throws Exception {
-        if (stat != null) {
-            stat.pass2(hex);
-        }
-    }
+public interface Instruction {
+    public int firstPass(int addressStart) throws Exception;
+    
+    public void secondPass(HEXFileManager hex) throws Exception;
 }

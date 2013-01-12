@@ -1,5 +1,5 @@
 /*
- * Program.java
+ * InstructionNoOperands.java
  * 
  * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
@@ -21,33 +21,29 @@
 package net.sf.emustudio.brainduck.brainc.tree;
 
 import emulib.runtime.HEXFileManager;
-import java.util.ArrayList;
-import java.util.List;
 
-public class Program {
+public class InstructionNoOperands implements Instruction {
 
-    private List<Instruction> instructions;
+    public final static int HALT = 0;
+    public final static int INC = 1;
+    public final static int DEC = 2;
+    public final static int INCV = 3;
+    public final static int DECV = 4;
+    public final static int LOOP = 7;
+    public final static int ENDL = 8;
+    private int instr;
 
-    public Program() {
-        instructions = new ArrayList<Instruction>();
+    public InstructionNoOperands(int instr) {
+        this.instr = instr;
     }
 
-    public void add(Instruction instruction) {
-        if (instruction != null) {
-            instructions.add(instruction);
-        }
-    }
-
+    @Override
     public int firstPass(int addressStart) throws Exception {
-        for (int i = 0; i < instructions.size(); i++) {
-            addressStart = instructions.get(i).firstPass(addressStart);
-        }
-        return addressStart;
+        return addressStart + 1;
     }
 
-    public void secondPass(HEXFileManager hex) throws Exception {
-        for (int i = 0; i < instructions.size(); i++) {
-            instructions.get(i).secondPass(hex);
-        }
+    @Override
+    public void secondPass(HEXFileManager hex) {
+        hex.putCode(String.format("%1$02X", instr));
     }
 }
