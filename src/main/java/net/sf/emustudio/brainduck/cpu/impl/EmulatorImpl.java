@@ -84,8 +84,7 @@ public class EmulatorImpl extends AbstractCPU {
             }
 
             if (memory.getDataType() != Short.class) {
-                StaticDialogs.showErrorMessage("Operating memory type is not supported"
-                        + " for this kind of CPU.");
+                StaticDialogs.showErrorMessage("Selected operating memory is not supported.");
                 return false;
             }
             disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
@@ -244,7 +243,6 @@ public class EmulatorImpl extends AbstractCPU {
                 return;
             case 1: /* INC */
                 P++;
-                System.out.println("newP = " + P);
                 return;
             case 9: /* INC operand */
                 param = ((Short) memory.read(IP++)).shortValue();
@@ -255,7 +253,6 @@ public class EmulatorImpl extends AbstractCPU {
                 return;
             case 2: /* DEC */
                 P--;
-                System.out.println("newP = " + P);
                 return;
             case 10: /* DEC operand */
                 param = ((Short) memory.read(IP++)).shortValue();
@@ -266,7 +263,6 @@ public class EmulatorImpl extends AbstractCPU {
                 return;
             case 3: /* INCV */
                 memory.write(P, (short) (memory.read(P) + 1));
-                System.out.println("mem[" + P + "] = " + (short) (memory.read(P) + 1));
                 return;
             case 11: /* INCV operand */
                 param = ((Short) memory.read(IP++)).shortValue();
@@ -277,7 +273,6 @@ public class EmulatorImpl extends AbstractCPU {
                 return;
             case 4: /* DECV */
                 memory.write(P, (short) (memory.read(P) - 1));
-                System.out.println("mem[" + P + "] = " + (short) (memory.read(P) - 1));
                 return;
             case 12: /* DECV operand */
                 param = ((Short) memory.read(IP++)).shortValue();
@@ -287,7 +282,6 @@ public class EmulatorImpl extends AbstractCPU {
                 }
                 return;
             case 5: /* PRINT */
-                System.out.println("print mem["+ P +"]=" + (Short) memory.read(P));
                 context.writeToDevice((Short) memory.read(P));
                 return;
             case 13: /* PRINT operand */
@@ -309,7 +303,6 @@ public class EmulatorImpl extends AbstractCPU {
                 }
                 return;
             case 7: { /* LOOP */
-                System.out.println("loop mem[" + P + "] = " + memory.read(P));
                 loopPointers.add(IP - 1);
                 if ((Short) memory.read(P) != 0) {
                     return;
@@ -343,7 +336,6 @@ public class EmulatorImpl extends AbstractCPU {
                 if (loopPointers.isEmpty()) {
                     break;
                 }
-                System.out.println("endl mem[" + P + "] = " + memory.read(P));
                 if ((Short) memory.read(P) == 0) {
                     loopPointers.poll(); // clear unused pointer
                     return;
