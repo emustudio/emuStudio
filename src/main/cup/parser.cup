@@ -47,7 +47,7 @@ parser code {:
     public int lastColumn;
     public static int errorCount = 0;
 
-    private String reportAppendString = null;
+    private String reportPrefixString = null;
     
     public Parser8080(java_cup.runtime.Scanner s, CompilerImpl asm) {
         this(s);
@@ -63,21 +63,26 @@ parser code {:
         done_parsing();
     }
 
-    public void report_error(String message, Symbol current) {
-        String mes;
+    public void report_error(String messageText, Symbol current) {
+        Token token = (Token)current;
 
-        Token t = (Token)current;
-        mes = message + t.getErrorString() + " ('"+t.getText()+"')";
-        
-        if (reportAppendString != null)
-          mes = reportAppendString + mes;
+        messageText = messageText + token.getErrorString() + " ('"+token.getText()+"')";
+        if (reportPrefixString != null) {
+            messageText = reportPrefixString + messageText;
+        }
 
-        asm.fireMessage(new Message(MessageType.TYPE_ERROR, mes,
-            t.getLine()+1, t.getColumn(), null, errorCount));
+        Message message = new Message(MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(),
+                null, errorCount);
+
+        if (asm != null) {
+            asm.notifyOnMessage(message);
+        } else {
+            System.out.println(message);
+        }
     }
     
-    public void setReportAppendString(String str) {
-        this.reportAppendString = str;
+    public void setReportPrefixString(String str) {
+        this.reportPrefixString = str;
     }
     
     public CompilerImpl getAsm() {

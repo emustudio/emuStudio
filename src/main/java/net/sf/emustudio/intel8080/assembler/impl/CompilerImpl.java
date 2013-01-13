@@ -30,6 +30,8 @@ import emulib.plugins.compiler.SourceFileExtension;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.HEXFileManager;
+import emulib.runtime.LoggerFactory;
+import emulib.runtime.interfaces.Logger;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.MissingResourceException;
@@ -46,6 +48,7 @@ import net.sf.emustudio.intel8080.assembler.tree.Statement;
         copyright="\u00A9 Copyright 2007-2012, Peter Jakubčo",
         description="Light modified clone of original Intel's assembler. For syntax look at users manual.")
 public class CompilerImpl extends AbstractCompiler {
+    private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
     private Lexer8080 lexer;
     private Parser8080 parser;
     private SourceFileExtension[] suffixes;
@@ -93,12 +96,12 @@ public class CompilerImpl extends AbstractCompiler {
         Object parsedAST;
         HEXFileManager hex = new HEXFileManager();
 
-        printInfo(CompilerImpl.class.getAnnotation(PluginType.class).title() + ", version " + getVersion());
+        notifyInfo(CompilerImpl.class.getAnnotation(PluginType.class).title() + ", version " + getVersion());
         lexer.reset(in, 0, 0, 0);
         parsedAST = parser.parse().value;
 
         if (parsedAST == null) {
-            printError("Unexpected end of file");
+            notifyError("Unexpected end of file");
             return null;
         }
         if (Parser8080.errorCount != 0) {
@@ -114,7 +117,7 @@ public class CompilerImpl extends AbstractCompiler {
             // don't worry about deadlock
         }
         if (env.getPassNeedCount() != 0) {
-            printError("Error: can't evaulate all expressions");
+            notifyError("Error: can't evaulate all expressions");
             return null;
         }
         stat.pass4(hex, env);
@@ -137,20 +140,20 @@ public class CompilerImpl extends AbstractCompiler {
             fileName += ".hex"; // the output suffix
 
             hex.generateFile(fileName);
-            printInfo("Compile was sucessfull. Output: " + fileName);
+            notifyInfo("Compile was sucessfull. Output: " + fileName);
 
             MemoryContext memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
             if (memory != null) {
                 if (hex.loadIntoMemory(memory)) {
-                    printInfo("Compiled file was loaded into operating memory.");
+                    notifyInfo("Compiled file was loaded into operating memory.");
                 } else {
-                    printError("Compiled file couldn't be loaded into operating memory due to an error.");
+                    notifyError("Compiled file couldn't be loaded into operating memory.");
                 }
             }
             programStart = hex.getProgramStart();
             return true;
         } catch (Exception e) {
-            printError(e.getMessage());
+            notifyError(e.getMessage());
             return false;
         }
     }
@@ -210,9 +213,10 @@ public class CompilerImpl extends AbstractCompiler {
         CompilerImpl compiler = new CompilerImpl(0L);
         try {
           HEXFileManager hex = compiler.compile(new FileReader(inputFile));
+          System.out.println("Saving output to: " + outputFile);
           hex.generateFile(outputFile);
-          System.out.println("Output saved to: " + outputFile);
         } catch (Exception e) {
+          LOGGER.error("Unexpected error", e);
           System.out.println(e.getMessage());
         }
     }
