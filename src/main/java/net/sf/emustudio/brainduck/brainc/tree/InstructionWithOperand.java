@@ -23,12 +23,12 @@ package net.sf.emustudio.brainduck.brainc.tree;
 import emulib.runtime.HEXFileManager;
 
 public class InstructionWithOperand implements Instruction {
-    public final static int LOAD = 6;
     public final static int INC = 9;
     public final static int DEC = 10;
     public final static int INCV = 11;
     public final static int DECV = 12;
     public final static int PRINT = 13;
+    public final static int LOAD = 14;
     private int instr;
     private int param;
     

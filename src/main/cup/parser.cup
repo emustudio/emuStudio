@@ -106,14 +106,15 @@ Instruction ::=
             PRINT Number:num {: RESULT = new InstructionWithOperand(InstructionWithOperand.PRINT, num); :} |
             LOAD Number:num  {: RESULT = new InstructionWithOperand(InstructionWithOperand.LOAD, num);  :} |
 
-            INC   {: RESULT = new InstructionNoOperands(InstructionNoOperands.INC);  :} |
-            DEC   {: RESULT = new InstructionNoOperands(InstructionNoOperands.DEC);  :} |
-            INCV  {: RESULT = new InstructionNoOperands(InstructionNoOperands.INCV); :} |
-            DECV  {: RESULT = new InstructionNoOperands(InstructionNoOperands.DECV); :} |
-            PRINT {: RESULT = new InstructionNoOperands(InstructionNoOperands.PRINT);  :} |
-            LOOP  {: RESULT = new InstructionNoOperands(InstructionNoOperands.LOOP); :} |
-            ENDL  {: RESULT = new InstructionNoOperands(InstructionNoOperands.ENDL); :} |
-            HALT  {: RESULT = new InstructionNoOperands(InstructionNoOperands.HALT); :}
+            INC   {: RESULT = new InstructionNoOperands(InstructionNoOperands.INC);   :} |
+            DEC   {: RESULT = new InstructionNoOperands(InstructionNoOperands.DEC);   :} |
+            INCV  {: RESULT = new InstructionNoOperands(InstructionNoOperands.INCV);  :} |
+            DECV  {: RESULT = new InstructionNoOperands(InstructionNoOperands.DECV);  :} |
+            PRINT {: RESULT = new InstructionNoOperands(InstructionNoOperands.PRINT); :} |
+            LOAD  {: RESULT = new InstructionNoOperands(InstructionNoOperands.LOAD);  :} |
+            LOOP  {: RESULT = new InstructionNoOperands(InstructionNoOperands.LOOP);  :} |
+            ENDL  {: RESULT = new InstructionNoOperands(InstructionNoOperands.ENDL);  :} |
+            HALT  {: RESULT = new InstructionNoOperands(InstructionNoOperands.HALT);  :}
             ;
 
 Number ::= NUMBER:num {: RESULT = Integer.parseInt((String)num)&0xFF; :};

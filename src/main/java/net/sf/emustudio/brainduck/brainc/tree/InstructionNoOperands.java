@@ -30,6 +30,7 @@ public class InstructionNoOperands implements Instruction {
     public final static int INCV = 3;
     public final static int DECV = 4;
     public final static int PRINT = 5;
+    public final static int LOAD = 6;
     public final static int LOOP = 7;
     public final static int ENDL = 8;
     private int instr;
