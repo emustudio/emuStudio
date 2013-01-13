@@ -78,9 +78,9 @@ public class IncludePseudoNode extends PseudoNode {
             Lexer8080 lex = new Lexer8080(f);
             Parser8080 par = new Parser8080(lex, asm);
 
-            par.setReportAppendString(shortFileName + ": ");
+            par.setReportPrefixString(shortFileName + ": ");
             Object s = par.parse().value;
-            par.setReportAppendString(null);
+            par.setReportPrefixString(null);
             
             if (s == null) {
                 throw new Exception("[" + line + "," + column + "] "
