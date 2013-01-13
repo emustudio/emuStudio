@@ -239,70 +239,64 @@ public class EmulatorImpl extends AbstractCPU {
                 runState = RunState.STATE_STOPPED_NORMAL;
                 return;
             case 1: /* INC */
+                P++;
+                return;
+            case 9: /* INC operand */
                 param = ((Short) memory.read(IP++)).shortValue();
-                if (param == 0xff) {
+                while (param > 0) {
                     P++;
-                } else {
-                    while (param > 0) {
-                        P++;
-                        param--;
-                    }
+                    param--;
                 }
                 return;
             case 2: /* DEC */
+                P--;
+                return;
+            case 10: /* DEC operand */
                 param = ((Short) memory.read(IP++)).shortValue();
-                if (param == 0xff) {
+                while (param > 0) {
                     P--;
-                } else {
-                    while (param > 0) {
-                        P--;
-                        param--;
-                    }
+                    param--;
                 }
                 return;
             case 3: /* INCV */
+                memory.write(P, (short) (memory.read(P) + 1));
+                return;
+            case 11: /* INCV operand */
                 param = ((Short) memory.read(IP++)).shortValue();
-                if (param == 0xff) {
+                while (param > 0) {
                     memory.write(P, (short) (memory.read(P) + 1));
-                } else {
-                    while (param > 0) {
-                        memory.write(P, (short) (memory.read(P) + 1));
-                        param--;
-                    }
+                    param--;
                 }
                 return;
             case 4: /* DECV */
+                memory.write(P, (short) (memory.read(P) - 1));
+                return;
+            case 12: /* DECV operand */
                 param = ((Short) memory.read(IP++)).shortValue();
-                if (param == 0xff) {
+                while (param > 0) {
                     memory.write(P, (short) (memory.read(P) - 1));
-                } else {
-                    while (param > 0) {
-                        memory.write(P, (short) (memory.read(P) - 1));
-                        param--;
-                    }
+                    param--;
                 }
                 return;
             case 5: /* PRINT */
+                context.writeToDevice((Short) memory.read(P));
+                return;
+            case 13: /* PRINT operand */
                 param = ((Short) memory.read(IP++)).shortValue();
-                if (param == 0xff) {
+                while (param > 0) {
                     context.writeToDevice((Short) memory.read(P));
-                } else {
-                    while (param > 0) {
-                        context.writeToDevice((Short) memory.read(P));
-                        param--;
-                    }
+                    param--;
                 }
                 return;
             case 6: /* LOAD */
+                memory.write(P, context.readFromDevice());
+                return;
+            case 14: /* LOAD operand */
                 param = ((Short) memory.read(IP++)).shortValue();
-                if (param == 0xff) {
+                while (param > 0) {
                     memory.write(P, context.readFromDevice());
-                } else {
-                    while (param > 0) {
-                        memory.write(P, context.readFromDevice());
-                        P++;
-                        param--;
-                    }
+                    P++;
+                    param--;
                 }
                 return;
             case 7: { /* LOOP */

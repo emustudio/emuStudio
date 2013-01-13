@@ -3,15 +3,17 @@ instruction = "halt": 00000000 |
                "dec": 00000010 |
               "incv": 00000011 |
               "decv": 00000100 |
-             "print": 00000101 imm8 |
-              "load": 00000110 imm8 |
+             "print": 00000101 |
+              "load": 00000110 |
               "loop": 00000111 |
               "endl": 00001000 |
 
                "inc": 00001001 imm8 |
                "dec": 00001010 imm8 |
               "incv": 00001011 imm8 |
-              "decv": 00001100 imm8;
+              "decv": 00001100 imm8 |
+             "print": 00001101 imm8 |
+              "load": 00001110 imm8;
 
 imm8 = imm8: imm8(8);
 
