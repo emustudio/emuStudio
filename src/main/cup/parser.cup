@@ -51,14 +51,15 @@ parser code {:
         done_parsing();
     }
 
-    public void report_error(String message, Symbol current) {
-        String mes;
-
-        Token t = (Token)current;
-        mes = message + t.getErrorString() + " ('"+t.getText()+"')";
-
-        compiler.fireMessage(new Message(MessageType.TYPE_ERROR, mes,
-            t.getLine()+1, t.getColumn(), null, errorCount));
+    public void report_error(String messageText, Symbol current) {
+        Token token = (Token)current;
+        Message message = new Message(MessageType.TYPE_ERROR, messageText + token.getErrorString() + " ('"+token.getText()+"')",
+                token.getLine()+1, token.getColumn(), null, errorCount);
+        if (compiler != null) {
+            compiler.notifyOnMessage(message);
+        } else {
+            System.out.println(message.getFormattedMessage());
+        }
     }
 :}
 
@@ -109,6 +110,7 @@ Instruction ::=
             DEC   {: RESULT = new InstructionNoOperands(InstructionNoOperands.DEC);  :} |
             INCV  {: RESULT = new InstructionNoOperands(InstructionNoOperands.INCV); :} |
             DECV  {: RESULT = new InstructionNoOperands(InstructionNoOperands.DECV); :} |
+            PRINT {: RESULT = new InstructionNoOperands(InstructionNoOperands.PRINT);  :} |
             LOOP  {: RESULT = new InstructionNoOperands(InstructionNoOperands.LOOP); :} |
             ENDL  {: RESULT = new InstructionNoOperands(InstructionNoOperands.ENDL); :} |
             HALT  {: RESULT = new InstructionNoOperands(InstructionNoOperands.HALT); :}

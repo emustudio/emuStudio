@@ -24,10 +24,13 @@ import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.plugins.compiler.AbstractCompiler;
 import emulib.plugins.compiler.LexicalAnalyzer;
+import emulib.plugins.compiler.Message;
 import emulib.plugins.compiler.SourceFileExtension;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.HEXFileManager;
+import emulib.runtime.LoggerFactory;
+import emulib.runtime.interfaces.Logger;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.MissingResourceException;
@@ -44,6 +47,7 @@ import net.sf.emustudio.brainduck.brainc.tree.Program;
         copyright="\u00A9 Copyright 2009-2012, Peter Jakubčo",
         description="Compiler for esoteric architecture called BrainDuck.")
 public class CompilerImpl extends AbstractCompiler {
+    private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
     private LexerBD lex;
     private ParserBD par;
     private SourceFileExtension[] suffixes;
@@ -57,7 +61,7 @@ public class CompilerImpl extends AbstractCompiler {
         super(pluginID);
         // lex has to be reset WITH a reader object before compile
         lex = new LexerBD((Reader) null);
-        par = new ParserBD(lex);
+        par = new ParserBD(lex, this);
         suffixes = new SourceFileExtension[1];
         suffixes[0] = new SourceFileExtension("asm", "Brainduck assembler source");
     }
@@ -86,22 +90,22 @@ public class CompilerImpl extends AbstractCompiler {
      */
     private HEXFileManager compile(Reader in) throws Exception {
         if (in == null) {
-            return null;
+            throw new Exception("Reader is null");
         }
 
         Object parsedProgram;
         HEXFileManager hex = new HEXFileManager();
 
-        printInfo(CompilerImpl.class.getAnnotation(PluginType.class).title() + ", version " + getVersion());
+        notifyInfo(CompilerImpl.class.getAnnotation(PluginType.class).title() + ", version " + getVersion());
         lex.reset(in, 0, 0, 0);
         parsedProgram = par.parse().value;
 
         if (parsedProgram == null) {
-            printError("Unexpected end of file");
-            return null;
+            notifyError("Unexpected end of file");
+            throw new Exception("Unexpected end of file");
         }
         if (par.errorCount != 0) {
-            return null;
+            throw new Exception("Program has errors");
         }
 
         // do several passes for compiling
@@ -115,9 +119,6 @@ public class CompilerImpl extends AbstractCompiler {
     public boolean compile(String fileName, Reader in) {
         try {
             HEXFileManager hex = compile(in);
-            if (hex == null) {
-                return false;
-            }
             
             // Remove ".*" suffix and add ".hex" suffix to the filename
             int i = fileName.lastIndexOf(".");
@@ -127,22 +128,23 @@ public class CompilerImpl extends AbstractCompiler {
             fileName += ".hex"; // the output suffix
 
             hex.generateFile(fileName);
-            printInfo("Compile was sucessfull. Output: " + fileName);
+            notifyInfo("Compile was sucessfull. Output: " + fileName);
             programStart = hex.getProgramStart();
             
             // try to access the memory
             MemoryContext memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
             if (memory != null) {
                 if (hex.loadIntoMemory(memory)) {
-                    printInfo("Compiled file was loaded into operating memory.");
+                    notifyInfo("Compiled file was loaded into operating memory.");
                 } else {
-                    printError("Compiled file couldn't be loaded into operating"
+                    notifyError("Compiled file couldn't be loaded into operating"
                             + "memory due to an error.");
                 }
             }
             return true;
         } catch (Exception e) {
-            printError(e.getMessage());
+            LOGGER.error("Unexpected error", e);
+            notifyError("Unexpected error: " + e.getMessage());
             return false;
         }
     }
@@ -205,11 +207,29 @@ public class CompilerImpl extends AbstractCompiler {
         }
         
         CompilerImpl compiler = new CompilerImpl(0L);
+        compiler.addCompilerListener(new CompilerListener() {
+
+            @Override
+            public void onStart() {
+            }
+
+            @Override
+            public void onMessage(Message message) {
+                System.out.println(message.getFormattedMessage());
+            }
+
+            @Override
+            public void onFinish(int errorCode) {
+            }
+        });
+        
+        
         try {
           HEXFileManager hex = compiler.compile(new FileReader(inputFile));
+          System.out.println("Saving output to: " + outputFile);
           hex.generateFile(outputFile);
-          System.out.println("Output saved to: " + outputFile);
         } catch (Exception e) {
+          LOGGER.error("Unexpected error", e);
           System.out.println(e.getMessage());
         }
     }
