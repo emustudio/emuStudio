@@ -3,7 +3,7 @@
  *
  * Created on Utorok, 2007, november 13, 17:01
  *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -64,8 +64,9 @@ public class SIOImpl extends AbstractDevice {
     public static final int CPU_PORT1 = 0x10;
     public static final int CPU_PORT2 = 0x11;
     
-    private StatusPort statusPort;
-    private DataPort dataPort;
+    private StatusCPUPort statusPort;
+    private DataCPUPort dataPort;
+    private PhysicalPort physicalPort;
     private int statusPortNumber;
     private int dataPortNumber;
     private ExtendedContext cpu;
@@ -73,15 +74,16 @@ public class SIOImpl extends AbstractDevice {
 
     public SIOImpl(Long pluginID) {
         super(pluginID);
-        statusPort = new StatusPort(this);
-        dataPort = new DataPort(this);
+        statusPort = new StatusCPUPort(this);
+        dataPort = new DataCPUPort(this);
+        physicalPort = new PhysicalPort(dataPort);
         statusPortNumber = CPU_PORT1;
         dataPortNumber = CPU_PORT2;
 
         try {
-            ContextPool.getInstance().register(pluginID, dataPort, DeviceContext.class);
+            ContextPool.getInstance().register(pluginID, physicalPort, DeviceContext.class);
         } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Could not register MITS 88-SIO context",
+            StaticDialogs.showErrorMessage("Could not register MITS 88-SIO physical port context",
                     SIOImpl.class.getAnnotation(PluginType.class).title());
         }
     }
@@ -151,49 +153,54 @@ public class SIOImpl extends AbstractDevice {
         readSettings();
 
         try {
-            cpu = (ExtendedContext) ContextPool.getInstance().getCPUContext(pluginID,
-                    ExtendedContext.class);
+            cpu = (ExtendedContext) ContextPool.getInstance().getCPUContext(pluginID, ExtendedContext.class);
         } catch (InvalidContextException e) {
-            StaticDialogs.showErrorMessage("Warning: Could not connect to CPU",
-                    SIOImpl.class.getAnnotation(PluginType.class).title());
+            StaticDialogs.showErrorMessage("Warning: Could not connect to CPU", getTitle());
         }
         
+        // get a device connected into this card
+        try {
+            DeviceContext device = ContextPool.getInstance().getDeviceContext(pluginID, DeviceContext.class);
+            if (device != null) {
+                dataPort.attachDevice(device);
+            }
+        } catch (InvalidContextException e) {
+            StaticDialogs.showErrorMessage("Warning: Could not get connected device", getTitle());
+        }
+
         if (cpu == null) {
             return true;
         }
 
         // attach IO ports
         if (cpu.attachDevice(statusPort, statusPortNumber) == false) {
-            String p;
-            p = JOptionPane.showInputDialog(getTitle() + " (port1) can not be"
-                    + " attached to default CPU port, please enter another one: ",
-                    CPU_PORT1);
+            String newPort = (String)JOptionPane.showInputDialog(null,
+                    "Status port can not be attached to default CPU port, please enter another one: ", getTitle(),
+                    JOptionPane.ERROR_MESSAGE, null, null, CPU_PORT1);
             try {
-                statusPortNumber = Integer.decode(p);
+                statusPortNumber = Integer.decode(newPort);
             } catch (NumberFormatException e) {
-                StaticDialogs.showErrorMessage("Error: wrong port number");
+                StaticDialogs.showErrorMessage("Error: wrong port number", getTitle());
                 return false;
             }
             if (cpu.attachDevice(statusPort, statusPortNumber) == false) {
-                StaticDialogs.showErrorMessage("Error: " + getTitle()
-                        + " (port1) still can't be attached");
+                StaticDialogs.showErrorMessage("Error: status port still cannot be attached", getTitle());
                 return false;
             }
         }
         if (cpu.attachDevice(dataPort, dataPortNumber) == false) {
-            String p;
-            p = JOptionPane.showInputDialog(getTitle() + " (port2) can not be"
-                    + " attached to default CPU port, please enter another one: ",
-                    CPU_PORT2);
+            String newPort = (String)JOptionPane.showInputDialog(null,
+                    "Data port can not be attached to default CPU port, please enter another one: ", getTitle(),
+                    JOptionPane.ERROR_MESSAGE, null, null, CPU_PORT2);
+
             try {
-                dataPortNumber = Integer.decode(p);
+                dataPortNumber = Integer.decode(newPort);
             } catch (NumberFormatException e) {
-                StaticDialogs.showErrorMessage("Error: wrong port number");
+                StaticDialogs.showErrorMessage("Error: wrong port number", getTitle());
                 return false;
             }
             if (cpu.attachDevice(dataPort, dataPortNumber) == false) {
-                StaticDialogs.showErrorMessage("Error: " + getTitle()
-                        + " (port2) still can't be attached");
+                StaticDialogs.showErrorMessage("Error: data port still cannot be attached", getTitle());
                 return false;
             }
         }

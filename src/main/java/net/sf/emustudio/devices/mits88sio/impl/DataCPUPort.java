@@ -1,5 +1,5 @@
 /*
- * DataPort.java
+ * DataCPUPort.java
  *
  * Created on 18.6.2008, 14:30:59
  *
@@ -24,26 +24,36 @@
 package net.sf.emustudio.devices.mits88sio.impl;
 
 import emulib.plugins.device.DeviceContext;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * This is the data port of 88-SIO card.
- * It's a male plug, RS-232 physical port.
+ * 
+ * This port is attached to a CPU.
  * 
  * A read to the data port gets the buffered character, a write to the data port
  * writes the character to the device.
  *
  * @author Peter Jakubčo
  */
-public class DataPort implements DeviceContext<Short> {
+public class DataCPUPort implements DeviceContext<Short> {
     private SIOImpl sio;
-    private List<Short> buffer = new ArrayList<Short>();
+    private Queue<Short> buffer = new LinkedList<Short>();
+    private DeviceContext<Short> device;
 
-    public DataPort(SIOImpl sio) {
+    public DataCPUPort(SIOImpl sio) {
         this.sio = sio;
     }
 
+    public void attachDevice(DeviceContext<Short> device) {
+        this.device = device;
+    }
+    
+    public void detachDevice() {
+        this.device = null;
+    }
+    
     public boolean isEmpty() {
         return buffer.isEmpty();
     }
@@ -55,6 +65,19 @@ public class DataPort implements DeviceContext<Short> {
      */
     @Override
     public void write(Short data) {
+        if (device != null) {
+            device.write(data);
+        }
+    }
+    
+    /**
+     * A device (usually the attached one) writes data.
+     * 
+     * We save it into a buffer for further reading by CPU.
+     * 
+     * @param data data
+     */
+    public void writeFromDevice(Short data) {
         sio.setStatus((short) (sio.getStatus() | 0x01));
         buffer.add(data);
     }
@@ -62,13 +85,11 @@ public class DataPort implements DeviceContext<Short> {
     @Override
     public Short read() {
         short result = 0;
-        if (buffer.size() > 0) {
-            result = buffer.remove(0);
-        }
 
         if (buffer.isEmpty()) {
             sio.setStatus((short) (sio.getStatus() & 0xFE));
         } else {
+            result = buffer.poll();
             sio.setStatus((short) (sio.getStatus() | 0x01));
         }
         return result;

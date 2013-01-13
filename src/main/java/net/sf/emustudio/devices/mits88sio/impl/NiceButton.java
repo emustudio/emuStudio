@@ -1,9 +1,8 @@
-/**
+/*
  * NiceButton.java
  * 
- *  KISS, YAGNI
- *
- * Copyright (C) 2009-2010 Peter Jakubčo <pjakubco at gmail.com>
+ * Copyright (C) 2009-2013 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,26 +21,26 @@
 package net.sf.emustudio.devices.mits88sio.impl;
 
 import java.awt.Dimension;
-
 import javax.swing.JButton;
 
 @SuppressWarnings("serial")
 public class NiceButton extends JButton {
-	private final static int x_WIDTH = 95;
-	private final static int x_HEIGHT = 30;
 
-	public NiceButton() {
-		super();
-		Dimension d = getPreferredSize();
-		d.setSize(x_WIDTH,x_HEIGHT); //d.getHeight());
-		this.setPreferredSize(d);
-		this.setSize(x_WIDTH, x_HEIGHT);//this.getHeight());
-		this.setMinimumSize(d);
-		this.setMaximumSize(d);
-	}
+    private final static int x_WIDTH = 95;
+    private final static int x_HEIGHT = 30;
 
-	public NiceButton(String text) {
-		this();
-		this.setText(text);
-	}
+    public NiceButton() {
+        super();
+        Dimension d = getPreferredSize();
+        d.setSize(x_WIDTH, x_HEIGHT);
+        this.setPreferredSize(d);
+        this.setSize(x_WIDTH, x_HEIGHT);
+        this.setMinimumSize(d);
+        this.setMaximumSize(d);
+    }
+
+    public NiceButton(String text) {
+        this();
+        this.setText(text);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * StatusPort.java
+ * StatusCPUPort.java
  *
  * Created on 18.6.2008, 14:27:23
  *
@@ -64,22 +64,24 @@ import emulib.plugins.device.DeviceContext;
  * @author Peter Jakubčo
  */
 @ContextType(id = "Status port")
-public class StatusPort implements DeviceContext<Short> {
+public class StatusCPUPort implements DeviceContext<Short> {
     private SIOImpl sio;
     private short status;
 
-    public StatusPort(SIOImpl sio) {
+    public StatusCPUPort(SIOImpl sio) {
         this.sio = sio;
     }
 
     @Override
     public Short read() {
+        System.out.println("STATUSPORT read=" + status);
         return status;
     }
 
     @Override
     public void write(Short val) {
         if (val == 0x03) {
+        System.out.println("STATUSPORT write=" + val);
             sio.reset();
         }
     }
