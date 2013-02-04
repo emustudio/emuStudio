@@ -30,7 +30,9 @@ import emulib.plugins.device.AbstractDevice;
 import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
+import emulib.runtime.LoggerFactory;
 import emulib.runtime.StaticDialogs;
+import emulib.runtime.interfaces.Logger;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import javax.swing.JOptionPane;
@@ -46,23 +48,23 @@ import net.sf.emustudio.intel8080.ExtendedContext;
  * RS232, or TTY interface.  Available baud rates were jumper
  * selectable for each port from 110 to 9600.
  *
- * All I/O is via programmed I/O.  Each each has a status port
- * and a data port.
+ * All I/O is via programmed I/O. Each each has a status port and a data port.
  *
- * From: http://www.altair32.com/Altair32specs.htm
- * The standard I/O addresses assigned by MITS was 20Q-21Q  for the first port
- * and 22Q-23Q for the second. The second port of the 2SIO is "connected" to a
- * virtual line printer and the paper tape reader/punch for support under CP/M.
+ * From: http://www.altair32.com/Altair32specs.htm The standard I/O addresses assigned by MITS was 20Q-21Q for the first
+ * port and 22Q-23Q for the second. The second port of the 2SIO is "connected" to a virtual line printer and the paper
+ * tape reader/punch for support under CP/M.
  *
  * @author Peter Jakubčo
  */
 @PluginType(type = PLUGIN_TYPE.DEVICE,
 title = "MITS 88-SIO Board",
-copyright = "\u00A9 Copyright 2007-2012, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2007-2013, Peter Jakubčo",
 description = "Custom implementation of MITS 88-SIO serial card.")
 public class SIOImpl extends AbstractDevice {
+
     public static final int CPU_PORT1 = 0x10;
     public static final int CPU_PORT2 = 0x11;
+    private static final Logger LOGGER = LoggerFactory.getLogger(SIOImpl.class);
     
     private StatusCPUPort statusPort;
     private DataCPUPort dataPort;
@@ -163,12 +165,15 @@ public class SIOImpl extends AbstractDevice {
             DeviceContext device = ContextPool.getInstance().getDeviceContext(pluginID, DeviceContext.class);
             if (device != null) {
                 dataPort.attachDevice(device);
+            } else {
+                LOGGER.warning("No device is connected into the MITS SIO.");
             }
         } catch (InvalidContextException e) {
             StaticDialogs.showErrorMessage("Warning: Could not get connected device", getTitle());
         }
 
         if (cpu == null) {
+            LOGGER.warning("MITS SIO is not connected to the CPU.");
             return true;
         }
 
@@ -210,7 +215,7 @@ public class SIOImpl extends AbstractDevice {
     @Override
     public void showGUI() {
         if (gui == null) {
-            gui = new SIODialog(statusPortNumber, dataPortNumber);
+            gui = new SIODialog(statusPortNumber, dataPortNumber, dataPort.getAttachedDeviceID());
         }
         gui.setVisible(true);
     }

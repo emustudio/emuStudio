@@ -24,6 +24,8 @@
 package net.sf.emustudio.devices.mits88sio.impl;
 
 import emulib.plugins.device.DeviceContext;
+import emulib.runtime.LoggerFactory;
+import emulib.runtime.interfaces.Logger;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -38,6 +40,8 @@ import java.util.Queue;
  * @author Peter Jakubčo
  */
 public class DataCPUPort implements DeviceContext<Short> {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataCPUPort.class);
     private SIOImpl sio;
     private Queue<Short> buffer = new LinkedList<Short>();
     private DeviceContext<Short> device;
@@ -47,7 +51,12 @@ public class DataCPUPort implements DeviceContext<Short> {
     }
 
     public void attachDevice(DeviceContext<Short> device) {
+        LOGGER.info("Attaching device to the data port: " + device);
         this.device = device;
+    }
+    
+    public String getAttachedDeviceID() {
+        return (device == null) ? "unknown" : device.toString();
     }
     
     public void detachDevice() {
@@ -84,12 +93,15 @@ public class DataCPUPort implements DeviceContext<Short> {
 
     @Override
     public Short read() {
-        short result = 0;
+        Short result;
 
+        result = buffer.poll();
+        if (result == null) {
+            result = 0;
+        }
         if (buffer.isEmpty()) {
             sio.setStatus((short) (sio.getStatus() & 0xFE));
         } else {
-            result = buffer.poll();
             sio.setStatus((short) (sio.getStatus() | 0x01));
         }
         return result;

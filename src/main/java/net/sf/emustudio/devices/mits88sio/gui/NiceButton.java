@@ -18,7 +18,7 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.devices.mits88sio.impl;
+package net.sf.emustudio.devices.mits88sio.gui;
 
 import java.awt.Dimension;
 import javax.swing.JButton;

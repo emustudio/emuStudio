@@ -32,7 +32,6 @@ import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
 import net.sf.emustudio.devices.mits88sio.impl.SIOImpl;
-import net.sf.emustudio.devices.mits88sio.impl.NiceButton;
 
 @SuppressWarnings("serial")
 public class ConfigDialog extends JDialog {

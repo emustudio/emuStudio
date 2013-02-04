@@ -35,10 +35,11 @@ import javax.swing.WindowConstants;
 @SuppressWarnings("serial")
 public class SIODialog extends JDialog {
 
-    public SIODialog(int port1CPU, int port2CPU) {
+    public SIODialog(int port1CPU, int port2CPU, String attachedDevice) {
         initComponents();
         lblPort1.setText(String.format("0x%X", port1CPU));
         lblPort2.setText(String.format("0x%X", port2CPU));
+        lblAttachedDevice.setText(attachedDevice);
         setLocationRelativeTo(null);
     }
 
@@ -49,12 +50,14 @@ public class SIODialog extends JDialog {
 
         lblPort1 = new JLabel("0x10");
         lblPort2 = new JLabel("0x11");
+        lblAttachedDevice = new JLabel();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("88-SIO run-time");
 
         lblPort1.setFont(lblPort1.getFont().deriveFont(lblPort1.getFont().getStyle() | java.awt.Font.BOLD));
         lblPort2.setFont(lblPort2.getFont().deriveFont(lblPort2.getFont().getStyle() | java.awt.Font.BOLD));
+        lblAttachedDevice.setFont(lblAttachedDevice.getFont().deriveFont(lblAttachedDevice.getFont().getStyle() | java.awt.Font.BOLD));
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -65,6 +68,7 @@ public class SIODialog extends JDialog {
                 .addGroup(layout.createSequentialGroup()
                 .addComponent(lblAttached)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED))
+                .addComponent(lblAttachedDevice)
                 .addGroup(layout.createSequentialGroup()
                 .addComponent(lblPort1LBL)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
@@ -78,7 +82,8 @@ public class SIODialog extends JDialog {
                 layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(lblAttached))
+                .addComponent(lblAttached)
+                .addComponent(lblAttachedDevice))
                 .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                 .addComponent(lblPort1LBL)
@@ -93,5 +98,6 @@ public class SIODialog extends JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private JLabel lblPort1;
     private JLabel lblPort2;
+    private JLabel lblAttachedDevice;
     // End of variables declaration//GEN-END:variables
 }

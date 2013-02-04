@@ -74,14 +74,12 @@ public class StatusCPUPort implements DeviceContext<Short> {
 
     @Override
     public Short read() {
-        System.out.println("STATUSPORT read=" + status);
         return status;
     }
 
     @Override
     public void write(Short val) {
         if (val == 0x03) {
-        System.out.println("STATUSPORT write=" + val);
             sio.reset();
         }
     }
