@@ -24,6 +24,8 @@
 package net.sf.emustudio.intel8080.impl;
 
 import emulib.plugins.device.DeviceContext;
+import emulib.runtime.LoggerFactory;
+import emulib.runtime.interfaces.Logger;
 import java.util.HashMap;
 import java.util.Map;
 import net.sf.emustudio.intel8080.ExtendedContext;
@@ -32,9 +34,12 @@ import net.sf.emustudio.intel8080.ExtendedContext;
 /**
  * Implementation of extended context of Intel8080 CPU.
  * 
+ *
  */
 public class ContextImpl implements ExtendedContext {
-    private Map<Integer,DeviceContext<Short>> devices;
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(ContextImpl.class);
+    private Map<Integer, DeviceContext<Short>> devices;
     private int clockFrequency = 2000; // kHz
     private EmulatorImpl cpu;
 
@@ -52,6 +57,7 @@ public class ContextImpl implements ExtendedContext {
         if (!device.getDataType().equals(Short.class)) {
             return false;
         }
+        LOGGER.info("Attached device to port " + port + " : " + device);
         devices.put(port, device);
         return true;
     }
@@ -59,11 +65,13 @@ public class ContextImpl implements ExtendedContext {
     @Override
     public void detachDevice(int port) {
         if (devices.containsKey(port)) {
+            LOGGER.info("Detaching device from port " + port);
             devices.remove(port);
         }
     }
     
     public void clearDevices() {
+        LOGGER.info("Detaching all devices");
         devices.clear();
     }
 

@@ -266,11 +266,17 @@ public class StatusPanel extends JPanel {
         lblRun.setFont(lblRun.getFont().deriveFont(lblRun.getFont().getStyle() | java.awt.Font.BOLD));
         lblRun.setForeground(new java.awt.Color(0, 102, 0));
 
-        spnFrequency.setModel(new SpinnerNumberModel(2000, 1, 99999, 100));
+        SpinnerNumberModel spFrequencyModel = new SpinnerNumberModel();
+        spFrequencyModel.setValue(2000);
+        spFrequencyModel.setStepSize(100);
+        spnFrequency.setModel(spFrequencyModel);
         lblKHZ.setFont(lblKHZ.getFont().deriveFont(lblKHZ.getFont().getStyle() | java.awt.Font.BOLD));
         lblFrequency.setFont(lblFrequency.getFont().deriveFont(lblFrequency.getFont().getStyle() | java.awt.Font.BOLD));
 
-        spnTestPeriode.setModel(new SpinnerNumberModel(50, 1, 10000, 50));
+        SpinnerNumberModel spTestPeriodeModel = new SpinnerNumberModel();
+        spTestPeriodeModel.setValue(50);
+        spTestPeriodeModel.setStepSize(50);
+        spnTestPeriode.setModel(spTestPeriodeModel);
         lblMS.setFont(lblMS.getFont().deriveFont(lblMS.getFont().getStyle() | java.awt.Font.BOLD));
 
         GroupLayout panelRunLayout = new GroupLayout(panelRun);
