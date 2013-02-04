@@ -29,7 +29,9 @@ import emulib.plugins.device.AbstractDevice;
 import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
+import emulib.runtime.LoggerFactory;
 import emulib.runtime.StaticDialogs;
+import emulib.runtime.interfaces.Logger;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import net.sf.emustudio.devices.adm3a.gui.ConfigDialog;
@@ -41,6 +43,7 @@ copyright = "\u00A9 Copyright 2007-2012, Peter Jakubčo",
 description = "Custom implementation of terminal ADM-3A from LSI")
 public class TerminalImpl extends AbstractDevice {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(TerminalImpl.class);
     private TerminalWindow terminalGUI;
     private TerminalDisplay terminal; // male
     private TerminalFemale female;
@@ -63,19 +66,22 @@ public class TerminalImpl extends AbstractDevice {
 
         try {
             // try to connect to a serial I/O board
-            DeviceContext device = ContextPool.getInstance().getDeviceContext(pluginID,
-                    DeviceContext.class);
+            DeviceContext device = ContextPool.getInstance().getDeviceContext(pluginID, DeviceContext.class);
 
             if (device != null) {
+                if (device.getDataType() != Short.class) {
+                    throw new InvalidContextException("Connected device is not supported");
+                }
                 female.attachDevice(device);
+            } else {
+                LOGGER.warning("The terminal is not connected to any I/O device.");
             }
 
             terminalGUI = new TerminalWindow(terminal, female);
             readSettings();
             return true;
         } catch (InvalidContextException e) {
-            StaticDialogs.showErrorMessage("Could not get serial I/O board Context",
-                    TerminalImpl.class.getAnnotation(PluginType.class).title());
+            StaticDialogs.showErrorMessage("Could not get serial I/O board Context", getTitle());
             return false;
         }
     }

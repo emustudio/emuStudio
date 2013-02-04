@@ -301,7 +301,7 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
             temp = y * col_count;
             for (x = 0; x < col_count; x++) {
                 synchronized (videoMemory) {
-                    sLine += (char) videoMemory[temp + x];
+                    sLine += videoMemory[temp + x];
                 }
             }
             g2d.drawString(sLine, 1, t_y);
@@ -381,7 +381,7 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
                 cursor_x = 0;
                 return; /* carriage return */
         }
-        insert_char((char)(short) data);
+        insert_char((char)(data & 0xFF));
         move_cursor();
         repaint();
     }
