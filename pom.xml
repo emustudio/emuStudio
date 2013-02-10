@@ -11,6 +11,10 @@
   <url>http://emustudio.sf.net</url>
   <description>Free, plugin-based software platform for computer emulation</description>
 
+  <scm>
+    <developerConnection>scm:git:ssh://github.com/emuStudio.git</developerConnection>
+  </scm>
+
   <licenses>
     <license>
       <name>GNU GPL 2</name>
@@ -128,6 +132,11 @@
             </plugin>
           </reportPlugins>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.4</version>
       </plugin>
     </plugins>
   </build>
