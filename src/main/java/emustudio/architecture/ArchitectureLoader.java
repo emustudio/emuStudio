@@ -29,6 +29,7 @@ import emulib.plugins.compiler.Compiler;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
+import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidPasswordException;
 import emulib.runtime.InvalidPluginException;
 import emulib.runtime.PluginLoader;
@@ -394,47 +395,40 @@ public class ArchitectureLoader implements ConfigurationManager {
         }
     }
     
-    /**
-     * Loads virtual configuration from current settings and creates virtual architecture.
-     * 
-     * @param configName  Name of the configuration
-     * 
-     * @return instance of virtual architecture
-     */
-    public ArchitectureManager createArchitecture(String configName)
-            throws PluginLoadingException, ReadConfigurationException, PluginInitializationException,
-            InvalidPasswordException, InvalidPluginException {
-        
-        Properties settings = readConfiguration(configName, true);
+    private Map<String, PluginInfo> preparePluginsToLoad(Properties settings) {
         Map<String, PluginInfo> pluginsToLoad = new HashMap<String, PluginInfo>();
         
         String tmp = settings.getProperty("compiler");
         if (tmp != null) {
             long id = createPluginID();
-            LOGGER.debug("Creating compiler instance, pluginID=" + id);
+            LOGGER.debug("Assigned compiler pluginID=" + id);
             pluginsToLoad.put("compiler", new PluginInfo("compiler", COMPILERS_DIR, tmp, Compiler.class, id));
         }
         tmp = settings.getProperty("cpu");
         if (tmp != null) {
             long id = createPluginID();
-            LOGGER.debug("Creating CPU instance, pluginID=" + id);
+            LOGGER.debug("Assigned CPU pluginID=" + id);
             pluginsToLoad.put("cpu", new PluginInfo("cpu", CPUS_DIR, tmp, CPU.class, id));
         }
         tmp = settings.getProperty("memory");
         if (tmp != null) {
             long id = createPluginID();
-            LOGGER.debug("Creating memory instance, pluginID=" + id);
+            LOGGER.debug("Assigned memory pluginID=" + id);
             pluginsToLoad.put("memory", new PluginInfo("memory", MEMORIES_DIR, tmp, Memory.class, id));
         }
         for (int i = 0; settings.containsKey("device" + i); i++) {
             tmp = settings.getProperty("device" + i);
             if (tmp != null) {
                 long id = createPluginID();
-                LOGGER.debug("Creating device[" + i + "] instance, pluginID=" + id);
+                LOGGER.debug("Assigned device[" + i + "] pluginID=" + id);
                 pluginsToLoad.put("device" + i, new PluginInfo("device" + i, DEVICES_DIR, tmp, Device.class, id));
             }
         }
-        
+        return pluginsToLoad;
+    }
+    
+    private void loadPlugins(Map<String, PluginInfo> pluginsToLoad) throws InvalidPasswordException,
+            InvalidPluginException, PluginLoadingException {
         PluginLoader pluginLoader = PluginLoader.getInstance();
         
         for (PluginInfo plugin : pluginsToLoad.values()) {
@@ -453,30 +447,9 @@ public class ArchitectureLoader implements ConfigurationManager {
             }
         }
         LOGGER.info("All plugins are loaded and resolved.");
-        
-        Compiler compiler = null;
-        CPU cpu = null;
-        Memory mem = null;
-        List<Device> devList = new ArrayList<Device>();
-        for (PluginInfo plugin : pluginsToLoad.values()) {
-            try {
-                plugin.plugin = (Plugin)newPlugin(plugin.mainClass, plugin.pluginInterface, plugin.pluginId);
-                if (plugin.plugin instanceof Compiler) {
-                    compiler = (Compiler)plugin.plugin;
-                } else if (plugin.plugin instanceof CPU) {
-                    cpu = (CPU)plugin.plugin;
-                } else if (plugin.plugin instanceof Memory) {
-                    mem = (Memory)plugin.plugin;
-                } else if (plugin.plugin instanceof Device) {
-                    devList.add((Device)plugin.plugin);
-                }
-            } catch (ClassNotFoundException e) {
-                throw new PluginLoadingException(new StringBuilder().append("Plugin ").append(plugin.pluginName)
-                        .append(" cannot be loaded.").toString(), plugin.pluginName, (Plugin) plugin.plugin);
-            }
-        }
-
-        // load connections
+    }
+    
+    private Map<Long, List<Long>> preparePluginConnections(Properties settings, Map<String, PluginInfo> pluginsToLoad) {
         Map<Long, List<Long>> connections = new HashMap<Long, List<Long>>();
         for (int i = 0; settings.containsKey("connection" + i + ".junc0"); i++) {
             // get i-th connection from settings
@@ -525,12 +498,51 @@ public class ArchitectureLoader implements ConfigurationManager {
                 }
             }
         }
+        return connections;
+    }
+    
+    /**
+     * Loads virtual configuration from current settings and creates virtual architecture.
+     * 
+     * @param configName  Name of the configuration
+     * 
+     * @return instance of virtual architecture
+     */
+    public ArchitectureManager createArchitecture(String configName)
+            throws PluginLoadingException, ReadConfigurationException, PluginInitializationException,
+            InvalidPasswordException, InvalidPluginException {
+        
+        Properties settings = readConfiguration(configName, true);
+        Map<String, PluginInfo> pluginsToLoad = preparePluginsToLoad(settings);
+        loadPlugins(pluginsToLoad);
+        
+        Compiler compiler = null;
+        CPU cpu = null;
+        Memory mem = null;
+        List<Device> devList = new ArrayList<Device>();
+        for (PluginInfo plugin : pluginsToLoad.values()) {
+            try {
+                plugin.plugin = (Plugin)newPlugin(plugin.mainClass, plugin.pluginInterface, plugin.pluginId);
+                if (plugin.plugin instanceof Compiler) {
+                    compiler = (Compiler)plugin.plugin;
+                } else if (plugin.plugin instanceof CPU) {
+                    cpu = (CPU)plugin.plugin;
+                } else if (plugin.plugin instanceof Memory) {
+                    mem = (Memory)plugin.plugin;
+                } else if (plugin.plugin instanceof Device) {
+                    devList.add((Device)plugin.plugin);
+                }
+            } catch (ClassNotFoundException e) {
+                throw new PluginLoadingException("Plugin " + plugin.pluginName + " cannot be loaded.", plugin.pluginName,
+                        plugin.plugin);
+            }
+        }
 
-        // this creates reversed array..
+        Map<Long, List<Long>> connections = preparePluginConnections(settings, pluginsToLoad);
         Collections.reverse(devList);
         Device[] devices = (Device[]) devList.toArray(new Device[0]);
         Computer computer = new Computer(cpu, mem, compiler, devices, pluginsToLoad.values(), connections);
-        emulib.runtime.ContextPool.getInstance().setComputer(Main.password, computer);
+        ContextPool.getInstance().setComputer(Main.password, computer);
         return new ArchitectureManager(computer, settings, loadSchema(configName), this);
     }
     
