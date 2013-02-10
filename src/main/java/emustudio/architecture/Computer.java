@@ -23,8 +23,8 @@ package emustudio.architecture;
 
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
-import emulib.plugins.Plugin;
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.Plugin;
 import emulib.plugins.compiler.Compiler;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.device.Device;
@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * @author vbmacher
  */
 public class Computer implements PluginConnections {
-    private final static Logger logger = LoggerFactory.getLogger(Computer.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(Computer.class);
     private CPU cpu;
     private Compiler compiler;
     private Memory memory;
@@ -170,7 +170,7 @@ public class Computer implements PluginConnections {
             try {
                 compiler.destroy();
             } catch (Exception e) {
-                logger.error("Could not destroy compiler.", e);
+                LOGGER.error("Could not destroy compiler.", e);
             }
         }
         int size = devices.length;
@@ -178,19 +178,19 @@ public class Computer implements PluginConnections {
             try {
                 devices[i].destroy();
             } catch (Exception e) {
-                logger.error("Could not destroy device.", e);
+                LOGGER.error("Could not destroy device.", e);
             }
         }
         try {
             cpu.destroy();
         } catch (Exception e) {
-            logger.error("Could not destroy CPU.", e);
+            LOGGER.error("Could not destroy CPU.", e);
         }
         if (memory != null) {
             try {
                 memory.destroy();
             } catch (Exception e) {
-                logger.error("Could not destroy memory.", e);
+                LOGGER.error("Could not destroy memory.", e);
             }
         }
 
@@ -261,8 +261,10 @@ public class Computer implements PluginConnections {
         List<Long> connection = connections.get(pluginID);
 
         if ((connection == null) || connection.isEmpty()) {
+            LOGGER.debug("Could not find connection between pluginID=" + pluginID + " and " + toPluginID);
             return false;
         }
+        LOGGER.debug("connection(" + pluginID + ").contains(" + toPluginID+ ") =" + connection.contains(toPluginID));
         return connection.contains(toPluginID);
     }
 }

@@ -99,7 +99,7 @@ import org.slf4j.LoggerFactory;
  * 
  */
 public class ArchitectureLoader implements ConfigurationManager {
-    private final static Logger logger = LoggerFactory.getLogger(ArchitectureLoader.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(ArchitectureLoader.class);
     /**
      * Directory name where the virtual computer configurations are stored.
      */
@@ -130,6 +130,23 @@ public class ArchitectureLoader implements ConfigurationManager {
     private static long nextPluginID = 0;
     
     private static ArchitectureLoader instance;
+
+    public class SortedProperties extends Properties {
+
+        /**
+         * Overrides, called by the store method.
+         */
+        @Override
+        public synchronized Enumeration keys() {
+            Enumeration keysEnum = super.keys();
+            List keyList = new ArrayList();
+            while (keysEnum.hasMoreElements()) {
+                keyList.add(keysEnum.nextElement());
+            }
+            Collections.sort(keyList);
+            return Collections.enumeration(keyList);
+        }
+    }
 
     public class PluginInfo {
         public String pluginSettingsName;
@@ -213,13 +230,13 @@ public class ArchitectureLoader implements ConfigurationManager {
         File file = new File(configurationBaseDirectory + File.separator + CONFIGS_DIR + File.separator
                 + configName + ".conf");
         if (!file.exists()) {
-            logger.error("Could not delete configuration: " + file.getAbsolutePath() + ". The file does not exist.");
+            LOGGER.error("Could not delete configuration: " + file.getAbsolutePath() + ". The file does not exist.");
             return false;
         }
         try {
             return file.delete();
         } catch(Exception e) {
-            logger.error(new StringBuilder().append("Could not delete configuration: ")
+            LOGGER.error(new StringBuilder().append("Could not delete configuration: ")
                     .append(file.getAbsolutePath()).toString());
         }
         return false;
@@ -236,14 +253,14 @@ public class ArchitectureLoader implements ConfigurationManager {
     public boolean renameConfiguration(String newName, String oldName) {
         File oldConfig = new File(configurationBaseDirectory + File.separator + CONFIGS_DIR + File.separator + oldName + ".conf");
         if (!oldConfig.exists()) {
-            logger.error("Could not rename configuration: " + oldConfig.getAbsolutePath() + ". The file does not exist.");
+            LOGGER.error("Could not rename configuration: " + oldConfig.getAbsolutePath() + ". The file does not exist.");
             return false;
         }
         try {
             return oldConfig.renameTo(new File(configurationBaseDirectory + File.separator + CONFIGS_DIR + File.separator
                     + newName + ".conf"));
         } catch(Exception e) {
-            logger.error(new StringBuilder().append("Could not rename configuration: ")
+            LOGGER.error(new StringBuilder().append("Could not rename configuration: ")
                     .append(oldConfig.getAbsolutePath()).append(" to (thesamepath)/").append(newName).toString());
         }
         return false;
@@ -290,7 +307,7 @@ public class ArchitectureLoader implements ConfigurationManager {
      */
     @Override
     public Properties readConfiguration(String configName, boolean schema_too) throws ReadConfigurationException {
-        Properties p = new Properties();
+        Properties p = new SortedProperties();
         File configFile = new File(configurationBaseDirectory + File.separator + CONFIGS_DIR + File.separator + configName
                 + ".conf");
         if (!configFile.exists() || !configFile.canRead()) {
@@ -393,26 +410,33 @@ public class ArchitectureLoader implements ConfigurationManager {
         
         String tmp = settings.getProperty("compiler");
         if (tmp != null) {
-            pluginsToLoad.put("compiler", new PluginInfo("compiler", COMPILERS_DIR, tmp, Compiler.class,
-                    createPluginID()));
+            long id = createPluginID();
+            LOGGER.debug("Creating compiler instance, pluginID=" + id);
+            pluginsToLoad.put("compiler", new PluginInfo("compiler", COMPILERS_DIR, tmp, Compiler.class, id));
         }
         tmp = settings.getProperty("cpu");
         if (tmp != null) {
-            pluginsToLoad.put("cpu", new PluginInfo("cpu", CPUS_DIR, tmp, CPU.class, createPluginID()));
+            long id = createPluginID();
+            LOGGER.debug("Creating CPU instance, pluginID=" + id);
+            pluginsToLoad.put("cpu", new PluginInfo("cpu", CPUS_DIR, tmp, CPU.class, id));
         }
         tmp = settings.getProperty("memory");
         if (tmp != null) {
-            pluginsToLoad.put("memory", new PluginInfo("memory", MEMORIES_DIR, tmp, Memory.class, createPluginID()));
+            long id = createPluginID();
+            LOGGER.debug("Creating memory instance, pluginID=" + id);
+            pluginsToLoad.put("memory", new PluginInfo("memory", MEMORIES_DIR, tmp, Memory.class, id));
         }
         for (int i = 0; settings.containsKey("device" + i); i++) {
             tmp = settings.getProperty("device" + i);
             if (tmp != null) {
-                pluginsToLoad.put("device" + i, new PluginInfo("device" + i, DEVICES_DIR, tmp, Device.class,
-                        createPluginID()));
+                long id = createPluginID();
+                LOGGER.debug("Creating device[" + i + "] instance, pluginID=" + id);
+                pluginsToLoad.put("device" + i, new PluginInfo("device" + i, DEVICES_DIR, tmp, Device.class, id));
             }
         }
         
         PluginLoader pluginLoader = PluginLoader.getInstance();
+        
         for (PluginInfo plugin : pluginsToLoad.values()) {
             Class<Plugin> mainClass = loadPlugin(plugin.dirName, plugin.pluginName);
             plugin.mainClass = mainClass;
@@ -428,7 +452,7 @@ public class ArchitectureLoader implements ConfigurationManager {
                         + Arrays.toString(pluginLoader.getUnloadedClassesList(Main.password)), "[unknown]", null);
             }
         }
-        logger.info("All plugins are loaded and resolved.");
+        LOGGER.info("All plugins are loaded and resolved.");
         
         Compiler compiler = null;
         CPU cpu = null;
@@ -470,14 +494,14 @@ public class ArchitectureLoader implements ConfigurationManager {
 
             PluginInfo pluginInfo = pluginsToLoad.get(j0);
             if (pluginInfo == null) {
-                logger.error(new StringBuilder().append("Invalid connection, j0=").append(j0).toString());
+                LOGGER.error(new StringBuilder().append("Invalid connection, j0=").append(j0).toString());
                 continue; // invalid connection
             }
             pID1 = pluginInfo.pluginId;
 
             pluginInfo = pluginsToLoad.get(j1);
             if (pluginInfo == null) {
-                logger.error(new StringBuilder().append("Invalid connection, j1=").append(j1).toString());
+                LOGGER.error(new StringBuilder().append("Invalid connection, j1=").append(j1).toString());
                 continue; // invalid connection
             }
             pID2 = pluginInfo.pluginId;

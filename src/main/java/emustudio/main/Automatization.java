@@ -117,13 +117,13 @@ public class Automatization implements Runnable {
                         
                         switch (message.getMessageType()) {
                             case TYPE_INFO:
-                                logger.info(message.getForrmattedMessage());
+                                logger.info(message.getFormattedMessage());
                             case TYPE_ERROR:
-                                logger.error(message.getForrmattedMessage());
+                                logger.error(message.getFormattedMessage());
                             case TYPE_WARNING:
-                                logger.warn(message.getForrmattedMessage());
+                                logger.warn(message.getFormattedMessage());
                             default:
-                                logger.info(message.getForrmattedMessage());
+                                logger.info(message.getFormattedMessage());
                         }
                     }
 

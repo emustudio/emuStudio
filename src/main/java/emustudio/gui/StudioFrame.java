@@ -183,7 +183,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
                 @Override
                 public void onMessage(Message message) {
-                    txtOutput.append(message.getForrmattedMessage() + "\n");
+                    txtOutput.append(message.getFormattedMessage() + "\n");
 //                    if (Main.commandLine.getOutputFileName() != null)
                 }
 
