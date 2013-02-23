@@ -15,7 +15,7 @@
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  MERCHANTABILITY or FITNESS FOR regs[REG_A] PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License along
@@ -32,7 +32,12 @@ import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
+import emulib.runtime.LoggerFactory;
 import emulib.runtime.StaticDialogs;
+import emulib.runtime.interfaces.Logger;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Timer;
@@ -54,6 +59,13 @@ title = "Intel 8080 CPU",
 copyright = "\u00A9 Copyright 2007-2012, Peter Jakubčo",
 description = "Emulator of Intel 8080 CPU")
 public class EmulatorImpl extends AbstractCPU {
+    public static final int REG_A = 7;
+    public static final int REG_B = 0;
+    public static final int REG_C = 1;
+    public static final int REG_D = 2;
+    public static final int REG_E = 3;
+    public static final int REG_H = 4;
+    public static final int REG_L = 5;
 
     private static final byte PARITY[] = {
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0,
@@ -65,6 +77,8 @@ public class EmulatorImpl extends AbstractCPU {
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0,
         1, 0, 0, 1
     };
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorImpl.class);
+    
     private StatusPanel statusPanel;
     private MemoryContext<Short> memory;
     private ContextImpl context;
@@ -77,14 +91,15 @@ public class EmulatorImpl extends AbstractCPU {
     // registers are public meant for only StatusPanel (didnt want make it thru getters)
     private int PC = 0; // program counter
     public int SP = 0; // stack pointer
-    public short B = 0, C = 0, D = 0, E = 0, H = 0, L = 0, Flags = 2, A = 0; // registers
+    public short[] regs = new short[8];
+    public short Flags = 2; // registers
     public static final int flagS = 0x80, flagZ = 0x40, flagAC = 0x10, flagP = 0x4, flagC = 0x1;
     private boolean INTE = false; // enabling / disabling of interrupts
     private boolean isINT = false;
     private short b1 = 0; // the raw interrupt instruction
     private short b2 = 0;
     private short b3 = 0;
-
+    
     /**
      * This class performs runtime frequency calculation and updating.
      *
@@ -179,7 +194,8 @@ public class EmulatorImpl extends AbstractCPU {
     @Override
     public void reset(int startPos) {
         super.reset(startPos);
-        SP = A = B = C = D = E = H = L = 0;
+        Arrays.fill(regs, (short)0);
+        SP = 0;
         Flags = 2; //0000 0010b
         PC = startPos;
         INTE = false;
@@ -218,6 +234,12 @@ public class EmulatorImpl extends AbstractCPU {
                 if (runState == RunState.STATE_RUNNING) {
                     runState = RunState.STATE_STOPPED_BREAK;
                 }
+            } catch (IllegalAccessException e) {
+                runState = RunState.STATE_STOPPED_BAD_INSTR;
+            } catch (IllegalArgumentException e) {
+                runState = RunState.STATE_STOPPED_BAD_INSTR;
+            } catch (InvocationTargetException e) {
+                runState = RunState.STATE_STOPPED_BAD_INSTR;
             } catch (IndexOutOfBoundsException e) {
                 runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
@@ -320,6 +342,12 @@ public class EmulatorImpl extends AbstractCPU {
                     if (isBreakpointSet(PC) == true) {
                         throw new Error();
                     }
+                } catch (IllegalAccessException e) {
+                    runState = RunState.STATE_STOPPED_BAD_INSTR;
+                } catch (IllegalArgumentException e) {
+                    runState = RunState.STATE_STOPPED_BAD_INSTR;
+                } catch (InvocationTargetException e) {
+                    runState = RunState.STATE_STOPPED_BAD_INSTR;
                 } catch (IndexOutOfBoundsException e) {
                     runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
                     break;
@@ -368,53 +396,18 @@ public class EmulatorImpl extends AbstractCPU {
 
     /* Get an 8080 register and return it */
     private short getreg(int reg) {
-        switch (reg) {
-            case 0:
-                return B;
-            case 1:
-                return C;
-            case 2:
-                return D;
-            case 3:
-                return E;
-            case 4:
-                return H;
-            case 5:
-                return L;
-            case 6:
-                return ((Short) memory.read((H << 8) | L)).shortValue();
-            case 7:
-                return A;
+        if (reg == 6) {
+            return ((Short) memory.read((regs[REG_H] << 8) | regs[REG_L])).shortValue();
         }
-        return 0;
+        return regs[reg];
     }
 
     /* Put a value into an 8080 register from memory */
     private void putreg(int reg, short val) {
-        switch (reg) {
-            case 0:
-                B = val;
-                break;
-            case 1:
-                C = val;
-                break;
-            case 2:
-                D = val;
-                break;
-            case 3:
-                E = val;
-                break;
-            case 4:
-                H = val;
-                break;
-            case 5:
-                L = val;
-                break;
-            case 6:
-                memory.write((H << 8) | L, val);
-                break;
-            case 7:
-                A = val;
+        if (reg == 6) {
+            memory.write((regs[REG_H] << 8) | regs[REG_L], val);
+        } else {
+            regs[reg] = val;
         }
     }
 
@@ -425,16 +418,16 @@ public class EmulatorImpl extends AbstractCPU {
         low = (short) (val & 0xFF);
         switch (reg) {
             case 0:
-                B = high;
-                C = low;
+                regs[REG_B] = high;
+                regs[REG_C] = low;
                 break;
             case 1:
-                D = high;
-                E = low;
+                regs[REG_D] = high;
+                regs[REG_E] = low;
                 break;
             case 2:
-                H = high;
-                L = low;
+                regs[REG_H] = high;
+                regs[REG_L] = low;
                 break;
             case 3:
                 SP = val;
@@ -446,11 +439,11 @@ public class EmulatorImpl extends AbstractCPU {
     int getpair(int reg) {
         switch (reg) {
             case 0:
-                return (B << 8) | C;
+                return (regs[REG_B] << 8) | regs[REG_C];
             case 1:
-                return (D << 8) | E;
+                return (regs[REG_D] << 8) | regs[REG_E];
             case 2:
-                return (H << 8) | L;
+                return (regs[REG_H] << 8) | regs[REG_L];
             case 3:
                 return SP;
         }
@@ -458,19 +451,19 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     /* Return the value of a selected register pair, in PUSH
-     format where 3 means A& flags, not SP
+     format where 3 means regs[REG_A]& flags, not SP
      */
     private int getpush(int reg) {
         int stat;
         switch (reg) {
             case 0:
-                return (B << 8) | C;
+                return (regs[REG_B] << 8) | regs[REG_C];
             case 1:
-                return (D << 8) | E;
+                return (regs[REG_D] << 8) | regs[REG_E];
             case 2:
-                return (H << 8) | L;
+                return (regs[REG_H] << 8) | regs[REG_L];
             case 3:
-                stat = (A << 8) | Flags;
+                stat = (regs[REG_A] << 8) | Flags;
                 stat |= 0x02;
                 return stat;
         }
@@ -478,7 +471,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     /* Place data into the indicated register pair, in PUSH
-     format where 3 means A& flags, not SP
+     format where 3 means regs[REG_A]& flags, not SP
      */
     private void putpush(int reg, int val) {
         short high, low;
@@ -486,19 +479,19 @@ public class EmulatorImpl extends AbstractCPU {
         low = (short) (val & 0xFF);
         switch (reg) {
             case 0:
-                B = high;
-                C = low;
+                regs[REG_B] = high;
+                regs[REG_C] = low;
                 break;
             case 1:
-                D = high;
-                E = low;
+                regs[REG_D] = high;
+                regs[REG_E] = low;
                 break;
             case 2:
-                H = high;
-                L = low;
+                regs[REG_H] = high;
+                regs[REG_L] = low;
                 break;
             case 3:
-                A = (short) ((val >>> 8) & 0xFF);
+                regs[REG_A] = (short) ((val >>> 8) & 0xFF);
                 Flags = (short) (val & 0xFF);
                 break;
         }
@@ -607,7 +600,470 @@ public class EmulatorImpl extends AbstractCPU {
         return false;
     }
 
-    private int evalStep() {
+    private static Method[] dispatchTable = new Method[256];
+    
+    static {
+        try {
+            dispatchTable[0] = EmulatorImpl.class.getDeclaredMethod("O0_NOP");
+            dispatchTable[7] = EmulatorImpl.class.getDeclaredMethod("O7_RLC");
+            dispatchTable[15] = EmulatorImpl.class.getDeclaredMethod("O15_RRC");
+            dispatchTable[23] = EmulatorImpl.class.getDeclaredMethod("O23_RAL");
+            dispatchTable[31] = EmulatorImpl.class.getDeclaredMethod("O31_RAR");
+            dispatchTable[34] = EmulatorImpl.class.getDeclaredMethod("O34_SHLD");
+            dispatchTable[39] = EmulatorImpl.class.getDeclaredMethod("O39_DAA");
+            dispatchTable[42] = EmulatorImpl.class.getDeclaredMethod("O42_LHLD");
+            dispatchTable[47] = EmulatorImpl.class.getDeclaredMethod("O47_CMA");
+            dispatchTable[50] = EmulatorImpl.class.getDeclaredMethod("O50_STA");
+            dispatchTable[55] = EmulatorImpl.class.getDeclaredMethod("O55_STC");
+            dispatchTable[58] = EmulatorImpl.class.getDeclaredMethod("O58_LDA");
+            dispatchTable[63] = EmulatorImpl.class.getDeclaredMethod("O63_CMC");
+            dispatchTable[118] = EmulatorImpl.class.getDeclaredMethod("O118_HLT");
+            dispatchTable[195] = EmulatorImpl.class.getDeclaredMethod("O195_JMP");
+            dispatchTable[198] = EmulatorImpl.class.getDeclaredMethod("O198_ADI");
+            dispatchTable[201] = EmulatorImpl.class.getDeclaredMethod("O201_RET");
+            dispatchTable[205] = EmulatorImpl.class.getDeclaredMethod("O205_CALL");
+            dispatchTable[206] = EmulatorImpl.class.getDeclaredMethod("O206_ACI");
+            dispatchTable[211] = EmulatorImpl.class.getDeclaredMethod("O211_OUT");
+            dispatchTable[214] = EmulatorImpl.class.getDeclaredMethod("O214_SUI");
+            dispatchTable[219] = EmulatorImpl.class.getDeclaredMethod("O219_IN");
+            dispatchTable[222] = EmulatorImpl.class.getDeclaredMethod("O222_SBI");
+            dispatchTable[227] = EmulatorImpl.class.getDeclaredMethod("O227_XTHL");
+            dispatchTable[230] = EmulatorImpl.class.getDeclaredMethod("O230_ANI");
+            dispatchTable[233] = EmulatorImpl.class.getDeclaredMethod("O233_PCHL");
+            dispatchTable[235] = EmulatorImpl.class.getDeclaredMethod("O235_XCHG");
+            dispatchTable[238] = EmulatorImpl.class.getDeclaredMethod("O238_XRI");
+            dispatchTable[243] = EmulatorImpl.class.getDeclaredMethod("O243_DI");
+            dispatchTable[246] = EmulatorImpl.class.getDeclaredMethod("O246_ORI");
+            dispatchTable[249] = EmulatorImpl.class.getDeclaredMethod("O249_SPHL");
+            dispatchTable[251] = EmulatorImpl.class.getDeclaredMethod("O251_EI");
+            dispatchTable[254] = EmulatorImpl.class.getDeclaredMethod("O254_CPI");
+        } catch (NoSuchMethodException e) {
+            LOGGER.error("Could not set up dispatch table. The emulator won't work correctly", e);
+        }
+    }
+
+    private int O0_NOP() {
+        return 4;
+    }
+    
+    private int O7_RLC() {
+        int xx = (regs[REG_A] << 9) & 0200000;
+        if (xx != 0) {
+            Flags |= flagC;
+        } else {
+            Flags &= (~flagC);
+        }
+        regs[REG_A] = (short) ((regs[REG_A] << 1) & 0xFF);
+        if (xx != 0) {
+            regs[REG_A] |= 0x01;
+        }
+        return 4;
+    }
+
+    private int O15_RRC() {
+        if ((regs[REG_A] & 0x01) == 1) {
+            Flags |= flagC;
+        } else {
+            Flags &= (~flagC);
+        }
+        regs[REG_A] = (short) ((regs[REG_A] >>> 1) & 0xFF);
+        if ((Flags & flagC) != 0) {
+            regs[REG_A] |= 0x80;
+        }
+        return 4;
+    }
+
+    private int O23_RAL() {
+        int xx = (regs[REG_A] << 9) & 0200000;
+        regs[REG_A] = (short) ((regs[REG_A] << 1) & 0xFF);
+        if ((Flags & flagC) != 0) {
+            regs[REG_A] |= 1;
+        } else {
+            regs[REG_A] &= 0xFE;
+        }
+        if (xx != 0) {
+            Flags |= flagC;
+        } else {
+            Flags &= (~flagC);
+        }
+        return 4;
+    }
+    
+    private int O31_RAR() {
+        int xx = 0;
+        if ((regs[REG_A] & 0x01) == 1) {
+            xx |= 0200000;
+        }
+        regs[REG_A] = (short) ((regs[REG_A] >>> 1) & 0xFF);
+        if ((Flags & flagC) != 0) {
+            regs[REG_A] |= 0x80;
+        } else {
+            regs[REG_A] &= 0x7F;
+        }
+        if (xx != 0) {
+            Flags |= flagC;
+        } else {
+            Flags &= (~flagC);
+        }
+        return 4;
+    }
+    
+    private int O34_SHLD() {
+        int DAR = (Integer) memory.readWord(PC);
+        PC += 2;
+        memory.writeWord(DAR, (regs[REG_H] << 8) | regs[REG_L]);
+        return 16;
+    }
+
+    private int O39_DAA() {
+        int DAR = regs[REG_A];
+        if (((DAR & 0x0F) > 9) || ((Flags & flagAC) != 0)) {
+            DAR += 6;
+            if ((DAR & 0x10) != (regs[REG_A] & 0x10)) {
+                Flags |= flagAC;
+            } else {
+                Flags &= (~flagAC);
+            }
+            regs[REG_A] = (short) (DAR & 0xFF);
+        }
+        DAR = (regs[REG_A] >>> 4) & 0x0F;
+        if ((DAR > 9) || ((Flags & flagC) != 0)) {
+            DAR += 6;
+            if ((DAR & 0x10) != 0) {
+                Flags |= flagC;
+            }
+            regs[REG_A] &= 0x0F;
+            regs[REG_A] |= ((DAR << 4) & 0xF0);
+        }
+        if ((regs[REG_A] & 0x80) != 0) {
+            Flags |= flagS;
+        } else {
+            Flags &= (~flagS);
+        }
+        if ((regs[REG_A] & 0xff) == 0) {
+            Flags |= flagZ;
+        } else {
+            Flags &= (~flagZ);
+        }
+        parity(regs[REG_A]);
+        regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+        return 4;
+    }
+    
+    private int O42_LHLD() {
+        // TODO: test!
+        int DAR = (Integer) memory.readWord(PC);
+        PC += 2;
+        regs[REG_L] = ((Short) memory.read(DAR)).shortValue();
+        regs[REG_H] = ((Short) memory.read(DAR + 1)).shortValue();
+        return 16;
+    }
+
+    private int O47_CMA() {
+        regs[REG_A] = (short) (~regs[REG_A]);
+        regs[REG_A] &= 0xFF;
+        return 4;
+    }
+
+    private int O50_STA() {
+        int DAR = (Integer) memory.readWord(PC);
+        PC += 2;
+        memory.write(DAR, regs[REG_A]);
+        return 13;
+    }
+
+    private int O55_STC() {
+        Flags |= flagC;
+        return 4;
+    }
+
+    private int O58_LDA() {
+        int DAR = (Integer) memory.readWord(PC);
+        PC += 2;
+        regs[REG_A] = ((Short) memory.read(DAR)).shortValue();
+        return 13;
+    }
+
+    private int O63_CMC() {
+        if ((Flags & flagC) != 0) {
+            Flags &= (~flagC);
+        } else {
+            Flags |= flagC;
+        }
+        return 4;
+    }
+
+    private int O118_HLT() {
+        runState = RunState.STATE_STOPPED_NORMAL;
+        return 7;
+    }
+
+    private int O195_JMP() {
+        PC = (Integer) memory.readWord(PC);
+        return 10;
+    }
+
+    private int O198_ADI() {
+        int DAR = regs[REG_A];
+        regs[REG_A] += ((Short) memory.read(PC++)).shortValue();
+        setarith(regs[REG_A], DAR);
+        regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+        return 7;
+    }
+
+    private int O201_RET() {
+        PC = (Integer) memory.readWord(SP);
+        SP += 2;
+        return 10;
+    }
+
+    private int O205_CALL() {
+        memory.writeWord(SP - 2, PC + 2);
+        SP -= 2;
+        PC = (Integer) memory.readWord(PC);
+        return 17;
+    }
+
+    private int O206_ACI() {
+        int DAR = regs[REG_A];
+        regs[REG_A] += ((Short) memory.read(PC++)).shortValue();
+        if ((Flags & flagC) != 0) {
+            regs[REG_A]++;
+        }
+        setarith(regs[REG_A], DAR);
+        regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+        return 7;
+    }
+
+    private int O211_OUT() {
+        int DAR = ((Short) memory.read(PC++)).shortValue();
+        context.fireIO(DAR, false, regs[REG_A]);
+        return 10;
+    }
+
+    private int O214_SUI() {
+        int DAR = regs[REG_A];
+        regs[REG_A] -= ((Short) memory.read(PC++)).shortValue();
+        setarith(regs[REG_A], DAR);
+        regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+        return 7;
+    }
+    
+    private int O219_IN() {
+        int DAR = ((Short) memory.read(PC++)).shortValue();
+        regs[REG_A] = context.fireIO(DAR, true, (short) 0);
+        return 10;
+    }
+
+    private int O222_SBI() {
+        int DAR = regs[REG_A];
+        regs[REG_A] -= ((Short) memory.read(PC++)).shortValue();
+        if ((Flags & flagC) != 0) {
+            regs[REG_A]--;
+        }
+        setarith(regs[REG_A], DAR);
+        regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+        return 7;
+    }
+
+    private int O227_XTHL() {
+        int DAR = (Integer) memory.readWord(SP);
+        memory.writeWord(SP, (regs[REG_H] << 8) | regs[REG_L]);
+        regs[REG_H] = (short) ((DAR >>> 8) & 0xFF);
+        regs[REG_L] = (short) (DAR & 0xFF);
+        return 18;
+    }
+
+    private int O230_ANI() {
+        regs[REG_A] &= ((Short) memory.read(PC++)).shortValue();
+        Flags &= (~flagC);
+        Flags &= (~flagAC);
+        setlogical(regs[REG_A]);
+        regs[REG_A] &= 0xFF;
+        return 7;
+    }
+
+    private int O233_PCHL() {
+        PC = (regs[REG_H] << 8) | regs[REG_L];
+        return 5;
+    }
+
+    private int O235_XCHG() {
+        short x = regs[REG_H];
+        short y = regs[REG_L];
+        regs[REG_H] = regs[REG_D];
+        regs[REG_L] = regs[REG_E];
+        regs[REG_D] = x;
+        regs[REG_E] = y;
+        return 4;
+    }
+
+    private int O238_XRI() {
+        regs[REG_A] ^= ((Short) memory.read(PC++)).shortValue();
+        Flags &= (~flagC);
+        Flags &= (~flagAC);
+        setlogical(regs[REG_A]);
+        regs[REG_A] &= 0xFF;
+        return 7;
+    }
+
+    private int O243_DI() {
+        INTE = false;
+        return 4;
+    }
+
+    private int O246_ORI() {
+        regs[REG_A] |= ((Short) memory.read(PC++)).shortValue();
+        Flags &= (~flagC);
+        Flags &= (~flagAC);
+        setlogical(regs[REG_A]);
+        regs[REG_A] &= 0xFF;
+        return 7;
+    }
+
+    private int O249_SPHL() {
+        SP = (regs[REG_H] << 8) | regs[REG_L];
+        return 5;
+    }
+    
+    private int O251_EI() {
+        INTE = true;
+        return 4;
+    }
+
+    private int O254_CPI() {
+        int X = regs[REG_A];
+        int DAR = regs[REG_A] & 0xFF;
+        DAR -= ((Short) memory.read(PC++)).shortValue();
+        setarith(DAR, X);
+        return 7;
+    }
+
+    private int MC0_O40_MOV(short OP) {
+        putreg((OP >>> 3) & 0x07, getreg(OP & 0x07));
+        if (((OP & 0x07) == 6) || (((OP >>> 3) & 0x07) == 6)) {
+            return 7;
+        } else {
+            return 5;
+        }
+    }
+
+    private int MC7_O6_MVI(short OP) {
+        putreg((OP >>> 3) & 0x07, ((Short) memory.read(PC++)).shortValue());
+        if (((OP >>> 3) & 0x07) == 6) {
+            return 10;
+        } else {
+            return 7;
+        }
+    }
+    
+    private int MCF_01_LXI(short OP) {
+        putpair((OP >>> 4) & 0x03, (Integer) memory.readWord(PC));
+        PC += 2;
+        return 10;
+    }
+    
+    private int MEF_0A_LDAX(short OP) {
+        putreg(7, ((Short) memory.read(getpair((OP >>> 4) & 0x03))).shortValue());
+        return 7;
+    }
+    
+    private int MEF_02_STAX(short OP) {
+        memory.write(getpair((OP >>> 4) & 0x03), getreg(7));
+        return 7;
+    }
+
+    private int MF8_B8_CMP(short OP) {
+        int X = regs[REG_A];
+        int DAR = regs[REG_A] & 0xFF;
+        DAR -= getreg(OP & 0x07);
+        setarith(DAR, X);
+        if ((OP & 0x07) == 6) {
+            return 7;
+        } else {
+            return 4;
+        }
+    }
+    
+    private int MC7_C2_JMP(short OP) {
+        if (checkCondition((OP >>> 3) & 0x07)) {
+            PC = (Integer) memory.readWord(PC);
+        } else {
+            PC += 2;
+        }
+        return 10;
+    }
+
+    private int MC7_C4_CALL(short OP) {
+        if (checkCondition((OP >>> 3) & 0x07)) {
+            int DAR = (Integer) memory.readWord(PC);
+            PC += 2;
+            memory.writeWord(SP - 2, PC);
+            SP -= 2;
+            PC = DAR;
+            return 17;
+        } else {
+            PC += 2;
+            return 11;
+        }
+    }
+    
+    private int MC7_C0_RET(short OP) {
+        if (checkCondition((OP >>> 3) & 0x07)) {
+            PC = (Integer) memory.readWord(SP);
+            SP += 2;
+        }
+        return 10;
+    }
+
+    private int MC7_C7_RST(short OP) {
+        memory.writeWord(SP - 2, PC);
+        SP -= 2;
+        PC = OP & 0x38;
+        return 11;
+    }
+
+    private int MCF_C5_PUSH(short OP) {
+        int DAR = getpush((OP >>> 4) & 0x03);
+        memory.writeWord(SP - 2, DAR);
+        SP -= 2;
+        return 11;
+    }
+    
+    private int MCF_C1_POP(short OP) {
+        int DAR = (Integer) memory.readWord(SP);
+        SP += 2;
+        putpush((OP >>> 4) & 0x03, DAR);
+        return 10;
+    }
+    
+    private int MF8_80_ADD(short OP) {
+        int X = regs[REG_A];
+        regs[REG_A] += getreg(OP & 0x07);
+        setarith(regs[REG_A], X);
+        regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+        if ((OP & 0x07) == 6) {
+            return 7;
+        }
+        return 4;
+    }
+
+    private int MF8_88_ADC(short OP) {
+        int X = regs[REG_A];
+        regs[REG_A] += getreg(OP & 0x07);
+        if ((Flags & flagC) != 0) {
+            regs[REG_A]++;
+        }
+        setarith(regs[REG_A], X);
+        regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+        if ((OP & 0x07) == 6) {
+            return 7;
+        }
+        return 4;
+    }
+
+
+    private int evalStep() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         short OP;
         int DAR;
 
@@ -632,125 +1088,54 @@ public class EmulatorImpl extends AbstractCPU {
             isINT = false;
         }
         OP = ((Short) memory.read(PC++)).shortValue();
-        if (OP == 118) { // hlt?
-            runState = RunState.STATE_STOPPED_NORMAL;
-            return 7;
-        }
 
         /* Handle below all operations which refer to registers or register pairs.
          After that, a large switch statement takes care of all other opcodes */
         if ((OP & 0xC0) == 0x40) {                             /* MOV */
-            putreg((OP >>> 3) & 0x07, getreg(OP & 0x07));
-            if (((OP & 0x07) == 6) || (((OP >>> 3) & 0x07) == 6)) {
-                return 7;
-            } else {
-                return 5;
-            }
+            return MC0_O40_MOV(OP);
         } else if ((OP & 0xC7) == 0x06) {                      /* MVI */
-            putreg((OP >>> 3) & 0x07, ((Short) memory.read(PC++)).shortValue());
-            if (((OP >>> 3) & 0x07) == 6) {
-                return 10;
-            } else {
-                return 7;
-            }
+            return MC7_O6_MVI(OP);
         } else if ((OP & 0xCF) == 0x01) {                      /* LXI */
-            putpair((OP >>> 4) & 0x03, (Integer) memory.readWord(PC));
-            PC += 2;
-            return 10;
+            return MCF_01_LXI(OP);
         } else if ((OP & 0xEF) == 0x0A) {                      /* LDAX */
-            putreg(7, ((Short) memory.read(getpair((OP >>> 4) & 0x03))).shortValue());
-            return 7;
+            return MEF_0A_LDAX(OP);
         } else if ((OP & 0xEF) == 0x02) {                      /* STAX */
-            memory.write(getpair((OP >>> 4) & 0x03), getreg(7));
-            return 7;
+            return MEF_02_STAX(OP);
         } else if ((OP & 0xF8) == 0xB8) {                      /* CMP */
-            int X = A;
-            DAR = A & 0xFF;
-            DAR -= getreg(OP & 0x07);
-            setarith(DAR, X);
-            if ((OP & 0x07) == 6) {
-                return 7;
-            } else {
-                return 4;
-            }
+            return MF8_B8_CMP(OP);
         } else if ((OP & 0xC7) == 0xC2) {                      /* JMP <condition> */
-            if (checkCondition((OP >>> 3) & 0x07)) {
-                PC = (Integer) memory.readWord(PC);
-            } else {
-                PC += 2;
-            }
-            return 10;
+            return MC7_C2_JMP(OP);
         } else if ((OP & 0xC7) == 0xC4) {                      /* CALL <condition> */
-            if (checkCondition((OP >>> 3) & 0x07)) {
-                DAR = (Integer) memory.readWord(PC);
-                PC += 2;
-                memory.writeWord(SP - 2, PC);
-                SP -= 2;
-                PC = DAR;
-                return 17;
-            } else {
-                PC += 2;
-                return 11;
-            }
+            return MC7_C4_CALL(OP);
         } else if ((OP & 0xC7) == 0xC0) {                      /* RET <condition> */
-            if (checkCondition((OP >>> 3) & 0x07)) {
-                PC = (Integer) memory.readWord(SP);
-                SP += 2;
-            }
-            return 10;
+            return MC7_C0_RET(OP);
         } else if ((OP & 0xC7) == 0xC7) {                      /* RST */
-            memory.writeWord(SP - 2, PC);
-            SP -= 2;
-            PC = OP & 0x38;
-            return 11;
+            return MC7_C7_RST(OP);
         } else if ((OP & 0xCF) == 0xC5) {                      /* PUSH */
-            DAR = getpush((OP >>> 4) & 0x03);
-            memory.writeWord(SP - 2, DAR);
-            SP -= 2;
-            return 11;
+            return MCF_C5_PUSH(OP);
         } else if ((OP & 0xCF) == 0xC1) {                      /*POP */
-            DAR = (Integer) memory.readWord(SP);
-            SP += 2;
-            putpush((OP >>> 4) & 0x03, DAR);
-            return 10;
+            return MCF_C1_POP(OP);
         } else if ((OP & 0xF8) == 0x80) {                      /* ADD */
-            int X = A;
-            A += getreg(OP & 0x07);
-            setarith(A, X);
-            A = (short) (A & 0xFF);
-            if ((OP & 0x07) == 6) {
-                return 7;
-            }
-            return 4;
+            return MF8_80_ADD(OP);
         } else if ((OP & 0xF8) == 0x88) {                      /* ADC */
-            int X = A;
-            A += getreg(OP & 0x07);
-            if ((Flags & flagC) != 0) {
-                A++;
-            }
-            setarith(A, X);
-            A = (short) (A & 0xFF);
-            if ((OP & 0x07) == 6) {
-                return 7;
-            }
-            return 4;
+            return MF8_88_ADC(OP);
         } else if ((OP & 0xF8) == 0x90) {                      /* SUB */
-            int X = A;
-            A -= getreg(OP & 0x07);
-            setarith(A, X);
-            A = (short) (A & 0xFF);
+            int X = regs[REG_A];
+            regs[REG_A] -= getreg(OP & 0x07);
+            setarith(regs[REG_A], X);
+            regs[REG_A] = (short) (regs[REG_A] & 0xFF);
             if ((OP & 0x07) == 6) {
                 return 7;
             }
             return 4;
         } else if ((OP & 0xF8) == 0x98) {                      /* SBB */
-            int X = A;
-            A -= (getreg(OP & 0x07));
+            int X = regs[REG_A];
+            regs[REG_A] -= (getreg(OP & 0x07));
             if ((Flags & flagC) != 0) {
-                A--;
+                regs[REG_A]--;
             }
-            setarith(A, X);
-            A = (short) (A & 0xFF);
+            setarith(regs[REG_A], X);
+            regs[REG_A] = (short) (regs[REG_A] & 0xFF);
             if ((OP & 0x07) == 6) {
                 return 7;
             }
@@ -789,262 +1174,28 @@ public class EmulatorImpl extends AbstractCPU {
             putpair(2, DAR);
             return 10;
         } else if ((OP & 0xF8) == 0xA0) {                      /* ANA */
-            A &= getreg(OP & 0x07);
-            setlogical(A);
-            A &= 0xFF;
+            regs[REG_A] &= getreg(OP & 0x07);
+            setlogical(regs[REG_A]);
+            regs[REG_A] &= 0xFF;
             return 4;
         } else if ((OP & 0xF8) == 0xA8) {                      /* XRA */
-            A ^= getreg(OP & 0x07);
-            setlogical(A);
-            A &= 0xFF;
+            regs[REG_A] ^= getreg(OP & 0x07);
+            setlogical(regs[REG_A]);
+            regs[REG_A] &= 0xFF;
             return 4;
         } else if ((OP & 0xF8) == 0xB0) {                      /* ORA */
-            A |= getreg(OP & 0x07);
-            setlogical(A);
-            A &= 0xFF;
+            regs[REG_A] |= getreg(OP & 0x07);
+            setlogical(regs[REG_A]);
+            regs[REG_A] &= 0xFF;
             return 4;
         }
-        /* The Big Instruction Decode Switch */
-        switch (OP) {
-            /* Logical instructions */
-            case 0376:                                     /* CPI */
-                int X = A;
-                DAR = A & 0xFF;
-                DAR -= ((Short) memory.read(PC++)).shortValue();
-                setarith(DAR, X);
-                return 7;
-            case 0346:                                     /* ANI */
-                A &= ((Short) memory.read(PC++)).shortValue();
-                Flags &= (~flagC);
-                Flags &= (~flagAC);
-                setlogical(A);
-                A &= 0xFF;
-                return 7;
-            case 0356:                                     /* XRI */
-                A ^= ((Short) memory.read(PC++)).shortValue();
-                Flags &= (~flagC);
-                Flags &= (~flagAC);
-                setlogical(A);
-                A &= 0xFF;
-                return 7;
-            case 0366:                                     /* ORI */
-                A |= ((Short) memory.read(PC++)).shortValue();
-                Flags &= (~flagC);
-                Flags &= (~flagAC);
-                setlogical(A);
-                A &= 0xFF;
-                return 7;
-            /* Jump instructions */
-            case 0303:                                     /* JMP */
-                PC = (Integer) memory.readWord(PC);
-                return 10;
-            case 0351:                                     /* PCHL */
-                PC = (H << 8) | L;
-                return 5;
-            case 0315:                                     /* CALL */
-                memory.writeWord(SP - 2, PC + 2);
-                SP -= 2;
-                PC = (Integer) memory.readWord(PC);
-                return 17;
-            case 0311:                                     /* RET */
-                PC = (Integer) memory.readWord(SP);
-                SP += 2;
-                return 10;
-            /* Data Transfer Group */
-            case 062:                                      /* STA */
-                DAR = (Integer) memory.readWord(PC);
-                PC += 2;
-                memory.write(DAR, A);
-                return 13;
-            case 072:                                      /* LDA */
-                DAR = (Integer) memory.readWord(PC);
-                PC += 2;
-                A = ((Short) memory.read(DAR)).shortValue();
-                return 13;
-            case 042:                                      /* SHLD */
-                DAR = (Integer) memory.readWord(PC);
-                PC += 2;
-                memory.writeWord(DAR, (H << 8) | L);
-                return 16;
-            case 052:                                      /* LHLD BUG !*/
-                DAR = (Integer) memory.readWord(PC);
-                PC += 2;
-                L = ((Short) memory.read(DAR)).shortValue();
-                H = ((Short) memory.read(DAR + 1)).shortValue();
-                return 16;
-            case 0353:                                     /* XCHG */
-                short x = H,
-                 y = L;
-                H = D;
-                L = E;
-                D = x;
-                E = y;
-                return 4;
-            /* Arithmetic Group */
-            case 0306:                                     /* ADI */
-                DAR = A;
-                A += ((Short) memory.read(PC++)).shortValue();
-                setarith(A, DAR);
-                A = (short) (A & 0xFF);
-                return 7;
-            case 0316:                                     /* ACI */
-                DAR = A;
-                A += ((Short) memory.read(PC++)).shortValue();
-                if ((Flags & flagC) != 0) {
-                    A++;
-                }
-                setarith(A, DAR);
-                A = (short) (A & 0xFF);
-                return 7;
-            case 0326:                                     /* SUI */
-                DAR = A;
-                A -= ((Short) memory.read(PC++)).shortValue();
-                setarith(A, DAR);
-                A = (short) (A & 0xFF);
-                return 7;
-            case 0336:                                     /* SBI */
-                DAR = A;
-                A -= ((Short) memory.read(PC++)).shortValue();
-                if ((Flags & flagC) != 0) {
-                    A--;
-                }
-                setarith(A, DAR);
-                A = (short) (A & 0xFF);
-                return 7;
-            case 047:                                      /* DAA */
-                DAR = A;
-                if (((DAR & 0x0F) > 9) || ((Flags & flagAC) != 0)) {
-                    DAR += 6;
-                    if ((DAR & 0x10) != (A & 0x10)) {
-                        Flags |= flagAC;
-                    } else {
-                        Flags &= (~flagAC);
-                    }
-                    A = (short) (DAR & 0xFF);
-                }
-                DAR = (A >>> 4) & 0x0F;
-                if ((DAR > 9) || ((Flags & flagC) != 0)) {
-                    DAR += 6;
-                    if ((DAR & 0x10) != 0) {
-                        Flags |= flagC;
-                    }
-                    A &= 0x0F;
-                    A |= ((DAR << 4) & 0xF0);
-                }
-                if ((A & 0x80) != 0) {
-                    Flags |= flagS;
-                } else {
-                    Flags &= (~flagS);
-                }
-                if ((A & 0xff) == 0) {
-                    Flags |= flagZ;
-                } else {
-                    Flags &= (~flagZ);
-                }
-                parity(A);
-                A = (short) (A & 0xFF);
-                return 4;
-            case 07: {                                     /* RLC */
-                int xx = (A << 9) & 0200000;
-                if (xx != 0) {
-                    Flags |= flagC;
-                } else {
-                    Flags &= (~flagC);
-                }
-                A = (short) ((A << 1) & 0xFF);
-                if (xx != 0) {
-                    A |= 0x01;
-                }
-                return 4;
-            }
-            case 017: {                                     /* RRC */
-                if ((A & 0x01) == 1) {
-                    Flags |= flagC;
-                } else {
-                    Flags &= (~flagC);
-                }
-                A = (short) ((A >>> 1) & 0xFF);
-                if ((Flags & flagC) != 0) {
-                    A |= 0x80;
-                }
-                return 4;
-            }
-            case 027: {                                    /* RAL */
-                int xx = (A << 9) & 0200000;
-                A = (short) ((A << 1) & 0xFF);
-                if ((Flags & flagC) != 0) {
-                    A |= 1;
-                } else {
-                    A &= 0xFE;
-                }
-                if (xx != 0) {
-                    Flags |= flagC;
-                } else {
-                    Flags &= (~flagC);
-                }
-                return 4;
-            }
-            case 037: {                                    /* RAR */
-                int xx = 0;
-                if ((A & 0x01) == 1) {
-                    xx |= 0200000;
-                }
-                A = (short) ((A >>> 1) & 0xFF);
-                if ((Flags & flagC) != 0) {
-                    A |= 0x80;
-                } else {
-                    A &= 0x7F;
-                }
-                if (xx != 0) {
-                    Flags |= flagC;
-                } else {
-                    Flags &= (~flagC);
-                }
-                return 4;
-            }
-            case 057:                                      /* CMA */
-                A = (short) (~A);
-                A &= 0xFF;
-                return 4;
-            case 077:                                      /* CMC */
-                if ((Flags & flagC) != 0) {
-                    Flags &= (~flagC);
-                } else {
-                    Flags |= flagC;
-                }
-                return 4;
-            case 067:                                      /* STC */
-                Flags |= flagC;
-                return 4;
-            /* Stack, I/O & Machine Control Group */
-            case 0:                                        /* NOP */
-                return 4;
-            case 0343:                                     /* XTHL */
-                DAR = (Integer) memory.readWord(SP);
-                memory.writeWord(SP, (H << 8) | L);
-                H = (short) ((DAR >>> 8) & 0xFF);
-                L = (short) (DAR & 0xFF);
-                return 18;
-            case 0371:                                     /* SPHL */
-                SP = (H << 8) | L;
-                return 5;
-            case 0373:                                     /* EI */
-                INTE = true;
-                return 4;
-            case 0363:                                     /* DI */
-                INTE = false;
-                return 4;
-            case 0333:                                     /* IN */
-                DAR = ((Short) memory.read(PC++)).shortValue();
-                A = context.fireIO(DAR, true, (short) 0);
-                return 10;
-            case 0323:                                     /* OUT */
-                DAR = ((Short) memory.read(PC++)).shortValue();
-                context.fireIO(DAR, false, A);
-                return 10;
+        /* Dispatch Instruction */
+        Method instr = dispatchTable[OP];
+        if (instr == null) {
+            runState = RunState.STATE_STOPPED_BAD_INSTR;
+            return 0;
         }
-        runState = RunState.STATE_STOPPED_BAD_INSTR;
-        return 0;
+        return (Integer)instr.invoke(this);
     }
 
     @Override

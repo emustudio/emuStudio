@@ -106,16 +106,16 @@ public class StatusPanel extends JPanel {
     }
 
     public void updateGUI() {
-        txtRegA.setText(getByteHexString(cpu.A));
-        txtRegB.setText(getByteHexString(cpu.B));
-        txtRegC.setText(getByteHexString(cpu.C));
-        txtRegBC.setText(getWordHexString(((cpu.B << 8) | cpu.C) & 0xFFFF));
-        txtRegD.setText(getByteHexString(cpu.D));
-        txtRegE.setText(getByteHexString(cpu.E));
-        txtRegDE.setText(getWordHexString(((cpu.D << 8) | cpu.E) & 0xFFFF));
-        txtRegH.setText(getByteHexString(cpu.H));
-        txtRegL.setText(getByteHexString(cpu.L));
-        txtRegHL.setText(getWordHexString(((cpu.H << 8) | cpu.L) & 0xFFFF));
+        txtRegA.setText(getByteHexString(cpu.regs[EmulatorImpl.REG_A]));
+        txtRegB.setText(getByteHexString(cpu.regs[EmulatorImpl.REG_B]));
+        txtRegC.setText(getByteHexString(cpu.regs[EmulatorImpl.REG_C]));
+        txtRegBC.setText(getWordHexString(((cpu.regs[EmulatorImpl.REG_B] << 8) | cpu.regs[EmulatorImpl.REG_C]) & 0xFFFF));
+        txtRegD.setText(getByteHexString(cpu.regs[EmulatorImpl.REG_D]));
+        txtRegE.setText(getByteHexString(cpu.regs[EmulatorImpl.REG_E]));
+        txtRegDE.setText(getWordHexString(((cpu.regs[EmulatorImpl.REG_D] << 8) | cpu.regs[EmulatorImpl.REG_E]) & 0xFFFF));
+        txtRegH.setText(getByteHexString(cpu.regs[EmulatorImpl.REG_H]));
+        txtRegL.setText(getByteHexString(cpu.regs[EmulatorImpl.REG_L]));
+        txtRegHL.setText(getWordHexString(((cpu.regs[EmulatorImpl.REG_H] << 8) | cpu.regs[EmulatorImpl.REG_L]) & 0xFFFF));
         txtRegSP.setText(getWordHexString(cpu.SP));
         txtRegPC.setText(getWordHexString(cpu.getInstructionPosition()));
 
