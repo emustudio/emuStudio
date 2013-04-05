@@ -45,7 +45,7 @@ import net.sf.emustudio.intel8080.assembler.tree.Statement;
  */
 @PluginType(type=PLUGIN_TYPE.COMPILER,
         title="Intel 8080 Assembler",
-        copyright="\u00A9 Copyright 2007-2012, Peter Jakubčo",
+        copyright="\u00A9 Copyright 2007-2013, Peter Jakubčo",
         description="Light modified clone of original Intel's assembler. For syntax look at users manual.")
 public class CompilerImpl extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
@@ -104,7 +104,7 @@ public class CompilerImpl extends AbstractCompiler {
             notifyError("Unexpected end of file");
             return null;
         }
-        if (Parser8080.errorCount != 0) {
+        if (parser.errorCount != 0) {
             return null;
         }
 

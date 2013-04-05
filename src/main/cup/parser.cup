@@ -45,7 +45,7 @@ parser code {:
     private CompilerImpl asm;
     public int lastLine;
     public int lastColumn;
-    public static int errorCount = 0;
+    public int errorCount = 0;
 
     private String reportPrefixString = null;
     
