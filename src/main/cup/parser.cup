@@ -3,7 +3,7 @@
  *
  * Parser (syntactic analyzer for RAM)
  *
- * Copyright (C) 2009-2012 Peter Jakubčo
+ * Copyright (C) 2009-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,7 @@ parser code {:
     private RAMCompiler ram = null;
     public Token lastToken;
     public int errorCount = 0;
+    private String reportPrefixString = null;
     
     public RAMParser(java_cup.runtime.Scanner s, RAMCompiler ram) {
         this(s);
@@ -54,15 +55,28 @@ parser code {:
         done_parsing();
     }
 
-    public void report_error(String message, Symbol current) {
-        String mes;
+    public void report_error(String messageText, Symbol current) {
+        Token token = (Token)current;
 
-        Token t = (Token)current;
-        mes = message + t.getErrorString() + " ('"+t.getText()+"')";
-        
-        ram.fireMessage(new Message(MessageType.TYPE_ERROR, mes,
-            t.getLine()+1, t.getColumn(), null, errorCount));
+        messageText = messageText + token.getErrorString() + " ('"+token.getText()+"')";
+        if (reportPrefixString != null) {
+            messageText = reportPrefixString + messageText;
+        }
+
+        Message message = new Message(MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(),
+                null, errorCount);
+
+        if (ram != null) {
+            ram.notifyOnMessage(message);
+        } else {
+            System.out.println(message);
+        }
     }
+
+    public void setReportPrefixString(String str) {
+        this.reportPrefixString = str;
+    }
+
 :}
 
 terminal HALT,LOAD,STORE,READ,WRITE,ADD,SUB,MUL,DIV,JMP,JZ,JGTZ;

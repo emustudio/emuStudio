@@ -1,7 +1,7 @@
 /*
  * RAMCompiler.java
  * 
- * Copyright (C) 2009-2012 Peter Jakubčo
+ * Copyright (C) 2009-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@ import net.sf.emustudio.ram.memory.RAMMemoryContext;
 
 @PluginType(type = PLUGIN_TYPE.COMPILER,
 title = "RAM Compiler",
-copyright = "\u00A9 Copyright 2009-2012, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2009-2013, Peter Jakubčo",
 description = "Custom compiler for RAM abstract machine")
 public class RAMCompiler extends AbstractCompiler {
     private RAMLexer lex = null;
@@ -90,7 +90,7 @@ public class RAMCompiler extends AbstractCompiler {
     }
 
     /**
-     * Compile the source code into HEXFileHadler
+     * Compile the source code into CompiledFileHandler
      *
      * @param in Reader object of the source code
      * @return HEXFileHandler object
@@ -104,14 +104,14 @@ public class RAMCompiler extends AbstractCompiler {
         }
 
         Object parsedProgram;
-        CompiledFileHandler hex = new CompiledFileHandler();
+        CompiledFileHandler compiledProgram = new CompiledFileHandler();
 
-        printInfo(getTitle() + ", version " + getVersion());
+        notifyInfo(RAMCompiler.class.getAnnotation(PluginType.class).title() + ", version " + getVersion());
         lex.reset(in, 0, 0, 0);
         parsedProgram = par.parse().value;
 
         if (parsedProgram == null) {
-            printError("Unexpected end of file");
+            notifyError("Unexpected end of file");
             return null;
         }
         if (par.errorCount != 0) {
@@ -121,27 +121,27 @@ public class RAMCompiler extends AbstractCompiler {
         // do several passes for compiling
         Program program = (Program) parsedProgram;
         program.pass1(0);
-        program.pass2(hex);
+        program.pass2(compiledProgram);
 
-        printInfo("Compile was sucessfull.");
+        notifyInfo("Compile was sucessfull.");
         if (memory != null) {
-            if (hex.loadIntoMemory(memory)) {
-                printInfo("Compiled file was loaded into operating memory.");
+            if (compiledProgram.loadIntoMemory(memory)) {
+                notifyInfo("Compiled file was loaded into operating memory.");
             } else {
-                printError("Compiled file couldn't be loaded into operating"
+                notifyInfo("Compiled file couldn't be loaded into operating"
                         + " memory due to an error.");
             }
         }
-        return hex;
+        return compiledProgram;
     }
 
     @Override
     public boolean compile(String fileName, Reader reader) {
-        printInfo("This compiler doesn't support compilation into a file.");
+        notifyInfo("This compiler doesn't support compilation into a file.");
         try {
             CompiledFileHandler c = compile(reader);
         } catch (Exception e) {
-            printError("Compile failed.");
+            notifyError("Compile failed.");
             return false;
         }
         return true;
