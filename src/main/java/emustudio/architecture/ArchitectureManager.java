@@ -23,6 +23,8 @@
 package emustudio.architecture;
 
 import emulib.emustudio.SettingsManager;
+import emulib.runtime.InvalidPasswordException;
+import emulib.runtime.StaticDialogs;
 import emustudio.architecture.ArchitectureLoader.PluginInfo;
 import emustudio.architecture.drawing.Schema;
 import emustudio.main.Main;
@@ -83,8 +85,12 @@ public class ArchitectureManager implements SettingsManager {
         }
         if (Main.commandLine.noGUIWanted()) {
            writeSetting("nogui", "true");
+           try {
+               StaticDialogs.setGUISupported(false, Main.password);
+           } catch (InvalidPasswordException e) {
+               logger.error("Could not disable GUI in static dialogs.");
+           }
         }
-
         return computer.initialize(this);
     }
 

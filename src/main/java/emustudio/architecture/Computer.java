@@ -3,7 +3,7 @@
  * 
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2012, Peter Jakubčo
+ * Copyright (C) 2009-2013, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -206,20 +206,24 @@ public class Computer implements PluginConnections {
      */
     public boolean initialize(SettingsManager settings) {
         if ((compiler != null) && (!compiler.initialize(settings))) {
+            LOGGER.error("Could not initialize compiler.");
             return false;
         }
 
         if ((memory != null) && (!memory.initialize(settings))) {
+            LOGGER.error("Could not initialize memory.");
             return false;
         }
 
         if (!cpu.initialize(settings)) {
+            LOGGER.error("Could not initialize CPU.");
             return false;
         }
 
         int size = devices.length;
         for (int i = 0; i < size; i++) {
             if (!devices[i].initialize(settings)) {
+                LOGGER.error("Could not initialize device[" + i + "]: " + devices[i].getTitle());
                 return false;
             }
         }

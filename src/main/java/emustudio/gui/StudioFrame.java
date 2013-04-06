@@ -4,7 +4,7 @@
  * Created on Nedeľa, 2007, august 5, 13:43
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2007-2012, Peter Jakubčo
+ * Copyright (C) 2007-2013, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -150,8 +150,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
             @Override
             public Object getElementAt(int index) {
-                PluginType pluginType = arch.getDevices()[index].getClass().getAnnotation(PluginType.class);
-                return pluginType.title();                        
+                return arch.getDevices()[index].getTitle();        
             }
         });
         this.setLocationRelativeTo(null);
