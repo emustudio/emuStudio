@@ -1,7 +1,7 @@
 /*
  * AbstractTape.java
  * 
- * Copyright (C) 2009-2012 Peter Jakubčo
+ * Copyright (C) 2009-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,8 @@ import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.device.AbstractDevice;
 import emulib.runtime.ContextPool;
-import emulib.runtime.StaticDialogs;
+import emulib.runtime.LoggerFactory;
+import emulib.runtime.interfaces.Logger;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
@@ -34,9 +35,10 @@ import net.sf.emustudio.ram.abstracttape.gui.TapeDialog;
 
 @PluginType(type = PLUGIN_TYPE.CPU,
 title = "Abstract tape",
-copyright = "\u00A9 Copyright 2008-2012, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2008-2013, Peter Jakubčo",
 description = "Abstract tape device is used by abstract machines such as RAM or Turing machine")
 public class AbstractTape extends AbstractDevice {
+    private static Logger LOGGER = LoggerFactory.getLogger(AbstractTape.class);
     private String guiTitle;
     private AbstractTapeContextImpl context;
     private TapeDialog gui;
@@ -47,8 +49,7 @@ public class AbstractTape extends AbstractDevice {
         try {
             ContextPool.getInstance().register(pluginID, context, AbstractTapeContext.class);
         } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Could not register Tape Context",
-                    AbstractTape.class.getAnnotation(PluginType.class).title());
+            LOGGER.error("Could not register Abstract tape context", e);
         }
     }
 
@@ -82,18 +83,20 @@ public class AbstractTape extends AbstractDevice {
         }
         gui.setVisible(true);
     }
+    
+    @Override
+    public String getTitle() {
+        return (guiTitle == null) ?
+                AbstractTape.class.getAnnotation(PluginType.class).title() 
+                : guiTitle;
+    }
+    
 
     public void setGUITitle(String title) {
         this.guiTitle = title;
         if (gui != null) {
             gui.setTitle(title);
         }
-    }
-    
-    public String getGUITitle() {
-        return (guiTitle == null) ?
-                AbstractTape.class.getAnnotation(PluginType.class).title() 
-                : guiTitle;
     }
     
     @Override

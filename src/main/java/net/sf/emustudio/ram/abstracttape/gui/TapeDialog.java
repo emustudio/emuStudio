@@ -54,7 +54,7 @@ public class TapeDialog extends JDialog {
         this.tapeContext = tapeContext;
         this.listModel = new TapeListModel();
         initComponents();
-        this.setTitle(tape.getGUITitle());
+        this.setTitle(tape.getTitle());
         lstTape.setModel(listModel);
         lstTape.setCellRenderer(new TapeCellRenderer());
         this.tapeContext.setListener(new TapeListener() {

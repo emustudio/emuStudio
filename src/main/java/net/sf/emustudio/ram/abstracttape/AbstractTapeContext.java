@@ -20,8 +20,10 @@
  */
 package net.sf.emustudio.ram.abstracttape;
 
+import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
 
+@ContextType
 public interface AbstractTapeContext extends DeviceContext {
 	/**
 	 * Clear content of the tape leaving only one empty string

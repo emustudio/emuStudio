@@ -45,7 +45,6 @@ import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
  *
  * @author Peter Jakubčo
  */
-@ContextType
 public class AbstractTapeContextImpl implements AbstractTapeContext {
 
     private List<String> tape; // tape is an array of strings
