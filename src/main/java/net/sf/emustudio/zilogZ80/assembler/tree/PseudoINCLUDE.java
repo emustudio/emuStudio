@@ -3,7 +3,7 @@
  *
  * Created on 14.8.2008, 9:27:10
  *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -84,9 +84,9 @@ public class PseudoINCLUDE extends Pseudo {
             LexerZ80 lex = new LexerZ80(f);
             ParserZ80 par = new ParserZ80(lex, asm);
 
-            par.setReportAppendString(shortFileName + ": ");
+            par.setReportPrefixString(shortFileName + ": ");
             Object s = par.parse().value;
-            par.setReportAppendString(null);
+            par.setReportPrefixString(null);
             if (s == null) {
                 throw new Exception("[" + line + "," + column + "] "
                         + "Error: Unexpected end of file (" + shortFileName + ")");

@@ -3,7 +3,7 @@
  *
  * Created on Piatok, 2007, august 10, 8:22
  *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ import net.sf.emustudio.zilogZ80.assembler.tree.Program;
  */
 @PluginType(type=PLUGIN_TYPE.COMPILER,
         title="Zilog Z80 Assembler",
-        copyright="\u00A9 Copyright 2007-2012, Peter Jakubčo",
+        copyright="\u00A9 Copyright 2007-2013, Peter Jakubčo",
         description="Custom version of the assembler. For syntax look at users manual.")
 public class CompilerImpl extends AbstractCompiler {
     private LexerZ80 lex;
@@ -87,15 +87,17 @@ public class CompilerImpl extends AbstractCompiler {
         Object parsedProgram;
         HEXFileManager hex = new HEXFileManager();
 
-        printInfo(CompilerImpl.class.getAnnotation(PluginType.class).title() + ", version " + getVersion());
+        notifyInfo(CompilerImpl.class.getAnnotation(PluginType.class).title() + ", version " + getVersion());
+        notifyCompileStart();
         lex.reset(in, 0, 0, 0);
         parsedProgram = par.parse().value;
 
         if (parsedProgram == null) {
-            printError("Unexpected end of file");
+            notifyError("Unexpected end of file");
             return null;
         }
-        if (ParserZ80.errorCount != 0) {
+        if (par.errorCount != 0) {
+            notifyCompileFinish(1);
             return null;
         }
 
@@ -108,10 +110,12 @@ public class CompilerImpl extends AbstractCompiler {
             // don't worry about deadlock
         }
         if (env.getPassNeedCount() != 0) {
-            printError("Error: can't evaulate all expressions");
+            notifyError("Error: can't evaulate all expressions");
+            notifyCompileFinish(1);
             return null;
         }
         stat.pass4(hex, env);
+        notifyCompileFinish(0);
         return hex;
     }
 
@@ -130,21 +134,21 @@ public class CompilerImpl extends AbstractCompiler {
             fileName += ".hex"; // the output suffix
             
             hex.generateFile(fileName);
-            printInfo("Compile was sucessfull. Output: " + fileName);
+            notifyInfo("Compile was sucessfull. Output: " + fileName);
 
             MemoryContext memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
             if (memory != null) {
                 if (hex.loadIntoMemory(memory)) {
-                    printInfo("Compiled file was loaded into operating memory.");
+                    notifyInfo("Compiled file was loaded into operating memory.");
                 } else {
-                    printError("Compiled file couldn't be loaded into operating"
+                    notifyError("Compiled file couldn't be loaded into operating"
                             + "memory due to an error.");
                 }
             }
             programStart = hex.getProgramStart();
             return true;
         } catch (Exception e) {
-            printError(e.getMessage());
+            notifyError(e.getMessage());
             return false;
         }
     }
