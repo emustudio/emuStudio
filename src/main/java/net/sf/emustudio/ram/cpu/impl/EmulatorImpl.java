@@ -28,7 +28,9 @@ import emulib.plugins.cpu.CPUContext;
 import emulib.plugins.cpu.Disassembler;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
+import emulib.runtime.LoggerFactory;
 import emulib.runtime.StaticDialogs;
+import emulib.runtime.interfaces.Logger;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -44,6 +46,7 @@ title = "Random Access Machine (RAM)",
 copyright = "\u00A9 Copyright 2009-2012, Peter Jakubčo",
 description = "Emulator of abstract RAM machine")
 public class EmulatorImpl extends AbstractCPU {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorImpl.class);
     private RAMMemoryContext mem;
     private RAMContext context;
     private RAMDisassembler dis;     // disassembler
@@ -79,6 +82,7 @@ public class EmulatorImpl extends AbstractCPU {
                     RAMMemoryContext.class);
         } catch (InvalidContextException e) {
             // Will be processed later on
+            LOGGER.error("Could not get memory context", e);
         }
 
         if (mem == null) {
