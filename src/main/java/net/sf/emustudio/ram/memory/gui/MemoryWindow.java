@@ -130,6 +130,7 @@ public class MemoryWindow extends JFrame {
                     was = true;
                     j++;
                     levels.remove(pos);
+                    keys = levels.keySet().iterator();
                 }
             }
             if (was) {
@@ -272,6 +273,7 @@ public class MemoryWindow extends JFrame {
         btnClear.setFocusable(false);
         btnClear.setHorizontalTextPosition(SwingConstants.CENTER);
         btnClear.setVerticalTextPosition(SwingConstants.BOTTOM);
+        btnClear.setToolTipText("Clear program tape");
         btnClear.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
