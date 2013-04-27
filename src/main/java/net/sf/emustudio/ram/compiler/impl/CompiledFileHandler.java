@@ -66,8 +66,6 @@ public class CompiledFileHandler {
             rmem.write(i, program.get(i));
         }
 
-        // TODO: beware!
-        CompilerEnvironment.clear();
         return true;
     }
 

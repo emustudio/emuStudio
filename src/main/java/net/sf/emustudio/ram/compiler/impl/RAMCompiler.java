@@ -1,6 +1,6 @@
 /*
  * RAMCompiler.java
- * 
+ *
  * Copyright (C) 2009-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
@@ -128,8 +128,7 @@ public class RAMCompiler extends AbstractCompiler {
             if (compiledProgram.loadIntoMemory(memory)) {
                 notifyInfo("Compiled file was loaded into operating memory.");
             } else {
-                notifyInfo("Compiled file couldn't be loaded into operating"
-                        + " memory due to an error.");
+                notifyInfo("Compiled file couldn't be loaded into operating memory due to an error.");
             }
         }
         return compiledProgram;
@@ -139,8 +138,15 @@ public class RAMCompiler extends AbstractCompiler {
     public boolean compile(String fileName, Reader reader) {
         try {
             CompiledFileHandler c = compile(reader);
+
+            int i = fileName.lastIndexOf(".");
+            if (i >= 0) {
+                fileName = fileName.substring(0, i);
+            }
+            fileName += ".ram"; // the output suffix
+
             if (c.serialize(fileName)) {
-                notifyInfo("Compiled file was saved.");
+                notifyInfo("Compilation was saved into the file: " + fileName);
             } else {
                 notifyError("Could not save compiled file.");
             }
