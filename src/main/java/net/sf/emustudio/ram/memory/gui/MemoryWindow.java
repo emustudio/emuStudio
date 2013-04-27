@@ -1,7 +1,7 @@
 /*
  * MemoryWindow.java
  * 
- * Copyright (C) 2009-2012 Peter Jakubčo
+ * Copyright (C) 2009-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -21,8 +21,11 @@
 package net.sf.emustudio.ram.memory.gui;
 
 import emulib.plugins.memory.Memory.MemoryListener;
+import emulib.runtime.StaticDialogs;
+import emulib.runtime.UniversalFileFilter;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -32,6 +35,7 @@ import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -220,9 +224,43 @@ public class MemoryWindow extends JFrame {
 
         computeComplexity();
     }
+    
+    private void openRAM() {
+        JFileChooser f = new JFileChooser();
+        UniversalFileFilter f1 = new UniversalFileFilter();
+        UniversalFileFilter f2 = new UniversalFileFilter();
 
-    public final void initComponents() {
+        f1.addExtension("ram");
+        f1.setDescription("RAM program file (*.ram)");
+        f2.addExtension("*");
+        f2.setDescription("All files (*.*)");
+
+        f.setDialogTitle("Load compiled RAM program");
+        f.setAcceptAllFileFilterUsed(false);
+        f.addChoosableFileFilter(f1);
+        f.addChoosableFileFilter(f2);
+        f.setFileFilter(f1);
+        f.setApproveButtonText("Load");
+        f.setCurrentDirectory(new File(System.getProperty("user.dir")));
+
+        int returnVal = f.showOpenDialog(this);
+        f.setVisible(true);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File fileSource = f.getSelectedFile();
+            if (fileSource.canRead() == true) {
+                memory.deserialize(fileSource.getAbsolutePath());
+                tableProgram.revalidate();
+                tableProgram.repaint();
+            } else {
+                StaticDialogs.showErrorMessage("File " + fileSource.getPath()
+                        + " can't be read.");
+            }
+        }
+    }
+
+    private void initComponents() {
         toolMemory = new JToolBar();
+        btnOpen = new JButton();
         btnClear = new JButton();
         scrollProgram = new JScrollPane();
         tableProgram = new JTable();
@@ -269,6 +307,18 @@ public class MemoryWindow extends JFrame {
 
         tableProgram.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
+        btnOpen.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/ram/memory/gui/document-open.png"))); // NOI18N
+        btnOpen.setFocusable(false);
+        btnOpen.setHorizontalTextPosition(SwingConstants.CENTER);
+        btnOpen.setVerticalTextPosition(SwingConstants.BOTTOM);
+        btnOpen.setToolTipText("Open compiled RAM program");
+        btnOpen.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openRAM();
+            }
+        });
+        
         btnClear.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/ram/memory/gui/edit-delete.png"))); // NOI18N
         btnClear.setFocusable(false);
         btnClear.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -280,6 +330,7 @@ public class MemoryWindow extends JFrame {
                 memory.clear();
             }
         });
+        toolMemory.add(btnOpen);
         toolMemory.add(btnClear);
 
         scrollProgram.setViewportView(tableProgram);
@@ -339,6 +390,8 @@ public class MemoryWindow extends JFrame {
 
         pack();
     }
+    
+    private JButton btnOpen;
     private JButton btnClear;
     private JLabel lblHALT;
     private JLabel lblJZ;
