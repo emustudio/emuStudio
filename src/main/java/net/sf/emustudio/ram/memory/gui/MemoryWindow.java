@@ -1,6 +1,6 @@
 /*
  * MemoryWindow.java
- * 
+ *
  * Copyright (C) 2009-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
@@ -224,7 +224,7 @@ public class MemoryWindow extends JFrame {
 
         computeComplexity();
     }
-    
+
     private void openRAM() {
         JFileChooser f = new JFileChooser();
         UniversalFileFilter f1 = new UniversalFileFilter();
@@ -251,9 +251,9 @@ public class MemoryWindow extends JFrame {
                 memory.deserialize(fileSource.getAbsolutePath());
                 tableProgram.revalidate();
                 tableProgram.repaint();
+                refillTable();
             } else {
-                StaticDialogs.showErrorMessage("File " + fileSource.getPath()
-                        + " can't be read.");
+                StaticDialogs.showErrorMessage("File " + fileSource.getPath() + " can't be read.");
             }
         }
     }
@@ -318,7 +318,7 @@ public class MemoryWindow extends JFrame {
                 openRAM();
             }
         });
-        
+
         btnClear.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/ram/memory/gui/edit-delete.png"))); // NOI18N
         btnClear.setFocusable(false);
         btnClear.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -390,7 +390,7 @@ public class MemoryWindow extends JFrame {
 
         pack();
     }
-    
+
     private JButton btnOpen;
     private JButton btnClear;
     private JLabel lblHALT;

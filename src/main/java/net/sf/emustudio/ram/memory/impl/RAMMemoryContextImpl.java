@@ -1,6 +1,6 @@
 /*
  * RAMMemoryContextImpl.java
- * 
+ *
  * Copyright (C) 2009-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
@@ -22,15 +22,10 @@ package net.sf.emustudio.ram.memory.impl;
 
 import emulib.plugins.memory.AbstractMemoryContext;
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -134,7 +129,7 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction> 
     public List<String> getInputs() {
         return inputs;
     }
-    
+
     public boolean deserialize(String filename) {
         try {
             InputStream file = new FileInputStream(filename);
@@ -151,7 +146,7 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction> 
         }
         return true;
     }
-    
+
 
     public void destroy() {
         memory.clear();
