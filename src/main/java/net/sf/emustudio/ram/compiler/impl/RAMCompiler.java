@@ -137,9 +137,13 @@ public class RAMCompiler extends AbstractCompiler {
 
     @Override
     public boolean compile(String fileName, Reader reader) {
-        notifyInfo("This compiler doesn't support compilation into a file.");
         try {
             CompiledFileHandler c = compile(reader);
+            if (c.serialize(fileName)) {
+                notifyInfo("Compiled file was saved.");
+            } else {
+                notifyError("Could not save compiled file.");
+            }
         } catch (Exception e) {
             notifyError("Compile failed.");
             return false;

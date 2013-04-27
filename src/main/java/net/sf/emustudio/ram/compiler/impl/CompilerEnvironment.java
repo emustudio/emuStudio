@@ -45,8 +45,8 @@ public class CompilerEnvironment {
         return -1;
     }
 
-    public static Label[] getLabels() {
-        return labels.toArray(new Label[0]);
+    public static List<Label> getLabels() {
+        return labels;
     }
 
     public static void addInputs(List<String> inp) {

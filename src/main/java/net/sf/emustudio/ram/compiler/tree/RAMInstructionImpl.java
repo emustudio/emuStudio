@@ -20,6 +20,7 @@
  */
 package net.sf.emustudio.ram.compiler.tree;
 
+import java.io.Serializable;
 import net.sf.emustudio.ram.compiler.impl.CompilerEnvironment;
 import net.sf.emustudio.ram.memory.RAMInstruction;
 
@@ -27,7 +28,7 @@ import net.sf.emustudio.ram.memory.RAMInstruction;
  * Implementation of interface which is defined in RAM Memory.
  * @author Peter Jakubčo
  */
-public class RAMInstructionImpl implements RAMInstruction {
+public class RAMInstructionImpl implements RAMInstruction, Serializable {
     private int instr;      // instruction code
     private char direction; // 0 - register, '=' - direct, '*' - indirect
     private Object operand; // operand

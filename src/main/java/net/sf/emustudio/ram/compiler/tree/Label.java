@@ -20,7 +20,9 @@
  */
 package net.sf.emustudio.ram.compiler.tree;
 
-public class Label {
+import java.io.Serializable;
+
+public class Label implements Serializable {
     private int address;
     private String value;
     private boolean evaluated = false;
