@@ -3,7 +3,7 @@
  *
  * Created on Utorok, 2007, august 7, 11:11
  * KISS, YAGNI, DRY
- * 
+ *
  * Copyright (C) 2007-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -97,7 +97,7 @@ import org.slf4j.LoggerFactory;
  * connection0.point0.x = 300
  * connection0.point0.y = 400
  * ...
- * 
+ *
  */
 public class ArchitectureLoader implements ConfigurationManager {
     private final static Logger LOGGER = LoggerFactory.getLogger(ArchitectureLoader.class);
@@ -125,11 +125,11 @@ public class ArchitectureLoader implements ConfigurationManager {
      * Directory name where devices are stored.
      */
     public final static String DEVICES_DIR = "devices";
-    
+
     private static String configurationBaseDirectory = System.getProperty("user.dir");
 
     private static long nextPluginID = 0;
-    
+
     private static ArchitectureLoader instance;
 
     public class SortedProperties extends Properties {
@@ -177,7 +177,7 @@ public class ArchitectureLoader implements ConfigurationManager {
 
     /**
      * Get instance of this class.
-     * 
+     *
      * @return always the same instance (singleton)
      */
     public static ArchitectureLoader getInstance() {
@@ -186,10 +186,10 @@ public class ArchitectureLoader implements ConfigurationManager {
         }
         return instance;
     }
-    
+
     /**
      * Get all file names from a directory ending with specified postfix.
-     * 
+     *
      * @param dirname directory to get files from
      * @param postfix file name postfix, e.g. ".png"
      * @return String array of names
@@ -210,19 +210,19 @@ public class ArchitectureLoader implements ConfigurationManager {
         }
         return (allNames == null) ? new String[0] : allNames;
     }
-    
+
     /**
      * Set base directory for locating configuration files.
-     * 
+     *
      * @param baseDirectory Absolute path of the base directory for the configurations
      */
     public static void setConfigurationBaseDirectory(String baseDirectory) {
         configurationBaseDirectory = baseDirectory;
     }
-    
+
     /**
      * Method deletes virtual configuration file from filesystem.
-     * 
+     *
      * @param configName Name of the configuration
      * @return true if the operation was successful, false otherwise
      */
@@ -266,11 +266,11 @@ public class ArchitectureLoader implements ConfigurationManager {
         }
         return false;
     }
-    
+
     /**
      * Method loads schema from configuration file. It is used
      * by ArchitectureEditor.
-     * 
+     *
      * @param configName Name of the virtual configuration
      * @return Schema of the configuration, or null if some error
      *         raises.
@@ -296,10 +296,10 @@ public class ArchitectureLoader implements ConfigurationManager {
         schema.save();
         writeConfiguration(schema.getConfigName(), schema.getSettings());
     }
-    
+
     /**
      * Method reads configuration into Properties object.
-     * 
+     *
      * @param configName
      * @param schema_too whether read schema settings too
      * @return properties object (settings for actual architecture
@@ -364,7 +364,7 @@ public class ArchitectureLoader implements ConfigurationManager {
     }
 
     /**
-     
+
      * Method save configuration to a file with name configName.
      *
      * @param configName name of configuration
@@ -394,10 +394,10 @@ public class ArchitectureLoader implements ConfigurationManager {
             throw new WriteConfigurationException("Could not save configuration.", e);
         }
     }
-    
+
     private Map<String, PluginInfo> preparePluginsToLoad(Properties settings) {
         Map<String, PluginInfo> pluginsToLoad = new HashMap<String, PluginInfo>();
-        
+
         String tmp = settings.getProperty("compiler");
         if (tmp != null) {
             long id = createPluginID();
@@ -426,11 +426,11 @@ public class ArchitectureLoader implements ConfigurationManager {
         }
         return pluginsToLoad;
     }
-    
+
     private void loadPlugins(Map<String, PluginInfo> pluginsToLoad) throws InvalidPasswordException,
             InvalidPluginException, PluginLoadingException {
         PluginLoader pluginLoader = PluginLoader.getInstance();
-        
+
         for (PluginInfo plugin : pluginsToLoad.values()) {
             Class<Plugin> mainClass = loadPlugin(plugin.dirName, plugin.pluginName);
             plugin.mainClass = mainClass;
@@ -442,13 +442,13 @@ public class ArchitectureLoader implements ConfigurationManager {
             if (pluginLoader.loadUndoneClasses(Main.password)) {
                 pluginLoader.resolveLoadedClasses(Main.password);
             } else {
-                throw new PluginLoadingException("Cannot load all classes of plug-ins:" 
+                throw new PluginLoadingException("Cannot load all classes of plug-ins:"
                         + Arrays.toString(pluginLoader.getUnloadedClassesList(Main.password)), "[unknown]", null);
             }
         }
         LOGGER.info("All plugins are loaded and resolved.");
     }
-    
+
     private Map<Long, List<Long>> preparePluginConnections(Properties settings, Map<String, PluginInfo> pluginsToLoad) {
         Map<Long, List<Long>> connections = new HashMap<Long, List<Long>>();
         for (int i = 0; settings.containsKey("connection" + i + ".junc0"); i++) {
@@ -500,22 +500,22 @@ public class ArchitectureLoader implements ConfigurationManager {
         }
         return connections;
     }
-    
+
     /**
      * Loads virtual configuration from current settings and creates virtual architecture.
-     * 
+     *
      * @param configName  Name of the configuration
-     * 
+     *
      * @return instance of virtual architecture
      */
     public ArchitectureManager createArchitecture(String configName)
             throws PluginLoadingException, ReadConfigurationException, PluginInitializationException,
             InvalidPasswordException, InvalidPluginException {
-        
+
         Properties settings = readConfiguration(configName, true);
         Map<String, PluginInfo> pluginsToLoad = preparePluginsToLoad(settings);
         loadPlugins(pluginsToLoad);
-        
+
         Compiler compiler = null;
         CPU cpu = null;
         Memory mem = null;
@@ -545,7 +545,7 @@ public class ArchitectureLoader implements ConfigurationManager {
         ContextPool.getInstance().setComputer(Main.password, computer);
         return new ArchitectureManager(computer, settings, loadSchema(configName), this);
     }
-    
+
     /**
      * Method compute an ID for a plugin identification for one runtime
      * session.
@@ -555,7 +555,7 @@ public class ArchitectureLoader implements ConfigurationManager {
      *
      * For the safety of correctness, the ID is made only as increased value
      * of some variable.
-     * 
+     *
      * @return hash for an identification of the plugin
      */
     private long createPluginID() {
@@ -569,28 +569,28 @@ public class ArchitectureLoader implements ConfigurationManager {
      *
      * Each main class implementing the interface must have two parameters within
      * the constructor - Long pluginID and ISettingsHandler settings.
-     * 
+     *
      * @param dirname type of a plugin (compiler, cpu, memory, devices)
      * @param pluginName name of the plugin
      * @return Main class of the plugin. It must be resolved before first use.
      */
     private Class<Plugin> loadPlugin(String dirname, String pluginName) throws InvalidPasswordException, InvalidPluginException {
-        return emulib.runtime.PluginLoader.getInstance().loadPlugin(configurationBaseDirectory + File.separator 
+        return emulib.runtime.PluginLoader.getInstance().loadPlugin(configurationBaseDirectory + File.separator
                 + dirname + File.separator + pluginName + ".jar", Main.password);
     }
-    
+
     /**
      * Creates new instance of class from given list that implements specified
      * interface.
-     * 
+     *
      * The class implementing the interface is found automatically. The method
      * takes into account only the first matching class.
-     * 
+     *
      * @param mainClass Main class of the plug-in. It must be already resolved.
      * @param pluginInterface The interface that main class MUST implement
      * @param pluginID The plug-in identification number
      * @return Instance object of loaded plugin
-     * @throws ClassNotFoundException 
+     * @throws ClassNotFoundException
      *     When the main class is null, or the class does not contain proper
      *     constructor.
      */
@@ -599,7 +599,7 @@ public class ArchitectureLoader implements ConfigurationManager {
         if (mainClass == null) {
             throw new ClassNotFoundException("Plug-in main class does not exist");
         }
-        
+
         if (!PluginLoader.doesImplement(mainClass, pluginInterface)) {
             throw new ClassNotFoundException("Plug-in main class does not implement specified interface");
         }

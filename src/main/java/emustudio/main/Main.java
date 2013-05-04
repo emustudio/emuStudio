@@ -4,7 +4,7 @@
  * Created on Nedeľa, 2007, august 5, 13:08
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2007-2012, Peter Jakubčo
+ * Copyright (C) 2007-2013, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ public class Main {
     public static CommandLine commandLine;
 
     public static void tryShowMessage(String message) {
-        if (!commandLine.noGUIWanted()) {
+        if (commandLine != null && !commandLine.noGUIWanted()) {
             StaticDialogs.showMessage(message);
         } else {
             System.out.println(message);
@@ -61,7 +61,7 @@ public class Main {
     }
 
     public static void tryShowMessage(String message, String title) {
-        if (!commandLine.noGUIWanted()) {
+        if (commandLine != null && !commandLine.noGUIWanted()) {
             StaticDialogs.showMessage(message, title);
         } else {
             System.out.println("[" + title + "] " + message);
@@ -69,7 +69,7 @@ public class Main {
     }
 
     public static void tryShowErrorMessage(String message) {
-        if (!commandLine.noGUIWanted()) {
+        if (commandLine != null && !commandLine.noGUIWanted()) {
             StaticDialogs.showErrorMessage(message);
         } else {
             System.out.println("Error: " + message);
@@ -77,7 +77,7 @@ public class Main {
     }
 
     public static void tryShowErrorMessage(String message, String title) {
-        if (!commandLine.noGUIWanted()) {
+        if (commandLine != null && !commandLine.noGUIWanted()) {
             StaticDialogs.showErrorMessage(message, title);
         } else {
             System.out.println("[" + title + "] Error: " + message);
@@ -104,7 +104,7 @@ public class Main {
         try {
             commandLine = CommandLineFactory.parseCommandLine(args);
         } catch (InvalidCommandLineException e) {
-            tryShowErrorMessage("Invalid command line");
+            tryShowErrorMessage("Invalid command line: " + e.getMessage());
             logger.error("Invalid command line.", e);
             return;
         }
@@ -142,6 +142,7 @@ public class Main {
         // to choose the configuration manually
         if (commandLine.getConfigName() == null) {
             if (commandLine.noGUIWanted()) {
+                tryShowErrorMessage("Configuration was not specified.");
                 logger.error("Configuration was not specified.");
                 System.exit(0);
             }
@@ -189,7 +190,7 @@ public class Main {
             tryShowErrorMessage("Could not load virtual computer. Please see log file for details.");
         }
 
-        if (!commandLine.noGUIWanted()) {
+        if (splash != null) {
             // hide splash screen
             splash.dispose();
         }
@@ -212,7 +213,13 @@ public class Main {
                 System.exit(1);
             }
         } else {
-            new Automatization(architecture, commandLine.getInputFileName(), commandLine.noGUIWanted()).run();
+            try {
+              new Automatization(architecture, commandLine.getInputFileName(), commandLine.noGUIWanted()).run();
+            } catch (AutomatizationException e) {
+                logger.error("Error during automatization.", e);
+                tryShowErrorMessage("Error: " + e.getMessage());
+                System.exit(1);
+            }
             architecture.destroy();
             System.exit(0);
         }
