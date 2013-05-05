@@ -3,7 +3,7 @@
  *
  * Created on 28.7.2008, 19:12:19
  *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -39,14 +39,14 @@ import net.sf.emustudio.devices.adm3a.gui.TerminalWindow;
 
 @PluginType(type = PLUGIN_TYPE.DEVICE,
 title = "LSI ADM-3A terminal",
-copyright = "\u00A9 Copyright 2007-2012, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2007-2013, Peter Jakubčo",
 description = "Custom implementation of terminal ADM-3A from LSI")
 public class TerminalImpl extends AbstractDevice {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminalImpl.class);
     private TerminalWindow terminalGUI;
     private TerminalDisplay terminal; // male
     private TerminalFemale female;
+    private boolean nogui;
 
     public TerminalImpl(Long pluginID) {
         super(pluginID);
@@ -88,11 +88,14 @@ public class TerminalImpl extends AbstractDevice {
 
     private void readSettings() {
         String s;
+        nogui = Boolean.parseBoolean(settings.readSetting(pluginID, "nogui"));
 
-        s = settings.readSetting(pluginID, "verbose");
+        s = settings.readSetting(pluginID, "auto");
         if (s != null && s.toUpperCase().equals("TRUE")) {
             terminal.setVerbose(true);
-            terminalGUI.setVisible(true);
+            if (!nogui) {
+              terminalGUI.setVisible(true);
+            }
         } else {
             terminal.setVerbose(false);
         }
@@ -121,7 +124,9 @@ public class TerminalImpl extends AbstractDevice {
 
     @Override
     public void showGUI() {
-        terminalGUI.setVisible(true);
+        if (!nogui) {
+          terminalGUI.setVisible(true);
+        }
     }
 
     @Override

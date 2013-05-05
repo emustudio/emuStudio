@@ -3,7 +3,7 @@
  *
  * Created on Utorok, 2007, november 20, 20:15
  *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -89,7 +89,7 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
     /**
      * Set verbose mode. If verbose mode is set, the output
      * is redirected also to a file.
-     * 
+     *
      * @param verbose set/unset verbose mode
      */
     public void setVerbose(boolean verbose) {
