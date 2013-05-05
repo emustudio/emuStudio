@@ -1,6 +1,6 @@
 /*
  * AbstractTape.java
- * 
+ *
  * Copyright (C) 2009-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
@@ -42,6 +42,8 @@ public class AbstractTape extends AbstractDevice {
     private String guiTitle;
     private AbstractTapeContextImpl context;
     private TapeDialog gui;
+    boolean nogui;
+    boolean auto;
 
     public AbstractTape(Long pluginID) {
         super(pluginID);
@@ -68,37 +70,44 @@ public class AbstractTape extends AbstractDevice {
         super.initialize(settings);
         this.settings = settings;
 
-        // show GUI at startup?        
+        nogui = Boolean.parseBoolean(settings.readSetting(pluginID, "nogui"));
+        auto = Boolean.parseBoolean(settings.readSetting(pluginID, "auto"));
+
+        // show GUI at startup?
         String s = settings.readSetting(pluginID, "showAtStartup");
-        if (s != null && s.toLowerCase().equals("true")) {
+        if (!nogui && s != null && s.toLowerCase().equals("true")) {
             showGUI();
         }
+        context.setVerbose(auto);
         return true;
     }
 
     @Override
     public void showGUI() {
-        if (gui == null) {
-            gui = new TapeDialog(this, context, settings, pluginID);
+        if (!nogui) {
+            if (gui == null) {
+                gui = new TapeDialog(this, context, settings, pluginID);
+            }
+            gui.setVisible(true);
         }
-        gui.setVisible(true);
     }
-    
+
     @Override
     public String getTitle() {
         return (guiTitle == null) ?
-                AbstractTape.class.getAnnotation(PluginType.class).title() 
+                AbstractTape.class.getAnnotation(PluginType.class).title()
                 : guiTitle;
     }
-    
+
 
     public void setGUITitle(String title) {
         this.guiTitle = title;
         if (gui != null) {
             gui.setTitle(title);
+            context.setVerbose(auto);
         }
     }
-    
+
     @Override
     public void destroy() {
         if (gui != null) {
@@ -116,7 +125,9 @@ public class AbstractTape extends AbstractDevice {
 
     @Override
     public void showSettings() {
-        new SettingsDialog(settings, pluginID, gui).setVisible(true);
+        if (!nogui) {
+            new SettingsDialog(settings, pluginID, gui).setVisible(true);
+        }
     }
 
     @Override

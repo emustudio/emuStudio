@@ -1,7 +1,7 @@
 /*
  * AbstractTapeContextImpl.java
  *
- * Copyright (C) 2009-2012 Peter Jakubčo
+ * Copyright (C) 2009-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,12 @@
  */
 package net.sf.emustudio.ram.abstracttape.impl;
 
-import emulib.annotations.ContextType;
+import emulib.runtime.LoggerFactory;
+import emulib.runtime.interfaces.Logger;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
@@ -29,7 +34,7 @@ import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
 
 /**
  * Tape used by abstract machines.
- * 
+ *
  * Tape options are:
  *   - (R)ead
  *   - (R)ead (W)rite
@@ -38,7 +43,7 @@ import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
  *     - only left
  *     - only right
  *     - both
- * 
+ *
  * The CPU must assign all the details to this tape using the tape context.
  *
  * By default, the tape is unbounded. However, it is possible to change.
@@ -46,26 +51,27 @@ import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
  * @author Peter Jakubčo
  */
 public class AbstractTapeContextImpl implements AbstractTapeContext {
-
+    private static Logger LOGGER = LoggerFactory.getLogger(AbstractTapeContextImpl.class);
     private List<String> tape; // tape is an array of strings
-    private int pos; // actual tape position
+    private int currentPosition; // actual tape position
     private boolean bounded; // tape is bounded form the left?
     private boolean editable; // if tape is editable by user
     private TapeListener listener;
     private boolean showPos;
     private boolean clearAtReset = true;
     private AbstractTape abst;
+    private Writer outw;
 
     public interface TapeListener extends EventListener {
 
         public void tapeChanged();
     }
-    
+
     public AbstractTapeContextImpl(AbstractTape abst) {
         this.abst = abst;
         listener = null;
         tape = new ArrayList<String>();
-        pos = 0;
+        currentPosition = 0;
         bounded = false;
         editable = true;
         showPos = true;
@@ -87,12 +93,12 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     @Override
     public void clear() {
         tape.clear();
-        pos = 0;
+        currentPosition = 0;
         fireChange();
     }
 
     public void reset() {
-        pos = 0;
+        currentPosition = 0;
         if (clearAtReset) {
             clear();
         }
@@ -111,12 +117,12 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
 
     @Override
     public boolean moveLeft() {
-        if (pos > 0) {
-            pos--;
+        if (currentPosition > 0) {
+            currentPosition--;
             fireChange();
             return true;
         } else if (bounded == false) {
-            pos = 0;
+            currentPosition = 0;
             tape.add(0, "");
             fireChange();
             return true;
@@ -126,8 +132,8 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
 
     @Override
     public void moveRight() {
-        pos++;
-        if (pos >= tape.size()) {
+        currentPosition++;
+        if (currentPosition >= tape.size()) {
             tape.add("");
         }
         fireChange();
@@ -141,7 +147,8 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
             symbol = "";
         }
         tape.add(0, symbol);
-        pos++;
+        writeSymbol(0, symbol);
+        currentPosition++;
         fireChange();
     }
 
@@ -150,6 +157,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
             symbol = "";
         }
         tape.add(symbol);
+        writeSymbol(tape.size()-1, symbol);
         fireChange();
     }
 
@@ -158,8 +166,10 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
             return;
         }
         tape.remove(pos);
-        if (this.pos >= pos) {
-            this.pos--;
+        writeSymbol(pos, "");
+
+        if (this.currentPosition >= pos) {
+            this.currentPosition--;
         }
         fireChange();
     }
@@ -172,6 +182,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
             symbol = "";
         }
         tape.set(pos, symbol);
+        writeSymbol(pos, symbol);
         fireChange();
     }
 
@@ -185,7 +196,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     }
 
     public int getPos() {
-        return pos;
+        return currentPosition;
     }
 
     /**
@@ -213,8 +224,10 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
                 tape.add("");
             }
             tape.add(symbol);
+            writeSymbol(pos, symbol);
         } else if ((pos < tape.size()) && (pos >= 0)) {
             tape.set(pos, symbol);
+            writeSymbol(pos, symbol);
         }
         fireChange();
     }
@@ -242,21 +255,61 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     }
 
     @Override
-    public Object read() {
-        if (pos >= tape.size() || (pos < 0)) {
+    public String read() {
+        if (currentPosition >= tape.size() || (currentPosition < 0)) {
             return "";
         }
-        return tape.get(pos);
+        return tape.get(currentPosition);
     }
 
     @Override
-    public void write(Object val) {
-        if (pos >= tape.size()) {
-            tape.add(pos, val.toString());
+    public void write(String val) {
+        if (currentPosition >= tape.size()) {
+            tape.add(currentPosition, val);
         } else {
-            tape.set(pos, val.toString());
+            tape.set(currentPosition, val);
         }
+        writeSymbol(currentPosition, val);
         fireChange();
+    }
+
+    private void writeSymbol(int position, String val) {
+        if (outw != null) {
+            try {
+                outw.write(position + " ");
+                outw.write(val + "\n");
+                outw.flush();
+            } catch (IOException e) {
+                LOGGER.error("Could not write to the output file", e);
+            }
+        }
+    }
+
+    /**
+     * Set verbose mode. If verbose mode is set, the output
+     * is redirected also to a file.
+     *
+     * @param verbose set/unset verbose mode
+     */
+    public void setVerbose(boolean verbose) {
+        if (outw != null) {
+            try {
+                outw.close();
+            } catch (IOException e) {
+                LOGGER.error("Could not close output file", e);
+            }
+            outw = null;
+        }
+        if (verbose) {
+            String title = abst.getTitle().trim();
+            LOGGER.info("Being verbose. Writing to file:" + title + ".out");
+            File f = new File(title + ".out");
+            try {
+                outw = new FileWriter(f);
+            } catch (IOException e) {
+                LOGGER.error("Could not create FileWriter", e);
+            }
+        }
     }
 
     public void setListener(TapeListener listener) {
