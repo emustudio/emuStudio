@@ -3,7 +3,7 @@
  *
  * Created on Štvrtok, 2008, september 25, 9:21
  *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ package net.sf.emustudio.memory.standard.gui;
 
 import emulib.emustudio.SettingsManager;
 import emulib.runtime.StaticDialogs;
+import emulib.runtime.UniversalFileFilter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +49,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import net.sf.emustudio.memory.standard.StandardMemoryContext.AddressRange;
-import net.sf.emustudio.memory.standard.gui.utils.EmuFileFilter;
 import net.sf.emustudio.memory.standard.gui.utils.NiceButton;
 import net.sf.emustudio.memory.standard.gui.utils.TableMemory;
 import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
@@ -432,8 +432,8 @@ public class SettingsDialog extends JDialog {
 
     private void btnAddImageActionPerformed(java.awt.event.ActionEvent evt) {
         JFileChooser f = new JFileChooser();
-        EmuFileFilter f1 = new EmuFileFilter();
-        EmuFileFilter f2 = new EmuFileFilter();
+        UniversalFileFilter f1 = new UniversalFileFilter();
+        UniversalFileFilter f2 = new UniversalFileFilter();
 
         f1.addExtension("hex");
         f1.addExtension("bin");

@@ -3,7 +3,7 @@
  *
  * Created on Nedeľa, 2007, oktober 28, 10:40
  *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ package net.sf.emustudio.memory.standard.gui;
 
 import emulib.emustudio.SettingsManager;
 import emulib.runtime.StaticDialogs;
+import emulib.runtime.UniversalFileFilter;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -57,7 +58,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import net.sf.emustudio.memory.standard.gui.utils.EmuFileFilter;
 import net.sf.emustudio.memory.standard.gui.utils.MemoryTableModel;
 import net.sf.emustudio.memory.standard.gui.utils.TableMemory;
 import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
@@ -467,8 +467,8 @@ public class MemoryFrame extends JFrame {
 
     private void btnOpenImageActionPerformed(java.awt.event.ActionEvent evt) {
         JFileChooser f = new JFileChooser();
-        EmuFileFilter f1 = new EmuFileFilter();
-        EmuFileFilter f2 = new EmuFileFilter();
+        UniversalFileFilter f1 = new UniversalFileFilter();
+        UniversalFileFilter f2 = new UniversalFileFilter();
 
         f1.addExtension("hex");
         f1.addExtension("bin");
@@ -556,8 +556,8 @@ public class MemoryFrame extends JFrame {
 
     private void btnDumpActionPerformed(java.awt.event.ActionEvent evt) {
         JFileChooser f = new JFileChooser();
-        EmuFileFilter f1 = new EmuFileFilter();
-        EmuFileFilter f2 = new EmuFileFilter();
+        UniversalFileFilter f1 = new UniversalFileFilter();
+        UniversalFileFilter f2 = new UniversalFileFilter();
 
         f1.addExtension("txt");
         f1.setDescription("Human-readable dump (*.txt)");
