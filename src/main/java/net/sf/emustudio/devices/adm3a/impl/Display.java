@@ -1,5 +1,5 @@
 /*
- * TerminalDisplay.java
+ * Display.java
  *
  * Created on Utorok, 2007, november 20, 20:15
  *
@@ -52,8 +52,7 @@ import java.util.TimerTask;
  *
  * @author Peter Jakubčo
  */
-public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
-    private final static String VERBOSE_FILE_NAME = "terminalADM-3A.out";
+public class Display extends Canvas implements DeviceContext<Short>, TerminalSettings.ChangedObserver {
     private final char[] videoMemory;
     private int col_count; // column count in CRT
     private int row_count; // row count in CRT
@@ -67,15 +66,13 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
     private int char_width = 0;
     private int start_y;
 
-    /* double buffering */
-    private Image dbImage;   // second buffer
     private Graphics2D dbg;  // graphics for double buffering
-    private boolean antiAliasing; // use antialiasing?
-    // verbose mode = output to a file
-    private boolean verbose = false;
-    private FileWriter outw = null;
+    private Image dbImage;   // second buffer
+    private FileWriter outputWriter = null;
+    private TerminalSettings settings;
 
-    public TerminalDisplay(int cols, int rows) {
+    public Display(int cols, int rows, TerminalSettings settings) {
+        this.settings = settings;
         this.col_count = cols;
         this.row_count = rows;
         videoMemory = new char[rows * cols];
@@ -83,39 +80,7 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
         cursorTimer = new Timer();
         cursorPainter = new CursorPainter();
         cursorTimer.scheduleAtFixedRate(cursorPainter, 0, 800);
-        antiAliasing = false;
-    }
-
-    /**
-     * Set verbose mode. If verbose mode is set, the output
-     * is redirected also to a file.
-     *
-     * @param verbose set/unset verbose mode
-     */
-    public void setVerbose(boolean verbose) {
-        if (verbose) {
-            File f = new File(VERBOSE_FILE_NAME);
-            try {
-                outw = new FileWriter(f);
-            } catch (IOException e) {
-            }
-        } else if (outw != null) {
-            try {
-                outw.close();
-            } catch (IOException e) {
-            }
-            outw = null;
-        }
-        this.verbose = verbose;
-    }
-
-    public boolean isAntiAliasing() {
-        return antiAliasing;
-    }
-
-    public void setAntiAliasing(boolean val) {
-        antiAliasing = val;
-        repaint();
+        settings.addChangedObserver(this);
     }
 
     public void setCursorPos(int x, int y) {
@@ -145,10 +110,11 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
         start_y = 2 * line_ascent + (d.height - max_height) / 2;
     }
 
-    public void destroyMe() {
+    public void destroy() {
+        settings.removeChangedObserver(this);
         cursorPainter.stop();
         cursorTimer.cancel();
-        setVerbose(false);
+        closeOutputWriter();
     }
 
     // Methods to set the various attributes of the component
@@ -199,7 +165,7 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
      * Method inserts char to cursor position. Doesn't move cursor.
      * @param c char to insert
      */
-    private void insert_char(char c) {
+    private void insertChar(char c) {
         synchronized (videoMemory) {
             videoMemory[cursor_y * col_count + cursor_x] = c;
         }
@@ -208,7 +174,7 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
     /**
      * Moves cursor backward in one position. Don't move cursor vertically.
      */
-    private void back_cursor() {
+    private void cursorBack() {
         if (cursor_x <= 0) {
             return;
         }
@@ -218,14 +184,14 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
     /**
      * Move cursor foreward in one position, also vertically if needed.
      */
-    private void move_cursor() {
+    private void moveCursor() {
         cursor_x++;
         if (cursor_x > (col_count - 1)) {
             cursor_x = 0;
             cursor_y++;
             // automatic line rolling
             if (cursor_y > (row_count - 1)) {
-                roll_line();
+                rollLine();
                 cursor_y = (row_count - 1);
             }
         }
@@ -236,7 +202,7 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
      * The principle: moves all lines beginning from 1 in videomemory into
      * line 0, and previous value of line 0 will be lost.
      */
-    public void roll_line() {
+    public void rollLine() {
         synchronized (videoMemory) {
             for (int i = col_count; i < (col_count * row_count); i++) {
                 videoMemory[i - col_count] = videoMemory[i];
@@ -261,16 +227,12 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
         }
         // for antialiasing text (hope it wont be turned on if antiAliasing
         // = false)
-        if (antiAliasing) {
-            dbg.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON);
-            dbg.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        if (settings.isAntiAliasing()) {
+            dbg.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            dbg.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         } else {
-            dbg.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_OFF);
-            dbg.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                    RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+            dbg.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+            dbg.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         }
         // clear screen in background
         dbg.setColor(getBackground());
@@ -308,19 +270,49 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
             sLine = "";
         }
     }
+    
+    private void openOutputWriter() {
+        try {
+            File tmpFile = new File(settings.getOutputFileName());
+            outputWriter = new FileWriter(tmpFile);
+        } catch (IOException e) {
+        }
+    }
+
+    private void closeOutputWriter() {
+        if (outputWriter != null) {
+            try {
+                outputWriter.close();
+            } catch (IOException e) {
+            }
+        }
+        outputWriter = null;
+    }
+
+    @Override
+    public void settingsChanged() {
+        if (settings.isNoGUI()) {
+            openOutputWriter();
+        } else {
+            closeOutputWriter();
+        }
+        if (settings.isAntiAliasing()) {
+            repaint();
+        }
+    }
 
     private class CursorPainter extends TimerTask {
 
         @Override
         public void run() {
-            Graphics g = getGraphics();
-            if (g == null) {
+            Graphics displayGraphics = getGraphics();
+            if (displayGraphics == null) {
                 return;
             }
-            g.setXORMode(Color.BLACK);
-            g.fillRect(cursor_x * char_width, cursor_y * line_height
+            displayGraphics.setXORMode(Color.BLACK);
+            displayGraphics.fillRect(cursor_x * char_width, cursor_y * line_height
                     + start_y - line_height, char_width, line_height);
-            g.setPaintMode();
+            displayGraphics.setPaintMode();
         }
 
         public void stop() {
@@ -329,21 +321,21 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
     }
 
     /**
-     * Input from the device is everytime 0, because everything new is
-     * sent immediately to the device, so internal buffer of terminal is
-     * everytime empty (in the implementation also doesn't exist).
+     * Input from the display is always 0, because the input is captured
+     * by an input provider, not by the display.
+     * 
      * @return 0
      */
     @Override
     public Short read() {
-        return (short)0;
+        return 0;
     }
 
-    private void verbose_char(short val) {
-        if (verbose && (outw != null)) {
+    private void writeToOutput(short val) {
+        if (outputWriter != null) {
             try {
-                outw.write((char) val);
-                outw.flush();
+                outputWriter.write((char) val);
+                outputWriter.flush();
             } catch (IOException e) {
             }
         }
@@ -356,7 +348,7 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
     public void write(Short data) {
         measure();
 
-        verbose_char(data);
+        writeToOutput(data);
         /*
          * if it is special char, interpret it. else just add
          * to "video memory"
@@ -365,7 +357,7 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
             case 7:
                 return; /* bell */
             case 8:
-                back_cursor();
+                cursorBack();
                 repaint();
                 return; /* backspace*/
             case 0x0A: /* line feed */
@@ -373,7 +365,7 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
                 cursor_x = 0;
                 if (cursor_y > (row_count - 1)) {
                     cursor_y = (row_count - 1);
-                    roll_line();
+                    rollLine();
                 }
                 repaint(); // to be sure for erasing cursor
                 return;
@@ -381,8 +373,8 @@ public class TerminalDisplay extends Canvas implements DeviceContext<Short> {
                 cursor_x = 0;
                 return; /* carriage return */
         }
-        insert_char((char)(data & 0xFF));
-        move_cursor();
+        insertChar((char)(data & 0xFF));
+        moveCursor();
         repaint();
     }
 

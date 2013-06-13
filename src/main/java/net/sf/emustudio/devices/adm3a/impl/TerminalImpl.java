@@ -32,53 +32,57 @@ import emulib.runtime.InvalidContextException;
 import emulib.runtime.LoggerFactory;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.interfaces.Logger;
+import java.io.File;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import net.sf.emustudio.devices.adm3a.InputProvider;
 import net.sf.emustudio.devices.adm3a.gui.ConfigDialog;
 import net.sf.emustudio.devices.adm3a.gui.TerminalWindow;
 
 @PluginType(type = PLUGIN_TYPE.DEVICE,
 title = "LSI ADM-3A terminal",
 copyright = "\u00A9 Copyright 2007-2013, Peter Jakubčo",
-description = "Custom implementation of terminal ADM-3A from LSI")
-public class TerminalImpl extends AbstractDevice {
+description = "Custom implementation of LSI ADM-3A terminal")
+public class TerminalImpl extends AbstractDevice implements TerminalSettings.ChangedObserver {
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminalImpl.class);
+
     private TerminalWindow terminalGUI;
-    private TerminalDisplay terminal; // male
-    private TerminalFemale female;
-    private boolean nogui;
+    private Display display;
+    private InputProvider keyboard;
+    private DeviceContext<Short> connectedDevice;
+    private TerminalSettings terminalSettings;
 
     public TerminalImpl(Long pluginID) {
         super(pluginID);
-        terminal = new TerminalDisplay(80, 25);
+        terminalSettings = new TerminalSettings(pluginID);
+        display = new Display(80, 25, terminalSettings);
         try {
-            ContextPool.getInstance().register(pluginID, terminal, DeviceContext.class);
+            ContextPool.getInstance().register(pluginID, display, DeviceContext.class);
         } catch (Exception e) {
             StaticDialogs.showErrorMessage("Could not register ADM-3A terminal",
                     TerminalImpl.class.getAnnotation(PluginType.class).title());
         }
-        female = new TerminalFemale();
     }
 
     @Override
     public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
+        terminalSettings.addChangedObserver(this);
+        terminalSettings.setSettingsManager(settings);
 
         try {
             // try to connect to a serial I/O board
             DeviceContext device = ContextPool.getInstance().getDeviceContext(pluginID, DeviceContext.class);
-
             if (device != null) {
                 if (device.getDataType() != Short.class) {
                     throw new InvalidContextException("Connected device is not supported");
                 }
-                female.attachDevice(device);
+                connectedDevice = device;
             } else {
                 LOGGER.warning("The terminal is not connected to any I/O device.");
             }
-
-            terminalGUI = new TerminalWindow(terminal, female);
-            readSettings();
+            terminalGUI = new TerminalWindow(display);
+            terminalSettings.read();
             return true;
         } catch (InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not get serial I/O board Context", getTitle());
@@ -86,52 +90,16 @@ public class TerminalImpl extends AbstractDevice {
         }
     }
 
-    private void readSettings() {
-        String s;
-        nogui = Boolean.parseBoolean(settings.readSetting(pluginID, "nogui"));
-
-        s = settings.readSetting(pluginID, "auto");
-        if (s != null && s.toUpperCase().equals("TRUE")) {
-            terminal.setVerbose(true);
-            if (!nogui) {
-              terminalGUI.setVisible(true);
-            }
-        } else {
-            terminal.setVerbose(false);
-        }
-
-        s = settings.readSetting(pluginID, "duplex_mode");
-        if (s != null && s.toUpperCase().equals("HALF")) {
-            terminalGUI.setHalfDuplex(true);
-        } else {
-            terminalGUI.setHalfDuplex(false);
-        }
-
-        s = settings.readSetting(pluginID, "always_on_top");
-        if (s != null && s.toUpperCase().equals("TRUE")) {
-            terminalGUI.setAlwaysOnTop(true);
-        } else {
-            terminalGUI.setAlwaysOnTop(false);
-        }
-
-        s = settings.readSetting(pluginID, "anti_aliasing");
-        if (s != null && s.toUpperCase().equals("TRUE")) {
-            terminal.setAntiAliasing(true);
-        } else {
-            terminal.setAntiAliasing(false);
-        }
-    }
-
     @Override
     public void showGUI() {
-        if (!nogui) {
+        if (!terminalSettings.isNoGUI()) {
           terminalGUI.setVisible(true);
         }
     }
 
     @Override
     public void reset() {
-        terminal.clearScreen();
+        display.clearScreen();
     }
 
 
@@ -147,19 +115,63 @@ public class TerminalImpl extends AbstractDevice {
 
     @Override
     public void destroy() {
+        terminalSettings.removeChangedObserver(this);
         if (terminalGUI != null) {
-            terminalGUI.destroyMe();
+            terminalGUI.destroy();
         }
     }
 
     @Override
     public void showSettings() {
-        new ConfigDialog(settings, pluginID, terminalGUI,
-                terminal).setVisible(true);
+        new ConfigDialog(terminalSettings, terminalGUI, display).setVisible(true);
     }
 
     @Override
     public boolean isShowSettingsSupported() {
         return true;
+    }
+
+    private void destroyKeyboard() {
+        if (keyboard != null) {
+            keyboard.destroy();
+        }
+    }
+
+    private void connectKeyboard() {
+        if (connectedDevice != null) {
+            keyboard.addDeviceObserver(connectedDevice);
+        } else {
+            LOGGER.warning("Keyboard is unconnected");
+        }
+    }
+
+    private void createKeyboardFromFile() {
+        destroyKeyboard();
+        KeyboardFromFile tmp = new KeyboardFromFile();
+        tmp.setInputFile(new File(terminalSettings.getInputFileName()));
+        keyboard = tmp;
+        connectKeyboard();
+    }
+
+    private void createKeyboard() {
+        destroyKeyboard();
+        Keyboard tmp = new Keyboard();
+        tmp.addListenerRecursively(terminalGUI);
+        keyboard = tmp;
+        connectKeyboard();
+    }
+
+    @Override
+    public void settingsChanged() {
+        if (terminalSettings.isNoGUI() && !(keyboard instanceof KeyboardFromFile)) {
+            createKeyboardFromFile();
+        } else if (!(keyboard instanceof Keyboard)) {
+            createKeyboard();
+        }
+        if (terminalSettings.isHalfDuplex()) {
+            keyboard.addDeviceObserver(display);
+        } else {
+            keyboard.removeDeviceObserver(display);
+        }
     }
 }

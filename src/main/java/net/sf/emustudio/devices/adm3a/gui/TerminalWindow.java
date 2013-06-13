@@ -3,7 +3,7 @@
  *
  * Created on Piatok, 2007, november 16, 11:42
  *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,46 +22,57 @@
  */
 package net.sf.emustudio.devices.adm3a.gui;
 
+import emulib.runtime.LoggerFactory;
+import emulib.runtime.interfaces.Logger;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Font;
+import java.io.IOException;
 import java.io.InputStream;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.WindowConstants;
-import net.sf.emustudio.devices.adm3a.impl.TerminalDisplay;
-import net.sf.emustudio.devices.adm3a.impl.TerminalFemale;
+import net.sf.emustudio.devices.adm3a.impl.Display;
 
 /**
- * Window (JFrame) implementation of interactive display terminal LSI ADM-3A
+ * Window representing the terminal.
  *
  * @author Peter Jakubčo
  */
-@SuppressWarnings("serial")
 public class TerminalWindow extends JFrame {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TerminalWindow.class);
+    private final Display display;
+    private final Font terminalFont;
 
-    private TerminalDisplay terminal;
-    private Font terminalFont;
-    private Keyboard keyboard;
+    public TerminalWindow(Display display) {
+        InputStream fin = this.getClass().getResourceAsStream("/net/sf/emustudio/devices/adm3a/gui/terminal.ttf");
+        Font font = null;
+        try {
+            font = Font.createFont(Font.TRUETYPE_FONT, fin).deriveFont(12f);
+        } catch (Exception e) {
+            LOGGER.error("Cannot load custom font file, using Java monospace", e);
+        } finally {
+            try {
+                fin.close();
+            } catch (IOException e) {
+                LOGGER.error("Could not close font input stream", e);
+            }
+        }
+        if (font == null) {
+            font = new java.awt.Font("Monospaced", 0, 12);
+        }
+        terminalFont = font;
+        this.display = display;
 
-    public TerminalWindow(TerminalDisplay lblTerminal, TerminalFemale female) {
-        this.terminal = lblTerminal;
-        keyboard = new Keyboard(terminal, female);
-        setVisible(false);
         initComponents();
-
-        keyboard.addListenerRecursively(this);
+        setVisible(false);
         this.setLocationRelativeTo(null);
     }
 
-    public void destroyMe() {
-        terminal.destroyMe();
+    public void destroy() {
+        display.destroy();
         this.dispose();
-    }
-
-    public void setHalfDuplex(boolean hd) {
-        keyboard.setHalfDuplex(hd);
     }
 
     private void initComponents() {
@@ -72,18 +83,10 @@ public class TerminalWindow extends JFrame {
         setTitle("Terminal ADM-3A");
         setResizable(false);
 
-        try {
-            // load terminal font from resources
-            InputStream fin = this.getClass().getResourceAsStream("/net/sf/emustudio/devices/adm3a/gui/terminal.ttf");
-            this.terminalFont = Font.createFont(Font.TRUETYPE_FONT, fin).deriveFont(12f);
-            fin.close();
-            terminal.setFont(this.terminalFont);
-        } catch (Exception e) {
-            terminal.setFont(new java.awt.Font("Monospaced", 0, 12));
-        }
-        terminal.setForeground(new java.awt.Color(0, 255, 0));
-        terminal.setBackground(new Color(0, 0, 0));
-        terminal.setBounds(53, 60, 653, 400);
+        display.setFont(terminalFont);
+        display.setForeground(new java.awt.Color(0, 255, 0));
+        display.setBackground(new Color(0, 0, 0));
+        display.setBounds(53, 60, 653, 400);
 
         lblBack.setLocation(0, 0);
         lblBack.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
@@ -96,7 +99,7 @@ public class TerminalWindow extends JFrame {
         pane.setBackground(Color.BLACK);
         pane.setLayout(null);
 
-        pane.add(terminal);
+        pane.add(display);
         pane.add(lblBack);
         pack();
         setSize(img.getIconWidth(), img.getIconHeight());

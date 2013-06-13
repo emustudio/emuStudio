@@ -1,7 +1,7 @@
 /*
  * Keyboard.java
  *
- * Copyright (C) 2009-2012 Peter Jakubčo
+ * Copyright (C) 2009-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -18,51 +18,22 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.devices.adm3a.gui;
+package net.sf.emustudio.devices.adm3a.impl;
 
+import emulib.plugins.device.DeviceContext;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import net.sf.emustudio.devices.adm3a.impl.TerminalDisplay;
-import net.sf.emustudio.devices.adm3a.impl.TerminalFemale;
+import java.util.ArrayList;
+import java.util.List;
+import net.sf.emustudio.devices.adm3a.InputProvider;
 
-public class Keyboard extends java.awt.event.KeyAdapter implements ContainerListener {
-
-    private TerminalFemale female;
-    private boolean halfDuplex = false;
-    private final Object keyLock; // monitor for key pressing
+public class Keyboard extends KeyAdapter implements ContainerListener, InputProvider {
     private int keyCode = 0;
-    private TerminalDisplay terminal;
-
-    public Keyboard(TerminalDisplay terminal, TerminalFemale female) {
-        keyLock = new Object();
-        this.terminal = terminal;
-        this.female = female;
-    }
-
-    public void setHalfDuplex(boolean hd) {
-        halfDuplex = hd;
-    }
-
-    public int getChar() {
-        if (keyCode != 0) {
-            int v = keyCode;
-            keyCode = 0;
-            return v;
-        }
-        synchronized (keyLock) {
-            try {
-                keyLock.wait();
-            } catch (InterruptedException ex) {
-                int v = keyCode;
-                keyCode = 0;
-                return v;
-            }
-        }
-        return 0;
-    }
+    private List<DeviceContext<Short>> observers = new ArrayList<DeviceContext<Short>>();
 
     public void addListenerRecursively(Component c) {
         c.addKeyListener(this);
@@ -76,7 +47,7 @@ public class Keyboard extends java.awt.event.KeyAdapter implements ContainerList
         }
     }
 
-    private void removeListenerRecursively(Component c) {
+    public void removeListenerRecursively(Component c) {
         c.removeKeyListener(this);
         if (c instanceof Container) {
             Container cont = (Container) c;
@@ -208,15 +179,12 @@ public class Keyboard extends java.awt.event.KeyAdapter implements ContainerList
                 }
             }
         }
-        if (halfDuplex == true) {
-            if (keyCode == 13) {
-                terminal.write((short) 10);
-            }
-            terminal.write((short) keyCode);
-        }
-        female.write((short) keyCode);
-        synchronized (keyLock) {
-            keyLock.notifyAll();
+        notifyObservers((short)keyCode);
+    }
+
+    private void notifyObservers(short input) {
+        for (DeviceContext<Short> observer : observers) {
+            observer.write(input);
         }
     }
 
@@ -228,5 +196,20 @@ public class Keyboard extends java.awt.event.KeyAdapter implements ContainerList
     @Override
     public void componentRemoved(ContainerEvent e) {
         removeListenerRecursively(e.getChild());
+    }
+
+    @Override
+    public void addDeviceObserver(DeviceContext<Short> listener) {
+        observers.add(listener);
+    }
+
+    @Override
+    public void removeDeviceObserver(DeviceContext<Short> listener) {
+        observers.remove(listener);
+    }
+
+    @Override
+    public void destroy() {
+        observers.clear();
     }
 }
