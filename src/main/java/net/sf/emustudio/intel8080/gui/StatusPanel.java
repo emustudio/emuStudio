@@ -43,7 +43,7 @@ import net.sf.emustudio.intel8080.impl.EmulatorImpl;
 
 /**
  * Status panel for the CPU.
- * 
+ *
  */
 @SuppressWarnings("serial")
 public class StatusPanel extends JPanel {
@@ -62,12 +62,12 @@ public class StatusPanel extends JPanel {
         cpu.addCPUListener(new FrequencyChangedListener() {
 
             @Override
-            public void runChanged(RunState state) {
+            public void runStateChanged(RunState state) {
                 run_state = state;
             }
 
             @Override
-            public void stateUpdated() {
+            public void internalStateChanged() {
                 updateGUI();
             }
 

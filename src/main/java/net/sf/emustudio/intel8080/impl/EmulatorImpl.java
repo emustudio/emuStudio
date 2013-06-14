@@ -2,10 +2,10 @@
  * EmulatorImpl.java
  *
  * Implementation of CPU emulation
- * 
+ *
  * Created on Piatok, 2007, oktober 26, 10:45
  *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -56,9 +56,11 @@ import net.sf.emustudio.intel8080.gui.StatusPanel;
  */
 @PluginType(type = PLUGIN_TYPE.CPU,
 title = "Intel 8080 CPU",
-copyright = "\u00A9 Copyright 2007-2012, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2007-2013, Peter Jakubčo",
 description = "Emulator of Intel 8080 CPU")
 public class EmulatorImpl extends AbstractCPU {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorImpl.class);
+
     public static final int REG_A = 7;
     public static final int REG_B = 0;
     public static final int REG_C = 1;
@@ -77,8 +79,7 @@ public class EmulatorImpl extends AbstractCPU {
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0,
         1, 0, 0, 1
     };
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorImpl.class);
-    
+
     private StatusPanel statusPanel;
     private MemoryContext<Short> memory;
     private ContextImpl context;
@@ -99,7 +100,7 @@ public class EmulatorImpl extends AbstractCPU {
     private short b1 = 0; // the raw interrupt instruction
     private short b2 = 0;
     private short b3 = 0;
-    
+
     /**
      * This class performs runtime frequency calculation and updating.
      *
@@ -187,8 +188,10 @@ public class EmulatorImpl extends AbstractCPU {
     public void destroy() {
         runState = RunState.STATE_STOPPED_NORMAL;
         stopFrequencyUpdater();
-        context.clearDevices();
-        context = null;
+        if (context != null) {
+            context.clearDevices();
+            context = null;
+        }
     }
 
     @Override
@@ -200,8 +203,7 @@ public class EmulatorImpl extends AbstractCPU {
         PC = startPos;
         INTE = false;
         stopFrequencyUpdater();
-        notifyCPURunState(runState);
-        notifyCPUState();
+        notifyStateChanged(runState);
     }
 
     /**
@@ -211,7 +213,7 @@ public class EmulatorImpl extends AbstractCPU {
     public void pause() {
         runState = RunState.STATE_STOPPED_BREAK;
         stopFrequencyUpdater();
-        notifyCPURunState(runState);
+        notifyStateChanged(runState);
     }
 
     /**
@@ -221,7 +223,7 @@ public class EmulatorImpl extends AbstractCPU {
     public void stop() {
         runState = RunState.STATE_STOPPED_NORMAL;
         stopFrequencyUpdater();
-        notifyCPURunState(runState);
+        notifyStateChanged(runState);
     }
 
     // vykona 1 krok - bez merania casov (bez real-time odozvy)
@@ -230,21 +232,16 @@ public class EmulatorImpl extends AbstractCPU {
         if (runState == RunState.STATE_STOPPED_BREAK) {
             try {
                 runState = RunState.STATE_RUNNING;
-                evalStep();
+                dispatch();
                 if (runState == RunState.STATE_RUNNING) {
                     runState = RunState.STATE_STOPPED_BREAK;
                 }
-            } catch (IllegalAccessException e) {
-                runState = RunState.STATE_STOPPED_BAD_INSTR;
-            } catch (IllegalArgumentException e) {
-                runState = RunState.STATE_STOPPED_BAD_INSTR;
-            } catch (InvocationTargetException e) {
-                runState = RunState.STATE_STOPPED_BAD_INSTR;
             } catch (IndexOutOfBoundsException e) {
                 runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
+            } catch (Exception e) {
+                runState = RunState.STATE_STOPPED_BAD_INSTR;
             }
-            notifyCPURunState(runState);
-            notifyCPUState();
+            notifyStateChanged(runState);
         }
     }
 
@@ -259,7 +256,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     private void fireFrequencyChanged(float newFrequency) {
-        for (CPUListener listener : cpuListeners) {
+        for (CPUListener listener : stateObservers) {
             if (listener instanceof FrequencyChangedListener) {
                 ((FrequencyChangedListener) listener).frequencyChanged(newFrequency);
             }
@@ -292,7 +289,7 @@ public class EmulatorImpl extends AbstractCPU {
     private void runFrequencyUpdater() {
         try {
             frequencyScheduler.purge();
-            frequencyScheduler.scheduleAtFixedRate(frequencyUpdater, 0, checkTimeSlice);
+            frequencyScheduler.scheduleAtFixedRate(frequencyUpdater, 0, 2*checkTimeSlice);
         } catch (Exception e) {
         }
     }
@@ -319,8 +316,7 @@ public class EmulatorImpl extends AbstractCPU {
         long slice;
 
         runState = RunState.STATE_RUNNING;
-        notifyCPURunState(runState);
-        notifyCPUState();
+        notifyStateChanged(runState);
         runFrequencyUpdater();
         /* 1 Hz  .... 1 tState per second
          * 1 kHz .... 1000 tStates per second
@@ -336,7 +332,7 @@ public class EmulatorImpl extends AbstractCPU {
             while ((cycles_executed < cycles_to_execute)
                     && (runState == RunState.STATE_RUNNING)) {
                 try {
-                    cycles = evalStep();
+                    cycles = dispatch();
                     cycles_executed += cycles;
                     executedCycles += cycles;
                     if (isBreakpointSet(PC) == true) {
@@ -366,8 +362,7 @@ public class EmulatorImpl extends AbstractCPU {
             }
         }
         stopFrequencyUpdater();
-        notifyCPURunState(runState);
-        notifyCPUState();
+        notifyStateChanged(runState);
     }
 
     @Override
@@ -601,52 +596,123 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     private static Method[] dispatchTable = new Method[256];
-    
+
     static {
         try {
-            dispatchTable[0] = EmulatorImpl.class.getDeclaredMethod("O0_NOP");
-            dispatchTable[7] = EmulatorImpl.class.getDeclaredMethod("O7_RLC");
-            dispatchTable[15] = EmulatorImpl.class.getDeclaredMethod("O15_RRC");
-            dispatchTable[23] = EmulatorImpl.class.getDeclaredMethod("O23_RAL");
-            dispatchTable[31] = EmulatorImpl.class.getDeclaredMethod("O31_RAR");
-            dispatchTable[34] = EmulatorImpl.class.getDeclaredMethod("O34_SHLD");
-            dispatchTable[39] = EmulatorImpl.class.getDeclaredMethod("O39_DAA");
-            dispatchTable[42] = EmulatorImpl.class.getDeclaredMethod("O42_LHLD");
-            dispatchTable[47] = EmulatorImpl.class.getDeclaredMethod("O47_CMA");
-            dispatchTable[50] = EmulatorImpl.class.getDeclaredMethod("O50_STA");
-            dispatchTable[55] = EmulatorImpl.class.getDeclaredMethod("O55_STC");
-            dispatchTable[58] = EmulatorImpl.class.getDeclaredMethod("O58_LDA");
-            dispatchTable[63] = EmulatorImpl.class.getDeclaredMethod("O63_CMC");
-            dispatchTable[118] = EmulatorImpl.class.getDeclaredMethod("O118_HLT");
-            dispatchTable[195] = EmulatorImpl.class.getDeclaredMethod("O195_JMP");
-            dispatchTable[198] = EmulatorImpl.class.getDeclaredMethod("O198_ADI");
-            dispatchTable[201] = EmulatorImpl.class.getDeclaredMethod("O201_RET");
-            dispatchTable[205] = EmulatorImpl.class.getDeclaredMethod("O205_CALL");
-            dispatchTable[206] = EmulatorImpl.class.getDeclaredMethod("O206_ACI");
-            dispatchTable[211] = EmulatorImpl.class.getDeclaredMethod("O211_OUT");
-            dispatchTable[214] = EmulatorImpl.class.getDeclaredMethod("O214_SUI");
-            dispatchTable[219] = EmulatorImpl.class.getDeclaredMethod("O219_IN");
-            dispatchTable[222] = EmulatorImpl.class.getDeclaredMethod("O222_SBI");
-            dispatchTable[227] = EmulatorImpl.class.getDeclaredMethod("O227_XTHL");
-            dispatchTable[230] = EmulatorImpl.class.getDeclaredMethod("O230_ANI");
-            dispatchTable[233] = EmulatorImpl.class.getDeclaredMethod("O233_PCHL");
-            dispatchTable[235] = EmulatorImpl.class.getDeclaredMethod("O235_XCHG");
-            dispatchTable[238] = EmulatorImpl.class.getDeclaredMethod("O238_XRI");
-            dispatchTable[243] = EmulatorImpl.class.getDeclaredMethod("O243_DI");
-            dispatchTable[246] = EmulatorImpl.class.getDeclaredMethod("O246_ORI");
-            dispatchTable[249] = EmulatorImpl.class.getDeclaredMethod("O249_SPHL");
-            dispatchTable[251] = EmulatorImpl.class.getDeclaredMethod("O251_EI");
-            dispatchTable[254] = EmulatorImpl.class.getDeclaredMethod("O254_CPI");
+            dispatchTable[0] = EmulatorImpl.class.getDeclaredMethod("O0_NOP", new Class[]{short.class});
+            dispatchTable[6] = EmulatorImpl.class.getDeclaredMethod("MC7_O6_MVI", new Class[]{short.class});
+            dispatchTable[7] = EmulatorImpl.class.getDeclaredMethod("O7_RLC", new Class[]{short.class});
+            dispatchTable[14] = EmulatorImpl.class.getDeclaredMethod("MC7_O6_MVI", new Class[]{short.class});
+            dispatchTable[15] = EmulatorImpl.class.getDeclaredMethod("O15_RRC", new Class[]{short.class});
+            dispatchTable[22] = EmulatorImpl.class.getDeclaredMethod("MC7_O6_MVI", new Class[]{short.class});
+            dispatchTable[23] = EmulatorImpl.class.getDeclaredMethod("O23_RAL", new Class[]{short.class});
+            dispatchTable[30] = EmulatorImpl.class.getDeclaredMethod("MC7_O6_MVI", new Class[]{short.class});
+            dispatchTable[31] = EmulatorImpl.class.getDeclaredMethod("O31_RAR", new Class[]{short.class});
+            dispatchTable[34] = EmulatorImpl.class.getDeclaredMethod("O34_SHLD", new Class[]{short.class});
+            dispatchTable[38] = EmulatorImpl.class.getDeclaredMethod("MC7_O6_MVI", new Class[]{short.class});
+            dispatchTable[39] = EmulatorImpl.class.getDeclaredMethod("O39_DAA", new Class[]{short.class});
+            dispatchTable[42] = EmulatorImpl.class.getDeclaredMethod("O42_LHLD", new Class[]{short.class});
+            dispatchTable[46] = EmulatorImpl.class.getDeclaredMethod("MC7_O6_MVI", new Class[]{short.class});
+            dispatchTable[47] = EmulatorImpl.class.getDeclaredMethod("O47_CMA", new Class[]{short.class});
+            dispatchTable[50] = EmulatorImpl.class.getDeclaredMethod("O50_STA", new Class[]{short.class});
+            dispatchTable[54] = EmulatorImpl.class.getDeclaredMethod("MC7_O6_MVI", new Class[]{short.class});
+            dispatchTable[55] = EmulatorImpl.class.getDeclaredMethod("O55_STC", new Class[]{short.class});
+            dispatchTable[58] = EmulatorImpl.class.getDeclaredMethod("O58_LDA", new Class[]{short.class});
+            dispatchTable[62] = EmulatorImpl.class.getDeclaredMethod("MC7_O6_MVI", new Class[]{short.class});
+            dispatchTable[63] = EmulatorImpl.class.getDeclaredMethod("O63_CMC", new Class[]{short.class});
+            dispatchTable[64] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[65] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[66] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[67] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[68] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[69] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[70] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[71] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[72] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[73] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[74] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[75] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[76] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[77] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[78] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[79] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[80] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[81] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[82] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[83] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[84] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[85] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[86] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[87] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[88] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[89] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[90] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[91] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[92] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[93] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[94] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[95] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[96] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[97] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[98] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[99] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[100] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[101] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[102] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[103] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[104] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[105] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[106] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[107] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[108] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[109] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[110] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[111] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[112] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[113] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[114] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[115] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[116] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[117] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[118] = EmulatorImpl.class.getDeclaredMethod("O118_HLT", new Class[]{short.class});
+            dispatchTable[119] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[120] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[121] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[122] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[123] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[124] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[125] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[126] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[127] = EmulatorImpl.class.getDeclaredMethod("MC0_O40_MOV", new Class[]{short.class});
+            dispatchTable[195] = EmulatorImpl.class.getDeclaredMethod("O195_JMP", new Class[]{short.class});
+            dispatchTable[198] = EmulatorImpl.class.getDeclaredMethod("O198_ADI", new Class[]{short.class});
+            dispatchTable[201] = EmulatorImpl.class.getDeclaredMethod("O201_RET", new Class[]{short.class});
+            dispatchTable[205] = EmulatorImpl.class.getDeclaredMethod("O205_CALL", new Class[]{short.class});
+            dispatchTable[206] = EmulatorImpl.class.getDeclaredMethod("O206_ACI", new Class[]{short.class});
+            dispatchTable[211] = EmulatorImpl.class.getDeclaredMethod("O211_OUT", new Class[]{short.class});
+            dispatchTable[214] = EmulatorImpl.class.getDeclaredMethod("O214_SUI", new Class[]{short.class});
+            dispatchTable[219] = EmulatorImpl.class.getDeclaredMethod("O219_IN", new Class[]{short.class});
+            dispatchTable[222] = EmulatorImpl.class.getDeclaredMethod("O222_SBI", new Class[]{short.class});
+            dispatchTable[227] = EmulatorImpl.class.getDeclaredMethod("O227_XTHL", new Class[]{short.class});
+            dispatchTable[230] = EmulatorImpl.class.getDeclaredMethod("O230_ANI", new Class[]{short.class});
+            dispatchTable[233] = EmulatorImpl.class.getDeclaredMethod("O233_PCHL", new Class[]{short.class});
+            dispatchTable[235] = EmulatorImpl.class.getDeclaredMethod("O235_XCHG", new Class[]{short.class});
+            dispatchTable[238] = EmulatorImpl.class.getDeclaredMethod("O238_XRI", new Class[]{short.class});
+            dispatchTable[243] = EmulatorImpl.class.getDeclaredMethod("O243_DI", new Class[]{short.class});
+            dispatchTable[246] = EmulatorImpl.class.getDeclaredMethod("O246_ORI", new Class[]{short.class});
+            dispatchTable[249] = EmulatorImpl.class.getDeclaredMethod("O249_SPHL", new Class[]{short.class});
+            dispatchTable[251] = EmulatorImpl.class.getDeclaredMethod("O251_EI", new Class[]{short.class});
+            dispatchTable[254] = EmulatorImpl.class.getDeclaredMethod("O254_CPI", new Class[]{short.class});
         } catch (NoSuchMethodException e) {
             LOGGER.error("Could not set up dispatch table. The emulator won't work correctly", e);
         }
     }
 
-    private int O0_NOP() {
+    private int O0_NOP(short OP) {
         return 4;
     }
-    
-    private int O7_RLC() {
+
+    private int O7_RLC(short OP) {
         int xx = (regs[REG_A] << 9) & 0200000;
         if (xx != 0) {
             Flags |= flagC;
@@ -660,7 +726,7 @@ public class EmulatorImpl extends AbstractCPU {
         return 4;
     }
 
-    private int O15_RRC() {
+    private int O15_RRC(short OP) {
         if ((regs[REG_A] & 0x01) == 1) {
             Flags |= flagC;
         } else {
@@ -673,7 +739,7 @@ public class EmulatorImpl extends AbstractCPU {
         return 4;
     }
 
-    private int O23_RAL() {
+    private int O23_RAL(short OP) {
         int xx = (regs[REG_A] << 9) & 0200000;
         regs[REG_A] = (short) ((regs[REG_A] << 1) & 0xFF);
         if ((Flags & flagC) != 0) {
@@ -688,8 +754,8 @@ public class EmulatorImpl extends AbstractCPU {
         }
         return 4;
     }
-    
-    private int O31_RAR() {
+
+    private int O31_RAR(short OP) {
         int xx = 0;
         if ((regs[REG_A] & 0x01) == 1) {
             xx |= 0200000;
@@ -707,15 +773,15 @@ public class EmulatorImpl extends AbstractCPU {
         }
         return 4;
     }
-    
-    private int O34_SHLD() {
+
+    private int O34_SHLD(short OP) {
         int DAR = (Integer) memory.readWord(PC);
         PC += 2;
         memory.writeWord(DAR, (regs[REG_H] << 8) | regs[REG_L]);
         return 16;
     }
 
-    private int O39_DAA() {
+    private int O39_DAA(short OP) {
         int DAR = regs[REG_A];
         if (((DAR & 0x0F) > 9) || ((Flags & flagAC) != 0)) {
             DAR += 6;
@@ -749,8 +815,8 @@ public class EmulatorImpl extends AbstractCPU {
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 4;
     }
-    
-    private int O42_LHLD() {
+
+    private int O42_LHLD(short OP) {
         // TODO: test!
         int DAR = (Integer) memory.readWord(PC);
         PC += 2;
@@ -759,32 +825,32 @@ public class EmulatorImpl extends AbstractCPU {
         return 16;
     }
 
-    private int O47_CMA() {
+    private int O47_CMA(short OP) {
         regs[REG_A] = (short) (~regs[REG_A]);
         regs[REG_A] &= 0xFF;
         return 4;
     }
 
-    private int O50_STA() {
+    private int O50_STA(short OP) {
         int DAR = (Integer) memory.readWord(PC);
         PC += 2;
         memory.write(DAR, regs[REG_A]);
         return 13;
     }
 
-    private int O55_STC() {
+    private int O55_STC(short OP) {
         Flags |= flagC;
         return 4;
     }
 
-    private int O58_LDA() {
+    private int O58_LDA(short OP) {
         int DAR = (Integer) memory.readWord(PC);
         PC += 2;
         regs[REG_A] = ((Short) memory.read(DAR)).shortValue();
         return 13;
     }
 
-    private int O63_CMC() {
+    private int O63_CMC(short OP) {
         if ((Flags & flagC) != 0) {
             Flags &= (~flagC);
         } else {
@@ -793,17 +859,17 @@ public class EmulatorImpl extends AbstractCPU {
         return 4;
     }
 
-    private int O118_HLT() {
+    private int O118_HLT(short OP) {
         runState = RunState.STATE_STOPPED_NORMAL;
         return 7;
     }
 
-    private int O195_JMP() {
+    private int O195_JMP(short OP) {
         PC = (Integer) memory.readWord(PC);
         return 10;
     }
 
-    private int O198_ADI() {
+    private int O198_ADI(short OP) {
         int DAR = regs[REG_A];
         regs[REG_A] += ((Short) memory.read(PC++)).shortValue();
         setarith(regs[REG_A], DAR);
@@ -811,20 +877,20 @@ public class EmulatorImpl extends AbstractCPU {
         return 7;
     }
 
-    private int O201_RET() {
+    private int O201_RET(short OP) {
         PC = (Integer) memory.readWord(SP);
         SP += 2;
         return 10;
     }
 
-    private int O205_CALL() {
+    private int O205_CALL(short OP) {
         memory.writeWord(SP - 2, PC + 2);
         SP -= 2;
         PC = (Integer) memory.readWord(PC);
         return 17;
     }
 
-    private int O206_ACI() {
+    private int O206_ACI(short OP) {
         int DAR = regs[REG_A];
         regs[REG_A] += ((Short) memory.read(PC++)).shortValue();
         if ((Flags & flagC) != 0) {
@@ -835,27 +901,27 @@ public class EmulatorImpl extends AbstractCPU {
         return 7;
     }
 
-    private int O211_OUT() {
+    private int O211_OUT(short OP) {
         int DAR = ((Short) memory.read(PC++)).shortValue();
         context.fireIO(DAR, false, regs[REG_A]);
         return 10;
     }
 
-    private int O214_SUI() {
+    private int O214_SUI(short OP) {
         int DAR = regs[REG_A];
         regs[REG_A] -= ((Short) memory.read(PC++)).shortValue();
         setarith(regs[REG_A], DAR);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 7;
     }
-    
-    private int O219_IN() {
+
+    private int O219_IN(short OP) {
         int DAR = ((Short) memory.read(PC++)).shortValue();
         regs[REG_A] = context.fireIO(DAR, true, (short) 0);
         return 10;
     }
 
-    private int O222_SBI() {
+    private int O222_SBI(short OP) {
         int DAR = regs[REG_A];
         regs[REG_A] -= ((Short) memory.read(PC++)).shortValue();
         if ((Flags & flagC) != 0) {
@@ -866,7 +932,7 @@ public class EmulatorImpl extends AbstractCPU {
         return 7;
     }
 
-    private int O227_XTHL() {
+    private int O227_XTHL(short OP) {
         int DAR = (Integer) memory.readWord(SP);
         memory.writeWord(SP, (regs[REG_H] << 8) | regs[REG_L]);
         regs[REG_H] = (short) ((DAR >>> 8) & 0xFF);
@@ -874,7 +940,7 @@ public class EmulatorImpl extends AbstractCPU {
         return 18;
     }
 
-    private int O230_ANI() {
+    private int O230_ANI(short OP) {
         regs[REG_A] &= ((Short) memory.read(PC++)).shortValue();
         Flags &= (~flagC);
         Flags &= (~flagAC);
@@ -883,12 +949,12 @@ public class EmulatorImpl extends AbstractCPU {
         return 7;
     }
 
-    private int O233_PCHL() {
+    private int O233_PCHL(short OP) {
         PC = (regs[REG_H] << 8) | regs[REG_L];
         return 5;
     }
 
-    private int O235_XCHG() {
+    private int O235_XCHG(short OP) {
         short x = regs[REG_H];
         short y = regs[REG_L];
         regs[REG_H] = regs[REG_D];
@@ -898,7 +964,7 @@ public class EmulatorImpl extends AbstractCPU {
         return 4;
     }
 
-    private int O238_XRI() {
+    private int O238_XRI(short OP) {
         regs[REG_A] ^= ((Short) memory.read(PC++)).shortValue();
         Flags &= (~flagC);
         Flags &= (~flagAC);
@@ -907,12 +973,12 @@ public class EmulatorImpl extends AbstractCPU {
         return 7;
     }
 
-    private int O243_DI() {
+    private int O243_DI(short OP) {
         INTE = false;
         return 4;
     }
 
-    private int O246_ORI() {
+    private int O246_ORI(short OP) {
         regs[REG_A] |= ((Short) memory.read(PC++)).shortValue();
         Flags &= (~flagC);
         Flags &= (~flagAC);
@@ -921,17 +987,17 @@ public class EmulatorImpl extends AbstractCPU {
         return 7;
     }
 
-    private int O249_SPHL() {
+    private int O249_SPHL(short OP) {
         SP = (regs[REG_H] << 8) | regs[REG_L];
         return 5;
     }
-    
-    private int O251_EI() {
+
+    private int O251_EI(short OP) {
         INTE = true;
         return 4;
     }
 
-    private int O254_CPI() {
+    private int O254_CPI(short OP) {
         int X = regs[REG_A];
         int DAR = regs[REG_A] & 0xFF;
         DAR -= ((Short) memory.read(PC++)).shortValue();
@@ -956,18 +1022,18 @@ public class EmulatorImpl extends AbstractCPU {
             return 7;
         }
     }
-    
+
     private int MCF_01_LXI(short OP) {
         putpair((OP >>> 4) & 0x03, (Integer) memory.readWord(PC));
         PC += 2;
         return 10;
     }
-    
+
     private int MEF_0A_LDAX(short OP) {
         putreg(7, ((Short) memory.read(getpair((OP >>> 4) & 0x03))).shortValue());
         return 7;
     }
-    
+
     private int MEF_02_STAX(short OP) {
         memory.write(getpair((OP >>> 4) & 0x03), getreg(7));
         return 7;
@@ -984,7 +1050,7 @@ public class EmulatorImpl extends AbstractCPU {
             return 4;
         }
     }
-    
+
     private int MC7_C2_JMP(short OP) {
         if (checkCondition((OP >>> 3) & 0x07)) {
             PC = (Integer) memory.readWord(PC);
@@ -1007,7 +1073,7 @@ public class EmulatorImpl extends AbstractCPU {
             return 11;
         }
     }
-    
+
     private int MC7_C0_RET(short OP) {
         if (checkCondition((OP >>> 3) & 0x07)) {
             PC = (Integer) memory.readWord(SP);
@@ -1029,14 +1095,14 @@ public class EmulatorImpl extends AbstractCPU {
         SP -= 2;
         return 11;
     }
-    
+
     private int MCF_C1_POP(short OP) {
         int DAR = (Integer) memory.readWord(SP);
         SP += 2;
         putpush((OP >>> 4) & 0x03, DAR);
         return 10;
     }
-    
+
     private int MF8_80_ADD(short OP) {
         int X = regs[REG_A];
         regs[REG_A] += getreg(OP & 0x07);
@@ -1062,10 +1128,98 @@ public class EmulatorImpl extends AbstractCPU {
         return 4;
     }
 
+    private int MF8_90_SUB(short OP) {
+        int X = regs[REG_A];
+        regs[REG_A] -= getreg(OP & 0x07);
+        setarith(regs[REG_A], X);
+        regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+        if ((OP & 0x07) == 6) {
+            return 7;
+        }
+        return 4;
+    }
 
-    private int evalStep() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    private int MF8_98_SBB(short OP) {
+        int X = regs[REG_A];
+        regs[REG_A] -= (getreg(OP & 0x07));
+        if ((Flags & flagC) != 0) {
+            regs[REG_A]--;
+        }
+        setarith(regs[REG_A], X);
+        regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+        if ((OP & 0x07) == 6) {
+            return 7;
+        }
+        return 4;
+    }
+
+    private int MC7_04_INR(short OP) {
+        int DAR = getreg((OP >>> 3) & 0x07) + 1;
+        setinc(DAR, DAR - 1);
+        DAR = DAR & 0xFF;
+        putreg((OP >>> 3) & 0x07, (short) DAR);
+        return 5;
+    }
+
+    private int MC7_05_DCR(short OP) {
+        int DAR = getreg((OP >>> 3) & 0x07) - 1;
+        setinc(DAR, DAR + 1);
+        DAR = DAR & 0xFF;
+        putreg((OP >>> 3) & 0x07, (short) DAR);
+        return 5;
+    }
+
+    private int MCF_03_INX(short OP) {
+        int DAR = getpair((OP >>> 4) & 0x03) + 1;
+        DAR = DAR & 0xFFFF;
+        putpair((OP >>> 4) & 0x03, DAR);
+        return 5;
+    }
+
+    private int MCF_0B_DCX(short OP) {
+        int DAR = getpair((OP >>> 4) & 0x03) - 1;
+        DAR = DAR & 0xFFFF;
+        putpair((OP >>> 4) & 0x03, DAR);
+        return 5;
+    }
+
+    private int MCF_09_DAD(short OP) {
+        int DAR = getpair((OP >>> 4) & 0x03);
+        DAR += getpair(2);
+        if ((DAR & 0x10000) != 0) {
+            Flags |= flagC;
+        } else {
+            Flags &= (~flagC);
+        }
+        DAR = DAR & 0xFFFF;
+        putpair(2, DAR);
+        return 10;
+    }
+
+    private int MF8_A0_ANA(short OP) {
+        regs[REG_A] &= getreg(OP & 0x07);
+        setlogical(regs[REG_A]);
+        regs[REG_A] &= 0xFF;
+        return 4;
+    }
+
+    private int MF8_A8_XRA(short OP) {
+        regs[REG_A] ^= getreg(OP & 0x07);
+        setlogical(regs[REG_A]);
+        regs[REG_A] &= 0xFF;
+        return 4;
+    }
+
+    private int MF8_B0_ORA(short OP) {
+        regs[REG_A] |= getreg(OP & 0x07);
+        setlogical(regs[REG_A]);
+        regs[REG_A] &= 0xFF;
+        return 4;
+    }
+
+
+    private int dispatch() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         short OP;
-        int DAR;
 
         /* if interrupt is waiting, instruction won't be read from memory
          * but from one or all of 3 bytes (b1,b2,b3) which represents either
@@ -1091,11 +1245,7 @@ public class EmulatorImpl extends AbstractCPU {
 
         /* Handle below all operations which refer to registers or register pairs.
          After that, a large switch statement takes care of all other opcodes */
-        if ((OP & 0xC0) == 0x40) {                             /* MOV */
-            return MC0_O40_MOV(OP);
-        } else if ((OP & 0xC7) == 0x06) {                      /* MVI */
-            return MC7_O6_MVI(OP);
-        } else if ((OP & 0xCF) == 0x01) {                      /* LXI */
+        if ((OP & 0xCF) == 0x01) {                      /* LXI */
             return MCF_01_LXI(OP);
         } else if ((OP & 0xEF) == 0x0A) {                      /* LDAX */
             return MEF_0A_LDAX(OP);
@@ -1120,74 +1270,25 @@ public class EmulatorImpl extends AbstractCPU {
         } else if ((OP & 0xF8) == 0x88) {                      /* ADC */
             return MF8_88_ADC(OP);
         } else if ((OP & 0xF8) == 0x90) {                      /* SUB */
-            int X = regs[REG_A];
-            regs[REG_A] -= getreg(OP & 0x07);
-            setarith(regs[REG_A], X);
-            regs[REG_A] = (short) (regs[REG_A] & 0xFF);
-            if ((OP & 0x07) == 6) {
-                return 7;
-            }
-            return 4;
+            return MF8_90_SUB(OP);
         } else if ((OP & 0xF8) == 0x98) {                      /* SBB */
-            int X = regs[REG_A];
-            regs[REG_A] -= (getreg(OP & 0x07));
-            if ((Flags & flagC) != 0) {
-                regs[REG_A]--;
-            }
-            setarith(regs[REG_A], X);
-            regs[REG_A] = (short) (regs[REG_A] & 0xFF);
-            if ((OP & 0x07) == 6) {
-                return 7;
-            }
-            return 4;
+            return MF8_98_SBB(OP);
         } else if ((OP & 0xC7) == 0x04) {                      /* INR */
-            DAR = getreg((OP >>> 3) & 0x07) + 1;
-            setinc(DAR, DAR - 1);
-            DAR = DAR & 0xFF;
-            putreg((OP >>> 3) & 0x07, (short) DAR);
-            return 5;
+            return MC7_04_INR(OP);
         } else if ((OP & 0xC7) == 0x05) {                      /* DCR */
-            DAR = getreg((OP >>> 3) & 0x07) - 1;
-            setinc(DAR, DAR + 1);
-            DAR = DAR & 0xFF;
-            putreg((OP >>> 3) & 0x07, (short) DAR);
-            return 5;
+            return MC7_05_DCR(OP);
         } else if ((OP & 0xCF) == 0x03) {                      /* INX */
-            DAR = getpair((OP >>> 4) & 0x03) + 1;
-            DAR = DAR & 0xFFFF;
-            putpair((OP >>> 4) & 0x03, DAR);
-            return 5;
+            return MCF_03_INX(OP);
         } else if ((OP & 0xCF) == 0x0B) {                      /* DCX */
-            DAR = getpair((OP >>> 4) & 0x03) - 1;
-            DAR = DAR & 0xFFFF;
-            putpair((OP >>> 4) & 0x03, DAR);
-            return 5;
+            return MCF_0B_DCX(OP);
         } else if ((OP & 0xCF) == 0x09) {                      /* DAD */
-            DAR = getpair((OP >>> 4) & 0x03);
-            DAR += getpair(2);
-            if ((DAR & 0x10000) != 0) {
-                Flags |= flagC;
-            } else {
-                Flags &= (~flagC);
-            }
-            DAR = DAR & 0xFFFF;
-            putpair(2, DAR);
-            return 10;
+            return MCF_09_DAD(OP);
         } else if ((OP & 0xF8) == 0xA0) {                      /* ANA */
-            regs[REG_A] &= getreg(OP & 0x07);
-            setlogical(regs[REG_A]);
-            regs[REG_A] &= 0xFF;
-            return 4;
+            return MF8_A0_ANA(OP);
         } else if ((OP & 0xF8) == 0xA8) {                      /* XRA */
-            regs[REG_A] ^= getreg(OP & 0x07);
-            setlogical(regs[REG_A]);
-            regs[REG_A] &= 0xFF;
-            return 4;
+            return MF8_A8_XRA(OP);
         } else if ((OP & 0xF8) == 0xB0) {                      /* ORA */
-            regs[REG_A] |= getreg(OP & 0x07);
-            setlogical(regs[REG_A]);
-            regs[REG_A] &= 0xFF;
-            return 4;
+            return MF8_B0_ORA(OP);
         }
         /* Dispatch Instruction */
         Method instr = dispatchTable[OP];
@@ -1195,7 +1296,7 @@ public class EmulatorImpl extends AbstractCPU {
             runState = RunState.STATE_STOPPED_BAD_INSTR;
             return 0;
         }
-        return (Integer)instr.invoke(this);
+        return (Integer)instr.invoke(this, OP);
     }
 
     @Override
