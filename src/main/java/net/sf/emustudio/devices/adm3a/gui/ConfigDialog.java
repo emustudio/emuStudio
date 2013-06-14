@@ -38,7 +38,7 @@ public class ConfigDialog extends javax.swing.JDialog {
         this.settings = settings;
         this.display = lblTerminal;
         this.window = window;
-        
+
         readSettings();
         this.setLocationRelativeTo(null);
     }
@@ -49,6 +49,8 @@ public class ConfigDialog extends javax.swing.JDialog {
         chkAntiAliasing.setSelected(settings.isAntiAliasing());
         txtInputFileName.setText(settings.getInputFileName());
         txtOutputFileName.setText(settings.getOutputFileName());
+        spnInputDelay.setValue(settings.getInputReadDelay());
+        chkNoGUIMode.setSelected(settings.isNoGUIMode());
     }
 
     private void updateSettings(boolean save) {
@@ -57,11 +59,13 @@ public class ConfigDialog extends javax.swing.JDialog {
         settings.setAntiAliasing(chkAntiAliasing.isSelected());
         settings.setInputFileName(txtInputFileName.getText());
         settings.setOutputFileName(txtOutputFileName.getText());
+        settings.setInputReadDelay((Integer)spnInputDelay.getValue());
+        settings.setNoGUIMode(chkNoGUIMode.isSelected());
         if (save) {
           settings.write();
         }
-    } 
-    
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -79,10 +83,14 @@ public class ConfigDialog extends javax.swing.JDialog {
         txtOutputFileName = new javax.swing.JTextField();
         javax.swing.JButton btnOutputBrowse = new javax.swing.JButton();
         javax.swing.JLabel jLabel3 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel4 = new javax.swing.JLabel();
+        spnInputDelay = new javax.swing.JSpinner();
+        javax.swing.JLabel jLabel5 = new javax.swing.JLabel();
         javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
         chkHalfDuplex = new javax.swing.JCheckBox();
         chkAlwaysOnTop = new javax.swing.JCheckBox();
         chkAntiAliasing = new javax.swing.JCheckBox();
+        chkNoGUIMode = new javax.swing.JCheckBox();
         javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
         chkSaveSettings = new javax.swing.JCheckBox();
         javax.swing.JButton btnClearScreen = new javax.swing.JButton();
@@ -108,7 +116,13 @@ public class ConfigDialog extends javax.swing.JDialog {
 
         btnOutputBrowse.setText("Browse...");
 
-        jLabel3.setText("Note: I/O redirection will be used only in emuStudio automatization mode.");
+        jLabel3.setText("Note: I/O redirection will be used only if No GUI mode is enabled.");
+
+        jLabel4.setText("Input delay:");
+
+        spnInputDelay.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(0), Integer.valueOf(0), null, Integer.valueOf(100)));
+
+        jLabel5.setText("ms");
 
         javax.swing.GroupLayout panelSimulationLayout = new javax.swing.GroupLayout(panelSimulation);
         panelSimulation.setLayout(panelSimulationLayout);
@@ -117,10 +131,13 @@ public class ConfigDialog extends javax.swing.JDialog {
             .addGroup(panelSimulationLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(panelSimulationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel3)
                     .addGroup(panelSimulationLayout.createSequentialGroup()
-                        .addGroup(panelSimulationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(panelSimulationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(panelSimulationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(jLabel4))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(panelSimulationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(panelSimulationLayout.createSequentialGroup()
@@ -130,8 +147,11 @@ public class ConfigDialog extends javax.swing.JDialog {
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelSimulationLayout.createSequentialGroup()
                                 .addComponent(txtInputFileName)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnInputBrowse))))
-                    .addComponent(jLabel3))
+                                .addComponent(btnInputBrowse))
+                            .addGroup(panelSimulationLayout.createSequentialGroup()
+                                .addComponent(spnInputDelay, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel5)))))
                 .addContainerGap())
         );
         panelSimulationLayout.setVerticalGroup(
@@ -146,7 +166,12 @@ public class ConfigDialog extends javax.swing.JDialog {
                     .addComponent(jLabel2)
                     .addComponent(txtOutputFileName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnOutputBrowse))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(panelSimulationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel4)
+                    .addComponent(spnInputDelay, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel5))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE)
                 .addComponent(jLabel3))
         );
 
@@ -158,6 +183,8 @@ public class ConfigDialog extends javax.swing.JDialog {
 
         chkAntiAliasing.setText("Use anti-aliasing");
 
+        chkNoGUIMode.setText("No GUI mode");
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -167,7 +194,8 @@ public class ConfigDialog extends javax.swing.JDialog {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(chkHalfDuplex)
                     .addComponent(chkAlwaysOnTop)
-                    .addComponent(chkAntiAliasing))
+                    .addComponent(chkAntiAliasing)
+                    .addComponent(chkNoGUIMode))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -179,7 +207,8 @@ public class ConfigDialog extends javax.swing.JDialog {
                 .addComponent(chkAlwaysOnTop)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkAntiAliasing)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 2, Short.MAX_VALUE)
+                .addComponent(chkNoGUIMode))
         );
 
         chkSaveSettings.setSelected(true);
@@ -243,13 +272,14 @@ public class ConfigDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(panelSimulation, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(btnOK, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                    .addGroup(layout.createSequentialGroup()
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnOK, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -287,7 +317,9 @@ public class ConfigDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkAlwaysOnTop;
     private javax.swing.JCheckBox chkAntiAliasing;
     private javax.swing.JCheckBox chkHalfDuplex;
+    private javax.swing.JCheckBox chkNoGUIMode;
     private javax.swing.JCheckBox chkSaveSettings;
+    private javax.swing.JSpinner spnInputDelay;
     private javax.swing.JTextField txtInputFileName;
     private javax.swing.JTextField txtOutputFileName;
     // End of variables declaration//GEN-END:variables

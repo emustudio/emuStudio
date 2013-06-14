@@ -92,7 +92,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
 
     @Override
     public void showGUI() {
-        if (!terminalSettings.isNoGUI()) {
+        if (isGUIAllowed()) {
           terminalGUI.setVisible(true);
         }
     }
@@ -123,12 +123,18 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
 
     @Override
     public void showSettings() {
-        new ConfigDialog(terminalSettings, terminalGUI, display).setVisible(true);
+        if (!terminalSettings.isNoGUI()) {
+          new ConfigDialog(terminalSettings, terminalGUI, display).setVisible(true);
+        }
     }
 
     @Override
     public boolean isShowSettingsSupported() {
         return true;
+    }
+
+    private boolean isGUIAllowed() {
+        return !(terminalSettings.isNoGUI() || terminalSettings.isNoGUIMode());
     }
 
     private void destroyKeyboard() {
@@ -151,6 +157,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
         tmp.setInputFile(new File(terminalSettings.getInputFileName()));
         keyboard = tmp;
         connectKeyboard();
+        tmp.processInputFile(terminalSettings.getInputReadDelay());
     }
 
     private void createKeyboard() {
@@ -163,10 +170,10 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
 
     @Override
     public void settingsChanged() {
-        if (terminalSettings.isNoGUI() && !(keyboard instanceof KeyboardFromFile)) {
-            createKeyboardFromFile();
-        } else if (!(keyboard instanceof Keyboard)) {
+        if (isGUIAllowed() && !(keyboard instanceof Keyboard)) {
             createKeyboard();
+        } else if (!(keyboard instanceof KeyboardFromFile)) {
+            createKeyboardFromFile();
         }
         if (terminalSettings.isHalfDuplex()) {
             keyboard.addDeviceObserver(display);
