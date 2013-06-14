@@ -99,16 +99,6 @@ public class TerminalSettings {
         }
     }
 
-    public void setNoGUI(boolean noGUI) {
-        settingsLock.writeLock().lock();
-        try {
-            this.emuStudioNoGUI = noGUI;
-        } finally {
-            settingsLock.writeLock().unlock();
-        }
-        notifyObservers();
-    }
-
     public boolean isNoGUIMode() {
         settingsLock.readLock().lock();
         try {
@@ -154,16 +144,6 @@ public class TerminalSettings {
         } finally {
             settingsLock.readLock().unlock();
         }
-    }
-
-    public void setAuto(boolean auto) {
-        settingsLock.writeLock().lock();
-        try {
-            this.emuStudioAuto = auto;
-        } finally {
-            settingsLock.writeLock().unlock();
-        }
-        notifyObservers();
     }
 
     public boolean isHalfDuplex() {

@@ -130,7 +130,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
 
     @Override
     public boolean isShowSettingsSupported() {
-        return true;
+        return !terminalSettings.isNoGUI();
     }
 
     private boolean isGUIAllowed() {
