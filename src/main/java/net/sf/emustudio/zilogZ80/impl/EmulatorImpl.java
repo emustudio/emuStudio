@@ -3,7 +3,7 @@
  *
  * Created on 23.8.2008, 12:53:21
  *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -73,7 +73,7 @@ public class EmulatorImpl extends AbstractCPU {
     private java.util.Timer frequencyScheduler;
     private FrequencyUpdater frequencyUpdater;
     private int checkTimeSlice = 100;
-    
+
     private byte intMode = 0; // interrupt mode (0,1,2)
     // Interrupt flip-flops
     private boolean[] IFF = new boolean[2]; // interrupt enable flip-flops
@@ -259,13 +259,13 @@ public class EmulatorImpl extends AbstractCPU {
     @Override
     public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
-        
+
         try {
             this.memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
         } catch (InvalidContextException e) {
             // Will be processed
         }
-        
+
 
         if (memory == null) {
             StaticDialogs.showErrorMessage("CPU must have access to memory");
@@ -312,7 +312,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     public void fireFrequencyChanged(float newFrequency) {
-        for (CPUListener listener : cpuListeners) {
+        for (CPUListener listener : stateObservers) {
             if (listener instanceof FrequencyChangedListener) {
                 ((FrequencyChangedListener) listener).frequencyChanged(newFrequency);
             }
@@ -355,8 +355,7 @@ public class EmulatorImpl extends AbstractCPU {
             } catch (IndexOutOfBoundsException e) {
                 runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
-            notifyCPURunState(runState);
-            notifyCPUState();
+            notifyStateChanged(runState);
         }
     }
 
@@ -367,14 +366,14 @@ public class EmulatorImpl extends AbstractCPU {
     public void pause() {
         runState = RunState.STATE_STOPPED_BREAK;
         stopFrequencyUpdater();
-        notifyCPURunState(runState);
+        notifyStateChanged(runState);
     }
 
     @Override
     public void stop() {
         runState = RunState.STATE_STOPPED_NORMAL;
         stopFrequencyUpdater();
-        notifyCPURunState(runState);
+        notifyStateChanged(runState);
     }
 
     @Override
@@ -393,8 +392,7 @@ public class EmulatorImpl extends AbstractCPU {
         IFF[1] = false;
         PC = startPos;
         stopFrequencyUpdater();
-        notifyCPURunState(runState);
-        notifyCPUState();
+        notifyStateChanged(runState);
         interruptPending = 0;
         isINT = noWait = false;
     }
@@ -2197,7 +2195,7 @@ public class EmulatorImpl extends AbstractCPU {
         runState = RunState.STATE_STOPPED_BAD_INSTR;
         return 0;
     }
-    
+
     private void stopFrequencyUpdater() {
         try {
             frequencyUpdater.cancel();
@@ -2213,7 +2211,7 @@ public class EmulatorImpl extends AbstractCPU {
         } catch (Exception e) {
         }
     }
-    
+
     @Override
     public boolean isShowSettingsSupported() {
         return false;
@@ -2246,8 +2244,7 @@ public class EmulatorImpl extends AbstractCPU {
         long slice;
 
         runState = RunState.STATE_RUNNING;
-        notifyCPURunState(runState);
-        notifyCPUState();
+        notifyStateChanged(runState);
         runFrequencyUpdater();
         /* 1 Hz  .... 1 tState per second
          * 1 kHz .... 1000 tStates per second
@@ -2290,8 +2287,7 @@ public class EmulatorImpl extends AbstractCPU {
             }
         }
         stopFrequencyUpdater();
-        notifyCPUState();
-        notifyCPURunState(runState);
+        notifyStateChanged(runState);
     }
 
     @Override

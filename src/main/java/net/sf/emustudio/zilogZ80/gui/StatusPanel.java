@@ -3,7 +3,7 @@
  *
  * Created on Nedeľa, 2008, august 24, 10:22
  *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -40,12 +40,12 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
 import net.sf.emustudio.intel8080.ExtendedContext;
-import net.sf.emustudio.zilogZ80.impl.EmulatorImpl;
 import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
+import net.sf.emustudio.zilogZ80.impl.EmulatorImpl;
 
 /**
  * Status panel for the CPU.
- * 
+ *
  * @author Peter Jakubčo
  */
 public class StatusPanel extends javax.swing.JPanel {
@@ -62,17 +62,17 @@ public class StatusPanel extends javax.swing.JPanel {
         this.context = context;
 
         run_state = RunState.STATE_STOPPED_NORMAL;
-        
+
         initComponents();
         cpu.addCPUListener(new FrequencyChangedListener() {
 
             @Override
-            public void runChanged(RunState state) {
+            public void runStateChanged(RunState state) {
                 run_state = state;
             }
 
             @Override
-            public void stateUpdated() {
+            public void internalStateChanged() {
                 updateGUI();
             }
 
