@@ -1,6 +1,6 @@
 /*
  * BrainStatusPanel.java
- * 
+ *
  * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
@@ -42,7 +42,7 @@ public class BrainStatusPanel extends JPanel {
         cpu.addCPUListener(new CPUListener() {
 
             @Override
-            public void runChanged(RunState state) {
+            public void runStateChanged(RunState state) {
                 switch (state) {
                     case STATE_STOPPED_NORMAL:
                         lblStatus.setText("stopped (normal)");
@@ -61,7 +61,7 @@ public class BrainStatusPanel extends JPanel {
             }
 
             @Override
-            public void stateUpdated() {
+            public void internalStateChanged() {
                 txtP.setText(String.format("%04X", cpu.getP()));
                 txtIP.setText(String.format("%04X", cpu.getIP()));
                 txtMemP.setText(String.format("%02X", (Short) mem.read(cpu.getP())));

@@ -1,6 +1,6 @@
 /*
  * BrainCPU.java
- * 
+ *
  * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
@@ -146,8 +146,7 @@ public class EmulatorImpl extends AbstractCPU {
         P = adr; // assign to the P register the address we have found
 
         // notify new CPU state
-        notifyCPURunState(runState);
-        notifyCPUState();
+        notifyStateChanged(runState);
     }
 
     @Override
@@ -155,7 +154,7 @@ public class EmulatorImpl extends AbstractCPU {
         // change the CPU state to "running"
         runState = RunState.STATE_RUNNING;
         // notify the state
-        notifyCPURunState(runState);
+        notifyStateChanged(runState);
 
         // here we are emulating in endless loop until an event stops it.
         // Externally, it might be the user, internally invalid instruction
@@ -178,8 +177,7 @@ public class EmulatorImpl extends AbstractCPU {
                 break;
             }
         }
-        notifyCPUState();
-        notifyCPURunState(runState);
+        notifyStateChanged(runState);
     }
 
     @Override
@@ -187,7 +185,7 @@ public class EmulatorImpl extends AbstractCPU {
         // change run state to "breakpoint"
         runState = RunState.STATE_STOPPED_BREAK;
         // notify the new state
-        notifyCPURunState(runState);
+        notifyStateChanged(runState);
     }
 
     @Override
@@ -209,8 +207,7 @@ public class EmulatorImpl extends AbstractCPU {
                 runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
             // notify CPU run state
-            notifyCPURunState(runState);
-            notifyCPUState();
+            notifyStateChanged(runState);
         }
     }
 
@@ -219,7 +216,7 @@ public class EmulatorImpl extends AbstractCPU {
         // change run state to "stopped"
         runState = RunState.STATE_STOPPED_NORMAL;
         // notify the state
-        notifyCPURunState(runState);
+        notifyStateChanged(runState);
     }
 
     @Override
