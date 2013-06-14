@@ -1,7 +1,7 @@
 /*
  * EmulatorImpl.java
- * 
- * Copyright (C) 2009-2012 Peter Jakubčo
+ *
+ * Copyright (C) 2009-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ import net.sf.emustudio.ram.memory.RAMMemoryContext;
 
 @PluginType(type = PLUGIN_TYPE.CPU,
 title = "Random Access Machine (RAM)",
-copyright = "\u00A9 Copyright 2009-2012, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2009-2013, Peter Jakubčo",
 description = "Emulator of abstract RAM machine")
 public class EmulatorImpl extends AbstractCPU {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorImpl.class);
@@ -153,8 +153,7 @@ public class EmulatorImpl extends AbstractCPU {
     public void reset(int pos) {
         super.reset(pos);
         IP = pos;
-        notifyCPURunState(runState);
-        notifyCPUState();
+        notifyStateChanged(runState);
 
         if (context.checkTapes()) {
             loadTape(context.getInput());
@@ -164,13 +163,13 @@ public class EmulatorImpl extends AbstractCPU {
     @Override
     public void pause() {
         runState = RunState.STATE_STOPPED_BREAK;
-        notifyCPURunState(runState);
+        notifyStateChanged(runState);
     }
 
     @Override
     public void stop() {
         runState = RunState.STATE_STOPPED_NORMAL;
-        notifyCPURunState(runState);
+        notifyStateChanged(runState);
     }
 
     @Override
@@ -185,8 +184,7 @@ public class EmulatorImpl extends AbstractCPU {
             } catch (IndexOutOfBoundsException e) {
                 runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
-            notifyCPURunState(runState);
-            notifyCPUState();
+            notifyStateChanged(runState);
         }
     }
 
@@ -198,7 +196,7 @@ public class EmulatorImpl extends AbstractCPU {
     @Override
     public void run() {
         runState = RunState.STATE_RUNNING;
-        notifyCPURunState(runState);
+        notifyStateChanged(runState);
 
         while (runState == RunState.STATE_RUNNING) {
             try {
@@ -214,8 +212,7 @@ public class EmulatorImpl extends AbstractCPU {
                 break;
             }
         }
-        notifyCPUState();
-        notifyCPURunState(runState);
+        notifyStateChanged(runState);
     }
 
     private void emulateInstruction() {

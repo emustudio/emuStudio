@@ -1,6 +1,6 @@
 /*
  * RAMStatusPanel.java
- * 
+ *
  * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
@@ -41,7 +41,7 @@ public class RAMStatusPanel extends JPanel {
         cpu.addCPUListener(new CPUListener() {
 
             @Override
-            public void runChanged(RunState state) {
+            public void runStateChanged(RunState state) {
                 switch (state) {
                     case STATE_STOPPED_NORMAL:
                         lblStatus.setText("stopped (normal)");
@@ -60,7 +60,7 @@ public class RAMStatusPanel extends JPanel {
             }
 
             @Override
-            public void stateUpdated() {
+            public void internalStateChanged() {
                 String s = cpu.getR0();
                 if (s == null || s.equals("")) {
                     s = "<empty>";
