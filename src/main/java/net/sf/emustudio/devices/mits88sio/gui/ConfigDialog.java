@@ -1,6 +1,6 @@
 /*
  * ConfigDialog.java
- * 
+ *
  * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
@@ -27,22 +27,21 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.GroupLayout;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
 import net.sf.emustudio.devices.mits88sio.impl.SIOImpl;
+import net.sf.emustudio.devices.mits88sio.impl.SIOSettings;
 
 @SuppressWarnings("serial")
 public class ConfigDialog extends JDialog {
+    private SIOSettings settings;
 
-    private SettingsManager settings;
-    private long pluginId;
-
-    public ConfigDialog(long hash, SettingsManager settings) {
-        super((Frame) null, true);
+    public ConfigDialog(SIOSettings settings) {
+        super((JFrame) null, true);
         this.settings = settings;
-        this.pluginId = hash;
 
         initComponents();
         readSettings();
@@ -50,24 +49,15 @@ public class ConfigDialog extends JDialog {
     }
 
     private void readSettings() {
-        String s;
-        s = settings.readSetting(pluginId, "port1");
-        if (s != null) {
-            txtPort1.setText(s);
-        } else {
-            txtPort1.setText(String.valueOf(SIOImpl.CPU_PORT1));
-        }
-        s = settings.readSetting(pluginId, "port2");
-        if (s != null) {
-            txtPort2.setText(s);
-        } else {
-            txtPort2.setText(String.valueOf(SIOImpl.CPU_PORT2));
-        }
+        txtPort1.setText(String.valueOf(settings.getStatusPortNumber()));
+        txtPort2.setText(String.valueOf(settings.getDataPortNumber()));
     }
 
     private void writeSettings() {
-        settings.writeSetting(pluginId, "port1", txtPort1.getText());
-        settings.writeSetting(pluginId, "port2", txtPort2.getText());
+        try {
+            settings.setStatusPortNumber(Integer.decode(txtPort1.getText()));
+            settings.setDataPortNumber(Integer.decode(txtPort2.getText()));
+        } catch (NumberFormatException e) {}
     }
 
     private void initComponents() {
@@ -167,8 +157,8 @@ public class ConfigDialog extends JDialog {
     }
 
     private void btnDefaultActionPerformed(java.awt.event.ActionEvent evt) {
-        txtPort1.setText(String.valueOf(SIOImpl.CPU_PORT1));
-        txtPort2.setText(String.valueOf(SIOImpl.CPU_PORT2));
+        txtPort1.setText(String.valueOf(SIOSettings.DEFAULT_STATUS_PORT_NUMBER));
+        txtPort2.setText(String.valueOf(SIOSettings.DEFAULT_DATA_PORT_NUMBER));
     }
     private JTextField txtPort1;
     private JTextField txtPort2;
