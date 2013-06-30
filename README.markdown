@@ -9,36 +9,8 @@ The compiler doesn't support compilation into a binary file, but outputs the res
 program memory of the emulator. It implements only parsing and semantic analysis.
 
 The compiler supports the following instructions: `HALT`, `READ`, `WRITE`, `LOAD`, `STORE`, `ADD`, `SUB`,
-`MUL`, `DIV`, `JMP`, `JGTZ`, and `JZ`. The input tape can be filled via `<input>` directive. Example:
-
-
-    ; COPY(X,Y)
-    ;
-    ; input:
-    ;     reg.1: X
-    ;     reg.2: Y
-    ;
-    ; output:
-    ;     reg.X: (reg.Y)
-    ;     reg.Y: (reg.Y)
-
-    <input> 3 4 hello howdy
-    <input> blabla
-
-    ; load X,Y
-    read 1
-    read 2
-
-    ; load reg.X, reg.Y
-    read *1
-    read *2
-
-    ; copying
-    load *2
-    store *1
-
-    halt
-
+`MUL`, `DIV`, `JMP`, `JGTZ`, and `JZ`. The input tape can be filled via `<input>` directive. Some examples
+can be found in the repository.
 
 Installation
 ------------
@@ -56,6 +28,8 @@ will not recognize the plug-in until restart. Don't forget to check the compatib
 distribution.
 
 For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
+
+[![Build Status](https://travis-ci.org/vbmacher/ramc-ram.png)](https://travis-ci.org/vbmacher/ramc-ram)
 
 License
 -------
