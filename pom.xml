@@ -38,6 +38,7 @@
   </properties>
 
   <build>
+    <finalName>z80-cpu.jar</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
