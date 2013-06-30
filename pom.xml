@@ -38,7 +38,7 @@
   </properties>
 
   <build>
-    <finalName>88-sio.jar</finalName>
+    <finalName>88-sio</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
