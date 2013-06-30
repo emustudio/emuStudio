@@ -41,6 +41,7 @@
   </properties>
 
   <build>
+    <finalName>ram-mem</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
