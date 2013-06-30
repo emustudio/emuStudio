@@ -38,6 +38,7 @@
   </properties>
 
   <build>
+    <finalName>adm3A-terminal.jar</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
