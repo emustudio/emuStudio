@@ -38,6 +38,7 @@
   </properties>
 
   <build>
+    <finalName>brainduck-mem</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
