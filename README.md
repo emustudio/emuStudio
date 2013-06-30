@@ -21,6 +21,8 @@ Installation
 
 Please follow instructions on [project's web page](http://emustudio.sourceforge.net/downloads.html).
 
+[![Build Status](https://travis-ci.org/vbmacher/emuStudio.png)](https://travis-ci.org/vbmacher/emuStudio)
+
 License
 -------
 
