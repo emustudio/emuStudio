@@ -38,7 +38,7 @@
   </properties>
 
   <build>
-    <finalName>88-disk.jar</finalName>
+    <finalName>88-disk</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
