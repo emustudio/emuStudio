@@ -1,10 +1,10 @@
 /*
  * ArchitectureManager.java
- * 
+ *
  * Created on Friday, 28.1.2008 22:31
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2008-2012, Peter Jakubčo
+ * Copyright (C) 2008-2013, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,11 +48,11 @@ public class ArchitectureManager implements SettingsManager {
 
     /**
      * Creates new virtual computer architecture and initializes all plug-ins.
-     * 
+     *
      * @param computer Virtual computer, handling the structure of plug-ins
      * @param settings ArchitectureManager settings (Properties)
      * @param schema   Abstract schema of the architecture
-     *  
+     *
      * @throws PluginInitializationException if initialization of the architecture failed.
      */
     public ArchitectureManager(Computer computer, Properties settings, Schema schema,
@@ -75,7 +75,7 @@ public class ArchitectureManager implements SettingsManager {
     /**
      * Initialize all plugins. The method is called by
      * constructor. Also provides necessary connections.
-     * 
+     *
      * @return true If the initialization succeeded, false otherwise
      */
     private boolean initialize() {
@@ -104,7 +104,7 @@ public class ArchitectureManager implements SettingsManager {
 
     /**
      * Get schema of this virtual architecture
-     * 
+     *
      * @return Abstract schema
      */
     public Schema getSchema() {
@@ -130,9 +130,9 @@ public class ArchitectureManager implements SettingsManager {
     }
 
     /**
-     * Method reads value of specified setting from Properties for 
+     * Method reads value of specified setting from Properties for
      * specified plugin. Setting has to be fully specified.
-     * 
+     *
      * @param pluginID  identification number of a plugin
      * @param settingName  name of wanted setting
      * @return setting value if exists, or null if not
@@ -140,11 +140,11 @@ public class ArchitectureManager implements SettingsManager {
     @Override
     public String readSetting(long pluginID, String settingName) {
         String prop = pluginNames.get(pluginID);
-        
+
         if ((prop == null) || prop.isEmpty()) {
             return null;
         }
-        
+
         if ((settingName != null) && !settingName.isEmpty()) {
             prop += "." + settingName;
         }
@@ -154,7 +154,7 @@ public class ArchitectureManager implements SettingsManager {
 
     /**
      * Get device name (file name without extension)
-     * 
+     *
      * @param index  Index of the device
      * @return device file name without extension, or null
      *         if device is unknown
@@ -165,7 +165,7 @@ public class ArchitectureManager implements SettingsManager {
 
     /**
      * Get compiler file name, without file extension.
-     * 
+     *
      * @return compiler name or null
      */
     public String getCompilerName() {
@@ -174,7 +174,7 @@ public class ArchitectureManager implements SettingsManager {
 
     /**
      * Get CPU file name, without file extension.
-     * 
+     *
      * @return CPU name or null
      */
     public String getCPUName() {
@@ -183,7 +183,7 @@ public class ArchitectureManager implements SettingsManager {
 
     /**
      * Get memory file name, without file extension.
-     * 
+     *
      * @return memory name or null
      */
     public String getMemoryName() {
@@ -191,9 +191,9 @@ public class ArchitectureManager implements SettingsManager {
     }
 
     /**
-     * Method writes a value of specified setting to Properties for 
+     * Method writes a value of specified setting to Properties for
      * specified plugin. Setting has to be fully specified.
-     * 
+     *
      * @param pluginID  plugin ID, identification of a plugin
      * @param settingName name of wanted setting
      * @param val new value of the setting
@@ -203,11 +203,11 @@ public class ArchitectureManager implements SettingsManager {
     @Override
     public boolean writeSetting(long pluginID, String settingName, String val) {
         String prop = pluginNames.get(pluginID);
-        
+
         if ((prop == null) || prop.isEmpty()) {
             return false;
         }
-        
+
         if ((settingName != null) && !settingName.isEmpty()) {
             prop += "." + settingName;
         }
@@ -227,9 +227,9 @@ public class ArchitectureManager implements SettingsManager {
     }
 
     /**
-     * Method removes value of specified setting from Properties for 
+     * Method removes value of specified setting from Properties for
      * specified plugin. Setting has to be fully specified.
-     * 
+     *
      * @param pluginID    plugin ID, identification of a plugin
      * @param settingName name of wanted setting
      * @return true if the setting was removed, or it didn't exist so far. It returns false if pluginID wasn't recognized
@@ -238,11 +238,11 @@ public class ArchitectureManager implements SettingsManager {
     @Override
     public boolean removeSetting(long pluginID, String settingName) {
         String prop = pluginNames.get(pluginID);
-        
+
         if ((prop == null) || prop.isEmpty()) {
             return false;
         }
-        
+
         if ((settingName != null) && !settingName.isEmpty()) {
             prop += "." + settingName;
         }
@@ -265,7 +265,7 @@ public class ArchitectureManager implements SettingsManager {
      * Set a setting for all plugins.
      *
      * This method should be used only by the emuStudio. It does not override any of the SettingsManager method.
-     * 
+     *
      * @param settingName name of the setting
      * @param value value of the setting
      * @return true if at least one setting was successfully saved; false otherwise.

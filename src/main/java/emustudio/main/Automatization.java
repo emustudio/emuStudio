@@ -64,6 +64,7 @@ public class Automatization implements Runnable {
     private Device[] devices;
 
     private RunState resultState;
+    private boolean nogui;
 
     /**
      * Creates new automatization object.
@@ -74,6 +75,8 @@ public class Automatization implements Runnable {
      */
     public Automatization(ArchitectureManager currentArch, String inputFileName, boolean nogui) throws AutomatizationException {
         this.currentArch = currentArch;
+        this.nogui = nogui;
+
         if (currentArch == null) {
             throw new AutomatizationException("Computer architecture must be set");
         }
@@ -173,10 +176,17 @@ public class Automatization implements Runnable {
 
         final Object resultStateLock = new Object();
 
+        // Show all devices if GUI is supported
+        for (Device device : devices) {
+            if (!nogui) {
+                device.showGUI();
+            }
+        }
+
         resultState = RunState.STATE_RUNNING;
         cpu.addCPUListener(new CPUListener() {
             @Override
-            public void runChanged(RunState state) {
+            public void runStateChanged(RunState state) {
                 if (state != RunState.STATE_RUNNING) {
                     synchronized (resultStateLock) {
                         resultState = state;
@@ -186,7 +196,7 @@ public class Automatization implements Runnable {
             }
 
             @Override
-            public void stateUpdated() {
+            public void internalStateChanged() {
             }
         });
         cpu.execute();

@@ -125,7 +125,7 @@ public class StudioFrame extends javax.swing.JFrame {
             @Override
             public void componentHidden(ComponentEvent e) {
             }
-            
+
         });
 
 
@@ -150,14 +150,14 @@ public class StudioFrame extends javax.swing.JFrame {
 
             @Override
             public Object getElementAt(int index) {
-                return arch.getDevices()[index].getTitle();        
+                return arch.getDevices()[index].getTitle();
             }
         });
         this.setLocationRelativeTo(null);
         this.setTitle("emuStudio [" + title + "]");
         txtSource.grabFocus();
     }
-    
+
     // get gui panel from CPU plugin and show in main window
     private void setStatusGUI() {
         JPanel statusPanel = cpu.getStatusPanel();
@@ -265,12 +265,12 @@ public class StudioFrame extends javax.swing.JFrame {
         cpu.addCPUListener(new CPU.CPUListener() {
 
             @Override
-            public void stateUpdated() {
+            public void internalStateChanged() {
                 tblDebug.refresh();
             }
 
             @Override
-            public void runChanged(RunState state) {
+            public void runStateChanged(RunState state) {
                 run_state = state;
                 if (state == RunState.STATE_RUNNING) {
                     btnStop.setEnabled(true);
@@ -746,10 +746,10 @@ public class StudioFrame extends javax.swing.JFrame {
 
         btnSeekBackward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/page-seek-backward.png"))); // NOI18N
         btnSeekBackward.setToolTipText("Go to the current page");
-        
+
         btnSeekForward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/page-seek-forward.png"))); // NOI18N
         btnSeekForward.setToolTipText("Go to the current page");
-        
+
         btnFirst.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1203,7 +1203,7 @@ public class StudioFrame extends javax.swing.JFrame {
         tblDebug.setEnabled(false);
         cpu.execute();
     }
-    
+
     private void btnRunTimeActionPerformed(java.awt.event.ActionEvent evt) {
         String sliceText = StaticDialogs.inputStringValue("Enter time slice in milliseconds:",
                 "Run timed emulation", "500");

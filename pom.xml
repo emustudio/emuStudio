@@ -45,7 +45,7 @@
   </properties>
 
   <build>
-    <finalName>emuStudio</finalName>
+    <finalName>emuStudio.jar</finalName>
     <extensions>
       <extension>
         <groupId>org.apache.maven.wagon</groupId>

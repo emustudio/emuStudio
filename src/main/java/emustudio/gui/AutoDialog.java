@@ -1,6 +1,6 @@
 /*
  * AutoDialog.java
- * 
+ *
  * KISS, YAGNI, DRY
  *
  * Copyright (C) 2009-2012, Peter Jakubčo
@@ -29,7 +29,7 @@ import javax.swing.*;
 /**
  * This is the dialog form that displays when the emuStudio automatization
  * is running.
- * 
+ *
  * @author vbmacher
  */
 @SuppressWarnings("serial")
@@ -54,7 +54,7 @@ public class AutoDialog extends JDialog {
 
         lblPerforming.setFont(lblPerforming.getFont().deriveFont(lblPerforming.getFont().getStyle() | java.awt.Font.BOLD));
         lblPerforming.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/motherboard-icon.gif"))); // NOI18N
-        lblPerforming.setText("Performing emulation, please wait...");
+        lblPerforming.setText("Running automatic emulation, please wait...");
 
         lblAction.setText("Initializing...");
 

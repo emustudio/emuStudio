@@ -388,7 +388,23 @@ public class ArchitectureLoader implements ConfigurationManager {
             configFile.createNewFile();
             FileOutputStream out = new FileOutputStream(configFile);
             settings.put("emu8Version", "4");
+            String noGUI = null;
+            if (settings.containsKey("nogui")) {
+                noGUI = (String)settings.remove("nogui");
+            }
+            String auto = null;
+            if (settings.containsKey("auto")) {
+                auto = (String)settings.remove("auto");
+            }
+
             settings.store(out, configName + " configuration file");
+
+            if (noGUI != null) {
+                settings.put("nogui", noGUI);
+            }
+            if (auto != null) {
+                settings.put("auto", auto);
+            }
             out.close();
         } catch (Exception e) {
             throw new WriteConfigurationException("Could not save configuration.", e);
