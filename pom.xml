@@ -46,7 +46,7 @@
   </repositories>
 
   <build>
-    <finalName>ramc-ram.jar</finalName>
+    <finalName>ramc-ram</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
