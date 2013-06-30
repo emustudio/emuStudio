@@ -46,7 +46,7 @@
   </repositories>
 
   <build>
-    <finalName>as-z80.jar</finalName>
+    <finalName>as-z80</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
