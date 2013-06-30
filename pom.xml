@@ -38,7 +38,7 @@
   </properties>
 
   <build>
-    <finalName>8080-cpu.jar</finalName>
+    <finalName>8080-cpu</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
