@@ -38,7 +38,7 @@
   </properties>
 
   <build>
-    <finalName>brainduck-terminal.jar</finalName>
+    <finalName>brainduck-terminal</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
