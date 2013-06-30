@@ -38,7 +38,7 @@
   </properties>
 
   <build>
-    <finalName>ram-cpu.jar</finalName>
+    <finalName>ram-cpu</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
