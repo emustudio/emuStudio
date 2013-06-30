@@ -37,7 +37,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import javax.swing.JOptionPane;
 import net.sf.emustudio.devices.mits88sio.gui.ConfigDialog;
-import net.sf.emustudio.devices.mits88sio.gui.SIODialog;
+import net.sf.emustudio.devices.mits88sio.gui.StatusDialog;
 import net.sf.emustudio.intel8080.ExtendedContext;
 
 /**
@@ -67,7 +67,7 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
     private DataCPUPort dataPort;
     private PhysicalPort physicalPort;
     private ExtendedContext cpu;
-    private SIODialog gui;
+    private StatusDialog gui;
     private SIOSettings sioSettings;
 
     private int currentStatusPortNumber = -1;
@@ -167,7 +167,7 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
     public void showGUI() {
         if (!sioSettings.isNoGUI()) {
             if (gui == null) {
-                gui = new SIODialog(currentStatusPortNumber,
+                gui = new StatusDialog(currentStatusPortNumber,
                         currentDataPortNumber, dataPort.getAttachedDeviceID());
             }
             gui.setVisible(true);
