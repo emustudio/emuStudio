@@ -46,6 +46,7 @@
   </repositories>
 
   <build>
+    <finalName>as-8080.jar</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
