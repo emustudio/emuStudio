@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>net.sf.emustudio</groupId>
-  <artifactId>terminal-brainduck</artifactId>
+  <artifactId>brainduck-terminal</artifactId>
   <version>0.13.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
@@ -38,6 +38,7 @@
   </properties>
 
   <build>
+    <finalName>brainduck-terminal.jar</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
