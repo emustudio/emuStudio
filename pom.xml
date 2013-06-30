@@ -38,7 +38,7 @@
   </properties>
 
   <build>
-    <finalName>brainduck-cpu.jar</finalName>
+    <finalName>brainduck-cpu</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
