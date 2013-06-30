@@ -38,7 +38,7 @@
   </properties>
 
   <build>
-    <finalName>simPseudo-z80</finalName>
+    <finalName>simhPseudo-z80</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
