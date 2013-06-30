@@ -35,6 +35,8 @@ distribution.
 
 For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
 
+[![Build Status](https://travis-ci.org/vbmacher/as-z80.png)](https://travis-ci.org/vbmacher/as-z80)
+
 License
 -------
 
