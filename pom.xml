@@ -46,7 +46,7 @@
   </repositories>
 
   <build>
-    <finalName>brainc-brainduck.jar</finalName>
+    <finalName>brainc-brainduck</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
