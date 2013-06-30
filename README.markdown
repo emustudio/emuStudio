@@ -41,6 +41,8 @@ distribution.
 
 For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
 
+[![Build Status](https://travis-ci.org/vbmacher/brainduck-cpu.png)](https://travis-ci.org/vbmacher/brainduck-cpu)
+
 License
 -------
 
