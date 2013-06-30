@@ -38,6 +38,7 @@
   </properties>
 
   <build>
+    <finalName>simPseudo-z80.jar</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
