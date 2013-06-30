@@ -38,7 +38,7 @@
   </properties>
 
   <build>
-    <finalName>abstractTape-ram.jar</finalName>
+    <finalName>abstractTape-ram</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
