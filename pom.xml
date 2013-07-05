@@ -44,6 +44,14 @@
       <url>http://emustudio.sf.net/repository/</url>
     </repository>
   </repositories>
+  
+  <pluginRepositories>
+    <pluginRepository>
+      <id>emustudio-plugin-repository</id>
+      <name>emuStudio Repository</name>
+      <url>http://emustudio.sf.net/repository/</url>
+    </pluginRepository>
+  </pluginRepositories>
 
   <build>
     <finalName>as-z80</finalName>
