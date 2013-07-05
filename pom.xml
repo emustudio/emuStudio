@@ -45,6 +45,14 @@
     </repository>
   </repositories>
 
+  <pluginRepositories>
+    <pluginRepository>
+      <id>emustudio-plugin-repository</id>
+      <name>emuStudio Repository</name>
+      <url>http://emustudio.sf.net/repository/</url>
+    </pluginRepository>
+  </pluginRepositories>
+  
   <build>
     <finalName>ramc-ram</finalName>
     <resources>
