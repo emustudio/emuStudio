@@ -79,7 +79,7 @@
                 <id>jacoco-report</id>
                 <phase>test</phase>
                 <goals>
-                  <goal>jacoco-report</goal>
+                  <goal>report</goal>
                 </goals>
               </execution>
             </executions>
