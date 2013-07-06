@@ -1,5 +1,7 @@
 Intel 8080 Assembler plug-in
 ----------------------------
+[![Build Status](https://travis-ci.org/vbmacher/as-8080.png)](https://travis-ci.org/vbmacher/as-8080)
+[![Coverage Status](https://coveralls.io/repos/vbmacher/as-8080/badge.png?branch=branch-0_31)](https://coveralls.io/r/vbmacher/as-8080?branch=branch-0_31)
 
 This project is light modified (enhanced) "clone" of original Intel's 8080 assembler, written in Java.
 It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based computer
@@ -33,8 +35,6 @@ will not recognize the plug-in until restart. Don't forget to check the compatib
 distribution.
 
 For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
-
-[![Build Status](https://travis-ci.org/vbmacher/as-8080.png)](https://travis-ci.org/vbmacher/as-8080)
 
 License
 -------
