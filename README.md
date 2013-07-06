@@ -1,7 +1,7 @@
 Welcome to emuStudio
 ---------------------
 [![Build Status](https://travis-ci.org/vbmacher/emuStudio.png)](https://travis-ci.org/vbmacher/emuStudio)
-[![Coverage Status](https://coveralls.io/repos/vbmacher/emuStudio/badge.png)](https://coveralls.io/r/vbmacher/emuStudio)
+[![Coverage Status](https://coveralls.io/repos/vbmacher/emuStudio/badge.png?branch=branch-0_39)](https://coveralls.io/r/vbmacher/emuStudio?branch=branch-0_39)
 
 emuStudio is software-based computer emulation platform, intended for emulation of whole computers (real or abstract), or
 their parts. The emulation is performed by plug-ins that represent computer components. There exist also compiler
