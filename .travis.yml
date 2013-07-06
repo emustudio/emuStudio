@@ -1,7 +1,7 @@
 language: java
 jdk:
 - oraclejdk6
-script: mvn -Pcoveralls test jacoco:report coveralls:jacoco
+script: mvn -X -Pcoveralls test jacoco:report coveralls:jacoco
 
 env:
   global:

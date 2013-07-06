@@ -71,9 +71,15 @@
             <executions>
               <execution>
                 <id>prepare-agent</id>
-                <phase>process-sources</phase>
                 <goals>
                   <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>jacoco-report</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>jacoco-report</goal>
                 </goals>
               </execution>
             </executions>
