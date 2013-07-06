@@ -80,6 +80,9 @@
                     <copy todir="src/main/java/">
                       <fileset dir="${basedir}/target/generated-sources/jflex" includes="**/*" />
 					</copy>
+                    <delete>
+                      <fileset dir="${basedir}/target/generated-sources" />
+                    </delete>
                   </target>
                 </configuration>
                 <goals>
