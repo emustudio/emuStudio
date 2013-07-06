@@ -1,16 +1,15 @@
 language: java
 jdk:
 - oraclejdk6
-
 script: mvn -Pcoveralls test jacoco:report coveralls:jacoco
 
 env:
   global:
   - EMUSTUDIO_USERNAME=vbmacher
   - secure: |-
-      xWA1PAw2JxZfowGWlirwPqNjPF3npp2OIBDAyLFaAxDHvgn6kG2ApytV9qVB
-      \ngr8H2fsQzMGcKkFi5QZm+wmzUUZu9Da8yQtaiDeARaIstg93Oo3Mc9UYMr
-      j+\nfgkMHXRCHNxQZYyBCRLqWaPOjgyQR4mb5aBasZ0O+N7rxkFKK54=
+      xcjSUo0AdRk5uGibuMwDg4/++LcF0ev9TZ6G+lzO09MyYhGb+o5sbAdeBdJh
+      Jp655cNOU6JgXXt1lHjwNwdkwK5XmUoYdbydBgKI49lcl/iLe2HFyuIlG6wK
+      zoLX5zkwFy3paduesm5JkM1I1K7fwJ0RCscCOoxeu+Z2khw6m10=
 
 after_success:
 - python scripts/addServer.py
