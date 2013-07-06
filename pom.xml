@@ -71,6 +71,7 @@
             <executions>
               <execution>
                 <id>prepare-agent</id>
+                <phase>process-sources</phase>
                 <goals>
                   <goal>prepare-agent</goal>
                 </goals>
@@ -85,34 +86,6 @@
               <serviceName>travis-ci</serviceName>
             </configuration>
           </plugin>
-		  <plugin>
-			<groupId>de.jflex</groupId>
-			<artifactId>maven-jflex-plugin</artifactId>
-			<version>1.4.3</version>
-			<executions>
-			  <execution>
-				<goals>
-				  <goal>generate</goal>
-				</goals>
-			  </execution>
-			</executions>
-		  </plugin>
-		  <plugin>
-			<groupId>edu.tum.cs</groupId>
-			<artifactId>cup-maven-plugin</artifactId>
-			<version>1.0.0</version>
-			<executions>
-			  <execution>
-				<goals>
-				  <goal>generate</goal>
-				</goals>
-			  </execution>
-			</executions>
-			<configuration>
-			  <className>Parser8080</className>
-			  <symbolsName>Sym8080</symbolsName>
-			</configuration>
-		  </plugin>
         </plugins>
       </build>
     </profile>
