@@ -1,5 +1,8 @@
 Zilog Z80 Assembler plug-in
 ----------------------------
+[![Build Status](https://travis-ci.org/vbmacher/as-z80.png)](https://travis-ci.org/vbmacher/as-z80)
+[![Coverage Status](https://coveralls.io/repos/vbmacher/as-z80/badge.png?branch=branch-0_17)](https://coveralls.io/r/vbmacher/as-z80?branch=branch-0_17)
+
 
 This project is my own version of assembler for Z80 processor, written in Java.
 It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based computer
@@ -34,8 +37,6 @@ will not recognize the plug-in until restart. Don't forget to check the compatib
 distribution.
 
 For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
-
-[![Build Status](https://travis-ci.org/vbmacher/as-z80.png)](https://travis-ci.org/vbmacher/as-z80)
 
 License
 -------
