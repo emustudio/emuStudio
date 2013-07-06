@@ -1,5 +1,7 @@
 BrainDuck compiler plug-in
 ---------------------------
+[![Build Status](https://travis-ci.org/vbmacher/brainc-brainduck.png)](https://travis-ci.org/vbmacher/brainc-brainduck)
+[![Coverage Status](https://coveralls.io/repos/vbmacher/brainc-brainduck/badge.png?branch=branch-0_15)](https://coveralls.io/r/vbmacher/brainc-brainduck?branch=branch-0_15)
 
 This is a compiler for my own CPU architecture called [BrainDuck](https://github.com/vbmacher/brainduck-cpu),
 written in Java. It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based
@@ -25,8 +27,6 @@ will not recognize the plug-in until restart. Don't forget to check the compatib
 distribution.
 
 For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
-
-[![Build Status](https://travis-ci.org/vbmacher/brainc-brainduck.png)](https://travis-ci.org/vbmacher/brainc-brainduck)
 
 License
 -------
