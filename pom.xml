@@ -71,7 +71,7 @@
             <executions>
               <execution>
                 <id>copy</id>
-                <phase>validate</phase>
+                <phase>process-sources</phase>
                 <configuration>
                   <target name="copy generated sources to src dir">
                     <copy todir="src/main/java/">
