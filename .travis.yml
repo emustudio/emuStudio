@@ -8,9 +8,9 @@ env:
   global:
   - EMUSTUDIO_USERNAME=vbmacher
   - secure: |-
-      I+jc/EdQKYwdh9hbJzG9LBJxhuOU1t+wY/J8/VLAg4ZCc5eoz9zaW1yq5ZYI
-      mkTzw9x3Qz3Ckq0xA84ZCoh7EUvfNvqZqI9bUbE3t6MD3YQyXvdEJnW6A4+I
-      o+7OttLm2Cv//DJ/VwLCvm3nLvgegHXROpBOdGC3A6qOHtwR7/8=
+      hv3eoAUw75qT5KTS65vCNnqsBUV+p/BrQ94LG5NGWU8WTa5j46v9AYZ1e0wd
+      t2RmblExlTy004gZFfGd3vbt+Z55iraIQDSSSvxuyLoxs5BlQNhHopltF7D5
+      yEER4pcSTAWxtV98Lxw1202Ud7P0VsVlJ5w9GOQ2b3oLbN+Xfxk=
 
 after_success:
 - python scripts/addServer.py
