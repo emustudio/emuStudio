@@ -23,7 +23,7 @@
   <developers>
     <developer>
       <id>vbmacher</id>
-      <name>Peter JakubËo</name>
+      <name>Peter Jakubƒço</name>
       <roles>
         <role>architect</role>
         <role>developer</role>
@@ -37,7 +37,45 @@
     <project.build.resourceDirectory>${basedir}/src/main/resources</project.build.resourceDirectory>
   </properties>
 
+  <profiles>
+    <profile>
+      <id>coveralls</id>
+      <activation>
+        <property>
+          <name>env.TRAVIS</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.6.3.201306030806</version>
+            <executions>
+              <execution>
+                <id>prepare-agent</id>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.eluder.coveralls</groupId>
+            <artifactId>coveralls-maven-plugin</artifactId>
+            <version>1.1.0</version>
+            <configuration>
+              <serviceName>travis-ci</serviceName>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
   <build>
+    <finalName>88-disk</finalName>
     <resources>
       <resource>
         <directory>${project.build.resourceDirectory}</directory>
@@ -136,7 +174,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.1</version>
+      <version>4.11</version>
       <scope>test</scope>
     </dependency>
     <dependency>

@@ -25,7 +25,7 @@ import emulib.runtime.StaticDialogs;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.GroupLayout;
 import javax.swing.JCheckBox;
@@ -45,12 +45,11 @@ import net.sf.emustudio.devices.mits88disk.impl.Drive;
 public class ConfigDialog extends JDialog {
 
     private SettingsManager settings;
-    private ArrayList<Drive> drives;
+    private List<Drive> drives;
     private long hash;
     private DiskFrame gui;
 
-    public ConfigDialog(long hash, SettingsManager settings,
-            ArrayList<Drive> drives, DiskFrame gui) {
+    public ConfigDialog(long hash, SettingsManager settings, List<Drive> drives, DiskFrame gui) {
         initComponents();
         this.hash = hash;
         this.settings = settings;

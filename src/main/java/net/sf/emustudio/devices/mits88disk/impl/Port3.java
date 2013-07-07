@@ -22,49 +22,40 @@
  */
 package net.sf.emustudio.devices.mits88disk.impl;
 
-import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
 import emulib.runtime.StaticDialogs;
-import java.io.IOException;
 
 /**
+ * Port 3.
+ * 
  * IN: read data
  * OUT: write data
  *
  * @author Peter Jakubčo
  */
-@ContextType
-public class Port3 implements DeviceContext {
+public class Port3 implements DeviceContext<Short> {
+    private DiskImpl disk;
 
-    private DiskImpl dsk;
-
-    public Port3(DiskImpl dsk) {
-        this.dsk = dsk;
-    }
-
-    public boolean attachDevice(DeviceContext device) {
-        return false;
-    }
-
-    public void detachDevice(DeviceContext device) {
+    public Port3(DiskImpl disk) {
+        this.disk = disk;
     }
 
     @Override
-    public Object read() {
-        short d = 0;
+    public Short read() {
+        short data = 0;
         try {
-            d = ((Drive) dsk.drives.get(dsk.current_drive)).readData();
-        } catch (IOException e) {
+            data = disk.getCurrentDrive().readData();
+        } catch (Exception e) {
             StaticDialogs.showErrorMessage("Couldn't read from disk");
         }
-        return d;
+        return data;
     }
 
     @Override
-    public void write(Object val) {
+    public void write(Short data) {
         try {
-            ((Drive) dsk.drives.get(dsk.current_drive)).writeData((Short) val);
-        } catch (IOException e) {
+            disk.getCurrentDrive().writeData(data);
+        } catch (Exception e) {
             StaticDialogs.showErrorMessage("Couldn't write to disk");
         }
     }

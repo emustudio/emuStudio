@@ -29,9 +29,11 @@ import emulib.emustudio.SettingsManager;
 import emulib.plugins.device.AbstractDevice;
 import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
+import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import net.sf.emustudio.devices.mits88disk.gui.ConfigDialog;
@@ -113,31 +115,31 @@ title = "MITS 88-DISK device",
 copyright = "\u00A9 Copyright 2007-2012, Peter Jakubčo",
 description = "Implementation of popular floppy disk controller.")
 public class DiskImpl extends AbstractDevice {
-
     private final static int DRIVES_COUNT = 16;
     public final static int CPU_PORT1 = 0x8;
     public final static int CPU_PORT2 = 0x9;
     public final static int CPU_PORT3 = 0xA;
+    
     private int port1CPU;
     private int port2CPU;
     private int port3CPU;
     private ExtendedContext cpuContext;
-    public ArrayList<Drive> drives;
+    private List<Drive> drives;
     private Port1 port1;
     private Port2 port2;
     private Port3 port3;
-    public int current_drive;
+    private int currentDrive;
     private DiskFrame gui;
     private boolean noGUI = false;
 
     public DiskImpl(Long pluginID) {
         super(pluginID);
-        this.drives = new ArrayList<Drive>();
+        drives = new ArrayList<Drive>();
         for (int i = 0; i < DRIVES_COUNT; i++) {
-            this.drives.add(new Drive());
+            drives.add(new Drive());
         }
 
-        this.current_drive = 0xFF;
+        this.currentDrive = 0xFF;
         port1CPU = CPU_PORT1;
         port2CPU = CPU_PORT2;
         port3CPU = CPU_PORT3;
@@ -182,8 +184,12 @@ public class DiskImpl extends AbstractDevice {
     public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
 
-        cpuContext = (ExtendedContext) ContextPool.getInstance()
-                .getCPUContext(pluginID, ExtendedContext.class);
+        try {
+            cpuContext = (ExtendedContext) ContextPool.getInstance()
+                    .getCPUContext(pluginID, ExtendedContext.class);
+        } catch (InvalidContextException e) {
+            // Error will be reported later on
+        }
 
         if (cpuContext == null) {
             StaticDialogs.showErrorMessage("Cannot connect to the CPU", "88-DISK");
@@ -312,6 +318,14 @@ public class DiskImpl extends AbstractDevice {
             return;
         }
         new ConfigDialog(pluginID, settings, drives, gui).setVisible(true);
+    }
+    
+    public Drive getCurrentDrive() {
+        return drives.get(currentDrive);
+    }
+    
+    public void setCurrentDrive(int index) {
+        currentDrive = index;
     }
 
     @Override

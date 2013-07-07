@@ -23,7 +23,7 @@
 package net.sf.emustudio.devices.mits88disk.gui;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
@@ -45,11 +45,10 @@ import net.sf.emustudio.devices.mits88disk.impl.Drive;
 public class DiskFrame extends JFrame {
     private final static String GUI_PATH = "/net/sf/emustudio/devices/mits88disk/gui/";
 
-    private ArrayList<Drive> drives;
+    private List<Drive> drives;
     private int driveInfoIndex = -1; // drive that wants to show current params
 
-    /** Creates new form DiskFrame */
-    public DiskFrame(ArrayList<Drive> drives) {
+    public DiskFrame(List<Drive> drives) {
         initComponents();
         this.drives = drives;
         this.setLocationRelativeTo(null);
