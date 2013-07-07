@@ -1,5 +1,7 @@
 SIMH Pseudo-device plug-in
 --------------------------
+[![Build Status](https://travis-ci.org/vbmacher/simhPseudo-z80.png)](https://travis-ci.org/vbmacher/simhPseudo-z80)
+[![Coverage Status](https://coveralls.io/repos/vbmacher/simhPseudo-z80/badge.png?branch=branch-0_13)](https://coveralls.io/r/vbmacher/simhPseudo-z80?branch=branch-0_13)
 
 The aim of this project is to mimic functionality of pseudo device that is implemented
 inside [simh](http://simh.trailing-edge.com/) emulator. It is used for the interaction
@@ -76,8 +78,6 @@ will not recognize the plug-in until restart. Don't forget to check the compatib
 distribution.
 
 For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
-
-[![Build Status](https://travis-ci.org/vbmacher/simhPseudo-z80.png)](https://travis-ci.org/vbmacher/simhPseudo-z80)
 
 License
 -------
