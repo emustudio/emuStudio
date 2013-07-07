@@ -1,5 +1,8 @@
 88-DISK plug-in
 ---------------
+[![Build Status](https://travis-ci.org/vbmacher/88-disk.png)](https://travis-ci.org/vbmacher/88-disk)
+[![Coverage Status](https://coveralls.io/repos/vbmacher/88-disk/badge.png?branch=branch-0_27)](https://coveralls.io/r/vbmacher/88-disk?branch=branch-0_27)
+
 
 This project is an emulator of MITS 88-DISK device, used in MITS Altair8800 computers.
 The device has been a disk controller that is plugged into S-BUS bus. It is implemented
@@ -35,8 +38,6 @@ will not recognize the plug-in until restart. Don't forget to check the compatib
 distribution.
 
 For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
-
-[![Build Status](https://travis-ci.org/vbmacher/88-disk.png)](https://travis-ci.org/vbmacher/88-disk)
 
 License
 -------
