@@ -1,5 +1,7 @@
 Standard operating memory plug-in
 ----------------------------------
+[![Build Status](https://travis-ci.org/vbmacher/standard-mem.png)](https://travis-ci.org/vbmacher/standard-mem)
+[![Coverage Status](https://coveralls.io/repos/vbmacher/standard-mem/badge.png?branch=branch-0_30)](https://coveralls.io/r/vbmacher/standard-mem?branch=branch-0_30)
 
 This project represents virtual computer's operating memory. It is implemented as a plug-in for
 [emuStudio](http://emustudio.sf.net), a software-based computer emulation platform\*.
@@ -24,8 +26,6 @@ will not recognize the plug-in until restart. Don't forget to check the compatib
 distribution.
 
 For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
-
-[![Build Status](https://travis-ci.org/vbmacher/standard-mem.png)](https://travis-ci.org/vbmacher/standard-mem)
 
 License
 -------

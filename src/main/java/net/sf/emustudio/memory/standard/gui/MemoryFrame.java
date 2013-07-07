@@ -72,7 +72,6 @@ public class MemoryFrame extends JFrame {
     private MemoryTableModel memModel;
     private SettingsManager settings;
 
-    /** Creates new form MemoryFrame */
     public MemoryFrame(long pluginID, MemoryImpl mem, MemoryContextImpl memContext,
             SettingsManager settings) {
         this.memContext = memContext;
