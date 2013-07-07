@@ -1,5 +1,7 @@
 BrainDuck text terminal plug-in
 -------------------------------
+[![Build Status](https://travis-ci.org/vbmacher/brainduck-terminal.png)](https://travis-ci.org/vbmacher/brainduck-terminal)
+[![Coverage Status](https://coveralls.io/repos/vbmacher/brainduck-terminal/badge.png?branch=branch-0_13)](https://coveralls.io/r/vbmacher/brainduck-terminal?branch=branch-0_13)
 
 This project is text terminal for BrainDuck architecture. BrainDuck is abstract
 machine based on esoteric programming language [brainfuck](http://en.wikipedia.org/wiki/Brainfuck).
@@ -30,8 +32,6 @@ will not recognize the plug-in until restart. Don't forget to check the compatib
 distribution.
 
 For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
-
-[![Build Status](https://travis-ci.org/vbmacher/brainduck-terminal.png)](https://travis-ci.org/vbmacher/brainduck-terminal)
 
 License
 -------
