@@ -1,5 +1,7 @@
 88-SIO Serial interface plug-in
 -------------------------------
+[![Build Status](https://travis-ci.org/vbmacher/88-sio.png)](https://travis-ci.org/vbmacher/88-sio)
+[![Coverage Status](https://coveralls.io/repos/vbmacher/88-sio/badge.png?branch=branch-0_17)](https://coveralls.io/r/vbmacher/88-sio?branch=branch-0_17)
 
 This project is an emulator of MITS 88-SIO device (serial card), used mainly in MITS
 Altair8800 computers. The device has been a serial I/O interface card that is plugged into
@@ -41,8 +43,6 @@ will not recognize the plug-in until restart. Don't forget to check the compatib
 distribution.
 
 For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
-
-[![Build Status](https://travis-ci.org/vbmacher/88-sio.png)](https://travis-ci.org/vbmacher/88-sio)
 
 License
 -------
