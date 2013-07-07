@@ -1,5 +1,7 @@
 Program memory plug-in for Random Access Machine (RAM)
 ------------------------------------------------------
+[![Build Status](https://travis-ci.org/vbmacher/ram-mem.png)](https://travis-ci.org/vbmacher/ram-mem)
+[![Coverage Status](https://coveralls.io/repos/vbmacher/ram-mem/badge.png?branch=branch-0_13)](https://coveralls.io/r/vbmacher/ram-mem?branch=branch-0_13)
 
 This project represents program memory (or program tape) of Random Access Machine, used in theoretical
 informatics. It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based
@@ -32,8 +34,6 @@ will not recognize the plug-in until restart. Don't forget to check the compatib
 distribution.
 
 For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
-
-[![Build Status](https://travis-ci.org/vbmacher/ram-mem.png)](https://travis-ci.org/vbmacher/ram-mem)
 
 License
 -------
