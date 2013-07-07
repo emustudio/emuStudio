@@ -1,7 +1,7 @@
 88-DISK plug-in
 ---------------
 [![Build Status](https://travis-ci.org/vbmacher/88-disk.png)](https://travis-ci.org/vbmacher/88-disk)
-[![Coverage Status](https://coveralls.io/repos/vbmacher/88-disk/badge.png?branch=branch-0_27)](https://coveralls.io/r/vbmacher/88-disk?branch=branch-0_27)
+[![Coverage Status](https://coveralls.io/repos/vbmacher/88-disk/badge.png?branch=branch-0_28)](https://coveralls.io/r/vbmacher/88-disk?branch=branch-0_28)
 
 
 This project is an emulator of MITS 88-DISK device, used in MITS Altair8800 computers.
