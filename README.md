@@ -1,5 +1,7 @@
 Abstract tape for Random Access Machine
 ----------------------------------------
+[![Build Status](https://travis-ci.org/vbmacher/abstractTape-ram.png)](https://travis-ci.org/vbmacher/abstractTape-ram)
+[![Coverage Status](https://coveralls.io/repos/vbmacher/abstractTape-ram/badge.png?branch=branch-0_22)](https://coveralls.io/r/vbmacher/abstractTape-ram?branch=branch-0_22)
 
 This project represents an 'abstract tape' that is used in abstract machines, such as Random
 Access Machine (RAM), or Turing machine. It is implemented as a plug-in for
@@ -27,8 +29,6 @@ will not recognize the plug-in until restart. Don't forget to check the compatib
 distribution.
 
 For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
-
-[![Build Status](https://travis-ci.org/vbmacher/abstractTape-ram.png)](https://travis-ci.org/vbmacher/abstractTape-ram)
 
 License
 -------
