@@ -1,5 +1,7 @@
 Random Access Machine emulator
 ------------------------------
+[![Build Status](https://travis-ci.org/vbmacher/ram-cpu.png)](https://travis-ci.org/vbmacher/ram-cpu)
+[![Coverage Status](https://coveralls.io/repos/vbmacher/ram-cpu/badge.png?branch=branch-0_12)](https://coveralls.io/r/vbmacher/ram-cpu?branch=branch-0_12)
 
 This is a Java-based emulator of Ranom Access Machine (RAM), used in theoretical informatics. It is implemented as a plug-in for
 [emuStudio](http://emustudio.sf.net), a software-based computer emulation platform\*.
@@ -29,8 +31,6 @@ will not recognize the plug-in until restart. Don't forget to check the compatib
 distribution.
 
 For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
-
-[![Build Status](https://travis-ci.org/vbmacher/ram-cpu.png)](https://travis-ci.org/vbmacher/ram-cpu)
 
 License
 -------
