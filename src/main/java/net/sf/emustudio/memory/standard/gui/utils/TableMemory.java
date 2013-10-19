@@ -100,9 +100,8 @@ public class TableMemory extends JTable {
             currentPage = memModel.getPage();
             adresses = new String[memModel.getRowCount()];
             for (int i = 0; i < adresses.length; i++) {
-                adresses[i] = String.format("%1$04Xh",
-                        memModel.getColumnCount() * i + memModel.getColumnCount()
-                        * memModel.getRowCount() * currentPage);
+                adresses[i] = emulib.runtime.RadixUtils.getWordHexString(memModel.getColumnCount() * i
+                        + memModel.getColumnCount() * memModel.getRowCount() * currentPage) + "h";
             }
             this.setOpaque(true);
             rowHeader = new JList(adresses);
