@@ -1,6 +1,6 @@
 /*
  * CommandLineFactory.java
- * 
+ *
  * Copyright (C) 2012, Peter Jakubčo
  * KISS, YAGNI, DRY
  *
@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Factory for parsing command lines.
- * 
+ *
  * @author vbmacher
  */
 public class CommandLineFactory {
@@ -38,12 +38,12 @@ public class CommandLineFactory {
         private boolean auto = false;
         private boolean help = false;
         private boolean noGUI = false;
-        
+
         /**
          * Create instance of the CommandLine class.
-         * 
+         *
          * @param inputFileName input source file name. If not used, null should be here.
-         * @param outputFileName output file name. If not used, null should be here.
+         * @param outputFileName output file name where compiler writes messages. If not used, null should be here.
          * @param configName name of virtual computer. If not used, null should be here.
          * @param auto whether to perform automatization
          * @param classToHash name of the class to create hash of
@@ -71,7 +71,7 @@ public class CommandLineFactory {
         public String getConfigName() {
             return configName;
         }
-        
+
         public void setConfigName(String configName) {
             this.configName = configName;
         }
@@ -87,12 +87,12 @@ public class CommandLineFactory {
         public boolean autoWanted() {
             return auto;
         }
-        
+
     }
-    
+
     /**
      * Parses command line and creates CommandLine object.
-     * 
+     *
      * @param args command-line arguments (raw)
      * @return CommandLine object
      * @throws InvalidCommandLineException if the command line is not parseable, or not valid.
@@ -104,7 +104,7 @@ public class CommandLineFactory {
         boolean auto = false;
         boolean noGUI = false;
         boolean help = false;
-        
+
         // process arguments
         int size = args.length;
         for (int i = 0; i < size; i++) {
@@ -133,9 +133,8 @@ public class CommandLineFactory {
                     }
                 } else if (arg.equals("--OUTPUT")) {
                     i++;
-                    // what output file take for emuStudio messages during
-                    // automation process. This option has a meaning
-                    // only if the "-auto" option is set too.
+                    // what output file take for emuStudio messages during automatization process. This option has a
+                    // meaning only if the "--auto" option is set.
                     if (outputFileName != null) {
                         logger.warn(new StringBuilder().append("Output file already defined, ignoring this one: ")
                                 .append(args[i]).toString());
