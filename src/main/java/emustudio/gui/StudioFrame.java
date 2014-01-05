@@ -22,7 +22,6 @@
  */
 package emustudio.gui;
 
-import emulib.annotations.PluginType;
 import emulib.emustudio.API;
 import emulib.plugins.compiler.Compiler;
 import emulib.plugins.compiler.Compiler.CompilerListener;
@@ -32,8 +31,14 @@ import emulib.plugins.cpu.CPU.RunState;
 import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
 import emulib.plugins.memory.Memory.MemoryListener;
+import emulib.plugins.memory.MemoryContext;
+import emulib.runtime.ContextPool;
+import emulib.runtime.InvalidContextException;
+import emulib.runtime.InvalidPasswordException;
+import emulib.runtime.LoggerFactory;
 import emulib.runtime.RadixUtils;
 import emulib.runtime.StaticDialogs;
+import emulib.runtime.interfaces.Logger;
 import emustudio.architecture.Computer;
 import emustudio.gui.debugTable.DebugTableImpl;
 import emustudio.gui.editor.EmuTextPane;
@@ -51,8 +56,6 @@ import java.io.StringReader;
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The main window of the emuStudio.
@@ -127,7 +130,6 @@ public class StudioFrame extends javax.swing.JFrame {
             }
 
         });
-
 
         if (compiler == null) {
             btnCompile.setEnabled(false);
@@ -249,16 +251,23 @@ public class StudioFrame extends javax.swing.JFrame {
         };
         txtSource.setUndoActionListener(undoStateListener);
         if (memory != null) {
-            memory.addMemoryListener(new MemoryListener() {
+            try {
+                MemoryContext memContext = ContextPool.getInstance().getMemoryContext(
+                        Main.password.hashCode(), MemoryContext.class);
+                memContext.addMemoryListener(new MemoryListener() {
 
-                @Override
-                public void memoryChanged(int adr) {
-                    if (run_state != RunState.STATE_RUNNING) {
-                        tblDebug.refresh();
+                    @Override
+                    public void memoryChanged(int adr) {
+                        if (run_state != RunState.STATE_RUNNING) {
+                            tblDebug.refresh();
+                        }
                     }
-                }
-            });
+                });
+            } catch (InvalidContextException e) {
+                logger.error("Could not register memory change listener", e);
+            }
             btnMemory.setEnabled(memory.isShowSettingsSupported());
+
         } else {
             btnMemory.setEnabled(false);
         }
@@ -306,7 +315,11 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
         btnBreakpoint.setEnabled(cpu.isBreakpointSupported());
-        API.getInstance().setDebugTable(tblDebug, Main.password);
+        try {
+            API.getInstance().setDebugTable(tblDebug, Main.password);
+        } catch (InvalidPasswordException e) {
+            logger.error("Could not register debug table", e);
+        }
     }
 
     private void initComponents() {
@@ -1263,10 +1276,10 @@ public class StudioFrame extends javax.swing.JFrame {
         } else {
             cpu.reset();
         }
-        Device dev[] = arch.getDevices();
-        if (dev != null) {
-            for (int i = 0; i < dev.length; i++) {
-                dev[i].reset();
+        Device devices[] = arch.getDevices();
+        if (devices != null) {
+            for (Device device : devices) {
+                device.reset();
             }
         }
         paneDebug.revalidate();

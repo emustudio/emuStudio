@@ -30,6 +30,9 @@ import emustudio.gui.LoadingDialog;
 import emustudio.gui.OpenComputerDialog;
 import emustudio.gui.StudioFrame;
 import emustudio.main.CommandLineFactory.CommandLine;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,19 +87,11 @@ public class Main {
         }
     }
 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String[] args) {
         try {
             javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-        } catch (javax.swing.UnsupportedLookAndFeelException e) {
-            logger.error("Unable to set system look and feel", e);
-        } catch (ClassNotFoundException e) {
-            logger.error("Unable to set system look and feel", e);
-        } catch (InstantiationException e) {
-            logger.error("Unable to set system look and feel", e);
-        } catch (IllegalAccessException e) {
+        } catch (javax.swing.UnsupportedLookAndFeelException | ClassNotFoundException
+                | InstantiationException | IllegalAccessException e) {
             logger.error("Unable to set system look and feel", e);
         }
 
@@ -118,7 +113,13 @@ public class Main {
             return;
         }
 
-        password = emulib.runtime.ContextPool.SHA1(String.valueOf(Math.random()) + new Date().toString());
+        try {
+            password = emulib.runtime.ContextPool.SHA1(String.valueOf(Math.random()) + new Date().toString());
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            logger.error("Could not compute hash.");
+            tryShowErrorMessage("Error: Could not compute hash");
+            return;
+        }
         if (!emulib.emustudio.API.assignPassword(password)) {
             logger.error("Communication with emuLib failed.");
             tryShowErrorMessage("Error: communication with emuLib failed.");
@@ -185,7 +186,7 @@ public class Main {
         } catch (PluginInitializationException e) {
             logger.error("Could not initialize plug-ins.", e);
             tryShowErrorMessage("Error: Could not initialize plug-ins. Please see log file for details.");
-        } catch (Exception e) {
+        } catch (IOException e) {
             logger.error("Could not load virtual computer. Unexpected error.", e);
             tryShowErrorMessage("Could not load virtual computer. Please see log file for details.");
         }

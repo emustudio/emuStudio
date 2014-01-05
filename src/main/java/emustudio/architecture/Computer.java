@@ -42,14 +42,14 @@ import org.slf4j.LoggerFactory;
  */
 public class Computer implements PluginConnections {
     private final static Logger LOGGER = LoggerFactory.getLogger(Computer.class);
-    private CPU cpu;
-    private Compiler compiler;
-    private Memory memory;
-    private Device[] devices;
+    private final CPU cpu;
+    private final Compiler compiler;
+    private final Memory memory;
+    private final Device[] devices;
 
-    private Map<Long, List<Long>> connections;
-    private Map<Long, Plugin> plugins;
-    private Collection<PluginInfo> pluginsInfo;
+    private final Map<Long, List<Long>> connections;
+    private final Map<Long, Plugin> plugins;
+    private final Collection<PluginInfo> pluginsInfo;
 
     /**
      * Creates new Computer instance.
@@ -68,7 +68,7 @@ public class Computer implements PluginConnections {
         this.compiler = compiler;
         this.devices = devices;
         this.connections = connections;
-        this.plugins = new HashMap<Long, Plugin>();
+        this.plugins = new HashMap<>();
 
         this.pluginsInfo = plugins;
         for (PluginInfo plugin : plugins) {

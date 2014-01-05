@@ -40,10 +40,10 @@ import org.slf4j.LoggerFactory;
 public class ArchitectureManager implements SettingsManager {
     private final static Logger logger = LoggerFactory.getLogger(ArchitectureManager.class);
 
-    private Computer computer;
-    private Properties settings;
-    private Schema schema;
-    private Map<Long, String> pluginNames;
+    private final Computer computer;
+    private final Properties settings;
+    private final Schema schema;
+    private final Map<Long, String> pluginNames;
     private ConfigurationManager configurationManager = null;
 
     /**
@@ -60,7 +60,7 @@ public class ArchitectureManager implements SettingsManager {
         this.computer = computer;
         this.settings = settings;
         this.schema = schema;
-        this.pluginNames = new HashMap<Long, String>();
+        this.pluginNames = new HashMap<>();
         this.configurationManager = configurationManager;
 
         for (PluginInfo plugin : computer.getPluginsInfo()) {

@@ -4,7 +4,7 @@
  * Created on Utorok, 2007, august 7, 11:11
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2007-2012, Peter Jakubčo
+ * Copyright (C) 2007-2013, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
-
 package emustudio.architecture;
 
 import emulib.plugins.Plugin;
@@ -39,6 +38,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import org.slf4j.Logger;
@@ -127,16 +127,13 @@ public class ArchitectureLoader implements ConfigurationManager {
     public final static String DEVICES_DIR = "devices";
 
     private static String configurationBaseDirectory = System.getProperty("user.dir");
-
     private static long nextPluginID = 0;
+    private final PluginLoader pluginLoader = new PluginLoader();
 
     private static ArchitectureLoader instance;
 
     public class SortedProperties extends Properties {
 
-        /**
-         * Overrides, called by the store method.
-         */
         @Override
         public synchronized Enumeration keys() {
             Enumeration keysEnum = super.keys();
@@ -274,6 +271,7 @@ public class ArchitectureLoader implements ConfigurationManager {
      * @param configName Name of the virtual configuration
      * @return Schema of the configuration, or null if some error
      *         raises.
+     * @throws emustudio.architecture.ReadConfigurationException
      */
     @Override
     public Schema loadSchema(String configName) throws ReadConfigurationException {
@@ -290,6 +288,7 @@ public class ArchitectureLoader implements ConfigurationManager {
      * Method saves abstract schema of some configuration into configuration file.
      *
      * @param schema Schema to save
+     * @throws emustudio.architecture.WriteConfigurationException
      */
     @Override
     public void saveSchema(Schema schema) throws WriteConfigurationException {
@@ -316,10 +315,10 @@ public class ArchitectureLoader implements ConfigurationManager {
                     .append(configFile.getAbsolutePath()).append(" does not exist.").toString());
         }
         try {
-            FileInputStream fin = new FileInputStream(configFile);
-            p.load(fin);
-            fin.close();
-        } catch (Exception e) {
+            try (FileInputStream fin = new FileInputStream(configFile)) {
+                p.load(fin);
+            }
+        } catch (IOException e) {
             throw new ReadConfigurationException(new StringBuilder().append("Could not read configuration file: ")
                     .append(configFile.getAbsolutePath()).toString(), e);
         }
@@ -386,33 +385,33 @@ public class ArchitectureLoader implements ConfigurationManager {
         try {
             File configFile = new File(dir + File.separator + configName + ".conf");
             configFile.createNewFile();
-            FileOutputStream out = new FileOutputStream(configFile);
-            settings.put("emu8Version", "4");
-            String noGUI = null;
-            if (settings.containsKey("nogui")) {
-                noGUI = (String)settings.remove("nogui");
-            }
-            String auto = null;
-            if (settings.containsKey("auto")) {
-                auto = (String)settings.remove("auto");
-            }
+            try (FileOutputStream out = new FileOutputStream(configFile)) {
+                settings.put("emu8Version", "4");
+                String noGUI = null;
+                if (settings.containsKey("nogui")) {
+                    noGUI = (String)settings.remove("nogui");
+                }
+                String auto = null;
+                if (settings.containsKey("auto")) {
+                    auto = (String)settings.remove("auto");
+                }
 
-            settings.store(out, configName + " configuration file");
+                settings.store(out, configName + " configuration file");
 
-            if (noGUI != null) {
-                settings.put("nogui", noGUI);
+                if (noGUI != null) {
+                    settings.put("nogui", noGUI);
+                }
+                if (auto != null) {
+                    settings.put("auto", auto);
+                }
             }
-            if (auto != null) {
-                settings.put("auto", auto);
-            }
-            out.close();
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new WriteConfigurationException("Could not save configuration.", e);
         }
     }
 
     private Map<String, PluginInfo> preparePluginsToLoad(Properties settings) {
-        Map<String, PluginInfo> pluginsToLoad = new HashMap<String, PluginInfo>();
+        Map<String, PluginInfo> pluginsToLoad = new HashMap<>();
 
         String tmp = settings.getProperty("compiler");
         if (tmp != null) {
@@ -444,29 +443,28 @@ public class ArchitectureLoader implements ConfigurationManager {
     }
 
     private void loadPlugins(Map<String, PluginInfo> pluginsToLoad) throws InvalidPasswordException,
-            InvalidPluginException, PluginLoadingException {
-        PluginLoader pluginLoader = PluginLoader.getInstance();
+            InvalidPluginException, PluginLoadingException, IOException {
 
         for (PluginInfo plugin : pluginsToLoad.values()) {
             Class<Plugin> mainClass = loadPlugin(plugin.dirName, plugin.pluginName);
             plugin.mainClass = mainClass;
         }
-        if (pluginLoader.canResolveClasses(Main.password)) {
-            // Resolve all plug-in classes
-            pluginLoader.resolveLoadedClasses(Main.password);
-        } else {
-            if (pluginLoader.loadUndoneClasses(Main.password)) {
-                pluginLoader.resolveLoadedClasses(Main.password);
-            } else {
-                throw new PluginLoadingException("Cannot load all classes of plug-ins:"
-                        + Arrays.toString(pluginLoader.getUnloadedClassesList(Main.password)), "[unknown]", null);
-            }
-        }
+//        if (pluginLoader.canResolveClasses(Main.password)) {
+//            // Resolve all plug-in classes
+//            pluginLoader.resolveLoadedClasses(Main.password);
+//        } else {
+//            if (pluginLoader.loadUndoneClasses(Main.password)) {
+//                pluginLoader.resolveLoadedClasses(Main.password);
+//            } else {
+//                throw new PluginLoadingException("Cannot load all classes of plug-ins:"
+//                        + Arrays.toString(pluginLoader.getUnloadedClassesList(Main.password)), "[unknown]", null);
+//            }
+//        }
         LOGGER.info("All plugins are loaded and resolved.");
     }
 
     private Map<Long, List<Long>> preparePluginConnections(Properties settings, Map<String, PluginInfo> pluginsToLoad) {
-        Map<Long, List<Long>> connections = new HashMap<Long, List<Long>>();
+        Map<Long, List<Long>> connections = new HashMap<>();
         for (int i = 0; settings.containsKey("connection" + i + ".junc0"); i++) {
             // get i-th connection from settings
             String j0 = settings.getProperty("connection" + i + ".junc0", "");
@@ -499,7 +497,7 @@ public class ArchitectureLoader implements ConfigurationManager {
             if (connections.containsKey(pID1)) {
                 connections.get(pID1).add(pID2);
             } else {
-                List<Long> ar = new ArrayList<Long>();
+                List<Long> ar = new ArrayList<>();
                 ar.add(pID2);
                 connections.put(pID1, ar);
             }
@@ -508,7 +506,7 @@ public class ArchitectureLoader implements ConfigurationManager {
                 if (connections.containsKey(pID2)) {
                     connections.get(pID2).add(pID1);
                 } else {
-                    List<Long> ar = new ArrayList<Long>();
+                    List<Long> ar = new ArrayList<>();
                     ar.add(pID1);
                     connections.put(pID2, ar);
                 }
@@ -526,7 +524,7 @@ public class ArchitectureLoader implements ConfigurationManager {
      */
     public ArchitectureManager createArchitecture(String configName)
             throws PluginLoadingException, ReadConfigurationException, PluginInitializationException,
-            InvalidPasswordException, InvalidPluginException {
+            InvalidPasswordException, InvalidPluginException, IOException {
 
         Properties settings = readConfiguration(configName, true);
         Map<String, PluginInfo> pluginsToLoad = preparePluginsToLoad(settings);
@@ -535,7 +533,7 @@ public class ArchitectureLoader implements ConfigurationManager {
         Compiler compiler = null;
         CPU cpu = null;
         Memory mem = null;
-        List<Device> devList = new ArrayList<Device>();
+        List<Device> devList = new ArrayList<>();
         for (PluginInfo plugin : pluginsToLoad.values()) {
             try {
                 plugin.plugin = (Plugin)newPlugin(plugin.mainClass, plugin.pluginInterface, plugin.pluginId);
@@ -590,8 +588,8 @@ public class ArchitectureLoader implements ConfigurationManager {
      * @param pluginName name of the plugin
      * @return Main class of the plugin. It must be resolved before first use.
      */
-    private Class<Plugin> loadPlugin(String dirname, String pluginName) throws InvalidPasswordException, InvalidPluginException {
-        return emulib.runtime.PluginLoader.getInstance().loadPlugin(configurationBaseDirectory + File.separator
+    private Class<Plugin> loadPlugin(String dirname, String pluginName) throws InvalidPasswordException, InvalidPluginException, IOException {
+        return pluginLoader.loadPlugin(configurationBaseDirectory + File.separator
                 + dirname + File.separator + pluginName + ".jar", Main.password);
     }
 
