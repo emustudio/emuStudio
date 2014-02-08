@@ -3,7 +3,7 @@
  *
  * Created on 15.2.2008, 11:40:01
  * KISS, YAGNI, DRY
- * 
+ *
  * Copyright (C) 2008-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,7 @@ import javax.swing.text.BadLocationException;
 
 /**
  * Singleton class for generally matching/replacing a text with pattern.
- * 
+ *
  * @author vbmacher
  */
 public class FindText {
@@ -60,7 +60,7 @@ public class FindText {
      * Flag for text searching in whole document.
      */
     public static final int DIRECTION_ALL = 2;
-    
+
     private static FindText instance = null;
     private Matcher matcher = null;
     private Pattern pattern = null;
@@ -84,7 +84,7 @@ public class FindText {
 
     /**
      * Get a singleton instance of this class.
-     * 
+     *
      * @return Singleton instance
      */
     public static FindText getInstance() {
@@ -96,7 +96,7 @@ public class FindText {
 
     /**
      * Parameter setting.
-     * 
+     *
      * @param findExpr new find pattern
      * @throws PatternSyntaxException if the pattern syntax is wrong (regular
      * expression).
@@ -117,7 +117,7 @@ public class FindText {
 
     /**
      * Get find expression (text to find).
-     * 
+     *
      * @return find expression
      */
     public String getFindExpr() {
@@ -145,7 +145,7 @@ public class FindText {
 
     /**
      * Determine if text searching is case sensitive.
-     * 
+     *
      * @return true if yes, false if not.
      */
     public boolean isCaseSensitive() {
@@ -154,7 +154,7 @@ public class FindText {
 
     /**
      * Determine if text searching searches for whole words only.
-     * 
+     *
      * @return true if yes, false if not.
      */
     public boolean isWholeWords() {
@@ -163,7 +163,7 @@ public class FindText {
 
     /**
      * Set search parameters.
-     * 
+     *
      * @param par searching flags (OR-ed together)
      */
     public void setParams(byte par) {
@@ -172,7 +172,7 @@ public class FindText {
 
     /**
      * Searching or replaces the text on specified position in document.
-     * 
+     *
      * @param text The document where to perform the search
      * @param curPos the starting position
      * @param endPos the ending position
@@ -228,7 +228,7 @@ public class FindText {
     /**
      * If text searching matches a string, this method would get the starting
      * position of the string within the document.
-     * 
+     *
      * @return starting position of matched string in the document.
      */
     public int getMatchStart() {
@@ -238,7 +238,7 @@ public class FindText {
     /**
      * If text searching matches a string, this method would get the ending
      * position of the string within the document.
-     * 
+     *
      * @return ending position of matched string in the document.
      */
     public int getMatchEnd() {
@@ -247,7 +247,7 @@ public class FindText {
 
     /**
      * Method replaces next found occurence by find replacement string.
-     * 
+     *
      * @param textPane the document where to perform search
      * @return false if replacement is null or if text was not found. Otherwise
      *  it returns true.
@@ -286,14 +286,12 @@ public class FindText {
             }
         } else if (direction == FindText.DIRECTION_TO_START) {
             matcher.region(0, curPos);
-            match = false;
             while (matcher.find(endM)) {
                 if (matcher.end() >= curPos) {
                     break;
                 }
                 startM = matcher.start() - 1;
                 endM = matcher.end();
-                match = true;
             }
             if (startM < 0) {
                 startM = 0;
@@ -333,7 +331,7 @@ public class FindText {
 
     /**
      * Replaces all find pattern occurences with find replacement.
-     * 
+     *
      * @param textPane the document where to perform search
      * @return false if replacement is null or if text was not found. Otherwise
      *  it returns true.

@@ -2,7 +2,7 @@
  * PluginLoadingException.java
  *
  * KISS, YAGNI, DRY
- * 
+ *
  * Copyright (C) 2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -26,13 +26,12 @@ import emulib.plugins.Plugin;
 
 /**
  * This exception is thrown when a plugin could not be loaded.
- * 
+ *
  * @author Peter Jakubco
  */
 public class PluginLoadingException extends Exception {
-
-    private Plugin source;
-    private String pluginName;
+    private final Plugin source;
+    private final String pluginName;
 
     public PluginLoadingException(String message, String pluginName,
             Plugin source) {
@@ -44,7 +43,7 @@ public class PluginLoadingException extends Exception {
     public Plugin getSource() {
         return source;
     }
-    
+
     public String getPluginName() {
         return pluginName;
     }

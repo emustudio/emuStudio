@@ -25,7 +25,7 @@ package emustudio.gui.utils;
 
 /**
  * File filter used in emuStudio.
- * 
+ *
  * @author vbmacher
  */
 public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
@@ -42,7 +42,7 @@ public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
     /**
      * Add an extension to be recognized by this file filter. The asterisk ("*")
      * can be also recognized.
-     * 
+     *
      * @param ext extension string, without the "." (dot)
      */
     public void addExtension(String ext) {
@@ -57,7 +57,7 @@ public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
 
     /**
      * Get first extension (usually the default one) of this file filter.
-     * 
+     *
      * @return first extension accepted by this file filter
      */
     public String getFirstExtension() {
@@ -68,7 +68,7 @@ public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
 
     /**
      * Determine if given file is accepted by this file filter.
-     * 
+     *
      * @param f a file
      * @return true if the file is accepted, false otherwise
      */
@@ -77,11 +77,17 @@ public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
         if (f.isDirectory()) return true;
         String ext = getExtension(f);
         if (ext != null) {
-            for (int i = 0; i < exts.length; i++)
-                if (exts[i].equals(ext) || exts[i].equals("*")) return true;
+            for (String ext1 : exts) {
+                if (ext1.equals(ext) || ext1.equals("*")) {
+                    return true;
+                }
+            }
         } else {
-            for (int i = 0; i < exts.length; i++)
-                if (exts[i].equals("*")) return true;
+            for (String ext1 : exts) {
+                if (ext1.equals("*")) {
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -97,14 +103,14 @@ public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
         String ext = null;
         String s = f.getName();
         int i = s.lastIndexOf('.');
-        if (i > 0 &&  i < s.length() - 1) 
+        if (i > 0 &&  i < s.length() - 1)
             ext = s.substring(i+1).toLowerCase();
         return ext;
     }
 
     /**
      * Get description of this file type.
-     * 
+     *
      * @return description of the file type
      */
     @Override
@@ -114,7 +120,7 @@ public class EmuFileFilter extends javax.swing.filechooser.FileFilter {
 
     /**
      * Set description of this file type.
-     * 
+     *
      * @param des description of the file type
      */
     public void setDescription(String des) {

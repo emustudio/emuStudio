@@ -27,7 +27,19 @@ import emustudio.gui.utils.NiceButton;
 import emustudio.main.Main;
 import java.util.ArrayList;
 import java.util.regex.PatternSyntaxException;
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.ComboBoxModel;
+import javax.swing.GroupLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextPane;
+import javax.swing.LayoutStyle;
+import javax.swing.WindowConstants;
 import javax.swing.event.ListDataListener;
 
 /**
@@ -37,15 +49,14 @@ import javax.swing.event.ListDataListener;
  */
 @SuppressWarnings("serial")
 public class FindDialog extends javax.swing.JDialog {
-
-    private static ArrayList<String> list = new ArrayList<String>();
-    private static ArrayList<String> rlist = new ArrayList<String>();
+    private static final ArrayList<String> list = new ArrayList<>();
+    private static final ArrayList<String> rlist = new ArrayList<>();
     private JTextPane textPane;
 
     private class CMBModel implements ComboBoxModel {
 
         private int in = -1;
-        private ArrayList<String> clist;
+        private final ArrayList<String> clist;
 
         public CMBModel(ArrayList<String> clist) {
             this.clist = clist;

@@ -49,21 +49,21 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
     /**
      * Schema of created computer.
      */
-    private Schema schema;
+    private final Schema schema;
     private boolean OOK = false;
     private DrawingPanel pan;
-    private PluginModel empty_model = new PluginModel(null);
+    private final PluginModel empty_model = new PluginModel(null);
     private boolean buttonSelected = false;
     /**
      * This variable holds true if the window is for editing an existing
      * computer, false or for creating a new computer.
      */
-    private boolean edit;
+    private final boolean edit;
     private OpenComputerDialog odialog;
 
     private class PluginModel implements ComboBoxModel {
 
-        private String[] pluginNames;
+        private final String[] pluginNames;
         private Object selectedObject = null;
 
         public PluginModel(String[] pluginNames) {
@@ -193,8 +193,8 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         if (c instanceof Container) {
             Container cont = (Container) c;
             Component[] children = cont.getComponents();
-            for (int i = 0; i < children.length; i++) {
-                addKeyListenerRecursively(children[i]);
+            for (Component child : children) {
+                addKeyListenerRecursively(child);
             }
         }
     }

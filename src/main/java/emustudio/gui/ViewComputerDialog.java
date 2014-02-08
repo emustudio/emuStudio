@@ -1,8 +1,8 @@
 /*
  * ViewComputerDialog.java
- * 
+ *
  * Copyright (C) 2012, Peter Jakubčo
- * 
+ *
  * KISS, YAGNI, DRY
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Swing dialog showing informations about all plug-ins and abstract schema.
- * 
+ *
  * @author Peter Jakubčo
  */
 public class ViewComputerDialog extends javax.swing.JDialog {
@@ -50,15 +50,12 @@ public class ViewComputerDialog extends javax.swing.JDialog {
     private final static String COMPILER_CONFIG_DIR = ArchitectureLoader.COMPILERS_DIR + File.separator;
     private final static String MEMORY_CONFIG_DIR = ArchitectureLoader.MEMORIES_DIR + File.separator;
     private final static String DEVICE_CONFIG_DIR = ArchitectureLoader.DEVICES_DIR + File.separator;
-    
+
     private Computer computer;
-    private PreviewPanel panelSchema;
-    
+    private final PreviewPanel panelSchema;
+
     private File fileComputerInfo;
-    
-    /**
-     * Creates new form ViewComputerDialog
-     */
+
     public ViewComputerDialog(JFrame parent) {
         super(parent, true);
         initComponents();
@@ -71,7 +68,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         for (int i = 0; i < j; i++) {
             cmbDevice.addItem(Main.architecture.getDeviceName(i));
         }
-        
+
         cmbDevice.addActionListener(new ActionListener() {
 
             @Override
@@ -86,13 +83,13 @@ public class ViewComputerDialog extends javax.swing.JDialog {
                 } catch (Exception ex) {
                 }
             }
-            
+
         });
         panelSchema = new PreviewPanel(Main.architecture.getSchema());
         scrollPane.setViewportView(panelSchema);
         scrollPane.getHorizontalScrollBar().setUnitIncrement(10);
         scrollPane.getVerticalScrollBar().setUnitIncrement(10);
-        
+
         if (computer.getCompiler() == null) {
             btnCompiler.setEnabled(false);
         }
@@ -102,13 +99,13 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         if (computer.getDeviceCount() == 0) {
             btnDevice.setEnabled(false);
         }
-        
+
         // Select default info
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
         setInfo(computer.getCPU(), CPU_CONFIG_DIR + Main.architecture.getCPUName());
     }
-    
+
     private void setInfo(Plugin plugin, String fileName) {
         if (plugin == null) {
             setVisibleInfo(false);
@@ -117,14 +114,14 @@ public class ViewComputerDialog extends javax.swing.JDialog {
             setVisibleInfo(true);
         }
         PluginType pluginType = plugin.getClass().getAnnotation(PluginType.class);
-        
+
         lblName.setText(pluginType.title());
         lblFileName.setText(fileName + ".jar");
         lblCopyright.setText(pluginType.copyright());
         lblVersion.setText(plugin.getVersion());
         txtDescription.setText(pluginType.description());
     }
-    
+
     private void setVisibleInfo(boolean visible) {
         if (!visible) {
             lblName.setText("Plug-in is not available. Please select another one.");
@@ -421,7 +418,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
     private void btnCompilerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCompilerActionPerformed
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        setInfo(computer.getCompiler(), COMPILER_CONFIG_DIR + Main.architecture.getCompilerName());        
+        setInfo(computer.getCompiler(), COMPILER_CONFIG_DIR + Main.architecture.getCompilerName());
     }//GEN-LAST:event_btnCompilerActionPerformed
 
     private void btnCPUActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCPUActionPerformed
@@ -472,14 +469,14 @@ public class ViewComputerDialog extends javax.swing.JDialog {
             public String getDescription() {
                 return "Text files (*.txt)";
             }
-            
+
         };
         f.addChoosableFileFilter(filter);
         f.addChoosableFileFilter(f.getAcceptAllFileFilter());
         f.setFileFilter(filter);
         f.setSelectedFile(fileComputerInfo);
         if (fileComputerInfo != null) {
-            f.setCurrentDirectory(fileComputerInfo.getParentFile()); 
+            f.setCurrentDirectory(fileComputerInfo.getParentFile());
         } else {
             f.setCurrentDirectory(new File(System.getProperty("user.dir")));
         }
@@ -491,7 +488,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         }
         File selectedFile = f.getSelectedFile();
         FileFilter selectedFileFilter = (FileFilter)f.getFileFilter();
-        
+
         if (selectedFileFilter != filter) {
             fileComputerInfo = selectedFile;
         } else {
@@ -516,63 +513,61 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         out.println(description);
         out.println();
     }
-    
+
     private void saveComputerInfo() {
         if (fileComputerInfo == null) {
             return;
         }
         try {
             FileWriter outFile = new FileWriter(fileComputerInfo);
-            PrintWriter out = new PrintWriter(outFile);
-            
-            out.println("Computer name: " + Main.architecture.getComputerName() + "\n");
-            Plugin plugin = computer.getCompiler();
-            if (plugin != null) {
-                out.println("Compiler\n########\n");
+            try (PrintWriter out = new PrintWriter(outFile)) {
+                out.println("Computer name: " + Main.architecture.getComputerName() + "\n");
+                Plugin plugin = computer.getCompiler();
+                if (plugin != null) {
+                    out.println("Compiler\n########\n");
+                    out.print("File name: ");
+                    out.print("[");
+                    out.print(COMPILER_CONFIG_DIR);
+                    out.print(Main.architecture.getCompilerName());
+                    out.println(".jar]");
+                    savePluginInfo(out, plugin);
+                }
+                out.println("CPU\n###\n");
                 out.print("File name: ");
                 out.print("[");
-                out.print(COMPILER_CONFIG_DIR);
-                out.print(Main.architecture.getCompilerName());
+                out.print(CPU_CONFIG_DIR);
+                out.print(Main.architecture.getCPUName());
                 out.println(".jar]");
-                savePluginInfo(out, plugin);
-            }
-            out.println("CPU\n###\n");
-            out.print("File name: ");
-            out.print("[");
-            out.print(CPU_CONFIG_DIR);
-            out.print(Main.architecture.getCPUName());
-            out.println(".jar]");
-            savePluginInfo(out, computer.getCPU());
-    
-            plugin = computer.getMemory();
-            if (plugin != null) {
-                out.println("Memory\n######\n");
-                out.print("File name: ");
-                out.print("[");
-                out.print(MEMORY_CONFIG_DIR);
-                out.print(Main.architecture.getMemoryName());
-                out.println(".jar]");
-                savePluginInfo(out, plugin);
-            }
-            int j = computer.getDeviceCount();
-            for (int i = 0; i < j; i++) {
-                plugin = computer.getDevice(i);
-                out.println("Device [" + i + "]\n###########\n");
-                out.print("File name: ");
-                out.print("[");
-                out.print(DEVICE_CONFIG_DIR);
-                out.print(Main.architecture.getDeviceName(i));
-                out.println(".jar]");
-                savePluginInfo(out, plugin);
-            }
+                savePluginInfo(out, computer.getCPU());
 
-            out.close();
+                plugin = computer.getMemory();
+                if (plugin != null) {
+                    out.println("Memory\n######\n");
+                    out.print("File name: ");
+                    out.print("[");
+                    out.print(MEMORY_CONFIG_DIR);
+                    out.print(Main.architecture.getMemoryName());
+                    out.println(".jar]");
+                    savePluginInfo(out, plugin);
+                }
+                int j = computer.getDeviceCount();
+                for (int i = 0; i < j; i++) {
+                    plugin = computer.getDevice(i);
+                    out.println("Device [" + i + "]\n###########\n");
+                    out.print("File name: ");
+                    out.print("[");
+                    out.print(DEVICE_CONFIG_DIR);
+                    out.print(Main.architecture.getDeviceName(i));
+                    out.println(".jar]");
+                    savePluginInfo(out, plugin);
+                }
+            }
         } catch (IOException e) {
             logger.error("Could not save computer information", e);
             Main.tryShowErrorMessage("Could not save computer information. For details, please see log file.");
         }
     }
-  
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToggleButton btnCPU;
     private javax.swing.JToggleButton btnCompiler;

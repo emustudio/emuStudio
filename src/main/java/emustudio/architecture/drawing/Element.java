@@ -23,16 +23,22 @@
 
 package emustudio.architecture.drawing;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.geom.Rectangle2D;
 import java.util.Enumeration;
 import java.util.Properties;
 
 /**
  * Element used by abstract schema of virtual computer.
- * 
+ *
  * It is a graphical object representing a plug-in.
- * 
+ *
  * @author vbmacher
  */
 public abstract class Element {
@@ -50,11 +56,11 @@ public abstract class Element {
      * Mouse tolerance of element border
      */
     public final static int TOLERANCE = 5;
-    
+
     /**
      * Element's actual properties.
      */
-    private Properties myProperties;
+    private final Properties myProperties;
 
     /**
      * Variable holds plug-in file name that is shown inside the element,
@@ -119,18 +125,18 @@ public abstract class Element {
 
     private Font boldFont;
     private Font italicFont;
-    
+
     /**
      * Background color of the element. Each plug-in type can have different
      * background color.
      */
-    private Color backColor;
-    
+    private final Color backColor;
+
     /**
      * Foreground color of the element box. Line color.
      */
-    private Color foreColor;
-    
+    private final Color foreColor;
+
     /**
      * Element will be drawn with linear gradient from white to backColor
      */
@@ -140,7 +146,7 @@ public abstract class Element {
      * Holds true, when this element is selected by user. False otherwise.
      */
     protected boolean selected;
-    
+
     protected Schema schema;
 
     /**
@@ -167,7 +173,7 @@ public abstract class Element {
     /**
      * Creates the Element instance. The element has a background color, all other
      * parameters are created automatically.
-     * 
+     *
      * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param location Location of this element in the abstract schema
      * @param backColor Background color
@@ -185,10 +191,10 @@ public abstract class Element {
         this.schema = schema;
         gradient = new GradientPaint(x, y, Color.WHITE, x, y+height, this.backColor, false);
     }
-    
+
     /**
      * Updates settings of the element from internal properties.
-     * 
+     *
      * @throws NumberFormatException when some properties are not well parseable.
      */
     public final void refreshSettings() throws NumberFormatException {
@@ -202,7 +208,7 @@ public abstract class Element {
         height = Integer.parseInt(myProperties.getProperty("height", "0"));
         this.wasMeasured = false;
     }
-    
+
     /**
      * Update internal properties
      */
@@ -212,29 +218,28 @@ public abstract class Element {
         myProperties.put("width", String.valueOf(getWidth()));
         myProperties.put("height", String.valueOf(getHeight()));
     }
-    
+
     /**
      * Get actual properties of this element.
-     * 
+     *
      * @return properties for this element
      */
     public Properties getProperties() {
         // actualize internal properties
         updateProperties();
-        return myProperties; 
+        return myProperties;
     }
-    
+
     /**
      * Saves all the element's settings into given properties.
-     * 
+     *
      * @param properties properties of virtual computer
      * @param elementName key setting name of this element within the properies
-     * @return saved settings
      */
     public void saveProperties(Properties properties, String elementName) {
         updateProperties();
         properties.put(elementName, pluginName);
-        
+
         Enumeration keys = myProperties.keys();
         while (keys.hasMoreElements()) {
             String elementSetting = (String)keys.nextElement();
@@ -274,7 +279,7 @@ public abstract class Element {
      *
      * @param p new point location
      * @return true if new location is not out of the canvas (less than minimal
-     * margins), false otherwise 
+     * margins), false otherwise
      */
     public boolean move(Point p) {
         return move (p.x, p.y);
@@ -300,24 +305,24 @@ public abstract class Element {
 
         this.x = x;
         this.y = y;
-        
+
         // do not break internal state of the element
         leftX += diffX;
         topY += diffY;
-        
+
         textX += diffX;
         textY += diffY;
 
         detailsX += diffX;
         detailsY += diffY;
         gradient = new GradientPaint(leftX, topY, Color.WHITE, leftX, topY+getHeight(), backColor, true);
-        
+
         return true;
     }
-        
+
     /**
      * Set new size of this element.
-     * 
+     *
      * @param width new width
      * @param height new height
      */
@@ -366,7 +371,7 @@ public abstract class Element {
         int tW2 = (int)r1.getWidth();
         int tH2 = (int)r1.getHeight();
         int tA2 = (int)fm1.getAscent();
-        
+
         // text width, text height, text ascent
         int tW = (tW1 > tW2) ? tW1 : tW2;
         int tH = (tH1 > tH2) ? tH1 : tH2;
@@ -375,7 +380,7 @@ public abstract class Element {
         if (width == 0) {
             width = tW + 20;
         }
-        
+
         if (height == 0) {
             height = 2 * tH + 20;
         }
@@ -386,7 +391,7 @@ public abstract class Element {
         topY = y - getHeight()/2;
 
         gradient = new GradientPaint(leftX, topY, Color.WHITE, leftX, topY+getHeight(), backColor, true);
-        
+
         textX = leftX + (getWidth() - tW) / 2;
         textY += topY;
 
@@ -394,7 +399,7 @@ public abstract class Element {
         detailsY = topY + (getHeight() - tA2);
         wasMeasured = true;
     }
-    
+
     /**
      * Set the default size according to text width and height.
      */
@@ -472,12 +477,12 @@ public abstract class Element {
         return (selectionStart.x <= xR) && (selectionEnd.x >= leftX)
                 && (selectionStart.y <= yB) && (selectionEnd.y >= topY);
     }
-    
+
     /**
-     * Determine if a point crosses north (top) border of this element. 
-     * 
+     * Determine if a point crosses north (top) border of this element.
+     *
      * Used for resizing. It uses a tolerance.
-     * 
+     *
      * @param borderPoint the point for the testing
      * @return true if mouse is crossing a top border of this element, false
      * otherwise.
@@ -492,10 +497,10 @@ public abstract class Element {
     }
 
     /**
-     * Determine if a point crosses south (bottom) border of this element. 
-     * 
+     * Determine if a point crosses south (bottom) border of this element.
+     *
      * Used for resizing. It uses a tolerance.
-     * 
+     *
      * @param borderPoint the point for the testing
      * @return true if mouse is crossing a bottom border of this element, false
      * otherwise.
@@ -511,10 +516,10 @@ public abstract class Element {
     }
 
     /**
-     * Determine if a point crosses west (left) border of this element. 
-     * 
+     * Determine if a point crosses west (left) border of this element.
+     *
      * Used for resizing. It uses a tolerance.
-     * 
+     *
      * @param borderPoint the point for the testing
      * @return true if mouse is crossing a left border of this element; false otherwise.
      */
@@ -528,10 +533,10 @@ public abstract class Element {
     }
 
     /**
-     * Determine if a point crosses east (right) border of this element. 
-     * 
+     * Determine if a point crosses east (right) border of this element.
+     *
      * Used for resizing. It uses a tolerance.
-     * 
+     *
      * @param borderPoint the point for the testing
      * @return true if mouse is crossing a right border of this element; false otherwise.
      */

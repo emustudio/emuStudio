@@ -3,19 +3,19 @@
  *
  * Created on Streda, 2007, august 8, 8:45
  * KISS, YAGNI, DRY
- * 
+ *
  * Copyright (C) 2007-2012, Peter Jakubčo
- * 
+ *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
  *  as published by the Free Software Foundation; either version 2
  *  of the License, or (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
@@ -45,10 +45,10 @@ import org.slf4j.LoggerFactory;
 public class OpenComputerDialog extends javax.swing.JDialog {
     private String archName;
     private boolean OOK = false;
-    private ConfigurationsListModel amodel;
-    private PreviewPanel preview;
+    private final ConfigurationsListModel amodel;
+    private final PreviewPanel preview;
     private final static Logger logger = LoggerFactory.getLogger(OpenComputerDialog.class);
-    
+
     /**
      * Creates new instance of this dialog.
      */
@@ -118,13 +118,13 @@ public class OpenComputerDialog extends javax.swing.JDialog {
 
     /**
      * Set the name of selected virtual computer.
-     * 
+     *
      * @param archName new name of the virtual computer
      */
     public void setArchName(String archName) {
         this.archName = archName;
     }
-    
+
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is

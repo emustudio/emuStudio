@@ -5,7 +5,7 @@
  * KISS, YAGNI, DRY
  *
  * Copyright (C) 2008-2012, Peter Jakubčo
- * 
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -31,13 +31,13 @@ import javax.swing.WindowConstants;
 
 /**
  * Preview dialog form of virtual computer.
- * 
+ *
  * @author  vbmacher
  */
 @SuppressWarnings("serial")
 public class ArchPreviewDialog extends JDialog {
 
-    private PreviewPanel pan;
+    private final PreviewPanel pan;
 
     /**
      * Creates new preview dialog form instance.

@@ -40,7 +40,11 @@ import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
 import emustudio.architecture.ArchitectureManager;
 import emustudio.gui.AutoDialog;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.Reader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +56,7 @@ import org.slf4j.LoggerFactory;
  */
 public class Automatization implements Runnable {
     private final static Logger LOGGER = LoggerFactory.getLogger("automatization");
-    private ArchitectureManager currentArch;
+    private final ArchitectureManager currentArch;
 
     private AutoDialog progressGUI;
     private Reader inputFileReader;
@@ -64,15 +68,8 @@ public class Automatization implements Runnable {
     private Device[] devices;
 
     private RunState resultState;
-    private boolean nogui;
+    private final boolean nogui;
 
-    /**
-     * Creates new automatization object.
-     *
-     * @param currentArch loaded computer
-     * @param inputFileName input source code file name
-     * @param nogui if true, GUI will not be shown.
-     */
     public Automatization(ArchitectureManager currentArch, String inputFileName, boolean nogui) throws AutomatizationException {
         this.currentArch = currentArch;
         this.nogui = nogui;

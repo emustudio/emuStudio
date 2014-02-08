@@ -29,22 +29,27 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.ImageIcon;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellRenderer;
 
 /**
  * Debug table.
- * 
+ *
  * @author vbmacher
  */
 @SuppressWarnings("serial")
 public class DebugTableImpl extends JTable  implements DebugTable {
-    private DebugTableModel debug_model;
-    private TextCellRenderer text_renderer;
-    private BooleanCellRenderer bool_renderer;
+    private final DebugTableModel debug_model;
+    private final TextCellRenderer text_renderer;
+    private final BooleanCellRenderer bool_renderer;
 
     private static final Color EVEN_ROW_COLOR = new Color(241, 245, 250);
-    private static final Color TABLE_GRID_COLOR = new Color(0xd9d9d9);    
+    private static final Color TABLE_GRID_COLOR = new Color(0xd9d9d9);
 
     private class BooleanCellRenderer extends JLabel implements TableCellRenderer {
 
@@ -52,7 +57,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                 boolean hasFocus, int row, int column) {
             boolean boolValue = (value == null) ? false : (Boolean)value;
-            
+
             if (boolValue) {
                 setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/breakpoint.png")));
             } else {
@@ -63,7 +68,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
             this.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
             return this;
         }
-        
+
         @Override
         public void paint(Graphics g) {
             g.setColor(Color.WHITE);
@@ -96,14 +101,14 @@ public class DebugTableImpl extends JTable  implements DebugTable {
 
         /**
          * Overrided method. Check Javadoc of the TableCellRenderer.
-         * 
+         *
          * @param table
          * @param value
          * @param isSelected
          * @param hasFocus
          * @param row
          * @param column
-         * @return 
+         * @return
          */
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
@@ -111,7 +116,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
             if (debug_model.isCurrent(row)) {
                 setBackground(Color.RED);
                 setForeground(Color.WHITE);
-            } else { 
+            } else {
                 setBackground((row % 2 == 0) ? Color.WHITE : EVEN_ROW_COLOR);
                 setForeground(Color.BLACK);
             }
@@ -123,7 +128,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
             height = getPreferredSize().height + 1;
             return this;
         }
-        
+
         /**
          * Estimates maximal number of rows that would fit in the debug table without using scrolls.
          * @return estimated row count in the debug table
@@ -136,8 +141,8 @@ public class DebugTableImpl extends JTable  implements DebugTable {
             return result;
         }
     }
-    
-    /** 
+
+    /**
      * Creates a new instance of DebugTableImpl
      */
     public DebugTableImpl() {
@@ -148,7 +153,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
         bool_renderer = new BooleanCellRenderer();
         setDefaultRenderer(Boolean.class, bool_renderer);
         setDefaultRenderer(Object.class, text_renderer);
-        
+
         setAllBooleanCellEditor();
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         debug_model.setRowCount(text_renderer.estimateRowCount(getPreferredSize().height));
@@ -163,7 +168,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
         // grid lines over the entire viewport.
         setShowGrid(false);
     }
-    
+
     private void setAllBooleanCellEditor() {
         int j = debug_model.getColumnCount();
         for (int i = 0; i < j; i++) {
@@ -178,7 +183,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
         debug_model.setRowCount(text_renderer.estimateRowCount(height));
         repaint();
     }
-    
+
     /**
      * Move to the first page.
      */
@@ -189,14 +194,14 @@ public class DebugTableImpl extends JTable  implements DebugTable {
 
     /**
      * Seeks the page backward by specified number of pages.
-     * 
+     *
      * @param value number of pages to backward
      */
     public void pageSeekBackward(int value) {
         debug_model.seekBackwardPage(value);
         refresh();
     }
-    
+
     /**
      * Move to previous page.
      */
@@ -220,17 +225,17 @@ public class DebugTableImpl extends JTable  implements DebugTable {
         debug_model.nextPage();
         refresh();
     }
-    
+
     /**
      * Seeks the page forward by specified number of pages.
-     * 
+     *
      * @param value number of pages to forward
      */
     public void pageSeekForward(int value) {
         debug_model.seekForwardPage(value);
         refresh();
     }
-    
+
     /**
      * Move to the last page.
      */
@@ -238,10 +243,10 @@ public class DebugTableImpl extends JTable  implements DebugTable {
         debug_model.lastPage();
         refresh();
     }
-    
+
     /**
      * Refresh the debug table.
-     * 
+     *
      * If it is enabled, the method updates values and repaints it.
      */
     @Override
@@ -251,5 +256,5 @@ public class DebugTableImpl extends JTable  implements DebugTable {
             repaint();
         }
     }
-    
+
 }

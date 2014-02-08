@@ -29,20 +29,20 @@ import javax.swing.text.BadLocationException;
 
 /**
  * Reader of the source code. It is used by syntax highlighter.
- * 
+ *
  * @author vbmacher
  */
 public class DocumentReader extends Reader {
     /**
      * Used for marking a place in the document where it is secure to reset lexical analyzer
      */
-    private long mark = -1;
-    
+    private final long mark = -1;
+
     /**
      * Position of the reader.
      */
     protected long position = 0;
-    
+
     /**
      * Document that is read by this reader.
      */
@@ -85,11 +85,11 @@ public class DocumentReader extends Reader {
 
     /**
      * Get the position within the source code, where the reader points.
-     * 
+     *
      * @return the position within the source code
      */
     public long getPosition() { return position; }
-    
+
     /**
      * Read a single character.
      *
@@ -238,7 +238,7 @@ public class DocumentReader extends Reader {
             position = docLen;
         }
     }
-    
+
     /**
      * Has no effect.  This reader can be used even after
      * it has been closed.
@@ -246,5 +246,5 @@ public class DocumentReader extends Reader {
     @Override
     public void close() {
     }
-    
+
 }

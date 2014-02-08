@@ -35,8 +35,8 @@ import javax.swing.table.AbstractTableModel;
 @SuppressWarnings("serial")
 public class DebugTableModel extends AbstractTableModel {
     private static final int MAX_ROW_COUNT = 13;
-    private DebugColumn[] columns;
-    private CPU cpu;
+    private final DebugColumn[] columns;
+    private final CPU cpu;
 
     private int page; // The page of the debug table
     private int rowCount; // actual row count
@@ -46,13 +46,13 @@ public class DebugTableModel extends AbstractTableModel {
      * current instruction and hopefully after current instruction. It is
      * dependent on rowCount.
      */
-    private int gapInstructionsCount;
-    
-    private int breakpointColumnIndex;
+    private final int gapInstructionsCount;
+
+    private final int breakpointColumnIndex;
 
     /**
      * Creates a new instance of DebugTableModel
-     * 
+     *
      * @param cpu CPU plug-in
      */
     public DebugTableModel(CPU cpu) {
@@ -87,19 +87,19 @@ public class DebugTableModel extends AbstractTableModel {
     public int getRowCount() {
         return rowCount;
     }
-    
+
     /**
      * Get breakpoint column index.
-     * 
+     *
      * @return index of breakpoint column, or -1 if it does not exist
      */
     public int getBreakpointColumnIndex() {
         return breakpointColumnIndex;
     }
-    
+
     /**
      * Set number of rows in the debug table.
-     * 
+     *
      * @param row_count count of rows
      */
     public void setRowCount(int row_count) {
@@ -141,7 +141,7 @@ public class DebugTableModel extends AbstractTableModel {
     public Class<?> getColumnClass(int columnIndex) {
         return columns[columnIndex].getClassType();
     }
-    
+
     /**
      * Go to previous page
      */
@@ -160,7 +160,7 @@ public class DebugTableModel extends AbstractTableModel {
 
     /**
      * Seeks the page backward by specified number of pages.
-     * 
+     *
      * @param value number of pages to backward
      */
     public void seekBackwardPage(int value) {
@@ -182,7 +182,7 @@ public class DebugTableModel extends AbstractTableModel {
         page = locationToPage(0);
         fireTableDataChanged();
     }
-    
+
     /**
      * Got to next page
      */
@@ -195,10 +195,10 @@ public class DebugTableModel extends AbstractTableModel {
         }
         fireTableDataChanged();
     }
-    
+
     /**
      * Seeks the page forward by specified number of pages.
-     * 
+     *
      * @param value number of pages to forward
      */
     public void seekForwardPage(int value) {
@@ -266,7 +266,7 @@ public class DebugTableModel extends AbstractTableModel {
     public Object getValueAt(int rowIndex, int columnIndex) {
         try {
             return columns[columnIndex].getDebugValue(rowToLocation(rowIndex));
-        } catch(Exception x) {
+        } catch(IndexOutOfBoundsException x) {
             return null;
         }
     }
@@ -296,11 +296,11 @@ public class DebugTableModel extends AbstractTableModel {
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return columns[columnIndex].isEditable();
     }
-    
+
     /**
      * Determine if the instruction at rowIndex is current
      * instruction.
-     * 
+     *
      * @param rowIndex The row in the debug table
      * @return true if the row represents current instruction
      */

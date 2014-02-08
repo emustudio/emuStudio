@@ -47,8 +47,19 @@ import javax.swing.JTextPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
-import javax.swing.text.*;
+import javax.swing.text.AbstractDocument;
 import javax.swing.text.AbstractDocument.DefaultDocumentEvent;
+import javax.swing.text.BoxView;
+import javax.swing.text.ComponentView;
+import javax.swing.text.Element;
+import javax.swing.text.FlowView;
+import javax.swing.text.IconView;
+import javax.swing.text.LabelView;
+import javax.swing.text.ParagraphView;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledEditorKit;
+import javax.swing.text.View;
+import javax.swing.text.ViewFactory;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
@@ -70,7 +81,7 @@ public class EmuTextPane extends JTextPane {
      * Width of a column in the editor where line numbers are shown
      */
     public static final short NUMBERS_WIDTH = 40;
-    
+
     /**
      * Height of the line
      */
@@ -92,7 +103,7 @@ public class EmuTextPane extends JTextPane {
     private final ViewFactory htmlFactory = new Workaround6606443ViewFactory();
 
     private SourceFileExtension[] fileExtensions;
-    
+
     public interface UndoActionListener {
         public void undoStateChanged(boolean canUndo, String presentationName);
         public void redoStateChanged(boolean canRedo, String presentationName);
@@ -113,27 +124,33 @@ public class EmuTextPane extends JTextPane {
         public View create(Element element) {
             String name = element.getName();
             View view = null;
-            if (name.equals(AbstractDocument.ContentElementName)) {
-                view = new LabelView(element);
-            } else if (name.equals(AbstractDocument.ParagraphElementName)) {
-                view = new ParagraphView(element);
-            } else if (name.equals(AbstractDocument.SectionElementName)) {
-                view = new BoxView(element, View.Y_AXIS);
-            } else if (name.equals(StyleConstants.ComponentElementName)) {
-                view = new ComponentView(element);
-            } else if (name.equals(StyleConstants.IconElementName)) {
-                view = new IconView(element);
-            } else {
-                throw new AssertionError("Unknown Element type: "
-                        + element.getClass().getName() + " : "
-                        + name);
+            switch (name) {
+                case AbstractDocument.ContentElementName:
+                    view = new LabelView(element);
+                    break;
+                case AbstractDocument.ParagraphElementName:
+                    view = new ParagraphView(element);
+                    break;
+                case AbstractDocument.SectionElementName:
+                    view = new BoxView(element, View.Y_AXIS);
+                    break;
+                case StyleConstants.ComponentElementName:
+                    view = new ComponentView(element);
+                    break;
+                case StyleConstants.IconElementName:
+                    view = new IconView(element);
+                    break;
+                default:
+                    throw new AssertionError("Unknown Element type: "
+                            + element.getClass().getName() + " : "
+                            + name);
             }
             if (view instanceof ParagraphView) {
                 try {
                     Field strategy = FlowView.class.getDeclaredField("strategy");
                     strategy.setAccessible(true);
                     strategy.set(view, new MyFlowStrategy());
-                } catch (Exception e) {
+                } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
                     logger.error("Could not set custom FlowStrategy in editor pane", e);
                 }
             }
@@ -158,7 +175,7 @@ public class EmuTextPane extends JTextPane {
             public ViewFactory getViewFactory() {
                 return htmlFactory;
             }
-        });  
+        });
         document = new HighLightedDocument();
         reader = new DocumentReader(document);
         document.setDocumentReader(reader);
@@ -234,10 +251,10 @@ public class EmuTextPane extends JTextPane {
     }
 
     /*** UNDO/REDO IMPLEMENTATION ***/
-    
+
     /**
      * Set up undo/redo listener.
-     * 
+     *
      * @param l The undo listener
      */
     public void setUndoActionListener(UndoActionListener l) {
@@ -246,7 +263,7 @@ public class EmuTextPane extends JTextPane {
 
     /**
      * Determine if the Redo operation can be realized.
-     * 
+     *
      * @return true if Redo can be realized, false otherwise.
      */
     public boolean canRedo() {
@@ -347,10 +364,10 @@ public class EmuTextPane extends JTextPane {
     }
 
     /*** SYNTAX HIGHLIGHTING IMPLEMENTATION ***/
-    
+
     /**
      * Get document reader for this editor.
-     * 
+     *
      * @return document reader
      */
     public Reader getDocumentReader() {
@@ -358,10 +375,10 @@ public class EmuTextPane extends JTextPane {
     }
 
     /*** LINE NUMBERS PAINT IMPLEMENTATION ***/
-    
+
     /**
      * Implements view lines numbers
-     * 
+     *
      * @param g Graphics object
      */
     @Override
@@ -406,7 +423,7 @@ public class EmuTextPane extends JTextPane {
     /**
      * Opens a file into text editor.
      * WARNING: This method Doesn't check whether file is saved.
-     * 
+     *
      * @param file The file to open
      * @return true if file was successfuly opened, false otherwise.
      */
@@ -563,7 +580,7 @@ public class EmuTextPane extends JTextPane {
 
         EmuFileFilter[] filters;
         int tmpLen = (fileExtensions != null) ? fileExtensions.length : 0;
-        
+
         f.setDialogTitle("Save file");
         f.setAcceptAllFileFilterUsed(false);
 
@@ -584,7 +601,7 @@ public class EmuTextPane extends JTextPane {
         f.setApproveButtonText("Save");
         f.setSelectedFile(fileSource);
         if (fileSource != null) {
-            f.setCurrentDirectory(fileSource.getParentFile()); 
+            f.setCurrentDirectory(fileSource.getParentFile());
         } else {
             f.setCurrentDirectory(new File(System.getProperty("user.dir")));
         }
@@ -596,7 +613,7 @@ public class EmuTextPane extends JTextPane {
         }
         File selectedFile = f.getSelectedFile();
         EmuFileFilter selectedFileFilter = (EmuFileFilter)f.getFileFilter();
-        
+
         String suffix = selectedFileFilter.getFirstExtension();
         if (!suffix.equals("*") &&
                 selectedFile.getName().toLowerCase().endsWith("." + suffix.toLowerCase())) {

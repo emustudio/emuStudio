@@ -38,11 +38,7 @@ class DocPositionComparator implements Comparator{
      */
     @Override
     public boolean equals(Object obj){
-        if (obj instanceof DocPositionComparator){
-            return true;
-        } else {
-            return false;
-        }
+        return obj instanceof DocPositionComparator;
     }
 
     /**

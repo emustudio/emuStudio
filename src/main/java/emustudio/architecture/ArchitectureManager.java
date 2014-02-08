@@ -28,7 +28,9 @@ import emulib.runtime.StaticDialogs;
 import emustudio.architecture.ArchitectureLoader.PluginInfo;
 import emustudio.architecture.drawing.Schema;
 import emustudio.main.Main;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +54,7 @@ public class ArchitectureManager implements SettingsManager {
      * @param computer Virtual computer, handling the structure of plug-ins
      * @param settings ArchitectureManager settings (Properties)
      * @param schema   Abstract schema of the architecture
+     * @param configurationManager
      *
      * @throws PluginInitializationException if initialization of the architecture failed.
      */

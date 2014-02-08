@@ -23,7 +23,11 @@
 
 package emustudio.architecture.drawing;
 
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Stroke;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +36,7 @@ import java.util.List;
  * The connection line within the abstract schemas.
  *
  * The line can connect two and only two different elements.
- * 
+ *
  * @author vbmacher
  */
 public class ConnectionLine {
@@ -40,12 +44,12 @@ public class ConnectionLine {
      * The length of arrow arm
      */
     private final static int ARROW_LENGTH = 10;
-    
+
     /**
      * Tolerance radius for user point selection, in pixels
      */
     public final static int TOLERANCE = 5;
-    
+
     /**
      * First element in the connection.
      *
@@ -62,18 +66,18 @@ public class ConnectionLine {
      * can not activate the first element.
      */
     private Element e2;
-    
+
     /**
      * Line points.
      */
-    private List<Point> points;
-    
-    private static BasicStroke thickLine = new BasicStroke(2);
-    
+    private final List<Point> points;
+
+    private static final BasicStroke thickLine = new BasicStroke(2);
+
     /**
      * Color of the line
      */
-    private Color lineColor;
+    private final Color lineColor;
 
     /**
      * Whether this line is selected by the user
@@ -92,7 +96,7 @@ public class ConnectionLine {
     private Point arrow1;
     private Point arrow1LeftEnd;
     private Point arrow1RightEnd;
-    private int[] xx1, yy1;
+    private final int[] xx1, yy1;
 
     /**
      * Begining arrow point for element2. The x and y values are relative
@@ -101,9 +105,9 @@ public class ConnectionLine {
     private Point arrow2;
     private Point arrow2LeftEnd;
     private Point arrow2RightEnd;
-    private int[] xx2, yy2;
-    
-    private Schema schema;
+    private final int[] xx2, yy2;
+
+    private final Schema schema;
 
     /**
      * Create new ConnectionLine object.
@@ -111,11 +115,12 @@ public class ConnectionLine {
      * @param e1 first connection element
      * @param e2 last connection element
      * @param points middle-ponits arraylist
+     * @param schema schema
      */
     public ConnectionLine(Element e1, Element e2, List<Point> points, Schema schema) {
         this.e1 = e1;
         this.e2 = e2;
-        this.points = new ArrayList<Point>();
+        this.points = new ArrayList<>();
         if (points != null) {
             this.points.addAll(points);
         }
@@ -123,18 +128,18 @@ public class ConnectionLine {
         this.lineColor = new Color(0x333333);
         this.bidirectional = true;
         this.selected = false;
-        
+
         xx1 = new int[4];
         yy1 = new int[4];
         xx2 = new int[4];
         yy2 = new int[4];
-        
+
         this.schema = schema;
     }
 
     /**
      * This method computes an intersection of two lines (not line segments).
-     * 
+     *
      * @param l1s Point of the first point of the first line
      * @param l1e Point of the ending point of the first line
      * @param l2s Point of the first point of the second line
@@ -161,7 +166,7 @@ public class ConnectionLine {
 
     /**
      * This method computes one or bidirectional arrows positions.
-     * 
+     *
      */
     private void computeArrows() {
         computeElementArrow(e2, e1);
@@ -171,10 +176,10 @@ public class ConnectionLine {
             arrow1RightEnd = null;
         }
     }
-    
+
     /**
      * This method computes relative start points of "arrows" on line end.
-     * 
+     *
      * The direction is meant to be firstE -> secondE.
      *
      * @param firstE first (starting) element
@@ -186,7 +191,7 @@ public class ConnectionLine {
 
         Point lineStart = new Point (firstE.getX(), firstE.getY());
         Point lineEnd;
-        
+
         int widthHalf = firstE.getWidth()/2;
         int heightHalf = firstE.getHeight()/2;
 
@@ -222,7 +227,7 @@ public class ConnectionLine {
             y_bottom = lineStart.y + heightHalf;
             y_top = lineStart.y - heightHalf;
         }
-        
+
         // test: bottom line of element1
         p = intersection(new Point(x_left,y_bottom), new Point(x_right, y_bottom), lineStart, lineEnd);
         arrow = null;
@@ -263,7 +268,7 @@ public class ConnectionLine {
      * This method computes the positions of the arrows end lines.
      *
      * The direction is meant to be firstE -> secondE.
-     * 
+     *
      * @param lineStart start point of this line
      * @param lineEnd end point of this line
      * @param firstE first (starting) element
@@ -316,10 +321,10 @@ public class ConnectionLine {
     public boolean isAreaCrossing(Point selectionStart, Point selectionEnd) {
         return isAreaCrossing(selectionStart, selectionEnd, 0);
     }
-    
+
     /**
      * Determine if some line point crosses given area.
-     * 
+     *
      * @param selectionStart Left-top point of the area
      * @param selectionEnd Bottom-right point of the area
      * @return true if the area covers some line point, false otherwise (or if line doesn't have points)
@@ -329,7 +334,7 @@ public class ConnectionLine {
             return false;
         }
         for (Point p : points) {
-            if ((p.x >= selectionStart.x) && (p.x <= selectionEnd.x) 
+            if ((p.x >= selectionStart.x) && (p.x <= selectionEnd.x)
                     && (p.y >= selectionStart.y) && (p.y <= selectionEnd.y)) {
                 return true;
             }
@@ -339,7 +344,7 @@ public class ConnectionLine {
 
     /**
      * Determine if given point crosses given area.
-     * 
+     *
      * @param selectionStart Left-top point of the area
      * @param selectionEnd Bottom-right point of the area
      * @param point The point
@@ -353,9 +358,9 @@ public class ConnectionLine {
     private static double dot(Point v0, Point v1) {
         return (v0.x * v1.x) + (v0.y * v1.y);
     }
-    
+
     private static boolean liesInTriangle(Point P, Point A, Point B, Point C) {
-        // Compute vectors        
+        // Compute vectors
         Point v0 = new Point(C.x - A.x, C.y - A.y);
         Point v1 = new Point(B.x - A.x, B.y - A.y);
         Point v2 = new Point(P.x - A.x, P.y - A.y);
@@ -379,7 +384,7 @@ public class ConnectionLine {
 
     /**
      * Determine whether a line segment P1P2 crosses a triangle ABC.
-     * 
+     *
      * @param P1 start point of the line segment
      * @param P2 end point of the line segment
      * @param A first point of the triangle
@@ -391,10 +396,10 @@ public class ConnectionLine {
         int a = P2.y - P1.y;
         int b = P1.x - P2.x;
         int c = -a * P1.x - b * P1.y; // general line equation
-        
+
         byte sign;
         boolean is = false;
-        
+
         int result = a * A.x + b * A.y + c;
         if (result > 0) {
             sign = 1;
@@ -421,11 +426,11 @@ public class ConnectionLine {
                 is = true;
             }
         }
-        
+
         if (is) {
             // now we know that line is crossing the triangle.
             // we must check if the line segment crosses the triangle
-            
+
             // A point is always left-top, B is always right, C is always under A
             if ((Math.min(P1.y, P2.y) <= C.y) && (Math.max(P1.y, P2.y) >= A.y)
                     && (Math.min(P1.x, P2.x) <= B.x) && (Math.max(P1.x, P2.x) >= A.x)) {
@@ -437,13 +442,13 @@ public class ConnectionLine {
                 return true;
             }
         }
-        
+
         return false;
     }
 
     /**
      * Determines whether a selection area crosses or overlays this line.
-     * 
+     *
      * If at least one intersection is found, then true is returned.
      * The algorithm is based on:
      * http://stackoverflow.com/questions/4497841/optimal-algorithm-if-line-intersects-convex-polygon
@@ -458,7 +463,7 @@ public class ConnectionLine {
         Point v1 = new Point(selectionEnd.x, selectionStart.y);
         Point v2 = selectionEnd;
         Point v3 = new Point(selectionStart.x, selectionEnd.y);
-        
+
         if ((arrow1 == null) || (arrow2 == null)) {
             computeArrows();
         }
@@ -471,10 +476,10 @@ public class ConnectionLine {
 
         for (Point p : points) {
             lineEnd = p;
-            
+
             intersection = intersection(v0, v2, lineStart, lineEnd);
             if (intersection != null) {
-                if ((intersection.x < v0.x) || (intersection.x > v2.x) 
+                if ((intersection.x < v0.x) || (intersection.x > v2.x)
                         || (intersection.y < v0.y) || (intersection.y > v2.y)){
                     intersection = null;
                 } else if (intersection.x < Math.min(lineStart.x, lineEnd.x)
@@ -526,10 +531,10 @@ public class ConnectionLine {
         }
         return false;
     }
-    
+
     /**
      * Determines whether a selection area crosses or overlays a line segment.
-     * 
+     *
      * If at least one intersection is found, then true is returned.
      *
      * @param lineStart Start point of the line segment
@@ -545,7 +550,7 @@ public class ConnectionLine {
         Point v1 = new Point(selectionEnd.x, selectionStart.y);
         Point v2 = selectionEnd;
         Point v3 = new Point(selectionStart.x, selectionEnd.y);
-        
+
         Point intersection = intersection(v0, v2, lineStart, lineEnd);
         if (intersection != null) {
             if ((intersection.x < v0.x) || (intersection.x > v2.x)
@@ -562,7 +567,7 @@ public class ConnectionLine {
             // possible crossing can be on triangle (v0, v2, v3)
             if (liesInTriangle(lineStart, lineEnd, v0, v2, v3)) {
                 return true;
-            } 
+            }
             // possible crossing can be on triangle (v0, v1, v2)
             if (liesInTriangle(lineStart, lineEnd, v0, v1, v2)) {
                 return true;
@@ -570,9 +575,9 @@ public class ConnectionLine {
         } else {
             return true;
         }
-        return false;        
+        return false;
     }
-    
+
     /**
      * Select or deselect this line.
      *
@@ -606,7 +611,7 @@ public class ConnectionLine {
         int x1 = e1.getX();
         int y1 = e1.getY();
         int x2, y2;
-        
+
         int widthHalf1 = e1.getWidth()/2;
         int heightHalf1 = e1.getHeight()/2;
 
@@ -635,7 +640,7 @@ public class ConnectionLine {
                     y1 = y2;
                 }
             }
-            
+
             if (!preview) {
                 if (!selected) {
                     g.setColor(Color.LIGHT_GRAY);
@@ -655,8 +660,8 @@ public class ConnectionLine {
 
         int widthHalf2 = e2.getWidth()/2;
         int heightHalf2 = e2.getHeight()/2;
-        
-        if (j >= 0) { // only if line contains points, modify the line end in a 
+
+        if (j >= 0) { // only if line contains points, modify the line end in a
                       // wish that the line was straight
             if (x1 >= (x2 - widthHalf2) && (x1 <= (x2 + widthHalf2))) {
                 x2 = x1;
@@ -713,7 +718,7 @@ public class ConnectionLine {
         int x1 = ee1.getX();
         int y1 = ee1.getY();
         int x2, y2;
-        
+
         for (int i = 0; i < ppoints.size(); i++) {
             Point p = ppoints.get(i);
             x2 = (int)p.getX();
@@ -741,8 +746,8 @@ public class ConnectionLine {
 
     /**
      * Draws a small red circle around given point
-     * 
-     * @param selPoint the center of the circle 
+     *
+     * @param selPoint the center of the circle
      * @param g Graphics2D object
      */
     public static void highlightPoint(Point selPoint, Graphics2D g) {
@@ -767,7 +772,7 @@ public class ConnectionLine {
     public void addPoint(int before, Point p) {
         points.add(before, p);
     }
-    
+
     /**
      * Adds a middle-point to this line.
      *
@@ -817,10 +822,10 @@ public class ConnectionLine {
         }
         return null;
     }
-    
+
     /**
      * Determine if two points point to each other (with some tolerance).
-     * 
+     *
      * @param linePoint First point (e.g. a line point)
      * @param selPoint Second point (e.g. mouse point)
      * @return true if given points point to each other, false otherwise.
@@ -844,7 +849,7 @@ public class ConnectionLine {
         if (!schema.canMovePoint(newLocation.x, newLocation.y)) {
             return false;
         }
-        
+
         int i = points.indexOf(p);
         if (i == -1) {
             return false;
@@ -869,7 +874,7 @@ public class ConnectionLine {
         }
         computeArrows();
     }
-    
+
     /**
      * Determines if all points of this line can be moved to a new location.
      * The new location is computed as: old + diff.
@@ -886,7 +891,7 @@ public class ConnectionLine {
         }
         return true;
     }
-    
+
     /**
      * Checks, whether this line is connected (from any side) to the specific
      * element.
@@ -895,10 +900,7 @@ public class ConnectionLine {
      * @return true, if the line is connected to the element; false otherwise
      */
     public boolean containsElement(Element e) {
-        if (e1 == e || e2 == e) {
-            return true;
-        }
-        return false;
+        return e1 == e || e2 == e;
     }
 
     /**
@@ -919,18 +921,18 @@ public class ConnectionLine {
 
     /**
      * Method determines whether point[x,y] crosses with this line.
-     * 
+     *
      * If yes, return index of a nearest cross point. If new point is
      * going to be added, it should be added to replace returned point index.
      *
      * @param point point that is checked
      * @param tolerance the tolerance
-     * @return 
+     * @return
      *     0 - if line doesn't contain any point, but point[x,y] is crossing the
      *         line; or if point[x,y] crosses the line near the beginning of it
-     *  
+     *
      *    -1 - if point[x,y] doesn't cross the line at all
-     * 
+     *
      *    points count - if point crosses line after last point, or before ending point of the line.
      *
      * Nearest point index of the line that the point crosses otherwise.
@@ -958,21 +960,21 @@ public class ConnectionLine {
             /*
              * Cross product is an area of parallelogram with sides vector1 and vector2
              * The area is similar to area of original vectors.
-             * 
+             *
              * S  = a  * b  * sin(alfa)
              * S' = a' * b' * sin(alfa)
-             * 
+             *
              * a' = k * a
              * b' = k * b
              * S' = k^2 * a * b * sin(alfa)
              * S' = k^2 * S
              * ============================
              * b*sin(alfa) = S/a = S' / (k^2 * a)
-             * 
+             *
              * but k = 1/a, therefore
-             * 
+             *
              * b*sin(alfa) = distance = S * a (= crossproduct * len)
-             * 
+             *
              */
             double crossproduct = vector2.y * vector1.x - vector2.x * vector1.y;
             if ((Math.abs(crossproduct) * len <= tolerance)

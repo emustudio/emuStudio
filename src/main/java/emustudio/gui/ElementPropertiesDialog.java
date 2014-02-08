@@ -1,8 +1,8 @@
 /*
  * ElementPropertiesDialog.java
- * 
+ *
  * KISS, YAGNI, DRY
- * 
+ *
  * Copyright (C) 2011-2012, Peter Jakubčo
  *
  * This program is free software; you can redistribute it and/or
@@ -35,15 +35,10 @@ import java.util.Properties;
 import javax.swing.JDialog;
 import javax.swing.table.DefaultTableModel;
 
-/**
- *
- * @author vbmacher
- */
 public class ElementPropertiesDialog extends javax.swing.JDialog {
-    private Element element;
-    private Properties settings;
-    
-    /** Creates new form ElementPropertiesDialog */
+    private final Element element;
+    private final Properties settings;
+
     public ElementPropertiesDialog(JDialog parent, Element element) {
         super(parent, true);
         initComponents();
@@ -58,11 +53,11 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
         DefaultTableModel model = (DefaultTableModel)tblSettings.getModel();
         Enumeration e = settings.keys();
         model.setRowCount(0);
-        
+
         while (e.hasMoreElements()) {
             String key = (String)e.nextElement();
             model.addRow(new String[]{key, settings.getProperty(key)});
-        }        
+        }
     }
     /** This method is called from within the constructor to
      * initialize the form.
@@ -171,7 +166,7 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
             settings.put(model.getValueAt(i, 0), model.getValueAt(i, 1));
         }
         try { element.refreshSettings(); }
-        catch(Exception e) {}
+        catch(NumberFormatException e) {}
         dispose();
     }//GEN-LAST:event_btnSaveActionPerformed
 
@@ -202,7 +197,7 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
         model.removeRow(i);
     }//GEN-LAST:event_btnRemoveActionPerformed
 
-  
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnNew;
     private javax.swing.JButton btnRemove;

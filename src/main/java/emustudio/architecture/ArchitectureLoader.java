@@ -40,7 +40,13 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -279,7 +285,7 @@ public class ArchitectureLoader implements ConfigurationManager {
             return new Schema(configName, readConfiguration(configName, true));
         } catch (ReadConfigurationException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (NullPointerException | NumberFormatException e) {
             throw new ReadConfigurationException("Could not load schema", e);
         }
     }
@@ -515,13 +521,6 @@ public class ArchitectureLoader implements ConfigurationManager {
         return connections;
     }
 
-    /**
-     * Loads virtual configuration from current settings and creates virtual architecture.
-     *
-     * @param configName  Name of the configuration
-     *
-     * @return instance of virtual architecture
-     */
     public ArchitectureManager createArchitecture(String configName)
             throws PluginLoadingException, ReadConfigurationException, PluginInitializationException,
             InvalidPasswordException, InvalidPluginException, IOException {

@@ -4,7 +4,7 @@
  * Created on 21.8.2008, 8:56:32
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2001, Stephen Ostermiller 
+ * Copyright (C) 2001, Stephen Ostermiller
  * http://ostermiller.org/contact.pl?regarding=Syntax+Highlighting
  * Copyright (C) 2008-2012, Peter Jakubčo
  *
@@ -27,14 +27,21 @@ package emustudio.gui.editor;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.Token;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import javax.swing.text.SimpleAttributeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * The syntax highlighting thread.
- * 
+ *
  * @author vbmacher
  */
 public class HighlightThread extends Thread {
@@ -48,15 +55,15 @@ public class HighlightThread extends Thread {
      * balanced tree.
      */
     @SuppressWarnings("unchecked")
-    private TreeSet<DocPosition> iniPositions = new TreeSet<DocPosition>(new DocPositionComparator());
+    private final SortedSet<DocPosition> iniPositions = new TreeSet<>(new DocPositionComparator());
     /**
      * As we go through and remove invalid positions we will also be finding
-     * new valid positions. 
+     * new valid positions.
      * Since the position list cannot be deleted from and written to at the same
      * time, we will keep a list of the new positions and simply add it to the
      * list of positions once all the old positions have been removed.
      */
-    private HashSet<DocPosition> newPositions = new HashSet<DocPosition>();
+    private final Set<DocPosition> newPositions = new HashSet<>();
 
     /**
      * A simple wrapper representing something that needs to be colored.
@@ -75,7 +82,7 @@ public class HighlightThread extends Thread {
     /**
      * Vector that stores the communication between the two threads.
      */
-    private volatile ArrayList<RecolorEvent> v = new ArrayList<RecolorEvent>();
+    private volatile ArrayList<RecolorEvent> v = new ArrayList<>();
     /**
      * The amount of change that has occurred before the place in the
      * document that we are currently highlighting (lastPosition).
@@ -106,13 +113,8 @@ public class HighlightThread extends Thread {
      * Lexical analyzer object
      */
     protected LexicalAnalyzer syntaxLexer;
-    /**
-     * A lock for modifying the document, or for
-     * actions that depend on the document not being
-     * modified.
-     */
-    //  public static Object doclock = new Object();
-    private Map<Integer, HighlightStyle> styles;
+
+    private final Map<Integer, HighlightStyle> styles;
 
     /**
      * Create an instance of the syntax highlighting thread.
@@ -142,7 +144,7 @@ public class HighlightThread extends Thread {
     /**
      * retrieve the style for the given type of text.
      *
-     * @param styleName the label for the type of text ("tag" for example) 
+     * @param styleName the label for the type of text ("tag" for example)
      *      or null if the styleName is not known.
      * @return the style
      */
@@ -154,7 +156,7 @@ public class HighlightThread extends Thread {
      * Tell the Syntax Highlighting thread to take another look at this
      * section of the document.  It will process this as a FIFO.
      * This method should be done inside a lock.
-     * 
+     *
      * @param position a starting position in the document
      * @param adjustment range of the text block
      */
@@ -275,7 +277,7 @@ public class HighlightThread extends Thread {
                         // Color stuff with the description of the style matched
                         // to the hash table that has been set up ahead of time.
                         int tEnd = t.getOffset() + t.getLength();
-                        
+
                         int tBegin = 0;
                         synchronized (lock) {
                             tBegin = t.getOffset() + change;
@@ -366,7 +368,7 @@ public class HighlightThread extends Thread {
                     while (workingIt.hasNext()){
                     System.out.println(workingIt.next());
                     }*/
-                    
+
                     //logger.trace(new StringBuilder().append("Started: ").append(dpStart.getPosition()).append(" Ended: ")
                       //      .append(dpEnd.getPosition()).toString());
                 } catch (IOException x) {

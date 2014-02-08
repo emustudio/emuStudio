@@ -2,7 +2,7 @@
  * DocPosition.java
  *
  * KISS, YAGNI, DRY
- * 
+ *
  * Copyright (C) 2009-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -73,11 +73,7 @@ class DocPosition {
     public boolean equals(Object obj){
         if (obj instanceof DocPosition){
             DocPosition d = (DocPosition)(obj);
-            if (this.position == d.position){
-                return true;
-            } else {
-                return false;
-            }
+            return this.position == d.position;
         } else {
             return false;
         }

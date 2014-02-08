@@ -46,7 +46,6 @@ public class CommandLineFactory {
          * @param outputFileName output file name where compiler writes messages. If not used, null should be here.
          * @param configName name of virtual computer. If not used, null should be here.
          * @param auto whether to perform automatization
-         * @param classToHash name of the class to create hash of
          * @param help whether to display help message
          * @param noGUI whether to not use GUI during automatization
          */
@@ -110,49 +109,53 @@ public class CommandLineFactory {
         for (int i = 0; i < size; i++) {
             String arg = args[i].toUpperCase();
             try {
-                if (arg.equals("--CONFIG")) {
-                    i++;
-                    // what configuration to load
-                    if (configName != null) {
-                        logger.warn(new StringBuilder().append("Config file already defined, ignoring this one: ")
-                                .append(args[i]).toString());
-                    } else {
-                        configName = args[i];
-                        logger.info(new StringBuilder().append("Loading virtual computer: ").append(configName).toString());
-                    }
-                } else if (arg.equals("--INPUT")) {
-                    i++;
-                    // what input file take to compiler
-                    if (inputFileName != null) {
-                        logger.warn(new StringBuilder().append("Input file already defined, ignoring this one: ")
-                                .append(args[i]).toString());
-                    } else {
-                        inputFileName = args[i];
-                        logger.info(new StringBuilder().append("Input file name for compiler: ").append(inputFileName)
-                                .toString());
-                    }
-                } else if (arg.equals("--OUTPUT")) {
-                    i++;
-                    // what output file take for emuStudio messages during automatization process. This option has a
-                    // meaning only if the "--auto" option is set.
-                    if (outputFileName != null) {
-                        logger.warn(new StringBuilder().append("Output file already defined, ignoring this one: ")
-                                .append(args[i]).toString());
-                    } else {
-                        outputFileName = args[i];
-                        logger.info(new StringBuilder().append("Output file name: ").append(outputFileName).toString());
-                    }
-                } else if (arg.equals("--AUTO")) {
-                    auto = true;
-                    logger.info("Turning automatization on.");
-                } else if (arg.equals("--HELP")) {
-                    help = true;
-                } else if (arg.equals("--NOGUI")) {
-                    logger.info("Setting GUI off.");
-                    noGUI = true;
-                } else {
-                    throw new InvalidCommandLineException(new StringBuilder().append("Unknown command line argument (")
-                            .append(arg).append(")").toString());
+                switch (arg) {
+                    case "--CONFIG":
+                        i++;
+                        // what configuration to load
+                        if (configName != null) {
+                            logger.warn(new StringBuilder().append("Config file already defined, ignoring this one: ")
+                                    .append(args[i]).toString());
+                        } else {
+                            configName = args[i];
+                            logger.info(new StringBuilder().append("Loading virtual computer: ").append(configName).toString());
+                        }   break;
+                    case "--INPUT":
+                        i++;
+                        // what input file take to compiler
+                        if (inputFileName != null) {
+                            logger.warn(new StringBuilder().append("Input file already defined, ignoring this one: ")
+                                    .append(args[i]).toString());
+                        } else {
+                            inputFileName = args[i];
+                            logger.info(new StringBuilder().append("Input file name for compiler: ").append(inputFileName)
+                                    .toString());
+                        }   break;
+                    case "--OUTPUT":
+                        i++;
+                        // what output file take for emuStudio messages during automatization process. This option has a
+                        // meaning only if the "--auto" option is set.
+                        if (outputFileName != null) {
+                            logger.warn(new StringBuilder().append("Output file already defined, ignoring this one: ")
+                                    .append(args[i]).toString());
+                        } else {
+                            outputFileName = args[i];
+                            logger.info(new StringBuilder().append("Output file name: ").append(outputFileName).toString());
+                        }   break;
+                    case "--AUTO":
+                        auto = true;
+                        logger.info("Turning automatization on.");
+                        break;
+                    case "--HELP":
+                        help = true;
+                        break;
+                    case "--NOGUI":
+                        logger.info("Setting GUI off.");
+                        noGUI = true;
+                        break;
+                    default:
+                        throw new InvalidCommandLineException(new StringBuilder().append("Unknown command line argument (")
+                                .append(arg).append(")").toString());
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new InvalidCommandLineException(new StringBuilder().append("[").append(arg)

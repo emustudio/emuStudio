@@ -23,7 +23,12 @@
 package emustudio.architecture.drawing;
 
 import java.awt.Point;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * This class represents abstract schema of virtual computer configuration. It is created by the schema editor and used
@@ -46,7 +51,7 @@ public class Schema {
     private MemoryElement memoryElement;
     private List<DeviceElement> deviceElements;
     private List<ConnectionLine> lines;
-    private Properties settings;
+    private final Properties settings;
     /**
      * Whether to use and draw grid
      */
@@ -66,9 +71,8 @@ public class Schema {
      * @param configName name of the configuration file
      * @param settings configuration file (all settings for all plug-ins)
      * @throws NumberFormatException when some settings are not well parseable
-     * @throws NullPointerException when some settings are not well parseable
      */
-    public Schema(String configName, Properties settings) throws NumberFormatException, NullPointerException {
+    public Schema(String configName, Properties settings) throws NumberFormatException {
         this.configName = configName;
         this.settings = settings;
         load();
@@ -80,8 +84,8 @@ public class Schema {
     public Schema() {
         cpuElement = null;
         memoryElement = null;
-        deviceElements = new ArrayList<DeviceElement>();
-        lines = new ArrayList<ConnectionLine>();
+        deviceElements = new ArrayList<>();
+        lines = new ArrayList<>();
         configName = "";
         compilerElement = null;
         this.useGrid = true;
@@ -93,8 +97,8 @@ public class Schema {
      * Method loads schema from configuration file (settings).
      */
     private void load() throws NumberFormatException, NullPointerException {
-        this.deviceElements = new ArrayList<DeviceElement>();
-        this.lines = new ArrayList<ConnectionLine>();
+        this.deviceElements = new ArrayList<>();
+        this.lines = new ArrayList<>();
 
         // grid
         useGrid = Boolean.parseBoolean(settings.getProperty("useGrid", "false"));
@@ -339,7 +343,7 @@ public class Schema {
      * @return ArrayList object containing all elements within this schema
      */
     public List<Element> getAllElements() {
-        List<Element> a = new ArrayList<Element>();
+        List<Element> a = new ArrayList<>();
         if (cpuElement != null) {
             a.add(cpuElement);
         }
@@ -419,7 +423,7 @@ public class Schema {
 
     /**
      * Get an element where at least one its border is crossing a point.
-     * 
+     *
      * It is used in the drawing panel.
      *
      * @param borderPoint Point that is checked for pointing at some element's border
@@ -486,15 +490,7 @@ public class Schema {
         }
         return null;
     }
-    
-    /**
-     * Get a connection line that crosses given selection area.
-     * 
-     * Line is considered only if it has line points, and only those are considered.
-     *
-     * @param p Point that the crossing is checked
-     * @return connection line object if the point is crossing this line, null otherwise
-     */
+
     public ConnectionLine getCrossingLine(Point selectionStart, Point selectionEnd) {
         for (ConnectionLine line : lines) {
             if (line.isAreaCrossingPoint(selectionStart, selectionEnd)) {
@@ -529,7 +525,7 @@ public class Schema {
             line.setSelected(line.isAreaCrossing(p1, p2));
         }
     }
-    
+
     /**
      * Select all elements and lines.
      */
@@ -553,7 +549,7 @@ public class Schema {
             line.setSelected(false);
         }
     }
-    
+
     /**
      * This method moves all selected elements to a new location. The new location is computed as: old + diff (the
      * parameter).
@@ -566,7 +562,7 @@ public class Schema {
         List<Element> allElements = getAllElements();
 
         // TODO: test only not selected element
-        
+
         // test for movement of all elements and line points first
         for (Element elem : allElements) {
             int x = elem.getX() + diffX;
@@ -580,7 +576,7 @@ public class Schema {
                 return false;
             }
         }
-        
+
         // actual movement
         for (Element elem : allElements) {
             int x = elem.getX() + diffX;
@@ -628,18 +624,10 @@ public class Schema {
         return (x >= MIN_LEFT_MARGIN) && (y >= MIN_TOP_MARGIN);
     }
 
-    /**
-     * Determine if an element can be moved to new location.
-     *
-     * @param newX new X location of the center point
-     * @param newY new Y location of the center point
-     * @param elem the element
-     * @return
-     */
     public boolean canMoveElement(int newX, int newY, Element element) {
         int eW = element.getWidth()/2;
         int eH = element.getHeight()/2;
-        
+
         Point elementStart = new Point(newX - eW, newY - eH);
         Point elementEnd = new Point(newX + eW, newY + eH);
         if (!fitToMargins(elementStart.x, elementStart.y)) {
@@ -659,7 +647,7 @@ public class Schema {
             }
             int elemW = elem.getWidth()/2;
             int elemH = elem.getHeight()/2;
-            
+
             // test left line
             if (ConnectionLine.isAreaCrossing(new Point(elem.getX()-elemW, elem.getY()-elemH),
                     new Point(elem.getX()-elemW, elem.getY()+elemH), elementStart, elementEnd, 0)) {
@@ -671,13 +659,13 @@ public class Schema {
                     new Point(elem.getX()+elemW, elem.getY()+elemH), elementStart, elementEnd, 0)) {
                 return false;
             }
-            
+
             // test top line
             if (ConnectionLine.isAreaCrossing(new Point(elem.getX()-elemW, elem.getY()-elemH),
                     new Point(elem.getX()+elemW, elem.getY()-elemH), elementStart, elementEnd, 0)) {
                 return false;
             }
-            
+
             // test bottom line
             if (ConnectionLine.isAreaCrossing(new Point(elem.getX()-elemW, elem.getY()+elemH),
                     new Point(elem.getX()+elemW, elem.getY()+elemH), elementStart, elementEnd, 0)) {
@@ -686,10 +674,10 @@ public class Schema {
         }
         return true;
     }
-    
+
     /**
      * Determines if a point can be moved to given location.
-     * 
+     *
      * @param newX new X location for the point
      * @param newY new Y location for the point
      * @return true if the point can be moved, false otherwise (out of margins, or some element is in the way).
@@ -725,9 +713,7 @@ public class Schema {
         Properties selProps = new Properties();
         while (e.hasMoreElements()) {
             String akey = (String) e.nextElement();
-            if (akey.equals(key)) {
-                continue;
-            } else if (akey.startsWith(key)) {
+            if (!akey.equals(key) && akey.startsWith(key)) {
                 selProps.put(akey.substring(key.length() + 1), settings.getProperty(akey));
             }
         }
@@ -763,7 +749,7 @@ public class Schema {
             memoryElement.saveProperties(settings, "memory");
         }
         // devices
-        Map<DeviceElement, String> devsHash = new HashMap<DeviceElement, String>();
+        Map<DeviceElement, String> devsHash = new HashMap<>();
         int devicesCount = deviceElements.size();
         for (int i = 0; i < devicesCount; i++) {
             DeviceElement dev = deviceElements.get(i);
