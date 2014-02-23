@@ -1,7 +1,7 @@
 /*
- * MemoryElement.java
+ * DeviceElement.java
  *
- * Created on 4.7.2008, 7:55:56
+ * Created on 4.7.2008, 8:11:24
  * KISS, YAGNI, DRY
  *
  * Copyright (C) 2008-2012, Peter Jakubčo
@@ -21,7 +21,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package emustudio.architecture.drawing;
+package emustudio.drawing;
 
 import java.awt.Color;
 import java.awt.Point;
@@ -31,35 +31,35 @@ import java.util.Properties;
  *
  * @author vbmacher
  */
-public class MemoryElement extends Element {
-    private final static Color BACK_COLOR = new Color(0xeeeeee);
+public class DeviceElement extends Element {
+    private final static Color BACK_COLOR = new Color(0xe0e0e0);
 
     /**
-     * Creates an instance of the MemoryElement.
+     * Creates an instance of the DeviceElement class.
      *
      * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param settings settings of this element from virtual configuration
      * @param schema Schema object for this element
      * @throws NumberFormatException when some settings are not well parseable
      */
-    public MemoryElement(String pluginName, Properties settings, Schema schema) throws NumberFormatException {
+    public DeviceElement(String pluginName, Properties settings, Schema schema) throws NumberFormatException {
         super(pluginName, settings, BACK_COLOR, schema);
     }
 
     /**
-     * Creates an instance of the MemoryElement.
+     * Creates an instance of the DeviceElement class.
      *
      * @param pluginName name of the compiler
      * @param location the point where the compiler is located in the schema
      * @param schema Schema object for this element
      */
-    public MemoryElement(String pluginName, Point location, Schema schema) {
+    public DeviceElement(String pluginName, Point location, Schema schema) {
         super(pluginName, location, BACK_COLOR, schema);
     }
 
     @Override
     protected String getPluginType() {
-        return "Memory";
+        return "Device";
     }
 
 }

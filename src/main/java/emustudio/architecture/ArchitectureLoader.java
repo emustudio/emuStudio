@@ -32,7 +32,7 @@ import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidPasswordException;
 import emulib.runtime.InvalidPluginException;
 import emulib.runtime.PluginLoader;
-import emustudio.architecture.drawing.Schema;
+import emustudio.drawing.Schema;
 import emustudio.main.Main;
 import java.io.File;
 import java.io.FileInputStream;

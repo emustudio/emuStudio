@@ -25,7 +25,7 @@ import emulib.annotations.PluginType;
 import emulib.plugins.Plugin;
 import emustudio.architecture.ArchitectureLoader;
 import emustudio.architecture.Computer;
-import emustudio.architecture.drawing.PreviewPanel;
+import emustudio.drawing.PreviewPanel;
 import emustudio.main.Main;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

@@ -21,7 +21,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package emustudio.architecture.drawing;
+package emustudio.drawing;
 
 import java.awt.BasicStroke;
 import java.awt.Color;

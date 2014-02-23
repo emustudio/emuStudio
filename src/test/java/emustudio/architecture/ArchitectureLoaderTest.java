@@ -1,8 +1,8 @@
 /*
  * ArchitectureLoaderTest.java
- * 
+ *
  * KISS, YAGNI, DRY
- * 
+ *
  * Copyright (C) 2012, Peter Jakubčo
  *
  * This program is free software; you can redistribute it and/or
@@ -21,28 +21,31 @@
  */
 package emustudio.architecture;
 
-import emustudio.architecture.drawing.Schema;
+import emustudio.drawing.Schema;
 import java.io.File;
 import java.io.IOException;
 import org.junit.AfterClass;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
 public class ArchitectureLoaderTest {
-    private static String BASE_DIRECTORY = System.getProperty("user.dir") + "/src/test/resources/";
-    
+    private static final String BASE_DIRECTORY = System.getProperty("user.dir") + "/src/test/resources/";
+
     @BeforeClass
     public static void setUpClass() {
         ArchitectureLoader.setConfigurationBaseDirectory(BASE_DIRECTORY);
     }
-    
+
     @AfterClass
     public static void tearDownClass() {
         ArchitectureLoader.setConfigurationBaseDirectory(System.getProperty("user.dir"));
     }
-    
+
     /**
      * Test of getInstance method, of class ArchitectureLoader.
      */
@@ -78,14 +81,14 @@ public class ArchitectureLoaderTest {
     @Test
     public void testDeleteConfiguration() throws IOException {
         ArchitectureLoader instance = ArchitectureLoader.getInstance();
-        
+
         File file = new File(BASE_DIRECTORY + ArchitectureLoader.CONFIGS_DIR + File.separator + "test.conf");
         assertTrue(file.exists());
-        
+
         assertTrue(instance.deleteConfiguration("test"));
         assertFalse(file.exists());
         assertFalse(instance.deleteConfiguration("test"));
-        
+
         assertFalse(file.exists());
         file.createNewFile();
         assertTrue(file.exists());
@@ -102,14 +105,14 @@ public class ArchitectureLoaderTest {
         File newFile = new File(BASE_DIRECTORY + ArchitectureLoader.CONFIGS_DIR + File.separator + "newtest.conf");
         assertTrue(oldFile.exists());
         assertFalse(newFile.exists());
-        
+
         assertTrue(instance.renameConfiguration("newtest", "test"));
         assertFalse(oldFile.exists());
         assertTrue(newFile.exists());
         assertFalse(instance.renameConfiguration("newtest", "test"));
         assertFalse(oldFile.exists());
         assertTrue(newFile.exists());
-        
+
         assertTrue(instance.renameConfiguration("test", "newtest"));
         assertTrue(oldFile.exists());
         assertFalse(newFile.exists());

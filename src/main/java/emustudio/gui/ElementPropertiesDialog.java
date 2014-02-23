@@ -28,7 +28,7 @@
 package emustudio.gui;
 
 import emulib.runtime.StaticDialogs;
-import emustudio.architecture.drawing.Element;
+import emustudio.drawing.Element;
 import emustudio.main.Main;
 import java.util.Enumeration;
 import java.util.Properties;

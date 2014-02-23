@@ -26,7 +26,7 @@ import emulib.emustudio.SettingsManager;
 import emulib.runtime.InvalidPasswordException;
 import emulib.runtime.StaticDialogs;
 import emustudio.architecture.ArchitectureLoader.PluginInfo;
-import emustudio.architecture.drawing.Schema;
+import emustudio.drawing.Schema;
 import emustudio.main.Main;
 import java.util.HashMap;
 import java.util.Map;

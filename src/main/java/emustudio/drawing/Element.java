@@ -20,8 +20,7 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
-package emustudio.architecture.drawing;
+package emustudio.drawing;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -30,6 +29,7 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.util.Enumeration;
 import java.util.Properties;
@@ -42,6 +42,7 @@ import java.util.Properties;
  * @author vbmacher
  */
 public abstract class Element {
+
     /**
      * Minimum width
      */
@@ -63,20 +64,17 @@ public abstract class Element {
     private final Properties myProperties;
 
     /**
-     * Variable holds plug-in file name that is shown inside the element,
-     * below the plug-in type.
+     * Variable holds plug-in file name that is shown inside the element, below the plug-in type.
      */
     private String pluginName;
 
     /**
-     * Element width - it is measured within the measure() method, or set
-     * by user.
+     * Element width - it is measured within the measure() method, or set by user.
      */
     private int width;
 
     /**
-     * Element height - it is measured within the measure() method, or set
-     * by user.
+     * Element height - it is measured within the measure() method, or set by user.
      */
     private int height;
 
@@ -113,13 +111,10 @@ public abstract class Element {
     private int detailsY;
 
     /**
-     * This variable holds true, if the element size has been measured.
-     * The measurement process means the computation of the width and
-     * height, and the correction of the X and Y positions wihin the schema
-     * canvas.
+     * This variable holds true, if the element size has been measured. The measurement process means the computation of
+     * the width and height, and the correction of the X and Y positions wihin the schema canvas.
      *
-     * The measurement is realized manually, by external call of the measure()
-     * method.
+     * The measurement is realized manually, by external call of the measure() method.
      */
     private boolean wasMeasured;
 
@@ -127,8 +122,7 @@ public abstract class Element {
     private Font italicFont;
 
     /**
-     * Background color of the element. Each plug-in type can have different
-     * background color.
+     * Background color of the element. Each plug-in type can have different background color.
      */
     private final Color backColor;
 
@@ -150,8 +144,8 @@ public abstract class Element {
     protected Schema schema;
 
     /**
-     * Creates the Element instance. The element has a background color,
-     * location and details that represent the plug-in name.
+     * Creates the Element instance. The element has a background color, location and details that represent the plug-in
+     * name.
      *
      * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param settings settings of this element
@@ -164,15 +158,14 @@ public abstract class Element {
         this.backColor = backColor;
         this.selected = false;
         this.foreColor = new Color(0x909090);
-        gradient = new GradientPaint(x, y, Color.WHITE, x, y+height, this.backColor, false);
+        gradient = new GradientPaint(x, y, Color.WHITE, x, y + height, this.backColor, false);
         this.myProperties = settings;
         this.schema = schema;
         refreshSettings();
     }
 
     /**
-     * Creates the Element instance. The element has a background color, all other
-     * parameters are created automatically.
+     * Creates the Element instance. The element has a background color, all other parameters are created automatically.
      *
      * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param location Location of this element in the abstract schema
@@ -189,7 +182,7 @@ public abstract class Element {
         this.foreColor = new Color(0x909090);
         this.myProperties = new Properties();
         this.schema = schema;
-        gradient = new GradientPaint(x, y, Color.WHITE, x, y+height, this.backColor, false);
+        gradient = new GradientPaint(x, y, Color.WHITE, x, y + height, this.backColor, false);
     }
 
     /**
@@ -242,7 +235,7 @@ public abstract class Element {
 
         Enumeration keys = myProperties.keys();
         while (keys.hasMoreElements()) {
-            String elementSetting = (String)keys.nextElement();
+            String elementSetting = (String) keys.nextElement();
             properties.put(elementName + "." + elementSetting, myProperties.getProperty(elementSetting));
         }
     }
@@ -252,19 +245,18 @@ public abstract class Element {
      *
      * @param g graphics, where to draw
      */
-    public void draw(Graphics g)  {
+    public void draw(Graphics2D g) {
         if (!wasMeasured) {
             measure(g);
         }
-        ((Graphics2D)g).setPaint(gradient);
+        g.setPaint(gradient);
         g.fillRect(leftX, topY, getWidth(), getHeight());
         if (selected) {
             g.setColor(Color.BLUE);
-        }
-        else {
+        } else {
             g.setColor(foreColor);
         }
-        g.draw3DRect(leftX, topY, getWidth(), getHeight(),true);
+        g.draw3DRect(leftX, topY, getWidth(), getHeight(), true);
         g.setFont(boldFont);
         if (!selected) {
             g.setColor(Color.BLACK);
@@ -278,11 +270,10 @@ public abstract class Element {
      * Move this element to a new location.
      *
      * @param p new point location
-     * @return true if new location is not out of the canvas (less than minimal
-     * margins), false otherwise
+     * @return true if new location is not out of the canvas (less than minimal margins), false otherwise
      */
     public boolean move(Point p) {
-        return move (p.x, p.y);
+        return move(p.x, p.y);
     }
 
     /**
@@ -315,7 +306,7 @@ public abstract class Element {
 
         detailsX += diffX;
         detailsY += diffY;
-        gradient = new GradientPaint(leftX, topY, Color.WHITE, leftX, topY+getHeight(), backColor, true);
+        gradient = new GradientPaint(leftX, topY, Color.WHITE, leftX, topY + getHeight(), backColor, true);
 
         return true;
     }
@@ -334,23 +325,23 @@ public abstract class Element {
 
     /**
      * Get plug-in name of this element.
+     *
      * @return plug-in name string
      */
-    public String getPluginName() { return pluginName; }
+    public String getPluginName() {
+        return pluginName;
+    }
 
     /**
-     * Get a string represetnation of plug-in type:
-     *   CPU, Compiler, Memory or Device.
+     * Get a string represetnation of plug-in type: CPU, Compiler, Memory or Device.
      *
      * @return plug-in type string
      */
     protected abstract String getPluginType();
 
     /**
-     * Perform a measurement of the box, based on given graphics. Before
-     * the element can be drawn, it has to be measured out. It means, that
-     * the width and height are computed (based on font sizes that depend on
-     * the Graphics object).
+     * Perform a measurement of the box, based on given graphics. Before the element can be drawn, it has to be measured
+     * out. It means, that the width and height are computed (based on font sizes that depend on the Graphics object).
      *
      * @param g Graphics object
      */
@@ -362,15 +353,15 @@ public abstract class Element {
         // First measure width and height of text
         FontMetrics fm = g.getFontMetrics(boldFont);
         Rectangle2D r = fm.getStringBounds(getPluginType(), g);
-        int tW1 = (int)r.getWidth();
-        int tH1 = (int)r.getHeight();
-        int tA1 = (int)fm.getAscent();
+        int tW1 = (int) r.getWidth();
+        int tH1 = (int) r.getHeight();
+        int tA1 = (int) fm.getAscent();
 
         FontMetrics fm1 = g.getFontMetrics(italicFont);
         Rectangle2D r1 = fm1.getStringBounds(pluginName, g);
-        int tW2 = (int)r1.getWidth();
-        int tH2 = (int)r1.getHeight();
-        int tA2 = (int)fm1.getAscent();
+        int tW2 = (int) r1.getWidth();
+        int tH2 = (int) r1.getHeight();
+        int tA2 = (int) fm1.getAscent();
 
         // text width, text height, text ascent
         int tW = (tW1 > tW2) ? tW1 : tW2;
@@ -385,12 +376,12 @@ public abstract class Element {
             height = 2 * tH + 20;
         }
 
-        textY = height/2 + 10 - tA1;
+        textY = height / 2 + 10 - tA1;
         // set starting x and y
-        leftX = x - getWidth()/2;
-        topY = y - getHeight()/2;
+        leftX = x - getWidth() / 2;
+        topY = y - getHeight() / 2;
 
-        gradient = new GradientPaint(leftX, topY, Color.WHITE, leftX, topY+getHeight(), backColor, true);
+        gradient = new GradientPaint(leftX, topY, Color.WHITE, leftX, topY + getHeight(), backColor, true);
 
         textX = leftX + (getWidth() - tW) / 2;
         textY += topY;
@@ -411,35 +402,52 @@ public abstract class Element {
 
     /**
      * Get element box width in pixels.
+     *
      * @return width of the element
      */
-    public int getWidth() { return (width == 0) ? MIN_WIDTH : width; }
+    public int getWidth() {
+        return (width == 0) ? MIN_WIDTH : width;
+    }
 
     /**
      * Get element box height in pixels.
+     *
      * @return height of the element
      */
-    public int getHeight() { return (height == 0) ? MIN_HEIGHT: height; }
+    public int getHeight() {
+        return (height == 0) ? MIN_HEIGHT : height;
+    }
+
+    public Point getPoint() {
+        return new Point(x, y);
+    }
+
+    public Rectangle getRectangle() {
+        return new Rectangle(x, y, getWidth(), getHeight());
+    }
 
     /**
      * Get the center X location of the element.
      *
      * @return X location of the element
      */
-    public int getX() { return x; }
+    public int getX() {
+        return x;
+    }
 
     /**
      * Get the center Y location of the element.
      *
      * @return Y location of the element
      */
-    public int getY() { return y; }
+    public int getY() {
+        return y;
+    }
 
     /**
      * Select/deselect this element.
      *
-     * @param selected if it is true, the element will be selected. If false,
-     * the element will be deselected.
+     * @param selected if it is true, the element will be selected. If false, the element will be deselected.
      */
     public void setSelected(boolean selected) {
         this.selected = selected;
@@ -455,14 +463,11 @@ public abstract class Element {
     }
 
     /**
-     * Determines whether a selection area crosses or overlays this element.
-     * It is assumed that the element is measured already.
+     * Determines whether a selection area crosses or overlays this element. It is assumed that the element is measured
+     * already.
      *
-     * The following four conditions must be true:
-     *  1.  selection.Xleft <= element.Xright
-     *  2.  selection.Xright >= element.Xleft
-     *  3.  selection.Ytop <= element.Ybottom
-     *  4.  selection.Ybottom >= element.Ytop
+     * The following four conditions must be true: 1. selection.Xleft <= element.Xright 2. selection.Xright >=
+     * element.Xleft 3. selection.Ytop <= element.Ybottom 4. selection.Ybottom >= element.Ytop
      *
      * @param selectionStart the selection start point
      * @param selectionEnd the selection end point
@@ -484,8 +489,7 @@ public abstract class Element {
      * Used for resizing. It uses a tolerance.
      *
      * @param borderPoint the point for the testing
-     * @return true if mouse is crossing a top border of this element, false
-     * otherwise.
+     * @return true if mouse is crossing a top border of this element, false otherwise.
      */
     public boolean crossesTopBorder(Point borderPoint) {
         if ((!wasMeasured) || (borderPoint == null)) {
@@ -502,8 +506,7 @@ public abstract class Element {
      * Used for resizing. It uses a tolerance.
      *
      * @param borderPoint the point for the testing
-     * @return true if mouse is crossing a bottom border of this element, false
-     * otherwise.
+     * @return true if mouse is crossing a bottom border of this element, false otherwise.
      */
     public boolean crossesBottomBorder(Point borderPoint) {
         if (!wasMeasured || (borderPoint == null)) {
@@ -529,7 +532,7 @@ public abstract class Element {
         }
         int xR = leftX + TOLERANCE;
         int yB = topY + getHeight();
-        return ((borderPoint.x >= leftX-TOLERANCE) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= topY));
+        return ((borderPoint.x >= leftX - TOLERANCE) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= topY));
     }
 
     /**

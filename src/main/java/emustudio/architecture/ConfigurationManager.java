@@ -1,8 +1,8 @@
 /*
  * ConfigurationManager
- * 
+ *
  * KISS, YAGNI, DRY
- * 
+ *
  * Copyright (C) 2012, Peter Jakubčo
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
  */
 package emustudio.architecture;
 
-import emustudio.architecture.drawing.Schema;
+import emustudio.drawing.Schema;
 import java.util.Properties;
 
 /**
@@ -32,8 +32,8 @@ public interface ConfigurationManager {
     public void writeConfiguration(String configName, Properties settings) throws WriteConfigurationException;
     public boolean renameConfiguration(String newName, String oldName);
     public boolean deleteConfiguration(String configName);
-    
+
     public Schema loadSchema(String configName) throws ReadConfigurationException;
     public void saveSchema(Schema schema) throws WriteConfigurationException;
-    
+
 }

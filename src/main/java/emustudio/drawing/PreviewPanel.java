@@ -1,11 +1,6 @@
 /*
- * PreviewPanel.java
- *
- * Created on 9.7.2008, 12:42:32
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2008-2012, Peter Jakubčo
- * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -20,10 +15,14 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package emustudio.architecture.drawing;
+package emustudio.drawing;
 
 import emustudio.main.Main;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -35,14 +34,9 @@ import javax.swing.filechooser.FileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- *
- * @author vbmacher
- */
-@SuppressWarnings("serial")
 public class PreviewPanel extends JPanel {
-
     private final static Logger logger = LoggerFactory.getLogger(PreviewPanel.class);
+
     private Schema schema;
     private int schemaWidth;
     private int schemaHeight;
@@ -65,18 +59,10 @@ public class PreviewPanel extends JPanel {
      */
     private boolean panelResized;
 
-    /**
-     * Creates empty PreviewPanel
-     */
     public PreviewPanel() {
         this(null);
     }
 
-    /**
-     * Creates PreviewPanel instance representing given schema.
-     *
-     * @param schema Schema of the virtual computer
-     */
     public PreviewPanel(Schema schema) {
         this.schema = schema;
         this.setBackground(Color.WHITE);
@@ -85,11 +71,6 @@ public class PreviewPanel extends JPanel {
         this.setDoubleBuffered(true);
     }
 
-    /**
-     * Override previous update method in order to implement double-buffering. As a second buffer is used Image object.
-     *
-     * @param g the Graphics object. It is retyped to Graphics2D
-     */
     @Override
     public void update(Graphics g) {
         // initialize buffer if needed
@@ -185,35 +166,23 @@ public class PreviewPanel extends JPanel {
         panelResized = true;
     }
 
-    /**
-     * Get schema real width.
-     *
-     * @return schema width
-     */
     public int getSchemaWidth() {
         return schemaWidth;
     }
 
-    /**
-     * Get schema real height.
-     *
-     * @return schema height
-     */
     public int getSchemaHeight() {
         return schemaHeight;
     }
 
-    /**
-     * Override panel paint method to draw shapes.
-     *
-     * @param g the Graphics object
-     */
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (schema == null) {
             return;
         }
+
+        Graphics2D graphics = (Graphics2D) g;
+
         boolean moved = panelResized;
         if (panelResized == false) {
             resizePanel(g);
@@ -227,18 +196,13 @@ public class PreviewPanel extends JPanel {
             }
         }
         for (ConnectionLine line : schema.getConnectionLines()) {
-            line.draw((Graphics2D) g, true);
+            line.draw(graphics, true);
         }
         for (Element element : schema.getAllElements()) {
-            element.draw(g);
+            element.draw(graphics);
         }
     }
 
-    /**
-     * Assign new schema to this PreviewPanel. If it is null, does nothing
-     *
-     * @param s new abstract schema
-     */
     public void setSchema(Schema s) {
         if (s == null) {
             return;
@@ -248,9 +212,6 @@ public class PreviewPanel extends JPanel {
         this.repaint();
     }
 
-    /**
-     * Clears the preview panel.
-     */
     public void clearScreen() {
         this.schema = null;
         this.repaint();
@@ -266,38 +227,6 @@ public class PreviewPanel extends JPanel {
         FileFilter defaultFilter = null;
         String suffixes[] = ImageIO.getWriterFileSuffixes();
         String formatNames[] = ImageIO.getWriterFormatNames();
-
-        class ImageFileFilter extends FileFilter {
-
-            private String formatName;
-            private String suffix;
-
-            public ImageFileFilter(String formatName, String suffix) {
-                this.formatName = formatName;
-                this.suffix = suffix;
-            }
-
-            @Override
-            public boolean accept(File f) {
-                if (f.isDirectory()) {
-                    return true;
-                }
-                return f.getName().toUpperCase().endsWith("." + suffix.toUpperCase());
-            }
-
-            @Override
-            public String getDescription() {
-                return formatName + " image";
-            }
-
-            public String getFormatName() {
-                return formatName;
-            }
-
-            public String getSuffix() {
-                return suffix;
-            }
-        }
 
         for (int i = 0; i < suffixes.length; i++) {
             FileFilter filter = new ImageFileFilter(suffixes[i], formatNames[i]);

@@ -22,8 +22,8 @@
  */
 package emustudio.gui;
 
-import emustudio.architecture.drawing.PreviewPanel;
-import emustudio.architecture.drawing.Schema;
+import emustudio.drawing.PreviewPanel;
+import emustudio.drawing.Schema;
 import javax.swing.GroupLayout;
 import javax.swing.JDialog;
 import javax.swing.JScrollPane;

@@ -21,7 +21,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package emustudio.architecture.drawing;
+package emustudio.drawing;
 
 import java.awt.Color;
 import java.awt.Point;
@@ -33,9 +33,9 @@ import java.util.Properties;
  */
 public class CpuElement extends Element {
     private final static Color BACK_COLOR = new Color(0xffeeee);
-    
+
     /**
-     * This constructor creates the CpuElement instance. 
+     * This constructor creates the CpuElement instance.
      *
      * @param pluginName file name of this plug-in, without '.jar' extension.
      * @param settings settings of this element from virtual configuration
@@ -66,6 +66,6 @@ public class CpuElement extends Element {
     protected String getPluginType() {
         return "CPU";
     }
-    
+
 }
 

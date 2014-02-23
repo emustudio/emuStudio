@@ -20,7 +20,7 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package emustudio.architecture.drawing;
+package emustudio.drawing;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -37,7 +37,6 @@ import java.util.Properties;
  * @author vbmacher
  */
 public class Schema {
-
     /**
      * Minimum left margin for all elements and line points within the schema
      */
@@ -46,41 +45,24 @@ public class Schema {
      * Minimum top margin for all elements and line points within the schema
      */
     public final static int MIN_TOP_MARGIN = 5;
+
     private CompilerElement compilerElement;
     private CpuElement cpuElement;
     private MemoryElement memoryElement;
     private List<DeviceElement> deviceElements;
     private List<ConnectionLine> lines;
     private final Properties settings;
-    /**
-     * Whether to use and draw grid
-     */
+
     private boolean useGrid;
-    /**
-     * Gap between vertical and horizontal grid lines
-     */
     private int gridGap;
-    /**
-     * Name of the configuration
-     */
     private String configName;
 
-    /**
-     * Creates new instance of Schema by parameters.
-     *
-     * @param configName name of the configuration file
-     * @param settings configuration file (all settings for all plug-ins)
-     * @throws NumberFormatException when some settings are not well parseable
-     */
     public Schema(String configName, Properties settings) throws NumberFormatException {
         this.configName = configName;
         this.settings = settings;
-        load();
+        loadFromSettings();
     }
 
-    /**
-     * Creates new instance of empty schema.
-     */
     public Schema() {
         cpuElement = null;
         memoryElement = null;
@@ -93,10 +75,7 @@ public class Schema {
         this.settings = new Properties();
     }
 
-    /**
-     * Method loads schema from configuration file (settings).
-     */
-    private void load() throws NumberFormatException, NullPointerException {
+    private void loadFromSettings() throws NumberFormatException, NullPointerException {
         this.deviceElements = new ArrayList<>();
         this.lines = new ArrayList<>();
 
@@ -159,9 +138,6 @@ public class Schema {
         }
     }
 
-    /**
-     * Destroys the schema. It means - clear all arrays and free memory holding by variables.
-     */
     public void destroy() {
         cpuElement = null;
         compilerElement = null;
@@ -198,30 +174,14 @@ public class Schema {
         }
     }
 
-    /**
-     * Get the virtual configuration name.
-     *
-     * @return virtual computer name
-     */
     public String getConfigName() {
         return configName;
     }
 
-    /**
-     * Set the virtual configuration name
-     *
-     * @param cName new virtual computer name
-     */
     public void setConfigName(String cName) {
         configName = cName;
     }
 
-    /**
-     * Set compiler element to this schema. If the origin compiler is not null and it is connected to something, the
-     * connections are kept.
-     *
-     * @param compiler new compiler element.
-     */
     public void setCompilerElement(CompilerElement compiler) {
         if ((compiler == null) && (this.compilerElement != null)) {
             removeIncidentLines(this.compilerElement);
@@ -231,21 +191,10 @@ public class Schema {
         compilerElement = compiler;
     }
 
-    /**
-     * Get compiler element.
-     *
-     * @return Compiler element. Null if unset.
-     */
     public CompilerElement getCompilerElement() {
         return compilerElement;
     }
 
-    /**
-     * Set cpu element to this schema. If the origin cpu is not null and it is connected to something, the connections
-     * are kept.
-     *
-     * @param cpuElement new cpu element.
-     */
     public void setCpuElement(CpuElement cpuElement) {
         if ((cpuElement == null) && (this.cpuElement != null)) {
             removeIncidentLines(this.cpuElement);
@@ -255,21 +204,10 @@ public class Schema {
         this.cpuElement = cpuElement;
     }
 
-    /**
-     * Get cpu element.
-     *
-     * @return CPU element. Null if unset.
-     */
     public CpuElement getCpuElement() {
         return cpuElement;
     }
 
-    /**
-     * Set memory element to this schema. If the origin memory is not null and it is connected to something, the
-     * connections are kept.
-     *
-     * @param memoryElement new memory element.
-     */
     public void setMemoryElement(MemoryElement memoryElement) {
         if ((memoryElement == null) && (this.memoryElement != null)) {
             removeIncidentLines(this.memoryElement);
@@ -279,20 +217,10 @@ public class Schema {
         this.memoryElement = memoryElement;
     }
 
-    /**
-     * Get memory element.
-     *
-     * @return Memory element. Null if unset.
-     */
     public MemoryElement getMemoryElement() {
         return memoryElement;
     }
 
-    /**
-     * Add device element. The method does nothing if the deviceElement is null.
-     *
-     * @param deviceElement the device element.
-     */
     public void addDeviceElement(DeviceElement deviceElement) {
         if (deviceElement == null) {
             return;
@@ -300,30 +228,15 @@ public class Schema {
         deviceElements.add(deviceElement);
     }
 
-    /**
-     * Method gets the list of all device elements.
-     *
-     * @return ArrayList object containing all devices
-     */
     public List<DeviceElement> getDeviceElements() {
         return deviceElements;
     }
 
-    /**
-     * Removes specified device element. If the device is not included in the schema, nothing is done.
-     *
-     * @param device the device element to remove
-     */
     public void removeDeviceElement(DeviceElement device) {
         removeIncidentLines(device);
         deviceElements.remove(device);
     }
 
-    /**
-     * Removes an element from this schema.
-     *
-     * @param elem element to remove
-     */
     public void removeElement(Element elem) {
         if (elem instanceof CompilerElement) {
             setCompilerElement(null);
@@ -336,12 +249,6 @@ public class Schema {
         }
     }
 
-    /**
-     * This method gets the list of all elements within this schema. CPU, Memory, Compiler and devices are joined into a
-     * single ArrayList object and returned.
-     *
-     * @return ArrayList object containing all elements within this schema
-     */
     public List<Element> getAllElements() {
         List<Element> a = new ArrayList<>();
         if (cpuElement != null) {
@@ -463,7 +370,7 @@ public class Schema {
      *
      * @param useGrid true if the schema uses grid, false otherwise
      */
-    public void setGridUsed(boolean useGrid) {
+    public void setUsingGrid(boolean useGrid) {
         this.useGrid = useGrid;
     }
 

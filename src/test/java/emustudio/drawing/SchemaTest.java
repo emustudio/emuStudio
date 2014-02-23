@@ -1,8 +1,8 @@
 /*
  * SchemaTest.java
- * 
+ *
  * Copyright (C) 2012, Peter Jakubčo
- * 
+ *
  * KISS, YAGNI, DRY
  *
  * This program is free software; you can redistribute it and/or
@@ -19,9 +19,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package emustudio.architecture.drawing;
+package emustudio.drawing;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,9 +39,9 @@ import org.junit.Test;
  * @author vbmacher
  */
 public class SchemaTest {
-    
+
     private static Graphics graphicsMock;
-    
+
     @BeforeClass
     public static void setUpClass() {
         graphicsMock = EasyMock.createNiceMock(Graphics.class);
@@ -52,7 +55,7 @@ public class SchemaTest {
         EasyMock.expect(graphicsMock.getFont()).andReturn(fontMock).anyTimes();
 
         EasyMock.expect(graphicsMock.getFontMetrics(EasyMock.anyObject(Font.class))).andReturn(fontMetricsMock).anyTimes();
-        
+
         EasyMock.replay(rect, fontMetricsMock, fontMock, graphicsMock);
     }
 
@@ -337,7 +340,7 @@ public class SchemaTest {
         p = new Point(50 + Element.TOLERANCE + 1, 100); // left border with tolerance
         result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
-        
+
         p = new Point(150 + Element.TOLERANCE, 100); // right border with tolerance
         expResult = elem;
         result = instance.getElementByBorderPoint(p);
@@ -347,15 +350,15 @@ public class SchemaTest {
         expResult = elem;
         result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
-        
+
         p = new Point(150 + Element.TOLERANCE + 1, 100); // right border with tolerance
         result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
-        
+
         p = new Point(150 - Element.TOLERANCE - 1, 100); // right border with tolerance
         result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
-        
+
         p = new Point(100, 85 - Element.TOLERANCE); // upper border with tolerance
         expResult = elem;
         result = instance.getElementByBorderPoint(p);
@@ -373,17 +376,17 @@ public class SchemaTest {
         p = new Point(100, 85 + Element.TOLERANCE + 1); // upper border with tolerance
         result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
-    
+
         p = new Point(100, 115 - Element.TOLERANCE); // bottom border with tolerance
         expResult = elem;
         result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
-        
+
         p = new Point(100, 115 + Element.TOLERANCE); // bottom border with tolerance
         expResult = elem;
         result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
-        
+
         p = new Point(100, 115 - Element.TOLERANCE - 1); // bottom border with tolerance
         result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
@@ -392,7 +395,7 @@ public class SchemaTest {
         result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
     }
-    
+
     /**
      * Test of isGridUsed method, of class Schema.
      */
@@ -402,11 +405,11 @@ public class SchemaTest {
         boolean expResult = true;
         boolean result = instance.isGridUsed();
         Assert.assertEquals(expResult, result);
-        
-        instance.setGridUsed(false);
+
+        instance.setUsingGrid(false);
         Assert.assertEquals(false, instance.isGridUsed());
     }
-     
+
     /**
      * Test of getGridGap method, of class Schema.
      */
@@ -417,13 +420,13 @@ public class SchemaTest {
         instance.setGridGap(expResult);
         int result = instance.getGridGap();
         Assert.assertEquals(expResult, result);
-        
+
         expResult = 23;
         instance.setGridGap(expResult);
         result = instance.getGridGap();
         Assert.assertEquals(expResult, result);
     }
-    
+
     /**
      * Test of getCrossingLine method, of class Schema.
      */
@@ -446,7 +449,7 @@ public class SchemaTest {
         deviceProps.setProperty("point.y", "100");
         deviceProps.setProperty("width", "100");
         deviceProps.setProperty("height", "30");
-        
+
         DeviceElement elem2 = new DeviceElement("dev-0", deviceProps, instance);
         elem2.measure(graphicsMock);
         instance.addDeviceElement(elem2);
@@ -460,23 +463,23 @@ public class SchemaTest {
         MemoryElement elem3 = new MemoryElement("memory", memProps, instance);
         elem3.measure(graphicsMock);
         instance.setMemoryElement(elem3);
-        
+
         ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList(), instance);
         instance.addConnectionLine(line0);
         ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList(), instance);
         instance.addConnectionLine(line1);
-        
+
         List<Point> points = new ArrayList<Point>();
         points.add(new Point(250,200));
         ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
         instance.addConnectionLine(line2);
-        
+
         Point p = null;
         ConnectionLine expResult = null;
         ConnectionLine result = instance.getCrossingLine(p);
         Assert.assertSame(expResult, result);
-        
-        
+
+
        /*             l
         *             i                 width  = 100
         * +---------+ n  +---------+    height = 30
@@ -492,11 +495,11 @@ public class SchemaTest {
         *      | 150,200 | 250,200
         *      +---------+
         */
-        p = new Point(125, 150); 
+        p = new Point(125, 150);
         expResult = line0;
         result = instance.getCrossingLine(p);
         Assert.assertSame(expResult, result);
-        
+
         p = new Point(123, 151);
         expResult = line0;
         result = instance.getCrossingLine(p);
@@ -522,17 +525,17 @@ public class SchemaTest {
             result = instance.getCrossingLine(p);
             Assert.assertEquals(expResult, result);
         }
-        
+
         p = new Point(175, 100);
         expResult = line1;
         result = instance.getCrossingLine(p);
         Assert.assertSame(expResult, result);
-        
+
         p = new Point(175, 100 + ConnectionLine.TOLERANCE);
         expResult = line1;
         result = instance.getCrossingLine(p);
         Assert.assertSame(expResult, result);
-        
+
         p = new Point(175, 100 - ConnectionLine.TOLERANCE);
         expResult = line1;
         result = instance.getCrossingLine(p);
@@ -542,7 +545,7 @@ public class SchemaTest {
         expResult = line2;
         result = instance.getCrossingLine(p);
         Assert.assertSame(expResult, result);
-        
+
         p = new Point(250 + ConnectionLine.TOLERANCE + 1, 200);
         result = instance.getCrossingLine(p);
         Assert.assertNull(result);
@@ -550,16 +553,16 @@ public class SchemaTest {
         p = new Point(250 + ConnectionLine.TOLERANCE + 20, 200);
         result = instance.getCrossingLine(p);
         Assert.assertNull(result);
-        
+
         instance.destroy();
         Assert.assertEquals(0, instance.getAllElements().size());
         Assert.assertNull(instance.getCompilerElement());
         Assert.assertNull(instance.getMemoryElement());
         Assert.assertNull(instance.getCpuElement());
         Assert.assertEquals(0, instance.getConnectionLines().size());
-        
+
     }
-     
+
     /**
      * Test of selectElements method, of class Schema.
      */
@@ -582,7 +585,7 @@ public class SchemaTest {
         deviceProps.setProperty("point.y", "100");
         deviceProps.setProperty("width", "100");
         deviceProps.setProperty("height", "30");
-        
+
         DeviceElement elem2 = new DeviceElement("dev-0", deviceProps, instance);
         elem2.measure(graphicsMock);
         instance.addDeviceElement(elem2);
@@ -596,17 +599,17 @@ public class SchemaTest {
         MemoryElement elem3 = new MemoryElement("memory", memProps, instance);
         elem3.measure(graphicsMock);
         instance.setMemoryElement(elem3);
-        
+
         ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList(), instance);
         instance.addConnectionLine(line0);
         ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList(), instance);
         instance.addConnectionLine(line1);
-        
+
         List<Point> points = new ArrayList<Point>();
         points.add(new Point(250,200));
         ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
         instance.addConnectionLine(line2);
-        
+
         int x = 50;
         int y = 20;
         int width = 300;
@@ -630,7 +633,7 @@ public class SchemaTest {
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
-        
+
         x = 0;
         y = 100;
         width = 49;
@@ -642,7 +645,7 @@ public class SchemaTest {
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
-        
+
         x = 0;
         y = 100;
         width = 50;
@@ -666,7 +669,7 @@ public class SchemaTest {
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
-        
+
         x = 0;
         y = 100;
         width = 100;
@@ -678,7 +681,7 @@ public class SchemaTest {
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
-        
+
         x = 0;
         y = 100;
         width = 100;
@@ -702,7 +705,7 @@ public class SchemaTest {
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertTrue(line2.isSelected());
-        
+
         x = 230;
         y = 190;
         width = 19;
@@ -751,7 +754,7 @@ public class SchemaTest {
         Assert.assertTrue(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
     }
-    
+
     /**
      * Test of moveSelection method, of class Schema.
      */
@@ -774,7 +777,7 @@ public class SchemaTest {
         deviceProps.setProperty("point.y", "100");
         deviceProps.setProperty("width", "100");
         deviceProps.setProperty("height", "30");
-        
+
         DeviceElement elem2 = new DeviceElement("dev-0", deviceProps, instance);
         elem2.measure(graphicsMock);
         instance.addDeviceElement(elem2);
@@ -788,17 +791,17 @@ public class SchemaTest {
         MemoryElement elem3 = new MemoryElement("memory", memProps, instance);
         elem3.measure(graphicsMock);
         instance.setMemoryElement(elem3);
-        
+
         ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList(), instance);
         instance.addConnectionLine(line0);
         ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList(), instance);
         instance.addConnectionLine(line1);
-        
+
         List<Point> points = new ArrayList<Point>();
         points.add(new Point(250,200));
         ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
         instance.addConnectionLine(line2);
-        
+
         int x = 0;
         int y = 90;
         int width = 100;
@@ -810,7 +813,7 @@ public class SchemaTest {
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
-        
+
         // left
         instance.moveSelection(-10, 0);
         Assert.assertEquals(90, elem.getX());
@@ -824,21 +827,21 @@ public class SchemaTest {
         Assert.assertEquals(100, elem.getX()); // move fails
         Assert.assertTrue(instance.moveSelection(49, 0));
         Assert.assertEquals(149, elem.getX()); // move succeeds
-        
+
         // down
         Assert.assertFalse(instance.moveSelection(0, 70));
         Assert.assertEquals(100, elem.getY());
         Assert.assertTrue(instance.moveSelection(0, 69));
         Assert.assertEquals(169, elem.getY());
-        
+
         // up
         Assert.assertTrue(instance.moveSelection(0, -69));
         Assert.assertEquals(100, elem.getY());
-        
+
         // back left
         Assert.assertTrue(instance.moveSelection(-49, 0));
         Assert.assertEquals(100, elem.getX());
-        
+
         // test left boundary
         Assert.assertTrue(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN + 1, 0));
         Assert.assertEquals(50 + Schema.MIN_LEFT_MARGIN + 1, elem.getX());
@@ -850,7 +853,7 @@ public class SchemaTest {
         Assert.assertEquals(100, elem.getX());
         Assert.assertFalse(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN - 1, 0));
         Assert.assertEquals(100, elem.getX());
-        
+
         // test top boundary
         Assert.assertTrue(instance.moveSelection(0, -85 + Schema.MIN_TOP_MARGIN + 1));
         Assert.assertEquals(15 + Schema.MIN_TOP_MARGIN + 1, elem.getY());
@@ -862,7 +865,7 @@ public class SchemaTest {
         Assert.assertEquals(100, elem.getY());
         Assert.assertFalse(instance.moveSelection(0, -85 + Schema.MIN_TOP_MARGIN - 1));
         Assert.assertEquals(100, elem.getY());
-        
+
        /*             l
         *             i                 width  = 100
         * +---------+ n  +---------+    height = 30
@@ -878,9 +881,9 @@ public class SchemaTest {
         *      | 150,200 | 250,200
         *      +---------+
         */
-        
+
         // now test elem3
-        
+
         // selection
         x = 80;
         y = 180;
@@ -893,15 +896,15 @@ public class SchemaTest {
         Assert.assertTrue(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
-        
+
         // down
         Assert.assertTrue(instance.moveSelection(0, 100));
         Assert.assertEquals(300, elem3.getY());
-        
+
         // up
         Assert.assertTrue(instance.moveSelection(0, -100));
         Assert.assertEquals(200, elem3.getY());
-        
+
         // right
         Assert.assertTrue(instance.moveSelection(49, 0));
         Assert.assertEquals(199, elem3.getX());
@@ -910,10 +913,10 @@ public class SchemaTest {
         Assert.assertFalse(instance.moveSelection(20, 0));
         Assert.assertEquals(199, elem3.getX()); // move failed
         Assert.assertTrue(instance.moveSelection(-1, 0));
-        Assert.assertEquals(198, elem3.getX()); 
+        Assert.assertEquals(198, elem3.getX());
         Assert.assertTrue(instance.moveSelection(-48, 0));
         Assert.assertEquals(150, elem3.getX());
-        
+
         // up
         Assert.assertFalse(instance.moveSelection(0, -100));
         Assert.assertEquals(200, elem3.getY()); // move failed
@@ -925,7 +928,7 @@ public class SchemaTest {
         Assert.assertEquals(151, elem3.getX());
         Assert.assertTrue(instance.moveSelection(-1, 0));
         Assert.assertEquals(150, elem3.getX());
-        
+
         // test multiple selection
         x = 0;
         y = 0;
@@ -938,7 +941,7 @@ public class SchemaTest {
         Assert.assertTrue(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
-        
+
         Assert.assertTrue(instance.moveSelection(10, 0));
         Assert.assertEquals(110, elem.getX());
         Assert.assertEquals(160, elem3.getX());
@@ -946,7 +949,7 @@ public class SchemaTest {
         Assert.assertTrue(instance.moveSelection(-10, 0));
         Assert.assertEquals(100, elem.getX());
         Assert.assertEquals(150, elem3.getX());
-        
+
         Assert.assertTrue(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN, 0));
         Assert.assertEquals(50 + Schema.MIN_LEFT_MARGIN, elem.getX());
         Assert.assertEquals(100 + Schema.MIN_LEFT_MARGIN, elem3.getX());
@@ -954,9 +957,9 @@ public class SchemaTest {
         Assert.assertFalse(instance.moveSelection(-1, 0));
         Assert.assertEquals(50 + Schema.MIN_LEFT_MARGIN, elem.getX());
         Assert.assertEquals(100 + Schema.MIN_LEFT_MARGIN, elem3.getX());
-    
+
     }
-    
+
     /**
      * Test of deleteSelected method, of class Schema.
      */
@@ -1003,7 +1006,7 @@ public class SchemaTest {
         points.add(new Point(250, 200));
         ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
         instance.addConnectionLine(line2);
-        
+
         int x = 150;
         int y = 200;
         int width = 10;
@@ -1015,7 +1018,7 @@ public class SchemaTest {
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
-        
+
         instance.deleteSelected();
         Assert.assertEquals(1, instance.getConnectionLines().size());
         Assert.assertEquals(2, instance.getAllElements().size());
@@ -1033,7 +1036,7 @@ public class SchemaTest {
         Schema instance = new Schema();
         Properties result = instance.getSettings();
         Assert.assertNotNull(result);
-        
+
         Properties compilerProps = new Properties();
         compilerProps.setProperty("compiler", "compiler");
         compilerProps.setProperty("point.x", "100");
@@ -1042,7 +1045,7 @@ public class SchemaTest {
         compilerProps.setProperty("height", "30");
         CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
         instance.setCompilerElement(elem);
-        
+
         Assert.assertNull(instance.getSettings().getProperty("compiler"));
         instance.save();
         Assert.assertEquals("compiler", instance.getSettings().getProperty("compiler"));
