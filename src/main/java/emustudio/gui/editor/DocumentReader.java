@@ -1,10 +1,5 @@
 /*
- * DocumentReader.java
- *
- * Created on 7.2.2008, 9:59:19
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2008-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,30 +24,13 @@ import javax.swing.text.BadLocationException;
 
 /**
  * Reader of the source code. It is used by syntax highlighter.
- *
- * @author vbmacher
  */
 public class DocumentReader extends Reader {
-    /**
-     * Used for marking a place in the document where it is secure to reset lexical analyzer
-     */
     private final long mark = -1;
+    private long position = 0;
 
-    /**
-     * Position of the reader.
-     */
-    protected long position = 0;
-
-    /**
-     * Document that is read by this reader.
-     */
     protected HighLightedDocument document;
 
-    /**
-     * Create an instance of the document reader.
-     *
-     * @param document the source code document
-     */
     public DocumentReader(HighLightedDocument document) {
         this.document = document;
     }
@@ -83,18 +61,8 @@ public class DocumentReader extends Reader {
         }
     }
 
-    /**
-     * Get the position within the source code, where the reader points.
-     *
-     * @return the position within the source code
-     */
     public long getPosition() { return position; }
 
-    /**
-     * Read a single character.
-     *
-     * @return the character or -1 if the end of the document has been reached.
-     */
     @Override
     public int read() {
         document.readLock();
@@ -115,30 +83,11 @@ public class DocumentReader extends Reader {
         }
     }
 
-    /**
-     * Read and fill the buffer.
-     * This method will always fill the buffer unless the end of the document
-     * is reached.
-     *
-     * @param cbuf the buffer to fill.
-     * @return the number of characters read or -1 if no more characters are available in the document.
-     * @throws IOException read corresponding Javadoc for Reader
-     */
     @Override
     public synchronized int read(char[] cbuf) throws IOException {
         return read(cbuf, 0, cbuf.length);
     }
 
-
-    /**
-     * Read and fill the buffer.
-     * This method will always fill the buffer unless the end of the document is reached.
-     *
-     * @param cbuf the buffer to fill.
-     * @param off offset into the buffer to begin the fill.
-     * @param len maximum number of characters to put in the buffer.
-     * @return the number of characters read or -1 if no more characters are available in the document.
-     */
     @Override
     public int read(char[] cbuf, int off, int len) {
         document.readLock();
@@ -170,19 +119,11 @@ public class DocumentReader extends Reader {
         }
     }
 
-    /**
-     * Determine if the reader is ready or not.
-     *
-     * @return true
-     */
     @Override
     public boolean ready() {
         return true;
     }
 
-    /**
-     * Reset this reader to the last mark, or the beginning of the document if a mark has not been set.
-     */
     @Override
     public void reset() {
         if (mark == -1){
@@ -192,14 +133,6 @@ public class DocumentReader extends Reader {
         }
     }
 
-    /**
-     * Skip characters of input.
-     * This method will always skip the maximum number of characters unless
-     * the end of the file is reached.
-     *
-     * @param n number of characters to skip.
-     * @return the actual number of characters skipped.
-     */
     @Override
     public long skip(long n){
         document.readLock();
@@ -219,11 +152,6 @@ public class DocumentReader extends Reader {
         }
     }
 
-    /**
-     * Seek to the given position in the document.
-     *
-     * @param n the offset to which to seek.
-     */
     public void seek(long n){
         document.readLock();
         int docLen = 0;
@@ -239,10 +167,6 @@ public class DocumentReader extends Reader {
         }
     }
 
-    /**
-     * Has no effect.  This reader can be used even after
-     * it has been closed.
-     */
     @Override
     public void close() {
     }

@@ -1,10 +1,5 @@
 /*
- * DebugTableModel.java
- *
- * Created on Pondelok, 2007, marec 26, 16:29
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2007-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,11 +23,6 @@ import emulib.plugins.cpu.DebugColumn;
 import emulib.plugins.cpu.Disassembler;
 import javax.swing.table.AbstractTableModel;
 
-/**
- *
- * @author vbmacher
- */
-@SuppressWarnings("serial")
 public class DebugTableModel extends AbstractTableModel {
     private static final int MAX_ROW_COUNT = 13;
     private final DebugColumn[] columns;
@@ -50,11 +40,6 @@ public class DebugTableModel extends AbstractTableModel {
 
     private final int breakpointColumnIndex;
 
-    /**
-     * Creates a new instance of DebugTableModel
-     *
-     * @param cpu CPU plug-in
-     */
     public DebugTableModel(CPU cpu) {
         this.cpu = cpu;
         page = 0;
@@ -79,38 +64,19 @@ public class DebugTableModel extends AbstractTableModel {
         gapInstructionsCount = rowCount / 2;
     }
 
-    /**
-     * Get the number of rows in the debug table.
-     * @return rows count
-     */
     @Override
     public int getRowCount() {
         return rowCount;
     }
 
-    /**
-     * Get breakpoint column index.
-     *
-     * @return index of breakpoint column, or -1 if it does not exist
-     */
     public int getBreakpointColumnIndex() {
         return breakpointColumnIndex;
     }
 
-    /**
-     * Set number of rows in the debug table.
-     *
-     * @param row_count count of rows
-     */
     public void setRowCount(int row_count) {
         this.rowCount = row_count;
     }
 
-    /**
-     * Get the number of columns in the debug table.
-     *
-     * @return columns count
-     */
     @Override
     public int getColumnCount() {
         try {  return columns.length; }
@@ -119,24 +85,11 @@ public class DebugTableModel extends AbstractTableModel {
         }
     }
 
-    /**
-     * Gets the title of the debug column.
-     *
-     * @param col
-     *   Column index
-     * @return the column title
-     */
     @Override
     public String getColumnName(int col) {
         return columns[col].getTitle();
     }
 
-    /**
-     * Gets the type of the column.
-     *
-     * @param columnIndex column index
-     * @return class representing the column type
-     */
     @Override
     public Class<?> getColumnClass(int columnIndex) {
         return columns[columnIndex].getClassType();
@@ -253,15 +206,6 @@ public class DebugTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
-    /**
-     * Returns a value at specified location in the debug table.
-     *
-     * @param rowIndex
-     *   The row index
-     * @param columnIndex
-     *   The column index
-     * @return value at (rowIndex, columnIndex)
-     */
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         try {
@@ -271,13 +215,6 @@ public class DebugTableModel extends AbstractTableModel {
         }
     }
 
-    /**
-     * Sets the value at specified location into the debug table.
-     *
-     * @param aValue The value
-     * @param rowIndex the index of the row
-     * @param columnIndex the index of the column
-     */
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         try {
@@ -285,13 +222,6 @@ public class DebugTableModel extends AbstractTableModel {
         } catch(IndexOutOfBoundsException e) {}
     }
 
-    /**
-     * Determine whether the column in the debug table is editable.
-     *
-     * @param rowIndex row index. It is irrelevant.
-     * @param columnIndex column index
-     * @return true if column is editable, false otherwise
-     */
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return columns[columnIndex].isEditable();

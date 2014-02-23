@@ -1,9 +1,5 @@
 /*
- * CompilerElement.java
- *
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2010-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -31,39 +27,18 @@ import java.util.Properties;
  * editor. It corresponds to a compiler object that will be used in the emulated
  * computer.
  *
- * @author vbmacher
  */
 public class CompilerElement extends Element {
     private final static Color BACK_COLOR = new Color(0xeeefff);
 
-    /**
-     * Create new Compiler element object.
-     *
-     * @param pluginName file name of this plug-in, without '.jar' extension.
-     * @param settings settings of virtual computer
-     * @param schema Schema object for this element
-     * @throws NullPointerException when some settings are not well parseable
-     */
     public CompilerElement(String pluginName, Properties settings, Schema schema) throws NumberFormatException {
         super(pluginName, settings, BACK_COLOR, schema);
     }
 
-    /**
-     * Create new Compiler element object.
-     *
-     * @param pluginName name of the compiler
-     * @param location the point where the compiler is located in the schema
-     * @param schema Schema object for this element
-     */
     public CompilerElement(String pluginName, Point location, Schema schema) {
         super(pluginName, location, BACK_COLOR, schema);
     }
 
-    /**
-     * Get string representing the type of the plugin.
-     *
-     * @return "compiler" text
-     */
     @Override
     protected String getPluginType() {
         return "Compiler";

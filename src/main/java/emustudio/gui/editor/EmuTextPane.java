@@ -1,10 +1,5 @@
 /*
- * EmuTextPane.java
- *
- * Created on Štvrtok, 2007, august 9, 15:05
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2007-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,7 +21,7 @@ import emulib.plugins.compiler.Compiler;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
 import emulib.plugins.compiler.Token;
-import emustudio.gui.utils.EmuFileFilter;
+import emulib.runtime.UniversalFileFilter;
 import emustudio.interfaces.ITokenColor;
 import emustudio.main.Main;
 import java.awt.Color;
@@ -35,6 +30,7 @@ import java.awt.Insets;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -49,6 +45,7 @@ import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AbstractDocument.DefaultDocumentEvent;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.BoxView;
 import javax.swing.text.ComponentView;
 import javax.swing.text.Element;
@@ -71,20 +68,11 @@ import org.slf4j.LoggerFactory;
  * line numbering or syntax highlighting and other.
  * TODO: add ability to set breakpoints
  *
- * @author vbmacher
  */
-@SuppressWarnings("serial")
 public class EmuTextPane extends JTextPane {
     private final static Logger logger = LoggerFactory.getLogger(EmuTextPane.class);
 
-    /**
-     * Width of a column in the editor where line numbers are shown
-     */
     public static final short NUMBERS_WIDTH = 40;
-
-    /**
-     * Height of the line
-     */
     public static final short NUMBERS_HEIGHT = 4;
 
     private LexicalAnalyzer syntaxLexer = null;
@@ -158,11 +146,6 @@ public class EmuTextPane extends JTextPane {
         }
     }
 
-    /**
-     * Creates a new instance of EmuTextPane
-     *
-     * @param compiler The chosen compiler.
-     */
     public EmuTextPane(Compiler compiler) {
         initStyles();
 
@@ -234,7 +217,7 @@ public class EmuTextPane extends JTextPane {
     }
 
     private void initStyles() {
-        styles = new HashMap<Integer, HighlightStyle>();
+        styles = new HashMap<>();
         styles.put(Token.COMMENT, new HighlightStyle(true, false, ITokenColor.COMMENT));
         styles.put(Token.ERROR, new HighlightStyle(false, false, ITokenColor.ERROR));
         styles.put(Token.IDENTIFIER, new HighlightStyle(false, false, ITokenColor.IDENTIFIER));
@@ -250,42 +233,22 @@ public class EmuTextPane extends JTextPane {
         this.setBackground(Color.WHITE);
     }
 
-    /*** UNDO/REDO IMPLEMENTATION ***/
-
-    /**
-     * Set up undo/redo listener.
-     *
-     * @param l The undo listener
-     */
     public void setUndoActionListener(UndoActionListener l) {
         undoListener = l;
     }
 
-    /**
-     * Determine if the Redo operation can be realized.
-     *
-     * @return true if Redo can be realized, false otherwise.
-     */
     public boolean canRedo() {
         synchronized (undoLock) {
             return undo.canRedo();
         }
     }
 
-    /**
-     * Determine if the Undo operation can be realized.
-     *
-     * @return true if Undo can be realized, false otherwise.
-     */
     public boolean canUndo() {
         synchronized (undoLock) {
             return undo.canUndo();
         }
     }
 
-    /**
-     * Perform Undo operation.
-     */
     public void undo() {
         boolean canUndo, canRedo;
         String undoPresName, redoPresName;
@@ -323,9 +286,6 @@ public class EmuTextPane extends JTextPane {
         }
     }
 
-    /**
-     * Perform Redo operation.
-     */
     public void redo() {
         boolean canUndo, canRedo;
         String undoPresName, redoPresName;
@@ -363,24 +323,10 @@ public class EmuTextPane extends JTextPane {
         }
     }
 
-    /*** SYNTAX HIGHLIGHTING IMPLEMENTATION ***/
-
-    /**
-     * Get document reader for this editor.
-     *
-     * @return document reader
-     */
     public Reader getDocumentReader() {
         return reader;
     }
 
-    /*** LINE NUMBERS PAINT IMPLEMENTATION ***/
-
-    /**
-     * Implements view lines numbers
-     *
-     * @param g Graphics object
-     */
     @Override
     public void paint(Graphics g) {
         super.paint(g);
@@ -408,25 +354,10 @@ public class EmuTextPane extends JTextPane {
             g.getClipBounds().y + g.getClipBounds().height);
     }
 
-    /*** OPENING/SAVING FILE ***/
-
-    /**
-     * The method opens the file based on file name given as String.
-     *
-     * @param fileName the name of the file to open
-     * @return true if the file was opened, false otherwise.
-     */
     public boolean openFile(String fileName) {
         return openFile(new File(fileName));
     }
 
-    /**
-     * Opens a file into text editor.
-     * WARNING: This method Doesn't check whether file is saved.
-     *
-     * @param file The file to open
-     * @return true if file was successfuly opened, false otherwise.
-     */
     public boolean openFile(File file) {
         fileSource = file;
         if (fileSource.canRead() == false) {
@@ -441,11 +372,11 @@ public class EmuTextPane extends JTextPane {
                 highlight.stopMe();
                 highlight = null;
             }
-            FileReader vstup = new FileReader(fileSource);
-            setText("");
-            getEditorKit().read(vstup, document, 0);
-            this.setCaretPosition(0);
-            vstup.close();
+            try (FileReader vstup = new FileReader(fileSource)) {
+                setText("");
+                getEditorKit().read(vstup, document, 0);
+                this.setCaretPosition(0);
+            }
             fileSaved = true;
 
             synchronized (syntaxLock) {
@@ -459,7 +390,7 @@ public class EmuTextPane extends JTextPane {
             logger.error("Could not open file. File not found.", e);
             Main.tryShowErrorMessage("File not found: " + fileSource.getPath());
             return false;
-        } catch (Exception e) {
+        } catch (IOException | BadLocationException e) {
             logger.error("Could not open file.", e);
             Main.tryShowErrorMessage("Error opening the file: " + fileSource.getPath());
             return false;
@@ -467,15 +398,10 @@ public class EmuTextPane extends JTextPane {
         return true;
     }
 
-    /**
-     * Display open-file dialog and opens a file.
-     *
-     * @return true if a file was opened; false otherwise
-     */
     public boolean openFileDialog() {
         JFileChooser f = new JFileChooser();
-        EmuFileFilter f1 = new EmuFileFilter();
-        EmuFileFilter f2 = new EmuFileFilter();
+        UniversalFileFilter f1 = new UniversalFileFilter();
+        UniversalFileFilter f2 = new UniversalFileFilter();
 
         if (this.confirmSave() == true) {
             return false;
@@ -483,9 +409,9 @@ public class EmuTextPane extends JTextPane {
 
         if ((fileExtensions != null) && (fileExtensions.length > 0)) {
             String descr = "Source files (";
-            for (int i = 0; i < fileExtensions.length; i++) {
-                f1.addExtension(fileExtensions[i].getExtension());
-                descr += "*." + fileExtensions[i].getExtension() + ",";
+            for (SourceFileExtension fileExtension : fileExtensions) {
+                f1.addExtension(fileExtension.getExtension());
+                descr += "*." + fileExtension.getExtension() + ",";
             }
             descr = descr.substring(0, descr.length()-1);
             descr += ")";
@@ -518,13 +444,6 @@ public class EmuTextPane extends JTextPane {
         return false;
     }
 
-    /**
-     * Method asks the user if he wants to save a file and performs it when
-     * he confirms.
-     *
-     * @return If the user cancels the confirmation, return true. Otherwise
-     * return false.
-     */
     public boolean confirmSave() {
         if (fileSaved == false) {
             int r = JOptionPane.showConfirmDialog(null, "File is not saved yet. Do you want to save the file ?");
@@ -537,14 +456,6 @@ public class EmuTextPane extends JTextPane {
         return false;
     }
 
-    /**
-     * Save the file.
-     *
-     * @param showDialogIfFileIsInvalid the flag indicating if the save
-     * dialog should be shown to select new file if the fileSource is null
-     * or invalid.
-     * @return true if file was saved, false otherwise
-     */
     public boolean saveFile(boolean showDialogIfFileIsInvalid) {
         if ((fileSource == null) || (fileSource.exists() && (fileSource.canWrite() == false))) {
             if (showDialogIfFileIsInvalid) {
@@ -557,12 +468,12 @@ public class EmuTextPane extends JTextPane {
             }
         }
         try {
-            FileWriter vystup = new FileWriter(fileSource);
-            write(vystup);
-            vystup.close();
+            try (FileWriter vystup = new FileWriter(fileSource)) {
+                write(vystup);
+            }
             fileSaved = true;
             return true;
-        } catch (Exception e) {
+        } catch (IOException e) {
             logger.error("Could not save file: " + fileSource.getPath(), e);
             Main.tryShowErrorMessage(new StringBuilder().append("Error: Cannot save the file: ")
                     .append(fileSource.getPath()).append("\n").append(e.getLocalizedMessage()).toString());
@@ -570,30 +481,25 @@ public class EmuTextPane extends JTextPane {
         }
     }
 
-    /**
-     * Shows file chooser dialog to select the file and save the file.
-     *
-     * @return true if the file was saved, false otherwise.
-     */
     public boolean saveFileDialog() {
         JFileChooser f = new JFileChooser();
 
-        EmuFileFilter[] filters;
+        UniversalFileFilter[] filters;
         int tmpLen = (fileExtensions != null) ? fileExtensions.length : 0;
 
         f.setDialogTitle("Save file");
         f.setAcceptAllFileFilterUsed(false);
 
-        filters = new EmuFileFilter[tmpLen + 1];
+        filters = new UniversalFileFilter[tmpLen + 1];
         if ((fileExtensions != null) && (fileExtensions.length > 0)) {
             for (int i = 0; i < fileExtensions.length; i++) {
-                filters[i] = new EmuFileFilter();
+                filters[i] = new UniversalFileFilter();
                 filters[i].addExtension(fileExtensions[i].getExtension());
                 filters[i].setDescription(fileExtensions[i].getFormattedDescription());
                 f.addChoosableFileFilter(filters[i]);
             }
         }
-        filters[filters.length-1] = new EmuFileFilter();
+        filters[filters.length-1] = new UniversalFileFilter();
         filters[filters.length-1].addExtension("*");
         filters[filters.length-1].setDescription("All files (*.*)");
         f.addChoosableFileFilter(filters[filters.length-1]);
@@ -612,7 +518,7 @@ public class EmuTextPane extends JTextPane {
             return false;
         }
         File selectedFile = f.getSelectedFile();
-        EmuFileFilter selectedFileFilter = (EmuFileFilter)f.getFileFilter();
+        UniversalFileFilter selectedFileFilter = (UniversalFileFilter)f.getFileFilter();
 
         String suffix = selectedFileFilter.getFirstExtension();
         if (!suffix.equals("*") &&
@@ -624,24 +530,10 @@ public class EmuTextPane extends JTextPane {
         return saveFile(false);
     }
 
-    /**
-     * Determine if the file was saved - i.e. if it is unmodified from last
-     * save.
-     *
-     * @return true if the file is saved, false otherwise
-     */
     public boolean isFileSaved() {
-        if (fileSaved  && (fileSource != null)) {
-            return true;
-        } else {
-            return false;
-        }
+        return fileSaved  && (fileSource != null);
     }
 
-    /**
-     * Return full path of the source file name, if it exists.
-     * @return
-     */
     public String getFileName() {
         if (fileSource == null) {
             return null;
@@ -650,14 +542,6 @@ public class EmuTextPane extends JTextPane {
         }
     }
 
-    /**
-     * Create new file environment.
-     *
-     * Confirms to save the file when it is not already saved, or is modified.
-     * Clears the environment and the text area.
-     *
-     * @return true if the new file was created, false otherwise
-     */
     public boolean newFile() {
         if (confirmSave() == true) {
             return false;

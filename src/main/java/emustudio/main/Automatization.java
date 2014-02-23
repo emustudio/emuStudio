@@ -1,9 +1,5 @@
 /*
- * Automatization.java
- *
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2010-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -51,8 +47,6 @@ import org.slf4j.LoggerFactory;
 /**
  * This class manages the emuStudio automatization process. In the process
  * the emulation is started automatically and results are collected.
- *
- * @author vbmacher
  */
 public class Automatization implements Runnable {
     private final static Logger LOGGER = LoggerFactory.getLogger("automatization");

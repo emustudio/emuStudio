@@ -1,9 +1,5 @@
 /*
- * ElementPropertiesDialog.java
- *
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2011-2012, Peter Jakubčo
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,11 +16,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-/*
- * ElementPropertiesDialog.java
- *
- * Created on 22.10.2011, 12:05:50
- */
 package emustudio.gui;
 
 import emulib.runtime.StaticDialogs;

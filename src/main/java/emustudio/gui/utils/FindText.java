@@ -1,10 +1,5 @@
 /*
- * FindText.java
- *
- * Created on 15.2.2008, 11:40:01
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2008-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,46 +23,16 @@ import java.util.regex.PatternSyntaxException;
 import javax.swing.JTextPane;
 import javax.swing.text.BadLocationException;
 
-/**
- * Singleton class for generally matching/replacing a text with pattern.
- *
- * @author vbmacher
- */
 public class FindText {
-
-    /**
-     * Flag for case-sentisiveness for text searching.
-     */
     public static final int CASE_SENSITIVE = 1;
-
-    /**
-     * Flag for whole words only in text searching.
-     */
     public static final int WHOLE_WORDS = 2;
-
-    /**
-     * Flag for text searching only to end of the document.
-     */
     public static final int DIRECTION_TO_END = 0;
-
-    /**
-     * Flag for text searching only from start to actual position in the
-     * document.
-     */
     public static final int DIRECTION_TO_START = 1;
-
-    /**
-     * Flag for text searching in whole document.
-     */
     public static final int DIRECTION_ALL = 2;
 
-    private static FindText instance = null;
     private Matcher matcher = null;
     private Pattern pattern = null;
 
-    /**
-     * Text replacement for "find and replace" action
-     */
     public String replacement = "";
 
     private int direction = 0;
@@ -75,24 +40,6 @@ public class FindText {
     // start/end of last match
     private int startM = -1;
     private int endM = -1;
-
-    /**
-     * Private constructor
-     */
-    private FindText() {
-    }
-
-    /**
-     * Get a singleton instance of this class.
-     *
-     * @return Singleton instance
-     */
-    public static FindText getInstance() {
-        if (instance == null) {
-            instance = new FindText();
-        }
-        return instance;
-    }
 
     /**
      * Parameter setting.
@@ -115,11 +62,6 @@ public class FindText {
         matcher = null;
     }
 
-    /**
-     * Get find expression (text to find).
-     *
-     * @return find expression
-     */
     public String getFindExpr() {
         if (matcher == null) {
             return null;
@@ -127,58 +69,26 @@ public class FindText {
         return matcher.pattern().toString();
     }
 
-    /**
-     * Get direction of searching in a document.
-     * @return direction flag
-     */
     public int getDirection() {
         return direction;
     }
 
-    /**
-     * Set direction of searching in a document.
-     * @param dir the direction flag
-     */
     public void setDirection(int dir) {
         direction = dir;
     }
 
-    /**
-     * Determine if text searching is case sensitive.
-     *
-     * @return true if yes, false if not.
-     */
     public boolean isCaseSensitive() {
         return ((params & CASE_SENSITIVE) != 0);
     }
 
-    /**
-     * Determine if text searching searches for whole words only.
-     *
-     * @return true if yes, false if not.
-     */
     public boolean isWholeWords() {
         return ((params & WHOLE_WORDS) != 0);
     }
 
-    /**
-     * Set search parameters.
-     *
-     * @param par searching flags (OR-ed together)
-     */
     public void setParams(byte par) {
         params = par;
     }
 
-    /**
-     * Searching or replaces the text on specified position in document.
-     *
-     * @param text The document where to perform the search
-     * @param curPos the starting position
-     * @param endPos the ending position
-     * @return false if text was not found. Otherwise returns true.
-     * @throws NullPointerException if the find pattern or text is null
-     */
     public boolean findNext(String text, int curPos, int endPos) throws NullPointerException {
         if ((matcher == null) && (pattern == null)) {
             throw new NullPointerException("matcher can't be null, use dialog");

@@ -1,10 +1,5 @@
 /*
- * StudioFrame.java
- *
- * Created on Nedeľa, 2007, august 5, 13:43
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2007-2013, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,26 +38,46 @@ import emustudio.architecture.Computer;
 import emustudio.gui.debugTable.DebugTableImpl;
 import emustudio.gui.editor.EmuTextPane;
 import emustudio.gui.editor.EmuTextPane.UndoActionListener;
+import emustudio.gui.utils.ConstantSizeButton;
 import emustudio.gui.utils.FindText;
-import emustudio.gui.utils.NiceButton;
 import emustudio.main.Main;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.FlavorEvent;
 import java.awt.datatransfer.FlavorListener;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.WindowEvent;
 import java.io.StringReader;
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.BorderFactory;
+import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
+import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
+import javax.swing.LayoutStyle;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+import javax.swing.WindowConstants;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 
-/**
- * The main window of the emuStudio.
- *
- * @author  vbmacher
- */
-@SuppressWarnings("serial")
 public class StudioFrame extends javax.swing.JFrame {
     private final static Logger logger = LoggerFactory.getLogger(StudioFrame.class);
     private EmuTextPane txtSource;
@@ -71,30 +86,18 @@ public class StudioFrame extends javax.swing.JFrame {
     private Clipboard systemClipboard;
     private RunState run_state = RunState.STATE_STOPPED_BREAK;
     private DebugTableImpl tblDebug;
-    // emulator
     private Compiler compiler;
     private Memory memory;
     private CPU cpu;
     private int pageSeekLastValue = 10;
+    private final FindText finder = new FindText();
 
-    /**
-     * Create new instance of the main window frame.
-     *
-     * @param fileName file name to open in the source code editor
-     * @param title title of the main window
-     */
     public StudioFrame(String fileName, String title) {
         this(title);
         txtSource.openFile(fileName);
     }
 
-    /**
-     * Creates new instance of the main window frame.
-     *
-     * @param title title of the main window
-     */
     public StudioFrame(String title) {
-        // create models and components
         arch = Main.architecture.getComputer();
 
         compiler = arch.getCompiler();
@@ -160,7 +163,6 @@ public class StudioFrame extends javax.swing.JFrame {
         txtSource.grabFocus();
     }
 
-    // get gui panel from CPU plugin and show in main window
     private void setStatusGUI() {
         JPanel statusPanel = cpu.getStatusPanel();
         if (statusPanel == null) {
@@ -185,7 +187,6 @@ public class StudioFrame extends javax.swing.JFrame {
                 @Override
                 public void onMessage(Message message) {
                     txtOutput.append(message.getFormattedMessage() + "\n");
-//                    if (Main.commandLine.getOutputFileName() != null)
                 }
 
                 @Override
@@ -371,8 +372,8 @@ public class StudioFrame extends javax.swing.JFrame {
         JPanel peripheralPanel = new JPanel();
         JScrollPane paneDevices = new JScrollPane();
         lstDevices = new JList();
-        JButton btnShowGUI = new NiceButton();
-        final JButton btnShowSettings = new NiceButton();
+        JButton btnShowGUI = new ConstantSizeButton();
+        final JButton btnShowSettings = new ConstantSizeButton();
         JMenuBar jMenuBar2 = new JMenuBar();
         JMenu mnuFile = new JMenu();
         JMenuItem mnuFileNew = new JMenuItem();
@@ -1444,16 +1445,15 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void mnuEditFindActionPerformed(java.awt.event.ActionEvent evt) {
-        new FindDialog(this, false, txtSource).setVisible(true);
+        new FindDialog(this, finder, false, txtSource).setVisible(true);
     }
 
     private void mnuEditFindNextActionPerformed(java.awt.event.ActionEvent evt) {
         try {
-            if (FindText.getInstance().findNext(txtSource.getText(),
+            if (finder.findNext(txtSource.getText(),
                     txtSource.getCaretPosition(),
                     txtSource.getDocument().getEndPosition().getOffset() - 1)) {
-                txtSource.select(FindText.getInstance().getMatchStart(),
-                        FindText.getInstance().getMatchEnd());
+                txtSource.select(finder.getMatchStart(), finder.getMatchEnd());
                 txtSource.grabFocus();
             } else {
                 Main.tryShowMessage("Expression was not found", "Find");
@@ -1480,7 +1480,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
     private void mnuEditReplaceNextActionPerformed(java.awt.event.ActionEvent evt) {
         try {
-            if (FindText.getInstance().replaceNext(txtSource)) {
+            if (finder.replaceNext(txtSource)) {
                 txtSource.grabFocus();
             } else {
                 Main.tryShowMessage("Expression was not found", "Replace next");

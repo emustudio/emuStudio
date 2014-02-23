@@ -1,9 +1,5 @@
 /*
- * ConfigurationManager
- *
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2012, Peter Jakubčo
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,9 +20,6 @@ package emustudio.architecture;
 import emustudio.drawing.Schema;
 import java.util.Properties;
 
-/**
- * This interface provides methods for managing configuration of a virtual computer.
- */
 public interface ConfigurationManager {
     public Properties readConfiguration(String configName, boolean schema_too) throws ReadConfigurationException;
     public void writeConfiguration(String configName, Properties settings) throws WriteConfigurationException;

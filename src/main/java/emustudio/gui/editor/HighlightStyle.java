@@ -1,10 +1,5 @@
 /*
- * HighlightStyle.java
- *
- * Created on 7.2.2008, 9:53:55
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2008-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,19 +28,9 @@ import javax.swing.text.StyleConstants;
  * For each token type an instance of this class is created and used in the
  * proper places.
  *
- * @author vbmacher
  */
-@SuppressWarnings("serial")
 public class HighlightStyle extends SimpleAttributeSet {
 
-    /**
-     * Creates new instance of the font style.
-     *
-     * @param italic true if the font should be italic, false otherwise
-     * @param bold  true if the font should be bold, false otherwise
-     * @param color color of the font. The color constant is taken from
-     * the ITokenColor interface.
-     */
     public HighlightStyle(boolean italic, boolean bold, Color color) {
         setStyle(italic, bold, color);
     }

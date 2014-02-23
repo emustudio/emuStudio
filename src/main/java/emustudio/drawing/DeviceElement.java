@@ -1,10 +1,5 @@
 /*
- * DeviceElement.java
- *
- * Created on 4.7.2008, 8:11:24
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2008-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,32 +22,13 @@ import java.awt.Color;
 import java.awt.Point;
 import java.util.Properties;
 
-/**
- *
- * @author vbmacher
- */
 public class DeviceElement extends Element {
     private final static Color BACK_COLOR = new Color(0xe0e0e0);
 
-    /**
-     * Creates an instance of the DeviceElement class.
-     *
-     * @param pluginName file name of this plug-in, without '.jar' extension.
-     * @param settings settings of this element from virtual configuration
-     * @param schema Schema object for this element
-     * @throws NumberFormatException when some settings are not well parseable
-     */
     public DeviceElement(String pluginName, Properties settings, Schema schema) throws NumberFormatException {
         super(pluginName, settings, BACK_COLOR, schema);
     }
 
-    /**
-     * Creates an instance of the DeviceElement class.
-     *
-     * @param pluginName name of the compiler
-     * @param location the point where the compiler is located in the schema
-     * @param schema Schema object for this element
-     */
     public DeviceElement(String pluginName, Point location, Schema schema) {
         super(pluginName, location, BACK_COLOR, schema);
     }

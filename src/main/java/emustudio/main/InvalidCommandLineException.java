@@ -1,7 +1,4 @@
-/* InvalidCommandLineException.java
- * 
- * Copyright (C) 2012, Peter Jakubčo
- * 
+/*
  * KISS, YAGNI, DRY
  *
  * This program is free software; you can redistribute it and/or
@@ -20,15 +17,10 @@
  */
 package emustudio.main;
 
-/**
- * Exception raised when command line cannot be parsed.
- * 
- * @author vbmacher
- */
 public class InvalidCommandLineException extends Exception {
-    
+
     public InvalidCommandLineException(String msg) {
         super(msg);
     }
-    
+
 }

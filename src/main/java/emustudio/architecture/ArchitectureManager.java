@@ -1,10 +1,5 @@
 /*
- * ArchitectureManager.java
- *
- * Created on Friday, 28.1.2008 22:31
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2008-2013, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,7 +32,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Class holds actual computer configuration - plugins and settings.
  *
- * @author vbmacher
  */
 public class ArchitectureManager implements SettingsManager {
     private final static Logger logger = LoggerFactory.getLogger(ArchitectureManager.class);
@@ -105,29 +99,14 @@ public class ArchitectureManager implements SettingsManager {
         pluginNames.clear();
     }
 
-    /**
-     * Get schema of this virtual architecture
-     *
-     * @return Abstract schema
-     */
     public Schema getSchema() {
         return schema;
     }
 
-    /**
-     * Return the name of the computer (the configuration name).
-     *
-     * @return name of the virtual computer
-     */
     public String getComputerName() {
         return (schema == null) ? "unknown" : schema.getConfigName();
     }
 
-    /**
-     * Return Computer object
-     *
-     * @return virtual computer structure
-     */
     public Computer getComputer() {
         return computer;
     }
@@ -166,20 +145,10 @@ public class ArchitectureManager implements SettingsManager {
         return settings.getProperty("device" + index, null);
     }
 
-    /**
-     * Get compiler file name, without file extension.
-     *
-     * @return compiler name or null
-     */
     public String getCompilerName() {
         return settings.getProperty("compiler", null);
     }
 
-    /**
-     * Get CPU file name, without file extension.
-     *
-     * @return CPU name or null
-     */
     public String getCPUName() {
         return settings.getProperty("cpu", null);
     }

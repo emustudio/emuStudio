@@ -1,10 +1,5 @@
 /*
- * ITokenColor.java
- *
- * Created on Streda, 2007, september 5, 10:43
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2007-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,59 +20,15 @@ package emustudio.interfaces;
 
 import java.awt.Color;
 
-/**
- * This class holds Color constants for particular token types.
- *
- * @author vbmacher
- */
 public class ITokenColor {
-    /**
-     * Comment token. Green color.
-     */
     public final static Color COMMENT = new Color(0,128,0);
-
-    /**
-     * Reserved token. Black color.
-     */
     public final static Color RESERVED = Color.BLACK;
-
-    /**
-     * Identifier token. Black color.
-     */
     public final static Color IDENTIFIER = Color.BLACK;
-
-    /**
-     * Literal token. Blue color.
-     */
     public final static Color LITERAL = new Color(0,0,128);
-
-    /**
-     * Label token. "Weird" blue color.
-     */
     public final static Color LABEL = new Color(0,128,128);
-
-    /**
-     * Register token. Brown color.
-     */
     public final static Color REGISTER = new Color(128,0,0);
-
-    /**
-     * Preprocessor token. "Weird" gray color.
-     */
     public final static Color PREPROCESSOR = new Color(80,80,80);
-
-    /**
-     * Separator token. Black color.
-     */
     public final static Color SEPARATOR = Color.BLACK;
-
-    /**
-     * Operator token. Blue color.
-     */
     public final static Color OPERATOR = new Color(0,0,128);
-
-    /**
-     * Error token. Red color.
-     */
     public final static Color ERROR = Color.RED;
 }

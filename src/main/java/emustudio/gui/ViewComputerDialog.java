@@ -1,8 +1,4 @@
 /*
- * ViewComputerDialog.java
- *
- * Copyright (C) 2012, Peter Jakubčo
- *
  * KISS, YAGNI, DRY
  *
  * This program is free software; you can redistribute it and/or
@@ -39,11 +35,6 @@ import javax.swing.filechooser.FileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Swing dialog showing informations about all plug-ins and abstract schema.
- *
- * @author Peter Jakubčo
- */
 public class ViewComputerDialog extends javax.swing.JDialog {
     private final static Logger logger = LoggerFactory.getLogger(ViewComputerDialog.class);
     private final static String CPU_CONFIG_DIR = ArchitectureLoader.CPUS_DIR + File.separator;

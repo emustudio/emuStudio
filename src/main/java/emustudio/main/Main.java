@@ -1,10 +1,5 @@
 /*
- * Main.java
- *
- * Created on Nedeľa, 2007, august 5, 13:08
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2007-2013, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,7 +20,11 @@ package emustudio.main;
 import emulib.runtime.InvalidPasswordException;
 import emulib.runtime.InvalidPluginException;
 import emulib.runtime.StaticDialogs;
-import emustudio.architecture.*;
+import emustudio.architecture.ArchitectureLoader;
+import emustudio.architecture.ArchitectureManager;
+import emustudio.architecture.PluginInitializationException;
+import emustudio.architecture.PluginLoadingException;
+import emustudio.architecture.ReadConfigurationException;
 import emustudio.gui.LoadingDialog;
 import emustudio.gui.OpenComputerDialog;
 import emustudio.gui.StudioFrame;
@@ -37,21 +36,10 @@ import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Main class of the emuStudio platform.
- *
- * @author vbmacher
- */
 public class Main {
-
     private final static Logger logger = LoggerFactory.getLogger(Main.class);
-    /**
-     * Loaded computer.
-     */
+
     public static ArchitectureManager architecture = null;
-    /**
-     * emuStudio password for emuLib identification security mechanism.
-     */
     public static String password = null;
     public static CommandLine commandLine;
 

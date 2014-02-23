@@ -1,9 +1,5 @@
 /*
- * DocPosition.java
- *
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,26 +23,12 @@ package emustudio.gui.editor;
  * in a collection.
  */
 class DocPosition {
-
-    /**
-     * The actual position
-     */
     private int position;
 
-    /**
-     * Get the position represented by this DocPosition
-     *
-     * @return the position
-     */
     int getPosition(){
         return position;
     }
 
-    /**
-     * Construct a DocPosition from the given offset into the document.
-     *
-     * @param position The position this DocObject will represent
-     */
     public DocPosition(int position){
         this.position = position;
     }
@@ -86,11 +68,6 @@ class DocPosition {
         return hash;
     }
 
-    /**
-     * A string representation useful for debugging.
-     *
-     * @return A string representing the position.
-     */
     @Override
     public String toString(){
         return "" + position;

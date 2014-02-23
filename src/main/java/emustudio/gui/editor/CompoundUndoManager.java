@@ -1,9 +1,5 @@
 /*
- * CompoundUndoManager.java
- *
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,45 +19,42 @@ package emustudio.gui.editor;
 
 /**
  * Copyright 2008 Ayman Al-Sairafi ayman.alsairafi@gmail.com
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License 
- *       at http://www.apache.org/licenses/LICENSE-2.0 
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
- * limitations under the License.  
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License
+ *       at http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-import javax.swing.undo.*;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.CompoundEdit;
+import javax.swing.undo.UndoManager;
+import javax.swing.undo.UndoableEdit;
 
 
 /**
- * A simple UndoManager that groups the Edits in each 0.5 second.  If the time 
+ * A simple UndoManager that groups the Edits in each 0.5 second.  If the time
  * difference between the current undo and the last one is less than 0.5 secs,
  * then the two edits are compound.
- * 
- * @author Ayman Al-Sairafi
+ *
  */
-@SuppressWarnings("serial")
 public class CompoundUndoManager extends UndoManager {
     /**
      * Delay between consequtive edits in ms where edits are added together.
-     * If the delay is greater than this, then separate undo operations are 
+     * If the delay is greater than this, then separate undo operations are
      * done, otherwise they are combined.
      */
     public static final int IDLE_DELAY_MS = 390;
 
     private long startMillis = 0;
     private CompoundEdit compoundEdit = null;
-    
-    /**
-     * See corresponding Javadoc for UndoManager.
-     * @param anEdit
-     * @return
-     */
+
     @Override
     public synchronized boolean addEdit(UndoableEdit anEdit) {
         boolean result = true;
@@ -75,7 +68,7 @@ public class CompoundUndoManager extends UndoManager {
             return false;
         }
         compoundEdit.addEdit(anEdit);
-        
+
         if ((startMillis > 0) && (now - startMillis > IDLE_DELAY_MS)) {
             compoundEdit.end();
             compoundEdit = null;
@@ -84,54 +77,28 @@ public class CompoundUndoManager extends UndoManager {
         return result;
     }
 
-    /**
-     * Determine if the Redo operation can be realized.
-     * 
-     * @return true if Redo can be realized, false otherwise.
-     */
     @Override
     public synchronized boolean canRedo() {
         return super.canRedo();
     }
 
-    /**
-     * Determine if the Undo operation can be realized.
-     * 
-     * @return true if Undo can be realized, false otherwise.
-     */
     @Override
     public synchronized boolean canUndo() {
         return super.canUndo();
     }
 
-    /**
-     * See corresponding Javadoc for UndoManager.
-     */
     @Override
     public synchronized void discardAllEdits() {
         compoundEdit = null;
         super.discardAllEdits();
     }
 
-
-    /**
-     * Perform Redo operation. For more information, see corresponding Javadoc
-     * for UndoManager.
-     * 
-     * @throws CannotRedoException
-     */
     @Override
     public synchronized void redo() throws CannotRedoException {
         commitCompound();
         super.redo();
     }
 
-    /**
-     * Perform Redo operation. For more information, see corresponding Javadoc
-     * for UndoManager.
-     * 
-     * @throws CannotUndoException
-     */
     @Override
     public synchronized void undo() throws CannotUndoException {
         commitCompound();

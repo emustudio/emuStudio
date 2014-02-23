@@ -1,10 +1,5 @@
 /*
- * DebugTableImpl.java
- *
- * Created on Piatok, 2007, november 9, 8:20
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2007-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,12 +32,6 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellRenderer;
 
-/**
- * Debug table.
- *
- * @author vbmacher
- */
-@SuppressWarnings("serial")
 public class DebugTableImpl extends JTable  implements DebugTable {
     private final DebugTableModel debug_model;
     private final TextCellRenderer text_renderer;
@@ -84,9 +73,6 @@ public class DebugTableImpl extends JTable  implements DebugTable {
         }
     }
 
-    /**
-     * This class does the painting of all text/numbers debug table cells.
-     */
     private class TextCellRenderer extends JLabel implements TableCellRenderer {
         public int height = 17;
 
@@ -99,17 +85,6 @@ public class DebugTableImpl extends JTable  implements DebugTable {
             setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD));
         }
 
-        /**
-         * Overrided method. Check Javadoc of the TableCellRenderer.
-         *
-         * @param table
-         * @param value
-         * @param isSelected
-         * @param hasFocus
-         * @param row
-         * @param column
-         * @return
-         */
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
                 boolean isSelected, boolean hasFocus, int row, int column) {
@@ -142,9 +117,6 @@ public class DebugTableImpl extends JTable  implements DebugTable {
         }
     }
 
-    /**
-     * Creates a new instance of DebugTableImpl
-     */
     public DebugTableImpl() {
         super();
         debug_model = new DebugTableModel(Main.architecture.getComputer().getCPU());
@@ -244,11 +216,6 @@ public class DebugTableImpl extends JTable  implements DebugTable {
         refresh();
     }
 
-    /**
-     * Refresh the debug table.
-     *
-     * If it is enabled, the method updates values and repaints it.
-     */
     @Override
     public void refresh() {
         if (isEnabled()) {

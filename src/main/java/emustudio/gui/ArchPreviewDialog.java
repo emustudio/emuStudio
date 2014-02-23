@@ -1,10 +1,5 @@
 /*
- * ArchPreviewDialog.java
- *
- * Created on Piatok, 2008, júl 18, 19:36
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2008-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,20 +27,12 @@ import javax.swing.WindowConstants;
 /**
  * Preview dialog form of virtual computer.
  *
- * @author  vbmacher
  */
 @SuppressWarnings("serial")
 public class ArchPreviewDialog extends JDialog {
 
     private final PreviewPanel pan;
 
-    /**
-     * Creates new preview dialog form instance.
-     *
-     * @param parent parent dialog
-     * @param modal whether this dialog should be modal
-     * @param schema virtual computer schema that will be previewed
-     */
     public ArchPreviewDialog(JDialog parent, boolean modal, Schema schema) {
         super(parent, modal);
         pan = new PreviewPanel(schema);

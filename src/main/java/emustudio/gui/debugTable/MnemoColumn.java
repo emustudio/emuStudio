@@ -1,9 +1,5 @@
 /*
- * MnemoColumn.java
- *
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2011-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -36,32 +32,15 @@ import emulib.plugins.cpu.InvalidInstructionException;
 public class MnemoColumn extends AbstractDebugColumn {
     private final Disassembler disassembler;
 
-    /**
-     * Creates an instance of the column.
-     *
-     * @param disassembler Dissassembler object
-     */
     public MnemoColumn(Disassembler disassembler) {
         super("mnemonics", java.lang.String.class, false);
         this.disassembler = disassembler;
     }
 
-    /**
-     * Does nothing, user cannot change the mnemonic represetnation.
-     *
-     * @param location
-     * @param value
-     */
     @Override
     public void setDebugValue(int location, Object value) {
     }
 
-    /**
-     * Get mnemonic representation of the instruction.
-     *
-     * @param location position in the memory
-     * @return a String value representation of an instruction
-     */
     @Override
     public Object getDebugValue(int location) {
         try {

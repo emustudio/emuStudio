@@ -1,10 +1,5 @@
 /*
- * Element.java
- *
- * Created on 3.7.2008, 8:26:22
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2008-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,19 +33,9 @@ import java.util.Properties;
  * Element used by abstract schema of virtual computer.
  *
  * It is a graphical object representing a plug-in.
- *
- * @author vbmacher
  */
 public abstract class Element {
-
-    /**
-     * Minimum width
-     */
     public final static int MIN_WIDTH = 80;
-
-    /**
-     * Minimum height
-     */
     public final static int MIN_HEIGHT = 50;
 
     /**
@@ -58,56 +43,21 @@ public abstract class Element {
      */
     public final static int TOLERANCE = 5;
 
-    /**
-     * Element's actual properties.
-     */
     private final Properties myProperties;
-
-    /**
-     * Variable holds plug-in file name that is shown inside the element, below the plug-in type.
-     */
     private String pluginName;
 
-    /**
-     * Element width - it is measured within the measure() method, or set by user.
-     */
     private int width;
-
-    /**
-     * Element height - it is measured within the measure() method, or set by user.
-     */
     private int height;
 
-    /**
-     * The center X position of the box.
-     */
     private int x;
     private int leftX;
-
-    /**
-     * The center Y position of the box.
-     */
     private int y;
     private int topY;
 
-    /**
-     * The X position of the plug-in type text
-     */
     private int textX;
-
-    /**
-     * The Y position of the plug-in type text
-     */
     private int textY;
 
-    /**
-     * The X position of the details text
-     */
     private int detailsX;
-
-    /**
-     * The Y position of the details text
-     */
     private int detailsY;
 
     /**
@@ -121,38 +71,14 @@ public abstract class Element {
     private Font boldFont;
     private Font italicFont;
 
-    /**
-     * Background color of the element. Each plug-in type can have different background color.
-     */
     private final Color backColor;
-
-    /**
-     * Foreground color of the element box. Line color.
-     */
     private final Color foreColor;
 
-    /**
-     * Element will be drawn with linear gradient from white to backColor
-     */
     private GradientPaint gradient;
-
-    /**
-     * Holds true, when this element is selected by user. False otherwise.
-     */
     protected boolean selected;
 
     protected Schema schema;
 
-    /**
-     * Creates the Element instance. The element has a background color, location and details that represent the plug-in
-     * name.
-     *
-     * @param pluginName file name of this plug-in, without '.jar' extension.
-     * @param settings settings of this element
-     * @param backColor Background color
-     * @param schema Schema object of the element
-     * @throws NumberFormatException when plug-in with settingsName does not exist in the schema
-     */
     public Element(String pluginName, Properties settings, Color backColor, Schema schema) throws NumberFormatException {
         this.pluginName = pluginName;
         this.backColor = backColor;
@@ -164,14 +90,6 @@ public abstract class Element {
         refreshSettings();
     }
 
-    /**
-     * Creates the Element instance. The element has a background color, all other parameters are created automatically.
-     *
-     * @param pluginName file name of this plug-in, without '.jar' extension.
-     * @param location Location of this element in the abstract schema
-     * @param backColor Background color
-     * @param schema Schema object of the element
-     */
     public Element(String pluginName, Point location, Color backColor, Schema schema) {
         this.pluginName = pluginName;
         this.x = location.x;
@@ -212,11 +130,6 @@ public abstract class Element {
         myProperties.put("height", String.valueOf(getHeight()));
     }
 
-    /**
-     * Get actual properties of this element.
-     *
-     * @return properties for this element
-     */
     public Properties getProperties() {
         // actualize internal properties
         updateProperties();
@@ -240,11 +153,6 @@ public abstract class Element {
         }
     }
 
-    /**
-     * This method draws this element to the graphics.
-     *
-     * @param g graphics, where to draw
-     */
     public void draw(Graphics2D g) {
         if (!wasMeasured) {
             measure(g);
@@ -266,24 +174,10 @@ public abstract class Element {
         g.drawString(pluginName, detailsX, detailsY);
     }
 
-    /**
-     * Move this element to a new location.
-     *
-     * @param p new point location
-     * @return true if new location is not out of the canvas (less than minimal margins), false otherwise
-     */
     public boolean move(Point p) {
         return move(p.x, p.y);
     }
 
-    /**
-     * Move this element to a new location.
-     *
-     * @param x new X location
-     * @param y new Y location
-     * @return true if the element moved; false if it couldn't either due to new location is out of the canvas (less
-     * than minimal margins), or other elements/line points are in the way.
-     */
     public boolean move(int x, int y) {
         if (!wasMeasured) {
             return false;
@@ -311,32 +205,16 @@ public abstract class Element {
         return true;
     }
 
-    /**
-     * Set new size of this element.
-     *
-     * @param width new width
-     * @param height new height
-     */
     public void setSize(int width, int height) {
         wasMeasured = false;
         this.width = (width <= MIN_WIDTH) ? MIN_WIDTH : width;
         this.height = (height <= MIN_HEIGHT) ? MIN_HEIGHT : height;
     }
 
-    /**
-     * Get plug-in name of this element.
-     *
-     * @return plug-in name string
-     */
     public String getPluginName() {
         return pluginName;
     }
 
-    /**
-     * Get a string represetnation of plug-in type: CPU, Compiler, Memory or Device.
-     *
-     * @return plug-in type string
-     */
     protected abstract String getPluginType();
 
     /**
@@ -391,29 +269,16 @@ public abstract class Element {
         wasMeasured = true;
     }
 
-    /**
-     * Set the default size according to text width and height.
-     */
     public void setDefaultSize() {
         width = 0;
         height = 0;
         wasMeasured = false;
     }
 
-    /**
-     * Get element box width in pixels.
-     *
-     * @return width of the element
-     */
     public int getWidth() {
         return (width == 0) ? MIN_WIDTH : width;
     }
 
-    /**
-     * Get element box height in pixels.
-     *
-     * @return height of the element
-     */
     public int getHeight() {
         return (height == 0) ? MIN_HEIGHT : height;
     }
@@ -426,38 +291,18 @@ public abstract class Element {
         return new Rectangle(x, y, getWidth(), getHeight());
     }
 
-    /**
-     * Get the center X location of the element.
-     *
-     * @return X location of the element
-     */
     public int getX() {
         return x;
     }
 
-    /**
-     * Get the center Y location of the element.
-     *
-     * @return Y location of the element
-     */
     public int getY() {
         return y;
     }
 
-    /**
-     * Select/deselect this element.
-     *
-     * @param selected if it is true, the element will be selected. If false, the element will be deselected.
-     */
     public void setSelected(boolean selected) {
         this.selected = selected;
     }
 
-    /**
-     * Determine whether this element is selected.
-     *
-     * @return true, if this element is selected, false otherwise.
-     */
     public boolean isSelected() {
         return selected;
     }

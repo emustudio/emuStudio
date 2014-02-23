@@ -1,7 +1,4 @@
 /*
- * CommandLineFactory.java
- *
- * Copyright (C) 2012, Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  * This program is free software; you can redistribute it and/or
@@ -25,8 +22,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Factory for parsing command lines.
- *
- * @author vbmacher
  */
 public class CommandLineFactory {
     private final static Logger logger = LoggerFactory.getLogger(CommandLineFactory.class);
@@ -39,16 +34,6 @@ public class CommandLineFactory {
         private boolean help = false;
         private boolean noGUI = false;
 
-        /**
-         * Create instance of the CommandLine class.
-         *
-         * @param inputFileName input source file name. If not used, null should be here.
-         * @param outputFileName output file name where compiler writes messages. If not used, null should be here.
-         * @param configName name of virtual computer. If not used, null should be here.
-         * @param auto whether to perform automatization
-         * @param help whether to display help message
-         * @param noGUI whether to not use GUI during automatization
-         */
         public CommandLine(String inputFileName, String outputFileName, String configName, boolean auto,
                 boolean help, boolean noGUI) {
             this.inputFileName = inputFileName;
@@ -89,13 +74,6 @@ public class CommandLineFactory {
 
     }
 
-    /**
-     * Parses command line and creates CommandLine object.
-     *
-     * @param args command-line arguments (raw)
-     * @return CommandLine object
-     * @throws InvalidCommandLineException if the command line is not parseable, or not valid.
-     */
     static CommandLine parseCommandLine(String[] args) throws InvalidCommandLineException {
         String configName = null;
         String inputFileName = null;

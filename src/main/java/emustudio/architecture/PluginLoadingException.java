@@ -1,9 +1,5 @@
 /*
- * PluginLoadingException.java
- *
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,7 +23,6 @@ import emulib.plugins.Plugin;
 /**
  * This exception is thrown when a plugin could not be loaded.
  *
- * @author Peter Jakubco
  */
 public class PluginLoadingException extends Exception {
     private final Plugin source;

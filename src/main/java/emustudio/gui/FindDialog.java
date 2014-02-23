@@ -1,10 +1,5 @@
 /*
- * FindDialog.java
- *
- * Created on 1.4.2009, 11:26
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,10 +17,11 @@
  */
 package emustudio.gui;
 
+import emustudio.gui.utils.ConstantSizeButton;
 import emustudio.gui.utils.FindText;
-import emustudio.gui.utils.NiceButton;
 import emustudio.main.Main;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.PatternSyntaxException;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -34,6 +30,7 @@ import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -44,21 +41,19 @@ import javax.swing.event.ListDataListener;
 
 /**
  * The find dialog. It searches for text within the source code editor.
- *
- * @author  vbmacher
  */
-@SuppressWarnings("serial")
 public class FindDialog extends javax.swing.JDialog {
-    private static final ArrayList<String> list = new ArrayList<>();
-    private static final ArrayList<String> rlist = new ArrayList<>();
+    private static final List<String> list = new ArrayList<>();
+    private static final List<String> rlist = new ArrayList<>();
     private JTextPane textPane;
+    private final FindText finder;
 
     private class CMBModel implements ComboBoxModel {
 
         private int in = -1;
-        private final ArrayList<String> clist;
+        private final List<String> clist;
 
-        public CMBModel(ArrayList<String> clist) {
+        public CMBModel(List<String> clist) {
             this.clist = clist;
         }
 
@@ -95,20 +90,13 @@ public class FindDialog extends javax.swing.JDialog {
         }
     }
 
-    /**
-     * Creates new find dialog instance.
-     *
-     * @param parent parent frame
-     * @param modal whether this dialog should be modal
-     * @param pane an object containing the all text, where the search process
-     * will be executed.
-     */
-    public FindDialog(StudioFrame parent, boolean modal, JTextPane pane) {
+    public FindDialog(JFrame parent, FindText finder, boolean modal, JTextPane pane) {
         super(parent, modal);
         this.textPane = pane;
+        this.finder = finder;
         initComponents();
 
-        switch (FindText.getInstance().getDirection()) {
+        switch (finder.getDirection()) {
             case FindText.DIRECTION_TO_END:
                 endRadio.setSelected(true);
                 break;
@@ -119,14 +107,14 @@ public class FindDialog extends javax.swing.JDialog {
                 allRadio.setSelected(true);
                 break;
         }
-        caseCheck.setSelected(FindText.getInstance().isCaseSensitive());
-        wholeCheck.setSelected(FindText.getInstance().isWholeWords());
+        caseCheck.setSelected(finder.isCaseSensitive());
+        wholeCheck.setSelected(finder.isWholeWords());
 
         cmbSearch.setModel(new CMBModel(list));
         cmbReplace.setModel(new CMBModel(rlist));
 
-        String str = FindText.getInstance().getFindExpr();
-        String rstr = FindText.getInstance().replacement;
+        String str = finder.getFindExpr();
+        String rstr = finder.replacement;
         for (int i = 0; i < list.size(); i++) {
             if (((String) list.get(i)).equals(str)) {
                 cmbSearch.setSelectedIndex(i);
@@ -146,11 +134,11 @@ public class FindDialog extends javax.swing.JDialog {
 
     private String saveGUI() {
         if (endRadio.isSelected()) {
-            FindText.getInstance().setDirection(FindText.DIRECTION_TO_END);
+            finder.setDirection(FindText.DIRECTION_TO_END);
         } else if (startRadio.isSelected()) {
-            FindText.getInstance().setDirection(FindText.DIRECTION_TO_START);
+            finder.setDirection(FindText.DIRECTION_TO_START);
         } else {
-            FindText.getInstance().setDirection(FindText.DIRECTION_ALL);
+            finder.setDirection(FindText.DIRECTION_ALL);
         }
 
         byte checks = 0;
@@ -160,7 +148,7 @@ public class FindDialog extends javax.swing.JDialog {
         if (wholeCheck.isSelected()) {
             checks |= FindText.WHOLE_WORDS;
         }
-        FindText.getInstance().setParams(checks);
+        finder.setParams(checks);
 
         String str = (String) cmbSearch.getEditor().getItem();
         if (!str.equals("") && !list.contains(str)) {
@@ -170,7 +158,7 @@ public class FindDialog extends javax.swing.JDialog {
             cmbSearch.getEditor().setItem(str);
         }
         String rstr = (String) cmbReplace.getEditor().getItem();
-        FindText.getInstance().replacement = rstr;
+        finder.replacement = rstr;
         if (!rstr.equals("") && !rlist.contains(rstr)) {
             rlist.add(rstr);
             cmbReplace.setModel(new CMBModel(rlist));
@@ -191,10 +179,10 @@ public class FindDialog extends javax.swing.JDialog {
         endRadio = new JRadioButton();
         startRadio = new JRadioButton();
         allRadio = new JRadioButton();
-        NiceButton btnSearch = new NiceButton();
+        ConstantSizeButton btnSearch = new ConstantSizeButton();
         JLabel lblReplaceWith = new JLabel();
         cmbReplace = new JComboBox();
-        NiceButton btnReplace = new NiceButton();
+        ConstantSizeButton btnReplace = new ConstantSizeButton();
         JButton btnReplaceAll = new JButton();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -291,12 +279,11 @@ public class FindDialog extends javax.swing.JDialog {
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         String str = saveGUI();
         try {
-            FindText.getInstance().createPattern(str);
-            if (FindText.getInstance().findNext(textPane.getText(),
+            finder.createPattern(str);
+            if (finder.findNext(textPane.getText(),
                     textPane.getCaretPosition(),
                     textPane.getDocument().getEndPosition().getOffset() - 1)) {
-                textPane.select(FindText.getInstance().getMatchStart(),
-                        FindText.getInstance().getMatchEnd());
+                textPane.select(finder.getMatchStart(), finder.getMatchEnd());
                 textPane.grabFocus();
                 dispose();
             } else {
@@ -311,9 +298,9 @@ public class FindDialog extends javax.swing.JDialog {
     private void replaceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceButtonActionPerformed
         String str = saveGUI();
         try {
-            FindText.getInstance().createPattern(str);
-            FindText.getInstance().replacement = (String) cmbReplace.getEditor().getItem();
-            if (FindText.getInstance().replaceNext(textPane)) {
+            finder.createPattern(str);
+            finder.replacement = (String) cmbReplace.getEditor().getItem();
+            if (finder.replaceNext(textPane)) {
                 textPane.grabFocus();
                 dispose();
             } else {
@@ -328,9 +315,9 @@ public class FindDialog extends javax.swing.JDialog {
     private void replaceAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceAllButtonActionPerformed
         String str = saveGUI();
         try {
-            FindText.getInstance().createPattern(str);
-            FindText.getInstance().replacement = (String) cmbReplace.getEditor().getItem();
-            if (FindText.getInstance().replaceAll(textPane)) {
+            finder.createPattern(str);
+            finder.replacement = (String) cmbReplace.getEditor().getItem();
+            if (finder.replaceAll(textPane)) {
                 textPane.grabFocus();
                 dispose();
             } else {

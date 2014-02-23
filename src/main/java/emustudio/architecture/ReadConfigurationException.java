@@ -1,9 +1,5 @@
 /*
- * ReadConfigurationException.java
- *
  * KISS, YAGNI, DRY
- * 
- * Copyright (C) 2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,14 +20,12 @@ package emustudio.architecture;
 
 /**
  * This exception is thrown when virtual computer configuration could not be read.
- * 
- * @author vbmacher
  */
 public class ReadConfigurationException extends Exception {
     public ReadConfigurationException(String message, Throwable cause) {
         super(message, cause);
     }
-    
+
     public ReadConfigurationException(String message) {
         super(message);
     }

@@ -1,9 +1,5 @@
 /*
- * ElementPopUpMenu.java
- *
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2011-2012, Peter Jakubčo
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -32,7 +28,6 @@ import javax.swing.JPopupMenu;
  * This class represents pop-up menu that shows up when a user clicks with
  * right button on drawing canvas in abstract schema editor.
  *
- * @author vbmacher
  */
 public class ElementPopUpMenu extends JPopupMenu {
     private final JMenuItem anItem;

@@ -1,9 +1,5 @@
 /*
- * NiceButton.java
- * 
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,11 +23,8 @@ import javax.swing.JButton;
 
 /**
  * A button with the constant size.
- *
- * @author vbmacher
  */
-@SuppressWarnings("serial")
-public class NiceButton extends JButton {
+public class ConstantSizeButton extends JButton {
 
     private final static int NB_WIDTH = 95;
     private static int NB_HEIGHT = 30;
@@ -41,11 +34,7 @@ public class NiceButton extends JButton {
         NB_HEIGHT = metrics.getHeight() + 9;
     }
 
-    /**
-     * Creates an instance of this button.
-     * 
-     */
-    public NiceButton() {
+    public ConstantSizeButton() {
         super();
         setHeight();
         Dimension d = getPreferredSize();

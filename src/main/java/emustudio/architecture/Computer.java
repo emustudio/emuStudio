@@ -1,9 +1,5 @@
 /*
- * Computer.java
- * 
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2013, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,15 +27,14 @@ import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
 import emulib.runtime.interfaces.PluginConnections;
 import emustudio.architecture.ArchitectureLoader.PluginInfo;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * This class implements virtual computer architecture.
- * 
- * @author vbmacher
- */
 public class Computer implements PluginConnections {
     private final static Logger LOGGER = LoggerFactory.getLogger(Computer.class);
     private final CPU cpu;
@@ -51,16 +46,6 @@ public class Computer implements PluginConnections {
     private final Map<Long, Plugin> plugins;
     private final Collection<PluginInfo> pluginsInfo;
 
-    /**
-     * Creates new Computer instance.
-     *
-     * @param cpu CPU object
-     * @param memory Memory object
-     * @param compiler Compiler object
-     * @param devices array of Device objects
-     * @param plugins collection of all plug-ins` information
-     * @param connections hashtable with all connections. Keys and values are plug-in IDs.
-     */
     public Computer(CPU cpu, Memory memory, Compiler compiler, Device[] devices, Collection<PluginInfo> plugins,
             Map<Long, List<Long>> connections) {
         this.cpu = cpu;
@@ -76,83 +61,38 @@ public class Computer implements PluginConnections {
         }
     }
 
-    /**
-     * Get a plug-in by given ID.
-     *
-     * @param pluginID ID of requested plug-in
-     * @return plug-in object
-     */
     public Plugin getPlugin(long pluginID) {
         return plugins.get(pluginID);
     }
-    
-    /**
-     * Get all plugins information
-     * 
-     * @return collection of PluginInfo objects
-     */
+
     public Collection<PluginInfo> getPluginsInfo() {
         return pluginsInfo;
     }
 
-    /**
-     * Get CPU plug-in.
-     *
-     * @return CPU plug-in object
-     */
     public CPU getCPU() {
         return cpu;
     }
 
-    /**
-     * Get compiler plug-in.
-     *
-     * @return Compiler plug-in object
-     */
     public Compiler getCompiler() {
         return compiler;
     }
 
-    /**
-     * Get memory plug-in.
-     *
-     * @return Memory plug-in object
-     */
     public Memory getMemory() {
         return memory;
     }
 
-    /**
-     * Get array of device plug-ins.
-     *
-     * @return array of Device plug-in object
-     */
     public Device[] getDevices() {
         return devices;
     }
 
-    /**
-     * Get a device plug-in by specific position.
-     *
-     * @param index position of the device in the devices array
-     * @return Device plug-in object
-     */
     public Device getDevice(int index) {
         return devices[index];
     }
 
-    /**
-     * Get devices count.
-     *
-     * @return devices count
-     */
     public int getDeviceCount() {
         return devices.length;
     }
 
-    /**
-     * Perform reset of all plugins 
-     */
     public void resetPlugins() {
         Collection<Plugin> pluginObjects = plugins.values();
         Iterator<Plugin> iterator = pluginObjects.iterator();
@@ -162,9 +102,6 @@ public class Computer implements PluginConnections {
         }
     }
 
-    /**
-     * Destroys this computer
-     */
     public void destroy() {
         if (compiler != null) {
             try {
@@ -198,12 +135,6 @@ public class Computer implements PluginConnections {
         connections.clear();
     }
 
-    /**
-     * This method initializes all plug-ins
-     *
-     * @param settings settings manipulation object
-     * @return true if initialization was successful, false otherwise
-     */
     public boolean initialize(SettingsManager settings) {
         if ((compiler != null) && (!compiler.initialize(settings))) {
             LOGGER.error("Could not initialize compiler.");
@@ -233,12 +164,6 @@ public class Computer implements PluginConnections {
         return true;
     }
 
-    /**
-     * Get plug-in type.
-     *
-     * @param pluginID plugin ID
-     * @return plug-in type. If the plug-in doesn't exist, return null.
-     */
     @Override
     public PLUGIN_TYPE getPluginType(long pluginID) {
         Plugin plugin = plugins.get(pluginID);

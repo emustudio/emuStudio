@@ -1,10 +1,5 @@
 /*
- * ConnectionLine.java
- *
- * Created on 4.7.2008, 9:43:39
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2008-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,8 +31,6 @@ import java.util.List;
  * The connection line within the abstract schemas.
  *
  * The line can connect two and only two different elements.
- *
- * @author vbmacher
  */
 public class ConnectionLine {
     /**
@@ -67,26 +60,14 @@ public class ConnectionLine {
      */
     private Element e2;
 
-    /**
-     * Line points.
-     */
     private final List<Point> points;
 
     private static final BasicStroke thickLine = new BasicStroke(2);
 
-    /**
-     * Color of the line
-     */
     private final Color lineColor;
 
-    /**
-     * Whether this line is selected by the user
-     */
     private boolean selected;
 
-    /**
-     * Holds true, if the line connection is bidirectional, false otherwise.
-     */
     private boolean bidirectional;
 
     /**
@@ -109,14 +90,6 @@ public class ConnectionLine {
 
     private final Schema schema;
 
-    /**
-     * Create new ConnectionLine object.
-     *
-     * @param e1 first connection element
-     * @param e2 last connection element
-     * @param points middle-ponits arraylist
-     * @param schema schema
-     */
     public ConnectionLine(Element e1, Element e2, List<Point> points, Schema schema) {
         this.e1 = e1;
         this.e2 = e2;
@@ -137,16 +110,6 @@ public class ConnectionLine {
         this.schema = schema;
     }
 
-    /**
-     * This method computes an intersection of two lines (not line segments).
-     *
-     * @param l1s Point of the first point of the first line
-     * @param l1e Point of the ending point of the first line
-     * @param l2s Point of the first point of the second line
-     * @param l2e Point of the ending point of the second line
-     * @return the intersection point of two lines if they have one; null
-     * instead
-     */
     private static Point intersection(Point l1s, Point l1e, Point l2s, Point l2e) {
         int div;
         int p_x, p_y;
@@ -164,10 +127,6 @@ public class ConnectionLine {
         return new Point(p_x, p_y);
     }
 
-    /**
-     * This method computes one or bidirectional arrows positions.
-     *
-     */
     private void computeArrows() {
         computeElementArrow(e2, e1);
         computeElementArrow(e1, e2);

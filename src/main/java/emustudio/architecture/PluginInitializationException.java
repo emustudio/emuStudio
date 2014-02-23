@@ -1,9 +1,5 @@
 /*
- * PluginInitializationException.java
- *
  * KISS, YAGNI, DRY
- * 
- * Copyright (C) 2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,8 +20,6 @@ package emustudio.architecture;
 
 /**
  * This exception is thrown when plugins could not be initialized.
- * 
- * @author Peter Jakubco
  */
 public class PluginInitializationException extends Exception {
 

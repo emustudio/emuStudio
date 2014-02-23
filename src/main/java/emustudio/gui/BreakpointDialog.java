@@ -1,10 +1,5 @@
 /*
- * BreakpointDialog.java
- *
- * Created on 1.4.2009, 10:04
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,27 +18,24 @@
 package emustudio.gui;
 
 import emulib.runtime.RadixUtils;
-import emustudio.gui.utils.NiceButton;
+import emustudio.gui.utils.ConstantSizeButton;
 import emustudio.main.Main;
-import javax.swing.*;
+import javax.swing.GroupLayout;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
+import javax.swing.LayoutStyle;
+import javax.swing.WindowConstants;
 
 /**
  * The breakpoint dialog - it asks user for the address where should be
  * set or unset the breakpoint.
- *
- * @author  vbmacher
  */
 @SuppressWarnings("serial")
 public class BreakpointDialog extends JDialog {
     private int adr = -1; // if adr == -1 then it means cancel
     private boolean set = false;
 
-    /**
-     * Create breakpoint dialog instance.
-     *
-     * @param parent parent frame
-     * @param modal whether this dialog should be modal
-     */
     public BreakpointDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
@@ -51,20 +43,10 @@ public class BreakpointDialog extends JDialog {
         txtAddress.grabFocus();
     }
 
-    /**
-     * Return the breakpoint address
-     * @return address or memory location, where the breakpoint should be
-     * set/unset.
-     */
     public int getAddress() {
         return adr;
     }
 
-    /**
-     * Determine whether the breakpoint should be set or unset.
-     *
-     * @return true whether the breakpoint should be set, false otherwise.
-     */
     public boolean isSet() {
         return set;
     }
@@ -72,8 +54,8 @@ public class BreakpointDialog extends JDialog {
     private void initComponents() {
         lblSetUnset = new JLabel();
         txtAddress = new JTextField();
-        btnSet = new NiceButton();
-        btnUnset = new NiceButton();
+        btnSet = new ConstantSizeButton();
+        btnUnset = new ConstantSizeButton();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Set/unset breakpoint");
@@ -124,7 +106,7 @@ public class BreakpointDialog extends JDialog {
 
         pack();
     }
-    
+
     private boolean parseAddress() {
         try {
             adr = RadixUtils.getInstance().parseRadix(txtAddress.getText());
@@ -152,8 +134,8 @@ public class BreakpointDialog extends JDialog {
         dispose();
     }
 
-    private NiceButton btnSet;
-    private NiceButton btnUnset;
+    private ConstantSizeButton btnSet;
+    private ConstantSizeButton btnUnset;
     private JLabel lblSetUnset;
     private JTextField txtAddress;
 }

@@ -1,7 +1,4 @@
 /*
- * HighlightThread.java
- *
- * Created on 21.8.2008, 8:56:32
  * KISS, YAGNI, DRY
  *
  * Copyright (C) 2001, Stephen Ostermiller
@@ -41,8 +38,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * The syntax highlighting thread.
- *
- * @author vbmacher
  */
 public class HighlightThread extends Thread {
     private final static Logger logger = LoggerFactory.getLogger(HighlightThread.class);
@@ -54,7 +49,6 @@ public class HighlightThread extends Thread {
      * and we need to be able to retrieve ranges from it, it is stored in a
      * balanced tree.
      */
-    @SuppressWarnings("unchecked")
     private final SortedSet<DocPosition> iniPositions = new TreeSet<>(new DocPositionComparator());
     /**
      * As we go through and remove invalid positions we will also be finding
@@ -116,14 +110,6 @@ public class HighlightThread extends Thread {
 
     private final Map<Integer, HighlightStyle> styles;
 
-    /**
-     * Create an instance of the syntax highlighting thread.
-     *
-     * @param lex lexical analyzer taken from the compiler
-     * @param lexReader document reader object of the source code
-     * @param document the document containing the source code
-     * @param styles styles for particular token types
-     */
     public HighlightThread(LexicalAnalyzer lex, DocumentReader lexReader,
             HighLightedDocument document,
             Map<Integer, HighlightStyle> styles) {
@@ -141,13 +127,6 @@ public class HighlightThread extends Thread {
         start();
     }
 
-    /**
-     * retrieve the style for the given type of text.
-     *
-     * @param styleName the label for the type of text ("tag" for example)
-     *      or null if the styleName is not known.
-     * @return the style
-     */
     private SimpleAttributeSet getStyle(int type) {
         return ((SimpleAttributeSet) styles.get(type));
     }
@@ -394,9 +373,6 @@ public class HighlightThread extends Thread {
         }
     }
 
-    /**
-     * Method informs this thread to stop.
-     */
     public void stopMe() {
         shouldStop = true;
         synchronized (lock) {
@@ -412,9 +388,6 @@ public class HighlightThread extends Thread {
         }
     }
 
-    /**
-     * Color or recolor the entire document
-     */
     public void colorAll() {
         synchronized (lock) {
             v.clear();

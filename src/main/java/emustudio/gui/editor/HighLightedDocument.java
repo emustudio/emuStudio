@@ -1,9 +1,5 @@
 /*
- * HighLightedDocument.java
- *
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2009-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,32 +21,17 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.DefaultStyledDocument;
 
 /**
- * Just like a DefaultStyledDocument but intercepts inserts and
- * removes to color them.
+ * Just like a DefaultStyledDocument but intercepts inserts and removes to color them.
  */
-@SuppressWarnings("serial")
 public class HighLightedDocument extends DefaultStyledDocument {
 
     private HighlightThread high;
     private DocumentReader documentReader;
 
-    /**
-     * Set the document reader object for this syntax highlighter.
-     * The document reader should be initialized by the source code
-     * already.
-     *
-     * @param documentReader the DoucmentReader object
-     */
     public void setDocumentReader(DocumentReader documentReader) {
         this.documentReader = documentReader;
     }
 
-    /**
-     * Assign a Thread object that will execute the syntax highlighting
-     * process.
-     *
-     * @param high the syntax highlighting thread
-     */
     public synchronized void setThread(HighlightThread high) {
         this.high = high;
     }
@@ -74,22 +55,22 @@ public class HighLightedDocument extends DefaultStyledDocument {
             high.color(evt.getOffset(), evt.getLength());
         }
     }
-    
+
     /**
      * Performs the update of the document reader and re-color needed parts,
      * when a text is removed from the document.
      *
      * It should be called whenever a text is removed from somewhere in the
      * source code.
-     * 
+     *
      * @param evt the change event
-     */ 
+     */
     @Override
     public void fireRemoveUpdate(DocumentEvent evt) {
         super.fireRemoveUpdate(evt);
         int offs = evt.getOffset();
         int len = -evt.getLength();
-        
+
         if (documentReader != null) {
             documentReader.update(offs, len);
         }

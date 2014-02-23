@@ -1,10 +1,5 @@
 /*
- * ArchitectureLoader.java
- *
- * Created on Utorok, 2007, august 7, 11:11
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2007-2013, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -171,10 +166,6 @@ public class ArchitectureLoader implements ConfigurationManager {
         }
     }
 
-    /**
-     * This forbids of creating the instance of this class. This class is
-     * a singleton.
-     */
     private ArchitectureLoader() {
     }
 
@@ -455,17 +446,6 @@ public class ArchitectureLoader implements ConfigurationManager {
             Class<Plugin> mainClass = loadPlugin(plugin.dirName, plugin.pluginName);
             plugin.mainClass = mainClass;
         }
-//        if (pluginLoader.canResolveClasses(Main.password)) {
-//            // Resolve all plug-in classes
-//            pluginLoader.resolveLoadedClasses(Main.password);
-//        } else {
-//            if (pluginLoader.loadUndoneClasses(Main.password)) {
-//                pluginLoader.resolveLoadedClasses(Main.password);
-//            } else {
-//                throw new PluginLoadingException("Cannot load all classes of plug-ins:"
-//                        + Arrays.toString(pluginLoader.getUnloadedClassesList(Main.password)), "[unknown]", null);
-//            }
-//        }
         LOGGER.info("All plugins are loaded and resolved.");
     }
 

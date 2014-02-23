@@ -1,10 +1,5 @@
 /*
- * Schema.java
- *
- * Created on 6.7.2008, 17:08:51
  * KISS, YAGNI, DRY
- *
- * Copyright (C) 2008-2012, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,16 +29,9 @@ import java.util.Properties;
  * This class represents abstract schema of virtual computer configuration. It is created by the schema editor and used
  * by ArchLoader. It is a graphics model of the virtual computer.
  *
- * @author vbmacher
  */
 public class Schema {
-    /**
-     * Minimum left margin for all elements and line points within the schema
-     */
     public final static int MIN_LEFT_MARGIN = 5;
-    /**
-     * Minimum top margin for all elements and line points within the schema
-     */
     public final static int MIN_TOP_MARGIN = 5;
 
     private CompilerElement compilerElement;
@@ -264,20 +252,10 @@ public class Schema {
         return a;
     }
 
-    /**
-     * Gets all connection lines that exist within this schema.
-     *
-     * @return ArrayList object of all connection lines
-     */
     public List<ConnectionLine> getConnectionLines() {
         return lines;
     }
 
-    /**
-     * Method adds new connection line to this schema. If it is null, nothing is done.
-     *
-     * @param conLine connection line to add
-     */
     public void addConnectionLine(ConnectionLine conLine) {
         if (conLine == null) {
             return;
@@ -285,11 +263,6 @@ public class Schema {
         lines.add(conLine);
     }
 
-    /**
-     * Removes specified connection line. If the index is out of the boundaries, nothing is done.
-     *
-     * @param index index to an array of connection lines
-     */
     public void removeConnectionLine(int index) {
         if ((index < 0) || (index >= lines.size())) {
             return;
@@ -297,21 +270,10 @@ public class Schema {
         lines.remove(index);
     }
 
-    /**
-     * Removes specified connection line. If the line is not included in the schema, nothing is done.
-     *
-     * @param line the connection line to remove
-     */
     public void removeConnectionLine(ConnectionLine line) {
         lines.remove(line);
     }
 
-    /**
-     * Gets an element that is located under the given point. It is used in the drawing panel.
-     *
-     * @param p Point that all elements locations are compared to
-     * @return crossing element, or null if it was not found
-     */
     public Element getCrossingElement(Point p) {
         if (p == null) {
             return null;
@@ -347,48 +309,22 @@ public class Schema {
         return null;
     }
 
-    /**
-     * Determine if the grid is used within the schema.
-     *
-     * @return true if the schema uses grid, false otherwise
-     */
     public boolean isGridUsed() {
         return useGrid;
     }
 
-    /**
-     * Return grid cells gap (i.e. cell size)
-     *
-     * @return grid cells gap
-     */
     public int getGridGap() {
         return gridGap;
     }
 
-    /**
-     * Set whether to use grid in the schema.
-     *
-     * @param useGrid true if the schema uses grid, false otherwise
-     */
     public void setUsingGrid(boolean useGrid) {
         this.useGrid = useGrid;
     }
 
-    /**
-     * Set grid cells gap (i.e. cell size)
-     *
-     * @param gridGap grid cells gap
-     */
     public void setGridGap(int gridGap) {
         this.gridGap = gridGap;
     }
 
-    /**
-     * Get a connection line that crosses given point.
-     *
-     * @param p Point that the crossing is checked
-     * @return connection line object if the point is crossing this line, null otherwise
-     */
     public ConnectionLine getCrossingLine(Point p) {
         for (ConnectionLine line : lines) {
             if (line.getCrossPoint(p, ConnectionLine.TOLERANCE) != -1) {
@@ -433,9 +369,6 @@ public class Schema {
         }
     }
 
-    /**
-     * Select all elements and lines.
-     */
     public void selectAll() {
         for (Element elem : getAllElements()) {
             elem.setSelected(true);
@@ -445,9 +378,6 @@ public class Schema {
         }
     }
 
-    /**
-     * Deselects all elements and lines.
-     */
     public void deselectAll() {
         for (Element elem : getAllElements()) {
             elem.setSelected(false);
@@ -500,9 +430,6 @@ public class Schema {
         return true;
     }
 
-    /**
-     * Deletes all selected elements.
-     */
     public void deleteSelected() {
         List<Element> allElements = getAllElements();
 
