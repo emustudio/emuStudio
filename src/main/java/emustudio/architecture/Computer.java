@@ -17,8 +17,6 @@
  */
 package emustudio.architecture;
 
-import emulib.annotations.PLUGIN_TYPE;
-import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.Plugin;
 import emulib.plugins.compiler.Compiler;
@@ -162,16 +160,6 @@ public class Computer implements PluginConnections {
         // the last operation - reset of all plugins
         resetPlugins();
         return true;
-    }
-
-    @Override
-    public PLUGIN_TYPE getPluginType(long pluginID) {
-        Plugin plugin = plugins.get(pluginID);
-        if (plugin == null) {
-            return null;
-        }
-        PluginType pluginType = plugin.getClass().getAnnotation(PluginType.class);
-        return pluginType.type();
     }
 
     /**
