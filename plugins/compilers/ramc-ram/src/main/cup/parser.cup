@@ -1,0 +1,165 @@
+/*
+ * RAMParser.java
+ *
+ * Parser (syntactic analyzer for RAM)
+ *
+ * Copyright (C) 2009-2013 Peter Jakubčo
+ * KISS, YAGNI, DRY
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+package net.sf.emustudio.ram.compiler.impl;
+
+import emulib.plugins.compiler.Message;
+import emulib.plugins.compiler.Message.MessageType;
+import emulib.plugins.compiler.Token;
+import java.util.ArrayList;
+import java.util.List;
+import java_cup.runtime.Symbol;
+import net.sf.emustudio.ram.compiler.tree.*;
+import net.sf.emustudio.ram.memory.RAMInstruction;
+
+init with {: errorCount = 0; :}
+parser code {:
+    private RAMCompiler ram = null;
+    public Token lastToken;
+    public int errorCount = 0;
+    private String reportPrefixString = null;
+    
+    public RAMParser(java_cup.runtime.Scanner s, RAMCompiler ram) {
+        this(s);
+        this.ram = ram;
+    }
+    	
+    public void syntax_error(Symbol current) {
+        errorCount++;
+        report_error("Syntax error: ",current);
+    }
+
+    public void unrecovered_syntax_error(Symbol current) {
+        errorCount++;
+        report_error("Fatal syntax error: ", current);
+        done_parsing();
+    }
+
+    public void report_error(String messageText, Symbol current) {
+        Token token = (Token)current;
+
+        messageText = messageText + token.getErrorString() + " ('"+token.getText()+"')";
+        if (reportPrefixString != null) {
+            messageText = reportPrefixString + messageText;
+        }
+
+        Message message = new Message(MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(),
+                null, errorCount);
+
+        if (ram != null) {
+            ram.notifyOnMessage(message);
+        } else {
+            System.out.println(message);
+        }
+    }
+
+    public void setReportPrefixString(String str) {
+        this.reportPrefixString = str;
+    }
+
+:}
+
+terminal HALT,LOAD,STORE,READ,WRITE,ADD,SUB,MUL,DIV,JMP,JZ,JGTZ;
+terminal EOL;
+terminal DIRECT,INDIRECT;
+terminal String NUMBER, IDENT, LABELL,STRING;
+terminal TCOMMENT, INPUT;
+
+non terminal Program Program;
+non terminal Row Row;
+non terminal RAMInstructionImpl Statement;
+non terminal Comment;
+non terminal Integer Number;
+non terminal Label LabelOpt;
+non terminal List StringVector;
+
+start with Program;
+
+Program ::= Row:row
+            {:
+                Program program = new Program();
+                if (row != null) program.addRow(row);
+                RESULT = program;
+            :}
+          | Program:program EOL Row:row
+            {:
+                if (row != null) program.addRow(row);
+                RESULT = program;
+            :};
+
+Row ::= LabelOpt:label Statement:stmt Comment
+        {: RESULT = new Row(stmt, label); :}
+      | LabelOpt:label Comment
+        {: RESULT = (label==null)?null:new Row(label); :}
+      | INPUT StringVector:vector 
+        {: RESULT = new Row(vector); :};
+
+StringVector ::= STRING:str
+                 {: 
+                     ArrayList<String> v = new ArrayList<String>();
+                     v.add(str);
+                     RESULT = v;
+                 :}
+               | StringVector:v STRING:str
+                 {:
+                     v.add(str);
+                     RESULT = v;
+                 :};
+
+Comment ::= TCOMMENT | ;
+
+LabelOpt ::= LABELL:label {: RESULT = new Label(label); :}
+           |             {: RESULT = null; :}
+           ;
+
+
+Statement ::= READ Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.READ, (char)0, num); :}
+            | READ INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.READ, '*', num); :}
+            | WRITE DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.WRITE, '=', str); :}
+            | WRITE Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.WRITE, (char)0, num); :}
+            | WRITE INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.WRITE, '*', num); :}
+            | LOAD DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.LOAD, '=', str); :}
+            | LOAD Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.LOAD, (char)0, num); :}
+            | LOAD INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.LOAD, '*', num); :}
+            | STORE Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.STORE, (char)0, num); :}
+            | STORE INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.STORE, '*', num); :}
+            | ADD DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.ADD, '=', str); :}
+            | ADD Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.ADD, (char)0, num); :}
+            | ADD INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.ADD, '*', num); :}
+            | SUB DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.SUB, '=', str); :}
+            | SUB Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.SUB, (char)0, num); :}
+            | SUB INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.SUB, '*', num); :}
+            | MUL DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.MUL, '=', str); :}
+            | MUL Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.MUL, (char)0, num); :}
+            | MUL INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.MUL, '*', num); :}
+            | DIV DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.DIV, '=', str); :}
+            | DIV Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.DIV, (char)0, num); :}
+            | DIV INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.DIV, '*', num); :}
+            | JMP IDENT:label {: RESULT = new RAMInstructionImpl(RAMInstruction.JMP, label); :}
+            | JZ IDENT:label {: RESULT = new RAMInstructionImpl(RAMInstruction.JZ, label); :}
+            | JGTZ IDENT:label {: RESULT = new RAMInstructionImpl(RAMInstruction.JGTZ, label); :}
+            | HALT  {: RESULT = new RAMInstructionImpl(RAMInstruction.HALT, (char)0,0); :}
+            ;
+
+Number ::= NUMBER:num {: RESULT = Integer.parseInt((String)num); :};
+
