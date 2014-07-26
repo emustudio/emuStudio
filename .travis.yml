@@ -4,6 +4,12 @@ jdk:
 
 script: mvn -Pcoveralls test jacoco:report coveralls:jacoco
 
+matrix:
+  fast_finish: true
+
+branches:
+  only:
+    - branch-0_39
 env:
   global:
   - EMUSTUDIO_USERNAME=vbmacher

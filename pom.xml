@@ -3,7 +3,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-                            
+
   <groupId>net.sf.emustudio</groupId>
   <artifactId>emustudio-parent</artifactId>
   <version>0.39-SNAPSHOT</version>
@@ -44,7 +44,7 @@
       <timezone>+1</timezone>
     </developer>
   </developers>
- 
+
   <modules>
     <module>pom-emustudio.xml</module>
     <module>plugins/compilers/ramc-ram</module>
@@ -422,6 +422,10 @@
 
   <repositories>
     <repository>
+      <id>codehaus</id>
+      <url>http://repository.codehaus.org</url>
+    </repository>
+    <repository>
       <id>emustudio-repository</id>
       <name>emuStudio Repository</name>
       <url>http://emustudio.sf.net/repository/</url>
@@ -429,6 +433,10 @@
   </repositories>
 
   <pluginRepositories>
+    <pluginRepository>
+      <id>codehaus</id>
+      <url>http://repository.codehaus.org</url>
+    </pluginRepository>
     <pluginRepository>
       <id>emustudio-plugin-repository</id>
       <name>emuStudio Repository</name>
@@ -443,6 +451,4 @@
       <url>sftp://web.sourceforge.net:/home/project-web/emustudio/htdocs/repository</url>
     </repository>
   </distributionManagement>
-
-
 </project>
