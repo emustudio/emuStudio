@@ -60,7 +60,7 @@
     <module>plugins/devices/brainduck-terminal</module>
     <module>plugins/devices/88-disk</module>
     <module>plugins/devices/88-sio</module>
-    <module>plugins/devices/simPseudo-z80</module>
+    <module>plugins/devices/simhPseudo-z80</module>
     <module>plugins/mem/brainduck-mem</module>
     <module>plugins/mem/ram-mem</module>
     <module>plugins/mem/standard-mem</module>
