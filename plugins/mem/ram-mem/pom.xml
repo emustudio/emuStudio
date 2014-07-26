@@ -12,7 +12,7 @@
   <artifactId>ram-mem</artifactId>
   <packaging>jar</packaging>
 
-  <name>Program memory for RAM machine</name>
+  <name>RAM Memory</name>
   <description>
     Program memory for Random Acces Machine (RAM)
   </description>
