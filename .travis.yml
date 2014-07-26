@@ -2,8 +2,6 @@ language: java
 jdk:
 - oraclejdk7
 
-script: mvn -Pcoveralls test jacoco:report coveralls:jacoco
-
 matrix:
   fast_finish: true
 
@@ -19,5 +17,6 @@ env:
       zoLX5zkwFy3paduesm5JkM1I1K7fwJ0RCscCOoxeu+Z2khw6m10=
 
 after_success:
-- python add_server.py
-- mvn clean deploy --settings ~/.m2/mySettings.xml
+  - mvn -Pcoveralls clean cobertura:cobertura coveralls:cobertura
+  - python add_server.py
+  - mvn clean deploy --settings ~/.m2/mySettings.xml
