@@ -40,9 +40,3 @@ will not recognize the plug-in until restart. Don't forget to check the compatib
 distribution.
 
 For more information, please visit [emuStudio home page](http://emustudio.sourceforge.net/downloads.html).
-
-License
--------
-
-This project is released under GNU GPL v2 license.
-
