@@ -1,0 +1,121 @@
+/*
+ * BDParser.java
+ *
+ * Parser (syntactic analyzer for BrainDuck)
+ *
+ * Copyright (C) 2009-2012 Peter Jakubčo
+ * KISS, YAGNI, DRY
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+package net.sf.emustudio.brainduck.brainc.impl;
+
+import java_cup.runtime.Symbol;
+import emulib.plugins.compiler.Token;
+import net.sf.emustudio.brainduck.brainc.tree.*;
+import emulib.plugins.compiler.Message;
+import emulib.plugins.compiler.Message.MessageType;
+
+init with {: errorCount = 0; :}
+parser code {:
+    private CompilerImpl compiler = null;
+    public Token lastToken;
+    public int errorCount = 0;
+    
+    public ParserBD(java_cup.runtime.Scanner s, CompilerImpl compiler) {
+        this(s);
+        this.compiler = compiler;
+    }
+    	
+    public void syntax_error(Symbol current) {
+        errorCount++;
+        report_error("Syntax error: ",current);
+    }
+
+    public void unrecovered_syntax_error(Symbol current) {
+        errorCount++;
+        report_error("Fatal syntax error: ", current);
+        done_parsing();
+    }
+
+    public void report_error(String messageText, Symbol current) {
+        Token token = (Token)current;
+        Message message = new Message(MessageType.TYPE_ERROR, messageText + token.getErrorString() + " ('"+token.getText()+"')",
+                token.getLine()+1, token.getColumn(), null, errorCount);
+        if (compiler != null) {
+            compiler.notifyOnMessage(message);
+        } else {
+            System.out.println(message.getFormattedMessage());
+        }
+    }
+:}
+
+terminal HALT,INC,DEC,INCV,DECV,PRINT,LOAD,LOOP,ENDL;
+terminal EOL;
+terminal String NUMBER;
+terminal TCOMMENT;
+
+non terminal Program Program;
+non terminal Instruction Instruction, Row;
+non terminal Comment;
+non terminal Integer Number;
+
+start with Program;
+
+Program ::= Row:row
+            {:
+                Program program = new Program();
+                if (row != null) {
+                    program.add(row);
+                }
+                RESULT = program;
+            :} |
+            Program:program EOL Row:row
+            {:
+                if (row != null) {
+                    program.add(row);
+                }
+                RESULT = program;
+            :};
+
+Row ::= Instruction:instruction Comment
+        {: RESULT = instruction; :} |
+        Comment
+        {: RESULT = null; :};
+         
+Comment ::= TCOMMENT | ;
+
+Instruction ::=
+            INC Number:num   {: RESULT = new InstructionWithOperand(InstructionWithOperand.INC, num);   :} |
+            DEC Number:num   {: RESULT = new InstructionWithOperand(InstructionWithOperand.DEC, num);   :} |
+            INCV Number:num  {: RESULT = new InstructionWithOperand(InstructionWithOperand.INCV, num);  :} |
+            DECV Number:num  {: RESULT = new InstructionWithOperand(InstructionWithOperand.DECV, num);  :} |
+            PRINT Number:num {: RESULT = new InstructionWithOperand(InstructionWithOperand.PRINT, num); :} |
+            LOAD Number:num  {: RESULT = new InstructionWithOperand(InstructionWithOperand.LOAD, num);  :} |
+
+            INC   {: RESULT = new InstructionNoOperands(InstructionNoOperands.INC);   :} |
+            DEC   {: RESULT = new InstructionNoOperands(InstructionNoOperands.DEC);   :} |
+            INCV  {: RESULT = new InstructionNoOperands(InstructionNoOperands.INCV);  :} |
+            DECV  {: RESULT = new InstructionNoOperands(InstructionNoOperands.DECV);  :} |
+            PRINT {: RESULT = new InstructionNoOperands(InstructionNoOperands.PRINT); :} |
+            LOAD  {: RESULT = new InstructionNoOperands(InstructionNoOperands.LOAD);  :} |
+            LOOP  {: RESULT = new InstructionNoOperands(InstructionNoOperands.LOOP);  :} |
+            ENDL  {: RESULT = new InstructionNoOperands(InstructionNoOperands.ENDL);  :} |
+            HALT  {: RESULT = new InstructionNoOperands(InstructionNoOperands.HALT);  :}
+            ;
+
+Number ::= NUMBER:num {: RESULT = Integer.parseInt((String)num)&0xFF; :};
+
