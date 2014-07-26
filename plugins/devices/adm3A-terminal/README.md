@@ -1,7 +1,5 @@
 LSI ADM-3A terminal plug-in
 ---------------------------
-[![Build Status](https://travis-ci.org/vbmacher/adm3A-terminal.png)](https://travis-ci.org/vbmacher/adm3A-terminal)
-[![Coverage Status](https://coveralls.io/repos/vbmacher/adm3A-terminal/badge.png?branch=branch-0_17)](https://coveralls.io/r/vbmacher/adm3A-terminal?branch=branch-0_17)
 
 The project represents an emulator of [ADM-3A](http://en.wikipedia.org/wiki/ADM-3A)
 terminal device from LSI company. It was used with old computers, e.g. MITS Altair8800.

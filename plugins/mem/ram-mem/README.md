@@ -1,14 +1,11 @@
 Program memory plug-in for Random Access Machine (RAM)
 ------------------------------------------------------
-[![Build Status](https://travis-ci.org/vbmacher/ram-mem.png)](https://travis-ci.org/vbmacher/ram-mem)
-[![Coverage Status](https://coveralls.io/repos/vbmacher/ram-mem/badge.png?branch=branch-0_13)](https://coveralls.io/r/vbmacher/ram-mem?branch=branch-0_13)
 
 This project represents program memory (or program tape) of Random Access Machine, used in theoretical
 informatics. It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based
 computer emulation platform\*.
 
-This plug-in can be used only with [ramc-ram](https://github.com/vbmacher/ramc-ram) compiler and
-[ram-cpu](https://github.com/vbmacher/ram-cpu) virtual processor. 
+This plug-in can be used only with `ramc-ram` compiler and `ram-cpu` RAM emulator. 
 Originally, RAM is of Harvard architecture, but it is implemented also in the emuStudio, as an example
 of the possibility to implement non-von Neumann computers. However, it is more complex for now.
 

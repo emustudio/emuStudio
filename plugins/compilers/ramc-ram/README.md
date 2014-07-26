@@ -1,8 +1,5 @@
 Compiler for Random Access Machine (RAM)
 ----------------------------------------
-[![Build Status](https://travis-ci.org/vbmacher/ramc-ram.png)](https://travis-ci.org/vbmacher/ramc-ram)
-[![Coverage Status](https://coveralls.io/repos/vbmacher/ramc-ram/badge.png?branch=branch-0_14)](https://coveralls.io/r/vbmacher/ramc-ram?branch=branch-0_14)
-
 
 This project is a compiler for abstract machine RAM, used in theoretical informatics, written in Java.
 It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based computer

@@ -1,7 +1,5 @@
 BrainDuck text terminal plug-in
 -------------------------------
-[![Build Status](https://travis-ci.org/vbmacher/brainduck-terminal.png)](https://travis-ci.org/vbmacher/brainduck-terminal)
-[![Coverage Status](https://coveralls.io/repos/vbmacher/brainduck-terminal/badge.png?branch=branch-0_13)](https://coveralls.io/r/vbmacher/brainduck-terminal?branch=branch-0_13)
 
 This project is text terminal for BrainDuck architecture. BrainDuck is abstract
 machine based on esoteric programming language [brainfuck](http://en.wikipedia.org/wiki/Brainfuck).
@@ -9,8 +7,7 @@ It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a softw
 computer emulation platform\*.
 
 The project has been created as teaching material for people who want to create plug-ins for emuStudio.
-The device can be used only with [brain-cpu](https://github.com/vbmacher/brainduck-cpu), because the
-device assumes special CPU context.
+The device can be used only with `brain-cpu` plug-in, because the device assumes special CPU context.
 
 The terminal is implemented as simple as possible. It is in fact an output tape that can roll in only 'down'
 direction. Therefore it's impossible to write chars to any screen position, as it is in classic terminals.

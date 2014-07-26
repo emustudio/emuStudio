@@ -1,7 +1,5 @@
 Zilog Z80 CPU plug-in
 ----------------------
-[![Build Status](https://travis-ci.org/vbmacher/z80-cpu.png)](https://travis-ci.org/vbmacher/z80-cpu)
-[![Coverage Status](https://coveralls.io/repos/vbmacher/z80-cpu/badge.png?branch=branch-0_17)](https://coveralls.io/r/vbmacher/z80-cpu?branch=branch-0_17)
 
 This project is Java-based emulator of 8-bit Zilog Z80 CPU. It is implemented as a plug-in for
 [emuStudio](http://emustudio.sf.net), a software-based computer emulation platform\*.

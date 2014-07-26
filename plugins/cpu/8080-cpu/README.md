@@ -1,7 +1,5 @@
 Intel 8080 CPU plug-in
 -----------------------
-[![Build Status](https://travis-ci.org/vbmacher/8080-cpu.png)](https://travis-ci.org/vbmacher/8080-cpu)
-[![Coverage Status](https://coveralls.io/repos/vbmacher/8080-cpu/badge.png?branch=branch-0_20)](https://coveralls.io/r/vbmacher/8080-cpu?branch=branch-0_20)
 
 This is another Java-based emulator of 8-bit Intel 8080 CPU. It is implemented as a plug-in for
 [emuStudio](http://emustudio.sf.net), a software-based computer emulation platform\*.

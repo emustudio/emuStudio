@@ -1,0 +1,254 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>net.sf.emustudio</groupId>
+    <artifactId>emustudio-parent</artifactId>
+    <version>0.39-SNAPSHOT</version>
+    <relativePath>.</relativePath>
+  </parent>
+
+  <artifactId>emuStudio</artifactId>
+  <packaging>jar</packaging>
+
+  <name>emuStudio Main Module</name>
+
+  <build>
+    <finalName>emustudio</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.4</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <classpathPrefix>lib/</classpathPrefix>
+              <mainClass>emustudio.main.Main</mainClass>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+            </manifest>
+            <manifestEntries>
+              <Class-Path>.</Class-Path>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.4</version>
+        <configuration>
+          <descriptors>
+            <descriptor>src/assemble/distribution.xml</descriptor>
+          </descriptors>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id> <!-- this is used for inheritance merges -->
+            <phase>package</phase> <!-- bind to the packaging phase -->
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>3.0-beta-3</version>
+        <configuration>
+          <outputDirectory>${basedir}/target/site</outputDirectory>
+          <reportPlugins>
+            <plugin>
+              <groupId>com.soebes.maven.plugins.dmg</groupId>
+              <artifactId>doxygen-maven-plugin</artifactId>
+              <version>1.0.1</version>
+              <configuration>
+                  <!-- <configurationFile>./Doxyfile</configurationFile> -->
+                  <doxyfileEncoding>UTF-8</doxyfileEncoding>
+                  <projectName>${project.name}</projectName>
+                  <projectNumber>${project.version}</projectNumber>
+                  <repeatBrief>true</repeatBrief>
+                  <javadocAutobrief>true</javadocAutobrief>
+                  <optimizeOutputJava>true</optimizeOutputJava>
+                  <idlPropertySupport>false</idlPropertySupport>
+                  <input>./src</input>
+                  <inputEncoding>UTF-8</inputEncoding>
+                  <recursive>true</recursive>
+                  <umlLook>true</umlLook>
+                  <haveDot>true</haveDot>
+                  <callGraph>true</callGraph>
+                  <callerGraph>true</callerGraph>
+                  <dotCleanup>true</dotCleanup>
+              </configuration>
+            </plugin>
+          </reportPlugins>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymock</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>cup</groupId>
+      <artifactId>java-cup-runtime</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>net.sf.emustudio</groupId>
+      <artifactId>emuLib</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+  </dependencies>
+
+  <profiles>
+    <profile>
+      <id>coveralls</id>
+      <activation>
+        <property>
+          <name>env.TRAVIS</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.6.4.201312101107</version>
+            <executions>
+              <execution>
+                <id>prepare-agent</id>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.eluder.coveralls</groupId>
+            <artifactId>coveralls-maven-plugin</artifactId>
+            <version>1.1.0</version>
+            <configuration>
+              <serviceName>travis-ci</serviceName>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <!--
+            Profile for creating emuStudio distribution. Use with command:
+              mvn -P dist assembly:single
+      -->
+      <id>dist</id>
+      <dependencies>
+        <!-- compilers -->
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>as-8080</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>as-z80</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>ramc-ram</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>brainc-brainduck</artifactId>
+        </dependency>
+
+        <!-- devices -->
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>88-disk</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>88-sio</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>abstractTape-ram</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>adm3A-terminal</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>simhPseudo-z80</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>terminal-brainduck</artifactId>
+        </dependency>
+
+        <!-- memories -->
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>ram-mem</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>standard-mem</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>brainduck-mem</artifactId>
+        </dependency>
+
+        <!-- cpus -->
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>8080-cpu</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>ram-cpu</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>z80-cpu</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>brainduck-cpu</artifactId>
+        </dependency>
+
+        <!-- emuStudio -->
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>emuStudio</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+</project>

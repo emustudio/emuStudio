@@ -1,7 +1,5 @@
 SIMH Pseudo-device plug-in
 --------------------------
-[![Build Status](https://travis-ci.org/vbmacher/simhPseudo-z80.png)](https://travis-ci.org/vbmacher/simhPseudo-z80)
-[![Coverage Status](https://coveralls.io/repos/vbmacher/simhPseudo-z80/badge.png?branch=branch-0_13)](https://coveralls.io/r/vbmacher/simhPseudo-z80?branch=branch-0_13)
 
 The aim of this project is to mimic functionality of pseudo device that is implemented
 inside [simh](http://simh.trailing-edge.com/) emulator. It is used for the interaction
@@ -9,8 +7,7 @@ between emulated programs and the emuStudio (eg. CP/M 3 operating system assembl
 the SIMH emulator uses this device). It is implemented as a plug-in for
 [emuStudio](http://emustudio.sf.net), a software-based computer emulation platform\*.
 
-In the present time it can be used side by side with [Intel 8080](https://github.com/vbmacher/8080-cpu)
-or [Zilog Z80](https://github.com/vbmacher/z80-cpu) CPU plug-ins.
+In the present time it can be used side by side with `8080-cpu` or `z80-cpu` plug-ins.
 
 Features
 --------

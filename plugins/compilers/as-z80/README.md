@@ -1,15 +1,12 @@
 Zilog Z80 Assembler plug-in
 ----------------------------
-[![Build Status](https://travis-ci.org/vbmacher/as-z80.png)](https://travis-ci.org/vbmacher/as-z80)
-[![Coverage Status](https://coveralls.io/repos/vbmacher/as-z80/badge.png?branch=branch-0_17)](https://coveralls.io/r/vbmacher/as-z80?branch=branch-0_17)
-
 
 This project is my own version of assembler for Z80 processor, written in Java.
 It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based computer
 emulation platform\*.
 
-The assembler syntax is inspired by my [Intel 8080 assembler](https://github.com/vbmacher/as-8080)
-project and by instruction list found at [this](http://nemesis.lonestar.org/computers/tandy/software/apps/m4/qd/opcodes.html)
+The assembler syntax is inspired by my `as-8080` compiler plug-in
+and by instruction list found at [this](http://nemesis.lonestar.org/computers/tandy/software/apps/m4/qd/opcodes.html)
 link. The assembler supports following features:
 
 * Support of full instruction set,

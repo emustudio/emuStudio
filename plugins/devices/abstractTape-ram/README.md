@@ -1,17 +1,16 @@
 Abstract tape for Random Access Machine
 ----------------------------------------
-[![Build Status](https://travis-ci.org/vbmacher/abstractTape-ram.png)](https://travis-ci.org/vbmacher/abstractTape-ram)
-[![Coverage Status](https://coveralls.io/repos/vbmacher/abstractTape-ram/badge.png?branch=branch-0_22)](https://coveralls.io/r/vbmacher/abstractTape-ram?branch=branch-0_22)
 
 This project represents an 'abstract tape' that is used in abstract machines, such as Random
 Access Machine (RAM), or Turing machine. It is implemented as a plug-in for
 [emuStudio](http://emustudio.sf.net), a software-based computer emulation platform\*.
 
-In the present time, only RAM machine emulator exists within the emuStudio. The device then
-represents either input, output or register tape of the RAM machine (it needs all three tapes).
-The program tape is represented by [ram-mem](https://github.com/vbmacher/ram-mem) plug-in. 
-The RAM emulator, [ram-cpu](https://github.com/vbmacher/ram-cpu) plug-in, assigns the function
-of the tape during initialization process (user is not responsible of this).
+In the present time, only RAM machine emulator exists within the emuStudio (`ram-cpu`).
+The device then represents either input, output or register tape of the RAM machine (it
+needs all three tapes).
+
+The program tape is represented by `ram-mem` plug-in. The RAM emulator (`ram-cpu`)
+assigns the function of the tape during initialization process (user is not responsible of this).
 
 Installation
 ------------

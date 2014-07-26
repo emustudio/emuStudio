@@ -1,17 +1,13 @@
 88-DISK plug-in
 ---------------
-[![Build Status](https://travis-ci.org/vbmacher/88-disk.png)](https://travis-ci.org/vbmacher/88-disk)
-[![Coverage Status](https://coveralls.io/repos/vbmacher/88-disk/badge.png?branch=branch-0_28)](https://coveralls.io/r/vbmacher/88-disk?branch=branch-0_28)
-
 
 This project is an emulator of MITS 88-DISK device, used in MITS Altair8800 computers.
 The device has been a disk controller that is plugged into S-BUS bus. It is implemented
 as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based computer emulation
 platform\*.
 
-In the present time it can be used side by side with
-[Intel 8080](https://github.com/vbmacher/8080-cpu) or [Zilog Z80](https://github.com/vbmacher/z80-cpu)
-CPU plug-ins. The plug-in supports up to 16 disk drives that are controlled by three I/O ports
+In the present time it can be used side by side with `8080-cpu` or `z80-cpu` plug-ins.
+The plug-in supports up to 16 disk drives that are controlled by three I/O ports
 attached to the CPU. 
 
 Programming

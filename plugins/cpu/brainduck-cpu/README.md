@@ -1,7 +1,5 @@
 BrainDuck CPU plug-in
 ----------------------
-[![Build Status](https://travis-ci.org/vbmacher/brainduck-cpu.png)](https://travis-ci.org/vbmacher/brainduck-cpu)
-[![Coverage Status](https://coveralls.io/repos/vbmacher/brainduck-cpu/badge.png?branch=branch-0_14)](https://coveralls.io/r/vbmacher/brainduck-cpu?branch=branch-0_14) 
 
 BrainDuck is abstract computer architecture based on esoteric programming language 
 [brainfuck](http://en.wikipedia.org/wiki/Brainfuck). This project represents Java-based

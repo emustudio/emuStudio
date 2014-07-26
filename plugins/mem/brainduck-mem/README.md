@@ -1,7 +1,5 @@
 BrainDuck operating memory plug-in
 -----------------------------------
-[![Build Status](https://travis-ci.org/vbmacher/brainduck-mem.png)](https://travis-ci.org/vbmacher/brainduck-mem)
-[![Coverage Status](https://coveralls.io/repos/vbmacher/brainduck-mem/badge.png?branch=branch-0_12)](https://coveralls.io/r/vbmacher/brainduck-mem?branch=branch-0_12)
 
 This project represents operating memory of abstract computer architecture called BrainDuck.
 It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based
