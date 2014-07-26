@@ -1,0 +1,10 @@
+emuLib:           4        | 5        | 6
+ramc-ram:         N/A      | N/A      | N/A
+ram-mem:          0.11b    | 0.11b    | 0.11b
+
+emuLib:           4        | 5        | 6        | 7     | 8
+ramc-ram:         0.1b     | 0.1b     | 0.1b     | 0.13b | 0.14b
+                  0.12b    | 0.12b    | 0.12b    |       |
+                  0.12-rc1 | 0.12-rc1 | 0.12-rc1 |       |
+ram-mem:          0.11-rc1 | 0.11-rc1 | 0.11-rc1 | 0.12b | 0.13b
+abstractTape-ram: N/A      | N/A      | N/A      | 0.21b | 0.22b
