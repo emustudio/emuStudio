@@ -1,0 +1,941 @@
+/*
+ * ParserZ80.java
+ *
+ * Parser (syntactic analyzer for Z80 assembler)
+ *
+ * Copyright (C) 2008-2013 Peter Jakubco
+ * KISS, YAGNI, DRY
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+package net.sf.emustudio.zilogZ80.assembler.impl;
+
+import java.util.ArrayList;
+import java_cup.runtime.Symbol;
+import emulib.plugins.compiler.Token;
+import net.sf.emustudio.zilogZ80.assembler.tree.*;
+import net.sf.emustudio.zilogZ80.assembler.treeAbstract.*;
+import emulib.plugins.compiler.Message;
+import emulib.plugins.compiler.Message.MessageType;
+
+init with {: errorCount = 0; lastLine = 0; lastColumn = 0; :}
+scan with {:
+    Token t = (Token)this.getScanner().next_token();
+    this.lastLine = t.getLine()+1;
+    this.lastColumn = t.getColumn()+1;
+    return (Symbol)t;
+ :}
+parser code {:
+    private CompilerImpl asm;
+    public int lastLine;
+    public int lastColumn;
+    public int errorCount = 0;
+    private String reportPrefixString = null;
+    
+    public ParserZ80(java_cup.runtime.Scanner s, CompilerImpl asm) {
+        this(s);
+        this.asm = asm;
+    }
+    
+    public CompilerImpl getAsm() {
+        return asm;
+    }
+    	
+    public void syntax_error(Symbol current) {
+        report_error("Syntax error: ",current);
+    }
+
+    public void unrecovered_syntax_error(Symbol current) {
+        report_error("Fatal syntax error: ", current);
+        done_parsing();
+    }
+
+    public void report_error(String messageText, Symbol current) {
+        Token token = (Token)current;
+
+        messageText = messageText + token.getErrorString() + " ('"+token.getText()+"')";
+        if (reportPrefixString != null) {
+            messageText = reportPrefixString + messageText;
+        }
+
+        Message message = new Message(MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(),
+                null, errorCount);
+
+        if (asm != null) {
+            asm.notifyOnMessage(message);
+        } else {
+            System.out.println(message);
+        }
+    }
+    
+    public void setReportPrefixString(String str) {
+        this.reportPrefixString = str;
+    }
+:}
+
+terminal RESERVED_ADC,RESERVED_ADD,RESERVED_AND,RESERVED_BIT,RESERVED_CALL,
+        RESERVED_CCF,RESERVED_CP,RESERVED_CPD,RESERVED_CPDR,RESERVED_CPI,
+        RESERVED_CPIR,RESERVED_CPL,RESERVED_DAA,RESERVED_DEC,RESERVED_DI,
+        RESERVED_DJNZ,RESERVED_EI,RESERVED_EX,RESERVED_EXX,RESERVED_HALT,
+        RESERVED_IM,RESERVED_IN,RESERVED_INC,RESERVED_IND,RESERVED_INDR,
+        RESERVED_INI,RESERVED_INIR,RESERVED_JP,RESERVED_JR,RESERVED_LD,
+        RESERVED_LDD,RESERVED_LDDR,RESERVED_LDI,RESERVED_LDIR,RESERVED_NEG,
+        RESERVED_NOP,RESERVED_OR,RESERVED_OTDR,RESERVED_OTIR,RESERVED_OUT,
+        RESERVED_OUTD,RESERVED_OUTI,RESERVED_POP,RESERVED_PUSH,RESERVED_RES,
+        RESERVED_RET,RESERVED_RETI,RESERVED_RETN,RESERVED_RL,RESERVED_RLA,
+        RESERVED_RLC,RESERVED_RLCA,RESERVED_RLD,RESERVED_RR,RESERVED_RRA,
+        RESERVED_RRC,RESERVED_RRCA,RESERVED_RRD,RESERVED_RST,RESERVED_SBC,
+        RESERVED_SCF,RESERVED_SET,RESERVED_SLA,RESERVED_SRA,RESERVED_SLL,
+        RESERVED_SRL,RESERVED_SUB,RESERVED_XOR,
+        RESERVED_C,RESERVED_NC,RESERVED_Z,RESERVED_NZ,RESERVED_M,RESERVED_P,
+        RESERVED_PE,RESERVED_PO;
+terminal PREPROCESSOR_ORG,PREPROCESSOR_EQU,PREPROCESSOR_VAR,
+        PREPROCESSOR_IF,PREPROCESSOR_ENDIF,PREPROCESSOR_MACRO,PREPROCESSOR_ENDM,
+        PREPROCESSOR_DB,PREPROCESSOR_DW,PREPROCESSOR_DS,PREPROCESSOR_ADDR,
+        PREPROCESSOR_INCLUDE;
+terminal REGISTERS_A,REGISTERS_B,REGISTERS_C,REGISTERS_D,REGISTERS_E,
+        REGISTERS_H,REGISTERS_L,REGISTERS_IX,REGISTERS_IY,REGISTERS_SP,
+        REGISTERS_BC,REGISTERS_DE,REGISTERS_HL,REGISTERS_AF,REGISTERS_AFF,
+        REGISTERS_I,REGISTERS_R;
+terminal SEPARATOR_LPAR,SEPARATOR_RPAR,SEPARATOR_COMMA,SEPARATOR_EOL,SEPARATOR_INDEXLPAR;
+terminal OPERATOR_ADD,OPERATOR_SUBTRACT,OPERATOR_MULTIPLY,OPERATOR_DIVIDE,
+        OPERATOR_MOD,OPERATOR_SHR,OPERATOR_SHL,OPERATOR_NOT,
+        OPERATOR_AND,OPERATOR_OR,OPERATOR_XOR,OPERATOR_EQUAL,
+        OPERATOR_LESS,OPERATOR_GREATER,OPERATOR_LE,OPERATOR_GE;
+terminal Integer LITERAL_DECIMAL_8BIT,LITERAL_DECIMAL_16BIT;
+terminal String LITERAL_STRING,TLABEL,TIDENTIFIER;
+terminal TCOMMENT;
+
+non terminal Program Program;
+non terminal Row Row;
+non terminal Label Label;
+non terminal Statement Statement;
+non terminal DataNode Datadef,DBList,DWList;
+non terminal Instruction Codedef;
+non terminal Pseudo Pseudo;
+non terminal DataDB DBData;
+non terminal DataDW DWData;
+non terminal Comment;
+non terminal InstrData Instruction;
+non terminal Expression Expression,Primarny;
+non terminal Integer BinaryOperator,UnaryOperator;
+non terminal ArrayList MacroOperands,MacroParameters,MacroParamsList,MacroOperList;
+non terminal Integer Reg,RegWA,RegRR,RegRY,RegRX,CondCC,CondCond,RegQQ;
+non terminal Integer RegRR_WSP;
+
+precedence left OPERATOR_OR,OPERATOR_XOR;
+precedence left OPERATOR_AND;
+precedence left OPERATOR_NOT;
+precedence nonassoc OPERATOR_EQUAL,OPERATOR_LESS,OPERATOR_GREATER,OPERATOR_LE,OPERATOR_GE;
+precedence left OPERATOR_ADD,OPERATOR_SUBTRACT;
+precedence left OPERATOR_MULTIPLY,OPERATOR_DIVIDE,OPERATOR_MOD,OPERATOR_SHL,
+                OPERATOR_SHR;
+
+start with Program;
+
+Program ::= Row:row
+            {:
+                Program program = new Program();
+                if (row != null) program.addRow(row);
+                RESULT = program;
+            :}|
+            Program:program SEPARATOR_EOL Row:row
+            {:
+                if (row != null) program.addRow(row);
+                RESULT = program;
+            :}|
+            Program:program error 
+            {: parser.errorCount++; RESULT = program; :};
+
+Row ::= Label:label Statement:stmt Comment
+        {:
+            if ((label == null) && (stmt == null)) RESULT = null;
+            else RESULT = new Row(label,stmt);
+        :};
+
+Label ::= TLABEL:name
+          {: RESULT = new Label(name,parser.lastLine,parser.lastColumn); :}|
+          {: RESULT = null; :};
+
+Comment ::= TCOMMENT | ;
+Statement ::= Instruction:instr
+              {: RESULT = instr; :}|
+              Pseudo:pseudo
+              {: RESULT = pseudo; :}|
+              {: RESULT = null; :};
+
+Instruction ::= Datadef:data
+                {: RESULT = data; :}|
+                Codedef:code
+                {: RESULT = code; :};
+
+Datadef ::= PREPROCESSOR_DB DBList:dblist
+            {: RESULT = dblist; :}|
+            PREPROCESSOR_DW DWList:dwlist
+            {: RESULT = dwlist; :}|
+            PREPROCESSOR_DS Expression:e
+            {:
+                DataNode dn = new DataNode(parser.lastLine,parser.lastColumn);
+                dn.addElement(new DataDS(e,parser.lastLine,parser.lastColumn));
+                RESULT= dn;
+            :};
+
+DBList ::= DBData:dbdata
+           {:
+               DataNode dn = new DataNode(parser.lastLine,parser.lastColumn);
+               dn.addElement(dbdata);
+               RESULT = dn;
+           :}|
+           DBList:dblist SEPARATOR_COMMA DBData:dbdata
+           {: dblist.addElement(dbdata); RESULT = dblist; :};
+
+DWList ::= DWData:dwdata
+           {:
+               DataNode dn = new DataNode(parser.lastLine,parser.lastColumn);
+               dn.addElement(dwdata);
+               RESULT = dn;
+           :}|
+           DWList:dwlist SEPARATOR_COMMA DWData:dwdata
+           {: dwlist.addElement(dwdata); RESULT = dwlist; :};
+
+DBData ::= Expression:e
+           {: RESULT = new DataDB(e,parser.lastLine,parser.lastColumn); :}|
+           LITERAL_STRING:str
+           {: RESULT = new DataDB(str,parser.lastLine,parser.lastColumn); :}|
+           Codedef:code
+           {: RESULT = new DataDB(code,parser.lastLine,parser.lastColumn); :};
+
+DWData ::= Expression:e
+           {: RESULT = new DataDW(e,parser.lastLine,parser.lastColumn); :};
+
+
+Expression ::= SEPARATOR_LPAR Expression:e SEPARATOR_RPAR
+               {: RESULT = e; :}|
+               Primarny:e
+               {: RESULT = e; :};
+
+Primarny ::= Expression:e1 BinaryOperator:op Expression:e2
+             {: RESULT = new Arithmetic(e1,e2,op); :}|
+             UnaryOperator:op Expression:e
+             {: RESULT = new Arithmetic(e,null,op); :}|
+             LITERAL_DECIMAL_8BIT:n
+             {: RESULT = new DecimalExpr(n); :}|
+             LITERAL_DECIMAL_16BIT:n
+             {: RESULT = new DecimalExpr(n); :}|
+             PREPROCESSOR_ADDR
+             {: RESULT = new Address(); :}|
+             TIDENTIFIER:name
+             {: RESULT = new Identifier(name,parser.lastLine,parser.lastColumn); :};
+
+UnaryOperator ::= OPERATOR_NOT
+                  {: RESULT = Arithmetic.NOT; :}|
+                  OPERATOR_ADD
+                  {: RESULT = Arithmetic.ADD; :}|
+                  OPERATOR_SUBTRACT
+                  {: RESULT = Arithmetic.MINUS; :};
+
+BinaryOperator ::= OPERATOR_OR
+                   {: RESULT = Arithmetic.OR; :}|
+                   OPERATOR_XOR
+                   {: RESULT = Arithmetic.XOR; :}|
+                   OPERATOR_AND
+                   {: RESULT = Arithmetic.AND; :}|
+                   OPERATOR_EQUAL
+                   {: RESULT = Arithmetic.EQ; :}|
+                   OPERATOR_LESS
+                   {: RESULT = Arithmetic.LESS; :}|
+                   OPERATOR_GREATER
+                   {: RESULT = Arithmetic.GREATER; :}|
+                   OPERATOR_LE
+                   {: RESULT = Arithmetic.LE; :}|
+                   OPERATOR_GE
+                   {: RESULT = Arithmetic.GE; :}|
+                   OPERATOR_ADD
+                   {: RESULT = Arithmetic.ADD; :}|
+                   OPERATOR_SUBTRACT
+                   {: RESULT = Arithmetic.MINUS; :}|
+                   OPERATOR_MULTIPLY
+                   {: RESULT = Arithmetic.MUL; :}|
+                   OPERATOR_DIVIDE
+                   {: RESULT = Arithmetic.DIV; :}|
+                   OPERATOR_MOD
+                   {: RESULT = Arithmetic.MOD; :}|
+                   OPERATOR_SHR
+                   {: RESULT = Arithmetic.SHR; :}|
+                   OPERATOR_SHL
+                   {: RESULT = Arithmetic.SHL; :};
+
+Pseudo ::= PREPROCESSOR_ORG Expression:e
+           {: RESULT = new PseudoORG(e,parser.lastLine, parser.lastColumn); :}|
+           TIDENTIFIER:name PREPROCESSOR_EQU Expression:e
+           {: RESULT = new PseudoEQU(name,e,parser.lastLine, parser.lastColumn); :}|
+           TIDENTIFIER:name PREPROCESSOR_VAR Expression:e
+           {: RESULT = new PseudoVAR(name,e,parser.lastLine, parser.lastColumn); :}|
+           PREPROCESSOR_IF Expression:e Comment SEPARATOR_EOL Program:s SEPARATOR_EOL PREPROCESSOR_ENDIF
+           {: RESULT = new PseudoIF(e,s,parser.lastLine, parser.lastColumn); :}|
+           TIDENTIFIER:name PREPROCESSOR_MACRO MacroOperands:opers Comment SEPARATOR_EOL Program:s PREPROCESSOR_ENDM
+           {: RESULT = new PseudoMACRO(name,opers,s,parser.lastLine, parser.lastColumn); :}|
+           TIDENTIFIER:name MacroParameters:params
+           {: RESULT = new PseudoMACROCall(name,params,parser.lastLine, parser.lastColumn); :}|
+           PREPROCESSOR_INCLUDE LITERAL_STRING:filename
+           {: RESULT = new PseudoINCLUDE(filename,parser.lastLine,parser.lastColumn, parser.getAsm()); :};
+
+MacroOperands ::= MacroOperList:operands
+                  {: RESULT = operands; :}|
+                  {: RESULT = null; :};
+
+MacroOperList ::= TIDENTIFIER:name
+                  {:
+                      ArrayList vec = new ArrayList();
+                      vec.add(name);
+                      RESULT = vec;
+                  :}|
+                  MacroOperList:operands SEPARATOR_COMMA TIDENTIFIER:name
+                  {: operands.add(name); RESULT = operands; :};
+
+MacroParameters ::= MacroParamsList:parameters
+                    {: RESULT = parameters; :}|
+                    {: RESULT = null; :}; 
+
+MacroParamsList ::= Expression:e
+                    {:
+                        ArrayList vec = new ArrayList();
+                        vec.add(e);
+                        RESULT = vec;
+                    :}|
+                    MacroParamsList:parameters SEPARATOR_COMMA Expression:e
+                    {: parameters.add(e); RESULT = parameters; :};
+
+Codedef ::= RESERVED_CCF
+            {: RESULT = new OC_NoParams(OC_NoParams.CCF,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_CPD
+            {: RESULT = new OC_NoParams(OC_NoParams.CPD,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_CPDR
+            {: RESULT = new OC_NoParams(OC_NoParams.CPDR,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_CPI
+            {: RESULT = new OC_NoParams(OC_NoParams.CPI,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_CPIR
+            {: RESULT = new OC_NoParams(OC_NoParams.CPIR,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_CPL
+            {: RESULT = new OC_NoParams(OC_NoParams.CPL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_DAA
+            {: RESULT = new OC_NoParams(OC_NoParams.DAA,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_DI
+            {: RESULT = new OC_NoParams(OC_NoParams.DI,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_EI
+            {: RESULT = new OC_NoParams(OC_NoParams.EI,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_EXX
+            {: RESULT = new OC_NoParams(OC_NoParams.EXX,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_HALT
+            {: RESULT = new OC_NoParams(OC_NoParams.HALT,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_IND
+            {: RESULT = new OC_NoParams(OC_NoParams.IND,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_INDR
+            {: RESULT = new OC_NoParams(OC_NoParams.INDR,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_INI
+            {: RESULT = new OC_NoParams(OC_NoParams.INI,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_INIR
+            {: RESULT = new OC_NoParams(OC_NoParams.INIR,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LDD
+            {: RESULT = new OC_NoParams(OC_NoParams.LDD,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LDDR
+            {: RESULT = new OC_NoParams(OC_NoParams.LDDR,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LDI
+            {: RESULT = new OC_NoParams(OC_NoParams.LDI,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LDIR
+            {: RESULT = new OC_NoParams(OC_NoParams.LDIR,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_NEG
+            {: RESULT = new OC_NoParams(OC_NoParams.NEG,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_NOP
+            {: RESULT = new OC_NoParams(OC_NoParams.NOP,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_OTDR
+            {: RESULT = new OC_NoParams(OC_NoParams.OTDR,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_OTIR
+            {: RESULT = new OC_NoParams(OC_NoParams.OTIR,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_OUTD
+            {: RESULT = new OC_NoParams(OC_NoParams.OUTD,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_OUTI
+            {: RESULT = new OC_NoParams(OC_NoParams.OUTI,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RETI
+            {: RESULT = new OC_NoParams(OC_NoParams.RETI,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RETN
+            {: RESULT = new OC_NoParams(OC_NoParams.RETN,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RLA
+            {: RESULT = new OC_NoParams(OC_NoParams.RLA,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RLCA
+            {: RESULT = new OC_NoParams(OC_NoParams.RLCA,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RLD
+            {: RESULT = new OC_NoParams(OC_NoParams.RLD,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RRA
+            {: RESULT = new OC_NoParams(OC_NoParams.RRA,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RRCA
+            {: RESULT = new OC_NoParams(OC_NoParams.RRCA,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RRD
+            {: RESULT = new OC_NoParams(OC_NoParams.RRD,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SCF
+            {: RESULT = new OC_NoParams(OC_NoParams.SCF,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_ADC REGISTERS_A SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.ADC_A_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_ADC REGISTERS_A SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.ADC_A_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_ADC REGISTERS_A SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.ADC_A_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_ADC REGISTERS_A SEPARATOR_COMMA Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.ADC,r,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_ADC REGISTERS_A SEPARATOR_COMMA Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.ADC,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_ADC REGISTERS_HL SEPARATOR_COMMA RegRR:r
+            {: RESULT = new OC_Reg(OC_Reg.ADC_HL,r,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_ADD REGISTERS_A SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.ADD_A_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_ADD REGISTERS_A SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.ADD_A_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_ADD REGISTERS_A SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.ADD_A_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_ADD REGISTERS_A SEPARATOR_COMMA Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.ADD,r,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_ADD REGISTERS_A SEPARATOR_COMMA Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.ADD,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_ADD REGISTERS_HL SEPARATOR_COMMA RegRR:r
+            {: RESULT = new OC_Reg(OC_Reg.ADD_HL,r,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_ADD REGISTERS_IX SEPARATOR_COMMA RegRX:r
+            {: RESULT = new OC_Reg(OC_Reg.ADD_IX,r,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_ADD REGISTERS_IY SEPARATOR_COMMA RegRY:r
+            {: RESULT = new OC_Reg(OC_Reg.ADD_IY,r,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_AND SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.AND_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_AND SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.ADD_A_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_AND SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.ADD_A_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_AND Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.AND,r,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_AND Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.AND,e,true,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_BIT Expression:e SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.BIT,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_BIT Expression:e1 SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e2 SEPARATOR_RPAR
+            {: RESULT = new OC_ExprExpr(OC_ExprExpr.BIT_IIX_NN,e1,e2,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_BIT Expression:e1 SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e2 SEPARATOR_RPAR
+            {: RESULT = new OC_ExprExpr(OC_ExprExpr.BIT_IIY_NN,e1,e2,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_BIT Expression:e SEPARATOR_COMMA Reg:r
+            {: RESULT = new OC_RegExpr(OC_RegExpr.BIT,e,r,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_CALL CondCC:cc SEPARATOR_COMMA Expression:e
+            {: RESULT = new OC_RegExpr(OC_RegExpr.CALL,cc,0,e,false,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_CALL Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.CALL,e,false,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_CP SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.CP_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_CP SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.CP_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_CP SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.CP_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_CP Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.CP,r,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_CP Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.CP,e,true,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_DEC SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.DEC_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_DEC SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.DEC_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_DEC SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.DEC_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_DEC REGISTERS_A
+            {: RESULT = new OC_NoParams(OC_NoParams.DEC_A,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_DEC RegWA:r
+            {:
+                int opcode = 0;
+                switch(r) {
+                    case 0: opcode = OC_NoParams.DEC_B; break;
+                    case 1: opcode = OC_NoParams.DEC_C; break;
+                    case 2: opcode = OC_NoParams.DEC_D; break;
+                    case 3: opcode = OC_NoParams.DEC_E; break;
+                    case 4: opcode = OC_NoParams.DEC_H; break;
+                    case 5: opcode = OC_NoParams.DEC_L; break;
+                }
+                RESULT = new OC_NoParams(opcode,parser.lastLine,parser.lastColumn);
+            :}|
+            RESERVED_DEC RegRR:r
+            {: RESULT = new OC_Reg(OC_Reg.DEC,r,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_DEC REGISTERS_IX
+            {: RESULT = new OC_NoParams(OC_NoParams.DEC_IX,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_DEC REGISTERS_IY
+            {: RESULT = new OC_NoParams(OC_NoParams.DEC_IY,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_DJNZ Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.DJNZ,e,true,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_EX SEPARATOR_LPAR REGISTERS_SP SEPARATOR_RPAR SEPARATOR_COMMA REGISTERS_HL
+            {: RESULT = new OC_NoParams(OC_NoParams.EX_SSPP_HL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_EX SEPARATOR_LPAR REGISTERS_SP SEPARATOR_RPAR SEPARATOR_COMMA REGISTERS_IX
+            {: RESULT = new OC_NoParams(OC_NoParams.EX_SSPP_IX,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_EX SEPARATOR_LPAR REGISTERS_SP SEPARATOR_RPAR SEPARATOR_COMMA REGISTERS_IY
+            {: RESULT = new OC_NoParams(OC_NoParams.EX_SSPP_IY,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_EX REGISTERS_DE SEPARATOR_COMMA REGISTERS_HL
+            {: RESULT = new OC_NoParams(OC_NoParams.EX_DDEE_HL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_EX REGISTERS_AF SEPARATOR_COMMA REGISTERS_AFF
+            {: RESULT = new OC_NoParams(OC_NoParams.EX_AF_AFF,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_IM Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.IM,e,true,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_IN REGISTERS_A SEPARATOR_COMMA SEPARATOR_LPAR Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.IN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_IN REGISTERS_A SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_C SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.IN_A,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_IN RegWA:r SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_C SEPARATOR_RPAR
+            {:
+                int opcode = 0;
+                switch(r) {
+                    case 0: opcode = OC_NoParams.IN_B; break;
+                    case 1: opcode = OC_NoParams.IN_C; break;
+                    case 2: opcode = OC_NoParams.IN_D; break;
+                    case 3: opcode = OC_NoParams.IN_E; break;
+                    case 4: opcode = OC_NoParams.IN_H; break;
+                    case 5: opcode = OC_NoParams.IN_L; break;
+                }
+                RESULT = new OC_NoParams(opcode,parser.lastLine,parser.lastColumn);
+            :}|
+
+            RESERVED_INC SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.INC_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_INC SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.INC_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_INC SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.INC_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_INC Reg:r
+            {:
+                int opcode = 0;
+                switch(r) {
+                    case 0: opcode = OC_NoParams.INC_B; break;
+                    case 1: opcode = OC_NoParams.INC_C; break;
+                    case 2: opcode = OC_NoParams.INC_D; break;
+                    case 3: opcode = OC_NoParams.INC_E; break;
+                    case 4: opcode = OC_NoParams.INC_H; break;
+                    case 5: opcode = OC_NoParams.INC_L; break;
+                    case 7: opcode = OC_NoParams.INC_A; break;
+                }
+                RESULT = new OC_NoParams(opcode,parser.lastLine,parser.lastColumn);
+            :}|
+            RESERVED_INC RegRR:rr
+            {: RESULT = new OC_Reg(OC_Reg.INC,rr,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_INC REGISTERS_IX
+            {: RESULT = new OC_NoParams(OC_NoParams.INC_IX,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_INC REGISTERS_IY
+            {: RESULT = new OC_NoParams(OC_NoParams.INC_IY,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_JP Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.JP,e,false,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_JP SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.JP_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_JP SEPARATOR_LPAR REGISTERS_IX SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.JP_IIXX,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_JP SEPARATOR_LPAR REGISTERS_IY SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.JP_IIYY,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_JP CondCC:cc SEPARATOR_COMMA Expression:e
+            {: RESULT = new OC_RegExpr(OC_RegExpr.JP,cc,0,e,false,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_JR Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.JR,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_JR CondCond:cc SEPARATOR_COMMA Expression:e
+            {: RESULT = new OC_RegExpr(OC_RegExpr.JR,cc,0,e,true,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_LD SEPARATOR_LPAR REGISTERS_BC SEPARATOR_RPAR SEPARATOR_COMMA REGISTERS_A
+            {: RESULT = new OC_NoParams(OC_NoParams.LD_BBCC_A,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD SEPARATOR_LPAR REGISTERS_DE SEPARATOR_RPAR SEPARATOR_COMMA REGISTERS_A
+            {: RESULT = new OC_NoParams(OC_NoParams.LD_DDEE_A,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR SEPARATOR_COMMA Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.LD_HHLL,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR SEPARATOR_COMMA Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.LD_HHLL_r,r,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e1 SEPARATOR_RPAR SEPARATOR_COMMA Expression:e2
+            {: RESULT = new OC_ExprExpr(OC_ExprExpr.LD_IIX_NN,e1,e2,false,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e1 SEPARATOR_RPAR SEPARATOR_COMMA Expression:e2
+            {: RESULT = new OC_ExprExpr(OC_ExprExpr.LD_IIY_NN,e1,e2,false,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR SEPARATOR_COMMA Reg:r
+            {: RESULT = new OC_RegExpr(OC_RegExpr.LD_IIX_NN,r,1,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR SEPARATOR_COMMA Reg:r
+            {: RESULT = new OC_RegExpr(OC_RegExpr.LD_IIY_NN,r,1,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD SEPARATOR_LPAR Expression:e SEPARATOR_RPAR SEPARATOR_COMMA REGISTERS_A
+            {: RESULT = new OC_Expr(OC_Expr.LD_NN_A,e,false,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD SEPARATOR_LPAR Expression:e SEPARATOR_RPAR SEPARATOR_COMMA RegRR:rr
+            {:
+                int opcode = 0;
+                switch(rr) {
+                    case 0: opcode = OC_Expr.LD_NN_BC; break;
+                    case 0x10: opcode = OC_Expr.LD_NN_DE; break;
+                    case 0x20: opcode = OC_Expr.LD_NN_HL; break;
+                    case 0x30: opcode = OC_Expr.LD_NN_SP; break;
+                }
+                RESULT = new OC_Expr(opcode,e,false,parser.lastLine,parser.lastColumn);
+            :}|
+            RESERVED_LD SEPARATOR_LPAR Expression:e SEPARATOR_RPAR SEPARATOR_COMMA REGISTERS_IX
+            {: RESULT = new OC_Expr(OC_Expr.LD_NN_IX,e,false,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD SEPARATOR_LPAR Expression:e SEPARATOR_RPAR SEPARATOR_COMMA REGISTERS_IY
+            {: RESULT = new OC_Expr(OC_Expr.LD_NN_IY,e,false,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_A SEPARATOR_COMMA SEPARATOR_INDEXLPAR REGISTERS_BC SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.LD_A_BBCC,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_A SEPARATOR_COMMA SEPARATOR_INDEXLPAR REGISTERS_DE SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.LD_A_DDEE,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_A SEPARATOR_COMMA SEPARATOR_INDEXLPAR Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.LD_A_NN,e,false,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_A SEPARATOR_COMMA REGISTERS_I
+            {: RESULT = new OC_NoParams(OC_NoParams.LD_A_I,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_A SEPARATOR_COMMA REGISTERS_R
+            {: RESULT = new OC_NoParams(OC_NoParams.LD_A_R,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD RegRR_WSP:rr SEPARATOR_COMMA SEPARATOR_INDEXLPAR Expression:e SEPARATOR_RPAR
+            {:
+                int opcode = 0;
+                switch(rr) {
+                    case 0: opcode = OC_Expr.LD_BC_NN; break;
+                    case 0x10: opcode = OC_Expr.LD_DE_NN; break;
+                    case 0x20: opcode = OC_Expr.LD_HL_NN; break;
+                }
+                RESULT = new OC_Expr(opcode,e,false,parser.lastLine,parser.lastColumn);
+            :}|
+            RESERVED_LD REGISTERS_SP SEPARATOR_COMMA SEPARATOR_INDEXLPAR Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.LD_SP_NN,e,false,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD RegRR_WSP:rr SEPARATOR_COMMA Expression:e
+            {: RESULT = new OC_RegExpr(OC_RegExpr.LD_RR,rr,0,e,false,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_SP SEPARATOR_COMMA Expression:e
+            {: RESULT = new OC_RegExpr(OC_RegExpr.LD_RR,0x30,0,e,false,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_I SEPARATOR_COMMA REGISTERS_A
+            {: RESULT = new OC_NoParams(OC_NoParams.LD_I,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_R SEPARATOR_COMMA REGISTERS_A
+            {: RESULT = new OC_NoParams(OC_NoParams.LD_R,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_IX SEPARATOR_COMMA SEPARATOR_INDEXLPAR Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.LD_IX_NN,e,false,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_IY SEPARATOR_COMMA SEPARATOR_INDEXLPAR Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.LD_IY_NN,e,false,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_IX SEPARATOR_COMMA Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.LD_IX,e,false,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_IY SEPARATOR_COMMA Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.LD_IY,e,false,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD RegWA:r SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {:
+                int opcode = 0;
+                switch(r) {
+                    case 0: opcode = OC_NoParams.LD_B_HHLL; break;
+                    case 1: opcode = OC_NoParams.LD_C_HHLL; break;
+                    case 2: opcode = OC_NoParams.LD_D_HHLL; break;
+                    case 3: opcode = OC_NoParams.LD_E_HHLL; break;
+                    case 4: opcode = OC_NoParams.LD_H_HHLL; break;
+                    case 5: opcode = OC_NoParams.LD_L_HHLL; break;
+                }
+                RESULT = new OC_NoParams(opcode,parser.lastLine,parser.lastColumn);
+            :}|
+            RESERVED_LD REGISTERS_A SEPARATOR_COMMA SEPARATOR_INDEXLPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.LD_A_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD RegWA:r SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {:
+                int opcode = 0;
+                switch(r) {
+                    case 0: opcode = OC_Expr.LD_B_IIX_NN; break;
+                    case 1: opcode = OC_Expr.LD_C_IIX_NN; break;
+                    case 2: opcode = OC_Expr.LD_D_IIX_NN; break;
+                    case 3: opcode = OC_Expr.LD_E_IIX_NN; break;
+                    case 4: opcode = OC_Expr.LD_H_IIX_NN; break;
+                    case 5: opcode = OC_Expr.LD_L_IIX_NN; break;
+                }
+                RESULT = new OC_Expr(opcode,e,true,parser.lastLine,parser.lastColumn);
+            :}|
+            RESERVED_LD RegWA:r SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {:
+                int opcode = 0;
+                switch(r) {
+                    case 0: opcode = OC_Expr.LD_B_IIY_NN; break;
+                    case 1: opcode = OC_Expr.LD_C_IIY_NN; break;
+                    case 2: opcode = OC_Expr.LD_D_IIY_NN; break;
+                    case 3: opcode = OC_Expr.LD_E_IIY_NN; break;
+                    case 4: opcode = OC_Expr.LD_H_IIY_NN; break;
+                    case 5: opcode = OC_Expr.LD_L_IIY_NN; break;
+                }
+                RESULT = new OC_Expr(opcode,e,true,parser.lastLine,parser.lastColumn);
+            :}|
+            RESERVED_LD REGISTERS_A SEPARATOR_COMMA SEPARATOR_INDEXLPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.LD_A_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_A SEPARATOR_COMMA SEPARATOR_INDEXLPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.LD_A_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_A SEPARATOR_COMMA Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.LD_A,r,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD RegWA:r1 SEPARATOR_COMMA Reg:r
+            {:
+                int opcode = 0;
+                switch(r1) {
+                    case 0: opcode = OC_Reg.LD_B; break;
+                    case 1: opcode = OC_Reg.LD_C; break;
+                    case 2: opcode = OC_Reg.LD_D; break;
+                    case 3: opcode = OC_Reg.LD_E; break;
+                    case 4: opcode = OC_Reg.LD_H; break;
+                    case 5: opcode = OC_Reg.LD_L; break;
+                }
+                RESULT = new OC_Reg(opcode,r,parser.lastLine,parser.lastColumn);
+            :}|
+            RESERVED_LD RegWA:r SEPARATOR_COMMA Expression:e
+            {:
+                int opcode = 0;
+                switch(r) {
+                    case 0: opcode = OC_Expr.LD_B; break;
+                    case 1: opcode = OC_Expr.LD_C; break;
+                    case 2: opcode = OC_Expr.LD_D; break;
+                    case 3: opcode = OC_Expr.LD_E; break;
+                    case 4: opcode = OC_Expr.LD_H; break;
+                    case 5: opcode = OC_Expr.LD_L; break;
+                }
+                RESULT = new OC_Expr(opcode,e,true,parser.lastLine,parser.lastColumn);
+            :}|
+            RESERVED_LD REGISTERS_A SEPARATOR_COMMA Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.LD_A,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_SP SEPARATOR_COMMA REGISTERS_HL
+            {: RESULT = new OC_NoParams(OC_NoParams.LD_SP_HL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_SP SEPARATOR_COMMA REGISTERS_IX
+            {: RESULT = new OC_NoParams(OC_NoParams.LD_SP_IX,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_LD REGISTERS_SP SEPARATOR_COMMA REGISTERS_IY
+            {: RESULT = new OC_NoParams(OC_NoParams.LD_SP_IY,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_OR SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.OR_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_OR SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.OR_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_OR SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.OR_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_OR Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.OR,r,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_OR Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.OR,e,true,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_OUT SEPARATOR_LPAR Expression:e SEPARATOR_RPAR SEPARATOR_COMMA REGISTERS_A
+            {: RESULT = new OC_Expr(OC_Expr.OUT,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_OUT SEPARATOR_LPAR REGISTERS_C SEPARATOR_RPAR SEPARATOR_COMMA Reg:r
+            {:
+                int opcode = 0;
+                switch(r) {
+                    case 0: opcode = OC_NoParams.OUT_B; break;
+                    case 1: opcode = OC_NoParams.OUT_C; break;
+                    case 2: opcode = OC_NoParams.OUT_D; break;
+                    case 3: opcode = OC_NoParams.OUT_E; break;
+                    case 4: opcode = OC_NoParams.OUT_H; break;
+                    case 5: opcode = OC_NoParams.OUT_L; break;
+                    case 7: opcode = OC_NoParams.OUT_A; break;
+                }
+                RESULT = new OC_NoParams(opcode,parser.lastLine,parser.lastColumn);
+            :}|
+
+            RESERVED_POP RegQQ:qq
+            {: RESULT = new OC_Reg(OC_Reg.POP,qq,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_POP REGISTERS_IX
+            {: RESULT = new OC_NoParams(OC_NoParams.POP_IX,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_POP REGISTERS_IY
+            {: RESULT = new OC_NoParams(OC_NoParams.POP_IY,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_PUSH RegQQ:qq
+            {: RESULT = new OC_Reg(OC_Reg.PUSH,qq,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_PUSH REGISTERS_IX
+            {: RESULT = new OC_NoParams(OC_NoParams.PUSH_IX,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_PUSH REGISTERS_IY
+            {: RESULT = new OC_NoParams(OC_NoParams.PUSH_IY,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_RES Expression:e SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.RES,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RES Expression:e1 SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e2 SEPARATOR_RPAR
+            {: RESULT = new OC_ExprExpr(OC_ExprExpr.RES_IIX_NN,e1,e2,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RES Expression:e1 SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e2 SEPARATOR_RPAR
+            {: RESULT = new OC_ExprExpr(OC_ExprExpr.RES_IIY_NN,e1,e2,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RES Expression:e SEPARATOR_COMMA Reg:r
+            {: RESULT = new OC_RegExpr(OC_RegExpr.RES,e,r,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_RET
+            {: RESULT = new OC_NoParams(OC_NoParams.RET,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RET CondCC:cc
+            {: RESULT = new OC_Reg(OC_Reg.RET,cc,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_RL SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.RL_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RL SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.RL_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RL SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.RL_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RL Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.RL,r,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_RLC SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.RLC_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RLC SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.RLC_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RLC SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.RLC_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RLC Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.RLC,r,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_RR SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.RR_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RR SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.RR_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RR SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.RR_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RR Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.RR,r,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_RRC SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.RRC_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RRC SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.RRC_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RRC SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.RRC_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_RRC Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.RRC,r,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_RST Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.RST,e,true,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_SBC REGISTERS_A SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.SBC_A_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SBC REGISTERS_A SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.SBC_A_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SBC REGISTERS_A SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.SBC_A_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SBC REGISTERS_A SEPARATOR_COMMA Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.SBC,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SBC REGISTERS_A SEPARATOR_COMMA Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.SBC,r,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SBC REGISTERS_HL SEPARATOR_COMMA RegRR:rr
+            {: RESULT = new OC_Reg(OC_Reg.SBC_HL,rr,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_SET Expression:e SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.SET,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SET Expression:e1 SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e2 SEPARATOR_RPAR
+            {: RESULT = new OC_ExprExpr(OC_ExprExpr.SET_IIX_NN,e1,e2,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SET Expression:e1 SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e2 SEPARATOR_RPAR
+            {: RESULT = new OC_ExprExpr(OC_ExprExpr.SET_IIY_NN,e1,e2,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SET Expression:e SEPARATOR_COMMA Reg:r
+            {: RESULT = new OC_RegExpr(OC_RegExpr.SET,e,r,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_SLA SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.SLA_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SLA SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.SLA_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SLA SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.SLA_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SLA Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.SLA,r,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_SRA SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.SRA_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SRA SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.SRA_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SRA SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.SRA_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SRA Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.SRA,r,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_SLL SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.SLL_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SLL SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.SLL_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SLL SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.SLL_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SLL Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.SLL,r,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_SRL SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.SRL_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SRL SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.SRL_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SRL SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.SRL_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SRL Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.SRL,r,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_SUB SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.SUB_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SUB SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.SUB_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SUB SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.SUB_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SUB Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.SUB,r,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_SUB Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.SUB,e,true,parser.lastLine,parser.lastColumn); :}|
+
+            RESERVED_XOR SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            {: RESULT = new OC_NoParams(OC_NoParams.XOR_HHLL,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_XOR SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.XOR_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_XOR SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            {: RESULT = new OC_Expr(OC_Expr.XOR_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_XOR Reg:r
+            {: RESULT = new OC_Reg(OC_Reg.XOR,r,parser.lastLine,parser.lastColumn); :}|
+            RESERVED_XOR Expression:e
+            {: RESULT = new OC_Expr(OC_Expr.XOR,e,true,parser.lastLine,parser.lastColumn); :};
+
+Reg ::=  REGISTERS_A {: RESULT = 7; :}|
+         REGISTERS_B {: RESULT = 0; :}|
+         REGISTERS_C {: RESULT = 1; :}|
+         REGISTERS_D {: RESULT = 2; :}|
+         REGISTERS_E {: RESULT = 3; :}|
+         REGISTERS_H {: RESULT = 4; :}|
+         REGISTERS_L {: RESULT = 5; :};
+
+RegWA ::= REGISTERS_B {: RESULT = 0; :}|
+          REGISTERS_C {: RESULT = 1; :}|
+          REGISTERS_D {: RESULT = 2; :}|
+          REGISTERS_E {: RESULT = 3; :}|
+          REGISTERS_H {: RESULT = 4; :}|
+          REGISTERS_L {: RESULT = 5; :};
+
+RegRR ::= REGISTERS_SP {: RESULT = 0x30; :}|
+          RegRR_WSP:r  {: RESULT = r; :};
+
+RegRR_WSP ::= REGISTERS_BC {: RESULT = 0; :}|
+              REGISTERS_DE {: RESULT = 0x10; :}|
+              REGISTERS_HL {: RESULT = 0x20; :};
+
+RegRX ::= REGISTERS_BC {: RESULT = 0; :}|
+          REGISTERS_DE {: RESULT = 0x10; :}|
+          REGISTERS_SP {: RESULT = 0x30; :}|
+          REGISTERS_IX {: RESULT = 0x20; :};
+
+RegRY ::= REGISTERS_BC {: RESULT = 0; :}|
+          REGISTERS_DE {: RESULT = 0x10; :}|
+          REGISTERS_SP {: RESULT = 0x30; :}|
+          REGISTERS_IY {: RESULT = 0x20; :};
+
+CondCC ::= RESERVED_C  {: RESULT = 0x18; :}|
+           RESERVED_NC {: RESULT = 0x10; :}|
+           RESERVED_Z  {: RESULT = 0x8; :}|
+           RESERVED_NZ {: RESULT = 0; :}|
+           RESERVED_M  {: RESULT = 0x38; :}|
+           RESERVED_P  {: RESULT = 0x30; :}|
+           RESERVED_PE {: RESULT = 0x28; :}|
+           RESERVED_PO {: RESULT = 0x20; :};
+
+CondCond ::= RESERVED_C  {: RESULT = 0x18; :}|
+             RESERVED_NC {: RESULT = 0x10; :}|
+             RESERVED_Z  {: RESULT = 0x8; :}|
+             RESERVED_NZ {: RESULT = 0x0; :};
+
+RegQQ ::= REGISTERS_AF {: RESULT = 0x30; :}|
+          REGISTERS_BC {: RESULT = 0; :}|
+          REGISTERS_DE {: RESULT = 0x10; :}|
+          REGISTERS_HL {: RESULT = 0x20; :};
+
