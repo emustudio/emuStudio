@@ -13,5 +13,5 @@ env:
       zoLX5zkwFy3paduesm5JkM1I1K7fwJ0RCscCOoxeu+Z2khw6m10=
 
 after_success:
-- python scripts/addServer.py
+- python add_server.py
 - mvn clean deploy --settings ~/.m2/mySettings.xml
