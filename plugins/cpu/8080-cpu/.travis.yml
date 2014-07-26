@@ -1,0 +1,17 @@
+language: java
+jdk:
+- oraclejdk6
+
+script: mvn -Pcoveralls test jacoco:report coveralls:jacoco
+
+env:
+  global:
+  - EMUSTUDIO_USERNAME=vbmacher
+  - secure: |-
+      mtecDar5I5ryFWDD5BL8/3Cj1BP6Xf7SnrYt1TuYjPxYJW8PtDvhxpT/laNg
+      VCkWVJAWax5Sf7tMGvwZmkbIZtH6F6yfNtKm4XMPg4e3wyMux2ldYkaFcgjC
+      l/UPAZ6jFw6KedRbIC3tCJzq3Ym1mFnyVkOV7DyggJFhs3CtMO8=
+
+after_success:
+- python scripts/addServer.py
+- mvn clean deploy --settings ~/.m2/mySettings.xml
