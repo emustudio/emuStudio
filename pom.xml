@@ -9,7 +9,7 @@
   <version>0.39-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>emuStudio</name>
+  <name>emuStudio Parent</name>
   <url>http://emustudio.sf.net</url>
   <description>Free, plugin-based software platform for computer emulation</description>
 
@@ -47,23 +47,23 @@
  
   <modules>
     <module>pom-emustudio.xml</module>
-    <module>plugins/compilers/as-8080</module>
-    <module>plugins/compilers/as-z80</module>
-    <module>plugins/compilers/brainc-brainduck</module>
     <module>plugins/compilers/ramc-ram</module>
-    <module>plugins/cpu/8080-cpu</module>
-    <module>plugins/cpu/z80-cpu</module>
-    <module>plugins/cpu/brainduck-cpu</module>
     <module>plugins/cpu/ram-cpu</module>
+    <module>plugins/mem/ram-mem</module>
     <module>plugins/devices/abstractTape-ram</module>
+    <module>plugins/compilers/as-8080</module>
+    <module>plugins/cpu/8080-cpu</module>
+    <module>plugins/compilers/as-z80</module>
+    <module>plugins/cpu/z80-cpu</module>
     <module>plugins/devices/adm3A-terminal</module>
-    <module>plugins/devices/brainduck-terminal</module>
     <module>plugins/devices/88-disk</module>
     <module>plugins/devices/88-sio</module>
     <module>plugins/devices/simhPseudo-z80</module>
-    <module>plugins/mem/brainduck-mem</module>
-    <module>plugins/mem/ram-mem</module>
     <module>plugins/mem/standard-mem</module>
+    <module>plugins/compilers/brainc-brainduck</module>
+    <module>plugins/mem/brainduck-mem</module>
+    <module>plugins/cpu/brainduck-cpu</module>
+    <module>plugins/devices/brainduck-terminal</module>
   </modules>
 
   <build>
@@ -78,9 +78,205 @@
             <target>1.7</target>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>          
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>2.6</version>
+          <executions>
+            <execution>
+              <id>copy-dependencies</id>
+              <phase>install</phase>
+              <goals>
+                <goal>copy-dependencies</goal>
+              </goals>
+              <configuration>
+                <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                <overWriteReleases>false</overWriteReleases>
+                <overWriteSnapshots>false</overWriteSnapshots>
+                <overWriteIfNewer>true</overWriteIfNewer>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>2.4</version>
+        </plugin>
+        <plugin>
+          <groupId>de.jflex</groupId>
+          <artifactId>maven-jflex-plugin</artifactId>
+          <version>1.4.3</version>
+        </plugin>
+        <plugin>
+          <groupId>edu.tum.cs</groupId>
+          <artifactId>cup-maven-plugin</artifactId>
+          <version>1.0.0</version>
+        </plugin>
+        <plugin>
+          <groupId>edigen</groupId>
+          <artifactId>edigen-maven-plugin</artifactId>
+          <version>1.0-SNAPSHOT</version>
+        </plugin>
       </plugins>
     </pluginManagement>
+    <extensions>
+      <extension>
+        <groupId>org.apache.maven.wagon</groupId>
+        <artifactId>wagon-ssh</artifactId>
+        <version>2.2</version>
+      </extension>
+    </extensions>
   </build>
+
+  <profiles>
+    <profile>
+      <id>coveralls</id>
+      <activation>
+        <property>
+          <name>env.TRAVIS</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.6.3.201306030806</version>
+            <executions>
+              <execution>
+                <id>prepare-agent</id>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.eluder.coveralls</groupId>
+            <artifactId>coveralls-maven-plugin</artifactId>
+            <version>1.1.0</version>
+            <configuration>
+              <serviceName>travis-ci</serviceName>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <!--
+            Profile for creating emuStudio distribution. Use with command:
+              mvn -P dist assembly:single
+      -->
+      <id>dist</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>2.4</version>
+            <configuration>
+              <descriptors>
+                <descriptor>src/assemble/distribution.xml</descriptor>
+              </descriptors>
+            </configuration>
+            <executions>
+              <execution>
+                <id>make-assembly</id> <!-- this is used for inheritance merges -->
+                <phase>package</phase> <!-- bind to the packaging phase -->
+                <goals>
+                  <goal>single</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+      <dependencies>
+        <!-- compilers -->
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>as-8080</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>as-z80</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>ramc-ram</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>brainc-brainduck</artifactId>
+        </dependency>
+
+        <!-- devices -->
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>88-disk</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>88-sio</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>abstractTape-ram</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>adm3A-terminal</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>simhPseudo-z80</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>terminal-brainduck</artifactId>
+        </dependency>
+
+        <!-- memories -->
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>ram-mem</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>standard-mem</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>brainduck-mem</artifactId>
+        </dependency>
+
+        <!-- cpus -->
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>8080-cpu</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>ram-cpu</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>z80-cpu</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>brainduck-cpu</artifactId>
+        </dependency>
+
+        <!-- emuStudio -->
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>emuStudio</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 
   <dependencyManagement>
     <dependencies>

@@ -13,23 +13,16 @@
   <packaging>jar</packaging>
 
   <name>BrainDuck CPU emulator</name>
-  <description>Abstract machine based on esoteric programming language brainfuck. Plug-in for the emuStudio platform.</description>
+  <description>Abstract machine based on esoteric programming language brainfuck</description>
 
   <profiles>
     <profile>
       <id>coveralls</id>
-      <activation>
-        <property>
-          <name>env.TRAVIS</name>
-          <value>true</value>
-        </property>
-      </activation>
       <build>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.7</version>
             <executions>
               <execution>
                 <id>copy</id>
@@ -53,23 +46,10 @@
           <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.6.3.201306030806</version>
-            <executions>
-              <execution>
-                <id>prepare-agent</id>
-                <goals>
-                  <goal>prepare-agent</goal>
-                </goals>
-              </execution>
-            </executions>
           </plugin>
           <plugin>
             <groupId>org.eluder.coveralls</groupId>
             <artifactId>coveralls-maven-plugin</artifactId>
-            <version>1.1.0</version>
-            <configuration>
-              <serviceName>travis-ci</serviceName>
-            </configuration>
           </plugin>
         </plugins>
       </build>
@@ -78,29 +58,6 @@
 
   <build>
     <finalName>brainduck-cpu</finalName>
-    <resources>
-      <resource>
-        <directory>${project.build.resourceDirectory}</directory>
-        <filtering>true</filtering>
-        <includes>
-          <include>**/*.properties</include>
-        </includes>
-      </resource>
-      <resource>
-        <directory>${project.build.resourceDirectory}</directory>
-        <filtering>false</filtering>
-        <excludes>
-          <exclude>**/*.properties</exclude>
-        </excludes>
-      </resource>
-    </resources>
-    <extensions>
-      <extension>
-        <groupId>org.apache.maven.wagon</groupId>
-        <artifactId>wagon-ssh</artifactId>
-        <version>2.2</version>
-      </extension>
-    </extensions>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -109,7 +66,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.4</version>
         <configuration>
           <archive>
             <manifest>
@@ -122,9 +78,12 @@
         </configuration>
       </plugin>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>          
+        <artifactId>maven-dependency-plugin</artifactId>
+      </plugin>      
+      <plugin>
         <groupId>edigen</groupId>
         <artifactId>edigen-maven-plugin</artifactId>
-        <version>1.0-SNAPSHOT</version>
         <configuration>
           <decoderName>net.sf.emustudio.braincpu.gui.DecoderImpl</decoderName>
           <disassemblerName>net.sf.emustudio.braincpu.gui.DisassemblerImpl</disassemblerName>
@@ -137,30 +96,6 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-resources-plugin</artifactId>
-        <version>2.6</version>
-      </plugin>
-      <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.6</version>
-        <executions>
-          <execution>
-            <id>copy-dependencies</id>
-            <phase>install</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/lib</outputDirectory>
-              <overWriteReleases>false</overWriteReleases>
-              <overWriteSnapshots>false</overWriteSnapshots>
-              <overWriteIfNewer>true</overWriteIfNewer>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>      
     </plugins>
   </build>
 

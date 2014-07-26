@@ -12,24 +12,17 @@
   <artifactId>brainc-brainduck</artifactId>
   <packaging>jar</packaging>
 
-  <name>Compiler for BrainDuck CPU</name>
-  <description>Java-based compiler for BrainDuck abstract processor. It is implemented as a plug-in for the emuStudio platform.</description>
+  <name>BrainDuck Compiler</name>
+  <description>Java-based compiler for BrainDuck CPU emulator</description>
 
   <profiles>
     <profile>
       <id>coveralls</id>
-      <activation>
-        <property>
-          <name>env.TRAVIS</name>
-          <value>true</value>
-        </property>
-      </activation>
       <build>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.7</version>
             <executions>
               <execution>
                 <id>copy</id>
@@ -56,23 +49,10 @@
           <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.6.3.201306030806</version>
-            <executions>
-              <execution>
-                <id>prepare-agent</id>
-                <goals>
-                  <goal>prepare-agent</goal>
-                </goals>
-              </execution>
-            </executions>
           </plugin>
           <plugin>
             <groupId>org.eluder.coveralls</groupId>
             <artifactId>coveralls-maven-plugin</artifactId>
-            <version>1.1.0</version>
-            <configuration>
-              <serviceName>travis-ci</serviceName>
-            </configuration>
           </plugin>
         </plugins>
       </build>
@@ -81,29 +61,6 @@
 
   <build>
     <finalName>brainc-brainduck</finalName>
-    <resources>
-      <resource>
-        <directory>${project.build.resourceDirectory}</directory>
-        <filtering>true</filtering>
-        <includes>
-          <include>**/*.properties</include>
-        </includes>
-      </resource>
-      <resource>
-        <directory>${project.build.resourceDirectory}</directory>
-        <filtering>false</filtering>
-        <excludes>
-          <exclude>**/*.properties</exclude>
-        </excludes>
-      </resource>
-    </resources>
-    <extensions>
-      <extension>
-        <groupId>org.apache.maven.wagon</groupId>
-        <artifactId>wagon-ssh</artifactId>
-        <version>2.2</version>
-      </extension>
-    </extensions>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -112,7 +69,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.4</version>
         <configuration>
           <archive>
             <manifest>
@@ -126,9 +82,12 @@
         </configuration>
       </plugin>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>          
+        <artifactId>maven-dependency-plugin</artifactId>
+      </plugin>      
+      <plugin>
         <groupId>de.jflex</groupId>
         <artifactId>maven-jflex-plugin</artifactId>
-        <version>1.4.3</version>
         <executions>
           <execution>
             <goals>
@@ -140,7 +99,6 @@
       <plugin>
         <groupId>edu.tum.cs</groupId>
         <artifactId>cup-maven-plugin</artifactId>
-        <version>1.0.0</version>
         <executions>
           <execution>
             <goals>
@@ -153,30 +111,6 @@
           <symbolsName>SymBD</symbolsName>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-resources-plugin</artifactId>
-        <version>2.6</version>
-      </plugin>
-      <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.6</version>
-        <executions>
-          <execution>
-            <id>copy-dependencies</id>
-            <phase>install</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/lib</outputDirectory>
-              <overWriteReleases>false</overWriteReleases>
-              <overWriteSnapshots>false</overWriteSnapshots>
-              <overWriteIfNewer>true</overWriteIfNewer>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>      
     </plugins>
   </build>
 
