@@ -3,7 +3,7 @@ BrainDuck compiler plug-in
 
 This is a compiler for my own CPU architecture called BrainDuck (`brainduck-cpu`),
 written in Java. It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based
-computer emulation platform\*.
+computer emulation platform.
 
 BrainDuck is abstract architecture derived from [brainfuck](http://en.wikipedia.org/wiki/Brainfuck), esoteric
 programming language. It was created to demonstrate the ability of emuStudio to emulate custom computer architectures.
@@ -30,7 +30,3 @@ License
 -------
 
 This project is released under GNU GPL v2 license.
-
-* * *
-
-\* You can find emuStudio repository at [GitHub](https://github.com/vbmacher/emuStudio).

@@ -3,7 +3,7 @@ Intel 8080 Assembler plug-in
 
 This project is light modified (enhanced) "clone" of original Intel's 8080 assembler, written in Java.
 It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based computer
-emulation platform\*.
+emulation platform.
 
 The assembler syntax is taken from manual found at [this](http://www.classiccmp.org/dunfield/r/8080asm.pdf)
 link. The assembler supports following features:
@@ -38,7 +38,3 @@ License
 -------
 
 This project is released under GNU GPL v2 license.
-
-* * *
-
-\* You can find emuStudio repository at [GitHub](http://github.com/vbmacher/emuStudio).

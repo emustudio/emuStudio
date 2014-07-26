@@ -3,7 +3,7 @@ Compiler for Random Access Machine (RAM)
 
 This project is a compiler for abstract machine RAM, used in theoretical informatics, written in Java.
 It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based computer
-emulation platform\*.
+emulation platform.
 
 The compiler doesn't support compilation into a binary file, but outputs the result directly to
 program memory of the emulator. It implements only parsing and semantic analysis.
@@ -33,7 +33,3 @@ License
 -------
 
 This project is released under GNU GPL v2 license.
-
-* * *
-
-\* You can find emuStudio repository at [GitHub](https://github.com/vbmacher/emuStudio).

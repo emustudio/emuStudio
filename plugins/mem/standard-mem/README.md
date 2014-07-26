@@ -2,7 +2,7 @@ Standard operating memory plug-in
 ----------------------------------
 
 This project represents virtual computer's operating memory. It is implemented as a plug-in for
-[emuStudio](http://emustudio.sf.net), a software-based computer emulation platform\*.
+[emuStudio](http://emustudio.sf.net), a software-based computer emulation platform.
 
 This plug-in can be used with any 'real' von-Neumann's CPUs that understand memory cells as linear
 ordered bytes. Size of the memory is variable, and can be set-up during construction of virtual computer.
@@ -29,8 +29,4 @@ License
 -------
 
 This project is released under GNU GPL v2 license.
-
-* * *
-
-\* You can find emuStudio repository at [GitHub](http://github.com/vbmacher/emuStudio).
 

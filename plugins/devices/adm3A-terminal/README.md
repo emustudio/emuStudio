@@ -5,7 +5,7 @@ The project represents an emulator of [ADM-3A](http://en.wikipedia.org/wiki/ADM-
 terminal device from LSI company. It was used with old computers, e.g. MITS Altair8800.
 The terminal was connected into RS-232 serial port (in emuStudio, it can be plugged into
 MITS 88-SIO device). The project is implemented as a plug-in for [emuStudio](http://emustudio.sf.net),
-a software-based computer emulation platform\*.
+a software-based computer emulation platform.
 
 Some main properties of the product include:
 
@@ -36,8 +36,4 @@ License
 -------
 
 This project is released under GNU GPL v2 license.
-
-* * *
-
-\* You can find emuStudio repository at [GitHub](http://github.com/vbmacher/emuStudio).
 

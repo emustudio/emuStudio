@@ -4,7 +4,7 @@ BrainDuck text terminal plug-in
 This project is text terminal for BrainDuck architecture. BrainDuck is abstract
 machine based on esoteric programming language [brainfuck](http://en.wikipedia.org/wiki/Brainfuck).
 It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based
-computer emulation platform\*.
+computer emulation platform.
 
 The project has been created as teaching material for people who want to create plug-ins for emuStudio.
 The device can be used only with `brain-cpu` plug-in, because the device assumes special CPU context.
@@ -34,8 +34,4 @@ License
 -------
 
 This project is released under GNU GPL v2 license.
-
-* * *
-
-\* You can find emuStudio repository at [GitHub](http://github.com/vbmacher/emuStudio).
 

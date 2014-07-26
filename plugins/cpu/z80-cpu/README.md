@@ -2,7 +2,7 @@ Zilog Z80 CPU plug-in
 ----------------------
 
 This project is Java-based emulator of 8-bit Zilog Z80 CPU. It is implemented as a plug-in for
-[emuStudio](http://emustudio.sf.net), a software-based computer emulation platform\*.
+[emuStudio](http://emustudio.sf.net), a software-based computer emulation platform.
 
 Features include:
 
@@ -36,8 +36,4 @@ License
 -------
 
 This project is released under GNU GPL v2 license.
-
-* * *
-
-\* You can find emuStudio repository at [GitHub](http://github.com/vbmacher/emuStudio).
 

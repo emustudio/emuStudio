@@ -3,7 +3,7 @@ BrainDuck operating memory plug-in
 
 This project represents operating memory of abstract computer architecture called BrainDuck.
 It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based
-computer emulation platform\*.
+computer emulation platform.
 
 The project has been created as teaching material for people who wants to create plug-ins for
 emuStudio. It is intended to be as simple as possible. It can be used for other architectures
@@ -33,8 +33,4 @@ License
 -------
 
 This project is released under GNU GPL v2 license.
-
-* * *
-
-\* You can find emuStudio repository at [GitHub](http://github.com/vbmacher/emuStudio).
 

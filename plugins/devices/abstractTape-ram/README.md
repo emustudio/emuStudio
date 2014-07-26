@@ -3,7 +3,7 @@ Abstract tape for Random Access Machine
 
 This project represents an 'abstract tape' that is used in abstract machines, such as Random
 Access Machine (RAM), or Turing machine. It is implemented as a plug-in for
-[emuStudio](http://emustudio.sf.net), a software-based computer emulation platform\*.
+[emuStudio](http://emustudio.sf.net), a software-based computer emulation platform.
 
 In the present time, only RAM machine emulator exists within the emuStudio (`ram-cpu`).
 The device then represents either input, output or register tape of the RAM machine (it
@@ -33,8 +33,4 @@ License
 -------
 
 This project is released under GNU GPL v2 license.
-
-* * *
-
-\* You can find emuStudio repository at [GitHub](http://github.com/vbmacher/emuStudio).
 

@@ -4,7 +4,7 @@
 This project is an emulator of MITS 88-SIO device (serial card), used mainly in MITS
 Altair8800 computers. The device has been a serial I/O interface card that is plugged into
 S-BUS bus. It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based
-computer emulation platform\*.
+computer emulation platform.
 
 In the present time it can be used side by side with `8080-cpu` or `z80-cpu` plug-ins. The card is
 controlled by two I/O ports attached to the CPU. 
@@ -46,8 +46,4 @@ License
 -------
 
 This project is released under GNU GPL v2 license.
-
-* * *
-
-\* You can find emuStudio repository at [GitHub](http://github.com/vbmacher/emuStudio).
 

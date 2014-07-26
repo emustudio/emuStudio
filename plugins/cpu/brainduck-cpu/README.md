@@ -4,7 +4,7 @@ BrainDuck CPU plug-in
 BrainDuck is abstract computer architecture based on esoteric programming language 
 [brainfuck](http://en.wikipedia.org/wiki/Brainfuck). This project represents Java-based
 emulator the CPU. It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net),
-a software-based computer emulation platform\*.
+a software-based computer emulation platform.
 
 This project has been created as the material for teaching how to create plug-ins in emuStudio.
 Instructions of the CPU are following those of the brainfuck language (BF), but are renamed into more
@@ -45,8 +45,4 @@ License
 -------
 
 This project is released under GNU GPL v2 license.
-
-* * *
-
-\* You can find emuStudio repository at [GitHub](http://github.com/vbmacher/emuStudio).
 

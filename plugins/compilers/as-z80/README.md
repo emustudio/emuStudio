@@ -3,7 +3,7 @@ Zilog Z80 Assembler plug-in
 
 This project is my own version of assembler for Z80 processor, written in Java.
 It is implemented as a plug-in for [emuStudio](http://emustudio.sf.net), a software-based computer
-emulation platform\*.
+emulation platform.
 
 The assembler syntax is inspired by my `as-8080` compiler plug-in
 and by instruction list found at [this](http://nemesis.lonestar.org/computers/tandy/software/apps/m4/qd/opcodes.html)
@@ -39,7 +39,3 @@ License
 -------
 
 This project is released under GNU GPL v2 license.
-
-* * *
-
-\* You can find emuStudio repository at [GitHub](https://github.com/vbmacher/emuStudio).
