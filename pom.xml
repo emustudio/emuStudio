@@ -298,6 +298,7 @@
         <groupId>net.sf.emustudio</groupId>
         <artifactId>emuLib</artifactId>
         <version>9.0.0-SNAPSHOT</version>
+          <type>jar</type>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -416,6 +417,27 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>net.sf.emustudio</groupId>
+      <artifactId>emuLib</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>cup</groupId>
+      <artifactId>java-cup-runtime</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymock</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
   <repositories>
     <repository>

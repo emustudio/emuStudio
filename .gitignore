@@ -1,12 +1,13 @@
 *~
 *.log
-compilers/*.*
-cpu/*.*
-mem/*.*
-config/*.*
-devices/*.*
+compilers/
+cpu/
+mem/
+config/
+devices/
 examples/
 lib/
+tmp/
 
 # Netbeans
 nbactions.xml
