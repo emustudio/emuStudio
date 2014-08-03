@@ -441,25 +441,51 @@
 
   <repositories>
     <repository>
+      <id>central</id>
+      <url>http://repo1.maven.org/maven2/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
       <id>codehaus</id>
       <url>http://repository.codehaus.org</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
     </repository>
     <repository>
       <id>emustudio-repository</id>
       <name>emuStudio Repository</name>
       <url>http://emustudio.sf.net/repository/</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
     </repository>
   </repositories>
 
   <pluginRepositories>
     <pluginRepository>
-      <id>codehaus</id>
-      <url>http://repository.codehaus.org</url>
+      <id>central</id>
+      <url>http://repo1.maven.org/maven2/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
     </pluginRepository>
     <pluginRepository>
-      <id>emustudio-plugin-repository</id>
+      <id>codehaus</id>
+      <url>http://repository.codehaus.org</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+    <pluginRepository>
+      <id>emustudio-repository</id>
       <name>emuStudio Repository</name>
       <url>http://emustudio.sf.net/repository/</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
     </pluginRepository>
   </pluginRepositories>
 
