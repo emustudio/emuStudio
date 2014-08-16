@@ -1,29 +1,42 @@
-Welcome to emuStudio
----------------------
+# Welcome to emuStudio
 [![Build Status](https://travis-ci.org/vbmacher/emuStudio.png)](https://travis-ci.org/vbmacher/emuStudio)
 [![Coverage Status](https://coveralls.io/repos/vbmacher/emuStudio/badge.png?branch=branch-0_39)](https://coveralls.io/r/vbmacher/emuStudio?branch=branch-0_39)
 
-emuStudio is software-based computer emulation platform, intended for emulation of whole computers (real or abstract), or
-their parts. The emulation is performed by plug-ins that represent computer components. There exist also compiler
-plug-ins allowing direct compilation of source code written for use in the emulator.
+emuStudio is free and versatile platform for computer emulation. It is written in Java, which makes
+it a naturally cross-platform application.
 
-The platform supports versatility by categorizing computer components into three types (CPUs, memories, and devices). The
-categorization is reflected by providing standard Java interfaces that plug-ins must implement (see project
- [emuLib](http://github.com/vbmacher/emuLib)).
+The description of plug-ins combinations is a description of a virtual computer. Plug-ins represent
+computer components.
 
-List of currently implemented plug-ins can be found on project's web site (and they can be implemented indepedently by anyone).
-Plug-ins developed by author are available in `plugins/` subdirectory.
+Plug-ins are developed separately, following so-called communication model. Anyone can take those
+components and combine them into a working computer, just by drawing simple computer schema.
 
-Main purpose of emuStudio is to allow realization of ideas in early phases of hardware design, and support education process.
-The platform has been used at Technical University of Košice (Slovakia) with very good responses of students and teachers since
-2007.
+Main purpose of emuStudio is to support education process of mainly old hardware. The platform has
+been used at Technical University of Košice (Slovakia) with very good responses of students and
+teachers since 2007.
 
-Installation
-------------
+# Feature highlights
+
+* Main module with Graphical User Interface (GUI)
+
+* Simple computer schema editor
+
+* Source code editor with support of syntax highlighting
+
+* CPU debugger with basic and advanced abilities
+
+* Operating memory and devices can have their own GUI windows
+
+* Automatic emulation run from command line
+
+* Several predefined computer sets and plug-ins
+
+* Consistent API for development of custom plug-ins
+
+# Installation
 
 Please follow instructions on [project's web page](http://emustudio.sourceforge.net/downloads.html).
 
-License
--------
+# License
 
 This project is released under GNU GPL v2 license.

@@ -32,9 +32,6 @@
                     <copy todir="src/main/java/">
                       <fileset dir="${basedir}/target/generated-sources/edigen" includes="**/*" />
 					</copy>
-                    <delete>
-                      <fileset dir="${basedir}/target/generated-sources" />
-                    </delete>
                   </target>
                 </configuration>
                 <goals>
