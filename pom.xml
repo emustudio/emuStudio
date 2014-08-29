@@ -1,3 +1,4 @@
+<!--suppress MavenModelInspection -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
@@ -231,7 +232,7 @@
         </dependency>
         <dependency>
           <groupId>net.sf.emustudio</groupId>
-          <artifactId>terminal-brainduck</artifactId>
+          <artifactId>brainduck-terminal</artifactId>
         </dependency>
 
         <!-- memories -->
