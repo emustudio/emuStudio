@@ -6,7 +6,7 @@
     <groupId>net.sf.emustudio</groupId>
     <artifactId>emustudio-parent</artifactId>
     <version>0.39-SNAPSHOT</version>
-    <relativePath>.</relativePath>
+    <relativePath>../.</relativePath>
   </parent>
 
   <artifactId>emuStudio</artifactId>

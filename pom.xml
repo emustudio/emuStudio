@@ -21,7 +21,6 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <netbeans.hint.license>gpl20</netbeans.hint.license>
-    <distribution.fileMapping>${artifact.artifactId}.${artifact.extension}</distribution.fileMapping>
     <project.build.resourceDirectory>${basedir}/src/main/resources</project.build.resourceDirectory>
   </properties>
 
@@ -47,7 +46,7 @@
   </developers>
 
   <modules>
-    <module>pom-emustudio.xml</module>
+    <module>main-module</module>
     <module>plugins/compilers/ramc-ram</module>
     <module>plugins/cpu/ram-cpu</module>
     <module>plugins/mem/ram-mem</module>
@@ -420,14 +419,6 @@
   </dependencyManagement>
 
   <dependencies>
-    <dependency>
-      <groupId>net.sf.emustudio</groupId>
-      <artifactId>emuLib</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>cup</groupId>
-      <artifactId>java-cup-runtime</artifactId>
-    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

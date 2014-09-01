@@ -22,7 +22,7 @@
       </includes>
     </dependencySet>
     <dependencySet>
-      <outputFileNameMapping>${distribution.fileMapping}</outputFileNameMapping>
+      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
       <outputDirectory>/compilers</outputDirectory>
       <useProjectArtifact>false</useProjectArtifact>
       <useTransitiveDependencies>false</useTransitiveDependencies>
@@ -34,7 +34,7 @@
       </includes>
     </dependencySet>
     <dependencySet>
-      <outputFileNameMapping>${distribution.fileMapping}</outputFileNameMapping>
+      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
       <outputDirectory>/devices</outputDirectory>
       <useProjectArtifact>false</useProjectArtifact>
       <useTransitiveDependencies>false</useTransitiveDependencies>
@@ -48,7 +48,7 @@
       </includes>
     </dependencySet>
     <dependencySet>
-      <outputFileNameMapping>${distribution.fileMapping}</outputFileNameMapping>
+      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
       <outputDirectory>/mem</outputDirectory>
       <useProjectArtifact>false</useProjectArtifact>
       <useTransitiveDependencies>false</useTransitiveDependencies>
@@ -59,7 +59,7 @@
       </includes>
     </dependencySet>
     <dependencySet>
-      <outputFileNameMapping>${distribution.fileMapping}</outputFileNameMapping>
+      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
       <outputDirectory>/cpu</outputDirectory>
       <useProjectArtifact>false</useProjectArtifact>
       <useTransitiveDependencies>false</useTransitiveDependencies>
@@ -71,7 +71,7 @@
       </includes>
     </dependencySet>
     <dependencySet>
-      <outputFileNameMapping>${distribution.fileMapping}</outputFileNameMapping>
+      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
       <outputDirectory>/</outputDirectory>
       <useTransitiveDependencies>false</useTransitiveDependencies>
       <useProjectArtifact>false</useProjectArtifact>
