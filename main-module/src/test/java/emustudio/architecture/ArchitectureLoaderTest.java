@@ -24,6 +24,11 @@ package emustudio.architecture;
 import emustudio.drawing.Schema;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -34,11 +39,10 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 public class ArchitectureLoaderTest {
-    private static final String BASE_DIRECTORY = System.getProperty("user.dir") + "/src/test/resources/";
 
     @BeforeClass
-    public static void setUpClass() {
-        ArchitectureLoader.setConfigurationBaseDirectory(BASE_DIRECTORY);
+    public static void setUpClass() throws URISyntaxException {
+        ArchitectureLoader.setConfigurationBaseDirectory(getBaseDirectory().toFile().getAbsolutePath());
     }
 
     @AfterClass
@@ -46,9 +50,11 @@ public class ArchitectureLoaderTest {
         ArchitectureLoader.setConfigurationBaseDirectory(System.getProperty("user.dir"));
     }
 
-    /**
-     * Test of getInstance method, of class ArchitectureLoader.
-     */
+    public static Path getBaseDirectory() throws URISyntaxException {
+        URL resourceUrl = ArchitectureLoaderTest.class.getResource("/");
+        return Paths.get(resourceUrl.toURI());
+    }
+
     @Test
     public void testGetInstance() {
         ArchitectureLoader result = ArchitectureLoader.getInstance();
@@ -56,33 +62,22 @@ public class ArchitectureLoaderTest {
         assertEquals(expResult, result);
     }
 
-    /**
-     * Test of getAllFileNames method, of class ArchitectureLoader.
-     */
     @Test
     public void testGetAllFileNames() {
-        String dirname = "src/test/resources/tmpfiles/";
-        ArchitectureLoader.setConfigurationBaseDirectory(System.getProperty("user.dir"));
-        String[] result = ArchitectureLoader.getAllFileNames(dirname, ".conf");
-        assertNotNull(result);
+        String tmpfilesDirname = "tmpfiles";
+        String[] result = ArchitectureLoader.getAllFileNames(tmpfilesDirname, ".conf");
         assertEquals(1, result.length);
-        result = ArchitectureLoader.getAllFileNames(dirname, ".txt");
-        assertNotNull(result);
+        result = ArchitectureLoader.getAllFileNames(tmpfilesDirname, ".txt");
         assertEquals(2, result.length);
-        result = ArchitectureLoader.getAllFileNames(dirname, ".NONEXISTANT");
-        assertNotNull(result);
+        result = ArchitectureLoader.getAllFileNames(tmpfilesDirname, ".NONEXISTANT");
         assertEquals(0, result.length);
-        ArchitectureLoader.setConfigurationBaseDirectory(BASE_DIRECTORY);
     }
 
-    /**
-     * Test of deleteConfiguration method, of class ArchitectureLoader.
-     */
     @Test
-    public void testDeleteConfiguration() throws IOException {
+    public void testDeleteConfiguration() throws Exception {
         ArchitectureLoader instance = ArchitectureLoader.getInstance();
 
-        File file = new File(BASE_DIRECTORY + ArchitectureLoader.CONFIGS_DIR + File.separator + "test.conf");
+        File file = getBaseDirectory().resolve(ArchitectureLoader.CONFIGS_DIR).resolve("test.conf").toFile();
         assertTrue(file.exists());
 
         assertTrue(instance.deleteConfiguration("test"));
@@ -94,15 +89,14 @@ public class ArchitectureLoaderTest {
         assertTrue(file.exists());
     }
 
-    /**
-     * Test of renameConfiguration method, of class ArchitectureLoader.
-     */
     @Test
-    public void testRenameConfiguration() {
+    public void testRenameConfiguration() throws URISyntaxException {
         ArchitectureLoader instance = ArchitectureLoader.getInstance();
 
-        File oldFile = new File(BASE_DIRECTORY + ArchitectureLoader.CONFIGS_DIR + File.separator + "test.conf");
-        File newFile = new File(BASE_DIRECTORY + ArchitectureLoader.CONFIGS_DIR + File.separator + "newtest.conf");
+        File oldFile = getBaseDirectory().resolve(ArchitectureLoader.CONFIGS_DIR).resolve("test.conf")
+                .toFile();
+        File newFile = getBaseDirectory().resolve(ArchitectureLoader.CONFIGS_DIR).resolve("newtest.conf")
+                .toFile();
         assertTrue(oldFile.exists());
         assertFalse(newFile.exists());
 
@@ -118,9 +112,6 @@ public class ArchitectureLoaderTest {
         assertFalse(newFile.exists());
     }
 
-    /**
-     * Test of loadSchema method, of class ArchitectureLoader.
-     */
     @Test
     public void testLoadSchema() throws Exception {
         String configName = "tmp";
@@ -141,56 +132,4 @@ public class ArchitectureLoaderTest {
         assertEquals(3, result.getConnectionLines().size());
     }
 
-    /**
-     * Test of saveSchema method, of class ArchitectureLoader.
-     */
-    @Test
-    @Ignore
-    public void testSaveSchema() throws Exception {
-    }
-
-    /**
-     * Test of readConfiguration method, of class ArchitectureLoader.
-     *
-    @Test
-    public void testReadConfiguration() throws Exception {
-        System.out.println("readConfiguration");
-        String configName = "";
-        boolean schema_too = false;
-        ArchitectureLoader instance = null;
-        Properties expResult = null;
-        Properties result = instance.readConfiguration(configName, schema_too);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of writeConfiguration method, of class ArchitectureLoader.
-     *
-    @Test
-    public void testWriteConfiguration() throws Exception {
-        System.out.println("writeConfiguration");
-        String configName = "";
-        Properties settings = null;
-        ArchitectureLoader instance = null;
-        instance.writeConfiguration(configName, settings);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of createArchitecture method, of class ArchitectureLoader.
-     *
-    @Test
-    public void testCreateArchitecture() throws Exception {
-        System.out.println("createArchitecture");
-        String configName = "";
-        ArchitectureLoader instance = null;
-        ArchitectureManager expResult = null;
-        ArchitectureManager result = instance.createArchitecture(configName);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }*/
 }
