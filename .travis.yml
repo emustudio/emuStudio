@@ -1,9 +1,15 @@
 language: java
+
 jdk:
-- oraclejdk7
+  - oraclejdk7
+
+os:
+  - linux
+
 branches:
   only:
   - branch-0_39
+
 env:
   global:
   - secure: |-
@@ -18,8 +24,15 @@ env:
       PlJFVU6VZRDPunvpB6PJvJ+hGCd1CKBRSt58oMkrIXX1GMFnVLWUQb0UuA9A
       zBqoVamVO6RZMkV5cwkeT4qhdmuolH+GPy/hqVtR7U1l+0BuCO6JpWdcP5DX
       BgteCsFztnGT0oZfkT6Yb9a11m5ahUZ5nXrwMu5MDqklsFgxplM=
+
 after_success:
 - mvn -Pcoveralls cobertura:cobertura coveralls:cobertura
 - python add_server.py
 - mvn deploy
 - python restore_backups.py
+
+notifications:
+  on_success: change
+  on_failure: always
+  template:
+  - "%{repository} (%{branch}:%{commit} by %{author}): %{message} (%{build_url})"
