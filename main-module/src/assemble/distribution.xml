@@ -44,7 +44,7 @@
         <include>net.sf.emustudio:abstractTape-ram</include>
         <include>net.sf.emustudio:adm3A-terminal</include>
         <include>net.sf.emustudio:simhPseudo-z80</include>
-        <include>net.sf.emustudio:terminal-brainduck</include>
+        <include>net.sf.emustudio:brainduck-terminal</include>
       </includes>
     </dependencySet>
     <dependencySet>
