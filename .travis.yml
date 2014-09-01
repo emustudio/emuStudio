@@ -28,7 +28,7 @@ env:
 after_success:
 - mvn -Pcoveralls cobertura:cobertura coveralls:cobertura
 - python add_server.py
-- mvn deploy
+- mvn clean deploy -DskipTests=true
 - python restore_backups.py
 
 notifications:
