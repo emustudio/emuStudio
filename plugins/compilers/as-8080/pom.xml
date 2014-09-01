@@ -23,6 +23,14 @@
           <plugin>
             <groupId>org.eluder.coveralls</groupId>
             <artifactId>coveralls-maven-plugin</artifactId>
+            <configuration>
+              <instrumentation>
+                <excludes>
+                  <exclude>**/Parser8080.class</exclude>
+                  <exclude>**/Sym8080.class</exclude>
+                </excludes>
+              </instrumentation>
+            </configuration>
           </plugin>
         </plugins>
       </build>

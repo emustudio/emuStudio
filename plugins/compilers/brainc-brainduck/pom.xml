@@ -23,6 +23,14 @@
           <plugin>
             <groupId>org.eluder.coveralls</groupId>
             <artifactId>coveralls-maven-plugin</artifactId>
+            <configuration>
+              <instrumentation>
+                <excludes>
+                  <exclude>**/ParserBD.class</exclude>
+                  <exclude>**/SymBD.class</exclude>
+                </excludes>
+              </instrumentation>
+            </configuration>
           </plugin>
         </plugins>
       </build>
