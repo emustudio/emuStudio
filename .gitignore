@@ -3,7 +3,6 @@
 compilers/
 cpu/
 mem/
-config/
 devices/
 examples/
 lib/
