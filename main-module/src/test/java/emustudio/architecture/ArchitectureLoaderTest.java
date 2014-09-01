@@ -78,6 +78,7 @@ public class ArchitectureLoaderTest {
         ArchitectureLoader instance = ArchitectureLoader.getInstance();
 
         File file = getBaseDirectory().resolve(ArchitectureLoader.CONFIGS_DIR).resolve("test.conf").toFile();
+        System.out.println(file.getAbsolutePath() + " : " + file.exists());
         assertTrue(file.exists());
 
         assertTrue(instance.deleteConfiguration("test"));
@@ -97,6 +98,9 @@ public class ArchitectureLoaderTest {
                 .toFile();
         File newFile = getBaseDirectory().resolve(ArchitectureLoader.CONFIGS_DIR).resolve("newtest.conf")
                 .toFile();
+
+        System.out.println(oldFile.getAbsolutePath() + " : " + oldFile.exists());
+
         assertTrue(oldFile.exists());
         assertFalse(newFile.exists());
 
