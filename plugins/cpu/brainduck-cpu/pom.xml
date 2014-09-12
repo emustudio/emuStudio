@@ -25,9 +25,13 @@
             <artifactId>coveralls-maven-plugin</artifactId>
             <configuration>
               <instrumentation>
+                <ignores>
+                  <ignore>**/DecoderImpl*.java</ignore>
+                  <ignore>**/DisassemblerImpl*.java</ignore>
+                </ignores>
                 <excludes>
-                  <exclude>**/DecoderImpl.class</exclude>
-                  <exclude>**/DisassemblerImpl.class</exclude>
+                  <exclude>**/DecoderImpl*.class</exclude>
+                  <exclude>**/DisassemblerImpl*.class</exclude>
                 </excludes>
               </instrumentation>
             </configuration>

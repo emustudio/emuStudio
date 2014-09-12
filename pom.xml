@@ -185,6 +185,9 @@
             <artifactId>coveralls-maven-plugin</artifactId>
             <configuration>
               <serviceName>travis-ci</serviceName>
+              <sourceDirectories>
+                <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+              </sourceDirectories>
             </configuration>
           </plugin>
         </plugins>
