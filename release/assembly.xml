@@ -1,15 +1,79 @@
 <assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
-  <id>dist</id>
+  <id>release</id>
   <formats>
     <format>zip</format>
+    <format>tar.gz</format>
   </formats>
   <includeSiteDirectory>false</includeSiteDirectory>
-  <includeBaseDirectory>true</includeBaseDirectory>
+  <includeBaseDirectory>false</includeBaseDirectory>
   <dependencySets>
     <dependencySet>
-      <outputFileNameMapping>${artifact.artifactId}-${artifact.version}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
+      <includes>
+        <include>net.sf.emustudio:as-8080</include>
+        <include>net.sf.emustudio:as-z80</include>
+        <include>net.sf.emustudio:ramc-ram</include>
+        <include>net.sf.emustudio:brainc-brainduck</include>
+      </includes>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useTransitiveDependencies>false</useTransitiveDependencies>
+      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+      <outputDirectory>/compilers</outputDirectory>
+      <unpack>false</unpack>
+    </dependencySet>
+    <dependencySet>
+      <includes>
+        <include>net.sf.emustudio:88-disk</include>
+        <include>net.sf.emustudio:88-sio</include>
+        <include>net.sf.emustudio:abstractTape-ram</include>
+        <include>net.sf.emustudio:adm3A-terminal</include>
+        <include>net.sf.emustudio:simhPseudo-z80</include>
+        <include>net.sf.emustudio:brainduck-terminal</include>
+      </includes>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useTransitiveDependencies>false</useTransitiveDependencies>
+      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+      <outputDirectory>/devices</outputDirectory>
+      <unpack>false</unpack>
+    </dependencySet>
+    <dependencySet>
+      <includes>
+        <include>net.sf.emustudio:ram-mem</include>
+        <include>net.sf.emustudio:standard-mem</include>
+        <include>net.sf.emustudio:brainduck-mem</include>
+      </includes>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useTransitiveDependencies>false</useTransitiveDependencies>
+      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+      <outputDirectory>/mem</outputDirectory>
+      <unpack>false</unpack>
+    </dependencySet>
+    <dependencySet>
+      <includes>
+        <include>net.sf.emustudio:8080-cpu</include>
+        <include>net.sf.emustudio:ram-cpu</include>
+        <include>net.sf.emustudio:z80-cpu</include>
+        <include>net.sf.emustudio:brainduck-cpu</include>
+      </includes>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useTransitiveDependencies>false</useTransitiveDependencies>
+      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+      <outputDirectory>/cpu</outputDirectory>
+      <unpack>false</unpack>
+    </dependencySet>
+    <dependencySet>
+      <includes>
+        <include>net.sf.emustudio:emuStudio</include>
+      </includes>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useTransitiveDependencies>false</useTransitiveDependencies>
+      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+      <outputDirectory>/</outputDirectory>
+      <unpack>false</unpack>
+    </dependencySet>
+    <dependencySet>
+      <outputFileNameMapping>${artifact.artifactId}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
       <outputDirectory>/lib</outputDirectory>
       <useProjectArtifact>false</useProjectArtifact>
       <useTransitiveDependencies>false</useTransitiveDependencies>
@@ -21,77 +85,14 @@
         <include>ch.qos.logback:logback-classic</include>
       </includes>
     </dependencySet>
-    <dependencySet>
-      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
-      <outputDirectory>/compilers</outputDirectory>
-      <useProjectArtifact>false</useProjectArtifact>
-      <useTransitiveDependencies>false</useTransitiveDependencies>
-      <includes>
-        <include>net.sf.emustudio:as-8080</include>
-        <include>net.sf.emustudio:as-z80</include>
-        <include>net.sf.emustudio:ramc-ram</include>
-        <include>net.sf.emustudio:brainc-brainduck</include>
-      </includes>
-    </dependencySet>
-    <dependencySet>
-      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
-      <outputDirectory>/devices</outputDirectory>
-      <useProjectArtifact>false</useProjectArtifact>
-      <useTransitiveDependencies>false</useTransitiveDependencies>
-      <includes>
-        <include>net.sf.emustudio:88-disk</include>
-        <include>net.sf.emustudio:88-sio</include>
-        <include>net.sf.emustudio:abstractTape-ram</include>
-        <include>net.sf.emustudio:adm3A-terminal</include>
-        <include>net.sf.emustudio:simhPseudo-z80</include>
-        <include>net.sf.emustudio:brainduck-terminal</include>
-      </includes>
-    </dependencySet>
-    <dependencySet>
-      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
-      <outputDirectory>/mem</outputDirectory>
-      <useProjectArtifact>false</useProjectArtifact>
-      <useTransitiveDependencies>false</useTransitiveDependencies>
-      <includes>
-        <include>net.sf.emustudio:ram-mem</include>
-        <include>net.sf.emustudio:standard-mem</include>
-        <include>net.sf.emustudio:brainduck-mem</include>
-      </includes>
-    </dependencySet>
-    <dependencySet>
-      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
-      <outputDirectory>/cpu</outputDirectory>
-      <useProjectArtifact>false</useProjectArtifact>
-      <useTransitiveDependencies>false</useTransitiveDependencies>
-      <includes>
-        <include>net.sf.emustudio:8080-cpu</include>
-        <include>net.sf.emustudio:ram-cpu</include>
-        <include>net.sf.emustudio:z80-cpu</include>
-        <include>net.sf.emustudio:brainduck-cpu</include>
-      </includes>
-    </dependencySet>
-    <dependencySet>
-      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
-      <outputDirectory>/</outputDirectory>
-      <useTransitiveDependencies>false</useTransitiveDependencies>
-      <useProjectArtifact>false</useProjectArtifact>
-      <includes>
-        <include>net.sf.emustudio:emuStudio</include>
-      </includes>
-    </dependencySet>
   </dependencySets>
-  <files>
-    <file>
-      <source>src/assemble/README.txt</source>
-      <outputDirectory>/</outputDirectory>
-    </file>
-    <file>
-      <source>src/assemble/COPYING</source>
-      <outputDirectory>/</outputDirectory>
-    </file>
-    <file>
-      <source>src/assemble/logback.xml</source>
-      <outputDirectory>/</outputDirectory>
-    </file>
-  </files>
+  <fileSets>
+    <fileSet>
+      <directory>files</directory>
+      <includes>
+        <include>**</include>
+      </includes>
+      <outputDirectory>/</outputDirectory>    
+    </fileSet>
+  </fileSets>
 </assembly>

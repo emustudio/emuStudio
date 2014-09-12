@@ -47,6 +47,7 @@
 
   <modules>
     <module>main-module</module>
+    <module>release</module>
     <module>plugins/compilers/ramc-ram</module>
     <module>plugins/cpu/ram-cpu</module>
     <module>plugins/mem/ram-mem</module>
@@ -192,16 +193,16 @@
     <profile>
       <!--
             Profile for creating emuStudio distribution. Use with command:
-              mvn -P dist assembly:single
+              mvn -P release assembly:single
       -->
-      <id>dist</id>
+      <id>release</id>
       <build>
         <plugins>
           <plugin>
             <artifactId>maven-assembly-plugin</artifactId>
             <configuration>
               <descriptors>
-                <descriptor>src/assemble/distribution.xml</descriptor>
+                <descriptor>assembly.xml</descriptor>
               </descriptors>
             </configuration>
             <executions>
@@ -216,89 +217,6 @@
           </plugin>
         </plugins>
       </build>
-      <dependencies>
-        <!-- compilers -->
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>as-8080</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>as-z80</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>ramc-ram</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>brainc-brainduck</artifactId>
-        </dependency>
-
-        <!-- devices -->
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>88-disk</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>88-sio</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>abstractTape-ram</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>adm3A-terminal</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>simhPseudo-z80</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>brainduck-terminal</artifactId>
-        </dependency>
-
-        <!-- memories -->
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>ram-mem</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>standard-mem</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>brainduck-mem</artifactId>
-        </dependency>
-
-        <!-- cpus -->
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>8080-cpu</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>ram-cpu</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>z80-cpu</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>brainduck-cpu</artifactId>
-        </dependency>
-
-        <!-- emuStudio -->
-        <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>emuStudio</artifactId>
-        </dependency>
-      </dependencies>
     </profile>
   </profiles>
 
@@ -342,7 +260,6 @@
         <artifactId>logback-classic</artifactId>
         <version>1.0.3</version>
       </dependency>
-
       <!-- compilers -->
       <dependency>
         <groupId>net.sf.emustudio</groupId>
