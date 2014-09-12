@@ -26,8 +26,8 @@
             <configuration>
               <instrumentation>
                 <excludes>
-                  <exclude>**/DecoderImpl.class</exclude>
-                  <exclude>**/DisassemblerImpl.class</exclude>
+                  <exclude>**/DecoderImpl*.class</exclude>
+                  <exclude>**/DisassemblerImpl*.class</exclude>
                 </excludes>
               </instrumentation>
             </configuration>
