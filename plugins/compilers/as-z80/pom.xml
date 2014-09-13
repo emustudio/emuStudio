@@ -17,28 +17,6 @@
   <name>Zilog Z80 assembler</name>
   <description>Java-based assembler of Zilog Z80 processor</description>
 
-  <profiles>
-    <profile>
-      <id>coveralls</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.eluder.coveralls</groupId>
-            <artifactId>coveralls-maven-plugin</artifactId>
-            <configuration>
-              <instrumentation>
-                <excludes>
-                  <exclude>**/ParserZ80.class</exclude>
-                  <exclude>**/SymZ80.class</exclude>
-                </excludes>
-              </instrumentation>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
-  
   <build>
     <finalName>as-z80</finalName>
     <plugins>
@@ -87,8 +65,8 @@
           </execution>
         </executions>
         <configuration>
-          <className>ParserZ80</className>
-          <symbolsName>SymZ80</symbolsName>
+          <className>ParserImpl</className>
+          <symbolsName>Symbols</symbolsName>
         </configuration>
       </plugin>
     </plugins>

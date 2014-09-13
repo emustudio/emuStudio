@@ -178,6 +178,15 @@
               <format>xml</format>
               <maxmem>256m</maxmem>
               <aggregate>true</aggregate>
+              <instrumentation>
+                <excludes>
+                  <exclude>**/DecoderImpl*.class</exclude>
+                  <exclude>**/DisassemblerImpl*.class</exclude>
+                  <exclude>**/LexerImpl*.class</exclude>
+                  <exclude>**/*ParserImpl*.class</exclude>
+                  <exclude>**/Symbols*.class</exclude>
+                </excludes>
+              </instrumentation>
             </configuration>
           </plugin>
           <plugin>
@@ -185,9 +194,6 @@
             <artifactId>coveralls-maven-plugin</artifactId>
             <configuration>
               <serviceName>travis-ci</serviceName>
-              <sourceDirectories>
-                <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
-              </sourceDirectories>
             </configuration>
           </plugin>
         </plugins>

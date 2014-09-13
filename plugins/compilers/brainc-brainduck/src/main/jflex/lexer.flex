@@ -1,9 +1,7 @@
 /*
- * LexerBD.java
- *
  * Lexical analyser for BrainDuck assembler
  *
- * Copyright (C) 2009-2012 Peter Jakubčo
+ * Copyright (C) 2009-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -31,7 +29,7 @@ import java.io.IOException;
 %%
 
 /* options */
-%class LexerBD
+%class LexerImpl
 %cup
 %public
 %implements LexicalAnalyzer
@@ -40,11 +38,11 @@ import java.io.IOException;
 %char
 %caseless
 %unicode
-%type TokenBD
+%type Tokens
 
 %{
     @Override
-    public TokenBD getSymbol() throws IOException {
+    public Tokens getSymbol() throws IOException {
         return next_token();
     }
 
@@ -61,14 +59,14 @@ import java.io.IOException;
         yyline = yychar = yycolumn = 0;
     }
     
-    private TokenBD token(int id, int type, Object val,boolean initial) {
-        return new TokenBD(id,type,yytext(),yyline,yycolumn,yychar,val,initial);
+    private Tokens token(int id, int type, Object val,boolean initial) {
+        return new Tokens(id,type,yytext(),yyline,yycolumn,yychar,val,initial);
     }
     
 %}
 
 %eofval{
-  return token(TokenBD.EOF, Token.TEOF,null,false);
+  return token(Tokens.EOF, Token.TEOF,null,false);
 %eofval}
 
 
@@ -79,21 +77,21 @@ Number     = [0-9]+
 
 %%
 
-"halt"  { return token(TokenBD.HALT, Token.RESERVED,null,true); }
-"inc"   { return token(TokenBD.INC,  Token.RESERVED,null,true); }
-"dec"   { return token(TokenBD.DEC,  Token.RESERVED,null,true); }
-"incv"  { return token(TokenBD.INCV, Token.RESERVED,null,true); }
-"decv"  { return token(TokenBD.DECV, Token.RESERVED,null,true); }
-"print" { return token(TokenBD.PRINT,Token.RESERVED,null,true); }
-"load"  { return token(TokenBD.LOAD, Token.RESERVED,null,true); }
-"loop"  { return token(TokenBD.LOOP, Token.RESERVED,null,true); }
-"endl"  { return token(TokenBD.ENDL, Token.RESERVED,null,true); }
+"halt"  { return token(Tokens.HALT, Token.RESERVED,null,true); }
+"inc"   { return token(Tokens.INC,  Token.RESERVED,null,true); }
+"dec"   { return token(Tokens.DEC,  Token.RESERVED,null,true); }
+"incv"  { return token(Tokens.INCV, Token.RESERVED,null,true); }
+"decv"  { return token(Tokens.DECV, Token.RESERVED,null,true); }
+"print" { return token(Tokens.PRINT,Token.RESERVED,null,true); }
+"load"  { return token(Tokens.LOAD, Token.RESERVED,null,true); }
+"loop"  { return token(Tokens.LOOP, Token.RESERVED,null,true); }
+"endl"  { return token(Tokens.ENDL, Token.RESERVED,null,true); }
 
 {WhiteSpace}   { }
-{Eol}          { return token(TokenBD.EOL, Token.SEPARATOR,null,true); }
-{Comment}      { return token(TokenBD.TCOMMENT, Token.COMMENT,null,true); }
-{Number}       { return token(TokenBD.NUMBER, Token.LITERAL,yytext(),true); }
+{Eol}          { return token(Tokens.EOL, Token.SEPARATOR,null,true); }
+{Comment}      { return token(Tokens.TCOMMENT, Token.COMMENT,null,true); }
+{Number}       { return token(Tokens.NUMBER, Token.LITERAL,yytext(),true); }
 
-//[^\n\r\ \t\f]+ { return token(TokenBD.error, TokenBD.ERROR); }
-.              { return token(TokenBD.error, TokenBD.ERROR,null,false); }
+//[^\n\r\ \t\f]+ { return token(Tokens.error, Tokens.ERROR); }
+.              { return token(Tokens.error, Tokens.ERROR,null,false); }
 

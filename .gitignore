@@ -1,9 +1,5 @@
 *~
 *.log
-compilers/
-cpu/
-mem/
-devices/
 examples/
 lib/
 tmp/

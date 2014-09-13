@@ -39,11 +39,11 @@ import net.sf.emustudio.ram.memory.RAMMemoryContext;
 
 @PluginType(type = PLUGIN_TYPE.COMPILER,
 title = "RAM Compiler",
-copyright = "\u00A9 Copyright 2009-2013, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2009-2014, Peter Jakubčo",
 description = "Custom compiler for RAM abstract machine")
 public class RAMCompiler extends AbstractCompiler {
-    private RAMLexer lex = null;
-    private RAMParser par;
+    private LexerImpl lex = null;
+    private ParserImpl par;
     private RAMMemoryContext memory;
     private RAMInstructionImpl context; // not needed context for anything, but
     private SourceFileExtension[] suffixes; // necessary for the registration
@@ -51,8 +51,8 @@ public class RAMCompiler extends AbstractCompiler {
     public RAMCompiler(Long pluginID) {
         super(pluginID);
         // lex has to be reset WITH a reader object before compile
-        lex = new RAMLexer((Reader) null);
-        par = new RAMParser(lex, this);
+        lex = new LexerImpl((Reader) null);
+        par = new ParserImpl(lex, this);
         context = new RAMInstructionImpl(0, null);
         try {
             ContextPool.getInstance().register(pluginID, context, RAMInstruction.class);
@@ -159,7 +159,7 @@ public class RAMCompiler extends AbstractCompiler {
 
     @Override
     public LexicalAnalyzer getLexer(Reader reader) {
-        return new RAMLexer(reader);
+        return new LexerImpl(reader);
     }
 
     @Override

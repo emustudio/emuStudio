@@ -1,5 +1,5 @@
 /*
- * ParserZ80.java
+ * ParserImpl.java
  *
  * Parser (syntactic analyzer for Z80 assembler)
  *
@@ -45,7 +45,7 @@ parser code {:
     public int errorCount = 0;
     private String reportPrefixString = null;
     
-    public ParserZ80(java_cup.runtime.Scanner s, CompilerImpl asm) {
+    public ParserImpl(java_cup.runtime.Scanner s, CompilerImpl asm) {
         this(s);
         this.asm = asm;
     }
