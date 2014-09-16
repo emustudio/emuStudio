@@ -1,8 +1,7 @@
 /*
- * MemoryImpl.java
- * 
- * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * Copyright (C) 2009-2014 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,12 +23,12 @@ import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.memory.AbstractMemory;
+import emulib.runtime.AlreadyRegisteredException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
-import net.sf.emustudio.ram.memory.RAMInstruction;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;
 import net.sf.emustudio.ram.memory.gui.MemoryWindow;
 
@@ -46,8 +45,8 @@ public class MemoryImpl extends AbstractMemory {
         context = new RAMMemoryContextImpl();
         try {
             ContextPool.getInstance().register(pluginID, context, RAMMemoryContext.class);
-        } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Could not register Program tape context", 
+        } catch (AlreadyRegisteredException | InvalidContextException e) {
+            StaticDialogs.showErrorMessage("Could not register Program tape context",
                     MemoryImpl.class.getAnnotation(PluginType.class).title());
         }
     }
@@ -65,18 +64,7 @@ public class MemoryImpl extends AbstractMemory {
     @Override
     public boolean initialize(SettingsManager settings) {
         super.initialize(settings);
-        try {
-            if (ContextPool.getInstance().getCompilerContext(pluginID,
-                    RAMInstruction.class) == null) {
-                StaticDialogs.showErrorMessage("Error: Could not access to the compiler");
-                return false;
-            }
-            return true;
-        } catch (InvalidContextException e) {
-            StaticDialogs.showErrorMessage("Error: Could not access to the compiler",
-                    MemoryImpl.class.getAnnotation(PluginType.class).title());
-            return false;
-        }
+        return true;
     }
 
     @Override

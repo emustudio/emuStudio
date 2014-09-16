@@ -27,6 +27,7 @@ import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
 import emulib.plugins.memory.Memory.MemoryListener;
 import emulib.plugins.memory.MemoryContext;
+import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.InvalidPasswordException;
@@ -264,7 +265,7 @@ public class StudioFrame extends javax.swing.JFrame {
                         }
                     }
                 });
-            } catch (InvalidContextException e) {
+            } catch (InvalidContextException | ContextNotFoundException e) {
                 logger.error("Could not register memory change listener", e);
             }
             btnMemory.setEnabled(memory.isShowSettingsSupported());

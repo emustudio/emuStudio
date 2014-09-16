@@ -1,9 +1,7 @@
 /*
- * DiskImpl.java
- *
  * Created on Streda, 30 january 2008
  *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,6 +26,7 @@ import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.device.AbstractDevice;
 import emulib.plugins.device.DeviceContext;
+import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
@@ -112,7 +111,7 @@ import net.sf.emustudio.intel8080.ExtendedContext;
  */
 @PluginType(type = PLUGIN_TYPE.DEVICE,
 title = "MITS 88-DISK device",
-copyright = "\u00A9 Copyright 2007-2012, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2007-2014, Peter Jakubčo",
 description = "Implementation of popular floppy disk controller.")
 public class DiskImpl extends AbstractDevice {
     private final static int DRIVES_COUNT = 16;
@@ -124,7 +123,7 @@ public class DiskImpl extends AbstractDevice {
     private int port2CPU;
     private int port3CPU;
     private ExtendedContext cpuContext;
-    private final List<Drive> drives;
+    private final List<Drive> drives = new ArrayList<>();
     private final Port1 port1;
     private final Port2 port2;
     private final Port3 port3;
@@ -134,7 +133,6 @@ public class DiskImpl extends AbstractDevice {
 
     public DiskImpl(Long pluginID) {
         super(pluginID);
-        drives = new ArrayList<>();
         for (int i = 0; i < DRIVES_COUNT; i++) {
             drives.add(new Drive());
         }
@@ -163,7 +161,7 @@ public class DiskImpl extends AbstractDevice {
      */
     private int providePort(int DISKport, int defaultPort, DeviceContext port) {
         String providedPort = StaticDialogs.inputStringValue("Port "
-                + String.valueOf(DISKport) + " can not be attached to default"
+                + DISKport + " can not be attached to default"
                 + " CPU port, please enter another one: ", "88-DISK",
                 String.valueOf(defaultPort));
         int portNumber;
@@ -187,17 +185,12 @@ public class DiskImpl extends AbstractDevice {
         try {
             cpuContext = (ExtendedContext) ContextPool.getInstance()
                     .getCPUContext(pluginID, ExtendedContext.class);
-        } catch (InvalidContextException e) {
-            // Error will be reported later on
-        }
-
-        if (cpuContext == null) {
+        } catch (InvalidContextException | ContextNotFoundException e) {
             StaticDialogs.showErrorMessage("Cannot connect to the CPU", "88-DISK");
             return false;
         }
 
         readSettings();
-
         // attach device to CPU
         if (cpuContext.attachDevice(port1, port1CPU) == false) {
             port1CPU = providePort(1, port1CPU, port1);

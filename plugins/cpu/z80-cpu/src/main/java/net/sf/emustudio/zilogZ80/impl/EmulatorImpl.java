@@ -29,6 +29,7 @@ import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.device.DeviceContext;
 import emulib.plugins.memory.MemoryContext;
+import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
@@ -262,15 +263,11 @@ public class EmulatorImpl extends AbstractCPU {
 
         try {
             this.memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
-        } catch (InvalidContextException e) {
-            // Will be processed
-        }
-
-
-        if (memory == null) {
+        } catch (InvalidContextException | ContextNotFoundException e) {
             StaticDialogs.showErrorMessage("CPU must have access to memory");
             return false;
         }
+
         if (memory.getDataType() != Short.class) {
             StaticDialogs.showErrorMessage("Operating memory type is not supported for this kind of CPU.");
             return false;
