@@ -23,9 +23,11 @@ package net.sf.emustudio.ram.cpu.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.CPUContext;
 import emulib.plugins.cpu.Disassembler;
+import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.LoggerFactory;
@@ -74,31 +76,27 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    public boolean initialize(SettingsManager settings) {
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
 
         try {
             mem = (RAMMemoryContext) ContextPool.getInstance().getMemoryContext(pluginID,
                     RAMMemoryContext.class);
-        } catch (InvalidContextException e) {
+        } catch (ContextNotFoundException | InvalidContextException e) {
             // Will be processed later on
-            LOGGER.error("Could not get memory context", e);
+            throw new PluginInitializationException(
+                this, "Could not get memory context", e
+            );
         }
 
-        if (mem == null) {
-            StaticDialogs.showErrorMessage("RAM must have access to program memory");
-            return false;
-        }
         if (mem.getDataType() != RAMInstruction.class) {
-            StaticDialogs.showErrorMessage("The RAM machine doesn't support this kind of program memory!");
-            return false;
+            throw new PluginInitializationException(
+                this, "The RAM machine doesn't support this kind of program memory!"
+            );
         }
 
         dis = new RAMDisassembler(this.mem);
-        if (!context.init(pluginID)) {
-            return false;
-        }
-        return true;
+        context.init(pluginID);
     }
 
     // called from RAMContext after Input tape attachement
@@ -244,6 +242,7 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getInput().moveRight();
                         context.getStorage().setSymbolAt(M, input);
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -265,6 +264,7 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getOutput().write(context.getStorage().getSymbolAt(M));
                         context.getOutput().moveRight();
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -286,6 +286,7 @@ public class EmulatorImpl extends AbstractCPU {
                         }
                         context.getStorage().setSymbolAt(0, context.getStorage().getSymbolAt(M));
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -307,6 +308,7 @@ public class EmulatorImpl extends AbstractCPU {
                         }
                         context.getStorage().setSymbolAt(M, context.getStorage().getSymbolAt(0));
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -323,6 +325,7 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
                         return;
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                     }
                     // then integer (if double failed)
                     try {
@@ -330,6 +333,7 @@ public class EmulatorImpl extends AbstractCPU {
                         double ri = Double.parseDouble(sym1);
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -350,12 +354,14 @@ public class EmulatorImpl extends AbstractCPU {
                             context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
                             return;
                         } catch (NumberFormatException e) {
+                            LOGGER.error("Could not parse number", e);
                         }
                         // then integer (if double failed)
                         double r0 = Double.parseDouble(sym0);
                         double ri = Double.parseDouble(sym1);
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -369,6 +375,7 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
                         return;
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                     }
                     // then integer (if double failed)
                     try {
@@ -376,6 +383,7 @@ public class EmulatorImpl extends AbstractCPU {
                         double ri = Double.parseDouble(sym1);
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -391,12 +399,14 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
                         return;
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                     }
                     try {
                         double r0 = Double.parseDouble(sym0);
                         double ri = Double.parseDouble(sym1);
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -415,11 +425,13 @@ public class EmulatorImpl extends AbstractCPU {
                             context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
                             return;
                         } catch (NumberFormatException e) {
+                            LOGGER.error("Could not parse number", e);
                         }
                         double r0 = Double.parseDouble(sym0);
                         double ri = Double.parseDouble(sym1);
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -432,12 +444,14 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
                         return;
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                     }
                     try {
                         double r0 = Double.parseDouble(sym0);
                         double ri = Double.parseDouble(sym1);
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -453,12 +467,14 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
                         return;
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                     }
                     try {
                         double r0 = Double.parseDouble(sym0);
                         double ri = Double.parseDouble(sym1);
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -478,11 +494,13 @@ public class EmulatorImpl extends AbstractCPU {
                             context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
                             return;
                         } catch (NumberFormatException e) {
+                            LOGGER.error("Could not parse number", e);
                         }
                         double r0 = Double.parseDouble(sym0);
                         double ri = Double.parseDouble(sym1);
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -495,12 +513,14 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
                         return;
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                     }
                     try {
                         double r0 = Double.parseDouble(sym0);
                         double ri = Double.parseDouble(sym1);
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -520,6 +540,7 @@ public class EmulatorImpl extends AbstractCPU {
                         return;
                     } catch (NumberFormatException e) {
                         // This really works (tested) for double numbers
+                        LOGGER.error("Could not parse number", e);
                     }
                     try {
                         double r0 = Double.parseDouble(sym0);
@@ -529,6 +550,7 @@ public class EmulatorImpl extends AbstractCPU {
                         }
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -552,6 +574,7 @@ public class EmulatorImpl extends AbstractCPU {
                             context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
                             return;
                         } catch (NumberFormatException e) {
+                            LOGGER.error("Could not parse number", e);
                         }
 
                         double r0 = Double.parseDouble(sym0);
@@ -561,7 +584,8 @@ public class EmulatorImpl extends AbstractCPU {
                         }
 
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
-                    } catch (Exception e) {
+                    } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -577,6 +601,7 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
                         return;
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                     }
                     try {
                         double r0 = Double.parseDouble(sym0);
@@ -586,6 +611,7 @@ public class EmulatorImpl extends AbstractCPU {
                         }
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                     return;
@@ -606,11 +632,13 @@ public class EmulatorImpl extends AbstractCPU {
                     rr0 = Integer.decode(r0);
                     t = true;
                 } catch (NumberFormatException e) {
+                    LOGGER.error("Could not parse number", e);
                 }
                 if (t == false) {
                     try {
                         rr0 = (int) Double.parseDouble(r0);
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                         break;
                     }
                 }
@@ -629,11 +657,13 @@ public class EmulatorImpl extends AbstractCPU {
                         rr0 = Integer.decode(r0);
                         t = true;
                     } catch (NumberFormatException e) {
+                        LOGGER.error("Could not parse number", e);
                     }
                     if (t == false) {
                         try {
                             rr0 = (int) Double.parseDouble(r0);
                         } catch (NumberFormatException e) {
+                            LOGGER.error("Could not parse number", e);
                             break;
                         }
                     }
@@ -642,6 +672,7 @@ public class EmulatorImpl extends AbstractCPU {
                         return;
                     }
                 } catch (NumberFormatException e) {
+                    LOGGER.error("Could not parse number", e);
                     break;
                 }
                 return;

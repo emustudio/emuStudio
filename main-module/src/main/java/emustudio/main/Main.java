@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2007-2014, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -17,12 +19,12 @@
  */
 package emustudio.main;
 
+import emulib.plugins.PluginInitializationException;
 import emulib.runtime.InvalidPasswordException;
 import emulib.runtime.InvalidPluginException;
 import emulib.runtime.StaticDialogs;
 import emustudio.architecture.ArchitectureLoader;
 import emustudio.architecture.ArchitectureManager;
-import emustudio.architecture.PluginInitializationException;
 import emustudio.architecture.PluginLoadingException;
 import emustudio.architecture.ReadConfigurationException;
 import emustudio.gui.LoadingDialog;
@@ -37,7 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Main {
-    private final static Logger logger = LoggerFactory.getLogger(Main.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public static ArchitectureManager architecture = null;
     public static String password = null;
@@ -80,7 +82,7 @@ public class Main {
             javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
         } catch (javax.swing.UnsupportedLookAndFeelException | ClassNotFoundException
                 | InstantiationException | IllegalAccessException e) {
-            logger.error("Unable to set system look and feel", e);
+            LOGGER.error("Unable to set system look and feel", e);
         }
 
         // parse command line arguments
@@ -88,7 +90,7 @@ public class Main {
             commandLine = CommandLineFactory.parseCommandLine(args);
         } catch (InvalidCommandLineException e) {
             tryShowErrorMessage("Invalid command line: " + e.getMessage());
-            logger.error("Invalid command line.", e);
+            LOGGER.error("Invalid command line.", e);
             return;
         }
 
@@ -96,7 +98,7 @@ public class Main {
         try {
             java_cup.runtime.Scanner d;
         } catch (NoClassDefFoundError e) {
-            logger.error("java_cup library not loaded");
+            LOGGER.error("java_cup library not loaded");
             tryShowErrorMessage("Error: java_cup library not loaded.");
             return;
         }
@@ -104,12 +106,12 @@ public class Main {
         try {
             password = emulib.runtime.ContextPool.SHA1(String.valueOf(Math.random()) + new Date().toString());
         } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-            logger.error("Could not compute hash.");
+            LOGGER.error("Could not compute hash.");
             tryShowErrorMessage("Error: Could not compute hash");
             return;
         }
         if (!emulib.emustudio.API.assignPassword(password)) {
-            logger.error("Communication with emuLib failed.");
+            LOGGER.error("Communication with emuLib failed.");
             tryShowErrorMessage("Error: communication with emuLib failed.");
             return;
         }
@@ -132,7 +134,7 @@ public class Main {
         if (commandLine.getConfigName() == null) {
             if (commandLine.noGUIWanted()) {
                 tryShowErrorMessage("Configuration was not specified.");
-                logger.error("Configuration was not specified.");
+                LOGGER.error("Configuration was not specified.");
                 System.exit(0);
             }
             OpenComputerDialog odi = new OpenComputerDialog();
@@ -141,7 +143,7 @@ public class Main {
                 commandLine.setConfigName(odi.getArchName());
             }
             if (commandLine.getConfigName() == null) {
-                logger.error("Configuration was not specified.");
+                LOGGER.error("Configuration was not specified.");
                 System.exit(0);
             }
         }
@@ -152,7 +154,7 @@ public class Main {
             splash = new LoadingDialog();
             splash.setVisible(true);
         } else {
-            logger.info(new StringBuilder().append("Loading virtual computer: ").append(commandLine.getConfigName())
+            LOGGER.info(new StringBuilder().append("Loading virtual computer: ").append(commandLine.getConfigName())
                     .toString());
         }
 
@@ -160,22 +162,22 @@ public class Main {
         try {
             architecture = ArchitectureLoader.getInstance().createArchitecture(commandLine.getConfigName());
         } catch (InvalidPasswordException e) {
-            logger.error("Wrong emuLib.", e);
+            LOGGER.error("Wrong emuLib.", e);
             tryShowErrorMessage("Wrong emuLib. Please see log file for details.");
         } catch (InvalidPluginException e) {
-            logger.error("Could not load plugin.", e);
+            LOGGER.error("Could not load plugin.", e);
             tryShowErrorMessage("Could not load plugin. Please see log file for details.");
         } catch (PluginLoadingException e) {
-            logger.error("Could not load virtual computer.", e);
+            LOGGER.error("Could not load virtual computer.", e);
             tryShowErrorMessage("Could not load virtual computer. Please see log file for details.");
         } catch (ReadConfigurationException e) {
-            logger.error("Could not read configuration.", e);
+            LOGGER.error("Could not read configuration.", e);
             tryShowErrorMessage("Error: Could not read configuration. Please see log file for details.");
         } catch (PluginInitializationException e) {
-            logger.error("Could not initialize plug-ins.", e);
+            LOGGER.error("{}: Could not initialize plug-in.", e.getPlugin().getTitle(), e);
             tryShowErrorMessage("Error: Could not initialize plug-ins. Please see log file for details.");
         } catch (IOException e) {
-            logger.error("Could not load virtual computer. Unexpected error.", e);
+            LOGGER.error("Could not load virtual computer. Unexpected error.", e);
             tryShowErrorMessage("Could not load virtual computer. Please see log file for details.");
         }
 
@@ -197,7 +199,7 @@ public class Main {
                     new StudioFrame(commandLine.getConfigName()).setVisible(true);
                 }
             } catch (Exception e) {
-                logger.error("Could not start main window.", e);
+                LOGGER.error("Could not start main window.", e);
                 tryShowErrorMessage("Could not start main window.");
                 System.exit(1);
             }
@@ -205,7 +207,7 @@ public class Main {
             try {
               new Automatization(architecture, commandLine.getInputFileName(), commandLine.noGUIWanted()).run();
             } catch (AutomatizationException e) {
-                logger.error("Error during automatization.", e);
+                LOGGER.error("Error during automatization.", e);
                 tryShowErrorMessage("Error: " + e.getMessage());
                 System.exit(1);
             }

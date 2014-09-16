@@ -1,8 +1,7 @@
 /*
- * BrainCPU.java
- *
- * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * Copyright (C) 2009-2014 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +22,7 @@ package net.sf.emustudio.brainduck.cpu.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.memory.MemoryContext;
@@ -43,7 +43,7 @@ import net.sf.emustudio.brainduck.cpu.gui.BrainStatusPanel;
 
 @PluginType(type = PLUGIN_TYPE.CPU,
 title = "BrainCPU",
-copyright = "\u00A9 Copyright 2009-2012, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2009-2014, Peter Jakubčo",
 description = "Emulator of CPU for abstract BrainDuck architecture")
 public class EmulatorImpl extends AbstractCPU {
 
@@ -75,21 +75,21 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    public boolean initialize(SettingsManager settings) {
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
         try {
             memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
 
             if (memory.getDataType() != Short.class) {
-                StaticDialogs.showErrorMessage("Selected operating memory is not supported.");
-                return false;
+                throw new PluginInitializationException(
+                        this, "Selected operating memory is not supported."
+                );
             }
             disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
-            return true;
         } catch (InvalidContextException | ContextNotFoundException e) {
-            StaticDialogs.showErrorMessage("Could not get memory context",
-                    EmulatorImpl.class.getAnnotation(PluginType.class).title());
-            return false;
+            throw new PluginInitializationException(
+                    this, "Could not get memory context", e
+            );
         }
     }
 

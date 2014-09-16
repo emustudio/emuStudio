@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2010-2014, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -18,6 +20,7 @@
 package emustudio.architecture;
 
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.PluginInitializationException;
 import emulib.runtime.InvalidPasswordException;
 import emulib.runtime.StaticDialogs;
 import emustudio.architecture.ArchitectureLoader.PluginInfo;
@@ -63,10 +66,7 @@ public class ArchitectureManager implements SettingsManager {
         for (PluginInfo plugin : computer.getPluginsInfo()) {
             pluginNames.put(plugin.pluginId, plugin.pluginSettingsName);
         }
-
-        if (initialize() == false) {
-            throw new PluginInitializationException("Initialization of plugins failed");
-        }
+        initialize();
     }
 
     /**
@@ -75,7 +75,7 @@ public class ArchitectureManager implements SettingsManager {
      *
      * @return true If the initialization succeeded, false otherwise
      */
-    private boolean initialize() {
+    private void initialize() throws PluginInitializationException {
         if (Main.commandLine.autoWanted()) {
            // Set "auto" setting to "true" to all plugins
            writeSetting("auto", "true");
@@ -85,10 +85,10 @@ public class ArchitectureManager implements SettingsManager {
            try {
                StaticDialogs.setGUISupported(false, Main.password);
            } catch (InvalidPasswordException e) {
-               logger.error("Could not disable GUI in static dialogs.");
+               // does not happen
            }
         }
-        return computer.initialize(this);
+        computer.initialize(this);
     }
 
     /**

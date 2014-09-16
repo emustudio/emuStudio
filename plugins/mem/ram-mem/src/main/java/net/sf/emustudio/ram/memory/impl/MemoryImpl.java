@@ -22,6 +22,7 @@ package net.sf.emustudio.ram.memory.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.memory.AbstractMemory;
 import emulib.runtime.AlreadyRegisteredException;
 import emulib.runtime.ContextPool;
@@ -62,9 +63,8 @@ public class MemoryImpl extends AbstractMemory {
     }
 
     @Override
-    public boolean initialize(SettingsManager settings) {
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
-        return true;
     }
 
     @Override

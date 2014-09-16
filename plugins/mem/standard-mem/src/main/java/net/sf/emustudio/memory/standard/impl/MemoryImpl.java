@@ -1,9 +1,7 @@
 /*
- * MemoryImpl.java
- *
  * Created on Sobota, 2007, october 27, 11:58
  *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,9 +23,12 @@ package net.sf.emustudio.memory.standard.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.memory.AbstractMemory;
 import emulib.plugins.memory.MemoryContext;
+import emulib.runtime.AlreadyRegisteredException;
 import emulib.runtime.ContextPool;
+import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.io.File;
 import java.util.List;
@@ -40,7 +41,7 @@ import net.sf.emustudio.memory.standard.impl.MemoryContextImpl.AddressRangeImpl;
 
 @PluginType(type=PLUGIN_TYPE.MEMORY,
         title="Standard operating memory",
-        copyright="\u00A9 Copyright 2006-2012, Peter Jakubčo",
+        copyright="\u00A9 Copyright 2006-2014, Peter Jakubčo",
         description="Operating memory suitable for most of CPUs")
 public class MemoryImpl extends AbstractMemory {
     private MemoryContextImpl context;
@@ -55,8 +56,8 @@ public class MemoryImpl extends AbstractMemory {
         try {
             ContextPool.getInstance().register(pluginID, context, StandardMemoryContext.class);
             ContextPool.getInstance().register(pluginID, context, MemoryContext.class);
-        } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Could not register the memory", 
+        } catch (AlreadyRegisteredException | InvalidContextException e) {
+            StaticDialogs.showErrorMessage("Could not register the memory",
                     MemoryImpl.class.getAnnotation(PluginType.class).title());
         }
     }
@@ -96,21 +97,27 @@ public class MemoryImpl extends AbstractMemory {
      *     6. set rom ranges to memory
      */
     @Override
-    public boolean initialize(SettingsManager settings) {
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
         String s = settings.readSetting(pluginID, "banksCount");
         int bCount = 0, bCommon = 0;
         if (s != null) {
             try {
                 bCount = Integer.parseInt(s);
-            } catch (Exception e) {
+            } catch (NumberFormatException e) {
+                throw new PluginInitializationException(
+                        this, "Could not parse banks count"
+                );
             }
         }
         s = settings.readSetting(pluginID, "commonBoundary");
         if (s != null) {
             try {
                 bCommon = Integer.parseInt(s);
-            } catch (Exception e) {
+            } catch (NumberFormatException e) {
+                throw new PluginInitializationException(
+                        this, "Could not parse common boundary"
+                );
             }
         }
         this.settings = settings;
@@ -135,7 +142,12 @@ public class MemoryImpl extends AbstractMemory {
                 if (r != null) {
                     try {
                         adr = Integer.decode(r);
-                    } catch (Exception e) {
+                    } catch (NumberFormatException e) {
+                        throw new PluginInitializationException(
+                                this,
+                                "Could not parse address at which the image"
+                                        + " should be loaded"
+                        );
                     }
                 }
                 context.loadBin(s, adr, 0);
@@ -154,18 +166,21 @@ public class MemoryImpl extends AbstractMemory {
             }
             try {
                 j = Integer.parseInt(s);
-            } catch (Exception e) {
-                break;
+            } catch (NumberFormatException e) {
+                throw new PluginInitializationException(
+                        this, "Could not parse ROM from (" + s + ")"
+                );
             }
             try {
                 k = Integer.parseInt(r);
-            } catch (Exception e) {
-                break;
+            } catch (NumberFormatException e) {
+                throw new PluginInitializationException(
+                        this, "Could not parse ROM to (" + r + ")"
+                );
             }
             context.setROM(new AddressRangeImpl(j, k));
             i++;
         }
-        return true;
     }
 
     /**

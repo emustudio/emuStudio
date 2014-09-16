@@ -1,7 +1,5 @@
 /*
- * BrainTerminal.java
- * 
- * Copyright (C) 2009-2012 Peter Jakubčo
+ * Copyright (C) 2009-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,8 +21,11 @@ package net.sf.emustudio.brainduck.terminal.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.device.AbstractDevice;
 import emulib.plugins.device.DeviceContext;
+import emulib.runtime.AlreadyRegisteredException;
+import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
@@ -35,7 +36,7 @@ import net.sf.emustudio.brainduck.terminal.gui.BrainTerminalDialog;
 
 @PluginType(type = PLUGIN_TYPE.DEVICE,
 title = "BrainDuck terminal",
-copyright = "\u00A9 Copyright 2009-2012, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2009-2014, Peter Jakubčo",
 description = "Terminal device for abstract BrainDuck architecture.")
 public class BrainTerminal extends AbstractDevice {
     private BrainCPUContext cpu;
@@ -46,10 +47,10 @@ public class BrainTerminal extends AbstractDevice {
         super(pluginID);
         gui = new BrainTerminalDialog();
         terminal = new BrainTerminalContext(gui);
-        
+
         try {
             ContextPool.getInstance().register(pluginID, terminal, DeviceContext.class);
-        } catch (Exception e) {
+        } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register CPU Context",
                     getTitle());
         }
@@ -66,21 +67,19 @@ public class BrainTerminal extends AbstractDevice {
     }
 
     @Override
-    public boolean initialize(SettingsManager settings) {
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
 
         try {
             cpu = (BrainCPUContext)ContextPool.getInstance().getCPUContext(pluginID, BrainCPUContext.class);
-        } catch (InvalidContextException e) {
-            // Will be processed
-        }
-        
-        if (cpu == null) {
-            StaticDialogs.showErrorMessage("BrainTerminal needs to be connected to the BrainCPU.");
-            return false;
+        } catch (ContextNotFoundException | InvalidContextException e) {
+            throw new PluginInitializationException(
+                    this,
+                    "BrainTerminal needs to be connected to the BrainCPU.",
+                    e
+            );
         }
         cpu.attachDevice(terminal);
-
         // read settings
         String s = settings.readSetting(pluginID, "verbose");
         if ((s != null) && (s.toUpperCase().equals("TRUE"))) {
@@ -89,7 +88,6 @@ public class BrainTerminal extends AbstractDevice {
         } else {
             gui.setVerbose(false);
         }
-        return true;
     }
 
     @Override
@@ -102,7 +100,7 @@ public class BrainTerminal extends AbstractDevice {
         gui.dispose();
         gui = null;
     }
-   
+
 
     @Override
     public void showGUI() {

@@ -1,7 +1,5 @@
 /*
- * AbstractTape.java
- *
- * Copyright (C) 2009-2013 Peter Jakubčo
+ * Copyright (C) 2009-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,8 +21,11 @@ package net.sf.emustudio.ram.abstracttape.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.device.AbstractDevice;
+import emulib.runtime.AlreadyRegisteredException;
 import emulib.runtime.ContextPool;
+import emulib.runtime.InvalidContextException;
 import emulib.runtime.LoggerFactory;
 import emulib.runtime.interfaces.Logger;
 import java.util.MissingResourceException;
@@ -35,10 +36,10 @@ import net.sf.emustudio.ram.abstracttape.gui.TapeDialog;
 
 @PluginType(type = PLUGIN_TYPE.CPU,
 title = "Abstract tape",
-copyright = "\u00A9 Copyright 2008-2013, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2008-2014, Peter Jakubčo",
 description = "Abstract tape device is used by abstract machines such as RAM or Turing machine")
 public class AbstractTape extends AbstractDevice {
-    private static Logger LOGGER = LoggerFactory.getLogger(AbstractTape.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTape.class);
     private String guiTitle;
     private AbstractTapeContextImpl context;
     private TapeDialog gui;
@@ -50,7 +51,7 @@ public class AbstractTape extends AbstractDevice {
         context = new AbstractTapeContextImpl(this);
         try {
             ContextPool.getInstance().register(pluginID, context, AbstractTapeContext.class);
-        } catch (Exception e) {
+        } catch (AlreadyRegisteredException | InvalidContextException e) {
             LOGGER.error("Could not register Abstract tape context", e);
         }
     }
@@ -66,7 +67,7 @@ public class AbstractTape extends AbstractDevice {
     }
 
     @Override
-    public boolean initialize(SettingsManager settings) {
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
         this.settings = settings;
 
@@ -79,7 +80,6 @@ public class AbstractTape extends AbstractDevice {
             showGUI();
         }
         context.setVerbose(auto);
-        return true;
     }
 
     @Override

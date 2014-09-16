@@ -24,6 +24,7 @@ package net.sf.emustudio.devices.mits88disk.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.device.AbstractDevice;
 import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextNotFoundException;
@@ -106,8 +107,6 @@ import net.sf.emustudio.intel8080.ExtendedContext;
  * X = Not used Sector number = binary of the sector number currently under the
  * head, 0-31. T = Sector True, is a 1 when the sector is positioned to read or
  * write.
- *
- * @author vbmacher
  */
 @PluginType(type = PLUGIN_TYPE.DEVICE,
 title = "MITS 88-DISK device",
@@ -179,15 +178,16 @@ public class DiskImpl extends AbstractDevice {
     }
 
     @Override
-    public boolean initialize(SettingsManager settings) {
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
 
         try {
             cpuContext = (ExtendedContext) ContextPool.getInstance()
                     .getCPUContext(pluginID, ExtendedContext.class);
         } catch (InvalidContextException | ContextNotFoundException e) {
-            StaticDialogs.showErrorMessage("Cannot connect to the CPU", "88-DISK");
-            return false;
+            throw new PluginInitializationException(
+                    this, ": Cannot connect to the CPU", e
+            );
         }
 
         readSettings();
@@ -195,28 +195,30 @@ public class DiskImpl extends AbstractDevice {
         if (cpuContext.attachDevice(port1, port1CPU) == false) {
             port1CPU = providePort(1, port1CPU, port1);
             if (port1CPU == -1) {
-                StaticDialogs.showErrorMessage("88-DISK (port1) can not be "
-                        + "attached to default CPU port");
-                return false;
+                throw new PluginInitializationException(
+                        this,
+                        ": 88-DISK (port1) can not be attached to default CPU port"
+                );
             }
         }
         if (cpuContext.attachDevice(port2, port2CPU) == false) {
             port2CPU = providePort(2, port2CPU, port2);
             if (port2CPU == -1) {
-                StaticDialogs.showErrorMessage("88-DISK (port2) can not be "
-                        + "attached to default CPU port");
-                return false;
+                throw new PluginInitializationException(
+                        this,
+                        ": 88-DISK (port2) can not be attached to default CPU port"
+                );
             }
         }
         if (cpuContext.attachDevice(port3, port3CPU) == false) {
             port3CPU = providePort(3, port3CPU, port3);
             if (port3CPU == -1) {
-                StaticDialogs.showErrorMessage("88-DISK (port3) can not be "
-                        + "attached to default CPU port");
-                return false;
+                throw new PluginInitializationException(
+                        this,
+                        ": 88-DISK (port3) can not be attached to default CPU port"
+                );
             }
         }
-        return true;
     }
 
     private void readSettings() {

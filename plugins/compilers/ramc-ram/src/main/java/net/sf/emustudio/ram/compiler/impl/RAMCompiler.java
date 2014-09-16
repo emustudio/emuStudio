@@ -23,9 +23,12 @@ package net.sf.emustudio.ram.compiler.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.compiler.AbstractCompiler;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
+import emulib.runtime.AlreadyRegisteredException;
+import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
@@ -56,7 +59,7 @@ public class RAMCompiler extends AbstractCompiler {
         context = new RAMInstructionImpl(0, null);
         try {
             ContextPool.getInstance().register(pluginID, context, RAMInstruction.class);
-        } catch (Exception e) {
+        } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register RAM instruction context",
                     RAMCompiler.class.getAnnotation(PluginType.class).title());
         }
@@ -73,20 +76,16 @@ public class RAMCompiler extends AbstractCompiler {
     }
 
     @Override
-    public boolean initialize(SettingsManager settings) {
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
         try {
             memory = (RAMMemoryContext) ContextPool.getInstance().getMemoryContext(pluginID,
                     RAMMemoryContext.class);
-        } catch (InvalidContextException e) {
-            // Will be processed
+        } catch (ContextNotFoundException | InvalidContextException e) {
+            throw new PluginInitializationException(
+                    this, "Could not access RAM program memory", e
+            );
         }
-
-        if (memory == null) {
-            StaticDialogs.showErrorMessage("Error: Could not access RAM program memory");
-            return false;
-        }
-        return true;
     }
 
     /**
