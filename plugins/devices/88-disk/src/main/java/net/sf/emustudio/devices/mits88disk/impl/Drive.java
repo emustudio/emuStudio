@@ -1,9 +1,7 @@
 /*
- * Drive.java
- *
  * Created on 6.2.2008, 8:46:46
  *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,33 +21,26 @@
 package net.sf.emustudio.devices.mits88disk.impl;
 
 import java.io.*;
-import java.util.EventListener;
-import javax.swing.event.EventListenerList;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Performs disk operations on single drive.
- *
- * @author Peter Jakubčo
  */
 public class Drive {
+    public final static int TRACKS_COUNT = 254;
+    public final static int SECTORS_COUNT = 32;
+    public final static int SECTOR_LENGTH = 137;
 
-    public final static int tracksCount = 254;
-    public final static int sectorsCount = 32;
-    public final static int sectorLength = 137;
     private short track;
     private short sector;
     private short sectorOffset;
-    /**
-     * mounted image
-     */
-    private File floppy = null;
+
+    private File mountedFloppy = null;
     private RandomAccessFile image;
     private boolean selected = false;
-    //   private int rotateLatency = 100;
-    /**
-     * gui interaction
-     */
-    private EventListenerList listeners; // list of listeners
+
+    private final List<DriveListener> listeners = new ArrayList<>();
 
     /*
      7   6   5   4   3   2   1   0
@@ -67,7 +58,7 @@ public class Drive {
      */
     private short flags;
 
-    public interface DriveListener extends EventListener {
+    public interface DriveListener {
 
         public void driveSelect(Drive drive, boolean sel);
 
@@ -76,39 +67,32 @@ public class Drive {
 
     public Drive() {
         track = 0;
-        sector = sectorsCount;
-        sectorOffset = sectorLength;
+        sector = SECTORS_COUNT;
+        sectorOffset = SECTOR_LENGTH;
         flags = 0xE7; // 11100111b
-        listeners = new EventListenerList();
     }
 
     public void addDriveListener(DriveListener l) {
-        listeners.add(DriveListener.class, l);
+        listeners.add(l);
     }
 
     public void removeDriveListener(DriveListener l) {
-        listeners.remove(DriveListener.class, l);
+        listeners.remove(l);
     }
 
-    private void fireListeners(boolean sel, boolean par) {
-        Object[] lis = listeners.getListenerList();
-        for (int i = 0; i < lis.length; i += 2) {
-            if (lis[i] == DriveListener.class) {
-                if (sel) {
-                    ((DriveListener) lis[i + 1]).driveSelect(this, selected);
-                }
-                if (par) {
-                    ((DriveListener) lis[i + 1]).driveParamsChanged(this);
-                }
+    private void notifyListeners(boolean sel, boolean par) {
+        for (DriveListener listener : listeners) {
+            if (sel) {
+                listener.driveSelect(this, selected);
+            }
+            if (par) {
+                listener.driveParamsChanged(this);
             }
         }
     }
 
     public void removeAllListeners() {
-        Object[] lis = listeners.getListenerList();
-        for (int i = 0; i < lis.length; i += 2) {
-            listeners.remove(DriveListener.class, (DriveListener) lis[i + 1]);
-        }
+        listeners.clear();
     }
 
     /**
@@ -117,12 +101,12 @@ public class Drive {
     public void select() {
         selected = true;
         flags = 0xE5; // 11100101b
-        sector = sectorsCount;
-        sectorOffset = sectorLength;
+        sector = SECTORS_COUNT;
+        sectorOffset = SECTOR_LENGTH;
         if (track == 0) {
             flags &= 0xBF;
         } // head is on track 0
-        fireListeners(true, true);
+        notifyListeners(true, true);
     }
 
     /**
@@ -131,44 +115,33 @@ public class Drive {
     public void deselect() {
         selected = false;
         flags = 0xE7;
-        fireListeners(true, false);
+        notifyListeners(true, false);
     }
 
     public boolean isSelected() {
         return selected;
     }
 
-    /**
-     * Create new image
-     */
     public static void createNewImage(String filename) throws IOException {
-        RandomAccessFile fout = new RandomAccessFile(filename, "w");
-        for (int i = 0; i < tracksCount * sectorsCount * sectorLength; i++) {
-            fout.writeByte(0);
+        try (RandomAccessFile fout = new RandomAccessFile(filename, "w")) {
+            for (int i = 0; i < TRACKS_COUNT * SECTORS_COUNT * SECTOR_LENGTH; i++) {
+                fout.writeByte(0);
+            }
         }
-        fout.close();
     }
 
-    /**
-     * Mount an image file to drive (insert diskette)
-     */
     public void mount(String fileName) throws IOException {
         File f = new File(fileName);
         if (f.isFile() == false) {
             throw new IOException("Specified file name doesn't point to a file");
         }
-//        if (f.length() < tracksCount * sectorsCount * sectorLength)
-        //          throw new IOException("Image file has small size");
         umount();
-        this.floppy = f;
+        this.mountedFloppy = f;
         image = new RandomAccessFile(f, "rwd");
     }
 
-    /**
-     * Umount image from drive (remove diskette)
-     */
     public void umount() {
-        floppy = null;
+        mountedFloppy = null;
         try {
             if (image != null) {
                 image.close();
@@ -177,11 +150,8 @@ public class Drive {
         }
     }
 
-    /**
-     * gets image File
-     */
     public File getImageFile() {
-        return floppy;
+        return mountedFloppy;
     }
 
     public short getFlags() {
@@ -206,15 +176,14 @@ public class Drive {
      * the right sector number is presented on device 11 IN, then set this bit.
      */
     public void setFlags(short val) {
-        if (floppy == null) {
+        if (mountedFloppy == null) {
             return;
         }
         if ((val & 0x01) != 0) { /* Step head in */
             track++;
             // if (track > 76) track = 76;
-            sector = sectorsCount;
-            sectorOffset = sectorLength;
-            System.out.println("HEAD IN: T " + track + ", S " + sector + " SO " + sectorOffset);
+            sector = SECTORS_COUNT;
+            sectorOffset = SECTOR_LENGTH;
         }
         if ((val & 0x02) != 0) { /* Step head out */
             track--;
@@ -222,34 +191,31 @@ public class Drive {
                 track = 0;
                 flags &= 0xBF; // head is on track 0
             }
-            sector = sectorsCount;
-            sectorOffset = sectorLength;
-            System.out.println("HEAD OUT: T " + track + ", S " + sector + " SO " + sectorOffset);
+            sector = SECTORS_COUNT;
+            sectorOffset = SECTOR_LENGTH;
         }
         if ((val & 0x04) != 0) { /* Head load */
             // 11111011
             flags &= 0xFB; /* turn on head loaded bit */
             flags &= 0x7F; /* turn on 'read data available */
-            System.out.println("HEAD LOAD: T " + track + ", S " + sector + " SO " + sectorOffset);
         }
         if ((val & 0x08) != 0) { /* Head Unload */
             flags |= 0x04; /* turn off 'head loaded' */
             flags |= 0x80; /* turn off 'read data avail */
-            sector = sectorsCount;
-            sectorOffset = sectorLength;
-            System.out.println("HEAD UNLOAD: T " + track + ", S " + sector + " SO " + sectorOffset);
+
+            sector = SECTORS_COUNT;
+            sectorOffset = SECTOR_LENGTH;
         }
         /* Interrupts & head current are ignored */
         if ((val & 0x80) != 0) { /* write sequence start */
             sectorOffset = 0; // sectorLength-1;
             flags &= 0xFE; /* enter new write data on */
-            System.out.println("WRITE START: T " + track + ", S " + sector + " SO " + sectorOffset);
         }
-        fireListeners(false, true);
+        notifyListeners(false, true);
     }
 
     /**
-     * return sector position in specified format
+     * @return sector position in specified format
      */
     public short getSectorPos() {
         if (((~flags) & 0x04) != 0) { /* head loaded? */
@@ -257,67 +223,66 @@ public class Drive {
             if (sector > 31) {
                 sector = 0;
             }
-            sectorOffset = sectorLength;
+            sectorOffset = SECTOR_LENGTH;
             short stat = (short) (sector << 1);
             stat &= 0x3E;  /* 111110b, return 'sector true' bit = 0 (true) */
+
             stat |= 0xC0;  // set on 'unused' bits  ?? > in simh bit are gonna up
-            fireListeners(false, true);
+            notifyListeners(false, true);
             return stat;
         } else {
             return 1;
         }   /* head not loaded - sector true is 1 (false) */
+
     }
 
     public void writeData(int data) throws IOException {
         int i = sectorOffset;
 
-        if (sectorOffset < sectorLength) {
+        if (sectorOffset < SECTOR_LENGTH) {
             sectorOffset++;
         } else {
             flags |= 1; /* ENWD off */
-            fireListeners(false, true);
+
+            notifyListeners(false, true);
             return;
         }
 
-        long pos = sectorsCount * sectorLength * track
-                + sectorLength * sector + i;
+        long pos = SECTORS_COUNT * SECTOR_LENGTH * track + SECTOR_LENGTH * sector + i;
 
-        System.out.println("WRITE: T " + track + ", S " + sector + " SO " + sectorOffset + "; pos=" + pos);
         image.seek(pos);
         image.writeByte(data & 0xFF);
 
-        fireListeners(false, true);
+        notifyListeners(false, true);
     }
 
     public short readData() throws IOException {
-        if (floppy == null) {
+        if (mountedFloppy == null) {
             return 0;
         }
         int i;
 
-        if (sectorOffset >= sectorLength) {
+        if (sectorOffset >= SECTOR_LENGTH) {
             i = 0;
         } else {
             i = sectorOffset;
         }
 
-        if (sectorOffset >= sectorLength) {
+        if (sectorOffset >= SECTOR_LENGTH) {
             sectorOffset = 1;
         } else {
             sectorOffset++;
         }
 
-        long pos = sectorsCount * sectorLength * track
-                + sectorLength * sector + i;
-
-        System.out.println("READ: T " + track + ", S " + sector + " SO " + sectorOffset + ", pos=" + pos);
+        long pos = SECTORS_COUNT * SECTOR_LENGTH * track
+                + SECTOR_LENGTH * sector + i;
 
         image.seek(pos);
-        fireListeners(false, true);
+        notifyListeners(false, true);
         try {
             short r = (short) (image.readUnsignedByte() & 0xFF);
             return r;
-        } catch (Exception e) {
+        } catch (IOException e) {
             return 0;
         }
     }
@@ -340,7 +305,7 @@ public class Drive {
     }
 
     public void setTrack(short track) {
-        sector = sectorsCount;
-        sectorOffset = sectorLength;
+        sector = SECTORS_COUNT;
+        sectorOffset = SECTOR_LENGTH;
     }
 }
