@@ -157,10 +157,6 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
                     this, ": Could not get connected device", e
             );
         }
-
-        if (cpu == null) {
-            LOGGER.warning("88-SIO is not connected to the CPU.");
-        }
         sioSettings.read();
     }
 
