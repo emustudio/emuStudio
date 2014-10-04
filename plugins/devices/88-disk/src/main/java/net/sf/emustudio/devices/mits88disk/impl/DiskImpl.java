@@ -1,9 +1,7 @@
 /*
- * DiskImpl.java
- *
  * Created on Streda, 30 january 2008
- * 
- * Copyright (C) 2008-2012 Peter Jakubčo
+ *
+ * Copyright (C) 2008-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -26,8 +24,10 @@ package net.sf.emustudio.devices.mits88disk.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.device.AbstractDevice;
 import emulib.plugins.device.DeviceContext;
+import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
@@ -107,34 +107,31 @@ import net.sf.emustudio.intel8080.ExtendedContext;
  * X = Not used Sector number = binary of the sector number currently under the
  * head, 0-31. T = Sector True, is a 1 when the sector is positioned to read or
  * write.
- *
- * @author vbmacher
  */
 @PluginType(type = PLUGIN_TYPE.DEVICE,
 title = "MITS 88-DISK device",
-copyright = "\u00A9 Copyright 2007-2012, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2007-2014, Peter Jakubčo",
 description = "Implementation of popular floppy disk controller.")
 public class DiskImpl extends AbstractDevice {
     private final static int DRIVES_COUNT = 16;
     public final static int CPU_PORT1 = 0x8;
     public final static int CPU_PORT2 = 0x9;
     public final static int CPU_PORT3 = 0xA;
-    
+
     private int port1CPU;
     private int port2CPU;
     private int port3CPU;
     private ExtendedContext cpuContext;
-    private List<Drive> drives;
-    private Port1 port1;
-    private Port2 port2;
-    private Port3 port3;
+    private final List<Drive> drives = new ArrayList<>();
+    private final Port1 port1;
+    private final Port2 port2;
+    private final Port3 port3;
     private int currentDrive;
     private DiskFrame gui;
     private boolean noGUI = false;
 
     public DiskImpl(Long pluginID) {
         super(pluginID);
-        drives = new ArrayList<Drive>();
         for (int i = 0; i < DRIVES_COUNT; i++) {
             drives.add(new Drive());
         }
@@ -163,7 +160,7 @@ public class DiskImpl extends AbstractDevice {
      */
     private int providePort(int DISKport, int defaultPort, DeviceContext port) {
         String providedPort = StaticDialogs.inputStringValue("Port "
-                + String.valueOf(DISKport) + " can not be attached to default"
+                + DISKport + " can not be attached to default"
                 + " CPU port, please enter another one: ", "88-DISK",
                 String.valueOf(defaultPort));
         int portNumber;
@@ -181,59 +178,53 @@ public class DiskImpl extends AbstractDevice {
     }
 
     @Override
-    public boolean initialize(SettingsManager settings) {
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
 
         try {
             cpuContext = (ExtendedContext) ContextPool.getInstance()
                     .getCPUContext(pluginID, ExtendedContext.class);
-        } catch (InvalidContextException e) {
-            // Error will be reported later on
-        }
-
-        if (cpuContext == null) {
-            StaticDialogs.showErrorMessage("Cannot connect to the CPU", "88-DISK");
-            return false;
+        } catch (InvalidContextException | ContextNotFoundException e) {
+            throw new PluginInitializationException(
+                    this, ": Cannot connect to the CPU", e
+            );
         }
 
         readSettings();
-
         // attach device to CPU
         if (cpuContext.attachDevice(port1, port1CPU) == false) {
             port1CPU = providePort(1, port1CPU, port1);
             if (port1CPU == -1) {
-                StaticDialogs.showErrorMessage("88-DISK (port1) can not be "
-                        + "attached to default CPU port");
-                return false;
+                throw new PluginInitializationException(
+                        this,
+                        ": 88-DISK (port1) can not be attached to default CPU port"
+                );
             }
         }
         if (cpuContext.attachDevice(port2, port2CPU) == false) {
             port2CPU = providePort(2, port2CPU, port2);
             if (port2CPU == -1) {
-                StaticDialogs.showErrorMessage("88-DISK (port2) can not be "
-                        + "attached to default CPU port");
-                return false;
+                throw new PluginInitializationException(
+                        this,
+                        ": 88-DISK (port2) can not be attached to default CPU port"
+                );
             }
         }
         if (cpuContext.attachDevice(port3, port3CPU) == false) {
             port3CPU = providePort(3, port3CPU, port3);
             if (port3CPU == -1) {
-                StaticDialogs.showErrorMessage("88-DISK (port3) can not be "
-                        + "attached to default CPU port");
-                return false;
+                throw new PluginInitializationException(
+                        this,
+                        ": 88-DISK (port3) can not be attached to default CPU port"
+                );
             }
         }
-        return true;
     }
 
     private void readSettings() {
         String s;
         s = settings.readSetting(pluginID, "nogui");
-        if (s != null && s.toUpperCase().equals("TRUE")) {
-            noGUI = true;
-        } else {
-            noGUI = false;
-        }
+        noGUI = s != null && s.toUpperCase().equals("TRUE");
         s = settings.readSetting(pluginID, "port1CPU");
         if (s != null) {
             try {
@@ -319,11 +310,11 @@ public class DiskImpl extends AbstractDevice {
         }
         new ConfigDialog(pluginID, settings, drives, gui).setVisible(true);
     }
-    
+
     public Drive getCurrentDrive() {
         return drives.get(currentDrive);
     }
-    
+
     public void setCurrentDrive(int index) {
         currentDrive = index;
     }
@@ -350,28 +341,34 @@ public class DiskImpl extends AbstractDevice {
         for (int i = 0; i < size; i++) {
             String arg = args[i].toUpperCase();
             try {
-                if (arg.equals("--LIST")) {
-                    // list files in the image
-                    ARG_LIST = true;
-                } else if (arg.equals("--IMAGE")) {
-                    i++;
-                    // the image file
-                    if (IMAGE_FILE != null) {
-                        System.out.println("Image file already defined,"
-                                + " ignoring this one: " + args[i]);
-                    } else {
-                        IMAGE_FILE = args[i];
-                        System.out.println("Image file name: " + IMAGE_FILE);
-                    }
-                } else if (arg.equals("--VERSION")) {
-                    ARG_VERSION = true;
-                } else if (arg.equals("--HELP")) {
-                    ARG_HELP = true;
-                } else if (arg.equals("--INFO")) {
-                    ARG_INFO = true;
-                } else {
-                    System.out.println("Error: Invalid command line argument "
-                            + "(" + arg + ")!");
+                switch (arg) {
+                    case "--LIST":
+                        // list files in the image
+                        ARG_LIST = true;
+                        break;
+                    case "--IMAGE":
+                        i++;
+                        // the image file
+                        if (IMAGE_FILE != null) {
+                            System.out.println("Image file already defined,"
+                                    + " ignoring this one: " + args[i]);
+                        } else {
+                            IMAGE_FILE = args[i];
+                            System.out.println("Image file name: " + IMAGE_FILE);
+                        }   break;
+                    case "--VERSION":
+                        ARG_VERSION = true;
+                        break;
+                    case "--HELP":
+                        ARG_HELP = true;
+                        break;
+                    case "--INFO":
+                        ARG_INFO = true;
+                        break;
+                    default:
+                        System.out.println("Error: Invalid command line argument "
+                                + "(" + arg + ")!");
+                        break;
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
             }
@@ -398,7 +395,7 @@ public class DiskImpl extends AbstractDevice {
                     + "\n--help        : output this message");
             return;
         }
-        
+
         if (ARG_VERSION) {
             System.out.println(new DiskImpl(0L).getVersion());
             return;
@@ -415,7 +412,7 @@ public class DiskImpl extends AbstractDevice {
         if (ARG_INFO) {
             System.out.println(cpmfs.getInfo());
         }
-        
+
         if (ARG_LIST) {
             System.out.println(cpmfs.getFiles());
         }

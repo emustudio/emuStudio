@@ -1,9 +1,7 @@
 /*
- * PseudoINCLUDE.java
- *
  * Created on 14.8.2008, 9:27:10
  *
- * Copyright (C) 2008-2013 Peter Jakubčo
+ * Copyright (C) 2008-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,18 +26,17 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import net.sf.emustudio.zilogZ80.assembler.impl.CompilerImpl;
-import net.sf.emustudio.zilogZ80.assembler.impl.LexerZ80;
+import net.sf.emustudio.zilogZ80.assembler.impl.LexerImpl;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
-import net.sf.emustudio.zilogZ80.assembler.impl.ParserZ80;
+import net.sf.emustudio.zilogZ80.assembler.impl.ParserImpl;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Pseudo;
 
 public class PseudoINCLUDE extends Pseudo {
-
-    private String filename;
-    private String shortFileName;
+    private final String filename;
+    private final String shortFileName;
     private Program program;
     private Namespace namespace;
-    private CompilerImpl asm;
+    private final CompilerImpl asm;
 
     public PseudoINCLUDE(String filename, int line, int column, CompilerImpl asm) {
         super(line, column);
@@ -81,8 +78,8 @@ public class PseudoINCLUDE extends Pseudo {
             Namespace parent) throws Exception {
         try {
             FileReader f = new FileReader(new File(filename));
-            LexerZ80 lex = new LexerZ80(f);
-            ParserZ80 par = new ParserZ80(lex, asm);
+            LexerImpl lex = new LexerImpl(f);
+            ParserImpl par = new ParserImpl(lex, asm);
 
             par.setReportPrefixString(shortFileName + ": ");
             Object s = par.parse().value;

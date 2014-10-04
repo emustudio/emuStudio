@@ -1,9 +1,7 @@
 /*
- * PseudoINCLUDE.java
- *
  * Created on 14.8.2008, 9:27:10
  *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -29,16 +27,16 @@ import java.io.IOException;
 import java.util.List;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.impl.CompilerImpl;
-import net.sf.emustudio.intel8080.assembler.impl.Lexer8080;
-import net.sf.emustudio.intel8080.assembler.impl.Parser8080;
+import net.sf.emustudio.intel8080.assembler.impl.LexerImpl;
+import net.sf.emustudio.intel8080.assembler.impl.ParserImpl;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoNode;
 
 public class IncludePseudoNode extends PseudoNode {
-    private String filename;
-    private String shortFileName;
+    private final String filename;
+    private final String shortFileName;
     private Statement program;
     private CompileEnv namespace;
-    private CompilerImpl asm;
+    private final CompilerImpl asm;
 
     public IncludePseudoNode(String filename, int line, int column, CompilerImpl asm) {
         super(line, column);
@@ -75,13 +73,13 @@ public class IncludePseudoNode extends PseudoNode {
     public void pass1(List<String> includefiles, CompileEnv parentEnv) throws Exception {
         try {
             FileReader f = new FileReader(new File(filename));
-            Lexer8080 lex = new Lexer8080(f);
-            Parser8080 par = new Parser8080(lex, asm);
+            LexerImpl lex = new LexerImpl(f);
+            ParserImpl par = new ParserImpl(lex, asm);
 
             par.setReportPrefixString(shortFileName + ": ");
             Object s = par.parse().value;
             par.setReportPrefixString(null);
-            
+
             if (s == null) {
                 throw new Exception("[" + line + "," + column + "] "
                         + "Error: Unexpected end of file (" + shortFileName + ")");

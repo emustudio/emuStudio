@@ -15,28 +15,6 @@
   <name>BrainDuck CPU emulator</name>
   <description>Abstract machine based on esoteric programming language brainfuck</description>
 
-  <profiles>
-    <profile>
-      <id>coveralls</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.eluder.coveralls</groupId>
-            <artifactId>coveralls-maven-plugin</artifactId>
-            <configuration>
-              <instrumentation>
-                <excludes>
-                  <exclude>**/DecoderImpl.class</exclude>
-                  <exclude>**/DisassemblerImpl.class</exclude>
-                </excludes>
-              </instrumentation>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
-
   <build>
     <finalName>brainduck-cpu</finalName>
     <plugins>

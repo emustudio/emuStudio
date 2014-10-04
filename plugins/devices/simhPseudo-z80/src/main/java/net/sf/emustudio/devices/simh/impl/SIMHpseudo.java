@@ -1,7 +1,5 @@
 /*
- * SIMHpseudo.java
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2007-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,7 +21,9 @@ package net.sf.emustudio.devices.simh.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.device.AbstractDevice;
+import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
@@ -34,13 +34,11 @@ import net.sf.emustudio.memory.standard.StandardMemoryContext;
 
 /**
  * SIMH emulator's pseudo device.
- * 
- * @author Peter Jakubčo
  */
 @PluginType(type=PLUGIN_TYPE.DEVICE,
         title="SIMH pseudo device",
         copyright="Copyright (c) 2002-2007, Peter Schorn\n"
-            + "\u00A9 Copyright 2007-2012, Peter Jakubčo",
+            + "\u00A9 Copyright 2007-2014, Peter Jakubčo",
         description="Overtaken implementation of simh pseudo device, used in simh emulator. Version is SIMH003.")
 public class SIMHpseudo extends AbstractDevice {
 
@@ -54,41 +52,35 @@ public class SIMHpseudo extends AbstractDevice {
     }
 
     @Override
-    public boolean initialize(SettingsManager settings) {
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
         try {
-        cpu = (ExtendedContext)ContextPool.getInstance().getCPUContext(pluginID, ExtendedContext.class);
-        } catch (InvalidContextException e) {
-            // Will be processed 
-        }
-        
-        if (cpu == null) {
-            StaticDialogs.showErrorMessage("SIMH-pseudo device has to be attached"
-                    + " to a CPU");
-            return false;
+            cpu = (ExtendedContext)ContextPool.getInstance().getCPUContext(pluginID, ExtendedContext.class);
+        } catch (ContextNotFoundException | InvalidContextException e) {
+            throw new PluginInitializationException(
+                    this, "Could not get CPU context", e
+            );
         }
 
         try {
             mem = (StandardMemoryContext) ContextPool.getInstance().getMemoryContext(pluginID, StandardMemoryContext.class);
-        } catch (InvalidContextException e) {
-            // Will be processed later
+        } catch (ContextNotFoundException | InvalidContextException e) {
+            throw new PluginInitializationException(
+                    this, "Could not get memory context", e
+            );
         }
 
-        if (mem == null) {
-            StaticDialogs.showErrorMessage("SIMH-pseudo device has to be attached"
-                    + " to a Memory");
-            return false;
-        }
         context.setMemory(mem);
 
         // attach IO port
         if (this.cpu.attachDevice(context, 0xFE) == false) {
-            StaticDialogs.showErrorMessage("Error: SIMH device can't be"
-                    + " attached to CPU (maybe there is a hardware conflict)");
-            return false;
+            throw new PluginInitializationException(
+                    this,
+                    "SIMH device can't be attached to CPU (maybe there is a"
+                            + " hardware conflict)"
+            );
         }
         reset();
-        return true;
     }
 
     @Override

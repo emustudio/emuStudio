@@ -1,5 +1,5 @@
 /*
- * RAMParser.java
+ * ParserImpl.java
  *
  * Parser (syntactic analyzer for RAM)
  *
@@ -39,7 +39,7 @@ parser code {:
     public int errorCount = 0;
     private String reportPrefixString = null;
     
-    public RAMParser(java_cup.runtime.Scanner s, RAMCompiler ram) {
+    public ParserImpl(java_cup.runtime.Scanner s, RAMCompiler ram) {
         this(s);
         this.ram = ram;
     }

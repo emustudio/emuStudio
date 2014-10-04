@@ -19,6 +19,7 @@
 package emustudio.architecture;
 
 import emulib.plugins.Plugin;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.compiler.Compiler;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.device.Device;

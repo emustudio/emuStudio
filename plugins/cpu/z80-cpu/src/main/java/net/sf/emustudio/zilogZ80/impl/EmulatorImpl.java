@@ -1,9 +1,7 @@
 /*
- * EmulatorImpl.java
- *
  * Created on 23.8.2008, 12:53:21
  *
- * Copyright (C) 2008-2013 Peter Jakubčo
+ * Copyright (C) 2008-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,10 +23,13 @@ package net.sf.emustudio.zilogZ80.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.device.DeviceContext;
 import emulib.plugins.memory.MemoryContext;
+import emulib.runtime.AlreadyRegisteredException;
+import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
@@ -36,6 +37,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.locks.LockSupport;
 import javax.swing.JPanel;
 import net.sf.emustudio.intel8080.ExtendedContext;
 import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
@@ -44,17 +46,16 @@ import net.sf.emustudio.zilogZ80.gui.DisassemblerImpl;
 import net.sf.emustudio.zilogZ80.gui.StatusPanel;
 
 /**
- * Main implementation class for CPU emulation CPU works in a separate thread (parallel with other hardware)
+ * Main implementation class for CPU emulation CPU works in a separate thread
+ * (parallel with other hardware)
  *
- * @author vbmacher
  */
 @PluginType(type = PLUGIN_TYPE.CPU,
 title = "Zilog Z80 CPU",
-copyright = "\u00A9 Copyright 2008-2012, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2008-2014, Peter Jakubčo",
 description = "Emulator of Zilog Z80 CPU")
 public class EmulatorImpl extends AbstractCPU {
-
-    private StatusPanel statusPanel;
+    private final StatusPanel statusPanel;
     private Disassembler disassembler;
     private MemoryContext<Short> memory;
     private ContextImpl context;
@@ -70,13 +71,13 @@ public class EmulatorImpl extends AbstractCPU {
             flagH = 0x10, flagPV = 0x4, flagN = 0x2, flagC = 0x1;
     // cpu speed
     private long long_cycles = 0; // count of executed cycles for runtime freq. computing
-    private java.util.Timer frequencyScheduler;
+    private final java.util.Timer frequencyScheduler;
     private FrequencyUpdater frequencyUpdater;
     private int checkTimeSlice = 100;
 
     private byte intMode = 0; // interrupt mode (0,1,2)
     // Interrupt flip-flops
-    private boolean[] IFF = new boolean[2]; // interrupt enable flip-flops
+    private final boolean[] IFF = new boolean[2]; // interrupt enable flip-flops
     // No-Extra wait for CPC Interrupt?
     private boolean noWait = false;
     // Flag to cause an interrupt to execute
@@ -235,16 +236,13 @@ public class EmulatorImpl extends AbstractCPU {
         }
     }
 
-    /**
-     * Constructor
-     */
     public EmulatorImpl(Long pluginID) {
         super(pluginID);
 
         context = new ContextImpl(this);
         try {
             ContextPool.getInstance().register(pluginID, context, ExtendedContext.class);
-        } catch (Exception e) {
+        } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register CPU Context",
                     EmulatorImpl.class.getAnnotation(PluginType.class).title());
         }
@@ -257,26 +255,24 @@ public class EmulatorImpl extends AbstractCPU {
      * Should be called only once
      */
     @Override
-    public boolean initialize(SettingsManager settings) {
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
 
         try {
             this.memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
-        } catch (InvalidContextException e) {
-            // Will be processed
+        } catch (InvalidContextException | ContextNotFoundException e) {
+            throw new PluginInitializationException(
+                    this, "CPU must have access to memory", e
+            );
         }
 
-
-        if (memory == null) {
-            StaticDialogs.showErrorMessage("CPU must have access to memory");
-            return false;
-        }
         if (memory.getDataType() != Short.class) {
-            StaticDialogs.showErrorMessage("Operating memory type is not supported for this kind of CPU.");
-            return false;
+            throw new PluginInitializationException(
+                    this,
+                    "Operating memory type is not supported for this kind of CPU."
+            );
         }
         disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
-        return true;
     }
 
     @Override
@@ -352,7 +348,7 @@ public class EmulatorImpl extends AbstractCPU {
                 } else if (runState == RunState.STATE_RUNNING) {
                     runState = RunState.STATE_STOPPED_BREAK;
                 }
-            } catch (IndexOutOfBoundsException e) {
+            } catch (ArrayIndexOutOfBoundsException e) {
                 runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
             }
             notifyStateChanged(runState);
@@ -2241,7 +2237,7 @@ public class EmulatorImpl extends AbstractCPU {
         int cycles_executed;
         int cycles_to_execute; // per second
         int cycles;
-        long slice;
+        long sliceNanos;
 
         runState = RunState.STATE_RUNNING;
         notifyStateChanged(runState);
@@ -2252,7 +2248,7 @@ public class EmulatorImpl extends AbstractCPU {
          */
         cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
         long i = 0;
-        slice = checkTimeSlice * 1000000;
+        sliceNanos = checkTimeSlice * 1000000;
         while (runState == RunState.STATE_RUNNING) {
             i++;
             startTime = System.nanoTime();
@@ -2278,12 +2274,9 @@ public class EmulatorImpl extends AbstractCPU {
                 break;
             }
             endTime = System.nanoTime() - startTime;
-            if (endTime < slice) {
+            if (endTime < sliceNanos) {
                 // time correction
-                try {
-                    Thread.sleep((slice - endTime) / 1000000);
-                } catch (java.lang.InterruptedException e) {
-                }
+                LockSupport.parkNanos(sliceNanos - endTime);
             }
         }
         stopFrequencyUpdater();

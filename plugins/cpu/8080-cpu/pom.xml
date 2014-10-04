@@ -15,28 +15,6 @@
   <name>Intel 8080 CPU emulator</name>
   <description>Another Java-based Intel 8080 CPU emulator</description>
 
-  <profiles>
-    <profile>
-      <id>coveralls</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.eluder.coveralls</groupId>
-            <artifactId>coveralls-maven-plugin</artifactId>
-            <configuration>
-              <instrumentation>
-                <excludes>
-                  <exclude>**/DecoderImpl.class</exclude>
-                  <exclude>**/DisassemblerImpl.class</exclude>
-                </excludes>
-              </instrumentation>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
-
   <build>
     <finalName>8080-cpu</finalName>
     <plugins>

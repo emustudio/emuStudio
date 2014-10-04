@@ -1,11 +1,9 @@
 /*
- * EmulatorImpl.java
- *
  * Implementation of CPU emulation
  *
  * Created on Piatok, 2007, oktober 26, 10:45
  *
- * Copyright (C) 2007-2013 Peter Jakubčo
+ * Copyright (C) 2007-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -27,9 +25,12 @@ package net.sf.emustudio.intel8080.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.memory.MemoryContext;
+import emulib.runtime.AlreadyRegisteredException;
+import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.LoggerFactory;
@@ -42,6 +43,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.locks.LockSupport;
 import javax.swing.JPanel;
 import net.sf.emustudio.intel8080.ExtendedContext;
 import net.sf.emustudio.intel8080.FrequencyChangedListener;
@@ -50,13 +52,13 @@ import net.sf.emustudio.intel8080.gui.DisassemblerImpl;
 import net.sf.emustudio.intel8080.gui.StatusPanel;
 
 /**
- * Main implementation class for CPU emulation CPU works in a separate thread (parallel with other hardware)
+ * Main implementation class for CPU emulation CPU works in a separate thread
+ * (parallel with other hardware)
  *
- * @author Peter Jakubčo
  */
 @PluginType(type = PLUGIN_TYPE.CPU,
 title = "Intel 8080 CPU",
-copyright = "\u00A9 Copyright 2007-2013, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2007-2014, Peter Jakubčo",
 description = "Emulator of Intel 8080 CPU")
 public class EmulatorImpl extends AbstractCPU {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorImpl.class);
@@ -80,13 +82,13 @@ public class EmulatorImpl extends AbstractCPU {
         1, 0, 0, 1
     };
 
-    private StatusPanel statusPanel;
+    private final StatusPanel statusPanel;
     private MemoryContext<Short> memory;
     private ContextImpl context;
     private Disassembler disasm;
     // cpu speed
     private long executedCycles = 0; // count of executed cycles for frequency calculation
-    private java.util.Timer frequencyScheduler;
+    private final java.util.Timer frequencyScheduler;
     private FrequencyUpdater frequencyUpdater;
     private int checkTimeSlice = 100;
     // registers are public meant for only StatusPanel (didnt want make it thru getters)
@@ -129,17 +131,12 @@ public class EmulatorImpl extends AbstractCPU {
         }
     }
 
-    /**
-     * Creates a new instance of EmulatorImpl.
-     *
-     * @param pluginID plugin unique ID
-     */
     public EmulatorImpl(Long pluginID) {
         super(pluginID);
         context = new ContextImpl(this);
         try {
             ContextPool.getInstance().register(pluginID, context, ExtendedContext.class);
-        } catch (Exception e) {
+        } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register CPU Context",
                     EmulatorImpl.class.getAnnotation(PluginType.class).title());
         }
@@ -159,28 +156,24 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    public boolean initialize(SettingsManager settings) {
+    public void initialize(SettingsManager settings) throws PluginInitializationException{
         super.initialize(settings);
         try {
             this.memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
 
-            if (memory == null) {
-                StaticDialogs.showErrorMessage("CPU must have access to memory");
-                return false;
-            }
             if (memory.getDataType() != Short.class) {
-                StaticDialogs.showErrorMessage("Operating memory type is not supported for this kind of CPU.");
-                return false;
+                throw new PluginInitializationException(
+                        this,
+                        "Operating memory type is not supported for this kind of CPU."
+                );
             }
 
             // create disassembler and debug columns
             disasm = new DisassemblerImpl(memory, new DecoderImpl(memory));
-
-            return true;
-        } catch (InvalidContextException e) {
-            StaticDialogs.showErrorMessage("Could not get memory context",
-                    EmulatorImpl.class.getAnnotation(PluginType.class).title());
-            return false;
+        } catch (InvalidContextException | ContextNotFoundException e) {
+            throw new PluginInitializationException(
+                    this, ": Could not get memory context", e
+            );
         }
     }
 
@@ -238,7 +231,7 @@ public class EmulatorImpl extends AbstractCPU {
                 }
             } catch (IndexOutOfBoundsException e) {
                 runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
-            } catch (Exception e) {
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
                 runState = RunState.STATE_STOPPED_BAD_INSTR;
             }
             notifyStateChanged(runState);
@@ -338,11 +331,7 @@ public class EmulatorImpl extends AbstractCPU {
                     if (isBreakpointSet(PC) == true) {
                         throw new Error();
                     }
-                } catch (IllegalAccessException e) {
-                    runState = RunState.STATE_STOPPED_BAD_INSTR;
-                } catch (IllegalArgumentException e) {
-                    runState = RunState.STATE_STOPPED_BAD_INSTR;
-                } catch (InvocationTargetException e) {
+                } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
                     runState = RunState.STATE_STOPPED_BAD_INSTR;
                 } catch (IndexOutOfBoundsException e) {
                     runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
@@ -355,10 +344,7 @@ public class EmulatorImpl extends AbstractCPU {
             endTime = System.nanoTime() - startTime;
             if (endTime < slice) {
                 // time correction
-                try {
-                    Thread.sleep((slice - endTime) / 1000000);
-                } catch (java.lang.InterruptedException e) {
-                }
+                LockSupport.parkNanos(slice - endTime);
             }
         }
         stopFrequencyUpdater();
@@ -595,7 +581,7 @@ public class EmulatorImpl extends AbstractCPU {
         return false;
     }
 
-    private static Method[] dispatchTable = new Method[256];
+    private static final Method[] dispatchTable = new Method[256];
 
     static {
         try {

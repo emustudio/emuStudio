@@ -15,28 +15,6 @@
   <name>Zilog Z80 CPU emulator</name>
   <description>Java-based CPU emulator of Zilog Z80 processor</description>
 
-  <profiles>
-    <profile>
-      <id>coveralls</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.eluder.coveralls</groupId>
-            <artifactId>coveralls-maven-plugin</artifactId>
-            <configuration>
-              <instrumentation>
-                <excludes>
-                  <exclude>**/DecoderImpl.class</exclude>
-                  <exclude>**/DisassemblerImpl.class</exclude>
-                </excludes>
-              </instrumentation>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
-
   <build>
     <finalName>z80-cpu</finalName>
     <plugins>

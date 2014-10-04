@@ -1,9 +1,7 @@
 /*
- * ArchitectureManagerTest.java
- *
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2012, Peter Jakubčo
+ * Copyright (C) 2012-2014, Peter Jakubčo
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,6 +19,7 @@
  */
 package emustudio.architecture;
 
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.compiler.Compiler;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.device.Device;
@@ -51,16 +50,9 @@ public class ArchitectureManagerTest {
     @BeforeClass
     public static void setUpClass() {
         cpuMock = EasyMock.createNiceMock(CPU.class);
-        EasyMock.expect(cpuMock.initialize(EasyMock.anyObject(ArchitectureManager.class))).andReturn(Boolean.TRUE).anyTimes();
-
         memoryMock = EasyMock.createNiceMock(Memory.class);
-        EasyMock.expect(memoryMock.initialize(EasyMock.anyObject(ArchitectureManager.class))).andReturn(Boolean.TRUE).anyTimes();
-
         compilerMock = EasyMock.createNiceMock(Compiler.class);
-        EasyMock.expect(compilerMock.initialize(EasyMock.anyObject(ArchitectureManager.class))).andReturn(Boolean.TRUE).anyTimes();
-
         deviceMock = EasyMock.createNiceMock(Device.class);
-        EasyMock.expect(deviceMock.initialize(EasyMock.anyObject(ArchitectureManager.class))).andReturn(Boolean.TRUE).anyTimes();
 
         Main.commandLine = EasyMock.createNiceMock(CommandLineFactory.CommandLine.class);
         EasyMock.expect(Main.commandLine.autoWanted()).andReturn(Boolean.FALSE).anyTimes();
@@ -74,14 +66,10 @@ public class ArchitectureManagerTest {
         Main.commandLine = null;
     }
 
-    /**
-     * Test of getSchema method, of class ArchitectureManager.
-     */
     @Test
     public void testGetSchema() throws PluginInitializationException {
         Schema schema = EasyMock.createNiceMock(Schema.class);
         Computer computer = EasyMock.createNiceMock(Computer.class);
-        EasyMock.expect(computer.initialize(EasyMock.anyObject(ArchitectureManager.class))).andReturn(Boolean.TRUE);
         EasyMock.expect(computer.getPluginsInfo()).andReturn(new ArrayList<PluginInfo>());
         EasyMock.replay(computer);
 
@@ -91,15 +79,11 @@ public class ArchitectureManagerTest {
         EasyMock.verify(computer);
     }
 
-    /**
-     * Test of getComputerName method, of class ArchitectureManager.
-     */
     @Test
     public void testGetComputerName() throws PluginInitializationException {
         Schema schema = EasyMock.createNiceMock(Schema.class);
         EasyMock.expect(schema.getConfigName()).andReturn("TEST");
         Computer computer = EasyMock.createNiceMock(Computer.class);
-        EasyMock.expect(computer.initialize(EasyMock.anyObject(ArchitectureManager.class))).andReturn(Boolean.TRUE);
         EasyMock.expect(computer.getPluginsInfo()).andReturn(new ArrayList<PluginInfo>());
         EasyMock.replay(computer, schema);
 
@@ -109,14 +93,10 @@ public class ArchitectureManagerTest {
         EasyMock.verify(computer, schema);
     }
 
-    /**
-     * Test of getComputer method, of class ArchitectureManager.
-     */
     @Test
     public void testGetComputer() throws PluginInitializationException {
         Schema schema = EasyMock.createNiceMock(Schema.class);
         Computer computer = EasyMock.createNiceMock(Computer.class);
-        EasyMock.expect(computer.initialize(EasyMock.anyObject(ArchitectureManager.class))).andReturn(Boolean.TRUE);
         EasyMock.expect(computer.getPluginsInfo()).andReturn(new ArrayList<PluginInfo>());
         EasyMock.replay(computer);
 
@@ -126,16 +106,12 @@ public class ArchitectureManagerTest {
         EasyMock.verify(computer);
     }
 
-    /**
-     * Test of readSetting method, of class ArchitectureManager.
-     */
     @Test
     public void testReadSetting() throws PluginInitializationException {
         Schema schema = EasyMock.createNiceMock(Schema.class);
         Computer computer = EasyMock.createNiceMock(Computer.class);
-        EasyMock.expect(computer.initialize(EasyMock.anyObject(ArchitectureManager.class))).andReturn(Boolean.TRUE);
 
-        List<PluginInfo> pluginNames = new ArrayList<PluginInfo>();
+        List<PluginInfo> pluginNames = new ArrayList<>();
         PluginInfo cpuInfo = EasyMock.createNiceMock(PluginInfo.class);
         pluginNames.add(cpuInfo);
         cpuInfo.pluginSettingsName = "cpu";
@@ -152,14 +128,10 @@ public class ArchitectureManagerTest {
         EasyMock.verify(cpuInfo, computer);
     }
 
-    /**
-     * Test of getDeviceName method, of class ArchitectureManager.
-     */
     @Test
     public void testGetDeviceName() throws PluginInitializationException {
         Schema schema = EasyMock.createNiceMock(Schema.class);
         Computer computer = EasyMock.createNiceMock(Computer.class);
-        EasyMock.expect(computer.initialize(EasyMock.anyObject(ArchitectureManager.class))).andReturn(Boolean.TRUE);
         EasyMock.expect(computer.getPluginsInfo()).andReturn(new ArrayList<PluginInfo>());
         EasyMock.replay(computer);
 
@@ -172,14 +144,10 @@ public class ArchitectureManagerTest {
         EasyMock.verify(computer);
     }
 
-    /**
-     * Test of getCompilerName method, of class ArchitectureManager.
-     */
     @Test
     public void testGetCompilerName() throws PluginInitializationException {
         Schema schema = EasyMock.createNiceMock(Schema.class);
         Computer computer = EasyMock.createNiceMock(Computer.class);
-        EasyMock.expect(computer.initialize(EasyMock.anyObject(ArchitectureManager.class))).andReturn(Boolean.TRUE);
         EasyMock.expect(computer.getPluginsInfo()).andReturn(new ArrayList<PluginInfo>());
         EasyMock.replay(computer);
 
@@ -192,14 +160,10 @@ public class ArchitectureManagerTest {
         EasyMock.verify(computer);
     }
 
-    /**
-     * Test of getCPUName method, of class ArchitectureManager.
-     */
     @Test
     public void testGetCPUName() throws PluginInitializationException {
         Schema schema = EasyMock.createNiceMock(Schema.class);
         Computer computer = EasyMock.createNiceMock(Computer.class);
-        EasyMock.expect(computer.initialize(EasyMock.anyObject(ArchitectureManager.class))).andReturn(Boolean.TRUE);
         EasyMock.expect(computer.getPluginsInfo()).andReturn(new ArrayList<PluginInfo>());
         EasyMock.replay(computer);
 
@@ -212,14 +176,10 @@ public class ArchitectureManagerTest {
         EasyMock.verify(computer);
     }
 
-    /**
-     * Test of getMemoryName method, of class ArchitectureManager.
-     */
     @Test
     public void testGetMemoryName() throws PluginInitializationException {
         Schema schema = EasyMock.createNiceMock(Schema.class);
         Computer computer = EasyMock.createNiceMock(Computer.class);
-        EasyMock.expect(computer.initialize(EasyMock.anyObject(ArchitectureManager.class))).andReturn(Boolean.TRUE);
         EasyMock.expect(computer.getPluginsInfo()).andReturn(new ArrayList<PluginInfo>());
         EasyMock.replay(computer);
 
@@ -232,16 +192,12 @@ public class ArchitectureManagerTest {
         EasyMock.verify(computer);
     }
 
-    /**
-     * Test of writeSetting method, of class ArchitectureManager.
-     */
     @Test
     public void testWriteSetting() throws PluginInitializationException {
         Schema schema = EasyMock.createNiceMock(Schema.class);
         Computer computer = EasyMock.createNiceMock(Computer.class);
-        EasyMock.expect(computer.initialize(EasyMock.anyObject(ArchitectureManager.class))).andReturn(Boolean.TRUE);
 
-        List<PluginInfo> pluginNames = new ArrayList<PluginInfo>();
+        List<PluginInfo> pluginNames = new ArrayList<>();
         PluginInfo cpuInfo = EasyMock.createNiceMock(PluginInfo.class);
         pluginNames.add(cpuInfo);
         cpuInfo.pluginSettingsName = "cpu";
@@ -256,16 +212,12 @@ public class ArchitectureManagerTest {
         EasyMock.verify(computer);
     }
 
-    /**
-     * Test of removeSetting method, of class ArchitectureManager.
-     */
     @Test
     public void testRemoveSetting() throws PluginInitializationException {
         Schema schema = EasyMock.createNiceMock(Schema.class);
         Computer computer = EasyMock.createNiceMock(Computer.class);
-        EasyMock.expect(computer.initialize(EasyMock.anyObject(ArchitectureManager.class))).andReturn(Boolean.TRUE);
 
-        List<PluginInfo> pluginNames = new ArrayList<PluginInfo>();
+        List<PluginInfo> pluginNames = new ArrayList<>();
         PluginInfo cpuInfo = EasyMock.createNiceMock(PluginInfo.class);
         pluginNames.add(cpuInfo);
         cpuInfo.pluginSettingsName = "cpu";
@@ -284,16 +236,12 @@ public class ArchitectureManagerTest {
         EasyMock.verify(computer);
     }
 
-    /**
-     * Test of writeSetting method, of class ArchitectureManager.
-     */
     @Test
     public void testWriteSettingToAll() throws PluginInitializationException {
         Schema schema = EasyMock.createNiceMock(Schema.class);
         Computer computer = EasyMock.createNiceMock(Computer.class);
-        EasyMock.expect(computer.initialize(EasyMock.anyObject(ArchitectureManager.class))).andReturn(Boolean.TRUE);
 
-        List<PluginInfo> pluginNames = new ArrayList<PluginInfo>();
+        List<PluginInfo> pluginNames = new ArrayList<>();
         PluginInfo cpuInfo = EasyMock.createNiceMock(PluginInfo.class);
         PluginInfo compilerInfo = EasyMock.createNiceMock(PluginInfo.class);
         pluginNames.add(cpuInfo);

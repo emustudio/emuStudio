@@ -1,7 +1,5 @@
 /*
- * CompilerImpl.java
- *
- * Copyright (C) 2009-2012 Peter Jakubčo
+ * Copyright (C) 2009-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -48,9 +46,9 @@ import net.sf.emustudio.brainduck.brainc.tree.Program;
         description="Compiler for esoteric architecture called BrainDuck.")
 public class CompilerImpl extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
-    private LexerBD lex;
-    private ParserBD par;
-    private SourceFileExtension[] suffixes;
+    private LexerImpl lex;
+    private ParserImpl par;
+    private final SourceFileExtension[] suffixes;
 
     /**
      * Public constructor.
@@ -60,8 +58,8 @@ public class CompilerImpl extends AbstractCompiler {
     public CompilerImpl(Long pluginID) {
         super(pluginID);
         // lex has to be reset WITH a reader object before compile
-        lex = new LexerBD((Reader) null);
-        par = new ParserBD(lex, this);
+        lex = new LexerImpl((Reader) null);
+        par = new ParserImpl(lex, this);
         suffixes = new SourceFileExtension[1];
         suffixes[0] = new SourceFileExtension("asm", "Brainduck assembler source");
     }
@@ -84,7 +82,7 @@ public class CompilerImpl extends AbstractCompiler {
 
     /**
      * Compile the source code into HEXFileHadler
-     * 
+     *
      * @param in  Reader object of the source code
      * @return HEXFileManager object
      */
@@ -119,7 +117,7 @@ public class CompilerImpl extends AbstractCompiler {
     public boolean compile(String fileName, Reader in) {
         try {
             HEXFileManager hex = compile(in);
-            
+
             // Remove ".*" suffix and add ".hex" suffix to the filename
             int i = fileName.lastIndexOf(".");
             if (i >= 0) {
@@ -130,7 +128,7 @@ public class CompilerImpl extends AbstractCompiler {
             hex.generateFile(fileName);
             notifyInfo("Compile was sucessfull. Output: " + fileName);
             programStart = hex.getProgramStart();
-            
+
             // try to access the memory
             MemoryContext memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
             if (memory != null) {
@@ -151,7 +149,7 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public LexicalAnalyzer getLexer(Reader in) {
-        return new LexerBD(in);
+        return new LexerImpl(in);
     }
 
     @Override
@@ -163,7 +161,7 @@ public class CompilerImpl extends AbstractCompiler {
     public boolean isShowSettingsSupported() {
         return false;
     }
-    
+
     @Override
     public SourceFileExtension[] getSourceSuffixList() {
         return suffixes;
@@ -175,13 +173,13 @@ public class CompilerImpl extends AbstractCompiler {
         System.out.println("\t--version, -v\t: print version");
         System.out.println("\t--help, -h\t: this help");
     }
-    
+
     public static void main(String[] args) {
         System.out.println(CompilerImpl.class.getAnnotation(PluginType.class).title());
-      
+
         String inputFile;
         String outputFile = null;
-      
+
         int i;
         for (i = 0; i < args.length; i++) {
             String arg = args[i].toLowerCase();
@@ -205,7 +203,7 @@ public class CompilerImpl extends AbstractCompiler {
         if (outputFile == null) {
           outputFile = inputFile.substring(0, inputFile.lastIndexOf('.')) + ".hex";
         }
-        
+
         CompilerImpl compiler = new CompilerImpl(0L);
         compiler.addCompilerListener(new CompilerListener() {
 
@@ -222,8 +220,8 @@ public class CompilerImpl extends AbstractCompiler {
             public void onFinish(int errorCode) {
             }
         });
-        
-        
+
+
         try {
           HEXFileManager hex = compiler.compile(new FileReader(inputFile));
           System.out.println("Saving output to: " + outputFile);

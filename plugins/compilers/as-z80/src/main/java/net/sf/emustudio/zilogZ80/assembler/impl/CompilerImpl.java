@@ -1,9 +1,7 @@
 /*
- * CompilerImpl.java
- *
  * Created on Piatok, 2007, august 10, 8:22
  *
- * Copyright (C) 2007-2013 Peter Jakubčo
+ * Copyright (C) 2007-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -45,15 +43,14 @@ import net.sf.emustudio.zilogZ80.assembler.tree.Program;
         copyright="\u00A9 Copyright 2007-2013, Peter Jakubčo",
         description="Custom version of the assembler. For syntax look at users manual.")
 public class CompilerImpl extends AbstractCompiler {
-    private LexerZ80 lex;
-    private ParserZ80 par;
-    private SourceFileExtension[] suffixes;
+    private LexerImpl lex;
+    private ParserImpl par;
+    private final SourceFileExtension[] suffixes;
 
-    /** Creates a new instance of assemblerZ80 */
     public CompilerImpl(Long pluginID) {
         super(pluginID);
-        lex = new LexerZ80((Reader) null);
-        par = new ParserZ80(lex);
+        lex = new LexerImpl((Reader) null);
+        par = new ParserImpl(lex);
         suffixes = new SourceFileExtension[1];
         suffixes[0] = new SourceFileExtension("asm", "Z80 assembler source");
     }
@@ -132,7 +129,7 @@ public class CompilerImpl extends AbstractCompiler {
                 fileName = fileName.substring(0, i);
             }
             fileName += ".hex"; // the output suffix
-            
+
             hex.generateFile(fileName);
             notifyInfo("Compile was sucessfull. Output: " + fileName);
 
@@ -155,7 +152,7 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public LexicalAnalyzer getLexer(Reader in) {
-        return new LexerZ80(in);
+        return new LexerImpl(in);
     }
 
     @Override
@@ -172,20 +169,20 @@ public class CompilerImpl extends AbstractCompiler {
     public SourceFileExtension[] getSourceSuffixList() {
         return suffixes;
     }
-    
+
     private static void printHelp() {
         System.out.println("Syntax: as-z80 [-o outputFile] inputFile\nOptions:");
         System.out.println("\t--output, -o\tfile: name of the output file");
         System.out.println("\t--version, -v\t: print version");
         System.out.println("\t--help, -h\t: this help");
     }
-    
+
     public static void main(String[] args) {
         System.out.println(CompilerImpl.class.getAnnotation(PluginType.class).title());
-      
+
         String inputFile;
         String outputFile = null;
-      
+
         int i;
         for (i = 0; i < args.length; i++) {
             String arg = args[i].toLowerCase();
@@ -209,7 +206,7 @@ public class CompilerImpl extends AbstractCompiler {
         if (outputFile == null) {
           outputFile = inputFile.substring(0, inputFile.lastIndexOf('.')) + ".hex";
         }
-        
+
         CompilerImpl compiler = new CompilerImpl(0L);
         try {
           HEXFileManager hex = compiler.compile(new FileReader(inputFile));
@@ -219,5 +216,5 @@ public class CompilerImpl extends AbstractCompiler {
           System.out.println(e.getMessage());
         }
     }
-    
+
 }

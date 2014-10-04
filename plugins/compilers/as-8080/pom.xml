@@ -15,28 +15,6 @@
   <name>Intel 8080 assembler</name>
   <description>Another Java-based assembler of Intel 8080 processor</description>
 
-  <profiles>
-    <profile>
-      <id>coveralls</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.eluder.coveralls</groupId>
-            <artifactId>coveralls-maven-plugin</artifactId>
-            <configuration>
-              <instrumentation>
-                <excludes>
-                  <exclude>**/Parser8080.class</exclude>
-                  <exclude>**/Sym8080.class</exclude>
-                </excludes>
-              </instrumentation>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>    
-  
   <build>
     <finalName>as-8080</finalName>
     <plugins>
@@ -88,8 +66,8 @@
           </execution>
         </executions>
         <configuration>
-          <className>Parser8080</className>
-          <symbolsName>Sym8080</symbolsName>
+          <className>ParserImpl</className>
+          <symbolsName>Symbols</symbolsName>
         </configuration>
       </plugin>
     </plugins>

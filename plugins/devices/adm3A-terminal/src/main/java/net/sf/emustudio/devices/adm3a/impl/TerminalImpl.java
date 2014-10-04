@@ -1,9 +1,7 @@
 /*
- * TerminalImpl.java
- *
  * Created on 28.7.2008, 19:12:19
  *
- * Copyright (C) 2008-2013 Peter Jakubčo
+ * Copyright (C) 2008-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,8 +23,11 @@ package net.sf.emustudio.devices.adm3a.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.device.AbstractDevice;
 import emulib.plugins.device.DeviceContext;
+import emulib.runtime.AlreadyRegisteredException;
+import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.LoggerFactory;
@@ -41,7 +42,7 @@ import net.sf.emustudio.devices.adm3a.gui.TerminalWindow;
 
 @PluginType(type = PLUGIN_TYPE.DEVICE,
 title = "LSI ADM-3A terminal",
-copyright = "\u00A9 Copyright 2007-2013, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2007-2014, Peter Jakubčo",
 description = "Custom implementation of LSI ADM-3A terminal")
 public class TerminalImpl extends AbstractDevice implements TerminalSettings.ChangedObserver {
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminalImpl.class);
@@ -58,24 +59,28 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
         display = new Display(80, 25, terminalSettings);
         try {
             ContextPool.getInstance().register(pluginID, display, DeviceContext.class);
-        } catch (Exception e) {
+        } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register ADM-3A terminal",
                     TerminalImpl.class.getAnnotation(PluginType.class).title());
         }
     }
 
     @Override
-    public boolean initialize(SettingsManager settings) {
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
         terminalSettings.addChangedObserver(this);
         terminalSettings.setSettingsManager(settings);
 
         try {
             // try to connect to a serial I/O board
-            DeviceContext device = ContextPool.getInstance().getDeviceContext(pluginID, DeviceContext.class);
+            DeviceContext device = ContextPool.getInstance().getDeviceContext(
+                    pluginID, DeviceContext.class
+            );
             if (device != null) {
                 if (device.getDataType() != Short.class) {
-                    throw new InvalidContextException("Connected device is not supported");
+                    throw new PluginInitializationException(
+                            this, "Connected device is not supported"
+                    );
                 }
                 connectedDevice = device;
             } else {
@@ -83,10 +88,10 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
             }
             terminalGUI = new TerminalWindow(display);
             terminalSettings.read();
-            return true;
-        } catch (InvalidContextException e) {
-            StaticDialogs.showErrorMessage("Could not get serial I/O board Context", getTitle());
-            return false;
+        } catch (ContextNotFoundException | InvalidContextException e) {
+            throw new PluginInitializationException(
+                    this, ": Could not get serial I/O board Context", e
+            );
         }
     }
 

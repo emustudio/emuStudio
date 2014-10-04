@@ -26,7 +26,7 @@ env:
       BgteCsFztnGT0oZfkT6Yb9a11m5ahUZ5nXrwMu5MDqklsFgxplM=
 
 after_success:
-- mvn -Pcoveralls cobertura:cobertura coveralls:cobertura
+- mvn -P coveralls clean cobertura:cobertura coveralls:cobertura
 - python add_server.py
 - mvn clean deploy -DskipTests=true
 - python restore_backups.py

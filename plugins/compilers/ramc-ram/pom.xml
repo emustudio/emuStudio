@@ -15,28 +15,6 @@
   <name>RAM Compiler</name>
   <description>Compiler for Random Access Machine emulator</description>
 
-  <profiles>
-    <profile>
-      <id>coveralls</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.eluder.coveralls</groupId>
-            <artifactId>coveralls-maven-plugin</artifactId>
-            <configuration>
-              <instrumentation>
-                <excludes>
-                  <exclude>**/RAMParser.class</exclude>
-                  <exclude>**/SymRAM.class</exclude>
-                </excludes>
-              </instrumentation>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
-
   <build>
     <finalName>ramc-ram</finalName>
     <plugins>
@@ -84,8 +62,8 @@
           </execution>
         </executions>
         <configuration>
-          <className>RAMParser</className>
-          <symbolsName>SymRAM</symbolsName>
+          <className>ParserImpl</className>
+          <symbolsName>Symbols</symbolsName>
         </configuration>
       </plugin>
     </plugins>

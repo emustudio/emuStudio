@@ -1,9 +1,7 @@
 /*
- * SIOImpl.java
- *
  * Created on Utorok, 2007, november 13, 17:01
  *
- * Copyright (C) 2007-2013 Peter Jakubčo
+ * Copyright (C) 2007-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -26,8 +24,11 @@ package net.sf.emustudio.devices.mits88sio.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.device.AbstractDevice;
 import emulib.plugins.device.DeviceContext;
+import emulib.runtime.AlreadyRegisteredException;
+import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.LoggerFactory;
@@ -54,11 +55,10 @@ import net.sf.emustudio.intel8080.ExtendedContext;
  * port and 22Q-23Q for the second. The second port of the 2SIO is "connected" to a virtual line printer and the paper
  * tape reader/punch for support under CP/M.
  *
- * @author Peter Jakubčo
  */
 @PluginType(type = PLUGIN_TYPE.DEVICE,
 title = "MITS 88-SIO Board",
-copyright = "\u00A9 Copyright 2007-2013, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2007-2014, Peter Jakubčo",
 description = "Custom implementation of MITS 88-SIO serial board.")
 public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserver {
     private static final Logger LOGGER = LoggerFactory.getLogger(SIOImpl.class);
@@ -82,7 +82,7 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
 
         try {
             ContextPool.getInstance().register(pluginID, physicalPort, DeviceContext.class);
-        } catch (Exception e) {
+        } catch (AlreadyRegisteredException | InvalidContextException e) {
             LOGGER.error("Could not register 88-SIO device context", e);
             StaticDialogs.showErrorMessage("Could not register MITS 88-SIO physical port context",
                     SIOImpl.class.getAnnotation(PluginType.class).title());
@@ -131,16 +131,17 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
      * fails. Main module won't start and make all detachments.
      */
     @Override
-    public boolean initialize(SettingsManager settings) {
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
         sioSettings.setSettingsManager(settings);
         sioSettings.addChangedObserver(this);
 
         try {
             cpu = (ExtendedContext) ContextPool.getInstance().getCPUContext(pluginID, ExtendedContext.class);
-        } catch (InvalidContextException e) {
-            LOGGER.error("Could not get CPU", e);
-            StaticDialogs.showErrorMessage("Warning: Could not connect to CPU", getTitle());
+        } catch (ContextNotFoundException | InvalidContextException e) {
+            throw new PluginInitializationException(
+                    this, ": Could not get CPU", e
+            );
         }
 
         // get a device connected into this card
@@ -151,16 +152,12 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
             } else {
                 LOGGER.warning("No device is connected into the 88-SIO.");
             }
-        } catch (InvalidContextException e) {
-            LOGGER.error("Could not get connected device", e);
-            StaticDialogs.showErrorMessage("Warning: Could not get connected device", getTitle());
-        }
-
-        if (cpu == null) {
-            LOGGER.warning("88-SIO is not connected to the CPU.");
+        } catch (ContextNotFoundException | InvalidContextException e) {
+            throw new PluginInitializationException(
+                    this, ": Could not get connected device", e
+            );
         }
         sioSettings.read();
-        return true;
     }
 
     @Override

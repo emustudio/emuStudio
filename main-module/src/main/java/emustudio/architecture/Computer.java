@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2014, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -19,6 +21,7 @@ package emustudio.architecture;
 
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.Plugin;
+import emulib.plugins.PluginInitializationException;
 import emulib.plugins.compiler.Compiler;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.device.Device;
@@ -44,8 +47,8 @@ public class Computer implements PluginConnections {
     private final Map<Long, Plugin> plugins;
     private final Collection<PluginInfo> pluginsInfo;
 
-    public Computer(CPU cpu, Memory memory, Compiler compiler, Device[] devices, Collection<PluginInfo> plugins,
-            Map<Long, List<Long>> connections) {
+    public Computer(CPU cpu, Memory memory, Compiler compiler, Device[] devices,
+            Collection<PluginInfo> plugins, Map<Long, List<Long>> connections) {
         this.cpu = cpu;
         this.memory = memory;
         this.compiler = compiler;
@@ -133,33 +136,22 @@ public class Computer implements PluginConnections {
         connections.clear();
     }
 
-    public boolean initialize(SettingsManager settings) {
-        if ((compiler != null) && (!compiler.initialize(settings))) {
-            LOGGER.error("Could not initialize compiler.");
-            return false;
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
+        if (compiler != null) {
+            compiler.initialize(settings);
         }
 
-        if ((memory != null) && (!memory.initialize(settings))) {
-            LOGGER.error("Could not initialize memory.");
-            return false;
+        if (memory != null) {
+            memory.initialize(settings);
         }
+        cpu.initialize(settings);
 
-        if (!cpu.initialize(settings)) {
-            LOGGER.error("Could not initialize CPU.");
-            return false;
-        }
-
-        int size = devices.length;
-        for (int i = 0; i < size; i++) {
-            if (!devices[i].initialize(settings)) {
-                LOGGER.error("Could not initialize device[" + i + "]: " + devices[i].getTitle());
-                return false;
-            }
+        for (Device device : devices) {
+            device.initialize(settings);
         }
 
         // the last operation - reset of all plugins
         resetPlugins();
-        return true;
     }
 
     /**
@@ -178,10 +170,12 @@ public class Computer implements PluginConnections {
         List<Long> connection = connections.get(pluginID);
 
         if ((connection == null) || connection.isEmpty()) {
-            LOGGER.debug("Could not find connection between pluginID=" + pluginID + " and " + toPluginID);
+            LOGGER.debug("Could not find connection between pluginID="
+                    + pluginID + " and " + toPluginID);
             return false;
         }
-        LOGGER.debug("connection(" + pluginID + ").contains(" + toPluginID+ ") =" + connection.contains(toPluginID));
+        LOGGER.debug("connection(" + pluginID + ").contains(" + toPluginID
+                + ") =" + connection.contains(toPluginID));
         return connection.contains(toPluginID);
     }
 }
