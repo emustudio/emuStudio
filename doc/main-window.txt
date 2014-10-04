@@ -1,0 +1,134 @@
+= Main window
+Version 0.39
+
+Main window the core part of emuStudio application. Users will spend there most of the time while
+working with emuStudio.
+
+Main window is part of main module, which actually is emuStudio itself. It's a separated application
+developed independently from plug-ins.
+
+== Brief description
+
+Main window contains two panels or tabs, placeholders for two actions users can do in emuStudio. The
+first tab is source code editor. Just below is compiler output window. You can see this in the
+following screenshot:
+
+image::images/source-code.png[Source code tab]
+
+Second tab is used during computer emulation. If user wrote a program in the source code editor and
+compiled it, it would be most likely loaded into operating memory footnote:[it depends on compiler
+plug-in] and ready for run.
+
+Emulation tab contains three main parts. The first one is very useful - listing of operating memory,
+disassembled into instructions. This part is called a debug window, or "debugger". The other part,
+below the debug window is a list of all computer devices used ("peripheral devices").footnote:[With
+double-click user can open GUI window of that particular device, if it supports it.]
+
+The last part on the right displays status of the CPU used in this computer. Each CPU has its own
+implementation of how the status window look and what it displays. The following image shows MITS
+Altair8800 computer with Intel 8080 CPU, and several devices:
+
+image::images/emulator.png[Emulation tab]
+
+== Source code editor
+
+In the source code editor, users can write programs for emulated computer. However, the most important tool which
+allows translation of the source code into binary program readable by emulated CPU is a compiler. Therefore,
+users must use the right compiler.
+
+Input language of a compiler is not limited, it can be either a kind of assembler, or even C or Pascal language.
+It depends on the compiler implementation, there can be many. The only restriction is that compiler must have
+output which is compatible with CPU which is currently being emulated. This cannot be checked automatically, users
+must take care of this.
+
+Source code editor supports only the basic features, such as line numbering and syntax highlighting. Also, there
+is possibility to search/replace text.
+
+Compilation must be run manually. Compiler output window shows all messages which compiler produces. The content
+is dependant on the used compiler, but most likely it will contain compilation success or errors messages.
+
+Compiled source code can produce output binary file (for example a HEX file), and it's automatically loaded into the
+operating memory (if the compiler supports it). If the emulation is running, user must stop it first manually.
+
+If another program is loaded in memory, it is not removed before loading currently compiled program, but the memory
+is overwritten at only those locations relevant to the compiled program. All the other content is left unchanged.
+
+== Emulation work-flow
+
+In real world, users control the power of computer. Computers can be turned on, or turned off if it is running,
+basically by pressing a button. It's obvious that we can turn on only not running or stopped computer. The power
+state is a term which denotes whether the computer is turned on or off. Each of those states define possible transitions
+to the other power state, executed by the action - pressing a button.
+
+Computer behaves according to the power state in which it is. If it's in a running state, it
+runs and we can see something on screen. If not, it is quiet and does nothing.
+
+In emuStudio, emulation of a virtual computer can be controlled very similarly. In addition to
+basic *run* (turn on), *stop* (turn off) actions and stopped/running states, emulation work-flow in emuStudio allows
+*reset* and *pause* actions (plus paused state).
+
+Emulation can be ready to run (the same as paused), running, or stopped. Each state has defined
+possible transitions to another states, by already mentioned actions. It's possible to show those transitions in a
+state diagram, as in the following image:
+
+[graphviz]
+---------------------------------------------------------------------
+digraph emulation_states {
+  ratio = 1;
+  node [shape = rect];
+
+  ready [ style = filled, fillcolor=lightgrey ];
+  stopped [shape = doubleoctagon ];
+
+  ready -> running [ label = "run " ];
+  ready -> stopped [ label = "stop " ];
+  ready -> ready   [ label = "step " ];
+  running -> stopped [ label = "stop, error " ];
+  running -> ready [ label = "pause, reset " ];
+  stopped -> ready [ label = "reset " ];
+}
+---------------------------------------------------------------------
+
+NOTE: This workflow applies to emulation of a whole computer. Independent emulation of devices
+or other computer components cannot be controled. The emulation of a computer starts when the CPU
+starts interpreting and executing instructions.
+
+== Debugger window
+
+Debugging is a process in which a programmer tries to analyze a program, usually with
+the intent to find bugs.footnote:[The adverb "to debug" has a deep history. Very early
+computers were having of so-called vacuum tubes, which were core elements acting as
+electrically controlled switches. From time to time a computer stopped working, and the
+most usual reason was that a bug (real one) came in a vacuum tube. Maintainers of the
+computer had to go there and manually remove the bug. It happened that often, so that
+the process of removing bugs got a name - "to de-bug".] Debugger in emuStudio contains
+debugger panel and list of few disassembled instructions from memory. In combination with
+CPU status panel, user is able to see (and check) all internal behavior of the emulated computer.
+
+Debugger panel contains buttons (icons) for controlling the emulation
+and accessing memory content. Most of these buttons are self-explanatory. 
+
+The other part is a list of few diassembled instructions.footnote:[Around ten, but it depends
+on the CPU] They are arranged in a table. The first column is usually interactive, allowing
+user to set breakpoints. Red strip is pointing to the very next instruction being executed.
+
+NOTE: The size of disassembled memory (resulting in the number of disassembled
+instructions) is not configurable. Also, user cannot change instructions in this place.
+
+Sometimes the instructions shown in the debugger do not have to be disassembled correctly.
+There are two reasons for that:
+
+- first, instructions can have various binary sizes (e.g. one byte, two bytes, etc.)
+- second, memory can contain programs on various locations, and emuStudio doesn't know where.
+  footnote:[Well, if it's just program compiled from the source code editor, it knows.]
+
+The implication is that if emuStudio starts to disassemble instructions at wrong location,
+the instructions will be disassembled incorrectly, or they can appear as invalid. 
+
+However, emuStudio is trying hard to find the nearest program start location at which it's
+safe to start disassembling. Usually it's just few instructions back, so it is a fast process.
+
+=== Controlling instructions window
+
+
+

@@ -1,0 +1,2 @@
+= Automatic emulation
+Version 0.39

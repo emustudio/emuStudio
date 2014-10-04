@@ -1,0 +1,3 @@
+= Logger configuration
+Version 0.39
+
