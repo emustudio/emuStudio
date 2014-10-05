@@ -1,0 +1,61 @@
+[[XO]]
+== Opening a computer
+
+The first action which emuStudio does is loading a computer to be emulated. Virtual computers are
+described in abstract schemas, which are stored in configuration files (see <<XIID,Directory structure>> section). 
+
+Computers can be loaded either from <<XC,command line>> or manually in GUI (default). The
+open dialog is the first thing which appears to a user.
+
+image::images/open-dialog.png["Open a computer" dialog]
+
+Left part contains a control panel and a list of all available virtual computers. When a user
+clicks at a computer, it's abstract schema is displayed on the right. Double-clicking or clicking
+on the `Open` button loads selected computer.
+
+[[XOM]]
+=== Managing virtual computers
+
+image::images/open-dialog-panel.png[Managing virtual computers]
+
+- *A*: Adds new computer. The abstract schema editor will be opened.
+- *B*: Deletes selected computer. Be aware of what you are doing - the action cannot be undone.
+- *C*: Edits selected computer. The abstract schema editor will be opened.
+- *D*: Saves the displayed abstract schema into image file.
+
+[[XOA]]
+=== Abstract schema editor
+
+Abstract schema editor is a graphical editor for drawing abstract schemas of virtual computers
+for emulation in emuStudio. Users pick plug-ins which appear as "boxes" or elements on the screen.
+Then using connection lines those elements can be connected together to express a relation (that they
+can "see" each other).
+
+When the abstract schema is completed, user must save it and then it will appear in the
+<<XOM,Open a computer>> dialog.
+
+image::images/schema-editor.png[Abstract schema editor]
+
+Description of the control panel follows.
+
+image::images/schema-editor-panel.png[Control panel in the abstract schema editor]
+
+- *A*: Save the virtual computer.
+- *B*: Select a compiler.
+- *C*: Select a CPU.
+- *D*: Select a memory.
+- *E*: Select a device.
+- *F*: Use a connection line. The line is bidirectional by default.
+- *G*: Set or unset the connection line to be bidirectional. If the line is not bidirectional,
+       the source direction is the first clicked element and the target direction is the second
+       clicked element.
+- *H*: Remove an element from the schema.
+- *I*: This drop-down list is used for selecting specific plug-in (element) in the abstract schema.
+       See icons `B`, `C`, `D`, and `E`. Those names are just file names of plug-ins located in
+       corresponding directory (see <<XIID,Directory structure>> section).
+- *J*: Use / do not use a grid in the editor. Elements are "snapped" to the grid if it is used
+       and it's easier to draw the schema which looks good. The slider on the right then controls
+       density of the grid. The density is saved in the configuration file of the edited computer.
+
+
+

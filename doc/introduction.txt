@@ -1,5 +1,5 @@
-= Introduction
-Version 0.39
+[[XI]]
+== Introduction
 
 emuStudio is graphical application allowing software-based computer emulation. Computer emulation can be
 explained as imitation of computer behaviour. There can be various levels of accuracy, or detail.
@@ -7,7 +7,8 @@ explained as imitation of computer behaviour. There can be various levels of acc
 It's free software, released under GNU GPL v2 license. The source code is freely available online.
 Implementation language is Java SE, which makes emuStudio a naturally cross-platform application.
 
-== Brief description
+[[XIB]]
+=== Brief description
 
 emuStudio is a graphical application. The technology of graphical components is Java Swing.
 
@@ -31,7 +32,8 @@ without graphical interface - some devices allow gathering input and writing out
 Errors, and other messages are written in log file. If there is some problem, user can check the log file,
 or pass it to the issue for analysis by developers of emuStudio.
 
-== Installation and run
+[[XII]]
+=== Installation and run
 
 At first, please download emuStudio distribution. It is a ZIP file in the form `emuStudio-[VERSION].zip`.
 Unpack the file where you want to have emuStudio installed.
@@ -44,4 +46,22 @@ line:
 ....
 java -jar emuStudio.jar
 ....
+
+[[XIID]]
+==== Directory structure
+
+emuStudio has very conservative and strict directory structure, as can be seen in the following
+list:
+
+- `config/`: location of configuration files. Each file represents abstract schema of one virtual
+             (emulated) computer.footnote:[The name of the file is the name of the computer, which
+             is not very good idea.] The files are human-readable.footnote:[format of the files is
+             Java properties.]
+- `compilers/`: location of compiler plug-ins.
+- `cpu/`: location of CPU plug-ins.
+- `devices/`: location of device plug-ins.
+- `mem/`: location of memory plug-ins.
+- `lib/`: location of shared libraries.
+
+
 

@@ -1,2 +1,4 @@
-= Automatic emulation
-Version 0.39
+[[XA]]
+== Automatic emulation
+
+TODO

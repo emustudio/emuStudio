@@ -1,0 +1,11 @@
+= emuStudio User documentation
+Version 0.39
+:toc:
+:numbered:
+
+include::introduction.txt[]
+include::open-computer.txt[]
+include::main-window.txt[]
+include::cmdline.txt[]
+include::automatization.txt[]
+

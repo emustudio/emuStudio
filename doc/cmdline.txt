@@ -1,0 +1,19 @@
+[[XC]]
+== Command line arguments
+
+emuStudio accepts several command line arguments. Their description is accessible with `--help`
+argument:
+
+	$ java -jar emuStudio.jar --help
+	emuStudio will accept the following command line parameters:
+
+	--config name : load configuration with file name
+	--input name  : use the source code given by the file name
+	--output name : output compiler messages into this file name
+	--auto        : run the emulation automatization
+	--nogui       : try to not show GUI in automatization
+	--help        : output this message
+
+Most of these arguments are self-explanatory. For emulation automatization description, please refer
+to section <<XA,Automatic emulation>>.
+
