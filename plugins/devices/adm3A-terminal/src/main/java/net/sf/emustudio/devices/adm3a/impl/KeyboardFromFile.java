@@ -62,7 +62,9 @@ public class KeyboardFromFile implements InputProvider {
             LOGGER.error("Could not process input file", e);
         } finally {
             try {
-                input.close();
+                if (input != null) {
+                    input.close();
+                }
             } catch (IOException e) {
                 LOGGER.error("Could not close input file", e);
             }

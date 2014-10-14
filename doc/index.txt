@@ -1,4 +1,5 @@
 = emuStudio User documentation
+(c) Copyright 2007-2014, Peter Jakubčo
 Version 0.39
 :toc:
 :numbered:
@@ -8,4 +9,6 @@ include::open-computer.txt[]
 include::main-window.txt[]
 include::cmdline.txt[]
 include::automatization.txt[]
+include::logger.txt[]
+
 

@@ -1,16 +1,15 @@
 [[XI]]
 == Introduction
 
-emuStudio is graphical application allowing software-based computer emulation. Computer emulation can be
-explained as imitation of computer behaviour. There can be various levels of accuracy, or detail.
+emuStudio is graphical application allowing software-based computer emulation. Computer emulation can
+be explained as imitation of computer behaviour. There can be various levels of accuracy, or detail.
 
 It's free software, released under GNU GPL v2 license. The source code is freely available online.
 Implementation language is Java SE, which makes emuStudio a naturally cross-platform application.
+The implementation technology of visual components is Java Swing.
 
 [[XIB]]
 === Brief description
-
-emuStudio is a graphical application. The technology of graphical components is Java Swing.
 
 Various computers can be emulated. Real computers are assembled using hardware components, which are
 in virtual environment represented by plug-ins. All virtual computers in emuStudio must have compiler,
@@ -20,9 +19,8 @@ Plug-ins combinations and computer settings are written in configuration files. 
 one single computer. These configurations can be created manually (they're Java properties files), but
 more convenient is an abstract schema editor.
 
-Source code editor enables users to write programs for emulated computer. Very related part is compiler,
-which must support this. Most compiler plug-ins enable direct transfer of the written code into emulated
-computer.
+Source code editor enables users to write programs for emulated computer. Very related part is
+compiler, which provides lexical and syntax analysis of the source code for the syntax highlighting. Most compiler plug-ins enable direct transfer of the written code into emulated computer.
 
 Some memory plug-ins allow modification of its content, which is immediately seen by CPU.
 
@@ -55,8 +53,8 @@ list:
 
 - `config/`: location of configuration files. Each file represents abstract schema of one virtual
              (emulated) computer.footnote:[The name of the file is the name of the computer, which
-             is not very good idea.] The files are human-readable.footnote:[format of the files is
-             Java properties.]
+             is not very good idea.] The files are human-readable.footnote:[Format of the files is
+             http://en.wikipedia.org/wiki/.properties[Java properties].]
 - `compilers/`: location of compiler plug-ins.
 - `cpu/`: location of CPU plug-ins.
 - `devices/`: location of device plug-ins.

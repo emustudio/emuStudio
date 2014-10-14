@@ -14,6 +14,7 @@ argument:
 	--nogui       : try to not show GUI in automatization
 	--help        : output this message
 
-Most of these arguments are self-explanatory. For emulation automatization description, please refer
-to section <<XA,Automatic emulation>>.
+Most of these arguments are self-explanatory. Some of them have meaning only when emulation
+automatization is turned on (`--nogui`). For more information, please refer to section
+<<XA,Automatic emulation>>.
 

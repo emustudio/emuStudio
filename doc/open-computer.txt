@@ -4,7 +4,7 @@
 The first action which emuStudio does is loading a computer to be emulated. Virtual computers are
 described in abstract schemas, which are stored in configuration files (see <<XIID,Directory structure>> section). 
 
-Computers can be loaded either from <<XC,command line>> or manually in GUI (default). The
+Computers can be loaded either from <<XC,command line>> or manually in GUI (by default). The
 open dialog is the first thing which appears to a user.
 
 image::images/open-dialog.png["Open a computer" dialog]
@@ -56,6 +56,38 @@ image::images/schema-editor-panel.png[Control panel in the abstract schema edito
 - *J*: Use / do not use a grid in the editor. Elements are "snapped" to the grid if it is used
        and it's easier to draw the schema which looks good. The slider on the right then controls
        density of the grid. The density is saved in the configuration file of the edited computer.
+
+NOTE: Virtual computers in emuStudio are following von-Neumann model of computers. It means that each
+      computer must have a CPU, and memory. Optionally one or more devices, and optionally a
+      compiler.footnote:[The compiler is not really a computer component, but since it also can be
+      interconnected to other components, it is part of the abstract schema.]
+
+==== Connection lines
+
+Connection line represents virtual "connection" between computer components. For the abstract schema
+it's not important how the connection is realized. It's safe to say that the connection is similar
+as if we say that a component "sees" the other component, in the direction of the arrow:
+
+image::images/connection.png[CPU "sees" operating memory, but not vice-versa]
+
+In the previous image, a CPU "sees" the memory, but not vice-versa. It means, CPU can read/write
+from/to memory, but memory is not seeing it, it can just answer to CPU requests. This connection makes
+sense in real-world computers.
+
+Drawing connection lines is very easy. Connection line always connects exactly two elements in the
+schema. At first, user must click on already existing element in the schema. It's just a click, not
+a drag.
+
+Then a grey temporary line is being drawn having its end at the mouse position and moving with the
+mouse move. If the element is not really close, user can make a "path" by clicking somewhere in the
+schema. At those locations fixed-points are created.
+
+When a user clicks at the second element, the temporary line disappears, and real connection line is
+created.
+
+User can find the fixed-points later and move them by dragging. They can be removed by clicking at
+them with right button of the mouse.
+
 
 
 
