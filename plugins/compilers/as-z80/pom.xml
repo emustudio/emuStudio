@@ -30,8 +30,7 @@
         <configuration>
           <archive>
             <manifest>
-              <addClasspath>true</addClasspath>
-              <classpathPrefix>lib/</classpathPrefix>
+              <addClasspath>false</addClasspath>
               <mainClass>net.sf.emustudio.zilogZ80.assembler.impl.CompilerImpl</mainClass>
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>

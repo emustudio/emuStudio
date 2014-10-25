@@ -259,7 +259,6 @@
         <groupId>net.sf.emustudio</groupId>
         <artifactId>emuLib</artifactId>
         <version>9.0.0-SNAPSHOT</version>
-          <type>jar</type>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>

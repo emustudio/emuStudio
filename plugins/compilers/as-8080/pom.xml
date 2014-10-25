@@ -28,15 +28,11 @@
         <configuration>
           <archive>
             <manifest>
-              <addClasspath>true</addClasspath>
-              <classpathPrefix>lib/</classpathPrefix>
+              <addClasspath>false</addClasspath>
               <mainClass>net.sf.emustudio.intel8080.assembler.impl.CompilerImpl</mainClass>
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
             </manifest>
-            <manifestEntries>
-              <Class-Path>.</Class-Path>
-            </manifestEntries>
           </archive>
         </configuration>
       </plugin>

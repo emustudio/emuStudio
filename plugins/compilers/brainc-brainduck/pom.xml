@@ -28,8 +28,7 @@
         <configuration>
           <archive>
             <manifest>
-              <addClasspath>true</addClasspath>
-              <classpathPrefix>lib/</classpathPrefix>
+              <addClasspath>false</addClasspath>
               <mainClass>net.sf.emustudio.brainduck.brainc.impl.CompilerImpl</mainClass>
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>

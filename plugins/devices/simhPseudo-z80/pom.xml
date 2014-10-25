@@ -31,11 +31,13 @@
         <configuration>
           <archive>
             <manifest>
-              <addClasspath>true</addClasspath>
-              <classpathPrefix>lib/</classpathPrefix>
+              <addClasspath>false</addClasspath>
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
             </manifest>
+            <manifestEntries>
+                <Class-Path>cpu/8080-cpu.jar cpu/z80-cpu.jar mem/standard-mem.jar</Class-Path>
+            </manifestEntries>
           </archive>
         </configuration>
       </plugin>

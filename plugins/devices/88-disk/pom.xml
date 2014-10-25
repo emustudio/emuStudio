@@ -28,12 +28,14 @@
         <configuration>
           <archive>
             <manifest>
-              <addClasspath>true</addClasspath>
+              <addClasspath>false</addClasspath>
               <mainClass>net.sf.emustudio.devices.mits88disk.impl.DiskImpl</mainClass>
-              <classpathPrefix>lib/</classpathPrefix>
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
             </manifest>
+            <manifestEntries>
+                <Class-Path>cpu/8080-cpu.jar</Class-Path>
+            </manifestEntries>
           </archive>
         </configuration>
       </plugin>
