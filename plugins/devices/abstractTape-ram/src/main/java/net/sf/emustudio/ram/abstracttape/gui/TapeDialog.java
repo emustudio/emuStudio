@@ -44,8 +44,7 @@ import net.sf.emustudio.ram.abstracttape.impl.AbstractTapeContextImpl.TapeListen
 
 @SuppressWarnings("serial")
 public class TapeDialog extends JDialog {
-
-    private AbstractTapeContextImpl tapeContext;
+    private final AbstractTapeContextImpl tapeContext;
     private TapeListModel listModel;
 
     public TapeDialog(AbstractTape tape, final AbstractTapeContextImpl tapeContext,
@@ -78,8 +77,19 @@ public class TapeDialog extends JDialog {
 
         @Override
         public Object getElementAt(int index) {
-            String s = tapeContext.getSymbolAt(index);
-            return (s == null || s.equals("")) ? "<empty>" : s;
+            String element = "";
+            
+            if (tapeContext.getDisplayRowNumbers()) {
+                element += String.format("%02d: ", index);
+            }
+            String symbolAtIndex = tapeContext.getSymbolAt(index);
+            if (symbolAtIndex == null || symbolAtIndex.isEmpty()) {
+                element += "<empty>";
+            } else {
+                element += symbolAtIndex;
+            }
+            
+            return element;
         }
 
         @Override

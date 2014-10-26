@@ -1,7 +1,5 @@
 /*
- * EmulatorImpl.java
- *
- * Copyright (C) 2009-2013 Peter Jakubčo
+ * Copyright (C) 2009-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -27,6 +25,7 @@ import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.CPUContext;
 import emulib.plugins.cpu.Disassembler;
+import emulib.runtime.AlreadyRegisteredException;
 import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
@@ -45,7 +44,7 @@ import net.sf.emustudio.ram.memory.RAMMemoryContext;
 
 @PluginType(type = PLUGIN_TYPE.CPU,
 title = "Random Access Machine (RAM)",
-copyright = "\u00A9 Copyright 2009-2013, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2009-2014, Peter Jakubčo",
 description = "Emulator of abstract RAM machine")
 public class EmulatorImpl extends AbstractCPU {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorImpl.class);
@@ -59,7 +58,7 @@ public class EmulatorImpl extends AbstractCPU {
         context = new RAMContext(this);
         try {
             ContextPool.getInstance().register(pluginID, context, CPUContext.class);
-        } catch (Exception e) {
+        } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register RAM CPU Context",
                     EmulatorImpl.class.getAnnotation(PluginType.class).title());
         }

@@ -49,6 +49,7 @@ public class RAMContext implements CPUContext {
             tapes[0].setPosVisible(false);
             tapes[0].setClearAtReset(true);
             tapes[0].setTitle("Registers (storage tape)");
+            tapes[0].setDisplayRowNumbers(true);
 
             tapes[1] = (AbstractTapeContext)
                     ContextPool.getInstance().getDeviceContext(pluginID, AbstractTapeContext.class, 1);

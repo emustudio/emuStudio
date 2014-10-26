@@ -51,16 +51,17 @@ import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
  * @author Peter Jakubčo
  */
 public class AbstractTapeContextImpl implements AbstractTapeContext {
-    private static Logger LOGGER = LoggerFactory.getLogger(AbstractTapeContextImpl.class);
-    private List<String> tape; // tape is an array of strings
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTapeContextImpl.class);
+    private final List<String> tape; // tape is an array of strings
     private int currentPosition; // actual tape position
     private boolean bounded; // tape is bounded form the left?
     private boolean editable; // if tape is editable by user
     private TapeListener listener;
     private boolean showPos;
     private boolean clearAtReset = true;
-    private AbstractTape abst;
+    private final AbstractTape abst;
     private Writer outw;
+    private boolean displayRowNumbers = false;
 
     public interface TapeListener extends EventListener {
 
@@ -70,7 +71,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     public AbstractTapeContextImpl(AbstractTape abst) {
         this.abst = abst;
         listener = null;
-        tape = new ArrayList<String>();
+        tape = new ArrayList<>();
         currentPosition = 0;
         bounded = false;
         editable = true;
@@ -82,6 +83,17 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         abst.setGUITitle(title);
     }
 
+    @Override
+    public boolean getDisplayRowNumbers() {
+        return displayRowNumbers;
+    }
+
+    @Override
+    public void setDisplayRowNumbers(boolean displayRowNumbers) {
+        this.displayRowNumbers = displayRowNumbers;
+        fireChange();
+    }
+    
     @Override
     public Class<?> getDataType() {
         return String.class;

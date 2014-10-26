@@ -77,5 +77,8 @@ public interface AbstractTapeContext extends DeviceContext<String> {
 	public void setClearAtReset(boolean clear);
 
         public void setTitle(String title);
+        
+        public boolean getDisplayRowNumbers();
+        public void setDisplayRowNumbers(boolean displayRowNumbers);
 
 }
