@@ -24,9 +24,8 @@ import emustudio.drawing.DrawingPanel;
 import emustudio.drawing.DrawingPanel.Tool;
 import emustudio.drawing.DrawingPanel.ToolListener;
 import emustudio.drawing.Schema;
+import static emustudio.gui.utils.Components.addKeyListenerRecursively;
 import emustudio.main.Main;
-import java.awt.Component;
-import java.awt.Container;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import javax.swing.ComboBoxModel;
@@ -132,7 +131,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         sliderGridGap.setValue(schema.getGridGap());
         panel.addMouseListener(panel);
         panel.addMouseMotionListener(panel);
-        addKeyListenerRecursively(this);
+        addKeyListenerRecursively(this, this);
 
         panel.addToolListener(new ToolListener() {
 
@@ -165,23 +164,6 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
 
     @Override
     public void keyReleased(KeyEvent e) {
-    }
-
-    /**
-     * This method adds this key listener to all sub-components of given
-     * component.
-     *
-     * @param c Component to add this key listener recursively
-     */
-    private void addKeyListenerRecursively(Component c) {
-        c.addKeyListener((KeyListener) this);
-        if (c instanceof Container) {
-            Container cont = (Container) c;
-            Component[] children = cont.getComponents();
-            for (Component child : children) {
-                addKeyListenerRecursively(child);
-            }
-        }
     }
 
     /**

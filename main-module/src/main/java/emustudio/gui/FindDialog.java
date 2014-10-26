@@ -17,9 +17,12 @@
  */
 package emustudio.gui;
 
+import static emustudio.gui.utils.Components.addKeyListenerRecursively;
 import emustudio.gui.utils.ConstantSizeButton;
 import emustudio.gui.utils.FindText;
 import emustudio.main.Main;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.PatternSyntaxException;
@@ -47,6 +50,7 @@ public class FindDialog extends javax.swing.JDialog {
     private static final List<String> rlist = new ArrayList<>();
     private JTextPane textPane;
     private final FindText finder;
+    private final DialogKeyListener dialogKeyListener = new DialogKeyListener();
 
     private class CMBModel implements ComboBoxModel {
 
@@ -89,8 +93,33 @@ public class FindDialog extends javax.swing.JDialog {
         public void removeListDataListener(ListDataListener l) {
         }
     }
+    
+    private class DialogKeyListener implements KeyListener {
 
-    public FindDialog(JFrame parent, FindText finder, boolean modal, JTextPane pane) {
+        @Override
+        public void keyTyped(KeyEvent e) {
+        }
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+            if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                FindDialog.this.dispose();
+            }
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+        }
+        
+    }
+    
+    public static FindDialog create(JFrame parent, FindText finder, boolean modal, JTextPane pane) {
+        FindDialog dialog = new FindDialog(parent, finder, modal, pane);
+        dialog.initialize();
+        return dialog;
+    }
+
+    private FindDialog(JFrame parent, FindText finder, boolean modal, JTextPane pane) {
         super(parent, modal);
         this.textPane = pane;
         this.finder = finder;
@@ -130,6 +159,10 @@ public class FindDialog extends javax.swing.JDialog {
             }
         }
         this.setLocationRelativeTo(parent);
+    }
+    
+    private void initialize() {
+        addKeyListenerRecursively(this, dialogKeyListener);
     }
 
     private String saveGUI() {

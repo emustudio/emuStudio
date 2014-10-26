@@ -54,6 +54,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.io.StringReader;
+import java.util.concurrent.locks.LockSupport;
 import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
@@ -1226,18 +1227,14 @@ public class StudioFrame extends javax.swing.JFrame {
             return;
         }
         try {
-            final int slice = RadixUtils.getInstance().parseRadix(sliceText);
+            final int sliceMillis = RadixUtils.getInstance().parseRadix(sliceText);
             new Thread() {
 
                 @Override
                 public void run() {
                     while (run_state == RunState.STATE_STOPPED_BREAK) {
                         cpu.step();
-                        try {
-                            Thread.sleep(slice);
-                        } catch (InterruptedException e) {
-                            logger.error("Sleeping interrupted while performing timed emulation.", e);
-                        }
+                        LockSupport.parkNanos(sliceMillis * 1000000);
                     }
                 }
             }.start();
@@ -1446,7 +1443,7 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void mnuEditFindActionPerformed(java.awt.event.ActionEvent evt) {
-        new FindDialog(this, finder, false, txtSource).setVisible(true);
+        FindDialog.create(this, finder, false, txtSource).setVisible(true);
     }
 
     private void mnuEditFindNextActionPerformed(java.awt.event.ActionEvent evt) {
