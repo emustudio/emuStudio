@@ -24,6 +24,7 @@ import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.PluginInitializationException;
 import emulib.plugins.memory.AbstractMemory;
+import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.AlreadyRegisteredException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
@@ -46,6 +47,7 @@ public class MemoryImpl extends AbstractMemory {
         context = new RAMMemoryContextImpl();
         try {
             ContextPool.getInstance().register(pluginID, context, RAMMemoryContext.class);
+            ContextPool.getInstance().register(pluginID, context, MemoryContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register Program tape context",
                     MemoryImpl.class.getAnnotation(PluginType.class).title());
