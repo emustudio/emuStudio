@@ -36,11 +36,7 @@ import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
 import emustudio.architecture.ArchitectureManager;
 import emustudio.gui.AutoDialog;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.Reader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +49,6 @@ public class Automatization implements Runnable {
     private final ArchitectureManager currentArch;
 
     private AutoDialog progressGUI;
-    private Reader inputFileReader;
     private File inputFile;
 
     private Compiler compiler;
@@ -75,10 +70,8 @@ public class Automatization implements Runnable {
             throw new AutomatizationException("Input file name cannot be empty");
         }
         this.inputFile = new File(inputFileName);
-        try {
-            inputFileReader = new BufferedReader(new FileReader(inputFile));
-        } catch( FileNotFoundException e) {
-            throw new AutomatizationException("Input file not found", e);
+        if (!inputFile.exists()) {
+            throw new AutomatizationException("Input file not found");
         }
 
         cpu = currentArch.getComputer().getCPU();
@@ -145,7 +138,7 @@ public class Automatization implements Runnable {
         compiler.addCompilerListener(reporter);
 
         String fileName = inputFile.getAbsolutePath();
-        if (!compiler.compile(fileName, inputFileReader)) {
+        if (!compiler.compile(fileName)) {
             throw new AutomatizationException("Error: compile failed. Automatization cannot continue.");
         }
     }

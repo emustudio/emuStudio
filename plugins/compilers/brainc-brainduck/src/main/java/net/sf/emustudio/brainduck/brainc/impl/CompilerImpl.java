@@ -32,29 +32,21 @@ import emulib.runtime.interfaces.Logger;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import net.sf.emustudio.brainduck.brainc.tree.Program;
 
-/**
- * Main class implementing the compiler.
- *
- * @author Peter Jakubčo
- */
-@PluginType(type=PLUGIN_TYPE.COMPILER,
-        title="BrainDuck Compiler",
-        copyright="\u00A9 Copyright 2009-2012, Peter Jakubčo",
-        description="Compiler for esoteric architecture called BrainDuck.")
+@PluginType(type = PLUGIN_TYPE.COMPILER,
+        title = "BrainDuck Compiler",
+        copyright = "\u00A9 Copyright 2009-2014, Peter Jakubčo",
+        description = "Compiler for esoteric architecture called BrainDuck.")
 public class CompilerImpl extends AbstractCompiler {
+
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
     private LexerImpl lex;
     private ParserImpl par;
     private final SourceFileExtension[] suffixes;
 
-    /**
-     * Public constructor.
-     *
-     * @param pluginID plug-in identification number
-     */
     public CompilerImpl(Long pluginID) {
         super(pluginID);
         // lex has to be reset WITH a reader object before compile
@@ -83,50 +75,45 @@ public class CompilerImpl extends AbstractCompiler {
     /**
      * Compile the source code into HEXFileHadler
      *
-     * @param in  Reader object of the source code
+     * @param in Reader object of the source code
      * @return HEXFileManager object
      */
-    private HEXFileManager compile(Reader in) throws Exception {
-        if (in == null) {
-            throw new Exception("Reader is null");
-        }
+    private HEXFileManager compileToHex(String inputFileName) throws Exception {
+        Objects.requireNonNull(inputFileName);
+
+        notifyInfo(getTitle() + ", version " + getVersion());
 
         Object parsedProgram;
         HEXFileManager hex = new HEXFileManager();
 
-        notifyInfo(CompilerImpl.class.getAnnotation(PluginType.class).title() + ", version " + getVersion());
-        lex.reset(in, 0, 0, 0);
-        parsedProgram = par.parse().value;
+        try (Reader reader = new FileReader(inputFileName)) {
+            lex.reset(reader, 0, 0, 0);
+            parsedProgram = par.parse().value;
 
-        if (parsedProgram == null) {
-            notifyError("Unexpected end of file");
-            throw new Exception("Unexpected end of file");
-        }
-        if (par.errorCount != 0) {
-            throw new Exception("Program has errors");
-        }
+            if (parsedProgram == null) {
+                notifyError("Unexpected end of file");
+                throw new Exception("Unexpected end of file");
+            }
+            if (par.errorCount != 0) {
+                throw new Exception("Program has errors");
+            }
 
-        // do several passes for compiling
-        Program program = (Program) parsedProgram;
-        program.firstPass(0);
-        program.secondPass(hex);
-        return hex;
+            // do several passes for compiling
+            Program program = (Program) parsedProgram;
+            program.firstPass(0);
+            program.secondPass(hex);
+            return hex;
+        }
     }
 
     @Override
-    public boolean compile(String fileName, Reader in) {
+    public boolean compile(String inputFileName, String outputFileName) {
         try {
-            HEXFileManager hex = compile(in);
+            notifyCompileStart();
+            HEXFileManager hex = compileToHex(inputFileName);
 
-            // Remove ".*" suffix and add ".hex" suffix to the filename
-            int i = fileName.lastIndexOf(".");
-            if (i >= 0) {
-                fileName = fileName.substring(0, i);
-            }
-            fileName += ".hex"; // the output suffix
-
-            hex.generateFile(fileName);
-            notifyInfo("Compile was sucessfull. Output: " + fileName);
+            hex.generateFile(inputFileName);
+            notifyInfo("Compile was sucessfull. Output: " + outputFileName);
             programStart = hex.getProgramStart();
 
             // try to access the memory
@@ -139,12 +126,26 @@ public class CompilerImpl extends AbstractCompiler {
                             + "memory due to an error.");
                 }
             }
+            notifyCompileFinish(0);
             return true;
         } catch (Exception e) {
-            LOGGER.error("Unexpected error", e);
-            notifyError("Unexpected error: " + e.getMessage());
+            notifyError("Compilation error: " + e.getMessage());
+            LOGGER.error("Compilation error", e);
+            notifyCompileFinish(1);
             return false;
         }
+    }
+
+    @Override
+    public boolean compile(String inputFileName) {
+        int i = inputFileName.lastIndexOf(".asm");
+
+        String outputFileName = inputFileName;
+        if (i >= 0) {
+            outputFileName = outputFileName.substring(0, i);
+        }
+        outputFileName += ".hex";
+        return compile(inputFileName, outputFileName);
     }
 
     @Override
@@ -183,7 +184,7 @@ public class CompilerImpl extends AbstractCompiler {
         int i;
         for (i = 0; i < args.length; i++) {
             String arg = args[i].toLowerCase();
-            if ((arg.equals("--output") || arg.equals("-o")) && ((i+1) < args.length)) {
+            if ((arg.equals("--output") || arg.equals("-o")) && ((i + 1) < args.length)) {
                 outputFile = args[++i];
             } else if (arg.equals("--help") || arg.equals("-h")) {
                 printHelp();
@@ -192,7 +193,7 @@ public class CompilerImpl extends AbstractCompiler {
                 System.out.println(new CompilerImpl(0L).getVersion());
                 return;
             } else {
-              break;
+                break;
             }
         }
         if (i >= args.length) {
@@ -201,7 +202,7 @@ public class CompilerImpl extends AbstractCompiler {
         }
         inputFile = args[i];
         if (outputFile == null) {
-          outputFile = inputFile.substring(0, inputFile.lastIndexOf('.')) + ".hex";
+            outputFile = inputFile.substring(0, inputFile.lastIndexOf('.')) + ".hex";
         }
 
         CompilerImpl compiler = new CompilerImpl(0L);
@@ -221,14 +222,11 @@ public class CompilerImpl extends AbstractCompiler {
             }
         });
 
-
         try {
-          HEXFileManager hex = compiler.compile(new FileReader(inputFile));
-          System.out.println("Saving output to: " + outputFile);
-          hex.generateFile(outputFile);
+            compiler.compile(inputFile, outputFile);
         } catch (Exception e) {
-          LOGGER.error("Unexpected error", e);
-          System.out.println(e.getMessage());
+            System.out.println(e.getMessage());
+            LOGGER.error("Compilation error", e);
         }
     }
 }

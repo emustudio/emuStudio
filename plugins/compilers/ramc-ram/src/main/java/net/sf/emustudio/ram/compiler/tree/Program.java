@@ -22,7 +22,7 @@ package net.sf.emustudio.ram.compiler.tree;
 
 import java.util.ArrayList;
 import java.util.List;
-import net.sf.emustudio.ram.compiler.impl.CompiledFileHandler;
+import net.sf.emustudio.ram.compiler.impl.CompiledCode;
 
 public class Program {
     private List<Row> instructionsList;
@@ -46,7 +46,7 @@ public class Program {
         return curr_addr;
     }
 
-    public void pass2(CompiledFileHandler hex) throws Exception {
+    public void pass2(CompiledCode hex) throws Exception {
         for (int i = 0; i < instructionsList.size(); i++) {
             instructionsList.get(i).pass2(hex);
         }

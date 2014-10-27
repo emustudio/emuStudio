@@ -1,7 +1,6 @@
 /*
- * RAMCompiler.java
+ * Copyright (C) 2009-2014 Peter Jakubčo
  *
- * Copyright (C) 2009-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -32,8 +31,10 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
+import java.io.FileReader;
 import java.io.Reader;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import net.sf.emustudio.ram.compiler.tree.Program;
 import net.sf.emustudio.ram.compiler.tree.RAMInstructionImpl;
@@ -88,74 +89,70 @@ public class RAMCompiler extends AbstractCompiler {
         }
     }
 
-    /**
-     * Compile the source code into CompiledFileHandler
-     *
-     * @param in Reader object of the source code
-     * @return HEXFileHandler object
-     */
-    private CompiledFileHandler compile(Reader in) throws Exception {
-        if (par == null) {
-            return null;
-        }
-        if (in == null) {
-            return null;
-        }
+    private CompiledCode compileFrom(String inputFileName) throws Exception {
+        Objects.requireNonNull(inputFileName);
+        Objects.requireNonNull(par);
+        
+        notifyInfo(getTitle() + ", version " + getVersion());
 
         Object parsedProgram;
-        CompiledFileHandler compiledProgram = new CompiledFileHandler();
+        CompiledCode compiledProgram = new CompiledCode();
 
-        notifyInfo(RAMCompiler.class.getAnnotation(PluginType.class).title() + ", version " + getVersion());
-        lex.reset(in, 0, 0, 0);
-        parsedProgram = par.parse().value;
+        try (Reader reader = new FileReader(inputFileName)) {
+            lex.reset(reader, 0, 0, 0);
+            parsedProgram = par.parse().value;
 
-        if (parsedProgram == null) {
-            notifyError("Unexpected end of file");
-            return null;
-        }
-        if (par.errorCount != 0) {
-            return null;
-        }
+            if (parsedProgram == null) {
+                notifyError("Unexpected end of file");
+                return null;
+            }
+            if (par.errorCount != 0) {
+                return null;
+            }
 
-        // do several passes for compiling
-        Program program = (Program) parsedProgram;
-        program.pass1(0);
-        program.pass2(compiledProgram);
+            // do several passes for compiling
+            Program program = (Program) parsedProgram;
+            program.pass1(0);
+            program.pass2(compiledProgram);
 
-        notifyInfo("Compile was sucessfull.");
-        if (memory != null) {
-            if (compiledProgram.loadIntoMemory(memory)) {
+            notifyInfo("Compile was sucessfull.");
+            if (memory != null) {
+                compiledProgram.loadIntoMemory(memory);
                 notifyInfo("Compiled file was loaded into operating memory.");
-            } else {
-                notifyInfo("Compiled file couldn't be loaded into operating memory due to an error.");
             }
         }
         return compiledProgram;
     }
 
     @Override
-    public boolean compile(String fileName, Reader reader) {
+    public boolean compile(String inputFileName, String outputFileName) {
         try {
-            CompiledFileHandler c = compile(reader);
+            CompiledCode code = compileFrom(inputFileName);
 
-            int i = fileName.lastIndexOf(".");
-            if (i >= 0) {
-                fileName = fileName.substring(0, i);
-            }
-            fileName += ".ram"; // the output suffix
-
-            if (c.serialize(fileName)) {
-                notifyInfo("Compilation was saved into the file: " + fileName);
+            if (code.serialize(outputFileName)) {
+                notifyInfo("Compilation was saved to the file: " + outputFileName);
             } else {
                 notifyError("Could not save compiled file.");
             }
         } catch (Exception e) {
-            notifyError("Compile failed.");
+            notifyError("Compilation failed: " + e.getMessage());
             return false;
         }
         return true;
     }
 
+    @Override
+    public boolean compile(String inputFileName) {
+        int i = inputFileName.lastIndexOf(".asm");
+
+        String outputFileName = inputFileName;
+        if (i >= 0) {
+            outputFileName = outputFileName.substring(0, i);
+        }
+        outputFileName += ".ram";
+        return compile(inputFileName, outputFileName);
+    }
+    
     @Override
     public LexicalAnalyzer getLexer(Reader reader) {
         return new LexerImpl(reader);
@@ -169,8 +166,6 @@ public class RAMCompiler extends AbstractCompiler {
     @Override
     public void destroy() {
         settings = null;
-        par = null;
-        lex = null;
     }
 
     @Override

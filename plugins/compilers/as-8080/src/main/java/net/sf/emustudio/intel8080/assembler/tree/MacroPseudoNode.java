@@ -1,9 +1,6 @@
 /*
- * MacroPseudoNode.java
+ * Copyright (C) 2007-2014 Peter Jakubčo
  *
- * Created on Sobota, 2007, september 29, 13:44
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -31,16 +28,16 @@ import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoBlock;
 
 public class MacroPseudoNode extends PseudoBlock {
     private CompileEnv newEnv;
-    private List<String> params; // macro parameters
+    private final List<String> params; // macro parameters
     private List<ExprNode> call_params; // concrete parameters, they can change
-    private Statement stat;
-    private String mnemo;
+    private final Statement stat;
+    private final String mnemo;
 
     public MacroPseudoNode(String name, List<String> params, Statement s, int line, int column) {
         super(line, column);
         this.mnemo = name;
         if (params == null) {
-            this.params = new ArrayList<String>();
+            this.params = new ArrayList<>();
         } else {
             this.params = params;
         }
@@ -74,13 +71,13 @@ public class MacroPseudoNode extends PseudoBlock {
     // call parameters have to be set
     @Override
     public int pass2(CompileEnv env, int addr_start) throws Exception {
-        newEnv = new CompileEnv();
+        newEnv = new CompileEnv(env.getInputFile().getAbsolutePath());
         // add local statement env to newEnv
         stat.getCompileEnv().copyTo(newEnv);
         env.copyTo(newEnv); // add parent statement env to newEnv
         // remove all existing definitions of params name (from level-up environment)
-        for (int i = 0; i < params.size(); i++) {
-            newEnv.removeAllDefinitions(params.get(i));
+        for (String param : params) {
+            newEnv.removeAllDefinitions(param);
         }
         // check of call_params
         if (call_params == null) {

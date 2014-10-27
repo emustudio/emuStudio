@@ -21,7 +21,7 @@
 package net.sf.emustudio.ram.compiler.tree;
 
 import java.util.List;
-import net.sf.emustudio.ram.compiler.impl.CompiledFileHandler;
+import net.sf.emustudio.ram.compiler.impl.CompiledCode;
 import net.sf.emustudio.ram.compiler.impl.CompilerEnvironment;
 
 public class Row {
@@ -61,7 +61,7 @@ public class Row {
         }
     }
 
-    public void pass2(CompiledFileHandler hex) throws Exception {
+    public void pass2(CompiledCode hex) throws Exception {
         if (stat != null) {
             if (stat.pass2()) {
                 hex.addCode(stat);

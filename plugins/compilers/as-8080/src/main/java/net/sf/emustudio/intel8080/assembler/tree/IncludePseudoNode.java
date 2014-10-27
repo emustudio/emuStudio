@@ -32,18 +32,14 @@ import net.sf.emustudio.intel8080.assembler.impl.ParserImpl;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoNode;
 
 public class IncludePseudoNode extends PseudoNode {
-    private final String filename;
-    private final String shortFileName;
+    private final String fileName;
+    private final CompilerImpl asm;
     private Statement program;
     private CompileEnv namespace;
-    private final CompilerImpl asm;
 
     public IncludePseudoNode(String filename, int line, int column, CompilerImpl asm) {
         super(line, column);
-
-        // change "\"'s to /'s
-        this.filename = filename.replace("\\", "/");
-        this.shortFileName = new File(filename).getName();
+        this.fileName = filename.replace("\\", File.separator);        
         this.asm = asm;
     }
 
@@ -51,51 +47,57 @@ public class IncludePseudoNode extends PseudoNode {
     public int getSize() {
         return program.getSize();
     }
+    
+    private File findIncludeFile(String tmpFileName) {
+        File tmpFile = new File(tmpFileName);
+        if (tmpFile.isAbsolute()) {
+            return tmpFile;
+        } else {
+            return new File(namespace.getInputFile().getParent()
+                    + File.separator + tmpFileName);
+        }        
+    }
 
     /**
-     * Method compare filename (in the include statement)
-     * with filename given by the parameter
+     * Method will compare filename (in the include statement)
+     * with filename given by the parameter.
+     * 
+     * @param tmpFileName 
      * @return true if filenames equal, false if not
      */
-    public boolean isEqualName(String filename) {
-        File f1 = new File(this.filename);
-        File f2 = new File(filename);
-        String ff1 = f1.getAbsolutePath();
-        String ff2 = f2.getAbsolutePath();
-
-        if (ff1.equals(ff2)) {
-            return true;
-        } else {
-            return false;
-        }
+    public boolean isEqualName(String tmpFileName) {
+        return findIncludeFile(fileName).equals(findIncludeFile(tmpFileName));
     }
 
     public void pass1(List<String> includefiles, CompileEnv parentEnv) throws Exception {
         try {
-            FileReader f = new FileReader(new File(filename));
+            namespace = new CompileEnv(parentEnv.getInputFile().getAbsolutePath());
+            
+            File file = findIncludeFile(fileName);
+            FileReader f = new FileReader(file);
             LexerImpl lex = new LexerImpl(f);
             ParserImpl par = new ParserImpl(lex, asm);
 
-            par.setReportPrefixString(shortFileName + ": ");
+            par.setReportPrefixString(file.getName() + ": ");
             Object s = par.parse().value;
             par.setReportPrefixString(null);
 
             if (s == null) {
                 throw new Exception("[" + line + "," + column + "] "
-                        + "Error: Unexpected end of file (" + shortFileName + ")");
+                        + "Error: Unexpected end of file (" + file.getName() + ")");
             }
 
             program = (Statement) s;
             program.addIncludeFiles(includefiles);
             namespace = parentEnv;
 
-            if (program.getIncludeLoops(filename)) {
+            if (program.getIncludeLoops(file.getAbsolutePath())) {
                 throw new Exception("[" + line + "," + column + "] "
-                        + "Error: Infinite INCLUDE loop (" + shortFileName + ")");
+                        + "Error: Infinite INCLUDE loop (" + file.getName() + ")");
             }
             program.pass1(namespace); // create symbol table
         } catch (IOException e) {
-            throw new Exception(shortFileName + ": I/O Error");
+            throw new Exception(fileName + ": I/O Error");
         } catch (Exception e) {
             throw new Exception("[" + line + "," + column + "] "
                     + e.getMessage());
@@ -104,7 +106,8 @@ public class IncludePseudoNode extends PseudoNode {
 
     @Override
     public int pass2(CompileEnv parentEnv, int addr_start) throws Exception {
-        return program.pass2(addr_start); // try to evaulate all expressions + compute relative addresses
+        // try to evaulate all expressions + compute relative addresses
+        return program.pass2(addr_start);
     }
 
     @Override
@@ -119,6 +122,6 @@ public class IncludePseudoNode extends PseudoNode {
 
     @Override
     public String getName() {
-        return filename;
+        return fileName;
     }
 }

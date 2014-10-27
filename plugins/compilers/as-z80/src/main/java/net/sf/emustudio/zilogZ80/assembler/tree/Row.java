@@ -23,7 +23,7 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
-import java.util.ArrayList;
+import java.util.List;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.impl.NeedMorePassException;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Statement;
@@ -73,15 +73,14 @@ public class Row {
         }
     }
 
-    public void pass1(ArrayList<String> inclfiles,
-            Namespace parent) throws Exception {
+    public void pass1(List<String> inclfiles, Namespace parent) throws Exception {
         ((PseudoINCLUDE) statement).pass1(inclfiles, parent);
     }
 
     public int pass2(Namespace prev_env, int addr_start) throws Exception {
         this.current_address = addr_start;
         if (label != null) {
-            label.setAddress(new Integer(addr_start));
+            label.setAddress(addr_start);
         }
         // pass2 pre definiciu makra nemozem volat. ide totiz o samotnu expanziu
         // makra. preto pass2 mozem volat az pri samotnom volani makra (pass2 triedy

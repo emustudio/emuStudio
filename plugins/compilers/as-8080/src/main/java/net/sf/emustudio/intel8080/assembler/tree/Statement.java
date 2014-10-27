@@ -1,9 +1,6 @@
 /*
- * Statement.java
+ * Copyright (C) 2007-2014 Peter Jakubčo
  *
- * Created on Piatok, 2007, september 21, 8:08
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -35,16 +32,10 @@ public class Statement {
      * 2. get all macro definitions
      */
     private CompileEnv env;
-    private List<InstructionNode> list; // all instructions
-    private List<String> includefiles; // list of files that
+    private final List<InstructionNode> list = new ArrayList<>();
+    private final List<String> includefiles = new ArrayList<>();
     // were checked for include-loops
     // in short: list of included files
-
-    public Statement() {
-        list = new ArrayList<InstructionNode>();
-        this.env = new CompileEnv();
-        includefiles = new ArrayList<String>();
-    }
 
     public void addElement(InstructionNode node) {
         list.add(node);
@@ -57,8 +48,8 @@ public class Statement {
     public int getSize() {
         InstructionNode in;
         int size = 0;
-        for (int i = 0; i < list.size(); i++) {
-            in = (InstructionNode) list.get(i);
+        for (InstructionNode list1 : list) {
+            in = (InstructionNode) list1;
             size += in.getSize();
         }
         return size;
@@ -103,8 +94,7 @@ public class Statement {
     // pass2 tries to evaulate all expressions and compute relative addresses
     public int pass2(CompileEnv parentEnv, int addr_start) throws Exception {
         int curr_addr;
-        for (int i = 0; i < list.size(); i++) {
-            InstructionNode in = (InstructionNode) list.get(i);
+        for (InstructionNode in : list) {
             try {
                 curr_addr = in.pass2(parentEnv, addr_start);
                 addr_start = curr_addr;
@@ -128,16 +118,11 @@ public class Statement {
                 parentEnv.removePassNeed(i);
             }
         }
-        if (pnCount < parentEnv.getPassNeedCount()) {
-            return true;
-        } else {
-            return false;
-        }
+        return pnCount < parentEnv.getPassNeedCount();
     }
 
     public void pass4(HEXFileManager hex) throws Exception {
-        for (int i = 0; i < list.size(); i++) {
-            InstructionNode in = (InstructionNode) list.get(i);
+        for (InstructionNode in : list) {
             in.pass4(hex);
         }
     }

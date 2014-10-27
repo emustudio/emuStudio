@@ -1,9 +1,6 @@
 /*
- * PseudoMACRO.java
+ * Copyright (C) 2007-2014 Peter Jakubčo
  *
- * Created on Sobota, 2007, september 29, 13:44
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -24,16 +21,16 @@ package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
 import java.util.ArrayList;
+import java.util.List;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Pseudo;
 
 public class PseudoMACRO extends Pseudo {
-
-    private ArrayList<String> params; // macro parameters
-    private ArrayList<Expression> call_params; // concrete parameters, they can change
-    private Program subprogram;
-    private String mnemo;
+    private final List<String> params; // macro parameters
+    private List<Expression> call_params; // concrete parameters, they can change
+    private final Program subprogram;
+    private final String mnemo;
     // for pass4
     private Namespace newEnv;
 
@@ -42,7 +39,7 @@ public class PseudoMACRO extends Pseudo {
         super(line, column);
         this.mnemo = name;
         if (params == null) {
-            this.params = new ArrayList<String>();
+            this.params = new ArrayList<>();
         } else {
             this.params = params;
         }
@@ -75,13 +72,13 @@ public class PseudoMACRO extends Pseudo {
     // call parameters have to be set
     @Override
     public int pass2(Namespace env, int addr_start) throws Exception {
-        newEnv = new Namespace();
+        newEnv = new Namespace(env.getInputFile().getAbsolutePath());
         // add local statement env to newEnv
         subprogram.getNamespace().copyTo(newEnv);
         env.copyTo(newEnv); // add parent statement env to newEnv
         // remove all existing definitions of params name (from level-up environment)
-        for (int i = 0; i < params.size(); i++) {
-            newEnv.removeAllDefinitions(params.get(i));
+        for (String param : params) {
+            newEnv.removeAllDefinitions(param);
         }
         // check of call_params
         if (call_params == null) {

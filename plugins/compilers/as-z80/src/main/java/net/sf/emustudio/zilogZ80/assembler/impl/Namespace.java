@@ -1,9 +1,6 @@
 /*
- * Namespace.java
+ * Copyright (C) 2007-2014 Peter Jakubčo
  *
- * Created on Pondelok, 2007, október 8, 18:08
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,6 +19,7 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.impl;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -41,25 +39,21 @@ import net.sf.emustudio.zilogZ80.assembler.tree.Row;
  * in pass1. This means that if eg. equ wasnt defined before first use error
  * comes.
  *
- * @author Peter Jakubčo
  */
 public class Namespace {
+    private final Map<String, Label> defLabels = new HashMap<>();
+    private final Map<String, PseudoMACRO> defMacros = new HashMap<>();
+    private final Map<String, PseudoEQU> defEqus = new HashMap<>();
+    private final Map<String, PseudoVAR> defVars = new HashMap<>();
+    private final List<Row> passNeed = new ArrayList<>();
+    private final File inputFile;
 
-    private Map<String, Label> defLabels;  // labelnode objects
-    private Map<String, PseudoMACRO> defMacros;  // all macros
-    private Map<String, PseudoEQU> defEqus;    // all equs
-    private Map<String, PseudoVAR> defVars;    // all sets
-    private List<Row> passNeed;   // objects that need more passes
+    public Namespace(String inputFileName) {
+        this.inputFile = new File(inputFileName);
+    }
 
-    /**
-     * Creates a new instance of Namespace
-     */
-    public Namespace() {
-        defLabels = new HashMap<String, Label>();
-        defMacros = new HashMap<String, PseudoMACRO>();
-        defEqus = new HashMap<String, PseudoEQU>();
-        defVars = new HashMap<String, PseudoVAR>();
-        passNeed = new ArrayList<Row>();
+    public File getInputFile() {
+        return inputFile;
     }
 
     // check if id is already defined (as whatever)
@@ -73,10 +67,7 @@ public class Namespace {
         if (defEqus.containsKey(name)) {
             return true;
         }
-        if (defVars.containsKey(name)) {
-            return true;
-        }
-        return false;
+        return defVars.containsKey(name);
     }
 
     public boolean addLabelDef(Label l) {

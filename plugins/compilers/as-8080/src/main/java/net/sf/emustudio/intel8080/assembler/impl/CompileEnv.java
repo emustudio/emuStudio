@@ -1,9 +1,6 @@
 /*
- * CompileEnv.java
+ * Copyright (C) 2007-2014 Peter Jakubčo
  *
- * Created on Pondelok, 2007, október 8, 18:08
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,8 +19,10 @@
  */
 package net.sf.emustudio.intel8080.assembler.impl;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import net.sf.emustudio.intel8080.assembler.tree.EquPseudoNode;
 import net.sf.emustudio.intel8080.assembler.tree.InstructionNode;
 import net.sf.emustudio.intel8080.assembler.tree.LabelNode;
@@ -38,68 +37,48 @@ import net.sf.emustudio.intel8080.assembler.tree.SetPseudoNode;
  * Sets, macros and equs are pseudoinstructions that aren't added into symbol table in pass1. This means if eg. equ
  * wasn't defined before first use, error raises.
  *
- * @author vbmacher
  */
 public class CompileEnv {
+    private final List<LabelNode> defLabels = new ArrayList<>();
+    private final List<MacroPseudoNode> defMacros = new ArrayList<>();
+    private final List<EquPseudoNode> defEqus = new ArrayList<>();
+    private final List<SetPseudoNode> defSets = new ArrayList<>();
+    private final List<InstructionNode> passNeed = new ArrayList<>();
+    private final File inputFile;
 
-    private List<LabelNode> defLabels;        // labelnode objects
-    private List<MacroPseudoNode> defMacros;  // all macros
-    private List<EquPseudoNode> defEqus;      // all equs
-    private List<SetPseudoNode> defSets;      // all sets
-    private List<InstructionNode> passNeed;   // objects that need more passes
-
-    /**
-     * Creates a new instance of CompileEnv
-     */
-    public CompileEnv() {
-        defLabels = new ArrayList<LabelNode>();
-        defMacros = new ArrayList<MacroPseudoNode>();
-        defEqus = new ArrayList<EquPseudoNode>();
-        defSets = new ArrayList<SetPseudoNode>();
-        passNeed = new ArrayList<InstructionNode>();
+    public CompileEnv(String inputFileName) {
+        this.inputFile = new File(inputFileName);
     }
 
+    public File getInputFile() {
+        return inputFile;
+    }
+    
     // check if id is already defined (as whatever)
     private boolean idExists(String name) {
-        for (int i = defLabels.size() - 1; i >= 0; i--) {
-            LabelNode in = (LabelNode) defLabels.get(i);
-            if (in.getName().equals(name)) {
-                return true;
-            }
+        Objects.requireNonNull(name);
+        
+        if (getLabel(name) != null) {
+            return true;
         }
-        for (int i = defMacros.size() - 1; i >= 0; i--) {
-            MacroPseudoNode mn = (MacroPseudoNode) defMacros.get(i);
-            if (mn.getName().equals(name)) {
-                return true;
-            }
+        if (getMacro(name) != null) {
+            return true;
         }
-        for (int i = defEqus.size() - 1; i >= 0; i--) {
-            EquPseudoNode mn = (EquPseudoNode) defEqus.get(i);
-            if (mn.getName().equals(name)) {
-                return true;
-            }
+        if (getEqu(name) != null) {
+            return true;
         }
-        for (int i = defSets.size() - 1; i >= 0; i--) {
-            SetPseudoNode mn = (SetPseudoNode) defSets.get(i);
-            if (mn.getName().equals(name)) {
-                return true;
-            }
-        }
-        return false;
+        return getSet(name) != null;
     }
 
-    //----
-    public boolean addLabelDef(LabelNode l) {
-        if (idExists(l.getName()) == true) {
+    public boolean addLabelDef(LabelNode label) {
+        if (idExists(label.getName())) {
             return false;
         }
-        defLabels.add(l);
-        return true;
+        return defLabels.add(label);
     }
 
     public LabelNode getLabel(String name) {
-        for (int i = 0; i < defLabels.size(); i++) {
-            LabelNode label = (LabelNode) defLabels.get(i);
+        for (LabelNode label : defLabels) {
             if (label.getName().equals(name)) {
                 return label;
             }
@@ -107,27 +86,23 @@ public class CompileEnv {
         return null;
     }
 
-    //-----
     public boolean addMacroDef(MacroPseudoNode m) {
-        if (idExists(m.getName()) == true) {
+        if (idExists(m.getName())) {
             return false;
         }
-        defMacros.add(m);
-        return true;
+        return defMacros.add(m);
     }
 
     // search for macro definition in symbol table
     public MacroPseudoNode getMacro(String name) {
-        for (int i = 0; i < defMacros.size(); i++) {
-            MacroPseudoNode mac = (MacroPseudoNode) defMacros.get(i);
-            if (mac.getName().equals(name)) {
-                return mac;
+        for (MacroPseudoNode macro : defMacros) {
+            if (macro.getName().equals(name)) {
+                return macro;
             }
         }
         return null;
     }
 
-    //---
     public boolean addEquDef(EquPseudoNode e) {
         if (idExists(e.getName()) == true) {
             return false;
@@ -137,8 +112,7 @@ public class CompileEnv {
     }
 
     public EquPseudoNode getEqu(String name) {
-        for (int i = 0; i < defEqus.size(); i++) {
-            EquPseudoNode equ = (EquPseudoNode) defEqus.get(i);
+        for (EquPseudoNode equ : defEqus) {
             if (equ.getName().equals(name)) {
                 return equ;
             }
@@ -146,24 +120,21 @@ public class CompileEnv {
         return null;
     }
 
-    //---
     // prida alebo prepise existujucu definiciu
     // pridava sa samozrejme az v pass2
     public boolean addSetDef(SetPseudoNode s) {
+        if (idExists(s.getName())) {
+            return false;
+        }
         SetPseudoNode exs = getSet(s.getName());
         if (exs != null) {
             defSets.remove(exs);
         }
-        if (idExists(s.getName()) == true) {
-            return false;
-        }
-        defSets.add(s);
-        return true;
+        return defSets.add(s);
     }
 
     public SetPseudoNode getSet(String name) {
-        for (int i = 0; i < defSets.size(); i++) {
-            SetPseudoNode set = (SetPseudoNode) defSets.get(i);
+        for (SetPseudoNode set : defSets) {
             if (set.getName().equals(name)) {
                 return set;
             }
@@ -171,7 +142,6 @@ public class CompileEnv {
         return null;
     }
 
-    //---
     // odstrani vsetky existujuce definicie s danym nazvom
     // vyuziva sa pri bloku macro
     public void removeAllDefinitions(String name) {
@@ -203,21 +173,20 @@ public class CompileEnv {
 
     public boolean copyTo(CompileEnv env) {
         boolean r = true;
-        for (int i = 0; i < defLabels.size(); i++) {
-            r &= env.addLabelDef((LabelNode) defLabels.get(i));
+        for (LabelNode label : defLabels) {
+            r &= env.addLabelDef(label);
         }
-        for (int i = 0; i < defMacros.size(); i++) {
-            r &= env.addMacroDef((MacroPseudoNode) defMacros.get(i));
+        for (MacroPseudoNode macro : defMacros) {
+            r &= env.addMacroDef(macro);
         }
-        for (int i = 0; i < defEqus.size(); i++) {
-            r &= env.addEquDef((EquPseudoNode) defEqus.get(i));
+        for (EquPseudoNode equ : defEqus) {
+            r &= env.addEquDef(equ);
         }
-        for (int i = 0; i < defSets.size(); i++) {
-            r &= env.addSetDef((SetPseudoNode) defSets.get(i));
+        for (SetPseudoNode set : defSets) {
+            r &= env.addSetDef(set);
         }
         return r;
     }
-    //---
 
     public void addPassNeed(InstructionNode n) {
         passNeed.add(n);

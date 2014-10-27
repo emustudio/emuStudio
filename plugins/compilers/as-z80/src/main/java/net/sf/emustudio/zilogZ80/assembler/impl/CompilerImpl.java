@@ -1,7 +1,6 @@
 /*
- * Created on Piatok, 2007, august 10, 8:22
- *
  * Copyright (C) 2007-2014 Peter Jakubčo
+ *
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,29 +27,30 @@ import emulib.plugins.compiler.SourceFileExtension;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.HEXFileManager;
+import emulib.runtime.LoggerFactory;
+import emulib.runtime.interfaces.Logger;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import net.sf.emustudio.zilogZ80.assembler.tree.Program;
 
-/**
- * Implementation class of the Zilog Z80 assembler.
- * @author Peter Jakubčo
- */
 @PluginType(type=PLUGIN_TYPE.COMPILER,
         title="Zilog Z80 Assembler",
         copyright="\u00A9 Copyright 2007-2013, Peter Jakubčo",
         description="Custom version of the assembler. For syntax look at users manual.")
 public class CompilerImpl extends AbstractCompiler {
-    private LexerImpl lex;
-    private ParserImpl par;
+    private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
+
+    private final LexerImpl lexer;
+    private final ParserImpl parser;
     private final SourceFileExtension[] suffixes;
 
     public CompilerImpl(Long pluginID) {
         super(pluginID);
-        lex = new LexerImpl((Reader) null);
-        par = new ParserImpl(lex);
+        lexer = new LexerImpl((Reader) null);
+        parser = new ParserImpl(lexer);
         suffixes = new SourceFileExtension[1];
         suffixes[0] = new SourceFileExtension("asm", "Z80 assembler source");
     }
@@ -67,89 +67,82 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public void destroy() {
-        lex = null;
-        par = null;
     }
 
-     /**
-     * Compile the source code into HEXFileHadler
-     *
-     * @return HEXFileManager object
-     */
-    public HEXFileManager compile(Reader in) throws Exception {
-        if (in == null) {
-            return null;
-        }
+    
+    private HEXFileManager compileToHex(String inputFileName) throws Exception {
+        Objects.requireNonNull(inputFileName);
+
+        notifyInfo(getTitle() + ", version " + getVersion());
 
         Object parsedProgram;
         HEXFileManager hex = new HEXFileManager();
 
-        notifyInfo(CompilerImpl.class.getAnnotation(PluginType.class).title() + ", version " + getVersion());
-        notifyCompileStart();
-        lex.reset(in, 0, 0, 0);
-        parsedProgram = par.parse().value;
+        try (Reader reader = new FileReader(inputFileName)) {
+            lexer.reset(reader, 0, 0, 0);
+            parsedProgram = parser.parse().value;
 
-        if (parsedProgram == null) {
-            notifyError("Unexpected end of file");
-            return null;
-        }
-        if (par.errorCount != 0) {
-            notifyCompileFinish(1);
-            return null;
-        }
+            if (parsedProgram == null) {
+                throw new Exception("Unexpected end of file");
+            }
+            if (parser.errorCount != 0) {
+                throw new Exception("One or more errors has been found, cannot continue.");
+            }
 
-        // do several passes for compiling
-        Program stat = (Program) parsedProgram;
-        Namespace env = new Namespace();
-        stat.pass1(env); // create symbol table
-        stat.pass2(0); // try to evaluate all expressions + compute relative addresses
-        while (stat.pass3(env) == true) {
-            // don't worry about deadlock
+            Program stat = (Program) parsedProgram;
+            Namespace env = new Namespace(inputFileName);
+            stat.pass1(env); // create symbol table
+            stat.pass2(0); // try to evaluate all expressions + compute relative addresses
+            while (stat.pass3(env) == true) {
+                // don't worry about deadlock
+            }
+            if (env.getPassNeedCount() != 0) {
+                throw new Exception("Error: can't evaulate all expressions");
+            }
+            stat.pass4(hex, env);
+            return hex;
         }
-        if (env.getPassNeedCount() != 0) {
-            notifyError("Error: can't evaulate all expressions");
-            notifyCompileFinish(1);
-            return null;
-        }
-        stat.pass4(hex, env);
-        notifyCompileFinish(0);
-        return hex;
     }
-
+    
     @Override
-    public boolean compile(String fileName, Reader in) {
+    public boolean compile(String inputFileName, String outputFileName) {
         try {
-            HEXFileManager hex = compile(in);
-            if (hex == null) {
-                return false;
-            }
-            // Remove ".*" suffix and add ".hex" suffix to the filename
-            int i = fileName.lastIndexOf(".");
-            if (i >= 0) {
-                fileName = fileName.substring(0, i);
-            }
-            fileName += ".hex"; // the output suffix
+            notifyCompileStart();
+            HEXFileManager hex = compileToHex(inputFileName);
 
-            hex.generateFile(fileName);
-            notifyInfo("Compile was sucessfull. Output: " + fileName);
+            hex.generateFile(inputFileName);
+            notifyInfo("Compile was sucessfull. Output: " + outputFileName);
 
             MemoryContext memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
             if (memory != null) {
                 if (hex.loadIntoMemory(memory)) {
                     notifyInfo("Compiled file was loaded into operating memory.");
                 } else {
-                    notifyError("Compiled file couldn't be loaded into operating"
-                            + "memory due to an error.");
+                    notifyError("Compiled file couldn't be loaded into operating memory.");
                 }
             }
             programStart = hex.getProgramStart();
+            notifyCompileFinish(0);
             return true;
         } catch (Exception e) {
-            notifyError(e.getMessage());
+            notifyError("Compilation error: " + e.getMessage());
+            LOGGER.error("Compilation error", e);
             return false;
         }
     }
 
+    @Override
+    public boolean compile(String inputFileName) {
+        int i = inputFileName.lastIndexOf(".asm");
+
+        String outputFileName = inputFileName;
+        if (i >= 0) {
+            outputFileName = outputFileName.substring(0, i);
+        }
+        outputFileName += ".hex";
+        return compile(inputFileName, outputFileName);
+    }
+    
     @Override
     public LexicalAnalyzer getLexer(Reader in) {
         return new LexerImpl(in);
@@ -209,11 +202,10 @@ public class CompilerImpl extends AbstractCompiler {
 
         CompilerImpl compiler = new CompilerImpl(0L);
         try {
-          HEXFileManager hex = compiler.compile(new FileReader(inputFile));
-          hex.generateFile(outputFile);
-          System.out.println("Output saved to: " + outputFile);
+          compiler.compile(inputFile, outputFile);
         } catch (Exception e) {
           System.out.println(e.getMessage());
+          LOGGER.error("Compilation error", e);
         }
     }
 

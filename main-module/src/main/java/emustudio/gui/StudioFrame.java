@@ -53,7 +53,6 @@ import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
-import java.io.StringReader;
 import java.util.concurrent.locks.LockSupport;
 import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
@@ -1328,12 +1327,10 @@ public class StudioFrame extends javax.swing.JFrame {
         String fn = txtSource.getFileName();
 
         try {
-            StringReader sourceReader;
-            sourceReader = new StringReader(txtSource.getText());
             if (memory != null) {
                 memory.reset();
             }
-            compiler.compile(fn, sourceReader);
+            compiler.compile(fn);
             int programStart = compiler.getProgramStartAddress();
             if (memory != null) {
                 memory.setProgramStart(programStart);

@@ -24,7 +24,7 @@ import emulib.runtime.HEXFileManager;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 import net.sf.emustudio.zilogZ80.assembler.impl.CompilerImpl;
 import net.sf.emustudio.zilogZ80.assembler.impl.LexerImpl;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
@@ -32,18 +32,14 @@ import net.sf.emustudio.zilogZ80.assembler.impl.ParserImpl;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Pseudo;
 
 public class PseudoINCLUDE extends Pseudo {
-    private final String filename;
-    private final String shortFileName;
+    private final String fileName;
     private Program program;
     private Namespace namespace;
     private final CompilerImpl asm;
 
     public PseudoINCLUDE(String filename, int line, int column, CompilerImpl asm) {
         super(line, column);
-
-        // change "\"'s to /'s
-        this.filename = filename.replace("\\", "/");
-        this.shortFileName = new File(filename).getName();
+        this.fileName = filename.replace("\\", File.separator);        
         this.asm = asm;
     }
 
@@ -51,54 +47,59 @@ public class PseudoINCLUDE extends Pseudo {
     public int getSize() {
         return program.getSize();
     }
+    
+    private File findIncludeFile(String tmpFileName) {
+        File tmpFile = new File(tmpFileName);
+        if (tmpFile.isAbsolute()) {
+            return tmpFile;
+        } else {
+            return new File(namespace.getInputFile().getParent()
+                    + File.separator + tmpFileName);
+        }        
+    }
+    
 
     /**
      * Method compare filename (in the include statement)
      * with filename given by the parameter
      * @return true if filenames equal, false if not
      */
-    public boolean isEqualName(String filename) {
-        File f1 = new File(this.filename);
-        File f2 = new File(filename);
-        String ff1 = f1.getAbsolutePath();
-        String ff2 = f2.getAbsolutePath();
-
-        if (ff1.equals(ff2)) {
-            return true;
-        } else {
-            return false;
-        }
+    public boolean isEqualName(String tmpFileName) {
+        return findIncludeFile(fileName).equals(findIncludeFile(tmpFileName));
     }
 
     @Override
     public void pass1() throws Exception {
     }
 
-    public void pass1(ArrayList<String> includefiles,
-            Namespace parent) throws Exception {
+    public void pass1(List<String> includefiles, Namespace parent) throws Exception {
         try {
-            FileReader f = new FileReader(new File(filename));
+            namespace = new Namespace(namespace.getInputFile().getAbsolutePath());
+            
+            File file = findIncludeFile(fileName);
+            
+            FileReader f = new FileReader(file);
             LexerImpl lex = new LexerImpl(f);
             ParserImpl par = new ParserImpl(lex, asm);
 
-            par.setReportPrefixString(shortFileName + ": ");
+            par.setReportPrefixString(file.getName() + ": ");
             Object s = par.parse().value;
             par.setReportPrefixString(null);
             if (s == null) {
                 throw new Exception("[" + line + "," + column + "] "
-                        + "Error: Unexpected end of file (" + shortFileName + ")");
+                        + "Error: Unexpected end of file (" + file.getName() + ")");
             }
             program = (Program) s;
             program.addIncludeFiles(includefiles);
             namespace = parent;
 
-            if (program.getIncludeLoops(filename)) {
+            if (program.getIncludeLoops(fileName)) {
                 throw new Exception("[" + line + "," + column + "] "
-                        + "Error: Infinite INCLUDE loop (" + shortFileName + ")");
+                        + "Error: Infinite INCLUDE loop (" + file.getName() + ")");
             }
             program.pass1(namespace); // create symbol table
         } catch (IOException e) {
-            throw new Exception(shortFileName + ": I/O Error");
+            throw new Exception(fileName + ": I/O Error");
         } catch (Exception e) {
             throw new Exception("[" + line + "," + column + "] "
                     + e.getMessage());

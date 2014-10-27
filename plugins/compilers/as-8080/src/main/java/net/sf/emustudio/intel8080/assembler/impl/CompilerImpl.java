@@ -33,22 +33,21 @@ import emulib.runtime.interfaces.Logger;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import net.sf.emustudio.intel8080.assembler.tree.Statement;
 
 /**
- * Main implementation class of the plugin (assembler for 8080 processor).
- *
- * @author Peter Jakubčo
+ * Main implementation class of the plug-in (assembler for 8080 processor).
  */
-@PluginType(type=PLUGIN_TYPE.COMPILER,
-        title="Intel 8080 Assembler",
-        copyright="\u00A9 Copyright 2007-2014, Peter Jakubčo",
-        description="Light modified clone of original Intel's assembler. For syntax look at users manual.")
+@PluginType(type = PLUGIN_TYPE.COMPILER,
+        title = "Intel 8080 Assembler",
+        copyright = "\u00A9 Copyright 2007-2014, Peter Jakubčo",
+        description = "Light modified clone of original Intel's assembler. For syntax look at users manual.")
 public class CompilerImpl extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
-    private LexerImpl lexer;
-    private ParserImpl parser;
+    private final LexerImpl lexer;
+    private final ParserImpl parser;
     private final SourceFileExtension[] suffixes;
 
     public CompilerImpl(Long pluginID) {
@@ -76,68 +75,51 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public void destroy() {
-        lexer = null;
-        parser = null;
     }
 
-    /**
-     * Compile the source code into HEXFileHadler
-     *
-     * @return HEXFileManager object
-     */
-    public HEXFileManager compile(Reader in) throws Exception {
-        if (in == null) {
-            return null;
-        }
+    private HEXFileManager compileToHex(String inputFileName) throws Exception {
+        Objects.requireNonNull(inputFileName);
+
+        notifyInfo(getTitle() + ", version " + getVersion());
 
         Object parsedAST;
         HEXFileManager hex = new HEXFileManager();
 
-        notifyInfo(CompilerImpl.class.getAnnotation(PluginType.class).title() + ", version " + getVersion());
-        lexer.reset(in, 0, 0, 0);
-        parsedAST = parser.parse().value;
+        try (Reader reader = new FileReader(inputFileName)) {
+            lexer.reset(reader, 0, 0, 0);
+            parsedAST = parser.parse().value;
 
-        if (parsedAST == null) {
-            notifyError("Unexpected end of file");
-            return null;
-        }
-        if (parser.errorCount != 0) {
-            return null;
-        }
+            if (parsedAST == null) {
+                throw new Exception("Unexpected end of file");
+            }
+            if (parser.errorCount != 0) {
+                throw new Exception("One or more errors has been found, cannot continue.");
+            }
 
-        // do several passes for compiling
-        Statement stat = (Statement) parsedAST;
-        CompileEnv env = new CompileEnv();
-        stat.pass1(env); // create symbol table
-        stat.pass2(0); // try to evaluate all expressions + compute relative addresses
-        while (stat.pass3(env) == true) {
-            // don't worry about deadlock
+            // do several passes for compiling
+            Statement stat = (Statement) parsedAST;
+            CompileEnv env = new CompileEnv(inputFileName);
+            stat.pass1(env); // create symbol table
+            stat.pass2(0); // try to evaluate all expressions + compute relative addresses
+            while (stat.pass3(env)) {
+                // don't worry about deadlock
+            }
+            if (env.getPassNeedCount() != 0) {
+                throw new Exception("Error: could not evaulate all expressions");
+            }
+            stat.pass4(hex, env);
+            return hex;
         }
-        if (env.getPassNeedCount() != 0) {
-            notifyError("Error: can't evaulate all expressions");
-            return null;
-        }
-        stat.pass4(hex, env);
-        return hex;
     }
 
     @Override
-    public boolean compile(String fileName, Reader in) {
+    public boolean compile(String inputFileName, String outputFileName) {
         try {
-            HEXFileManager hex = compile(in);
-            if (hex == null) {
-                return false;
-            }
+            notifyCompileStart();
+            HEXFileManager hex = compileToHex(inputFileName);
 
-            // Remove ".*" suffix and add ".hex" suffix to the filename
-            int i = fileName.lastIndexOf(".");
-            if (i >= 0) {
-                fileName = fileName.substring(0, i);
-            }
-            fileName += ".hex"; // the output suffix
-
-            hex.generateFile(fileName);
-            notifyInfo("Compile was sucessfull. Output: " + fileName);
+            hex.generateFile(inputFileName);
+            notifyInfo("Compile was sucessfull. Output: " + outputFileName);
 
             MemoryContext memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
             if (memory != null) {
@@ -148,11 +130,26 @@ public class CompilerImpl extends AbstractCompiler {
                 }
             }
             programStart = hex.getProgramStart();
+            notifyCompileFinish(0);
             return true;
         } catch (Exception e) {
-            notifyError(e.getMessage());
+            notifyError("Compilation error: " + e.getMessage());
+            LOGGER.error("Compilation error", e);
+            notifyCompileFinish(1);            
             return false;
         }
+    }
+
+    @Override
+    public boolean compile(String inputFileName) {
+        int i = inputFileName.lastIndexOf(".asm");
+
+        String outputFileName = inputFileName;
+        if (i >= 0) {
+            outputFileName = outputFileName.substring(0, i);
+        }
+        outputFileName += ".hex";
+        return compile(inputFileName, outputFileName);
     }
 
     @Override
@@ -186,7 +183,7 @@ public class CompilerImpl extends AbstractCompiler {
         int i;
         for (i = 0; i < args.length; i++) {
             String arg = args[i].toLowerCase();
-            if ((arg.equals("--output") || arg.equals("-o")) && ((i+1) < args.length)) {
+            if ((arg.equals("--output") || arg.equals("-o")) && ((i + 1) < args.length)) {
                 outputFile = args[++i];
             } else if (arg.equals("--help") || arg.equals("-h")) {
                 printHelp();
@@ -195,7 +192,7 @@ public class CompilerImpl extends AbstractCompiler {
                 System.out.println(new CompilerImpl(0L).getVersion());
                 return;
             } else {
-              break;
+                break;
             }
         }
         if (i >= args.length) {
@@ -204,17 +201,15 @@ public class CompilerImpl extends AbstractCompiler {
         }
         inputFile = args[i];
         if (outputFile == null) {
-          outputFile = inputFile.substring(0, inputFile.lastIndexOf('.')) + ".hex";
+            outputFile = inputFile.substring(0, inputFile.lastIndexOf('.')) + ".hex";
         }
 
         CompilerImpl compiler = new CompilerImpl(0L);
         try {
-          HEXFileManager hex = compiler.compile(new FileReader(inputFile));
-          System.out.println("Saving output to: " + outputFile);
-          hex.generateFile(outputFile);
+            compiler.compile(inputFile, outputFile);
         } catch (Exception e) {
-          LOGGER.error("Unexpected error", e);
-          System.out.println(e.getMessage());
+            System.out.println(e.getMessage());
+            LOGGER.error("Compilation error", e);
         }
     }
 }

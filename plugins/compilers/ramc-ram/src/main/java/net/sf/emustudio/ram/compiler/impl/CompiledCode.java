@@ -33,12 +33,8 @@ import net.sf.emustudio.ram.compiler.tree.Label;
 import net.sf.emustudio.ram.memory.RAMInstruction;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;
 
-public class CompiledFileHandler {
-    private List<RAMInstruction> program;
-
-    public CompiledFileHandler() {
-        program = new ArrayList<RAMInstruction>();
-    }
+public class CompiledCode {
+    private final List<RAMInstruction> program = new ArrayList<>();
 
     public void addCode(RAMInstruction code) {
         program.add(code);
@@ -51,7 +47,7 @@ public class CompiledFileHandler {
      *
      * @param mem context of operating memory
      */
-    public boolean loadIntoMemory(RAMMemoryContext mem) {
+    public void loadIntoMemory(RAMMemoryContext mem) {
         RAMMemoryContext rmem = mem;
         // load labels
         for (Label label : CompilerEnvironment.getLabels()) {
@@ -65,25 +61,21 @@ public class CompiledFileHandler {
         for (int i = 0; i < program.size(); i++) {
             rmem.write(i, program.get(i));
         }
-
-        return true;
     }
 
     public boolean serialize(String filename) {
         try {
             OutputStream file = new FileOutputStream(filename);
             OutputStream buffer = new BufferedOutputStream(file);
-            ObjectOutput output = new ObjectOutputStream(buffer);
-
-            Map<Integer, String> labels = new HashMap<Integer, String>();
-            for (Label label : CompilerEnvironment.getLabels()) {
-                labels.put(label.getAddress(), label.getValue());
+            try (ObjectOutput output = new ObjectOutputStream(buffer)) {
+                Map<Integer, String> labels = new HashMap<>();
+                for (Label label : CompilerEnvironment.getLabels()) {
+                    labels.put(label.getAddress(), label.getValue());
+                }
+                output.writeObject(labels);
+                output.writeObject(CompilerEnvironment.getInputs());
+                output.writeObject(program);
             }
-            output.writeObject(labels);
-            output.writeObject(CompilerEnvironment.getInputs());
-            output.writeObject(program);
-
-            output.close();
             CompilerEnvironment.clear();
         } catch (Exception e) {
             return false;
