@@ -62,58 +62,44 @@ parser code {:
 :}
 
 terminal HALT,INC,DEC,INCV,DECV,PRINT,LOAD,LOOP,ENDL;
-terminal EOL;
-terminal String NUMBER;
 terminal TCOMMENT;
 
 non terminal Program Program;
-non terminal Instruction Instruction, Row;
+non terminal Instruction Instruction, Statement;
 non terminal Comment;
-non terminal Integer Number;
 
 start with Program;
 
-Program ::= Row:row
+Program ::= Statement:statement
             {:
                 Program program = new Program();
-                if (row != null) {
-                    program.add(row);
+                if (statement != null) {
+                    program.add(statement);
                 }
                 RESULT = program;
             :} |
-            Program:program EOL Row:row
+            Program:program Statement:statement
             {:
-                if (row != null) {
-                    program.add(row);
+                if (statement != null) {
+                    program.add(statement);
                 }
                 RESULT = program;
             :};
 
-Row ::= Instruction:instruction Comment
-        {: RESULT = instruction; :} |
-        Comment
-        {: RESULT = null; :};
+Statement ::= Instruction:instruction Comment
+        {: RESULT = instruction; :};
          
 Comment ::= TCOMMENT | ;
 
 Instruction ::=
-            INC Number:num   {: RESULT = new InstructionWithOperand(InstructionWithOperand.INC, num);   :} |
-            DEC Number:num   {: RESULT = new InstructionWithOperand(InstructionWithOperand.DEC, num);   :} |
-            INCV Number:num  {: RESULT = new InstructionWithOperand(InstructionWithOperand.INCV, num);  :} |
-            DECV Number:num  {: RESULT = new InstructionWithOperand(InstructionWithOperand.DECV, num);  :} |
-            PRINT Number:num {: RESULT = new InstructionWithOperand(InstructionWithOperand.PRINT, num); :} |
-            LOAD Number:num  {: RESULT = new InstructionWithOperand(InstructionWithOperand.LOAD, num);  :} |
-
-            INC   {: RESULT = new InstructionNoOperands(InstructionNoOperands.INC);   :} |
-            DEC   {: RESULT = new InstructionNoOperands(InstructionNoOperands.DEC);   :} |
-            INCV  {: RESULT = new InstructionNoOperands(InstructionNoOperands.INCV);  :} |
-            DECV  {: RESULT = new InstructionNoOperands(InstructionNoOperands.DECV);  :} |
-            PRINT {: RESULT = new InstructionNoOperands(InstructionNoOperands.PRINT); :} |
-            LOAD  {: RESULT = new InstructionNoOperands(InstructionNoOperands.LOAD);  :} |
-            LOOP  {: RESULT = new InstructionNoOperands(InstructionNoOperands.LOOP);  :} |
-            ENDL  {: RESULT = new InstructionNoOperands(InstructionNoOperands.ENDL);  :} |
-            HALT  {: RESULT = new InstructionNoOperands(InstructionNoOperands.HALT);  :}
+            INC   {: RESULT = new Instruction(Instruction.INC);   :} |
+            DEC   {: RESULT = new Instruction(Instruction.DEC);   :} |
+            INCV  {: RESULT = new Instruction(Instruction.INCV);  :} |
+            DECV  {: RESULT = new Instruction(Instruction.DECV);  :} |
+            PRINT {: RESULT = new Instruction(Instruction.PRINT); :} |
+            LOAD  {: RESULT = new Instruction(Instruction.LOAD);  :} |
+            LOOP  {: RESULT = new Instruction(Instruction.LOOP);  :} |
+            ENDL  {: RESULT = new Instruction(Instruction.ENDL);  :} |
+            HALT  {: RESULT = new Instruction(Instruction.HALT);  :}
             ;
-
-Number ::= NUMBER:num {: RESULT = Integer.parseInt((String)num)&0xFF; :};
 

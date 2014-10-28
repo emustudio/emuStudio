@@ -1,7 +1,5 @@
 /*
- * Instruction.java
- * 
- * Copyright (C) 2009-2012 Peter Jakubčo
+ * Copyright (C) 2009-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,8 +20,27 @@ package net.sf.emustudio.brainduck.brainc.tree;
 
 import emulib.runtime.HEXFileManager;
 
-public interface Instruction {
-    public int firstPass(int addressStart) throws Exception;
-    
-    public void secondPass(HEXFileManager hex) throws Exception;
+public class Instruction {
+    public final static int HALT = 0;
+    public final static int INC = 1;
+    public final static int DEC = 2;
+    public final static int INCV = 3;
+    public final static int DECV = 4;
+    public final static int PRINT = 5;
+    public final static int LOAD = 6;
+    public final static int LOOP = 7;
+    public final static int ENDL = 8;
+    private final int instructionCode;
+
+    public Instruction(int instr) {
+        this.instructionCode = instr;
+    }
+
+    public int firstPass(int addressStart) throws Exception {
+        return addressStart + 1;
+    }
+
+    public void secondPass(HEXFileManager hex) {
+        hex.putCode(String.format("%1$02X", instructionCode));
+    }
 }

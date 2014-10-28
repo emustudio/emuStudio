@@ -69,29 +69,21 @@ import java.io.IOException;
   return token(Tokens.EOF, Token.TEOF,null,false);
 %eofval}
 
-
-Comment    = ";"[^\r\n]*
-Eol        = \n|\r|\r\n
-WhiteSpace = [\ \t\f]
-Number     = [0-9]+
+Comment    = [^<>\+-\.,\[\];]+
 
 %%
 
-"halt"  { return token(Tokens.HALT, Token.RESERVED,null,true); }
-"inc"   { return token(Tokens.INC,  Token.RESERVED,null,true); }
-"dec"   { return token(Tokens.DEC,  Token.RESERVED,null,true); }
-"incv"  { return token(Tokens.INCV, Token.RESERVED,null,true); }
-"decv"  { return token(Tokens.DECV, Token.RESERVED,null,true); }
-"print" { return token(Tokens.PRINT,Token.RESERVED,null,true); }
-"load"  { return token(Tokens.LOAD, Token.RESERVED,null,true); }
-"loop"  { return token(Tokens.LOOP, Token.RESERVED,null,true); }
-"endl"  { return token(Tokens.ENDL, Token.RESERVED,null,true); }
+";"  { return token(Tokens.HALT, Token.RESERVED,null,true); }
+">"   { return token(Tokens.INC,  Token.RESERVED,null,true); }
+"<"   { return token(Tokens.DEC,  Token.RESERVED,null,true); }
+"+"  { return token(Tokens.INCV, Token.RESERVED,null,true); }
+"-"  { return token(Tokens.DECV, Token.RESERVED,null,true); }
+"." { return token(Tokens.PRINT,Token.RESERVED,null,true); }
+","  { return token(Tokens.LOAD, Token.RESERVED,null,true); }
+"["  { return token(Tokens.LOOP, Token.RESERVED,null,true); }
+"]"  { return token(Tokens.ENDL, Token.RESERVED,null,true); }
 
-{WhiteSpace}   { }
-{Eol}          { return token(Tokens.EOL, Token.SEPARATOR,null,true); }
 {Comment}      { return token(Tokens.TCOMMENT, Token.COMMENT,null,true); }
-{Number}       { return token(Tokens.NUMBER, Token.LITERAL,yytext(),true); }
 
-//[^\n\r\ \t\f]+ { return token(Tokens.error, Tokens.ERROR); }
 .              { return token(Tokens.error, Tokens.ERROR,null,false); }
 
