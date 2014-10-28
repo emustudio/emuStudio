@@ -238,63 +238,20 @@ public class EmulatorImpl extends AbstractCPU {
             case 1: /* INC */
                 P++;
                 return;
-            case 9: /* INC operand */
-                param = memory.read(IP++);
-                while (param > 0) {
-                    P++;
-                    param--;
-                }
-                return;
             case 2: /* DEC */
                 P--;
-                return;
-            case 10: /* DEC operand */
-                param = memory.read(IP++);
-                while (param > 0) {
-                    P--;
-                    param--;
-                }
                 return;
             case 3: /* INCV */
                 memory.write(P, (short) (memory.read(P) + 1));
                 return;
-            case 11: /* INCV operand */
-                param = memory.read(IP++);
-                while (param > 0) {
-                    memory.write(P, (short) (memory.read(P) + 1));
-                    param--;
-                }
-                return;
             case 4: /* DECV */
                 memory.write(P, (short) (memory.read(P) - 1));
-                return;
-            case 12: /* DECV operand */
-                param = memory.read(IP++);
-                while (param > 0) {
-                    memory.write(P, (short) (memory.read(P) - 1));
-                    param--;
-                }
                 return;
             case 5: /* PRINT */
                 context.writeToDevice(memory.read(P));
                 return;
-            case 13: /* PRINT operand */
-                param = memory.read(IP++);
-                while (param > 0) {
-                    context.writeToDevice(memory.read(P));
-                    param--;
-                }
-                return;
             case 6: /* LOAD */
                 memory.write(P, context.readFromDevice());
-                return;
-            case 14: /* LOAD operand */
-                param = memory.read(IP++);
-                while (param > 0) {
-                    memory.write(P, context.readFromDevice());
-                    P++;
-                    param--;
-                }
                 return;
             case 7: { /* LOOP */
                 loopPointers.add(IP - 1);
@@ -307,12 +264,6 @@ public class EmulatorImpl extends AbstractCPU {
                 // on the same nesting level (according to loop_count value)
                 // IP is pointing at following instruction
                 while ((OP = memory.read(IP++)) != 0) {
-                    // if the instruction is in the range <0,6> then it has a parameter
-                    if ((OP >= 9) && (OP <= 14)) {
-                        if ((OP = memory.read(IP++)) == 0) {
-                            break;
-                        }
-                    }
                     if (OP == 7) {
                         loop_count++;
                     }

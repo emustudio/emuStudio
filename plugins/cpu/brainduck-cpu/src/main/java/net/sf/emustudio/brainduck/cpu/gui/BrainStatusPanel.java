@@ -75,7 +75,7 @@ public class BrainStatusPanel extends JPanel {
         txtP = new JTextField("0000");
         txtIP = new JTextField("0000");
         lblStatus = new JLabel("breakpoint");
-        JLabel lblMemP = new JLabel("mem(P):");
+        JLabel lblMemP = new JLabel("*P");
         txtMemP = new JTextField("00");
 
         lblStatus.setFont(lblStatus.getFont().deriveFont(Font.BOLD));

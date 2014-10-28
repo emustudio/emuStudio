@@ -1,7 +1,5 @@
 /*
- * BrainTerminalDialog.java
- * 
- * Copyright (C) 2009-2012 Peter Jakubčo
+ * Copyright (C) 2009-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -32,7 +30,6 @@ import javax.swing.WindowConstants;
 
 @SuppressWarnings("serial")
 public class BrainTerminalDialog extends JDialog {
-
     private final static String VERBOSE_FILE_NAME = "BrainTerminal.out";
     private String inputBuffer;
     // verbose mode = output to a file

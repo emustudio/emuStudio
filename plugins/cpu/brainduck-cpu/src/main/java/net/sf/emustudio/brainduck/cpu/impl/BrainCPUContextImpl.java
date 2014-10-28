@@ -35,8 +35,7 @@ public class BrainCPUContextImpl implements BrainCPUContext {
      * Attach a device into the CPU. Procesor BainCPU can have attached only
      * single device, and it's the terminal.
      *
-     * @param listener
-     * @param port
+     * @param device
      * @return
      */
     @Override
@@ -77,7 +76,7 @@ public class BrainCPUContextImpl implements BrainCPUContext {
         if (device == null) {
             return 0;
         }
-        return (Short) device.read();
+        return device.read();
     }
 
     @Override
