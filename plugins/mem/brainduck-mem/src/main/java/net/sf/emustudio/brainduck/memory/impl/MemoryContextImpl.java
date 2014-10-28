@@ -78,7 +78,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> {
 
     @Override
     public void write(int to, Short val) {
-        memory[to] = (short) ((Short) val & 0xFF);
+        memory[to] = (short) (val & 0xFF);
         notifyMemoryChanged(to);
     }
 

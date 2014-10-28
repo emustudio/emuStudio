@@ -130,10 +130,10 @@ public class EmulatorImpl extends AbstractCPU {
         super.reset(adr);
         IP = adr; // initialize program counter
         loopPointers.clear();
-
+        
         // find closest "free" address which does not contain a program
         try {
-            while ((Short) memory.read(adr++) != 0) {
+            while (memory.read(adr++) != 0) {
             }
         } catch (IndexOutOfBoundsException e) {
             // we get here if "adr" would point to nonexistant memory location,
@@ -228,7 +228,7 @@ public class EmulatorImpl extends AbstractCPU {
         short OP, param;
 
         // FETCH
-        OP = ((Short) memory.read(IP++)).shortValue();
+        OP = memory.read(IP++);
 
         // DECODE
         switch (OP) {
@@ -239,7 +239,7 @@ public class EmulatorImpl extends AbstractCPU {
                 P++;
                 return;
             case 9: /* INC operand */
-                param = ((Short) memory.read(IP++)).shortValue();
+                param = memory.read(IP++);
                 while (param > 0) {
                     P++;
                     param--;
@@ -249,7 +249,7 @@ public class EmulatorImpl extends AbstractCPU {
                 P--;
                 return;
             case 10: /* DEC operand */
-                param = ((Short) memory.read(IP++)).shortValue();
+                param = memory.read(IP++);
                 while (param > 0) {
                     P--;
                     param--;
@@ -259,7 +259,7 @@ public class EmulatorImpl extends AbstractCPU {
                 memory.write(P, (short) (memory.read(P) + 1));
                 return;
             case 11: /* INCV operand */
-                param = ((Short) memory.read(IP++)).shortValue();
+                param = memory.read(IP++);
                 while (param > 0) {
                     memory.write(P, (short) (memory.read(P) + 1));
                     param--;
@@ -269,19 +269,19 @@ public class EmulatorImpl extends AbstractCPU {
                 memory.write(P, (short) (memory.read(P) - 1));
                 return;
             case 12: /* DECV operand */
-                param = ((Short) memory.read(IP++)).shortValue();
+                param = memory.read(IP++);
                 while (param > 0) {
                     memory.write(P, (short) (memory.read(P) - 1));
                     param--;
                 }
                 return;
             case 5: /* PRINT */
-                context.writeToDevice((Short) memory.read(P));
+                context.writeToDevice(memory.read(P));
                 return;
             case 13: /* PRINT operand */
-                param = ((Short) memory.read(IP++)).shortValue();
+                param = memory.read(IP++);
                 while (param > 0) {
-                    context.writeToDevice((Short) memory.read(P));
+                    context.writeToDevice(memory.read(P));
                     param--;
                 }
                 return;
@@ -289,7 +289,7 @@ public class EmulatorImpl extends AbstractCPU {
                 memory.write(P, context.readFromDevice());
                 return;
             case 14: /* LOAD operand */
-                param = ((Short) memory.read(IP++)).shortValue();
+                param = memory.read(IP++);
                 while (param > 0) {
                     memory.write(P, context.readFromDevice());
                     P++;
@@ -298,7 +298,7 @@ public class EmulatorImpl extends AbstractCPU {
                 return;
             case 7: { /* LOOP */
                 loopPointers.add(IP - 1);
-                if ((Short) memory.read(P) != 0) {
+                if (memory.read(P) != 0) {
                     return;
                 }
                 int loop_count = 0; // loop nesting level counter
@@ -306,10 +306,10 @@ public class EmulatorImpl extends AbstractCPU {
                 // we start to look for "endl" instruction
                 // on the same nesting level (according to loop_count value)
                 // IP is pointing at following instruction
-                while ((OP = (Short) memory.read(IP++)) != 0) {
+                while ((OP = memory.read(IP++)) != 0) {
                     // if the instruction is in the range <0,6> then it has a parameter
                     if ((OP >= 9) && (OP <= 14)) {
-                        if ((OP = (Short) memory.read(IP++)) == 0) {
+                        if ((OP = memory.read(IP++)) == 0) {
                             break;
                         }
                     }
@@ -330,7 +330,7 @@ public class EmulatorImpl extends AbstractCPU {
                 if (loopPointers.isEmpty()) {
                     break;
                 }
-                if ((Short) memory.read(P) == 0) {
+                if (memory.read(P) == 0) {
                     loopPointers.poll(); // clear unused pointer
                     return;
                 }
