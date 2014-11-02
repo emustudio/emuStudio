@@ -39,12 +39,12 @@ import net.sf.emustudio.brainduck.brainc.tree.Program;
 @PluginType(type = PLUGIN_TYPE.COMPILER,
         title = "BrainDuck Compiler",
         copyright = "\u00A9 Copyright 2009-2014, Peter Jakubčo",
-        description = "Compiler for esoteric architecture called BrainDuck.")
+        description = "Compiler for esoteric architecture based on brainfuck.")
 public class CompilerImpl extends AbstractCompiler {
-
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
-    private LexerImpl lex;
-    private ParserImpl par;
+
+    private final LexerImpl lex;
+    private final ParserImpl par;
     private final SourceFileExtension[] suffixes;
 
     public CompilerImpl(Long pluginID) {
@@ -53,7 +53,7 @@ public class CompilerImpl extends AbstractCompiler {
         lex = new LexerImpl((Reader) null);
         par = new ParserImpl(lex, this);
         suffixes = new SourceFileExtension[1];
-        suffixes[0] = new SourceFileExtension("asm", "Brainduck assembler source");
+        suffixes[0] = new SourceFileExtension("b", "Brainduck assembler source");
     }
 
     @Override
@@ -68,16 +68,8 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public void destroy() {
-        this.par = null;
-        this.lex = null;
     }
 
-    /**
-     * Compile the source code into HEXFileHadler
-     *
-     * @param in Reader object of the source code
-     * @return HEXFileManager object
-     */
     private HEXFileManager compileToHex(String inputFileName) throws Exception {
         Objects.requireNonNull(inputFileName);
 
@@ -113,7 +105,7 @@ public class CompilerImpl extends AbstractCompiler {
             HEXFileManager hex = compileToHex(inputFileName);
 
             hex.generateFile(outputFileName);
-            notifyInfo("Compile was sucessfull. Output: " + outputFileName);
+            notifyInfo("Compile was successful. Output: " + outputFileName);
             programStart = hex.getProgramStart();
 
             // try to access the memory
@@ -138,11 +130,14 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public boolean compile(String inputFileName) {
-        int i = inputFileName.lastIndexOf(".asm");
-
         String outputFileName = inputFileName;
-        if (i >= 0) {
-            outputFileName = outputFileName.substring(0, i);
+        for (SourceFileExtension extension : suffixes) {
+            int i = inputFileName.lastIndexOf("." + extension.getExtension());
+
+            if (i >= 0) {
+                outputFileName = outputFileName.substring(0, i);
+                break;
+            }
         }
         outputFileName += ".hex";
         return compile(inputFileName, outputFileName);

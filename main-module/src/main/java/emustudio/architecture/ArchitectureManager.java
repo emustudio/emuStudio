@@ -78,10 +78,10 @@ public class ArchitectureManager implements SettingsManager {
     private void initialize() throws PluginInitializationException {
         if (Main.commandLine.autoWanted()) {
            // Set "auto" setting to "true" to all plugins
-           writeSetting("auto", "true");
+           writeSetting(SettingsManager.AUTO, "true");
         }
         if (Main.commandLine.noGUIWanted()) {
-           writeSetting("nogui", "true");
+           writeSetting(SettingsManager.NO_GUI, "true");
            try {
                StaticDialogs.setGUISupported(false, Main.password);
            } catch (InvalidPasswordException e) {

@@ -1,6 +1,4 @@
 /*
- * Created on 28.7.2008, 19:12:19
- *
  * Copyright (C) 2008-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
@@ -139,7 +137,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
     }
 
     private boolean isGUIAllowed() {
-        return !(terminalSettings.isNoGUI() || terminalSettings.isNoGUIMode());
+        return !terminalSettings.isNoGUI();
     }
 
     private void destroyKeyboard() {

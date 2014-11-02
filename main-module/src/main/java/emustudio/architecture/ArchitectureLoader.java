@@ -18,6 +18,7 @@
  */
 package emustudio.architecture;
 
+import emulib.emustudio.SettingsManager;
 import emulib.plugins.Plugin;
 import emulib.plugins.PluginInitializationException;
 import emulib.plugins.compiler.Compiler;
@@ -385,22 +386,16 @@ public class ArchitectureLoader implements ConfigurationManager {
             configFile.createNewFile();
             try (FileOutputStream out = new FileOutputStream(configFile)) {
                 settings.put("emu8Version", "4");
-                String noGUI = null;
-                if (settings.containsKey("nogui")) {
-                    noGUI = (String)settings.remove("nogui");
-                }
-                String auto = null;
-                if (settings.containsKey("auto")) {
-                    auto = (String)settings.remove("auto");
-                }
+                String noGUI = (String)settings.remove(SettingsManager.NO_GUI);
+                String auto = (String)settings.remove(SettingsManager.AUTO);
 
                 settings.store(out, configName + " configuration file");
 
                 if (noGUI != null) {
-                    settings.put("nogui", noGUI);
+                    settings.put(SettingsManager.NO_GUI, noGUI);
                 }
                 if (auto != null) {
-                    settings.put("auto", auto);
+                    settings.put(SettingsManager.AUTO, auto);
                 }
             }
         } catch (IOException e) {

@@ -1,4 +1,5 @@
 /*
+ * (c) Copyright 2006-2014, Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -36,6 +37,7 @@ import emulib.runtime.RadixUtils;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.interfaces.Logger;
 import emustudio.architecture.Computer;
+import emustudio.emulation.EmulationController;
 import emustudio.gui.debugTable.DebugTableImpl;
 import emustudio.gui.editor.EmuTextPane;
 import emustudio.gui.editor.EmuTextPane.UndoActionListener;
@@ -53,6 +55,7 @@ import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
@@ -80,18 +83,19 @@ import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 
 public class StudioFrame extends javax.swing.JFrame {
-    private final static Logger logger = LoggerFactory.getLogger(StudioFrame.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(StudioFrame.class);
+
     private EmuTextPane txtSource;
-    private Computer arch; // current architecture
     private UndoActionListener undoStateListener;
-    private Clipboard systemClipboard;
-    private RunState run_state = RunState.STATE_STOPPED_BREAK;
-    private DebugTableImpl tblDebug;
-    private Compiler compiler;
-    private Memory memory;
-    private CPU cpu;
-    private int pageSeekLastValue = 10;
+    private final Clipboard systemClipboard;
     private final FindText finder = new FindText();
+
+    private final EmulationController emulationController;
+    private final Computer computer;
+    private volatile RunState run_state = RunState.STATE_STOPPED_BREAK;
+
+    private DebugTableImpl tblDebug;
+    private int pageSeekLastValue = 10;
 
     public StudioFrame(String fileName, String title) {
         this(title);
@@ -99,18 +103,15 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     public StudioFrame(String title) {
-        arch = Main.architecture.getComputer();
+        computer = Main.architecture.getComputer();
+        emulationController = new EmulationController(computer);
 
-        compiler = arch.getCompiler();
-        memory = arch.getMemory();
-        cpu = arch.getCPU();
-
-        txtSource = new EmuTextPane(compiler);
+        txtSource = new EmuTextPane(computer.getCompiler());
         tblDebug = new DebugTableImpl();
+        systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
         initComponents();
 
-        btnBreakpoint.setEnabled(arch.getCPU().isBreakpointSupported());
         jScrollPane1.setViewportView(txtSource);
         paneDebug.setViewportView(tblDebug);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -135,28 +136,28 @@ public class StudioFrame extends javax.swing.JFrame {
 
         });
 
-        if (compiler == null) {
-            btnCompile.setEnabled(false);
-            mnuProjectCompile.setEnabled(false);
-        }
-
         this.setStatusGUI();
         pack();
         tblDebug.fireResized(paneDebug.getHeight());
 
+        try {
+            API.getInstance().setDebugTable(tblDebug, Main.password);
+        } catch (InvalidPasswordException e) {
+            LOGGER.error("Could not register debug table", e);
+        }
+
         setupListeners();
 
-        btnBreakpoint.setEnabled(cpu.isBreakpointSupported());
         lstDevices.setModel(new AbstractListModel() {
 
             @Override
             public int getSize() {
-                return arch.getDevices().length;
+                return computer.getDevices().length;
             }
 
             @Override
             public Object getElementAt(int index) {
-                return arch.getDevices()[index].getTitle();
+                return computer.getDevices()[index].getTitle();
             }
         });
         this.setLocationRelativeTo(null);
@@ -165,7 +166,7 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void setStatusGUI() {
-        JPanel statusPanel = cpu.getStatusPanel();
+        JPanel statusPanel = computer.getCPU().getStatusPanel();
         if (statusPanel == null) {
             return;
         }
@@ -178,101 +179,16 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void setupListeners() {
-        if (compiler != null) {
-            compiler.addCompilerListener(new CompilerListener() {
+        setupClipboard();
+        setupUndoRedo();
 
-                @Override
-                public void onStart() {
-                }
+        setupCompiler();
+        setupMemory();
+        setupCPU();
+    }
 
-                @Override
-                public void onMessage(Message message) {
-                    txtOutput.append(message.getFormattedMessage() + "\n");
-                }
-
-                @Override
-                public void onFinish(int errorCode) {
-                }
-            });
-            if ((compiler != null) && !compiler.isShowSettingsSupported()) {
-                mnuProjectCompilerSettings.setEnabled(false);
-            }
-        } else {
-            mnuProjectCompilerSettings.setEnabled(false);
-        }
-        systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        if (systemClipboard.getContents(null) != null) {
-            btnPaste.setEnabled(true);
-            mnuEditPaste.setEnabled(true);
-        }
-        systemClipboard.addFlavorListener(new FlavorListener() {
-
-            @Override
-            public void flavorsChanged(FlavorEvent e) {
-                if (systemClipboard.getContents(null) == null) {
-                    btnPaste.setEnabled(false);
-                    mnuEditPaste.setEnabled(false);
-                } else {
-                    btnPaste.setEnabled(true);
-                    mnuEditPaste.setEnabled(true);
-                }
-            }
-        });
-        txtSource.addCaretListener(new CaretListener() {
-
-            @Override
-            public void caretUpdate(CaretEvent e) {
-                if (e.getDot() == e.getMark()) {
-                    btnCut.setEnabled(false);
-                    mnuEditCut.setEnabled(false);
-                    btnCopy.setEnabled(false);
-                    mnuEditCopy.setEnabled(false);
-                } else {
-                    btnCut.setEnabled(true);
-                    mnuEditCut.setEnabled(true);
-                    btnCopy.setEnabled(true);
-                    mnuEditCopy.setEnabled(true);
-                }
-            }
-        });
-        undoStateListener = new UndoActionListener() {
-
-            @Override
-            public void undoStateChanged(boolean canUndo, String presentationName) {
-                mnuEditUndo.setEnabled(canUndo);
-                btnUndo.setEnabled(canUndo);
-                btnUndo.setToolTipText(presentationName);
-            }
-
-            @Override
-            public void redoStateChanged(boolean canRedo, String presentationName) {
-                mnuEditRedo.setEnabled(canRedo);
-                btnRedo.setEnabled(canRedo);
-                btnRedo.setToolTipText(presentationName);
-            }
-        };
-        txtSource.setUndoActionListener(undoStateListener);
-        if (memory != null) {
-            try {
-                MemoryContext memContext = ContextPool.getInstance().getMemoryContext(
-                        Main.password.hashCode(), MemoryContext.class);
-                memContext.addMemoryListener(new MemoryListener() {
-
-                    @Override
-                    public void memoryChanged(int adr) {
-                        if (run_state != RunState.STATE_RUNNING) {
-                            tblDebug.refresh();
-                        }
-                    }
-                });
-            } catch (InvalidContextException | ContextNotFoundException e) {
-                logger.error("Could not register memory change listener", e);
-            }
-            btnMemory.setEnabled(memory.isShowSettingsSupported());
-
-        } else {
-            btnMemory.setEnabled(false);
-        }
+    private void setupCPU() {
+        CPU cpu = computer.getCPU();
         cpu.addCPUListener(new CPU.CPUListener() {
 
             @Override
@@ -317,10 +233,115 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
         btnBreakpoint.setEnabled(cpu.isBreakpointSupported());
-        try {
-            API.getInstance().setDebugTable(tblDebug, Main.password);
-        } catch (InvalidPasswordException e) {
-            logger.error("Could not register debug table", e);
+    }
+
+    private void setupUndoRedo() {
+        undoStateListener = new UndoActionListener() {
+
+            @Override
+            public void undoStateChanged(boolean canUndo, String presentationName) {
+                mnuEditUndo.setEnabled(canUndo);
+                btnUndo.setEnabled(canUndo);
+                btnUndo.setToolTipText(presentationName);
+            }
+
+            @Override
+            public void redoStateChanged(boolean canRedo, String presentationName) {
+                mnuEditRedo.setEnabled(canRedo);
+                btnRedo.setEnabled(canRedo);
+                btnRedo.setToolTipText(presentationName);
+            }
+        };
+        txtSource.setUndoActionListener(undoStateListener);
+    }
+
+    private void setupClipboard() {
+        if (systemClipboard.getContents(null) != null) {
+            btnPaste.setEnabled(true);
+            mnuEditPaste.setEnabled(true);
+        }
+        systemClipboard.addFlavorListener(new FlavorListener() {
+
+            @Override
+            public void flavorsChanged(FlavorEvent e) {
+                if (systemClipboard.getContents(null) == null) {
+                    btnPaste.setEnabled(false);
+                    mnuEditPaste.setEnabled(false);
+                } else {
+                    btnPaste.setEnabled(true);
+                    mnuEditPaste.setEnabled(true);
+                }
+            }
+        });
+        txtSource.addCaretListener(new CaretListener() {
+
+            @Override
+            public void caretUpdate(CaretEvent e) {
+                if (e.getDot() == e.getMark()) {
+                    btnCut.setEnabled(false);
+                    mnuEditCut.setEnabled(false);
+                    btnCopy.setEnabled(false);
+                    mnuEditCopy.setEnabled(false);
+                } else {
+                    btnCut.setEnabled(true);
+                    mnuEditCut.setEnabled(true);
+                    btnCopy.setEnabled(true);
+                    mnuEditCopy.setEnabled(true);
+                }
+            }
+        });
+    }
+
+    private void setupCompiler() {
+        Compiler compiler = computer.getCompiler();
+
+        if (compiler != null) {
+            compiler.addCompilerListener(new CompilerListener() {
+
+                @Override
+                public void onStart() {
+                }
+
+                @Override
+                public void onMessage(Message message) {
+                    txtOutput.append(message.getFormattedMessage() + "\n");
+                }
+
+                @Override
+                public void onFinish(int errorCode) {
+                }
+            });
+            if (!compiler.isShowSettingsSupported()) {
+                mnuProjectCompilerSettings.setEnabled(false);
+            }
+        } else {
+            btnCompile.setEnabled(false);
+            mnuProjectCompile.setEnabled(false);
+            mnuProjectCompilerSettings.setEnabled(false);
+        }
+    }
+
+    private void setupMemory() {
+        Memory memory = computer.getMemory();
+        if (memory != null) {
+            try {
+                MemoryContext memContext = ContextPool.getInstance().getMemoryContext(
+                        Main.password.hashCode(), MemoryContext.class);
+                memContext.addMemoryListener(new MemoryListener() {
+
+                    @Override
+                    public void memoryChanged(int adr) {
+                        if (run_state != RunState.STATE_RUNNING) {
+                            tblDebug.refresh();
+                        }
+                    }
+                });
+            } catch (InvalidContextException | ContextNotFoundException e) {
+                LOGGER.error("Could not register memory change listener", e);
+            }
+            btnMemory.setEnabled(memory.isShowSettingsSupported());
+        } else {
+            btnMemory.setEnabled(false);
         }
     }
 
@@ -866,7 +887,7 @@ public class StudioFrame extends javax.swing.JFrame {
             public void mouseClicked(MouseEvent e) {
                 int i = lstDevices.getSelectedIndex();
                 if (i >= 0) {
-                    btnShowSettings.setEnabled(arch.getDevice(i).isShowSettingsSupported());
+                    btnShowSettings.setEnabled(computer.getDevice(i).isShowSettingsSupported());
                 }
 
                 if (e.getClickCount() == 2) {
@@ -1171,7 +1192,7 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void btnPauseActionPerformed(java.awt.event.ActionEvent evt) {
-        cpu.pause();
+        emulationController.pause();
     }
 
     private void showSettingsButtonActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1181,9 +1202,9 @@ public class StudioFrame extends javax.swing.JFrame {
                 Main.tryShowErrorMessage("Device has to be selected!");
                 return;
             }
-            arch.getDevices()[i].showSettings();
+            computer.getDevices()[i].showSettings();
         } catch (Exception e) {
-            logger.error("Can't show settings of the device.",e);
+            LOGGER.error("Can't show settings of the device.", e);
             Main.tryShowErrorMessage("Can't show settings of the device:\n " + e.getMessage());
         }
     }
@@ -1195,14 +1216,16 @@ public class StudioFrame extends javax.swing.JFrame {
                 Main.tryShowErrorMessage("Device has to be selected!");
                 return;
             }
-            arch.getDevices()[i].showGUI();
+            computer.getDevices()[i].showGUI();
         } catch (Exception e) {
-            logger.error("Can't show GUI of the device.", e);
+            LOGGER.error("Can't show GUI of the device.", e);
             Main.tryShowErrorMessage("Can't show GUI of the device:\n " + e.getMessage());
         }
     }
 
     private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {
+        Memory memory = computer.getMemory();
+
         if ((memory != null) && (memory.isShowSettingsSupported())) {
             memory.showSettings();
         } else {
@@ -1211,12 +1234,12 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void btnStepActionPerformed(java.awt.event.ActionEvent evt) {
-        cpu.step();
+        emulationController.step();
     }
 
     private void btnRunActionPerformed(java.awt.event.ActionEvent evt) {
         tblDebug.setEnabled(false);
-        cpu.execute();
+        emulationController.start();
     }
 
     private void btnRunTimeActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1227,60 +1250,35 @@ public class StudioFrame extends javax.swing.JFrame {
         }
         try {
             final int sliceMillis = RadixUtils.getInstance().parseRadix(sliceText);
-            new Thread() {
-
-                @Override
-                public void run() {
-                    while (run_state == RunState.STATE_STOPPED_BREAK) {
-                        cpu.step();
-                        LockSupport.parkNanos(sliceMillis * 1000000);
-                    }
-                }
-            }.start();
+            emulationController.step(sliceMillis, TimeUnit.MILLISECONDS);
         } catch (NumberFormatException e) {
             Main.tryShowErrorMessage("Error: Wrong number format");
         }
     }
 
     private void btnStopActionPerformed(java.awt.event.ActionEvent evt) {
-        cpu.stop();
+        emulationController.stop();
     }
 
     private void btnBackActionPerformed(java.awt.event.ActionEvent evt) {
-        try {
-            int pc = cpu.getInstructionPosition();
-            if (pc > 0) {
-                cpu.setInstructionPosition(pc - 1);
-                paneDebug.revalidate();
-                tblDebug.refresh();
-            }
-        } catch (NullPointerException e) {
+        CPU cpu = computer.getCPU();
+        int pc = cpu.getInstructionPosition();
+        if (pc > 0) {
+            cpu.setInstructionPosition(pc - 1);
+            paneDebug.revalidate();
+            tblDebug.refresh();
         }
     }
 
     private void btnBeginningActionPerformed(java.awt.event.ActionEvent evt) {
-        try {
-            cpu.setInstructionPosition(0);
-            paneDebug.revalidate();
-            tblDebug.refresh();
-        } catch (NullPointerException e) {
-        }
+        CPU cpu = computer.getCPU();
+        cpu.setInstructionPosition(0);
+        paneDebug.revalidate();
+        tblDebug.refresh();
     }
 
     private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {
-        if (memory != null) {
-            cpu.reset(memory.getProgramStart()); // first address of an image??
-            memory.reset();
-        } else {
-            cpu.reset();
-        }
-        Device devices[] = arch.getDevices();
-        if (devices != null) {
-            for (Device device : devices) {
-                device.reset();
-            }
-        }
-        paneDebug.revalidate();
+        emulationController.reset();
     }
 
     private void btnJumpActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1295,11 +1293,15 @@ public class StudioFrame extends javax.swing.JFrame {
             Main.tryShowErrorMessage("The number entered is in inccorret format", "Jump");
             return;
         }
+
+        CPU cpu = computer.getCPU();
+        Memory memory = computer.getMemory();
+
         if (cpu.setInstructionPosition(address) == false) {
-            StringBuilder maxSize = (memory != null) ? new StringBuilder().append("\n (expected range from 0 to ")
-                    .append(String.valueOf(memory.getSize())).append(")") : new StringBuilder();
-            Main.tryShowErrorMessage(new StringBuilder().append("Typed address is incorrect !")
-                    .append(maxSize).toString(), "Jump");
+            String maxSize = (memory != null) ?
+                    "\n (expected range from 0 to " + String.valueOf(memory.getSize()) + ")"
+                    : "";
+            Main.tryShowErrorMessage("Typed address is incorrect !" + maxSize, "Jump");
             return;
         }
         paneDebug.revalidate();
@@ -1319,6 +1321,8 @@ public class StudioFrame extends javax.swing.JFrame {
             Main.tryShowErrorMessage("You must first stop running emulation.", "Compile");
             return;
         }
+
+        Compiler compiler = computer.getCompiler();
         if (compiler == null) {
             Main.tryShowErrorMessage("Compiler is not defined.", "Compile");
             return;
@@ -1327,6 +1331,7 @@ public class StudioFrame extends javax.swing.JFrame {
         String fn = txtSource.getFileName();
 
         try {
+            Memory memory = computer.getMemory();
             if (memory != null) {
                 memory.reset();
             }
@@ -1335,9 +1340,9 @@ public class StudioFrame extends javax.swing.JFrame {
             if (memory != null) {
                 memory.setProgramStart(programStart);
             }
-            cpu.reset(programStart);
+            computer.getCPU().reset(programStart);
         } catch (Exception e) {
-            logger.error("Could not compile file.", e);
+            LOGGER.error("Could not compile file.", e);
             txtOutput.append("Could not compile file: " + e.toString() + "\n");
         }
     }
@@ -1347,6 +1352,7 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void mnuProjectCompilerSettingsActionPerformed(java.awt.event.ActionEvent evt) {
+        Compiler compiler = computer.getCompiler();
         if ((compiler != null) && (compiler.isShowSettingsSupported())) {
             compiler.showSettings();
         }
@@ -1400,7 +1406,7 @@ public class StudioFrame extends javax.swing.JFrame {
         if (txtSource.confirmSave() == true) {
             return;
         }
-        arch.destroy();
+        computer.destroy();
         dispose();
         System.exit(0); //calling the method is a must
     }
@@ -1462,11 +1468,13 @@ public class StudioFrame extends javax.swing.JFrame {
         BreakpointDialog bDialog = new BreakpointDialog(this, true);
         bDialog.setVisible(true);
         int address = bDialog.getAddress();
-        if ((address != -1) && arch.getCPU().isBreakpointSupported()) {
+
+        CPU cpu = computer.getCPU();
+        if ((address != -1) && cpu.isBreakpointSupported()) {
             if (bDialog.isSet()) {
-                arch.getCPU().setBreakpoint(address);
+                cpu.setBreakpoint(address);
             } else {
-                arch.getCPU().unsetBreakpoint(address);
+                cpu.unsetBreakpoint(address);
             }
         }
         paneDebug.revalidate();

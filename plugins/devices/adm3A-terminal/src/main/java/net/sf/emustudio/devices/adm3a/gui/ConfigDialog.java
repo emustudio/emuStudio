@@ -1,9 +1,5 @@
 /*
- * ConfigDialog.java
- *
- * Created on Streda, 2008, január 2, 13:32
- *
- * Copyright (C) 2008-2013 Peter Jakubčo
+ * Copyright (C) 2008-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -27,9 +23,9 @@ import net.sf.emustudio.devices.adm3a.impl.Display;
 import net.sf.emustudio.devices.adm3a.impl.TerminalSettings;
 
 public class ConfigDialog extends javax.swing.JDialog {
-    private TerminalSettings settings;
-    private Display display;
-    private TerminalWindow window;
+    private final TerminalSettings settings;
+    private final Display display;
+    private final TerminalWindow window;
 
     public ConfigDialog(TerminalSettings settings, TerminalWindow window, Display lblTerminal) {
         super((JFrame)null, true);
@@ -50,7 +46,6 @@ public class ConfigDialog extends javax.swing.JDialog {
         txtInputFileName.setText(settings.getInputFileName());
         txtOutputFileName.setText(settings.getOutputFileName());
         spnInputDelay.setValue(settings.getInputReadDelay());
-        chkNoGUIMode.setSelected(settings.isNoGUIMode());
     }
 
     private void updateSettings(boolean save) {
@@ -60,7 +55,6 @@ public class ConfigDialog extends javax.swing.JDialog {
         settings.setInputFileName(txtInputFileName.getText());
         settings.setOutputFileName(txtOutputFileName.getText());
         settings.setInputReadDelay((Integer)spnInputDelay.getValue());
-        settings.setNoGUIMode(chkNoGUIMode.isSelected());
         if (save) {
           settings.write();
         }
@@ -86,11 +80,10 @@ public class ConfigDialog extends javax.swing.JDialog {
         javax.swing.JLabel jLabel4 = new javax.swing.JLabel();
         spnInputDelay = new javax.swing.JSpinner();
         javax.swing.JLabel jLabel5 = new javax.swing.JLabel();
-        javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new javax.swing.JPanel();
         chkHalfDuplex = new javax.swing.JCheckBox();
         chkAlwaysOnTop = new javax.swing.JCheckBox();
         chkAntiAliasing = new javax.swing.JCheckBox();
-        chkNoGUIMode = new javax.swing.JCheckBox();
         javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
         chkSaveSettings = new javax.swing.JCheckBox();
         javax.swing.JButton btnClearScreen = new javax.swing.JButton();
@@ -102,7 +95,7 @@ public class ConfigDialog extends javax.swing.JDialog {
         setModal(true);
         setResizable(false);
 
-        panelSimulation.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Redirect I/O", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
+        panelSimulation.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Redirect I/O", 0, 0, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
 
         jLabel1.setText("Input file name:");
 
@@ -175,15 +168,13 @@ public class ConfigDialog extends javax.swing.JDialog {
                 .addComponent(jLabel3))
         );
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Terminal", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Terminal", 0, 0, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
 
         chkHalfDuplex.setText("Half duplex mode");
 
         chkAlwaysOnTop.setText("Display always on top");
 
         chkAntiAliasing.setText("Use anti-aliasing");
-
-        chkNoGUIMode.setText("No GUI mode");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -194,8 +185,7 @@ public class ConfigDialog extends javax.swing.JDialog {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(chkHalfDuplex)
                     .addComponent(chkAlwaysOnTop)
-                    .addComponent(chkAntiAliasing)
-                    .addComponent(chkNoGUIMode))
+                    .addComponent(chkAntiAliasing))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -207,8 +197,7 @@ public class ConfigDialog extends javax.swing.JDialog {
                 .addComponent(chkAlwaysOnTop)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkAntiAliasing)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 2, Short.MAX_VALUE)
-                .addComponent(chkNoGUIMode))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         chkSaveSettings.setSelected(true);
@@ -271,29 +260,31 @@ public class ConfigDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(panelSimulation, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(panelSimulation, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnOK, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(btnOK, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(18, 18, 18)
                 .addComponent(panelSimulation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(btnOK)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -317,8 +308,8 @@ public class ConfigDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkAlwaysOnTop;
     private javax.swing.JCheckBox chkAntiAliasing;
     private javax.swing.JCheckBox chkHalfDuplex;
-    private javax.swing.JCheckBox chkNoGUIMode;
     private javax.swing.JCheckBox chkSaveSettings;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JSpinner spnInputDelay;
     private javax.swing.JTextField txtInputFileName;
     private javax.swing.JTextField txtOutputFileName;

@@ -71,8 +71,8 @@ public class AbstractTape extends AbstractDevice {
         super.initialize(settings);
         this.settings = settings;
 
-        nogui = Boolean.parseBoolean(settings.readSetting(pluginID, "nogui"));
-        auto = Boolean.parseBoolean(settings.readSetting(pluginID, "auto"));
+        nogui = Boolean.parseBoolean(settings.readSetting(pluginID, SettingsManager.NO_GUI));
+        auto = Boolean.parseBoolean(settings.readSetting(pluginID, SettingsManager.AUTO));
 
         // show GUI at startup?
         String s = settings.readSetting(pluginID, "showAtStartup");

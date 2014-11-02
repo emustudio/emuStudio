@@ -122,7 +122,7 @@ public class MemoryImpl extends AbstractMemory {
         }
         this.settings = settings;
         context.init(DEFAULT_MEM_SIZE, bCount, bCommon, memGUI);
-        noGUI = Boolean.parseBoolean(settings.readSetting(pluginID, "nogui"));
+        noGUI = Boolean.parseBoolean(settings.readSetting(pluginID, SettingsManager.NO_GUI));
         if (!noGUI) {
             memGUI = new MemoryFrame(pluginID, this, context, settings);
         }

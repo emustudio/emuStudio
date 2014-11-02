@@ -223,7 +223,7 @@ public class DiskImpl extends AbstractDevice {
 
     private void readSettings() {
         String s;
-        s = settings.readSetting(pluginID, "nogui");
+        s = settings.readSetting(pluginID, SettingsManager.NO_GUI);
         noGUI = s != null && s.toUpperCase().equals("TRUE");
         s = settings.readSetting(pluginID, "port1CPU");
         if (s != null) {

@@ -1,7 +1,7 @@
 /*
  * BrainTerminalContext.java
- * 
- * Copyright (C) 2009-2012 Peter Jakubčo
+ *
+ * Copyright (C) 2009-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -21,14 +21,13 @@
 package net.sf.emustudio.brainduck.terminal.impl;
 
 import emulib.plugins.device.DeviceContext;
-import net.sf.emustudio.brainduck.terminal.gui.BrainTerminalDialog;
+import net.sf.emustudio.brainduck.terminal.io.IOProvider;
 
 public class BrainTerminalContext implements DeviceContext<Short> {
+    private volatile IOProvider ioProvider = IOProvider.DUMMY;
 
-    private BrainTerminalDialog gui;
-
-    public BrainTerminalContext(BrainTerminalDialog gui) {
-        this.gui = gui;
+    public void setIoProvider(IOProvider ioProvider) {
+        this.ioProvider = ioProvider;
     }
 
     @Override
@@ -38,12 +37,12 @@ public class BrainTerminalContext implements DeviceContext<Short> {
 
     @Override
     public Short read() {
-        return (short) gui.getChar();
+        return (short)ioProvider.read();
     }
 
     @Override
     public void write(Short val) {
-        gui.putChar((char)(short)val);
+        ioProvider.write(val);
     }
 
 }

@@ -31,15 +31,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class SIOSettings {
     private final static Logger LOGGER = LoggerFactory.getLogger(SIOSettings.class);
 
-    private final static String NO_GUI = "nogui";
-    private final static String AUTO = "auto";
     private final static String STATUS_PORT_NUMBER = "statusPortNumber";
     private final static String DATA_PORT_NUMBER = "dataPortNumber";
 
     public static final int DEFAULT_STATUS_PORT_NUMBER = 0x10;
     public static final int DEFAULT_DATA_PORT_NUMBER = 0x11;
 
-    private long pluginID;
+    private final long pluginID;
     private SettingsManager settingsManager;
 
     private boolean emuStudioNoGUI = false;
@@ -48,8 +46,8 @@ public class SIOSettings {
     private int statusPortNumber = DEFAULT_STATUS_PORT_NUMBER;
     private int dataPortNumber = DEFAULT_DATA_PORT_NUMBER;
 
-    private List<ChangedObserver> observers = new ArrayList<ChangedObserver>();
-    private ReadWriteLock settingsLock = new ReentrantReadWriteLock();
+    private final List<ChangedObserver> observers = new ArrayList<>();
+    private final ReadWriteLock settingsLock = new ReentrantReadWriteLock();
 
     public interface ChangedObserver {
         void settingsChanged();
@@ -144,8 +142,8 @@ public class SIOSettings {
             if (settingsManager == null) {
                 return;
             }
-            settingsManager.writeSetting(pluginID, NO_GUI, String.valueOf(emuStudioNoGUI));
-            settingsManager.writeSetting(pluginID, AUTO, String.valueOf(emuStudioAuto));
+            settingsManager.writeSetting(pluginID, SettingsManager.NO_GUI, String.valueOf(emuStudioNoGUI));
+            settingsManager.writeSetting(pluginID, SettingsManager.AUTO, String.valueOf(emuStudioAuto));
             settingsManager.writeSetting(pluginID, STATUS_PORT_NUMBER, String.valueOf(statusPortNumber));
             settingsManager.writeSetting(pluginID, DATA_PORT_NUMBER, String.valueOf(dataPortNumber));
         } finally {
@@ -159,8 +157,8 @@ public class SIOSettings {
             if (settingsManager == null) {
                 return;
             }
-            emuStudioNoGUI = Boolean.parseBoolean(settingsManager.readSetting(pluginID, NO_GUI));
-            emuStudioAuto = Boolean.parseBoolean(settingsManager.readSetting(pluginID, AUTO));
+            emuStudioNoGUI = Boolean.parseBoolean(settingsManager.readSetting(pluginID, SettingsManager.NO_GUI));
+            emuStudioAuto = Boolean.parseBoolean(settingsManager.readSetting(pluginID, SettingsManager.AUTO));
             String tmp = settingsManager.readSetting(pluginID, STATUS_PORT_NUMBER);
             if (tmp != null) {
                 try {

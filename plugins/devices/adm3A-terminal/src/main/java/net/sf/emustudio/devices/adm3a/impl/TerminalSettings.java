@@ -33,22 +33,18 @@ public class TerminalSettings {
 
     private final static String DEFAULT_INPUT_FILE_NAME = "terminalADM-3A.in";
     private final static String DEFAULT_OUTPUT_FILE_NAME = "terminalADM-3A.out";
-    private final static String NO_GUI = "nogui";
-    private final static String AUTO = "auto";
     private final static String ANTI_ALIASING = "antiAliasing";
     private final static String HALF_DUPLEX = "halfDuplex";
     private final static String ALWAYS_ON_TOP = "alwaysOnTop";
     private final static String INPUT_FILE_NAME = "inputFileName";
     private final static String OUTPUT_FILE_NAME = "outputFileName";
     private final static String INPUT_READ_DELAY = "inputReadDelay";
-    private final static String NOGUI_MODE = "noGUIMode";
 
-    private long pluginID;
+    private final long pluginID;
     private SettingsManager settingsManager;
 
     private boolean emuStudioNoGUI = false;
     private boolean emuStudioAuto = false;
-    private boolean noGUIMode = false;
     private boolean halfDuplex = false;
     private boolean antiAliasing = true;
     private boolean alwaysOnTop = false;
@@ -56,8 +52,8 @@ public class TerminalSettings {
     private String outputFileName = DEFAULT_OUTPUT_FILE_NAME;
     private int inputReadDelay = 0;
 
-    private List<ChangedObserver> observers = new ArrayList<ChangedObserver>();
-    private ReadWriteLock settingsLock = new ReentrantReadWriteLock();
+    private final List<ChangedObserver> observers = new ArrayList<>();
+    private final ReadWriteLock settingsLock = new ReentrantReadWriteLock();
 
     public interface ChangedObserver {
         void settingsChanged();
@@ -97,25 +93,6 @@ public class TerminalSettings {
         } finally {
             settingsLock.readLock().unlock();
         }
-    }
-
-    public boolean isNoGUIMode() {
-        settingsLock.readLock().lock();
-        try {
-            return noGUIMode;
-        } finally {
-            settingsLock.readLock().unlock();
-        }
-    }
-
-    public void setNoGUIMode(boolean noGUIMode) {
-        settingsLock.writeLock().lock();
-        try {
-            this.noGUIMode = noGUIMode;
-        } finally {
-            settingsLock.writeLock().unlock();
-        }
-        notifyObservers();
     }
 
     public int getInputReadDelay() {
@@ -247,15 +224,14 @@ public class TerminalSettings {
             if (settingsManager == null) {
                 return;
             }
-            settingsManager.writeSetting(pluginID, NO_GUI, String.valueOf(emuStudioNoGUI));
-            settingsManager.writeSetting(pluginID, AUTO, String.valueOf(emuStudioAuto));
+            settingsManager.writeSetting(pluginID, SettingsManager.NO_GUI, String.valueOf(emuStudioNoGUI));
+            settingsManager.writeSetting(pluginID, SettingsManager.AUTO, String.valueOf(emuStudioAuto));
             settingsManager.writeSetting(pluginID, HALF_DUPLEX, String.valueOf(halfDuplex));
             settingsManager.writeSetting(pluginID, ALWAYS_ON_TOP, String.valueOf(alwaysOnTop));
             settingsManager.writeSetting(pluginID, ANTI_ALIASING, String.valueOf(antiAliasing));
             settingsManager.writeSetting(pluginID, INPUT_FILE_NAME, inputFileName);
             settingsManager.writeSetting(pluginID, OUTPUT_FILE_NAME, outputFileName);
             settingsManager.writeSetting(pluginID, INPUT_READ_DELAY, String.valueOf(inputReadDelay));
-            settingsManager.writeSetting(pluginID, NOGUI_MODE, String.valueOf(noGUIMode));
         } finally {
             settingsLock.readLock().unlock();
         }
@@ -267,9 +243,8 @@ public class TerminalSettings {
             if (settingsManager == null) {
                 return;
             }
-            emuStudioNoGUI = Boolean.parseBoolean(settingsManager.readSetting(pluginID, NO_GUI));
-            emuStudioAuto = Boolean.parseBoolean(settingsManager.readSetting(pluginID, AUTO));
-            noGUIMode = Boolean.parseBoolean(settingsManager.readSetting(pluginID, NOGUI_MODE));
+            emuStudioNoGUI = Boolean.parseBoolean(settingsManager.readSetting(pluginID, SettingsManager.NO_GUI));
+            emuStudioAuto = Boolean.parseBoolean(settingsManager.readSetting(pluginID, SettingsManager.AUTO));
             halfDuplex = Boolean.parseBoolean(settingsManager.readSetting(pluginID, HALF_DUPLEX));
             alwaysOnTop = Boolean.parseBoolean(settingsManager.readSetting(pluginID, ALWAYS_ON_TOP));
             antiAliasing = Boolean.parseBoolean(settingsManager.readSetting(pluginID, ANTI_ALIASING));

@@ -65,8 +65,7 @@ terminal HALT,INC,DEC,INCV,DECV,PRINT,LOAD,LOOP,ENDL;
 terminal TCOMMENT;
 
 non terminal Program Program;
-non terminal Instruction Instruction, Statement;
-non terminal Comment;
+non terminal Instruction Statement;
 
 start with Program;
 
@@ -86,12 +85,7 @@ Program ::= Statement:statement
                 RESULT = program;
             :};
 
-Statement ::= Instruction:instruction Comment
-        {: RESULT = instruction; :};
-         
-Comment ::= TCOMMENT | ;
-
-Instruction ::=
+Statement ::=
             INC   {: RESULT = new Instruction(Instruction.INC);   :} |
             DEC   {: RESULT = new Instruction(Instruction.DEC);   :} |
             INCV  {: RESULT = new Instruction(Instruction.INCV);  :} |
@@ -100,6 +94,7 @@ Instruction ::=
             LOAD  {: RESULT = new Instruction(Instruction.LOAD);  :} |
             LOOP  {: RESULT = new Instruction(Instruction.LOOP);  :} |
             ENDL  {: RESULT = new Instruction(Instruction.ENDL);  :} |
-            HALT  {: RESULT = new Instruction(Instruction.HALT);  :}
+            HALT  {: RESULT = new Instruction(Instruction.HALT);  :} |
+            TCOMMENT {: RESULT = null; :}
             ;
 
