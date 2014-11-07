@@ -371,6 +371,7 @@ public class Display extends Canvas implements DeviceContext<Short>, TerminalSet
                 return;
             case 0x0D:
                 cursor_x = 0;
+                repaint(); // to be sure for erasing cursor
                 return; /* carriage return */
         }
         insertChar((char)(data & 0xFF));

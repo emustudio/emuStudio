@@ -19,103 +19,118 @@
 
 package net.sf.emustudio.brainduck.terminal.io;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Point;
-import java.util.concurrent.TimeUnit;
-import javax.swing.JComponent;
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 
+import javax.swing.*;
+import java.awt.*;
+import java.util.concurrent.TimeUnit;
+
+
 @ThreadSafe
-public class TextCanvas extends JComponent {
-    @GuardedBy("this")
+public class TextCanvas extends JPanel {
+    @GuardedBy("memory")
     private final int[][] memory;
-    private final int width;
-    private final int height;
+    private final int maxColumn;
+    private final int maxRow;
+
     private final Cursor cursor;
     private volatile boolean needMeasure;
+    private volatile int charWidth;
+    private volatile int charHeight;
 
-    private final Font textFont = Font.decode("monospace-PLAIN-14");
+    private final Font textFont = new Font("Monospaced", 0, 14);
 
-    public TextCanvas(int width, int height) {
-        this.width = width;
-        this.height = height;
-        this.memory = new int[height][width];
-        this.cursor = new Cursor(500, TimeUnit.MILLISECONDS);
+    public TextCanvas(int maxColumn, int maxRow) {
+        this.maxColumn = maxColumn;
+        this.maxRow = maxRow;
+        this.memory = new int[maxRow][maxColumn];
+        this.cursor = new Cursor(1, TimeUnit.SECONDS, maxColumn);
 
-        this.setBackground(Color.WHITE);
-        this.setForeground(Color.BLACK);
+        this.setBackground(java.awt.Color.WHITE);
+        this.setForeground(java.awt.Color.BLACK);
         this.setFont(textFont);
-        this.add(cursor);
-        this.setPreferredSize(new Dimension(width, height));
+        this.setDoubleBuffered(true);
         needMeasure = true;
     }
     
     public void start() {
-        cursor.start();
+        measureIfNeeded();
+        cursor.start(this);
     }
     
     public void stop() {
         cursor.stop();
     }
-    
-    public void writeAtCursor(int c) {
-        Point cursorPoint = cursor.getPoint();
-        writeCharAt(c, cursorPoint.x, cursorPoint.y);
-        cursor.advance(width);
+
+    public Cursor getTextCanvasCursor() {
+        return cursor;
     }
     
-    public synchronized void writeCharAt(int c, int x, int y) {
-        memory[y][x] = c;
+    public void writeAtCursor(int c) {
+        Point cursorPoint = cursor.getLogicalPoint();
+        writeCharAt(c, cursorPoint.x, cursorPoint.y);
+        cursor.advance(1);
+    }
+    
+    public void writeCharAt(int c, int x, int y) {
+        synchronized (memory) {
+            memory[y][x] = c;
+        }
         repaint();
     }
     
-    public int getCharAt(int x, int y) {
-        return memory[y][x];
-    }
-    
-    public synchronized void clear() {
-        for (int[] row : memory) {
-            for (int col = 0; col < row.length; col++) {
-                row[col] = 0;
+    public void clear() {
+        synchronized (memory) {
+            for (int[] row : memory) {
+                for (int col = 0; col < row.length; col++) {
+                    row[col] = 0;
+                }
             }
         }
         cursor.reset();
         repaint();
     }
-    
-    @Override
-    public synchronized void paint(Graphics g) {
-        g.setFont(textFont);
-        FontMetrics fontMetrics = g.getFontMetrics();
-        int charWidth = fontMetrics.charWidth('Y');
-        int charHeight = fontMetrics.getHeight();
 
+    private void measureIfNeeded() {
         if (needMeasure) {
-            Dimension newDimension = new Dimension(width * charWidth, height + height * charHeight);
-            setPreferredSize(newDimension);
-            setSize(newDimension);
+            FontMetrics fontMetrics = getGraphics().getFontMetrics();
+            charWidth = fontMetrics.charWidth('W');
+            charHeight = fontMetrics.getHeight();
             needMeasure = false;
         }
-        
-        for (int row = 0; row < memory.length; row++) {
-            int y = charHeight + row * charHeight;
-            String string = "";
-            for (int col = 0; col < memory[row].length; col++) {
-                int value = memory[row][col];
-                if (value > 0) {
-                    string += value;
-                } else if (value < 0) {
-                    break;
-                } else {
-                    string += " ";
+    }
+
+    public int getCharWidth() {
+        return charWidth;
+    }
+
+    public int getCharHeight() {
+        return charHeight;
+    }
+
+    @Override
+    public void paintComponent(Graphics g) {
+        g.setFont(textFont);
+        g.clearRect(0, 0, getSize().width, getSize().height);
+
+        synchronized (memory) {
+            int y = charHeight;
+            int x = 0;
+
+            for (int row = 0; row < memory.length; row++) {
+                for (int col = 0; col < memory[row].length; col++) {
+                    int value = memory[row][col];
+
+                    if (value < 32) {
+                        continue;
+                    }
+
+                    g.drawString("" + (char)value, x, y);
+                    x += charWidth;
                 }
+                y += charHeight;
             }
-            g.drawString(string, 0, y);
         }
     }
     

@@ -148,8 +148,6 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public void run() {
-        System.out.println("Running from " + Thread.currentThread().getName());
-
         // change the CPU state to "running"
         runState = RunState.STATE_RUNNING;
         // notify the state

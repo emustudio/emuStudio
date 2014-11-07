@@ -57,10 +57,14 @@ public class FileIOProvider implements IOProvider {
     @Override
     public int read() {
         try {
-            return reader.read();
+            int character = reader.read();
+            if (character == -1) {
+                return IOProvider.EOF;
+            }
+            return character;
         } catch (IOException e) {
             LOGGER.error("Could not read from input file: " + INPUT_FILE_NAME, e);
-            return -1;
+            return IOProvider.EOF;
         }
     }
 

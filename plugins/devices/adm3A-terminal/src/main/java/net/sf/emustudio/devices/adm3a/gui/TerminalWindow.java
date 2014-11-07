@@ -24,22 +24,13 @@ package net.sf.emustudio.devices.adm3a.gui;
 
 import emulib.runtime.LoggerFactory;
 import emulib.runtime.interfaces.Logger;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Font;
-import java.io.IOException;
-import java.io.InputStream;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.WindowConstants;
 import net.sf.emustudio.devices.adm3a.impl.Display;
 
-/**
- * Window representing the terminal.
- *
- * @author Peter Jakubčo
- */
+import javax.swing.*;
+import java.awt.*;
+import java.io.IOException;
+import java.io.InputStream;
+
 public class TerminalWindow extends JFrame {
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminalWindow.class);
     private final Display display;
@@ -50,6 +41,7 @@ public class TerminalWindow extends JFrame {
         Font font = null;
         try {
             font = Font.createFont(Font.TRUETYPE_FONT, fin).deriveFont(12f);
+            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
         } catch (Exception e) {
             LOGGER.error("Cannot load custom font file, using Java monospace", e);
         } finally {

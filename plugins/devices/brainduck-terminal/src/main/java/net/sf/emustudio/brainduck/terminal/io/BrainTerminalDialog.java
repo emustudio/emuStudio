@@ -19,21 +19,18 @@
  */
 package net.sf.emustudio.brainduck.terminal.io;
 
+import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.net.URL;
 import java.util.Objects;
-import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import javax.swing.ImageIcon;
 
 public class BrainTerminalDialog extends javax.swing.JDialog implements IOProvider, KeyListener {
     private static final int MAX_WIDTH = 80;
     private static final int MAX_HEIGHT = 25;
-    private static final int EOF = -1;
-    
+
     private final ImageIcon blueIcon;
     private final ImageIcon redIcon;
     private final ImageIcon greenIcon;
@@ -58,6 +55,7 @@ public class BrainTerminalDialog extends javax.swing.JDialog implements IOProvid
 
         setTitle("BrainDuck Terminal");
         initComponents();
+        setLocationRelativeTo(null);
         
         canvas = new TextCanvas(MAX_WIDTH, MAX_HEIGHT);
         scrollPane.setViewportView(canvas);
@@ -89,6 +87,28 @@ public class BrainTerminalDialog extends javax.swing.JDialog implements IOProvid
     public void write(int c) {
         setWriteIcon();
         try {
+            Cursor cursor = canvas.getTextCanvasCursor();
+            if (c < 32) {
+                switch (c) {
+                    case 7:  /* bell */
+                        break;
+                    case 8:  /* backspace*/
+                        cursor.back();
+                        break;
+                    case 9:
+                        cursor.advance(4);
+                        break;
+                    case 0x0A: /* line feed */
+                        cursor.newLine();
+                        cursor.carriageReturn(); // simulate DOS
+                        break;
+                    case 0x0D: /* carriage return */
+                        cursor.carriageReturn();
+                        break;
+                }
+                repaint();
+                return;
+            }
             canvas.writeAtCursor(c);
         } finally {
             setIdleIcon();
@@ -97,7 +117,6 @@ public class BrainTerminalDialog extends javax.swing.JDialog implements IOProvid
 
     @Override
     public int read() {
-        System.out.println("Reading from " + Thread.currentThread().getName());
         setReadIcon();
         try {
             return inputBuffer.take();
@@ -106,7 +125,7 @@ public class BrainTerminalDialog extends javax.swing.JDialog implements IOProvid
         } finally {
             setIdleIcon();
         }
-        return EOF;
+        return IOProvider.EOF;
     }
 
     @Override
@@ -131,10 +150,14 @@ public class BrainTerminalDialog extends javax.swing.JDialog implements IOProvid
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-            inputBuffer.add(EOF);
+        int keycode = e.getKeyCode();
+        if (keycode == KeyEvent.VK_ESCAPE) {
+            inputBuffer.add(IOProvider.EOF);
+        } else if (keycode == KeyEvent.VK_SHIFT || keycode == KeyEvent.VK_CONTROL ||
+                keycode == KeyEvent.VK_ALT || keycode == KeyEvent.VK_META) {
+            return;
         } else {
-            inputBuffer.add((int)e.getKeyChar());
+            inputBuffer.add((int) e.getKeyChar());
         }
     }
 
@@ -174,6 +197,8 @@ public class BrainTerminalDialog extends javax.swing.JDialog implements IOProvid
                 .addGap(0, 9, Short.MAX_VALUE)
                 .addComponent(lblStatusIcon))
         );
+
+        scrollPane.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

@@ -17,125 +17,142 @@
  */
 package net.sf.emustudio.brainduck.terminal.io;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Graphics;
-import java.awt.Point;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
-
-import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 
+import java.awt.*;
+import java.util.Objects;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
 @ThreadSafe
-public class Cursor extends Component {
+public class Cursor {
     private final int howOften;
     private final TimeUnit timeUnit;
+    private final int canvasMaxColumn;
 
-    private final BlockingDeque<Point> repaintTasks = new LinkedBlockingDeque<>();
+    private final BlockingDeque<PointTask> repaintTasks = new LinkedBlockingDeque<>();
+    private volatile TextCanvas canvas;
 
-    private volatile Point cursorPoint; // set only in swing thread
-    private volatile boolean xored = false; // used only in swing thread
-    
-    @GuardedBy("schedulerLock")
-    private ScheduledExecutorService repaintScheduler;
-    private final Object schedulerLock = new Object();
+    private volatile int charWidth;
+    private volatile int charHeight;
 
-    public Cursor(int howOften, TimeUnit timeUnit) {
+    private final AtomicReference<Point> cursorPoint = new AtomicReference<>(new Point());
+
+    private final ScheduledExecutorService repaintScheduler = Executors.newSingleThreadScheduledExecutor();
+
+    private interface PointTask {
+        public void execute(Point point);
+    }
+
+    public Cursor(int howOften, TimeUnit timeUnit, int canvasMaxColumn) {
         this.howOften = howOften;
-        this.timeUnit = timeUnit;
+        this.canvasMaxColumn = canvasMaxColumn;
+        this.timeUnit = Objects.requireNonNull(timeUnit);
         reset();
     }
 
-    public void start() {
-        synchronized (schedulerLock) {
-            repaintScheduler = Executors.newSingleThreadScheduledExecutor();
-            repaintScheduler.scheduleWithFixedDelay(new Runnable() {
+    public void start(TextCanvas canvas) {
+        this.canvas = Objects.requireNonNull(canvas);
+        this.charWidth = canvas.getCharWidth();
+        this.charHeight = canvas.getCharHeight();
 
-                @Override
-                public void run() {
-                    repaint();
-                }
-            }, 0, howOften, timeUnit);
-        }
+        repaintScheduler.scheduleWithFixedDelay(new Runnable() {
+
+            @Override
+            public void run() {
+                repaint();
+            }
+        }, 0, howOften, timeUnit);
     }
 
     public void stop() {
-        synchronized (schedulerLock) {
-            if (repaintScheduler != null) {
-                repaintScheduler.shutdownNow();
-                try {
-                    repaintScheduler.awaitTermination(3 * howOften, timeUnit);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
+        repaintScheduler.shutdownNow();
+        try {
+            repaintScheduler.awaitTermination(3 * howOften, timeUnit);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
-    public void advance(int maxColumn) {
-        Point point = getPoint();
-        point = point.getLocation();
-        if (point.x + 1 > maxColumn) {
+    public void back() {
+        Point oldPoint;
+        Point point;
+        do {
+            oldPoint = cursorPoint.get();
+            point = new Point(oldPoint);
+            if (point.x - 1 < 0) {
+                point.x = 0;
+            } else {
+                point.x--;
+            }
+        } while (!cursorPoint.compareAndSet(oldPoint, point));
+    }
+
+    public void newLine() {
+        Point oldPoint;
+        Point point;
+        do {
+            oldPoint = cursorPoint.get();
+            point = new Point(oldPoint);
             point.y++;
+        } while (!cursorPoint.compareAndSet(oldPoint, point));
+    }
+
+    public void carriageReturn() {
+        Point oldPoint;
+        Point point;
+        do {
+            oldPoint = cursorPoint.get();
+            point = new Point(oldPoint);
             point.x = 0;
-        } else {
-            point.x++;
-        }
-        repaintTasks.add(point);
+        } while (!cursorPoint.compareAndSet(oldPoint, point));
+    }
+
+    public void advance(final int count) {
+        Point oldPoint;
+        Point point;
+        do {
+            oldPoint = cursorPoint.get();
+            point = new Point(oldPoint);
+            for (int i = 0; i < count; i++) {
+                if (point.x + 1 > canvasMaxColumn) {
+                    point.y++;
+                    point.x = 0;
+                } else {
+                    point.x++;
+                }
+            }
+        } while (!cursorPoint.compareAndSet(oldPoint, point));
     }
 
     public final void reset() {
-        repaintTasks.add(new Point());
+        Point oldPoint;
+        Point point;
+        do {
+            oldPoint = cursorPoint.get();
+            point = new Point();
+        } while (!cursorPoint.compareAndSet(oldPoint, point));
     }
     
-    public Point getPoint() {
-        Point point = repaintTasks.peekLast();
-        if (point == null) {
-            return cursorPoint;
-        }
-        return point;
+    public Point getLogicalPoint() {
+        return new Point(cursorPoint.get());
     }
     
-    private void paintCursor(Graphics g, int row, int col, int width, int height) {
-        int x = col * width;
-        int y = height + row * height;
-        
-        g.setXORMode(Color.BLACK);
-        g.fillRect(x, y, width, height);
-    }
-
-    @Override
-    public void paint(Graphics g) {
-        // works only for monospaced fonts
-        int rectWidth = g.getFontMetrics().charWidth('Y');
-        int rectHeight = g.getFontMetrics().getHeight();
-
-        List<Point> tasks = new ArrayList<>();
-        repaintTasks.drainTo(tasks);
-
-        Point point = null;
-        while (!tasks.isEmpty()) {
-            point = tasks.remove(0);
+    private void repaint() {
+        Graphics graphics = canvas.getGraphics();
+        if (graphics == null) {
+            return;
         }
 
-        // get the current point
-        Point tmpCursorPoint = cursorPoint;
-        if (point == null) {
-            point = tmpCursorPoint;
-        }
+        Point point = cursorPoint.get();
 
-        if (xored && tmpCursorPoint != null && !tmpCursorPoint.equals(point)) {
-            paintCursor(g, tmpCursorPoint.x, tmpCursorPoint.y, rectWidth, rectHeight);
-            xored = false;
-        }
-        paintCursor(g, point.x, point.y, rectWidth, rectHeight);
-        xored = !xored;
-        cursorPoint = point;
+        graphics.setXORMode(Color.WHITE);
+        graphics.fillRect(point.x * charWidth, point.y * charHeight, charWidth, charHeight);
+        graphics.setPaintMode();
     }
 
 }

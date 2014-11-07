@@ -23,7 +23,8 @@ package net.sf.emustudio.brainduck.terminal.io;
 import java.io.Closeable;
 
 public interface IOProvider extends Closeable {
-    public static IOProvider DUMMY = new IOProvider() {
+    public static final int EOF = 0;
+    public static final IOProvider DUMMY = new IOProvider() {
 
         @Override
         public void write(int c) {
