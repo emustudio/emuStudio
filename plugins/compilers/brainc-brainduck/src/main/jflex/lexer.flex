@@ -66,10 +66,14 @@ import java.io.IOException;
 %}
 
 %eofval{
-  return token(Tokens.EOF, Token.TEOF,null,false);
+  return token(Tokens.EOF, Token.TEOF, null, false);
 %eofval}
 
-Comment    = [^<>\+-\.,\[\];]+
+LineTerminator = \r|\n|\r\n
+InputCharacter = [^\r\n]
+WhiteSpace     = {LineTerminator} | [ \t\f]
+
+Comment        = {WhiteSpace}+ | {LineTerminator}+ | [^<>+\-\.,\[\];\t\f\r\n]+ {InputCharacter}*
 
 %%
 
@@ -84,6 +88,4 @@ Comment    = [^<>\+-\.,\[\];]+
 "]"  { return token(Tokens.ENDL, Token.RESERVED,null,true); }
 
 {Comment}      { return token(Tokens.TCOMMENT, Token.COMMENT,null,true); }
-
-.              { return token(Tokens.error, Tokens.ERROR,null,false); }
 

@@ -112,8 +112,8 @@
         </plugin>
         <plugin>
           <groupId>de.jflex</groupId>
-          <artifactId>maven-jflex-plugin</artifactId>
-          <version>1.4.3</version>
+          <artifactId>jflex-maven-plugin</artifactId>
+          <version>1.6.0</version>
         </plugin>
         <plugin>
           <groupId>edu.tum.cs</groupId>
