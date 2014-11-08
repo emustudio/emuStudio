@@ -32,15 +32,16 @@ import emulib.runtime.InvalidContextException;
 import emulib.runtime.LoggerFactory;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.interfaces.Logger;
-import java.util.List;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-import javax.swing.JPanel;
 import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
 import net.sf.emustudio.ram.cpu.gui.RAMDisassembler;
 import net.sf.emustudio.ram.cpu.gui.RAMStatusPanel;
 import net.sf.emustudio.ram.memory.RAMInstruction;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;
+
+import javax.swing.*;
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 
 @PluginType(type = PLUGIN_TYPE.CPU,
 title = "Random Access Machine (RAM)",
@@ -48,8 +49,8 @@ copyright = "\u00A9 Copyright 2009-2014, Peter Jakubčo",
 description = "Emulator of abstract RAM machine")
 public class EmulatorImpl extends AbstractCPU {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorImpl.class);
-    private RAMMemoryContext mem;
-    private RAMContext context;
+    private RAMMemoryContext memory;
+    private final RAMContext context;
     private RAMDisassembler dis;     // disassembler
     private int IP; // instruction position
 
@@ -79,28 +80,25 @@ public class EmulatorImpl extends AbstractCPU {
         super.initialize(settings);
 
         try {
-            mem = (RAMMemoryContext) ContextPool.getInstance().getMemoryContext(pluginID,
-                    RAMMemoryContext.class);
+            memory = (RAMMemoryContext) ContextPool.getInstance().getMemoryContext(pluginID, RAMMemoryContext.class);
         } catch (ContextNotFoundException | InvalidContextException e) {
             // Will be processed later on
-            throw new PluginInitializationException(
-                this, "Could not get memory context", e
-            );
+            throw new PluginInitializationException(this, "Could not get memory context", e);
         }
 
-        if (mem.getDataType() != RAMInstruction.class) {
+        if (memory.getDataType() != RAMInstruction.class) {
             throw new PluginInitializationException(
                 this, "The RAM machine doesn't support this kind of program memory!"
             );
         }
 
-        dis = new RAMDisassembler(this.mem);
+        dis = new RAMDisassembler(this.memory);
         context.init(pluginID);
     }
 
     // called from RAMContext after Input tape attachement
     public void loadTape(AbstractTapeContext tape) {
-        List<String> data = mem.getInputs();
+        List<String> data = memory.getInputs();
         if (data == null) {
             return;
         }
@@ -113,7 +111,7 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public JPanel getStatusPanel() {
-        return new RAMStatusPanel(this, mem);
+        return new RAMStatusPanel(this, memory);
     }
 
     @Override
@@ -139,49 +137,17 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public void destroy() {
-        runState = RunState.STATE_STOPPED_NORMAL;
+        stop();
         context.destroy();
-        context = null;
-        breaks.clear();
-        breaks = null;
+        breakpoints.clear();
     }
 
     @Override
     public void reset(int pos) {
         super.reset(pos);
         IP = pos;
-        notifyStateChanged(runState);
-
         if (context.checkTapes()) {
             loadTape(context.getInput());
-        }
-    }
-
-    @Override
-    public void pause() {
-        runState = RunState.STATE_STOPPED_BREAK;
-        notifyStateChanged(runState);
-    }
-
-    @Override
-    public void stop() {
-        runState = RunState.STATE_STOPPED_NORMAL;
-        notifyStateChanged(runState);
-    }
-
-    @Override
-    public void step() {
-        if (runState == RunState.STATE_STOPPED_BREAK) {
-            try {
-                runState = RunState.STATE_RUNNING;
-                emulateInstruction();
-                if (runState == RunState.STATE_RUNNING) {
-                    runState = RunState.STATE_STOPPED_BREAK;
-                }
-            } catch (IndexOutOfBoundsException e) {
-                runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
-            }
-            notifyStateChanged(runState);
         }
     }
 
@@ -191,42 +157,43 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    public void run() {
-        runState = RunState.STATE_RUNNING;
-        notifyStateChanged(runState);
+    protected void stepInternal() throws Exception {
+        emulateInstruction();
+    }
 
-        while (runState == RunState.STATE_RUNNING) {
+    @Override
+    public void run() {
+        while (getRunState() == RunState.STATE_RUNNING) {
             try {
                 if (isBreakpointSet(IP)) {
                     throw new Error();
                 }
                 emulateInstruction();
             } catch (IndexOutOfBoundsException e) {
-                runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
+                setRunState(RunState.STATE_STOPPED_ADDR_FALLOUT);
                 break;
             } catch (Error er) {
-                runState = RunState.STATE_STOPPED_BREAK;
+                setRunState(RunState.STATE_STOPPED_BREAK);
                 break;
             }
         }
-        notifyStateChanged(runState);
     }
 
     private void emulateInstruction() {
         if (!context.checkTapes()) {
-            runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
+            setRunState(RunState.STATE_STOPPED_ADDR_FALLOUT);
             return;
         }
 
-        RAMInstruction in = (RAMInstruction) mem.read(IP++);
+        RAMInstruction in = memory.read(IP++);
         if (in == null) {
-            runState = RunState.STATE_STOPPED_BAD_INSTR;
+            setRunState(RunState.STATE_STOPPED_BAD_INSTR);
             return;
         }
         switch (in.getCode()) {
             case RAMInstruction.READ:
                 if (in.getDirection() == 0) {
-                    String input = (String) context.getInput().read();
+                    String input = context.getInput().read();
                     context.getInput().moveRight();
                     context.getStorage().setSymbolAt((Integer) in.getOperand(),
                             input);
@@ -237,7 +204,7 @@ public class EmulatorImpl extends AbstractCPU {
                         if (M < 0) {
                             break;
                         }
-                        String input = (String) context.getInput().read();
+                        String input = context.getInput().read();
                         context.getInput().moveRight();
                         context.getStorage().setSymbolAt(M, input);
                     } catch (NumberFormatException e) {
@@ -633,7 +600,7 @@ public class EmulatorImpl extends AbstractCPU {
                 } catch (NumberFormatException e) {
                     LOGGER.error("Could not parse number", e);
                 }
-                if (t == false) {
+                if (!t) {
                     try {
                         rr0 = (int) Double.parseDouble(r0);
                     } catch (NumberFormatException e) {
@@ -658,7 +625,7 @@ public class EmulatorImpl extends AbstractCPU {
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
                     }
-                    if (t == false) {
+                    if (!t) {
                         try {
                             rr0 = (int) Double.parseDouble(r0);
                         } catch (NumberFormatException e) {
@@ -676,10 +643,10 @@ public class EmulatorImpl extends AbstractCPU {
                 }
                 return;
             case RAMInstruction.HALT:
-                runState = RunState.STATE_STOPPED_NORMAL;
+                setRunState(RunState.STATE_STOPPED_NORMAL);
                 return;
         }
-        runState = RunState.STATE_STOPPED_BAD_INSTR;
+        setRunState(RunState.STATE_STOPPED_BAD_INSTR);
     }
 
     @Override

@@ -33,17 +33,18 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.locks.LockSupport;
-import javax.swing.JPanel;
 import net.sf.emustudio.intel8080.ExtendedContext;
 import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
 import net.sf.emustudio.zilogZ80.gui.DecoderImpl;
 import net.sf.emustudio.zilogZ80.gui.DisassemblerImpl;
 import net.sf.emustudio.zilogZ80.gui.StatusPanel;
+
+import javax.swing.*;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * Main implementation class for CPU emulation CPU works in a separate thread
@@ -56,9 +57,11 @@ copyright = "\u00A9 Copyright 2008-2014, Peter Jakubčo",
 description = "Emulator of Zilog Z80 CPU")
 public class EmulatorImpl extends AbstractCPU {
     private final StatusPanel statusPanel;
+    private final ContextImpl context;
+
     private Disassembler disassembler;
     private MemoryContext<Short> memory;
-    private ContextImpl context;
+
     // 2 sets of 6 GPR
     public short B, B1, C, C1, D, D1, E, E1;
     public short H, H1, L, L1;
@@ -215,7 +218,6 @@ public class EmulatorImpl extends AbstractCPU {
      *
      * CC ..by.. time[s] XX ..by.. 1 [s] ? --------------- XX:CC = 1:time XX = CC / time [Hz]
      *
-     * @author vbmacher
      */
     private class FrequencyUpdater extends TimerTask {
 
@@ -277,10 +279,8 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public void destroy() {
-        runState = RunState.STATE_STOPPED_NORMAL;
-        stopFrequencyUpdater();
+        stop();
         context.clearDevices();
-        context = null;
     }
 
     @Override
@@ -334,42 +334,27 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    public void step() {
-        if (runState == RunState.STATE_STOPPED_BREAK) {
-            try {
-                runState = RunState.STATE_RUNNING;
-                boolean oldIFF = IFF[0];
-                noWait = false;
-                evalStep(fetchOpcode());
-                isINT = (interruptPending != 0) && oldIFF && IFF[0];
-                if (PC > 0xffff) {
-                    runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
-                    PC = 0xffff;
-                } else if (runState == RunState.STATE_RUNNING) {
-                    runState = RunState.STATE_STOPPED_BREAK;
-                }
-            } catch (ArrayIndexOutOfBoundsException e) {
-                runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
-            }
-            notifyStateChanged(runState);
+    protected void stepInternal() throws Exception {
+        boolean oldIFF = IFF[0];
+        noWait = false;
+        evalStep(memory.read(PC++));
+        isINT = (interruptPending != 0) && oldIFF && IFF[0];
+        if (PC > 0xffff) {
+            setRunState(RunState.STATE_STOPPED_ADDR_FALLOUT);
+            PC = 0xffff;
         }
     }
 
-    /**
-     * Force (external) breakpoint
-     */
     @Override
     public void pause() {
-        runState = RunState.STATE_STOPPED_BREAK;
+        super.pause();
         stopFrequencyUpdater();
-        notifyStateChanged(runState);
     }
 
     @Override
     public void stop() {
-        runState = RunState.STATE_STOPPED_NORMAL;
+        super.stop();
         stopFrequencyUpdater();
-        notifyStateChanged(runState);
     }
 
     @Override
@@ -388,7 +373,6 @@ public class EmulatorImpl extends AbstractCPU {
         IFF[1] = false;
         PC = startPos;
         stopFrequencyUpdater();
-        notifyStateChanged(runState);
         interruptPending = 0;
         isINT = noWait = false;
     }
@@ -417,7 +401,7 @@ public class EmulatorImpl extends AbstractCPU {
             case 5:
                 return L;
             case 6:
-                return ((Short) memory.read((H << 8) | L)).shortValue();
+                return memory.read((H << 8) | L);
             case 7:
                 return A;
         }
@@ -689,10 +673,10 @@ public class EmulatorImpl extends AbstractCPU {
         switch (intMode) {
             case 0:  // rst p (interruptVector)
                 cycles += 11;
-                RunState old_runstate = runState;
+                RunState old_runstate = getRunState();
                 evalStep((short) interruptVector); // must ignore halt
-                if (runState == RunState.STATE_STOPPED_NORMAL) {
-                    runState = old_runstate;
+                if (getRunState() == RunState.STATE_STOPPED_NORMAL) {
+                    setRunState(old_runstate);
                 }
                 break;
             case 1: // rst 0xFF
@@ -704,19 +688,10 @@ public class EmulatorImpl extends AbstractCPU {
             case 2:
                 cycles += 13;
                 memory.writeWord(SP - 2, PC);
-                PC = (Short) memory.readWord((I << 8) | interruptVector);
+                PC = (Integer)memory.readWord((I << 8) | interruptVector);
                 break;
         }
         return cycles;
-    }
-
-    /**
-     * Fetches an opcode from memory.
-     *
-     * @return opcode
-     */
-    private short fetchOpcode() {
-        return ((Short) memory.read(PC++)).shortValue();
     }
 
     /**
@@ -739,7 +714,7 @@ public class EmulatorImpl extends AbstractCPU {
         }
         R++;
         if (OP == 0x76) { /* HALT */
-            runState = RunState.STATE_STOPPED_NORMAL;
+            setRunState(RunState.STATE_STOPPED_NORMAL);
             return 4;
         }
 
@@ -822,7 +797,7 @@ public class EmulatorImpl extends AbstractCPU {
             case 0x36:
             case 0x3E:
                 tmp = (OP >>> 3) & 0x07;
-                putreg(tmp, ((Short) memory.read(PC++)).shortValue());
+                putreg(tmp, memory.read(PC++));
                 if (tmp == 6) {
                     return 10;
                 } else {
@@ -1052,7 +1027,7 @@ public class EmulatorImpl extends AbstractCPU {
                 F1 = (short) tmp;
                 return 4;
             case 0x0A: /* LD A,(BC) */
-                tmp = (Short) memory.read(getpair(0));
+                tmp = memory.read(getpair(0));
                 A = (short) tmp;
                 return 7;
             case 0x0F: /* RRCA */
@@ -1060,7 +1035,7 @@ public class EmulatorImpl extends AbstractCPU {
                 A = RRCA_TABLE[A];
                 return 4;
             case 0x10: /* DJNZ e */
-                tmp = (Short) memory.read(PC++);
+                tmp = memory.read(PC++);
                 B--;
                 B &= 0xFF;
                 if (B != 0) {
@@ -1077,7 +1052,7 @@ public class EmulatorImpl extends AbstractCPU {
                 F = (short) ((F & 0xEC) | tmp);
                 return 4;
             case 0x1A: /* LD A,(DE) */
-                tmp = (Short) memory.read(getpair(1));
+                tmp = memory.read(getpair(1));
                 A = (short) (tmp & 0xff);
                 return 7;
             case 0x1F: /* RRA */
@@ -1145,8 +1120,8 @@ public class EmulatorImpl extends AbstractCPU {
                 L1 = (short) tmp;
                 return 4;
             case 0xE3: /* EX (SP),HL */
-                tmp = (Short) memory.read(SP);
-                tmp1 = (Short) memory.read(SP + 1);
+                tmp = memory.read(SP);
+                tmp1 = memory.read(SP + 1);
                 memory.write(SP, L);
                 memory.write(SP + 1, H);
                 L = (short) (tmp & 0xff);
@@ -1173,7 +1148,7 @@ public class EmulatorImpl extends AbstractCPU {
                 IFF[0] = IFF[1] = true;
                 return 4;
             case 0xED:
-                OP = ((Short) memory.read(PC++)).shortValue();
+                OP = memory.read(PC++);
                 switch (OP) {
                     /* IN r,(C) */
                     case 0x40:
@@ -1266,14 +1241,14 @@ public class EmulatorImpl extends AbstractCPU {
                         return 9;
                     case 0x67: /* RRD */
                         tmp = A & 0x0F;
-                        tmp1 = (Short) memory.read((H << 8) | L);
+                        tmp1 = memory.read((H << 8) | L);
                         A = (short) ((A & 0xF0) | (tmp1 & 0x0F));
                         tmp1 = ((tmp1 >>> 4) & 0x0F) | (tmp << 4);
                         memory.write(((H << 8) | L), (short)(tmp1 & 0xff));
                         F = (short) (DAA_TABLE[A] | (F & flagC));
                         return 18;
                     case 0x6F: /* RLD */
-                        tmp = (Short) memory.read((H << 8) | L);
+                        tmp = memory.read((H << 8) | L);
                         tmp1 = (tmp >>> 4) & 0x0F;
                         tmp = ((tmp << 4) & 0xF0) | (A & 0x0F);
                         A = (short) ((A & 0xF0) | tmp1);
@@ -1290,7 +1265,7 @@ public class EmulatorImpl extends AbstractCPU {
                     case 0xA0: /* LDI */
                         tmp1 = (H << 8) | L;
                         tmp2 = (D << 8) | E;
-                        memory.write(tmp2, (Short) memory.read(tmp1));
+                        memory.write(tmp2, memory.read(tmp1));
                         tmp1 = (tmp1 + 1) & 0xFFFF;
                         tmp2 = (tmp2 + 1) & 0xFFFF;
                         tmp = (((B << 8) | C) - 1) & 0xFFFF;
@@ -1303,7 +1278,7 @@ public class EmulatorImpl extends AbstractCPU {
                         F = (short) ((F & 0xE9) | ((tmp != 0) ? flagPV : 0));
                         return 16;
                     case 0xA1: /* CPI */
-                        tmp2 = (Short) memory.read((H << 8) | L);
+                        tmp2 = memory.read((H << 8) | L);
                         tmp = (A - tmp2) & 0xFF;
                         tmp1 = (((B << 8) | C) - 1) & 0xFFFF;
                         tmp3 = tmp ^ tmp2 ^ A;
@@ -1333,7 +1308,7 @@ public class EmulatorImpl extends AbstractCPU {
                         return 16;
                     case 0xA3: /* OUTI */
                         tmp1 = (H << 8) | L;
-                        context.fireIO(C, false, (Short) memory.read(tmp1));
+                        context.fireIO(C, false, memory.read(tmp1));
                         tmp1 = (tmp1 + 1) & 0xFFFF;
                         H = (short) ((tmp1 >>> 8) & 0xff);
                         L = (short) (tmp1 & 0xFF);
@@ -1343,7 +1318,7 @@ public class EmulatorImpl extends AbstractCPU {
                     case 0xA8: /* LDD */
                         tmp1 = (H << 8) | L;
                         tmp2 = (D << 8) | E;
-                        memory.write(tmp2, (Short) memory.read(tmp1));
+                        memory.write(tmp2, memory.read(tmp1));
                         tmp1 = (tmp1 - 1) & 0xFFFF;
                         tmp2 = (tmp2 - 1) & 0xFFFF;
                         tmp = (((B << 8) | C) - 1) & 0xFFFF;
@@ -1356,7 +1331,7 @@ public class EmulatorImpl extends AbstractCPU {
                         F = (short) ((F & 0xE9) | ((tmp != 0) ? flagPV : 0));
                         return 16;
                     case 0xA9: /* CPD */
-                        tmp2 = (Short) memory.read((H << 8) | L);
+                        tmp2 = memory.read((H << 8) | L);
                         tmp = (A - tmp2) & 0xFF;
                         tmp1 = (((B << 8) | C) - 1) & 0xFFFF;
                         tmp3 = tmp ^ tmp2 ^ A;
@@ -1386,7 +1361,7 @@ public class EmulatorImpl extends AbstractCPU {
                         return 16;
                     case 0xAB: /* OUTD */
                         tmp1 = (H << 8) | L;
-                        context.fireIO(C, false, (Short) memory.read((short) tmp1));
+                        context.fireIO(C, false, memory.read((short) tmp1));
                         tmp1 = (tmp1 - 1) & 0xFFFF;
                         H = (short) ((tmp1 >>> 8) & 0xff);
                         L = (short) (tmp1 & 0xFF);
@@ -1396,7 +1371,7 @@ public class EmulatorImpl extends AbstractCPU {
                     case 0xB0: /* LDIR */
                         tmp1 = (H << 8) | L;
                         tmp2 = (D << 8) | E;
-                        memory.write(tmp2, (Short) memory.read(tmp1));
+                        memory.write(tmp2, memory.read(tmp1));
                         tmp1 = (tmp1 + 1) & 0xFFFF;
                         tmp2 = (tmp2 + 1) & 0xFFFF;
                         H = (short) ((tmp1 >>> 8) & 0xff);
@@ -1413,7 +1388,7 @@ public class EmulatorImpl extends AbstractCPU {
                         PC -= 2;
                         return 21;
                     case 0xB1: /* CPIR */
-                        tmp2 = (Short) memory.read((H << 8) | L);
+                        tmp2 = memory.read((H << 8) | L);
                         tmp = (A - tmp2) & 0xFF;
                         tmp1 = (((B << 8) | C) - 1) & 0xFFFF;
                         tmp3 = tmp ^ tmp2 ^ A;
@@ -1453,7 +1428,7 @@ public class EmulatorImpl extends AbstractCPU {
                         return 21;
                     case 0xB3: /* OTIR */
                         tmp1 = (H << 8) | L;
-                        context.fireIO(C, false, (Short) memory.read(tmp1));
+                        context.fireIO(C, false, memory.read(tmp1));
                         tmp1 = (tmp1 + 1) & 0xFFFF;
                         H = (short) ((tmp1 >>> 8) & 0xff);
                         L = (short) (tmp1 & 0xFF);
@@ -1467,7 +1442,7 @@ public class EmulatorImpl extends AbstractCPU {
                     case 0xB8: /* LDDR */
                         tmp1 = (H << 8) | L;
                         tmp2 = (D << 8) | E;
-                        memory.write(tmp2, (Short) memory.read(tmp1));
+                        memory.write(tmp2, memory.read(tmp1));
                         tmp1 = (tmp1 - 1) & 0xFFFF;
                         tmp2 = (tmp2 - 1) & 0xFFFF;
                         tmp = (((B << 8) | C) - 1) & 0xFFFF;
@@ -1484,7 +1459,7 @@ public class EmulatorImpl extends AbstractCPU {
                         PC -= 2;
                         return 21;
                     case 0xB9: /* CPDR */
-                        tmp2 = (Short) memory.read((H << 8) | L);
+                        tmp2 = memory.read((H << 8) | L);
                         tmp = (A - tmp2) & 0xFF;
                         tmp1 = (((B << 8) | C) - 1) & 0xFFFF;
                         tmp3 = tmp ^ tmp2 ^ A;
@@ -1524,7 +1499,7 @@ public class EmulatorImpl extends AbstractCPU {
                         return 21;
                     case 0xBB: /* OTDR */
                         tmp1 = (H << 8) | L;
-                        context.fireIO(C, false, (Short) memory.read((short) tmp1));
+                        context.fireIO(C, false, memory.read((short) tmp1));
                         tmp1 = (tmp1 - 1) & 0xFFFF;
                         H = (short) (tmp1 >>> 8);
                         L = (short) (tmp1 & 0xFF);
@@ -1562,7 +1537,7 @@ public class EmulatorImpl extends AbstractCPU {
                 if (OP == 0xFD) {
                     special = 0xFD;
                 }
-                OP = ((Short) memory.read(PC++)).shortValue();
+                OP = memory.read(PC++);
                 switch (OP) {
                     /* ADD ii,pp */
                     case 0x09:
@@ -1626,7 +1601,7 @@ public class EmulatorImpl extends AbstractCPU {
                         SP = (special == 0xDD) ? IX : IY;
                         return 10;
                 }
-                tmp = ((Short) memory.read(PC++)).shortValue();
+                tmp = memory.read(PC++).shortValue();
                 switch (OP) {
                     case 0x76:
                         break;
@@ -1639,7 +1614,7 @@ public class EmulatorImpl extends AbstractCPU {
                     case 0x6E:
                     case 0x7E:
                         tmp1 = (OP >>> 3) & 7;
-                        putreg2(tmp1, (Short) memory.read((getspecial(special) + tmp) & 0xffff));
+                        putreg2(tmp1, memory.read((getspecial(special) + tmp) & 0xffff));
                         return 19;
                     /* LD (ii+d),r */
                     case 0x70:
@@ -1661,59 +1636,59 @@ public class EmulatorImpl extends AbstractCPU {
                         return 23;
                     case 0x35: /* DEC (ii+d) */
                         tmp1 = (getspecial(special) + tmp) & 0xffff;
-                        tmp2 = ((Short) memory.read(tmp1) - 1) & 0xff;
+                        tmp2 = (memory.read(tmp1) - 1) & 0xff;
                         F = (short) ((F & 1) | DECZ80_TABLE[tmp2]);
                         return 23;
                     case 0x86: /* ADD A,(ii+d) */
-                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
                         tmp2 = A + tmp1;
                         F = (short) (CBITSZ80_TABLE[tmp1 ^ tmp2 ^ A] | (tmp2 & 0x80)
                                 | (((tmp2 & 0xff) == 0) ? flagZ : 0));
                         A = (short) (tmp2 & 0xff);
                         return 19;
                     case 0x8E: /* ADC A,(ii+d) */
-                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
                         tmp2 = A + tmp1 + (F & 1);
                         F = (short) (CBITSZ80_TABLE[tmp1 ^ tmp2 ^ A] | (tmp2 & 0x80)
                                 | (((tmp2 & 0xff) == 0) ? flagZ : 0));
                         A = (short) (tmp2 & 0xff);
                         return 19;
                     case 0x96: /* SUB (ii+d) */
-                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
                         tmp2 = A - tmp1;
                         F = (short) (CBITS2Z80_TABLE[(A ^ tmp1 ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
                                 | (((tmp2 & 0xff) == 0) ? flagZ : 0) | flagN);
                         A = (short) (tmp2 & 0xff);
                         return 19;
                     case 0x9E: /* SBC A,(ii+d) */
-                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
                         tmp2 = A - tmp1 - (F & 1);
                         F = (short) (CBITS2Z80_TABLE[(A ^ tmp1 ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
                                 | (((tmp2 & 0xff) == 0) ? flagZ : 0) | flagN);
                         A = (short) (tmp2 & 0xff);
                         return 19;
                     case 0xA6: /* AND (ii+d) */
-                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
                         A = (short) ((A & tmp1) & 0xff);
                         F = AND_TABLE[A];
                         return 19;
                     case 0xAE: /* XOR (ii+d) */
-                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
                         A = (short) ((A ^ tmp1) & 0xff);
                         F = DAA_TABLE[A];
                         return 19;
                     case 0xB6: /* OR (ii+d) */
-                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
                         A = (short) ((A | tmp1) & 0xff);
                         F = DAA_TABLE[A];
                         return 19;
                     case 0xBE: /* CP (ii+d) */
-                        tmp1 = (Short) memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
                         tmp2 = A - tmp1;
                         F = (short) (CP_TABLE[tmp2 & 0xff] | CBITS2Z80_TABLE[(A ^ tmp1 ^ tmp2) & 0x1ff]);
                         return 19;
                 }
-                tmp |= (((Short) memory.read(PC++)).shortValue() << 8);
+                tmp |= ((memory.read(PC++)).shortValue() << 8);
                 switch (OP) {
                     case 0x21: /* LD ii,nn */
                         putspecial(special, tmp);
@@ -1742,7 +1717,7 @@ public class EmulatorImpl extends AbstractCPU {
                             case 0x76:
                             case 0x7E:
                                 tmp2 = (OP >>> 3) & 7;
-                                tmp1 = (Short) memory.read((getspecial(special) + tmp) & 0xffff);
+                                tmp1 = memory.read((getspecial(special) + tmp) & 0xffff);
                                 F = (short) ((F & 0x95) | flagH | (((tmp1 & (1 << tmp2)) == 0) ? flagZ : 0));
                                 return 20;
                             /* RES b,(ii+d) */
@@ -1771,13 +1746,13 @@ public class EmulatorImpl extends AbstractCPU {
                             case 0xFE:
                                 tmp2 = (OP >>> 3) & 7;
                                 tmp3 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) memory.read(tmp3);
+                                tmp1 = memory.read(tmp3);
                                 tmp1 = (tmp1 | (1 << tmp2));
                                 memory.write(tmp3, (short)(tmp1 & 0xff));
                                 return 23;
                             case 0x06: /* RLC (ii+d) */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) memory.read(tmp2);
+                                tmp1 = memory.read(tmp2);
                                 F = (short) ((tmp1 >>> 7) & 0xff);
                                 tmp1 <<= 1;
                                 tmp1 |= (F & 1);
@@ -1786,7 +1761,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 return 23;
                             case 0x0E: /* RRC (ii+d) */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) memory.read(tmp2);
+                                tmp1 = memory.read(tmp2);
                                 F = (short) (tmp1 & 1);
                                 tmp1 >>>= 1;
                                 tmp1 |= ((F & 1) << 7);
@@ -1796,7 +1771,7 @@ public class EmulatorImpl extends AbstractCPU {
                             case 0x16: /* RL (ii+d) */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
                                 tmp3 = F & 1;
-                                tmp1 = (Short) memory.read(tmp2);
+                                tmp1 = memory.read(tmp2);
                                 F = (short) ((tmp1 >>> 7) & 0xff);
                                 tmp1 <<= 1;
                                 tmp1 |= tmp3;
@@ -1805,7 +1780,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 return 23;
                             case 0x1E: /* RR (ii+d) */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) memory.read(tmp2);
+                                tmp1 = memory.read(tmp2);
                                 tmp3 = F & 1;
                                 F = (short) (tmp1 & 1);
                                 tmp1 >>>= 1;
@@ -1815,7 +1790,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 return 23;
                             case 0x26: /* SLA (ii+d) */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) memory.read(tmp2);
+                                tmp1 = memory.read(tmp2);
                                 F = (short) ((tmp1 >>> 7) & 0xff);
                                 tmp1 <<= 1;
                                 memory.write(tmp2, (short)(tmp1 & 0xff));
@@ -1823,7 +1798,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 return 23;
                             case 0x2E: /* SRA (ii+d) */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) memory.read(tmp2);
+                                tmp1 = memory.read(tmp2);
                                 tmp3 = tmp1 & 0x80;
                                 F = (short) (tmp1 & 1);
                                 tmp1 >>>= 1;
@@ -1833,7 +1808,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 return 23;
                             case 0x36: /* SLL (ii+d) unsupported */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) memory.read(tmp2);
+                                tmp1 = memory.read(tmp2);
                                 F = (short) ((tmp1 >>> 7) & 0xff);
                                 tmp3 = tmp1 & 1;
                                 tmp1 <<= 1;
@@ -1843,7 +1818,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 return 23;
                             case 0x3E: /* SRL (ii+d) */
                                 tmp2 = (getspecial(special) + tmp) & 0xffff;
-                                tmp1 = (Short) memory.read(tmp2);
+                                tmp1 = memory.read(tmp2);
                                 F = (short) (tmp1 & 1);
                                 tmp1 >>>= 1;
                                 memory.write(tmp2, (short)(tmp1 & 0xff));
@@ -1852,7 +1827,7 @@ public class EmulatorImpl extends AbstractCPU {
                         }
                 }
             case 0xCB:
-                OP = (Short) memory.read(PC++);
+                OP = memory.read(PC++);
                 switch (OP) {
                     /* RLC r */
                     case 0x00:
@@ -2060,7 +2035,7 @@ public class EmulatorImpl extends AbstractCPU {
                         }
                 }
         }
-        tmp = (Short) memory.read(PC++);
+        tmp = memory.read(PC++);
         switch (OP) {
             /* JR cc,d */
             case 0x20:
@@ -2127,7 +2102,7 @@ public class EmulatorImpl extends AbstractCPU {
                 F = (short) (CP_TABLE[tmp2 & 0xff] | CBITS2Z80_TABLE[(A ^ tmp ^ tmp2) & 0x1ff]);
                 return 7;
         }
-        tmp += ((Short) memory.read(PC++) << 8);
+        tmp += (memory.read(PC++) << 8);
         switch (OP) {
             /* LD ss, nn */
             case 0x01:
@@ -2177,7 +2152,7 @@ public class EmulatorImpl extends AbstractCPU {
                 memory.write(tmp, A);
                 return 13;
             case 0x3A: /* LD A,(nn) */
-                A = (short) ((Short) memory.read(tmp) & 0xff);
+                A = (short) (memory.read(tmp) & 0xff);
                 return 13;
             case 0xC3: /* JP nn */
                 PC = tmp;
@@ -2188,7 +2163,7 @@ public class EmulatorImpl extends AbstractCPU {
                 PC = tmp;
                 return 17;
         }
-        runState = RunState.STATE_STOPPED_BAD_INSTR;
+        setRunState(RunState.STATE_STOPPED_BAD_INSTR);
         return 0;
     }
 
@@ -2239,48 +2214,47 @@ public class EmulatorImpl extends AbstractCPU {
         int cycles;
         long sliceNanos;
 
-        runState = RunState.STATE_RUNNING;
-        notifyStateChanged(runState);
         runFrequencyUpdater();
+        try {
         /* 1 Hz  .... 1 tState per second
          * 1 kHz .... 1000 tStates per second
          * clockFrequency is in kHz it have to be multiplied with 1000
          */
-        cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
-        long i = 0;
-        sliceNanos = checkTimeSlice * 1000000;
-        while (runState == RunState.STATE_RUNNING) {
-            i++;
-            startTime = System.nanoTime();
-            cycles_executed = 0;
-            try {
-                while ((cycles_executed < cycles_to_execute)
-                        && (runState == RunState.STATE_RUNNING)) {
-                    cycles = evalStep(fetchOpcode());
-                    cycles_executed += cycles;
-                    long_cycles += cycles;
-                    if (isBreakpointSet(PC) == true) {
-                        throw new Error();
+            cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
+            long i = 0;
+            sliceNanos = checkTimeSlice * 1000000;
+            while (getRunState() == RunState.STATE_RUNNING) {
+                i++;
+                startTime = System.nanoTime();
+                cycles_executed = 0;
+                try {
+                    while ((cycles_executed < cycles_to_execute) && (getRunState() == RunState.STATE_RUNNING)) {
+                        cycles = evalStep(memory.read(PC++));
+                        cycles_executed += cycles;
+                        long_cycles += cycles;
+                        if (isBreakpointSet(PC) == true) {
+                            throw new Error();
+                        }
                     }
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    setRunState(RunState.STATE_STOPPED_ADDR_FALLOUT);
+                    break;
+                } catch (IndexOutOfBoundsException e) {
+                    setRunState(RunState.STATE_STOPPED_ADDR_FALLOUT);
+                    break;
+                } catch (Error er) {
+                    setRunState(RunState.STATE_STOPPED_BREAK);
+                    break;
                 }
-            } catch (ArrayIndexOutOfBoundsException e) {
-                runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
-                break;
-            } catch (IndexOutOfBoundsException e) {
-                runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
-                break;
-            } catch (Error er) {
-                runState = RunState.STATE_STOPPED_BREAK;
-                break;
+                endTime = System.nanoTime() - startTime;
+                if (endTime < sliceNanos) {
+                    // time correction
+                    LockSupport.parkNanos(sliceNanos - endTime);
+                }
             }
-            endTime = System.nanoTime() - startTime;
-            if (endTime < sliceNanos) {
-                // time correction
-                LockSupport.parkNanos(sliceNanos - endTime);
-            }
+        } finally {
+            stopFrequencyUpdater();
         }
-        stopFrequencyUpdater();
-        notifyStateChanged(runState);
     }
 
     @Override

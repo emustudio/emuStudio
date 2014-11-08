@@ -36,6 +36,13 @@ import emulib.runtime.InvalidContextException;
 import emulib.runtime.LoggerFactory;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.interfaces.Logger;
+import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.intel8080.FrequencyChangedListener;
+import net.sf.emustudio.intel8080.gui.DecoderImpl;
+import net.sf.emustudio.intel8080.gui.DisassemblerImpl;
+import net.sf.emustudio.intel8080.gui.StatusPanel;
+
+import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -44,12 +51,6 @@ import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.LockSupport;
-import javax.swing.JPanel;
-import net.sf.emustudio.intel8080.ExtendedContext;
-import net.sf.emustudio.intel8080.FrequencyChangedListener;
-import net.sf.emustudio.intel8080.gui.DecoderImpl;
-import net.sf.emustudio.intel8080.gui.DisassemblerImpl;
-import net.sf.emustudio.intel8080.gui.StatusPanel;
 
 /**
  * Main implementation class for CPU emulation CPU works in a separate thread
@@ -84,7 +85,7 @@ public class EmulatorImpl extends AbstractCPU {
 
     private final StatusPanel statusPanel;
     private MemoryContext<Short> memory;
-    private ContextImpl context;
+    private final ContextImpl context;
     private Disassembler disasm;
     // cpu speed
     private long executedCycles = 0; // count of executed cycles for frequency calculation
@@ -179,12 +180,8 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public void destroy() {
-        runState = RunState.STATE_STOPPED_NORMAL;
-        stopFrequencyUpdater();
-        if (context != null) {
-            context.clearDevices();
-            context = null;
-        }
+        stop();
+        context.clearDevices();
     }
 
     @Override
@@ -196,46 +193,23 @@ public class EmulatorImpl extends AbstractCPU {
         PC = startPos;
         INTE = false;
         stopFrequencyUpdater();
-        notifyStateChanged(runState);
     }
 
-    /**
-     * Force (external) breakpoint
-     */
     @Override
     public void pause() {
-        runState = RunState.STATE_STOPPED_BREAK;
+        super.pause();
         stopFrequencyUpdater();
-        notifyStateChanged(runState);
     }
 
-    /**
-     * Stops an emulation
-     */
     @Override
     public void stop() {
-        runState = RunState.STATE_STOPPED_NORMAL;
+        super.stop();
         stopFrequencyUpdater();
-        notifyStateChanged(runState);
     }
 
-    // vykona 1 krok - bez merania casov (bez real-time odozvy)
     @Override
-    public void step() {
-        if (runState == RunState.STATE_STOPPED_BREAK) {
-            try {
-                runState = RunState.STATE_RUNNING;
-                dispatch();
-                if (runState == RunState.STATE_RUNNING) {
-                    runState = RunState.STATE_STOPPED_BREAK;
-                }
-            } catch (IndexOutOfBoundsException e) {
-                runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
-            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                runState = RunState.STATE_STOPPED_BAD_INSTR;
-            }
-            notifyStateChanged(runState);
-        }
+    protected void stepInternal() throws Exception {
+        dispatch();
     }
 
     public void interrupt(short b1, short b2, short b3) {
@@ -256,13 +230,11 @@ public class EmulatorImpl extends AbstractCPU {
         }
     }
 
-    /* DOWN: GUI interaction */
     @Override
     public JPanel getStatusPanel() {
         return statusPanel;
     }
 
-    /* DOWN: other */
     public int getSliceTime() {
         return checkTimeSlice;
     }
@@ -308,47 +280,46 @@ public class EmulatorImpl extends AbstractCPU {
         int cycles;
         long slice;
 
-        runState = RunState.STATE_RUNNING;
-        notifyStateChanged(runState);
         runFrequencyUpdater();
+        try {
         /* 1 Hz  .... 1 tState per second
          * 1 kHz .... 1000 tStates per second
          * clockFrequency is in kHz it have to be multiplied with 1000
          */
-        cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
-        long i = 0;
-        slice = checkTimeSlice * 1000000;
-        while (runState == RunState.STATE_RUNNING) {
-            i++;
-            startTime = System.nanoTime();
-            cycles_executed = 0;
-            while ((cycles_executed < cycles_to_execute)
-                    && (runState == RunState.STATE_RUNNING)) {
-                try {
-                    cycles = dispatch();
-                    cycles_executed += cycles;
-                    executedCycles += cycles;
-                    if (isBreakpointSet(PC) == true) {
-                        throw new Error();
+            cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
+            long i = 0;
+            slice = checkTimeSlice * 1000000;
+            while (getRunState() == RunState.STATE_RUNNING) {
+                i++;
+                startTime = System.nanoTime();
+                cycles_executed = 0;
+                while ((cycles_executed < cycles_to_execute) && (getRunState() == RunState.STATE_RUNNING)) {
+                    try {
+                        cycles = dispatch();
+                        cycles_executed += cycles;
+                        executedCycles += cycles;
+                        if (isBreakpointSet(PC) == true) {
+                            throw new Error();
+                        }
+                    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                        setRunState(RunState.STATE_STOPPED_BAD_INSTR);
+                    } catch (IndexOutOfBoundsException e) {
+                        setRunState(RunState.STATE_STOPPED_ADDR_FALLOUT);
+                        break;
+                    } catch (Error er) {
+                        setRunState(RunState.STATE_STOPPED_BREAK);
+                        break;
                     }
-                } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                    runState = RunState.STATE_STOPPED_BAD_INSTR;
-                } catch (IndexOutOfBoundsException e) {
-                    runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
-                    break;
-                } catch (Error er) {
-                    runState = RunState.STATE_STOPPED_BREAK;
-                    break;
+                }
+                endTime = System.nanoTime() - startTime;
+                if (endTime < slice) {
+                    // time correction
+                    LockSupport.parkNanos(slice - endTime);
                 }
             }
-            endTime = System.nanoTime() - startTime;
-            if (endTime < slice) {
-                // time correction
-                LockSupport.parkNanos(slice - endTime);
-            }
+        } finally {
+            stopFrequencyUpdater();
         }
-        stopFrequencyUpdater();
-        notifyStateChanged(runState);
     }
 
     @Override
@@ -846,7 +817,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     private int O118_HLT(short OP) {
-        runState = RunState.STATE_STOPPED_NORMAL;
+        setRunState(RunState.STATE_STOPPED_NORMAL);
         return 7;
     }
 
@@ -1203,8 +1174,7 @@ public class EmulatorImpl extends AbstractCPU {
         return 4;
     }
 
-
-    private int dispatch() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    private int dispatch() throws InvocationTargetException, IllegalAccessException {
         short OP;
 
         /* if interrupt is waiting, instruction won't be read from memory
@@ -1279,7 +1249,7 @@ public class EmulatorImpl extends AbstractCPU {
         /* Dispatch Instruction */
         Method instr = dispatchTable[OP];
         if (instr == null) {
-            runState = RunState.STATE_STOPPED_BAD_INSTR;
+            setRunState(RunState.STATE_STOPPED_BAD_INSTR);
             return 0;
         }
         return (Integer)instr.invoke(this, OP);

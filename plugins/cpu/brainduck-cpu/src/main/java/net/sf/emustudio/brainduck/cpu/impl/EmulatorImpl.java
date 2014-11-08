@@ -37,9 +37,9 @@ import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
 import net.sf.emustudio.brainduck.cpu.gui.BrainStatusPanel;
 
 import javax.swing.*;
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.MissingResourceException;
-import java.util.Queue;
 import java.util.ResourceBundle;
 
 @PluginType(type = PLUGIN_TYPE.CPU,
@@ -47,12 +47,12 @@ title = "BrainCPU",
 copyright = "\u00A9 Copyright 2009-2014, Peter Jakubčo",
 description = "Emulator of CPU for abstract BrainDuck architecture")
 public class EmulatorImpl extends AbstractCPU {
+    private final BrainCPUContextImpl context;
+    private final Deque<Integer> loopPointers = new LinkedList<>();
 
-    private MemoryContext<Short> memory;
-    private BrainCPUContextImpl context;
-    private int IP, P; // registers of the CPU
     private Disassembler disassembler;
-    private Queue<Integer> loopPointers = new LinkedList<>();
+    private MemoryContext<Short> memory;
+    private volatile int IP, P; // registers of the CPU
 
     public EmulatorImpl(Long pluginID) {
         super(pluginID);
@@ -88,9 +88,7 @@ public class EmulatorImpl extends AbstractCPU {
             }
             disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         } catch (InvalidContextException | ContextNotFoundException e) {
-            throw new PluginInitializationException(
-                    this, "Could not get memory context", e
-            );
+            throw new PluginInitializationException(this, "Could not get memory context", e);
         }
     }
 
@@ -131,7 +129,7 @@ public class EmulatorImpl extends AbstractCPU {
         super.reset(adr);
         IP = adr; // initialize program counter
         loopPointers.clear();
-        
+
         // find closest "free" address which does not contain a program
         try {
             while (memory.read(adr++) != 0) {
@@ -142,22 +140,14 @@ public class EmulatorImpl extends AbstractCPU {
             adr = 0;
         }
         P = adr; // assign to the P register the address we have found
-
-        // notify new CPU state
-        notifyStateChanged(runState);
     }
 
     @Override
     public void run() {
-        // change the CPU state to "running"
-        runState = RunState.STATE_RUNNING;
-        // notify the state
-        notifyStateChanged(runState);
-
         // here we are emulating in endless loop until an event stops it.
         // Externally, it might be the user, internally invalid instruction
         // or nonexistant memory location (address fallout)
-        while (runState == RunState.STATE_RUNNING) {
+        while (getRunState() == RunState.STATE_RUNNING) {
             try {
                 // if a breakpoint is set on the address pointed by IP register
                 // we throw new Breakpoint instance.
@@ -167,59 +157,24 @@ public class EmulatorImpl extends AbstractCPU {
                 emulateInstruction();
             } catch (IndexOutOfBoundsException e) {
                 // we get here if IP registers would point at nonexistant memory
-                runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
+                setRunState(RunState.STATE_STOPPED_ADDR_FALLOUT);
                 break;
             } catch (Breakpoint er) {
                 // we get here if a Breakpoint was thrown.
-                runState = RunState.STATE_STOPPED_BREAK;
+                setRunState(RunState.STATE_STOPPED_BREAK);
                 break;
             }
         }
-        notifyStateChanged(runState);
     }
 
     @Override
-    public void pause() {
-        // change run state to "breakpoint"
-        runState = RunState.STATE_STOPPED_BREAK;
-        // notify the new state
-        notifyStateChanged(runState);
-    }
-
-    @Override
-    public void step() {
-        // if the run state is "breakpoint"
-        if (runState == RunState.STATE_STOPPED_BREAK) {
-            try {
-                // change the state to "running"
-                runState = RunState.STATE_RUNNING;
-                emulateInstruction();
-                // if the emulation would like to continue (if it wasn't
-                // interrupted externally nor internally)
-                if (runState == RunState.STATE_RUNNING) {
-                    // then we change the run state back to "breakpoint"
-                    runState = RunState.STATE_STOPPED_BREAK;
-                }
-            } catch (IndexOutOfBoundsException e) {
-                // we get here if IP register would point at nonexistant memory
-                runState = RunState.STATE_STOPPED_ADDR_FALLOUT;
-            }
-            // notify CPU run state
-            notifyStateChanged(runState);
-        }
-    }
-
-    @Override
-    public void stop() {
-        // change run state to "stopped"
-        runState = RunState.STATE_STOPPED_NORMAL;
-        // notify the state
-        notifyStateChanged(runState);
+    protected void stepInternal() {
+        emulateInstruction();
     }
 
     @Override
     public void destroy() {
-        runState = RunState.STATE_STOPPED_NORMAL;
+        setRunState(RunState.STATE_STOPPED_NORMAL);
     }
 
     /**
@@ -233,29 +188,29 @@ public class EmulatorImpl extends AbstractCPU {
 
         // DECODE
         switch (OP) {
-            case 0: /* HALT */
-                runState = RunState.STATE_STOPPED_NORMAL;
+            case 0: /* ; */
+                setRunState(RunState.STATE_STOPPED_NORMAL);
                 return;
-            case 1: /* INC */
+            case 1: /* >  */
                 P++;
                 return;
-            case 2: /* DEC */
+            case 2: /* < */
                 P--;
                 return;
-            case 3: /* INCV */
-                memory.write(P, (short) ((memory.read(P) + 1) & 0xFF));
+            case 3: /* + */
+                memory.write(P, (short) (memory.read(P) + 1));
                 return;
-            case 4: /* DECV */
-                memory.write(P, (short) ((memory.read(P) - 1) & 0xFF));
+            case 4: /* - */
+                memory.write(P, (short) (memory.read(P) - 1));
                 return;
-            case 5: /* PRINT */
+            case 5: /* . */
                 context.writeToDevice(memory.read(P));
                 return;
-            case 6: /* LOAD */
-                memory.write(P, (short)(context.readFromDevice() & 0xFF));
+            case 6: /* , */
+                memory.write(P, context.readFromDevice());
                 return;
-            case 7: { /* LOOP */
-                loopPointers.add(IP - 1);
+            case 7: { /* [ */
+                loopPointers.push(IP -1);
                 if (memory.read(P) != 0) {
                     return;
                 }
@@ -278,21 +233,16 @@ public class EmulatorImpl extends AbstractCPU {
                 }
                 break;
             }
-            case 8: /* ENDL */
-                if (loopPointers.isEmpty()) {
-                    break;
+            case 8: /* ] */
+                int tmpIP = loopPointers.pop();
+                if (memory.read(P) != 0) {
+                    IP = tmpIP;
                 }
-                if (memory.read(P) == 0) {
-                    loopPointers.poll(); // clear unused pointer
-                    return;
-                }
-
-                IP = loopPointers.poll();
                 return;
             default: /* invalid instruction */
                 break;
         }
-        runState = RunState.STATE_STOPPED_BAD_INSTR;
+        setRunState(RunState.STATE_STOPPED_BAD_INSTR);
     }
 
     @Override
