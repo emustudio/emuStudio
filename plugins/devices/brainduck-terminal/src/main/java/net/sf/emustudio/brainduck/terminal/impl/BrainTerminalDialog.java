@@ -17,28 +17,30 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package net.sf.emustudio.brainduck.terminal.io;
+package net.sf.emustudio.brainduck.terminal.impl;
 
-import javax.swing.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.net.URL;
 import java.util.Objects;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import javax.swing.ImageIcon;
+import javax.swing.JDialog;
+import net.sf.emustudio.brainduck.terminal.io.Cursor;
+import net.sf.emustudio.brainduck.terminal.io.Display;
+import net.sf.emustudio.brainduck.terminal.io.GUIUtils;
+import net.sf.emustudio.brainduck.terminal.io.Keyboard;
+import net.sf.emustudio.brainduck.terminal.io.OutputProvider;
 
-public class BrainTerminalDialog extends javax.swing.JDialog implements IOProvider, KeyListener {
-    private static final int MAX_WIDTH = 80;
-    private static final int MAX_HEIGHT = 25;
+public class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.KeyboardListener {
+    private static final int MAX_COLUMN = 80;
+    private static final int MAX_ROW = 25;
 
     private final ImageIcon blueIcon;
     private final ImageIcon redIcon;
     private final ImageIcon greenIcon;
     
-    private final TextCanvas canvas;
-    private final BlockingQueue<Integer> inputBuffer = new LinkedBlockingQueue<>();
+    private final Display canvas;
+    private final Keyboard keyboard;
 
-    private BrainTerminalDialog() {
+    private BrainTerminalDialog(Keyboard keyboard) {
         URL blueIconURL = getClass().getResource(
                 "/net/sf/emustudio/brainduck/terminal/16_circle_blue.png"
         );
@@ -52,44 +54,54 @@ public class BrainTerminalDialog extends javax.swing.JDialog implements IOProvid
         blueIcon = new ImageIcon(Objects.requireNonNull(blueIconURL));
         redIcon = new ImageIcon(Objects.requireNonNull(redIconURL));
         greenIcon = new ImageIcon(Objects.requireNonNull(greenIconURL));
+        
+        this.keyboard = keyboard;
 
         setTitle("BrainDuck Terminal");
         initComponents();
         setLocationRelativeTo(null);
         
-        canvas = new TextCanvas(MAX_WIDTH, MAX_HEIGHT);
+        canvas = new Display(MAX_COLUMN, MAX_ROW);
         scrollPane.setViewportView(canvas);
         canvas.start();
     }
 
-    public static BrainTerminalDialog create() {
-        BrainTerminalDialog dialog = new BrainTerminalDialog();
-        GUIUtils.addListenerRecursively(dialog, dialog);
+    public static BrainTerminalDialog create(Keyboard keyboard) {
+        BrainTerminalDialog dialog = new BrainTerminalDialog(keyboard);
+        GUIUtils.addListenerRecursively(dialog, dialog.keyboard);
+        dialog.keyboard.addListener(dialog);
         return dialog;
     }
 
-    private void setReadIcon() {
-        lblStatusIcon.setIcon(greenIcon);
-        lblStatusIcon.repaint();
-    }
-    
-    private void setIdleIcon() {
-        lblStatusIcon.setIcon(blueIcon);
-        lblStatusIcon.repaint();
-    }
-
-    private void setWriteIcon() {
+    private void writeStarted() {
         lblStatusIcon.setIcon(redIcon);
         lblStatusIcon.repaint();
     }
 
     @Override
-    public void write(int c) {
-        setWriteIcon();
+    public void readStarted() {
+        lblStatusIcon.setIcon(greenIcon);
+        lblStatusIcon.repaint();
+    }
+
+    @Override
+    public void readEnded() {
+        lblStatusIcon.setIcon(blueIcon);
+        lblStatusIcon.repaint();
+    }
+
+    @Override
+    public void reset() {
+        canvas.clear();
+    }
+
+    @Override
+    public void write(int character) {
+        writeStarted();
         try {
             Cursor cursor = canvas.getTextCanvasCursor();
-            if (c < 32) {
-                switch (c) {
+            if (character < 32) {
+                switch (character) {
                     case 7:  /* bell */
                         break;
                     case 8:  /* backspace*/
@@ -100,37 +112,18 @@ public class BrainTerminalDialog extends javax.swing.JDialog implements IOProvid
                         break;
                     case 0x0A: /* line feed */
                         cursor.newLine();
-                        cursor.carriageReturn(); // simulate DOS
+                        cursor.carriageReturn(); // simulate CR/LF
                         break;
                     case 0x0D: /* carriage return */
                         cursor.carriageReturn();
                         break;
                 }
-                repaint();
                 return;
             }
-            canvas.writeAtCursor(c);
+            canvas.writeAtCursor(character);
         } finally {
-            setIdleIcon();
+            readEnded();
         }
-    }
-
-    @Override
-    public int read() {
-        setReadIcon();
-        try {
-            return inputBuffer.take();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } finally {
-            setIdleIcon();
-        }
-        return IOProvider.EOF;
-    }
-
-    @Override
-    public void reset() {
-        canvas.clear();
     }
 
     @Override
@@ -141,30 +134,10 @@ public class BrainTerminalDialog extends javax.swing.JDialog implements IOProvid
     @Override
     public void close() {
         canvas.stop();
-        GUIUtils.removeListenerRecursively(this, this);
+        GUIUtils.removeListenerRecursively(this, keyboard);
+        dispose();
     }
 
-    @Override
-    public void keyTyped(KeyEvent e) {
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        int keycode = e.getKeyCode();
-        if (keycode == KeyEvent.VK_ESCAPE) {
-            inputBuffer.add(IOProvider.EOF);
-        } else if (keycode == KeyEvent.VK_SHIFT || keycode == KeyEvent.VK_CONTROL ||
-                keycode == KeyEvent.VK_ALT || keycode == KeyEvent.VK_META) {
-            return;
-        } else {
-            inputBuffer.add((int) e.getKeyChar());
-        }
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-    }
-    
     /**
      * This method is called from within the constructor to initialize the form. WARNING: Do NOT modify this code. The
      * content of this method is always regenerated by the Form Editor.

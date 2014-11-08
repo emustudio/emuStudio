@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 
 @ThreadSafe
-public class TextCanvas extends JPanel {
+public class Display extends JPanel {
     @GuardedBy("memory")
     private final int[][] memory;
     private final int maxColumn;
@@ -41,7 +41,7 @@ public class TextCanvas extends JPanel {
 
     private final Font textFont = new Font("Monospaced", 0, 14);
 
-    public TextCanvas(int maxColumn, int maxRow) {
+    public Display(int maxColumn, int maxRow) {
         this.maxColumn = maxColumn;
         this.maxRow = maxRow;
         this.memory = new int[maxRow][maxColumn];

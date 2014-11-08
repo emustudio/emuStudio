@@ -26,7 +26,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public class FileIOProvider implements IOProvider {
+public class FileIOProvider implements InputProvider, OutputProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileIOProvider.class);
     private static final String OUTPUT_FILE_NAME = "BrainTerminal.out";
     private static final String INPUT_FILE_NAME = "BrainTerminal.in";

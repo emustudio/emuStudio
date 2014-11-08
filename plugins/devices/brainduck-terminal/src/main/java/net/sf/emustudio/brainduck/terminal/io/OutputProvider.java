@@ -1,6 +1,4 @@
 /*
- * KISS, DRY, YAGNI
- *
  * Copyright (C) 2014 Peter Jakubčo
  *
  * This program is free software; you can redistribute it and/or
@@ -17,14 +15,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package net.sf.emustudio.brainduck.terminal.io;
 
-import java.io.Closeable;
+import java.io.IOException;
 
-public interface IOProvider extends Closeable {
-    public static final int EOF = 0;
+public interface OutputProvider extends IOProvider {
+    public static final OutputProvider DUMMY = new OutputProvider() {
+
+        @Override
+        public void write(int character) {
+        }
+
+        @Override
+        public void reset() {
+        }
+
+        @Override
+        public void close() throws IOException {
+        }
+
+        @Override
+        public void showGUI() {
+        }
+    };
     
-    public void reset();
-
+    public void write(int character);
+    
+    public void showGUI();
+    
 }

@@ -76,12 +76,12 @@ public class TerminalWindow extends JFrame {
         setResizable(false);
 
         display.setFont(terminalFont);
-        display.setForeground(new java.awt.Color(0, 255, 0));
+        display.setForeground(new Color(0, 255, 0));
         display.setBackground(new Color(0, 0, 0));
         display.setBounds(53, 60, 653, 400);
 
         lblBack.setLocation(0, 0);
-        lblBack.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        lblBack.setFont(new Font("Monospaced", 0, 12)); // NOI18N
         lblBack.setIcon(img); // NOI18N
         lblBack.setFocusable(false);
 

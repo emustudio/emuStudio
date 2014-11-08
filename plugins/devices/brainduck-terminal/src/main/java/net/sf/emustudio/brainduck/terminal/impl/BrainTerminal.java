@@ -35,9 +35,10 @@ import java.io.IOException;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
-import net.sf.emustudio.brainduck.terminal.io.BrainTerminalDialog;
 import net.sf.emustudio.brainduck.terminal.io.FileIOProvider;
-import net.sf.emustudio.brainduck.terminal.io.IOProvider;
+import net.sf.emustudio.brainduck.terminal.io.InputProvider;
+import net.sf.emustudio.brainduck.terminal.io.Keyboard;
+import net.sf.emustudio.brainduck.terminal.io.OutputProvider;
 
 @PluginType(type = PLUGIN_TYPE.DEVICE,
 title = "BrainDuck terminal",
@@ -49,7 +50,6 @@ public class BrainTerminal extends AbstractDevice {
     private boolean nogui;
     private BrainCPUContext cpu;
     private BrainTerminalContext terminal;
-    private IOProvider ioProvider;
 
     public BrainTerminal(Long pluginID) {
         super(pluginID);
@@ -77,39 +77,46 @@ public class BrainTerminal extends AbstractDevice {
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
 
-        // read settings
-        String s = settings.readSetting(pluginID, SettingsManager.NO_GUI);
-        nogui = (s != null) && s.toUpperCase().equals("TRUE");
-        if (nogui) {
-            try {
-                ioProvider = new FileIOProvider();
-            } catch (IOException e) {
-                throw new PluginInitializationException(this, e);
-            }
-        } else {
-            ioProvider = BrainTerminalDialog.create();
-        }
-        terminal.setIoProvider(ioProvider);
-
         try {
-            cpu = (BrainCPUContext)ContextPool.getInstance().getCPUContext(pluginID, BrainCPUContext.class);
+            // read settings
+            String s = settings.readSetting(pluginID, SettingsManager.NO_GUI);
+            nogui = (s != null) && s.toUpperCase().equals("TRUE");
+
+            InputProvider inputProvider;
+            OutputProvider outputProvider;
+
+            if (nogui) {
+                FileIOProvider fileIOProvider = new FileIOProvider();
+                inputProvider = fileIOProvider;
+                outputProvider = fileIOProvider;
+            } else {
+                Keyboard keyboard = new Keyboard();
+                outputProvider = BrainTerminalDialog.create(keyboard);
+                inputProvider = keyboard;
+            }
+            terminal.setInputProvider(inputProvider);
+            terminal.setOutputProvider(outputProvider);
+
+            cpu = (BrainCPUContext) ContextPool.getInstance().getCPUContext(pluginID, BrainCPUContext.class);
+            cpu.attachDevice(terminal);
+        } catch (IOException e) {
+            throw new PluginInitializationException(this, e);
         } catch (ContextNotFoundException | InvalidContextException e) {
             throw new PluginInitializationException(
                     this, "BrainTerminal needs to be connected to the BrainCPU.", e
             );
         }
-        cpu.attachDevice(terminal);
     }
 
     @Override
     public void reset() {
-        ioProvider.reset();
+        terminal.reset();
     }
 
     @Override
     public void destroy() {
         try {
-            ioProvider.close();
+            terminal.close();
         } catch (IOException e) {
             LOGGER.error("Could not close io provider", e);
         }
@@ -118,7 +125,7 @@ public class BrainTerminal extends AbstractDevice {
     @Override
     public void showGUI() {
         if (!nogui) {
-            ioProvider.showGUI();
+            terminal.showGUI();
         }
     }
 

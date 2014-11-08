@@ -1,6 +1,4 @@
 /*
- * BrainTerminalContext.java
- *
  * Copyright (C) 2009-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
@@ -21,13 +19,24 @@
 package net.sf.emustudio.brainduck.terminal.impl;
 
 import emulib.plugins.device.DeviceContext;
+import java.io.IOException;
+import java.util.Objects;
+import net.jcip.annotations.ThreadSafe;
 import net.sf.emustudio.brainduck.terminal.io.IOProvider;
+import net.sf.emustudio.brainduck.terminal.io.InputProvider;
+import net.sf.emustudio.brainduck.terminal.io.OutputProvider;
 
-public class BrainTerminalContext implements DeviceContext<Short> {
-    private volatile IOProvider ioProvider = IOProvider.DUMMY;
+@ThreadSafe
+public class BrainTerminalContext implements DeviceContext<Short>, IOProvider {
+    private volatile InputProvider inputProvider = InputProvider.DUMMY;
+    private volatile OutputProvider outputProvider = OutputProvider.DUMMY;
 
-    public void setIoProvider(IOProvider ioProvider) {
-        this.ioProvider = ioProvider;
+    public void setInputProvider(InputProvider inputProvider) {
+        this.inputProvider = Objects.requireNonNull(inputProvider);
+    }
+
+    public void setOutputProvider(OutputProvider outputProvider) {
+        this.outputProvider = Objects.requireNonNull(outputProvider);
     }
 
     @Override
@@ -37,12 +46,51 @@ public class BrainTerminalContext implements DeviceContext<Short> {
 
     @Override
     public Short read() {
-        return (short)ioProvider.read();
+        InputProvider tmpInputProvider = inputProvider;
+        if (tmpInputProvider != null) {
+            return (short)tmpInputProvider.read();
+        }
+        return InputProvider.EOF;
     }
 
     @Override
     public void write(Short val) {
-        ioProvider.write(val);
+        OutputProvider tmpOutputProvider = outputProvider;
+        if (tmpOutputProvider != null) {
+            tmpOutputProvider.write(val);
+        }
     }
+
+    @Override
+    public void reset() {
+        InputProvider tmpInputProvider = inputProvider;
+        if (tmpInputProvider != null) {
+            tmpInputProvider.reset();
+        }
+        OutputProvider tmpOutputProvider = outputProvider;
+        if (tmpOutputProvider != null) {
+            tmpOutputProvider.reset();
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        InputProvider tmpInputProvider = inputProvider;
+        if (tmpInputProvider != null) {
+            tmpInputProvider.close();
+        }
+        OutputProvider tmpOutputProvider = outputProvider;
+        if (tmpOutputProvider != null) {
+            tmpOutputProvider.close();
+        }
+    }
+    
+    public void showGUI() {
+        OutputProvider tmpOutputProvider = outputProvider;
+        if (tmpOutputProvider != null) {
+            tmpOutputProvider.showGUI();
+        }
+    }
+    
 
 }

@@ -35,7 +35,7 @@ public class Cursor {
     private final int canvasMaxColumn;
 
     private final BlockingDeque<PointTask> repaintTasks = new LinkedBlockingDeque<>();
-    private volatile TextCanvas canvas;
+    private volatile Display canvas;
 
     private volatile int charWidth;
     private volatile int charHeight;
@@ -55,7 +55,7 @@ public class Cursor {
         reset();
     }
 
-    public void start(TextCanvas canvas) {
+    public void start(Display canvas) {
         this.canvas = Objects.requireNonNull(canvas);
         this.charWidth = canvas.getCharWidth();
         this.charHeight = canvas.getCharHeight();
