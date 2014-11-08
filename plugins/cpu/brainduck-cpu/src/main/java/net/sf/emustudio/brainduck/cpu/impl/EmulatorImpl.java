@@ -31,15 +31,16 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
-import java.util.LinkedList;
-import java.util.MissingResourceException;
-import java.util.Queue;
-import java.util.ResourceBundle;
-import javax.swing.JPanel;
 import net.sf.emustudio.braincpu.gui.DecoderImpl;
 import net.sf.emustudio.braincpu.gui.DisassemblerImpl;
 import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
 import net.sf.emustudio.brainduck.cpu.gui.BrainStatusPanel;
+
+import javax.swing.*;
+import java.util.LinkedList;
+import java.util.MissingResourceException;
+import java.util.Queue;
+import java.util.ResourceBundle;
 
 @PluginType(type = PLUGIN_TYPE.CPU,
 title = "BrainCPU",
@@ -242,16 +243,16 @@ public class EmulatorImpl extends AbstractCPU {
                 P--;
                 return;
             case 3: /* INCV */
-                memory.write(P, (short) (memory.read(P) + 1));
+                memory.write(P, (short) ((memory.read(P) + 1) & 0xFF));
                 return;
             case 4: /* DECV */
-                memory.write(P, (short) (memory.read(P) - 1));
+                memory.write(P, (short) ((memory.read(P) - 1) & 0xFF));
                 return;
             case 5: /* PRINT */
                 context.writeToDevice(memory.read(P));
                 return;
             case 6: /* LOAD */
-                memory.write(P, context.readFromDevice());
+                memory.write(P, (short)(context.readFromDevice() & 0xFF));
                 return;
             case 7: { /* LOOP */
                 loopPointers.add(IP - 1);
