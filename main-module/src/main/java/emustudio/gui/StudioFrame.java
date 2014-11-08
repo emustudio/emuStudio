@@ -24,7 +24,6 @@ import emulib.plugins.compiler.Compiler.CompilerListener;
 import emulib.plugins.compiler.Message;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.CPU.RunState;
-import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
 import emulib.plugins.memory.Memory.MemoryListener;
 import emulib.plugins.memory.MemoryContext;
@@ -44,8 +43,11 @@ import emustudio.gui.editor.EmuTextPane.UndoActionListener;
 import emustudio.gui.utils.ConstantSizeButton;
 import emustudio.gui.utils.FindText;
 import emustudio.main.Main;
-import java.awt.Font;
-import java.awt.Toolkit;
+
+import javax.swing.*;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.FlavorEvent;
 import java.awt.datatransfer.FlavorListener;
@@ -56,31 +58,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
-import javax.swing.AbstractListModel;
-import javax.swing.BorderFactory;
-import javax.swing.GroupLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JList;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextArea;
-import javax.swing.JToolBar;
-import javax.swing.KeyStroke;
-import javax.swing.LayoutStyle;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
-import javax.swing.event.CaretEvent;
-import javax.swing.event.CaretListener;
 
 public class StudioFrame extends javax.swing.JFrame {
     private final static Logger LOGGER = LoggerFactory.getLogger(StudioFrame.class);
@@ -1412,8 +1389,9 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void btnOpenActionPerformed(java.awt.event.ActionEvent evt) {
-        txtSource.openFileDialog();
-        txtOutput.setText("");
+        if (txtSource.openFileDialog()) {
+            txtOutput.setText("");
+        }
     }
 
     private void btnNewActionPerformed(java.awt.event.ActionEvent evt) {
