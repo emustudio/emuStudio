@@ -6,7 +6,6 @@ dcx sp       ; stack initialization (0FFFFh)
 
 lxi h,text1 
 call putstr  ; print text1
-
 lxi d,input  ; address for string input
 call getline ; read from keyboard
 

@@ -30,12 +30,13 @@ import emulib.runtime.ContextPool;
 import emulib.runtime.HEXFileManager;
 import emulib.runtime.LoggerFactory;
 import emulib.runtime.interfaces.Logger;
+import net.sf.emustudio.intel8080.assembler.tree.Statement;
+
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
-import net.sf.emustudio.intel8080.assembler.tree.Statement;
 
 /**
  * Main implementation class of the plug-in (assembler for 8080 processor).
@@ -116,6 +117,7 @@ public class CompilerImpl extends AbstractCompiler {
     public boolean compile(String inputFileName, String outputFileName) {
         try {
             notifyCompileStart();
+            parser.setCompiler(this);
             HEXFileManager hex = compileToHex(inputFileName);
 
             hex.generateFile(outputFileName);
@@ -134,8 +136,7 @@ public class CompilerImpl extends AbstractCompiler {
             return true;
         } catch (Exception e) {
             notifyError("Compilation error: " + e.getMessage());
-            LOGGER.error("Compilation error", e);
-            notifyCompileFinish(1);            
+            notifyCompileFinish(1);
             return false;
         }
     }

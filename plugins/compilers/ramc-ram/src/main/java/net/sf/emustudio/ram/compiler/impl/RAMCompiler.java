@@ -31,32 +31,33 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
+import net.sf.emustudio.ram.compiler.tree.Program;
+import net.sf.emustudio.ram.compiler.tree.RAMInstructionImpl;
+import net.sf.emustudio.ram.memory.RAMInstruction;
+import net.sf.emustudio.ram.memory.RAMMemoryContext;
+
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
-import net.sf.emustudio.ram.compiler.tree.Program;
-import net.sf.emustudio.ram.compiler.tree.RAMInstructionImpl;
-import net.sf.emustudio.ram.memory.RAMInstruction;
-import net.sf.emustudio.ram.memory.RAMMemoryContext;
 
 @PluginType(type = PLUGIN_TYPE.COMPILER,
 title = "RAM Compiler",
 copyright = "\u00A9 Copyright 2009-2014, Peter Jakubčo",
 description = "Custom compiler for RAM abstract machine")
 public class RAMCompiler extends AbstractCompiler {
-    private LexerImpl lex = null;
-    private ParserImpl par;
+    private final LexerImpl lexer;
+    private final ParserImpl parser;
     private RAMMemoryContext memory;
     private RAMInstructionImpl context; // not needed context for anything, but
     private SourceFileExtension[] suffixes; // necessary for the registration
 
     public RAMCompiler(Long pluginID) {
         super(pluginID);
-        // lex has to be reset WITH a reader object before compile
-        lex = new LexerImpl((Reader) null);
-        par = new ParserImpl(lex, this);
+        // lexer has to be reset WITH a reader object before compile
+        lexer = new LexerImpl((Reader) null);
+        parser = new ParserImpl(lexer);
         context = new RAMInstructionImpl(0, null);
         try {
             ContextPool.getInstance().register(pluginID, context, RAMInstruction.class);
@@ -91,23 +92,23 @@ public class RAMCompiler extends AbstractCompiler {
 
     private CompiledCode compileFrom(String inputFileName) throws Exception {
         Objects.requireNonNull(inputFileName);
-        Objects.requireNonNull(par);
-        
+
         notifyInfo(getTitle() + ", version " + getVersion());
+        parser.setCompiler(this);
 
         Object parsedProgram;
         CompiledCode compiledProgram = new CompiledCode();
 
         try (Reader reader = new FileReader(inputFileName)) {
-            lex.reset(reader, 0, 0, 0);
-            parsedProgram = par.parse().value;
+            lexer.reset(reader, 0, 0, 0);
+            parsedProgram = parser.parse().value;
 
             if (parsedProgram == null) {
                 notifyError("Unexpected end of file");
-                return null;
+                throw new Exception("Unexpected end of file");
             }
-            if (par.errorCount != 0) {
-                return null;
+            if (parser.errorCount != 0) {
+                throw new Exception("Program has errors");
             }
 
             // do several passes for compiling

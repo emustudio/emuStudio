@@ -3,7 +3,7 @@
  *
  * Parser (syntactic analyzer for 8080 compiler)
  *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -42,18 +42,13 @@ scan with {:
     return (Symbol)t;
  :}
 parser code {:
-    private CompilerImpl asm;
+    private CompilerImpl compiler;
     public int lastLine;
     public int lastColumn;
     public int errorCount = 0;
 
     private String reportPrefixString = null;
     
-    public ParserImpl(java_cup.runtime.Scanner s, CompilerImpl asm) {
-        this(s);
-        this.asm = asm;
-    }
-    	
     public void syntax_error(Symbol current) {
         report_error("Syntax error: ",current);
     }
@@ -74,19 +69,23 @@ parser code {:
         Message message = new Message(MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(),
                 null, errorCount);
 
-        if (asm != null) {
-            asm.notifyOnMessage(message);
+        if (compiler != null) {
+            compiler.notifyOnMessage(message);
         } else {
-            System.out.println(message);
+            System.out.println(message.getFormattedMessage());
         }
     }
-    
+
+    public void setCompiler(CompilerImpl compiler) {
+        this.compiler = compiler;
+    }
+
+    public CompilerImpl getCompiler() {
+        return compiler;
+    }
+
     public void setReportPrefixString(String str) {
         this.reportPrefixString = str;
-    }
-    
-    public CompilerImpl getAsm() {
-        return asm;
     }
 
 :}
@@ -229,7 +228,7 @@ Pseudocode ::= PREPROCESSOR_ORG Expression:e
  | TIDENTIFIER:name MacroExprOptional:vec
     {: RESULT = new MacroCallPseudo(name, vec,parser.lastLine, parser.lastColumn); :}
  | PREPROCESSOR_INCLUDE LITERAL_STRING:filename
-    {: RESULT = new IncludePseudoNode(filename,parser.lastLine,parser.lastColumn,parser.getAsm()); :};
+    {: RESULT = new IncludePseudoNode(filename,parser.lastLine,parser.lastColumn,parser.getCompiler()); :};
 
 MacroOperOptional ::= MOperList:vec {: RESULT = vec; :} | {: RESULT = null; :};
 MOperList ::= TIDENTIFIER:name

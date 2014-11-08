@@ -39,19 +39,18 @@ scan with {:
     return (Symbol)t;
  :}
 parser code {:
-    private CompilerImpl asm;
+    private CompilerImpl compiler;
     public int lastLine;
     public int lastColumn;
     public int errorCount = 0;
     private String reportPrefixString = null;
-    
-    public ParserImpl(java_cup.runtime.Scanner s, CompilerImpl asm) {
-        this(s);
-        this.asm = asm;
+
+    public void setCompiler(CompilerImpl compiler) {
+        this.compiler = compiler;
     }
-    
-    public CompilerImpl getAsm() {
-        return asm;
+
+    public CompilerImpl getCompiler() {
+        return compiler;
     }
     	
     public void syntax_error(Symbol current) {
@@ -74,10 +73,10 @@ parser code {:
         Message message = new Message(MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(),
                 null, errorCount);
 
-        if (asm != null) {
-            asm.notifyOnMessage(message);
+        if (compiler != null) {
+            compiler.notifyOnMessage(message);
         } else {
-            System.out.println(message);
+            System.out.println(message.getFormattedMessage());
         }
     }
     
@@ -291,7 +290,7 @@ Pseudo ::= PREPROCESSOR_ORG Expression:e
            TIDENTIFIER:name MacroParameters:params
            {: RESULT = new PseudoMACROCall(name,params,parser.lastLine, parser.lastColumn); :}|
            PREPROCESSOR_INCLUDE LITERAL_STRING:filename
-           {: RESULT = new PseudoINCLUDE(filename,parser.lastLine,parser.lastColumn, parser.getAsm()); :};
+           {: RESULT = new PseudoINCLUDE(filename,parser.lastLine,parser.lastColumn, parser.getCompiler()); :};
 
 MacroOperands ::= MacroOperList:operands
                   {: RESULT = operands; :}|

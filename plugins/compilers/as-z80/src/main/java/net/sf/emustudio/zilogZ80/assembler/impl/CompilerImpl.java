@@ -29,16 +29,17 @@ import emulib.runtime.ContextPool;
 import emulib.runtime.HEXFileManager;
 import emulib.runtime.LoggerFactory;
 import emulib.runtime.interfaces.Logger;
+import net.sf.emustudio.zilogZ80.assembler.tree.Program;
+
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
-import net.sf.emustudio.zilogZ80.assembler.tree.Program;
 
 @PluginType(type=PLUGIN_TYPE.COMPILER,
         title="Zilog Z80 Assembler",
-        copyright="\u00A9 Copyright 2007-2013, Peter Jakubčo",
+        copyright="\u00A9 Copyright 2007-2014, Peter Jakubčo",
         description="Custom version of the assembler. For syntax look at users manual.")
 public class CompilerImpl extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
@@ -97,7 +98,7 @@ public class CompilerImpl extends AbstractCompiler {
                 // don't worry about deadlock
             }
             if (env.getPassNeedCount() != 0) {
-                throw new Exception("Error: can't evaulate all expressions");
+                throw new Exception("Error: can't evaluate all expressions");
             }
             stat.pass4(hex, env);
             return hex;
@@ -108,6 +109,7 @@ public class CompilerImpl extends AbstractCompiler {
     public boolean compile(String inputFileName, String outputFileName) {
         try {
             notifyCompileStart();
+            parser.setCompiler(this);
             HEXFileManager hex = compileToHex(inputFileName);
 
             hex.generateFile(outputFileName);
@@ -126,7 +128,6 @@ public class CompilerImpl extends AbstractCompiler {
             return true;
         } catch (Exception e) {
             notifyError("Compilation error: " + e.getMessage());
-            LOGGER.error("Compilation error", e);
             return false;
         }
     }

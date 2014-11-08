@@ -21,26 +21,27 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.List;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.impl.CompilerImpl;
 import net.sf.emustudio.intel8080.assembler.impl.LexerImpl;
 import net.sf.emustudio.intel8080.assembler.impl.ParserImpl;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoNode;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.List;
+
 public class IncludePseudoNode extends PseudoNode {
     private final String fileName;
-    private final CompilerImpl asm;
+    private final CompilerImpl compiler;
     private Statement program;
     private CompileEnv namespace;
 
-    public IncludePseudoNode(String filename, int line, int column, CompilerImpl asm) {
+    public IncludePseudoNode(String filename, int line, int column, CompilerImpl compiler) {
         super(line, column);
         this.fileName = filename.replace("\\", File.separator);        
-        this.asm = asm;
+        this.compiler = compiler;
     }
 
     @Override
@@ -75,12 +76,13 @@ public class IncludePseudoNode extends PseudoNode {
             
             File file = findIncludeFile(fileName);
             FileReader f = new FileReader(file);
-            LexerImpl lex = new LexerImpl(f);
-            ParserImpl par = new ParserImpl(lex, asm);
+            LexerImpl lexer = new LexerImpl(f);
+            ParserImpl parser = new ParserImpl(lexer);
+            parser.setCompiler(compiler);
 
-            par.setReportPrefixString(file.getName() + ": ");
-            Object s = par.parse().value;
-            par.setReportPrefixString(null);
+            parser.setReportPrefixString(file.getName() + ": ");
+            Object s = parser.parse().value;
+            parser.setReportPrefixString(null);
 
             if (s == null) {
                 throw new Exception("[" + line + "," + column + "] "

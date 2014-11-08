@@ -21,26 +21,27 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.List;
 import net.sf.emustudio.zilogZ80.assembler.impl.CompilerImpl;
 import net.sf.emustudio.zilogZ80.assembler.impl.LexerImpl;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.impl.ParserImpl;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Pseudo;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.List;
+
 public class PseudoINCLUDE extends Pseudo {
     private final String fileName;
     private Program program;
     private Namespace namespace;
-    private final CompilerImpl asm;
+    private final CompilerImpl compiler;
 
-    public PseudoINCLUDE(String filename, int line, int column, CompilerImpl asm) {
+    public PseudoINCLUDE(String filename, int line, int column, CompilerImpl compiler) {
         super(line, column);
         this.fileName = filename.replace("\\", File.separator);        
-        this.asm = asm;
+        this.compiler = compiler;
     }
 
     @Override
@@ -79,12 +80,13 @@ public class PseudoINCLUDE extends Pseudo {
             File file = findIncludeFile(fileName);
             
             FileReader f = new FileReader(file);
-            LexerImpl lex = new LexerImpl(f);
-            ParserImpl par = new ParserImpl(lex, asm);
+            LexerImpl lexer = new LexerImpl(f);
+            ParserImpl parser = new ParserImpl(lexer);
+            parser.setCompiler(compiler);
 
-            par.setReportPrefixString(file.getName() + ": ");
-            Object s = par.parse().value;
-            par.setReportPrefixString(null);
+            parser.setReportPrefixString(file.getName() + ": ");
+            Object s = parser.parse().value;
+            parser.setReportPrefixString(null);
             if (s == null) {
                 throw new Exception("[" + line + "," + column + "] "
                         + "Error: Unexpected end of file (" + file.getName() + ")");
@@ -101,8 +103,7 @@ public class PseudoINCLUDE extends Pseudo {
         } catch (IOException e) {
             throw new Exception(fileName + ": I/O Error");
         } catch (Exception e) {
-            throw new Exception("[" + line + "," + column + "] "
-                    + e.getMessage());
+            throw new Exception("[" + line + "," + column + "] " + e.getMessage());
         }
     }
 

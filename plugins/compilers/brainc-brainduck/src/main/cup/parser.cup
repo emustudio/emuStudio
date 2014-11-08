@@ -1,5 +1,5 @@
 /*
- * Parser (syntactic analyzer for BrainDuck)
+ * Parser (syntactic analyzer for Brainfuck)
  *
  * Copyright (C) 2009-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
@@ -29,15 +29,14 @@ import emulib.plugins.compiler.Message.MessageType;
 
 init with {: errorCount = 0; :}
 parser code {:
-    private CompilerImpl compiler = null;
+    private CompilerImpl compiler;
     public Token lastToken;
     public int errorCount = 0;
-    
-    public ParserImpl(java_cup.runtime.Scanner s, CompilerImpl compiler) {
-        this(s);
+
+    public void setCompiler(CompilerImpl compiler) {
         this.compiler = compiler;
     }
-    	
+
     public void syntax_error(Symbol current) {
         errorCount++;
         report_error("Syntax error: ",current);

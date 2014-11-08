@@ -1,9 +1,7 @@
 /*
- * ParserImpl.java
- *
  * Parser (syntactic analyzer for RAM)
  *
- * Copyright (C) 2009-2013 Peter Jakubčo
+ * Copyright (C) 2009-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -34,16 +32,15 @@ import net.sf.emustudio.ram.memory.RAMInstruction;
 
 init with {: errorCount = 0; :}
 parser code {:
-    private RAMCompiler ram = null;
+    private RAMCompiler compiler;
     public Token lastToken;
     public int errorCount = 0;
     private String reportPrefixString = null;
     
-    public ParserImpl(java_cup.runtime.Scanner s, RAMCompiler ram) {
-        this(s);
-        this.ram = ram;
+    public void setCompiler(RAMCompiler compiler) {
+        this.compiler = compiler;
     }
-    	
+
     public void syntax_error(Symbol current) {
         errorCount++;
         report_error("Syntax error: ",current);
@@ -66,10 +63,10 @@ parser code {:
         Message message = new Message(MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(),
                 null, errorCount);
 
-        if (ram != null) {
-            ram.notifyOnMessage(message);
+        if (compiler != null) {
+            compiler.notifyOnMessage(message);
         } else {
-            System.out.println(message);
+            System.out.println(message.getFormattedMessage());
         }
     }
 

@@ -29,12 +29,13 @@ import emulib.runtime.ContextPool;
 import emulib.runtime.HEXFileManager;
 import emulib.runtime.LoggerFactory;
 import emulib.runtime.interfaces.Logger;
+import net.sf.emustudio.brainduck.brainc.tree.Program;
+
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
-import net.sf.emustudio.brainduck.brainc.tree.Program;
 
 @PluginType(type = PLUGIN_TYPE.COMPILER,
         title = "BrainDuck Compiler",
@@ -43,15 +44,15 @@ import net.sf.emustudio.brainduck.brainc.tree.Program;
 public class CompilerImpl extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
 
-    private final LexerImpl lex;
-    private final ParserImpl par;
+    private final LexerImpl lexer;
+    private final ParserImpl parser;
     private final SourceFileExtension[] suffixes;
 
     public CompilerImpl(Long pluginID) {
         super(pluginID);
-        // lex has to be reset WITH a reader object before compile
-        lex = new LexerImpl((Reader) null);
-        par = new ParserImpl(lex, this);
+        // lexer has to be reset WITH a reader object before compile
+        lexer = new LexerImpl((Reader) null);
+        parser = new ParserImpl(lexer);
         suffixes = new SourceFileExtension[1];
         suffixes[0] = new SourceFileExtension("b", "Brainduck assembler source");
     }
@@ -79,14 +80,14 @@ public class CompilerImpl extends AbstractCompiler {
         HEXFileManager hex = new HEXFileManager();
 
         try (Reader reader = new FileReader(inputFileName)) {
-            lex.reset(reader, 0, 0, 0);
-            parsedProgram = par.parse().value;
+            lexer.reset(reader, 0, 0, 0);
+            parsedProgram = parser.parse().value;
 
             if (parsedProgram == null) {
                 notifyError("Unexpected end of file");
                 throw new Exception("Unexpected end of file");
             }
-            if (par.errorCount != 0) {
+            if (parser.errorCount != 0) {
                 throw new Exception("Program has errors");
             }
 
@@ -102,6 +103,7 @@ public class CompilerImpl extends AbstractCompiler {
     public boolean compile(String inputFileName, String outputFileName) {
         try {
             notifyCompileStart();
+            parser.setCompiler(this);
             HEXFileManager hex = compileToHex(inputFileName);
 
             hex.generateFile(outputFileName);
