@@ -132,7 +132,7 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public boolean compile(String inputFileName) {
-        String outputFileName = inputFileName;
+        String outputFileName = Objects.requireNonNull(inputFileName);
         for (SourceFileExtension extension : suffixes) {
             int i = inputFileName.lastIndexOf("." + extension.getExtension());
 

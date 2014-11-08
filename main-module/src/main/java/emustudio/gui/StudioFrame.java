@@ -1304,10 +1304,13 @@ public class StudioFrame extends javax.swing.JFrame {
             Main.tryShowErrorMessage("Compiler is not defined.", "Compile");
             return;
         }
-        txtOutput.setText("");
-        String fn = txtSource.getFileName();
-
         try {
+            if (!txtSource.saveFile(true)) {
+                return;
+            }
+
+            String fn = txtSource.getFileName();
+            txtOutput.setText("");
             Memory memory = computer.getMemory();
             if (memory != null) {
                 memory.reset();
