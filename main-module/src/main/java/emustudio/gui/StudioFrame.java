@@ -38,6 +38,7 @@ import emulib.runtime.interfaces.Logger;
 import emustudio.architecture.Computer;
 import emustudio.emulation.EmulationController;
 import emustudio.gui.debugTable.DebugTableImpl;
+import emustudio.gui.debugTable.PagesPanel;
 import emustudio.gui.editor.EmuTextPane;
 import emustudio.gui.editor.EmuTextPane.UndoActionListener;
 import emustudio.gui.utils.ConstantSizeButton;
@@ -71,8 +72,7 @@ public class StudioFrame extends javax.swing.JFrame {
     private final Computer computer;
     private volatile RunState run_state = RunState.STATE_STOPPED_BREAK;
 
-    private DebugTableImpl tblDebug;
-    private int pageSeekLastValue = 10;
+    private DebugTableImpl debugTable;
 
     public StudioFrame(String fileName, String title) {
         this(title);
@@ -84,19 +84,19 @@ public class StudioFrame extends javax.swing.JFrame {
         emulationController = new EmulationController(computer);
 
         txtSource = new EmuTextPane(computer.getCompiler());
-        tblDebug = new DebugTableImpl();
+        debugTable = new DebugTableImpl();
         systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
         initComponents();
 
-        jScrollPane1.setViewportView(txtSource);
-        paneDebug.setViewportView(tblDebug);
+        editorScrollPane.setViewportView(txtSource);
+        paneDebug.setViewportView(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         paneDebug.addComponentListener(new ComponentListener() {
 
             @Override
             public void componentResized(ComponentEvent e) {
-                tblDebug.fireResized(paneDebug.getHeight());
+                debugTable.fireResized(paneDebug.getHeight());
             }
 
             @Override
@@ -115,10 +115,10 @@ public class StudioFrame extends javax.swing.JFrame {
 
         this.setStatusGUI();
         pack();
-        tblDebug.fireResized(paneDebug.getHeight());
+        debugTable.fireResized(paneDebug.getHeight());
 
         try {
-            API.getInstance().setDebugTable(tblDebug, Main.password);
+            API.getInstance().setDebugTable(debugTable, Main.password);
         } catch (InvalidPasswordException e) {
             LOGGER.error("Could not register debug table", e);
         }
@@ -170,7 +170,7 @@ public class StudioFrame extends javax.swing.JFrame {
 
             @Override
             public void internalStateChanged() {
-                tblDebug.refresh();
+                debugTable.refresh();
             }
 
             @Override
@@ -184,8 +184,8 @@ public class StudioFrame extends javax.swing.JFrame {
                     btnBeginning.setEnabled(false);
                     btnPause.setEnabled(true);
                     btnRunTime.setEnabled(false);
-                    tblDebug.setEnabled(false);
-                    tblDebug.setVisible(false);
+                    debugTable.setEnabled(false);
+                    debugTable.setVisible(false);
                     paneDebug.setEnabled(false);
                 } else {
                     btnPause.setEnabled(false);
@@ -203,9 +203,9 @@ public class StudioFrame extends javax.swing.JFrame {
                     btnBack.setEnabled(true);
                     btnBeginning.setEnabled(true);
                     paneDebug.setEnabled(true);
-                    tblDebug.setEnabled(true);
-                    tblDebug.setVisible(true);
-                    tblDebug.refresh();
+                    debugTable.setEnabled(true);
+                    debugTable.setVisible(true);
+                    debugTable.refresh();
                 }
             }
         });
@@ -309,7 +309,7 @@ public class StudioFrame extends javax.swing.JFrame {
                     @Override
                     public void memoryChanged(int adr) {
                         if (run_state != RunState.STATE_RUNNING) {
-                            tblDebug.refresh();
+                            debugTable.refresh();
                         }
                     }
                 });
@@ -339,7 +339,7 @@ public class StudioFrame extends javax.swing.JFrame {
         JSeparator jSeparator2 = new JSeparator();
         btnCompile = new JButton();
         JSplitPane splitSource = new JSplitPane();
-        jScrollPane1 = new JScrollPane();
+        editorScrollPane = new JScrollPane();
         JScrollPane jScrollPane2 = new JScrollPane();
         txtOutput = new JTextArea();
         JPanel panelEmulator = new JPanel();
@@ -360,13 +360,6 @@ public class StudioFrame extends javax.swing.JFrame {
         btnBreakpoint = new JButton();
         btnMemory = new JButton();
         paneDebug = new JScrollPane();
-        JButton btnFirst =  new JButton();
-        JButton btnBackward = new JButton();
-        JButton btnCurrentPage =  new JButton();
-        JButton btnForward =  new JButton();
-        JButton btnLast =  new JButton();
-        JButton btnSeekBackward =  new JButton();
-        JButton btnSeekForward =  new JButton();
 
         JPanel peripheralPanel = new JPanel();
         JScrollPane paneDevices = new JScrollPane();
@@ -400,7 +393,7 @@ public class StudioFrame extends javax.swing.JFrame {
         JMenu mnuHelp = new JMenu();
         JMenuItem mnuHelpAbout = new JMenuItem();
         JSeparator jSeparator7 = new JSeparator();
-        JPanel panelPages = new JPanel();
+        JPanel panelPages = PagesPanel.create(debugTable);
 
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("emuStudio");
@@ -562,7 +555,7 @@ public class StudioFrame extends javax.swing.JFrame {
         splitSource.setDividerLocation(260);
         splitSource.setOrientation(JSplitPane.VERTICAL_SPLIT);
         splitSource.setOneTouchExpandable(true);
-        splitSource.setLeftComponent(jScrollPane1);
+        splitSource.setLeftComponent(editorScrollPane);
 
         txtOutput.setColumns(20);
         txtOutput.setEditable(false);
@@ -577,11 +570,23 @@ public class StudioFrame extends javax.swing.JFrame {
         GroupLayout panelSourceLayout = new GroupLayout(panelSource);
         panelSource.setLayout(panelSourceLayout);
         panelSourceLayout.setHorizontalGroup(
-                panelSourceLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(toolStandard) //, GroupLayout.DEFAULT_SIZE, 728, Short.MAX_VALUE)
-                .addGroup(panelSourceLayout.createSequentialGroup().addContainerGap().addComponent(splitSource) //, GroupLayout.DEFAULT_SIZE, 708, Short.MAX_VALUE)
-                .addContainerGap()));
+                panelSourceLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(toolStandard)
+                        .addGroup(
+                                panelSourceLayout
+                                        .createSequentialGroup()
+                                        .addContainerGap()
+                                        .addComponent(splitSource)
+                                        .addContainerGap()
+                        )
+        );
         panelSourceLayout.setVerticalGroup(
-                panelSourceLayout.createSequentialGroup().addComponent(toolStandard, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE).addComponent(splitSource, 10, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE).addContainerGap());
+                panelSourceLayout
+                        .createSequentialGroup()
+                        .addComponent(toolStandard, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(splitSource, 10, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)
+                        .addContainerGap()
+        );
 
         tabbedPane.addTab("Source code editor", panelSource);
 
@@ -742,115 +747,19 @@ public class StudioFrame extends javax.swing.JFrame {
         toolDebug.add(btnBreakpoint);
         toolDebug.add(btnMemory);
 
-        btnFirst.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/page-first.png"))); // NOI18N
-        btnFirst.setToolTipText("Go to the first page");
-
-        btnBackward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/page-back.png"))); // NOI18N
-        btnBackward.setToolTipText("Go to the previous page");
-
-        btnCurrentPage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/page-current.png"))); // NOI18N
-        btnCurrentPage.setToolTipText("Go to the current page");
-
-        btnForward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/page-forward.png"))); // NOI18N
-        btnForward.setToolTipText("Go to the next page");
-
-        btnLast.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/page-last.png"))); // NOI18N
-        btnLast.setToolTipText("Go to the last page");
-
-        btnSeekBackward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/page-seek-backward.png"))); // NOI18N
-        btnSeekBackward.setToolTipText("Go to the current page");
-
-        btnSeekForward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/page-seek-forward.png"))); // NOI18N
-        btnSeekForward.setToolTipText("Go to the current page");
-
-        btnFirst.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnFirstActionPerformed(evt);
-            }
-        });
-        btnBackward.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnBackwardActionPerformed(evt);
-            }
-        });
-        btnForward.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnForwardActionPerformed(evt);
-            }
-        });
-        btnCurrentPage.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnCurrentPageActionPerformed(evt);
-            }
-        });
-        btnLast.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnLastActionPerformed(evt);
-            }
-        });
-        btnSeekBackward.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnSeekBackwardActionPerformed(evt);
-            }
-        });
-        btnSeekForward.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnSeekForwardActionPerformed(evt);
-            }
-        });
-
-        GroupLayout pagesLayout = new GroupLayout(panelPages);
-        panelPages.setLayout(pagesLayout);
-        pagesLayout.setHorizontalGroup(
-            pagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-            .addGroup(pagesLayout.createSequentialGroup()
-                .addComponent(btnFirst)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnSeekBackward)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnBackward)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnCurrentPage)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnForward)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnSeekForward)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnLast))
-        );
-        pagesLayout.setVerticalGroup(
-            pagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-            .addGroup(pagesLayout.createSequentialGroup()
-                .addGroup(pagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(btnLast)
-                    .addComponent(btnSeekBackward)
-                    .addComponent(btnBackward)
-                    .addComponent(btnFirst)
-                    .addComponent(btnCurrentPage)
-                    .addComponent(btnSeekForward)
-                    .addComponent(btnForward)))
-        );
-
         GroupLayout debuggerPanelLayout = new GroupLayout(debuggerPanel);
         debuggerPanel.setLayout(debuggerPanelLayout);
         debuggerPanelLayout.setHorizontalGroup(
                 debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.CENTER).addComponent(toolDebug) //, GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
-                .addGroup(debuggerPanelLayout.createSequentialGroup().addComponent(panelPages))
-                .addComponent(paneDebug, 10, 350, Short.MAX_VALUE));
+                        .addGroup(debuggerPanelLayout.createSequentialGroup().addComponent(panelPages))
+                        .addComponent(paneDebug, 10, 350, Short.MAX_VALUE));
         debuggerPanelLayout.setVerticalGroup(
                 debuggerPanelLayout.createSequentialGroup()
-                .addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
-                .addComponent(paneDebug, GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(panelPages)));
+                        .addComponent(toolDebug, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(paneDebug, GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(debuggerPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                .addComponent(panelPages)));
         splitLeftRight.setDividerLocation(1.0);
         splitPerDebug.setTopComponent(debuggerPanel);
 
@@ -1162,10 +1071,10 @@ public class StudioFrame extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
-                GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
+                        GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
         layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE,
-                GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
+                        GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
     }
 
     private void btnPauseActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1215,7 +1124,7 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void btnRunActionPerformed(java.awt.event.ActionEvent evt) {
-        tblDebug.setEnabled(false);
+        debugTable.setEnabled(false);
         emulationController.start();
     }
 
@@ -1243,7 +1152,7 @@ public class StudioFrame extends javax.swing.JFrame {
         if (pc > 0) {
             cpu.setInstructionPosition(pc - 1);
             paneDebug.revalidate();
-            tblDebug.refresh();
+            debugTable.refresh();
         }
     }
 
@@ -1251,7 +1160,7 @@ public class StudioFrame extends javax.swing.JFrame {
         CPU cpu = computer.getCPU();
         cpu.setInstructionPosition(0);
         paneDebug.revalidate();
-        tblDebug.refresh();
+        debugTable.refresh();
     }
 
     private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1282,7 +1191,7 @@ public class StudioFrame extends javax.swing.JFrame {
             return;
         }
         paneDebug.revalidate();
-        tblDebug.refresh();
+        debugTable.refresh();
     }
 
     private void mnuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1459,7 +1368,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         }
         paneDebug.revalidate();
-        tblDebug.refresh();
+        debugTable.refresh();
     }
 
     private void mnuEditReplaceNextActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1474,36 +1383,6 @@ public class StudioFrame extends javax.swing.JFrame {
         }
     }
 
-    private void btnFirstActionPerformed(java.awt.event.ActionEvent evt) {
-        tblDebug.firstPage();
-    }
-
-    private void btnBackwardActionPerformed(java.awt.event.ActionEvent evt) {
-        tblDebug.previousPage();
-    }
-
-    private void btnCurrentPageActionPerformed(java.awt.event.ActionEvent evt) {
-        tblDebug.currentPage();
-    }
-
-    private void btnForwardActionPerformed(java.awt.event.ActionEvent evt) {
-        tblDebug.nextPage();
-    }
-    private void btnLastActionPerformed(java.awt.event.ActionEvent evt) {
-        tblDebug.lastPage();
-    }
-
-    private void btnSeekBackwardActionPerformed(java.awt.event.ActionEvent evt) {
-        String res = JOptionPane.showInputDialog(this, "Please enter number of pages to backward", pageSeekLastValue);
-        pageSeekLastValue = Integer.decode(res);
-        tblDebug.pageSeekBackward(pageSeekLastValue);
-    }
-
-    private void btnSeekForwardActionPerformed(java.awt.event.ActionEvent evt) {
-        String res = JOptionPane.showInputDialog(this, "Please enter number of pages to forward", pageSeekLastValue);
-        pageSeekLastValue = Integer.decode(res);
-        tblDebug.pageSeekForward(pageSeekLastValue);
-    }
     JButton btnBack;
     JButton btnBeginning;
     JButton btnBreakpoint;
@@ -1518,7 +1397,7 @@ public class StudioFrame extends javax.swing.JFrame {
     JButton btnStep;
     JButton btnStop;
     JButton btnUndo;
-    JScrollPane jScrollPane1;
+    JScrollPane editorScrollPane;
     JList lstDevices;
     JMenuItem mnuEditCopy;
     JMenuItem mnuEditCut;
