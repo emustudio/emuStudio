@@ -23,15 +23,10 @@ package net.sf.emustudio.brainduck.cpu.gui;
 import emulib.plugins.cpu.CPU.CPUListener;
 import emulib.plugins.cpu.CPU.RunState;
 import emulib.plugins.memory.MemoryContext;
-import java.awt.Color;
-import java.awt.Font;
-import javax.swing.BorderFactory;
-import javax.swing.GroupLayout;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.LayoutStyle;
 import net.sf.emustudio.brainduck.cpu.impl.EmulatorImpl;
+
+import javax.swing.*;
+import java.awt.*;
 
 @SuppressWarnings("serial")
 public class BrainStatusPanel extends JPanel {
@@ -64,7 +59,12 @@ public class BrainStatusPanel extends JPanel {
             public void internalStateChanged() {
                 txtP.setText(String.format("%04X", cpu.getP()));
                 txtIP.setText(String.format("%04X", cpu.getIP()));
-                txtMemP.setText(String.format("%02X", (Short) mem.read(cpu.getP())));
+                try {
+                    short value = (Short) mem.read(cpu.getP());
+                    txtMemP.setText(String.format("%02X", value));
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    txtMemP.setText("[unreachable]");
+                }
             }
         });
     }

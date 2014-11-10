@@ -206,6 +206,7 @@ public class StudioFrame extends javax.swing.JFrame {
                     debugTable.setEnabled(true);
                     debugTable.setVisible(true);
                     debugTable.refresh();
+                    debugTable.currentPage();
                 }
             }
         });
