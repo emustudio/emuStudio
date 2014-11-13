@@ -40,10 +40,12 @@ import net.sf.emustudio.zilogZ80.gui.DisassemblerImpl;
 import net.sf.emustudio.zilogZ80.gui.StatusPanel;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -91,6 +93,12 @@ public class EmulatorImpl extends AbstractCPU {
     private int interruptPending = 0;
     // device that want to interrupt
     private DeviceContext interruptDevice;
+
+    private volatile SettingsManager settings;
+    private volatile boolean stopRequested;
+    private final List<FrequencyChangedListener> frequencyChangedListenerList = new CopyOnWriteArrayList<>();
+    private RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
+
 
     /* parityTable[i] = (number of 1's in i is odd) ? 0 : 4, i = 0..255 */
     private final static short PARITY_TABLE[] = {
@@ -253,15 +261,23 @@ public class EmulatorImpl extends AbstractCPU {
         frequencyScheduler = new Timer();
     }
 
+    public void addFrequencyChangedListener(FrequencyChangedListener listener) {
+        frequencyChangedListenerList.add(listener);
+    }
+
+    public void removeFrequencyChangedListener(FrequencyChangedListener listener) {
+        frequencyChangedListenerList.remove(listener);
+    }
+
     /**
      * Should be called only once
      */
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
-        super.initialize(settings);
+        this.settings = settings;
 
         try {
-            this.memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
+            this.memory = ContextPool.getInstance().getMemoryContext(getPluginID(), MemoryContext.class);
         } catch (InvalidContextException | ContextNotFoundException e) {
             throw new PluginInitializationException(
                     this, "CPU must have access to memory", e
@@ -278,9 +294,9 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    public void destroy() {
-        stop();
+    protected void destroyInternal() {
         context.clearDevices();
+        frequencyChangedListenerList.clear();
     }
 
     @Override
@@ -308,10 +324,8 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     public void fireFrequencyChanged(float newFrequency) {
-        for (CPUListener listener : stateObservers) {
-            if (listener instanceof FrequencyChangedListener) {
-                ((FrequencyChangedListener) listener).frequencyChanged(newFrequency);
-            }
+        for (FrequencyChangedListener listener : frequencyChangedListenerList) {
+            listener.frequencyChanged(newFrequency);
         }
     }
 
@@ -334,15 +348,17 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    protected void stepInternal() throws Exception {
+    protected RunState stepInternal() throws Exception {
         boolean oldIFF = IFF[0];
         noWait = false;
+        currentRunState = RunState.STATE_STOPPED_BREAK;
         evalStep(memory.read(PC++));
         isINT = (interruptPending != 0) && oldIFF && IFF[0];
         if (PC > 0xffff) {
-            setRunState(RunState.STATE_STOPPED_ADDR_FALLOUT);
             PC = 0xffff;
+            return RunState.STATE_STOPPED_ADDR_FALLOUT;
         }
+        return currentRunState;
     }
 
     @Override
@@ -372,9 +388,11 @@ public class EmulatorImpl extends AbstractCPU {
         IFF[0] = false;
         IFF[1] = false;
         PC = startPos;
-        stopFrequencyUpdater();
         interruptPending = 0;
         isINT = noWait = false;
+        stopRequested = false;
+        currentRunState = RunState.STATE_STOPPED_BREAK;
+        stopFrequencyUpdater();
     }
 
     public int getSliceTime() {
@@ -673,10 +691,10 @@ public class EmulatorImpl extends AbstractCPU {
         switch (intMode) {
             case 0:  // rst p (interruptVector)
                 cycles += 11;
-                RunState old_runstate = getRunState();
+                RunState old_runstate = currentRunState;
                 evalStep((short) interruptVector); // must ignore halt
-                if (getRunState() == RunState.STATE_STOPPED_NORMAL) {
-                    setRunState(old_runstate);
+                if (currentRunState == RunState.STATE_STOPPED_NORMAL) {
+                    currentRunState = old_runstate;
                 }
                 break;
             case 1: // rst 0xFF
@@ -714,7 +732,7 @@ public class EmulatorImpl extends AbstractCPU {
         }
         R++;
         if (OP == 0x76) { /* HALT */
-            setRunState(RunState.STATE_STOPPED_NORMAL);
+            currentRunState = RunState.STATE_STOPPED_NORMAL;
             return 4;
         }
 
@@ -2163,7 +2181,7 @@ public class EmulatorImpl extends AbstractCPU {
                 PC = tmp;
                 return 17;
         }
-        setRunState(RunState.STATE_STOPPED_BAD_INSTR);
+        currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
         return 0;
     }
 
@@ -2193,6 +2211,11 @@ public class EmulatorImpl extends AbstractCPU {
         return disassembler;
     }
 
+    @Override
+    protected void requestStop() {
+        stopRequested = true;
+    }
+
     /**
      * Run a CPU execution (thread).
      *
@@ -2207,44 +2230,42 @@ public class EmulatorImpl extends AbstractCPU {
      *
      */
     @Override
-    public void run() {
+    public RunState call() {
         long startTime, endTime;
         int cycles_executed;
         int cycles_to_execute; // per second
         int cycles;
         long sliceNanos;
 
-        runFrequencyUpdater();
-        try {
         /* 1 Hz  .... 1 tState per second
          * 1 kHz .... 1000 tStates per second
          * clockFrequency is in kHz it have to be multiplied with 1000
          */
-            cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
-            long i = 0;
-            sliceNanos = checkTimeSlice * 1000000;
-            while (getRunState() == RunState.STATE_RUNNING) {
+        cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
+        long i = 0;
+        sliceNanos = checkTimeSlice * 1000000;
+        try {
+            runFrequencyUpdater();
+            currentRunState = RunState.STATE_RUNNING;
+            while (!stopRequested && (currentRunState == RunState.STATE_RUNNING)) {
                 i++;
                 startTime = System.nanoTime();
                 cycles_executed = 0;
                 try {
-                    while ((cycles_executed < cycles_to_execute) && (getRunState() == RunState.STATE_RUNNING)) {
+                    while ((cycles_executed < cycles_to_execute) && !stopRequested && (currentRunState == RunState.STATE_RUNNING)) {
                         cycles = evalStep(memory.read(PC++));
                         cycles_executed += cycles;
                         long_cycles += cycles;
                         if (isBreakpointSet(PC) == true) {
-                            throw new Error();
+                            throw new Breakpoint();
                         }
                     }
                 } catch (ArrayIndexOutOfBoundsException e) {
-                    setRunState(RunState.STATE_STOPPED_ADDR_FALLOUT);
-                    break;
+                    return RunState.STATE_STOPPED_ADDR_FALLOUT;
                 } catch (IndexOutOfBoundsException e) {
-                    setRunState(RunState.STATE_STOPPED_ADDR_FALLOUT);
-                    break;
-                } catch (Error er) {
-                    setRunState(RunState.STATE_STOPPED_BREAK);
-                    break;
+                    return RunState.STATE_STOPPED_ADDR_FALLOUT;
+                } catch (Breakpoint e) {
+                    return RunState.STATE_STOPPED_BREAK;
                 }
                 endTime = System.nanoTime() - startTime;
                 if (endTime < sliceNanos) {
@@ -2255,6 +2276,7 @@ public class EmulatorImpl extends AbstractCPU {
         } finally {
             stopFrequencyUpdater();
         }
+        return RunState.STATE_STOPPED_NORMAL;
     }
 
     @Override

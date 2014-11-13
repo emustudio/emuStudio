@@ -53,6 +53,9 @@ public class EmulatorImpl extends AbstractCPU {
     private Disassembler disassembler;
     private MemoryContext<Short> memory;
     private volatile int IP, P; // registers of the CPU
+    private int memorySize; // cached memory size
+    private volatile SettingsManager settings;
+    private volatile boolean stopRequested;
 
     public EmulatorImpl(Long pluginID) {
         super(pluginID);
@@ -77,15 +80,16 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
-        super.initialize(settings);
+        this.settings = settings;
         try {
-            memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
+            memory = ContextPool.getInstance().getMemoryContext(getPluginID(), MemoryContext.class);
 
             if (memory.getDataType() != Short.class) {
                 throw new PluginInitializationException(
                         this, "Selected operating memory is not supported."
                 );
             }
+            memorySize = memory.getSize();
             disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
         } catch (InvalidContextException | ContextNotFoundException e) {
             throw new PluginInitializationException(this, "Could not get memory context", e);
@@ -127,6 +131,8 @@ public class EmulatorImpl extends AbstractCPU {
     @Override
     public void reset(int adr) {
         super.reset(adr);
+        stopRequested = false;
+
         IP = adr; // initialize program counter
         loopPointers.clear();
 
@@ -143,44 +149,34 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    public void run() {
-        // here we are emulating in endless loop until an event stops it.
-        // Externally, it might be the user, internally invalid instruction
-        // or nonexistant memory location (address fallout)
-        while (getRunState() == RunState.STATE_RUNNING) {
+    public RunState call() {
+        while (!stopRequested) {
             try {
-                // if a breakpoint is set on the address pointed by IP register
-                // we throw new Breakpoint instance.
-                if (isBreakpointSet(IP) == true) {
+                if (isBreakpointSet(IP)) {
                     throw new Breakpoint();
                 }
-                emulateInstruction();
-            } catch (IndexOutOfBoundsException e) {
-                // we get here if IP registers would point at nonexistant memory
-                setRunState(RunState.STATE_STOPPED_ADDR_FALLOUT);
-                break;
+                RunState tmpRunState = stepInternal();
+                if (tmpRunState != RunState.STATE_STOPPED_BREAK) {
+                    return tmpRunState;
+                }
             } catch (Breakpoint er) {
-                // we get here if a Breakpoint was thrown.
-                setRunState(RunState.STATE_STOPPED_BREAK);
-                break;
+                return  RunState.STATE_STOPPED_BREAK;
             }
         }
+        return RunState.STATE_STOPPED_NORMAL;
     }
 
     @Override
-    protected void stepInternal() {
-        emulateInstruction();
+    protected void destroyInternal() {
     }
 
     @Override
-    public void destroy() {
-        setRunState(RunState.STATE_STOPPED_NORMAL);
+    protected void requestStop() {
+        stopRequested = true;
     }
 
-    /**
-     * This method emulates a single instruction.
-     */
-    private void emulateInstruction() {
+    @Override
+    protected RunState stepInternal() {
         short OP, param;
 
         // FETCH
@@ -189,34 +185,39 @@ public class EmulatorImpl extends AbstractCPU {
         // DECODE
         switch (OP) {
             case 0: /* ; */
-                setRunState(RunState.STATE_STOPPED_NORMAL);
-                return;
+                return RunState.STATE_STOPPED_NORMAL;
             case 1: /* >  */
+                if (P + 1 > memorySize) {
+                    return RunState.STATE_STOPPED_ADDR_FALLOUT;
+                }
                 P++;
-                return;
+                break;
             case 2: /* < */
+                if (P - 1 < 0) {
+                    return RunState.STATE_STOPPED_ADDR_FALLOUT;
+                }
                 P--;
-                return;
+                break;
             case 3: /* + */
                 memory.write(P, (short) (memory.read(P) + 1));
-                return;
+                break;
             case 4: /* - */
                 memory.write(P, (short) (memory.read(P) - 1));
-                return;
+                break;
             case 5: /* . */
                 context.writeToDevice(memory.read(P));
-                return;
+                break;
             case 6: /* , */
                 memory.write(P, context.readFromDevice());
-                return;
+                break;
             case 7: { /* [ */
                 loopPointers.push(IP -1);
                 if (memory.read(P) != 0) {
-                    return;
+                    break;
                 }
                 int loop_count = 0; // loop nesting level counter
 
-                // we start to look for "endl" instruction
+                // we start to look for "]" instruction
                 // on the same nesting level (according to loop_count value)
                 // IP is pointing at following instruction
                 while ((OP = memory.read(IP++)) != 0) {
@@ -225,7 +226,7 @@ public class EmulatorImpl extends AbstractCPU {
                     }
                     if (OP == 8) {
                         if (loop_count == 0) {
-                            return;
+                            break;
                         } else {
                             loop_count--;
                         }
@@ -238,11 +239,11 @@ public class EmulatorImpl extends AbstractCPU {
                 if (memory.read(P) != 0) {
                     IP = tmpIP;
                 }
-                return;
-            default: /* invalid instruction */
                 break;
+            default: /* invalid instruction */
+                return RunState.STATE_STOPPED_BAD_INSTR;
         }
-        setRunState(RunState.STATE_STOPPED_BAD_INSTR);
+        return RunState.STATE_STOPPED_BREAK;
     }
 
     @Override

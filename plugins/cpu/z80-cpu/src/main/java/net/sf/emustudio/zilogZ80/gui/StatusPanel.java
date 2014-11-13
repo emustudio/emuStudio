@@ -22,26 +22,20 @@
  */
 package net.sf.emustudio.zilogZ80.gui;
 
+import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.CPU.RunState;
-import static emulib.runtime.RadixUtils.*;
-import java.awt.Color;
-import java.awt.Font;
-import javax.swing.BorderFactory;
-import javax.swing.GroupLayout;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSpinner;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.LayoutStyle;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.table.AbstractTableModel;
 import net.sf.emustudio.intel8080.ExtendedContext;
 import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
 import net.sf.emustudio.zilogZ80.impl.EmulatorImpl;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.table.AbstractTableModel;
+import java.awt.*;
+
+import static emulib.runtime.RadixUtils.getByteHexString;
+import static emulib.runtime.RadixUtils.getWordHexString;
 
 /**
  * Status panel for the CPU.
@@ -64,7 +58,7 @@ public class StatusPanel extends javax.swing.JPanel {
         run_state = RunState.STATE_STOPPED_NORMAL;
 
         initComponents();
-        cpu.addCPUListener(new FrequencyChangedListener() {
+        cpu.addCPUListener(new CPU.CPUListener() {
 
             @Override
             public void runStateChanged(RunState state) {
@@ -76,11 +70,12 @@ public class StatusPanel extends javax.swing.JPanel {
                 updateGUI();
             }
 
+        });
+        cpu.addFrequencyChangedListener(new FrequencyChangedListener() {
             @Override
-            public void frequencyChanged(float frequency) {
-                lblFrequency.setText(String.format("%.2f kHz", frequency));
+            public void frequencyChanged(float newFrequency) {
+                lblFrequency.setText(String.format("%.2f kHz", newFrequency));
             }
-
         });
         spnFrequency.addChangeListener(new ChangeListener() {
 

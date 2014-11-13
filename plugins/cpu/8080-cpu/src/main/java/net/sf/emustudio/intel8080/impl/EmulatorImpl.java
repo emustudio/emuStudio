@@ -46,10 +46,13 @@ import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.List;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -103,6 +106,13 @@ public class EmulatorImpl extends AbstractCPU {
     private short b1 = 0; // the raw interrupt instruction
     private short b2 = 0;
     private short b3 = 0;
+
+    private volatile RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
+    private volatile boolean stopRequested;
+    private volatile SettingsManager settings;
+
+    private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
+
 
     /**
      * This class performs runtime frequency calculation and updating.
@@ -158,9 +168,9 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException{
-        super.initialize(settings);
+        this.settings = Objects.requireNonNull(settings);
         try {
-            this.memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
+            this.memory = ContextPool.getInstance().getMemoryContext(getPluginID(), MemoryContext.class);
 
             if (memory.getDataType() != Short.class) {
                 throw new PluginInitializationException(
@@ -179,19 +189,22 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    public void destroy() {
-        stop();
+    protected void destroyInternal() {
         context.clearDevices();
+        frequencyChangedListeners.clear();
     }
 
     @Override
     public void reset(int startPos) {
         super.reset(startPos);
+
         Arrays.fill(regs, (short)0);
         SP = 0;
         Flags = 2; //0000 0010b
         PC = startPos;
         INTE = false;
+        stopRequested = false;
+        currentRunState = RunState.STATE_STOPPED_BREAK;
         stopFrequencyUpdater();
     }
 
@@ -208,9 +221,20 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    protected void stepInternal() throws Exception {
+    protected RunState stepInternal() throws Exception {
+        currentRunState = RunState.STATE_STOPPED_BREAK;
         dispatch();
+        return currentRunState;
     }
+
+    public void addFrequencyChangedListener(FrequencyChangedListener listener) {
+        frequencyChangedListeners.add(listener);
+    }
+
+    public void removeFrequencyChangedListener(FrequencyChangedListener listener) {
+        frequencyChangedListeners.remove(listener);
+    }
+
 
     public void interrupt(short b1, short b2, short b3) {
         if (INTE == false) {
@@ -223,10 +247,8 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     private void fireFrequencyChanged(float newFrequency) {
-        for (CPUListener listener : stateObservers) {
-            if (listener instanceof FrequencyChangedListener) {
-                ((FrequencyChangedListener) listener).frequencyChanged(newFrequency);
-            }
+        for (FrequencyChangedListener listener : frequencyChangedListeners) {
+            listener.frequencyChanged(newFrequency);
         }
     }
 
@@ -259,6 +281,11 @@ public class EmulatorImpl extends AbstractCPU {
         }
     }
 
+    @Override
+    protected void requestStop() {
+        stopRequested = true;
+    }
+
     /**
      * Run a CPU execution (thread).
      *
@@ -273,42 +300,41 @@ public class EmulatorImpl extends AbstractCPU {
      *
      */
     @Override
-    public void run() {
+    public RunState call() {
         long startTime, endTime;
         int cycles_executed;
         int cycles_to_execute; // per second
         int cycles;
         long slice;
 
-        runFrequencyUpdater();
-        try {
         /* 1 Hz  .... 1 tState per second
          * 1 kHz .... 1000 tStates per second
          * clockFrequency is in kHz it have to be multiplied with 1000
          */
-            cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
-            long i = 0;
-            slice = checkTimeSlice * 1000000;
-            while (getRunState() == RunState.STATE_RUNNING) {
+        cycles_to_execute = checkTimeSlice * context.getCPUFrequency();
+        long i = 0;
+        slice = checkTimeSlice * 1000000;
+        try {
+            runFrequencyUpdater();
+            currentRunState = RunState.STATE_RUNNING;
+            while (!stopRequested && (currentRunState == RunState.STATE_RUNNING)) {
                 i++;
                 startTime = System.nanoTime();
                 cycles_executed = 0;
-                while ((cycles_executed < cycles_to_execute) && (getRunState() == RunState.STATE_RUNNING)) {
+                while ((cycles_executed < cycles_to_execute) && !stopRequested && (currentRunState == RunState.STATE_RUNNING)) {
                     try {
                         cycles = dispatch();
                         cycles_executed += cycles;
                         executedCycles += cycles;
                         if (isBreakpointSet(PC) == true) {
-                            throw new Error();
+                            throw new Breakpoint();
                         }
                     } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                        setRunState(RunState.STATE_STOPPED_BAD_INSTR);
+                        return  RunState.STATE_STOPPED_BAD_INSTR;
                     } catch (IndexOutOfBoundsException e) {
-                        setRunState(RunState.STATE_STOPPED_ADDR_FALLOUT);
-                        break;
-                    } catch (Error er) {
-                        setRunState(RunState.STATE_STOPPED_BREAK);
-                        break;
+                        return  RunState.STATE_STOPPED_ADDR_FALLOUT;
+                    } catch (Breakpoint e) {
+                        return RunState.STATE_STOPPED_BREAK;
                     }
                 }
                 endTime = System.nanoTime() - startTime;
@@ -320,6 +346,7 @@ public class EmulatorImpl extends AbstractCPU {
         } finally {
             stopFrequencyUpdater();
         }
+        return RunState.STATE_STOPPED_NORMAL;
     }
 
     @Override
@@ -349,7 +376,7 @@ public class EmulatorImpl extends AbstractCPU {
     /* Get an 8080 register and return it */
     private short getreg(int reg) {
         if (reg == 6) {
-            return ((Short) memory.read((regs[REG_H] << 8) | regs[REG_L])).shortValue();
+            return memory.read((regs[REG_H] << 8) | regs[REG_L]);
         }
         return regs[reg];
     }
@@ -777,8 +804,8 @@ public class EmulatorImpl extends AbstractCPU {
         // TODO: test!
         int DAR = (Integer) memory.readWord(PC);
         PC += 2;
-        regs[REG_L] = ((Short) memory.read(DAR)).shortValue();
-        regs[REG_H] = ((Short) memory.read(DAR + 1)).shortValue();
+        regs[REG_L] = memory.read(DAR);
+        regs[REG_H] = memory.read(DAR + 1);
         return 16;
     }
 
@@ -817,7 +844,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     private int O118_HLT(short OP) {
-        setRunState(RunState.STATE_STOPPED_NORMAL);
+        currentRunState = RunState.STATE_STOPPED_NORMAL;
         return 7;
     }
 
@@ -849,7 +876,7 @@ public class EmulatorImpl extends AbstractCPU {
 
     private int O206_ACI(short OP) {
         int DAR = regs[REG_A];
-        regs[REG_A] += ((Short) memory.read(PC++)).shortValue();
+        regs[REG_A] += memory.read(PC++);
         if ((Flags & flagC) != 0) {
             regs[REG_A]++;
         }
@@ -859,28 +886,28 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     private int O211_OUT(short OP) {
-        int DAR = ((Short) memory.read(PC++)).shortValue();
+        int DAR = memory.read(PC++);
         context.fireIO(DAR, false, regs[REG_A]);
         return 10;
     }
 
     private int O214_SUI(short OP) {
         int DAR = regs[REG_A];
-        regs[REG_A] -= ((Short) memory.read(PC++)).shortValue();
+        regs[REG_A] -= memory.read(PC++);
         setarith(regs[REG_A], DAR);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 7;
     }
 
     private int O219_IN(short OP) {
-        int DAR = ((Short) memory.read(PC++)).shortValue();
+        int DAR = memory.read(PC++);
         regs[REG_A] = context.fireIO(DAR, true, (short) 0);
         return 10;
     }
 
     private int O222_SBI(short OP) {
         int DAR = regs[REG_A];
-        regs[REG_A] -= ((Short) memory.read(PC++)).shortValue();
+        regs[REG_A] -= memory.read(PC++);
         if ((Flags & flagC) != 0) {
             regs[REG_A]--;
         }
@@ -898,7 +925,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     private int O230_ANI(short OP) {
-        regs[REG_A] &= ((Short) memory.read(PC++)).shortValue();
+        regs[REG_A] &= memory.read(PC++);
         Flags &= (~flagC);
         Flags &= (~flagAC);
         setlogical(regs[REG_A]);
@@ -922,7 +949,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     private int O238_XRI(short OP) {
-        regs[REG_A] ^= ((Short) memory.read(PC++)).shortValue();
+        regs[REG_A] ^= memory.read(PC++);
         Flags &= (~flagC);
         Flags &= (~flagAC);
         setlogical(regs[REG_A]);
@@ -936,7 +963,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     private int O246_ORI(short OP) {
-        regs[REG_A] |= ((Short) memory.read(PC++)).shortValue();
+        regs[REG_A] |= memory.read(PC++);
         Flags &= (~flagC);
         Flags &= (~flagAC);
         setlogical(regs[REG_A]);
@@ -972,7 +999,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     private int MC7_O6_MVI(short OP) {
-        putreg((OP >>> 3) & 0x07, ((Short) memory.read(PC++)).shortValue());
+        putreg((OP >>> 3) & 0x07, memory.read(PC++));
         if (((OP >>> 3) & 0x07) == 6) {
             return 10;
         } else {
@@ -987,7 +1014,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     private int MEF_0A_LDAX(short OP) {
-        putreg(7, ((Short) memory.read(getpair((OP >>> 4) & 0x03))).shortValue());
+        putreg(7, memory.read(getpair((OP >>> 4) & 0x03)));
         return 7;
     }
 
@@ -1197,7 +1224,7 @@ public class EmulatorImpl extends AbstractCPU {
             }
             isINT = false;
         }
-        OP = ((Short) memory.read(PC++)).shortValue();
+        OP = memory.read(PC++);
 
         /* Handle below all operations which refer to registers or register pairs.
          After that, a large switch statement takes care of all other opcodes */
@@ -1249,7 +1276,7 @@ public class EmulatorImpl extends AbstractCPU {
         /* Dispatch Instruction */
         Method instr = dispatchTable[OP];
         if (instr == null) {
-            setRunState(RunState.STATE_STOPPED_BAD_INSTR);
+            currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
             return 0;
         }
         return (Integer)instr.invoke(this, OP);

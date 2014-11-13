@@ -23,14 +23,12 @@
 
 package net.sf.emustudio.intel8080;
 
-import emulib.plugins.cpu.CPU.CPUListener;
-
 /**
  * Listener of frequency changes
  *
  * @author Peter Jakubčo
  */
-public interface FrequencyChangedListener extends CPUListener {
+public interface FrequencyChangedListener {
 
     /**
      * Handle frequency changes of the CPU.

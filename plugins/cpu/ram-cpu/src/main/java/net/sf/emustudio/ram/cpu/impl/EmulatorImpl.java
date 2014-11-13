@@ -53,6 +53,8 @@ public class EmulatorImpl extends AbstractCPU {
     private final RAMContext context;
     private RAMDisassembler dis;     // disassembler
     private int IP; // instruction position
+    private volatile SettingsManager settings;
+    private volatile boolean stopRequested;
 
     public EmulatorImpl(Long pluginID) {
         super(pluginID);
@@ -77,10 +79,10 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
-        super.initialize(settings);
+        this.settings = settings;
 
         try {
-            memory = (RAMMemoryContext) ContextPool.getInstance().getMemoryContext(pluginID, RAMMemoryContext.class);
+            memory = (RAMMemoryContext) ContextPool.getInstance().getMemoryContext(getPluginID(), RAMMemoryContext.class);
         } catch (ContextNotFoundException | InvalidContextException e) {
             // Will be processed later on
             throw new PluginInitializationException(this, "Could not get memory context", e);
@@ -93,7 +95,7 @@ public class EmulatorImpl extends AbstractCPU {
         }
 
         dis = new RAMDisassembler(this.memory);
-        context.init(pluginID);
+        context.init(getPluginID());
     }
 
     // called from RAMContext after Input tape attachement
@@ -136,10 +138,8 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    public void destroy() {
-        stop();
+    protected void destroyInternal() {
         context.destroy();
-        breakpoints.clear();
     }
 
     @Override
@@ -149,6 +149,7 @@ public class EmulatorImpl extends AbstractCPU {
         if (context.checkTapes()) {
             loadTape(context.getInput());
         }
+        stopRequested = false;
     }
 
     @Override
@@ -157,38 +158,38 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    protected void stepInternal() throws Exception {
-        emulateInstruction();
+    protected void requestStop() {
+        stopRequested = true;
     }
 
     @Override
-    public void run() {
-        while (getRunState() == RunState.STATE_RUNNING) {
+    public RunState call() {
+        while (!stopRequested) {
             try {
                 if (isBreakpointSet(IP)) {
-                    throw new Error();
+                    throw new Breakpoint();
                 }
-                emulateInstruction();
+                RunState tmpRunState = stepInternal();
+                if (tmpRunState != RunState.STATE_STOPPED_BREAK) {
+                    return tmpRunState;
+                }
             } catch (IndexOutOfBoundsException e) {
-                setRunState(RunState.STATE_STOPPED_ADDR_FALLOUT);
-                break;
-            } catch (Error er) {
-                setRunState(RunState.STATE_STOPPED_BREAK);
-                break;
+                return RunState.STATE_STOPPED_ADDR_FALLOUT;
+            } catch (Breakpoint er) {
+                return RunState.STATE_STOPPED_BREAK;
             }
         }
+        return RunState.STATE_STOPPED_NORMAL;
     }
 
-    private void emulateInstruction() {
+    public RunState stepInternal() {
         if (!context.checkTapes()) {
-            setRunState(RunState.STATE_STOPPED_ADDR_FALLOUT);
-            return;
+            return RunState.STATE_STOPPED_ADDR_FALLOUT;
         }
 
         RAMInstruction in = memory.read(IP++);
         if (in == null) {
-            setRunState(RunState.STATE_STOPPED_BAD_INSTR);
-            return;
+            return RunState.STATE_STOPPED_BAD_INSTR;
         }
         switch (in.getCode()) {
             case RAMInstruction.READ:
@@ -197,89 +198,89 @@ public class EmulatorImpl extends AbstractCPU {
                     context.getInput().moveRight();
                     context.getStorage().setSymbolAt((Integer) in.getOperand(),
                             input);
-                    return;
+                    break;
                 } else if (in.getDirection() == '*') {
                     try {
                         int M = Integer.decode(context.getStorage().getSymbolAt((Integer) in.getOperand()));
                         if (M < 0) {
-                            break;
+                            return RunState.STATE_STOPPED_BAD_INSTR;
                         }
                         String input = context.getInput().read();
                         context.getInput().moveRight();
                         context.getStorage().setSymbolAt(M, input);
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 }
-                break;
+                return RunState.STATE_STOPPED_BAD_INSTR;
             case RAMInstruction.WRITE:
                 if (in.getDirection() == 0) {
                     context.getOutput().write(context.getStorage()
                             .getSymbolAt((Integer) in.getOperand()));
                     context.getOutput().moveRight();
-                    return;
+                    break;
                 } else if (in.getDirection() == '*') {
                     try {
                         int M = Integer.decode(context.getStorage()
                                 .getSymbolAt((Integer) in.getOperand()));
                         if (M < 0) {
-                            break;
+                            return RunState.STATE_STOPPED_BAD_INSTR;
                         }
                         context.getOutput().write(context.getStorage().getSymbolAt(M));
                         context.getOutput().moveRight();
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 } else if (in.getDirection() == '=') {
                     context.getOutput().write(String.valueOf(in.getOperand()));
                     context.getOutput().moveRight();
-                    return;
+                    break;
                 }
-                break;
+                return RunState.STATE_STOPPED_BAD_INSTR;
             case RAMInstruction.LOAD:
                 if (in.getDirection() == 0) {
                     context.getStorage().setSymbolAt(0, context.getStorage().getSymbolAt((Integer) in.getOperand()));
-                    return;
+                    break;
                 } else if (in.getDirection() == '*') {
                     try {
                         int M = Integer.decode(context.getStorage().getSymbolAt((Integer) in.getOperand()));
                         if (M < 0) {
-                            break;
+                            return RunState.STATE_STOPPED_BAD_INSTR;
                         }
                         context.getStorage().setSymbolAt(0, context.getStorage().getSymbolAt(M));
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 } else if (in.getDirection() == '=') {
                     context.getStorage().setSymbolAt(0, (String) in.getOperand());
-                    return;
+                    break;
                 }
-                break;
+                return RunState.STATE_STOPPED_BAD_INSTR;
             case RAMInstruction.STORE:
                 if (in.getDirection() == 0) {
                     context.getStorage().setSymbolAt((Integer) in.getOperand(),
                             context.getStorage().getSymbolAt(0));
-                    return;
+                    break;
                 } else if (in.getDirection() == '*') {
                     try {
                         int M = Integer.decode(context.getStorage().getSymbolAt((Integer) in.getOperand()));
                         if (M < 0) {
-                            break;
+                            return RunState.STATE_STOPPED_BAD_INSTR;
                         }
                         context.getStorage().setSymbolAt(M, context.getStorage().getSymbolAt(0));
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 }
-                break;
+                return RunState.STATE_STOPPED_BAD_INSTR;
             case RAMInstruction.ADD:
                 if (in.getDirection() == 0) {
                     String sym0 = context.getStorage().getSymbolAt(0);
@@ -289,7 +290,7 @@ public class EmulatorImpl extends AbstractCPU {
                         int r0 = Integer.decode(sym0);
                         int ri = Integer.decode(sym1);
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
-                        return;
+                        break;
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
                     }
@@ -300,15 +301,15 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 } else if (in.getDirection() == '*') {
                     try {
                         int M = Integer.decode(context.getStorage().getSymbolAt(
                                 (Integer) in.getOperand()));
                         if (M < 0) {
-                            break;
+                            return RunState.STATE_STOPPED_BAD_INSTR;
                         }
 
                         String sym0 = context.getStorage().getSymbolAt(0);
@@ -318,7 +319,7 @@ public class EmulatorImpl extends AbstractCPU {
                             int r0 = Integer.decode(sym0);
                             int ri = Integer.decode(sym1);
                             context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
-                            return;
+                            break;
                         } catch (NumberFormatException e) {
                             LOGGER.error("Could not parse number", e);
                         }
@@ -328,9 +329,9 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 } else if (in.getDirection() == '=') {
                     String sym0 = context.getStorage().getSymbolAt(0);
                     String sym1 = (String) in.getOperand();
@@ -339,7 +340,7 @@ public class EmulatorImpl extends AbstractCPU {
                         int r0 = Integer.decode(sym0);
                         int ri = Integer.decode(sym1);
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
-                        return;
+                        break;
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
                     }
@@ -350,11 +351,11 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 + ri));
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 }
-                break;
+                return RunState.STATE_STOPPED_BAD_INSTR;
             case RAMInstruction.SUB:
                 if (in.getDirection() == 0) {
                     String sym0 = context.getStorage().getSymbolAt(0);
@@ -363,7 +364,7 @@ public class EmulatorImpl extends AbstractCPU {
                         int r0 = Integer.decode(sym0);
                         int ri = Integer.decode(sym1);
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
-                        return;
+                        break;
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
                     }
@@ -373,15 +374,15 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 } else if (in.getDirection() == '*') {
                     try {
                         int M = Integer.decode(context.getStorage().getSymbolAt(
                                 (Integer) in.getOperand()));
                         if (M < 0) {
-                            break;
+                            return RunState.STATE_STOPPED_BAD_INSTR;
                         }
                         String sym0 = context.getStorage().getSymbolAt(0);
                         String sym1 = context.getStorage().getSymbolAt(M);
@@ -389,7 +390,7 @@ public class EmulatorImpl extends AbstractCPU {
                             int r0 = Integer.decode(sym0);
                             int ri = Integer.decode(sym1);
                             context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
-                            return;
+                            break;
                         } catch (NumberFormatException e) {
                             LOGGER.error("Could not parse number", e);
                         }
@@ -398,9 +399,9 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 } else if (in.getDirection() == '=') {
                     String sym0 = context.getStorage().getSymbolAt(0);
                     String sym1 = (String) in.getOperand();
@@ -408,7 +409,7 @@ public class EmulatorImpl extends AbstractCPU {
                         int r0 = Integer.decode(sym0);
                         int ri = Integer.decode(sym1);
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
-                        return;
+                        break;
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
                     }
@@ -418,11 +419,11 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 - ri));
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 }
-                break;
+                return RunState.STATE_STOPPED_BAD_INSTR;
             case RAMInstruction.MUL:
                 if (in.getDirection() == 0) {
                     String sym0 = context.getStorage().getSymbolAt(0);
@@ -431,7 +432,7 @@ public class EmulatorImpl extends AbstractCPU {
                         int r0 = Integer.decode(sym0);
                         int ri = Integer.decode(sym1);
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
-                        return;
+                        break;
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
                     }
@@ -441,15 +442,15 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 } else if (in.getDirection() == '*') {
                     try {
                         int M = Integer.decode(context.getStorage().getSymbolAt(
                                 (Integer) in.getOperand()));
                         if (M < 0) {
-                            break;
+                            return RunState.STATE_STOPPED_BAD_INSTR;
                         }
 
                         String sym0 = context.getStorage().getSymbolAt(0);
@@ -458,7 +459,7 @@ public class EmulatorImpl extends AbstractCPU {
                             int r0 = Integer.decode(sym0);
                             int ri = Integer.decode(sym1);
                             context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
-                            return;
+                            break;
                         } catch (NumberFormatException e) {
                             LOGGER.error("Could not parse number", e);
                         }
@@ -467,9 +468,9 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 } else if (in.getDirection() == '=') {
                     String sym0 = context.getStorage().getSymbolAt(0);
                     String sym1 = (String) in.getOperand();
@@ -477,7 +478,7 @@ public class EmulatorImpl extends AbstractCPU {
                         int r0 = Integer.decode(sym0);
                         int ri = Integer.decode(sym1);
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
-                        return;
+                        break;
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
                     }
@@ -487,11 +488,11 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 * ri));
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 }
-                break;
+                return RunState.STATE_STOPPED_BAD_INSTR;
             case RAMInstruction.DIV:
                 if (in.getDirection() == 0) {
                     String sym0 = context.getStorage().getSymbolAt(0);
@@ -500,10 +501,10 @@ public class EmulatorImpl extends AbstractCPU {
                         int r0 = Integer.decode(sym0);
                         int ri = Integer.decode(sym1);
                         if (ri == 0) {
-                            break;
+                            return RunState.STATE_STOPPED_BAD_INSTR;
                         }
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
-                        return;
+                        break;
                     } catch (NumberFormatException e) {
                         // This really works (tested) for double numbers
                         LOGGER.error("Could not parse number", e);
@@ -512,20 +513,20 @@ public class EmulatorImpl extends AbstractCPU {
                         double r0 = Double.parseDouble(sym0);
                         double ri = Double.parseDouble(sym1);
                         if (ri == 0) {
-                            break;
+                            return RunState.STATE_STOPPED_BAD_INSTR;
                         }
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 } else if (in.getDirection() == '*') {
                     try {
                         int M = Integer.decode(context.getStorage().getSymbolAt(
                                 (Integer) in.getOperand()));
                         if (M < 0) {
-                            break;
+                            return RunState.STATE_STOPPED_BAD_INSTR;
                         }
 
                         String sym0 = context.getStorage().getSymbolAt(0);
@@ -538,7 +539,7 @@ public class EmulatorImpl extends AbstractCPU {
                                 break;
                             }
                             context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
-                            return;
+                            break;
                         } catch (NumberFormatException e) {
                             LOGGER.error("Could not parse number", e);
                         }
@@ -546,15 +547,15 @@ public class EmulatorImpl extends AbstractCPU {
                         double r0 = Double.parseDouble(sym0);
                         double ri = Double.parseDouble(sym1);
                         if (ri == 0) {
-                            break;
+                            return RunState.STATE_STOPPED_BAD_INSTR;
                         }
 
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 } else if (in.getDirection() == '=') {
                     String sym0 = context.getStorage().getSymbolAt(0);
                     String sym1 = (String) in.getOperand();
@@ -565,7 +566,7 @@ public class EmulatorImpl extends AbstractCPU {
                             break;
                         }
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
-                        return;
+                        break;
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
                     }
@@ -578,19 +579,19 @@ public class EmulatorImpl extends AbstractCPU {
                         context.getStorage().setSymbolAt(0, String.valueOf(r0 / ri));
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
-                    return;
+                    break;
                 }
-                break;
+                return RunState.STATE_STOPPED_BAD_INSTR;
             case RAMInstruction.JMP:
                 IP = (Integer) in.getOperand();
-                return;
+                break;
             case RAMInstruction.JZ: {
                 String r0 = context.getStorage().getSymbolAt(0);
                 if (r0 == null || r0.equals("")) {
                     IP = (Integer) in.getOperand();
-                    return;
+                    break;
                 }
                 int rr0 = 0;
                 boolean t = false;
@@ -605,14 +606,13 @@ public class EmulatorImpl extends AbstractCPU {
                         rr0 = (int) Double.parseDouble(r0);
                     } catch (NumberFormatException e) {
                         LOGGER.error("Could not parse number", e);
-                        break;
+                        return RunState.STATE_STOPPED_BAD_INSTR;
                     }
                 }
                 if (rr0 == 0) {
                     IP = (Integer) in.getOperand();
-                    return;
                 }
-                return;
+                break;
             }
             case RAMInstruction.JGTZ:
                 try {
@@ -630,23 +630,24 @@ public class EmulatorImpl extends AbstractCPU {
                             rr0 = (int) Double.parseDouble(r0);
                         } catch (NumberFormatException e) {
                             LOGGER.error("Could not parse number", e);
-                            break;
+                            return RunState.STATE_STOPPED_BAD_INSTR;
                         }
                     }
                     if (rr0 > 0) {
                         IP = (Integer) in.getOperand();
-                        return;
+                        break;
                     }
                 } catch (NumberFormatException e) {
                     LOGGER.error("Could not parse number", e);
-                    break;
+                    return RunState.STATE_STOPPED_BAD_INSTR;
                 }
-                return;
+                break;
             case RAMInstruction.HALT:
-                setRunState(RunState.STATE_STOPPED_NORMAL);
-                return;
+                return RunState.STATE_STOPPED_NORMAL;
+            default:
+                return RunState.STATE_STOPPED_BAD_INSTR;
         }
-        setRunState(RunState.STATE_STOPPED_BAD_INSTR);
+        return RunState.STATE_STOPPED_BREAK;
     }
 
     @Override

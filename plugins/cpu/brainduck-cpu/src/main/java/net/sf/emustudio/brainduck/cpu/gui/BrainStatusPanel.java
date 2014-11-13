@@ -30,6 +30,13 @@ import java.awt.*;
 
 @SuppressWarnings("serial")
 public class BrainStatusPanel extends JPanel {
+    private final JTextField txtP = new JTextField("0000");
+    private final JTextField txtIP = new JTextField("0000");
+    private final JLabel lblStatus = new JLabel("breakpoint");
+    private final JTextField txtMemP = new JTextField("00");
+    private final JLabel lblTime = new JLabel("0.00 s");
+    private volatile long nanoStartTime;
+    private volatile long nanoTime;
 
     public BrainStatusPanel(final EmulatorImpl cpu, final MemoryContext mem) {
         initComponents();
@@ -39,6 +46,11 @@ public class BrainStatusPanel extends JPanel {
             @Override
             public void runStateChanged(RunState state) {
                 switch (state) {
+                    case STATE_RUNNING:
+                        lblStatus.setText("running");
+                        lblTime.setText("counting...");
+                        nanoStartTime = System.nanoTime();
+                        break;
                     case STATE_STOPPED_NORMAL:
                         lblStatus.setText("stopped (normal)");
                         break;
@@ -52,7 +64,13 @@ public class BrainStatusPanel extends JPanel {
                         lblStatus.setText("stopped (instruction fallout)");
                         break;
                 }
-
+                long tmpNanoTime = 0;
+                if (state != RunState.STATE_RUNNING && nanoStartTime != 0) {
+                    tmpNanoTime = System.nanoTime() - nanoStartTime;
+                    nanoTime = tmpNanoTime;
+                    nanoStartTime = 0;
+                }
+                lblTime.setText(String.format("%.2f s", (double) tmpNanoTime / 1000000000.0));
             }
 
             @Override
@@ -72,13 +90,11 @@ public class BrainStatusPanel extends JPanel {
     private void initComponents() {
         JLabel lblP = new JLabel("P");
         JLabel lblIP = new JLabel("IP");
-        txtP = new JTextField("0000");
-        txtIP = new JTextField("0000");
-        lblStatus = new JLabel("breakpoint");
         JLabel lblMemP = new JLabel("*P");
-        txtMemP = new JTextField("00");
+        JLabel lblTimeT = new JLabel("Execution time: ");
 
         lblStatus.setFont(lblStatus.getFont().deriveFont(Font.BOLD));
+        lblTime.setFont(lblStatus.getFont().deriveFont(Font.BOLD));
         txtP.setEditable(false);
         txtP.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
         txtIP.setEditable(false);
@@ -89,12 +105,71 @@ public class BrainStatusPanel extends JPanel {
         GroupLayout layout = new GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
-                layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblP).addComponent(lblIP).addComponent(lblMemP)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtP, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE).addComponent(txtIP, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE).addComponent(txtMemP, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE))).addComponent(lblStatus, GroupLayout.DEFAULT_SIZE, 150, Short.MAX_VALUE)).addContainerGap(20, Short.MAX_VALUE));
+                layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(
+                                layout
+                                        .createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(
+                                                layout.createSequentialGroup()
+                                                        .addGroup(
+                                                                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                                        .addComponent(lblP)
+                                                                        .addComponent(lblIP)
+                                                                        .addComponent(lblMemP)
+                                                                        .addComponent(lblTimeT))
+                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                        .addGroup(
+                                                                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                                        .addComponent(
+                                                                                txtP,
+                                                                                GroupLayout.DEFAULT_SIZE,
+                                                                                GroupLayout.PREFERRED_SIZE,
+                                                                                GroupLayout.DEFAULT_SIZE)
+                                                                        .addComponent(
+                                                                                txtIP,
+                                                                                GroupLayout.DEFAULT_SIZE,
+                                                                                GroupLayout.PREFERRED_SIZE,
+                                                                                GroupLayout.DEFAULT_SIZE)
+                                                                        .addComponent(
+                                                                                txtMemP,
+                                                                                GroupLayout.DEFAULT_SIZE,
+                                                                                GroupLayout.PREFERRED_SIZE,
+                                                                                GroupLayout.DEFAULT_SIZE)
+                                                                        .addComponent(
+                                                                                lblTime,
+                                                                                GroupLayout.DEFAULT_SIZE,
+                                                                                GroupLayout.PREFERRED_SIZE,
+                                                                                GroupLayout.DEFAULT_SIZE)))
+                                        .addComponent(
+                                                lblStatus,
+                                                GroupLayout.DEFAULT_SIZE,
+                                                150,
+                                                Short.MAX_VALUE))
+                        .addContainerGap(20, Short.MAX_VALUE)
+        );
         layout.setVerticalGroup(
-                layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblP).addComponent(txtP)).addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblIP).addComponent(txtIP)).addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblMemP).addComponent(txtMemP)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(lblStatus).addContainerGap());
+                layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(
+                                layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblP)
+                                        .addComponent(txtP))
+                        .addGroup(
+                                layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblIP)
+                                        .addComponent(txtIP))
+                        .addGroup(
+                                layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblMemP)
+                                        .addComponent(txtMemP))
+                        .addGroup(
+                                layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblTimeT)
+                                        .addComponent(lblTime))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lblStatus).addContainerGap()
+        );
     }
-    private JTextField txtP;
-    private JTextField txtIP;
-    private JLabel lblStatus;
-    private JTextField txtMemP;
+
 }

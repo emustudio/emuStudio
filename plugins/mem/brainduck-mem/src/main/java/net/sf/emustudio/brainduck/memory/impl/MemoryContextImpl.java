@@ -94,4 +94,8 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> {
         }
     }
 
+    @Override
+    public int getSize() {
+        return memory.length;
+    }
 }
