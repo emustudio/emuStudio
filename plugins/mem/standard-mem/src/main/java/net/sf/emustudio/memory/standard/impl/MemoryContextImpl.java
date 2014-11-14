@@ -25,6 +25,9 @@ package net.sf.emustudio.memory.standard.impl;
 import emulib.plugins.memory.AbstractMemoryContext;
 import emulib.runtime.HEXFileManager;
 import emulib.runtime.StaticDialogs;
+import net.sf.emustudio.memory.standard.StandardMemoryContext;
+import net.sf.emustudio.memory.standard.gui.MemoryFrame;
+
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
@@ -32,8 +35,6 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import net.sf.emustudio.memory.standard.StandardMemoryContext;
-import net.sf.emustudio.memory.standard.gui.MemoryFrame;
 
 public class MemoryContextImpl extends AbstractMemoryContext<Short> implements StandardMemoryContext {
 
@@ -281,6 +282,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         }
     }
 
+    @Override
     public int getSize() {
         if (sizeSet == false) {
             return 0;

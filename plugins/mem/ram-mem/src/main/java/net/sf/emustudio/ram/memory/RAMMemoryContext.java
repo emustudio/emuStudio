@@ -35,11 +35,4 @@ public interface RAMMemoryContext extends MemoryContext<RAMInstruction> {
 	// for CPU
 	public List<String> getInputs();
         
-        /**
-         * Get memory size.
-         * 
-         * @return memory size
-         */
-        public int getSize();
-        
 }
