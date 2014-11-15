@@ -34,7 +34,7 @@ import emulib.runtime.StaticDialogs;
 import net.sf.emustudio.braincpu.gui.DecoderImpl;
 import net.sf.emustudio.braincpu.gui.DisassemblerImpl;
 import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
-import net.sf.emustudio.brainduck.cpu.gui.BrainStatusPanel;
+import net.sf.emustudio.brainduck.cpu.gui.StatusPanel;
 
 import javax.swing.*;
 import java.util.Deque;
@@ -112,7 +112,7 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public JPanel getStatusPanel() {
-        return new BrainStatusPanel(this, memory);
+        return new StatusPanel(memory, this);
     }
 
     @Override
