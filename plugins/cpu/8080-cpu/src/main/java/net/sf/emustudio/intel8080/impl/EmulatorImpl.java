@@ -110,6 +110,7 @@ public class EmulatorImpl extends AbstractCPU {
     private volatile RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
     private volatile boolean stopRequested;
     private volatile SettingsManager settings;
+    private final ContextPool contextPool;
 
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
 
@@ -142,11 +143,12 @@ public class EmulatorImpl extends AbstractCPU {
         }
     }
 
-    public EmulatorImpl(Long pluginID) {
+    public EmulatorImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
         context = new ContextImpl(this);
         try {
-            ContextPool.getInstance().register(pluginID, context, ExtendedContext.class);
+            contextPool.register(pluginID, context, ExtendedContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register CPU Context",
                     EmulatorImpl.class.getAnnotation(PluginType.class).title());
@@ -170,7 +172,7 @@ public class EmulatorImpl extends AbstractCPU {
     public void initialize(SettingsManager settings) throws PluginInitializationException{
         this.settings = Objects.requireNonNull(settings);
         try {
-            this.memory = ContextPool.getInstance().getMemoryContext(getPluginID(), MemoryContext.class);
+            this.memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
 
             if (memory.getDataType() != Short.class) {
                 throw new PluginInitializationException(
@@ -182,9 +184,7 @@ public class EmulatorImpl extends AbstractCPU {
             // create disassembler and debug columns
             disasm = new DisassemblerImpl(memory, new DecoderImpl(memory));
         } catch (InvalidContextException | ContextNotFoundException e) {
-            throw new PluginInitializationException(
-                    this, ": Could not get memory context", e
-            );
+            throw new PluginInitializationException(this, ": Could not get memory context", e);
         }
     }
 

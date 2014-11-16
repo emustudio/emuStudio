@@ -42,6 +42,7 @@ import net.sf.emustudio.zilogZ80.gui.StatusPanel;
 import javax.swing.*;
 import java.util.List;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -98,6 +99,7 @@ public class EmulatorImpl extends AbstractCPU {
     private volatile boolean stopRequested;
     private final List<FrequencyChangedListener> frequencyChangedListenerList = new CopyOnWriteArrayList<>();
     private RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
+    private final ContextPool contextPool;
 
 
     /* parityTable[i] = (number of 1's in i is odd) ? 0 : 4, i = 0..255 */
@@ -246,15 +248,15 @@ public class EmulatorImpl extends AbstractCPU {
         }
     }
 
-    public EmulatorImpl(Long pluginID) {
+    public EmulatorImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
 
         context = new ContextImpl(this);
         try {
-            ContextPool.getInstance().register(pluginID, context, ExtendedContext.class);
+            contextPool.register(pluginID, context, ExtendedContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
-            StaticDialogs.showErrorMessage("Could not register CPU Context",
-                    EmulatorImpl.class.getAnnotation(PluginType.class).title());
+            StaticDialogs.showErrorMessage("Could not register CPU Context", getTitle());
         }
         statusPanel = new StatusPanel(this, context);
         frequencyUpdater = new FrequencyUpdater();
@@ -277,7 +279,7 @@ public class EmulatorImpl extends AbstractCPU {
         this.settings = settings;
 
         try {
-            this.memory = ContextPool.getInstance().getMemoryContext(getPluginID(), MemoryContext.class);
+            this.memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
         } catch (InvalidContextException | ContextNotFoundException e) {
             throw new PluginInitializationException(
                     this, "CPU must have access to memory", e

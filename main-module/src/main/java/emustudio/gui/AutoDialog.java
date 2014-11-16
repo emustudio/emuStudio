@@ -18,9 +18,8 @@
  */
 package emustudio.gui;
 
-import emustudio.main.Main;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import emustudio.architecture.Computer;
+
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -28,6 +27,9 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Objects;
 
 /**
  * This is the dialog form that displays when the emuStudio automatization
@@ -35,9 +37,11 @@ import javax.swing.WindowConstants;
  */
 @SuppressWarnings("serial")
 public class AutoDialog extends JDialog {
+    private final Computer computer;
 
-    public AutoDialog() {
-        super();
+    public AutoDialog(Computer computer) {
+        this.computer = Objects.requireNonNull(computer);
+
         initComponents();
         this.setLocationRelativeTo(null);
     }
@@ -89,7 +93,7 @@ public class AutoDialog extends JDialog {
     }
 
     private void btnStopActionPerformed(ActionEvent e) {
-        Main.architecture.getComputer().getCPU().stop();
+        computer.getCPU().stop();
     }
     private JLabel lblAction;
     private JButton btnStop;

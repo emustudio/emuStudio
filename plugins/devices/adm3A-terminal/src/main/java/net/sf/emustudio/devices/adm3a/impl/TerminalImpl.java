@@ -31,12 +31,14 @@ import emulib.runtime.InvalidContextException;
 import emulib.runtime.LoggerFactory;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.interfaces.Logger;
-import java.io.File;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
 import net.sf.emustudio.devices.adm3a.InputProvider;
 import net.sf.emustudio.devices.adm3a.gui.ConfigDialog;
 import net.sf.emustudio.devices.adm3a.gui.TerminalWindow;
+
+import java.io.File;
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
 @PluginType(type = PLUGIN_TYPE.DEVICE,
 title = "LSI ADM-3A terminal",
@@ -50,13 +52,15 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
     private InputProvider keyboard;
     private DeviceContext<Short> connectedDevice;
     private TerminalSettings terminalSettings;
+    private final ContextPool contextPool;
 
-    public TerminalImpl(Long pluginID) {
+    public TerminalImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
         terminalSettings = new TerminalSettings(pluginID);
         display = new Display(80, 25, terminalSettings);
         try {
-            ContextPool.getInstance().register(pluginID, display, DeviceContext.class);
+            contextPool.register(pluginID, display, DeviceContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register ADM-3A terminal",
                     TerminalImpl.class.getAnnotation(PluginType.class).title());
@@ -71,14 +75,10 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
 
         try {
             // try to connect to a serial I/O board
-            DeviceContext device = ContextPool.getInstance().getDeviceContext(
-                    pluginID, DeviceContext.class
-            );
+            DeviceContext device = contextPool.getDeviceContext(pluginID, DeviceContext.class);
             if (device != null) {
                 if (device.getDataType() != Short.class) {
-                    throw new PluginInitializationException(
-                            this, "Connected device is not supported"
-                    );
+                    throw new PluginInitializationException(this, "Connected device is not supported");
                 }
                 connectedDevice = device;
             } else {

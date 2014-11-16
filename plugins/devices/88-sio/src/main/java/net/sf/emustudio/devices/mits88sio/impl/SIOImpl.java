@@ -34,12 +34,14 @@ import emulib.runtime.InvalidContextException;
 import emulib.runtime.LoggerFactory;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.interfaces.Logger;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-import javax.swing.JOptionPane;
 import net.sf.emustudio.devices.mits88sio.gui.ConfigDialog;
 import net.sf.emustudio.devices.mits88sio.gui.StatusDialog;
 import net.sf.emustudio.intel8080.ExtendedContext;
+
+import javax.swing.JOptionPane;
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
 /**
  * This class represents the emulator of MITS 2SIO card.
@@ -69,23 +71,25 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
     private ExtendedContext cpu;
     private StatusDialog gui;
     private SIOSettings sioSettings;
+    private final ContextPool contextPool;
 
     private int currentStatusPortNumber = -1;
     private int currentDataPortNumber = -1;
 
-    public SIOImpl(Long pluginID) {
+    public SIOImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
+
         statusPort = new StatusCPUPort(this);
         dataPort = new DataCPUPort(this);
         physicalPort = new PhysicalPort(dataPort);
         sioSettings = new SIOSettings(pluginID);
 
         try {
-            ContextPool.getInstance().register(pluginID, physicalPort, DeviceContext.class);
+            contextPool.register(pluginID, physicalPort, DeviceContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             LOGGER.error("Could not register 88-SIO device context", e);
-            StaticDialogs.showErrorMessage("Could not register MITS 88-SIO physical port context",
-                    SIOImpl.class.getAnnotation(PluginType.class).title());
+            StaticDialogs.showErrorMessage("Could not register MITS 88-SIO physical port context", getTitle());
         }
     }
 
@@ -137,25 +141,21 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
         sioSettings.addChangedObserver(this);
 
         try {
-            cpu = (ExtendedContext) ContextPool.getInstance().getCPUContext(pluginID, ExtendedContext.class);
+            cpu = (ExtendedContext) contextPool.getCPUContext(pluginID, ExtendedContext.class);
         } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException(
-                    this, ": Could not get CPU", e
-            );
+            throw new PluginInitializationException(this, ": Could not get CPU", e);
         }
 
         // get a device connected into this card
         try {
-            DeviceContext device = ContextPool.getInstance().getDeviceContext(pluginID, DeviceContext.class);
+            DeviceContext device = contextPool.getDeviceContext(pluginID, DeviceContext.class);
             if (device != null) {
                 dataPort.attachDevice(device);
             } else {
                 LOGGER.warning("No device is connected into the 88-SIO.");
             }
         } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException(
-                    this, ": Could not get connected device", e
-            );
+            throw new PluginInitializationException(this, ": Could not get connected device", e);
         }
         sioSettings.read();
     }

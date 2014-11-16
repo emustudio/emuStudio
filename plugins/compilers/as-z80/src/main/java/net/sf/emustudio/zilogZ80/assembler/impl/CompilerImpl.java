@@ -47,9 +47,12 @@ public class CompilerImpl extends AbstractCompiler {
     private final LexerImpl lexer;
     private final ParserImpl parser;
     private final SourceFileExtension[] suffixes;
+    private final ContextPool contextPool;
 
-    public CompilerImpl(Long pluginID) {
+    public CompilerImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
+
         lexer = new LexerImpl((Reader) null);
         parser = new ParserImpl(lexer);
         suffixes = new SourceFileExtension[1];
@@ -115,7 +118,7 @@ public class CompilerImpl extends AbstractCompiler {
             hex.generateFile(outputFileName);
             notifyInfo("Compile was sucessfull. Output: " + outputFileName);
 
-            MemoryContext memory = ContextPool.getInstance().getMemoryContext(pluginID, MemoryContext.class);
+            MemoryContext memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
             if (memory != null) {
                 if (hex.loadIntoMemory(memory)) {
                     notifyInfo("Compiled file was loaded into operating memory.");
@@ -186,7 +189,7 @@ public class CompilerImpl extends AbstractCompiler {
                 printHelp();
                 return;
             } else if (arg.equals("--version") || arg.equals("-v")) {
-                System.out.println(new CompilerImpl(0L).getVersion());
+                System.out.println(new CompilerImpl(0L, new ContextPool()).getVersion());
                 return;
             } else {
               break;
@@ -201,7 +204,7 @@ public class CompilerImpl extends AbstractCompiler {
           outputFile = inputFile.substring(0, inputFile.lastIndexOf('.')) + ".hex";
         }
 
-        CompilerImpl compiler = new CompilerImpl(0L);
+        CompilerImpl compiler = new CompilerImpl(0L, new ContextPool());
         try {
           compiler.compile(inputFile, outputFile);
         } catch (Exception e) {

@@ -31,14 +31,16 @@ import emulib.runtime.InvalidContextException;
 import emulib.runtime.LoggerFactory;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.interfaces.Logger;
-import java.io.IOException;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
 import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
 import net.sf.emustudio.brainduck.terminal.io.FileIOProvider;
 import net.sf.emustudio.brainduck.terminal.io.InputProvider;
 import net.sf.emustudio.brainduck.terminal.io.Keyboard;
 import net.sf.emustudio.brainduck.terminal.io.OutputProvider;
+
+import java.io.IOException;
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
 @PluginType(type = PLUGIN_TYPE.DEVICE,
 title = "BrainDuck terminal",
@@ -50,13 +52,15 @@ public class BrainTerminal extends AbstractDevice {
     private boolean nogui;
     private BrainCPUContext cpu;
     private BrainTerminalContext terminal;
+    private final ContextPool contextPool;
 
-    public BrainTerminal(Long pluginID) {
+    public BrainTerminal(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
         terminal = new BrainTerminalContext();
 
         try {
-            ContextPool.getInstance().register(pluginID, terminal, DeviceContext.class);
+            contextPool.register(pluginID, terminal, DeviceContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register CPU Context",
                     getTitle());
@@ -97,7 +101,7 @@ public class BrainTerminal extends AbstractDevice {
             terminal.setInputProvider(inputProvider);
             terminal.setOutputProvider(outputProvider);
 
-            cpu = (BrainCPUContext) ContextPool.getInstance().getCPUContext(pluginID, BrainCPUContext.class);
+            cpu = (BrainCPUContext) contextPool.getCPUContext(pluginID, BrainCPUContext.class);
             cpu.attachDevice(terminal);
         } catch (IOException e) {
             throw new PluginInitializationException(this, e);

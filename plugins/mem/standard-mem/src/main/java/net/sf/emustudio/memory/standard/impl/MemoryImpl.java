@@ -30,14 +30,16 @@ import emulib.runtime.AlreadyRegisteredException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
-import java.io.File;
-import java.util.List;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
 import net.sf.emustudio.memory.standard.StandardMemoryContext;
 import net.sf.emustudio.memory.standard.StandardMemoryContext.AddressRange;
 import net.sf.emustudio.memory.standard.gui.MemoryFrame;
 import net.sf.emustudio.memory.standard.impl.MemoryContextImpl.AddressRangeImpl;
+
+import java.io.File;
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
 @PluginType(type=PLUGIN_TYPE.MEMORY,
         title="Standard operating memory",
@@ -47,15 +49,17 @@ public class MemoryImpl extends AbstractMemory {
     private MemoryContextImpl context;
     private MemoryFrame memGUI;
     private boolean noGUI = false; // whether to support GUI
+    private final ContextPool contextPool;
 
     private final static int DEFAULT_MEM_SIZE = 65536;
 
-    public MemoryImpl(Long pluginID) {
+    public MemoryImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
         context = new MemoryContextImpl();
         try {
-            ContextPool.getInstance().register(pluginID, context, StandardMemoryContext.class);
-            ContextPool.getInstance().register(pluginID, context, MemoryContext.class);
+            contextPool.register(pluginID, context, StandardMemoryContext.class);
+            contextPool.register(pluginID, context, MemoryContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register the memory",
                     MemoryImpl.class.getAnnotation(PluginType.class).title());

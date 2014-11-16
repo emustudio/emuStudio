@@ -41,6 +41,7 @@ import net.sf.emustudio.ram.memory.RAMMemoryContext;
 import javax.swing.*;
 import java.util.List;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(type = PLUGIN_TYPE.CPU,
@@ -55,12 +56,15 @@ public class EmulatorImpl extends AbstractCPU {
     private int IP; // instruction position
     private volatile SettingsManager settings;
     private volatile boolean stopRequested;
+    private final ContextPool contextPool;
 
-    public EmulatorImpl(Long pluginID) {
+    public EmulatorImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
-        context = new RAMContext(this);
+        this.contextPool = Objects.requireNonNull(contextPool);
+
+        context = new RAMContext(this, contextPool);
         try {
-            ContextPool.getInstance().register(pluginID, context, CPUContext.class);
+            contextPool.register(pluginID, context, CPUContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register RAM CPU Context",
                     EmulatorImpl.class.getAnnotation(PluginType.class).title());
@@ -82,7 +86,7 @@ public class EmulatorImpl extends AbstractCPU {
         this.settings = settings;
 
         try {
-            memory = (RAMMemoryContext) ContextPool.getInstance().getMemoryContext(getPluginID(), RAMMemoryContext.class);
+            memory = (RAMMemoryContext) contextPool.getMemoryContext(getPluginID(), RAMMemoryContext.class);
         } catch (ContextNotFoundException | InvalidContextException e) {
             // Will be processed later on
             throw new PluginInitializationException(this, "Could not get memory context", e);

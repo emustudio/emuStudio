@@ -31,23 +31,24 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
+import javax.swing.JPanel;
 import net.sf.emustudio.braincpu.gui.DecoderImpl;
 import net.sf.emustudio.braincpu.gui.DisassemblerImpl;
 import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
 import net.sf.emustudio.brainduck.cpu.gui.StatusPanel;
-
-import javax.swing.*;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
 
 @PluginType(type = PLUGIN_TYPE.CPU,
 title = "BrainCPU",
 copyright = "\u00A9 Copyright 2009-2014, Peter Jakubčo",
 description = "Emulator of CPU for abstract BrainDuck architecture")
 public class EmulatorImpl extends AbstractCPU {
-    private final BrainCPUContextImpl context;
+    private final ContextPool contextPool;
+    private final BrainCPUContextImpl context = new BrainCPUContextImpl();
     private final Deque<Integer> loopPointers = new LinkedList<>();
 
     private Disassembler disassembler;
@@ -57,11 +58,11 @@ public class EmulatorImpl extends AbstractCPU {
     private volatile SettingsManager settings;
     private volatile boolean stopRequested;
 
-    public EmulatorImpl(Long pluginID) {
+    public EmulatorImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
-        context = new BrainCPUContextImpl();
+        this.contextPool = Objects.requireNonNull(contextPool);
         try {
-            ContextPool.getInstance().register(pluginID, context, BrainCPUContext.class);
+            contextPool.register(pluginID, context, BrainCPUContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register CPU Context",
                     EmulatorImpl.class.getAnnotation(PluginType.class).title());
@@ -82,7 +83,7 @@ public class EmulatorImpl extends AbstractCPU {
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         this.settings = settings;
         try {
-            memory = ContextPool.getInstance().getMemoryContext(getPluginID(), MemoryContext.class);
+            memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
 
             if (memory.getDataType() != Short.class) {
                 throw new PluginInitializationException(

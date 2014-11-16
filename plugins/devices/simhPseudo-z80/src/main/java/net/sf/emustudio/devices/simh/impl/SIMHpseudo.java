@@ -27,10 +27,12 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
 import net.sf.emustudio.intel8080.ExtendedContext;
 import net.sf.emustudio.memory.standard.StandardMemoryContext;
+
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
 /**
  * SIMH emulator's pseudo device.
@@ -41,13 +43,14 @@ import net.sf.emustudio.memory.standard.StandardMemoryContext;
             + "\u00A9 Copyright 2007-2014, Peter Jakubčo",
         description="Overtaken implementation of simh pseudo device, used in simh emulator. Version is SIMH003.")
 public class SIMHpseudo extends AbstractDevice {
-
     private PseudoContext context;
     private ExtendedContext cpu;
     private StandardMemoryContext mem;
+    private final ContextPool contextPool;
 
-    public SIMHpseudo(Long pluginID) {
+    public SIMHpseudo(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
         context = new PseudoContext();
     }
 
@@ -55,19 +58,15 @@ public class SIMHpseudo extends AbstractDevice {
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
         try {
-            cpu = (ExtendedContext)ContextPool.getInstance().getCPUContext(pluginID, ExtendedContext.class);
+            cpu = (ExtendedContext)contextPool.getCPUContext(pluginID, ExtendedContext.class);
         } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException(
-                    this, "Could not get CPU context", e
-            );
+            throw new PluginInitializationException(this, "Could not get CPU context", e);
         }
 
         try {
-            mem = (StandardMemoryContext) ContextPool.getInstance().getMemoryContext(pluginID, StandardMemoryContext.class);
+            mem = (StandardMemoryContext) contextPool.getMemoryContext(pluginID, StandardMemoryContext.class);
         } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException(
-                    this, "Could not get memory context", e
-            );
+            throw new PluginInitializationException(this, "Could not get memory context", e);
         }
 
         context.setMemory(mem);
@@ -75,9 +74,7 @@ public class SIMHpseudo extends AbstractDevice {
         // attach IO port
         if (this.cpu.attachDevice(context, 0xFE) == false) {
             throw new PluginInitializationException(
-                    this,
-                    "SIMH device can't be attached to CPU (maybe there is a"
-                            + " hardware conflict)"
+                    this, "SIMH device can't be attached to CPU (maybe there is a hardware conflict)"
             );
         }
         reset();

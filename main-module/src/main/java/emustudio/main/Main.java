@@ -20,28 +20,31 @@
 package emustudio.main;
 
 import emulib.plugins.PluginInitializationException;
+import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidPasswordException;
 import emulib.runtime.InvalidPluginException;
+import emulib.runtime.PluginLoader;
 import emulib.runtime.StaticDialogs;
-import emustudio.architecture.ArchitectureLoader;
-import emustudio.architecture.ArchitectureManager;
-import emustudio.architecture.PluginLoadingException;
+import emustudio.architecture.Computer;
+import emustudio.architecture.ComputerFactory;
+import emustudio.architecture.Configuration;
+import emustudio.architecture.ConfigurationFactory;
 import emustudio.architecture.ReadConfigurationException;
+import emustudio.architecture.SettingsManagerImpl;
 import emustudio.gui.LoadingDialog;
 import emustudio.gui.OpenComputerDialog;
 import emustudio.gui.StudioFrame;
 import emustudio.main.CommandLineFactory.CommandLine;
-import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Main {
     private final static Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
-    public static ArchitectureManager architecture = null;
     public static String password = null;
     public static CommandLine commandLine;
 
@@ -129,6 +132,13 @@ public class Main {
             return;
         }
 
+        ConfigurationFactory configurationManager = new ConfigurationFactory();
+        ContextPool contextPool = new ContextPool();
+        PluginLoader pluginLoader = new PluginLoader();
+        Computer computer = null;
+        Configuration configuration = null;
+        SettingsManagerImpl settingsManager = null;
+
         // if configuration name has not been specified, let user
         // to choose the configuration manually
         if (commandLine.getConfigName() == null) {
@@ -154,31 +164,33 @@ public class Main {
             splash = new LoadingDialog();
             splash.setVisible(true);
         } else {
-            LOGGER.info(new StringBuilder().append("Loading virtual computer: ").append(commandLine.getConfigName())
-                    .toString());
+            LOGGER.info("Loading virtual computer: {}", commandLine.getConfigName());
         }
 
         // load the virtual computer
         try {
-            architecture = ArchitectureLoader.getInstance().createArchitecture(commandLine.getConfigName());
-        } catch (InvalidPasswordException e) {
-            LOGGER.error("Wrong emuLib.", e);
-            tryShowErrorMessage("Wrong emuLib. Please see log file for details.");
+            computer = new ComputerFactory(configurationManager, pluginLoader)
+                    .createComputer(commandLine.getConfigName(), contextPool);
+            contextPool.setComputer(password, computer);
+
+            configuration = ConfigurationFactory.read(commandLine.getConfigName());
+            settingsManager = new SettingsManagerImpl(computer, configuration);
+
+            computer.initialize(settingsManager);
         } catch (InvalidPluginException e) {
             LOGGER.error("Could not load plugin.", e);
             tryShowErrorMessage("Could not load plugin. Please see log file for details.");
-        } catch (PluginLoadingException e) {
-            LOGGER.error("Could not load virtual computer.", e);
-            tryShowErrorMessage("Could not load virtual computer. Please see log file for details.");
         } catch (ReadConfigurationException e) {
             LOGGER.error("Could not read configuration.", e);
             tryShowErrorMessage("Error: Could not read configuration. Please see log file for details.");
         } catch (PluginInitializationException e) {
-            LOGGER.error("{}: Could not initialize plug-in.", e.getPlugin().getTitle(), e);
-            tryShowErrorMessage("Error: Could not initialize plug-ins. Please see log file for details.");
-        } catch (IOException e) {
-            LOGGER.error("Could not load virtual computer. Unexpected error.", e);
-            tryShowErrorMessage("Could not load virtual computer. Please see log file for details.");
+            LOGGER.error("Could not initialize plugins.", e);
+            tryShowErrorMessage("Error: Could not initialize plugins. Please see log file for details.");
+            computer = null;
+        } catch (InvalidPasswordException e) {
+            LOGGER.error("Could not initialize emuLib.", e);
+            tryShowErrorMessage("Error: Could not initialize emuLib. Please see log file for details.");
+            computer = null;
         }
 
         if (splash != null) {
@@ -186,7 +198,7 @@ public class Main {
             splash.dispose();
         }
 
-        if (architecture == null) {
+        if (computer == null || settingsManager == null || configuration == null) {
             System.exit(1);
         }
 
@@ -194,9 +206,9 @@ public class Main {
             try {
                 // if the automatization is turned off, start the emuStudio normally
                 if (commandLine.getInputFileName() != null) {
-                    new StudioFrame(commandLine.getInputFileName(), commandLine.getConfigName()).setVisible(true);
+                    new StudioFrame(contextPool, computer, commandLine.getInputFileName(), settingsManager).setVisible(true);
                 } else {
-                    new StudioFrame(commandLine.getConfigName()).setVisible(true);
+                    new StudioFrame(contextPool, computer, settingsManager).setVisible(true);
                 }
             } catch (Exception e) {
                 LOGGER.error("Could not start main window.", e);
@@ -205,13 +217,13 @@ public class Main {
             }
         } else {
             try {
-              new Automatization(architecture, commandLine.getInputFileName(), commandLine.noGUIWanted()).run();
+              new Automatization(settingsManager, computer, commandLine.getInputFileName(), commandLine.noGUIWanted()).run();
             } catch (AutomatizationException e) {
                 LOGGER.error("Error during automatization.", e);
                 tryShowErrorMessage("Error: " + e.getMessage());
                 System.exit(1);
             }
-            architecture.destroy();
+            computer.destroy();
             System.exit(0);
         }
     }

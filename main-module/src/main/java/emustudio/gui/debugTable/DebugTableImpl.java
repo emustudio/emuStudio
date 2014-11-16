@@ -19,11 +19,8 @@
 package emustudio.gui.debugTable;
 
 import emulib.emustudio.DebugTable;
-import emustudio.main.Main;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Graphics;
+import emustudio.architecture.Computer;
+
 import javax.swing.DefaultCellEditor;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
@@ -31,16 +28,20 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellRenderer;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
 
 public class DebugTableImpl extends JTable  implements DebugTable {
-    private final DebugTableModel debug_model;
-    private final TextCellRenderer text_renderer;
-    private final BooleanCellRenderer bool_renderer;
+    private final DebugTableModel debugModel;
+    private final TextCellRenderer textRenderer;
+    private final BooleanCellRenderer boolRenderer;
 
     private static final Color EVEN_ROW_COLOR = new Color(241, 245, 250);
     private static final Color TABLE_GRID_COLOR = new Color(0xd9d9d9);
 
-    private class BooleanCellRenderer extends JLabel implements TableCellRenderer {
+    private static class BooleanCellRenderer extends JLabel implements TableCellRenderer {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
@@ -66,7 +67,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
         }
     }
 
-    private class BooleanEditComponent extends JCheckBox {
+    private static class BooleanEditComponent extends JCheckBox {
 
         @Override
         public void paint(Graphics g) {
@@ -88,7 +89,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
                 boolean isSelected, boolean hasFocus, int row, int column) {
-            if (debug_model.isCurrent(row)) {
+            if (debugModel.isCurrent(row)) {
                 setBackground(Color.RED);
                 setForeground(Color.WHITE);
             } else {
@@ -117,19 +118,19 @@ public class DebugTableImpl extends JTable  implements DebugTable {
         }
     }
 
-    public DebugTableImpl() {
+    public DebugTableImpl(Computer computer) {
         super();
-        debug_model = new DebugTableModel(Main.architecture.getComputer().getCPU());
-        setModel(debug_model);
-        text_renderer = new TextCellRenderer();
-        bool_renderer = new BooleanCellRenderer();
-        setDefaultRenderer(Boolean.class, bool_renderer);
-        setDefaultRenderer(Object.class, text_renderer);
+        debugModel = new DebugTableModel(computer.getCPU());
+        setModel(debugModel);
+        textRenderer = new TextCellRenderer();
+        boolRenderer = new BooleanCellRenderer();
+        setDefaultRenderer(Boolean.class, boolRenderer);
+        setDefaultRenderer(Object.class, textRenderer);
 
         setAllBooleanCellEditor();
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        debug_model.setRowCount(text_renderer.estimateRowCount(getPreferredSize().height));
-        int breakIndex = debug_model.getBreakpointColumnIndex();
+        debugModel.setRowCount(textRenderer.estimateRowCount(getPreferredSize().height));
+        int breakIndex = debugModel.getBreakpointColumnIndex();
         if (breakIndex >= 0) {
             getColumn(getColumnName(breakIndex)).setPreferredWidth(20);
         }
@@ -142,9 +143,9 @@ public class DebugTableImpl extends JTable  implements DebugTable {
     }
 
     private void setAllBooleanCellEditor() {
-        int j = debug_model.getColumnCount();
+        int j = debugModel.getColumnCount();
         for (int i = 0; i < j; i++) {
-            if (debug_model.getColumnClass(i) == Boolean.class) {
+            if (debugModel.getColumnClass(i) == Boolean.class) {
                 this.getColumn(this.getColumnName(i)).setCellEditor(
                         new DefaultCellEditor(new BooleanEditComponent()));
             }
@@ -152,7 +153,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
     }
 
     public void fireResized(int height) {
-        debug_model.setRowCount(text_renderer.estimateRowCount(height));
+        debugModel.setRowCount(textRenderer.estimateRowCount(height));
         repaint();
     }
 
@@ -160,7 +161,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
      * Move to the first page.
      */
     public void firstPage() {
-        debug_model.firstPage();
+        debugModel.firstPage();
         refresh();
     }
 
@@ -170,7 +171,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
      * @param value number of pages to backward
      */
     public void pageSeekBackward(int value) {
-        debug_model.seekBackwardPage(value);
+        debugModel.seekBackwardPage(value);
         refresh();
     }
 
@@ -178,7 +179,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
      * Move to previous page.
      */
     public void previousPage() {
-        debug_model.previousPage();
+        debugModel.previousPage();
         refresh();
     }
 
@@ -186,7 +187,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
      * Move to the page with actual PC pointer.
      */
     public void currentPage() {
-        debug_model.currentPage();
+        debugModel.currentPage();
         refresh();
     }
 
@@ -194,7 +195,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
      * Move to next page.
      */
     public void nextPage() {
-        debug_model.nextPage();
+        debugModel.nextPage();
         refresh();
     }
 
@@ -204,7 +205,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
      * @param value number of pages to forward
      */
     public void pageSeekForward(int value) {
-        debug_model.seekForwardPage(value);
+        debugModel.seekForwardPage(value);
         refresh();
     }
 
@@ -212,7 +213,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
      * Move to the last page.
      */
     public void lastPage() {
-        debug_model.lastPage();
+        debugModel.lastPage();
         refresh();
     }
 

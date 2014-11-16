@@ -36,6 +36,7 @@ import emulib.runtime.RadixUtils;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.interfaces.Logger;
 import emustudio.architecture.Computer;
+import emustudio.architecture.SettingsManagerImpl;
 import emustudio.emulation.EmulationController;
 import emustudio.gui.debugTable.DebugTableImpl;
 import emustudio.gui.debugTable.PagesPanel;
@@ -45,10 +46,32 @@ import emustudio.gui.utils.ConstantSizeButton;
 import emustudio.gui.utils.FindText;
 import emustudio.main.Main;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.BorderFactory;
+import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
+import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
+import javax.swing.LayoutStyle;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+import javax.swing.WindowConstants;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.FlavorEvent;
 import java.awt.datatransfer.FlavorListener;
@@ -58,9 +81,10 @@ import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-public class StudioFrame extends javax.swing.JFrame {
+public class StudioFrame extends JFrame {
     private final static Logger LOGGER = LoggerFactory.getLogger(StudioFrame.class);
 
     private EmuTextPane txtSource;
@@ -68,23 +92,28 @@ public class StudioFrame extends javax.swing.JFrame {
     private final Clipboard systemClipboard;
     private final FindText finder = new FindText();
 
-    private final EmulationController emulationController;
     private final Computer computer;
+    private final SettingsManagerImpl settings;
+
+    private final EmulationController emulationController;
     private volatile RunState run_state = RunState.STATE_STOPPED_BREAK;
-
     private DebugTableImpl debugTable;
+    private final ContextPool contextPool;
 
-    public StudioFrame(String fileName, String title) {
-        this(title);
+    public StudioFrame(ContextPool contextPool, Computer computer, String fileName, SettingsManagerImpl settings) {
+        this(contextPool, computer, settings);
         txtSource.openFile(fileName);
     }
 
-    public StudioFrame(String title) {
-        computer = Main.architecture.getComputer();
+    public StudioFrame(ContextPool contextPool, final Computer computer, SettingsManagerImpl settings) {
+        this.contextPool = Objects.requireNonNull(contextPool);
+        this.computer = Objects.requireNonNull(computer);
+        this.settings = Objects.requireNonNull(settings);
+
         emulationController = new EmulationController(computer);
 
         txtSource = new EmuTextPane(computer.getCompiler());
-        debugTable = new DebugTableImpl();
+        debugTable = new DebugTableImpl(computer);
         systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
         initComponents();
@@ -138,7 +167,7 @@ public class StudioFrame extends javax.swing.JFrame {
             }
         });
         this.setLocationRelativeTo(null);
-        this.setTitle("emuStudio [" + title + "]");
+        this.setTitle("emuStudio [" + computer.getName() + "]");
         txtSource.grabFocus();
     }
 
@@ -303,8 +332,7 @@ public class StudioFrame extends javax.swing.JFrame {
         Memory memory = computer.getMemory();
         if (memory != null) {
             try {
-                MemoryContext memContext = ContextPool.getInstance().getMemoryContext(
-                        Main.password.hashCode(), MemoryContext.class);
+                MemoryContext memContext = contextPool.getMemoryContext(Main.password.hashCode(), MemoryContext.class);
                 memContext.addMemoryListener(new MemoryListener() {
 
                     @Override
@@ -1238,7 +1266,7 @@ public class StudioFrame extends javax.swing.JFrame {
     }
 
     private void mnuProjectViewConfigActionPerformed(java.awt.event.ActionEvent evt) {
-        new ViewComputerDialog(this).setVisible(true);
+        new ViewComputerDialog(this, computer, settings).setVisible(true);
     }
 
     private void mnuProjectCompilerSettingsActionPerformed(java.awt.event.ActionEvent evt) {

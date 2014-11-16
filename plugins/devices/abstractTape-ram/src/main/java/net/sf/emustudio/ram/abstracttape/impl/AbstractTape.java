@@ -28,11 +28,13 @@ import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.LoggerFactory;
 import emulib.runtime.interfaces.Logger;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
 import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
 import net.sf.emustudio.ram.abstracttape.gui.SettingsDialog;
 import net.sf.emustudio.ram.abstracttape.gui.TapeDialog;
+
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
 @PluginType(type = PLUGIN_TYPE.CPU,
 title = "Abstract tape",
@@ -43,14 +45,17 @@ public class AbstractTape extends AbstractDevice {
     private String guiTitle;
     private AbstractTapeContextImpl context;
     private TapeDialog gui;
+    private final ContextPool contextPool;
+
     boolean nogui;
     boolean auto;
 
-    public AbstractTape(Long pluginID) {
+    public AbstractTape(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
         context = new AbstractTapeContextImpl(this);
         try {
-            ContextPool.getInstance().register(pluginID, context, AbstractTapeContext.class);
+            contextPool.register(pluginID, context, AbstractTapeContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             LOGGER.error("Could not register Abstract tape context", e);
         }

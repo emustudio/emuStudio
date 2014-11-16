@@ -19,14 +19,16 @@
 package emustudio.gui;
 
 import emulib.runtime.StaticDialogs;
-import emustudio.architecture.ArchitectureLoader;
+import emustudio.architecture.Configuration;
+import emustudio.architecture.ConfigurationFactory;
 import emustudio.architecture.ReadConfigurationException;
 import emustudio.drawing.PreviewPanel;
 import emustudio.drawing.Schema;
 import emustudio.main.Main;
-import javax.swing.AbstractListModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.swing.AbstractListModel;
 
 /**
  * This dialog manages the virtual computers. It offers a list of all
@@ -37,14 +39,14 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class OpenComputerDialog extends javax.swing.JDialog {
+    private final static Logger LOGGER = LoggerFactory.getLogger(OpenComputerDialog.class);
+
     private String archName;
     private boolean OOK = false;
     private final ConfigurationsListModel amodel;
     private final PreviewPanel preview;
-    private final static Logger logger = LoggerFactory.getLogger(OpenComputerDialog.class);
 
     public OpenComputerDialog() {
-        super();
         initComponents();
         amodel = new ConfigurationsListModel();
         lstConfig.setModel(amodel);
@@ -62,7 +64,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         private String[] allModels;
 
         public ConfigurationsListModel() {
-            allModels = ArchitectureLoader.getAllFileNames(ArchitectureLoader.CONFIGS_DIR, ".conf");
+            allModels = ConfigurationFactory.getAllFileNames(ConfigurationFactory.CONFIGS_DIR, ".conf");
         }
 
         @Override
@@ -76,7 +78,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         }
 
         public void update() {
-            allModels = ArchitectureLoader.getAllFileNames(ArchitectureLoader.CONFIGS_DIR, ".conf");
+            allModels = ConfigurationFactory.getAllFileNames(ConfigurationFactory.CONFIGS_DIR, ".conf");
             this.fireContentsChanged(this, -1, -1);
         }
     }
@@ -342,14 +344,12 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         }
         archName = (String) lstConfig.getSelectedValue();
         try {
-            Schema schema = ArchitectureLoader.getInstance().loadSchema(archName);
-            if (schema == null) {
-                return;
-            }
+            Configuration configuration = ConfigurationFactory.read(archName);
+            Schema schema = configuration.loadSchema();
             SchemaEditorDialog d = new SchemaEditorDialog(this, schema);
             d.setVisible(true);
         } catch (ReadConfigurationException e) {
-            logger.error("Could not load computer configuration", e);
+            LOGGER.error("Could not load computer configuration", e);
             Main.tryShowErrorMessage("Could not load computer configuration!");
         }
     }//GEN-LAST:event_btnEditActionPerformed
@@ -363,7 +363,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
                 + " selected computer?", "Delete architecture");
         archName = (String) lstConfig.getSelectedValue();
         if (r == StaticDialogs.YES_OPTION) {
-            boolean re = ArchitectureLoader.getInstance().deleteConfiguration(archName);
+            boolean re = ConfigurationFactory.delete(archName);
             lstConfig.clearSelection();
             if (re) {
                 archName = "";
@@ -388,12 +388,13 @@ public class OpenComputerDialog extends javax.swing.JDialog {
 
         archName = (String) lstConfig.getSelectedValue();
         try {
-            Schema s = ArchitectureLoader.getInstance().loadSchema(archName);
+            Configuration configuration = ConfigurationFactory.read(archName);
+            Schema s = configuration.loadSchema();
 
             preview.setSchema(s);
             preview.repaint();
         } catch (ReadConfigurationException e) {
-            logger.error("Could not update computer preview.", e);
+            LOGGER.error("Could not update computer preview.", e);
         }
 
         lblPreview.setText(archName);

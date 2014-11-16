@@ -29,25 +29,30 @@ import emulib.runtime.AlreadyRegisteredException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;
 import net.sf.emustudio.ram.memory.gui.MemoryWindow;
 
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
+
 @PluginType(type=PLUGIN_TYPE.MEMORY,
         title="RAM Program Tape",
-        copyright="\u00A9 Copyright 2009-2012, Peter Jakubčo",
+        copyright="\u00A9 Copyright 2009-2014, Peter Jakubčo",
         description="Read-only program tape for abstract RAM machine.")
 public class MemoryImpl extends AbstractMemory {
-    private RAMMemoryContextImpl context;
-    private MemoryWindow gui = null;
+    private final RAMMemoryContextImpl context;
+    private final ContextPool contextPool;
+    private MemoryWindow gui;
 
-    public MemoryImpl(Long pluginID) {
+    public MemoryImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
+
         context = new RAMMemoryContextImpl();
         try {
-            ContextPool.getInstance().register(pluginID, context, RAMMemoryContext.class);
-            ContextPool.getInstance().register(pluginID, context, MemoryContext.class);
+            contextPool.register(pluginID, context, RAMMemoryContext.class);
+            contextPool.register(pluginID, context, MemoryContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register Program tape context",
                     MemoryImpl.class.getAnnotation(PluginType.class).title());
@@ -95,7 +100,6 @@ public class MemoryImpl extends AbstractMemory {
     @Override
     public void destroy() {
         context.destroy();
-        context = null;
         if (gui != null) {
             gui.dispose();
             gui = null;

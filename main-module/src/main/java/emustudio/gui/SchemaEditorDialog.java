@@ -18,20 +18,23 @@
 package emustudio.gui;
 
 import emulib.runtime.StaticDialogs;
-import emustudio.architecture.ArchitectureLoader;
+import emustudio.architecture.ConfigurationFactory;
+import emustudio.architecture.ConfigurationImpl;
 import emustudio.architecture.WriteConfigurationException;
 import emustudio.drawing.DrawingPanel;
 import emustudio.drawing.DrawingPanel.Tool;
 import emustudio.drawing.DrawingPanel.ToolListener;
 import emustudio.drawing.Schema;
-import static emustudio.gui.utils.Components.addKeyListenerRecursively;
 import emustudio.main.Main;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import javax.swing.ComboBoxModel;
-import javax.swing.event.ListDataListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.swing.ComboBoxModel;
+import javax.swing.event.ListDataListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+
+import static emustudio.gui.utils.Components.addKeyListenerRecursively;
 
 /**
  * Editor of abstract schemas of a virtual computer.
@@ -435,7 +438,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             return;
         }
         buttonSelected = true;
-        String[] cpus = ArchitectureLoader.getAllFileNames(ArchitectureLoader.CPUS_DIR, ".jar");
+        String[] cpus = ConfigurationFactory.getAllFileNames(ConfigurationFactory.CPUS_DIR, ".jar");
         cmbPlugin.setModel(new PluginModel(cpus));
         try {
             cmbPlugin.setSelectedIndex(0);
@@ -452,7 +455,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             return;
         }
         buttonSelected = true;
-        String[] mems = ArchitectureLoader.getAllFileNames(ArchitectureLoader.MEMORIES_DIR, ".jar");
+        String[] mems = ConfigurationFactory.getAllFileNames(ConfigurationFactory.MEMORIES_DIR, ".jar");
         cmbPlugin.setModel(new PluginModel(mems));
         try {
             cmbPlugin.setSelectedIndex(0);
@@ -469,7 +472,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             return;
         }
         buttonSelected = true;
-        String[] devs = ArchitectureLoader.getAllFileNames(ArchitectureLoader.DEVICES_DIR, ".jar");
+        String[] devs = ConfigurationFactory.getAllFileNames(ConfigurationFactory.DEVICES_DIR, ".jar");
         cmbPlugin.setModel(new PluginModel(devs));
         try {
             cmbPlugin.setSelectedIndex(0);
@@ -577,10 +580,11 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
                 schema.setConfigName(name);
 
                 if (!old.equals(name)) {
-                    ArchitectureLoader.getInstance().renameConfiguration(name, old);
+                    ConfigurationFactory.rename(name, old);
                 }
                 try {
-                    ArchitectureLoader.getInstance().saveSchema(schema);
+                    schema.save();
+                    new ConfigurationImpl(name, schema.getSettings()).write();
                 } catch (WriteConfigurationException e) {
                     String msg = new StringBuilder().append("Could not save schema.").toString();
                     logger.error(msg, e);
@@ -591,7 +595,8 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             } else {
                 schema.setConfigName(name);
                 try {
-                    ArchitectureLoader.getInstance().saveSchema(schema);
+                    schema.save();
+                    new ConfigurationImpl(name, schema.getSettings()).write();
                 } catch (WriteConfigurationException e) {
                     String msg = new StringBuilder().append("Could not save schema.").toString();
                     logger.error(msg, e);
@@ -619,7 +624,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             return;
         }
         buttonSelected = true;
-        String[] compilers = ArchitectureLoader.getAllFileNames(ArchitectureLoader.COMPILERS_DIR, ".jar");
+        String[] compilers = ConfigurationFactory.getAllFileNames(ConfigurationFactory.COMPILERS_DIR, ".jar");
         cmbPlugin.setModel(new PluginModel(compilers));
         try {
             cmbPlugin.setSelectedIndex(0);

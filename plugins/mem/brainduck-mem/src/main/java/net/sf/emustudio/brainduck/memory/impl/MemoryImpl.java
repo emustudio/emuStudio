@@ -30,6 +30,7 @@ import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(type = PLUGIN_TYPE.MEMORY,
@@ -39,15 +40,16 @@ description = "Operating memory for abstract BrainDuck architecture")
 public class MemoryImpl extends AbstractMemory {
     private MemoryContextImpl memContext;
     private int size;
+    private final ContextPool contextPool;
 
-    public MemoryImpl(Long pluginID) {
+    public MemoryImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
         memContext = new MemoryContextImpl();
         try {
-            ContextPool.getInstance().register(pluginID, memContext, MemoryContext.class);
+            contextPool.register(pluginID, memContext, MemoryContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
-            StaticDialogs.showErrorMessage("Could not register Brainduck memory",
-                    MemoryImpl.class.getAnnotation(PluginType.class).title());
+            StaticDialogs.showErrorMessage("Could not register Brainduck memory", getTitle());
         }
     }
 

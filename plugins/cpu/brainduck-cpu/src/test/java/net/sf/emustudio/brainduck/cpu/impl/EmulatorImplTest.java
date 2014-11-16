@@ -1,4 +1,6 @@
 /*
+ * Copyright (C) 2014 Peter Jakubčo
+ *
  * KISS, YAGNI, DRY
  *
  * This program is free software; you can redistribute it and/or
@@ -15,18 +17,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package emustudio.architecture;
+package net.sf.emustudio.brainduck.cpu.impl;
 
-import emustudio.drawing.Schema;
-import java.util.Properties;
+import org.junit.Test;
 
-public interface ConfigurationManager {
-    public Properties readConfiguration(String configName, boolean schema_too) throws ReadConfigurationException;
-    public void writeConfiguration(String configName, Properties settings) throws WriteConfigurationException;
-    public boolean renameConfiguration(String newName, String oldName);
-    public boolean deleteConfiguration(String configName);
+public class EmulatorImplTest {
 
-    public Schema loadSchema(String configName) throws ReadConfigurationException;
-    public void saveSchema(Schema schema) throws WriteConfigurationException;
+
+    @Test
+    public void testGetVersion() {
+      
+    }
 
 }

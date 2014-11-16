@@ -22,23 +22,19 @@ import emulib.annotations.PluginType;
 import emulib.plugins.compiler.Compiler;
 import emulib.plugins.compiler.Compiler.CompilerListener;
 import emulib.plugins.compiler.Message;
-import static emulib.plugins.compiler.Message.MessageType.TYPE_ERROR;
-import static emulib.plugins.compiler.Message.MessageType.TYPE_INFO;
-import static emulib.plugins.compiler.Message.MessageType.TYPE_WARNING;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.CPU.CPUListener;
 import emulib.plugins.cpu.CPU.RunState;
-import static emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
-import static emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_BAD_INSTR;
-import static emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_BREAK;
-import static emulib.plugins.cpu.CPU.RunState.STATE_STOPPED_NORMAL;
 import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
-import emustudio.architecture.ArchitectureManager;
+import emustudio.architecture.Computer;
+import emustudio.architecture.SettingsManagerImpl;
 import emustudio.gui.AutoDialog;
-import java.io.File;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.util.Objects;
 
 /**
  * This class manages the emuStudio automatization process. In the process
@@ -46,7 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 public class Automatization implements Runnable {
     private final static Logger LOGGER = LoggerFactory.getLogger("automatization");
-    private final ArchitectureManager currentArch;
+    private final SettingsManagerImpl settings;
 
     private AutoDialog progressGUI;
     private File inputFile;
@@ -59,31 +55,27 @@ public class Automatization implements Runnable {
     private RunState resultState;
     private final boolean nogui;
 
-    public Automatization(ArchitectureManager currentArch, String inputFileName, boolean nogui) throws AutomatizationException {
-        this.currentArch = currentArch;
-        this.nogui = nogui;
+    public Automatization(SettingsManagerImpl settings, Computer computer, String inputFileName, boolean nogui) throws AutomatizationException {
+        Objects.requireNonNull(computer);
 
-        if (currentArch == null) {
-            throw new AutomatizationException("Computer architecture must be set");
-        }
-        if (inputFileName == null) {
-            throw new AutomatizationException("Input file name cannot be empty");
-        }
-        this.inputFile = new File(inputFileName);
+        this.settings = Objects.requireNonNull(settings);
+        this.nogui = nogui;
+        this.inputFile = new File(Objects.requireNonNull(inputFileName));
+
         if (!inputFile.exists()) {
             throw new AutomatizationException("Input file not found");
         }
 
-        cpu = currentArch.getComputer().getCPU();
+        cpu = computer.getCPU();
         if (cpu == null) {
             throw new AutomatizationException("CPU must be set");
         }
-        compiler = currentArch.getComputer().getCompiler();
-        memory = currentArch.getComputer().getMemory();
-        devices = currentArch.getComputer().getDevices();
+        compiler = computer.getCompiler();
+        memory = computer.getMemory();
+        devices = computer.getDevices();
 
         if (!nogui) {
-            progressGUI = new AutoDialog();
+            progressGUI = new AutoDialog(computer);
         }
     }
 
@@ -217,9 +209,9 @@ public class Automatization implements Runnable {
 
     /**
      * Executes automatic emulation.
-     *
+     * <p/>
      * It assumes that the virtual computer is loaded.
-     *
+     * <p/>
      * All output is saved into output file.
      */
     @Override
@@ -232,7 +224,7 @@ public class Automatization implements Runnable {
         PluginType cpuType = (cpu != null) ? cpu.getClass().getAnnotation(PluginType.class) : null;
         PluginType memoryType = (memory != null) ? memory.getClass().getAnnotation(PluginType.class) : null;
 
-	try {
+        try {
             LOGGER.info("Starting emulation automatization...");
             LOGGER.info("Compiler: " + ((compilerType == null) ? "none" : compilerType.title()));
             LOGGER.info("CPU: " + ((cpuType == null) ? "none" : cpuType.title()));
@@ -241,7 +233,7 @@ public class Automatization implements Runnable {
             int size = devices.length;
             for (int i = 0; i < size; i++) {
                 PluginType deviceType = devices[i].getClass().getAnnotation(PluginType.class);
-                LOGGER.info("Device #" + String.format("%02d", i)  + ": " + deviceType.title());
+                LOGGER.info("Device #" + String.format("%02d", i) + ": " + deviceType.title());
             }
 
             if (compiler != null) {
@@ -256,7 +248,7 @@ public class Automatization implements Runnable {
             LOGGER.error("Error during automatization", e);
             Main.tryShowErrorMessage("Error: " + e.getMessage());
         } finally {
-            currentArch.destroy();
+            settings.destroy();
             if (progressGUI != null) {
                 progressGUI.dispose();
                 progressGUI = null;

@@ -27,17 +27,20 @@ import emulib.plugins.cpu.CPU;
 import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
 import emulib.runtime.interfaces.PluginConnections;
-import emustudio.architecture.ArchitectureLoader.PluginInfo;
+import emustudio.architecture.ComputerFactory.PluginInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Computer implements PluginConnections {
     private final static Logger LOGGER = LoggerFactory.getLogger(Computer.class);
+
+    private final String name;
     private final CPU cpu;
     private final Compiler compiler;
     private final Memory memory;
@@ -47,8 +50,9 @@ public class Computer implements PluginConnections {
     private final Map<Long, Plugin> plugins;
     private final Collection<PluginInfo> pluginsInfo;
 
-    public Computer(CPU cpu, Memory memory, Compiler compiler, Device[] devices,
+    public Computer(String name, CPU cpu, Memory memory, Compiler compiler, Device[] devices,
             Collection<PluginInfo> plugins, Map<Long, List<Long>> connections) {
+        this.name = name;
         this.cpu = cpu;
         this.memory = memory;
         this.compiler = compiler;
@@ -60,6 +64,10 @@ public class Computer implements PluginConnections {
         for (PluginInfo plugin : plugins) {
             this.plugins.put(plugin.pluginId, plugin.plugin);
         }
+    }
+
+    public String getName() {
+        return name;
     }
 
     public Plugin getPlugin(long pluginID) {

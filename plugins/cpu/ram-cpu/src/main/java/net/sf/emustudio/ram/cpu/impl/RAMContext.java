@@ -26,19 +26,23 @@ import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
 
+import java.util.Objects;
+
 public class RAMContext implements CPUContext {
     private final EmulatorImpl cpu;
     private final AbstractTapeContext[] tapes;
+    private final ContextPool contextPool;
 
-    public RAMContext(EmulatorImpl cpu) {
-        this.cpu = cpu;
+    public RAMContext(EmulatorImpl cpu, ContextPool contextPool) {
+        this.cpu = Objects.requireNonNull(cpu);
+        this.contextPool = Objects.requireNonNull(contextPool);
         tapes = new AbstractTapeContext[3];
     }
 
     public void init(long pluginID) throws PluginInitializationException {
         try {
             tapes[0] = (AbstractTapeContext)
-                    ContextPool.getInstance().getDeviceContext(pluginID, AbstractTapeContext.class, 0);
+                    contextPool.getDeviceContext(pluginID, AbstractTapeContext.class, 0);
             if (tapes[0] == null) {
                 throw new PluginInitializationException(
                         cpu, "Could not get the Registers (storage tape)"
@@ -52,7 +56,7 @@ public class RAMContext implements CPUContext {
             tapes[0].setDisplayRowNumbers(true);
 
             tapes[1] = (AbstractTapeContext)
-                    ContextPool.getInstance().getDeviceContext(pluginID, AbstractTapeContext.class, 1);
+                    contextPool.getDeviceContext(pluginID, AbstractTapeContext.class, 1);
             if (tapes[1] == null) {
                 throw new PluginInitializationException(
                         cpu, "Could not get the Input tape"
@@ -65,12 +69,9 @@ public class RAMContext implements CPUContext {
             tapes[1].setTitle("Input tape");
             cpu.loadTape(tapes[1]);
 
-            tapes[2] = (AbstractTapeContext)
-                    ContextPool.getInstance().getDeviceContext(pluginID, AbstractTapeContext.class, 2);
+            tapes[2] = (AbstractTapeContext)contextPool.getDeviceContext(pluginID, AbstractTapeContext.class, 2);
             if (tapes[2] == null) {
-                throw new PluginInitializationException(
-                        cpu, "Could not get the Output tape"
-                );
+                throw new PluginInitializationException(cpu, "Could not get the Output tape");
             }
             tapes[2].setBounded(true);
             tapes[2].setEditable(false);
@@ -80,9 +81,7 @@ public class RAMContext implements CPUContext {
         } catch (PluginInitializationException e) {
             throw e;
         } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException(
-                    cpu, "One or more tapes needs to be connected to the CPU!", e
-            );
+            throw new PluginInitializationException(cpu, "One or more tapes needs to be connected to the CPU!", e);
         }
     }
 

@@ -52,15 +52,18 @@ public class RAMCompiler extends AbstractCompiler {
     private RAMMemoryContext memory;
     private RAMInstructionImpl context; // not needed context for anything, but
     private SourceFileExtension[] suffixes; // necessary for the registration
+    private final ContextPool contextPool;
 
-    public RAMCompiler(Long pluginID) {
+    public RAMCompiler(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
+
         // lexer has to be reset WITH a reader object before compile
         lexer = new LexerImpl((Reader) null);
         parser = new ParserImpl(lexer);
         context = new RAMInstructionImpl(0, null);
         try {
-            ContextPool.getInstance().register(pluginID, context, RAMInstruction.class);
+            contextPool.register(pluginID, context, RAMInstruction.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register RAM instruction context",
                     RAMCompiler.class.getAnnotation(PluginType.class).title());
@@ -81,8 +84,7 @@ public class RAMCompiler extends AbstractCompiler {
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
         try {
-            memory = (RAMMemoryContext) ContextPool.getInstance().getMemoryContext(pluginID,
-                    RAMMemoryContext.class);
+            memory = (RAMMemoryContext) contextPool.getMemoryContext(pluginID, RAMMemoryContext.class);
         } catch (ContextNotFoundException | InvalidContextException e) {
             throw new PluginInitializationException(
                     this, "Could not access RAM program memory", e

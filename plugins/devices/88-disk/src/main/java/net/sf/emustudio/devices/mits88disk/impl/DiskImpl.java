@@ -31,14 +31,16 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
+import net.sf.emustudio.devices.mits88disk.gui.ConfigDialog;
+import net.sf.emustudio.devices.mits88disk.gui.DiskFrame;
+import net.sf.emustudio.intel8080.ExtendedContext;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.ResourceBundle;
-import net.sf.emustudio.devices.mits88disk.gui.ConfigDialog;
-import net.sf.emustudio.devices.mits88disk.gui.DiskFrame;
-import net.sf.emustudio.intel8080.ExtendedContext;
 
 /**
  * MITS 88-DISK Floppy Disk controller with up to eight drives (although I think
@@ -129,9 +131,12 @@ public class DiskImpl extends AbstractDevice {
     private int currentDrive;
     private DiskFrame gui;
     private boolean noGUI = false;
+    private final ContextPool contextPool;
 
-    public DiskImpl(Long pluginID) {
+    public DiskImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
+
         for (int i = 0; i < DRIVES_COUNT; i++) {
             drives.add(new Drive());
         }
@@ -182,12 +187,9 @@ public class DiskImpl extends AbstractDevice {
         super.initialize(settings);
 
         try {
-            cpuContext = (ExtendedContext) ContextPool.getInstance()
-                    .getCPUContext(pluginID, ExtendedContext.class);
+            cpuContext = (ExtendedContext) contextPool.getCPUContext(pluginID, ExtendedContext.class);
         } catch (InvalidContextException | ContextNotFoundException e) {
-            throw new PluginInitializationException(
-                    this, ": Cannot connect to the CPU", e
-            );
+            throw new PluginInitializationException(this, ": Cannot connect to the CPU", e);
         }
 
         readSettings();
@@ -196,8 +198,7 @@ public class DiskImpl extends AbstractDevice {
             port1CPU = providePort(1, port1CPU, port1);
             if (port1CPU == -1) {
                 throw new PluginInitializationException(
-                        this,
-                        ": 88-DISK (port1) can not be attached to default CPU port"
+                        this, ": 88-DISK (port1) can not be attached to default CPU port"
                 );
             }
         }
@@ -205,8 +206,7 @@ public class DiskImpl extends AbstractDevice {
             port2CPU = providePort(2, port2CPU, port2);
             if (port2CPU == -1) {
                 throw new PluginInitializationException(
-                        this,
-                        ": 88-DISK (port2) can not be attached to default CPU port"
+                        this, ": 88-DISK (port2) can not be attached to default CPU port"
                 );
             }
         }
@@ -214,8 +214,7 @@ public class DiskImpl extends AbstractDevice {
             port3CPU = providePort(3, port3CPU, port3);
             if (port3CPU == -1) {
                 throw new PluginInitializationException(
-                        this,
-                        ": 88-DISK (port3) can not be attached to default CPU port"
+                        this, ": 88-DISK (port3) can not be attached to default CPU port"
                 );
             }
         }
@@ -397,7 +396,7 @@ public class DiskImpl extends AbstractDevice {
         }
 
         if (ARG_VERSION) {
-            System.out.println(new DiskImpl(0L).getVersion());
+            System.out.println(new DiskImpl(0L, new ContextPool()).getVersion());
             return;
         }
 
