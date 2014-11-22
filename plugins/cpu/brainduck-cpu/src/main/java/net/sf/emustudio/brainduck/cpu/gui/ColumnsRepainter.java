@@ -106,7 +106,6 @@ public class ColumnsRepainter {
         while (columns.hasMoreElements()) {
             TableColumn column = columns.nextElement();
             column.setHeaderValue(tableModel.getColumnName(column.getModelIndex()));
-            column.sizeWidthToFit();
         }
         JTableHeader header = table.getTableHeader();
         header.revalidate();

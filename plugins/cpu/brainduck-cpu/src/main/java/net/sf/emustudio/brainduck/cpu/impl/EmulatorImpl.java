@@ -31,16 +31,17 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
+import net.sf.emustudio.braincpu.gui.DecoderImpl;
+import net.sf.emustudio.braincpu.gui.DisassemblerImpl;
+import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
+import net.sf.emustudio.brainduck.cpu.gui.StatusPanel;
+
+import javax.swing.JPanel;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
-import javax.swing.JPanel;
-import net.sf.emustudio.braincpu.gui.DecoderImpl;
-import net.sf.emustudio.braincpu.gui.DisassemblerImpl;
-import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
-import net.sf.emustudio.brainduck.cpu.gui.StatusPanel;
 
 @PluginType(type = PLUGIN_TYPE.CPU,
 title = "BrainCPU",
@@ -64,8 +65,7 @@ public class EmulatorImpl extends AbstractCPU {
         try {
             contextPool.register(pluginID, context, BrainCPUContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
-            StaticDialogs.showErrorMessage("Could not register CPU Context",
-                    EmulatorImpl.class.getAnnotation(PluginType.class).title());
+            StaticDialogs.showErrorMessage("Could not register CPU Context", getTitle());
         }
     }
 
@@ -161,7 +161,7 @@ public class EmulatorImpl extends AbstractCPU {
                     return tmpRunState;
                 }
             } catch (Breakpoint er) {
-                return  RunState.STATE_STOPPED_BREAK;
+                return RunState.STATE_STOPPED_BREAK;
             }
         }
         return RunState.STATE_STOPPED_NORMAL;
@@ -169,6 +169,7 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     protected void destroyInternal() {
+        context.detachDevice();
     }
 
     @Override
@@ -211,8 +212,8 @@ public class EmulatorImpl extends AbstractCPU {
             case 6: /* , */
                 memory.write(P, context.readFromDevice());
                 break;
-            case 7: { /* [ */
-                loopPointers.push(IP -1);
+            case 7: /* [ */
+                loopPointers.push(IP - 1);
                 if (memory.read(P) != 0) {
                     break;
                 }
@@ -234,7 +235,6 @@ public class EmulatorImpl extends AbstractCPU {
                     }
                 }
                 break;
-            }
             case 8: /* ] */
                 int tmpIP = loopPointers.pop();
                 if (memory.read(P) != 0) {

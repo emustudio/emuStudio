@@ -23,6 +23,8 @@ package net.sf.emustudio.brainduck.cpu.impl;
 import emulib.plugins.device.DeviceContext;
 import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
 
+import java.util.Objects;
+
 public class BrainCPUContextImpl implements BrainCPUContext {
 
     private DeviceContext<Short> device;
@@ -40,10 +42,7 @@ public class BrainCPUContextImpl implements BrainCPUContext {
      */
     @Override
     public boolean attachDevice(DeviceContext<Short> device) {
-        if (this.device != null) {
-            return false;
-        }
-        this.device = device;
+        this.device = Objects.requireNonNull(device);
         return true;
     }
 
