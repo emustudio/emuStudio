@@ -35,6 +35,9 @@
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
             </manifest>
+            <manifestEntries>
+              <Class-Path>lib/java-cup-runtime-0.11a.jar</Class-Path>
+            </manifestEntries>
           </archive>
         </configuration>
       </plugin>

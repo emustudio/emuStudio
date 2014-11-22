@@ -41,7 +41,6 @@ public class ModeSelector {
 
     public void select(SelectMode mode) {
         currentMode = modes[mode.ordinal()];
-        System.out.println(currentMode);
     }
 
     public Mode get() {

@@ -232,7 +232,7 @@ public class ComputerFactory {
             }
         } catch (InvalidPluginException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (Exception | NoClassDefFoundError e) {
             throw new InvalidPluginException("Plug-in main class does not have proper constructor", e);
         }
     }
