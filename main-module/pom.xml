@@ -49,10 +49,6 @@
       <artifactId>easymock</artifactId>
     </dependency>
     <dependency>
-      <groupId>cup</groupId>
-      <artifactId>java-cup-runtime</artifactId>
-    </dependency>
-    <dependency>
       <groupId>net.sf.emustudio</groupId>
       <artifactId>emuLib</artifactId>
     </dependency>

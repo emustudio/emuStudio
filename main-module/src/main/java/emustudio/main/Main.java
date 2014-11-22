@@ -97,15 +97,6 @@ public class Main {
             return;
         }
 
-        // Test if java_cup is loaded
-        try {
-            java_cup.runtime.Scanner d;
-        } catch (NoClassDefFoundError e) {
-            LOGGER.error("java_cup library not loaded");
-            tryShowErrorMessage("Error: java_cup library not loaded.");
-            return;
-        }
-
         try {
             password = emulib.runtime.ContextPool.SHA1(String.valueOf(Math.random()) + new Date().toString());
         } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
