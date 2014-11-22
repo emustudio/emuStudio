@@ -24,8 +24,9 @@
 package net.sf.emustudio.devices.mits88sio.impl;
 
 import emulib.plugins.device.DeviceContext;
-import emulib.runtime.LoggerFactory;
-import emulib.runtime.interfaces.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -40,7 +41,6 @@ import java.util.Queue;
  * @author Peter Jakubčo
  */
 public class DataCPUPort implements DeviceContext<Short> {
-    
     private static final Logger LOGGER = LoggerFactory.getLogger(DataCPUPort.class);
     private SIOImpl sio;
     private Queue<Short> buffer = new LinkedList<Short>();

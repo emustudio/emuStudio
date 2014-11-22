@@ -28,14 +28,14 @@ import emulib.runtime.AlreadyRegisteredException;
 import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
-import emulib.runtime.LoggerFactory;
 import emulib.runtime.StaticDialogs;
-import emulib.runtime.interfaces.Logger;
 import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
 import net.sf.emustudio.brainduck.terminal.io.FileIOProvider;
 import net.sf.emustudio.brainduck.terminal.io.InputProvider;
 import net.sf.emustudio.brainduck.terminal.io.Keyboard;
 import net.sf.emustudio.brainduck.terminal.io.OutputProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.MissingResourceException;

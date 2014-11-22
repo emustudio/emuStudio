@@ -21,8 +21,10 @@
  */
 package net.sf.emustudio.ram.abstracttape.impl;
 
-import emulib.runtime.LoggerFactory;
-import emulib.runtime.interfaces.Logger;
+import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -30,7 +32,6 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
-import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
 
 /**
  * Tape used by abstract machines.

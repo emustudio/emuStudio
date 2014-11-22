@@ -22,12 +22,18 @@
  */
 package net.sf.emustudio.devices.adm3a.gui;
 
-import emulib.runtime.LoggerFactory;
-import emulib.runtime.interfaces.Logger;
 import net.sf.emustudio.devices.adm3a.impl.Display;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.WindowConstants;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.Font;
+import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 import java.io.InputStream;
 

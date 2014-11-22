@@ -27,9 +27,9 @@ import emulib.plugins.compiler.SourceFileExtension;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.HEXFileManager;
-import emulib.runtime.LoggerFactory;
-import emulib.runtime.interfaces.Logger;
 import net.sf.emustudio.zilogZ80.assembler.tree.Program;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.io.Reader;

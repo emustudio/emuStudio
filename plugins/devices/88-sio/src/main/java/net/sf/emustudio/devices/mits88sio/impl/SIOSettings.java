@@ -21,8 +21,9 @@
 package net.sf.emustudio.devices.mits88sio.impl;
 
 import emulib.emustudio.SettingsManager;
-import emulib.runtime.LoggerFactory;
-import emulib.runtime.interfaces.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;

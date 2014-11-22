@@ -28,9 +28,9 @@ import emulib.plugins.compiler.SourceFileExtension;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.HEXFileManager;
-import emulib.runtime.LoggerFactory;
-import emulib.runtime.interfaces.Logger;
 import net.sf.emustudio.intel8080.assembler.tree.Statement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.io.Reader;
@@ -38,9 +38,6 @@ import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-/**
- * Main implementation class of the plug-in (assembler for 8080 processor).
- */
 @PluginType(type = PLUGIN_TYPE.COMPILER,
         title = "Intel 8080 Assembler",
         copyright = "\u00A9 Copyright 2007-2014, Peter Jakubčo",

@@ -24,20 +24,14 @@
 package net.sf.emustudio.intel8080.impl;
 
 import emulib.plugins.device.DeviceContext;
-import emulib.runtime.LoggerFactory;
-import emulib.runtime.interfaces.Logger;
+import net.sf.emustudio.intel8080.ExtendedContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
-import net.sf.emustudio.intel8080.ExtendedContext;
 
-
-/**
- * Implementation of extended context of Intel8080 CPU.
- * 
- *
- */
 public class ContextImpl implements ExtendedContext {
-
     private final static Logger LOGGER = LoggerFactory.getLogger(ContextImpl.class);
     private Map<Integer, DeviceContext<Short>> devices;
     private int clockFrequency = 2000; // kHz

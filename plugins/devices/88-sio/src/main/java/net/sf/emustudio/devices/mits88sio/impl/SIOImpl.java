@@ -31,12 +31,12 @@ import emulib.runtime.AlreadyRegisteredException;
 import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
-import emulib.runtime.LoggerFactory;
 import emulib.runtime.StaticDialogs;
-import emulib.runtime.interfaces.Logger;
 import net.sf.emustudio.devices.mits88sio.gui.ConfigDialog;
 import net.sf.emustudio.devices.mits88sio.gui.StatusDialog;
 import net.sf.emustudio.intel8080.ExtendedContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.JOptionPane;
 import java.util.MissingResourceException;
@@ -152,7 +152,7 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
             if (device != null) {
                 dataPort.attachDevice(device);
             } else {
-                LOGGER.warning("No device is connected into the 88-SIO.");
+                LOGGER.warn("No device is connected into the 88-SIO.");
             }
         } catch (ContextNotFoundException | InvalidContextException e) {
             throw new PluginInitializationException(this, ": Could not get connected device", e);

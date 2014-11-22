@@ -26,11 +26,11 @@ import emulib.plugins.device.AbstractDevice;
 import emulib.runtime.AlreadyRegisteredException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
-import emulib.runtime.LoggerFactory;
-import emulib.runtime.interfaces.Logger;
 import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
 import net.sf.emustudio.ram.abstracttape.gui.SettingsDialog;
 import net.sf.emustudio.ram.abstracttape.gui.TapeDialog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.MissingResourceException;
 import java.util.Objects;

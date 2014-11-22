@@ -21,15 +21,17 @@
 package net.sf.emustudio.devices.adm3a.impl;
 
 import emulib.plugins.device.DeviceContext;
-import emulib.runtime.LoggerFactory;
-import emulib.runtime.interfaces.Logger;
+import net.sf.emustudio.devices.adm3a.InputProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import net.sf.emustudio.devices.adm3a.InputProvider;
+import java.util.concurrent.locks.LockSupport;
 
 public class KeyboardFromFile implements InputProvider {
     private final static Logger LOGGER = LoggerFactory.getLogger(KeyboardFromFile.class);
@@ -52,10 +54,7 @@ public class KeyboardFromFile implements InputProvider {
             while ((key = input.read()) != -1) {
                 notifyObservers((short) key);
                 if (delayInMilliseconds > 0) {
-                    try {
-                        Thread.sleep(delayInMilliseconds);
-                    } catch (InterruptedException e) {
-                    }
+                    LockSupport.parkNanos(delayInMilliseconds * 1000000);
                 }
             }
         } catch (Exception e) {

@@ -31,10 +31,8 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.InvalidPasswordException;
-import emulib.runtime.LoggerFactory;
 import emulib.runtime.RadixUtils;
 import emulib.runtime.StaticDialogs;
-import emulib.runtime.interfaces.Logger;
 import emustudio.architecture.Computer;
 import emustudio.architecture.SettingsManagerImpl;
 import emustudio.emulation.EmulationController;
@@ -45,6 +43,8 @@ import emustudio.gui.editor.EmuTextPane.UndoActionListener;
 import emustudio.gui.utils.ConstantSizeButton;
 import emustudio.gui.utils.FindText;
 import emustudio.main.Main;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
@@ -76,10 +76,14 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.FlavorEvent;
 import java.awt.datatransfer.FlavorListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -426,10 +430,10 @@ public class StudioFrame extends JFrame {
 
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("emuStudio");
-        addWindowListener(new java.awt.event.WindowAdapter() {
+        addWindowListener(new WindowAdapter() {
 
             @Override
-            public void windowClosing(java.awt.event.WindowEvent evt) {
+            public void windowClosing(WindowEvent evt) {
                 formWindowClosing(evt);
             }
         });
@@ -444,10 +448,10 @@ public class StudioFrame extends JFrame {
         btnNew.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/document-new.png"))); // NOI18N
         btnNew.setToolTipText("New file");
         btnNew.setFocusable(false);
-        btnNew.addActionListener(new java.awt.event.ActionListener() {
+        btnNew.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnNewActionPerformed(evt);
             }
         });
@@ -455,10 +459,10 @@ public class StudioFrame extends JFrame {
         btnOpen.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/document-open.png"))); // NOI18N
         btnOpen.setToolTipText("Open file");
         btnOpen.setFocusable(false);
-        btnOpen.addActionListener(new java.awt.event.ActionListener() {
+        btnOpen.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnOpenActionPerformed(evt);
             }
         });
@@ -466,10 +470,10 @@ public class StudioFrame extends JFrame {
         btnSave.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/document-save.png"))); // NOI18N
         btnSave.setToolTipText("Save file");
         btnSave.setFocusable(false);
-        btnSave.addActionListener(new java.awt.event.ActionListener() {
+        btnSave.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnSaveActionPerformed(evt);
             }
         });
@@ -482,10 +486,10 @@ public class StudioFrame extends JFrame {
         btnCut.setToolTipText("Cut selection");
         btnCut.setEnabled(false);
         btnCut.setFocusable(false);
-        btnCut.addActionListener(new java.awt.event.ActionListener() {
+        btnCut.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnCutActionPerformed(evt);
             }
         });
@@ -494,10 +498,10 @@ public class StudioFrame extends JFrame {
         btnCopy.setToolTipText("Copy selection");
         btnCopy.setEnabled(false);
         btnCopy.setFocusable(false);
-        btnCopy.addActionListener(new java.awt.event.ActionListener() {
+        btnCopy.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnCopyActionPerformed(evt);
             }
         });
@@ -506,10 +510,10 @@ public class StudioFrame extends JFrame {
         btnPaste.setToolTipText("Paste selection");
         btnPaste.setEnabled(false);
         btnPaste.setFocusable(false);
-        btnPaste.addActionListener(new java.awt.event.ActionListener() {
+        btnPaste.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnPasteActionPerformed(evt);
             }
         });
@@ -517,10 +521,10 @@ public class StudioFrame extends JFrame {
         btnFindReplace.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/edit-find-replace.png"))); // NOI18N
         btnFindReplace.setToolTipText("Find/replace text...");
         btnFindReplace.setFocusable(false);
-        btnFindReplace.addActionListener(new java.awt.event.ActionListener() {
+        btnFindReplace.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnFindReplaceActionPerformed(evt);
             }
         });
@@ -529,10 +533,10 @@ public class StudioFrame extends JFrame {
         btnUndo.setToolTipText("Undo");
         btnUndo.setEnabled(false);
         btnUndo.setFocusable(false);
-        btnUndo.addActionListener(new java.awt.event.ActionListener() {
+        btnUndo.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnUndoActionPerformed(evt);
             }
         });
@@ -541,10 +545,10 @@ public class StudioFrame extends JFrame {
         btnRedo.setToolTipText("Redo");
         btnRedo.setEnabled(false);
         btnRedo.setFocusable(false);
-        btnRedo.addActionListener(new java.awt.event.ActionListener() {
+        btnRedo.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnRedoActionPerformed(evt);
             }
         });
@@ -558,10 +562,10 @@ public class StudioFrame extends JFrame {
         btnCompile.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/compile.png"))); // NOI18N
         btnCompile.setToolTipText("Compile source");
         btnCompile.setFocusable(false);
-        btnCompile.addActionListener(new java.awt.event.ActionListener() {
+        btnCompile.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnCompileActionPerformed(evt);
             }
         });
@@ -645,10 +649,10 @@ public class StudioFrame extends JFrame {
         btnReset.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/reset.png"))); // NOI18N
         btnReset.setToolTipText("Reset emulation");
         btnReset.setFocusable(false);
-        btnReset.addActionListener(new java.awt.event.ActionListener() {
+        btnReset.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnResetActionPerformed(evt);
             }
         });
@@ -656,10 +660,10 @@ public class StudioFrame extends JFrame {
         btnBeginning.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-first.png"))); // NOI18N
         btnBeginning.setToolTipText("Jump to beginning");
         btnBeginning.setFocusable(false);
-        btnBeginning.addActionListener(new java.awt.event.ActionListener() {
+        btnBeginning.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnBeginningActionPerformed(evt);
             }
         });
@@ -667,10 +671,10 @@ public class StudioFrame extends JFrame {
         btnBack.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-previous.png"))); // NOI18N
         btnBack.setToolTipText("Step back");
         btnBack.setFocusable(false);
-        btnBack.addActionListener(new java.awt.event.ActionListener() {
+        btnBack.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnBackActionPerformed(evt);
             }
         });
@@ -678,10 +682,10 @@ public class StudioFrame extends JFrame {
         btnStop.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-stop.png"))); // NOI18N
         btnStop.setToolTipText("Stop emulation");
         btnStop.setFocusable(false);
-        btnStop.addActionListener(new java.awt.event.ActionListener() {
+        btnStop.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnStopActionPerformed(evt);
             }
         });
@@ -689,10 +693,10 @@ public class StudioFrame extends JFrame {
         btnPause.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-pause.png"))); // NOI18N
         btnPause.setToolTipText("Pause emulation");
         btnPause.setFocusable(false);
-        btnPause.addActionListener(new java.awt.event.ActionListener() {
+        btnPause.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnPauseActionPerformed(evt);
             }
         });
@@ -700,10 +704,10 @@ public class StudioFrame extends JFrame {
         btnRun.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-play.png"))); // NOI18N
         btnRun.setToolTipText("Run emulation");
         btnRun.setFocusable(false);
-        btnRun.addActionListener(new java.awt.event.ActionListener() {
+        btnRun.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnRunActionPerformed(evt);
             }
         });
@@ -711,10 +715,10 @@ public class StudioFrame extends JFrame {
         btnRunTime.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-play-time.png"))); // NOI18N
         btnRunTime.setToolTipText("Run emulation in time slices");
         btnRunTime.setFocusable(false);
-        btnRunTime.addActionListener(new java.awt.event.ActionListener() {
+        btnRunTime.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnRunTimeActionPerformed(evt);
             }
         });
@@ -722,10 +726,10 @@ public class StudioFrame extends JFrame {
         btnStep.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-next.png"))); // NOI18N
         btnStep.setToolTipText("Step forward");
         btnStep.setFocusable(false);
-        btnStep.addActionListener(new java.awt.event.ActionListener() {
+        btnStep.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnStepActionPerformed(evt);
             }
         });
@@ -733,10 +737,10 @@ public class StudioFrame extends JFrame {
         btnJump.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-jump.png"))); // NOI18N
         btnJump.setToolTipText("Jump to address");
         btnJump.setFocusable(false);
-        btnJump.addActionListener(new java.awt.event.ActionListener() {
+        btnJump.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnJumpActionPerformed(evt);
             }
         });
@@ -746,10 +750,10 @@ public class StudioFrame extends JFrame {
         btnBreakpoint.setFocusable(false);
         btnBreakpoint.setHorizontalTextPosition(SwingConstants.CENTER);
         btnBreakpoint.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnBreakpoint.addActionListener(new java.awt.event.ActionListener() {
+        btnBreakpoint.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnBreakpointActionPerformed(evt);
             }
         });
@@ -757,10 +761,10 @@ public class StudioFrame extends JFrame {
         btnMemory.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/grid_memory.gif"))); // NOI18N
         btnMemory.setToolTipText("Show operating memory");
         btnMemory.setFocusable(false);
-        btnMemory.addActionListener(new java.awt.event.ActionListener() {
+        btnMemory.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 btnMemoryActionPerformed(evt);
             }
         });
@@ -829,20 +833,20 @@ public class StudioFrame extends JFrame {
 
         btnShowSettings.setText("Settings");
         btnShowSettings.setFont(btnShowSettings.getFont().deriveFont(btnShowSettings.getFont().getStyle() & ~java.awt.Font.BOLD));
-        btnShowSettings.addActionListener(new java.awt.event.ActionListener() {
+        btnShowSettings.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 showSettingsButtonActionPerformed(evt);
             }
         });
 
         btnShowGUI.setText("Show");
         btnShowGUI.setFont(btnShowGUI.getFont().deriveFont(btnShowGUI.getFont().getStyle() & ~java.awt.Font.BOLD));
-        btnShowGUI.addActionListener(new java.awt.event.ActionListener() {
+        btnShowGUI.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 showGUIButtonActionPerformed(evt);
             }
         });
@@ -869,39 +873,39 @@ public class StudioFrame extends JFrame {
         mnuFile.setFont(mnuFile.getFont().deriveFont(mnuFile.getFont().getStyle() & ~java.awt.Font.BOLD));
 
 
-        mnuFileNew.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.CTRL_MASK));
+        mnuFileNew.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK));
         mnuFileNew.setText("New");
         mnuFile.setFont(mnuFile.getFont().deriveFont(mnuFile.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuFileNew.setFont(mnuFileNew.getFont().deriveFont(mnuFileNew.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuFileNew.addActionListener(new java.awt.event.ActionListener() {
+        mnuFileNew.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuFileNewActionPerformed(evt);
             }
         });
         mnuFile.add(mnuFileNew);
 
-        mnuFileOpen.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
+        mnuFileOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
         mnuFileOpen.setText("Open...");
         mnuFileOpen.setFont(mnuFileOpen.getFont().deriveFont(mnuFileOpen.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuFileOpen.addActionListener(new java.awt.event.ActionListener() {
+        mnuFileOpen.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuFileOpenActionPerformed(evt);
             }
         });
         mnuFile.add(mnuFileOpen);
         mnuFile.add(jSeparator3);
 
-        mnuFileSave.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
+        mnuFileSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
         mnuFileSave.setText("Save");
         mnuFileSave.setFont(mnuFileSave.getFont().deriveFont(mnuFileSave.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuFileSave.addActionListener(new java.awt.event.ActionListener() {
+        mnuFileSave.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuFileSaveActionPerformed(evt);
             }
         });
@@ -909,10 +913,10 @@ public class StudioFrame extends JFrame {
 
         mnuFileSaveAs.setText("Save As...");
         mnuFileSaveAs.setFont(mnuFileSaveAs.getFont().deriveFont(mnuFileSaveAs.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuFileSaveAs.addActionListener(new java.awt.event.ActionListener() {
+        mnuFileSaveAs.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuFileSaveAsActionPerformed(evt);
             }
         });
@@ -921,10 +925,10 @@ public class StudioFrame extends JFrame {
 
         mnuFileExit.setText("Exit");
         mnuFileExit.setFont(mnuFileExit.getFont().deriveFont(mnuFileExit.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuFileExit.addActionListener(new java.awt.event.ActionListener() {
+        mnuFileExit.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuFileExitActionPerformed(evt);
             }
         });
@@ -935,104 +939,104 @@ public class StudioFrame extends JFrame {
         mnuEdit.setText("Edit");
         mnuEdit.setFont(mnuEdit.getFont().deriveFont(mnuEdit.getFont().getStyle() & ~java.awt.Font.BOLD));
 
-        mnuEditUndo.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, java.awt.event.InputEvent.CTRL_MASK));
+        mnuEditUndo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK));
         mnuEditUndo.setText("Undo");
         mnuEditUndo.setFont(mnuEditUndo.getFont().deriveFont(mnuEditUndo.getFont().getStyle() & ~java.awt.Font.BOLD));
         mnuEditUndo.setEnabled(false);
-        mnuEditUndo.addActionListener(new java.awt.event.ActionListener() {
+        mnuEditUndo.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuEditUndoActionPerformed(evt);
             }
         });
         mnuEdit.add(mnuEditUndo);
 
-        mnuEditRedo.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Y, java.awt.event.InputEvent.CTRL_MASK));
+        mnuEditRedo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_MASK));
         mnuEditRedo.setText("Redo");
         mnuEditRedo.setEnabled(false);
         mnuEditRedo.setFont(mnuEditRedo.getFont().deriveFont(mnuEditRedo.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuEditRedo.addActionListener(new java.awt.event.ActionListener() {
+        mnuEditRedo.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuEditRedoActionPerformed(evt);
             }
         });
         mnuEdit.add(mnuEditRedo);
         mnuEdit.add(jSeparator6);
 
-        mnuEditCut.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_X, java.awt.event.InputEvent.CTRL_MASK));
+        mnuEditCut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK));
         mnuEditCut.setText("Cut selection");
         mnuEditCut.setEnabled(false);
         mnuEditCut.setFont(mnuEditCut.getFont().deriveFont(mnuEditCut.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuEditCut.addActionListener(new java.awt.event.ActionListener() {
+        mnuEditCut.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuEditCutActionPerformed(evt);
             }
         });
         mnuEdit.add(mnuEditCut);
 
-        mnuEditCopy.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.CTRL_MASK));
+        mnuEditCopy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
         mnuEditCopy.setText("Copy selection");
         mnuEditCopy.setEnabled(false);
         mnuEditCopy.setFont(mnuEditCopy.getFont().deriveFont(mnuEditCopy.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuEditCopy.addActionListener(new java.awt.event.ActionListener() {
+        mnuEditCopy.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuEditCopyActionPerformed(evt);
             }
         });
         mnuEdit.add(mnuEditCopy);
 
-        mnuEditPaste.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_V, java.awt.event.InputEvent.CTRL_MASK));
+        mnuEditPaste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_MASK));
         mnuEditPaste.setText("Paste selection");
         mnuEditPaste.setEnabled(false);
         mnuEditPaste.setFont(mnuEditPaste.getFont().deriveFont(mnuEditPaste.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuEditPaste.addActionListener(new java.awt.event.ActionListener() {
+        mnuEditPaste.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuEditPasteActionPerformed(evt);
             }
         });
         mnuEdit.add(mnuEditPaste);
         mnuEdit.add(jSeparator5);
 
-        mnuEditFind.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F, java.awt.event.InputEvent.CTRL_MASK));
+        mnuEditFind.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_MASK));
         mnuEditFind.setText("Find/replace text...");
         mnuEditFind.setFont(mnuEditFind.getFont().deriveFont(mnuEditFind.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuEditFind.addActionListener(new java.awt.event.ActionListener() {
+        mnuEditFind.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuEditFindActionPerformed(evt);
             }
         });
         mnuEdit.add(mnuEditFind);
 
-        mnuEditFindNext.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F3, 0));
+        mnuEditFindNext.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0));
         mnuEditFindNext.setText("Find next");
         mnuEditFindNext.setFont(mnuEditFindNext.getFont().deriveFont(mnuEditFindNext.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuEditFindNext.addActionListener(new java.awt.event.ActionListener() {
+        mnuEditFindNext.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuEditFindNextActionPerformed(evt);
             }
         });
         mnuEdit.add(mnuEditFindNext);
 
-        mnuEditReplaceNext.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4, 0));
+        mnuEditReplaceNext.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0));
         mnuEditReplaceNext.setText("Replace next");
         mnuEditReplaceNext.setFont(mnuEditReplaceNext.getFont().deriveFont(mnuEditReplaceNext.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuEditReplaceNext.addActionListener(new java.awt.event.ActionListener() {
+        mnuEditReplaceNext.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuEditReplaceNextActionPerformed(evt);
             }
         });
@@ -1045,10 +1049,10 @@ public class StudioFrame extends JFrame {
 
         mnuProjectCompile.setText("Compile source...");
         mnuProjectCompile.setFont(mnuProjectCompile.getFont().deriveFont(mnuProjectCompile.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuProjectCompile.addActionListener(new java.awt.event.ActionListener() {
+        mnuProjectCompile.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuProjectCompileActionPerformed(evt);
             }
         });
@@ -1056,10 +1060,10 @@ public class StudioFrame extends JFrame {
 
         mnuProjectViewConfig.setText("View computer...");
         mnuProjectViewConfig.setFont(mnuProjectViewConfig.getFont().deriveFont(mnuProjectViewConfig.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuProjectViewConfig.addActionListener(new java.awt.event.ActionListener() {
+        mnuProjectViewConfig.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuProjectViewConfigActionPerformed(evt);
             }
         });
@@ -1067,10 +1071,10 @@ public class StudioFrame extends JFrame {
 
         mnuProjectCompilerSettings.setText("Compiler settings...");
         mnuProjectCompilerSettings.setFont(mnuProjectCompilerSettings.getFont().deriveFont(mnuProjectCompilerSettings.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuProjectCompilerSettings.addActionListener(new java.awt.event.ActionListener() {
+        mnuProjectCompilerSettings.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuProjectCompilerSettingsActionPerformed(evt);
             }
         });
@@ -1083,10 +1087,10 @@ public class StudioFrame extends JFrame {
 
         mnuHelpAbout.setText("About...");
         mnuHelpAbout.setFont(mnuHelpAbout.getFont().deriveFont(mnuHelpAbout.getFont().getStyle() & ~java.awt.Font.BOLD));
-        mnuHelpAbout.addActionListener(new java.awt.event.ActionListener() {
+        mnuHelpAbout.addActionListener(new ActionListener() {
 
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            public void actionPerformed(ActionEvent evt) {
                 mnuHelpAboutActionPerformed(evt);
             }
         });
@@ -1106,11 +1110,11 @@ public class StudioFrame extends JFrame {
                         GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
     }
 
-    private void btnPauseActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnPauseActionPerformed(ActionEvent evt) {
         emulationController.pause();
     }
 
-    private void showSettingsButtonActionPerformed(java.awt.event.ActionEvent evt) {
+    private void showSettingsButtonActionPerformed(ActionEvent evt) {
         try {
             int i = lstDevices.getSelectedIndex();
             if (i == -1) {
@@ -1124,7 +1128,7 @@ public class StudioFrame extends JFrame {
         }
     }
 
-    private void showGUIButtonActionPerformed(java.awt.event.ActionEvent evt) {
+    private void showGUIButtonActionPerformed(ActionEvent evt) {
         try {
             int i = lstDevices.getSelectedIndex();
             if (i == -1) {
@@ -1138,7 +1142,7 @@ public class StudioFrame extends JFrame {
         }
     }
 
-    private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnMemoryActionPerformed(ActionEvent evt) {
         Memory memory = computer.getMemory();
 
         if ((memory != null) && (memory.isShowSettingsSupported())) {
@@ -1148,16 +1152,16 @@ public class StudioFrame extends JFrame {
         }
     }
 
-    private void btnStepActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnStepActionPerformed(ActionEvent evt) {
         emulationController.step();
     }
 
-    private void btnRunActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnRunActionPerformed(ActionEvent evt) {
         debugTable.setEnabled(false);
         emulationController.start();
     }
 
-    private void btnRunTimeActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnRunTimeActionPerformed(ActionEvent evt) {
         String sliceText = StaticDialogs.inputStringValue("Enter time slice in milliseconds:",
                 "Run timed emulation", "500");
         if (sliceText == null) {
@@ -1171,11 +1175,11 @@ public class StudioFrame extends JFrame {
         }
     }
 
-    private void btnStopActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnStopActionPerformed(ActionEvent evt) {
         emulationController.stop();
     }
 
-    private void btnBackActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnBackActionPerformed(ActionEvent evt) {
         CPU cpu = computer.getCPU();
         int pc = cpu.getInstructionPosition();
         if (pc > 0) {
@@ -1185,18 +1189,18 @@ public class StudioFrame extends JFrame {
         }
     }
 
-    private void btnBeginningActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnBeginningActionPerformed(ActionEvent evt) {
         CPU cpu = computer.getCPU();
         cpu.setInstructionPosition(0);
         paneDebug.revalidate();
         debugTable.refresh();
     }
 
-    private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnResetActionPerformed(ActionEvent evt) {
         emulationController.reset();
     }
 
-    private void btnJumpActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnJumpActionPerformed(ActionEvent evt) {
         int address;
         try {
             String number = StaticDialogs.inputStringValue("Jump to address: ", "Jump", "0");
@@ -1223,15 +1227,15 @@ public class StudioFrame extends JFrame {
         debugTable.refresh();
     }
 
-    private void mnuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuHelpAboutActionPerformed(ActionEvent evt) {
         (new AboutDialog(this)).setVisible(true);
     }
 
-    private void mnuProjectCompileActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuProjectCompileActionPerformed(ActionEvent evt) {
         btnCompileActionPerformed(evt);
     }
 
-    private void btnCompileActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnCompileActionPerformed(ActionEvent evt) {
         if (run_state == RunState.STATE_RUNNING) {
             Main.tryShowErrorMessage("You must first stop running emulation.", "Compile");
             return;
@@ -1265,62 +1269,62 @@ public class StudioFrame extends JFrame {
         }
     }
 
-    private void mnuProjectViewConfigActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuProjectViewConfigActionPerformed(ActionEvent evt) {
         new ViewComputerDialog(this, computer, settings).setVisible(true);
     }
 
-    private void mnuProjectCompilerSettingsActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuProjectCompilerSettingsActionPerformed(ActionEvent evt) {
         Compiler compiler = computer.getCompiler();
         if ((compiler != null) && (compiler.isShowSettingsSupported())) {
             compiler.showSettings();
         }
     }
 
-    private void mnuEditPasteActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuEditPasteActionPerformed(ActionEvent evt) {
         btnPasteActionPerformed(evt);
     }
 
-    private void mnuEditCopyActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuEditCopyActionPerformed(ActionEvent evt) {
         btnCopyActionPerformed(evt);
     }
 
-    private void mnuEditCutActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuEditCutActionPerformed(ActionEvent evt) {
         btnCutActionPerformed(evt);
     }
 
-    private void mnuEditRedoActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuEditRedoActionPerformed(ActionEvent evt) {
         btnRedoActionPerformed(evt);
     }
 
-    private void mnuEditUndoActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuEditUndoActionPerformed(ActionEvent evt) {
         btnUndoActionPerformed(evt);
     }
 
-    private void mnuFileSaveAsActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuFileSaveAsActionPerformed(ActionEvent evt) {
         txtSource.saveFileDialog();
     }
 
-    private void mnuFileSaveActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuFileSaveActionPerformed(ActionEvent evt) {
         btnSaveActionPerformed(evt);
     }
 
-    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnSaveActionPerformed(ActionEvent evt) {
         txtSource.saveFile(true);
     }
 
-    private void mnuFileOpenActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuFileOpenActionPerformed(ActionEvent evt) {
         btnOpenActionPerformed(evt);
     }
 
-    private void mnuFileNewActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuFileNewActionPerformed(ActionEvent evt) {
         btnNewActionPerformed(evt);
     }
 
-    private void mnuFileExitActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuFileExitActionPerformed(ActionEvent evt) {
         this.processWindowEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
     }
 
-    private void formWindowClosing(java.awt.event.WindowEvent evt) {
+    private void formWindowClosing(WindowEvent evt) {
         if (txtSource.confirmSave() == true) {
             return;
         }
@@ -1329,46 +1333,46 @@ public class StudioFrame extends JFrame {
         System.exit(0); //calling the method is a must
     }
 
-    private void btnOpenActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnOpenActionPerformed(ActionEvent evt) {
         if (txtSource.openFileDialog()) {
             txtOutput.setText("");
         }
     }
 
-    private void btnNewActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnNewActionPerformed(ActionEvent evt) {
         txtSource.newFile();
         txtOutput.setText("");
     }
 
-    private void btnFindReplaceActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnFindReplaceActionPerformed(ActionEvent evt) {
         mnuEditFindActionPerformed(evt);
     }
 
-    private void btnPasteActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnPasteActionPerformed(ActionEvent evt) {
         txtSource.paste();
     }
 
-    private void btnCopyActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnCopyActionPerformed(ActionEvent evt) {
         txtSource.copy();
     }
 
-    private void btnCutActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnCutActionPerformed(ActionEvent evt) {
         txtSource.cut();
     }
 
-    private void btnRedoActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnRedoActionPerformed(ActionEvent evt) {
         txtSource.redo();
     }
 
-    private void btnUndoActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnUndoActionPerformed(ActionEvent evt) {
         txtSource.undo();
     }
 
-    private void mnuEditFindActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuEditFindActionPerformed(ActionEvent evt) {
         FindDialog.create(this, finder, false, txtSource).setVisible(true);
     }
 
-    private void mnuEditFindNextActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuEditFindNextActionPerformed(ActionEvent evt) {
         try {
             if (finder.findNext(txtSource.getText(),
                     txtSource.getCaretPosition(),
@@ -1383,7 +1387,7 @@ public class StudioFrame extends JFrame {
         }
     }
 
-    private void btnBreakpointActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnBreakpointActionPerformed(ActionEvent evt) {
         BreakpointDialog bDialog = new BreakpointDialog(this, true);
         bDialog.setVisible(true);
         int address = bDialog.getAddress();
@@ -1400,7 +1404,7 @@ public class StudioFrame extends JFrame {
         debugTable.refresh();
     }
 
-    private void mnuEditReplaceNextActionPerformed(java.awt.event.ActionEvent evt) {
+    private void mnuEditReplaceNextActionPerformed(ActionEvent evt) {
         try {
             if (finder.replaceNext(txtSource)) {
                 txtSource.grabFocus();

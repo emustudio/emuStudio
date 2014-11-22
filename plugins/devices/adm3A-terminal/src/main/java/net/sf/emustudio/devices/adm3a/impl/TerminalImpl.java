@@ -28,12 +28,12 @@ import emulib.runtime.AlreadyRegisteredException;
 import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
-import emulib.runtime.LoggerFactory;
 import emulib.runtime.StaticDialogs;
-import emulib.runtime.interfaces.Logger;
 import net.sf.emustudio.devices.adm3a.InputProvider;
 import net.sf.emustudio.devices.adm3a.gui.ConfigDialog;
 import net.sf.emustudio.devices.adm3a.gui.TerminalWindow;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.MissingResourceException;
@@ -82,7 +82,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
                 }
                 connectedDevice = device;
             } else {
-                LOGGER.warning("The terminal is not connected to any I/O device.");
+                LOGGER.warn("The terminal is not connected to any I/O device.");
             }
             terminalGUI = new TerminalWindow(display);
             terminalSettings.read();
@@ -150,7 +150,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
         if (connectedDevice != null) {
             keyboard.addDeviceObserver(connectedDevice);
         } else {
-            LOGGER.warning("Keyboard is unconnected");
+            LOGGER.warn("Keyboard is unconnected");
         }
     }
 

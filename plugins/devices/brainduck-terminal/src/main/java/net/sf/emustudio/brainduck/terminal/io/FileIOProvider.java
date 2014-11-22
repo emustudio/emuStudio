@@ -20,8 +20,9 @@
 
 package net.sf.emustudio.brainduck.terminal.io;
 
-import emulib.runtime.LoggerFactory;
-import emulib.runtime.interfaces.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -73,12 +74,12 @@ public class FileIOProvider implements InputProvider, OutputProvider {
         try {
             writer.close();
         } catch (IOException e) {
-            LOGGER.warning("Could not close writer", e);
+            LOGGER.warn("Could not close writer", e);
         }
         try {
             reader.close();
         } catch (IOException e) {
-            LOGGER.warning("Could not close reader", e);
+            LOGGER.warn("Could not close reader", e);
         }
     }
 

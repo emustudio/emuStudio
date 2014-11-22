@@ -20,8 +20,8 @@
  */
 package emustudio.architecture;
 
-import emulib.runtime.LoggerFactory;
-import emulib.runtime.interfaces.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -131,8 +131,8 @@ public class ConfigurationFactory {
         File configFile = new File(configurationBaseDirectory + File.separator + CONFIGS_DIR + File.separator + configName
                 + ".conf");
         if (!configFile.exists() || !configFile.canRead()) {
-            throw new ReadConfigurationException(new StringBuilder().append("Configuration file: ")
-                    .append(configFile.getAbsolutePath()).append(" does not exist.").toString());
+            throw new ReadConfigurationException("Configuration file: " + configFile.getAbsolutePath()
+                    + " does not exist.");
         }
         try {
             try (FileInputStream fin = new FileInputStream(configFile)) {
