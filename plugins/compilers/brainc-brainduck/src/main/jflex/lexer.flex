@@ -73,7 +73,7 @@ LineTerminator = \r|\n|\r\n
 InputCharacter = [^\r\n]
 WhiteSpace     = {LineTerminator} | [ \t\f]
 
-Comment        = {WhiteSpace}+ | {LineTerminator}+ | [^<>+\-\.,\[\];\t\f\r\n]+ {InputCharacter}*
+Comment        = [^<>+\-\.,\[\]; \t\f\r\n]+ {InputCharacter}*
 
 %%
 
@@ -87,5 +87,7 @@ Comment        = {WhiteSpace}+ | {LineTerminator}+ | [^<>+\-\.,\[\];\t\f\r\n]+ {
 "["  { return token(Tokens.LOOP, Token.RESERVED,null,true); }
 "]"  { return token(Tokens.ENDL, Token.RESERVED,null,true); }
 
-{Comment}      { return token(Tokens.TCOMMENT, Token.COMMENT,null,true); }
+{Comment}          { return token(Tokens.TCOMMENT, Token.COMMENT,null,true); }
+{WhiteSpace}+      { return token(Tokens.TCOMMENT, Token.COMMENT,null,true); }
+{LineTerminator}+  { return token(Tokens.TCOMMENT, Token.COMMENT,null,true); }
 
