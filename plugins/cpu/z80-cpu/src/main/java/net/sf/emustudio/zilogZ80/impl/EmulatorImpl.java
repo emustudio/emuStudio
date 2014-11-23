@@ -96,7 +96,6 @@ public class EmulatorImpl extends AbstractCPU {
     private DeviceContext interruptDevice;
 
     private volatile SettingsManager settings;
-    private volatile boolean stopRequested;
     private final List<FrequencyChangedListener> frequencyChangedListenerList = new CopyOnWriteArrayList<>();
     private RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
     private final ContextPool contextPool;
@@ -392,7 +391,6 @@ public class EmulatorImpl extends AbstractCPU {
         PC = startPos;
         interruptPending = 0;
         isINT = noWait = false;
-        stopRequested = false;
         currentRunState = RunState.STATE_STOPPED_BREAK;
         stopFrequencyUpdater();
     }
@@ -2213,11 +2211,6 @@ public class EmulatorImpl extends AbstractCPU {
         return disassembler;
     }
 
-    @Override
-    protected void requestStop() {
-        stopRequested = true;
-    }
-
     /**
      * Run a CPU execution (thread).
      *
@@ -2249,12 +2242,12 @@ public class EmulatorImpl extends AbstractCPU {
         try {
             runFrequencyUpdater();
             currentRunState = RunState.STATE_RUNNING;
-            while (!stopRequested && (currentRunState == RunState.STATE_RUNNING)) {
+            while (!Thread.currentThread().isInterrupted() && (currentRunState == RunState.STATE_RUNNING)) {
                 i++;
                 startTime = System.nanoTime();
                 cycles_executed = 0;
                 try {
-                    while ((cycles_executed < cycles_to_execute) && !stopRequested && (currentRunState == RunState.STATE_RUNNING)) {
+                    while ((cycles_executed < cycles_to_execute) && !Thread.currentThread().isInterrupted() && (currentRunState == RunState.STATE_RUNNING)) {
                         cycles = evalStep(memory.read(PC++));
                         cycles_executed += cycles;
                         long_cycles += cycles;

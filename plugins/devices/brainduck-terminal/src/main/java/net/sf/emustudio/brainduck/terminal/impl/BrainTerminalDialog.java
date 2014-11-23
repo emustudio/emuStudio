@@ -82,12 +82,14 @@ public class BrainTerminalDialog extends JDialog implements OutputProvider, Keyb
     public void readStarted() {
         lblStatusIcon.setIcon(greenIcon);
         lblStatusIcon.repaint();
+        btnASCII.setEnabled(true);
     }
 
     @Override
     public void readEnded() {
         lblStatusIcon.setIcon(blueIcon);
         lblStatusIcon.repaint();
+        btnASCII.setEnabled(false);
     }
 
     @Override
@@ -148,12 +150,16 @@ public class BrainTerminalDialog extends JDialog implements OutputProvider, Keyb
 
         panelStatus = new javax.swing.JPanel();
         lblStatusIcon = new javax.swing.JLabel();
+        btnASCII = new javax.swing.JButton();
         scrollPane = new javax.swing.JScrollPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         lblStatusIcon.setIcon(blueIcon);
         lblStatusIcon.setToolTipText("Waiting for input? (red - yes, blue - no)");
+
+        btnASCII.setText("ASCII input");
+        btnASCII.setEnabled(false);
 
         javax.swing.GroupLayout panelStatusLayout = new javax.swing.GroupLayout(panelStatus);
         panelStatus.setLayout(panelStatusLayout);
@@ -163,12 +169,15 @@ public class BrainTerminalDialog extends JDialog implements OutputProvider, Keyb
                 .addContainerGap()
                 .addComponent(lblStatusIcon)
                 .addContainerGap(676, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelStatusLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(btnASCII)
+                .addContainerGap())
         );
         panelStatusLayout.setVerticalGroup(
             panelStatusLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelStatusLayout.createSequentialGroup()
-                .addGap(0, 9, Short.MAX_VALUE)
-                .addComponent(lblStatusIcon))
+            .addComponent(lblStatusIcon, javax.swing.GroupLayout.Alignment.TRAILING)
+            .addComponent(btnASCII, javax.swing.GroupLayout.Alignment.TRAILING)
         );
 
         scrollPane.setBackground(new java.awt.Color(255, 255, 255));
@@ -183,7 +192,7 @@ public class BrainTerminalDialog extends JDialog implements OutputProvider, Keyb
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 403, Short.MAX_VALUE)
+                .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 387, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(panelStatus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
@@ -192,6 +201,7 @@ public class BrainTerminalDialog extends JDialog implements OutputProvider, Keyb
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnASCII;
     private javax.swing.JLabel lblStatusIcon;
     private javax.swing.JPanel panelStatus;
     private javax.swing.JScrollPane scrollPane;

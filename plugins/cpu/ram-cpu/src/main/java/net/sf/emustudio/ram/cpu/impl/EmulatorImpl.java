@@ -55,7 +55,6 @@ public class EmulatorImpl extends AbstractCPU {
     private RAMDisassembler dis;     // disassembler
     private int IP; // instruction position
     private volatile SettingsManager settings;
-    private volatile boolean stopRequested;
     private final ContextPool contextPool;
 
     public EmulatorImpl(Long pluginID, ContextPool contextPool) {
@@ -153,7 +152,6 @@ public class EmulatorImpl extends AbstractCPU {
         if (context.checkTapes()) {
             loadTape(context.getInput());
         }
-        stopRequested = false;
     }
 
     @Override
@@ -162,13 +160,8 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    protected void requestStop() {
-        stopRequested = true;
-    }
-
-    @Override
     public RunState call() {
-        while (!stopRequested) {
+        while (!Thread.currentThread().isInterrupted()) {
             try {
                 if (isBreakpointSet(IP)) {
                     throw new Breakpoint();

@@ -32,6 +32,7 @@ import emulib.runtime.StaticDialogs;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
+import net.sf.emustudio.brainduck.memory.gui.MemoryGUI;
 
 @PluginType(type = PLUGIN_TYPE.MEMORY,
 title = "BrainDuck memory",
@@ -41,6 +42,7 @@ public class MemoryImpl extends AbstractMemory {
     private MemoryContextImpl memContext;
     private int size;
     private final ContextPool contextPool;
+    private MemoryGUI memoryGUI;
 
     public MemoryImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
@@ -68,6 +70,10 @@ public class MemoryImpl extends AbstractMemory {
         super.initialize(settings);
         this.size = 65536;
         memContext.init(size);
+        
+        if (!Boolean.parseBoolean(settings.readSetting(pluginID, SettingsManager.NO_GUI))) {
+            memoryGUI = new MemoryGUI(memContext);
+        }
     }
 
     @Override
@@ -83,14 +89,15 @@ public class MemoryImpl extends AbstractMemory {
 
     @Override
     public void showSettings() {
-        // we don't have any gui
-        StaticDialogs.showMessage("BrainDuck memory doesn't support GUI.");
+        if (memoryGUI != null) {
+            memoryGUI.setVisible(true);
+        }
     }
 
 
     @Override
     public boolean isShowSettingsSupported() {
-        return false;
+        return true;
     }
 
 }

@@ -80,7 +80,7 @@ public class EmulatorImplTest {
         emulator.destroy();
     }
 
-    private void emulate(byte[] program, byte[] data, byte[] input) {
+    private void setupEmulator(byte[] program, byte[] data, byte[] input) {
         memory.setProgram(Objects.requireNonNull(program));
         emulator.reset();
         if (data != null) {
@@ -89,7 +89,20 @@ public class EmulatorImplTest {
         if (input != null) {
             ioDevice.setInput(input);
         }
+    }
 
+    private void emulateWithBreakpoint(byte[] program, byte[] data, byte[] input, int breakpoint) {
+        setupEmulator(program, data, input);
+        emulator.setBreakpoint(breakpoint);
+        try {
+            assertEquals(CPU.RunState.STATE_STOPPED_BREAK, emulator.call());
+        } finally {
+            emulator.unsetBreakpoint(breakpoint);
+        }
+    }
+
+    private void emulate(byte[] program, byte[] data, byte[] input) {
+        setupEmulator(program, data, input);
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, emulator.call());
     }
 
@@ -169,7 +182,10 @@ public class EmulatorImplTest {
     @Test(timeout = 3000)
     public void testCopyCell2() {
         // [->+>+<<]>>[-<<+>>]
-        byte[] program = new byte[] { 7, 4, 1, 3, 1, 3, 2, 2, 8, 1, 1, 7, 4, 2, 2, 3, 1, 1, 8 };
+        byte[] program = new byte[] {
+                7, 4, 1, 3, 1, 3, 2, 2, 8, 1, 1, 7, 4, 2, 2, 3,
+                1, 1, 8
+        };
         byte[] data = new byte[] { 4 };
 
         emulate(program, data, null);
@@ -183,7 +199,11 @@ public class EmulatorImplTest {
     @Test(timeout = 3000)
     public void testAddition() {
         // ,>++++++[<-------->-],[<+>-],<.>.
-        byte[] program = new byte[] { 6, 1, 3, 3, 3, 3, 3, 3, 7, 2, 4, 4, 4, 4, 4, 4, 4, 4, 1, 4, 8, 6, 7, 2, 3, 1, 4, 8, 6, 2, 5, 1, 5 };
+        byte[] program = new byte[] {
+                6, 1, 3, 3, 3, 3, 3, 3, 7, 2, 4, 4, 4, 4, 4, 4,
+                4, 4, 1, 4, 8, 6, 7, 2, 3, 1, 4, 8, 6, 2, 5, 1,
+                5
+        };
         byte[] input = new byte[] { '4', '4', '\n' };
 
         emulate(program, null, input);
@@ -203,7 +223,10 @@ public class EmulatorImplTest {
     @Test(timeout = 3000)
     public void testMoreAddition() {
         // ,>++++++[<-------->-],[<+>-],<.>.
-        byte[] program = new byte[] { 6, 1, 3, 3, 3, 3, 3, 3, 7, 2, 4, 4, 4, 4, 4, 4, 4, 4, 1, 4, 8, 6, 7, 2, 3, 1, 4, 8, 6, 2, 5, 1, 5 };
+        byte[] program = new byte[] {
+                6, 1, 3, 3, 3, 3, 3, 3, 7, 2, 4, 4, 4, 4, 4, 4,
+                4, 4, 1, 4, 8, 6, 7, 2, 3, 1, 4, 8, 6, 2, 5, 1,
+                5 };
         byte[] input = new byte[] { '8', '8', 'a' };
 
         emulate(program, null, input);
@@ -236,9 +259,13 @@ public class EmulatorImplTest {
     public void testMultiply() {
         // [>>>+>+<<<<-]>>>>[<<<<+>>>>-]<[<<[>>>+>+<<<<-]>>>>[<<<<+>>>>-]<[<<+>>-]<-]
 
-        byte[] program = new byte[] { 7, 1, 1, 1, 3, 1, 3, 2, 2, 2, 2, 4, 8, 1, 1, 1, 1, 7, 2, 2, 2, 2, 3, 1, 1, 1, 1,
-                4, 8, 2, 7, 2, 2, 7, 1, 1, 1, 3, 1, 3, 2, 2, 2, 2, 4, 8, 1, 1, 1, 1, 7, 2, 2, 2, 2, 3, 1, 1, 1, 1, 4, 8,
-                2, 7, 2, 2, 3, 1, 1, 4, 8, 2, 4, 8 };
+        byte[] program = new byte[] {
+                7, 1, 1, 1, 3, 1, 3, 2, 2, 2, 2, 4, 8, 1, 1, 1,
+                1, 7, 2, 2, 2, 2, 3, 1, 1, 1, 1, 4, 8, 2, 7, 2,
+                2, 7, 1, 1, 1, 3, 1, 3, 2, 2, 2, 2, 4, 8, 1, 1,
+                1, 1, 7, 2, 2, 2, 2, 3, 1, 1, 1, 1, 4, 8, 2, 7,
+                2, 2, 3, 1, 1, 4, 8, 2, 4, 8
+        };
         byte[] data = new byte[] { 20, 5 };
 
         emulate(program, data, null);
@@ -247,6 +274,88 @@ public class EmulatorImplTest {
         assertEquals(20, memory.read(memory.getDataStart()).byteValue());
         assertEquals(5, memory.read(memory.getDataStart() + 1).byteValue());
         assertEquals(20 * 5, memory.read(memory.getDataStart() + 2).byteValue());
+    }
+
+    @Test(timeout = 3000)
+    public void testDecrementZeroGives255() {
+        // -
+        byte[] program = new byte[] { 4 };
+
+        emulate(program, null, null);
+
+        assertEquals(memory.getDataStart(), emulator.getP());
+        assertEquals(255, memory.read(memory.getDataStart()).shortValue());
+    }
+
+    @Test(timeout = 3000)
+    public void testTwoLoopsInLoop() {
+        // +[[-]+[-]]
+        byte[] program = new byte[] { 3, 7, 7, 4, 8, 3, 7, 4, 8, 8 };
+
+        emulate(program, null, null);
+        assertEquals(11, emulator.getIP());
+    }
+
+    @Test(timeout = 3000)
+    public void testMinusPlusGivesZero() {
+        // -+
+        byte[] program = new byte[] { 4, 3 };
+
+        emulate(program, null, null);
+        assertEquals(0, memory.read(emulator.getP()).byteValue());
+    }
+
+    @Test(timeout = 3000)
+    public void testSelfPrint() {
+        // +++++[>+++++++++<-],[[>--.++>+<<-]>+.->[<.>-]<<,]
+        byte[] program = new byte[] {
+                3, 3, 3, 3, 3, 7, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                2, 4, 8, 6, 7, 7, 1, 4, 4, 5, 3, 3, 1, 3, 2, 2,
+                4, 8, 1, 3, 5, 4, 1, 7, 2, 5, 1, 4, 8, 2, 2, 6,
+                8
+        };
+        byte[] input = new byte[] { 1, 0 };
+
+        emulateWithBreakpoint(program, null, input, 19);
+
+        assertEquals(19, emulator.getIP());
+        assertEquals(45, memory.read(emulator.getP() + 1).shortValue());
+
+        emulator.step(); // ,
+        assertEquals(1, memory.read(emulator.getP()).shortValue());
+
+        emulator.step(); // [
+        emulator.step(); // [
+        emulator.step(); // >
+        assertEquals(memory.getDataStart() + 1, emulator.getP());
+        assertEquals(45, memory.read(emulator.getP()).shortValue());
+
+        emulator.step(); // -
+        emulator.step(); // -
+        assertEquals(43, memory.read(emulator.getP()).shortValue());
+
+        emulator.step(); // .
+
+        emulator.step(); // +
+        emulator.step(); // +
+        assertEquals(45, memory.read(emulator.getP()).shortValue());
+
+        emulator.step(); // >
+        assertEquals(memory.getDataStart() + 2, emulator.getP());
+        assertEquals(0, memory.read(emulator.getP()).shortValue());
+        assertEquals(29, emulator.getIP());
+        assertEquals(3, memory.read(emulator.getIP()).shortValue());
+
+
+        emulator.step(); // +
+        assertEquals(1, memory.read(emulator.getP()).shortValue());
+
+        emulator.call();
+
+        assertTrue(ioDevice.wasInputRead());
+
+        List<Short> output = ioDevice.getOutput();
+        assertEquals(3, output.size());
     }
 
 }

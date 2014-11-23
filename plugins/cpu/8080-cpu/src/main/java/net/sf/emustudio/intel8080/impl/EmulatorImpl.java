@@ -108,7 +108,6 @@ public class EmulatorImpl extends AbstractCPU {
     private short b3 = 0;
 
     private volatile RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
-    private volatile boolean stopRequested;
     private volatile SettingsManager settings;
     private final ContextPool contextPool;
 
@@ -203,7 +202,6 @@ public class EmulatorImpl extends AbstractCPU {
         Flags = 2; //0000 0010b
         PC = startPos;
         INTE = false;
-        stopRequested = false;
         currentRunState = RunState.STATE_STOPPED_BREAK;
         stopFrequencyUpdater();
     }
@@ -281,11 +279,6 @@ public class EmulatorImpl extends AbstractCPU {
         }
     }
 
-    @Override
-    protected void requestStop() {
-        stopRequested = true;
-    }
-
     /**
      * Run a CPU execution (thread).
      *
@@ -317,11 +310,11 @@ public class EmulatorImpl extends AbstractCPU {
         try {
             runFrequencyUpdater();
             currentRunState = RunState.STATE_RUNNING;
-            while (!stopRequested && (currentRunState == RunState.STATE_RUNNING)) {
+            while (!Thread.currentThread().isInterrupted() && (currentRunState == RunState.STATE_RUNNING)) {
                 i++;
                 startTime = System.nanoTime();
                 cycles_executed = 0;
-                while ((cycles_executed < cycles_to_execute) && !stopRequested && (currentRunState == RunState.STATE_RUNNING)) {
+                while ((cycles_executed < cycles_to_execute) && !Thread.currentThread().isInterrupted() && (currentRunState == RunState.STATE_RUNNING)) {
                     try {
                         cycles = dispatch();
                         cycles_executed += cycles;

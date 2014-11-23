@@ -6,11 +6,11 @@ import emulib.plugins.memory.MemoryContext;
 
 @ContextType
 public class MemoryStub implements MemoryContext<Short> {
-    private final byte[] memory;
+    private final short[] memory;
     private int afterProgram;
 
     public MemoryStub(int size) {
-        this.memory = new byte[size];
+        this.memory = new short[size];
     }
 
     public void setProgram(byte[] program) {
@@ -69,15 +69,15 @@ public class MemoryStub implements MemoryContext<Short> {
 
     @Override
     public void write(int to, Short val) {
-        memory[to] = (byte) (val & 0xFF);
+        memory[to] = (short)(val & 0xFF);
     }
 
     @Override
     public void writeWord(int to, Object val) {
-        byte low = (byte) ((Integer) val & 0xFF);
+        short low = (byte) ((Integer) val & 0xFF);
         memory[to] = low;
         if (to < memory.length - 1) {
-            byte high = (byte) (((Integer) val >>> 8) & 0xFF);
+            short high = (byte) (((Integer) val >>> 8) & 0xFF);
             memory[to + 1] = high;
         }
     }

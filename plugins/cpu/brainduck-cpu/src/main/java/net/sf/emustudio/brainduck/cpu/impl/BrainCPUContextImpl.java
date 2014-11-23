@@ -33,13 +33,6 @@ public class BrainCPUContextImpl implements BrainCPUContext {
         device = null;
     }
 
-    /**
-     * Attach a device into the CPU. Procesor BainCPU can have attached only
-     * single device, and it's the terminal.
-     *
-     * @param device
-     * @return
-     */
     @Override
     public boolean attachDevice(DeviceContext<Short> device) {
         this.device = Objects.requireNonNull(device);
@@ -75,7 +68,8 @@ public class BrainCPUContextImpl implements BrainCPUContext {
         if (device == null) {
             return 0;
         }
-        return device.read();
+        Short value = device.read();
+        return (value == null) ? 0 : value;
     }
 
     @Override

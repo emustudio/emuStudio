@@ -1,9 +1,7 @@
 /*
  * MemoryTableModel.java
  *
- * Created on Streda, 2007, marec 21, 9:38
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,10 +18,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * ----------------------------------------------------------------------------
- * tabulka ma 16 riadkov a 16 stlpcov (od 0 po FF)
- * celkovo tak zobrazuje 16*16 = 256 hodnot na stranku
- *
  */
 package net.sf.emustudio.memory.standard.gui.utils;
 
@@ -31,16 +25,16 @@ import javax.swing.table.AbstractTableModel;
 import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
 
 /**
+ * tabulka ma 16 riadkov a 16 stlpcov (od 0 po FF)
+ * celkovo tak zobrazuje 16*16 = 256 hodnot na stranku
+ * ----------------------------------------------------------------------------
  * model pre tabulku operacnej pamate podporuje strankovanie (zobrazuje len
  * urcity pocet riadkov na stranku) - kvoli zvyseniu rychlosti + pridana podpora
  * "bankovania" pamate = pamat od adresy 0 po COMMON sa da prepinat = banky,
  * zvysna pamat je rovnaka pre vsetky banky
- *
- * @author vbmacher
  */
 public class MemoryTableModel extends AbstractTableModel {
-
-    private MemoryContextImpl mem;
+    private final MemoryContextImpl mem;
     private int currentPage = 0;
     private int currentBank = 0;
     private final int ROW_COUNT = 16;
@@ -74,10 +68,7 @@ public class MemoryTableModel extends AbstractTableModel {
 
     public boolean isAtBANK(int rowIndex, int columnIndex) {
         int pos = ROW_COUNT * COLUMN_COUNT * currentPage + rowIndex * COLUMN_COUNT + columnIndex;
-        if (pos < mem.getCommonBoundary()) {
-            return true;
-        }
-        return false;
+        return pos < mem.getCommonBoundary();
     }
 
     @Override

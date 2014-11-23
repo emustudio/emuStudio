@@ -57,7 +57,6 @@ public class EmulatorImpl extends AbstractCPU {
     private volatile int IP, P; // registers of the CPU
     private int memorySize; // cached memory size
     private volatile SettingsManager settings;
-    private volatile boolean stopRequested;
 
     public EmulatorImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
@@ -132,7 +131,6 @@ public class EmulatorImpl extends AbstractCPU {
     @Override
     public void reset(int adr) {
         super.reset(adr);
-        stopRequested = false;
 
         IP = adr; // initialize program counter
         loopPointers.clear();
@@ -151,7 +149,7 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public RunState call() {
-        while (!stopRequested) {
+        while (!Thread.currentThread().isInterrupted()) {
             try {
                 if (isBreakpointSet(IP)) {
                     throw new Breakpoint();
@@ -170,11 +168,6 @@ public class EmulatorImpl extends AbstractCPU {
     @Override
     protected void destroyInternal() {
         context.detachDevice();
-    }
-
-    @Override
-    protected void requestStop() {
-        stopRequested = true;
     }
 
     @Override

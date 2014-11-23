@@ -64,13 +64,12 @@ import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
 import net.sf.emustudio.memory.standard.impl.MemoryImpl;
 
 public class MemoryFrame extends JFrame {
-
-    private MemoryContextImpl memContext;
-    private MemoryImpl mem;
-    private long pluginID;
+    private final MemoryContextImpl memContext;
+    private final MemoryImpl mem;
+    private final long pluginID;
     private TableMemory tblMemory;
     private MemoryTableModel memModel;
-    private SettingsManager settings;
+    private final SettingsManager settings;
 
     public MemoryFrame(long pluginID, MemoryImpl mem, MemoryContextImpl memContext,
             SettingsManager settings) {
@@ -525,10 +524,8 @@ public class MemoryFrame extends JFrame {
         try {
             address = Integer.decode(JOptionPane.showInputDialog(this,
                     "Find address:", "Find Address",
-                    JOptionPane.QUESTION_MESSAGE, null, null, 0).toString()).intValue();
-        } catch (NumberFormatException e) {
-            return;
-        } catch (NullPointerException f) {
+                    JOptionPane.QUESTION_MESSAGE, null, null, 0).toString());
+        } catch (NumberFormatException | NullPointerException e) {
             return;
         }
         if (address < 0 || address >= memContext.getSize()) {
@@ -581,20 +578,20 @@ public class MemoryFrame extends JFrame {
                 }
                 fileSource.createNewFile();
                 if (f.getFileFilter().equals(f1)) {
-                    // human-readable format
-                    BufferedWriter out = new BufferedWriter(new FileWriter(fileSource));
-                    for (int i = 0; i < memContext.getSize(); i++) {
-                        out.write(String.format("%X:\t%02X\n", i, (Short) memContext.read(i)));
+                    try ( // human-readable format
+                            BufferedWriter out = new BufferedWriter(new FileWriter(fileSource))) {
+                        for (int i = 0; i < memContext.getSize(); i++) {
+                            out.write(String.format("%X:\t%02X\n", i, memContext.read(i)));
+                        }
                     }
-                    out.close();
                 } else {
                     // binary format
                     FileOutputStream fos = new FileOutputStream(fileSource);
-                    DataOutputStream ds = new DataOutputStream(fos);
-                    for (int i = 0; i < memContext.getSize(); i++) {
-                        ds.writeByte((Short) memContext.read(i) & 0xff);
+                    try (DataOutputStream ds = new DataOutputStream(fos)) {
+                        for (int i = 0; i < memContext.getSize(); i++) {
+                            ds.writeByte(memContext.read(i) & 0xff);
+                        }
                     }
-                    ds.close();
                 }
             } catch (IOException e) {
                 StaticDialogs.showErrorMessage("Error: Dumpfile couldn't be created.");
