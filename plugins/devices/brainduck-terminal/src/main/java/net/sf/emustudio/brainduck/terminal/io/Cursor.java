@@ -19,7 +19,9 @@ package net.sf.emustudio.brainduck.terminal.io;
 
 import net.jcip.annotations.ThreadSafe;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Point;
 import java.util.Objects;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.Executors;
@@ -32,7 +34,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Cursor {
     private final int howOften;
     private final TimeUnit timeUnit;
-    private final int canvasMaxColumn;
 
     private final BlockingDeque<PointTask> repaintTasks = new LinkedBlockingDeque<>();
     private volatile Display canvas;
@@ -48,9 +49,8 @@ public class Cursor {
         public void execute(Point point);
     }
 
-    public Cursor(int howOften, TimeUnit timeUnit, int canvasMaxColumn) {
+    public Cursor(int howOften, TimeUnit timeUnit) {
         this.howOften = howOften;
-        this.canvasMaxColumn = canvasMaxColumn;
         this.timeUnit = Objects.requireNonNull(timeUnit);
         reset();
     }
@@ -119,12 +119,7 @@ public class Cursor {
             oldPoint = cursorPoint.get();
             point = new Point(oldPoint);
             for (int i = 0; i < count; i++) {
-                if (point.x + 1 > canvasMaxColumn) {
-                    point.y++;
-                    point.x = 0;
-                } else {
-                    point.x++;
-                }
+                point.x++;
             }
         } while (!cursorPoint.compareAndSet(oldPoint, point));
     }

@@ -19,20 +19,18 @@
  */
 package net.sf.emustudio.brainduck.terminal.impl;
 
-import java.net.URL;
-import java.util.Objects;
-import javax.swing.ImageIcon;
-import javax.swing.JDialog;
 import net.sf.emustudio.brainduck.terminal.io.Cursor;
 import net.sf.emustudio.brainduck.terminal.io.Display;
 import net.sf.emustudio.brainduck.terminal.io.GUIUtils;
 import net.sf.emustudio.brainduck.terminal.io.Keyboard;
 import net.sf.emustudio.brainduck.terminal.io.OutputProvider;
 
-public class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.KeyboardListener {
-    private static final int MAX_COLUMN = 80;
-    private static final int MAX_ROW = 25;
+import javax.swing.ImageIcon;
+import javax.swing.JDialog;
+import java.net.URL;
+import java.util.Objects;
 
+public class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.KeyboardListener {
     private final ImageIcon blueIcon;
     private final ImageIcon redIcon;
     private final ImageIcon greenIcon;
@@ -61,7 +59,7 @@ public class BrainTerminalDialog extends JDialog implements OutputProvider, Keyb
         initComponents();
         setLocationRelativeTo(null);
         
-        canvas = new Display(MAX_COLUMN, MAX_ROW);
+        canvas = new Display();
         scrollPane.setViewportView(canvas);
         canvas.start();
     }

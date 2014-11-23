@@ -131,7 +131,7 @@ public class EmulatorImplTest {
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, emulator.call());
 
         assertEquals(0, memory.read(memory.getDataStart()).byteValue());
-        assertEquals(4, emulator.getIP());
+        assertEquals(4, emulator.getInstructionPosition());
     }
 
     @Test(timeout = 3000)
@@ -293,7 +293,7 @@ public class EmulatorImplTest {
         byte[] program = new byte[] { 3, 7, 7, 4, 8, 3, 7, 4, 8, 8 };
 
         emulate(program, null, null);
-        assertEquals(11, emulator.getIP());
+        assertEquals(11, emulator.getInstructionPosition());
     }
 
     @Test(timeout = 3000)
@@ -318,7 +318,7 @@ public class EmulatorImplTest {
 
         emulateWithBreakpoint(program, null, input, 19);
 
-        assertEquals(19, emulator.getIP());
+        assertEquals(19, emulator.getInstructionPosition());
         assertEquals(45, memory.read(emulator.getP() + 1).shortValue());
 
         emulator.step(); // ,
@@ -343,8 +343,8 @@ public class EmulatorImplTest {
         emulator.step(); // >
         assertEquals(memory.getDataStart() + 2, emulator.getP());
         assertEquals(0, memory.read(emulator.getP()).shortValue());
-        assertEquals(29, emulator.getIP());
-        assertEquals(3, memory.read(emulator.getIP()).shortValue());
+        assertEquals(29, emulator.getInstructionPosition());
+        assertEquals(3, memory.read(emulator.getInstructionPosition()).shortValue());
 
 
         emulator.step(); // +

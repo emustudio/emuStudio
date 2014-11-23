@@ -16,23 +16,27 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package net.sf.emustudio.brainduck.terminal.io;
 
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
-
 
 @ThreadSafe
 public class Display extends JPanel {
+
     @GuardedBy("memory")
-    private final int[][] memory;
-    private final int maxColumn;
-    private final int maxRow;
+    private final List<List<Integer>> memory = new LinkedList<>();
+    @GuardedBy("memory")
+    private volatile int memYsize;
 
     private final Cursor cursor;
     private volatile boolean needMeasure;
@@ -41,11 +45,8 @@ public class Display extends JPanel {
 
     private final Font textFont = new Font("Monospaced", 0, 14);
 
-    public Display(int maxColumn, int maxRow) {
-        this.maxColumn = maxColumn;
-        this.maxRow = maxRow;
-        this.memory = new int[maxRow][maxColumn];
-        this.cursor = new Cursor(1, TimeUnit.SECONDS, maxColumn);
+    public Display() {
+        this.cursor = new Cursor(1, TimeUnit.SECONDS);
 
         this.setBackground(java.awt.Color.WHITE);
         this.setForeground(java.awt.Color.BLACK);
@@ -53,40 +54,58 @@ public class Display extends JPanel {
         this.setDoubleBuffered(true);
         needMeasure = true;
     }
-    
+
     public void start() {
         measureIfNeeded();
         cursor.start(this);
     }
-    
+
     public void stop() {
-        cursor.stop();
+        synchronized (memory) {
+            cursor.stop();
+            memory.clear();
+        }
     }
 
     public Cursor getTextCanvasCursor() {
         return cursor;
     }
-    
+
     public void writeAtCursor(int c) {
         Point cursorPoint = cursor.getLogicalPoint();
         writeCharAt(c, cursorPoint.x, cursorPoint.y);
         cursor.advance(1);
     }
-    
+
+    @GuardedBy("memory")
+    private void ensureMemorySize(int x, int y) {
+        if (memYsize <= y) {
+            for (int i = memYsize; i <= y; i++) {
+                memory.add(new LinkedList<Integer>());
+                memYsize++;
+            }
+        }
+        List<Integer> row = memory.get(y);
+        int memXsize = row.size();
+        if (memXsize <= x) {
+            for (int i = memXsize; i <= x; i++) {
+                row.add(0);
+            }
+        }
+    }
+
     public void writeCharAt(int c, int x, int y) {
         synchronized (memory) {
-            memory[y][x] = c;
+            ensureMemorySize(x, y);
+            memory.get(y).set(x, c);
         }
         repaint();
     }
-    
+
     public void clear() {
         synchronized (memory) {
-            for (int[] row : memory) {
-                for (int col = 0; col < row.length; col++) {
-                    row[col] = 0;
-                }
-            }
+            memory.clear();
+            memYsize = 0;
         }
         cursor.reset();
         repaint();
@@ -118,20 +137,23 @@ public class Display extends JPanel {
             int y = charHeight;
             int x = 0;
 
-            for (int row = 0; row < memory.length; row++) {
-                for (int col = 0; col < memory[row].length; col++) {
-                    int value = memory[row][col];
+            for (int i = 0; i < memYsize; i++) {
+                List<Integer> row = memory.get(i);
+                int memXsize = row.size();
+                x = 0;
+                for (int col = 0; col < memXsize; col++) {
+                    int value = row.get(col);
 
                     if (value < 32) {
                         continue;
                     }
 
-                    g.drawString("" + (char)value, x, y);
+                    g.drawString("" + (char) value, x, y);
                     x += charWidth;
                 }
                 y += charHeight;
             }
         }
     }
-    
+
 }

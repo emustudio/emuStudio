@@ -67,7 +67,8 @@ public class StatusPanel extends JPanel {
                 int P = cpu.getP();
                 
                 txtP.setText(String.format("%04X", P));
-                txtIP.setText(String.format("%04X", cpu.getIP()));
+                txtIP.setText(String.format("%04X", cpu.getInstructionPosition()));
+                lblLoopLevel.setText(String.valueOf(cpu.getLoopLevel()));
                 try {
                     short value = (Short) memory.read(P);
                     txtMemP.setText(String.format("%02X", value));
@@ -117,21 +118,23 @@ public class StatusPanel extends JPanel {
         javax.swing.JSeparator jSeparator1 = new javax.swing.JSeparator();
         javax.swing.JLabel jLabel7 = new javax.swing.JLabel();
         lblTime = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel8 = new javax.swing.JLabel();
+        lblLoopLevel = new javax.swing.JLabel();
         javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
         lblRunState = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
         tblMemory = new javax.swing.JTable();
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Internal state"));
 
-        jLabel1.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel1.setText("IP:");
 
-        jLabel2.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel2.setText("P:");
 
-        jLabel3.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel3.setText("*P:");
 
         txtMemP.setEditable(false);
@@ -146,19 +149,26 @@ public class StatusPanel extends JPanel {
         txtIP.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         txtIP.setText("0");
 
-        jLabel4.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel4.setText("h");
 
-        jLabel5.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel5.setText("h");
 
-        jLabel6.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        jLabel6.setFont(jLabel6.getFont().deriveFont(jLabel6.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel6.setText("h");
 
-        jLabel7.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
+        jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel7.setText("Execution time:");
 
+        lblTime.setFont(lblTime.getFont().deriveFont(lblTime.getFont().getStyle() | java.awt.Font.BOLD));
         lblTime.setText("0 ms");
+
+        jLabel8.setFont(jLabel8.getFont().deriveFont(jLabel8.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel8.setText("Loop level:");
+
+        lblLoopLevel.setFont(lblLoopLevel.getFont().deriveFont(lblLoopLevel.getFont().getStyle() | java.awt.Font.BOLD));
+        lblLoopLevel.setText("0");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -191,9 +201,13 @@ public class StatusPanel extends JPanel {
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jSeparator1)
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jLabel7)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel7)
+                                    .addComponent(jLabel8))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblTime)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(lblLoopLevel)
+                                    .addComponent(lblTime))
                                 .addGap(0, 0, Short.MAX_VALUE)))
                         .addContainerGap())))
         );
@@ -217,15 +231,19 @@ public class StatusPanel extends JPanel {
                     .addComponent(jLabel6))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel7)
                     .addComponent(lblTime))
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel8)
+                    .addComponent(lblLoopLevel)))
         );
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Run state"));
 
+        lblRunState.setFont(lblRunState.getFont().deriveFont(lblRunState.getFont().getStyle() | java.awt.Font.BOLD));
         lblRunState.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblRunState.setText("stopped (breakpoint)");
 
@@ -243,7 +261,7 @@ public class StatusPanel extends JPanel {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(lblRunState)
-                .addContainerGap(13, Short.MAX_VALUE))
+                .addContainerGap(21, Short.MAX_VALUE))
         );
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Memory view"));
@@ -283,7 +301,7 @@ public class StatusPanel extends JPanel {
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 63, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -315,7 +333,7 @@ public class StatusPanel extends JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblLoopLevel;
     private javax.swing.JLabel lblRunState;
     private javax.swing.JLabel lblTime;
     private javax.swing.JTable tblMemory;

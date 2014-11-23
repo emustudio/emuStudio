@@ -77,7 +77,7 @@ public class EmulatorImpl extends AbstractCPU {
             return "(unknown)";
         }
     }
-
+    
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         this.settings = settings;
@@ -100,7 +100,7 @@ public class EmulatorImpl extends AbstractCPU {
     public int getInstructionPosition() {
         return IP;
     }
-
+    
     @Override
     public boolean setInstructionPosition(int pos) {
         if (pos < 0) {
@@ -123,9 +123,9 @@ public class EmulatorImpl extends AbstractCPU {
     public int getP() {
         return P;
     }
-
-    public int getIP() {
-        return IP;
+    
+    public int getLoopLevel() {
+        return loopPointers.size();
     }
 
     @Override
@@ -206,8 +206,8 @@ public class EmulatorImpl extends AbstractCPU {
                 memory.write(P, context.readFromDevice());
                 break;
             case 7: /* [ */
-                loopPointers.push(IP - 1);
                 if (memory.read(P) != 0) {
+                    loopPointers.push(IP - 1);
                     break;
                 }
                 int loop_count = 0; // loop nesting level counter
