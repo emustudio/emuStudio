@@ -1,8 +1,7 @@
 *~
 *.log
-examples/
+*.hex
 lib/
-tmp/
 
 # Netbeans
 nbactions.xml
