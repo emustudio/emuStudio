@@ -27,8 +27,11 @@ import net.sf.emustudio.brainduck.terminal.io.OutputProvider;
 
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import java.awt.event.KeyEvent;
 import java.net.URL;
 import java.util.Objects;
+import java.util.StringTokenizer;
 
 public class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.KeyboardListener {
     private final ImageIcon blueIcon;
@@ -155,9 +158,19 @@ public class BrainTerminalDialog extends JDialog implements OutputProvider, Keyb
 
         lblStatusIcon.setIcon(blueIcon);
         lblStatusIcon.setToolTipText("Waiting for input? (red - yes, blue - no)");
+        lblStatusIcon.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
-        btnASCII.setText("ASCII input");
+        btnASCII.setFont(btnASCII.getFont());
+        btnASCII.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/brainduck/terminal/16_ascii.png"))); // NOI18N
+        btnASCII.setToolTipText("Input by ASCII code");
+        btnASCII.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         btnASCII.setEnabled(false);
+        btnASCII.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        btnASCII.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnASCIIActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout panelStatusLayout = new javax.swing.GroupLayout(panelStatus);
         panelStatus.setLayout(panelStatusLayout);
@@ -165,17 +178,15 @@ public class BrainTerminalDialog extends JDialog implements OutputProvider, Keyb
             panelStatusLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelStatusLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblStatusIcon)
-                .addContainerGap(676, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelStatusLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(lblStatusIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnASCII)
-                .addContainerGap())
+                .addContainerGap(664, Short.MAX_VALUE))
         );
         panelStatusLayout.setVerticalGroup(
             panelStatusLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(lblStatusIcon, javax.swing.GroupLayout.Alignment.TRAILING)
-            .addComponent(btnASCII, javax.swing.GroupLayout.Alignment.TRAILING)
+            .addComponent(lblStatusIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(btnASCII, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
         );
 
         scrollPane.setBackground(new java.awt.Color(255, 255, 255));
@@ -190,13 +201,23 @@ public class BrainTerminalDialog extends JDialog implements OutputProvider, Keyb
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 387, Short.MAX_VALUE)
+                .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(panelStatus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btnASCIIActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnASCIIActionPerformed
+        String asciiString = JOptionPane.showInputDialog(this, "Enter ASCII codes separated with spaces", "0");
+        StringTokenizer tokenizer = new StringTokenizer(asciiString);
+        
+        while (tokenizer.hasMoreTokens()) {
+            int ascii = Integer.decode(tokenizer.nextToken());
+            keyboard.keyPressed(new KeyEvent(this, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, ascii, (char)ascii));
+        }
+    }//GEN-LAST:event_btnASCIIActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnASCII;
