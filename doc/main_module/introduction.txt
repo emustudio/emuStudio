@@ -5,7 +5,7 @@ emuStudio is graphical application allowing software-based computer emulation. C
 be explained as imitation of computer behaviour. There can be various levels of accuracy, or detail.
 
 It's free software, released under GNU GPL v2 license. The source code is freely available online.
-Implementation language is Java SE, which makes emuStudio a naturally cross-platform application.
+Implementation language is Java SE 7, which makes emuStudio a naturally cross-platform application.
 The implementation technology of visual components is Java Swing.
 
 [[XIB]]

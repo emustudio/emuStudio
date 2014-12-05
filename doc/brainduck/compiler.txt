@@ -1,0 +1,24 @@
+[[XC]]
+== Compiler `brainc-brainduck`
+
+BrainDuck is an abstract computer for emuStudio, which mimics http://en.wikipedia.org/wiki/Brainfuck[brainfuck] programming language. Originally, brainfuck was developped by
+http://esolangs.org/wiki/Urban_M%C3%BCller[Urban Miller] and it is well-known fact that the language
+has minimalistic compiler and it's eight instructions don't prevent it to be Turing complete. Also,
+there exist many extensions of the language and there are organized programming contests in
+brainfuck worldwide. But all of that can be read at Wikipedia or at other sources.
+
+BrainDuck architecture is just a name for virtual computer in emuStudio, and consists of these
+plug-ins:
+
+- `brainc-compiler`: Compiler of brainfuck language (original, without extensions)
+- `brainduck-cpu`: Brainfuck emulator acting like CPU with two registers
+- `brainduck-mem`: Virtual operating memory which holds both compiled brainfuck program and data
+- `brainduck-terminal`: Virtual terminal for displaying the output and requesting for input.
+
+All these plug-ins are free software, released under GNU GPL v2 license. The source code is freely
+available online.
+
+Implementation language is Java SE 7. The implementation technology of visual components is Java
+Swing. All plug-ins use library `emuLib` version `9.0.0`.
+
+
