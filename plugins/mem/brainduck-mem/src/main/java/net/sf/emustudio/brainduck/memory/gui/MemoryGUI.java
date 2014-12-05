@@ -18,12 +18,23 @@
  */
 package net.sf.emustudio.brainduck.memory.gui;
 
+import emulib.plugins.memory.Memory;
 import emulib.plugins.memory.MemoryContext;
 import javax.swing.JDialog;
 
 public class MemoryGUI extends JDialog {
     private final MemoryTable table;
     private final MemoryTableModel tableModel;
+    private final Memory.MemoryListener memoryListener = new MemoryListenerImpl();
+    
+    private class MemoryListenerImpl implements Memory.MemoryListener {
+
+        @Override
+        public void memoryChanged(int memoryPosition) {
+            tableModel.dataChangedAt(memoryPosition);
+        }
+        
+    }
 
     public MemoryGUI(MemoryContext memory) {
         setLocationRelativeTo(null);
@@ -34,6 +45,8 @@ public class MemoryGUI extends JDialog {
         scrollPane.setViewportView(table);
         
         lblPageCount.setText(String.valueOf(tableModel.getPageCount()));
+        
+        memory.addMemoryListener(memoryListener);
     }
 
     /**

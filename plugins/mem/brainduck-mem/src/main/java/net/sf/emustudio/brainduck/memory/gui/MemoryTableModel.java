@@ -70,6 +70,16 @@ public class MemoryTableModel extends AbstractTableModel {
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return true;
     }
+    
+    public void dataChangedAt(int address) {
+        int page = address / (ROW_COUNT * COLUMN_COUNT);
+        if (page == this.currentPage) {
+            int positionInPage = address % (ROW_COUNT * COLUMN_COUNT);
+            int row = positionInPage / COLUMN_COUNT;
+            int col = positionInPage % COLUMN_COUNT;
+            fireTableCellUpdated(row, col);
+        }
+    }
 
     public void setPage(int page) throws IndexOutOfBoundsException {
         if (page >= getPageCount() || page < 0) {
