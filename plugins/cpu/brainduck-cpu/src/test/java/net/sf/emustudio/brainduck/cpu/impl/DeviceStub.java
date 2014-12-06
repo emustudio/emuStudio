@@ -3,15 +3,15 @@ package net.sf.emustudio.brainduck.cpu.impl;
 import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @ContextType
 public class DeviceStub implements DeviceContext<Short> {
-    private final List<Short> output = new ArrayList<>();
-    private final Queue<Short> input = new LinkedList<>();
+    private final List<Short> output = new CopyOnWriteArrayList<>();
+    private final Queue<Short> input = new ConcurrentLinkedQueue<>();
 
     public void setInput(byte[] input) {
         for (byte value : input) {

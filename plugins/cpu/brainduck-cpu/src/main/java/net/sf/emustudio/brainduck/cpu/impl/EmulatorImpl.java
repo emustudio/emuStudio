@@ -38,7 +38,9 @@ import net.sf.emustudio.brainduck.cpu.gui.StatusPanel;
 
 import javax.swing.JPanel;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
@@ -56,7 +58,18 @@ public class EmulatorImpl extends AbstractCPU {
     private MemoryContext<Short> memory;
     private volatile int IP, P; // registers of the CPU
     private int memorySize; // cached memory size
-    private volatile SettingsManager settings;
+
+    // optimization
+    private final Map<Integer, Integer> loopEndsCache = new HashMap<>();
+    private volatile int lastOperation;
+    private volatile boolean optimize;
+    private final Map<Integer, OperationCache> operationsCache = new HashMap<>();
+
+    private static class OperationCache {
+        public int argument;
+        public int nextIP;
+        public short operation;
+    }
 
     public EmulatorImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
@@ -80,7 +93,6 @@ public class EmulatorImpl extends AbstractCPU {
     
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
-        this.settings = settings;
         try {
             memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
 
@@ -134,6 +146,9 @@ public class EmulatorImpl extends AbstractCPU {
 
         IP = adr; // initialize program counter
         loopPointers.clear();
+        loopEndsCache.clear();
+        operationsCache.clear();
+        optimize = false;
 
         // find closest "free" address which does not contain a program
         try {
@@ -149,6 +164,7 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public RunState call() {
+        optimize = true;
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 if (isBreakpointSet(IP)) {
@@ -162,6 +178,7 @@ public class EmulatorImpl extends AbstractCPU {
                 return RunState.STATE_STOPPED_BREAK;
             }
         }
+        optimize = false;
         return RunState.STATE_STOPPED_NORMAL;
     }
 
@@ -172,58 +189,99 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     protected RunState stepInternal() {
-        short OP, param;
+        short OP;
 
         // FETCH
-        OP = memory.read(IP++);
+        int argument = 1;
+
+        if (optimize) {
+            if (operationsCache.containsKey(IP)) {
+                OperationCache operation = operationsCache.get(IP);
+                OP = operation.operation;
+                IP = operation.nextIP;
+                argument = operation.argument;
+            } else {
+                OP = memory.read(IP++);
+                if (OP != 0 && OP != 7 && OP != 8 && (lastOperation == OP)) {
+                    int previousIP = IP - 2;
+                    OperationCache operation = new OperationCache();
+
+                    operation.operation = OP;
+                    operation.argument = 2;
+                    while (memory.read(IP) == lastOperation) {
+                        operation.argument++;
+                        IP++;
+                    }
+                    operation.nextIP = IP;
+                    operationsCache.put(previousIP, operation);
+
+                    argument = operation.argument - 1;
+                }
+            }
+            lastOperation = OP;
+        } else {
+            OP = memory.read(IP++);
+        }
 
         // DECODE
         switch (OP) {
             case 0: /* ; */
                 return RunState.STATE_STOPPED_NORMAL;
             case 1: /* >  */
-                if (P + 1 > memorySize) {
+                P += argument;
+                if (P > memorySize) {
                     return RunState.STATE_STOPPED_ADDR_FALLOUT;
                 }
-                P++;
                 break;
             case 2: /* < */
-                if (P - 1 < 0) {
+                P -= argument;
+                if (P < 0) {
                     return RunState.STATE_STOPPED_ADDR_FALLOUT;
                 }
-                P--;
                 break;
             case 3: /* + */
-                memory.write(P, (short) (memory.read(P) + 1));
+                memory.write(P, (short) (memory.read(P) + argument));
                 break;
             case 4: /* - */
-                memory.write(P, (short) (memory.read(P) - 1));
+                memory.write(P, (short) (memory.read(P) - argument));
                 break;
             case 5: /* . */
-                context.writeToDevice(memory.read(P));
+                while (argument > 0) {
+                    context.writeToDevice(memory.read(P));
+                    argument--;
+                }
                 break;
             case 6: /* , */
-                memory.write(P, context.readFromDevice());
+                while (argument > 0) {
+                    memory.write(P, context.readFromDevice());
+                    argument--;
+                }
                 break;
             case 7: /* [ */
+                int startingBrace = IP - 1;
                 if (memory.read(P) != 0) {
-                    loopPointers.push(IP - 1);
+                    loopPointers.push(startingBrace);
                     break;
                 }
-                int loop_count = 0; // loop nesting level counter
+                if (loopEndsCache.containsKey(startingBrace)) {
+                    IP = loopEndsCache.get(startingBrace);
+                } else {
+                    int loop_count = 0; // loop nesting level counter
 
-                // we start to look for "]" instruction
-                // on the same nesting level (according to loop_count value)
-                // IP is pointing at following instruction
-                while ((OP = memory.read(IP++)) != 0) {
-                    if (OP == 7) {
-                        loop_count++;
-                    }
-                    if (OP == 8) {
-                        if (loop_count == 0) {
-                            break;
-                        } else {
-                            loop_count--;
+                    // we start to look for "]" instruction
+                    // on the same nesting level (according to loop_count value)
+                    // IP is pointing at following instruction
+                    while ((OP = memory.read(IP++)) != 0) {
+                        if (OP == 7) {
+                            loop_count++;
+                        }
+                        if (OP == 8) {
+                            if (loop_count == 0) {
+                                loopEndsCache.put(startingBrace, IP);
+                                break;
+                            } else {
+                                loop_count--;
+                            }
                         }
                     }
                 }
