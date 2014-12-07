@@ -61,7 +61,6 @@ public class EmulatorImpl extends AbstractCPU {
 
     // optimization
     private final Map<Integer, Integer> loopEndsCache = new HashMap<>();
-    private volatile int lastOperation;
     private volatile boolean optimize;
     private final Map<Integer, OperationCache> operationsCache = new HashMap<>();
 
@@ -160,26 +159,55 @@ public class EmulatorImpl extends AbstractCPU {
             adr = 0;
         }
         P = adr; // assign to the P register the address we have found
+        analyzeForOptimization(adr);
     }
+
+    private void analyzeForOptimization(int programSize) {
+        int lastOperation = 0;
+        short OP;
+
+        for (int tmpIP = 0; tmpIP < programSize; tmpIP++) {
+            OP = memory.read(tmpIP);
+            if (OP != 0 && OP != 7 && OP != 8 && (lastOperation == OP)) {
+                int previousIP = tmpIP - 1;
+                OperationCache operation = new OperationCache();
+
+                operation.operation = OP;
+                operation.argument = 2;
+
+                while ((tmpIP+1) < programSize && (memory.read(tmpIP+1) == lastOperation)) {
+                    operation.argument++;
+                    tmpIP++;
+                }
+                operation.nextIP = tmpIP + 1;
+                operationsCache.put(previousIP, operation);
+            }
+            lastOperation = OP;
+        }
+    }
+
 
     @Override
     public RunState call() {
         optimize = true;
-        while (!Thread.currentThread().isInterrupted()) {
-            try {
-                if (isBreakpointSet(IP)) {
-                    throw new Breakpoint();
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    if (isBreakpointSet(IP)) {
+                        throw new Breakpoint();
+                    }
+                    RunState tmpRunState = stepInternal();
+                    if (tmpRunState != RunState.STATE_STOPPED_BREAK) {
+                        return tmpRunState;
+                    }
+                } catch (Breakpoint er) {
+                    return RunState.STATE_STOPPED_BREAK;
                 }
-                RunState tmpRunState = stepInternal();
-                if (tmpRunState != RunState.STATE_STOPPED_BREAK) {
-                    return tmpRunState;
-                }
-            } catch (Breakpoint er) {
-                return RunState.STATE_STOPPED_BREAK;
             }
+        } finally {
+            optimize = false;
         }
-        optimize = false;
-        return RunState.STATE_STOPPED_NORMAL;
+        return RunState.STATE_STOPPED_NORMAL; // cannot be in finally block! it can rewrite breakpoint
     }
 
     @Override
@@ -194,31 +222,11 @@ public class EmulatorImpl extends AbstractCPU {
         // FETCH
         int argument = 1;
 
-        if (optimize) {
-            if (operationsCache.containsKey(IP)) {
-                OperationCache operation = operationsCache.get(IP);
-                OP = operation.operation;
-                IP = operation.nextIP;
-                argument = operation.argument;
-            } else {
-                OP = memory.read(IP++);
-                if (OP != 0 && OP != 7 && OP != 8 && (lastOperation == OP)) {
-                    int previousIP = IP - 2;
-                    OperationCache operation = new OperationCache();
-
-                    operation.operation = OP;
-                    operation.argument = 2;
-                    while (memory.read(IP) == lastOperation) {
-                        operation.argument++;
-                        IP++;
-                    }
-                    operation.nextIP = IP;
-                    operationsCache.put(previousIP, operation);
-
-                    argument = operation.argument - 1;
-                }
-            }
-            lastOperation = OP;
+        if (optimize && operationsCache.containsKey(IP)) {
+            OperationCache operation = operationsCache.get(IP);
+            OP = operation.operation;
+            IP = operation.nextIP;
+            argument = operation.argument;
         } else {
             OP = memory.read(IP++);
         }
