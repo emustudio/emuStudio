@@ -159,10 +159,10 @@ public class EmulatorImpl extends AbstractCPU {
             adr = 0;
         }
         P = adr; // assign to the P register the address we have found
-        analyzeForOptimization(adr);
+        profileAndOptimize(adr);
     }
 
-    private void analyzeForOptimization(int programSize) {
+    private void profileAndOptimize(int programSize) {
         int lastOperation = 0;
         short OP;
 
@@ -184,8 +184,85 @@ public class EmulatorImpl extends AbstractCPU {
             }
             lastOperation = OP;
         }
+
+        optimizeBuildingBlocks(programSize);
+        optimizeLoops(programSize);
     }
 
+    private void optimizeLoops(int programSize) {
+        short OP;
+        for (int tmpIP = 0; tmpIP < programSize; tmpIP++) {
+            if (memory.read(tmpIP) != 7) {
+                continue;
+            }
+            int loop_count = 0; // loop nesting level counter
+
+            // we start to look for "]" instruction
+            // on the same nesting level (according to loop_count value)
+            // IP is pointing at following instruction
+            int tmpIP2 = tmpIP + 1;
+            while ((tmpIP2 < programSize) && (OP = memory.read(tmpIP2++)) != 0) {
+                if (OP == 7) {
+                    loop_count++;
+                }
+                if (OP == 8) {
+                    if (loop_count == 0) {
+                        loopEndsCache.put(tmpIP, tmpIP2);
+                        break;
+                    } else {
+                        loop_count--;
+                    }
+                }
+            }
+        }
+    }
+
+    private void optimizeBuildingBlocks(int programSize) {
+        short OP;
+        for (int tmpIP = 0; tmpIP < programSize; tmpIP++) {
+            OP = memory.read(tmpIP);
+            if (OP == 7 && tmpIP+2 < programSize) {
+                tmpIP++;
+                OP = memory.read(tmpIP);
+                if (OP == 4 && (memory.read(tmpIP + 1) == 8)) {
+                    // got [-]
+                    OperationCache operation = new OperationCache();
+
+                    operation.operation = 0xA1;
+                    operation.nextIP = tmpIP + 2;
+                    operationsCache.put(tmpIP - 1, operation);
+                } else if (OP == 1 && tmpIP + 4 < programSize) {
+                    short OP1 = memory.read(tmpIP + 1);
+                    short OP2 = memory.read(tmpIP + 2);
+                    short OP3 = memory.read(tmpIP + 3);
+                    short OP4 = memory.read(tmpIP + 4);
+
+                    if (OP1 == 3 && OP2 == 2 && OP3 == 4 && OP4 == 8) {
+                        // got [>+<-]
+                        OperationCache operation = new OperationCache();
+
+                        operation.operation = 0xA2;
+                        operation.nextIP = tmpIP + 5;
+                        operationsCache.put(tmpIP - 1, operation);
+                    }
+                } else if (OP == 4 && tmpIP + 4 < programSize) {
+                    short OP1 = memory.read(tmpIP + 1);
+                    short OP2 = memory.read(tmpIP + 2);
+                    short OP3 = memory.read(tmpIP + 3);
+                    short OP4 = memory.read(tmpIP + 4);
+
+                    if (OP1 == 1 && OP2 == 3 && OP3 == 2 && OP4 == 8) {
+                        // got [->+<]
+                        OperationCache operation = new OperationCache();
+
+                        operation.operation = 0xA2;
+                        operation.nextIP = tmpIP + 5;
+                        operationsCache.put(tmpIP - 1, operation);
+                    }
+                }
+            }
+        }
+    }
 
     @Override
     public RunState call() {
@@ -271,34 +348,20 @@ public class EmulatorImpl extends AbstractCPU {
                     loopPointers.push(startingBrace);
                     break;
                 }
-                if (loopEndsCache.containsKey(startingBrace)) {
-                    IP = loopEndsCache.get(startingBrace);
-                } else {
-                    int loop_count = 0; // loop nesting level counter
-
-                    // we start to look for "]" instruction
-                    // on the same nesting level (according to loop_count value)
-                    // IP is pointing at following instruction
-                    while ((OP = memory.read(IP++)) != 0) {
-                        if (OP == 7) {
-                            loop_count++;
-                        }
-                        if (OP == 8) {
-                            if (loop_count == 0) {
-                                loopEndsCache.put(startingBrace, IP);
-                                break;
-                            } else {
-                                loop_count--;
-                            }
-                        }
-                    }
-                }
+                IP = loopEndsCache.get(startingBrace);
                 break;
             case 8: /* ] */
                 int tmpIP = loopPointers.pop();
                 if (memory.read(P) != 0) {
                     IP = tmpIP;
                 }
+                break;
+            case 0xA1: /* [-] */
+                memory.write(P, (short)0);
+                break;
+            case 0xA2: /* [>+<-] */
+                memory.write(P+1, memory.read(P));
+                memory.write(P, (short)0);
                 break;
             default: /* invalid instruction */
                 return RunState.STATE_STOPPED_BAD_INSTR;
