@@ -18,7 +18,6 @@
  */
 package net.sf.emustudio.brainduck.terminal.io;
 
-import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 
 import javax.swing.JPanel;
@@ -26,17 +25,17 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Point;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 @ThreadSafe
 public class Display extends JPanel {
+    private final static int DEFAULT_COLUMN = 120;
 
-    @GuardedBy("memory")
-    private final List<List<Integer>> memory = new LinkedList<>();
-    @GuardedBy("memory")
-    private volatile int memYsize;
+    private final ConcurrentMap<Integer, int[]> memory = new ConcurrentHashMap<>();
 
     private final Cursor cursor;
     private volatile boolean needMeasure;
@@ -61,10 +60,8 @@ public class Display extends JPanel {
     }
 
     public void stop() {
-        synchronized (memory) {
-            cursor.stop();
-            memory.clear();
-        }
+        cursor.stop();
+        memory.clear();
     }
 
     public Cursor getTextCanvasCursor() {
@@ -77,36 +74,31 @@ public class Display extends JPanel {
         cursor.advance(1);
     }
 
-    @GuardedBy("memory")
     private void ensureMemorySize(int x, int y) {
-        if (memYsize <= y) {
-            for (int i = memYsize; i <= y; i++) {
-                memory.add(new LinkedList<Integer>());
-                memYsize++;
-            }
+        if (!memory.containsKey(y)) {
+            memory.putIfAbsent(y, new int[DEFAULT_COLUMN]);
         }
-        List<Integer> row = memory.get(y);
-        int memXsize = row.size();
-        if (memXsize <= x) {
-            for (int i = memXsize; i <= x; i++) {
-                row.add(0);
+        int[] row = memory.get(y);
+        if (row.length <= x) {
+            int[] newRow = Arrays.copyOf(row, x + 20);
+            while (!memory.replace(y, row, newRow)) {
+                row = memory.get(y);
+                if (row.length > x) {
+                    break;
+                }
+                newRow = Arrays.copyOf(row, x + 20);
             }
         }
     }
 
     public void writeCharAt(int c, int x, int y) {
-        synchronized (memory) {
-            ensureMemorySize(x, y);
-            memory.get(y).set(x, c);
-        }
+        ensureMemorySize(x, y);
+        memory.get(y)[x] = c;
         repaint();
     }
 
     public void clear() {
-        synchronized (memory) {
-            memory.clear();
-            memYsize = 0;
-        }
+        memory.clear();
         cursor.reset();
         repaint();
     }
@@ -133,25 +125,24 @@ public class Display extends JPanel {
         g.setFont(textFont);
         g.clearRect(0, 0, getSize().width, getSize().height);
 
-        synchronized (memory) {
-            int y = charHeight;
-            int x = 0;
+        int y = charHeight;
+        int x = 0;
 
-            for (int i = 0; i < memYsize; i++) {
-                List<Integer> row = memory.get(i);
-                int memXsize = row.size();
-                x = 0;
-                for (int col = 0; col < memXsize; col++) {
-                    int value = row.get(col);
+        int rowIndex = 0;
+        for (Map.Entry<Integer, int[]> entry : memory.entrySet()) {
+            int targetRow = entry.getKey();
 
-                    if (value < 32) {
-                        continue;
-                    }
+            y += (charHeight * (targetRow - rowIndex));
+            rowIndex = targetRow;
 
-                    g.drawString("" + (char) value, x, y);
-                    x += charWidth;
+            int[] row = entry.getValue();
+            x = 0;
+            for (int col = 0; col < row.length; col++) {
+                if (row[col] < 32) {
+                    continue;
                 }
-                y += charHeight;
+                g.drawString("" + (char) row[col], x, y);
+                x += charWidth;
             }
         }
     }
