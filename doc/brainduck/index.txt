@@ -6,5 +6,6 @@ Version 0.39
 
 include::introduction.txt[]
 include::compiler.txt[]
-
-
+include::cpu.txt[]
+include::memory.txt[]
+include::terminal.txt[]
