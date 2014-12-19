@@ -15,11 +15,13 @@ panel in the main window.
 
 Breakpoints are supported, so as "jump" to specific location, which might be actually dangerous to use.
 
+[[XCI]]
 === Installation and run
 
 The BrainDuck CPU can be run only as a part of emuStudio. It is installed in location
 `cpu/brainduck-cpu.jar`.
 
+[[XCS]]
 === Status panel
 
 In the following image, you can see the status panel of `brainduck-cpu`. 
@@ -36,6 +38,7 @@ or the user stops it.
 Loop level shows the depth level of brainfuck loop the program is in. For example, if instruction pointer points
 into middle of the program `[[-]]`, to the `-` instruction, loop level is 2.
 
+[[XCR]]
 === Running brainfuck programs
 
 It is very important to reset CPU after each source code compilation. The reason is that after compilation register
