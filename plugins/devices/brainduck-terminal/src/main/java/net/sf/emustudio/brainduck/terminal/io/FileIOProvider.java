@@ -23,20 +23,36 @@ package net.sf.emustudio.brainduck.terminal.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
 
 public class FileIOProvider implements InputProvider, OutputProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileIOProvider.class);
-    private static final String OUTPUT_FILE_NAME = "BrainTerminal.out";
-    private static final String INPUT_FILE_NAME = "BrainTerminal.in";
+    private static final File OUTPUT_FILE_NAME = new File("BrainTerminal.out");
+    private static final File INPUT_FILE_NAME = new File("BrainTerminal.in");
 
-    private final FileReader reader;
+    private final Reader reader;
     private final FileWriter writer;
 
     public FileIOProvider() throws IOException {
-        this.reader = new FileReader(INPUT_FILE_NAME);
+        if (INPUT_FILE_NAME.exists()) {
+            this.reader = new FileReader(INPUT_FILE_NAME);
+        } else {
+            this.reader = new Reader() {
+                @Override
+                public int read(char[] cbuf, int off, int len) throws IOException {
+                    return -1;
+                }
+
+                @Override
+                public void close() throws IOException {
+
+                }
+            };
+        }
         try {
             this.writer = new FileWriter(OUTPUT_FILE_NAME);
         } catch (IOException e) {
@@ -85,11 +101,6 @@ public class FileIOProvider implements InputProvider, OutputProvider {
 
     @Override
     public void reset() {
-        try {
-            reader.reset();
-        } catch (IOException e) {
-            LOGGER.error("Could not reset reader", e);
-        }
     }
 
     @Override
