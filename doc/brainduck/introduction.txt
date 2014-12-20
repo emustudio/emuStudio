@@ -86,7 +86,3 @@ gained from terminal is passed to the CPU, and output is pushed from CPU to the 
 
 Plug-in `brainduck-cpu` also depends on `brainduck-mem`, because memory is a place where program
 and data are stored.
-
-
-
-

@@ -1,0 +1,26 @@
+[[XE]]
+== Emulation automation
+
+BrainDuck is one of computers which allows automatic emulation. It means that it is possible to run the emulation from
+command line, while all necessary input and output is redirected from/to files. If user interaction is necessary, it is
+possible to run an interactive automation.
+
+Suppose the BrainDuck computer is represented by abstract schema presented in <<XIIS,Introduction>> section. In that
+case, BrainDuck terminal is the only device dealing with I/O. If the emulation was executed in automatic non-interactive
+mode, it will recognize it and the input/output will be redirected from/to files.
+
+Input file is called `BrainTerminal.in` and must be placed in the directory from which emuStudio was executed.
+
+Output file is called `BrainTerminal.out` and it will be created automatically, or appended when it exists in the location
+from which emuStudio was executed.
+
+Command line for starting non-interactive automatic emulation:
+
+    java -jar emuStudio.jar --config BrainDuck --input examples/brainc-brainduck/mandelbrot.b --output compiler.out --auto --nogui
+
+- configuration `config/BrainDuck.conf` will be loaded
+- input file for compiler is one of the examples
+- compiler messages will be redirected to file `compiler.out`
+- (`--auto`) automatic emulation mode will be performed
+- (`--nogui`) non-interactive version will be set
+
