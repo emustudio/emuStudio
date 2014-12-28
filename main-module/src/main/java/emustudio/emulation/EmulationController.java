@@ -4,12 +4,13 @@ import emulib.plugins.cpu.CPU;
 import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
 import emustudio.architecture.Computer;
-import net.jcip.annotations.ThreadSafe;
-
 import java.io.Closeable;
-import java.io.IOException;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class EmulationController implements Closeable {

@@ -82,14 +82,6 @@ public class Keyboard  implements InputProvider, KeyListener {
     
     @Override
     public void keyTyped(KeyEvent e) {
-        int keycode = e.getKeyCode();
-        if (keycode == KeyEvent.VK_ESCAPE) {
-            inputBuffer.add(InputProvider.EOF);
-        } else if (keycode == KeyEvent.VK_SHIFT || keycode == KeyEvent.VK_CONTROL ||
-                keycode == KeyEvent.VK_ALT || keycode == KeyEvent.VK_META) {
-        } else {
-            inputBuffer.add((int) e.getKeyChar());
-        }
     }
 
     @Override
