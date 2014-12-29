@@ -26,7 +26,8 @@ import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.CPU.RunState;
 import net.sf.emustudio.intel8080.ExtendedContext;
 import net.sf.emustudio.intel8080.FrequencyChangedListener;
-import net.sf.emustudio.intel8080.impl.EmulatorImpl;
+import net.sf.emustudio.intel8080.impl.CpuImpl;
+import net.sf.emustudio.intel8080.impl.EmulatorEngine;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -37,29 +38,32 @@ import java.awt.*;
 import static emulib.runtime.RadixUtils.getByteHexString;
 import static emulib.runtime.RadixUtils.getWordHexString;
 
-/**
- * Status panel for the CPU.
- *
- */
 @SuppressWarnings("serial")
 public class StatusPanel extends JPanel {
-    private EmulatorImpl cpu;
-    private ExtendedContext context;
-    private RunState run_state;
-    private AbstractTableModel flagModel;
+    private final CpuImpl cpu;
+    private final EmulatorEngine engine;
+    private final ExtendedContext context;
+    private final AbstractTableModel flagModel;
+    private volatile RunState runState = RunState.STATE_STOPPED_NORMAL;
 
-    public StatusPanel(EmulatorImpl cpu, ExtendedContext context) {
+    public StatusPanel(CpuImpl cpu, ExtendedContext context) {
         this.cpu = cpu;
         this.context = context;
-
-        run_state = RunState.STATE_STOPPED_NORMAL;
+        this.engine = cpu.getEngine();
+        flagModel = new FlagsModel(engine);
 
         initComponents();
+        tblFlags.setModel(flagModel);
+
+        setupListeners();
+    }
+
+    private void setupListeners() {
         cpu.addCPUListener(new CPU.CPUListener() {
 
             @Override
             public void runStateChanged(RunState state) {
-                run_state = state;
+                runState = state;
             }
 
             @Override
@@ -78,11 +82,11 @@ public class StatusPanel extends JPanel {
 
             @Override
             public void stateChanged(ChangeEvent e) {
-                int i = (Integer) ((SpinnerNumberModel) spnFrequency.getModel()).getValue();
+                int i = (Integer)spnFrequency.getModel().getValue();
                 try {
                     StatusPanel.this.context.setCPUFrequency(i);
                 } catch (IndexOutOfBoundsException ex) {
-                    ((SpinnerNumberModel) spnFrequency.getModel()).setValue(StatusPanel.this.context.getCPUFrequency());
+                    spnFrequency.getModel().setValue(context.getCPUFrequency());
                 }
             }
         });
@@ -90,56 +94,40 @@ public class StatusPanel extends JPanel {
 
             @Override
             public void stateChanged(ChangeEvent e) {
-                int i = (Integer) ((SpinnerNumberModel) spnTestPeriode.getModel()).getValue();
+                int i = (Integer) spnTestPeriode.getModel().getValue();
                 try {
                     StatusPanel.this.cpu.setSliceTime(i);
                 } catch (IndexOutOfBoundsException ex) {
-                    ((SpinnerNumberModel) spnTestPeriode.getModel()).setValue(StatusPanel.this.cpu.getSliceTime());
+                    spnTestPeriode.getModel().setValue(cpu.getSliceTime());
                 }
             }
         });
-        flagModel = new FlagsModel(cpu);
-        tblFlags.setModel(flagModel);
     }
 
     public void updateGUI() {
-        txtRegA.setText(getByteHexString(cpu.regs[EmulatorImpl.REG_A]));
-        txtRegB.setText(getByteHexString(cpu.regs[EmulatorImpl.REG_B]));
-        txtRegC.setText(getByteHexString(cpu.regs[EmulatorImpl.REG_C]));
-        txtRegBC.setText(getWordHexString(((cpu.regs[EmulatorImpl.REG_B] << 8) | cpu.regs[EmulatorImpl.REG_C]) & 0xFFFF));
-        txtRegD.setText(getByteHexString(cpu.regs[EmulatorImpl.REG_D]));
-        txtRegE.setText(getByteHexString(cpu.regs[EmulatorImpl.REG_E]));
-        txtRegDE.setText(getWordHexString(((cpu.regs[EmulatorImpl.REG_D] << 8) | cpu.regs[EmulatorImpl.REG_E]) & 0xFFFF));
-        txtRegH.setText(getByteHexString(cpu.regs[EmulatorImpl.REG_H]));
-        txtRegL.setText(getByteHexString(cpu.regs[EmulatorImpl.REG_L]));
-        txtRegHL.setText(getWordHexString(((cpu.regs[EmulatorImpl.REG_H] << 8) | cpu.regs[EmulatorImpl.REG_L]) & 0xFFFF));
-        txtRegSP.setText(getWordHexString(cpu.SP));
-        txtRegPC.setText(getWordHexString(cpu.getInstructionPosition()));
+        txtRegA.setText(getByteHexString(engine.regs[EmulatorEngine.REG_A]));
+        txtRegB.setText(getByteHexString(engine.regs[EmulatorEngine.REG_B]));
+        txtRegC.setText(getByteHexString(engine.regs[EmulatorEngine.REG_C]));
+        txtRegBC.setText(getWordHexString(engine.regs[EmulatorEngine.REG_B], engine.regs[EmulatorEngine.REG_C]));
+        txtRegD.setText(getByteHexString(engine.regs[EmulatorEngine.REG_D]));
+        txtRegE.setText(getByteHexString(engine.regs[EmulatorEngine.REG_E]));
+        txtRegDE.setText(getWordHexString(engine.regs[EmulatorEngine.REG_D], engine.regs[EmulatorEngine.REG_E]));
+        txtRegH.setText(getByteHexString(engine.regs[EmulatorEngine.REG_H]));
+        txtRegL.setText(getByteHexString(engine.regs[EmulatorEngine.REG_L]));
+        txtRegHL.setText(getWordHexString(engine.regs[EmulatorEngine.REG_H], engine.regs[EmulatorEngine.REG_L]));
+        txtRegSP.setText(getWordHexString(engine.SP));
+        txtRegPC.setText(getWordHexString(engine.PC));
 
-        txtFlags.setText(getByteHexString(cpu.Flags));
+        txtFlags.setText(getByteHexString(engine.Flags));
         flagModel.fireTableDataChanged();
 
-        if (run_state == RunState.STATE_RUNNING) {
-            lblRun.setText("running");
+        lblRun.setText(runState.toString());
+        if (runState == RunState.STATE_RUNNING) {
             spnFrequency.setEnabled(false);
             spnTestPeriode.setEnabled(false);
         } else {
             spnFrequency.setEnabled(true);
             spnTestPeriode.setEnabled(true);
-            switch (run_state) {
-                case STATE_STOPPED_NORMAL:
-                    lblRun.setText("stopped (normal)");
-                    break;
-                case STATE_STOPPED_BREAK:
-                    lblRun.setText("breakpoint");
-                    break;
-                case STATE_STOPPED_ADDR_FALLOUT:
-                    lblRun.setText("stopped (address fallout)");
-                    break;
-                case STATE_STOPPED_BAD_INSTR:
-                    lblRun.setText("stopped (instruction fallout)");
-                    break;
-            }
         }
     }
 
@@ -257,7 +245,7 @@ public class StatusPanel extends JPanel {
                 new javax.swing.border.LineBorder(new java.awt.Color(153, 153, 153), 1, true),
                 "Run control", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
                 javax.swing.border.TitledBorder.DEFAULT_POSITION,
-                new java.awt.Font("DejaVu Sans", 1, 14),
+                new java.awt.Font("DejaVu Sans", Font.BOLD, 14),
                 new java.awt.Color(102, 102, 102))); // NOI18N
 
         lblRun.setFont(lblRun.getFont().deriveFont(lblRun.getFont().getStyle() | java.awt.Font.BOLD));

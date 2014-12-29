@@ -33,12 +33,13 @@ import java.util.Map;
 
 public class ContextImpl implements ExtendedContext {
     private final static Logger LOGGER = LoggerFactory.getLogger(ContextImpl.class);
-    private Map<Integer, DeviceContext<Short>> devices;
-    private int clockFrequency = 2000; // kHz
-    private EmulatorImpl cpu;
 
-    public ContextImpl(EmulatorImpl cpu) {
-        devices = new HashMap<Integer,DeviceContext<Short>>();
+    private final CpuImpl cpu;
+    private final Map<Integer, DeviceContext<Short>> devices = new HashMap<>();
+
+    private int clockFrequency = 2000; // kHz
+
+    public ContextImpl(CpuImpl cpu) {
         this.cpu = cpu;
     }
     
@@ -78,14 +79,13 @@ public class ContextImpl implements ExtendedContext {
      * @return value from the port if read is true, otherwise 0
      */
     public short fireIO(int port, boolean read, short val) {
-        if (devices.containsKey(port) == false) {
+        if (!devices.containsKey(port)) {
             // this behavior isn't constant for all situations...
             return 0;
         }
-        if (read == true) { 
-            return (Short)devices.get(port).read();
-        }
-        else {
+        if (read) {
+            return devices.get(port).read();
+        } else {
             devices.get(port).write(val);
         }
         return 0;
@@ -111,7 +111,7 @@ public class ContextImpl implements ExtendedContext {
         short b1 = (instruction.length >= 1) ? instruction[0] : 0;
         short b2 = (instruction.length >= 2) ? instruction[1] : 0;
         short b3 = (instruction.length >= 3) ? instruction[2] : 0;
-        cpu.interrupt(b1, b2, b3);
+        cpu.getEngine().interrupt(b1, b2, b3);
     }
 
     @Override
