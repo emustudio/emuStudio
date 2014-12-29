@@ -33,13 +33,6 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
-import net.sf.emustudio.intel8080.ExtendedContext;
-import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
-import net.sf.emustudio.zilogZ80.gui.DecoderImpl;
-import net.sf.emustudio.zilogZ80.gui.DisassemblerImpl;
-import net.sf.emustudio.zilogZ80.gui.StatusPanel;
-
-import javax.swing.*;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Objects;
@@ -48,6 +41,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
+import javax.swing.JPanel;
+import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
+import net.sf.emustudio.zilogZ80.gui.DecoderImpl;
+import net.sf.emustudio.zilogZ80.gui.DisassemblerImpl;
+import net.sf.emustudio.zilogZ80.gui.StatusPanel;
 
 /**
  * Main implementation class for CPU emulation CPU works in a separate thread
@@ -270,9 +269,6 @@ public class EmulatorImpl extends AbstractCPU {
         frequencyChangedListenerList.remove(listener);
     }
 
-    /**
-     * Should be called only once
-     */
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         this.settings = settings;
@@ -730,7 +726,7 @@ public class EmulatorImpl extends AbstractCPU {
         if (isINT) {
             return doInterrupt();
         }
-        R++;
+        R = (short)((R + 1) & 0xFF);
         if (OP == 0x76) { /* HALT */
             currentRunState = RunState.STATE_STOPPED_NORMAL;
             return 4;
@@ -1619,7 +1615,7 @@ public class EmulatorImpl extends AbstractCPU {
                         SP = (special == 0xDD) ? IX : IY;
                         return 10;
                 }
-                tmp = memory.read(PC++).shortValue();
+                tmp = memory.read(PC++);
                 switch (OP) {
                     case 0x76:
                         break;
@@ -1706,7 +1702,7 @@ public class EmulatorImpl extends AbstractCPU {
                         F = (short) (CP_TABLE[tmp2 & 0xff] | CBITS2Z80_TABLE[(A ^ tmp1 ^ tmp2) & 0x1ff]);
                         return 19;
                 }
-                tmp |= ((memory.read(PC++)).shortValue() << 8);
+                tmp |= ((memory.read(PC++)) << 8);
                 switch (OP) {
                     case 0x21: /* LD ii,nn */
                         putspecial(special, tmp);

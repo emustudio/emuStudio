@@ -1,7 +1,7 @@
 /*
  * FlagsModel.java
  *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,24 +23,20 @@ package net.sf.emustudio.zilogZ80.gui;
 import javax.swing.table.AbstractTableModel;
 import net.sf.emustudio.zilogZ80.impl.EmulatorImpl;
 
-/**
- *
- * @author vbmacher
- */
 class FlagsModel extends AbstractTableModel {
-    private String[] flags = {"S", "Z", "H", "P/V", "N", "C"};
-    private int[] flagsI = {0, 0, 0, 0, 0, 0};
-    private int set;
+    private static final String[] FLAG_NAMES = {"S", "Z", "H", "P/V", "N", "C"};
+    private final int[] flagsI = {0, 0, 0, 0, 0, 0};
+    private final int registersSet;
     private final EmulatorImpl cpu;
 
-    public FlagsModel(int set, final EmulatorImpl cpu) {
+    public FlagsModel(int registersSet, final EmulatorImpl cpu) {
         this.cpu = cpu;
-        this.set = set;
+        this.registersSet = registersSet;
     }
 
     @Override
     public int getRowCount() {
-        return 2;
+        return 1;
     }
 
     @Override
@@ -50,24 +46,18 @@ class FlagsModel extends AbstractTableModel {
 
     @Override
     public String getColumnName(int columnIndex) {
-        return flags[columnIndex];
+        return FLAG_NAMES[columnIndex];
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        switch (rowIndex) {
-            case 0:
-                return flags[columnIndex];
-            case 1:
-                return flagsI[columnIndex];
-        }
-        return null;
+        return flagsI[columnIndex];
     }
 
     @Override
     public void fireTableDataChanged() {
         short F;
-        if (set == 0) {
+        if (registersSet == 0) {
             F = cpu.F;
         } else {
             F = cpu.F1;

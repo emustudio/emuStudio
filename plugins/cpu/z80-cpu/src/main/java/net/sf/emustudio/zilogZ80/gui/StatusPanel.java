@@ -1,68 +1,59 @@
 /*
- * StatusPanel.java
- *
- * Created on Nedeľa, 2008, august 24, 10:22
- *
- * Copyright (C) 2008-2013 Peter Jakubčo
+ * Copyright (C) 2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 package net.sf.emustudio.zilogZ80.gui;
 
 import emulib.plugins.cpu.CPU;
-import emulib.plugins.cpu.CPU.RunState;
+import static emulib.runtime.RadixUtils.getByteHexString;
+import static emulib.runtime.RadixUtils.getWordHexString;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import net.sf.emustudio.intel8080.ExtendedContext;
 import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
 import net.sf.emustudio.zilogZ80.impl.EmulatorImpl;
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.table.AbstractTableModel;
-import java.awt.*;
-
-import static emulib.runtime.RadixUtils.getByteHexString;
-import static emulib.runtime.RadixUtils.getWordHexString;
-
-/**
- * Status panel for the CPU.
- *
- * @author Peter Jakubčo
- */
 public class StatusPanel extends javax.swing.JPanel {
+    private final EmulatorImpl cpu;
+    private final ExtendedContext context;
+    private final FlagsModel flagModel1;
+    private final FlagsModel flagModel2;
 
-    private RunState run_state;
-    private EmulatorImpl cpu;
-    private ExtendedContext context;
-    private AbstractTableModel flagModel1;
-    private AbstractTableModel flagModel2;
+    private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_NORMAL;
 
-    /** Creates new form statusGUI */
     public StatusPanel(EmulatorImpl cpu, ExtendedContext context) {
         this.cpu = cpu;
         this.context = context;
-
-        run_state = RunState.STATE_STOPPED_NORMAL;
-
+        this.flagModel1 = new FlagsModel(0, cpu);
+        this.flagModel2 = new FlagsModel(1, cpu);
+        
         initComponents();
+        tblFlags1.setModel(flagModel1);
+        tblFlags2.setModel(flagModel2);
+        
+        setupListeners();
+    }
+    
+    private void setupListeners() {
         cpu.addCPUListener(new CPU.CPUListener() {
 
             @Override
-            public void runStateChanged(RunState state) {
-                run_state = state;
+            public void runStateChanged(CPU.RunState state) {
+                runState = state;
             }
 
             @Override
@@ -81,11 +72,11 @@ public class StatusPanel extends javax.swing.JPanel {
 
             @Override
             public void stateChanged(ChangeEvent e) {
-                int i = (Integer) ((SpinnerNumberModel) spnFrequency.getModel()).getValue();
+                int i = (Integer)spnFrequency.getModel().getValue();
                 try {
-                    StatusPanel.this.context.setCPUFrequency(i);
+                    context.setCPUFrequency(i);
                 } catch (IndexOutOfBoundsException ex) {
-                    ((SpinnerNumberModel) spnFrequency.getModel()).setValue(StatusPanel.this.context.getCPUFrequency());
+                    spnFrequency.getModel().setValue(context.getCPUFrequency());
                 }
             }
         });
@@ -93,382 +84,784 @@ public class StatusPanel extends javax.swing.JPanel {
 
             @Override
             public void stateChanged(ChangeEvent e) {
-                int i = (Integer) ((SpinnerNumberModel) spnTestPeriode.getModel()).getValue();
+                int i = (Integer) spnTestPeriode.getModel().getValue();
                 try {
-                    StatusPanel.this.cpu.setSliceTime(i);
+                    cpu.setSliceTime(i);
                 } catch (IndexOutOfBoundsException ex) {
-                    ((SpinnerNumberModel) spnTestPeriode.getModel()).setValue(StatusPanel.this.cpu.getSliceTime());
+                    spnTestPeriode.getModel().setValue(cpu.getSliceTime());
                 }
             }
         });
-        flagModel1 = new FlagsModel(0, cpu);
-        flagModel2 = new FlagsModel(1, cpu);
-        tblFlags.setModel(flagModel1);
-        tblFlags2.setModel(flagModel2);
     }
 
-    // user set frequency
-    private void setCPUFreq(int f) {
-        context.setCPUFrequency(f);
+    private String wordHex(short upper, short lower) {
+        return getWordHexString(((upper << 8) | lower) & 0xFFFF);
     }
 
-
-    private String f(int what) {
-        return getWordHexString(what);
-    }
-
-    private String f(short what) {
+    private String byteHex(short what) {
         return getByteHexString(what);
-
     }
 
     public void updateGUI() {
-        txtRegA.setText(f(cpu.A));
-        txtRegF.setText(f(cpu.F));
-        txtRegB.setText(f(cpu.B));
-        txtRegC.setText(f(cpu.C));
-        txtRegBC.setText(f(((cpu.B << 8) | cpu.C) & 0xFFFF));
-        txtRegD.setText(f(cpu.D));
-        txtRegE.setText(f(cpu.E));
-        txtRegDE.setText(f(((cpu.D << 8) | cpu.E) & 0xFFFF));
-        txtRegH.setText(f(cpu.H));
-        txtRegL.setText(f(cpu.L));
-        txtRegHL.setText(f(((cpu.H << 8) | cpu.L) & 0xFFFF));
+        txtA1.setText(byteHex(cpu.A));
+        txtF1.setText(byteHex(cpu.F));
+        txtB1.setText(byteHex(cpu.B));
+        txtC1.setText(byteHex(cpu.C));
+        txtBC1.setText(wordHex(cpu.B, cpu.C));
+        txtD1.setText(byteHex(cpu.D));
+        txtE1.setText(byteHex(cpu.E));
+        txtDE1.setText(wordHex(cpu.D, cpu.E));
+        txtH1.setText(byteHex(cpu.H));
+        txtL1.setText(byteHex(cpu.L));
+        txtHL1.setText(wordHex(cpu.H, cpu.L));
         flagModel1.fireTableDataChanged();
-        txtRegA1.setText(f(cpu.A1));
-        txtRegF1.setText(f(cpu.F1));
-        txtRegB1.setText(f(cpu.B1));
-        txtRegC1.setText(f(cpu.C1));
-        txtRegBC1.setText(f(((cpu.B1 << 8) | cpu.C1) & 0xFFFF));
-        txtRegD1.setText(f(cpu.D1));
-        txtRegE1.setText(f(cpu.E1));
-        txtRegDE1.setText(f(((cpu.D1 << 8) | cpu.E1) & 0xFFFF));
-        txtRegH1.setText(f(cpu.H1));
-        txtRegL1.setText(f(cpu.L1));
-        txtRegHL1.setText(f(((cpu.H1 << 8) | cpu.L1) & 0xFFFF));
+        txtA2.setText(byteHex(cpu.A1));
+        txtF2.setText(byteHex(cpu.F1));
+        txtB2.setText(byteHex(cpu.B1));
+        txtC2.setText(byteHex(cpu.C1));
+        txtBC2.setText(wordHex(cpu.B1, cpu.C1));
+        txtD2.setText(byteHex(cpu.D1));
+        txtE2.setText(byteHex(cpu.E1));
+        txtDE2.setText(wordHex(cpu.D1, cpu.E1));
+        txtH2.setText(byteHex(cpu.H1));
+        txtL2.setText(byteHex(cpu.L1));
+        txtHL2.setText(wordHex(cpu.H1, cpu.L1));
         flagModel2.fireTableDataChanged();
 
-        txtRegSP.setText(getWordHexString(cpu.SP));
-        txtRegPC.setText(getWordHexString(cpu.PC));
-        txtRegIX.setText(getWordHexString(cpu.IX));
-        txtRegIY.setText(getWordHexString(cpu.IY));
-        txtRegI.setText(getByteHexString(cpu.I));
-        txtRegR.setText(getByteHexString(cpu.R));
+        txtSP.setText(getWordHexString(cpu.SP));
+        txtPC.setText(getWordHexString(cpu.PC));
+        txtIX.setText(getWordHexString(cpu.IX));
+        txtIY.setText(getWordHexString(cpu.IY));
+        txtI.setText(getByteHexString(cpu.I));
+        txtR.setText(getByteHexString(cpu.R));
 
-        if (run_state == RunState.STATE_RUNNING) {
-            lblRun.setText("running");
+        lblRunState.setText(runState.toString());
+        if (runState == CPU.RunState.STATE_RUNNING) {
             spnFrequency.setEnabled(false);
             spnTestPeriode.setEnabled(false);
         } else {
             spnFrequency.setEnabled(true);
             spnTestPeriode.setEnabled(true);
-            switch (run_state) {
-                case STATE_STOPPED_NORMAL:
-                    lblRun.setText("stopped (normal)");
-                    break;
-                case STATE_STOPPED_BREAK:
-                    lblRun.setText("breakpoint");
-                    break;
-                case STATE_STOPPED_ADDR_FALLOUT:
-                    lblRun.setText("stopped (address fallout)");
-                    break;
-                case STATE_STOPPED_BAD_INSTR:
-                    lblRun.setText("stopped (instruction fallout)");
-                    break;
-            }
         }
     }
-
+    
+    
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        JPanel paneRegisters = new JPanel();
-        JTabbedPane tabbedGPR = new JTabbedPane();
-        JPanel panelSET1 = new JPanel();
-        JLabel lblRegB = new JLabel("B");
-        txtRegB = new JTextField("00");
-        JLabel lblRegC = new JLabel("C");
-        txtRegC = new JTextField("00");
-        JLabel lblRegBC = new JLabel("BC");
-        txtRegBC = new JTextField("0000");
-        JLabel lblRegD = new JLabel("D");
-        txtRegD = new JTextField("00");
-        JLabel lblRegE = new JLabel("E");
-        txtRegE = new JTextField("00");
-        JLabel lblRegDE = new JLabel("DE");
-        txtRegDE = new JTextField("0000");
-        JLabel lblRegH = new JLabel("H");
-        txtRegH = new JTextField("00");
-        JLabel lblRegL = new JLabel("L");
-        txtRegL = new JTextField("00");
-        JLabel lblRegHL = new JLabel("HL");
-        txtRegHL = new JTextField("0000");
-        JLabel lblRegA = new JLabel("A");
-        txtRegA = new JTextField("00");
-        JLabel lblRegF = new JLabel("F");
-        txtRegF = new JTextField("00");
-        JLabel lblFlagsLBL = new JLabel("Flags (F): ");
-        tblFlags = new JTable();
-        JPanel panelSET2 = new JPanel();
-        JLabel lblRegB1 = new JLabel("B");
-        txtRegB1 = new JTextField("00");
-        JLabel lblRegC1 = new JLabel("C");
-        txtRegC1 = new JTextField("00");
-        JLabel lblRegBC1 = new JLabel("BC");
-        txtRegBC1 = new JTextField("0000");
-        JLabel lblRegD1 = new JLabel("D");
-        txtRegD1 = new JTextField("00");
-        JLabel lblRegE1 = new JLabel("E");
-        txtRegE1 = new JTextField("00");
-        JLabel lblRegDE1 = new JLabel("DE");
-        txtRegDE1 = new JTextField("0000");
-        JLabel lblRegH1 = new JLabel("H");
-        txtRegH1 = new JTextField("00");
-        JLabel lblRegL1 = new JLabel("L");
-        txtRegL1 = new JTextField("00");
-        JLabel lblRegHL1 = new JLabel("HL");
-        txtRegHL1 = new JTextField("0000");
-        JLabel lblRegA1 = new JLabel("A");
-        txtRegA1 = new JTextField("00");
-        JLabel lblRegF1 = new JLabel("F");
-        txtRegF1 = new JTextField("00");
-        JLabel lblFlags1LBL = new JLabel("Flags (F): ");
-        tblFlags2 = new JTable();
-        JLabel lblRegPC = new JLabel("PC");
-        txtRegPC = new JTextField("0000");
-        JLabel lblRegSP = new JLabel("SP");
-        txtRegSP = new JTextField("0000");
-        JLabel lblRegIX = new JLabel("IX");
-        txtRegIX = new JTextField("0000");
-        JLabel lblRegIY = new JLabel("IY");
-        JLabel lblRegI = new JLabel("I");
-        txtRegI = new JTextField("00");
-        JLabel lblRegR = new JLabel("R");
-        txtRegIY = new JTextField("0000");
-        txtRegR = new JTextField("00");
-        JPanel panelRun = new JPanel();
-        lblRun = new JLabel("Stopped");
-        JLabel lblCPUFreq = new JLabel("CPU frequency:");
-        spnFrequency = new JSpinner();
-        JLabel lblKHZ = new JLabel("kHz");
-        JLabel lblTestPeriode = new JLabel("Test periode:");
-        spnTestPeriode = new JSpinner();
-        JLabel lblMS = new JLabel("ms");
-        JLabel lblRuntimeFreq = new JLabel("Runtime frequency:");
-        lblFrequency = new JLabel();
 
-        setBorder(null);
-        paneRegisters.setBorder(null);
+        javax.swing.JTabbedPane jTabbedPane1 = new javax.swing.JTabbedPane();
+        javax.swing.JPanel panelSet1 = new javax.swing.JPanel();
+        javax.swing.JLabel jLabel13 = new javax.swing.JLabel();
+        txtA1 = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel14 = new javax.swing.JLabel();
+        txtB1 = new javax.swing.JTextField();
+        txtF1 = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel15 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel16 = new javax.swing.JLabel();
+        txtC1 = new javax.swing.JTextField();
+        txtD1 = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel17 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel18 = new javax.swing.JLabel();
+        txtH1 = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel19 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel20 = new javax.swing.JLabel();
+        txtE1 = new javax.swing.JTextField();
+        txtL1 = new javax.swing.JTextField();
+        txtHL1 = new javax.swing.JTextField();
+        txtDE1 = new javax.swing.JTextField();
+        txtBC1 = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel21 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel22 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel23 = new javax.swing.JLabel();
+        javax.swing.JScrollPane jScrollPane2 = new javax.swing.JScrollPane();
+        tblFlags1 = new javax.swing.JTable();
+        javax.swing.JLabel jLabel24 = new javax.swing.JLabel();
+        javax.swing.JPanel panelSet2 = new javax.swing.JPanel();
+        javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
+        txtB2 = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
+        txtC2 = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel3 = new javax.swing.JLabel();
+        txtBC2 = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel4 = new javax.swing.JLabel();
+        txtD2 = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel5 = new javax.swing.JLabel();
+        txtE2 = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel6 = new javax.swing.JLabel();
+        txtDE2 = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel7 = new javax.swing.JLabel();
+        txtH2 = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel8 = new javax.swing.JLabel();
+        txtL2 = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel9 = new javax.swing.JLabel();
+        txtHL2 = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel10 = new javax.swing.JLabel();
+        txtA2 = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel11 = new javax.swing.JLabel();
+        txtF2 = new javax.swing.JTextField();
+        javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
+        tblFlags2 = new javax.swing.JTable();
+        javax.swing.JLabel jLabel12 = new javax.swing.JLabel();
+        javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
+        javax.swing.JLabel jLabel26 = new javax.swing.JLabel();
+        txtPC = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel25 = new javax.swing.JLabel();
+        txtSP = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel27 = new javax.swing.JLabel();
+        txtIX = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel28 = new javax.swing.JLabel();
+        txtIY = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel29 = new javax.swing.JLabel();
+        txtI = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel30 = new javax.swing.JLabel();
+        txtR = new javax.swing.JTextField();
+        javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
+        lblRunState = new javax.swing.JLabel();
+        javax.swing.JSeparator jSeparator1 = new javax.swing.JSeparator();
+        javax.swing.JLabel jLabel31 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel32 = new javax.swing.JLabel();
+        spnFrequency = new javax.swing.JSpinner();
+        spnTestPeriode = new javax.swing.JSpinner();
+        javax.swing.JLabel jLabel33 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel34 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel35 = new javax.swing.JLabel();
+        lblFrequency = new javax.swing.JLabel();
 
-        tabbedGPR.setBorder(null);
-        panelSET1.setBorder(null);
+        jLabel13.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel13.setText("A");
 
-        lblRegB.setFont(lblRegB.getFont().deriveFont(lblRegB.getFont().getStyle() | Font.BOLD));
-        txtRegB.setEditable(false);
-        txtRegB.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        txtA1.setEditable(false);
+        txtA1.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtA1.setText("00");
 
-        lblRegC.setFont(lblRegC.getFont().deriveFont(lblRegC.getFont().getStyle() | Font.BOLD));
-        txtRegC.setEditable(false);
-        txtRegC.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        jLabel14.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel14.setText("B");
 
-        lblRegBC.setFont(lblRegBC.getFont().deriveFont(lblRegBC.getFont().getStyle() | Font.BOLD));
-        txtRegBC.setEditable(false);
-        txtRegBC.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        txtB1.setEditable(false);
+        txtB1.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtB1.setText("00");
 
-        lblRegD.setFont(lblRegD.getFont().deriveFont(lblRegD.getFont().getStyle() | Font.BOLD));
-        txtRegD.setEditable(false);
-        txtRegD.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        txtF1.setEditable(false);
+        txtF1.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtF1.setText("00");
 
-        lblRegE.setFont(lblRegE.getFont().deriveFont(lblRegE.getFont().getStyle() | Font.BOLD));
-        txtRegE.setEditable(false);
-        txtRegE.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        jLabel15.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel15.setText("F");
 
-        lblRegDE.setFont(lblRegDE.getFont().deriveFont(lblRegDE.getFont().getStyle() | Font.BOLD));
-        txtRegDE.setEditable(false);
-        txtRegDE.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        jLabel16.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel16.setText("C");
 
-        lblRegH.setFont(lblRegH.getFont().deriveFont(lblRegH.getFont().getStyle() | Font.BOLD));
-        txtRegH.setEditable(false);
-        txtRegH.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        txtC1.setEditable(false);
+        txtC1.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtC1.setText("00");
 
-        lblRegL.setFont(lblRegL.getFont().deriveFont(lblRegL.getFont().getStyle() | Font.BOLD));
-        txtRegL.setEditable(false);
-        txtRegL.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        txtD1.setEditable(false);
+        txtD1.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtD1.setText("00");
 
-        lblRegHL.setFont(lblRegHL.getFont().deriveFont(lblRegHL.getFont().getStyle() | Font.BOLD));
-        txtRegHL.setEditable(false);
-        txtRegHL.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        jLabel17.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel17.setText("D");
 
-        lblRegA.setFont(lblRegA.getFont().deriveFont(lblRegA.getFont().getStyle() | Font.BOLD));
-        txtRegA.setEditable(false);
-        txtRegA.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        jLabel18.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel18.setText("H");
 
-        lblRegF.setFont(lblRegF.getFont().deriveFont(lblRegF.getFont().getStyle() | Font.BOLD));
-        txtRegF.setEditable(false);
-        txtRegF.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        txtH1.setEditable(false);
+        txtH1.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtH1.setText("00");
 
-        tblFlags.setAutoCreateRowSorter(true);
-        tblFlags.setBackground(Color.white);
-        tblFlags.setBorder(null);
-        tblFlags.setRowSelectionAllowed(false);
+        jLabel19.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel19.setText("L");
 
-        GroupLayout panelSET1Layout = new GroupLayout(panelSET1);
-        panelSET1.setLayout(panelSET1Layout);
-        panelSET1Layout.setHorizontalGroup(
-                panelSET1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(panelSET1Layout.createSequentialGroup().addContainerGap().addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegB).addComponent(lblRegD).addComponent(lblRegH).addComponent(lblRegA)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtRegB).addComponent(txtRegD).addComponent(txtRegH).addComponent(txtRegA)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegC).addComponent(lblRegE).addComponent(lblRegL).addComponent(lblRegF)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtRegC).addComponent(txtRegE).addComponent(txtRegL).addComponent(txtRegF)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegBC).addComponent(lblRegDE).addComponent(lblRegHL)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtRegBC).addComponent(txtRegDE).addComponent(txtRegHL)).addContainerGap()).addGroup(panelSET1Layout.createSequentialGroup().addContainerGap().addComponent(lblFlagsLBL)).addGroup(panelSET1Layout.createSequentialGroup().addContainerGap().addComponent(tblFlags).addContainerGap()));
-        panelSET1Layout.setVerticalGroup(panelSET1Layout.createSequentialGroup().addContainerGap().addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegB).addComponent(txtRegB).addComponent(lblRegC).addComponent(txtRegC).addComponent(lblRegBC).addComponent(txtRegBC)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegD).addComponent(txtRegD).addComponent(lblRegE).addComponent(txtRegE).addComponent(lblRegDE).addComponent(txtRegDE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegH).addComponent(txtRegH).addComponent(lblRegL).addComponent(txtRegL).addComponent(lblRegHL).addComponent(txtRegHL)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelSET1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegA).addComponent(txtRegA).addComponent(lblRegF).addComponent(txtRegF)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(lblFlagsLBL).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(tblFlags).addContainerGap());
-        tabbedGPR.addTab("Set1", panelSET1);
+        jLabel20.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel20.setText("E");
 
-        panelSET2.setBorder(null);
+        txtE1.setEditable(false);
+        txtE1.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtE1.setText("00");
 
-        lblRegB1.setFont(lblRegB1.getFont().deriveFont(lblRegB1.getFont().getStyle() | Font.BOLD));
-        txtRegB1.setEditable(false);
-        txtRegB1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        txtL1.setEditable(false);
+        txtL1.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtL1.setText("00");
 
-        lblRegC1.setFont(lblRegC1.getFont().deriveFont(lblRegC1.getFont().getStyle() | Font.BOLD));
-        txtRegC1.setEditable(false);
-        txtRegC1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        txtHL1.setEditable(false);
+        txtHL1.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtHL1.setText("00");
 
-        lblRegBC1.setFont(lblRegBC1.getFont().deriveFont(lblRegBC1.getFont().getStyle() | Font.BOLD));
-        txtRegBC1.setEditable(false);
-        txtRegBC1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        txtDE1.setEditable(false);
+        txtDE1.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtDE1.setText("00");
 
-        lblRegD1.setFont(lblRegD1.getFont().deriveFont(lblRegD1.getFont().getStyle() | Font.BOLD));
-        txtRegD1.setEditable(false);
-        txtRegD1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        txtBC1.setEditable(false);
+        txtBC1.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtBC1.setText("00");
 
-        lblRegE1.setFont(lblRegE1.getFont().deriveFont(lblRegE1.getFont().getStyle() | Font.BOLD));
-        txtRegE1.setEditable(false);
-        txtRegE1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        jLabel21.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel21.setText("BC");
 
-        lblRegDE1.setFont(lblRegDE1.getFont().deriveFont(lblRegDE1.getFont().getStyle() | Font.BOLD));
-        txtRegDE1.setEditable(false);
-        txtRegDE1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        jLabel22.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel22.setText("DE");
 
-        lblRegH1.setFont(lblRegH1.getFont().deriveFont(lblRegH1.getFont().getStyle() | Font.BOLD));
-        txtRegH1.setEditable(false);
-        txtRegH1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        jLabel23.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel23.setText("HL");
 
-        lblRegL1.setFont(lblRegL1.getFont().deriveFont(lblRegL1.getFont().getStyle() | Font.BOLD));
-        txtRegL1.setEditable(false);
-        txtRegL1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        jScrollPane2.setBorder(null);
 
-        lblRegHL1.setFont(lblRegHL1.getFont().deriveFont(lblRegHL1.getFont().getStyle() | Font.BOLD));
-        txtRegHL1.setEditable(false);
-        txtRegHL1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        tblFlags1.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
 
-        lblRegA1.setFont(lblRegA1.getFont().deriveFont(lblRegA1.getFont().getStyle() | Font.BOLD));
-        txtRegA1.setEditable(false);
-        txtRegA1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+            },
+            new String [] {
 
-        lblRegF1.setFont(lblRegF1.getFont().deriveFont(lblRegF1.getFont().getStyle() | Font.BOLD));
-        txtRegF1.setEditable(false);
-        txtRegF1.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+            }
+        ));
+        tblFlags1.setRowSelectionAllowed(false);
+        jScrollPane2.setViewportView(tblFlags1);
 
-        tblFlags2.setAutoCreateRowSorter(true);
-        tblFlags2.setBackground(java.awt.Color.white);
-        tblFlags2.setBorder(null);
+        jLabel24.setText("Flags (F):");
+
+        javax.swing.GroupLayout panelSet1Layout = new javax.swing.GroupLayout(panelSet1);
+        panelSet1.setLayout(panelSet1Layout);
+        panelSet1Layout.setHorizontalGroup(
+            panelSet1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelSet1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(panelSet1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addGroup(panelSet1Layout.createSequentialGroup()
+                        .addGroup(panelSet1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel17)
+                            .addComponent(jLabel14))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(panelSet1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(panelSet1Layout.createSequentialGroup()
+                                .addComponent(txtB1, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel16))
+                            .addGroup(panelSet1Layout.createSequentialGroup()
+                                .addComponent(txtD1, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(jLabel20)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(panelSet1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(txtC1, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtE1, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(panelSet1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel21)
+                            .addComponent(jLabel22))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(panelSet1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtBC1, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtDE1, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(panelSet1Layout.createSequentialGroup()
+                        .addComponent(jLabel18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtH1, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel19)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtL1, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel23)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtHL1, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(panelSet1Layout.createSequentialGroup()
+                        .addComponent(jLabel13)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtA1, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel15)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtF1, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel24))
+                .addContainerGap(24, Short.MAX_VALUE))
+        );
+        panelSet1Layout.setVerticalGroup(
+            panelSet1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelSet1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(panelSet1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel13)
+                    .addComponent(txtA1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel15)
+                    .addComponent(txtF1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(panelSet1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel14)
+                    .addComponent(txtB1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel16)
+                    .addComponent(txtC1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel21)
+                    .addComponent(txtBC1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(panelSet1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panelSet1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel17)
+                        .addComponent(txtD1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(panelSet1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(txtE1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel20)
+                        .addComponent(txtDE1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel22)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(panelSet1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel18)
+                    .addComponent(txtH1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel19)
+                    .addComponent(txtL1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtHL1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel23))
+                .addGap(9, 9, 9)
+                .addComponent(jLabel24)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(20, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Set 1", panelSet1);
+
+        jLabel1.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel1.setText("B");
+
+        txtB2.setEditable(false);
+        txtB2.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtB2.setText("00");
+
+        jLabel2.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel2.setText("C");
+
+        txtC2.setEditable(false);
+        txtC2.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtC2.setText("00");
+
+        jLabel3.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel3.setText("BC");
+
+        txtBC2.setEditable(false);
+        txtBC2.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtBC2.setText("00");
+
+        jLabel4.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel4.setText("D");
+
+        txtD2.setEditable(false);
+        txtD2.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtD2.setText("00");
+
+        jLabel5.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel5.setText("E");
+
+        txtE2.setEditable(false);
+        txtE2.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtE2.setText("00");
+
+        jLabel6.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel6.setText("DE");
+
+        txtDE2.setEditable(false);
+        txtDE2.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtDE2.setText("00");
+
+        jLabel7.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel7.setText("H");
+
+        txtH2.setEditable(false);
+        txtH2.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtH2.setText("00");
+
+        jLabel8.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel8.setText("L");
+
+        txtL2.setEditable(false);
+        txtL2.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtL2.setText("00");
+
+        jLabel9.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel9.setText("HL");
+
+        txtHL2.setEditable(false);
+        txtHL2.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtHL2.setText("00");
+
+        jLabel10.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel10.setText("A");
+
+        txtA2.setEditable(false);
+        txtA2.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtA2.setText("00");
+
+        jLabel11.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel11.setText("F");
+
+        txtF2.setEditable(false);
+        txtF2.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtF2.setText("00");
+
+        jScrollPane1.setBorder(null);
+
+        tblFlags2.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
         tblFlags2.setRowSelectionAllowed(false);
+        jScrollPane1.setViewportView(tblFlags2);
 
-        GroupLayout panelSET2Layout = new GroupLayout(panelSET2);
-        panelSET2.setLayout(panelSET2Layout);
+        jLabel12.setText("Flags (F):");
 
-        panelSET2Layout.setHorizontalGroup(
-                panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(panelSET2Layout.createSequentialGroup().addContainerGap().addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegB1).addComponent(lblRegD1).addComponent(lblRegH1).addComponent(lblRegA1)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtRegB1).addComponent(txtRegD1).addComponent(txtRegH1).addComponent(txtRegA1)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegC1).addComponent(lblRegE1).addComponent(lblRegL1).addComponent(lblRegF1)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtRegC1).addComponent(txtRegE1).addComponent(txtRegL1).addComponent(txtRegF1)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegBC1).addComponent(lblRegDE1).addComponent(lblRegHL1)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtRegBC1).addComponent(txtRegDE1).addComponent(txtRegHL1)).addContainerGap()).addGroup(panelSET2Layout.createSequentialGroup().addContainerGap().addComponent(lblFlags1LBL)).addGroup(panelSET2Layout.createSequentialGroup().addContainerGap().addComponent(tblFlags2).addContainerGap()));
-        panelSET2Layout.setVerticalGroup(panelSET2Layout.createSequentialGroup().addContainerGap().addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegB1).addComponent(txtRegB1).addComponent(lblRegC1).addComponent(txtRegC1).addComponent(lblRegBC1).addComponent(txtRegBC1)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegD1).addComponent(txtRegD1).addComponent(lblRegE1).addComponent(txtRegE1).addComponent(lblRegDE1).addComponent(txtRegDE1)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegH1).addComponent(txtRegH1).addComponent(lblRegL1).addComponent(txtRegL1).addComponent(lblRegHL1).addComponent(txtRegHL1)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelSET2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegA1).addComponent(txtRegA1).addComponent(lblRegF1).addComponent(txtRegF1)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(lblFlags1LBL).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(tblFlags2).addContainerGap());
+        javax.swing.GroupLayout panelSet2Layout = new javax.swing.GroupLayout(panelSet2);
+        panelSet2.setLayout(panelSet2Layout);
+        panelSet2Layout.setHorizontalGroup(
+            panelSet2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelSet2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(panelSet2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addGroup(panelSet2Layout.createSequentialGroup()
+                        .addGroup(panelSet2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel4)
+                            .addComponent(jLabel1))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(panelSet2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(panelSet2Layout.createSequentialGroup()
+                                .addComponent(txtB2, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel2))
+                            .addGroup(panelSet2Layout.createSequentialGroup()
+                                .addComponent(txtD2, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(jLabel5)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(panelSet2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(txtC2, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtE2, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(panelSet2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel3)
+                            .addComponent(jLabel6))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(panelSet2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtBC2, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtDE2, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(panelSet2Layout.createSequentialGroup()
+                        .addComponent(jLabel7)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtH2, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel8)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtL2, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel9)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtHL2, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(panelSet2Layout.createSequentialGroup()
+                        .addComponent(jLabel10)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtA2, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel11)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtF2, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel12))
+                .addContainerGap(24, Short.MAX_VALUE))
+        );
+        panelSet2Layout.setVerticalGroup(
+            panelSet2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelSet2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(panelSet2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel10)
+                    .addComponent(txtA2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel11)
+                    .addComponent(txtF2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(panelSet2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(txtB2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2)
+                    .addComponent(txtC2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3)
+                    .addComponent(txtBC2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(panelSet2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panelSet2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel4)
+                        .addComponent(txtD2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(panelSet2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(txtE2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel5)
+                        .addComponent(txtDE2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel6)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(panelSet2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel7)
+                    .addComponent(txtH2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel8)
+                    .addComponent(txtL2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtHL2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel9))
+                .addGap(9, 9, 9)
+                .addComponent(jLabel12)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(20, Short.MAX_VALUE))
+        );
 
-        tabbedGPR.addTab("Set 2", panelSET2);
+        jTabbedPane1.addTab("Set 2", panelSet2);
 
-        lblRegPC.setFont(lblRegPC.getFont().deriveFont(lblRegPC.getFont().getStyle() | Font.BOLD));
-        txtRegPC.setEditable(false);
-        txtRegPC.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        jLabel26.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel26.setText("PC");
 
-        lblRegSP.setFont(lblRegSP.getFont().deriveFont(lblRegSP.getFont().getStyle() | Font.BOLD));
-        txtRegSP.setEditable(false);
-        txtRegSP.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        txtPC.setEditable(false);
+        txtPC.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtPC.setText("00");
 
-        lblRegIX.setFont(lblRegIX.getFont().deriveFont(lblRegIX.getFont().getStyle() | Font.BOLD));
-        txtRegIX.setEditable(false);
-        txtRegIX.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        jLabel25.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel25.setText("SP");
 
-        lblRegI.setFont(lblRegI.getFont().deriveFont(lblRegI.getFont().getStyle() | Font.BOLD));
-        txtRegI.setEditable(false);
-        txtRegI.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        txtSP.setEditable(false);
+        txtSP.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtSP.setText("00");
 
-        lblRegIY.setFont(lblRegIY.getFont().deriveFont(lblRegIY.getFont().getStyle() | Font.BOLD));
-        txtRegIY.setEditable(false);
-        txtRegIY.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        jLabel27.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel27.setText("IX");
 
-        lblRegR.setFont(lblRegR.getFont().deriveFont(lblRegR.getFont().getStyle() | Font.BOLD));
-        txtRegR.setEditable(false);
-        txtRegR.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.lightGray));
+        txtIX.setEditable(false);
+        txtIX.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtIX.setText("00");
 
-        GroupLayout paneRegistersLayout = new GroupLayout(paneRegisters);
-        paneRegisters.setLayout(paneRegistersLayout);
-        paneRegistersLayout.setHorizontalGroup(
-                paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(paneRegistersLayout.createSequentialGroup().addContainerGap().addComponent(tabbedGPR, javax.swing.GroupLayout.PREFERRED_SIZE, 251, javax.swing.GroupLayout.PREFERRED_SIZE).addContainerGap()).addGroup(paneRegistersLayout.createSequentialGroup().addContainerGap().addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegPC).addComponent(lblRegIX).addComponent(lblRegI)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtRegPC).addComponent(txtRegIX).addComponent(txtRegI)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblRegSP).addComponent(lblRegIY).addComponent(lblRegR)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtRegSP).addComponent(txtRegIY).addComponent(txtRegR)).addContainerGap()));
-        paneRegistersLayout.setVerticalGroup(
-                paneRegistersLayout.createSequentialGroup().addContainerGap().addComponent(tabbedGPR, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegPC).addComponent(txtRegPC).addComponent(lblRegSP).addComponent(txtRegSP)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegIX).addComponent(txtRegIX).addComponent(lblRegIY).addComponent(txtRegIY)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(paneRegistersLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRegI).addComponent(txtRegI).addComponent(lblRegR).addComponent(txtRegR)).addContainerGap());
-        panelRun.setBorder(BorderFactory.createTitledBorder(new javax.swing.border.LineBorder(
-                Color.gray, 1, true), "Run control", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-                javax.swing.border.TitledBorder.DEFAULT_POSITION,
-                panelRun.getFont().deriveFont(Font.BOLD), Color.gray)); // NOI18N
+        jLabel28.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel28.setText("IY");
 
-        lblRun.setFont(lblRun.getFont().deriveFont(lblRun.getFont().getStyle() | Font.BOLD));
-        lblRun.setForeground(new java.awt.Color(0, 102, 0));
-        spnFrequency.setModel(new SpinnerNumberModel(20000, 1, 99999, 100));
-        lblKHZ.setFont(lblKHZ.getFont().deriveFont(lblKHZ.getFont().getStyle() | Font.BOLD));
-        spnTestPeriode.setModel(new SpinnerNumberModel(50, 1, 10000, 10));
-        lblMS.setFont(lblMS.getFont().deriveFont(lblMS.getFont().getStyle() | Font.BOLD));
-        lblFrequency.setFont(lblFrequency.getFont().deriveFont(lblFrequency.getFont().getStyle() | Font.BOLD));
-        lblFrequency.setText("0,0 kHz");
+        txtIY.setEditable(false);
+        txtIY.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtIY.setText("00");
 
-        GroupLayout panelRunLayout = new GroupLayout(panelRun);
-        panelRun.setLayout(panelRunLayout);
+        jLabel29.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel29.setText("I");
 
-        panelRunLayout.setHorizontalGroup(
-                panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(panelRunLayout.createSequentialGroup().addContainerGap().addComponent(lblRun).addContainerGap()).addGroup(panelRunLayout.createSequentialGroup().addContainerGap().addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblCPUFreq).addComponent(lblTestPeriode)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(spnFrequency).addComponent(spnTestPeriode)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblKHZ).addComponent(lblMS)).addContainerGap()).addGroup(panelRunLayout.createSequentialGroup().addContainerGap().addComponent(lblRuntimeFreq).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(lblFrequency).addContainerGap()));
-        panelRunLayout.setVerticalGroup(
-                panelRunLayout.createSequentialGroup().addContainerGap().addComponent(lblRun).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE, false).addComponent(lblCPUFreq).addComponent(spnFrequency, GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE).addComponent(lblKHZ)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE, false).addComponent(lblTestPeriode).addComponent(spnTestPeriode, GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE).addComponent(lblMS)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRuntimeFreq).addComponent(lblFrequency)).addContainerGap());
+        txtI.setEditable(false);
+        txtI.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtI.setText("00");
 
-        GroupLayout layout = new GroupLayout(this);
+        jLabel30.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel30.setText("R");
+
+        txtR.setEditable(false);
+        txtR.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtR.setText("00");
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel25)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtSP, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(10, 10, 10)
+                        .addComponent(jLabel28)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtIY, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel26)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtPC, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(10, 10, 10)
+                        .addComponent(jLabel27)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtIX, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel29)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtI, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel30)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtR, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel26)
+                    .addComponent(txtPC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtIX, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel27)
+                    .addComponent(jLabel29)
+                    .addComponent(txtI, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel28)
+                    .addComponent(txtIY, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtSP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel25)
+                    .addComponent(jLabel30)
+                    .addComponent(txtR, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Run control"));
+
+        lblRunState.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        lblRunState.setForeground(new java.awt.Color(0, 102, 0));
+        lblRunState.setText("breakpoint");
+
+        jLabel31.setFont(jLabel31.getFont());
+        jLabel31.setText("CPU Frequency:");
+
+        jLabel32.setFont(jLabel32.getFont());
+        jLabel32.setText("Test periode:");
+
+        spnFrequency.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(20000), Integer.valueOf(1), null, Integer.valueOf(100)));
+        spnFrequency.setName("CPU frequency"); // NOI18N
+
+        spnTestPeriode.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(50), Integer.valueOf(10), null, Integer.valueOf(5)));
+
+        jLabel33.setFont(jLabel33.getFont().deriveFont(jLabel33.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel33.setText("kHz");
+
+        jLabel34.setFont(jLabel34.getFont().deriveFont(jLabel34.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel34.setText("ms");
+
+        jLabel35.setFont(jLabel35.getFont());
+        jLabel35.setText("Runtime frequency:");
+
+        lblFrequency.setFont(lblFrequency.getFont().deriveFont(lblFrequency.getFont().getStyle() | java.awt.Font.BOLD));
+        lblFrequency.setText("0.00 kHz");
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jSeparator1)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblRunState)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel31)
+                                    .addComponent(jLabel32))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(spnFrequency)
+                                    .addComponent(spnTestPeriode, javax.swing.GroupLayout.DEFAULT_SIZE, 91, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel33)
+                                    .addComponent(jLabel34)))
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(jLabel35)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblFrequency)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblRunState)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel31)
+                    .addComponent(spnFrequency, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel33))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel32)
+                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(spnTestPeriode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel34)))
+                .addGap(18, 18, 18)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel35)
+                    .addComponent(lblFrequency))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(paneRegisters, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(panelRun, 10, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE));
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jTabbedPane1, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
         layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addComponent(paneRegisters, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(panelRun)));
-    }
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+    }// </editor-fold>//GEN-END:initComponents
 
-    JLabel lblFrequency;
-    JLabel lblRun;
-    JSpinner spnFrequency;
-    JSpinner spnTestPeriode;
-    JTable tblFlags;
-    JTable tblFlags2;
-    JTextField txtRegA;
-    JTextField txtRegA1;
-    JTextField txtRegB;
-    JTextField txtRegB1;
-    JTextField txtRegBC;
-    JTextField txtRegBC1;
-    JTextField txtRegC;
-    JTextField txtRegC1;
-    JTextField txtRegD;
-    JTextField txtRegD1;
-    JTextField txtRegDE;
-    JTextField txtRegDE1;
-    JTextField txtRegE;
-    JTextField txtRegE1;
-    JTextField txtRegF;
-    JTextField txtRegF1;
-    JTextField txtRegH;
-    JTextField txtRegH1;
-    JTextField txtRegHL;
-    JTextField txtRegHL1;
-    JTextField txtRegI;
-    JTextField txtRegIX;
-    JTextField txtRegIY;
-    JTextField txtRegL;
-    JTextField txtRegL1;
-    JTextField txtRegPC;
-    JTextField txtRegR;
-    JTextField txtRegSP;
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel lblFrequency;
+    private javax.swing.JLabel lblRunState;
+    private javax.swing.JSpinner spnFrequency;
+    private javax.swing.JSpinner spnTestPeriode;
+    private javax.swing.JTable tblFlags1;
+    private javax.swing.JTable tblFlags2;
+    private javax.swing.JTextField txtA1;
+    private javax.swing.JTextField txtA2;
+    private javax.swing.JTextField txtB1;
+    private javax.swing.JTextField txtB2;
+    private javax.swing.JTextField txtBC1;
+    private javax.swing.JTextField txtBC2;
+    private javax.swing.JTextField txtC1;
+    private javax.swing.JTextField txtC2;
+    private javax.swing.JTextField txtD1;
+    private javax.swing.JTextField txtD2;
+    private javax.swing.JTextField txtDE1;
+    private javax.swing.JTextField txtDE2;
+    private javax.swing.JTextField txtE1;
+    private javax.swing.JTextField txtE2;
+    private javax.swing.JTextField txtF1;
+    private javax.swing.JTextField txtF2;
+    private javax.swing.JTextField txtH1;
+    private javax.swing.JTextField txtH2;
+    private javax.swing.JTextField txtHL1;
+    private javax.swing.JTextField txtHL2;
+    private javax.swing.JTextField txtI;
+    private javax.swing.JTextField txtIX;
+    private javax.swing.JTextField txtIY;
+    private javax.swing.JTextField txtL1;
+    private javax.swing.JTextField txtL2;
+    private javax.swing.JTextField txtPC;
+    private javax.swing.JTextField txtR;
+    private javax.swing.JTextField txtSP;
+    // End of variables declaration//GEN-END:variables
 }
