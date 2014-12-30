@@ -118,7 +118,7 @@ public class StatusPanel extends JPanel {
         txtRegSP.setText(getWordHexString(engine.SP));
         txtRegPC.setText(getWordHexString(engine.PC));
 
-        txtFlags.setText(getByteHexString(engine.Flags));
+        txtFlags.setText(getByteHexString(engine.flags));
         flagModel.fireTableDataChanged();
 
         lblRun.setText(runState.toString());

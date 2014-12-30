@@ -20,7 +20,7 @@
 package net.sf.emustudio.intel8080.gui;
 
 import javax.swing.table.AbstractTableModel;
-import net.sf.emustudio.intel8080.impl.CpuImpl;
+
 import net.sf.emustudio.intel8080.impl.EmulatorEngine;
 
 /**
@@ -64,12 +64,12 @@ public class FlagsModel extends AbstractTableModel {
 
     @Override
     public void fireTableDataChanged() {
-        short F = cpu.Flags;
-        flagsI[0] = ((F & EmulatorEngine.flagS) != 0) ? 1 : 0;
-        flagsI[1] = ((F & EmulatorEngine.flagZ) != 0) ? 1 : 0;
-        flagsI[2] = ((F & EmulatorEngine.flagAC) != 0) ? 1 : 0;
-        flagsI[3] = ((F & EmulatorEngine.flagP) != 0) ? 1 : 0;
-        flagsI[4] = ((F & EmulatorEngine.flagC) != 0) ? 1 : 0;
+        short F = cpu.flags;
+        flagsI[0] = ((F & EmulatorEngine.FLAG_S) != 0) ? 1 : 0;
+        flagsI[1] = ((F & EmulatorEngine.FLAG_Z) != 0) ? 1 : 0;
+        flagsI[2] = ((F & EmulatorEngine.FLAG_AC) != 0) ? 1 : 0;
+        flagsI[3] = ((F & EmulatorEngine.FLAG_P) != 0) ? 1 : 0;
+        flagsI[4] = ((F & EmulatorEngine.FLAG_C) != 0) ? 1 : 0;
         super.fireTableDataChanged();
     }
 }

@@ -1,95 +1,12 @@
 package net.sf.emustudio.intel8080.impl;
 
-import emulib.emustudio.SettingsManager;
 import emulib.plugins.cpu.CPU;
-import emulib.plugins.memory.MemoryContext;
-import emulib.runtime.ContextPool;
-import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import static net.sf.emustudio.intel8080.impl.Utils.concat;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-public class CpuImplTest {
-    private static final long PLUGIN_ID = 0L;
-
-    private CpuImpl cpu;
-    private MemoryStub memoryStub;
-    private RunStateListener runStateListener;
-
-    private short[] program;
-
-    @Before
-    public void setUp() throws Exception {
-        memoryStub = new MemoryStub();
-
-        ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, MemoryContext.class))
-                .andReturn(memoryStub)
-                .anyTimes();
-        replay(contextPool);
-
-        runStateListener = new RunStateListener();
-        cpu = new CpuImpl(PLUGIN_ID, contextPool);
-        cpu.addCPUListener(runStateListener);
-
-        // simulate emuStudio boot
-        cpu.initialize(EasyMock.createNiceMock(SettingsManager.class));
-    }
-
-    @After
-    public void tearDown() {
-        cpu.destroy();
-        program = null;
-    }
-
-    private void resetProgram() {
-        memoryStub.setMemory(program);
-        cpu.reset();
-    }
-
-    private void stepAndCheck(int value, int register) {
-        cpu.step();
-        assertEquals(value, cpu.getEngine().regs[register]);
-    }
-
-    private void stepCount(int count) {
-        for (int i = 0; i < count; i++) {
-            cpu.step();
-        }
-    }
-
-    private short[] fillGeneralRegisters(short[] values) {
-        return new short[]{
-                0x3E, values[0], // MVI A,byte
-                0x06, values[1], // MVI B,byte
-                0x0E, values[2], // MVI C,byte
-                0x16, values[3], // MVI D,byte
-                0x1E, values[4], // MVI E,byte
-                0x26, values[5], // MVI H,byte
-                0x2E, values[6], // MVI L,byte
-        };
-    }
-
-    private void stepAndCheckGeneralRegisters(short[] values) {
-        stepAndCheck(values[0], EmulatorEngine.REG_A);
-        stepAndCheck(values[1], EmulatorEngine.REG_B);
-        stepAndCheck(values[2], EmulatorEngine.REG_C);
-        stepAndCheck(values[3], EmulatorEngine.REG_D);
-        stepAndCheck(values[4], EmulatorEngine.REG_E);
-        stepAndCheck(values[5], EmulatorEngine.REG_H);
-        stepAndCheck(values[6], EmulatorEngine.REG_L);
-    }
-
-    private void stepAndCheckRegister(short[] values, int register) {
-        for (short value : values) {
-            stepAndCheck(value, register);
-        }
-    }
+public class InstructionsMoveTest extends InstructionsTest {
 
     @Test
     public void testMemoryOverflow() throws Exception {
@@ -134,7 +51,7 @@ public class CpuImplTest {
                 0x47, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45
         });
         resetProgram();
-            stepCount(7);
+        stepCount(7);
 
         stepAndCheckRegister(new short[] { 1,1,3,4,5,6,7}, EmulatorEngine.REG_B);
     }

@@ -13,13 +13,19 @@ import java.util.concurrent.locks.LockSupport;
 public class EmulatorEngine {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
 
-    public static final int REG_A = 7;
-    public static final int REG_B = 0;
-    public static final int REG_C = 1;
-    public static final int REG_D = 2;
-    public static final int REG_E = 3;
-    public static final int REG_H = 4;
-    public static final int REG_L = 5;
+    public static final int REG_A = 7,
+            REG_B = 0,
+            REG_C = 1,
+            REG_D = 2,
+            REG_E = 3,
+            REG_H = 4,
+            REG_L = 5;
+
+    public static final int FLAG_S = 0x80,
+            FLAG_Z = 0x40,
+            FLAG_AC = 0x10,
+            FLAG_P = 0x4,
+            FLAG_C = 0x1;
 
     private static final byte PARITY[] = {
             1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0,
@@ -41,8 +47,7 @@ public class EmulatorEngine {
     public int PC = 0; // program counter
     public int SP = 0; // stack pointer
     public short[] regs = new short[8];
-    public short Flags = 2; // registers
-    public static final int flagS = 0x80, flagZ = 0x40, flagAC = 0x10, flagP = 0x4, flagC = 0x1;
+    public short flags = 2; // registers
     public volatile CPU.RunState currentRunState = CPU.RunState.STATE_STOPPED_NORMAL;
 
     private final MemoryContext<Short> memory;
@@ -65,7 +70,7 @@ public class EmulatorEngine {
     public void reset(int startPos) {
         Arrays.fill(regs, (short) 0);
         SP = 0;
-        Flags = 2; //0000 0010b
+        flags = 2; //0000 0010b
         PC = startPos;
         INTE = false;
         currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
@@ -193,7 +198,7 @@ public class EmulatorEngine {
             case 2:
                 return (regs[REG_H] << 8) | regs[REG_L];
             case 3:
-                stat = (regs[REG_A] << 8) | Flags;
+                stat = (regs[REG_A] << 8) | flags;
                 stat |= 0x02;
                 return stat;
         }
@@ -222,7 +227,7 @@ public class EmulatorEngine {
                 break;
             case 3:
                 regs[REG_A] = (short) ((val >>> 8) & 0xFF);
-                Flags = (short) (val & 0xFF);
+                flags = (short) (val & 0xFF);
                 break;
         }
     }
@@ -232,25 +237,25 @@ public class EmulatorEngine {
      */
     private void setarith(int reg, int before) {
         if ((reg & 0x100) != 0) {
-            Flags |= flagC;
+            flags |= FLAG_C;
         } else {
-            Flags &= (~flagC);
+            flags &= (~FLAG_C);
         }
         if ((reg & 0x80) != 0) {
-            Flags |= flagS;
+            flags |= FLAG_S;
         } else {
-            Flags &= (~flagS);
+            flags &= (~FLAG_S);
         }
         if ((reg & 0xff) == 0) {
-            Flags |= flagZ;
+            flags |= FLAG_Z;
         } else {
-            Flags &= (~flagZ);
+            flags &= (~FLAG_Z);
         }
         // carry from 3.bit to 4.
         if (((before & 8) == 8) && ((reg & 0x10) == 0x10)) {
-            Flags |= flagAC;
+            flags |= FLAG_AC;
         } else {
-            Flags &= (~flagAC);
+            flags &= (~FLAG_AC);
         }
         parity(reg);
     }
@@ -260,19 +265,19 @@ public class EmulatorEngine {
      */
     private void setinc(int reg, int before) {
         if ((reg & 0x80) != 0) {
-            Flags |= flagS;
+            flags |= FLAG_S;
         } else {
-            Flags &= (~flagS);
+            flags &= (~FLAG_S);
         }
         if ((reg & 0xff) == 0) {
-            Flags |= flagZ;
+            flags |= FLAG_Z;
         } else {
-            Flags &= (~flagZ);
+            flags &= (~FLAG_Z);
         }
         if (((before & 8) == 8) && ((reg & 0x10) == 0x10)) {
-            Flags |= flagAC;
+            flags |= FLAG_AC;
         } else {
-            Flags &= (~flagAC);
+            flags &= (~FLAG_AC);
         }
         parity(reg);
     }
@@ -281,18 +286,18 @@ public class EmulatorEngine {
      a logical (bitwise) operation on 'reg'.
      */
     private void setlogical(int reg) {
-        Flags &= (~flagC);
+        flags &= (~FLAG_C);
         if ((reg & 0x80) != 0) {
-            Flags |= flagS;
+            flags |= FLAG_S;
         } else {
-            Flags &= (~flagS);
+            flags &= (~FLAG_S);
         }
         if ((reg & 0xff) == 0) {
-            Flags |= flagZ;
+            flags |= FLAG_Z;
         } else {
-            Flags &= (~flagZ);
+            flags &= (~FLAG_Z);
         }
-        Flags &= (~flagAC);
+        flags &= (~FLAG_AC);
         parity(reg);
     }
 
@@ -301,9 +306,9 @@ public class EmulatorEngine {
      */
     private void parity(int reg) {
         if (PARITY[reg & 0xFF] == 1) {
-            Flags |= flagP;
+            flags |= FLAG_P;
         } else {
-            Flags &= (~flagP);
+            flags &= (~FLAG_P);
         }
     }
 
@@ -311,21 +316,21 @@ public class EmulatorEngine {
     private boolean checkCondition(int con) {
         switch (con) {
             case 0:
-                return ((Flags & flagZ) == 0);
+                return ((flags & FLAG_Z) == 0);
             case 1:
-                return ((Flags & flagZ) != 0);
+                return ((flags & FLAG_Z) != 0);
             case 2:
-                return ((Flags & flagC) == 0);
+                return ((flags & FLAG_C) == 0);
             case 3:
-                return ((Flags & flagC) != 0);
+                return ((flags & FLAG_C) != 0);
             case 4:
-                return ((Flags & flagP) == 0);
+                return ((flags & FLAG_P) == 0);
             case 5:
-                return ((Flags & flagP) != 0);
+                return ((flags & FLAG_P) != 0);
             case 6:
-                return ((Flags & flagS) == 0);
+                return ((flags & FLAG_S) == 0);
             case 7:
-                return ((Flags & flagS) != 0);
+                return ((flags & FLAG_S) != 0);
         }
         return false;
     }
@@ -450,9 +455,9 @@ public class EmulatorEngine {
     private int O7_RLC(short OP) {
         int xx = (regs[REG_A] << 9) & 0200000;
         if (xx != 0) {
-            Flags |= flagC;
+            flags |= FLAG_C;
         } else {
-            Flags &= (~flagC);
+            flags &= (~FLAG_C);
         }
         regs[REG_A] = (short) ((regs[REG_A] << 1) & 0xFF);
         if (xx != 0) {
@@ -463,12 +468,12 @@ public class EmulatorEngine {
 
     private int O15_RRC(short OP) {
         if ((regs[REG_A] & 0x01) == 1) {
-            Flags |= flagC;
+            flags |= FLAG_C;
         } else {
-            Flags &= (~flagC);
+            flags &= (~FLAG_C);
         }
         regs[REG_A] = (short) ((regs[REG_A] >>> 1) & 0xFF);
-        if ((Flags & flagC) != 0) {
+        if ((flags & FLAG_C) != 0) {
             regs[REG_A] |= 0x80;
         }
         return 4;
@@ -477,15 +482,15 @@ public class EmulatorEngine {
     private int O23_RAL(short OP) {
         int xx = (regs[REG_A] << 9) & 0200000;
         regs[REG_A] = (short) ((regs[REG_A] << 1) & 0xFF);
-        if ((Flags & flagC) != 0) {
+        if ((flags & FLAG_C) != 0) {
             regs[REG_A] |= 1;
         } else {
             regs[REG_A] &= 0xFE;
         }
         if (xx != 0) {
-            Flags |= flagC;
+            flags |= FLAG_C;
         } else {
-            Flags &= (~flagC);
+            flags &= (~FLAG_C);
         }
         return 4;
     }
@@ -496,15 +501,15 @@ public class EmulatorEngine {
             xx |= 0200000;
         }
         regs[REG_A] = (short) ((regs[REG_A] >>> 1) & 0xFF);
-        if ((Flags & flagC) != 0) {
+        if ((flags & FLAG_C) != 0) {
             regs[REG_A] |= 0x80;
         } else {
             regs[REG_A] &= 0x7F;
         }
         if (xx != 0) {
-            Flags |= flagC;
+            flags |= FLAG_C;
         } else {
-            Flags &= (~flagC);
+            flags &= (~FLAG_C);
         }
         return 4;
     }
@@ -518,33 +523,33 @@ public class EmulatorEngine {
 
     private int O39_DAA(short OP) {
         int DAR = regs[REG_A];
-        if (((DAR & 0x0F) > 9) || ((Flags & flagAC) != 0)) {
+        if (((DAR & 0x0F) > 9) || ((flags & FLAG_AC) != 0)) {
             DAR += 6;
             if ((DAR & 0x10) != (regs[REG_A] & 0x10)) {
-                Flags |= flagAC;
+                flags |= FLAG_AC;
             } else {
-                Flags &= (~flagAC);
+                flags &= (~FLAG_AC);
             }
             regs[REG_A] = (short) (DAR & 0xFF);
         }
         DAR = (regs[REG_A] >>> 4) & 0x0F;
-        if ((DAR > 9) || ((Flags & flagC) != 0)) {
+        if ((DAR > 9) || ((flags & FLAG_C) != 0)) {
             DAR += 6;
             if ((DAR & 0x10) != 0) {
-                Flags |= flagC;
+                flags |= FLAG_C;
             }
             regs[REG_A] &= 0x0F;
             regs[REG_A] |= ((DAR << 4) & 0xF0);
         }
         if ((regs[REG_A] & 0x80) != 0) {
-            Flags |= flagS;
+            flags |= FLAG_S;
         } else {
-            Flags &= (~flagS);
+            flags &= (~FLAG_S);
         }
         if ((regs[REG_A] & 0xff) == 0) {
-            Flags |= flagZ;
+            flags |= FLAG_Z;
         } else {
-            Flags &= (~flagZ);
+            flags &= (~FLAG_Z);
         }
         parity(regs[REG_A]);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
@@ -574,22 +579,22 @@ public class EmulatorEngine {
     }
 
     private int O55_STC(short OP) {
-        Flags |= flagC;
+        flags |= FLAG_C;
         return 4;
     }
 
     private int O58_LDA(short OP) {
         int DAR = (Integer) memory.readWord(PC);
         PC += 2;
-        regs[REG_A] = ((Short) memory.read(DAR)).shortValue();
+        regs[REG_A] = memory.read(DAR);
         return 13;
     }
 
     private int O63_CMC(short OP) {
-        if ((Flags & flagC) != 0) {
-            Flags &= (~flagC);
+        if ((flags & FLAG_C) != 0) {
+            flags &= (~FLAG_C);
         } else {
-            Flags |= flagC;
+            flags |= FLAG_C;
         }
         return 4;
     }
@@ -606,7 +611,7 @@ public class EmulatorEngine {
 
     private int O198_ADI(short OP) {
         int DAR = regs[REG_A];
-        regs[REG_A] += ((Short) memory.read(PC++)).shortValue();
+        regs[REG_A] += memory.read(PC++);
         setarith(regs[REG_A], DAR);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 7;
@@ -628,7 +633,7 @@ public class EmulatorEngine {
     private int O206_ACI(short OP) {
         int DAR = regs[REG_A];
         regs[REG_A] += memory.read(PC++);
-        if ((Flags & flagC) != 0) {
+        if ((flags & FLAG_C) != 0) {
             regs[REG_A]++;
         }
         setarith(regs[REG_A], DAR);
@@ -659,7 +664,7 @@ public class EmulatorEngine {
     private int O222_SBI(short OP) {
         int DAR = regs[REG_A];
         regs[REG_A] -= memory.read(PC++);
-        if ((Flags & flagC) != 0) {
+        if ((flags & FLAG_C) != 0) {
             regs[REG_A]--;
         }
         setarith(regs[REG_A], DAR);
@@ -677,8 +682,8 @@ public class EmulatorEngine {
 
     private int O230_ANI(short OP) {
         regs[REG_A] &= memory.read(PC++);
-        Flags &= (~flagC);
-        Flags &= (~flagAC);
+        flags &= (~FLAG_C);
+        flags &= (~FLAG_AC);
         setlogical(regs[REG_A]);
         regs[REG_A] &= 0xFF;
         return 7;
@@ -701,8 +706,8 @@ public class EmulatorEngine {
 
     private int O238_XRI(short OP) {
         regs[REG_A] ^= memory.read(PC++);
-        Flags &= (~flagC);
-        Flags &= (~flagAC);
+        flags &= (~FLAG_C);
+        flags &= (~FLAG_AC);
         setlogical(regs[REG_A]);
         regs[REG_A] &= 0xFF;
         return 7;
@@ -715,8 +720,8 @@ public class EmulatorEngine {
 
     private int O246_ORI(short OP) {
         regs[REG_A] |= memory.read(PC++);
-        Flags &= (~flagC);
-        Flags &= (~flagAC);
+        flags &= (~FLAG_C);
+        flags &= (~FLAG_AC);
         setlogical(regs[REG_A]);
         regs[REG_A] &= 0xFF;
         return 7;
@@ -735,7 +740,7 @@ public class EmulatorEngine {
     private int O254_CPI(short OP) {
         int X = regs[REG_A];
         int DAR = regs[REG_A] & 0xFF;
-        DAR -= ((Short) memory.read(PC++)).shortValue();
+        DAR -= memory.read(PC++);
         setarith(DAR, X);
         return 7;
     }
@@ -852,7 +857,7 @@ public class EmulatorEngine {
     private int MF8_88_ADC(short OP) {
         int X = regs[REG_A];
         regs[REG_A] += getreg(OP & 0x07);
-        if ((Flags & flagC) != 0) {
+        if ((flags & FLAG_C) != 0) {
             regs[REG_A]++;
         }
         setarith(regs[REG_A], X);
@@ -877,7 +882,7 @@ public class EmulatorEngine {
     private int MF8_98_SBB(short OP) {
         int X = regs[REG_A];
         regs[REG_A] -= (getreg(OP & 0x07));
-        if ((Flags & flagC) != 0) {
+        if ((flags & FLAG_C) != 0) {
             regs[REG_A]--;
         }
         setarith(regs[REG_A], X);
@@ -922,9 +927,9 @@ public class EmulatorEngine {
         int DAR = getpair((OP >>> 4) & 0x03);
         DAR += getpair(2);
         if ((DAR & 0x10000) != 0) {
-            Flags |= flagC;
+            flags |= FLAG_C;
         } else {
-            Flags &= (~flagC);
+            flags &= (~FLAG_C);
         }
         DAR = DAR & 0xFFFF;
         putpair(2, DAR);
