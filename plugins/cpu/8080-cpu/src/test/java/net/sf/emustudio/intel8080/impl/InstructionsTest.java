@@ -1,6 +1,7 @@
 package net.sf.emustudio.intel8080.impl;
 
 import emulib.emustudio.SettingsManager;
+import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import org.easymock.EasyMock;
@@ -14,11 +15,18 @@ import static org.junit.Assert.*;
 public abstract class InstructionsTest {
     protected static final long PLUGIN_ID = 0L;
 
+    private static int[] GENERAL_REGISTERS = new int[] {
+            EmulatorEngine.REG_A, EmulatorEngine.REG_B, EmulatorEngine.REG_C,
+            EmulatorEngine.REG_D, EmulatorEngine.REG_E, EmulatorEngine.REG_H,
+            EmulatorEngine.REG_L
+    };
+
+
     protected CpuImpl cpu;
     protected MemoryStub memoryStub;
-    protected RunStateListenerStub runStateListener;
+    private RunStateListenerStub runStateListener;
 
-    protected short[] program;
+    private short[] program;
 
     @Before
     public void setUp() throws Exception {
@@ -44,9 +52,26 @@ public abstract class InstructionsTest {
         program = null;
     }
 
+    protected void resetProgram(int... program) {
+        this.program = new short[program.length];
+        for (int i = 0; i < program.length; i++) {
+            this.program[i] = (short)program[i];
+        }
+        resetProgram();
+    }
+
+    protected void resetProgram(short... program) {
+        this.program = program;
+        resetProgram();
+    }
+
     protected void resetProgram() {
         memoryStub.setMemory(program);
         cpu.reset();
+    }
+
+    protected void checkRunState(CPU.RunState runState) {
+        assertEquals(runState, runStateListener.runState);
     }
 
     protected void stepAndCheck(int value, int register) {
@@ -59,48 +84,61 @@ public abstract class InstructionsTest {
         assertEquals(value, (int)memoryStub.read(address));
     }
 
-    protected void stepCount(int count) {
-        for (int i = 0; i < count; i++) {
+    protected void stepAndCheckMemory(int address, int... values) {
+        for (int value : values) {
             cpu.step();
+            assertEquals(value, (int) memoryStub.read(address));
         }
     }
 
-    protected short[] fillGeneralRegisters(short[] values) {
-        return new short[]{
-                0x3E, values[0], // MVI A,byte
-                0x06, values[1], // MVI B,byte
-                0x0E, values[2], // MVI C,byte
-                0x16, values[3], // MVI D,byte
-                0x1E, values[4], // MVI E,byte
-                0x26, values[5], // MVI H,byte
-                0x2E, values[6], // MVI L,byte
+    protected short[] generateMVI(int... values) {
+        int[] opcodes = new int[] {
+                0x3E, 0x06, 0x0E, 0x16, 0x1E, 0x26, 0x2E
         };
+        short[] result = new short[values.length * 2];
+        for (int i = 0, j = 0; i < values.length; i++, j+=2) {
+            result[j] = (short)opcodes[i];
+            result[j+1] = (short)values[i];
+        }
+        return result;
     }
 
-    protected void stepAndCheckGeneralRegisters(short value) {
-        stepAndCheck(value, EmulatorEngine.REG_A);
-        stepAndCheck(value, EmulatorEngine.REG_B);
-        stepAndCheck(value, EmulatorEngine.REG_C);
-        stepAndCheck(value, EmulatorEngine.REG_D);
-        stepAndCheck(value, EmulatorEngine.REG_E);
-        stepAndCheck(value, EmulatorEngine.REG_H);
-        stepAndCheck(value, EmulatorEngine.REG_L);
+    protected void setRegisters(int... values) {
+        EmulatorEngine engine = cpu.getEngine();
+        for (int i = 0; i < values.length; i++) {
+            engine.regs[GENERAL_REGISTERS[i]] = (short)values[i];
+        }
     }
 
-    protected void stepAndCheckGeneralRegisters(short[] values) {
-        stepAndCheck(values[0], EmulatorEngine.REG_A);
-        stepAndCheck(values[1], EmulatorEngine.REG_B);
-        stepAndCheck(values[2], EmulatorEngine.REG_C);
-        stepAndCheck(values[3], EmulatorEngine.REG_D);
-        stepAndCheck(values[4], EmulatorEngine.REG_E);
-        stepAndCheck(values[5], EmulatorEngine.REG_H);
-        stepAndCheck(values[6], EmulatorEngine.REG_L);
+    protected void setRegister(int register, int value) {
+        cpu.getEngine().regs[register] = (short)value;
     }
 
-    protected void stepAndCheckRegister(short[] values, int register) {
-        for (short value : values) {
+    protected void checkRegister(int register, int value) {
+        assertEquals(value, cpu.getEngine().regs[register]);
+    }
+
+    protected void stepAndCheckRegisters(int... values) {
+        for (int i = 0; i < values.length; i++) {
+            stepAndCheck(values[i], GENERAL_REGISTERS[i]);
+        }
+    }
+
+    protected void stepAndCheckRegister(int register, int... values) {
+        for (int value : values) {
             stepAndCheck(value, register);
         }
     }
 
+    protected void setFlags(int mask) {
+        cpu.getEngine().flags |= mask;
+    }
+
+    protected void checkFlags(int mask) {
+        assertFalse((cpu.getEngine().flags & mask) == 0);
+    }
+
+    protected void checkNotFlags(int mask) {
+        assertTrue((cpu.getEngine().flags & mask) == 0);
+    }
 }
