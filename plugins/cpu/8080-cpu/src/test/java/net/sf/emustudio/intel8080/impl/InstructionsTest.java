@@ -91,6 +91,10 @@ public abstract class InstructionsTest {
         }
     }
 
+    protected void checkMemory(int value, int address) {
+        assertEquals(value, (int) memoryStub.read(address));
+    }
+
     protected short[] generateMVI(int... values) {
         int[] opcodes = new int[] {
                 0x3E, 0x06, 0x0E, 0x16, 0x1E, 0x26, 0x2E
@@ -132,6 +136,10 @@ public abstract class InstructionsTest {
 
     protected void setFlags(int mask) {
         cpu.getEngine().flags |= mask;
+    }
+
+    protected void resetFlags(int mask) {
+        cpu.getEngine().flags &= ~mask;
     }
 
     protected void checkFlags(int mask) {

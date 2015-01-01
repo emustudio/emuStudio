@@ -235,7 +235,7 @@ public class EmulatorEngine {
     /* Set the <C>arry, <S>ign, <Z>ero and <P>arity flags following
      an arithmetic operation on 'reg'. 8080 changes AC flag
      */
-    private void setarith(int reg, int before) {
+    private void setarith(int reg, int before, int diff) {
         if ((reg & 0x100) != 0) {
             flags |= FLAG_C;
         } else {
@@ -252,7 +252,7 @@ public class EmulatorEngine {
             flags &= (~FLAG_Z);
         }
         // carry from 3.bit to 4.
-        if (((before & 8) == 8) && ((reg & 0x10) == 0x10)) {
+        if ((before & 0xF) + (diff & 0xF) > 0x0F) {
             flags |= FLAG_AC;
         } else {
             flags &= (~FLAG_AC);
@@ -611,8 +611,9 @@ public class EmulatorEngine {
 
     private int O198_ADI(short OP) {
         int DAR = regs[REG_A];
-        regs[REG_A] += memory.read(PC++);
-        setarith(regs[REG_A], DAR);
+        int diff = memory.read(PC++);
+        regs[REG_A] += diff;
+        setarith(regs[REG_A], DAR, diff);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 7;
     }
@@ -632,11 +633,12 @@ public class EmulatorEngine {
 
     private int O206_ACI(short OP) {
         int DAR = regs[REG_A];
-        regs[REG_A] += memory.read(PC++);
+        int diff = memory.read(PC++);
         if ((flags & FLAG_C) != 0) {
-            regs[REG_A]++;
+            diff++;
         }
-        setarith(regs[REG_A], DAR);
+        regs[REG_A] += diff;
+        setarith(regs[REG_A], DAR, diff);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 7;
     }
@@ -649,8 +651,9 @@ public class EmulatorEngine {
 
     private int O214_SUI(short OP) {
         int DAR = regs[REG_A];
-        regs[REG_A] -= memory.read(PC++);
-        setarith(regs[REG_A], DAR);
+        int diff = memory.read(PC++);
+        regs[REG_A] -= diff;
+        setarith(regs[REG_A], DAR, diff);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 7;
     }
@@ -663,11 +666,12 @@ public class EmulatorEngine {
 
     private int O222_SBI(short OP) {
         int DAR = regs[REG_A];
-        regs[REG_A] -= memory.read(PC++);
+        int diff = memory.read(PC++);
         if ((flags & FLAG_C) != 0) {
-            regs[REG_A]--;
+            diff++;
         }
-        setarith(regs[REG_A], DAR);
+        regs[REG_A] -= diff;
+        setarith(regs[REG_A], DAR, diff);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 7;
     }
@@ -740,8 +744,9 @@ public class EmulatorEngine {
     private int O254_CPI(short OP) {
         int X = regs[REG_A];
         int DAR = regs[REG_A] & 0xFF;
-        DAR -= memory.read(PC++);
-        setarith(DAR, X);
+        int diff = memory.read(PC++);
+        DAR -= diff;
+        setarith(DAR, X, diff);
         return 7;
     }
 
@@ -782,8 +787,9 @@ public class EmulatorEngine {
     private int MF8_B8_CMP(short OP) {
         int X = regs[REG_A];
         int DAR = regs[REG_A] & 0xFF;
-        DAR -= getreg(OP & 0x07);
-        setarith(DAR, X);
+        int diff = getreg(OP & 0x07);
+        DAR -= diff;
+        setarith(DAR, X, diff);
         if ((OP & 0x07) == 6) {
             return 7;
         } else {
@@ -845,8 +851,9 @@ public class EmulatorEngine {
 
     private int MF8_80_ADD(short OP) {
         int X = regs[REG_A];
-        regs[REG_A] += getreg(OP & 0x07);
-        setarith(regs[REG_A], X);
+        int diff = getreg(OP & 0x07);
+        regs[REG_A] += diff;
+        setarith(regs[REG_A], X, diff);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         if ((OP & 0x07) == 6) {
             return 7;
@@ -856,11 +863,12 @@ public class EmulatorEngine {
 
     private int MF8_88_ADC(short OP) {
         int X = regs[REG_A];
-        regs[REG_A] += getreg(OP & 0x07);
+        int diff = getreg(OP & 0x07);
         if ((flags & FLAG_C) != 0) {
-            regs[REG_A]++;
+            diff++;
         }
-        setarith(regs[REG_A], X);
+        regs[REG_A] += diff;
+        setarith(regs[REG_A], X, diff);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         if ((OP & 0x07) == 6) {
             return 7;
@@ -870,8 +878,9 @@ public class EmulatorEngine {
 
     private int MF8_90_SUB(short OP) {
         int X = regs[REG_A];
-        regs[REG_A] -= getreg(OP & 0x07);
-        setarith(regs[REG_A], X);
+        int diff = getreg(OP & 0x07);
+        regs[REG_A] -= diff;
+        setarith(regs[REG_A], X, diff);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         if ((OP & 0x07) == 6) {
             return 7;
@@ -881,11 +890,12 @@ public class EmulatorEngine {
 
     private int MF8_98_SBB(short OP) {
         int X = regs[REG_A];
-        regs[REG_A] -= (getreg(OP & 0x07));
+        int diff = getreg(OP & 0x07);
         if ((flags & FLAG_C) != 0) {
-            regs[REG_A]--;
+            diff++;
         }
-        setarith(regs[REG_A], X);
+        regs[REG_A] -= diff;
+        setarith(regs[REG_A], X, diff);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         if ((OP & 0x07) == 6) {
             return 7;
