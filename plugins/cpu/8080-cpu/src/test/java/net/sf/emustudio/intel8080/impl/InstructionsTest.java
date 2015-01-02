@@ -79,6 +79,12 @@ public abstract class InstructionsTest {
         assertEquals(value, cpu.getEngine().regs[register]);
     }
 
+    protected void stepAndCheckAccAndFlags(int value, int flagsMask, int notFlagsMask) {
+        stepAndCheck(value, EmulatorEngine.REG_A);
+        checkFlags(flagsMask);
+        checkNotFlags(notFlagsMask);
+    }
+
     protected void stepAndCheckMemory(int value, int address) {
         cpu.step();
         assertEquals(value, (int)memoryStub.read(address));
