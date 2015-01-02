@@ -90,6 +90,13 @@ public abstract class InstructionsTest {
         assertEquals(value, (int)memoryStub.read(address));
     }
 
+    protected void stepAndCheckMemoryAndFlags(int value, int address, int flagsMask, int notFlagsMask) {
+        stepAndCheckMemory(value, address);
+        checkFlags(flagsMask);
+        checkNotFlags(notFlagsMask);
+    }
+
+
     protected void stepAndCheckMemory(int address, int... values) {
         for (int value : values) {
             cpu.step();

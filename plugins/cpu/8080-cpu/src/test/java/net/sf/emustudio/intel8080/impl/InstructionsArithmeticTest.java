@@ -203,12 +203,7 @@ public class InstructionsArithmeticTest extends InstructionsTest {
         setRegister(EmulatorEngine.REG_H, 0);
         setRegister(EmulatorEngine.REG_L, 1);
 
-        stepAndCheckMemory(0, 1);
-        checkFlags(
-                EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_AC
-                        | EmulatorEngine.FLAG_P
-        );
-        checkNotFlags(EmulatorEngine.FLAG_S);
+        stepAndCheckMemoryAndFlags(0, 1, FLAG_Z_AC_P_C, EmulatorEngine.FLAG_S);
     }
 
     @Test
@@ -221,12 +216,33 @@ public class InstructionsArithmeticTest extends InstructionsTest {
         setRegister(EmulatorEngine.REG_H, 0);
         setRegister(EmulatorEngine.REG_L, 1);
 
-        stepAndCheckMemory(0xFF, 1);
-        checkFlags(
-                EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_AC
-                        | EmulatorEngine.FLAG_P
-        );
-        checkNotFlags(EmulatorEngine.FLAG_Z);
+        stepAndCheckMemoryAndFlags(0xFF, 1, FLAG_S_AC_P_C, EmulatorEngine.FLAG_Z);
     }
 
+    @Test
+    public void testDAD() throws Exception {
+        resetProgram(
+                0x09, 0x19, 0x29, 0x39
+        );
+
+        setRegisters(0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD);
+
+        stepAndCheck(0xE0, EmulatorEngine.REG_H);
+        checkRegister(EmulatorEngine.REG_L, 0x23);
+        checkNotFlags(EmulatorEngine.FLAG_C);
+
+        stepAndCheck(0x58, EmulatorEngine.REG_H);
+        checkRegister(EmulatorEngine.REG_L, 0xB3);
+        checkFlags(EmulatorEngine.FLAG_C);
+
+        stepAndCheck(0xB1, EmulatorEngine.REG_H);
+        checkRegister(EmulatorEngine.REG_L, 0x66);
+        checkNotFlags(EmulatorEngine.FLAG_C);
+
+        cpu.getEngine().SP = 0x4E9A;
+        stepAndCheck(0, EmulatorEngine.REG_H);
+        checkRegister(EmulatorEngine.REG_L, 0);
+        checkFlags(EmulatorEngine.FLAG_C);
+        checkNotFlags(EmulatorEngine.FLAG_Z);
+    }
 }
