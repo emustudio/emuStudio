@@ -265,9 +265,9 @@ public class EmulatorEngine {
         int xormask = sumWith ^ before;
 
         int C0 = mask&1;
-        int C1 = (mask>>>1) ^ (C0&(xormask>>>1));
-        int C2 = (mask>>>2) ^ (C1&(xormask>>>2));
-        int C3 = (mask>>>3) ^ (C2&(xormask>>>3));
+        int C1 = ((mask>>>1) ^ (C0&(xormask>>>1)))&1;
+        int C2 = ((mask>>>2) ^ (C1&(xormask>>>2)))&1;
+        int C3 = ((mask>>>3) ^ (C2&(xormask>>>3)))&1;
 
         if (C3 != 0) {
             flags |= FLAG_AC;
@@ -279,7 +279,7 @@ public class EmulatorEngine {
     /* Set the <S>ign, <Z>ero amd <P>arity flags following
      an INR/DCR operation on 'reg'.
      */
-    private void setinc(int reg, int before) {
+    private void setinc(int reg, int before, int diff) {
         if ((reg & 0x80) != 0) {
             flags |= FLAG_S;
         } else {
@@ -290,11 +290,7 @@ public class EmulatorEngine {
         } else {
             flags &= (~FLAG_Z);
         }
-        if (((before & 8) == 8) && ((reg & 0x10) == 0x10)) {
-            flags |= FLAG_AC;
-        } else {
-            flags &= (~FLAG_AC);
-        }
+        auxCarry(before, diff);
         parity(reg);
     }
 
@@ -921,7 +917,7 @@ public class EmulatorEngine {
 
     private int MC7_04_INR(short OP) {
         int DAR = getreg((OP >>> 3) & 0x07) + 1;
-        setinc(DAR, DAR - 1);
+        setinc(DAR, DAR - 1, 1);
         DAR = DAR & 0xFF;
         putreg((OP >>> 3) & 0x07, (short) DAR);
         return 5;
@@ -929,7 +925,7 @@ public class EmulatorEngine {
 
     private int MC7_05_DCR(short OP) {
         int DAR = getreg((OP >>> 3) & 0x07) - 1;
-        setinc(DAR, DAR + 1);
+        setinc(DAR, DAR + 1, (-1)&0xFF);
         DAR = DAR & 0xFF;
         putreg((OP >>> 3) & 0x07, (short) DAR);
         return 5;
