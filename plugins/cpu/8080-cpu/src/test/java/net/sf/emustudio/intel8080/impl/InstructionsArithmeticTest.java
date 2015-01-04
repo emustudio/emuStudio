@@ -2,6 +2,8 @@ package net.sf.emustudio.intel8080.impl;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+
 public class InstructionsArithmeticTest extends InstructionsTest {
     private final static int FLAG_S_P = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_P;
     private final static int FLAG_S_C = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_C;
@@ -269,10 +271,56 @@ public class InstructionsArithmeticTest extends InstructionsTest {
     }
 
     @Test
+    public void testINX() throws Exception {
+        resetProgram(0x03, 0x13, 0x23, 0x33);
+
+        setRegisters(0, 0xFF, 0xFF, 0, 0xFF, 0x11, 0xFF);
+        cpu.getEngine().SP = 0x0F;
+
+        stepAndCheck(0, EmulatorEngine.REG_B);
+        checkRegister(EmulatorEngine.REG_C, 0);
+        checkNotFlags(FLAG_S_Z_AC_P_C);
+
+        stepAndCheck(1, EmulatorEngine.REG_D);
+        checkRegister(EmulatorEngine.REG_E, 0);
+        checkNotFlags(FLAG_S_Z_AC_P_C);
+
+        stepAndCheck(0x12, EmulatorEngine.REG_H);
+        checkRegister(EmulatorEngine.REG_L, 0);
+        checkNotFlags(FLAG_S_Z_AC_P_C);
+
+        cpu.step();
+        assertEquals(0x10, cpu.getEngine().SP);
+        checkNotFlags(FLAG_S_Z_AC_P_C);
+    }
+
+    @Test
+    public void testDCX() throws Exception {
+        resetProgram(0x0B, 0x1B, 0x2B, 0x3B);
+
+        setRegisters(0, 0, 0, 1, 0, 0x12, 0);
+        cpu.getEngine().SP = 0x10;
+
+        stepAndCheck(0xFF, EmulatorEngine.REG_B);
+        checkRegister(EmulatorEngine.REG_C, 0xFF);
+        checkNotFlags(FLAG_S_Z_AC_P_C);
+
+        stepAndCheck(0, EmulatorEngine.REG_D);
+        checkRegister(EmulatorEngine.REG_E, 0xFF);
+        checkNotFlags(FLAG_S_Z_AC_P_C);
+
+        stepAndCheck(0x11, EmulatorEngine.REG_H);
+        checkRegister(EmulatorEngine.REG_L, 0xFF);
+        checkNotFlags(FLAG_S_Z_AC_P_C);
+
+        cpu.step();
+        assertEquals(0x0F, cpu.getEngine().SP);
+        checkNotFlags(FLAG_S_Z_AC_P_C);
+    }
+
+    @Test
     public void testDAD() throws Exception {
-        resetProgram(
-                0x09, 0x19, 0x29, 0x39
-        );
+        resetProgram(0x09, 0x19, 0x29, 0x39);
 
         setRegisters(0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD);
 
