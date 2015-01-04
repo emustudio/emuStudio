@@ -309,7 +309,6 @@ public class EmulatorEngine {
         } else {
             flags &= (~FLAG_Z);
         }
-        flags &= (~FLAG_AC);
         parity(reg);
     }
 
@@ -966,8 +965,11 @@ public class EmulatorEngine {
     }
 
     private int MF8_A8_XRA(short OP) {
-        regs[REG_A] ^= getreg(OP & 0x07);
+        short before = regs[REG_A];
+        short diff = getreg(OP & 0x07);
+        regs[REG_A] ^= diff;
         setlogical(regs[REG_A]);
+        auxCarry(before, diff);
         regs[REG_A] &= 0xFF;
         return 4;
     }

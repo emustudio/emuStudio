@@ -13,6 +13,31 @@ import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.*;
 
 public abstract class InstructionsTest {
+    protected final static int FLAG_S_Z = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_Z;
+    protected final static int FLAG_S_P = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_P;
+    protected final static int FLAG_S_C = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_C;
+    protected final static int FLAG_S_P_C = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_P;
+    protected final static int FLAG_S_AC = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_AC;
+    protected final static int FLAG_S_AC_P = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_P;
+    protected final static int FLAG_S_AC_P_C = EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_P;
+    protected final static int FLAG_S_AC_C = EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_AC;
+    protected final static int FLAG_S_Z_P = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_P;
+    protected final static int FLAG_S_Z_C = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_C;
+    protected final static int FLAG_S_Z_P_C = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_P | EmulatorEngine.FLAG_C;
+    protected final static int FLAG_S_Z_AC_C = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_C;
+    protected final static int FLAG_S_Z_AC_P = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_P;
+    protected final static int FLAG_S_Z_AC_P_C = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_P | EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_Z;
+    protected final static int FLAG_Z_AC = EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_AC;
+    protected final static int FLAG_Z_AC_P = EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_P;
+    protected final static int FLAG_Z_AC_C = EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_AC;
+    protected final static int FLAG_Z_AC_P_C = EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_P | EmulatorEngine.FLAG_AC;
+    protected final static int FLAG_Z_P = EmulatorEngine.FLAG_P | EmulatorEngine.FLAG_Z;
+    protected final static int FLAG_Z_P_C = EmulatorEngine.FLAG_P | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_C;
+    protected final static int FLAG_Z_C = EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_C;
+    protected final static int FLAG_AC_C = EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_C;
+    protected final static int FLAG_AC_P = EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_P;
+    protected final static int FLAG_AC_P_C = EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_P;
+
     protected static final long PLUGIN_ID = 0L;
 
     private static int[] GENERAL_REGISTERS = new int[] {
@@ -81,7 +106,9 @@ public abstract class InstructionsTest {
 
     protected void stepAndCheckAccAndFlags(int value, int flagsMask, int notFlagsMask) {
         stepAndCheck(value, EmulatorEngine.REG_A);
-        checkFlags(flagsMask);
+        if (flagsMask != -1) {
+            checkFlags(flagsMask);
+        }
         checkNotFlags(notFlagsMask);
     }
 
@@ -156,7 +183,7 @@ public abstract class InstructionsTest {
     }
 
     protected void checkFlags(int mask) {
-        assertFalse((cpu.getEngine().flags & mask) == 0);
+        assertTrue((cpu.getEngine().flags & mask) == mask);
     }
 
     protected void checkNotFlags(int mask) {

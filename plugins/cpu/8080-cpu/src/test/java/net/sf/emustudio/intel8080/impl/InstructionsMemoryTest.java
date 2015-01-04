@@ -16,14 +16,7 @@ public class InstructionsMemoryTest extends InstructionsTest {
         setRegister(EmulatorEngine.REG_A, 0xFF);
         setFlags(EmulatorEngine.FLAG_S);
 
-        stepAndCheck(0xFF, EmulatorEngine.REG_A);
-        checkFlags(
-                EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_P | EmulatorEngine.FLAG_C
-                | EmulatorEngine.FLAG_AC
-        );
-        checkNotFlags(
-                EmulatorEngine.FLAG_Z
-        );
+        stepAndCheckAccAndFlags(0xFF, EmulatorEngine.FLAG_P, FLAG_S_Z_AC_C);
     }
 
 }

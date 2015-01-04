@@ -5,21 +5,6 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class InstructionsArithmeticTest extends InstructionsTest {
-    private final static int FLAG_S_P = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_P;
-    private final static int FLAG_S_C = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_C;
-    private final static int FLAG_S_AC = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_AC;
-    private final static int FLAG_S_AC_P_C = EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_P;
-    private final static int FLAG_S_AC_C = EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_AC;
-    private final static int FLAG_S_Z_P = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_P;
-    private final static int FLAG_S_Z_P_C = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_P | EmulatorEngine.FLAG_C;
-    private final static int FLAG_S_Z_AC_C = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_C;
-    private final static int FLAG_S_Z_AC_P_C = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_P | EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_Z;
-    private final static int FLAG_Z_AC_P = EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_P;
-    private final static int FLAG_Z_AC_C = EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_AC;
-    private final static int FLAG_Z_AC_P_C = EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_P | EmulatorEngine.FLAG_AC;
-    private final static int FLAG_Z_P = EmulatorEngine.FLAG_P | EmulatorEngine.FLAG_Z;
-    private final static int FLAG_Z_P_C = EmulatorEngine.FLAG_P | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_C;
-    private final static int FLAG_AC_C = EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_C;
 
     @Test
     public void testADD() throws Exception {
@@ -110,10 +95,10 @@ public class InstructionsArithmeticTest extends InstructionsTest {
 
         stepAndCheckAccAndFlags(0, FLAG_Z_AC_P, FLAG_S_C);
         stepAndCheckAccAndFlags(0xFF, FLAG_S_P, FLAG_Z_AC_C);
-        stepAndCheckAccAndFlags(1, FLAG_S_AC, FLAG_Z_P_C);
+        stepAndCheckAccAndFlags(1, EmulatorEngine.FLAG_AC, FLAG_S_Z_P_C);
         stepAndCheckAccAndFlags(0, FLAG_Z_AC_P, FLAG_S_C);
-        stepAndCheckAccAndFlags(1, 0xFF, FLAG_S_Z_AC_P_C);
-        stepAndCheckAccAndFlags(2, 0xFF, FLAG_S_Z_AC_P_C);
+        stepAndCheckAccAndFlags(1, -1, FLAG_S_Z_AC_P_C);
+        stepAndCheckAccAndFlags(2, -1, FLAG_S_Z_AC_P_C);
         stepAndCheckAccAndFlags(3, EmulatorEngine.FLAG_P, FLAG_S_Z_AC_C);
     }
 
@@ -127,7 +112,7 @@ public class InstructionsArithmeticTest extends InstructionsTest {
         setRegister(EmulatorEngine.REG_H, 0);
         setRegister(EmulatorEngine.REG_L, 1);
 
-        stepAndCheckAccAndFlags(0xFF, FLAG_S_AC_P_C, EmulatorEngine.FLAG_Z);
+        stepAndCheckAccAndFlags(0xFF, FLAG_S_P, FLAG_Z_AC_C);
     }
 
     @Test
@@ -141,16 +126,16 @@ public class InstructionsArithmeticTest extends InstructionsTest {
         stepAndCheckAccAndFlags(0xFF, FLAG_S_P, FLAG_Z_AC_C);
 
         setFlags(EmulatorEngine.FLAG_C);
-        stepAndCheckAccAndFlags(1, FLAG_S_AC, FLAG_Z_P_C);
+        stepAndCheckAccAndFlags(1, EmulatorEngine.FLAG_AC, FLAG_S_Z_P_C);
 
         setFlags(EmulatorEngine.FLAG_C);
         stepAndCheckAccAndFlags(0, FLAG_Z_AC_P, FLAG_S_C);
 
         setFlags(EmulatorEngine.FLAG_C);
-        stepAndCheckAccAndFlags(1, 0xFF, FLAG_S_Z_AC_P_C);
+        stepAndCheckAccAndFlags(1, -1, FLAG_S_Z_AC_P_C);
 
         setFlags(EmulatorEngine.FLAG_C);
-        stepAndCheckAccAndFlags(2, 0xFF, FLAG_S_Z_AC_P_C);
+        stepAndCheckAccAndFlags(2, -1, FLAG_S_Z_AC_P_C);
 
         setFlags(EmulatorEngine.FLAG_C);
         stepAndCheckAccAndFlags(3, EmulatorEngine.FLAG_P, FLAG_S_Z_AC_C);
@@ -179,7 +164,7 @@ public class InstructionsArithmeticTest extends InstructionsTest {
         setRegister(EmulatorEngine.REG_A, 2);
 
         setFlags(EmulatorEngine.FLAG_C);
-        stepAndCheckAccAndFlags(2, 0xFF, FLAG_S_Z_AC_P_C);
+        stepAndCheckAccAndFlags(2, -1, FLAG_S_Z_AC_P_C);
     }
 
     @Test
@@ -222,8 +207,7 @@ public class InstructionsArithmeticTest extends InstructionsTest {
 
         setRegister(EmulatorEngine.REG_H, 0);
         setRegister(EmulatorEngine.REG_L, 1);
-
-        stepAndCheckMemoryAndFlags(0, 1, FLAG_Z_AC_P_C, EmulatorEngine.FLAG_S);
+        stepAndCheckMemoryAndFlags(0, 1, FLAG_Z_AC_P, FLAG_S_C);
     }
 
     @Test
@@ -267,7 +251,7 @@ public class InstructionsArithmeticTest extends InstructionsTest {
         setRegister(EmulatorEngine.REG_H, 0);
         setRegister(EmulatorEngine.REG_L, 1);
 
-        stepAndCheckMemoryAndFlags(0xFF, 1, FLAG_S_AC_P_C, EmulatorEngine.FLAG_Z);
+        stepAndCheckMemoryAndFlags(0xFF, 1, FLAG_S_P, FLAG_Z_AC_C);
     }
 
     @Test
