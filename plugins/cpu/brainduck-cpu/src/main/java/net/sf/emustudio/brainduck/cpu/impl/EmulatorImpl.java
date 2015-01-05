@@ -35,6 +35,8 @@ import net.sf.emustudio.braincpu.gui.DecoderImpl;
 import net.sf.emustudio.braincpu.gui.DisassemblerImpl;
 import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
 import net.sf.emustudio.brainduck.cpu.gui.StatusPanel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.JPanel;
 import java.util.Deque;
@@ -50,6 +52,8 @@ title = "BrainCPU",
 copyright = "\u00A9 Copyright 2009-2014, Peter Jakubčo",
 description = "Emulator of CPU for abstract BrainDuck architecture")
 public class EmulatorImpl extends AbstractCPU {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorImpl.class);
+
     private final ContextPool contextPool;
     private final BrainCPUContextImpl context = new BrainCPUContextImpl();
     private final Deque<Integer> loopPointers = new LinkedList<>();
@@ -160,6 +164,7 @@ public class EmulatorImpl extends AbstractCPU {
         }
         P = adr; // assign to the P register the address we have found
         profileAndOptimize(adr);
+        LOGGER.debug("Register P was reset to " + P);
     }
 
     private void profileAndOptimize(int programSize) {
