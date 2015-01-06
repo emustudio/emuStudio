@@ -143,6 +143,15 @@ public class InstructionsLogicTest extends InstructionsTest {
     }
 
     @Test
+    public void testORI() throws Exception {
+        resetProgram(0xF6, 0xC0);
+        setRegister(EmulatorEngine.REG_A, 0x5);
+        setFlags(FLAG_P_C);
+
+        stepAndCheckAccAndFlags(0xC5, FLAG_S_P, FLAG_Z_AC_C);
+    }
+
+    @Test
     public void testDAA() throws Exception {
         resetProgram(0x27, 0x27, 0x27, 0x27, 0x27);
 
@@ -220,4 +229,66 @@ public class InstructionsLogicTest extends InstructionsTest {
         stepAndCheckAccAndFlags(0xF2, EmulatorEngine.FLAG_C, FLAG_S_Z_AC_P);
     }
 
+    @Test
+    public void testRAL() throws Exception {
+        resetProgram(0x17, 0x17, 0x17, 0x17, 0x17, 0x17, 0x17, 0x17);
+
+        setRegisters(0xB5);
+        stepAndCheckAccAndFlags(0x6A, EmulatorEngine.FLAG_C, FLAG_S_Z_AC_P);
+        stepAndCheckAccAndFlags(0xD5, -1, FLAG_S_Z_AC_P_C);
+        stepAndCheckAccAndFlags(0xAA, EmulatorEngine.FLAG_C, FLAG_S_Z_AC_P);
+        stepAndCheckAccAndFlags(0x55, EmulatorEngine.FLAG_C, FLAG_S_Z_AC_P);
+        stepAndCheckAccAndFlags(0xAB, -1, FLAG_S_Z_AC_P_C);
+        stepAndCheckAccAndFlags(0x56, EmulatorEngine.FLAG_C, FLAG_S_Z_AC_P);
+        stepAndCheckAccAndFlags(0xAD, -1, FLAG_S_Z_AC_P_C);
+        stepAndCheckAccAndFlags(0x5A, EmulatorEngine.FLAG_C, FLAG_S_Z_AC_P);
+    }
+
+    @Test
+    public void testRAR() throws Exception {
+        resetProgram(0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F);
+
+        setRegisters(0x6A);
+        setFlags(EmulatorEngine.FLAG_C);
+        stepAndCheckAccAndFlags(0xB5, -1, FLAG_S_Z_AC_P_C);
+        stepAndCheckAccAndFlags(0x5A, EmulatorEngine.FLAG_C, FLAG_S_Z_AC_P);
+        stepAndCheckAccAndFlags(0xAD, -1, FLAG_S_Z_AC_P_C);
+        stepAndCheckAccAndFlags(0x56, EmulatorEngine.FLAG_C, FLAG_S_Z_AC_P);
+        stepAndCheckAccAndFlags(0xAB, -1, FLAG_S_Z_AC_P_C);
+        stepAndCheckAccAndFlags(0x55, EmulatorEngine.FLAG_C, FLAG_S_Z_AC_P);
+        stepAndCheckAccAndFlags(0xAA, EmulatorEngine.FLAG_C, FLAG_S_Z_AC_P);
+        stepAndCheckAccAndFlags(0xD5, -1, FLAG_S_Z_AC_P_C);
+
+    }
+
+    @Test
+    public void testCMP() throws Exception {
+        resetProgram(0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD);
+
+        // TODO
+
+    }
+
+    @Test
+    public void testCMP_M() throws Exception {
+        resetProgram(
+                0xBE,
+                0xC0 // address 1
+        );
+
+        setRegister(EmulatorEngine.REG_H, 0);
+        setRegister(EmulatorEngine.REG_L, 1);
+        setRegister(EmulatorEngine.REG_A, 0xFF);
+        setFlags(EmulatorEngine.FLAG_S);
+
+        stepAndCheckAccAndFlags(0xFF, EmulatorEngine.FLAG_P, FLAG_S_Z_AC_C);
+    }
+
+    /*CMP		A		CP		A		BF		A - A
+CMP		B		CP		B		B8		A - B
+CMP		C		CP		C		B9		A - C
+CMP		D		CP		D		BA		A - D
+CMP		E		CP		E		BB		A - E
+CMP		H		CP		H		BC		A - H
+CMP		L		CP		L		BD		A - L*/
 }
