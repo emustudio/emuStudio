@@ -38,7 +38,7 @@ public class EmulatorEngine {
             1, 0, 0, 1
     };
 
-    private boolean INTE = false; // enabling / disabling of interrupts
+    public boolean INTE = false; // enabling / disabling of interrupts
     private boolean isINT = false;
     private short b1 = 0; // the raw interrupt instruction
     private short b2 = 0;

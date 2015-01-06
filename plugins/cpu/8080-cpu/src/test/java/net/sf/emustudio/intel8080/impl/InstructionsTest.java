@@ -24,6 +24,7 @@ public abstract class InstructionsTest {
     protected final static int FLAG_S_Z_P = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_P;
     protected final static int FLAG_S_Z_C = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_C;
     protected final static int FLAG_S_Z_P_C = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_P | EmulatorEngine.FLAG_C;
+    protected final static int FLAG_S_Z_AC = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_AC;
     protected final static int FLAG_S_Z_AC_C = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_C;
     protected final static int FLAG_S_Z_AC_P = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_Z | EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_P;
     protected final static int FLAG_S_Z_AC_P_C = EmulatorEngine.FLAG_S | EmulatorEngine.FLAG_P | EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_Z;
@@ -37,6 +38,7 @@ public abstract class InstructionsTest {
     protected final static int FLAG_AC_C = EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_C;
     protected final static int FLAG_AC_P = EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_P;
     protected final static int FLAG_AC_P_C = EmulatorEngine.FLAG_AC | EmulatorEngine.FLAG_C | EmulatorEngine.FLAG_P;
+    protected final static int FLAG_P_C = EmulatorEngine.FLAG_P | EmulatorEngine.FLAG_C;
 
     protected static final long PLUGIN_ID = 0L;
 
