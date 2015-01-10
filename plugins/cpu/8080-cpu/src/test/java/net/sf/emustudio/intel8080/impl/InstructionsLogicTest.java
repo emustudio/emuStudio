@@ -294,4 +294,13 @@ public class InstructionsLogicTest extends InstructionsTest {
         stepAndCheckAccAndFlags(0xFF, EmulatorEngine.FLAG_P, FLAG_S_Z_AC_C);
     }
 
+    @Test
+    public void testCPI() throws Exception {
+        resetProgram(0xFE, 0xC0);
+
+        setRegisters(0xFF);
+        setFlags(EmulatorEngine.FLAG_S);
+
+        stepAndCheckAccAndFlags(0xFF, EmulatorEngine.FLAG_P, FLAG_S_Z_AC_C);
+    }
 }
