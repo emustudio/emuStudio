@@ -263,10 +263,22 @@ public class InstructionsLogicTest extends InstructionsTest {
 
     @Test
     public void testCMP() throws Exception {
-        resetProgram(0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD);
+        resetProgram(0xBF, 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD);
 
-        // TODO
-
+        setRegisters(0xFF, 5, 0xFE, 1, 0xFF, 0xFF, 0xFF);
+        stepAndCheckAccAndFlags(0xFF, FLAG_Z_AC_P, FLAG_S_C);
+        setRegisters(2);
+        stepAndCheckAccAndFlags(2, FLAG_S_C, FLAG_Z_AC_P);
+        setRegisters(0xFF);
+        stepAndCheckAccAndFlags(0xFF, EmulatorEngine.FLAG_AC, FLAG_S_Z_P_C);
+        setRegisters(1);
+        stepAndCheckAccAndFlags(1, FLAG_Z_AC_P, FLAG_S_C);
+        setRegisters(0);
+        stepAndCheckAccAndFlags(0, EmulatorEngine.FLAG_C, FLAG_S_Z_AC_P);
+        setRegisters(1);
+        stepAndCheckAccAndFlags(1, EmulatorEngine.FLAG_C, FLAG_S_Z_AC_P);
+        setRegisters(2);
+        stepAndCheckAccAndFlags(2, FLAG_P_C, FLAG_S_Z_AC);
     }
 
     @Test
@@ -276,19 +288,10 @@ public class InstructionsLogicTest extends InstructionsTest {
                 0xC0 // address 1
         );
 
-        setRegister(EmulatorEngine.REG_H, 0);
-        setRegister(EmulatorEngine.REG_L, 1);
-        setRegister(EmulatorEngine.REG_A, 0xFF);
+        setRegisters(0xFF, 0, 0, 0, 0, 0, 1);
         setFlags(EmulatorEngine.FLAG_S);
 
         stepAndCheckAccAndFlags(0xFF, EmulatorEngine.FLAG_P, FLAG_S_Z_AC_C);
     }
 
-    /*CMP		A		CP		A		BF		A - A
-CMP		B		CP		B		B8		A - B
-CMP		C		CP		C		B9		A - C
-CMP		D		CP		D		BA		A - D
-CMP		E		CP		E		BB		A - E
-CMP		H		CP		H		BC		A - H
-CMP		L		CP		L		BD		A - L*/
 }

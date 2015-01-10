@@ -236,15 +236,7 @@ public class EmulatorEngine {
      an arithmetic operation on 'reg'. 8080 changes AC flag
      */
     private void setarith(int reg, int before, int sumWith, boolean sub) {
-        if (sub) {
-            flags &= (~FLAG_C);
-        } else {
-            if ((reg & 0x100) != 0) {
-                flags |= FLAG_C;
-            } else {
-                flags &= (~FLAG_C);
-            }
-        }
+        carry(before, sumWith, sub);
         if ((reg & 0x80) != 0) {
             flags |= FLAG_S;
         } else {
@@ -275,6 +267,35 @@ public class EmulatorEngine {
             flags &= (~FLAG_AC);
         }
     }
+
+    private void carry(int before, int sumWith, boolean sub) {
+        int mask = sumWith & before;
+        int xormask = sumWith ^ before;
+
+        int C0 = mask&1;
+        int C1 = ((mask>>>1) ^ (C0&(xormask>>>1)))&1;
+        int C2 = ((mask>>>2) ^ (C1&(xormask>>>2)))&1;
+        int C3 = ((mask>>>3) ^ (C2&(xormask>>>3)))&1;
+        int C4 = ((mask>>>4) ^ (C3&(xormask>>>4)))&1;
+        int C5 = ((mask>>>5) ^ (C4&(xormask>>>5)))&1;
+        int C6 = ((mask>>>6) ^ (C5&(xormask>>>6)))&1;
+        int C7 = ((mask>>>7) ^ (C6&(xormask>>>7)))&1;
+
+        if (sub) {
+            if (C7 != 0) {
+                flags &= (~FLAG_C);
+            } else {
+                flags |= FLAG_C;
+            }
+        } else {
+            if (C7 != 0) {
+                flags |= FLAG_C;
+            } else {
+                flags &= (~FLAG_C);
+            }
+        }
+    }
+
 
     /* Set the <S>ign, <Z>ero amd <P>arity flags following
      an INR/DCR operation on 'reg'.
@@ -797,7 +818,7 @@ public class EmulatorEngine {
 
     private int MF8_B8_CMP(short OP) {
         int X = regs[REG_A];
-        int DAR = regs[REG_A] & 0xFF;
+        int DAR = X & 0xFF;
         int diff = getreg(OP & 0x07);
         DAR -= diff;
         setarith(DAR, X, (-diff) & 0xFF, true);
