@@ -841,8 +841,7 @@ public class EmulatorEngine {
     private int MC7_C4_CALL(short OP) {
         if (checkCondition((OP >>> 3) & 0x07)) {
             int DAR = (Integer) memory.readWord(PC);
-            PC += 2;
-            memory.writeWord(SP - 2, PC);
+            memory.writeWord(SP - 2, PC + 2);
             SP -= 2;
             PC = DAR;
             return 17;

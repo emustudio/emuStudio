@@ -114,6 +114,17 @@ public abstract class InstructionsTest {
         checkNotFlags(notFlagsMask);
     }
 
+    protected void stepAndCheckPC(int PC) {
+        cpu.step();
+        assertEquals(PC, cpu.getEngine().PC);
+    }
+
+    protected void stepAndCheckPCandSPandMemory(int PC, int SP, int memValue) {
+        stepAndCheckPC(PC);
+        assertEquals(SP, cpu.getEngine().SP);
+        assertEquals(memValue, memoryStub.readWord(cpu.getEngine().SP));
+    }
+
     protected void stepAndCheckMemory(int value, int address) {
         cpu.step();
         assertEquals(value, (int)memoryStub.read(address));
