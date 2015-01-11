@@ -214,14 +214,6 @@ public class EmulatorEngine {
         }
     }
 
-    /* Set the <C>arry, <S>ign, <Z>ero and <P>arity flags following
-     an arithmetic operation on 'reg'. 8080 changes AC flag
-     */
-    private void setarith(int reg, int before, int sumWith) {
-        flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[reg & 0x1FF];
-        auxCarry(before, sumWith);
-    }
-
     private void auxCarry(int before, int sumWith) {
         int mask = sumWith & before;
         int xormask = sumWith ^ before;
@@ -481,7 +473,10 @@ public class EmulatorEngine {
         int DAR = regs[REG_A];
         int diff = memory.read(PC++);
         regs[REG_A] += diff;
-        setarith(regs[REG_A], DAR, diff);
+
+        flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[regs[REG_A] & 0x1FF];
+        auxCarry(DAR, diff);
+
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 7;
     }
@@ -506,7 +501,10 @@ public class EmulatorEngine {
             diff++;
         }
         regs[REG_A] += diff;
-        setarith(regs[REG_A], DAR, diff);
+
+        flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[regs[REG_A] & 0x1FF];
+        auxCarry(DAR, diff);
+
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 7;
     }
@@ -521,7 +519,10 @@ public class EmulatorEngine {
         int DAR = regs[REG_A];
         int diff = memory.read(PC++);
         regs[REG_A] -= diff;
-        setarith(regs[REG_A], DAR, (-diff) & 0xFF);
+
+        flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[regs[REG_A] & 0x1FF];
+        auxCarry(DAR, (-diff) & 0xFF);
+
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 7;
     }
@@ -539,7 +540,10 @@ public class EmulatorEngine {
             diff++;
         }
         regs[REG_A] -= diff;
-        setarith(regs[REG_A], DAR, (-diff) & 0xFF);
+
+        flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[regs[REG_A] & 0x1FF];
+        auxCarry(DAR, (-diff) & 0xFF);
+
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 7;
     }
@@ -605,7 +609,10 @@ public class EmulatorEngine {
         int DAR = regs[REG_A] & 0xFF;
         int diff = memory.read(PC++);
         DAR -= diff;
-        setarith(DAR, X, (-diff) & 0xFF);
+
+        flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[DAR & 0x1FF];
+        auxCarry(X, (-diff) & 0xFF);
+
         return 7;
     }
 
@@ -648,12 +655,11 @@ public class EmulatorEngine {
         int DAR = X & 0xFF;
         int diff = getreg(OP & 0x07);
         DAR -= diff;
-        setarith(DAR, X, (-diff) & 0xFF);
-        if ((OP & 0x07) == 6) {
-            return 7;
-        } else {
-            return 4;
-        }
+
+        flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[DAR & 0x1FF];
+        auxCarry(X, (-diff) & 0xFF);
+
+        return  ((OP & 0x07) == 6) ? 7 : 4;
     }
 
     private int MC7_C2_JMP(short OP) {
@@ -714,12 +720,12 @@ public class EmulatorEngine {
         int X = regs[REG_A];
         int diff = getreg(OP & 0x07);
         regs[REG_A] += diff;
-        setarith(regs[REG_A], X, diff);
+
+        flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[regs[REG_A] & 0x1FF];
+        auxCarry(X, diff);
+
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
-        if ((OP & 0x07) == 6) {
-            return 7;
-        }
-        return 4;
+        return  ((OP & 0x07) == 6) ? 7 : 4;
     }
 
     private int MF8_88_ADC(short OP) {
@@ -729,24 +735,24 @@ public class EmulatorEngine {
             diff++;
         }
         regs[REG_A] += diff;
-        setarith(regs[REG_A], X, diff);
+
+        flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[regs[REG_A] & 0x1FF];
+        auxCarry(X, diff);
+
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
-        if ((OP & 0x07) == 6) {
-            return 7;
-        }
-        return 4;
+        return  ((OP & 0x07) == 6) ? 7 : 4;
     }
 
     private int MF8_90_SUB(short OP) {
         int X = regs[REG_A];
         int diff = getreg(OP & 0x07);
         regs[REG_A] -= diff;
-        setarith(regs[REG_A], X, (-diff) & 0xFF);
+
+        flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[regs[REG_A] & 0x1FF];
+        auxCarry(X, (-diff) & 0xFF);
+
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
-        if ((OP & 0x07) == 6) {
-            return 7;
-        }
-        return 4;
+        return  ((OP & 0x07) == 6) ? 7 : 4;
     }
 
     private int MF8_98_SBB(short OP) {
@@ -756,12 +762,12 @@ public class EmulatorEngine {
             diff++;
         }
         regs[REG_A] -= diff;
-        setarith(regs[REG_A], X, (-diff) & 0xFF);
+
+        flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[regs[REG_A] & 0x1FF];
+        auxCarry(X, (-diff) & 0xFF);
+
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
-        if ((OP & 0x07) == 6) {
-            return 7;
-        }
-        return 4;
+        return ((OP & 0x07) == 6) ? 7 : 4;
     }
 
     private int MC7_04_INR(short OP) {
@@ -841,7 +847,7 @@ public class EmulatorEngine {
                 } else if (b1 == 0315) {                        /* CALL */
                     memory.writeWord(SP - 2, PC + 2);
                     SP -= 2;
-                    PC = (int) (((b3 & 0xFF) << 8) | (b2 & 0xFF));
+                    PC = ((b3 & 0xFF) << 8) | (b2 & 0xFF);
                     return 17;
                 }
             }
