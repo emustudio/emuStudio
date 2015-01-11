@@ -296,43 +296,6 @@ public class EmulatorEngine {
         }
     }
 
-
-    /* Set the <S>ign, <Z>ero amd <P>arity flags following
-     an INR/DCR operation on 'reg'.
-     */
-    private void setinc(int reg, int before, int diff) {
-        if ((reg & 0x80) != 0) {
-            flags |= FLAG_S;
-        } else {
-            flags &= (~FLAG_S);
-        }
-        if ((reg & 0xff) == 0) {
-            flags |= FLAG_Z;
-        } else {
-            flags &= (~FLAG_Z);
-        }
-        auxCarry(before, diff);
-        parity(reg);
-    }
-
-    /* Set the <C>arry, <S>ign, <Z>ero amd <P>arity flags following
-     a logical (bitwise) operation on 'reg'.
-     */
-    private void setlogical(int reg) {
-        flags &= (~FLAG_C);
-        if ((reg & 0x80) != 0) {
-            flags |= FLAG_S;
-        } else {
-            flags &= (~FLAG_S);
-        }
-        if ((reg & 0xff) == 0) {
-            flags |= FLAG_Z;
-        } else {
-            flags &= (~FLAG_Z);
-        }
-        parity(reg);
-    }
-
     /* Set the Parity (P) flag based on parity of 'reg', i.e., number
      of bits on even: P=0200000, else P=0
      */
@@ -717,11 +680,8 @@ public class EmulatorEngine {
     }
 
     private int O230_ANI(short OP) {
-        regs[REG_A] &= memory.read(PC++);
-        flags &= (~FLAG_C);
-        flags &= (~FLAG_AC);
-        setlogical(regs[REG_A]);
-        regs[REG_A] &= 0xFF;
+        regs[REG_A] &= (memory.read(PC++) & 0xFF);
+        flags = (short)(EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_AC));
         return 7;
     }
 
@@ -741,11 +701,8 @@ public class EmulatorEngine {
     }
 
     private int O238_XRI(short OP) {
-        regs[REG_A] ^= memory.read(PC++);
-        flags &= (~FLAG_C);
-        flags &= (~FLAG_AC);
-        setlogical(regs[REG_A]);
-        regs[REG_A] &= 0xFF;
+        regs[REG_A] ^= (memory.read(PC++) & 0xFF);
+        flags = (short)(EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_AC));
         return 7;
     }
 
@@ -755,11 +712,8 @@ public class EmulatorEngine {
     }
 
     private int O246_ORI(short OP) {
-        regs[REG_A] |= memory.read(PC++);
-        flags &= (~FLAG_C);
-        flags &= (~FLAG_AC);
-        setlogical(regs[REG_A]);
-        regs[REG_A] &= 0xFF;
+        regs[REG_A] |= (memory.read(PC++) & 0xFF);
+        flags = (short)(EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_AC));
         return 7;
     }
 
@@ -935,31 +889,27 @@ public class EmulatorEngine {
     }
 
     private int MC7_04_INR(short OP) {
-        int DAR = getreg((OP >>> 3) & 0x07) + 1;
-        setinc(DAR, DAR - 1, 1);
-        DAR = DAR & 0xFF;
-        putreg((OP >>> 3) & 0x07, (short) DAR);
+        short DAR = (short)((getreg((OP >>> 3) & 0x07) + 1) & 0xFF);
+        flags = EmulatorTables.INC_TABLE[DAR];
+        putreg((OP >>> 3) & 0x07, DAR);
         return 5;
     }
 
     private int MC7_05_DCR(short OP) {
-        int DAR = getreg((OP >>> 3) & 0x07) - 1;
-        setinc(DAR, DAR + 1, (-1)&0xFF);
-        DAR = DAR & 0xFF;
-        putreg((OP >>> 3) & 0x07, (short) DAR);
+        short DAR = (short)((getreg((OP >>> 3) & 0x07) - 1) & 0xFF);
+        flags = EmulatorTables.DEC_TABLE[DAR];
+        putreg((OP >>> 3) & 0x07, DAR);
         return 5;
     }
 
     private int MCF_03_INX(short OP) {
-        int DAR = getpair((OP >>> 4) & 0x03) + 1;
-        DAR = DAR & 0xFFFF;
+        int DAR = (getpair((OP >>> 4) & 0x03) + 1) & 0xFFFF;
         putpair((OP >>> 4) & 0x03, DAR);
         return 5;
     }
 
     private int MCF_0B_DCX(short OP) {
-        int DAR = getpair((OP >>> 4) & 0x03) - 1;
-        DAR = DAR & 0xFFFF;
+        int DAR = (getpair((OP >>> 4) & 0x03) - 1) & 0xFFFF;
         putpair((OP >>> 4) & 0x03, DAR);
         return 5;
     }
@@ -979,8 +929,7 @@ public class EmulatorEngine {
 
     private int MF8_A0_ANA(short OP) {
         regs[REG_A] &= getreg(OP & 0x07);
-        setlogical(regs[REG_A]);
-        regs[REG_A] &= 0xFF;
+        flags = (short)(EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_AC));
         return 4;
     }
 
@@ -988,16 +937,14 @@ public class EmulatorEngine {
         short before = regs[REG_A];
         short diff = getreg(OP & 0x07);
         regs[REG_A] ^= diff;
-        setlogical(regs[REG_A]);
+        flags = EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]];
         auxCarry(before, diff);
-        regs[REG_A] &= 0xFF;
         return 4;
     }
 
     private int MF8_B0_ORA(short OP) {
         regs[REG_A] |= getreg(OP & 0x07);
-        setlogical(regs[REG_A]);
-        regs[REG_A] &= 0xFF;
+        flags = (short)(EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_AC));
         return 4;
     }
 
