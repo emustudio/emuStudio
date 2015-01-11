@@ -125,6 +125,11 @@ public abstract class InstructionsTest {
         assertEquals(memValue, memoryStub.readWord(cpu.getEngine().SP));
     }
 
+    protected void stepAndCheckPCandSP(int PC, int SP) {
+        stepAndCheckPC(PC);
+        assertEquals(SP, cpu.getEngine().SP);
+    }
+
     protected void stepAndCheckMemory(int value, int address) {
         cpu.step();
         assertEquals(value, (int)memoryStub.read(address));

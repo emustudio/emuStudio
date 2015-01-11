@@ -1,5 +1,6 @@
 package net.sf.emustudio.intel8080.impl;
 
+import emulib.plugins.cpu.CPU;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -144,4 +145,20 @@ public class InstructionsControlTest extends InstructionsTest {
         stepAndCheckPCandSPandMemory(0x38, 0x8, 8);
     }
 
+    @Test
+    public void testPCHL() throws Exception {
+        resetProgram(0xE9);
+        setRegister(EmulatorEngine.REG_H, 0x1F);
+        setRegister(EmulatorEngine.REG_L, 0x2F);
+
+        stepAndCheckPC(0x1F2F);
+    }
+
+    @Test
+    public void testHLT() throws Exception {
+        resetProgram(0x76);
+
+        cpu.step();
+        checkRunState(CPU.RunState.STATE_STOPPED_NORMAL);
+    }
 }
