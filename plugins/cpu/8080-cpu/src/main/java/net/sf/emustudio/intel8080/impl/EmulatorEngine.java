@@ -13,29 +13,13 @@ import java.util.concurrent.locks.LockSupport;
 public class EmulatorEngine {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
 
-    public static final int REG_A = 7,
-            REG_B = 0,
-            REG_C = 1,
-            REG_D = 2,
-            REG_E = 3,
-            REG_H = 4,
-            REG_L = 5;
-
-    public static final int FLAG_S = 0x80,
-            FLAG_Z = 0x40,
-            FLAG_AC = 0x10,
-            FLAG_P = 0x4,
-            FLAG_C = 0x1;
-
-    private static final byte PARITY[] = {
-            1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0,
-            1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1,
-            1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0,
-            1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-            1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0,
-            1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1,
-            1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0,
-            1, 0, 0, 1
+    public static final int REG_A = 7, REG_B = 0, REG_C = 1, REG_D = 2, REG_E = 3, REG_H = 4, REG_L = 5;
+    public static final int FLAG_S = 0x80, FLAG_Z = 0x40, FLAG_AC = 0x10, FLAG_P = 0x4, FLAG_C = 0x1;
+    private final static int[] CONDITION = new int[] {
+            FLAG_Z, FLAG_Z, FLAG_C, FLAG_C, FLAG_P, FLAG_P, FLAG_S, FLAG_S
+    };
+    private final static int[] CONDITION_VALUES = new int[] {
+            0, FLAG_Z, 0, FLAG_C, 0, FLAG_P, 0, FLAG_S
     };
 
     public boolean INTE = false; // enabling / disabling of interrupts
@@ -198,9 +182,7 @@ public class EmulatorEngine {
             case 2:
                 return (regs[REG_H] << 8) | regs[REG_L];
             case 3:
-                stat = (regs[REG_A] << 8) | flags;
-                stat |= 0x02;
-                return stat;
+                return (regs[REG_A] << 8) | flags | 2;
         }
         return 0;
     }
@@ -226,8 +208,8 @@ public class EmulatorEngine {
                 regs[REG_L] = low;
                 break;
             case 3:
-                regs[REG_A] = (short) ((val >>> 8) & 0xFF);
-                flags = (short) (val & 0xFF);
+                regs[REG_A] = high;
+                flags = (short)(low | 2);
                 break;
         }
     }
@@ -235,21 +217,9 @@ public class EmulatorEngine {
     /* Set the <C>arry, <S>ign, <Z>ero and <P>arity flags following
      an arithmetic operation on 'reg'. 8080 changes AC flag
      */
-    private void setarith(int reg, int before, int sumWith, boolean sub) {
-        carry(before, sumWith, sub);
-        if ((reg & 0x80) != 0) {
-            flags |= FLAG_S;
-        } else {
-            flags &= (~FLAG_S);
-        }
-        if ((reg & 0xff) == 0) {
-            flags |= FLAG_Z;
-        } else {
-            flags &= (~FLAG_Z);
-        }
-        // carry from 3.bit to 4.
+    private void setarith(int reg, int before, int sumWith) {
+        flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[reg & 0x1FF];
         auxCarry(before, sumWith);
-        parity(reg);
     }
 
     private void auxCarry(int before, int sumWith) {
@@ -268,176 +238,114 @@ public class EmulatorEngine {
         }
     }
 
-    private void carry(int before, int sumWith, boolean sub) {
-        int mask = sumWith & before;
-        int xormask = sumWith ^ before;
-
-        int C0 = mask&1;
-        int C1 = ((mask>>>1) ^ (C0&(xormask>>>1)))&1;
-        int C2 = ((mask>>>2) ^ (C1&(xormask>>>2)))&1;
-        int C3 = ((mask>>>3) ^ (C2&(xormask>>>3)))&1;
-        int C4 = ((mask>>>4) ^ (C3&(xormask>>>4)))&1;
-        int C5 = ((mask>>>5) ^ (C4&(xormask>>>5)))&1;
-        int C6 = ((mask>>>6) ^ (C5&(xormask>>>6)))&1;
-        int C7 = ((mask>>>7) ^ (C6&(xormask>>>7)))&1;
-
-        if (sub) {
-            if (C7 != 0) {
-                flags &= (~FLAG_C);
-            } else {
-                flags |= FLAG_C;
-            }
-        } else {
-            if (C7 != 0) {
-                flags |= FLAG_C;
-            } else {
-                flags &= (~FLAG_C);
-            }
-        }
-    }
-
-    /* Set the Parity (P) flag based on parity of 'reg', i.e., number
-     of bits on even: P=0200000, else P=0
-     */
-    private void parity(int reg) {
-        if (PARITY[reg & 0xFF] == 1) {
-            flags |= FLAG_P;
-        } else {
-            flags &= (~FLAG_P);
-        }
-    }
-
-    /* Test an 8080 flag condition and return 1 if true, 0 if false */
-    private boolean checkCondition(int con) {
-        switch (con) {
-            case 0:
-                return ((flags & FLAG_Z) == 0);
-            case 1:
-                return ((flags & FLAG_Z) != 0);
-            case 2:
-                return ((flags & FLAG_C) == 0);
-            case 3:
-                return ((flags & FLAG_C) != 0);
-            case 4:
-                return ((flags & FLAG_P) == 0);
-            case 5:
-                return ((flags & FLAG_P) != 0);
-            case 6:
-                return ((flags & FLAG_S) == 0);
-            case 7:
-                return ((flags & FLAG_S) != 0);
-        }
-        return false;
-    }
-
-    private static final Method[] dispatchTable = new Method[256];
+    private static final Method[] DISPATCH_TABLE = new Method[256];
 
     static {
         try {
-            dispatchTable[0] = EmulatorEngine.class.getDeclaredMethod("O0_NOP", short.class);
-            dispatchTable[6] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
-            dispatchTable[7] = EmulatorEngine.class.getDeclaredMethod("O7_RLC", short.class);
-            dispatchTable[14] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
-            dispatchTable[15] = EmulatorEngine.class.getDeclaredMethod("O15_RRC", short.class);
-            dispatchTable[22] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
-            dispatchTable[23] = EmulatorEngine.class.getDeclaredMethod("O23_RAL", short.class);
-            dispatchTable[30] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
-            dispatchTable[31] = EmulatorEngine.class.getDeclaredMethod("O31_RAR", short.class);
-            dispatchTable[34] = EmulatorEngine.class.getDeclaredMethod("O34_SHLD", short.class);
-            dispatchTable[38] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
-            dispatchTable[39] = EmulatorEngine.class.getDeclaredMethod("O39_DAA", short.class);
-            dispatchTable[42] = EmulatorEngine.class.getDeclaredMethod("O42_LHLD", short.class);
-            dispatchTable[46] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
-            dispatchTable[47] = EmulatorEngine.class.getDeclaredMethod("O47_CMA", short.class);
-            dispatchTable[50] = EmulatorEngine.class.getDeclaredMethod("O50_STA", short.class);
-            dispatchTable[54] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
-            dispatchTable[55] = EmulatorEngine.class.getDeclaredMethod("O55_STC", short.class);
-            dispatchTable[58] = EmulatorEngine.class.getDeclaredMethod("O58_LDA", short.class);
-            dispatchTable[62] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
-            dispatchTable[63] = EmulatorEngine.class.getDeclaredMethod("O63_CMC", short.class);
-            dispatchTable[64] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[65] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[66] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[67] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[68] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[69] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[70] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[71] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[72] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[73] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[74] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[75] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[76] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[77] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[78] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[79] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[80] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[81] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[82] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[83] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[84] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[85] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[86] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[87] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[88] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[89] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[90] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[91] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[92] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[93] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[94] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[95] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[96] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[97] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[98] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[99] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[100] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[101] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[102] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[103] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[104] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[105] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[106] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[107] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[108] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[109] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[110] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[111] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[112] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[113] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[114] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[115] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[116] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[117] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[118] = EmulatorEngine.class.getDeclaredMethod("O118_HLT", short.class);
-            dispatchTable[119] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[120] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[121] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[122] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[123] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[124] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[125] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[126] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[127] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
-            dispatchTable[195] = EmulatorEngine.class.getDeclaredMethod("O195_JMP", short.class);
-            dispatchTable[198] = EmulatorEngine.class.getDeclaredMethod("O198_ADI", short.class);
-            dispatchTable[201] = EmulatorEngine.class.getDeclaredMethod("O201_RET", short.class);
-            dispatchTable[205] = EmulatorEngine.class.getDeclaredMethod("O205_CALL", short.class);
-            dispatchTable[206] = EmulatorEngine.class.getDeclaredMethod("O206_ACI", short.class);
-            dispatchTable[211] = EmulatorEngine.class.getDeclaredMethod("O211_OUT", short.class);
-            dispatchTable[214] = EmulatorEngine.class.getDeclaredMethod("O214_SUI", short.class);
-            dispatchTable[219] = EmulatorEngine.class.getDeclaredMethod("O219_IN", short.class);
-            dispatchTable[222] = EmulatorEngine.class.getDeclaredMethod("O222_SBI", short.class);
-            dispatchTable[227] = EmulatorEngine.class.getDeclaredMethod("O227_XTHL", short.class);
-            dispatchTable[230] = EmulatorEngine.class.getDeclaredMethod("O230_ANI", short.class);
-            dispatchTable[233] = EmulatorEngine.class.getDeclaredMethod("O233_PCHL", short.class);
-            dispatchTable[235] = EmulatorEngine.class.getDeclaredMethod("O235_XCHG", short.class);
-            dispatchTable[238] = EmulatorEngine.class.getDeclaredMethod("O238_XRI", short.class);
-            dispatchTable[243] = EmulatorEngine.class.getDeclaredMethod("O243_DI", short.class);
-            dispatchTable[246] = EmulatorEngine.class.getDeclaredMethod("O246_ORI", short.class);
-            dispatchTable[249] = EmulatorEngine.class.getDeclaredMethod("O249_SPHL", short.class);
-            dispatchTable[251] = EmulatorEngine.class.getDeclaredMethod("O251_EI", short.class);
-            dispatchTable[254] = EmulatorEngine.class.getDeclaredMethod("O254_CPI", short.class);
+            DISPATCH_TABLE[0] = EmulatorEngine.class.getDeclaredMethod("O0_NOP", short.class);
+            DISPATCH_TABLE[6] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
+            DISPATCH_TABLE[7] = EmulatorEngine.class.getDeclaredMethod("O7_RLC", short.class);
+            DISPATCH_TABLE[14] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
+            DISPATCH_TABLE[15] = EmulatorEngine.class.getDeclaredMethod("O15_RRC", short.class);
+            DISPATCH_TABLE[22] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
+            DISPATCH_TABLE[23] = EmulatorEngine.class.getDeclaredMethod("O23_RAL", short.class);
+            DISPATCH_TABLE[30] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
+            DISPATCH_TABLE[31] = EmulatorEngine.class.getDeclaredMethod("O31_RAR", short.class);
+            DISPATCH_TABLE[34] = EmulatorEngine.class.getDeclaredMethod("O34_SHLD", short.class);
+            DISPATCH_TABLE[38] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
+            DISPATCH_TABLE[39] = EmulatorEngine.class.getDeclaredMethod("O39_DAA", short.class);
+            DISPATCH_TABLE[42] = EmulatorEngine.class.getDeclaredMethod("O42_LHLD", short.class);
+            DISPATCH_TABLE[46] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
+            DISPATCH_TABLE[47] = EmulatorEngine.class.getDeclaredMethod("O47_CMA", short.class);
+            DISPATCH_TABLE[50] = EmulatorEngine.class.getDeclaredMethod("O50_STA", short.class);
+            DISPATCH_TABLE[54] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
+            DISPATCH_TABLE[55] = EmulatorEngine.class.getDeclaredMethod("O55_STC", short.class);
+            DISPATCH_TABLE[58] = EmulatorEngine.class.getDeclaredMethod("O58_LDA", short.class);
+            DISPATCH_TABLE[62] = EmulatorEngine.class.getDeclaredMethod("MC7_O6_MVI", short.class);
+            DISPATCH_TABLE[63] = EmulatorEngine.class.getDeclaredMethod("O63_CMC", short.class);
+            DISPATCH_TABLE[64] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[65] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[66] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[67] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[68] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[69] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[70] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[71] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[72] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[73] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[74] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[75] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[76] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[77] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[78] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[79] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[80] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[81] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[82] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[83] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[84] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[85] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[86] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[87] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[88] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[89] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[90] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[91] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[92] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[93] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[94] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[95] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[96] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[97] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[98] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[99] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[100] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[101] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[102] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[103] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[104] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[105] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[106] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[107] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[108] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[109] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[110] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[111] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[112] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[113] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[114] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[115] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[116] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[117] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[118] = EmulatorEngine.class.getDeclaredMethod("O118_HLT", short.class);
+            DISPATCH_TABLE[119] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[120] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[121] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[122] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[123] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[124] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[125] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[126] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[127] = EmulatorEngine.class.getDeclaredMethod("MC0_O40_MOV", short.class);
+            DISPATCH_TABLE[195] = EmulatorEngine.class.getDeclaredMethod("O195_JMP", short.class);
+            DISPATCH_TABLE[198] = EmulatorEngine.class.getDeclaredMethod("O198_ADI", short.class);
+            DISPATCH_TABLE[201] = EmulatorEngine.class.getDeclaredMethod("O201_RET", short.class);
+            DISPATCH_TABLE[205] = EmulatorEngine.class.getDeclaredMethod("O205_CALL", short.class);
+            DISPATCH_TABLE[206] = EmulatorEngine.class.getDeclaredMethod("O206_ACI", short.class);
+            DISPATCH_TABLE[211] = EmulatorEngine.class.getDeclaredMethod("O211_OUT", short.class);
+            DISPATCH_TABLE[214] = EmulatorEngine.class.getDeclaredMethod("O214_SUI", short.class);
+            DISPATCH_TABLE[219] = EmulatorEngine.class.getDeclaredMethod("O219_IN", short.class);
+            DISPATCH_TABLE[222] = EmulatorEngine.class.getDeclaredMethod("O222_SBI", short.class);
+            DISPATCH_TABLE[227] = EmulatorEngine.class.getDeclaredMethod("O227_XTHL", short.class);
+            DISPATCH_TABLE[230] = EmulatorEngine.class.getDeclaredMethod("O230_ANI", short.class);
+            DISPATCH_TABLE[233] = EmulatorEngine.class.getDeclaredMethod("O233_PCHL", short.class);
+            DISPATCH_TABLE[235] = EmulatorEngine.class.getDeclaredMethod("O235_XCHG", short.class);
+            DISPATCH_TABLE[238] = EmulatorEngine.class.getDeclaredMethod("O238_XRI", short.class);
+            DISPATCH_TABLE[243] = EmulatorEngine.class.getDeclaredMethod("O243_DI", short.class);
+            DISPATCH_TABLE[246] = EmulatorEngine.class.getDeclaredMethod("O246_ORI", short.class);
+            DISPATCH_TABLE[249] = EmulatorEngine.class.getDeclaredMethod("O249_SPHL", short.class);
+            DISPATCH_TABLE[251] = EmulatorEngine.class.getDeclaredMethod("O251_EI", short.class);
+            DISPATCH_TABLE[254] = EmulatorEngine.class.getDeclaredMethod("O254_CPI", short.class);
         } catch (NoSuchMethodException e) {
             LOGGER.error("Could not set up dispatch table. The emulator won't work correctly", e);
         }
@@ -448,64 +356,44 @@ public class EmulatorEngine {
     }
 
     private int O7_RLC(short OP) {
-        int xx = (regs[REG_A] << 9) & 0200000;
-        if (xx != 0) {
-            flags |= FLAG_C;
-        } else {
-            flags &= (~FLAG_C);
-        }
-        regs[REG_A] = (short) ((regs[REG_A] << 1) & 0xFF);
-        if (xx != 0) {
-            regs[REG_A] |= 0x01;
-        }
+        int temp = (regs[REG_A] & 0x80) >>> 7;
+
+        flags &= (~FLAG_C);
+        flags |= temp;
+
+        regs[REG_A] = (short)((regs[REG_A] << 1 | temp) & 0xFF);
         return 4;
     }
 
     private int O15_RRC(short OP) {
-        if ((regs[REG_A] & 0x01) == 1) {
-            flags |= FLAG_C;
-        } else {
-            flags &= (~FLAG_C);
-        }
-        regs[REG_A] = (short) ((regs[REG_A] >>> 1) & 0xFF);
-        if ((flags & FLAG_C) != 0) {
-            regs[REG_A] |= 0x80;
-        }
+        int temp = regs[REG_A] & 0x01;
+
+        flags &= (~FLAG_C);
+        flags |= temp;
+
+        regs[REG_A] = (short) ((regs[REG_A] >>> 1) | (temp << 7));
         return 4;
     }
 
     private int O23_RAL(short OP) {
-        int xx = (regs[REG_A] << 9) & 0200000;
-        regs[REG_A] = (short) ((regs[REG_A] << 1) & 0xFF);
-        if ((flags & FLAG_C) != 0) {
-            regs[REG_A] |= 1;
-        } else {
-            regs[REG_A] &= 0xFE;
-        }
-        if (xx != 0) {
-            flags |= FLAG_C;
-        } else {
-            flags &= (~FLAG_C);
-        }
+        int temp = regs[REG_A] << 1;
+        regs[REG_A] = (short) (temp & 0xFF);
+        regs[REG_A] |= (flags & FLAG_C);
+
+        flags &= (~FLAG_C);
+        flags |= EmulatorTables.CARRY_TABLE[temp];
         return 4;
     }
 
     private int O31_RAR(short OP) {
-        int xx = 0;
-        if ((regs[REG_A] & 0x01) == 1) {
-            xx |= 0200000;
-        }
-        regs[REG_A] = (short) ((regs[REG_A] >>> 1) & 0xFF);
-        if ((flags & FLAG_C) != 0) {
+        int newCarry = regs[REG_A] & 1;
+        regs[REG_A] = (short) (regs[REG_A] >>> 1);
+        if ((flags & FLAG_C) == FLAG_C) {
             regs[REG_A] |= 0x80;
-        } else {
-            regs[REG_A] &= 0x7F;
         }
-        if (xx != 0) {
-            flags |= FLAG_C;
-        } else {
-            flags &= (~FLAG_C);
-        }
+        flags &= (~FLAG_C);
+        flags |= newCarry;
+
         return 4;
     }
 
@@ -517,42 +405,27 @@ public class EmulatorEngine {
     }
 
     private int O39_DAA(short OP) {
-        int DAR = regs[REG_A];
-        if (((DAR & 0x0F) > 9) || ((flags & FLAG_AC) != 0)) {
-            DAR += 6;
-            if ((DAR & 0x10) != (regs[REG_A] & 0x10)) {
-                flags |= FLAG_AC;
-            } else {
-                flags &= (~FLAG_AC);
-            }
-            regs[REG_A] = (short) (DAR & 0xFF);
-        }
-        DAR = (regs[REG_A] >>> 4) & 0x0F;
-        if ((DAR > 9) || ((flags & FLAG_C) != 0)) {
-            DAR += 6;
-            if ((DAR & 0x10) != 0) {
-                flags |= FLAG_C;
-            }
-            regs[REG_A] &= 0x0F;
-            regs[REG_A] |= ((DAR << 4) & 0xF0);
-        }
-        if ((regs[REG_A] & 0x80) != 0) {
-            flags |= FLAG_S;
+        int temp = regs[REG_A];
+        boolean acFlag = (flags & FLAG_AC) == FLAG_AC;
+        boolean cFlag = (flags & FLAG_C) == FLAG_C;
+
+        if (!acFlag && !cFlag) {
+            regs[REG_A] = (short)(EmulatorTables.DAA_NOT_AC_NOT_C_TABLE[temp] & 0xFF);
+            flags = (short)((EmulatorTables.DAA_NOT_AC_NOT_C_TABLE[temp] >> 8) & 0xFF);
+        } else if (acFlag && !cFlag) {
+            regs[REG_A] = (short)(EmulatorTables.DAA_AC_NOT_C_TABLE[temp] & 0xFF);
+            flags = (short)((EmulatorTables.DAA_AC_NOT_C_TABLE[temp] >> 8) & 0xFF);
+        } else if (!acFlag && cFlag) {
+            regs[REG_A] = (short)(EmulatorTables.DAA_NOT_AC_C_TABLE[temp] & 0xFF);
+            flags = (short)((EmulatorTables.DAA_NOT_AC_C_TABLE[temp] >> 8) & 0xFF);
         } else {
-            flags &= (~FLAG_S);
+            regs[REG_A] = (short)(EmulatorTables.DAA_AC_C_TABLE[temp] & 0xFF);
+            flags = (short)((EmulatorTables.DAA_AC_C_TABLE[temp] >> 8) & 0xFF);
         }
-        if ((regs[REG_A] & 0xff) == 0) {
-            flags |= FLAG_Z;
-        } else {
-            flags &= (~FLAG_Z);
-        }
-        parity(regs[REG_A]);
-        regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 4;
     }
 
     private int O42_LHLD(short OP) {
-        // TODO: test!
         int DAR = (Integer) memory.readWord(PC);
         PC += 2;
         regs[REG_L] = memory.read(DAR);
@@ -608,7 +481,7 @@ public class EmulatorEngine {
         int DAR = regs[REG_A];
         int diff = memory.read(PC++);
         regs[REG_A] += diff;
-        setarith(regs[REG_A], DAR, diff, false);
+        setarith(regs[REG_A], DAR, diff);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 7;
     }
@@ -633,7 +506,7 @@ public class EmulatorEngine {
             diff++;
         }
         regs[REG_A] += diff;
-        setarith(regs[REG_A], DAR, diff, false);
+        setarith(regs[REG_A], DAR, diff);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 7;
     }
@@ -648,7 +521,7 @@ public class EmulatorEngine {
         int DAR = regs[REG_A];
         int diff = memory.read(PC++);
         regs[REG_A] -= diff;
-        setarith(regs[REG_A], DAR, (-diff) & 0xFF, true);
+        setarith(regs[REG_A], DAR, (-diff) & 0xFF);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 7;
     }
@@ -666,7 +539,7 @@ public class EmulatorEngine {
             diff++;
         }
         regs[REG_A] -= diff;
-        setarith(regs[REG_A], DAR, (-diff) & 0xFF, true);
+        setarith(regs[REG_A], DAR, (-diff) & 0xFF);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         return 7;
     }
@@ -732,7 +605,7 @@ public class EmulatorEngine {
         int DAR = regs[REG_A] & 0xFF;
         int diff = memory.read(PC++);
         DAR -= diff;
-        setarith(DAR, X, (-diff) & 0xFF, true);
+        setarith(DAR, X, (-diff) & 0xFF);
         return 7;
     }
 
@@ -775,7 +648,7 @@ public class EmulatorEngine {
         int DAR = X & 0xFF;
         int diff = getreg(OP & 0x07);
         DAR -= diff;
-        setarith(DAR, X, (-diff) & 0xFF, true);
+        setarith(DAR, X, (-diff) & 0xFF);
         if ((OP & 0x07) == 6) {
             return 7;
         } else {
@@ -784,7 +657,8 @@ public class EmulatorEngine {
     }
 
     private int MC7_C2_JMP(short OP) {
-        if (checkCondition((OP >>> 3) & 0x07)) {
+        int index = (OP >>> 3) & 0x07;
+        if ((flags & CONDITION[index]) == CONDITION_VALUES[index]) {
             PC = (Integer) memory.readWord(PC);
         } else {
             PC += 2;
@@ -793,7 +667,8 @@ public class EmulatorEngine {
     }
 
     private int MC7_C4_CALL(short OP) {
-        if (checkCondition((OP >>> 3) & 0x07)) {
+        int index = (OP >>> 3) & 0x07;
+        if ((flags & CONDITION[index]) == CONDITION_VALUES[index]) {
             int DAR = (Integer) memory.readWord(PC);
             memory.writeWord(SP - 2, PC + 2);
             SP -= 2;
@@ -806,7 +681,8 @@ public class EmulatorEngine {
     }
 
     private int MC7_C0_RET(short OP) {
-        if (checkCondition((OP >>> 3) & 0x07)) {
+        int index = (OP >>> 3) & 0x07;
+        if ((flags & CONDITION[index]) == CONDITION_VALUES[index]) {
             PC = (Integer) memory.readWord(SP);
             SP += 2;
         }
@@ -838,7 +714,7 @@ public class EmulatorEngine {
         int X = regs[REG_A];
         int diff = getreg(OP & 0x07);
         regs[REG_A] += diff;
-        setarith(regs[REG_A], X, diff, false);
+        setarith(regs[REG_A], X, diff);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         if ((OP & 0x07) == 6) {
             return 7;
@@ -853,7 +729,7 @@ public class EmulatorEngine {
             diff++;
         }
         regs[REG_A] += diff;
-        setarith(regs[REG_A], X, diff, false);
+        setarith(regs[REG_A], X, diff);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         if ((OP & 0x07) == 6) {
             return 7;
@@ -865,7 +741,7 @@ public class EmulatorEngine {
         int X = regs[REG_A];
         int diff = getreg(OP & 0x07);
         regs[REG_A] -= diff;
-        setarith(regs[REG_A], X, (-diff) & 0xFF, true);
+        setarith(regs[REG_A], X, (-diff) & 0xFF);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         if ((OP & 0x07) == 6) {
             return 7;
@@ -880,7 +756,7 @@ public class EmulatorEngine {
             diff++;
         }
         regs[REG_A] -= diff;
-        setarith(regs[REG_A], X, (-diff) & 0xFF, true);
+        setarith(regs[REG_A], X, (-diff) & 0xFF);
         regs[REG_A] = (short) (regs[REG_A] & 0xFF);
         if ((OP & 0x07) == 6) {
             return 7;
@@ -1021,7 +897,7 @@ public class EmulatorEngine {
             return MF8_B0_ORA(OP);
         }
         /* Dispatch Instruction */
-        Method instr = dispatchTable[OP];
+        Method instr = DISPATCH_TABLE[OP];
         if (instr == null) {
             currentRunState = CPU.RunState.STATE_STOPPED_BAD_INSTR;
             return 0;

@@ -172,7 +172,7 @@ public class InstructionsLogicTest extends InstructionsTest {
         setRegisters(0x22);
         resetFlags(FLAG_S_Z_AC);
         setFlags(FLAG_P_C);
-        stepAndCheckAccAndFlags(0x82, FLAG_S_P_C, FLAG_Z_AC);
+        stepAndCheckAccAndFlags(0x82, FLAG_S_P, FLAG_Z_AC_C);
 
         resetFlags(FLAG_S_AC_P_C);
         setFlags(FLAG_Z_P);
