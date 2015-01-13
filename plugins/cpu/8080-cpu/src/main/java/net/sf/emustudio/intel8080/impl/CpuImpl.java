@@ -54,7 +54,6 @@ title = "Intel 8080 CPU",
 copyright = "\u00A9 Copyright 2007-2014, Peter Jakubčo",
 description = "Emulator of Intel 8080 CPU")
 public class CpuImpl extends AbstractCPU {
-    private final StatusPanel statusPanel;
     private final ContextImpl context;
     private Disassembler disassembler;
     // cpu speed
@@ -65,6 +64,7 @@ public class CpuImpl extends AbstractCPU {
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
 
     private EmulatorEngine engine;
+    private StatusPanel statusPanel;
 
     /**
      * This class performs runtime frequency calculation and updating.
@@ -103,7 +103,6 @@ public class CpuImpl extends AbstractCPU {
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register CPU Context", getTitle());
         }
-        statusPanel = new StatusPanel(this, context);
         frequencyUpdater = new FrequencyUpdater();
         frequencyScheduler = new Timer();
     }
@@ -133,6 +132,7 @@ public class CpuImpl extends AbstractCPU {
             // create disassembler and debug columns
             this.disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
             this.engine = new EmulatorEngine(memory, context);
+            statusPanel = new StatusPanel(this, context);
         } catch (InvalidContextException | ContextNotFoundException e) {
             throw new PluginInitializationException(this, ": Could not get memory context", e);
         }
