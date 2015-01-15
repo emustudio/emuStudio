@@ -772,14 +772,14 @@ public class EmulatorEngine {
 
     private int MC7_04_INR(short OP) {
         short DAR = (short)((getreg((OP >>> 3) & 0x07) + 1) & 0xFF);
-        flags = EmulatorTables.INC_TABLE[DAR];
+        flags = (short)(EmulatorTables.INC_TABLE[DAR] | (flags & FLAG_C));
         putreg((OP >>> 3) & 0x07, DAR);
         return 5;
     }
 
     private int MC7_05_DCR(short OP) {
         short DAR = (short)((getreg((OP >>> 3) & 0x07) - 1) & 0xFF);
-        flags = EmulatorTables.DEC_TABLE[DAR];
+        flags = (short)(EmulatorTables.DEC_TABLE[DAR] | (flags & FLAG_C));
         putreg((OP >>> 3) & 0x07, DAR);
         return 5;
     }

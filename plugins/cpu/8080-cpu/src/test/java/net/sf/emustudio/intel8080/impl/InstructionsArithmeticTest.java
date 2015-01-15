@@ -164,7 +164,7 @@ public class InstructionsArithmeticTest extends InstructionsTest {
 
     @Test
     public void testINR() throws Exception {
-        resetProgram(0x3C, 0x04, 0x0C, 0x14, 0x1C, 0x24, 0x2C);
+        resetProgram(0x3C, 0x04, 0x0C, 0x14, 0x1C, 0x24, 0x2C, 0x3C);
         setRegisters(0xFF, 0, 127, 0x0F, 2, 0xFE, 0x0E);
 
         stepAndCheckAccAndFlags(0, FLAG_Z_AC_P, FLAG_S_C);
@@ -191,6 +191,9 @@ public class InstructionsArithmeticTest extends InstructionsTest {
         stepAndCheck(0x0F, EmulatorEngine.REG_L);
         checkFlags(EmulatorEngine.FLAG_P);
         checkNotFlags(FLAG_S_Z_AC_C);
+
+        setFlags(EmulatorEngine.FLAG_C);
+        stepAndCheckAccAndFlags(1, EmulatorEngine.FLAG_C, FLAG_Z_AC_P);
     }
 
     @Test
