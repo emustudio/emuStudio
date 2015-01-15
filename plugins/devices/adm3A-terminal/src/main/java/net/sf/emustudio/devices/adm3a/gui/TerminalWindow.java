@@ -34,7 +34,6 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
-import java.io.IOException;
 import java.io.InputStream;
 
 public class TerminalWindow extends JFrame {
@@ -43,22 +42,13 @@ public class TerminalWindow extends JFrame {
     private final Font terminalFont;
 
     public TerminalWindow(Display display) {
-        InputStream fin = this.getClass().getResourceAsStream("/net/sf/emustudio/devices/adm3a/gui/terminal.ttf");
-        Font font = null;
-        try {
-            font = Font.createFont(Font.TRUETYPE_FONT, fin).deriveFont(12f);
+        Font font;
+        try (InputStream fin = TerminalWindow.class.getResourceAsStream("/net/sf/emustudio/devices/adm3a/gui/terminal.ttf")) {
+            font = Font.createFont(Font.TRUETYPE_FONT, fin).deriveFont(Font.PLAIN, 12f);
             GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
         } catch (Exception e) {
-            LOGGER.error("Cannot load custom font file, using Java monospace", e);
-        } finally {
-            try {
-                fin.close();
-            } catch (IOException e) {
-                LOGGER.error("Could not close font input stream", e);
-            }
-        }
-        if (font == null) {
-            font = new java.awt.Font("Monospaced", 0, 12);
+            LOGGER.error("Could not load custom font, using default monospaced font", e);
+            font = new Font(Font.MONOSPACED, 0, 12);
         }
         terminalFont = font;
         this.display = display;
