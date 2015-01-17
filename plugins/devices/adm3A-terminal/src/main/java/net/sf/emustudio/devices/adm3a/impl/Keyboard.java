@@ -21,6 +21,8 @@
 package net.sf.emustudio.devices.adm3a.impl;
 
 import emulib.plugins.device.DeviceContext;
+import net.sf.emustudio.devices.adm3a.InputProvider;
+
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ContainerEvent;
@@ -29,9 +31,79 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
-import net.sf.emustudio.devices.adm3a.InputProvider;
 
 public class Keyboard extends KeyAdapter implements ContainerListener, InputProvider {
+    private static final int[] CONTROL_KEYCODES = new int[256];
+    private static final int[] CONTROL_KEYCODES_ALWAYS_ACTIVE = new int[256];
+
+    static {
+        CONTROL_KEYCODES['@'] = 0;
+        CONTROL_KEYCODES['A'] = 1;
+        CONTROL_KEYCODES['B'] = 2;
+        CONTROL_KEYCODES['C'] = 3;
+        CONTROL_KEYCODES['D'] = 4;
+        CONTROL_KEYCODES['E'] = 5;
+        CONTROL_KEYCODES['F'] = 6;
+        CONTROL_KEYCODES['G'] = 7;
+        CONTROL_KEYCODES['H'] = 8;
+        CONTROL_KEYCODES['I'] = 9;
+        CONTROL_KEYCODES['J'] = 10;
+        CONTROL_KEYCODES['K'] = 11;
+        CONTROL_KEYCODES['L'] = 12;
+        CONTROL_KEYCODES['M'] = 13;
+        CONTROL_KEYCODES['N'] = 14;
+        CONTROL_KEYCODES['O'] = 15;
+        CONTROL_KEYCODES['P'] = 16;
+        CONTROL_KEYCODES['Q'] = 17;
+        CONTROL_KEYCODES['R'] = 18;
+        CONTROL_KEYCODES['S'] = 19;
+        CONTROL_KEYCODES['T'] = 20;
+        CONTROL_KEYCODES['U'] = 21;
+        CONTROL_KEYCODES['V'] = 22;
+        CONTROL_KEYCODES['W'] = 23;
+        CONTROL_KEYCODES['X'] = 24;
+        CONTROL_KEYCODES['Y'] = 25;
+        CONTROL_KEYCODES['Z'] = 26;
+        CONTROL_KEYCODES['['] = 27;
+        CONTROL_KEYCODES['\\'] = 28;
+        CONTROL_KEYCODES[']'] = 29;
+        CONTROL_KEYCODES['^'] = 30;
+        CONTROL_KEYCODES['-'] = 31;
+        CONTROL_KEYCODES['a'] = 1;
+        CONTROL_KEYCODES['b'] = 2;
+        CONTROL_KEYCODES['c'] = 3;
+        CONTROL_KEYCODES['d'] = 4;
+        CONTROL_KEYCODES['e'] = 5;
+        CONTROL_KEYCODES['f'] = 6;
+        CONTROL_KEYCODES['g'] = 7;
+        CONTROL_KEYCODES['h'] = 8;
+        CONTROL_KEYCODES['i'] = 9;
+        CONTROL_KEYCODES['j'] = 10;
+        CONTROL_KEYCODES['k'] = 11;
+        CONTROL_KEYCODES['l'] = 12;
+        CONTROL_KEYCODES['m'] = 13;
+        CONTROL_KEYCODES['n'] = 14;
+        CONTROL_KEYCODES['o'] = 15;
+        CONTROL_KEYCODES['p'] = 16;
+        CONTROL_KEYCODES['q'] = 17;
+        CONTROL_KEYCODES['r'] = 18;
+        CONTROL_KEYCODES['s'] = 19;
+        CONTROL_KEYCODES['t'] = 20;
+        CONTROL_KEYCODES['u'] = 21;
+        CONTROL_KEYCODES['v'] = 22;
+        CONTROL_KEYCODES['w'] = 23;
+        CONTROL_KEYCODES['x'] = 24;
+        CONTROL_KEYCODES['y'] = 25;
+        CONTROL_KEYCODES['z'] = 26;
+
+        CONTROL_KEYCODES_ALWAYS_ACTIVE[KeyEvent.VK_DOWN] = 10;
+        CONTROL_KEYCODES_ALWAYS_ACTIVE[KeyEvent.VK_UP] = 11;
+        CONTROL_KEYCODES_ALWAYS_ACTIVE[KeyEvent.VK_RIGHT] = 12;
+        CONTROL_KEYCODES_ALWAYS_ACTIVE[KeyEvent.VK_LEFT] = 8;
+        CONTROL_KEYCODES_ALWAYS_ACTIVE[KeyEvent.VK_ENTER] = 13;
+
+    }
+
     private int keyCode = 0;
     private List<DeviceContext<Short>> observers = new ArrayList<DeviceContext<Short>>();
 
@@ -61,117 +133,12 @@ public class Keyboard extends KeyAdapter implements ContainerListener, InputProv
 
     @Override
     public void keyPressed(KeyEvent evt) {
+        int tmpKeyCode = evt.getKeyCode() & 0xFF;
         if (evt.isControlDown()) {
-            switch (evt.getKeyCode()) {
-                case (int) '@':
-                    keyCode = 0;
-                    break;
-                case (int) 'A':
-                    keyCode = 1;
-                    break;
-                case (int) 'B':
-                    keyCode = 2;
-                    break;
-                case (int) 'C':
-                    keyCode = 3;
-                    break;
-                case (int) 'D':
-                    keyCode = 4;
-                    break;
-                case (int) 'E':
-                    keyCode = 5;
-                    break;
-                case (int) 'F':
-                    keyCode = 6;
-                    break;
-                case (int) 'G':
-                    keyCode = 7;
-                    break;
-                case (int) 'H':
-                    keyCode = 8;
-                    break;
-                case (int) 'I':
-                    keyCode = 9;
-                    break;
-                case (int) 'J':
-                    keyCode = 10;
-                    break;
-                case (int) 'K':
-                    keyCode = 11;
-                    break;
-                case (int) 'L':
-                    keyCode = 12;
-                    break;
-                case (int) 'M':
-                    keyCode = 13;
-                    break;
-                case (int) 'N':
-                    keyCode = 14;
-                    break;
-                case (int) 'O':
-                    keyCode = 15;
-                    break;
-                case (int) 'P':
-                    keyCode = 16;
-                    break;
-                case (int) 'Q':
-                    keyCode = 17;
-                    break;
-                case (int) 'R':
-                    keyCode = 18;
-                    break;
-                case (int) 'S':
-                    keyCode = 19;
-                    break;
-                case (int) 'T':
-                    keyCode = 20;
-                    break;
-                case (int) 'U':
-                    keyCode = 21;
-                    break;
-                case (int) 'V':
-                    keyCode = 22;
-                    break;
-                case (int) 'W':
-                    keyCode = 23;
-                    break;
-                case (int) 'X':
-                    keyCode = 24;
-                    break;
-                case (int) 'Y':
-                    keyCode = 25;
-                    break;
-                case (int) 'Z':
-                    keyCode = 26;
-                    break;
-                case (int) '[':
-                    keyCode = 27;
-                    break;
-                case (int) '*':
-                    keyCode = 28;
-                    break;
-                case (int) ']':
-                    keyCode = 29;
-                    break;
-                case (int) '^':
-                    keyCode = 30;
-                    break;
-                default:
-                    return;
-            }
+            keyCode = CONTROL_KEYCODES[tmpKeyCode];
         } else {
-            int kC = evt.getKeyCode();
-            if (kC == KeyEvent.VK_DOWN) {
-                keyCode = 10;
-            } else if (kC == KeyEvent.VK_UP) {
-                keyCode = 11;
-            } else if (kC == KeyEvent.VK_RIGHT) {
-                keyCode = 12;
-            } else if (kC == KeyEvent.VK_LEFT) {
-                keyCode = 8;
-            } else if (kC == KeyEvent.VK_ENTER) {
-                keyCode = 13;
-            } else {
+            keyCode = CONTROL_KEYCODES_ALWAYS_ACTIVE[tmpKeyCode];
+            if (keyCode == 0) {
                 keyCode = (int) evt.getKeyChar();
                 if (keyCode > 254) {
                     keyCode = 0;

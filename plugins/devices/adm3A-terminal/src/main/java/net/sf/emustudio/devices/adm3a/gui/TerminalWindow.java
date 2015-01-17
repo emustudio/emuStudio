@@ -38,6 +38,9 @@ import java.io.InputStream;
 
 public class TerminalWindow extends JFrame {
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminalWindow.class);
+    private static final Color FOREGROUND = new Color(0, 255, 0);
+    private static final Color BACKGROUND = new Color(0, 0, 0);
+
     private final Display display;
     private final Font terminalFont;
 
@@ -72,12 +75,12 @@ public class TerminalWindow extends JFrame {
         setResizable(false);
 
         display.setFont(terminalFont);
-        display.setForeground(new Color(0, 255, 0));
-        display.setBackground(new Color(0, 0, 0));
+        display.setForeground(FOREGROUND);
+        display.setBackground(BACKGROUND);
         display.setBounds(53, 60, 653, 400);
 
         lblBack.setLocation(0, 0);
-        lblBack.setFont(new Font("Monospaced", 0, 12)); // NOI18N
+        lblBack.setFont(new Font(Font.MONOSPACED, 0, 12)); // NOI18N
         lblBack.setIcon(img); // NOI18N
         lblBack.setFocusable(false);
 

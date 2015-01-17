@@ -341,6 +341,14 @@ public class Display extends Canvas implements DeviceContext<Short>, TerminalSet
         }
     }
 
+    private void insertString(String string) {
+        for (char c : string.toCharArray()) {
+            insertChar((char) (c & 0xFF));
+            moveCursor();
+        }
+    }
+
+
     /**
      * This method is called from serial I/O card (by OUT instruction)
      */
@@ -354,6 +362,10 @@ public class Display extends Canvas implements DeviceContext<Short>, TerminalSet
          * to "video memory"
          */
         switch (data) {
+            case 5:
+                /* HERE IS*/
+                insertString("LSI-ADM3A Terminal");
+                return;
             case 7:
                 return; /* bell */
             case 8:
@@ -369,10 +381,22 @@ public class Display extends Canvas implements DeviceContext<Short>, TerminalSet
                 }
                 repaint(); // to be sure for erasing cursor
                 return;
+            case 0xB: // VT
+            case 0xC: // FF
+                return;
             case 0x0D:
                 cursor_x = 0;
                 repaint(); // to be sure for erasing cursor
                 return; /* carriage return */
+            case 0xE: // SO
+            case 0xF: // SI
+                return;
+            case 0x1A: // clear screen
+                clearScreen();
+                return;
+            case 0x1B: // initiates load cursor operation
+            case 0x1E: // homes cursor
+                return;
         }
         insertChar((char)(data & 0xFF));
         moveCursor();
