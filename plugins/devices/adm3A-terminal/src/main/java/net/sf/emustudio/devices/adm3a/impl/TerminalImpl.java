@@ -42,28 +42,32 @@ import java.util.ResourceBundle;
 
 @PluginType(type = PLUGIN_TYPE.DEVICE,
 title = "LSI ADM-3A terminal",
-copyright = "\u00A9 Copyright 2007-2014, Peter Jakubčo",
+copyright = "\u00A9 Copyright 2007-2015, Peter Jakubčo",
 description = "Custom implementation of LSI ADM-3A terminal")
 public class TerminalImpl extends AbstractDevice implements TerminalSettings.ChangedObserver {
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminalImpl.class);
+    public static final int COLUMNS_COUNT = 80;
+    public static final int ROWS_COUNT = 24;
+
+    private final ContextPool contextPool;
+    private final Display display;
+    private final Cursor cursor;
+    private final TerminalSettings terminalSettings;
 
     private TerminalWindow terminalGUI;
-    private Display display;
     private InputProvider keyboard;
     private DeviceContext<Short> connectedDevice;
-    private TerminalSettings terminalSettings;
-    private final ContextPool contextPool;
 
     public TerminalImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
         this.contextPool = Objects.requireNonNull(contextPool);
         terminalSettings = new TerminalSettings(pluginID);
-        display = new Display(80, 25, terminalSettings);
+        cursor = new Cursor(COLUMNS_COUNT, ROWS_COUNT);
+        display = new Display(COLUMNS_COUNT, ROWS_COUNT, terminalSettings, cursor);
         try {
             contextPool.register(pluginID, display, DeviceContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
-            StaticDialogs.showErrorMessage("Could not register ADM-3A terminal",
-                    TerminalImpl.class.getAnnotation(PluginType.class).title());
+            StaticDialogs.showErrorMessage("Could not register ADM-3A terminal", getTitle());
         }
     }
 
@@ -85,18 +89,17 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
                 LOGGER.warn("The terminal is not connected to any I/O device.");
             }
             terminalGUI = new TerminalWindow(display);
+            display.start();
             terminalSettings.read();
         } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException(
-                    this, ": Could not get serial I/O board Context", e
-            );
+            throw new PluginInitializationException(this, ": Could not get serial I/O board Context", e);
         }
     }
 
     @Override
     public void showGUI() {
         if (isGUIAllowed()) {
-          terminalGUI.setVisible(true);
+            terminalGUI.setVisible(true);
         }
     }
 
@@ -122,6 +125,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
         if (terminalGUI != null) {
             terminalGUI.destroy();
         }
+        display.destroy();
     }
 
     @Override
@@ -156,8 +160,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
 
     private void createKeyboardFromFile() {
         destroyKeyboard();
-        KeyboardFromFile tmp = new KeyboardFromFile();
-        tmp.setInputFile(new File(terminalSettings.getInputFileName()));
+        KeyboardFromFile tmp = new KeyboardFromFile(new File(terminalSettings.getInputFileName()));
         keyboard = tmp;
         connectKeyboard();
         tmp.processInputFile(terminalSettings.getInputReadDelay());
@@ -165,7 +168,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
 
     private void createKeyboard() {
         destroyKeyboard();
-        Keyboard tmp = new Keyboard();
+        Keyboard tmp = new Keyboard(cursor);
         tmp.addListenerRecursively(terminalGUI);
         keyboard = tmp;
         connectKeyboard();

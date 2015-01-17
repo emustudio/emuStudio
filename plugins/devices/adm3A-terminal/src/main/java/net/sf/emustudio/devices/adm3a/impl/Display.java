@@ -24,20 +24,23 @@
 package net.sf.emustudio.devices.adm3a.impl;
 
 import emulib.plugins.device.DeviceContext;
-import java.awt.Canvas;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.JPanel;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.RenderingHints;
+import java.awt.GraphicsEnvironment;
+import java.awt.Point;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.io.InputStream;
+import java.util.Objects;
 
 /**
  * This class provides emulation of CRT display. It supports double buffering
@@ -49,201 +52,115 @@ import java.util.TimerTask;
  *
  * Terminal can interpret ASCII codes from 0-127. Some have special
  * functionality (0-31)
- *
- * @author Peter Jakubčo
  */
-public class Display extends Canvas implements DeviceContext<Short>, TerminalSettings.ChangedObserver {
+public class Display extends JPanel implements DeviceContext<Short>, TerminalSettings.ChangedObserver, Cursor.LineRoller {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Display.class);
+
+    private static final String HERE_IS_CONSTANT = "LSI-ADM3A Terminal";
+    public static final Color FOREGROUND = new Color(0, 255, 0);
+    public static final Color BACKGROUND = new Color(0, 0, 0);
+
     private final char[] videoMemory;
-    private int col_count; // column count in CRT
-    private int row_count; // row count in CRT
-    private int line_height; // height of the font = height of the line
-    private int line_ascent; // Font height above baseline
-    private int max_width;   // The width of the terminal
-    private int max_height;  // The height of the terminal
-    private Timer cursorTimer;
-    private CursorPainter cursorPainter;
-    private int cursor_x = 0, cursor_y = 0; // position of cursor
-    private int char_width = 0;
-    private int start_y;
+    private final int colCount;
+    private final int rowCount;
 
-    private Graphics2D dbg;  // graphics for double buffering
-    private Image dbImage;   // second buffer
+    private final TerminalSettings settings;
+    private final Cursor cursor;
+
+    private int charWidth;
+    private int charHeight;
+    private int maxWidth;
+    private int maxHeight;
+    private int startY;
+    private volatile boolean needsMeasure = true;
+
     private FileWriter outputWriter = null;
-    private TerminalSettings settings;
 
-    public Display(int cols, int rows, TerminalSettings settings) {
-        this.settings = settings;
-        this.col_count = cols;
-        this.row_count = rows;
-        videoMemory = new char[rows * cols];
+    public Display(int cols, int rows, TerminalSettings settings, Cursor cursor) {
+        this.colCount = cols;
+        this.rowCount = rows;
+
+        this.settings = Objects.requireNonNull(settings);
+        this.cursor = Objects.requireNonNull(cursor);
+        this.videoMemory = new char[rows * cols];
+
+        setForeground(FOREGROUND);
+        setBackground(BACKGROUND);
+        setDoubleBuffered(true);
+        setFont(loadFont());
+
         clearScreen();
-        cursorTimer = new Timer();
-        cursorPainter = new CursorPainter();
-        cursorTimer.scheduleAtFixedRate(cursorPainter, 0, 800);
         settings.addChangedObserver(this);
     }
 
-    public void setCursorPos(int x, int y) {
-        cursor_x = x;
-        cursor_y = y;
-        repaint();
+    private Font loadFont() {
+        Font font;
+        try (InputStream fin = getClass().getResourceAsStream("/net/sf/emustudio/devices/adm3a/gui/terminal.ttf")) {
+            font = Font.createFont(Font.TRUETYPE_FONT, fin).deriveFont(Font.PLAIN, 12f);
+            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
+        } catch (Exception e) {
+            LOGGER.error("Could not load custom font, using default monospaced font", e);
+            font = new Font(Font.MONOSPACED, 0, 12);
+        }
+        return font;
     }
 
-    protected void measure() {
-        FontMetrics fm;
-        try {
-            fm = getFontMetrics(getFont());
-        } catch (Exception e) {
-            return;
-        }
-        if (fm == null) {
-            return;
-        }
-        line_height = fm.getHeight();
-        line_ascent = fm.getAscent();
-        char_width = fm.stringWidth("W");
 
-        max_width = col_count * char_width;
-        max_height = row_count * line_height;
 
-        Dimension d = getSize();
-        start_y = 2 * line_ascent + (d.height - max_height) / 2;
+    @Override
+    public Class<?> getDataType() {
+        return Short.class;
+    }
+
+    /**
+     * Input from the display is always 0, because the input is captured
+     * by an input provider, not by the display.
+     *
+     * @return 0
+     */
+    @Override
+    public Short read() {
+        return 0;
+    }
+
+    public void start() {
+        measureIfNeeded();
+        cursor.start(getGraphics(), charWidth, charHeight, startY);
+    }
+
+    protected void measureIfNeeded() {
+        if (needsMeasure) {
+            Graphics graphics = getGraphics();
+            FontMetrics fontMetrics = graphics.getFontMetrics();
+
+            charWidth = fontMetrics.charWidth('W');
+            charHeight = fontMetrics.getHeight();
+
+            int lineAscent = fontMetrics.getAscent();
+
+            maxWidth = colCount * charWidth;
+            maxHeight = rowCount * charHeight;
+
+            Dimension d = getSize();
+            startY = 2 * lineAscent + (d.height - maxHeight) / 2;
+            needsMeasure = false;
+        }
     }
 
     public void destroy() {
         settings.removeChangedObserver(this);
-        cursorPainter.stop();
-        cursorTimer.cancel();
+        cursor.destroy();
         closeOutputWriter();
-    }
-
-    // Methods to set the various attributes of the component
-    @Override
-    public void setFont(Font f) {
-        super.setFont(f);
-        measure();
-        repaint();
-    }
-
-    @Override
-    public void setForeground(Color c) {
-        super.setForeground(c);
-        repaint();
-    }
-
-    @Override
-    public void addNotify() {
-        super.addNotify();
-        measure();
     }
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(max_width, max_height);
+        return new Dimension(maxWidth, maxHeight);
     }
 
     @Override
     public Dimension getMinimumSize() {
-        return new Dimension(max_width, max_height);
-    }
-
-    /**
-     * Method clears screen of emulated CRT
-     */
-    public final void clearScreen() {
-        synchronized (videoMemory) {
-            for (int i = 0; i < (row_count * col_count); i++) {
-                videoMemory[i] = ' ';
-            }
-        }
-        cursor_x = 0;
-        cursor_y = 0;
-        repaint();
-    }
-
-    /**
-     * Method inserts char to cursor position. Doesn't move cursor.
-     * @param c char to insert
-     */
-    private void insertChar(char c) {
-        synchronized (videoMemory) {
-            videoMemory[cursor_y * col_count + cursor_x] = c;
-        }
-    }
-
-    /**
-     * Moves cursor backward in one position. Don't move cursor vertically.
-     */
-    private void cursorBack() {
-        if (cursor_x <= 0) {
-            return;
-        }
-        cursor_x--;
-    }
-
-    /**
-     * Move cursor foreward in one position, also vertically if needed.
-     */
-    private void moveCursor() {
-        cursor_x++;
-        if (cursor_x > (col_count - 1)) {
-            cursor_x = 0;
-            cursor_y++;
-            // automatic line rolling
-            if (cursor_y > (row_count - 1)) {
-                rollLine();
-                cursor_y = (row_count - 1);
-            }
-        }
-    }
-
-    /**
-     * Rolls screen by 1 row vertically up.
-     * The principle: moves all lines beginning from 1 in videomemory into
-     * line 0, and previous value of line 0 will be lost.
-     */
-    public void rollLine() {
-        synchronized (videoMemory) {
-            for (int i = col_count; i < (col_count * row_count); i++) {
-                videoMemory[i - col_count] = videoMemory[i];
-            }
-            for (int i = col_count * row_count - col_count; i < (col_count * row_count); i++) {
-                videoMemory[i] = ' ';
-            }
-        }
-        repaint();
-    }
-
-    /**
-     * Override previous update method in order to implement double-buffering.
-     * As a second buffer is used Image object.
-     */
-    @Override
-    public void update(Graphics g) {
-        // initialize buffer if needed
-        if (dbImage == null) {
-            dbImage = createImage(this.getSize().width, this.getSize().height);
-            dbg = (Graphics2D) dbImage.getGraphics();
-        }
-        // for antialiasing text (hope it wont be turned on if antiAliasing
-        // = false)
-        if (settings.isAntiAliasing()) {
-            dbg.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            dbg.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        } else {
-            dbg.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-            dbg.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-        }
-        // clear screen in background
-        dbg.setColor(getBackground());
-        dbg.fillRect(0, 0, this.getSize().width, this.getSize().height);
-
-        // draw elements in background
-        dbg.setColor(getForeground());
-        paint(dbg);
-
-        // draw image on the screen
-        g.drawImage(dbImage, 0, 0, this);
+        return new Dimension(maxWidth, maxHeight);
     }
 
     /**
@@ -251,17 +168,22 @@ public class Display extends Canvas implements DeviceContext<Short>, TerminalSet
      * in videomemory represents ASCII form of the char.
      */
     @Override
-    public void paint(Graphics g) {
+    public void paintComponent(Graphics graphics) {
+        Dimension size = getSize();
+        graphics.setColor(BACKGROUND);
+        graphics.fillRect(0, 0, size.width, size.height);
+        graphics.setColor(FOREGROUND);
+
         int t_y;
         int x, y;
         int temp;
         String sLine = "";
 
-        Graphics2D g2d = (Graphics2D) g;
-        for (y = 0; y < row_count; y++) {
-            t_y = start_y + y * line_height;
-            temp = y * col_count;
-            for (x = 0; x < col_count; x++) {
+        Graphics2D g2d = (Graphics2D) graphics;
+        for (y = 0; y < rowCount; y++) {
+            t_y = startY + y * charHeight;
+            temp = y * colCount;
+            for (x = 0; x < colCount; x++) {
                 synchronized (videoMemory) {
                     sLine += videoMemory[temp + x];
                 }
@@ -301,36 +223,6 @@ public class Display extends Canvas implements DeviceContext<Short>, TerminalSet
         }
     }
 
-    private class CursorPainter extends TimerTask {
-
-        @Override
-        public void run() {
-            Graphics displayGraphics = getGraphics();
-            if (displayGraphics == null) {
-                return;
-            }
-            displayGraphics.setXORMode(Color.BLACK);
-            displayGraphics.fillRect(cursor_x * char_width, cursor_y * line_height
-                    + start_y - line_height, char_width, line_height);
-            displayGraphics.setPaintMode();
-        }
-
-        public void stop() {
-            this.cancel();
-        }
-    }
-
-    /**
-     * Input from the display is always 0, because the input is captured
-     * by an input provider, not by the display.
-     * 
-     * @return 0
-     */
-    @Override
-    public Short read() {
-        return 0;
-    }
-
     private void writeToOutput(short val) {
         if (outputWriter != null) {
             try {
@@ -341,71 +233,91 @@ public class Display extends Canvas implements DeviceContext<Short>, TerminalSet
         }
     }
 
-    private void insertString(String string) {
-        for (char c : string.toCharArray()) {
-            insertChar((char) (c & 0xFF));
-            moveCursor();
+    private void insertChar(char c) {
+        Point cursorPoint = cursor.getPoint();
+        synchronized (videoMemory) {
+            videoMemory[cursorPoint.y * colCount + cursorPoint.x] = c;
         }
     }
 
+    public final void clearScreen() {
+        synchronized (videoMemory) {
+            for (int i = 0; i < (rowCount * colCount); i++) {
+                videoMemory[i] = ' ';
+            }
+        }
+        cursor.home();
+        repaint();
+    }
+
+    @Override
+    public void rollLine() {
+        synchronized (videoMemory) {
+            for (int i = colCount; i < (colCount * rowCount); i++) {
+                videoMemory[i - colCount] = videoMemory[i];
+            }
+            for (int i = colCount * rowCount - colCount; i < (colCount * rowCount); i++) {
+                videoMemory[i] = ' ';
+            }
+        }
+        repaint();
+    }
+
+    private void insertString(String string) {
+        for (char c : string.toCharArray()) {
+            insertChar(c);
+            cursor.move(this);
+        }
+    }
 
     /**
      * This method is called from serial I/O card (by OUT instruction)
      */
     @Override
     public void write(Short data) {
-        measure();
-
         writeToOutput(data);
         /*
          * if it is special char, interpret it. else just add
          * to "video memory"
          */
         switch (data) {
-            case 5:
-                /* HERE IS*/
-                insertString("LSI-ADM3A Terminal");
+            case 5: // HERE IS
+                insertString(HERE_IS_CONSTANT);
+                break;
+            case 7: // BELL
                 return;
-            case 7:
-                return; /* bell */
-            case 8:
-                cursorBack();
-                repaint();
-                return; /* backspace*/
-            case 0x0A: /* line feed */
-                cursor_y++;
-                cursor_x = 0;
-                if (cursor_y > (row_count - 1)) {
-                    cursor_y = (row_count - 1);
-                    rollLine();
-                }
-                repaint(); // to be sure for erasing cursor
-                return;
-            case 0xB: // VT
-            case 0xC: // FF
-                return;
-            case 0x0D:
-                cursor_x = 0;
-                repaint(); // to be sure for erasing cursor
-                return; /* carriage return */
-            case 0xE: // SO
-            case 0xF: // SI
+            case 8: // BACKSPACE
+                cursor.back();
+                break;
+            case 0x0A: // line feed
+                cursor.down(this);
+                break;
+            case 0x0B: // VT
+                cursor.up();
+                break;
+            case 0x0C: // FF
+                cursor.forward();
+                break;
+            case 0x0D: // CARRIAGE RETURN
+                cursor.carriageReturn();
+                break;
+            case 0x0E: // SO
+            case 0x0F: // SI
                 return;
             case 0x1A: // clear screen
                 clearScreen();
                 return;
             case 0x1B: // initiates load cursor operation
             case 0x1E: // homes cursor
-                return;
+                cursor.home();
+                break;
         }
-        insertChar((char)(data & 0xFF));
-        moveCursor();
-        repaint();
-    }
 
-    @Override
-    public Class<?> getDataType() {
-        return Short.class;
+        if (data >= 32) {
+            insertChar((char) (data & 0xFF));
+            cursor.move(this);
+        }
+        repaint();
     }
 
 }

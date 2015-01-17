@@ -23,8 +23,6 @@
 package net.sf.emustudio.devices.adm3a.gui;
 
 import net.sf.emustudio.devices.adm3a.impl.Display;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -33,27 +31,11 @@ import javax.swing.WindowConstants;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Font;
-import java.awt.GraphicsEnvironment;
-import java.io.InputStream;
 
 public class TerminalWindow extends JFrame {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TerminalWindow.class);
-    private static final Color FOREGROUND = new Color(0, 255, 0);
-    private static final Color BACKGROUND = new Color(0, 0, 0);
-
     private final Display display;
-    private final Font terminalFont;
 
     public TerminalWindow(Display display) {
-        Font font;
-        try (InputStream fin = TerminalWindow.class.getResourceAsStream("/net/sf/emustudio/devices/adm3a/gui/terminal.ttf")) {
-            font = Font.createFont(Font.TRUETYPE_FONT, fin).deriveFont(Font.PLAIN, 12f);
-            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
-        } catch (Exception e) {
-            LOGGER.error("Could not load custom font, using default monospaced font", e);
-            font = new Font(Font.MONOSPACED, 0, 12);
-        }
-        terminalFont = font;
         this.display = display;
 
         initComponents();
@@ -62,7 +44,6 @@ public class TerminalWindow extends JFrame {
     }
 
     public void destroy() {
-        display.destroy();
         this.dispose();
     }
 
@@ -74,9 +55,6 @@ public class TerminalWindow extends JFrame {
         setTitle("Terminal ADM-3A");
         setResizable(false);
 
-        display.setFont(terminalFont);
-        display.setForeground(FOREGROUND);
-        display.setBackground(BACKGROUND);
         display.setBounds(53, 60, 653, 400);
 
         lblBack.setLocation(0, 0);

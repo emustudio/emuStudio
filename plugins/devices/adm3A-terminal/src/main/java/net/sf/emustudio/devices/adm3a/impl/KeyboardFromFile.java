@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
@@ -37,9 +36,9 @@ public class KeyboardFromFile implements InputProvider {
     private final static Logger LOGGER = LoggerFactory.getLogger(KeyboardFromFile.class);
 
     private List<DeviceContext<Short>> inputObservers = new CopyOnWriteArrayList<DeviceContext<Short>>();
-    private File inputFile;
+    private final File inputFile;
 
-    public void setInputFile(File inputFile) {
+    public KeyboardFromFile(File inputFile) {
         this.inputFile = inputFile;
     }
 
@@ -47,9 +46,7 @@ public class KeyboardFromFile implements InputProvider {
         if (inputFile == null) {
             return;
         }
-        BufferedInputStream input = null;
-        try {
-            input = new BufferedInputStream(new FileInputStream(inputFile));
+        try(BufferedInputStream input = new BufferedInputStream(new FileInputStream(inputFile))) {
             int key;
             while ((key = input.read()) != -1) {
                 notifyObservers((short) key);
@@ -59,14 +56,6 @@ public class KeyboardFromFile implements InputProvider {
             }
         } catch (Exception e) {
             LOGGER.error("Could not process input file", e);
-        } finally {
-            try {
-                if (input != null) {
-                    input.close();
-                }
-            } catch (IOException e) {
-                LOGGER.error("Could not close input file", e);
-            }
         }
     }
 
