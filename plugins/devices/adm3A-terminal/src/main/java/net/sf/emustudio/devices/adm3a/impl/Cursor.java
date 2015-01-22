@@ -1,32 +1,40 @@
 package net.sf.emustudio.devices.adm3a.impl;
 
+import net.jcip.annotations.ThreadSafe;
+
 import java.awt.Graphics;
 import java.awt.Point;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+@ThreadSafe
 public class Cursor {
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-    private ScheduledFuture cursorPainter;
 
-    private volatile int cursorX = 0, cursorY = 0; // position of cursor
-    private final int colCount; // column count in CRT
-    private final int rowCount; // row count in CRT
+    private final int colCount;
+    private final int rowCount;
+    private final AtomicReference<Point> cursorPoint = new AtomicReference<>(new Point());
+    private volatile ScheduledFuture cursorPainter;
 
     public interface LineRoller {
 
         void rollLine();
     }
 
+    // run by only one thread
     private class CursorPainter implements Runnable {
         private final Graphics graphics;
-        private final int charHeight; // height of the font = height of the line
+        private final int charHeight;
         private final int charWidth;
         private final int startY;
+
+        private volatile boolean nowVisible;
+        private volatile Point visiblePoint;
 
         private CursorPainter(Graphics graphics, int charWidth, int charHeight, int startY) {
             this.charHeight = charHeight;
@@ -37,10 +45,15 @@ public class Cursor {
 
         @Override
         public void run() {
+            if (!nowVisible) {
+                visiblePoint = cursorPoint.get();
+            }
+
             graphics.setXORMode(Display.BACKGROUND);
             graphics.setColor(Display.FOREGROUND);
-            graphics.fillRect(cursorX * charWidth, cursorY * charHeight + startY - charHeight, charWidth, charHeight);
+            graphics.fillRect(visiblePoint.x * charWidth, visiblePoint.y * charHeight + startY - charHeight, charWidth, charHeight);
             graphics.setPaintMode();
+            nowVisible = !nowVisible;
         }
 
     }
@@ -51,73 +64,108 @@ public class Cursor {
     }
 
     public void home() {
-        cursorX = 0;
-        cursorY = 0;
+        cursorPoint.set(new Point());
     }
 
     public Point getPoint(){
-        return new Point(cursorX, cursorY);
+        return new Point(cursorPoint.get());
     }
 
     public void set(int x, int y) {
-        this.cursorX = x;
-        this.cursorY = y;
+        cursorPoint.set(new Point(x, y));
     }
 
     public void move(LineRoller lineRoller) {
-        cursorX++;
-        if (cursorX > (colCount - 1)) {
-            cursorX = 0;
-            cursorY++;
-            // automatic line rolling
-            if (cursorY > (rowCount - 1)) {
-                lineRoller.rollLine();
-                cursorY = (rowCount - 1);
+        Point oldPoint = cursorPoint.get();
+        Point newPoint;
+        do {
+            newPoint = new Point(oldPoint);
+
+            newPoint.x++;
+            if (newPoint.x > (colCount - 1)) {
+                newPoint.x = 0;
+                newPoint.y++;
+                // automatic line rolling
+                if (newPoint.y > (rowCount - 1)) {
+                    lineRoller.rollLine();
+                    newPoint.y = (rowCount - 1);
+                }
             }
-        }
+        } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
     }
 
     public void back() {
-        if (cursorX > 0) {
-            cursorX--;
-        }
+        Point oldPoint = cursorPoint.get();
+        Point newPoint;
+        do {
+            newPoint = new Point(oldPoint);
+
+            if (newPoint.x > 0) {
+                newPoint.x--;
+            }
+        } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
     }
 
     public void up() {
-        if (cursorY > 0) {
-            cursorY--;
-        }
+        Point oldPoint = cursorPoint.get();
+        Point newPoint;
+        do {
+            newPoint = new Point(oldPoint);
+
+            if (newPoint.y > 0) {
+                newPoint.y--;
+            }
+        } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
     }
 
     public void down(LineRoller lineRoller) {
-        if (cursorY == (rowCount - 1)) {
-            lineRoller.rollLine();
-        } else {
-            cursorY++;
-        }
+        Point oldPoint = cursorPoint.get();
+        Point newPoint;
+        do {
+            newPoint = new Point(oldPoint);
+
+            if (newPoint.y == (rowCount - 1)) {
+                lineRoller.rollLine();
+            } else {
+                newPoint.y++;
+            }
+        } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
     }
 
     public void forward() {
-        if (cursorX < (colCount - 1)) {
-            cursorX++;
-        }
+        Point oldPoint = cursorPoint.get();
+        Point newPoint;
+        do {
+            newPoint = new Point(oldPoint);
+
+            if (newPoint.x < (colCount - 1)) {
+                newPoint.x++;
+            }
+        } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
     }
 
     public void carriageReturn() {
-        cursorX = 0;
+        Point oldPoint = cursorPoint.get();
+        Point newPoint;
+        do {
+            newPoint = new Point(oldPoint);
+            newPoint.x = 0;
+        } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
     }
 
-    public void start(Graphics graphics, int charWidth, int charHeight, int startY) {
+    public synchronized void start(Graphics graphics, int charWidth, int charHeight, int startY) {
         if (cursorPainter != null) {
-            cursorPainter.cancel(true);
+            throw new IllegalStateException("Cursor painter has already started");
         }
         cursorPainter = executorService.scheduleWithFixedDelay(
-                new CursorPainter(graphics, charWidth, charHeight, startY), 0, 800, MILLISECONDS
+                    new CursorPainter(graphics, charWidth, charHeight, startY), 0, 800, MILLISECONDS
         );
     }
 
-    public void destroy() {
-        cursorPainter.cancel(true);
+    public synchronized void destroy() {
+        if (cursorPainter != null) {
+            cursorPainter.cancel(true);
+        }
         cursorPainter = null;
         executorService.shutdownNow();
     }

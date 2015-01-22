@@ -235,6 +235,9 @@ public class Keyboard extends KeyAdapter implements ContainerListener, InputProv
             newKeyCode = CONTROL_KEYCODES_ALWAYS_ACTIVE[originalKeyCode];
             if (newKeyCode == 0) {
                 int tmpKeyChar = evt.getKeyChar();
+                if (tmpKeyChar > 254) {
+                    return;
+                }
 
                 if (expect == 0 && originalKeyCode == KeyEvent.VK_ESCAPE) {
                     expect = '=';
@@ -243,21 +246,17 @@ public class Keyboard extends KeyAdapter implements ContainerListener, InputProv
                     expect = -1;
                     return;
                 } else if (expect == -1) {
-                    int cursorPos = ESC_CURSOR_CODES[originalKeyCode];
+                    int cursorPos = ESC_CURSOR_CODES[tmpKeyChar];
                     if (cursorPos != -1) {
                         if (cursorPos < 24) {
                             cursor.set(cursorPos, cursorPos);
                         } else {
-                            cursor.set(0, cursorPos);
+                            cursor.set(cursorPos, cursor.getPoint().y);
                         }
                     }
                 }
                 expect = 0;
-
                 newKeyCode = tmpKeyChar;
-                if (newKeyCode > 254) {
-                    newKeyCode = 0;
-                }
             }
         }
         if (newKeyCode != 0) {
