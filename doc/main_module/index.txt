@@ -1,5 +1,5 @@
 = emuStudio User documentation
-(c) Copyright 2007-2014, Peter Jakubčo
+(c) Copyright 2007-2015, Peter Jakubčo
 Version 0.39
 :toc:
 :numbered:
