@@ -48,8 +48,6 @@ import java.util.List;
  * The CPU must assign all the details to this tape using the tape context.
  *
  * By default, the tape is unbounded. However, it is possible to change.
- *
- * @author Peter Jakubčo
  */
 public class AbstractTapeContextImpl implements AbstractTapeContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTapeContextImpl.class);

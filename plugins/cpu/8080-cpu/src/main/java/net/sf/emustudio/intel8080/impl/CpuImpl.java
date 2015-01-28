@@ -45,20 +45,24 @@ import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
-@PluginType(type = PLUGIN_TYPE.CPU,
-title = "Intel 8080 CPU",
-copyright = "\u00A9 Copyright 2007-2014, Peter Jakubčo",
-description = "Emulator of Intel 8080 CPU")
+@PluginType(
+        type = PLUGIN_TYPE.CPU,
+        title = "Intel 8080 CPU",
+        copyright = "\u00A9 Copyright 2007-2015, Peter Jakubčo",
+        description = "Emulator of Intel 8080 CPU"
+)
 public class CpuImpl extends AbstractCPU {
     private final ContextImpl context;
     private Disassembler disassembler;
-    // cpu speed
-    private final java.util.Timer frequencyScheduler;
-    private FrequencyUpdater frequencyUpdater;
+    private final ScheduledExecutorService frequencyScheduler = Executors.newSingleThreadScheduledExecutor();
+    private final AtomicReference<Future> frequencyUpdaterFuture = new AtomicReference<>();
 
     private final ContextPool contextPool;
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
@@ -66,15 +70,7 @@ public class CpuImpl extends AbstractCPU {
     private EmulatorEngine engine;
     private StatusPanel statusPanel;
 
-    /**
-     * This class performs runtime frequency calculation and updating.
-     *
-     * Given: time, executed cycles count Frequency is defined as number of something by some period of time. Hz = 1/s,
-     * kHz = 1000/s time has to be in seconds
-     *
-     * CC ..by.. time[s] XX ..by.. 1 [s] ? --------------- XX:CC = 1:time XX = CC / time [Hz]
-     */
-    private class FrequencyUpdater extends TimerTask {
+    private class FrequencyUpdater implements Runnable {
 
         private long startTimeSaved = 0;
         private float frequency;
@@ -103,8 +99,6 @@ public class CpuImpl extends AbstractCPU {
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register CPU Context", getTitle());
         }
-        frequencyUpdater = new FrequencyUpdater();
-        frequencyScheduler = new Timer();
     }
 
     @Override
@@ -200,44 +194,41 @@ public class CpuImpl extends AbstractCPU {
     }
 
     private void stopFrequencyUpdater() {
-        try {
-            frequencyUpdater.cancel();
-            frequencyUpdater = new FrequencyUpdater();
-        } catch (Exception e) {
-        }
+        Future tmpFuture;
+
+        do {
+            tmpFuture = frequencyUpdaterFuture.get();
+            if (tmpFuture != null) {
+                tmpFuture.cancel(false);
+            }
+        } while (!frequencyUpdaterFuture.compareAndSet(tmpFuture, null));
     }
 
-    private void runFrequencyUpdater() {
-        try {
-            frequencyScheduler.purge();
-            frequencyScheduler.scheduleAtFixedRate(
-                    frequencyUpdater, 0, 2 * engine.checkTimeSlice
-            );
-        } catch (Exception e) {
-        }
+    private void startFrequencyUpdater() {
+        Future tmpFuture;
+        Future newFuture = frequencyScheduler.scheduleAtFixedRate(new FrequencyUpdater(), 0, 1, TimeUnit.SECONDS);
+
+        do {
+            tmpFuture = frequencyUpdaterFuture.get();
+            if (tmpFuture != null) {
+                tmpFuture.cancel(false);
+            }
+        } while (!frequencyUpdaterFuture.compareAndSet(tmpFuture, newFuture));
     }
 
-    /**
-     * Run a CPU execution (thread).
-     *
-     * Real-time CPU frequency balancing *********************************
-     *
-     * 1 cycle is performed in 1 periode of CPU frequency. CPU_PERIODE = 1 / CPU_FREQ [micros]
-     * cycles_to_execute_per_second = 1000 / CPU_PERIODE
-     *
-     * cycles_to_execute_per_second = 1000 / (1/CPU_FREQ) cycles_to_execute_per_second = 1000 * CPU_FREQ
-     *
-     * 1000 s = 1 micros => slice_length (can vary)
-     *
-     */
     @Override
     public RunState call() {
         try {
-            runFrequencyUpdater();
+            startFrequencyUpdater();
             return engine.run(this);
         } finally {
             stopFrequencyUpdater();
         }
+    }
+
+    @Override
+    public void showSettings() {
+
     }
 
     @Override
@@ -264,8 +255,4 @@ public class CpuImpl extends AbstractCPU {
         return true;
     }
 
-    @Override
-    public void showSettings() {
-        // TODO Auto-generated method stub
-    }
 }
