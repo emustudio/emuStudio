@@ -1,7 +1,5 @@
 /*
- * Created on 23.8.2008, 12:53:21
- *
- * Copyright (C) 2008-2014 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -33,6 +31,13 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
+import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
+import net.sf.emustudio.zilogZ80.gui.DecoderImpl;
+import net.sf.emustudio.zilogZ80.gui.DisassemblerImpl;
+import net.sf.emustudio.zilogZ80.gui.StatusPanel;
+
+import javax.swing.JPanel;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Objects;
@@ -41,22 +46,18 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
-import javax.swing.JPanel;
-import net.sf.emustudio.intel8080.ExtendedContext;
-import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
-import net.sf.emustudio.zilogZ80.gui.DecoderImpl;
-import net.sf.emustudio.zilogZ80.gui.DisassemblerImpl;
-import net.sf.emustudio.zilogZ80.gui.StatusPanel;
 
 /**
  * Main implementation class for CPU emulation CPU works in a separate thread
  * (parallel with other hardware)
  *
  */
-@PluginType(type = PLUGIN_TYPE.CPU,
-title = "Zilog Z80 CPU",
-copyright = "\u00A9 Copyright 2008-2014, Peter Jakubčo",
-description = "Emulator of Zilog Z80 CPU")
+@PluginType(
+        type = PLUGIN_TYPE.CPU,
+        title = "Zilog Z80 CPU",
+        copyright = "\u00A9 Copyright 2008-2015, Peter Jakubčo",
+        description = "Emulator of Zilog Z80 CPU"
+)
 public class EmulatorImpl extends AbstractCPU {
     private final StatusPanel statusPanel;
     private final ContextImpl context;

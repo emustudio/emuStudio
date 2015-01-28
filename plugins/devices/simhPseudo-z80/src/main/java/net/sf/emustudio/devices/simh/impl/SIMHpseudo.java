@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2014 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -37,11 +37,12 @@ import java.util.ResourceBundle;
 /**
  * SIMH emulator's pseudo device.
  */
-@PluginType(type=PLUGIN_TYPE.DEVICE,
+@PluginType(
+        type=PLUGIN_TYPE.DEVICE,
         title="SIMH pseudo device",
-        copyright="Copyright (c) 2002-2007, Peter Schorn\n"
-            + "\u00A9 Copyright 2007-2014, Peter Jakubčo",
-        description="Overtaken implementation of simh pseudo device, used in simh emulator. Version is SIMH003.")
+        copyright="Copyright (c) 2002-2007, Peter Schorn\n\u00A9 Copyright 2007-2015, Peter Jakubčo",
+        description="Re-implementation of simh pseudo device, used in simh emulator. Version is SIMH003."
+)
 public class SIMHpseudo extends AbstractDevice {
     private PseudoContext context;
     private ExtendedContext cpu;

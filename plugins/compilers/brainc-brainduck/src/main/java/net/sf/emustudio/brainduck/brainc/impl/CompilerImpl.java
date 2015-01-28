@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2014 Peter Jakubčo
+ * Copyright (C) 2009-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -37,10 +37,12 @@ import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-@PluginType(type = PLUGIN_TYPE.COMPILER,
+@PluginType(
+        type = PLUGIN_TYPE.COMPILER,
         title = "BrainDuck Compiler",
-        copyright = "\u00A9 Copyright 2009-2014, Peter Jakubčo",
-        description = "Compiler for esoteric architecture based on brainfuck.")
+        copyright = "\u00A9 Copyright 2009-2015, Peter Jakubčo",
+        description = "Compiler for esoteric architecture based on brainfuck."
+)
 public class CompilerImpl extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
 

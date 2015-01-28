@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2014 Peter Jakubčo
+ * Copyright (C) 2009-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -44,10 +44,12 @@ import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-@PluginType(type = PLUGIN_TYPE.CPU,
-title = "Random Access Machine (RAM)",
-copyright = "\u00A9 Copyright 2009-2014, Peter Jakubčo",
-description = "Emulator of abstract RAM machine")
+@PluginType(
+        type = PLUGIN_TYPE.CPU,
+        title = "Random Access Machine (RAM)",
+        copyright = "\u00A9 Copyright 2009-2015, Peter Jakubčo",
+        description = "Emulator of abstract RAM machine"
+)
 public class EmulatorImpl extends AbstractCPU {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorImpl.class);
     private RAMMemoryContext memory;

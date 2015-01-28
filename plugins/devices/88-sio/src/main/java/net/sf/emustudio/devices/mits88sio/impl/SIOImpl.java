@@ -1,7 +1,5 @@
 /*
- * Created on Utorok, 2007, november 13, 17:01
- *
- * Copyright (C) 2007-2014 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -58,10 +56,12 @@ import java.util.ResourceBundle;
  * tape reader/punch for support under CP/M.
  *
  */
-@PluginType(type = PLUGIN_TYPE.DEVICE,
-title = "MITS 88-SIO Board",
-copyright = "\u00A9 Copyright 2007-2014, Peter Jakubčo",
-description = "Custom implementation of MITS 88-SIO serial board.")
+@PluginType(
+        type = PLUGIN_TYPE.DEVICE,
+        title = "MITS 88-SIO Board",
+        copyright = "\u00A9 Copyright 2007-2015, Peter Jakubčo",
+        description = "Custom implementation of MITS 88-SIO serial board."
+)
 public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserver {
     private static final Logger LOGGER = LoggerFactory.getLogger(SIOImpl.class);
 

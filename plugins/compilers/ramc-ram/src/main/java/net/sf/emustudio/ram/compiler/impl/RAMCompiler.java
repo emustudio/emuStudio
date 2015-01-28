@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2014 Peter Jakubčo
+ * Copyright (C) 2009-2015 Peter Jakubčo
  *
  * KISS, YAGNI, DRY
  *
@@ -42,10 +42,12 @@ import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-@PluginType(type = PLUGIN_TYPE.COMPILER,
-title = "RAM Compiler",
-copyright = "\u00A9 Copyright 2009-2014, Peter Jakubčo",
-description = "Custom compiler for RAM abstract machine")
+@PluginType(
+        type = PLUGIN_TYPE.COMPILER,
+        title = "RAM Compiler",
+        copyright = "\u00A9 Copyright 2009-2015, Peter Jakubčo",
+        description = "Custom compiler for RAM abstract machine"
+)
 public class RAMCompiler extends AbstractCompiler {
     private final LexerImpl lexer;
     private final ParserImpl parser;

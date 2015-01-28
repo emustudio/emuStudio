@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2014 Peter Jakubčo
+ * Copyright (C) 2009-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -36,10 +36,12 @@ import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-@PluginType(type = PLUGIN_TYPE.CPU,
-title = "Abstract tape",
-copyright = "\u00A9 Copyright 2008-2015, Peter Jakubčo",
-description = "Abstract tape device is used by abstract machines such as RAM or Turing machine")
+@PluginType(
+        type = PLUGIN_TYPE.CPU,
+        title = "Abstract tape",
+        copyright = "\u00A9 Copyright 2008-2015, Peter Jakubčo",
+        description = "Abstract tape device is used by abstract machines such as RAM or Turing machine"
+)
 public class AbstractTape extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTape.class);
     private String guiTitle;

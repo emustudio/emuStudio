@@ -110,10 +110,12 @@ import java.util.ResourceBundle;
  * head, 0-31. T = Sector True, is a 1 when the sector is positioned to read or
  * write.
  */
-@PluginType(type = PLUGIN_TYPE.DEVICE,
-title = "MITS 88-DISK device",
-copyright = "\u00A9 Copyright 2007-2014, Peter Jakubčo",
-description = "Implementation of popular floppy disk controller.")
+@PluginType(
+        type = PLUGIN_TYPE.DEVICE,
+        title = "MITS 88-DISK device",
+        copyright = "\u00A9 Copyright 2007-2015, Peter Jakubčo",
+        description = "Implementation of popular floppy disk controller."
+)
 public class DiskImpl extends AbstractDevice {
     private final static int DRIVES_COUNT = 16;
     public final static int CPU_PORT1 = 0x8;

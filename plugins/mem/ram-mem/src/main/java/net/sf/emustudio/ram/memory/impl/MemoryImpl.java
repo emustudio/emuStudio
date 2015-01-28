@@ -1,7 +1,7 @@
 /*
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2014 Peter Jakubčo
+ * Copyright (C) 2009-2015 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,10 +36,12 @@ import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-@PluginType(type=PLUGIN_TYPE.MEMORY,
+@PluginType(
+        type=PLUGIN_TYPE.MEMORY,
         title="RAM Program Tape",
-        copyright="\u00A9 Copyright 2009-2014, Peter Jakubčo",
-        description="Read-only program tape for abstract RAM machine.")
+        copyright="\u00A9 Copyright 2009-2015, Peter Jakubčo",
+        description="Read-only program tape for abstract RAM machine."
+)
 public class MemoryImpl extends AbstractMemory {
     private final RAMMemoryContextImpl context;
     private final ContextPool contextPool;

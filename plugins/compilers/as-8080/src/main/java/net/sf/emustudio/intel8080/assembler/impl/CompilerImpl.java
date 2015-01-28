@@ -1,7 +1,5 @@
 /*
- * Created on Piatok, 2007, august 10, 8:22
- *
- * Copyright (C) 2007-2014 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -38,10 +36,12 @@ import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-@PluginType(type = PLUGIN_TYPE.COMPILER,
+@PluginType(
+        type = PLUGIN_TYPE.COMPILER,
         title = "Intel 8080 Assembler",
-        copyright = "\u00A9 Copyright 2007-2014, Peter Jakubčo",
-        description = "Light modified clone of original Intel's assembler. For syntax look at users manual.")
+        copyright = "\u00A9 Copyright 2007-2015, Peter Jakubčo",
+        description = "Light modified clone of original Intel's assembler. For syntax look at users manual."
+)
 public class CompilerImpl extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
     private final LexerImpl lexer;

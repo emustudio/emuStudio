@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2014 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -40,10 +40,12 @@ import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-@PluginType(type = PLUGIN_TYPE.DEVICE,
-title = "LSI ADM-3A terminal",
-copyright = "\u00A9 Copyright 2007-2015, Peter Jakubčo",
-description = "Custom implementation of LSI ADM-3A terminal")
+@PluginType(
+        type = PLUGIN_TYPE.DEVICE,
+        title = "LSI ADM-3A terminal",
+        copyright = "\u00A9 Copyright 2007-2015, Peter Jakubčo",
+        description = "Custom implementation of LSI ADM-3A terminal"
+)
 public class TerminalImpl extends AbstractDevice implements TerminalSettings.ChangedObserver {
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminalImpl.class);
     public static final int COLUMNS_COUNT = 80;

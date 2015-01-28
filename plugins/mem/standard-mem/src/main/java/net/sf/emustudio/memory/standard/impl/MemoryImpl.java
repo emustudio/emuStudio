@@ -1,7 +1,5 @@
 /*
- * Created on Sobota, 2007, october 27, 11:58
- *
- * Copyright (C) 2007-2014 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -41,10 +39,12 @@ import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-@PluginType(type=PLUGIN_TYPE.MEMORY,
+@PluginType(
+        type=PLUGIN_TYPE.MEMORY,
         title="Standard operating memory",
-        copyright="\u00A9 Copyright 2006-2014, Peter Jakubčo",
-        description="Operating memory suitable for most of CPUs")
+        copyright="\u00A9 Copyright 2006-2015, Peter Jakubčo",
+        description="Operating memory suitable for most of CPUs"
+)
 public class MemoryImpl extends AbstractMemory {
     private MemoryContextImpl context;
     private MemoryFrame memGUI;

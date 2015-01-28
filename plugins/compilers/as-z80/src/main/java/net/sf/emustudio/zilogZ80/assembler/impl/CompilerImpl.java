@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2014 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  *
  * KISS, YAGNI, DRY
  *
@@ -37,10 +37,12 @@ import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-@PluginType(type=PLUGIN_TYPE.COMPILER,
+@PluginType(
+        type=PLUGIN_TYPE.COMPILER,
         title="Zilog Z80 Assembler",
-        copyright="\u00A9 Copyright 2007-2014, Peter Jakubčo",
-        description="Custom version of the assembler. For syntax look at users manual.")
+        copyright="\u00A9 Copyright 2007-2015, Peter Jakubčo",
+        description="Custom version of the assembler. For syntax look at users manual."
+)
 public class CompilerImpl extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
 
