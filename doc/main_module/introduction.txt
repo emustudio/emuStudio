@@ -20,7 +20,8 @@ one single computer. These configurations can be created manually (they're Java 
 more convenient is an abstract schema editor.
 
 Source code editor enables users to write programs for emulated computer. Very related part is
-compiler, which provides lexical and syntax analysis of the source code for the syntax highlighting. Most compiler plug-ins enable direct transfer of the written code into emulated computer.
+compiler, which provides lexical and syntax analysis of the source code for the syntax highlighting. Most compiler
+plug-ins enable direct transfer of the written code into emulated computer.
 
 Some memory plug-ins allow modification of its content, which is immediately seen by CPU.
 

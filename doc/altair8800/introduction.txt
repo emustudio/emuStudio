@@ -1,0 +1,122 @@
+[[XI]]
+== Introduction
+
+Computer MITS Altair 8800 was named after a planet in one of the first episodes of Star Trek series. Having Intel 8080
+CPU inside, with 256 bytes of memory, no display and keyboard is this computer, when comparing to the present era,
+absolutely ridiculous. His author, Ed Roberts, called the invention "personal computer", which is now very common term.
+As Wikipedia states:
+
+[quote, Wikipedia, Altair 8800]
+The Altair is widely recognized as the spark that ignited the microcomputer revolution.
+
+image::images/altair8800.png[MITS Altair8800 with LSI ADM-3A terminal and floppy drive]
+
+Altair 8800 is one of the oldest commercially available computers overall. Ed Roberts (founder and CEO of MITS
+corporation) was selling these machines by mail directly from the factory.
+
+Various enthusiasts understood the power of Altair and started to develop software and hardware for the computer. Those
+people saw a freedom in Altair - some kind of a release from batch tasks ran on mainframe systems, maintained by elite.
+The phenomenon of a computer which could be put on the kitchen table allowed to make enormous money by two smart
+university students. In 1975, Paul Allen and Bill Gates wrote a trimmed version of BASIC programming language, called
+Altair BASIC, which pushed them directly to foundation of Microsoft corporation.
+
+Basic configuration of MITS Altair 8800 was:
+
+[width="50%"]
+|======================================================================================================================
+|Processor       | Intel 8080 or 8080a
+|Speed           | 2 MHz
+|RAM             | from 256 bytes to 64 kB
+|ROM             | optional; usually EPROM Intel 1702 with 256 bytes. footnote:[They were used for various bootloaders]
+|Storage         | optional; paper tapes, cassette tapes or 5.25" or 8" floppy disks (MITS 88-DISK)
+|Extensions      | at first 16 slots, later 18 slots
+|Bus             | famous S-100
+|Video           | none
+|I/O             | optional; parallel or serial board (MITS 88-SIO)
+|OS capabilities | MITS DOS, CP/M, Altair Disk BASIC
+|======================================================================================================================
+
+[[XA]]
+== Altair for emuStudio
+
+Abstract schema for emuStudio can be seen in the following image.
+
+image::images/altairscheme.png[Abstract schema of MITS Altair8800]
+
+The following plug-ins are used in the schema. Each plug-in is described in much more detail in its own section.
+
+=== Compiler: `as-8080`
+
+Assembler for Intel 8080 CPU in emuStudio is very similar to assembler http://altairclone.com/downloads/manuals/8080%20Programmers%20Manual.pdf
+but has some little differences. Features:
+
+- full instructions support
+- macro support
+- include other files support
+- output is in Intel HEX format
+
+=== Operating memory (RAM): `standard-mem`
+
+This plug-in fulfills requirements as RAM and ROM for real computers emulation. Features:
+
+- single cell is 1 byte wide
+- memory size can be set up manually
+- managing ROM ranges
+- loading binary memory images
+- loading files in Intel HEX format
+- possibility to save images for automatic loading at startup
+- intuitive and useful GUI
+
+=== CPU: `8080-cpu`
+
+The emulator of Intel 8080 microprocessor. Features include:
+
+- emulation of all instructions with all flags correctly
+- interpretation as emulation technique
+- correct instructions timing
+- ability to set clock frequency manually at run-time
+- emulation of interrupts
+- disassembler implementation
+- breakpoints support
+
+=== Device: `88-sio`
+
+Implementation of serial board MITS 88-SIO. Features:
+
+- allows to connect one device only
+- CPU ports can be set manually
+
+=== Device: `88-disk`
+
+Implementation of floppy disk drive MITS 88-DISK. Features:
+
+- allows to mount up to 16 disk images
+- CPU ports can be set manually
+- interrupts are not implemented
+- images can be saved for automatic mount at startup
+
+=== Device: `adm3A-terminal`
+
+Emulation of famous terminal from Lear Siegler, Inc. - ADM-3A. Features include:
+
+- antialiasing, double-buffering
+- automatic (no GUI) mode - input/output from/to files
+- custom font, and nice look
+- emulation of all control codes, including `ESC+'='` combinations
+
+[[XB]]
+== Booting operating systems
+
+Since this virtual computer emulates a real machine, it's possible to use real software written for the computer.
+As was mentioned in <<XA,Altair for emuStudio>> section, several operating systems and programs can be run on Altair.
+There are many disk and memory images of those systems available online, and only some were tested and proved to work.
+
+Most of the disk images usable in emuStudio are taken from SIMH emulator footnote:[http://simh.trailing-edge.com/].
+Some images were modified for SIMH emulator, by which they lose some originality, but definitely not functionality.
+
+Tested and fully-functional images were:
+
+- Operating system CP/M v2.2
+- Altair DOS v1.0
+- BASIC programming language in various versions
+

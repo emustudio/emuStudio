@@ -96,7 +96,7 @@ digraph emulation_states {
 ---------------------------------------------------------------------
 
 NOTE: This workflow applies to emulation of a whole computer. Independent emulation of devices
-or other computer components cannot be controled. The emulation of a computer starts when the CPU
+or other computer components cannot be controlled. The emulation of a computer starts when the CPU
 starts interpreting and executing instructions.
 
 [[XMED]]
@@ -143,7 +143,7 @@ image::images/debugger-toolbar.png[Debugger toolbar]
 [[XMEL]]
 ==== List of instructions
 
-The largest part of the debugger window a list of few diassembled instructions, so-called
+The largest part of the debugger window a list of few disassembled instructions, so-called
 *instructions window*.footnote:[Around 15 instructions are shown, but it depends on the
 CPU] They are arranged in a table. The first column is usually interactive, allowing user to set
 breakpoints. Red strip is pointing to the very next instruction being executed.
