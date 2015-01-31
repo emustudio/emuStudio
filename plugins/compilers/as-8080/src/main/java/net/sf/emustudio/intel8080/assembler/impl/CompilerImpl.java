@@ -46,7 +46,9 @@ public class CompilerImpl extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
     private final LexerImpl lexer;
     private final ParserImpl parser;
-    private final SourceFileExtension[] suffixes;
+    private final SourceFileExtension[] suffixes = new SourceFileExtension[] {
+            new SourceFileExtension("asm", "8080 assembler source")
+    };
     private final ContextPool contextPool;
 
     public CompilerImpl(Long pluginID, ContextPool contextPool) {
@@ -54,8 +56,6 @@ public class CompilerImpl extends AbstractCompiler {
         this.contextPool = Objects.requireNonNull(contextPool);
         lexer = new LexerImpl((Reader) null);
         parser = new ParserImpl(lexer);
-        suffixes = new SourceFileExtension[1];
-        suffixes[0] = new SourceFileExtension("asm", "8080 assembler source");
     }
 
     @Override

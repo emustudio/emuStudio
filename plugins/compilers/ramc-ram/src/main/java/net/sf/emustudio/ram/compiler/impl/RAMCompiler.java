@@ -52,8 +52,10 @@ public class RAMCompiler extends AbstractCompiler {
     private final LexerImpl lexer;
     private final ParserImpl parser;
     private RAMMemoryContext memory;
-    private RAMInstructionImpl context; // not needed context for anything, but
-    private SourceFileExtension[] suffixes; // necessary for the registration
+    private RAMInstructionImpl context;
+    private final SourceFileExtension[] suffixes = new SourceFileExtension[] {
+            new SourceFileExtension("ram", "Random Access Machine source")
+    };
     private final ContextPool contextPool;
 
     public RAMCompiler(Long pluginID, ContextPool contextPool) {
@@ -67,8 +69,7 @@ public class RAMCompiler extends AbstractCompiler {
         try {
             contextPool.register(pluginID, context, RAMInstruction.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
-            StaticDialogs.showErrorMessage("Could not register RAM instruction context",
-                    RAMCompiler.class.getAnnotation(PluginType.class).title());
+            StaticDialogs.showErrorMessage("Could not register RAM instruction context", getTitle());
         }
     }
 
@@ -88,9 +89,7 @@ public class RAMCompiler extends AbstractCompiler {
         try {
             memory = (RAMMemoryContext) contextPool.getMemoryContext(pluginID, RAMMemoryContext.class);
         } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException(
-                    this, "Could not access RAM program memory", e
-            );
+            throw new PluginInitializationException(this, "Could not access RAM program memory", e);
         }
     }
 
@@ -148,13 +147,13 @@ public class RAMCompiler extends AbstractCompiler {
 
     @Override
     public boolean compile(String inputFileName) {
-        int i = inputFileName.lastIndexOf(".asm");
+        int i = inputFileName.lastIndexOf(".ram");
 
         String outputFileName = inputFileName;
         if (i >= 0) {
             outputFileName = outputFileName.substring(0, i);
         }
-        outputFileName += ".ram";
+        outputFileName += ".ro";
         return compile(inputFileName, outputFileName);
     }
     
