@@ -1,0 +1,4 @@
+1. Open MITS Altair8800 computer
+2. Load file `exbas.bin` into memory at address 0
+3. Open terminal
+4. Run emulation

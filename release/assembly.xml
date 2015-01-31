@@ -121,6 +121,8 @@
       <directory>../plugins/compilers/ramc-ram/examples</directory>
       <includes>
         <include>*.ram</include>
+        <include>*.txt</include>
+        <include>*.pdf</include>
       </includes>
       <outputDirectory>/examples/ramc-ram</outputDirectory>
     </fileSet>

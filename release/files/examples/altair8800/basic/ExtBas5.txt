@@ -1,0 +1,5 @@
+1. Open MITS Altair8800 computer
+2. Load file `boot/boot.bin` into memory at address 0xFF00
+3. Mount disk image file `ExtBas5.dsk` into device MITS 88-DISK as disk 0
+4. Open terminal
+5. Run emulation
