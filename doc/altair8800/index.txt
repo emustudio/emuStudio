@@ -5,3 +5,4 @@ Version 0.39
 :numbered:
 
 include::introduction.txt[]
+include::images.txt[]

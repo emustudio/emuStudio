@@ -1,0 +1,16 @@
+[[XB]]
+== Booting operating systems
+
+Since this virtual computer emulates a real machine, it's possible to use real software written for the computer.
+As was mentioned in <<XA,Altair for emuStudio>> section, several operating systems and programs can be run on Altair.
+There are many disk and memory images of those systems available online, but only some were tested and proved to work.
+
+Most of the disk images usable in emuStudio are borrowed from great SIMH emulator footnote:[http://simh.trailing-edge.com/].
+Some images were modified for SIMH, by which they lose some sort of originality, but definitely not functionality.
+
+Tested and fully-functional images were:
+
+- Operating system CP/M v2.2
+- Altair DOS v1.0
+- BASIC programming language in various versions
+
