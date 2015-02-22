@@ -65,7 +65,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
         this.contextPool = Objects.requireNonNull(contextPool);
         terminalSettings = new TerminalSettings(pluginID);
         cursor = new Cursor(COLUMNS_COUNT, ROWS_COUNT);
-        display = new Display(COLUMNS_COUNT, ROWS_COUNT, terminalSettings, cursor);
+        display = new Display(cursor, terminalSettings);
         try {
             contextPool.register(pluginID, display, DeviceContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
@@ -128,6 +128,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
             terminalGUI.destroy();
         }
         display.destroy();
+        cursor.destroy();
     }
 
     @Override

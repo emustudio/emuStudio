@@ -14,3 +14,5 @@ Tested and fully-functional images were:
 - Altair DOS v1.0
 - BASIC programming language in various versions
 
+The following subsections describe in short how to boot those systems, along with screenshots how it looks.
+

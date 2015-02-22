@@ -1,25 +1,44 @@
+/*
+ * Copyright (C) 2014-2015 Peter Jakubčo
+ * KISS, YAGNI, DRY
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 package net.sf.emustudio.devices.adm3a.impl;
 
 import net.jcip.annotations.ThreadSafe;
 
+import javax.swing.Timer;
 import java.awt.Graphics;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Objects;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 @ThreadSafe
 public class Cursor {
-    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-
     private final int colCount;
     private final int rowCount;
+
     private final AtomicReference<Point> cursorPoint = new AtomicReference<>(new Point());
-    private volatile ScheduledFuture cursorPainter;
+
+    private volatile boolean reset = true;
+
+    private final CursorPainter cursorPainter = new CursorPainter();
+    private final Timer cursorPainterTimer = new Timer(0, cursorPainter);
 
     public interface LineRoller {
 
@@ -27,35 +46,37 @@ public class Cursor {
     }
 
     // run by only one thread
-    private class CursorPainter implements Runnable {
-        private final Graphics graphics;
-        private final int charHeight;
-        private final int charWidth;
-        private final int startY;
+    private class CursorPainter implements ActionListener {
+        private Point visiblePoint;
+        private volatile DisplayParameters displayParameters;
+        private volatile Graphics graphics;
 
-        private volatile boolean nowVisible;
-        private volatile Point visiblePoint;
+        public void setDisplayParameters(DisplayParameters displayParameters) {
+            this.displayParameters = Objects.requireNonNull(displayParameters);
+        }
 
-        private CursorPainter(Graphics graphics, int charWidth, int charHeight, int startY) {
-            this.charHeight = charHeight;
-            this.charWidth = charWidth;
-            this.startY = startY;
+        public void setGraphics(Graphics graphics) {
             this.graphics = Objects.requireNonNull(graphics);
         }
 
         @Override
-        public void run() {
-            if (!nowVisible) {
+        public void actionPerformed(ActionEvent e) {
+            if (displayParameters == null || graphics == null) {
+                return;
+            }
+            if (reset || visiblePoint == null) {
                 visiblePoint = cursorPoint.get();
             }
 
             graphics.setXORMode(Display.BACKGROUND);
             graphics.setColor(Display.FOREGROUND);
-            graphics.fillRect(visiblePoint.x * charWidth, visiblePoint.y * charHeight + startY - charHeight, charWidth, charHeight);
+            graphics.fillRect(
+                    visiblePoint.x * displayParameters.charWidth,
+                    visiblePoint.y * displayParameters.charHeight + displayParameters.startY - displayParameters.charHeight,
+                    displayParameters.charWidth, displayParameters.charHeight);
             graphics.setPaintMode();
-            nowVisible = !nowVisible;
+            reset = !reset;
         }
-
     }
 
     public Cursor(int colCount, int rowCount) {
@@ -65,6 +86,18 @@ public class Cursor {
 
     public void home() {
         cursorPoint.set(new Point());
+    }
+
+    public void reset() {
+        this.reset = true;
+    }
+
+    public int getColCount() {
+        return colCount;
+    }
+
+    public int getRowCount() {
+        return rowCount;
     }
 
     public Point getPoint(){
@@ -153,20 +186,16 @@ public class Cursor {
         } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
     }
 
-    public synchronized void start(Graphics graphics, int charWidth, int charHeight, int startY) {
-        if (cursorPainter != null) {
-            throw new IllegalStateException("Cursor painter has already started");
-        }
-        cursorPainter = executorService.scheduleWithFixedDelay(
-                    new CursorPainter(graphics, charWidth, charHeight, startY), 0, 800, MILLISECONDS
-        );
+    public synchronized void start(Graphics graphics, DisplayParameters displayParameters) {
+        cursorPainterTimer.stop();
+
+        cursorPainter.setDisplayParameters(displayParameters);
+        cursorPainter.setGraphics(graphics);
+        cursorPainterTimer.setDelay(800);
+        cursorPainterTimer.start();
     }
 
     public synchronized void destroy() {
-        if (cursorPainter != null) {
-            cursorPainter.cancel(true);
-        }
-        cursorPainter = null;
-        executorService.shutdownNow();
+        cursorPainterTimer.stop();
     }
 }

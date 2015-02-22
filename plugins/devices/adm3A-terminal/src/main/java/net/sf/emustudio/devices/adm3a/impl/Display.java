@@ -31,11 +31,13 @@ import javax.swing.JPanel;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.font.LineMetrics;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -43,69 +45,56 @@ import java.io.InputStream;
 import java.util.Objects;
 
 /**
- * This class provides emulation of CRT display. It supports double buffering
- * and offers anti-aliasing. For painting it uses Graphics2D class.
- *
- * This class is rewritten example from the book _Java in a Nutshell_
- * by David Flanagan.
- * Written by David Flanagan. Copyright (c) 1996 O'Reilly & Associates.
- *
- * Terminal can interpret ASCII codes from 0-127. Some have special
- * functionality (0-31)
+ * Terminal can interpret ASCII codes from 0-127. Some have special purpose (0-31).
  */
 public class Display extends JPanel implements DeviceContext<Short>, TerminalSettings.ChangedObserver, Cursor.LineRoller {
     private static final Logger LOGGER = LoggerFactory.getLogger(Display.class);
 
     private static final String HERE_IS_CONSTANT = "LSI-ADM3A Terminal";
     public static final Color FOREGROUND = new Color(0, 255, 0);
-    public static final Color BACKGROUND = new Color(0, 0, 0);
+    public static final Color BACKGROUND = Color.BLACK;
+    public static final String TERMINAL_FONT_PATH = "/net/sf/emustudio/devices/adm3a/gui/terminal.ttf";
 
     private final char[] videoMemory;
     private final int colCount;
     private final int rowCount;
 
     private final TerminalSettings settings;
-    private final Cursor cursor;
 
-    private int charWidth;
-    private int charHeight;
-    private int maxWidth;
-    private int maxHeight;
-    private int startY;
-    private volatile boolean needsMeasure = true;
+    private final Cursor cursor;
+    private volatile DisplayParameters displayParameters;
+    private volatile Dimension size;
 
     private FileWriter outputWriter = null;
 
-    public Display(int cols, int rows, TerminalSettings settings, Cursor cursor) {
-        this.colCount = cols;
-        this.rowCount = rows;
-
+    public Display(Cursor cursor, TerminalSettings settings) {
         this.settings = Objects.requireNonNull(settings);
         this.cursor = Objects.requireNonNull(cursor);
-        this.videoMemory = new char[rows * cols];
+        this.colCount = cursor.getColCount();
+        this.rowCount = cursor.getRowCount();
+        this.videoMemory = new char[rowCount * colCount];
 
         setForeground(FOREGROUND);
         setBackground(BACKGROUND);
         setDoubleBuffered(true);
         setFont(loadFont());
+        this.displayParameters = measure();
+        this.size = new Dimension(displayParameters.maxWidth, displayParameters.maxHeight);
 
-        clearScreen();
         settings.addChangedObserver(this);
     }
 
     private Font loadFont() {
         Font font;
-        try (InputStream fin = getClass().getResourceAsStream("/net/sf/emustudio/devices/adm3a/gui/terminal.ttf")) {
-            font = Font.createFont(Font.TRUETYPE_FONT, fin).deriveFont(Font.PLAIN, 12f);
+        try (InputStream fin = getClass().getResourceAsStream(TERMINAL_FONT_PATH)) {
+            font = Font.createFont(Font.TRUETYPE_FONT, fin).deriveFont(Font.PLAIN, 14f);
             GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
         } catch (Exception e) {
             LOGGER.error("Could not load custom font, using default monospaced font", e);
-            font = new Font(Font.MONOSPACED, 0, 12);
+            font = new Font(Font.MONOSPACED, 0, 14);
         }
         return font;
     }
-
-
 
     @Override
     public Class<?> getDataType() {
@@ -113,8 +102,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
     }
 
     /**
-     * Input from the display is always 0, because the input is captured
-     * by an input provider, not by the display.
+     * Input from the display is always 0, because the input is captured by an input provider, not by the display.
      *
      * @return 0
      */
@@ -124,43 +112,61 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
     }
 
     public void start() {
-        measureIfNeeded();
-        cursor.start(getGraphics(), charWidth, charHeight, startY);
+        cursor.start(getGraphics(), displayParameters);
     }
 
-    protected void measureIfNeeded() {
-        if (needsMeasure) {
-            Graphics graphics = getGraphics();
-            FontMetrics fontMetrics = graphics.getFontMetrics();
+    private DisplayParameters measure() {
+        Font font = getFont();
+        Rectangle2D metrics = font.getStringBounds("W", Utils.getDefaultFrc());
+        LineMetrics lineMetrics = font.getLineMetrics("W", Utils.getDefaultFrc());
 
-            charWidth = fontMetrics.charWidth('W');
-            charHeight = fontMetrics.getHeight();
+        int charWidth = (int)metrics.getWidth();
+        int charHeight = (int)lineMetrics.getHeight();
 
-            int lineAscent = fontMetrics.getAscent();
+        int lineAscent = (int)lineMetrics.getAscent();
 
-            maxWidth = colCount * charWidth;
-            maxHeight = rowCount * charHeight;
+        int maxWidth = colCount * charWidth;
+        int maxHeight = rowCount * charHeight;
 
-            Dimension d = getSize();
-            startY = 2 * lineAscent + (d.height - maxHeight) / 2;
-            needsMeasure = false;
+        int startY;
+        if (size == null) {
+            startY = 2 * lineAscent;
+        } else {
+            startY = (size.height - maxHeight) / 2;
+            if (startY < lineAscent) {
+                startY = lineAscent;
+            }
         }
+        return new DisplayParameters(charHeight, charWidth, startY, maxWidth, maxHeight);
     }
 
     public void destroy() {
         settings.removeChangedObserver(this);
-        cursor.destroy();
         closeOutputWriter();
     }
 
     @Override
+    public void setBounds(int x, int y, int width, int height) {
+        super.setBounds(x, y, width, height);
+        this.size = getSize();
+        this.displayParameters = measure();
+    }
+
+    @Override
+    public void setBounds(Rectangle r) {
+        super.setBounds(r);
+        this.size = getSize();
+        this.displayParameters = measure();
+    }
+
+    @Override
     public Dimension getPreferredSize() {
-        return new Dimension(maxWidth, maxHeight);
+        return this.size;
     }
 
     @Override
     public Dimension getMinimumSize() {
-        return new Dimension(maxWidth, maxHeight);
+        return this.size;
     }
 
     /**
@@ -169,10 +175,12 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
      */
     @Override
     public void paintComponent(Graphics graphics) {
-        Dimension size = getSize();
+        Dimension dimension = size;
         graphics.setColor(BACKGROUND);
-        graphics.fillRect(0, 0, size.width, size.height);
+        graphics.fillRect(0, 0, dimension.width, dimension.height);
         graphics.setColor(FOREGROUND);
+
+        cursor.reset();
 
         int t_y;
         int x, y;
@@ -181,7 +189,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
 
         Graphics2D g2d = (Graphics2D) graphics;
         for (y = 0; y < rowCount; y++) {
-            t_y = startY + y * charHeight;
+            t_y = displayParameters.startY + y * displayParameters.charHeight;
             temp = y * colCount;
             for (x = 0; x < colCount; x++) {
                 synchronized (videoMemory) {
@@ -198,6 +206,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
             File tmpFile = new File(settings.getOutputFileName());
             outputWriter = new FileWriter(tmpFile);
         } catch (IOException e) {
+            LOGGER.error("Could not open file for writing output: {}", settings.getOutputFileName(), e);
         }
     }
 
@@ -229,6 +238,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
                 outputWriter.write((char) val);
                 outputWriter.flush();
             } catch (IOException e) {
+                LOGGER.error("Could not write to file: " + settings.getOutputFileName(), e);
             }
         }
     }
