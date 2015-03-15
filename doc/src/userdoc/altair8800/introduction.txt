@@ -9,7 +9,7 @@ As Wikipedia states:
 [quote, Wikipedia, Altair 8800]
 The Altair is widely recognized as the spark that ignited the microcomputer revolution.
 
-image::images/altair8800.png[MITS Altair8800 with LSI ADM-3A terminal and floppy drive]
+image::altair8800/images/altair8800.png[MITS Altair8800 with LSI ADM-3A terminal and floppy drive]
 
 Altair 8800 is one of the oldest commercially available computers overall. Ed Roberts (founder and CEO of MITS
 corporation) was selling these machines by mail directly from the factory.
@@ -53,7 +53,7 @@ image::altair8800/images/altairz80.png[Abstract schema of MITS Altair8800 (with 
 
 The following plug-ins are used in the schemas. Each plug-in is described in much more detail in its own section.
 
-=== Compiler: `as-8080`
+=== Compiler: <<XA8080,as-8080>>
 
 Assembler for Intel 8080 CPU in emuStudio is very similar to
 http://altairclone.com/downloads/manuals/8080%20Programmers%20Manual.pdf[Intel assembler], but has some little
@@ -67,7 +67,7 @@ differences. Features include:
 - literals and expressions in various radixes (bin, dec, hex, oct)
 - output is in Intel HEX format only
 
-=== Compiler: `as-z80`
+=== Compiler: <<XAZ80,as-z80>>
 
 The assembler syntax is inspired by `as-8080` compiler, and by instruction set described
 http://www.z80.info/zip/z80cpu_um.pdf[here]. The assembler supports following features:
@@ -81,7 +81,7 @@ http://www.z80.info/zip/z80cpu_um.pdf[here]. The assembler supports following fe
 - literals and expressions in various radixes (bin, dec, hex, oct)
 - output is in Intel HEX format only
 
-=== Operating memory (RAM): `standard-mem`
+=== Operating memory (RAM): <<XASMEM,standard-mem>>
 
 This plug-in fulfills requirements as RAM and ROM for real computers emulation. Features:
 
@@ -117,14 +117,14 @@ The emulator of Zilog Z80 microprocessor. Features include:
 - disassembler implementation
 - breakpoints support
 
-=== Device: `88-sio`
+=== Device: <<XS,88-sio>>
 
 Implementation of serial board MITS 88-SIO. Features:
 
 - allows to connect one device only
 - CPU ports can be set manually
 
-=== Device: `88-disk`
+=== Device: <<XD,88-disk>>
 
 Implementation of floppy disk drive MITS 88-DISK. Features:
 
@@ -142,7 +142,7 @@ Emulation of famous terminal from Lear Siegler, Inc. - ADM-3A. Features include:
 - custom font, and nice look
 - emulation of all control codes, including `ESC+'='` combinations
 
-=== Device: `simhPseudo-z80`
+=== Device: <<XSPSEUDO,simhPseudo-z80>>
 
 Virtual device partially reimplemented from http://simh.trailing-edge.com/[simh] emulator. This device is used
 mainly for communication between CP/M 3 operating system for `simh` and emuStudio. Most of the original functionality

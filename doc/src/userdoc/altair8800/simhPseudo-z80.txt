@@ -1,2 +1,2 @@
-[[XS]]
+[[XSPSEUDO]]
 == Virtual device `simhPseudo-z80`

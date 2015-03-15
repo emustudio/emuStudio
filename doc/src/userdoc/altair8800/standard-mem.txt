@@ -1,0 +1,2 @@
+[[XASMEM]]
+== Operating memory `standard-mem`
