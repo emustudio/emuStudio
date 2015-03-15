@@ -37,23 +37,49 @@ Basic configuration of MITS Altair 8800 was:
 |======================================================================================================================
 
 [[XA]]
-== Altair for emuStudio
+== Altair8800 for emuStudio
 
-Abstract schema for emuStudio can be seen in the following image.
+In emuStudio, there exist two variants of the computer. These variants varies only with the used CPU. There is available
+either Intel 8080 emulator, or Zilog Z80 emulator. Lots of behavior and some devices was inspired by
+http://simh.trailing-edge.com/[simh] emulator.
 
-image::images/altairscheme.png[Abstract schema of MITS Altair8800]
+Abstract schema for emuStudio (Intel 8080):
 
-The following plug-ins are used in the schema. Each plug-in is described in much more detail in its own section.
+image::altair8800/images/altairscheme.png[Abstract schema of MITS Altair8800 (with Intel 8080)]
+
+Abstract schema for emuStudio (Zilog Z80):
+
+image::altair8800/images/altairz80.png[Abstract schema of MITS Altair8800 (with Zilog Z80)]
+
+The following plug-ins are used in the schemas. Each plug-in is described in much more detail in its own section.
 
 === Compiler: `as-8080`
 
-Assembler for Intel 8080 CPU in emuStudio is very similar to assembler http://altairclone.com/downloads/manuals/8080%20Programmers%20Manual.pdf
-but has some little differences. Features:
+Assembler for Intel 8080 CPU in emuStudio is very similar to
+http://altairclone.com/downloads/manuals/8080%20Programmers%20Manual.pdf[Intel assembler], but has some little
+differences. Features include:
 
 - full instructions support
-- macro support
+- macro support (unlimited nesting)
 - include other files support
-- output is in Intel HEX format
+- data definition
+- relative addressing using labels
+- literals and expressions in various radixes (bin, dec, hex, oct)
+- output is in Intel HEX format only
+
+=== Compiler: `as-z80`
+
+The assembler syntax is inspired by `as-8080` compiler, and by instruction set described
+http://www.z80.info/zip/z80cpu_um.pdf[here]. The assembler supports following features:
+
+- full instructions support
+- macro support (unlimited nesting)
+- include other files support
+- conditional assembly
+- data definition
+- relative addressing using labels
+- literals and expressions in various radixes (bin, dec, hex, oct)
+- output is in Intel HEX format only
 
 === Operating memory (RAM): `standard-mem`
 
@@ -70,6 +96,18 @@ This plug-in fulfills requirements as RAM and ROM for real computers emulation. 
 === CPU: `8080-cpu`
 
 The emulator of Intel 8080 microprocessor. Features include:
+
+- emulation of all instructions with all flags correctly
+- threaded code / interpretation as emulation technique
+- correct instructions timing
+- ability to set clock frequency manually at run-time
+- emulation of interrupts
+- disassembler implementation
+- breakpoints support
+
+=== CPU: `z80-cpu`
+
+The emulator of Zilog Z80 microprocessor. Features include:
 
 - emulation of all instructions with all flags correctly
 - interpretation as emulation technique
@@ -103,3 +141,9 @@ Emulation of famous terminal from Lear Siegler, Inc. - ADM-3A. Features include:
 - automatic (no GUI) mode - input/output from/to files
 - custom font, and nice look
 - emulation of all control codes, including `ESC+'='` combinations
+
+=== Device: `simhPseudo-z80`
+
+Virtual device partially reimplemented from http://simh.trailing-edge.com/[simh] emulator. This device is used
+mainly for communication between CP/M 3 operating system for `simh` and emuStudio. Most of the original functionality
+is not implemented, but it is cruical for support of memory bank-switching.

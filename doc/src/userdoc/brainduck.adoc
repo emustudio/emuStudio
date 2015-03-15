@@ -1,0 +1,12 @@
+= BrainDuck - virtual computer based on brainfuck
+(c) Copyright 2009-2015, Peter Jakubčo
+Version 0.39
+:toc:
+:numbered:
+
+include::brainduck/introduction.txt[]
+include::brainduck/compiler.txt[]
+include::brainduck/cpu.txt[]
+include::brainduck/memory.txt[]
+include::brainduck/terminal.txt[]
+include::brainduck/automation.txt[]

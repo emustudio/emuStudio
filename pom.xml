@@ -1,7 +1,7 @@
 <!--suppress MavenModelInspection -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
@@ -22,6 +22,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <netbeans.hint.license>gpl20</netbeans.hint.license>
     <project.build.resourceDirectory>${basedir}/src/main/resources</project.build.resourceDirectory>
+    <jruby.version>1.7.17</jruby.version>
   </properties>
 
   <licenses>
@@ -48,6 +49,7 @@
   <modules>
     <module>main-module</module>
     <module>release</module>
+    <module>doc</module>
     <module>plugins/compilers/ramc-ram</module>
     <module>plugins/cpu/ram-cpu</module>
     <module>plugins/mem/ram-mem</module>
@@ -144,6 +146,16 @@
           <artifactId>maven-antrun-plugin</artifactId>
           <version>1.7</version>
         </plugin>
+        <plugin>
+          <groupId>org.asciidoctor</groupId>
+          <artifactId>asciidoctor-maven-plugin</artifactId>
+          <version>1.5.2</version>
+        </plugin>
+        <plugin>
+          <groupId>de.saumya.mojo</groupId>
+          <artifactId>gem-maven-plugin</artifactId>
+          <version>1.0.8</version>
+        </plugin>
       </plugins>
     </pluginManagement>
     <extensions>
@@ -223,8 +235,8 @@
             </configuration>
             <executions>
               <execution>
-                <id>make-assembly</id> <!-- this is used for inheritance merges -->
-                <phase>package</phase> <!-- bind to the packaging phase -->
+                <id>make-assembly</id>
+                <phase>package</phase>
                 <goals>
                   <goal>single</goal>
                 </goals>
@@ -374,6 +386,14 @@
         <artifactId>emuStudio</artifactId>
         <version>${project.version}</version>
       </dependency>
+
+      <!-- other -->
+      <dependency>
+        <groupId>rubygems</groupId>
+        <artifactId>asciidoctor-diagram</artifactId>
+        <version>1.2.1</version>
+        <type>gem</type>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -401,6 +421,17 @@
     <repository>
       <id>codehaus</id>
       <url>http://repository.codehaus.org</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>rubygems-proxy-releases</id>
+      <name>RubyGems.org Proxy (Releases)</name>
+      <url>http://rubygems-proxy.torquebox.org/releases</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>

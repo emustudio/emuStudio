@@ -10,7 +10,7 @@ Some images were modified for SIMH, by which they lose some sort of originality,
 
 Tested and fully-functional images were:
 
-- Operating system CP/M v2.2
+- Operating system CP/M v2.2 and 3
 - Altair DOS v1.0
 - BASIC programming language in various versions
 

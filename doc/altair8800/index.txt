@@ -1,8 +1,0 @@
-= MITS Altair8800 - emulator of famous personal computer
-(c) Copyright 2009-2015, Peter Jakubčo
-Version 0.39
-:toc:
-:numbered:
-
-include::introduction.txt[]
-include::images.txt[]

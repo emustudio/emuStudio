@@ -26,7 +26,7 @@ The BrainDuck CPU can be run only as a part of emuStudio. It is installed in loc
 
 In the following image, you can see the status panel of `brainduck-cpu`. 
 
-image::images/status-panel.png[BrainDuck CPU status panel]
+image::brainduck/images/status-panel.png[BrainDuck CPU status panel]
 
 It is split into three parts. Within 'Internal status' part, there is shown content of registers `IP` and `P`. Register
 `IP` does not have counterpart in brainfuck. IP stands for "instruction pointer". The content is pointing at the next

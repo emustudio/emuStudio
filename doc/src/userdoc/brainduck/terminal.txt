@@ -23,7 +23,7 @@ The BrainDuck terminal can be run only as a part of emuStudio. It is installed i
 
 In the following image, BrainDuck terminal window is shown:
 
-image::images/brainduck-terminal.png[BrainDuck terminal window]
+image::brainduck/images/brainduck-terminal.png[BrainDuck terminal window]
 
 It's easy and simple. BrainDuck CPU as it interprets `.` (dot) instructions, it sends the output to this terminal and it is
 displayed on screen.
@@ -31,7 +31,7 @@ displayed on screen.
 Input cannot be entered anytime. In brainfuck, input is requested through `,` instruction. Only when CPU encounters
 `,` (comma) instruction, user is asked to enter input. This situation is marked with geen icon in the bottom-left corner:
 
-image::images/brainduck-terminal-input.png[Input is enabled in BrainDuck terminal window]
+image::brainduck/images/brainduck-terminal-input.png[Input is enabled in BrainDuck terminal window]
 
 Next to the icon, there is a blue "ASC" button. This button can be used for entering binary values as input.
 Special little dialog will appear asking user to enter space-separated numbers, representing ASCII codes of the input.

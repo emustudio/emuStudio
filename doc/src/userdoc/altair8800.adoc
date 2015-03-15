@@ -1,0 +1,13 @@
+= MITS Altair8800 - emulator of famous personal computer
+(c) Copyright 2009-2015, Peter Jakubčo
+Version 0.39
+:toc:
+:numbered:
+
+include::altair8800/introduction.txt[]
+include::altair8800/images.txt[]
+include::altair8800/assembler8080.txt[]
+include::altair8800/assemblerz80.txt[]
+include::altair8800/88-disk.txt[]
+include::altair8800/88-sio.txt[]
+include::altair8800/simhPseudo-z80.txt[]

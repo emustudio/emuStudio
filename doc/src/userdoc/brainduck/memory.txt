@@ -24,7 +24,7 @@ The BrainDuck memory can be run only as a part of emuStudio. It is installed in 
 
 In the following screenshot, it is possible to see GUI of `brainduck-mem`.
 
-image::images/brainduck-mem.png[BrainDuck memory window]
+image::brainduck/images/brainduck-mem.png[BrainDuck memory window]
 
 - *A*: Shows actually displayed page. Can be edited manually by entering a number and pressing ENTER key
 - *B*: By double-clicking on a memory cell, the cell editor is enabled and user can overwrite the content of the cell.

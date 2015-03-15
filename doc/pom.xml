@@ -1,0 +1,96 @@
+<!--suppress MavenModelInspection -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                      http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>net.sf.emustudio</groupId>
+    <artifactId>emustudio-parent</artifactId>
+    <version>0.39-SNAPSHOT</version>
+    <relativePath>../.</relativePath>
+  </parent>
+
+  <artifactId>emuStudio-doc</artifactId>
+  <packaging>pom</packaging>
+
+  <name>emuStudio Documentation</name>
+
+  <profiles>
+    <profile>
+      <id>doc</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>de.saumya.mojo</groupId>
+            <artifactId>gem-maven-plugin</artifactId>
+            <configuration>
+              <!-- align JRuby version with AsciidoctorJ to avoid redundant downloading -->
+              <jrubyVersion>${jruby.version}</jrubyVersion>
+              <gemHome>${project.build.directory}/gems</gemHome>
+              <gemPath>${project.build.directory}/gems</gemPath>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>initialize</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.asciidoctor</groupId>
+            <artifactId>asciidoctor-maven-plugin</artifactId>
+            <configuration>
+              <sourceDirectory>src/userdoc</sourceDirectory>
+              <sourceHighlighter>coderay</sourceHighlighter>
+
+              <!-- The gem-maven-plugin appends the scope (e.g., provided) to the gemPath defined in the plugin configuration -->
+              <gemPath>${project.build.directory}/gems-provided</gemPath>
+              <requires>
+                <require>asciidoctor-diagram</require>
+              </requires>
+            </configuration>
+
+            <executions>
+              <execution>
+                <id>output-html</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>process-asciidoc</goal>
+                </goals>
+                <configuration>
+                  <backend>html</backend>
+                  <doctype>article</doctype>
+                  <attributes>
+                    <imagesdir>.</imagesdir>
+                    <!-- Display anchors on html document-->
+                    <sectanchors>true</sectanchors>
+                    <toclevels>3</toclevels>
+                    <!-- Parse link attributes such as window="_blank"   -->
+                    <linkattrs>true</linkattrs>
+                  </attributes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+      <dependencies>
+        <dependency>
+          <groupId>rubygems</groupId>
+          <artifactId>asciidoctor-diagram</artifactId>
+          <type>gem</type>
+          <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>rubygems</groupId>
+              <artifactId>asciidoctor</artifactId>
+            </exclusion>
+          </exclusions>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+</project>
