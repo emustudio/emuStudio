@@ -33,6 +33,16 @@ teachers since 2007.
 
 * Consistent API for development of custom plug-ins
 
+# Compiling
+
+The project is using Maven for managing dependencies and build process. Each module can be compiled separately,
+but if you run the following command in the root directory, it will compile each module (results will be in particular
+module directory):
+
+```
+mvn clean install
+```
+
 # Installation
 
 Please follow instructions on [project's web page](http://emustudio.sourceforge.net/downloads.html).
