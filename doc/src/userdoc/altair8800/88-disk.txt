@@ -1,2 +1,5 @@
 [[XD]]
 == Virtual device `88-disk`
+
+[[XDM]]
+=== Mounting disk images

@@ -146,4 +146,4 @@ Emulation of famous terminal from Lear Siegler, Inc. - ADM-3A. Features include:
 
 Virtual device partially reimplemented from http://simh.trailing-edge.com/[simh] emulator. This device is used
 mainly for communication between CP/M 3 operating system for `simh` and emuStudio. Most of the original functionality
-is not implemented, but it is cruical for support of memory bank-switching.
+is not implemented, but it is crucial for support of memory bank-switching.

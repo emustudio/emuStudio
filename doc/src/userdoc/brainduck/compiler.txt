@@ -50,14 +50,14 @@ NOTE: BrainDuck architecture conforms to true von-Neumann model, instead of clas
 [width="40%",frame="top",options="header"]
 |================================================
 |Brainfuck  instruction  | C language equivalent
-| >                      | P++
-| <                      | P--
-| +                      | ++*P
-| -                      | --*P
-| ,                      | *P = getchar()
-| .                      | putchar(*P);
-| [                      | while (*P) {
-| ]                      | }
+| `>`                    | `P++`
+| `<`                    | `P--`
+| `+`                    | `++*P`
+| `-`                    | `--*P`
+| `,`                    | `*P = getchar()`
+| `.`                    | `putchar(*P);`
+| `[`                    | `while (*P) {`
+| `]`                    | `}`
 |================================================
 
 

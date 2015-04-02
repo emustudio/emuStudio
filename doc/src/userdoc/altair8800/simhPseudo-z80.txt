@@ -1,2 +1,7 @@
 [[XSPSEUDO]]
 == Virtual device `simhPseudo-z80`
+
+The SIMH pseudo device facilitates the communication between the
+simulated ALTAIR and the simulator environment. This device defines a
+number of (most R/O) registers (see source code) which are primarily useful
+for debugging purposes.
