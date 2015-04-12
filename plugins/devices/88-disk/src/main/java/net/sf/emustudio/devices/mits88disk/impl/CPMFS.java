@@ -1,7 +1,6 @@
 /*
- * CPMFS.java
+ * Copyright (C) 2011-2015, Peter Jakubčo
  *
- * Copyright (C) 2011-2012, Peter Jakubčo
  * KISS, YAGNI, DRY
  * 
  *  This program is free software; you can redistribute it and/or
@@ -22,188 +21,136 @@
 package net.sf.emustudio.devices.mits88disk.impl;
 
 import emulib.runtime.StaticDialogs;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * CP/M Filesystem handler
- *
- * For CP/M there is one and only one standard disk storage - 8" SSSD, that is
- * to say 8 inch Single-Sided Single-Density Soft sectored disk formatted as
- * 26 128 byte FM encoded sectors per track totaling 77 tracks.
- * The sectors are formatted sequentially as sector numbers 1 through 26, the
- * tracks are formatted as track numbers 0 through 76.
- * The first two tracks are reserved and normally contains the boot program.
- * The next 75 tracks contain the directory and data, the sectors are not
- * accessed sequentially but are in fact accessed in an interleaved fashion.
- * The interleave was optimized for an 8080 running at 2mhz.
- * The interleave factor is 6, this means that the sectors accessed in this
- * order:  1,7,13,19,25,5,11,17,23,3,9,15,21,2,8,14,20,26,6,12,18,24,4,10,16,22.
- *
- *
- * Directory entries - The directory is a sequence of directory entries
- * (also called extents), which contain 32 bytes of the following structure:
- *
- * St F0 F1 F2 F3 F4 F5 F6 F7 E0 E1 E2 Xl Bc Xh Rc
- * Al Al Al Al Al Al Al Al Al Al Al Al Al Al Al Al
- *
- * St is the status; possible values are:
- *    0-15: used for file, status is the user number
- *    16-31: used for file, status is the user number (P2DOS)
- *           or used for password extent (CP/M 3 or higher)
- *    32: disc label
- *    33: time stamp (P2DOS)
- *    0xE5: unused
- *
- * F0-E2 are the file name and its extension. They may consist of any printable
- * 7 bit ASCII character but: < > . , ; : = ? * [ ]. The file name must not
- * be empty, the extension may be empty. Both are padded with blanks. The
- * highest bit of each character of the file name and extension is used as
- * attribute. The attributes have the following meaning:
- *
- * F0: requires set wheel byte (Backgrounder II)
- * F1: public file (P2DOS, ZSDOS), forground-only command (Backgrounder II)
- * F2: date stamp (ZSDOS), background-only commands (Backgrounder II)
- * F7: wheel protect (ZSDOS)
- * E0: read-only
- * E1: system file
- * E2: archived
- * 
- * @author vbmacher
  */
 
-/**
- * sectors per track: 32
-sectors per block: 8
-blocks per disk: 254
-reserved tracks: 6
-tracks per disk: 70
-
- */
+// block = 1024, 2048, 4096, 8192 and 16384
 public class CPMFS {
-    private final static int SECTOR_SIZE = 137; // block = 1024, 2048, 4096, 8192 and 16384
+    private static final Logger LOGGER = LoggerFactory.getLogger(CPMFS.class);
+
     private final static int TRACKS = 254;
-    private final static int SECTORS = 32; // 26, 32
+    private final static int SECTOR_SIZE = 137;
+    private final static int SECTORS_COUNT = 32; // 26, 32
     private final static int INTERLEAVE = 2;
 
     private final static int MAX_FILES = 256; //64, 256;
+    private final static int DIRECTORY_TRACK = 6;
 
-    private short track;
-    private short sector;
-    private long image_pos;
+    // specific for altcpm.dsk
+    private final static int[] DIRECTORY_SECTORS_BITMAP = new int[] {
+            0,17,2,19,4,21,6
+    };
+    private final static int DIRECTORY_ENTRY_SIZE = 32;
+    private final static int UNUSED_FILE = 0xE5;
 
-    // 88-DCDD
-    private File image;
+    private final File imageFile;
 
-    private byte[] tempData;
+    private int track;
+    private int sector;
+    private byte[] sectorData;
 
-    public CPMFS(String image) {
-        this(new File(image));
+    public CPMFS(String imageFile) {
+        this(new File(imageFile));
     }
 
-    public CPMFS(File image) {
-        this.image = image;
-        tempData = new byte[SECTOR_SIZE];
+    public CPMFS(File imageFile) {
+        this.imageFile = Objects.requireNonNull(imageFile);
+        sectorData = new byte[SECTOR_SIZE];
 
-        resetPos();
+        resetPosition();
     }
 
-    public String getFiles() {
-        int files = 0;
-        String result = "";
+    private byte[] readDirectory() throws IOException {
+        byte[] directory = new byte[DIRECTORY_SECTORS_BITMAP.length * SECTOR_SIZE];
+        ByteBuffer directoryBuffer = ByteBuffer.wrap(directory);
 
-        try {
-            RandomAccessFile raf = new RandomAccessFile(image, "r");
+        try (RandomAccessFile randomFile = new RandomAccessFile(imageFile, "r")) {
+            resetPosition(DIRECTORY_TRACK);
+            for (int i = 0; i < DIRECTORY_SECTORS_BITMAP.length; i++) {
+                sector = DIRECTORY_SECTORS_BITMAP[i];
 
-            // search for the directory label
-            setTrack((short)6);
-
-            // 66C3
-            int cnt = 0;
-            do {
-                int x = readSector(raf);
-                nextSector();
-                if (x <= 0) {
-                    break;
-                }
-
-                // search for files
-                int i = 3;
-                do {
-                    cnt++;
-                    if ((tempData[i] >= 0) && (tempData[i] < 32)) {
-                        files++;
-                        result += "\n(" + ((int)tempData[i]) + ") " + (char)tempData[i+1] +
-                                (char)tempData[i+2] + (char)tempData[i+3] +
-                                (char)tempData[i+4] + (char)tempData[i+5] +
-                                (char)tempData[i+6] + (char)tempData[i+7] +
-                                (char)tempData[i+8] + (char)tempData[i+9] +
-                                (char)tempData[i+10] + (char)tempData[i+11];
-                    }
-                    i += 32;
-                } while ((cnt <= MAX_FILES) && (i < SECTOR_SIZE));
-
-            } while (cnt <= MAX_FILES);
-
-            result += "\nNumber of files: " + files;
-            raf.close();
-        } catch(FileNotFoundException e) {
-            StaticDialogs.showErrorMessage("The image file was not found!");
-        } catch (IOException r) {
+                readSector(randomFile);
+                directoryBuffer.put(sectorData);
+            }
         }
-        return result;
+        return directory;
+    }
+
+    private String formatFileName(int status, byte[] fileName) {
+        byte[] nameBytes = new byte[11];
+        String name;
+
+        for (int i = 0; i < nameBytes.length; i++) {
+            nameBytes[i] = (byte)(fileName[i] & 0x7F);
+        }
+        name = new String(nameBytes);
+
+        return String.format("%02X: %s", status, name);
+    }
+
+    public List<String> getFileNames() {
+        List<String> fileNames = new ArrayList<>();
+        try {
+            byte[] directory = readDirectory();
+            for (int i = 3; i < directory.length - DIRECTORY_ENTRY_SIZE; i += DIRECTORY_ENTRY_SIZE) {
+                ByteBuffer directoryEntry = ByteBuffer.wrap(directory, i, DIRECTORY_ENTRY_SIZE);
+
+                int fileStatus = directoryEntry.get();
+                if (fileStatus < 32) {
+                    byte[] fileName = new byte[11];
+                    directoryEntry.get(fileName);
+                    int extentLower = directoryEntry.get();
+                    if (extentLower == 0) {
+                        fileNames.add(formatFileName(fileStatus, fileName));
+                    }
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("Unknown error during getting file names", e);
+        }
+        return fileNames;
     }
 
     public String getInfo() {
-        int files = 0;
-        String result = "";
+        int fileCount = 0;
+        String discLabel = "";
 
         try {
-            RandomAccessFile raf = new RandomAccessFile(image, "r");
+            byte[] directory = readDirectory();
 
-            // search for the directory label
-            setTrack((short)6);
+            for (int i = 3; i < directory.length - DIRECTORY_ENTRY_SIZE; i += DIRECTORY_ENTRY_SIZE) {
+                ByteBuffer directoryEntry = ByteBuffer.wrap(directory, i, DIRECTORY_ENTRY_SIZE);
 
-            // 66C3
-            int cnt = 0;
-            do {
-                int x = readSector(raf);
-                nextSector();
-                if (x <= 0) {
-                    break;
+                int fileStatus = directoryEntry.get();
+
+                if (fileStatus != UNUSED_FILE) {
+                    fileCount++;
                 }
-
-                // search for files
-                int i = 3;
-                do {
-                    cnt++;
-                    if ((tempData[i] >= 0) && (tempData[i] < 32)) {
-                        files++;
-                    }
-
-                    if (tempData[i] == 32) {
-                        result = "Disc label (t " +track+ ", s " + sector +"): " + (char)tempData[i+1] +
-                                (char)tempData[i+2] + (char)tempData[i+3] +
-                                (char)tempData[i+4] + (char)tempData[i+5] +
-                                (char)tempData[i+6] + (char)tempData[i+7] +
-                                (char)tempData[i+8] + (char)tempData[i+9] +
-                                (char)tempData[i+10] + (char)tempData[i+11];
-                    }
-
-                    i += 32;
-                } while ((cnt <= MAX_FILES) && (i < SECTOR_SIZE));
-
-            } while (cnt <= MAX_FILES);
-
-            result += "\nNumber of files: " + files;
-            raf.close();
+                if (fileStatus == 32) {
+                    byte[] fileName = new byte[11];
+                    directoryEntry.get(fileName);
+                    discLabel = formatFileName(fileStatus, fileName);
+                }
+            }
         } catch(FileNotFoundException e) {
             StaticDialogs.showErrorMessage("The image file was not found!");
         } catch (IOException r) {   
         }
-        return result;
+        return "DISC: " + discLabel + "\n"
+                + "Number of files: " + fileCount;
     }
 
     /************************************************************************/
@@ -211,43 +158,40 @@ public class CPMFS {
     private void nextSector() {
         sector += INTERLEAVE;
 
-        if (sector == (SECTORS+1)) {
+        if (sector == (SECTORS_COUNT +1)) {
             track++;
             sector = 0;
-        } else if (sector == SECTORS) {
-            sector %= SECTORS;
+        } else if (sector == SECTORS_COUNT) {
+            sector %= SECTORS_COUNT;
             sector++;
         }
 
-        image_pos = SECTORS * SECTOR_SIZE * track + SECTOR_SIZE * sector;
-//        System.out.println("NEWPOS: T " + track + ", S " + sector + ", pos="
-  //              + image_pos);
+    //    System.out.println("NEXTSECTOR: T " + track + ", S " + sector);
     }
 
-    private void resetPos() {
-        sector = 0;
-        track = 0;
-        image_pos = 0;
-    //    System.out.println("NEWPOS: T " + track + ", S " + sector + ", pos="
-      //          + image_pos);
+    private void resetPosition() {
+        resetPosition(0, 0);
     }
 
-    private void setTrack(short track) {
+    private void resetPosition(int track) {
+        resetPosition(track, 0);
+    }
+
+    private void resetPosition(int track, int sector) {
         this.track = track;
-        sector = 0;
+        this.sector = sector;
 
-        image_pos = SECTORS * SECTOR_SIZE * track;
-//        System.out.println("NEWPOS: T " + track + ", S " + sector + ", pos="
-  //              + image_pos);
+     //   System.out.println("POSITION: T " + track + ", S " + sector);
     }
 
-    private int readSector(RandomAccessFile f) {
-        try {
-            f.seek(image_pos);
-            return f.read(tempData, 0, SECTOR_SIZE);
-        } catch (IOException e) {
+    private void readSector(RandomAccessFile f) throws IOException {
+     //   System.out.println("READING: T " + track + ", S " + sector + "; pos=" +
+       //         (SECTORS_COUNT * SECTOR_SIZE * track + SECTOR_SIZE * sector));
+
+        f.seek(SECTORS_COUNT * SECTOR_SIZE * track + SECTOR_SIZE * sector);
+        if (f.read(sectorData, 0, SECTOR_SIZE) < SECTOR_SIZE) {
+            throw new IOException("Could not read whole sector! (T:" + track + " S:" + sector + ")");
         }
-        return -1;
     }
 
 }

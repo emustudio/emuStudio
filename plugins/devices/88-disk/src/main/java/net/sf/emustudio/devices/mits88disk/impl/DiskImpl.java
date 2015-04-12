@@ -415,7 +415,7 @@ public class DiskImpl extends AbstractDevice {
         }
 
         if (ARG_LIST) {
-            System.out.println(cpmfs.getFiles());
+            System.out.println(cpmfs.getFileNames());
         }
     }
 }

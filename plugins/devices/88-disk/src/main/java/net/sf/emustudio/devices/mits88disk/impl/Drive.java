@@ -20,14 +20,28 @@
  */
 package net.sf.emustudio.devices.mits88disk.impl;
 
-import java.io.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Performs disk operations on single drive.
  */
 public class Drive {
+    private static Logger LOGGER = LoggerFactory.getLogger(Drive.class);
+
     public final static int TRACKS_COUNT = 254;
     public final static int SECTORS_COUNT = 32;
     public final static int SECTOR_LENGTH = 137;
@@ -37,10 +51,11 @@ public class Drive {
     private short sectorOffset;
 
     private File mountedFloppy = null;
-    private RandomAccessFile image;
+    private SeekableByteChannel imageChannel;
     private boolean selected = false;
 
     private final List<DriveListener> listeners = new ArrayList<>();
+    private final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(1);
 
     /*
      7   6   5   4   3   2   1   0
@@ -123,7 +138,7 @@ public class Drive {
     }
 
     public static void createNewImage(String filename) throws IOException {
-        try (RandomAccessFile fout = new RandomAccessFile(filename, "w")) {
+        try (RandomAccessFile fout = new RandomAccessFile(filename, "rw")) {
             for (int i = 0; i < TRACKS_COUNT * SECTORS_COUNT * SECTOR_LENGTH; i++) {
                 fout.writeByte(0);
             }
@@ -132,21 +147,26 @@ public class Drive {
 
     public void mount(String fileName) throws IOException {
         File f = new File(fileName);
-        if (f.isFile() == false) {
+        if (!f.isFile() || !f.exists()) {
             throw new IOException("Specified file name doesn't point to a file");
         }
         umount();
         this.mountedFloppy = f;
-        image = new RandomAccessFile(f, "rwd");
+        Set<OpenOption> optionSet = new HashSet<>();
+        optionSet.add(StandardOpenOption.READ);
+        optionSet.add(StandardOpenOption.WRITE);
+
+        imageChannel = Files.newByteChannel(f.toPath(), optionSet);
     }
 
     public void umount() {
         mountedFloppy = null;
         try {
-            if (image != null) {
-                image.close();
+            if (imageChannel != null) {
+                imageChannel.close();
             }
         } catch (IOException e) {
+            LOGGER.error("Could not umount disk image", e);
         }
     }
 
@@ -211,6 +231,8 @@ public class Drive {
             sectorOffset = 0; // sectorLength-1;
             flags &= 0xFE; /* enter new write data on */
         }
+
+//        LOGGER.debug("TRACK={}, SECTOR={}, SECTOROFFSET={}", track, sector, sectorOffset);
         notifyListeners(false, true);
     }
 
@@ -228,6 +250,8 @@ public class Drive {
             stat &= 0x3E;  /* 111110b, return 'sector true' bit = 0 (true) */
 
             stat |= 0xC0;  // set on 'unused' bits  ?? > in simh bit are gonna up
+
+//            LOGGER.debug("TRACK={}, SECTOR={}, SECTOROFFSET={}", track, sector, sectorOffset);
             notifyListeners(false, true);
             return stat;
         } else {
@@ -247,11 +271,14 @@ public class Drive {
             notifyListeners(false, true);
             return;
         }
+  //      LOGGER.debug("WRITING BYTE; TRACK={}, SECTOR={}, SECTOROFFSET={}", track, sector, sectorOffset);
 
-        long pos = SECTORS_COUNT * SECTOR_LENGTH * track + SECTOR_LENGTH * sector + i;
+        byteBuffer.clear();
+        byteBuffer.put((byte) (data & 0xFF));
+        byteBuffer.flip();
 
-        image.seek(pos);
-        image.writeByte(data & 0xFF);
+        imageChannel.position(SECTORS_COUNT * SECTOR_LENGTH * track + SECTOR_LENGTH * sector + i);
+        imageChannel.write(byteBuffer);
 
         notifyListeners(false, true);
     }
@@ -274,17 +301,17 @@ public class Drive {
             sectorOffset++;
         }
 
-        long pos = SECTORS_COUNT * SECTOR_LENGTH * track
-                + SECTOR_LENGTH * sector + i;
+        //    LOGGER.debug("READING BYTE; TRACK={}, SECTOR={}, SECTOROFFSET={}", track, sector, sectorOffset);
 
-        image.seek(pos);
+        imageChannel.position(SECTORS_COUNT * SECTOR_LENGTH * track + SECTOR_LENGTH * sector + i);
         notifyListeners(false, true);
-        try {
-            short r = (short) (image.readUnsignedByte() & 0xFF);
-            return r;
-        } catch (IOException e) {
-            return 0;
+        byteBuffer.clear();
+        int bytesRead = imageChannel.read(byteBuffer);
+        if (bytesRead != byteBuffer.capacity()) {
+            throw new IOException("Could not read data from disk image");
         }
+        byteBuffer.flip();
+        return (short) (byteBuffer.get() & 0xFF);
     }
 
     // for gui calls (drive info)

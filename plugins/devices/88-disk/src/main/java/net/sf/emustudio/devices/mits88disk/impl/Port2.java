@@ -1,9 +1,6 @@
 /*
- * Port2.java
+ * Copyright (C) 2008-2015 Peter Jakubčo
  *
- * Created on 18.6.2008, 15:10:20
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -24,36 +21,29 @@ package net.sf.emustudio.devices.mits88disk.impl;
 
 import emulib.plugins.device.DeviceContext;
 
+import java.util.Objects;
+
 /**
  * Port 2.
  * 
  * IN: sector pos
  * OUT: set flags
- *
- * @author Peter Jakubčo
  */
 public class Port2 implements DeviceContext<Short> {
-    private DiskImpl disk;
+    private final DiskImpl disk;
 
     public Port2(DiskImpl disk) {
-        this.disk = disk;
+        this.disk = Objects.requireNonNull(disk);
     }
 
     @Override
     public Short read() {
-        try {
-            return disk.getCurrentDrive().getSectorPos();
-        } catch (IndexOutOfBoundsException e) {
-        }
-        return 0;
+        return disk.getCurrentDrive().getSectorPos();
     }
 
     @Override
     public void write(Short val) {
-        try {
-            disk.getCurrentDrive().setFlags(val);
-        } catch (IndexOutOfBoundsException e) {
-        }
+        disk.getCurrentDrive().setFlags(val);
     }
 
     @Override

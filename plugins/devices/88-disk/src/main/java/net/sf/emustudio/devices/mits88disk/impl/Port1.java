@@ -1,9 +1,6 @@
 /*
- * Port1.java
+ * Copyright (C) 2008-2015 Peter Jakubčo
  *
- * Created on 18.6.2008, 15:01:27
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -24,29 +21,24 @@ package net.sf.emustudio.devices.mits88disk.impl;
 
 import emulib.plugins.device.DeviceContext;
 
+import java.util.Objects;
+
 /**
  * Port 1.
  * 
  * IN: disk flags
  * OUT: select/unselect drive
- *
- * @author Peter Jakubčo
  */
 public class Port1 implements DeviceContext<Short> {
-
-    private DiskImpl disk;
+    private final DiskImpl disk;
 
     public Port1(DiskImpl disk) {
-        this.disk = disk;
+        this.disk = Objects.requireNonNull(disk);
     }
 
     @Override
     public Short read() {
-        try {
-            return disk.getCurrentDrive().getFlags();
-        } catch (Exception e) {
-        }
-        return 0;
+        return disk.getCurrentDrive().getFlags();
     }
 
     @Override
@@ -55,16 +47,10 @@ public class Port1 implements DeviceContext<Short> {
         disk.setCurrentDrive(value & 0x0F);
         if ((value & 0x80) != 0) {
             // disable device
-            try {
-                disk.getCurrentDrive().deselect();
-            } catch (IndexOutOfBoundsException e) {
-            }
+            disk.getCurrentDrive().deselect();
             disk.setCurrentDrive(0xFF);
         } else {
-            try {
-                disk.getCurrentDrive().select();
-            } catch (IndexOutOfBoundsException e) {
-            }
+            disk.getCurrentDrive().select();
         }
     }
 

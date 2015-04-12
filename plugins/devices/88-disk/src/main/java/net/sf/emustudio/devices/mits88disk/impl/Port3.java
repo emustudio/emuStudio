@@ -1,9 +1,6 @@
 /*
- * Port3.java
+ * Copyright (C) 2008-2015 Peter Jakubčo
  *
- * Created on 18.6.2008, 15:13:58
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -24,20 +21,24 @@ package net.sf.emustudio.devices.mits88disk.impl;
 
 import emulib.plugins.device.DeviceContext;
 import emulib.runtime.StaticDialogs;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
 
 /**
  * Port 3.
  * 
  * IN: read data
  * OUT: write data
- *
- * @author Peter Jakubčo
  */
 public class Port3 implements DeviceContext<Short> {
-    private DiskImpl disk;
+    private final static Logger LOGGER = LoggerFactory.getLogger(Port3.class);
+
+    private final DiskImpl disk;
 
     public Port3(DiskImpl disk) {
-        this.disk = disk;
+        this.disk = Objects.requireNonNull(disk);
     }
 
     @Override
@@ -46,7 +47,8 @@ public class Port3 implements DeviceContext<Short> {
         try {
             data = disk.getCurrentDrive().readData();
         } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Couldn't read from disk");
+            LOGGER.error("Could not read from disk", e);
+            StaticDialogs.showErrorMessage("Could not read from disk. Please see log file for more details");
         }
         return data;
     }
@@ -56,7 +58,8 @@ public class Port3 implements DeviceContext<Short> {
         try {
             disk.getCurrentDrive().writeData(data);
         } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Couldn't write to disk");
+            LOGGER.error("Could not write to disk", e);
+            StaticDialogs.showErrorMessage("Couldn't write to disk. Please see log file for more details");
         }
     }
 

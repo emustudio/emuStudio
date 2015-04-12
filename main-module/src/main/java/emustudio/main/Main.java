@@ -182,6 +182,10 @@ public class Main {
             LOGGER.error("Could not initialize emuLib.", e);
             tryShowErrorMessage("Error: Could not initialize emuLib. Please see log file for details.");
             computer = null;
+        } catch (Throwable e) {
+            LOGGER.error("Unexpected error", e);
+            tryShowErrorMessage("Error: Could not initialize emuLib. Please see log file for details.");
+            computer = null;
         }
 
         if (splash != null) {
