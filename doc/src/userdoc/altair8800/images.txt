@@ -17,6 +17,7 @@ Tested and fully-functional images were:
 
 The following subsections describe in short how to boot those systems, along with screen-shots how it looks.
 
+[[XBBR]]
 === Boot ROM
 
 Booting operating systems on Altair requires special ROM image to be <<XASMEML,loaded in operating memory>>
@@ -110,8 +111,34 @@ The following image shows the look right after the boot:
 
 image::altair8800/images/cpm3.png[Operating system CP/M 3 (banked version)]
 
-
 === Altair DOS v1.0
+
+TODO
 
 === BASIC
 
+In this section will be presented how to boot MITS BASIC version 4.1. There is possible to boot also other versions,
+but the principle is always the same.
+
+As it is written in `simh` manual: MITS BASIC 4.1 was the commonly used software for serious users of the Altair
+computer. It is a powerful (but slow) BASIC with some extended commands to allow it to access and manage the disk.
+There was no operating system it ran under.
+
+NOTE: After boot, you must mount the disk with `MOUNT 0`. Then, command `FILES` will show all files on the disk. In
+      order to run a file, run command `RUN "file"`. Manual can be found at
+      http://bitsavers.informatik.uni-stuttgart.de/pdf/mits/Altair_8800_BASIC_4.1_Reference_Jul77.pdf[this link].
+
+It is assumed you have either `boot.bin` or `mboot.bin` mounted in the operating memory (see <<XBBR,Boot ROM>> for more
+details).
+
+Steps for booting BASIC follow:
+
+1. <<XDM,Mount disk image>> `mbasic.dsk` to drive `A:` in MITS 88-DISK.
+2. In emuStudio jump to location `0xFF00` footnoteref:[debugger,See "Debugger toolbar" in the user documentation of Main module]
+3. Optionally, you can set CPU frequency to 2000 kHz, which was Intel 8080 original frequency.
+4. Before starting emulation, show ADM-3A terminal, which can be found in "peripheral devices" window.
+5. Run the emulation footnoteref:[debugger]
+
+The following image shows the look right after the boot:
+
+image::altair8800/images/mbasic.png[Altair 8800 Basic 4.1]

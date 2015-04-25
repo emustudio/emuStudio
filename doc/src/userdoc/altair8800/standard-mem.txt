@@ -1,6 +1,17 @@
 [[XASMEM]]
 == Operating memory `standard-mem`
 
+This plug-in fulfills requirements as RAM and ROM for real computers emulation. Features:
+
+- single cell is 1 byte wide
+- memory size can be set up manually
+- managing ROM ranges
+- loading binary memory images
+- loading files in Intel HEX format
+- possibility to save images for automatic loading at startup
+- intuitive and useful GUI
+
+
 [[XASMEML]]
 === Loading image files
 

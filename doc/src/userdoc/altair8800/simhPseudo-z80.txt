@@ -1,7 +1,7 @@
 [[XSPSEUDO]]
 == Virtual device `simhPseudo-z80`
 
-The SIMH pseudo device facilitates the communication between the
-simulated ALTAIR and the simulator environment. This device defines a
-number of (most R/O) registers (see source code) which are primarily useful
-for debugging purposes.
+Virtual device partially reimplemented from http://simh.trailing-edge.com/[simh] emulator. This device is used
+mainly for communication between CP/M 3 operating system for `simh` and emuStudio. Most of the original functionality
+is not implemented, but it is crucial for support of memory bank-switching.
+

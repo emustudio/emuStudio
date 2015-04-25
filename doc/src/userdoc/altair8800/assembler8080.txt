@@ -1,2 +1,16 @@
 [[XA8080]]
 == Assembler `as-8080`
+
+Assembler for Intel 8080 CPU in emuStudio is very similar to
+http://altairclone.com/downloads/manuals/8080%20Programmers%20Manual.pdf[Intel assembler], but has some little
+differences. Features include:
+
+- full instructions support
+- macro support (unlimited nesting)
+- include other files support
+- data definition
+- relative addressing using labels
+- literals and expressions in various radixes (bin, dec, hex, oct)
+- output is in Intel HEX format only
+
+

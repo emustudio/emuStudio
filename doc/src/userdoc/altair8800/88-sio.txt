@@ -1,2 +1,7 @@
 [[XS]]
 == Virtual device `88-sio`
+
+Implementation of serial board MITS 88-SIO. Features:
+
+- allows to connect one device only
+- CPU ports can be set manually

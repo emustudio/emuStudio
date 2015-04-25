@@ -53,97 +53,13 @@ image::altair8800/images/altairz80.png[Abstract schema of MITS Altair8800 (with 
 
 The following plug-ins are used in the schemas. Each plug-in is described in much more detail in its own section.
 
-=== Compiler: <<XA8080,as-8080>>
+- Compiler: <<XA8080,as-8080>>
+- Compiler: <<XAZ80,as-z80>>
+- Operating memory (RAM): <<XASMEM,standard-mem>>
+- CPU: `8080-cpu`
+- CPU: `z80-cpu`
+- Device: <<XS,88-sio>>
+- Device: <<XD,88-disk>>
+- Device: <<XSPSEUDO,simhPseudo-z80>>
+- Device: <<XADM3A,adm3A-terminal>>
 
-Assembler for Intel 8080 CPU in emuStudio is very similar to
-http://altairclone.com/downloads/manuals/8080%20Programmers%20Manual.pdf[Intel assembler], but has some little
-differences. Features include:
-
-- full instructions support
-- macro support (unlimited nesting)
-- include other files support
-- data definition
-- relative addressing using labels
-- literals and expressions in various radixes (bin, dec, hex, oct)
-- output is in Intel HEX format only
-
-=== Compiler: <<XAZ80,as-z80>>
-
-The assembler syntax is inspired by `as-8080` compiler, and by instruction set described
-http://www.z80.info/zip/z80cpu_um.pdf[here]. The assembler supports following features:
-
-- full instructions support
-- macro support (unlimited nesting)
-- include other files support
-- conditional assembly
-- data definition
-- relative addressing using labels
-- literals and expressions in various radixes (bin, dec, hex, oct)
-- output is in Intel HEX format only
-
-=== Operating memory (RAM): <<XASMEM,standard-mem>>
-
-This plug-in fulfills requirements as RAM and ROM for real computers emulation. Features:
-
-- single cell is 1 byte wide
-- memory size can be set up manually
-- managing ROM ranges
-- loading binary memory images
-- loading files in Intel HEX format
-- possibility to save images for automatic loading at startup
-- intuitive and useful GUI
-
-=== CPU: `8080-cpu`
-
-The emulator of Intel 8080 microprocessor. Features include:
-
-- emulation of all instructions with all flags correctly
-- threaded code / interpretation as emulation technique
-- correct instructions timing
-- ability to set clock frequency manually at run-time
-- emulation of interrupts
-- disassembler implementation
-- breakpoints support
-
-=== CPU: `z80-cpu`
-
-The emulator of Zilog Z80 microprocessor. Features include:
-
-- emulation of all instructions with all flags correctly
-- interpretation as emulation technique
-- correct instructions timing
-- ability to set clock frequency manually at run-time
-- emulation of interrupts
-- disassembler implementation
-- breakpoints support
-
-=== Device: <<XS,88-sio>>
-
-Implementation of serial board MITS 88-SIO. Features:
-
-- allows to connect one device only
-- CPU ports can be set manually
-
-=== Device: <<XD,88-disk>>
-
-Implementation of floppy disk drive MITS 88-DISK. Features:
-
-- allows to mount up to 16 disk images
-- CPU ports can be set manually
-- interrupts are not implemented
-- images can be saved for automatic mount at startup
-
-=== Device: `adm3A-terminal`
-
-Emulation of famous terminal from Lear Siegler, Inc. - ADM-3A. Features include:
-
-- antialiasing, double-buffering
-- automatic (no GUI) mode - input/output from/to files
-- custom font, and nice look
-- emulation of all control codes, including `ESC+'='` combinations
-
-=== Device: <<XSPSEUDO,simhPseudo-z80>>
-
-Virtual device partially reimplemented from http://simh.trailing-edge.com/[simh] emulator. This device is used
-mainly for communication between CP/M 3 operating system for `simh` and emuStudio. Most of the original functionality
-is not implemented, but it is crucial for support of memory bank-switching.

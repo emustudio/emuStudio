@@ -1,0 +1,9 @@
+[[XADM3A]]
+== Virtual device: `adm3a-terminal`
+
+Emulation of famous terminal from Lear Siegler, Inc. - ADM-3A. Features include:
+
+- antialiasing, double-buffering
+- automatic (no GUI) mode - input/output from/to files
+- custom font, and nice look
+- emulation of all control codes, including `ESC+'='` combinations
