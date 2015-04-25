@@ -37,15 +37,11 @@ import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
 import net.sf.emustudio.devices.mits88disk.impl.Drive;
 
-/**
- *
- * @author  vbmacher
- */
 @SuppressWarnings("serial")
 public class DiskFrame extends JFrame {
     private final static String GUI_PATH = "/net/sf/emustudio/devices/mits88disk/gui/";
 
-    private List<Drive> drives;
+    private final List<Drive> drives;
     private int driveInfoIndex = -1; // drive that wants to show current params
 
     public DiskFrame(List<Drive> drives) {
@@ -65,10 +61,9 @@ public class DiskFrame extends JFrame {
                 updateDriveInfo(drive);
             }
         };
-        for (int i = 0; i < drives.size(); i++) {
-            Drive d = drives.get(i);
-            d.removeAllListeners();
-            d.addDriveListener(dl);
+        for (Drive drive : drives) {
+            drive.removeAllListeners();
+            drive.addDriveListener(dl);
         }
     }
 

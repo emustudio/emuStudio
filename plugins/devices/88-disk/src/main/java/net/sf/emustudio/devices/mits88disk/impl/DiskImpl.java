@@ -1,7 +1,5 @@
 /*
- * Created on Streda, 30 january 2008
- *
- * Copyright (C) 2008-2014 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -31,16 +29,15 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
-import net.sf.emustudio.devices.mits88disk.gui.ConfigDialog;
-import net.sf.emustudio.devices.mits88disk.gui.DiskFrame;
-import net.sf.emustudio.intel8080.ExtendedContext;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
+import net.sf.emustudio.devices.mits88disk.gui.DiskFrame;
+import net.sf.emustudio.devices.mits88disk.gui.SettingsDialog;
+import net.sf.emustudio.intel8080.ExtendedContext;
 
 /**
  * MITS 88-DISK Floppy Disk controller with up to eight drives (although I think
@@ -266,12 +263,6 @@ public class DiskImpl extends AbstractDevice {
         }
 
         gui = new DiskFrame(drives);
-        s = settings.readSetting(pluginID, "always_on_top");
-        if (s != null && s.toUpperCase().equals("TRUE")) {
-            gui.setAlwaysOnTop(true);
-        } else {
-            gui.setAlwaysOnTop(false);
-        }
     }
 
     @Override
@@ -309,7 +300,7 @@ public class DiskImpl extends AbstractDevice {
         if (noGUI) {
             return;
         }
-        new ConfigDialog(pluginID, settings, drives, gui).setVisible(true);
+        new SettingsDialog(gui, pluginID, settings, drives).setVisible(true);
     }
 
     public Drive getCurrentDrive() {
