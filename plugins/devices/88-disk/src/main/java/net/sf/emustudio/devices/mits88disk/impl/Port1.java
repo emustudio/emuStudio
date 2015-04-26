@@ -38,19 +38,20 @@ public class Port1 implements DeviceContext<Short> {
 
     @Override
     public Short read() {
-        return disk.getCurrentDrive().getFlags();
+        return disk.getCurrentDrive().getPort1status();
     }
 
     @Override
     public void write(Short value) {
         // select device
         disk.setCurrentDrive(value & 0x0F);
+        Drive drive = disk.getCurrentDrive();
         if ((value & 0x80) != 0) {
             // disable device
-            disk.getCurrentDrive().deselect();
+            drive.deselect();
             disk.setCurrentDrive(0xFF);
         } else {
-            disk.getCurrentDrive().select();
+            drive.select();
         }
     }
 

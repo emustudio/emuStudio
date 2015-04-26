@@ -38,12 +38,14 @@ public class Port2 implements DeviceContext<Short> {
 
     @Override
     public Short read() {
-        return disk.getCurrentDrive().getSectorPos();
+        Drive currentDrive = disk.getCurrentDrive();
+        currentDrive.nextSectorIfHeadIsLoaded();
+        return disk.getCurrentDrive().getPort2status();
     }
 
     @Override
     public void write(Short val) {
-        disk.getCurrentDrive().setFlags(val);
+        disk.getCurrentDrive().writeToPort2(val);
     }
 
     @Override

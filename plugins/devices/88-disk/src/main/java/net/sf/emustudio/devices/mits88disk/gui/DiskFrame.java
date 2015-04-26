@@ -21,35 +21,40 @@ package net.sf.emustudio.devices.mits88disk.gui;
 import net.sf.emustudio.devices.mits88disk.impl.Drive;
 
 import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
-import java.io.File;
 import java.util.List;
 import java.util.Objects;
 
-public class DiskFrame extends javax.swing.JFrame {
+public class DiskFrame extends JFrame {
     private final static String GUI_PATH = "/net/sf/emustudio/devices/mits88disk/gui/";
 
     private final List<Drive> drives;
-    private final GUIDriveListener listener = new GUIDriveListener();
 
     private class GUIDriveListener implements Drive.DriveListener {
+        private final int index;
+
+        private GUIDriveListener(int index) {
+            this.index = index;
+        }
 
         @Override
-        public void driveSelect(final Drive drive, final boolean sel) {
+        public void driveSelect(final boolean selected) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    select(drive, sel);
+                    select(index, selected);
                 }
             });
         }
 
         @Override
-        public void driveParamsChanged(final Drive drive) {
+        public void driveParamsChanged(final Drive.DriveParameters parameters) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    updateDriveInfo(drive);
+                    updateDriveInfo(parameters);
                 }
             });
         }
@@ -60,9 +65,9 @@ public class DiskFrame extends javax.swing.JFrame {
 
         initComponents();
         this.setLocationRelativeTo(null);
-        
-        for (Drive drive : drives) {
-            drive.addDriveListener(listener);
+
+        for (int index = 0; index < drives.size(); index++) {
+            drives.get(index).setDriveListener(new GUIDriveListener(index));
         }        
     }
 
@@ -74,82 +79,29 @@ public class DiskFrame extends javax.swing.JFrame {
         }
         return binaryString;
     }
-    
+
     private void updateDriveInfo(Drive drive) {
-        lblPort1Status.setText(toBinaryByte(drive.getFlags()));
-        lblPort2Status.setText(toBinaryByte(drive.getSectorPos()));
+        updateDriveInfo(drive.getDriveParameters());
+    }
+
+    private void updateDriveInfo(Drive.DriveParameters parameters) {
+        lblPort1Status.setText(toBinaryByte(parameters.port1status));
+        lblPort2Status.setText(toBinaryByte(parameters.port2status));
         
-        lblSector.setText(String.valueOf(drive.getSector()));
-        lblTrack.setText(String.valueOf(drive.getTrack()));
-        lblOffset.setText(String.valueOf(drive.getOffset()));
-        
-        File f = drive.getImageFile();
-        if (f != null) {
-            txtMountedImage.setText(f.getPath());
+        lblSector.setText(String.valueOf(parameters.sector));
+        lblTrack.setText(String.valueOf(parameters.track));
+        lblOffset.setText(String.valueOf(parameters.sectorOffset));
+
+        if (parameters.mountedFloppy != null) {
+            txtMountedImage.setText(parameters.mountedFloppy.getPath());
         } else {
             txtMountedImage.setText("none");
         }
     }
 
-    // calling from DiskImpl
-    public void select(Drive dr, boolean sel) {
-        String fil;
-        int drive = drives.indexOf(dr);
-        if (sel) {
-            fil = GUI_PATH + "on.gif";
-        } else {
-            fil = GUI_PATH + "off.gif";
-        }
-        switch (drive) {
-            case 0:
-                btn0.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-            case 1:
-                btn1.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-            case 2:
-                btn2.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-            case 3:
-                btn3.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-            case 4:
-                btn3.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-            case 5:
-                btn5.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-            case 6:
-                btn6.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-            case 7:
-                btn7.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-            case 8:
-                btn8.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-            case 9:
-                btn9.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-            case 10:
-                btn10.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-            case 11:
-                btn11.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-            case 12:
-                btn12.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-            case 13:
-                btn13.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-            case 14:
-                btn14.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-            case 15:
-                btn15.setIcon(new ImageIcon(getClass().getResource(fil)));
-                break;
-        }
+    public void select(int driveIndex, boolean selected) {
+        String resourceFile = selected ? GUI_PATH + "on.gif" : GUI_PATH + "off.gif";
+        driveButtons[driveIndex].setIcon(new ImageIcon(getClass().getResource(resourceFile)));
     }
     
 
@@ -161,25 +113,8 @@ public class DiskFrame extends javax.swing.JFrame {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-
         javax.swing.ButtonGroup buttonGroup1 = new javax.swing.ButtonGroup();
         javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
-        btn0 = new javax.swing.JToggleButton();
-        btn1 = new javax.swing.JToggleButton();
-        btn2 = new javax.swing.JToggleButton();
-        btn3 = new javax.swing.JToggleButton();
-        btn4 = new javax.swing.JToggleButton();
-        btn5 = new javax.swing.JToggleButton();
-        btn6 = new javax.swing.JToggleButton();
-        btn7 = new javax.swing.JToggleButton();
-        btn8 = new javax.swing.JToggleButton();
-        btn9 = new javax.swing.JToggleButton();
-        btn10 = new javax.swing.JToggleButton();
-        btn11 = new javax.swing.JToggleButton();
-        btn12 = new javax.swing.JToggleButton();
-        btn13 = new javax.swing.JToggleButton();
-        btn14 = new javax.swing.JToggleButton();
-        btn15 = new javax.swing.JToggleButton();
         javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
         javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
         javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
@@ -653,22 +588,22 @@ public class DiskFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btn15ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JToggleButton btn0;
-    private javax.swing.JToggleButton btn1;
-    private javax.swing.JToggleButton btn10;
-    private javax.swing.JToggleButton btn11;
-    private javax.swing.JToggleButton btn12;
-    private javax.swing.JToggleButton btn13;
-    private javax.swing.JToggleButton btn14;
-    private javax.swing.JToggleButton btn15;
-    private javax.swing.JToggleButton btn2;
-    private javax.swing.JToggleButton btn3;
-    private javax.swing.JToggleButton btn4;
-    private javax.swing.JToggleButton btn5;
-    private javax.swing.JToggleButton btn6;
-    private javax.swing.JToggleButton btn7;
-    private javax.swing.JToggleButton btn8;
-    private javax.swing.JToggleButton btn9;
+    private final javax.swing.JToggleButton btn0 = new javax.swing.JToggleButton();
+    private final javax.swing.JToggleButton btn1 = new javax.swing.JToggleButton();
+    private final javax.swing.JToggleButton btn10 = new javax.swing.JToggleButton();
+    private final javax.swing.JToggleButton btn11 = new javax.swing.JToggleButton();
+    private final javax.swing.JToggleButton btn12 = new javax.swing.JToggleButton();
+    private final javax.swing.JToggleButton btn13 = new javax.swing.JToggleButton();
+    private final javax.swing.JToggleButton btn14 = new javax.swing.JToggleButton();
+    private final javax.swing.JToggleButton btn15 = new javax.swing.JToggleButton();
+    private final javax.swing.JToggleButton btn2 = new javax.swing.JToggleButton();
+    private final javax.swing.JToggleButton btn3 = new javax.swing.JToggleButton();
+    private final javax.swing.JToggleButton btn4 = new javax.swing.JToggleButton();
+    private final javax.swing.JToggleButton btn5 = new javax.swing.JToggleButton();
+    private final javax.swing.JToggleButton btn6 = new javax.swing.JToggleButton();
+    private final javax.swing.JToggleButton btn7 = new javax.swing.JToggleButton();
+    private final javax.swing.JToggleButton btn8 = new javax.swing.JToggleButton();
+    private final javax.swing.JToggleButton btn9 = new javax.swing.JToggleButton();
     private javax.swing.JLabel lblOffset;
     private javax.swing.JLabel lblPort1Status;
     private javax.swing.JLabel lblPort2Status;
@@ -676,4 +611,9 @@ public class DiskFrame extends javax.swing.JFrame {
     private javax.swing.JLabel lblTrack;
     private javax.swing.JTextArea txtMountedImage;
     // End of variables declaration//GEN-END:variables
+
+    private final JToggleButton[] driveButtons = new JToggleButton[] {
+            btn0, btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9, btn10, btn11, btn12, btn13, btn14, btn15
+    };
+
 }
