@@ -7,7 +7,10 @@ So far, there is only user documentation, in folder `userdoc`. It is written in 
 
 ## How to "compile" the documentation?
 
-It is enough just to run Maven on this module:
+Before installation, please install Graphviz on your computer. The `dot` program must be in path.
+Graphviz can be downloaded from http://www.graphviz.org/Download.php
+
+Then, run the following command:
 
 ```
 mvn clean install -P doc
