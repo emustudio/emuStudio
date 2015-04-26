@@ -1,7 +1,5 @@
 /*
- * Created on 6.2.2008, 8:46:46
- *
- * Copyright (C) 2008-2014 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,9 +18,6 @@
  */
 package net.sf.emustudio.devices.mits88disk.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -32,6 +27,9 @@ import java.nio.file.OpenOption;
 import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
 import java.util.Set;
+import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Performs disk operations on single drive.
@@ -73,6 +71,7 @@ public class Drive {
     private short port1status;
     private short port2status;
 
+    @Immutable
     public static final class DriveParameters {
         public final short port1status;
         public final short port2status;
@@ -102,10 +101,15 @@ public class Drive {
     }
 
     public Drive() {
+        init();
+    }
+    
+    private void init() {
         track = 0;
-        sector = sectorsCount;
-        sectorOffset = sectorLength;
+        sector = 0;
+        sectorOffset = 0;
         port1status = 0xE7; // 11100111b
+        port2status = 0xC1;
     }
 
     public void setSectorsCount(short sectorsCount) {
@@ -113,6 +117,7 @@ public class Drive {
             throw new IllegalArgumentException("Sectors count must be > 0");
         }
         this.sectorsCount = sectorsCount;
+        init();
     }
 
     public void setSectorLength(short sectorLength) {
@@ -120,6 +125,7 @@ public class Drive {
             throw new IllegalArgumentException("Sector length must be > 0");
         }
         this.sectorLength = sectorLength;
+        init();
     }
 
     public short getSectorsCount() {
@@ -155,11 +161,14 @@ public class Drive {
     }
 
     public void select() {
+        if (mountedFloppy == null) {
+            throw new IllegalStateException("Image is not mounted");
+        }
         selected = true;
         port1status = 0xE5; // 11100101b
         port2status = 0xC1;
-        sector = sectorsCount;
-        sectorOffset = sectorLength;
+        sector = 0;
+        sectorOffset = 0;
         if (track == 0) {
             port1status &= 0xBF;
         } // head is on track 0
@@ -175,10 +184,9 @@ public class Drive {
         notifyParamsChanged();
     }
 
-    public void mount(String fileName) throws IOException {
-        File file = new File(fileName);
+    public void mount(File file) throws IOException {
         if (!file.isFile() || !file.exists()) {
-            throw new IOException("Specified file name doesn't point to a file");
+            throw new IllegalArgumentException("Specified file name doesn't point to a file");
         }
         umount();
         this.mountedFloppy = file;
@@ -190,6 +198,9 @@ public class Drive {
     }
 
     public void umount() {
+        if (selected) {
+            throw new IllegalStateException("Drive cannot be unmounted when it is selected");
+        }
         mountedFloppy = null;
         try {
             if (imageChannel != null) {
@@ -212,29 +223,11 @@ public class Drive {
         return port2status;
     }
 
-    /**
-     * Drive Control (Device 11 OUT):
-     *
-     * +---+---+---+---+---+---+---+---+ | W | C | D | E | U | H | O | I |
-     * +---+---+---+---+---+---+---+---+
-     *
-     * I - When 1, steps head IN one track O - When 1, steps head OUT out track
-     * H - When 1, loads head to drive surface U - When 1, unloads head E -
-     * Enables interrupts (ignored this simulator) D - Disables interrupts
-     * (ignored this simulator) C - When 1 lowers head current (ignored this
-     * simulator) W - When 1, starts Write Enable sequence: W bit on device 10
-     * (see above) will go 1 and data will be read from port 12 until 137 bytes
-     * have been read by the controller from that port. The W bit will go off
-     * then, and the sector data will be written to disk. Before you do this,
-     * you must have stepped the track to the desired number, and waited until
-     * the right sector number is presented on device 11 IN, then set this bit.
-     */
     public void writeToPort2(short val) {
         if ((val & 0x01) != 0) { /* Step head in */
             track++;
-            // if (track > 76) track = 76;
-            sector = sectorsCount;
-            sectorOffset = sectorLength;
+            sector = 0;
+            sectorOffset = 0;
         }
         if ((val & 0x02) != 0) { /* Step head out */
             track--;
@@ -242,8 +235,8 @@ public class Drive {
                 track = 0;
                 port1status &= 0xBF; // head is on track 0
             }
-            sector = sectorsCount;
-            sectorOffset = sectorLength;
+            sector = 0;
+            sectorOffset = 0;
         }
         if ((val & 0x04) != 0) { /* Head load */
             // 11111011
@@ -256,8 +249,8 @@ public class Drive {
             port1status |= 0x04; /* turn off 'head loaded' */
             port1status |= 0x80; /* turn off 'read data avail */
 
-            sector = sectorsCount;
-            sectorOffset = sectorLength;
+            sector = 0;
+            sectorOffset = 0;
         }
         /* Interrupts & head current are ignored */
         if ((val & 0x80) != 0) { /* write sequence start */
@@ -270,7 +263,7 @@ public class Drive {
     public void nextSectorIfHeadIsLoaded() {
         if (((~port1status) & 0x04) != 0) { /* head loaded? */
             sector = (short)((sector + 1) % 32);
-            sectorOffset = sectorLength;
+            sectorOffset = 0;
             port2status = (short)((sector << 1) & 0x3E | 0xC0);
         } else {
             // head not loaded - sector true is 1 (false)
@@ -280,54 +273,39 @@ public class Drive {
     }
 
     public void writeData(int data) throws IOException {
-        int i = sectorOffset;
-
-        if (sectorOffset < sectorLength) {
-            sectorOffset++;
-        } else {
-            port1status |= 1; /* ENWD off */
-            notifyParamsChanged();
-            return;
-        }
-
         byteBuffer.clear();
         byteBuffer.put((byte) (data & 0xFF));
         byteBuffer.flip();
 
-        imageChannel.position(sectorsCount * sectorLength * track + sectorLength * sector + i);
-        imageChannel.write(byteBuffer);
-
-        notifyParamsChanged();
+        try {
+            imageChannel.position(sectorsCount * sectorLength * track + sectorLength * sector + sectorOffset);
+            imageChannel.write(byteBuffer);
+        } finally {
+            sectorOffset = (short) ((sectorOffset + 1) % sectorLength);
+            if (sectorOffset == 0) {
+                port1status |= 1; /* ENWD off */
+            }
+            notifyParamsChanged();
+        }
     }
 
     public short readData() throws IOException {
         if (mountedFloppy == null) {
             return 0;
         }
-        int previousOffset;
-
-        if (sectorOffset >= sectorLength) {
-            previousOffset = 0;
-        } else {
-            previousOffset = sectorOffset;
+        imageChannel.position(sectorsCount * sectorLength * track + sectorLength * sector + sectorOffset);
+        try {
+            byteBuffer.clear();
+            int bytesRead = imageChannel.read(byteBuffer);
+            if (bytesRead != byteBuffer.capacity()) {
+                throw new IOException("Could not read data from disk image");
+            }
+            byteBuffer.flip();
+            return (short) (byteBuffer.get() & 0xFF);
+        } finally {
+            sectorOffset = (short) ((sectorOffset + 1) % sectorLength);
+            notifyParamsChanged();
         }
-
-        if (sectorOffset >= sectorLength) {
-            sectorOffset = 1;
-        } else {
-            sectorOffset++;
-        }
-
-        imageChannel.position(sectorsCount * sectorLength * track + sectorLength * sector + previousOffset);
-        notifyParamsChanged();
-
-        byteBuffer.clear();
-        int bytesRead = imageChannel.read(byteBuffer);
-        if (bytesRead != byteBuffer.capacity()) {
-            throw new IOException("Could not read data from disk image");
-        }
-        byteBuffer.flip();
-        return (short) (byteBuffer.get() & 0xFF);
     }
 
     public int getSector() {

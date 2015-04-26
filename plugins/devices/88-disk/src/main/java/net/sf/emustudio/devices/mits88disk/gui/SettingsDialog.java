@@ -20,15 +20,13 @@ package net.sf.emustudio.devices.mits88disk.gui;
 
 import emulib.emustudio.SettingsManager;
 import emulib.runtime.StaticDialogs;
-import net.sf.emustudio.devices.mits88disk.impl.DiskImpl;
-import net.sf.emustudio.devices.mits88disk.impl.Drive;
-
-import javax.swing.JFileChooser;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
-
+import javax.swing.JFileChooser;
+import net.sf.emustudio.devices.mits88disk.impl.DiskImpl;
+import net.sf.emustudio.devices.mits88disk.impl.Drive;
 import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.IMAGE;
 import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT1_CPU;
 import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT2_CPU;
@@ -495,7 +493,7 @@ public class SettingsDialog extends javax.swing.JDialog {
     private void btnMountActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMountActionPerformed
         Drive drive = drives.get(cmbDrive.getSelectedIndex());
         try {
-            drive.mount(txtImageFile.getText());
+            drive.mount(new File(txtImageFile.getText()));
         } catch (IOException ex) {
             StaticDialogs.showErrorMessage(ex.getMessage());
             txtImageFile.grabFocus();
