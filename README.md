@@ -43,6 +43,16 @@ module directory):
 mvn clean install
 ```
 
+In order to package complete emuStudio with examples and all plug-ins, please go to subdirectory `release` and then
+invoke the following command:
+
+```
+mvn clean install -P release
+```
+
+Inside `target` subdirectory will be a zip file containing full distribution of emuStudio. It is enough to unzip it
+somewhere and it's ready to run.
+
 # Installation
 
 Please follow instructions on [project's web page](http://emustudio.sourceforge.net/downloads.html).
