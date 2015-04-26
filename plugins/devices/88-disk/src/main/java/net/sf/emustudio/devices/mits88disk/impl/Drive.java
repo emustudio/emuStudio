@@ -20,9 +20,6 @@
  */
 package net.sf.emustudio.devices.mits88disk.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -35,12 +32,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Performs disk operations on single drive.
  */
 public class Drive {
-    private static Logger LOGGER = LoggerFactory.getLogger(Drive.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Drive.class);
 
     public final static int TRACKS_COUNT = 254;
     public final static int SECTORS_COUNT = 32;
