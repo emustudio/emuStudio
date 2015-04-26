@@ -18,16 +18,42 @@
  */
 package net.sf.emustudio.devices.mits88disk.gui;
 
+import net.sf.emustudio.devices.mits88disk.impl.Drive;
+
+import javax.swing.ImageIcon;
+import javax.swing.SwingUtilities;
 import java.io.File;
 import java.util.List;
 import java.util.Objects;
-import javax.swing.ImageIcon;
-import net.sf.emustudio.devices.mits88disk.impl.Drive;
 
 public class DiskFrame extends javax.swing.JFrame {
     private final static String GUI_PATH = "/net/sf/emustudio/devices/mits88disk/gui/";
 
     private final List<Drive> drives;
+    private final GUIDriveListener listener = new GUIDriveListener();
+
+    private class GUIDriveListener implements Drive.DriveListener {
+
+        @Override
+        public void driveSelect(final Drive drive, final boolean sel) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    select(drive, sel);
+                }
+            });
+        }
+
+        @Override
+        public void driveParamsChanged(final Drive drive) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    updateDriveInfo(drive);
+                }
+            });
+        }
+    }
 
     public DiskFrame(List<Drive> drives) {
         this.drives = Objects.requireNonNull(drives);
@@ -35,27 +61,23 @@ public class DiskFrame extends javax.swing.JFrame {
         initComponents();
         this.setLocationRelativeTo(null);
         
-        Drive.DriveListener dl = new Drive.DriveListener() {
-
-            @Override
-            public void driveSelect(Drive drive, boolean sel) {
-                select(drive, sel);
-            }
-
-            @Override
-            public void driveParamsChanged(Drive drive) {
-                updateDriveInfo(drive);
-            }
-        };
         for (Drive drive : drives) {
-            drive.removeAllListeners();
-            drive.addDriveListener(dl);
+            drive.addDriveListener(listener);
         }        
+    }
+
+    private String toBinaryByte(int number) {
+        String binaryString = Integer.toBinaryString(number);
+        int length = binaryString.length();
+        for (int i = 0; i < 8 - length; i++) {
+            binaryString = "0" + binaryString;
+        }
+        return binaryString;
     }
     
     private void updateDriveInfo(Drive drive) {
-        lblPort1Status.setText(Integer.toBinaryString(drive.getFlags()));
-        lblPort2Status.setText(Integer.toBinaryString(drive.getSectorPos()));
+        lblPort1Status.setText(toBinaryByte(drive.getFlags()));
+        lblPort2Status.setText(toBinaryByte(drive.getSectorPos()));
         
         lblSector.setText(String.valueOf(drive.getSector()));
         lblTrack.setText(String.valueOf(drive.getTrack()));
@@ -409,8 +431,10 @@ public class DiskFrame extends javax.swing.JFrame {
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Flags and settings", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
 
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel1.setText("Port 1:");
 
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel2.setText("Port 2:");
 
         lblPort1Status.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
@@ -473,16 +497,19 @@ public class DiskFrame extends javax.swing.JFrame {
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 78, Short.MAX_VALUE)
+                .addComponent(jScrollPane1)
                 .addContainerGap())
         );
 
         jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Position", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
 
+        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel3.setText("Track:");
 
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel4.setText("Sector:");
 
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel5.setText("Offset:");
 
         lblOffset.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
@@ -501,18 +528,14 @@ public class DiskFrame extends javax.swing.JFrame {
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addComponent(jLabel5)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblOffset))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel4)
-                            .addComponent(jLabel3))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblTrack)
-                            .addComponent(lblSector))))
+                    .addComponent(jLabel4)
+                    .addComponent(jLabel3)
+                    .addComponent(jLabel5))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblOffset)
+                    .addComponent(lblTrack)
+                    .addComponent(lblSector))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
@@ -527,9 +550,9 @@ public class DiskFrame extends javax.swing.JFrame {
                     .addComponent(jLabel4)
                     .addComponent(lblSector))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblOffset)
-                    .addComponent(jLabel5))
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel5)
+                    .addComponent(lblOffset))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 

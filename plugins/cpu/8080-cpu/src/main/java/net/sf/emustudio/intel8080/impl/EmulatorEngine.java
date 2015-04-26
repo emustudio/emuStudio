@@ -99,7 +99,7 @@ public class EmulatorEngine {
                 LockSupport.parkNanos(slice - endTime);
             }
         }
-        return CPU.RunState.STATE_STOPPED_NORMAL;
+        return currentRunState;
     }
 
 
