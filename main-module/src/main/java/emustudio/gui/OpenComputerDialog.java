@@ -25,10 +25,9 @@ import emustudio.architecture.ReadConfigurationException;
 import emustudio.drawing.PreviewPanel;
 import emustudio.drawing.Schema;
 import emustudio.main.Main;
+import javax.swing.AbstractListModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.swing.AbstractListModel;
 
 /**
  * This dialog manages the virtual computers. It offers a list of all
@@ -271,7 +270,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel1.setText("Please select a virtual configuration that will be emulated:");
 
-        btnOpen.setFont(btnOpen.getFont().deriveFont(btnOpen.getFont().getStyle() & ~java.awt.Font.BOLD));
+        btnOpen.setFont(btnOpen.getFont().deriveFont(btnOpen.getFont().getStyle() | java.awt.Font.BOLD));
         btnOpen.setText("Open");
         btnOpen.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -279,6 +278,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
             }
         });
 
+        btnClose.setFont(btnClose.getFont().deriveFont(btnClose.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnClose.setText("Close");
         btnClose.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

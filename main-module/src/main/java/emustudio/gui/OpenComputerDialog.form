@@ -317,7 +317,7 @@
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
           <FontInfo relative="true">
-            <Font bold="false" component="btnOpen" property="font" relativeSize="true" size="0"/>
+            <Font bold="true" component="btnOpen" property="font" relativeSize="true" size="0"/>
           </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="Open"/>
@@ -332,6 +332,11 @@
     </Component>
     <Component class="javax.swing.JButton" name="btnClose">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="false" component="btnClose" property="font" relativeSize="true" size="0"/>
+          </FontInfo>
+        </Property>
         <Property name="text" type="java.lang.String" value="Close"/>
       </Properties>
       <Events>
