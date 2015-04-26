@@ -1,9 +1,5 @@
 /*
- * ImageFilter.java
- *
- * Created on Piatok, 2008, februar 8, 19:48
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,10 +18,6 @@
  */
 package net.sf.emustudio.devices.mits88disk.gui;
 
-/**
- *
- * @author vbmacher
- */
 public class ImageFilter extends javax.swing.filechooser.FileFilter {
 
     private String[] exts;
@@ -59,14 +51,14 @@ public class ImageFilter extends javax.swing.filechooser.FileFilter {
         }
         String ext = this.getExtension(f);
         if (ext != null) {
-            for (int i = 0; i < exts.length; i++) {
-                if (exts[i].equals(ext) || exts[i].equals("*")) {
+            for (String ext1 : exts) {
+                if (ext1.equals(ext) || ext1.equals("*")) {
                     return true;
                 }
             }
         } else {
-            for (int i = 0; i < exts.length; i++) {
-                if (exts[i].equals("*")) {
+            for (String ext1 : exts) {
+                if (ext1.equals("*")) {
                     return true;
                 }
             }

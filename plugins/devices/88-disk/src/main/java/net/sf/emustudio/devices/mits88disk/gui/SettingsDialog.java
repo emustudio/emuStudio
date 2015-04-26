@@ -29,6 +29,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
+import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.IMAGE;
+import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT1_CPU;
+import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT2_CPU;
+import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT3_CPU;
+import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.SECTORS_COUNT;
+import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.SECTOR_LENGTH;
+
 public class SettingsDialog extends javax.swing.JDialog {
     private final SettingsManager settings;
     private final List<Drive> drives;
@@ -47,43 +54,51 @@ public class SettingsDialog extends javax.swing.JDialog {
 
         readSettings();
         cmbDrive.setSelectedIndex(0);
-        updateGUI(0);
+        updateGUI(drives.get(0));
         setLocationRelativeTo(null);
     }
 
     private void readSettings() {
         String s;
-        s = settings.readSetting(pluginId, "port1CPU");
+        s = settings.readSetting(pluginId, PORT1_CPU);
         if (s != null) {
             txtPort1.setText(s);
         }
-        s = settings.readSetting(pluginId, "port2CPU");
+        s = settings.readSetting(pluginId, PORT2_CPU);
         if (s != null) {
             txtPort2.setText(s);
         }
-        s = settings.readSetting(pluginId, "port3CPU");
+        s = settings.readSetting(pluginId, PORT3_CPU);
         if (s != null) {
             txtPort3.setText(s);
         }
     }
 
     private void writeSettings() {
-        settings.writeSetting(pluginId, "port1CPU", txtPort1.getText());
-        settings.writeSetting(pluginId, "port2CPU", txtPort2.getText());
-        settings.writeSetting(pluginId, "port3CPU", txtPort3.getText());
+        settings.writeSetting(pluginId, PORT1_CPU, txtPort1.getText());
+        settings.writeSetting(pluginId, PORT2_CPU, txtPort2.getText());
+        settings.writeSetting(pluginId, PORT3_CPU, txtPort3.getText());
 
-        for (int i = 0; i < 16; i++) {
-            File f = ((Drive) drives.get(i)).getImageFile();
-            if (f != null) {
-                settings.writeSetting(pluginId, "image" + i, f.getAbsolutePath());
+        for (int i = 0; i < drives.size(); i++) {
+            Drive drive = drives.get(i);
+
+            settings.writeSetting(pluginId, SECTORS_COUNT + i, String.valueOf(drive.getSectorsCount()));
+            settings.writeSetting(pluginId, SECTOR_LENGTH + i, String.valueOf(drive.getSectorLength()));
+            
+            File file = drive.getImageFile();
+            if (file != null) {
+                settings.writeSetting(pluginId, IMAGE + i, file.getAbsolutePath());
             } else {
-                settings.removeSetting(pluginId, "image" + i);
+                settings.removeSetting(pluginId, IMAGE + i);
             }
         }
     }
 
-    private void updateGUI(int drive) {
-        File f = ((Drive) drives.get(drive)).getImageFile();
+    private void updateGUI(Drive drive) {
+        txtSectorLength.setText(String.valueOf(drive.getSectorLength()));
+        txtSectorsCount.setText(String.valueOf(drive.getSectorsCount()));
+
+        File f = drive.getImageFile();
         if (f != null) {
             txtImageFile.setText(f.getAbsolutePath());
             btnUnmount.setEnabled(true);
@@ -111,6 +126,12 @@ public class SettingsDialog extends javax.swing.JDialog {
         btnMount = new javax.swing.JButton();
         btnUnmount = new javax.swing.JButton();
         javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
+        javax.swing.JPanel jPanel3 = new javax.swing.JPanel();
+        javax.swing.JLabel jLabel10 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel11 = new javax.swing.JLabel();
+        btnDefaultParams = new javax.swing.JButton();
+        txtSectorsCount = new javax.swing.JTextField();
+        txtSectorLength = new javax.swing.JTextField();
         javax.swing.JPanel panelPorts = new javax.swing.JPanel();
         javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
         javax.swing.JLabel jLabel3 = new javax.swing.JLabel();
@@ -184,7 +205,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                 .addComponent(btnMount)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnUnmount)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(23, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -199,6 +220,60 @@ public class SettingsDialog extends javax.swing.JDialog {
         jLabel2.setFont(jLabel2.getFont().deriveFont((jLabel2.getFont().getStyle() & ~java.awt.Font.ITALIC) & ~java.awt.Font.BOLD));
         jLabel2.setText("Disk drive:");
 
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Drive parameters", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 0, 12))); // NOI18N
+
+        jLabel10.setFont(jLabel10.getFont().deriveFont(jLabel10.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel10.setText("Sectors count:");
+
+        jLabel11.setFont(jLabel11.getFont().deriveFont(jLabel11.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel11.setText("Sector length:");
+
+        btnDefaultParams.setFont(btnDefaultParams.getFont().deriveFont(btnDefaultParams.getFont().getStyle() & ~java.awt.Font.BOLD));
+        btnDefaultParams.setText("Change to Default");
+        btnDefaultParams.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDefaultParamsActionPerformed(evt);
+            }
+        });
+
+        txtSectorsCount.setText("32");
+
+        txtSectorLength.setText("137");
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(btnDefaultParams)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel10)
+                            .addComponent(jLabel11))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(txtSectorsCount)
+                            .addComponent(txtSectorLength, javax.swing.GroupLayout.DEFAULT_SIZE, 121, Short.MAX_VALUE))))
+                .addContainerGap(58, Short.MAX_VALUE))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel10)
+                    .addComponent(txtSectorsCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel11)
+                    .addComponent(txtSectorLength, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addComponent(btnDefaultParams)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout panelImagesLayout = new javax.swing.GroupLayout(panelImages);
         panelImages.setLayout(panelImagesLayout);
         panelImagesLayout.setHorizontalGroup(
@@ -206,7 +281,6 @@ public class SettingsDialog extends javax.swing.JDialog {
             .addGroup(panelImagesLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(panelImagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(txtImageFile)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelImagesLayout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
@@ -216,7 +290,11 @@ public class SettingsDialog extends javax.swing.JDialog {
                             .addComponent(jLabel1)
                             .addComponent(cmbDrive, javax.swing.GroupLayout.PREFERRED_SIZE, 277, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel2))
-                        .addGap(0, 306, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(panelImagesLayout.createSequentialGroup()
+                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         panelImagesLayout.setVerticalGroup(
@@ -233,8 +311,12 @@ public class SettingsDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnBrowse)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(panelImagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panelImagesLayout.createSequentialGroup()
+                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         jTabbedPane1.addTab("Disk Images", panelImages);
@@ -251,7 +333,7 @@ public class SettingsDialog extends javax.swing.JDialog {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel3)
-                .addContainerGap(143, Short.MAX_VALUE))
+                .addContainerGap(90, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -346,7 +428,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .addComponent(jLabel6)
                     .addComponent(txtPort3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel9))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 103, Short.MAX_VALUE)
                 .addComponent(btnDefault)
                 .addContainerGap())
         );
@@ -393,8 +475,7 @@ public class SettingsDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmbDriveItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbDriveItemStateChanged
-        int i = cmbDrive.getSelectedIndex();
-        updateGUI(i);
+        updateGUI(drives.get(cmbDrive.getSelectedIndex()));
     }//GEN-LAST:event_cmbDriveItemStateChanged
 
     private void txtImageFileInputMethodTextChanged(java.awt.event.InputMethodEvent evt) {//GEN-FIRST:event_txtImageFileInputMethodTextChanged
@@ -406,20 +487,20 @@ public class SettingsDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_txtImageFileInputMethodTextChanged
 
     private void btnUnmountActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUnmountActionPerformed
-        int i = cmbDrive.getSelectedIndex();
-        ((Drive) drives.get(i)).umount();
-        updateGUI(i);
+        Drive drive = drives.get(cmbDrive.getSelectedIndex());
+        drive.umount();
+        updateGUI(drive);
     }//GEN-LAST:event_btnUnmountActionPerformed
 
     private void btnMountActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMountActionPerformed
-        int i = cmbDrive.getSelectedIndex();
+        Drive drive = drives.get(cmbDrive.getSelectedIndex());
         try {
-            ((Drive) drives.get(i)).mount(txtImageFile.getText());
+            drive.mount(txtImageFile.getText());
         } catch (IOException ex) {
             StaticDialogs.showErrorMessage(ex.getMessage());
             txtImageFile.grabFocus();
         }
-        updateGUI(i);
+        updateGUI(drive);
     }//GEN-LAST:event_btnMountActionPerformed
 
     private void btnBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBrowseActionPerformed
@@ -440,7 +521,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         f.setFileFilter(f1);
         f.setApproveButtonText("Open");
         int i = cmbDrive.getSelectedIndex();
-        File ff = ((Drive) drives.get(i)).getImageFile();
+        File ff = drives.get(i).getImageFile();
         f.setSelectedFile(ff);
         if (ff == null) {
             f.setCurrentDirectory(new File(System.getProperty("user.dir")));
@@ -474,6 +555,22 @@ public class SettingsDialog extends javax.swing.JDialog {
             txtPort3.grabFocus();
             return;
         }
+        
+        Drive drive = drives.get(cmbDrive.getSelectedIndex());
+        try {
+            drive.setSectorsCount(Short.parseShort(txtSectorsCount.getText()));
+        } catch (Exception e) {
+            StaticDialogs.showErrorMessage("Sectors count: Bad number\n" + e.getMessage());
+            txtSectorsCount.grabFocus();
+            return;
+        }
+        try {
+            drive.setSectorLength(Short.parseShort(txtSectorLength.getText()));
+        } catch (Exception e) {
+            StaticDialogs.showErrorMessage("Sector length: Bad number\n" + e.getMessage());
+            txtSectorLength.grabFocus();
+            return;
+        }
 
         if (chkSaveSettings.isSelected()) {
             writeSettings();
@@ -482,14 +579,20 @@ public class SettingsDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_btnOKActionPerformed
 
     private void btnDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDefaultActionPerformed
-        txtPort1.setText(String.format("0x%02X", DiskImpl.CPU_PORT1));
-        txtPort2.setText(String.format("0x%02X", DiskImpl.CPU_PORT2));
-        txtPort3.setText(String.format("0x%02X", DiskImpl.CPU_PORT3));
+        txtPort1.setText(String.format("0x%02X", DiskImpl.DEFAULT_CPU_PORT1));
+        txtPort2.setText(String.format("0x%02X", DiskImpl.DEFAULT_CPU_PORT2));
+        txtPort3.setText(String.format("0x%02X", DiskImpl.DEFAULT_CPU_PORT3));
     }//GEN-LAST:event_btnDefaultActionPerformed
+
+    private void btnDefaultParamsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDefaultParamsActionPerformed
+        txtSectorsCount.setText(String.valueOf(Drive.DEFAULT_SECTORS_COUNT));
+        txtSectorLength.setText(String.valueOf(Drive.DEFAULT_SECTOR_LENGTH));
+    }//GEN-LAST:event_btnDefaultParamsActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnBrowse;
     private javax.swing.JButton btnDefault;
+    private javax.swing.JButton btnDefaultParams;
     private javax.swing.JButton btnMount;
     private javax.swing.JButton btnOK;
     private javax.swing.JButton btnUnmount;
@@ -499,5 +602,7 @@ public class SettingsDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtPort1;
     private javax.swing.JTextField txtPort2;
     private javax.swing.JTextField txtPort3;
+    private javax.swing.JTextField txtSectorLength;
+    private javax.swing.JTextField txtSectorsCount;
     // End of variables declaration//GEN-END:variables
 }

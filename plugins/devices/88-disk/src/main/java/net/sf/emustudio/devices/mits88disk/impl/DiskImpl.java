@@ -29,15 +29,23 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
+import net.sf.emustudio.devices.mits88disk.gui.DiskFrame;
+import net.sf.emustudio.devices.mits88disk.gui.SettingsDialog;
+import net.sf.emustudio.intel8080.ExtendedContext;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
-import net.sf.emustudio.devices.mits88disk.gui.DiskFrame;
-import net.sf.emustudio.devices.mits88disk.gui.SettingsDialog;
-import net.sf.emustudio.intel8080.ExtendedContext;
+
+import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.IMAGE;
+import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT1_CPU;
+import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT2_CPU;
+import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT3_CPU;
+import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.SECTORS_COUNT;
+import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.SECTOR_LENGTH;
 
 /**
  * MITS 88-DISK Floppy Disk controller with up to eight drives (although I think
@@ -115,9 +123,9 @@ import net.sf.emustudio.intel8080.ExtendedContext;
 )
 public class DiskImpl extends AbstractDevice {
     private final static int DRIVES_COUNT = 16;
-    public final static int CPU_PORT1 = 0x8;
-    public final static int CPU_PORT2 = 0x9;
-    public final static int CPU_PORT3 = 0xA;
+    public final static int DEFAULT_CPU_PORT1 = 0x8;
+    public final static int DEFAULT_CPU_PORT2 = 0x9;
+    public final static int DEFAULT_CPU_PORT3 = 0xA;
 
     private int port1CPU;
     private int port2CPU;
@@ -141,9 +149,9 @@ public class DiskImpl extends AbstractDevice {
         }
 
         this.currentDrive = 0xFF;
-        port1CPU = CPU_PORT1;
-        port2CPU = CPU_PORT2;
-        port3CPU = CPU_PORT3;
+        port1CPU = DEFAULT_CPU_PORT1;
+        port2CPU = DEFAULT_CPU_PORT2;
+        port3CPU = DEFAULT_CPU_PORT3;
 
         port1 = new Port1(this);
         port2 = new Port2(this);
@@ -170,7 +178,7 @@ public class DiskImpl extends AbstractDevice {
         int portNumber;
         try {
             portNumber = Integer.decode(providedPort);
-            if (cpuContext.attachDevice(port, portNumber) == false) {
+            if (!cpuContext.attachDevice(port, portNumber)) {
                 StaticDialogs.showErrorMessage("Error: the device still can't be attached");
                 return -1;
             }
@@ -193,7 +201,7 @@ public class DiskImpl extends AbstractDevice {
 
         readSettings();
         // attach device to CPU
-        if (cpuContext.attachDevice(port1, port1CPU) == false) {
+        if (!cpuContext.attachDevice(port1, port1CPU)) {
             port1CPU = providePort(1, port1CPU, port1);
             if (port1CPU == -1) {
                 throw new PluginInitializationException(
@@ -201,7 +209,7 @@ public class DiskImpl extends AbstractDevice {
                 );
             }
         }
-        if (cpuContext.attachDevice(port2, port2CPU) == false) {
+        if (!cpuContext.attachDevice(port2, port2CPU)) {
             port2CPU = providePort(2, port2CPU, port2);
             if (port2CPU == -1) {
                 throw new PluginInitializationException(
@@ -209,7 +217,7 @@ public class DiskImpl extends AbstractDevice {
                 );
             }
         }
-        if (cpuContext.attachDevice(port3, port3CPU) == false) {
+        if (!cpuContext.attachDevice(port3, port3CPU)) {
             port3CPU = providePort(3, port3CPU, port3);
             if (port3CPU == -1) {
                 throw new PluginInitializationException(
@@ -217,52 +225,60 @@ public class DiskImpl extends AbstractDevice {
                 );
             }
         }
+
+        if (!noGUI) {
+            gui = new DiskFrame(drives);
+        }
     }
 
     private void readSettings() {
         String s;
         s = settings.readSetting(pluginID, SettingsManager.NO_GUI);
         noGUI = s != null && s.toUpperCase().equals("TRUE");
-        s = settings.readSetting(pluginID, "port1CPU");
+        s = settings.readSetting(pluginID, PORT1_CPU);
         if (s != null) {
             try {
                 port1CPU = Integer.decode(s);
             } catch (NumberFormatException e) {
-                port1CPU = CPU_PORT1;
+                port1CPU = DEFAULT_CPU_PORT1;
             }
         }
-        s = settings.readSetting(pluginID, "port2CPU");
+        s = settings.readSetting(pluginID, PORT2_CPU);
         if (s != null) {
             try {
                 port2CPU = Integer.decode(s);
             } catch (NumberFormatException e) {
-                port2CPU = CPU_PORT2;
+                port2CPU = DEFAULT_CPU_PORT2;
             }
         }
-        s = settings.readSetting(pluginID, "port3CPU");
+        s = settings.readSetting(pluginID, PORT3_CPU);
         if (s != null) {
             try {
                 port3CPU = Integer.decode(s);
             } catch (NumberFormatException e) {
-                port3CPU = CPU_PORT3;
+                port3CPU = DEFAULT_CPU_PORT3;
             }
         }
-        for (int i = 0; i < 16; i++) {
-            s = settings.readSetting(pluginID, "image" + i);
+        for (int i = 0; i < DRIVES_COUNT; i++) {
+            String sectorsCountStr = settings.readSetting(pluginID, SECTORS_COUNT + i);
+            String sectorLengthStr = settings.readSetting(pluginID, SECTOR_LENGTH + i);
+
+            short sectorsCount = (sectorsCountStr == null) ? Drive.DEFAULT_SECTORS_COUNT : Short.parseShort(sectorsCountStr);
+            short sectorLength = (sectorLengthStr == null) ? Drive.DEFAULT_SECTOR_LENGTH : Short.parseShort(sectorLengthStr);
+
+            Drive drive = drives.get(i);
+            drive.setSectorsCount(sectorsCount);
+            drive.setSectorLength(sectorLength);
+
+            s = settings.readSetting(pluginID, IMAGE + i);
             if (s != null) {
                 try {
-                    drives.get(i).mount(s);
+                    drive.mount(s);
                 } catch (IOException ex) {
                     StaticDialogs.showErrorMessage(ex.getMessage());
                 }
             }
         }
-
-        if (noGUI) {
-            return;
-        }
-
-        gui = new DiskFrame(drives);
     }
 
     @Override
@@ -315,6 +331,7 @@ public class DiskImpl extends AbstractDevice {
     public boolean isShowSettingsSupported() {
         return !noGUI;
     }
+
     private static boolean ARG_LIST = false;
     private static String IMAGE_FILE = null;
     private static boolean ARG_HELP = false;

@@ -39,9 +39,11 @@ import java.util.Set;
 public class Drive {
     private static final Logger LOGGER = LoggerFactory.getLogger(Drive.class);
 
-    public final static int TRACKS_COUNT = 254;
-    public final static int SECTORS_COUNT = 32;
-    public final static int SECTOR_LENGTH = 137;
+    public final static short DEFAULT_SECTORS_COUNT = 32;
+    public final static short DEFAULT_SECTOR_LENGTH = 137;
+
+    private volatile short sectorsCount = DEFAULT_SECTORS_COUNT;
+    private volatile short sectorLength = DEFAULT_SECTOR_LENGTH;
 
     private volatile short track;
     private volatile short sector;
@@ -101,9 +103,31 @@ public class Drive {
 
     public Drive() {
         track = 0;
-        sector = SECTORS_COUNT;
-        sectorOffset = SECTOR_LENGTH;
+        sector = sectorsCount;
+        sectorOffset = sectorLength;
         port1status = 0xE7; // 11100111b
+    }
+
+    public void setSectorsCount(short sectorsCount) {
+        if (sectorsCount <= 0) {
+            throw new IllegalArgumentException("Sectors count must be > 0");
+        }
+        this.sectorsCount = sectorsCount;
+    }
+
+    public void setSectorLength(short sectorLength) {
+        if (sectorLength <= 0) {
+            throw new IllegalArgumentException("Sector length must be > 0");
+        }
+        this.sectorLength = sectorLength;
+    }
+
+    public short getSectorsCount() {
+        return sectorsCount;
+    }
+
+    public short getSectorLength() {
+        return sectorLength;
     }
 
     public void setDriveListener(DriveListener listener) {
@@ -120,7 +144,7 @@ public class Drive {
     private void notifyParamsChanged() {
         DriveListener tmpListener = listener;
         if (tmpListener != null) {
-            listener.driveParamsChanged(new DriveParameters(
+            tmpListener.driveParamsChanged(new DriveParameters(
                     port1status, port2status, track, sector, sectorOffset, mountedFloppy
             ));
         }
@@ -134,8 +158,8 @@ public class Drive {
         selected = true;
         port1status = 0xE5; // 11100101b
         port2status = 0xC1;
-        sector = SECTORS_COUNT;
-        sectorOffset = SECTOR_LENGTH;
+        sector = sectorsCount;
+        sectorOffset = sectorLength;
         if (track == 0) {
             port1status &= 0xBF;
         } // head is on track 0
@@ -209,8 +233,8 @@ public class Drive {
         if ((val & 0x01) != 0) { /* Step head in */
             track++;
             // if (track > 76) track = 76;
-            sector = SECTORS_COUNT;
-            sectorOffset = SECTOR_LENGTH;
+            sector = sectorsCount;
+            sectorOffset = sectorLength;
         }
         if ((val & 0x02) != 0) { /* Step head out */
             track--;
@@ -218,8 +242,8 @@ public class Drive {
                 track = 0;
                 port1status &= 0xBF; // head is on track 0
             }
-            sector = SECTORS_COUNT;
-            sectorOffset = SECTOR_LENGTH;
+            sector = sectorsCount;
+            sectorOffset = sectorLength;
         }
         if ((val & 0x04) != 0) { /* Head load */
             // 11111011
@@ -232,8 +256,8 @@ public class Drive {
             port1status |= 0x04; /* turn off 'head loaded' */
             port1status |= 0x80; /* turn off 'read data avail */
 
-            sector = SECTORS_COUNT;
-            sectorOffset = SECTOR_LENGTH;
+            sector = sectorsCount;
+            sectorOffset = sectorLength;
         }
         /* Interrupts & head current are ignored */
         if ((val & 0x80) != 0) { /* write sequence start */
@@ -246,7 +270,7 @@ public class Drive {
     public void nextSectorIfHeadIsLoaded() {
         if (((~port1status) & 0x04) != 0) { /* head loaded? */
             sector = (short)((sector + 1) % 32);
-            sectorOffset = SECTOR_LENGTH;
+            sectorOffset = sectorLength;
             port2status = (short)((sector << 1) & 0x3E | 0xC0);
         } else {
             // head not loaded - sector true is 1 (false)
@@ -258,7 +282,7 @@ public class Drive {
     public void writeData(int data) throws IOException {
         int i = sectorOffset;
 
-        if (sectorOffset < SECTOR_LENGTH) {
+        if (sectorOffset < sectorLength) {
             sectorOffset++;
         } else {
             port1status |= 1; /* ENWD off */
@@ -270,7 +294,7 @@ public class Drive {
         byteBuffer.put((byte) (data & 0xFF));
         byteBuffer.flip();
 
-        imageChannel.position(SECTORS_COUNT * SECTOR_LENGTH * track + SECTOR_LENGTH * sector + i);
+        imageChannel.position(sectorsCount * sectorLength * track + sectorLength * sector + i);
         imageChannel.write(byteBuffer);
 
         notifyParamsChanged();
@@ -282,19 +306,19 @@ public class Drive {
         }
         int previousOffset;
 
-        if (sectorOffset >= SECTOR_LENGTH) {
+        if (sectorOffset >= sectorLength) {
             previousOffset = 0;
         } else {
             previousOffset = sectorOffset;
         }
 
-        if (sectorOffset >= SECTOR_LENGTH) {
+        if (sectorOffset >= sectorLength) {
             sectorOffset = 1;
         } else {
             sectorOffset++;
         }
 
-        imageChannel.position(SECTORS_COUNT * SECTOR_LENGTH * track + SECTOR_LENGTH * sector + previousOffset);
+        imageChannel.position(sectorsCount * sectorLength * track + sectorLength * sector + previousOffset);
         notifyParamsChanged();
 
         byteBuffer.clear();

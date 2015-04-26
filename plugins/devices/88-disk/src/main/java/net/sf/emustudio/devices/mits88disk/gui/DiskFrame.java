@@ -101,7 +101,9 @@ public class DiskFrame extends JFrame {
 
     public void select(int driveIndex, boolean selected) {
         String resourceFile = selected ? GUI_PATH + "on.gif" : GUI_PATH + "off.gif";
-        driveButtons[driveIndex].setIcon(new ImageIcon(getClass().getResource(resourceFile)));
+        if (driveIndex >= 0 && driveIndex < driveButtons.length) {
+            driveButtons[driveIndex].setIcon(new ImageIcon(getClass().getResource(resourceFile)));
+        }
     }
     
 
