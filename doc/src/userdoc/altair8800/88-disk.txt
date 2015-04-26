@@ -36,10 +36,14 @@ image::altair8800/images/88-disk-01.png[Settings window of 88-DISK]
 
 - *A*: Select drive (A - P)
 - *B*: Choosing the image file
-- *C*: Mount the image file onto the selected drive. If there is any disk mounted already, the new image will be
-       re-mounted.
-- *D*: Un-mount already mounted image from the selected drive.
-- *E*: Check box for saving the settings into the computer configuration file. If checked, the settings will be
+- *C*: Set sectors count and sector length for the current drive footnote:[Be cautious with the settings. Incorrect
+       values can result in disk image file damage. Default values are used for classic Altair8800 image files used by
+       simh].
+- *D*: Set default values for sector count and sector length for the current drive.
+
+- *E*: Mount/unmount the image file onto/from the selected drive.
+       Mount operation: If there is any disk mounted already, the new image will be re-mounted.
+- *F*: Check box for saving the settings into the computer configuration file. If checked, the settings will be
        loaded after start.
 
 === CPU Ports settings
