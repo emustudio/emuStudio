@@ -45,6 +45,8 @@ import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT3_C
 import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.SECTORS_COUNT;
 import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.SECTOR_LENGTH;
 import net.sf.emustudio.intel8080.ExtendedContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * MITS 88-DISK Floppy Disk controller with up to 16 drives
@@ -56,6 +58,8 @@ import net.sf.emustudio.intel8080.ExtendedContext;
         description = "Implementation of popular floppy disk controller."
 )
 public class DiskImpl extends AbstractDevice {
+    private final static Logger LOGGER = LoggerFactory.getLogger(DiskImpl.class);
+    
     private final static int DRIVES_COUNT = 16;
     public final static int DEFAULT_CPU_PORT1 = 0x8;
     public final static int DEFAULT_CPU_PORT2 = 0x9;
@@ -102,7 +106,7 @@ public class DiskImpl extends AbstractDevice {
      * @param DISKport Port number in 88-DISK (1,2,3)
      * @param defaultPort Default port number on CPU
      * @param port The 88-DISK port object that needs to be attached
-     * @return new port number if the attachement was successful, -1 otherwise
+     * @return new port number if the attachment was successful, -1 otherwise
      */
     private int providePort(int DISKport, int defaultPort, DeviceContext port) {
         String providedPort = StaticDialogs.inputStringValue("Port "
@@ -174,6 +178,7 @@ public class DiskImpl extends AbstractDevice {
             try {
                 port1CPU = Integer.decode(s);
             } catch (NumberFormatException e) {
+                LOGGER.error("Could not read Port 1 number, using default.", e);
                 port1CPU = DEFAULT_CPU_PORT1;
             }
         }
@@ -182,6 +187,7 @@ public class DiskImpl extends AbstractDevice {
             try {
                 port2CPU = Integer.decode(s);
             } catch (NumberFormatException e) {
+                LOGGER.error("Could not read Port 2 number, using default.", e);
                 port2CPU = DEFAULT_CPU_PORT2;
             }
         }
@@ -190,6 +196,7 @@ public class DiskImpl extends AbstractDevice {
             try {
                 port3CPU = Integer.decode(s);
             } catch (NumberFormatException e) {
+                LOGGER.error("Could not read Port 3 number, using default.", e);
                 port3CPU = DEFAULT_CPU_PORT3;
             }
         }
@@ -209,6 +216,7 @@ public class DiskImpl extends AbstractDevice {
                 try {
                     drive.mount(new File(s));
                 } catch (IOException ex) {
+                    LOGGER.error("Could not mount image file {}", s, ex);                    
                     StaticDialogs.showErrorMessage(ex.getMessage());
                 }
             }
@@ -314,6 +322,7 @@ public class DiskImpl extends AbstractDevice {
                         break;
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
+                LOGGER.error("Expected argument", e);
             }
         }
     }
