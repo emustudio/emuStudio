@@ -21,6 +21,12 @@ package net.sf.emustudio.devices.mits88disk.impl;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import net.sf.emustudio.devices.mits88disk.impl.Drive.DriveListener;
+import org.easymock.EasyMock;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -239,5 +245,106 @@ public class DriveTest {
         }
         assertImageContent(1);
     }
-    
+
+    @Test
+    public void testDriveListenerIsCalledWhenDiskIsSelected() throws Exception {
+        DriveListener listener = EasyMock.createMock(DriveListener.class);
+        listener.driveSelect(true);
+        expectLastCall().once();
+        listener.driveParamsChanged(anyObject(Drive.DriveParameters.class));
+        expectLastCall().once();
+        replay(listener);
+        
+        Drive drive = new Drive();
+        drive.setDriveListener(listener);
+        drive.mount(testImageFile);
+        drive.select();
+        
+        verify(listener);
+    }
+
+    @Test
+    public void testDriveListenerIsCalledWhenDiskIsDeselected() throws Exception {
+        DriveListener listener = EasyMock.createMock(DriveListener.class);
+        listener.driveSelect(false);
+        expectLastCall().once();
+        listener.driveParamsChanged(anyObject(Drive.DriveParameters.class));
+        expectLastCall().once();
+        replay(listener);
+        
+        Drive drive = new Drive();
+        drive.mount(testImageFile);
+        drive.select();
+        drive.setDriveListener(listener);
+        drive.deselect();
+        
+        verify(listener);
+    }
+
+    @Test
+    public void testDriveListenerIsCalledWhenSectorNumberIsChanged() throws Exception {
+        DriveListener listener = EasyMock.createMock(DriveListener.class);
+        listener.driveParamsChanged(anyObject(Drive.DriveParameters.class));
+        expectLastCall().once();
+        replay(listener);
+        
+        Drive drive = new Drive();
+        drive.mount(testImageFile);
+        drive.select();
+        drive.setDriveListener(listener);
+        drive.nextSectorIfHeadIsLoaded();
+        
+        verify(listener);
+    }
+
+    @Test
+    public void testDriveListenerIsCalledWhenDataAreRead() throws Exception {
+        DriveListener listener = EasyMock.createMock(DriveListener.class);
+        listener.driveParamsChanged(anyObject(Drive.DriveParameters.class));
+        expectLastCall().once();
+        replay(listener);
+
+        Drive drive = new Drive();
+        drive.mount(testImageFile);
+        drive.select();        
+        drive.writeToPort2((short)0x04);
+        drive.setDriveListener(listener);
+        drive.readData();
+
+        verify(listener);
+    }
+
+    @Test
+    public void testDriveListenerIsCalledWhenDataAreWritten() throws Exception {
+        DriveListener listener = EasyMock.createMock(DriveListener.class);
+        listener.driveParamsChanged(anyObject(Drive.DriveParameters.class));
+        expectLastCall().once();
+        replay(listener);
+
+        Drive drive = new Drive();
+        drive.mount(testImageFile);
+        drive.select();
+        drive.writeToPort2((short)0x04);
+        drive.writeToPort2((short)0x80);
+        drive.setDriveListener(listener);
+        drive.writeData(1);
+        
+        verify(listener);
+    }
+
+    @Test
+    public void testDriveListenerIsCalledWhenFlagsAreSet() throws Exception {
+        DriveListener listener = EasyMock.createMock(DriveListener.class);
+        listener.driveParamsChanged(anyObject(Drive.DriveParameters.class));
+        expectLastCall().once();
+        replay(listener);
+
+        Drive drive = new Drive();
+        drive.mount(testImageFile);
+        drive.select();
+        drive.setDriveListener(listener);
+        drive.writeToPort2((short)0x04);
+        
+        verify(listener);
+    }
 }
