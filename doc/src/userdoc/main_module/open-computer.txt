@@ -88,6 +88,18 @@ created.
 User can find the fixed-points later and move them by dragging. They can be removed by clicking at
 them with right button of the mouse.
 
+==== Accessing settings of plug-ins
 
+Each plug-in in the abstract schema can have its own "hidden" settings, which are used by particular plug-in.
+Most of these settings can be set in a "Settings" window accessible from Emulator panel -> Peripheral devices window.
+However, plug-ins save their settings directly into the configuration file. The format of the file is
+http://en.wikipedia.org/wiki/.properties[Java properties file].
 
+Settings of particular plug-in can be accessed by clicking on the plug-in in the Abstract schema editor with
+the right mouse button.
 
+For example, the following image shows the settings of the plug-in `standard-mem`:
+
+image::main_module/images/schema-editor-settings.png["Hidden" settings of Standard operating memory plug-in]
+
+It is possible to Add, Remove or Save the settings. Please refer for particular plug-ins which settings they support.

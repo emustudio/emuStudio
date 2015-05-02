@@ -59,8 +59,30 @@ These numbers can be changed in the Settings window, tab "CPU Ports":
 
 image::altair8800/images/88-disk-02.png[Setting CPU ports]
 
+=== Advanced: Settings in configuration file
+
+Configuration file of virtual computers contain also settings of all the used plug-ins, including devices. Please
+read the section "Accessing settings of plug-ins" in the user documentation of Main module to see how the settings can
+be accessed.
+
+The following table shows all the possible settings of MITS 88-DISK plug-in:
+
+.Settings of MITS 88-DISK
+[width="60%",frame="topbot",options="header,footer"]
+|==========================================================================================
+|Name           | Default value | Valid values         | Description
+|`port1CPU`     | 0x08          | > 0 and < 256        | Number of Port 1
+|`port2CPU`     | 0x09          | > 0 and < 256        | Number of Port 2
+|`port3CPU`     | 0x0A          | > 0 and < 256        | Number of Port 3
+|`sectorsCount` | 32            | > 0                  | Count of sectors in a disk image
+|`sectorLength` | 137           | > 0                  | Size of one sector in bytes
+|`image0`       | N/A           | Path to existing file| File name to mount on disk A (0)
+| ...           | ...           | ...                  | ...
+|`image15`      | N/A           | Path to existing file| File name to mount on disk P (15)
+|==========================================================================================
+
 [[XDP]]
-=== Programming
+=== Advanced: Programming
 
 Data are written onto or read from disk in a serial fashion. The position in the floppy disk is uniquely set by the
 track number, sector number and the offset in the sector. It is rudimentary to know how many tracks are available,
