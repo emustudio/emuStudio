@@ -60,6 +60,7 @@ public class StatusDialog extends javax.swing.JDialog {
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Attached device", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
 
+        lblAttachedDevice.setFont(lblAttachedDevice.getFont().deriveFont(lblAttachedDevice.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblAttachedDevice.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblAttachedDevice.setText("?");
 
@@ -82,11 +83,13 @@ public class StatusDialog extends javax.swing.JDialog {
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "CPU Connection", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
 
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel1.setText("Status port:");
 
         lblStatusPort.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         lblStatusPort.setText("17");
 
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel2.setText("Data port:");
 
         lblDataPort.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
@@ -105,7 +108,7 @@ public class StatusDialog extends javax.swing.JDialog {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblStatusPort)
                     .addComponent(lblDataPort, javax.swing.GroupLayout.Alignment.TRAILING))
-                .addContainerGap(150, Short.MAX_VALUE))
+                .addContainerGap(161, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -118,7 +121,7 @@ public class StatusDialog extends javax.swing.JDialog {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(lblDataPort))
-                .addContainerGap(21, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());

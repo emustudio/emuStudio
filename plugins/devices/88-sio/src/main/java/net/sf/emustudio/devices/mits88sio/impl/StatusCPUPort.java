@@ -26,50 +26,18 @@ package net.sf.emustudio.devices.mits88sio.impl;
 import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
 
+import java.util.Objects;
+
 /**
  * This is the status port of 88-SIO card.
- * 
- * A write to the status port can select
- * some options for the device (0x03 will reset the port).
- * A read of the status port gets the port status:
- *
- *  +---+---+---+---+---+---+---+---+
- *  | X   X   X   X   X   X   O   I |
- *  +---+---+---+---+---+---+---+---+
- *
- * I - A 1 in this bit position means a character has been received
- *     on the data port and is ready to be read.
- * O - A 1 in this bit means the port is ready to receive a character
- *     on the data port and transmit it out over the serial line.
- *
- * Meaning of all bits:
- * 7. 0 - Output device ready (a ready pulse was sent from device) also causes
- *        a hardware interrupt if is enabled
- *    1 - not ready
- * 6. not used
- * 5. 0 -
- *    1 - data available (a word of data is in the buffer on the I/O board)
- * 4. 0 -
- *    1 - data overflow (a new word of data has been received before the previous
- *        word was inputed to the accumulator)
- * 3. 0 -
- *    1 - framing error (data bit has no valid stop bit)
- * 2. 0 -
- *    1 - parity error (received parity does not agree with selected parity)
- * 1. 0 -
- *    1 - X-mitter buffer empty (the previous data word has been X-mitted and a new data
- *        word may be outputted
- * 0. 0 - Input device ready (a ready pulse has been sent from the device)
- *
- * @author Peter Jakubčo
  */
 @ContextType(id = "Status port")
 public class StatusCPUPort implements DeviceContext<Short> {
-    private SIOImpl sio;
+    private final SIOImpl sio;
     private short status;
 
     public StatusCPUPort(SIOImpl sio) {
-        this.sio = sio;
+        this.sio = Objects.requireNonNull(sio);
     }
 
     @Override
@@ -83,9 +51,21 @@ public class StatusCPUPort implements DeviceContext<Short> {
             sio.reset();
         }
     }
-    
-    public void setStatus(short status) {
-        this.status = status;
+
+    public void reset() {
+        this.status = 0x02;
+    }
+
+    public void onWriteFromAttachedDevice() {
+        status = (short)(status | 0x01);
+    }
+
+    public void onReadFromAttachedDevice(boolean bufferIsEmpty) {
+        if (bufferIsEmpty) {
+            status = (short) (status & 0xFE);
+        } else {
+            status = (short) (status | 0x01);
+        }
     }
 
     @Override

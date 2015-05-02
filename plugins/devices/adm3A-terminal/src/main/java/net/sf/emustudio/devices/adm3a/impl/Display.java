@@ -1,9 +1,5 @@
 /*
- * Display.java
- *
- * Created on Utorok, 2007, november 20, 20:15
- *
- * Copyright (C) 2007-2013 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,6 +19,7 @@
  */
 package net.sf.emustudio.devices.adm3a.impl;
 
+import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,10 +44,11 @@ import java.util.Objects;
 /**
  * Terminal can interpret ASCII codes from 0-127. Some have special purpose (0-31).
  */
+@ContextType(id = "LSI ADM-3A Terminal")
 public class Display extends JPanel implements DeviceContext<Short>, TerminalSettings.ChangedObserver, Cursor.LineRoller {
     private static final Logger LOGGER = LoggerFactory.getLogger(Display.class);
 
-    private static final String HERE_IS_CONSTANT = "LSI-ADM3A Terminal";
+    private static final String HERE_IS_CONSTANT = Display.class.getAnnotation(ContextType.class).id();
     public static final Color FOREGROUND = new Color(0, 255, 0);
     public static final Color BACKGROUND = Color.BLACK;
     public static final String TERMINAL_FONT_PATH = "/net/sf/emustudio/devices/adm3a/gui/terminal.ttf";

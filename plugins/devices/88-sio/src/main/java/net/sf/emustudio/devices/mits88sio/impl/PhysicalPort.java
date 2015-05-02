@@ -1,9 +1,5 @@
 /*
- * PhysicalPort.java
- *
- * Created on 18.6.2008, 14:27:23
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,22 +16,23 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- */package net.sf.emustudio.devices.mits88sio.impl;
+ */
+package net.sf.emustudio.devices.mits88sio.impl;
 
 import emulib.plugins.device.DeviceContext;
+
+import java.util.Objects;
 
 /**
  * This port is a physical port which is used to device-device connection.
  * 
  * For example, a terminal would use this port for communication.
- * 
- * @author Peter Jakubčo
  */
 public class PhysicalPort implements DeviceContext<Short> {
-    private DataCPUPort dataPort;
+    private final DataCPUPort dataPort;
     
     public PhysicalPort(DataCPUPort dataPort) {
-        this.dataPort = dataPort;
+        this.dataPort = Objects.requireNonNull(dataPort);
     }
 
     @Override

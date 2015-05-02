@@ -21,14 +21,15 @@
 package net.sf.emustudio.devices.mits88sio.impl;
 
 import emulib.emustudio.SettingsManager;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 
+@ThreadSafe
 public class SIOSettings {
     private final static Logger LOGGER = LoggerFactory.getLogger(SIOSettings.class);
 
@@ -39,16 +40,14 @@ public class SIOSettings {
     public static final int DEFAULT_DATA_PORT_NUMBER = 0x11;
 
     private final long pluginID;
-    private SettingsManager settingsManager;
+    private volatile SettingsManager settingsManager;
 
-    private boolean emuStudioNoGUI = false;
-    private boolean emuStudioAuto = false;
+    private volatile boolean emuStudioNoGUI = false;
 
-    private int statusPortNumber = DEFAULT_STATUS_PORT_NUMBER;
-    private int dataPortNumber = DEFAULT_DATA_PORT_NUMBER;
+    private volatile int statusPortNumber = DEFAULT_STATUS_PORT_NUMBER;
+    private volatile int dataPortNumber = DEFAULT_DATA_PORT_NUMBER;
 
-    private final List<ChangedObserver> observers = new ArrayList<>();
-    private final ReadWriteLock settingsLock = new ReentrantReadWriteLock();
+    private final List<ChangedObserver> observers = new CopyOnWriteArrayList<>();
 
     public interface ChangedObserver {
         void settingsChanged();
@@ -67,12 +66,7 @@ public class SIOSettings {
     }
 
     public void setSettingsManager(SettingsManager settingsManager) {
-        settingsLock.writeLock().lock();
-        try {
-            this.settingsManager = settingsManager;
-        } finally {
-            settingsLock.writeLock().unlock();
-        }
+        this.settingsManager = Objects.requireNonNull(settingsManager);
     }
 
     private void notifyObservers() {
@@ -82,102 +76,57 @@ public class SIOSettings {
     }
 
     public boolean isNoGUI() {
-        settingsLock.readLock().lock();
-        try {
-            return emuStudioNoGUI;
-        } finally {
-            settingsLock.readLock().unlock();
-        }
+        return emuStudioNoGUI;
     }
 
     public int getStatusPortNumber() {
-        settingsLock.readLock().lock();
-        try {
-            return statusPortNumber;
-        } finally {
-            settingsLock.readLock().unlock();
-        }
+        return statusPortNumber;
     }
 
     public void setStatusPortNumber(int statusPortNumber) {
-        settingsLock.writeLock().lock();
-        try {
-            this.statusPortNumber = statusPortNumber;
-        } finally {
-            settingsLock.writeLock().unlock();
-        }
+        this.statusPortNumber = statusPortNumber;
         notifyObservers();
     }
 
     public int getDataPortNumber() {
-        settingsLock.readLock().lock();
-        try {
-            return dataPortNumber;
-        } finally {
-            settingsLock.readLock().unlock();
-        }
+        return dataPortNumber;
     }
 
     public void setDataPortNumber(int dataPortNumber) {
-        settingsLock.writeLock().lock();
-        try {
-            this.dataPortNumber = dataPortNumber;
-        } finally {
-            settingsLock.writeLock().unlock();
-        }
+        this.dataPortNumber = dataPortNumber;
         notifyObservers();
     }
 
-    public boolean isAuto() {
-        settingsLock.readLock().lock();
-        try {
-            return emuStudioAuto;
-        } finally {
-            settingsLock.readLock().unlock();
-        }
-    }
-
-    public void write() {
-        settingsLock.readLock().lock();
-        try {
-            if (settingsManager == null) {
-                return;
-            }
-            settingsManager.writeSetting(pluginID, SettingsManager.NO_GUI, String.valueOf(emuStudioNoGUI));
-            settingsManager.writeSetting(pluginID, SettingsManager.AUTO, String.valueOf(emuStudioAuto));
-            settingsManager.writeSetting(pluginID, STATUS_PORT_NUMBER, String.valueOf(statusPortNumber));
-            settingsManager.writeSetting(pluginID, DATA_PORT_NUMBER, String.valueOf(dataPortNumber));
-        } finally {
-            settingsLock.readLock().unlock();
+    public synchronized void write() {
+        SettingsManager tmpManager = settingsManager;
+        if (tmpManager != null) {
+            tmpManager.writeSetting(pluginID, STATUS_PORT_NUMBER, String.valueOf(statusPortNumber));
+            tmpManager.writeSetting(pluginID, DATA_PORT_NUMBER, String.valueOf(dataPortNumber));
         }
     }
 
     public void read() {
-        settingsLock.writeLock().lock();
-        try {
-            if (settingsManager == null) {
-                return;
-            }
-            emuStudioNoGUI = Boolean.parseBoolean(settingsManager.readSetting(pluginID, SettingsManager.NO_GUI));
-            emuStudioAuto = Boolean.parseBoolean(settingsManager.readSetting(pluginID, SettingsManager.AUTO));
-            String tmp = settingsManager.readSetting(pluginID, STATUS_PORT_NUMBER);
-            if (tmp != null) {
-                try {
-                    statusPortNumber = Integer.decode(tmp);
-                } catch (NumberFormatException e) {
-                    LOGGER.error("Could not read setting: status port number", e);
+        SettingsManager tmpManager = settingsManager;
+        synchronized (this) {
+            if (tmpManager != null) {
+                emuStudioNoGUI = Boolean.parseBoolean(tmpManager.readSetting(pluginID, SettingsManager.NO_GUI));
+                String tmp = tmpManager.readSetting(pluginID, STATUS_PORT_NUMBER);
+                if (tmp != null) {
+                    try {
+                        statusPortNumber = Integer.decode(tmp);
+                    } catch (NumberFormatException e) {
+                        LOGGER.error("Could not read setting: status port number", e);
+                    }
+                }
+                tmp = tmpManager.readSetting(pluginID, DATA_PORT_NUMBER);
+                if (tmp != null) {
+                    try {
+                        dataPortNumber = Integer.decode(tmp);
+                    } catch (NumberFormatException e) {
+                        LOGGER.error("Could not read setting: data port number", e);
+                    }
                 }
             }
-            tmp = settingsManager.readSetting(pluginID, DATA_PORT_NUMBER);
-            if (tmp != null) {
-                try {
-                    dataPortNumber = Integer.decode(tmp);
-                } catch (NumberFormatException e) {
-                    LOGGER.error("Could not read setting: data port number", e);
-                }
-            }
-        } finally {
-            settingsLock.writeLock().unlock();
         }
         notifyObservers();
     }

@@ -1,9 +1,5 @@
 /*
- * DataCPUPort.java
- *
- * Created on 18.6.2008, 14:30:59
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,11 +19,13 @@
  */
 package net.sf.emustudio.devices.mits88sio.impl;
 
+import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.Queue;
 
 /**
@@ -37,26 +35,28 @@ import java.util.Queue;
  * 
  * A read to the data port gets the buffered character, a write to the data port
  * writes the character to the device.
- *
- * @author Peter Jakubčo
  */
 public class DataCPUPort implements DeviceContext<Short> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataCPUPort.class);
-    private SIOImpl sio;
-    private Queue<Short> buffer = new LinkedList<Short>();
+    private final StatusCPUPort statusPort;
+    private final Queue<Short> buffer = new LinkedList<Short>();
     private DeviceContext<Short> device;
 
-    public DataCPUPort(SIOImpl sio) {
-        this.sio = sio;
+    public DataCPUPort(StatusCPUPort statusPort) {
+        this.statusPort = Objects.requireNonNull(statusPort);
     }
 
     public void attachDevice(DeviceContext<Short> device) {
-        LOGGER.info("Attaching device to the data port: " + device);
-        this.device = device;
+        this.device = Objects.requireNonNull(device);
+        LOGGER.info("Attaching device to the data port: " + getAttachedDeviceID());
     }
     
     public String getAttachedDeviceID() {
-        return (device == null) ? "unknown" : device.toString();
+        if (device == null) {
+            return "unknown";
+        }
+        ContextType contextType = device.getClass().getAnnotation(ContextType.class);
+        return  (contextType != null) ? contextType.id() : device.toString();
     }
     
     public void detachDevice() {
@@ -87,7 +87,7 @@ public class DataCPUPort implements DeviceContext<Short> {
      * @param data data
      */
     public void writeFromDevice(Short data) {
-        sio.setStatus((short) (sio.getStatus() | 0x01));
+        statusPort.onWriteFromAttachedDevice();
         buffer.add(data);
     }
 
@@ -99,11 +99,7 @@ public class DataCPUPort implements DeviceContext<Short> {
         if (result == null) {
             result = 0;
         }
-        if (buffer.isEmpty()) {
-            sio.setStatus((short) (sio.getStatus() & 0xFE));
-        } else {
-            sio.setStatus((short) (sio.getStatus() | 0x01));
-        }
+        statusPort.onReadFromAttachedDevice(buffer.isEmpty());
         return result;
     }
 

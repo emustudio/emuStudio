@@ -43,18 +43,6 @@ import java.util.ResourceBundle;
 
 /**
  * This class represents the emulator of MITS 2SIO card.
- *
- * The card had two physical I/O ports which could be connected
- * to any serial I/O device that would connect to a current loop,
- * RS232, or TTY interface.  Available baud rates were jumper
- * selectable for each port from 110 to 9600.
- *
- * All I/O is via programmed I/O. Each each has a status port and a data port.
- *
- * From: http://www.altair32.com/Altair32specs.htm The standard I/O addresses assigned by MITS was 20Q-21Q for the first
- * port and 22Q-23Q for the second. The second port of the 2SIO is "connected" to a virtual line printer and the paper
- * tape reader/punch for support under CP/M.
- *
  */
 @PluginType(
         type = PLUGIN_TYPE.DEVICE,
@@ -65,23 +53,24 @@ import java.util.ResourceBundle;
 public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserver {
     private static final Logger LOGGER = LoggerFactory.getLogger(SIOImpl.class);
 
-    private StatusCPUPort statusPort;
-    private DataCPUPort dataPort;
-    private PhysicalPort physicalPort;
+    private final StatusCPUPort statusPort;
+    private final DataCPUPort dataPort;
+    private final ContextPool contextPool;
+    private final PhysicalPort physicalPort;
+    private final SIOSettings sioSettings;
+
     private ExtendedContext cpu;
     private StatusDialog gui;
-    private SIOSettings sioSettings;
-    private final ContextPool contextPool;
 
-    private int currentStatusPortNumber = -1;
-    private int currentDataPortNumber = -1;
+    private int statusPortNumber = -1;
+    private int dataPortNumber = -1;
 
     public SIOImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
         this.contextPool = Objects.requireNonNull(contextPool);
 
         statusPort = new StatusCPUPort(this);
-        dataPort = new DataCPUPort(this);
+        dataPort = new DataCPUPort(statusPort);
         physicalPort = new PhysicalPort(dataPort);
         sioSettings = new SIOSettings(pluginID);
 
@@ -105,23 +94,15 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
     }
 
     /* Reset routine
-     * TODO: automatization process messes the reset...
+     * TODO: automation process messes the reset...
+     * Buffer should be emptied
      */
     @Override
     public void reset() {
         if (dataPort.isEmpty()) {
-            statusPort.setStatus((short)0x02);
+            statusPort.reset();
         }
     }
-
-    public void setStatus(short status) {
-        statusPort.setStatus(status);
-    }
-
-    public short getStatus() {
-        return statusPort.read();
-    }
-
 
     /**
      * I/O instruction handlers, called from the CPU module when an IN or OUT
@@ -164,8 +145,7 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
     public void showGUI() {
         if (!sioSettings.isNoGUI()) {
             if (gui == null) {
-                gui = new StatusDialog(currentStatusPortNumber,
-                        currentDataPortNumber, dataPort.getAttachedDeviceID());
+                gui = new StatusDialog(statusPortNumber, dataPortNumber, dataPort.getAttachedDeviceID());
             }
             gui.setVisible(true);
         }
@@ -173,8 +153,9 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
 
     @Override
     public void destroy() {
-        cpu.detachDevice(currentStatusPortNumber);
-        cpu.detachDevice(currentDataPortNumber);
+        cpu.detachDevice(statusPortNumber);
+        cpu.detachDevice(dataPortNumber);
+        dataPort.detachDevice();
         if (gui != null) {
             gui.dispose();
         }
@@ -209,28 +190,29 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
 
     @Override
     public void settingsChanged() {
-        if (cpu == null) {
-            return;
+        if (dataPortNumber != -1) {
+            cpu.detachDevice(dataPortNumber);
         }
-        if (currentDataPortNumber != -1) {
-            cpu.detachDevice(currentDataPortNumber);
+        if (statusPortNumber != -1) {
+            cpu.detachDevice(statusPortNumber);
         }
-        if (currentStatusPortNumber != -1) {
-            cpu.detachDevice(currentStatusPortNumber);
-        }
-        currentDataPortNumber = sioSettings.getDataPortNumber();
-        currentStatusPortNumber = sioSettings.getStatusPortNumber();
+        dataPortNumber = sioSettings.getDataPortNumber();
+        statusPortNumber = sioSettings.getStatusPortNumber();
 
         // attach IO ports
-        if (cpu.attachDevice(statusPort, currentStatusPortNumber) == false) {
-            currentStatusPortNumber = getAnotherPortNumber("Status port", SIOSettings.DEFAULT_STATUS_PORT_NUMBER);
-            if (cpu.attachDevice(statusPort, currentStatusPortNumber) == false) {
+        if (!cpu.attachDevice(statusPort, statusPortNumber)) {
+            LOGGER.warn("Could not attach Status port to {}. Trying another one.", statusPortNumber);
+            statusPortNumber = getAnotherPortNumber("Status port", SIOSettings.DEFAULT_STATUS_PORT_NUMBER);
+            if (!cpu.attachDevice(statusPort, statusPortNumber)) {
+                LOGGER.error("Could not attach Status port to {}.", statusPortNumber);
                 StaticDialogs.showErrorMessage("Error: status port still cannot be attached", getTitle());
             }
         }
-        if (cpu.attachDevice(dataPort, currentDataPortNumber) == false) {
-            currentDataPortNumber = getAnotherPortNumber("Data port", SIOSettings.DEFAULT_DATA_PORT_NUMBER);
-            if (cpu.attachDevice(dataPort, currentDataPortNumber) == false) {
+        if (!cpu.attachDevice(dataPort, dataPortNumber)) {
+            LOGGER.warn("Could not attach Data port to {}. Trying another one.", dataPortNumber);
+            dataPortNumber = getAnotherPortNumber("Data port", SIOSettings.DEFAULT_DATA_PORT_NUMBER);
+            if (!cpu.attachDevice(dataPort, dataPortNumber)) {
+                LOGGER.error("Could not attach Data port to {}.", dataPortNumber);
                 StaticDialogs.showErrorMessage("Error: data port still cannot be attached", getTitle());
             }
         }
