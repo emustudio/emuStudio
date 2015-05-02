@@ -1,9 +1,5 @@
 /*
- * StatusCPUPort.java
- *
- * Created on 18.6.2008, 14:27:23
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,54 +19,37 @@
  */
 package net.sf.emustudio.devices.mits88sio.impl;
 
-import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
 
 import java.util.Objects;
 
 /**
- * This is the status port of 88-SIO card.
+ * This is the data port of 88-SIO card.
+ * 
+ * This port is attached to a CPU.
+ * 
+ * A read to the data port gets the buffered character, a write to the data port
+ * writes the character to the device.
  */
-@ContextType(id = "Status port")
-public class StatusCPUPort implements DeviceContext<Short> {
-    private final SIOImpl sio;
-    private short status;
+public class Port2 implements DeviceContext<Short> {
+    private final Transmitter transmitter;
 
-    public StatusCPUPort(SIOImpl sio) {
-        this.sio = Objects.requireNonNull(sio);
+    public Port2(Transmitter transmitter) {
+        this.transmitter = Objects.requireNonNull(transmitter);
+    }
+
+    @Override
+    public void write(Short data) {
+        transmitter.writeToDevice(data);
     }
 
     @Override
     public Short read() {
-        return status;
-    }
-
-    @Override
-    public void write(Short val) {
-        if (val == 0x03) {
-            sio.reset();
-        }
-    }
-
-    public void reset() {
-        this.status = 0x02;
-    }
-
-    public void onWriteFromAttachedDevice() {
-        status = (short)(status | 0x01);
-    }
-
-    public void onReadFromAttachedDevice(boolean bufferIsEmpty) {
-        if (bufferIsEmpty) {
-            status = (short) (status & 0xFE);
-        } else {
-            status = (short) (status | 0x01);
-        }
+        return transmitter.readBuffer();
     }
 
     @Override
     public Class<?> getDataType() {
         return Short.class;
     }
-
 }

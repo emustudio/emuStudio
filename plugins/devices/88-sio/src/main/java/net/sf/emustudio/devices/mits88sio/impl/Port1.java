@@ -1,5 +1,9 @@
 /*
- * Copyright (C) 2008-2015 Peter Jakubčo
+ * StatusCPUPort.java
+ *
+ * Created on 18.6.2008, 14:27:23
+ *
+ * Copyright (C) 2008-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -19,35 +23,35 @@
  */
 package net.sf.emustudio.devices.mits88sio.impl;
 
+import emulib.annotations.ContextType;
 import emulib.plugins.device.DeviceContext;
 
 import java.util.Objects;
 
 /**
- * This port is a physical port which is used to device-device connection.
- * 
- * For example, a terminal would use this port for communication.
+ * This is the status port of 88-SIO card.
  */
-public class PhysicalPort implements DeviceContext<Short> {
+@ContextType(id = "Status port")
+public class Port1 implements DeviceContext<Short> {
     private final Transmitter transmitter;
-    
-    public PhysicalPort(Transmitter transmitter) {
+
+    public Port1(Transmitter transmitter) {
         this.transmitter = Objects.requireNonNull(transmitter);
     }
 
     @Override
     public Short read() {
-        return 0; // Attached device cannot read back what it already wrote
+        return transmitter.readStatus();
     }
 
     @Override
     public void write(Short val) {
-        transmitter.writeFromDevice(val);
+        transmitter.writeToStatus(val);
     }
 
     @Override
-    public Class getDataType() {
+    public Class<?> getDataType() {
         return Short.class;
     }
-    
+
 }

@@ -33,9 +33,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class SIOSettings {
     private final static Logger LOGGER = LoggerFactory.getLogger(SIOSettings.class);
 
-    private final static String STATUS_PORT_NUMBER = "statusPortNumber";
-    private final static String DATA_PORT_NUMBER = "dataPortNumber";
-
+    public static final String STATUS_PORT_NUMBER = "statusPortNumber";
+    public static final String DATA_PORT_NUMBER = "dataPortNumber";
     public static final int DEFAULT_STATUS_PORT_NUMBER = 0x10;
     public static final int DEFAULT_DATA_PORT_NUMBER = 0x11;
 
@@ -97,18 +96,20 @@ public class SIOSettings {
         notifyObservers();
     }
 
-    public synchronized void write() {
+    public void write() {
         SettingsManager tmpManager = settingsManager;
         if (tmpManager != null) {
-            tmpManager.writeSetting(pluginID, STATUS_PORT_NUMBER, String.valueOf(statusPortNumber));
-            tmpManager.writeSetting(pluginID, DATA_PORT_NUMBER, String.valueOf(dataPortNumber));
+            synchronized (this) {
+                tmpManager.writeSetting(pluginID, STATUS_PORT_NUMBER, String.valueOf(statusPortNumber));
+                tmpManager.writeSetting(pluginID, DATA_PORT_NUMBER, String.valueOf(dataPortNumber));
+            }
         }
     }
 
     public void read() {
         SettingsManager tmpManager = settingsManager;
-        synchronized (this) {
-            if (tmpManager != null) {
+        if (tmpManager != null) {
+            synchronized (this) {
                 emuStudioNoGUI = Boolean.parseBoolean(tmpManager.readSetting(pluginID, SettingsManager.NO_GUI));
                 String tmp = tmpManager.readSetting(pluginID, STATUS_PORT_NUMBER);
                 if (tmp != null) {
