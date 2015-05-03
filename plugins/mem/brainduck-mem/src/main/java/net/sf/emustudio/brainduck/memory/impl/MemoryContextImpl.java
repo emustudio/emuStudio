@@ -22,7 +22,7 @@ package net.sf.emustudio.brainduck.memory.impl;
 
 import emulib.plugins.memory.AbstractMemoryContext;
 
-public class MemoryContextImpl extends AbstractMemoryContext<Short> {
+public class MemoryContextImpl extends AbstractMemoryContext<Short, Integer> {
 
     private short[] memory; // this array is the operating memory
 
@@ -67,13 +67,13 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> {
     }
 
     @Override
-    public Object readWord(int from) {
+    public Integer readWord(int from) {
         if (from == memory.length - 1) {
-            return memory[from];
+            return (int)memory[from];
         }
         int low = memory[from] & 0xFF;
         int high = memory[from + 1];
-        return (int) ((high << 8) | low);
+        return ((high << 8) | low);
     }
 
     @Override
@@ -83,12 +83,12 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> {
     }
 
     @Override
-    public void writeWord(int to, Object val) {
-        short low = (short) ((Integer) val & 0xFF);
+    public void writeWord(int to, Integer val) {
+        short low = (short) (val & 0xFF);
         memory[to] = low;
         notifyMemoryChanged(to);
         if (to < memory.length - 1) {
-            short high = (short) (((Integer) val >>> 8) & 0xFF);
+            short high = (short) ((val >>> 8) & 0xFF);
             memory[to + 1] = high;
             notifyMemoryChanged(to + 1);
         }

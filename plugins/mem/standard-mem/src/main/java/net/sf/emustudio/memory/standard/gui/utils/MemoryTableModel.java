@@ -21,8 +21,9 @@
  */
 package net.sf.emustudio.memory.standard.gui.utils;
 
-import javax.swing.table.AbstractTableModel;
 import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
+
+import javax.swing.table.AbstractTableModel;
 
 /**
  * tabulka ma 16 riadkov a 16 stlpcov (od 0 po FF)
@@ -34,11 +35,12 @@ import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
  * zvysna pamat je rovnaka pre vsetky banky
  */
 public class MemoryTableModel extends AbstractTableModel {
+    private static final int ROW_COUNT = 16;
+    private static final int COLUMN_COUNT = 16;
+
     private final MemoryContextImpl mem;
     private int currentPage = 0;
     private int currentBank = 0;
-    private final int ROW_COUNT = 16;
-    private final int COLUMN_COUNT = 16;
 
     public MemoryTableModel(MemoryContextImpl mem) {
         this.mem = mem;

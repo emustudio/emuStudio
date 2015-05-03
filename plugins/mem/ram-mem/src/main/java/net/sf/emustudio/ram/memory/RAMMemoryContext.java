@@ -25,7 +25,7 @@ import emulib.plugins.memory.MemoryContext;
 import java.util.List;
 
 @ContextType
-public interface RAMMemoryContext extends MemoryContext<RAMInstruction> {
+public interface RAMMemoryContext extends MemoryContext<RAMInstruction, RAMInstruction> {
 	public void addLabel(int pos, String label);
 	public String getLabel(int pos);
 	

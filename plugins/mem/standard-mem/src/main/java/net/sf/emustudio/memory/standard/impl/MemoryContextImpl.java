@@ -1,9 +1,5 @@
 /*
- * MemoryContextImpl.java
- *
- * Created on 18.6.2008, 8:00:16
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,6 +18,7 @@
  */
 package net.sf.emustudio.memory.standard.impl;
 
+import emulib.annotations.ContextType;
 import emulib.plugins.memory.AbstractMemoryContext;
 import emulib.runtime.HEXFileManager;
 import emulib.runtime.StaticDialogs;
@@ -30,91 +27,41 @@ import net.sf.emustudio.memory.standard.gui.MemoryFrame;
 
 import java.io.EOFException;
 import java.io.File;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class MemoryContextImpl extends AbstractMemoryContext<Short> implements StandardMemoryContext {
+@ContextType(id = "Standard Memory")
+public class MemoryContextImpl extends AbstractMemoryContext<Short, Integer> implements StandardMemoryContext {
+    public final static int DEFAULT_MEM_SIZE = 65536;
+
+    private final List<AddressRange> romList = new ArrayList<>();
 
     public int lastImageStart = 0;
-    private boolean lastStartSet = false;
-    private short[][] mem;
-    private boolean sizeSet; // whether memory was initialized (created)
+    private short[][] mem = new short[0][0];
     private int banksCount;
     private short bankSelect = 0;
     private int bankCommon = 0;
     private int activeBank;
     private MemoryFrame gui;
-    private List<AddressRange> romList;
 
-    public static class AddressRangeImpl implements AddressRange {
-
-        private int startAddress;
-        private int stopAddress;
-
-        public AddressRangeImpl(int startAddress, int stopAddress) {
-            this.startAddress = startAddress;
-            this.stopAddress = stopAddress;
-        }
-
-        @Override
-        public int getStartAddress() {
-            return startAddress;
-        }
-
-        @Override
-        public int getStopAddress() {
-            return stopAddress;
-        }
-
-        @Override
-        public int compareTo(AddressRange o) {
-            if (o == this) {
-                return 0;
-            }
-            if (startAddress < o.getStartAddress()) {
-                return -1;
-            } else if (startAddress > o.getStartAddress()) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-    }
-
-    public MemoryContextImpl() {
-        super();
-        sizeSet = false;
-        romList = new ArrayList<AddressRange>();
-    }
-
-    public boolean init(int size, int banks, int bankCommon, MemoryFrame gui) {
-        this.gui = gui;
-        if (sizeSet == true) {
-            return false;
-        }
-        this.bankCommon = bankCommon;
+    public void init(int size, int banks, int bankCommon, MemoryFrame gui) {
         if (banks <= 0) {
-            banks = 1;
+            throw new IllegalArgumentException("Number of banks must be >= 1!");
         }
+
+        this.gui = gui; // can be null
+        this.bankCommon = bankCommon;
         this.banksCount = banks;
-        mem = new short[size][banks];
-        sizeSet = true;
-        return true;
+        mem = new short[banks][size];
     }
 
-    /**
-     * Clears memory content.
-     */
     @Override
     public void clear() {
-        if (sizeSet == false) {
-            return;
-        }
         for (int i = 0; i < mem.length; i++) {
-            for (int j = 0; j < banksCount; j++) {
+            for (int j = 0; j < mem[i].length; j++) {
                 mem[i][j] = 0;
             }
         }
@@ -127,7 +74,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         mem = null;
         activeBank = 0;
         banksCount = 0;
-        sizeSet = false;
     }
 
     @Override
@@ -155,139 +101,116 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         return bankCommon;
     }
 
-    // this can parse classic old data
     @Override
     public boolean loadHex(String filename, int bank) {
-        if (sizeSet == false) {
-            return false;
-        }
-        lastStartSet = false;
         try {
             lastImageStart = HEXFileManager.loadIntoMemory(filename, this);
-        } catch (java.io.FileNotFoundException ex) {
+        } catch (FileNotFoundException ex) {
             StaticDialogs.showErrorMessage("File not found: " + filename);
-            notifyMemoryChanged(-1);
             return false;
         } catch (Exception e) {
             StaticDialogs.showErrorMessage("Error opening file: " + filename);
-            notifyMemoryChanged(-1);
             return false;
+        } finally {
+            notifyMemoryChanged(-1);
         }
-        notifyMemoryChanged(-1);
         return true;
     }
 
-    /**
-     * Method loads a binary file into memory.
-     *
-     * @param filename Binary file name (has to be readable and has to exist)
-     * @param address an address where the file should be loaded.
-     * @return true if file was successfully loaded, false if not.
-     */
     @Override
     public boolean loadBin(String filename, int address, int bank) {
-        if (sizeSet == false) {
+        lastImageStart = 0;
+        File f = new File(filename);
+        if (!f.isFile()) {
+            StaticDialogs.showErrorMessage("Specified file name doesn't point to a file");
             return false;
         }
-        lastImageStart = 0;
-        lastStartSet = true;
-        try {
-            File f = new File(filename);
-            if (f.isFile() == false) {
-                throw new IOException("Specified file name doesn't point to a file");
+
+        try (RandomAccessFile binaryFile = new RandomAccessFile(f, "r")) {
+            long position = 0, length = binaryFile.length();
+            while (position < length) {
+                mem[bank][address++] = (short) (binaryFile.readUnsignedByte() & 0xFF);
+                position++;
             }
-            RandomAccessFile vstup = new RandomAccessFile(f, "r");
-            int i;
-            long r = 0, l = vstup.length();
-            while (r < l) {
-                i = vstup.readUnsignedByte();
-                mem[address++][bank] = (short) (i & 0xFF);
-                l++;
-            }
-            vstup.close();
+            binaryFile.close();
         } catch (EOFException ex) {
-        } catch (java.io.FileNotFoundException ex) {
+            // ignored intentionally
+        } catch (FileNotFoundException ex) {
             StaticDialogs.showErrorMessage("File not found: " + filename);
-            notifyMemoryChanged(-1);
             return false;
         } catch (Exception e) {
             StaticDialogs.showErrorMessage("Error opening file: " + filename);
-            notifyMemoryChanged(-1);
             return false;
+        } finally {
+            notifyMemoryChanged(-1);
         }
-        notifyMemoryChanged(-1);
         return true;
     }
 
     @Override
     public Short read(int from) {
         if (from < bankCommon) {
-            return mem[from][bankSelect];
+            return mem[bankSelect][from];
         } else {
-            return mem[from][0];
+            return mem[0][from];
         }
     }
 
     public Object read(int from, int bank) {
         if (from < bankCommon) {
-            return mem[from][bank];
+            return mem[bank][from];
         } else {
-            return mem[from][0];
+            return mem[0][from];
         }
     }
 
     @Override
-    public Object readWord(int from) {
+    public Integer readWord(int from) {
         activeBank = (from < bankCommon) ? bankSelect : 0;
-        if (from == mem.length - 1) {
-            return mem[from][activeBank];
+        if (from == mem[0].length - 1) {
+            return (int)mem[activeBank][from];
         }
-        int low = mem[from][activeBank] & 0xFF;
-        int high = mem[from + 1][activeBank];
-        return (int) ((high << 8) | low);
+        int low = mem[activeBank][from] & 0xFF;
+        int high = mem[activeBank][from + 1];
+        return (high << 8) | low;
     }
 
     @Override
     public void write(int to, Short val) {
-        if (isROM(to) == true) {
-            return;
+        if (!isROM(to)) {
+            activeBank = (to < bankCommon) ? bankSelect : 0;
+            mem[activeBank][to] = (short) (val & 0xFF);
+            notifyMemoryChanged(to);
         }
-        activeBank = (to < bankCommon) ? bankSelect : 0;
-        mem[to][activeBank] = (short) (val & 0xFF);
-        notifyMemoryChanged(to);
     }
 
     public void write(int to, short val, int bank) {
-        if (isROM(to) == true) {
-            return;
+        if (!isROM(to)) {
+            activeBank = (to < bankCommon) ? bank : 0;
+            mem[activeBank][to] = (short)(val & 0xFF);
+            notifyMemoryChanged(to);
         }
-        activeBank = (to < bankCommon) ? bank : 0;
-        mem[to][activeBank] = (short)(val & 0xFF);
-        notifyMemoryChanged(to);
     }
 
     @Override
-    public void writeWord(int to, Object val) {
-        if (isROM(to) == true) {
+    public void writeWord(int to, Integer val) {
+        if (isROM(to)) {
             return;
         }
         activeBank = (to < bankCommon) ? bankSelect : 0;
-        short low = (short) ((Integer) val & 0xFF);
-        mem[to][activeBank] = low;
+        short low = (short) (val & 0xFF);
+        mem[activeBank][to] = low;
         notifyMemoryChanged(to);
         if (to < mem.length - 1) {
-            short high = (short) (((Integer) val >>> 8) & 0xFF);
-            mem[to + 1][activeBank] = high;
+            short high = (short) ((val >>> 8) & 0xFF);
+            mem[activeBank][to + 1] = high;
             notifyMemoryChanged(to + 1);
         }
     }
 
     @Override
     public int getSize() {
-        if (sizeSet == false) {
-            return 0;
-        }
-        return mem.length;
+        return mem[0].length;
     }
 
     /**
@@ -353,25 +276,18 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         romList.add(range);
     }
 
-    // remove range from romBitmap
     @Override
     public void setRAM(AddressRange range) {
-        if (sizeSet == false) {
-            return;
-        }
         if (range.getStartAddress() > range.getStopAddress()) {
-            return;
+            throw new IllegalArgumentException("Range stop address must be > than start address!");
         }
         removeROMRange(range);
     }
 
     @Override
     public void setROM(AddressRange range) {
-        if (sizeSet == false) {
-            return;
-        }
         if (range.getStartAddress() > range.getStopAddress()) {
-            return;
+            throw new IllegalArgumentException("Range stop address must be > than start address!");
         }
         addRomRange(range);
     }
@@ -388,7 +304,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         return false;
     }
 
-    // only for GUI purposes, this have nothing to do with memory emulation
     @Override
     public List<AddressRange> getROMRanges() {
         return romList;

@@ -51,6 +51,7 @@ import javax.swing.table.AbstractTableModel;
 import net.sf.emustudio.memory.standard.StandardMemoryContext.AddressRange;
 import net.sf.emustudio.memory.standard.gui.utils.NiceButton;
 import net.sf.emustudio.memory.standard.gui.utils.TableMemory;
+import net.sf.emustudio.memory.standard.impl.AddressRangeImpl;
 import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
 import net.sf.emustudio.memory.standard.impl.MemoryImpl;
 
@@ -372,7 +373,7 @@ public class SettingsDialog extends JDialog {
 
     private void btnAddRangeActionPerformed(java.awt.event.ActionEvent evt) {
         try {
-            memContext.setROM(new MemoryContextImpl.AddressRangeImpl(Integer.decode(txtFrom.getText()),
+            memContext.setROM(new AddressRangeImpl(Integer.decode(txtFrom.getText()),
                     Integer.decode(txtTo.getText())));
         } catch (Exception e) {
             StaticDialogs.showErrorMessage("Range (from,to) has to be positive integer ArrayList!");
@@ -386,7 +387,7 @@ public class SettingsDialog extends JDialog {
 
     private void btnRemoveRangeActionPerformed(java.awt.event.ActionEvent evt) {
         try {
-            memContext.setRAM(new MemoryContextImpl.AddressRangeImpl(Integer.decode(txtFrom.getText()),
+            memContext.setRAM(new AddressRangeImpl(Integer.decode(txtFrom.getText()),
                     Integer.decode(txtTo.getText())));
         } catch (Exception e) {
             StaticDialogs.showErrorMessage("Range (from,to) has to be positive integer ArrayList!");

@@ -63,7 +63,7 @@ public class EmulatorImpl extends AbstractCPU {
     private final ContextImpl context;
 
     private Disassembler disassembler;
-    private MemoryContext<Short> memory;
+    private MemoryContext<Short, Integer> memory;
 
     // 2 sets of 6 GPR
     public short B, B1, C, C1, D, D1, E, E1;
@@ -703,7 +703,7 @@ public class EmulatorImpl extends AbstractCPU {
             case 2:
                 cycles += 13;
                 memory.writeWord(SP - 2, PC);
-                PC = (Integer)memory.readWord((I << 8) | interruptVector);
+                PC = memory.readWord((I << 8) | interruptVector);
                 break;
         }
         return cycles;
@@ -788,7 +788,7 @@ public class EmulatorImpl extends AbstractCPU {
             case 0xE1:
             case 0xF1:
                 tmp = (OP >>> 4) & 0x03;
-                tmp1 = (Integer) memory.readWord(SP);
+                tmp1 = memory.readWord(SP);
                 SP = (SP + 2) & 0xffff;
                 putpair2(tmp, tmp1);
                 return 10;
@@ -865,7 +865,7 @@ public class EmulatorImpl extends AbstractCPU {
             case 0xF8:
                 tmp = (OP >>> 3) & 7;
                 if (getCC(tmp)) {
-                    PC = (Integer) memory.readWord(SP);
+                    PC = memory.readWord(SP);
                     SP = (SP + 2) & 0xffff;
                     return 11;
                 }
@@ -1111,7 +1111,7 @@ public class EmulatorImpl extends AbstractCPU {
                 F = (short) ((F & 0xEC) | (tmp << 4) | ((~tmp) & 1));
                 return 4;
             case 0xC9: /* RET */
-                PC = (Integer) memory.readWord(SP);
+                PC = memory.readWord(SP);
                 SP += 2;
                 return 10;
             case 0xD9: /* EXX */
@@ -1223,7 +1223,7 @@ public class EmulatorImpl extends AbstractCPU {
                         return 8;
                     case 0x45: /* RETN */
                         IFF[0] = IFF[1];
-                        PC = (Integer) memory.readWord(SP);
+                        PC = memory.readWord(SP);
                         SP = (SP + 2) & 0xffff;
                         return 14;
                     case 0x46: /* IM 0 */
@@ -1234,7 +1234,7 @@ public class EmulatorImpl extends AbstractCPU {
                         return 9;
                     case 0x4D: /* RETI - weird.. */
                         IFF[0] = IFF[1];
-                        PC = (Integer) memory.readWord(SP);
+                        PC = memory.readWord(SP);
                         SP = (SP + 2) & 0xffff;
                         return 14;
                     case 0x4F: /* LD R,A */
@@ -1526,7 +1526,7 @@ public class EmulatorImpl extends AbstractCPU {
                         PC -= 2;
                         return 21;
                 }
-                tmp = (Integer) memory.readWord(PC);
+                tmp = memory.readWord(PC);
                 PC += 2;
                 switch (OP) {
                     /* LD (nn), ss */
@@ -1542,7 +1542,7 @@ public class EmulatorImpl extends AbstractCPU {
                     case 0x5B:
                     case 0x6B:
                     case 0x7B:
-                        tmp1 = (Integer) memory.readWord(tmp);
+                        tmp1 = memory.readWord(tmp);
                         putpair((OP >>> 4) & 3, tmp1);
                         return 20;
                 }
@@ -1580,14 +1580,14 @@ public class EmulatorImpl extends AbstractCPU {
                         return 10;
                     case 0xE1: /* POP ii */
                         if (special == 0xDD) {
-                            IX = (Integer) memory.readWord(SP);
+                            IX = memory.readWord(SP);
                         } else {
-                            IY = (Integer) memory.readWord(SP);
+                            IY = memory.readWord(SP);
                         }
                         SP += 2;
                         return 14;
                     case 0xE3: /* EX (SP),ii */
-                        tmp = (Integer) memory.readWord(SP);
+                        tmp = memory.readWord(SP);
                         if (special == 0xDD) {
                             tmp1 = IX;
                             IX = tmp;
@@ -1712,7 +1712,7 @@ public class EmulatorImpl extends AbstractCPU {
                         memory.writeWord(tmp, getspecial(special));
                         return 16;
                     case 0x2A: /* LD ii,(nn) */
-                        tmp1 = (Integer) memory.readWord(tmp);
+                        tmp1 = memory.readWord(tmp);
                         putspecial(special, tmp1);
                         return 20;
                     case 0x36: /* LD (ii+d),d */
@@ -2160,7 +2160,7 @@ public class EmulatorImpl extends AbstractCPU {
                 memory.writeWord(tmp, tmp1);
                 return 16;
             case 0x2A: /* LD HL,(nn) */
-                tmp1 = (Integer) memory.readWord(tmp);
+                tmp1 = memory.readWord(tmp);
                 putpair(2, tmp1);
                 return 16;
             case 0x32: /* LD (nn),A */

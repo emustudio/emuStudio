@@ -34,13 +34,13 @@ public class EmulatorEngine {
     public short flags = 2; // registers
     public volatile CPU.RunState currentRunState = CPU.RunState.STATE_STOPPED_NORMAL;
 
-    private final MemoryContext<Short> memory;
+    private final MemoryContext<Short, Integer> memory;
     private final ContextImpl context;
 
     public int checkTimeSlice = 100;
     private long executedCycles = 0;
 
-    public EmulatorEngine(MemoryContext<Short> memory, ContextImpl context) {
+    public EmulatorEngine(MemoryContext<Short, Integer> memory, ContextImpl context) {
         this.memory = memory;
         this.context = context;
     }

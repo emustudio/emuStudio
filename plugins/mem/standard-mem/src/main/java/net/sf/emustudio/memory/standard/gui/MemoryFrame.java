@@ -25,18 +25,11 @@ package net.sf.emustudio.memory.standard.gui;
 import emulib.emustudio.SettingsManager;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.UniversalFileFilter;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.BufferedWriter;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import net.sf.emustudio.memory.standard.gui.utils.MemoryTableModel;
+import net.sf.emustudio.memory.standard.gui.utils.TableMemory;
+import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
+import net.sf.emustudio.memory.standard.impl.MemoryImpl;
+
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
@@ -58,10 +51,18 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import net.sf.emustudio.memory.standard.gui.utils.MemoryTableModel;
-import net.sf.emustudio.memory.standard.gui.utils.TableMemory;
-import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
-import net.sf.emustudio.memory.standard.impl.MemoryImpl;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.BufferedWriter;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class MemoryFrame extends JFrame {
     private final MemoryContextImpl memContext;
@@ -578,8 +579,7 @@ public class MemoryFrame extends JFrame {
                 }
                 fileSource.createNewFile();
                 if (f.getFileFilter().equals(f1)) {
-                    try ( // human-readable format
-                            BufferedWriter out = new BufferedWriter(new FileWriter(fileSource))) {
+                    try (BufferedWriter out = new BufferedWriter(new FileWriter(fileSource))) {
                         for (int i = 0; i < memContext.getSize(); i++) {
                             out.write(String.format("%X:\t%02X\n", i, memContext.read(i)));
                         }

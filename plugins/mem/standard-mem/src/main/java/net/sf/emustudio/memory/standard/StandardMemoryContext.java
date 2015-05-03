@@ -1,9 +1,5 @@
 /*
- * StandardMemoryContext.java
- *
- * Created on 18.6.2008, 8:29:36
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,26 +19,23 @@
 
 package net.sf.emustudio.memory.standard;
 
-import emulib.annotations.ContextType;
 import emulib.plugins.memory.MemoryContext;
+
 import java.util.List;
 
 /**
  * Extended memory context.
  * 
  * Supports bank switching, ROM ranges, and loading HEX/BIN files.
- * 
- * @author Peter Jakubčo
  */
-@ContextType
-public interface StandardMemoryContext extends MemoryContext<Short> {
+public interface StandardMemoryContext extends MemoryContext<Short, Integer> {
     
     /**
      * This interface represents a range of addresses in the memory.
      */
-    public interface AddressRange extends Comparable<AddressRange> {
-        public int getStartAddress();
-        public int getStopAddress();
+    interface AddressRange extends Comparable<AddressRange> {
+        int getStartAddress();
+        int getStopAddress();
     }
     
     /**
@@ -51,49 +44,49 @@ public interface StandardMemoryContext extends MemoryContext<Short> {
      * @param address memory position
      * @return true if the memory position is read only, false otherwise
      */
-    public boolean isROM(int address);
+    boolean isROM(int address);
     
     /**
      * Get list of ranges of adresses in memory which are read-only.
      * 
      * @return list of ROM memory addresses
      */
-    public List<AddressRange> getROMRanges();
-    
+    List<AddressRange> getROMRanges();
+
     /**
      * Set specified memory range as RAM (Random Access Memory).
      * 
      * @param range address range
      */
-    public void setRAM(AddressRange range);
+    void setRAM(AddressRange range);
     
     /**
      * Set specified memory range as ROM (Read Only Memory).
      * 
      * @param range address range
      */
-    public void setROM(AddressRange range);
+    void setROM(AddressRange range);
 
     /**
      * Get number of available memory banks.
      * 
      * @return count of memory banks
      */
-    public int getBanksCount();
+    int getBanksCount();
     
     /**
      * Get index of the selected memory bank.
      * 
      * @return index of active (selected) memory bank
      */
-    public short getSelectedBank();
+    short getSelectedBank();
     
     /**
      * Select (set as active) a memory bank.
      * 
      * @param bankIndex index (number) of a bank which should be selected
      */
-    public void selectBank(short bankIndex);
+    void selectBank(short bankIndex);
     
     /**
      * Return an address in the memory which represents a boundary from which
@@ -102,7 +95,7 @@ public interface StandardMemoryContext extends MemoryContext<Short> {
      * 
      * @return common boundary address
      */
-    public int getCommonBoundary();
+    int getCommonBoundary();
 
     /**
      * Loads a HEX file into the memory.
@@ -111,7 +104,7 @@ public interface StandardMemoryContext extends MemoryContext<Short> {
      * @param bank bank index
      * @return true if the file was loaded successfully, false otherwise
      */
-    public boolean loadHex(String filename, int bank);
+    boolean loadHex(String filename, int bank);
     
     /**
      * Loads a binary file into the memory.
@@ -121,6 +114,6 @@ public interface StandardMemoryContext extends MemoryContext<Short> {
      * @param bank bank index
      * @return true if the file was loaded successfully, false otherwise
      */
-    public boolean loadBin(String filename, int address, int bank);
+    boolean loadBin(String filename, int address, int bank);
     
 }

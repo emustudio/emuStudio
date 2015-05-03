@@ -122,7 +122,7 @@ public abstract class InstructionsTest {
     protected void stepAndCheckPCandSPandMemory(int PC, int SP, int memValue) {
         stepAndCheckPC(PC);
         assertEquals(SP, cpu.getEngine().SP);
-        assertEquals(memValue, memoryStub.readWord(cpu.getEngine().SP));
+        assertEquals(memValue, memoryStub.readWord(cpu.getEngine().SP).intValue());
     }
 
     protected void stepAndCheckPCandSP(int PC, int SP) {

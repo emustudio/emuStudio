@@ -22,11 +22,6 @@
  */
 package net.sf.emustudio.memory.standard.gui.utils;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
 import javax.swing.AbstractCellEditor;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -40,6 +35,11 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
 
 public class TableMemory extends JTable {
 
@@ -65,7 +65,7 @@ public class TableMemory extends JTable {
         }
     }
 
-    public class MemRowHeaderRenderer extends JLabel implements ListCellRenderer {
+    public static class MemRowHeaderRenderer extends JLabel implements ListCellRenderer {
 
         public MemRowHeaderRenderer(JTable table) {
             JTableHeader header = table.getTableHeader();

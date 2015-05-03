@@ -3,7 +3,7 @@ package net.sf.emustudio.intel8080.impl;
 import emulib.plugins.memory.Memory;
 import emulib.plugins.memory.MemoryContext;
 
-public class MemoryStub implements MemoryContext<Short> {
+public class MemoryStub implements MemoryContext<Short, Integer> {
     private short[] memory;
 
     public void setMemory(short[] memory) {
@@ -16,7 +16,7 @@ public class MemoryStub implements MemoryContext<Short> {
     }
 
     @Override
-    public Object readWord(int memoryPosition) {
+    public Integer readWord(int memoryPosition) {
         int low = memory[memoryPosition] & 0xFF;
         int high = memory[memoryPosition + 1];
         return (high << 8) | low;
@@ -28,10 +28,10 @@ public class MemoryStub implements MemoryContext<Short> {
     }
 
     @Override
-    public void writeWord(int memoryPosition, Object value) {
-        short low = (short) ((Integer) value & 0xFF);
+    public void writeWord(int memoryPosition, Integer value) {
+        short low = (short) (value & 0xFF);
         memory[memoryPosition] = low;
-        short high = (short) (((Integer) value >>> 8) & 0xFF);
+        short high = (short) ((value >>> 8) & 0xFF);
         memory[memoryPosition + 1] = high;
     }
 

@@ -33,7 +33,7 @@ import java.util.Map;
 import net.sf.emustudio.ram.memory.RAMInstruction;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;
 
-public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction> implements RAMMemoryContext {
+public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction, RAMInstruction> implements RAMMemoryContext {
     private List<RAMInstruction> memory;
     private Map<Integer, String> labels;
     private List<String> inputs; // not for memory, but for CPU. Memory holds program so...
@@ -76,7 +76,7 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction> 
     }
 
     @Override
-    public Object readWord(int pos) {
+    public RAMInstruction readWord(int pos) {
         if (pos >= memory.size()) {
             return null;
         }
@@ -96,7 +96,7 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction> 
 
     // This method is not and won't be implemented.
     @Override
-    public void writeWord(int pos, Object instr) {
+    public void writeWord(int pos, RAMInstruction instr) {
     }
 
     @Override
