@@ -1,5 +1,6 @@
 /*
  * KISS, YAGNI, DRY
+ * (c) Copyright 2015, Peter Jakubčo
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,20 +22,20 @@ package emustudio.gui;
 import emulib.runtime.StaticDialogs;
 import emustudio.drawing.Element;
 import emustudio.main.Main;
-import java.util.Enumeration;
-import java.util.Properties;
+
 import javax.swing.JDialog;
 import javax.swing.table.DefaultTableModel;
+import java.util.Map;
 
 public class ElementPropertiesDialog extends javax.swing.JDialog {
     private final Element element;
-    private final Properties settings;
+    private final Map<String, String> settings;
 
     public ElementPropertiesDialog(JDialog parent, Element element) {
         super(parent, true);
         initComponents();
         this.element = element;
-        this.settings = element.getProperties();
+        this.settings = element.getPropertiesWithoutSchema();
         setTitle(element.getPluginName() + " settings");
         setLocationRelativeTo(null);
         loadTable();
@@ -42,12 +43,10 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
 
     private void loadTable() {
         DefaultTableModel model = (DefaultTableModel)tblSettings.getModel();
-        Enumeration e = settings.keys();
         model.setRowCount(0);
-
-        while (e.hasMoreElements()) {
-            String key = (String)e.nextElement();
-            model.addRow(new String[]{key, settings.getProperty(key)});
+        
+        for (Map.Entry<String, String> entry : settings.entrySet()) {
+            model.addRow(new String[] { entry.getKey(), entry.getValue() });
         }
     }
     /** This method is called from within the constructor to
@@ -154,9 +153,9 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
         DefaultTableModel model = (DefaultTableModel)tblSettings.getModel();
         settings.clear();
         for (int i = 0; i < model.getRowCount(); i++) {
-            settings.put(model.getValueAt(i, 0), model.getValueAt(i, 1));
+            settings.put((String)model.getValueAt(i, 0), (String)model.getValueAt(i, 1));
         }
-        try { element.refreshSettings(); }
+        try { element.refreshSettings(settings); }
         catch(NumberFormatException e) {}
         dispose();
     }//GEN-LAST:event_btnSaveActionPerformed

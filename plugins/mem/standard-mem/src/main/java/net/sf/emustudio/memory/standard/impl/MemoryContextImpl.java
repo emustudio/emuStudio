@@ -23,7 +23,7 @@ import emulib.plugins.memory.AbstractMemoryContext;
 import emulib.runtime.HEXFileManager;
 import emulib.runtime.StaticDialogs;
 import net.sf.emustudio.memory.standard.StandardMemoryContext;
-import net.sf.emustudio.memory.standard.gui.MemoryFrame;
+import net.sf.emustudio.memory.standard.gui.MemoryDialog;
 
 import java.io.EOFException;
 import java.io.File;
@@ -40,14 +40,14 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short, Integer> imp
     private final List<AddressRange> romList = new ArrayList<>();
 
     public int lastImageStart = 0;
-    private short[][] mem = new short[0][0];
+    private short[][] mem = new short[1][0];
     private int banksCount;
     private short bankSelect = 0;
     private int bankCommon = 0;
     private int activeBank;
-    private MemoryFrame gui;
+    private MemoryDialog gui;
 
-    public void init(int size, int banks, int bankCommon, MemoryFrame gui) {
+    public void init(int size, int banks, int bankCommon, MemoryDialog gui) {
         if (banks <= 0) {
             throw new IllegalArgumentException("Number of banks must be >= 1!");
         }

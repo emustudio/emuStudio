@@ -30,7 +30,9 @@ import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import net.sf.emustudio.memory.standard.StandardMemoryContext;
 import net.sf.emustudio.memory.standard.StandardMemoryContext.AddressRange;
-import net.sf.emustudio.memory.standard.gui.MemoryFrame;
+import net.sf.emustudio.memory.standard.gui.MemoryDialog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.MissingResourceException;
@@ -43,8 +45,10 @@ import java.util.ResourceBundle;
         description="Operating memory suitable for most of CPUs"
 )
 public class MemoryImpl extends AbstractMemory {
+    private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
+
     private final MemoryContextImpl context = new MemoryContextImpl();
-    private MemoryFrame gui;
+    private MemoryDialog gui;
     private boolean emuStudioNoGUI = false;
 
     public MemoryImpl(Long pluginID, ContextPool contextPool) {
@@ -53,6 +57,7 @@ public class MemoryImpl extends AbstractMemory {
             contextPool.register(pluginID, context, StandardMemoryContext.class);
             contextPool.register(pluginID, context, MemoryContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
+            LOGGER.error("Could not register memory", e);
             StaticDialogs.showErrorMessage("Could not register the memory",
                     MemoryImpl.class.getAnnotation(PluginType.class).title());
         }
@@ -116,7 +121,7 @@ public class MemoryImpl extends AbstractMemory {
 
         emuStudioNoGUI = Boolean.parseBoolean(settings.readSetting(pluginID, SettingsManager.NO_GUI));
         if (!emuStudioNoGUI) {
-            gui = new MemoryFrame(pluginID, this, context, settings);
+            gui = new MemoryDialog(pluginID, this, context, settings);
         }
 
         if (banksCount == 0) {

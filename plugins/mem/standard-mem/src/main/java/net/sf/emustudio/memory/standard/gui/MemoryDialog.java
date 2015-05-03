@@ -1,9 +1,5 @@
 /*
- * MemoryFrame.java
- *
- * Created on Nedeľa, 2007, oktober 28, 10:40
- *
- * Copyright (C) 2007-2013 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -34,8 +30,8 @@ import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -44,6 +40,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.LayoutStyle;
+import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
@@ -64,7 +61,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public class MemoryFrame extends JFrame {
+public class MemoryDialog extends JDialog {
     private final MemoryContextImpl memContext;
     private final MemoryImpl mem;
     private final long pluginID;
@@ -72,8 +69,7 @@ public class MemoryFrame extends JFrame {
     private MemoryTableModel memModel;
     private final SettingsManager settings;
 
-    public MemoryFrame(long pluginID, MemoryImpl mem, MemoryContextImpl memContext,
-            SettingsManager settings) {
+    public MemoryDialog(long pluginID, MemoryImpl mem, MemoryContextImpl memContext, SettingsManager settings) {
         this.memContext = memContext;
         this.mem = mem;
         this.pluginID = pluginID;
@@ -89,7 +85,7 @@ public class MemoryFrame extends JFrame {
 
             @Override
             public void tableChanged(TableModelEvent e) {
-                ((SpinnerNumberModel) spnPage.getModel()).setValue(memModel.getPage());
+                spnPage.getModel().setValue(memModel.getPage());
             }
         });
         lblPageCount.setText(String.valueOf(memModel.getPageCount()));
@@ -98,11 +94,11 @@ public class MemoryFrame extends JFrame {
 
             @Override
             public void stateChanged(ChangeEvent e) {
-                int i = (Integer) ((SpinnerNumberModel) spnPage.getModel()).getValue();
+                int i = (Integer) spnPage.getModel().getValue();
                 try {
                     memModel.setPage(i);
                 } catch (IndexOutOfBoundsException ex) {
-                    ((SpinnerNumberModel) spnPage.getModel()).setValue(memModel.getPage());
+                    spnPage.getModel().setValue(memModel.getPage());
                 }
             }
         });
@@ -114,7 +110,7 @@ public class MemoryFrame extends JFrame {
                 try {
                     memModel.setCurrentBank(i);
                 } catch (IndexOutOfBoundsException ex) {
-                    ((SpinnerNumberModel) spnBank.getModel()).setValue(memModel.getCurrentBank());
+                    spnBank.getModel().setValue(memModel.getCurrentBank());
                 }
             }
         });
@@ -156,15 +152,17 @@ public class MemoryFrame extends JFrame {
             @Override
             public void keyPressed(KeyEvent e) {
                 super.keyPressed(e);
+                SpinnerModel model = spnPage.getModel();
+
                 int key = e.getKeyCode();
                 if ((key == KeyEvent.VK_RIGHT) // ->
                         && (tblMemory.getSelectedColumn() == memModel.getColumnCount() - 1)) {
                     if (tblMemory.getSelectedRow() == memModel.getRowCount() - 1) {
-                        int i = (Integer) ((SpinnerNumberModel) spnPage.getModel()).getValue();
+                        int i = (Integer) model.getValue();
                         try {
                             memModel.setPage(i + 1);
                         } catch (IndexOutOfBoundsException ex) {
-                            ((SpinnerNumberModel) spnPage.getModel()).setValue(0);
+                            model.setValue(0);
                         }
                         tblMemory.setRowSelectionInterval(0, 0);
                         tblMemory.scrollRectToVisible(tblMemory.getCellRect(0, 0, true));
@@ -176,11 +174,11 @@ public class MemoryFrame extends JFrame {
                 } else if ((key == KeyEvent.VK_LEFT) // <-
                         && (tblMemory.getSelectedColumn() == 0)) {
                     if (tblMemory.getSelectedRow() == 0) {
-                        int i = (Integer) ((SpinnerNumberModel) spnPage.getModel()).getValue();
+                        int i = (Integer) model.getValue();
                         try {
                             memModel.setPage(i - 1);
                         } catch (IndexOutOfBoundsException ex) {
-                            ((SpinnerNumberModel) spnPage.getModel()).setValue(memModel.getPageCount() - 1);
+                            model.setValue(memModel.getPageCount() - 1);
                         }
                         tblMemory.setRowSelectionInterval(memModel.getRowCount() - 1,
                                 memModel.getRowCount() - 1);
@@ -192,23 +190,23 @@ public class MemoryFrame extends JFrame {
                     }
                 } else if ((key == KeyEvent.VK_UP) // ^
                         && (tblMemory.getSelectedRow() == 0)) {
-                    int i = (Integer) ((SpinnerNumberModel) spnPage.getModel()).getValue();
+                    int i = (Integer) model.getValue();
                     int col = tblMemory.getSelectedColumn();
                     try {
                         memModel.setPage(i - 1);
                     } catch (IndexOutOfBoundsException ex) {
-                        ((SpinnerNumberModel) spnPage.getModel()).setValue(memModel.getPageCount() - 1);
+                        model.setValue(memModel.getPageCount() - 1);
                     }
                     tblMemory.setColumnSelectionInterval(col, col);
                     up_correct = true;
                 } else if ((key == KeyEvent.VK_DOWN) // v
                         && (tblMemory.getSelectedRow() == memModel.getRowCount() - 1)) {
-                    int i = (Integer) ((SpinnerNumberModel) spnPage.getModel()).getValue();
+                    int i = (Integer) model.getValue();
                     int col = tblMemory.getSelectedColumn();
                     try {
                         memModel.setPage(i + 1);
                     } catch (IndexOutOfBoundsException ex) {
-                        ((SpinnerNumberModel) spnPage.getModel()).setValue(0);
+                        model.setValue(0);
                     }
                     tblMemory.setColumnSelectionInterval(col, col);
                     down_correct = true;
@@ -281,7 +279,7 @@ public class MemoryFrame extends JFrame {
     }
 
     public void updateBank(short bank) {
-        lblRuntimeBank.setText(String.valueOf(bank));
+        lblSelectedBank.setText(String.valueOf(bank));
     }
 
     private void destroyME() {
@@ -320,8 +318,8 @@ public class MemoryFrame extends JFrame {
         spnBank = new JSpinner();
         JLabel lblBanksCountLBL = new JLabel("Banks count:");
         lblBanksCount = new JLabel("0");
-        JLabel lblRuntimeBankLBL = new JLabel("Run-time bank:");
-        lblRuntimeBank = new JLabel("0");
+        JLabel lblSelectedBankLBL = new JLabel("Selected bank:");
+        lblSelectedBank = new JLabel("0");
         JToolBar.Separator jSeparator1 = new JToolBar.Separator();
         JPanel panelMemory = new JPanel();
 
@@ -330,6 +328,19 @@ public class MemoryFrame extends JFrame {
 
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
+
+        lblPageNumber.setFont(lblPageNumber.getFont().deriveFont(lblPageNumber.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblHEX.setFont(lblHEX.getFont().deriveFont(lblHEX.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblDEC.setFont(lblDEC.getFont().deriveFont(lblDEC.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblOCT.setFont(lblOCT.getFont().deriveFont(lblOCT.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblBIN.setFont(lblBIN.getFont().deriveFont(lblBIN.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblBank.setFont(lblBank.getFont().deriveFont(lblBank.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblBanksCountLBL.setFont(lblBanksCountLBL.getFont().deriveFont(lblBanksCountLBL.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblPageCountLBL.setFont(lblPageCountLBL.getFont().deriveFont(lblPageCountLBL.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblSelectedBankLBL.setFont(lblSelectedBankLBL.getFont().deriveFont(lblSelectedBankLBL.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblAddress.setFont(lblAddress.getFont().deriveFont(lblAddress.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblChar.setFont(lblChar.getFont().deriveFont(lblChar.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lblValue.setFont(lblValue.getFont().deriveFont(lblValue.getFont().getStyle() & ~java.awt.Font.BOLD));
 
         btnClearMemory.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/edit-delete.png"))); // NOI18N
         btnClearMemory.setToolTipText("Clear memory");
@@ -417,24 +428,21 @@ public class MemoryFrame extends JFrame {
         spnPage.setPreferredSize(new java.awt.Dimension(70, 25));
         lblPageCount.setFont(lblPageCount.getFont().deriveFont(lblPageCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblBanksCount.setFont(lblBanksCount.getFont().deriveFont(lblBanksCount.getFont().getStyle() | java.awt.Font.BOLD));
-        lblRuntimeBank.setFont(lblRuntimeBank.getFont().deriveFont(lblRuntimeBank.getFont().getStyle() | java.awt.Font.BOLD));
+        lblSelectedBank.setFont(lblSelectedBank.getFont().deriveFont(lblSelectedBank.getFont().getStyle() | java.awt.Font.BOLD));
 
         GroupLayout panelMemoryLayout = new GroupLayout(panelMemory);
         panelMemory.setLayout(panelMemoryLayout);
 
         panelMemoryLayout.setHorizontalGroup(
-                panelMemoryLayout.createSequentialGroup().addContainerGap().addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblPageNumber).addComponent(lblPageCountLBL)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(spnPage).addComponent(lblPageCount)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblBank).addComponent(lblBanksCountLBL).addComponent(lblRuntimeBankLBL)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(spnBank).addComponent(lblBanksCount).addComponent(lblRuntimeBank)).addContainerGap());
+                panelMemoryLayout.createSequentialGroup().addContainerGap().addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblPageNumber).addComponent(lblPageCountLBL)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(spnPage).addComponent(lblPageCount)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblBank).addComponent(lblBanksCountLBL).addComponent(lblSelectedBankLBL)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(spnBank).addComponent(lblBanksCount).addComponent(lblSelectedBank)).addContainerGap());
         panelMemoryLayout.setVerticalGroup(
-                panelMemoryLayout.createSequentialGroup().addContainerGap().addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblPageNumber).addComponent(spnPage).addComponent(lblBank).addComponent(spnBank)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblPageCountLBL).addComponent(lblPageCount).addComponent(lblBanksCountLBL).addComponent(lblBanksCount)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRuntimeBankLBL).addComponent(lblRuntimeBank)));
+                panelMemoryLayout.createSequentialGroup().addContainerGap().addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblPageNumber).addComponent(spnPage).addComponent(lblBank).addComponent(spnBank)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblPageCountLBL).addComponent(lblPageCount).addComponent(lblBanksCountLBL).addComponent(lblBanksCount)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblSelectedBankLBL).addComponent(lblSelectedBank)));
 
         panelValue.setBorder(BorderFactory.createTitledBorder("Selected value"));
 
-        lblAddress.setFont(lblAddress.getFont().deriveFont(lblAddress.getFont().getStyle() | java.awt.Font.BOLD));
         txtAddress.setEditable(false);
         txtAddress.setHorizontalAlignment(JTextField.RIGHT);
 
-        lblValue.setFont(lblValue.getFont().deriveFont(lblValue.getFont().getStyle() | java.awt.Font.BOLD));
-        lblChar.setFont(lblChar.getFont().deriveFont(lblChar.getFont().getStyle() | java.awt.Font.BOLD));
         txtChar.setEditable(false);
         txtValDec.setEditable(false);
         txtValDec.setHorizontalAlignment(JTextField.RIGHT);
@@ -547,8 +555,7 @@ public class MemoryFrame extends JFrame {
     }
 
     private void btnSettingsActionPerformed(java.awt.event.ActionEvent evt) {
-        new SettingsDialog(this, pluginID, mem, memContext, tblMemory,
-                settings).setVisible(true);
+        new SettingsDialog(this, pluginID, mem, memContext, tblMemory, settings).setVisible(true);
     }
 
     private void btnDumpActionPerformed(java.awt.event.ActionEvent evt) {
@@ -601,7 +608,7 @@ public class MemoryFrame extends JFrame {
 
     private JLabel lblBanksCount;
     private JLabel lblPageCount;
-    private JLabel lblRuntimeBank;
+    private JLabel lblSelectedBank;
     private JScrollPane paneMemory;
     private JSpinner spnBank;
     private JSpinner spnPage;

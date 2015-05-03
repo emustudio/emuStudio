@@ -1,5 +1,6 @@
 /*
  * KISS, YAGNI, DRY
+ * (c) Copyright 2015, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,6 +28,9 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -38,13 +42,10 @@ public abstract class Element {
     public final static int MIN_WIDTH = 80;
     public final static int MIN_HEIGHT = 50;
 
-    /**
-     * Mouse tolerance of element border
-     */
-    public final static int TOLERANCE = 5;
+    public final static int MOUSE_TOLERANCE = 5;
 
     private final Properties myProperties;
-    private String pluginName;
+    private final String pluginName;
 
     private int width;
     private int height;
@@ -72,57 +73,52 @@ public abstract class Element {
     private Font italicFont;
 
     private final Color backColor;
-    private final Color foreColor;
+    private final Color foreColor = new Color(0x909090);
 
     private GradientPaint gradient;
-    protected boolean selected;
+    protected boolean selected = false;
 
     protected Schema schema;
 
     public Element(String pluginName, Properties settings, Color backColor, Schema schema) throws NumberFormatException {
-        this.pluginName = pluginName;
-        this.backColor = backColor;
-        this.selected = false;
-        this.foreColor = new Color(0x909090);
-        gradient = new GradientPaint(x, y, Color.WHITE, x, y + height, this.backColor, false);
+        this.pluginName = (pluginName == null || pluginName.isEmpty()) ? "unknown" : pluginName;
+        this.schema = Objects.requireNonNull(schema);
+        this.backColor = Objects.requireNonNull(backColor);
+
+        this.gradient = new GradientPaint(x, y, Color.WHITE, x, y + height, this.backColor, false);
         this.myProperties = settings;
-        this.schema = schema;
+
         refreshSettings();
     }
 
     public Element(String pluginName, Point location, Color backColor, Schema schema) {
-        this.pluginName = pluginName;
+        this.pluginName = (pluginName == null || pluginName.isEmpty()) ? "unknown" : pluginName;
+        this.schema = Objects.requireNonNull(schema);
+        this.backColor = Objects.requireNonNull(backColor);
+
+        this.gradient = new GradientPaint(x, y, Color.WHITE, x, y + height, this.backColor, false);
+        this.myProperties = new Properties();
+
         this.x = location.x;
         this.y = location.y;
-        this.backColor = backColor;
         this.wasMeasured = false;
-        this.selected = false;
-        this.foreColor = new Color(0x909090);
-        this.myProperties = new Properties();
-        this.schema = schema;
-        gradient = new GradientPaint(x, y, Color.WHITE, x, y + height, this.backColor, false);
     }
 
-    /**
-     * Updates settings of the element from internal properties.
-     *
-     * @throws NumberFormatException when some properties are not well parseable.
-     */
-    public final void refreshSettings() throws NumberFormatException {
-        if ((pluginName == null) || (pluginName.isEmpty())) {
-            pluginName = "unknown";
-        }
-
+    private void refreshSettings() throws NumberFormatException {
         x = Integer.parseInt(myProperties.getProperty("point.x", "0"));
         y = Integer.parseInt(myProperties.getProperty("point.y", "0"));
         width = Integer.parseInt(myProperties.getProperty("width", "0"));
         height = Integer.parseInt(myProperties.getProperty("height", "0"));
         this.wasMeasured = false;
     }
+    
+    public final void refreshSettings(Map properties) throws NumberFormatException {
+        myProperties.clear();
+        updateProperties();
+        myProperties.putAll(properties);
+        refreshSettings();
+    }
 
-    /**
-     * Update internal properties
-     */
     private void updateProperties() {
         myProperties.put("point.x", String.valueOf(x));
         myProperties.put("point.y", String.valueOf(y));
@@ -133,7 +129,22 @@ public abstract class Element {
     public Properties getProperties() {
         // actualize internal properties
         updateProperties();
-        return myProperties;
+        return new Properties(myProperties);
+    }
+    
+    public Map<String, String> getPropertiesWithoutSchema() {
+        Map<String, String> map = new HashMap<>();
+        for (Map.Entry entry : myProperties.entrySet()) {
+            String key = (String)entry.getKey();
+            if (key.startsWith("point")) {
+                continue;
+            }
+            if (key.equals("width") || key.equals("height")) {
+                continue;
+            }
+            map.put(key, (String)entry.getValue());
+        }
+        return map;
     }
 
     /**
@@ -341,8 +352,8 @@ public abstract class Element {
             return false;
         }
         int xR = leftX + getWidth();
-        int yB = topY + TOLERANCE;
-        return ((borderPoint.x >= leftX) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= topY - TOLERANCE));
+        int yB = topY + MOUSE_TOLERANCE;
+        return ((borderPoint.x >= leftX) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= topY - MOUSE_TOLERANCE));
     }
 
     /**
@@ -358,8 +369,8 @@ public abstract class Element {
             return false;
         }
         int xR = leftX + getWidth();
-        int yT = topY + getHeight() - TOLERANCE;
-        int yB = topY + getHeight() + TOLERANCE;
+        int yT = topY + getHeight() - MOUSE_TOLERANCE;
+        int yB = topY + getHeight() + MOUSE_TOLERANCE;
         return ((borderPoint.x >= leftX) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= yT));
     }
 
@@ -375,9 +386,9 @@ public abstract class Element {
         if ((!wasMeasured) || (borderPoint == null)) {
             return false;
         }
-        int xR = leftX + TOLERANCE;
+        int xR = leftX + MOUSE_TOLERANCE;
         int yB = topY + getHeight();
-        return ((borderPoint.x >= leftX - TOLERANCE) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= topY));
+        return ((borderPoint.x >= leftX - MOUSE_TOLERANCE) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= topY));
     }
 
     /**
@@ -392,8 +403,8 @@ public abstract class Element {
         if ((!wasMeasured) || (borderPoint == null)) {
             return false;
         }
-        int xL = leftX + getWidth() - TOLERANCE;
-        int xR = leftX + getWidth() + TOLERANCE;
+        int xL = leftX + getWidth() - MOUSE_TOLERANCE;
+        int xR = leftX + getWidth() + MOUSE_TOLERANCE;
         int yB = topY + getHeight();
         return ((borderPoint.x >= xL) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= topY));
     }

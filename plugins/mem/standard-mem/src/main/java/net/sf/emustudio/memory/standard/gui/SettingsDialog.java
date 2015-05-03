@@ -25,9 +25,13 @@ package net.sf.emustudio.memory.standard.gui;
 import emulib.emustudio.SettingsManager;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.UniversalFileFilter;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import net.sf.emustudio.memory.standard.StandardMemoryContext.AddressRange;
+import net.sf.emustudio.memory.standard.gui.utils.NiceButton;
+import net.sf.emustudio.memory.standard.gui.utils.TableMemory;
+import net.sf.emustudio.memory.standard.impl.AddressRangeImpl;
+import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
+import net.sf.emustudio.memory.standard.impl.MemoryImpl;
+
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.InputVerifier;
@@ -48,12 +52,9 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-import net.sf.emustudio.memory.standard.StandardMemoryContext.AddressRange;
-import net.sf.emustudio.memory.standard.gui.utils.NiceButton;
-import net.sf.emustudio.memory.standard.gui.utils.TableMemory;
-import net.sf.emustudio.memory.standard.impl.AddressRangeImpl;
-import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
-import net.sf.emustudio.memory.standard.impl.MemoryImpl;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SettingsDialog extends JDialog {
 
@@ -66,7 +67,7 @@ public class SettingsDialog extends JDialog {
     private List<String> imageFullNames = new ArrayList<String>();
     private List<Integer> imageAddresses = new ArrayList<Integer>();
 
-    public SettingsDialog(java.awt.Frame parent, long pluginID,
+    public SettingsDialog(JDialog parent, long pluginID,
             MemoryImpl mem, MemoryContextImpl memContext, TableMemory tblMem,
             SettingsManager settings) {
         super(parent, true);

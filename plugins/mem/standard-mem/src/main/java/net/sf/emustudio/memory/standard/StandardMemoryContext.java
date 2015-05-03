@@ -19,6 +19,7 @@
 
 package net.sf.emustudio.memory.standard;
 
+import emulib.annotations.ContextType;
 import emulib.plugins.memory.MemoryContext;
 
 import java.util.List;
@@ -28,6 +29,7 @@ import java.util.List;
  * 
  * Supports bank switching, ROM ranges, and loading HEX/BIN files.
  */
+@ContextType(id = "Standard memory")
 public interface StandardMemoryContext extends MemoryContext<Short, Integer> {
     
     /**

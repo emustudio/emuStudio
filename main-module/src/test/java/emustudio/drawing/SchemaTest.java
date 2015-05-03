@@ -1,8 +1,5 @@
 /*
- * SchemaTest.java
- *
- * Copyright (C) 2012, Peter Jakubčo
- *
+ * Copyright (C) 2012-2015, Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  * This program is free software; you can redistribute it and/or
@@ -21,6 +18,11 @@
  */
 package emustudio.drawing;
 
+import org.easymock.EasyMock;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -29,15 +31,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import org.easymock.EasyMock;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
-/**
- *
- * @author vbmacher
- */
 public class SchemaTest {
 
     private static Graphics graphicsMock;
@@ -59,9 +53,6 @@ public class SchemaTest {
         EasyMock.replay(rect, fontMetricsMock, fontMock, graphicsMock);
     }
 
-    /**
-     * Test of getConfigName method, of class Schema.
-     */
     @Test
     public void testGetConfigName() {
         Schema instance = new Schema("test", new Properties());
@@ -70,9 +61,6 @@ public class SchemaTest {
         Assert.assertEquals(expResult, result);
     }
 
-    /**
-     * Test of setConfigName method, of class Schema.
-     */
     @Test
     public void testSetConfigName() {
         String cName = "test";
@@ -81,9 +69,6 @@ public class SchemaTest {
         Assert.assertEquals(cName, instance.getConfigName());
     }
 
-    /**
-     * Test of getCompilerElement method, of class Schema.
-     */
     @Test
     public void testGetCompilerElement() {
         Schema instance = new Schema();
@@ -93,9 +78,6 @@ public class SchemaTest {
         Assert.assertSame(expResult, result);
     }
 
-    /**
-     * Test of getCpuElement method, of class Schema.
-     */
     @Test
     public void testGetCpuElement() {
         Schema instance = new Schema();
@@ -105,9 +87,6 @@ public class SchemaTest {
         Assert.assertSame(expResult, result);
     }
 
-    /**
-     * Test of getMemoryElement method, of class Schema.
-     */
     @Test
     public void testGetMemoryElement() {
         Schema instance = new Schema();
@@ -117,9 +96,6 @@ public class SchemaTest {
         Assert.assertSame(expResult, result);
     }
 
-    /**
-     * Test of addDeviceElement method, of class Schema.
-     */
     @Test
     public void testAddDeviceElement() {
         DeviceElement deviceElement = null;
@@ -134,9 +110,6 @@ public class SchemaTest {
         }
     }
 
-    /**
-     * Test of getDeviceElements method, of class Schema.
-     */
     @Test
     public void testGetDeviceElements() {
         Schema instance = new Schema();
@@ -155,9 +128,6 @@ public class SchemaTest {
         Assert.assertEquals("dev-2", result.get(2).getPluginName());
     }
 
-    /**
-     * Test of removeDeviceElement method, of class Schema.
-     */
     @Test
     public void testRemoveDeviceElement() {
         Schema instance = new Schema();
@@ -168,9 +138,6 @@ public class SchemaTest {
         Assert.assertEquals(0, instance.getDeviceElements().size());
     }
 
-    /**
-     * Test of removeElement method, of class Schema.
-     */
     @Test
     public void testRemoveElement() {
         Schema instance = new Schema();
@@ -188,9 +155,6 @@ public class SchemaTest {
         Assert.assertEquals(0, instance.getDeviceElements().size());
     }
 
-    /**
-     * Test of getAllElements method, of class Schema.
-     */
     @Test
     public void testGetAllElements() {
         Schema instance = new Schema();
@@ -205,9 +169,6 @@ public class SchemaTest {
         Assert.assertTrue(result.contains(elem2));
     }
 
-    /**
-     * Test of getConnectionLines method, of class Schema.
-     */
     @Test
     public void testAddGetRemoveConnectionLines() {
         Schema instance = new Schema();
@@ -236,12 +197,9 @@ public class SchemaTest {
         Assert.assertEquals(0, instance.getConnectionLines().size());
     }
 
-    /**
-     * Test of getCrossingElement method, of class Schema.
-     */
     @Test
     public void testGetCrossingElement() {
-        Schema instance = new Schema();
+        Schema schema = new Schema();
         Properties props = new Properties();
         props.setProperty("compiler", "compiler");
         props.setProperty("point.x", "100");
@@ -249,60 +207,41 @@ public class SchemaTest {
         props.setProperty("width", "100");
         props.setProperty("height", "30");
 
-        CompilerElement elem = new CompilerElement("compiler", props, instance);
-        instance.setCompilerElement(elem);
-        Assert.assertSame(elem, instance.getCompilerElement());
+        CompilerElement elem = new CompilerElement("compiler", props, schema);
+        schema.setCompilerElement(elem);
+        Assert.assertSame(elem, schema.getCompilerElement());
 
         Point p = null;
-        Element result = instance.getCrossingElement(p);
-        Assert.assertNull(result);
+        Assert.assertNull(schema.getCrossingElement(p));
 
         p = new Point(110, 110); // somewhere in the middle
-        Element expResult = elem;
-        result = instance.getCrossingElement(p);
-        Assert.assertSame(expResult, result);
+        Assert.assertSame(elem, schema.getCrossingElement(p));
 
         p = new Point(50, 85); // left upper corner
-        expResult = elem;
-        result = instance.getCrossingElement(p);
-        Assert.assertSame(expResult, result);
+        Assert.assertSame(elem, schema.getCrossingElement(p));
 
         p = new Point(49, 85); // one pixel left from left upper corner
-        result = instance.getCrossingElement(p);
-        Assert.assertNull(result);
+        Assert.assertNull(schema.getCrossingElement(p));
 
         p = new Point(150, 85); // right upper corner
-        expResult = elem;
-        result = instance.getCrossingElement(p);
-        Assert.assertSame(expResult, result);
+        Assert.assertSame(elem, schema.getCrossingElement(p));
 
         p = new Point(150, 84); // one pixel above right upper corner
-        result = instance.getCrossingElement(p);
-        Assert.assertNull(result);
+        Assert.assertNull(schema.getCrossingElement(p));
 
         p = new Point(50, 115); // left bottom corner
-        expResult = elem;
-        result = instance.getCrossingElement(p);
-        Assert.assertSame(expResult, result);
+        Assert.assertSame(elem, schema.getCrossingElement(p));
 
         p = new Point(49, 115); // one pixel left from left bottom corner
-        expResult = null;
-        result = instance.getCrossingElement(p);
-        Assert.assertSame(expResult, result);
+        Assert.assertNull(schema.getCrossingElement(p));
 
         p = new Point(150, 115); // right bottom corner
-        expResult = elem;
-        result = instance.getCrossingElement(p);
-        Assert.assertSame(expResult, result);
+        Assert.assertSame(elem, schema.getCrossingElement(p));
 
         p = new Point(151, 115); // one pixel right from right bottom corner
-        result = instance.getCrossingElement(p);
-        Assert.assertNull(result);
+        Assert.assertNull(schema.getCrossingElement(p));
     }
 
-    /**
-     * Test of getElementByBorderPoint method, of class Schema.
-     */
     @Test
     public void testGetResizeElement() {
         Schema instance = new Schema();
@@ -327,78 +266,75 @@ public class SchemaTest {
         result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
 
-        p = new Point(50 - Element.TOLERANCE, 100); // left border with tolerance
+        p = new Point(50 - Element.MOUSE_TOLERANCE, 100); // left border with tolerance
         expResult = elem;
         result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
 
-        p = new Point(50 + Element.TOLERANCE, 100); // left border with tolerance
+        p = new Point(50 + Element.MOUSE_TOLERANCE, 100); // left border with tolerance
         expResult = elem;
         result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
 
-        p = new Point(50 + Element.TOLERANCE + 1, 100); // left border with tolerance
+        p = new Point(50 + Element.MOUSE_TOLERANCE + 1, 100); // left border with tolerance
         result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
 
-        p = new Point(150 + Element.TOLERANCE, 100); // right border with tolerance
+        p = new Point(150 + Element.MOUSE_TOLERANCE, 100); // right border with tolerance
         expResult = elem;
         result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
 
-        p = new Point(150 - Element.TOLERANCE, 100); // right border with tolerance
+        p = new Point(150 - Element.MOUSE_TOLERANCE, 100); // right border with tolerance
         expResult = elem;
         result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
 
-        p = new Point(150 + Element.TOLERANCE + 1, 100); // right border with tolerance
+        p = new Point(150 + Element.MOUSE_TOLERANCE + 1, 100); // right border with tolerance
         result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
 
-        p = new Point(150 - Element.TOLERANCE - 1, 100); // right border with tolerance
+        p = new Point(150 - Element.MOUSE_TOLERANCE - 1, 100); // right border with tolerance
         result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
 
-        p = new Point(100, 85 - Element.TOLERANCE); // upper border with tolerance
+        p = new Point(100, 85 - Element.MOUSE_TOLERANCE); // upper border with tolerance
         expResult = elem;
         result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
 
-        p = new Point(100, 85 + Element.TOLERANCE); // upper border with tolerance
+        p = new Point(100, 85 + Element.MOUSE_TOLERANCE); // upper border with tolerance
         expResult = elem;
         result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
 
-        p = new Point(100, 85 - Element.TOLERANCE - 1); // upper border with tolerance
+        p = new Point(100, 85 - Element.MOUSE_TOLERANCE - 1); // upper border with tolerance
         result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
 
-        p = new Point(100, 85 + Element.TOLERANCE + 1); // upper border with tolerance
+        p = new Point(100, 85 + Element.MOUSE_TOLERANCE + 1); // upper border with tolerance
         result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
 
-        p = new Point(100, 115 - Element.TOLERANCE); // bottom border with tolerance
+        p = new Point(100, 115 - Element.MOUSE_TOLERANCE); // bottom border with tolerance
         expResult = elem;
         result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
 
-        p = new Point(100, 115 + Element.TOLERANCE); // bottom border with tolerance
+        p = new Point(100, 115 + Element.MOUSE_TOLERANCE); // bottom border with tolerance
         expResult = elem;
         result = instance.getElementByBorderPoint(p);
         Assert.assertSame(expResult, result);
 
-        p = new Point(100, 115 - Element.TOLERANCE - 1); // bottom border with tolerance
+        p = new Point(100, 115 - Element.MOUSE_TOLERANCE - 1); // bottom border with tolerance
         result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
 
-        p = new Point(100, 115 + Element.TOLERANCE + 1); // bottom border with tolerance
+        p = new Point(100, 115 + Element.MOUSE_TOLERANCE + 1); // bottom border with tolerance
         result = instance.getElementByBorderPoint(p);
         Assert.assertNull(result);
     }
 
-    /**
-     * Test of isGridUsed method, of class Schema.
-     */
     @Test
     public void testGetSetUseGrid() {
         Schema instance = new Schema();
@@ -410,9 +346,6 @@ public class SchemaTest {
         Assert.assertEquals(false, instance.isGridUsed());
     }
 
-    /**
-     * Test of getGridGap method, of class Schema.
-     */
     @Test
     public void testSetGetGridGap() {
         Schema instance = new Schema();
@@ -427,9 +360,6 @@ public class SchemaTest {
         Assert.assertEquals(expResult, result);
     }
 
-    /**
-     * Test of getCrossingLine method, of class Schema.
-     */
     @Test
     public void testGetCrossingLine() {
         Schema instance = new Schema();
@@ -563,9 +493,6 @@ public class SchemaTest {
 
     }
 
-    /**
-     * Test of selectElements method, of class Schema.
-     */
     @Test
     public void testSelectElements() {
         Schema instance = new Schema();
@@ -755,9 +682,6 @@ public class SchemaTest {
         Assert.assertFalse(line2.isSelected());
     }
 
-    /**
-     * Test of moveSelection method, of class Schema.
-     */
     @Test
     public void testMoveSelection() {
         Schema instance = new Schema();
@@ -960,9 +884,6 @@ public class SchemaTest {
 
     }
 
-    /**
-     * Test of deleteSelected method, of class Schema.
-     */
     @Test
     public void testDeleteSelected() {
         Schema instance = new Schema();
@@ -1028,9 +949,6 @@ public class SchemaTest {
         Assert.assertSame(elem2, instance.getDeviceElements().get(0));
     }
 
-    /**
-     * Test of getProperties method, of class Schema.
-     */
     @Test
     public void testSaveAndGetSettings() {
         Schema instance = new Schema();
