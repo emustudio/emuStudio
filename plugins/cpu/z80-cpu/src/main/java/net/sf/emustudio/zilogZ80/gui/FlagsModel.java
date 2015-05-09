@@ -1,7 +1,5 @@
 /*
- * FlagsModel.java
- *
- * Copyright (C) 2008-2014 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -21,15 +19,15 @@
 package net.sf.emustudio.zilogZ80.gui;
 
 import javax.swing.table.AbstractTableModel;
-import net.sf.emustudio.zilogZ80.impl.EmulatorImpl;
+import net.sf.emustudio.zilogZ80.impl.EmulatorEngine;
 
 class FlagsModel extends AbstractTableModel {
     private static final String[] FLAG_NAMES = {"S", "Z", "H", "P/V", "N", "C"};
     private final int[] flagsI = {0, 0, 0, 0, 0, 0};
     private final int registersSet;
-    private final EmulatorImpl cpu;
+    private final EmulatorEngine cpu;
 
-    public FlagsModel(int registersSet, final EmulatorImpl cpu) {
+    public FlagsModel(int registersSet, final EmulatorEngine cpu) {
         this.cpu = cpu;
         this.registersSet = registersSet;
     }
@@ -62,12 +60,12 @@ class FlagsModel extends AbstractTableModel {
         } else {
             F = cpu.F1;
         }
-        flagsI[0] = ((F & EmulatorImpl.flagS) != 0) ? 1 : 0;
-        flagsI[1] = ((F & EmulatorImpl.flagZ) != 0) ? 1 : 0;
-        flagsI[2] = ((F & EmulatorImpl.flagH) != 0) ? 1 : 0;
-        flagsI[3] = ((F & EmulatorImpl.flagPV) != 0) ? 1 : 0;
-        flagsI[4] = ((F & EmulatorImpl.flagN) != 0) ? 1 : 0;
-        flagsI[5] = ((F & EmulatorImpl.flagC) != 0) ? 1 : 0;
+        flagsI[0] = ((F & EmulatorEngine.flagS) != 0) ? 1 : 0;
+        flagsI[1] = ((F & EmulatorEngine.flagZ) != 0) ? 1 : 0;
+        flagsI[2] = ((F & EmulatorEngine.flagH) != 0) ? 1 : 0;
+        flagsI[3] = ((F & EmulatorEngine.flagPV) != 0) ? 1 : 0;
+        flagsI[4] = ((F & EmulatorEngine.flagN) != 0) ? 1 : 0;
+        flagsI[5] = ((F & EmulatorEngine.flagC) != 0) ? 1 : 0;
         super.fireTableDataChanged();
     }
     

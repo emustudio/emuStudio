@@ -1,9 +1,5 @@
 /*
- * ContextImpl.java
- *
- * Created on 18.6.2008, 8:50:11
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,41 +19,42 @@
 package net.sf.emustudio.zilogZ80.impl;
 
 import emulib.plugins.device.DeviceContext;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import net.sf.emustudio.intel8080.ExtendedContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * Context of Z80 CPU emulator.
- * 
- */
 public final class ContextImpl implements ExtendedContext {
-    private Map<Integer, DeviceContext<Short>> devices;
-    private EmulatorImpl cpu;
-    private int clockFrequency = 20000; // kHz
+    private final static Logger LOGGER = LoggerFactory.getLogger(net.sf.emustudio.intel8080.impl.ContextImpl.class);
+    private final ConcurrentMap<Integer, DeviceContext<Short>> devices = new ConcurrentHashMap<>();
 
-    public ContextImpl(EmulatorImpl cpu) {
-        devices = new HashMap<Integer, DeviceContext<Short>>();
+    private volatile EmulatorEngine cpu;
+    private volatile int clockFrequency = 2000; // kHz
+
+    public void setCpu(EmulatorEngine cpu) {
         this.cpu = cpu;
     }
 
     // device mapping = only one device can be attached to one port
     @Override
     public boolean attachDevice(DeviceContext<Short> device, int port) {
-        if (devices.containsKey(port)) {
-            return false;
-        }
         if (!device.getDataType().equals(Short.class)) {
             return false;
         }
-        devices.put(port, device);
+        if (devices.containsKey(port)) {
+            return false;
+        }
+        if (devices.putIfAbsent(port, device) == null) {
+            LOGGER.info("[port={}] Attached device: {}", port, device);
+        }
         return true;
     }
 
     @Override
     public void detachDevice(int port) {
-        if (devices.containsKey(port)) {
-            devices.remove(port);
+        if (devices.remove(port) != null) {
+            LOGGER.info("Detached device from port " + port);
         }
     }
 
@@ -74,16 +71,13 @@ public final class ContextImpl implements ExtendedContext {
      * @return value from the port if read is true, otherwise 0
      */
     public short fireIO(int port, boolean read, short val) {
-        if (devices.containsKey(port) == false) {
-            // this behavior isn't constant for all situations...
-            // on ALTAIR computer it depends on setting of one switch on front
-            // panel (called IR or what..)
-            return 0;
-        }
-        if (read == true) {
-            return (Short) devices.get(port).read();
-        } else {
-            devices.get(port).write(val);
+        DeviceContext<Short> device = devices.get(port);
+        if (device != null) {
+            if (read) {
+                return device.read();
+            } else {
+                device.write(val);
+            }
         }
         return 0;
     }

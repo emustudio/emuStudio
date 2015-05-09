@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Peter Jakubčo
+ * Copyright (C) 2014-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  * This program is free software; you can redistribute it and/or
@@ -25,21 +25,22 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import net.sf.emustudio.intel8080.ExtendedContext;
 import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
-import net.sf.emustudio.zilogZ80.impl.EmulatorImpl;
+import net.sf.emustudio.zilogZ80.impl.EmulatorEngine;
+import net.sf.emustudio.zilogZ80.impl.EmulatorPlugin;
 
 public class StatusPanel extends javax.swing.JPanel {
-    private final EmulatorImpl cpu;
+    private final EmulatorPlugin cpu;
     private final ExtendedContext context;
     private final FlagsModel flagModel1;
     private final FlagsModel flagModel2;
 
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_NORMAL;
 
-    public StatusPanel(EmulatorImpl cpu, ExtendedContext context) {
+    public StatusPanel(EmulatorPlugin cpu, ExtendedContext context) {
         this.cpu = cpu;
         this.context = context;
-        this.flagModel1 = new FlagsModel(0, cpu);
-        this.flagModel2 = new FlagsModel(1, cpu);
+        this.flagModel1 = new FlagsModel(0, cpu.getEngine());
+        this.flagModel2 = new FlagsModel(1, cpu.getEngine());
         
         initComponents();
         tblFlags1.setModel(flagModel1);
@@ -103,37 +104,38 @@ public class StatusPanel extends javax.swing.JPanel {
     }
 
     public void updateGUI() {
-        txtA1.setText(byteHex(cpu.A));
-        txtF1.setText(byteHex(cpu.F));
-        txtB1.setText(byteHex(cpu.B));
-        txtC1.setText(byteHex(cpu.C));
-        txtBC1.setText(wordHex(cpu.B, cpu.C));
-        txtD1.setText(byteHex(cpu.D));
-        txtE1.setText(byteHex(cpu.E));
-        txtDE1.setText(wordHex(cpu.D, cpu.E));
-        txtH1.setText(byteHex(cpu.H));
-        txtL1.setText(byteHex(cpu.L));
-        txtHL1.setText(wordHex(cpu.H, cpu.L));
+        EmulatorEngine engine = cpu.getEngine();
+        txtA1.setText(byteHex(engine.A));
+        txtF1.setText(byteHex(engine.F));
+        txtB1.setText(byteHex(engine.B));
+        txtC1.setText(byteHex(engine.C));
+        txtBC1.setText(wordHex(engine.B, engine.C));
+        txtD1.setText(byteHex(engine.D));
+        txtE1.setText(byteHex(engine.E));
+        txtDE1.setText(wordHex(engine.D, engine.E));
+        txtH1.setText(byteHex(engine.H));
+        txtL1.setText(byteHex(engine.L));
+        txtHL1.setText(wordHex(engine.H, engine.L));
         flagModel1.fireTableDataChanged();
-        txtA2.setText(byteHex(cpu.A1));
-        txtF2.setText(byteHex(cpu.F1));
-        txtB2.setText(byteHex(cpu.B1));
-        txtC2.setText(byteHex(cpu.C1));
-        txtBC2.setText(wordHex(cpu.B1, cpu.C1));
-        txtD2.setText(byteHex(cpu.D1));
-        txtE2.setText(byteHex(cpu.E1));
-        txtDE2.setText(wordHex(cpu.D1, cpu.E1));
-        txtH2.setText(byteHex(cpu.H1));
-        txtL2.setText(byteHex(cpu.L1));
-        txtHL2.setText(wordHex(cpu.H1, cpu.L1));
+        txtA2.setText(byteHex(engine.A1));
+        txtF2.setText(byteHex(engine.F1));
+        txtB2.setText(byteHex(engine.B1));
+        txtC2.setText(byteHex(engine.C1));
+        txtBC2.setText(wordHex(engine.B1, engine.C1));
+        txtD2.setText(byteHex(engine.D1));
+        txtE2.setText(byteHex(engine.E1));
+        txtDE2.setText(wordHex(engine.D1, engine.E1));
+        txtH2.setText(byteHex(engine.H1));
+        txtL2.setText(byteHex(engine.L1));
+        txtHL2.setText(wordHex(engine.H1, engine.L1));
         flagModel2.fireTableDataChanged();
 
-        txtSP.setText(getWordHexString(cpu.SP));
-        txtPC.setText(getWordHexString(cpu.PC));
-        txtIX.setText(getWordHexString(cpu.IX));
-        txtIY.setText(getWordHexString(cpu.IY));
-        txtI.setText(getByteHexString(cpu.I));
-        txtR.setText(getByteHexString(cpu.R));
+        txtSP.setText(getWordHexString(engine.SP));
+        txtPC.setText(getWordHexString(engine.PC));
+        txtIX.setText(getWordHexString(engine.IX));
+        txtIY.setText(getWordHexString(engine.IY));
+        txtI.setText(getByteHexString(engine.I));
+        txtR.setText(getByteHexString(engine.R));
 
         lblRunState.setText(runState.toString());
         if (runState == CPU.RunState.STATE_RUNNING) {
