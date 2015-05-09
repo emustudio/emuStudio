@@ -31,13 +31,6 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
-import net.sf.emustudio.intel8080.ExtendedContext;
-import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
-import net.sf.emustudio.zilogZ80.gui.DecoderImpl;
-import net.sf.emustudio.zilogZ80.gui.DisassemblerImpl;
-import net.sf.emustudio.zilogZ80.gui.StatusPanel;
-
-import javax.swing.JPanel;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Objects;
@@ -46,6 +39,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
+import javax.swing.JPanel;
+import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
+import net.sf.emustudio.zilogZ80.gui.DecoderImpl;
+import net.sf.emustudio.zilogZ80.gui.DisassemblerImpl;
+import net.sf.emustudio.zilogZ80.gui.StatusPanel;
 
 /**
  * Main implementation class for CPU emulation CPU works in a separate thread
@@ -2058,13 +2057,13 @@ public class EmulatorImpl extends AbstractCPU {
             case 0x30:
             case 0x38:
                 if (getCC1((OP >>> 3) & 3)) {
-                    b = (byte) tmp;
+                    b = (byte) (tmp - 2);
                     PC += b;
                     return 12;
                 }
                 return 7;
             case 0x18: /* JR e */
-                b = (byte) tmp;
+                b = (byte) (tmp - 2);
                 PC += b;
                 return 12;
             case 0xC6: /* ADD A,d */

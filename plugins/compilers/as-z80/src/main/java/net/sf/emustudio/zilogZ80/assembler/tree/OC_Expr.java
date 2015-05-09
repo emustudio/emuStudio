@@ -1,9 +1,5 @@
 /*
- * OC_Expr.java
- *
- * Created on Sobota, 2008, august 16, 11:50
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,7 +24,6 @@ import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Instruction;
 
 public class OC_Expr extends Instruction {
-
     public static final int ADC = 0xCE00; // ADC A,N
     public static final int ADC_A_IIX_NN = 0xDD8E00; // ADC A, (IX+N)
     public static final int ADC_A_IIY_NN = 0xFD8E00; // ADC A, (IY+N)
@@ -122,9 +117,10 @@ public class OC_Expr extends Instruction {
     public static final int XOR = 0xEE00; // XOR N
     public static final int XOR_IIX_NN = 0xDDAE00; // XOR (IX+N)
     public static final int XOR_IIY_NN = 0xFDAE00; // XOR (IY+N)    
-    private Expression expr;
-    private boolean oneByte;
-    private int old_opcode;
+    
+    private final Expression expr;
+    private final boolean oneByte;
+    private final int old_opcode;
 
     public OC_Expr(int opcode, Expression expr, boolean oneByte, int line, int column) {
         super(opcode, line, column);
@@ -226,10 +222,7 @@ public class OC_Expr extends Instruction {
                 }
                 break;
             case JR:
-                //   if (val < 0) val = (0xFF-(val+1))&0xff;
-                // else
-                val = (val - 2) & 0xff;
-                opcode += Expression.reverseBytes(val, 1);
+                opcode += Expression.reverseBytes(val & 0xff, 1);
                 break;
             default:
                 if (oneByte) {

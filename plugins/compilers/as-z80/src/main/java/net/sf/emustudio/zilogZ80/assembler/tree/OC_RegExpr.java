@@ -1,9 +1,5 @@
 /*
- * OC_RegExpr.java
- *
- * Created on Pondelok, 2008, august 18, 8:55
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -30,8 +26,6 @@ import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Instruction;
 /**
  *
  * opcode = (first_byte+reg) expr
- *
- * @author Peter Jakubčo
  */
 public class OC_RegExpr extends Instruction {
 
@@ -44,13 +38,14 @@ public class OC_RegExpr extends Instruction {
     public static final int BIT = 0xCB40; // BIT b,r
     public static final int RES = 0xCB80; // RES b,r
     public static final int SET = 0xCBC0; // SET b,r
-    private Expression expr;
-    private boolean oneByte;
-    private boolean bitInstr; // bit instruction? (BIT,SET,RES)
-    private int old_opcode;
+    
+    private final Expression expr;
+    private final boolean oneByte;
+    private final boolean bitInstr; // bit instruction? (BIT,SET,RES)
+    private final int old_opcode;
 
     /**
-     * *
+     *
      * Creates a new instance of OC_RegExpr
      *
      * @param pos index of byte where add register value; e.g. DD 70+reg XX XX
@@ -60,10 +55,10 @@ public class OC_RegExpr extends Instruction {
             boolean oneByte, int line, int column) {
         super(opcode, line, column);
         this.opcode += (reg << ((getSize() - 1 - pos) * 8));
-        old_opcode = opcode; //this.opcode;
+        this.old_opcode = opcode; //this.opcode;
         this.oneByte = oneByte;
         this.expr = expr;
-        bitInstr = false;
+        this.bitInstr = false;
     }
 
     /**
@@ -90,10 +85,6 @@ public class OC_RegExpr extends Instruction {
         if (oneByte && (Expression.getSize(val) > 1)) {
             throw new Exception("[" + line + "," + column + "] Error:"
                     + " value too large");
-        }
-        //   opcode = old_opcode;
-        if (old_opcode == JR) {
-            val = (val - 2) & 0xff;
         }
         if (bitInstr) {
             if ((val > 7) || (val < 0)) {
