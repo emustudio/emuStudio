@@ -70,13 +70,13 @@ public final class ContextImpl implements ExtendedContext {
      *            true, then val is ignored.
      * @return value from the port if read is true, otherwise 0
      */
-    public short fireIO(int port, boolean read, short val) {
+    public short fireIO(int port, boolean read, int val) {
         DeviceContext<Short> device = devices.get(port);
         if (device != null) {
             if (read) {
                 return device.read();
             } else {
-                device.write(val);
+                device.write((short)val);
             }
         }
         return 0;

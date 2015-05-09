@@ -54,18 +54,18 @@ class FlagsModel extends AbstractTableModel {
 
     @Override
     public void fireTableDataChanged() {
-        short F;
+        int F;
         if (registersSet == 0) {
-            F = cpu.F;
+            F = cpu.flags;
         } else {
-            F = cpu.F1;
+            F = cpu.flags2;
         }
-        flagsI[0] = ((F & EmulatorEngine.flagS) != 0) ? 1 : 0;
-        flagsI[1] = ((F & EmulatorEngine.flagZ) != 0) ? 1 : 0;
-        flagsI[2] = ((F & EmulatorEngine.flagH) != 0) ? 1 : 0;
-        flagsI[3] = ((F & EmulatorEngine.flagPV) != 0) ? 1 : 0;
-        flagsI[4] = ((F & EmulatorEngine.flagN) != 0) ? 1 : 0;
-        flagsI[5] = ((F & EmulatorEngine.flagC) != 0) ? 1 : 0;
+        flagsI[0] = ((F & EmulatorEngine.FLAG_S) != 0) ? 1 : 0;
+        flagsI[1] = ((F & EmulatorEngine.FLAG_Z) != 0) ? 1 : 0;
+        flagsI[2] = ((F & EmulatorEngine.FLAG_H) != 0) ? 1 : 0;
+        flagsI[3] = ((F & EmulatorEngine.FLAG_PV) != 0) ? 1 : 0;
+        flagsI[4] = ((F & EmulatorEngine.FLAG_N) != 0) ? 1 : 0;
+        flagsI[5] = ((F & EmulatorEngine.FLAG_C) != 0) ? 1 : 0;
         super.fireTableDataChanged();
     }
     

@@ -26,6 +26,13 @@ import javax.swing.event.ChangeListener;
 import net.sf.emustudio.intel8080.ExtendedContext;
 import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
 import net.sf.emustudio.zilogZ80.impl.EmulatorEngine;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_A;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_B;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_C;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_D;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_E;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_H;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
 import net.sf.emustudio.zilogZ80.impl.EmulatorPlugin;
 
 public class StatusPanel extends javax.swing.JPanel {
@@ -95,39 +102,39 @@ public class StatusPanel extends javax.swing.JPanel {
         });
     }
 
-    private String wordHex(short upper, short lower) {
+    private String wordHex(int upper, int lower) {
         return getWordHexString(((upper << 8) | lower) & 0xFFFF);
     }
 
-    private String byteHex(short what) {
+    private String byteHex(int what) {
         return getByteHexString(what);
     }
 
     public void updateGUI() {
         EmulatorEngine engine = cpu.getEngine();
-        txtA1.setText(byteHex(engine.A));
-        txtF1.setText(byteHex(engine.F));
-        txtB1.setText(byteHex(engine.B));
-        txtC1.setText(byteHex(engine.C));
-        txtBC1.setText(wordHex(engine.B, engine.C));
-        txtD1.setText(byteHex(engine.D));
-        txtE1.setText(byteHex(engine.E));
-        txtDE1.setText(wordHex(engine.D, engine.E));
-        txtH1.setText(byteHex(engine.H));
-        txtL1.setText(byteHex(engine.L));
-        txtHL1.setText(wordHex(engine.H, engine.L));
+        txtA1.setText(byteHex(engine.regs[REG_A]));
+        txtF1.setText(byteHex(engine.flags));
+        txtB1.setText(byteHex(engine.regs[REG_B]));
+        txtC1.setText(byteHex(engine.regs[REG_C]));
+        txtBC1.setText(wordHex(engine.regs[REG_B], engine.regs[REG_C]));
+        txtD1.setText(byteHex(engine.regs[REG_D]));
+        txtE1.setText(byteHex(engine.regs[REG_E]));
+        txtDE1.setText(wordHex(engine.regs[REG_D], engine.regs[REG_E]));
+        txtH1.setText(byteHex(engine.regs[REG_H]));
+        txtL1.setText(byteHex(engine.regs[REG_L]));
+        txtHL1.setText(wordHex(engine.regs[REG_H], engine.regs[REG_L]));
         flagModel1.fireTableDataChanged();
-        txtA2.setText(byteHex(engine.A1));
-        txtF2.setText(byteHex(engine.F1));
-        txtB2.setText(byteHex(engine.B1));
-        txtC2.setText(byteHex(engine.C1));
-        txtBC2.setText(wordHex(engine.B1, engine.C1));
-        txtD2.setText(byteHex(engine.D1));
-        txtE2.setText(byteHex(engine.E1));
-        txtDE2.setText(wordHex(engine.D1, engine.E1));
-        txtH2.setText(byteHex(engine.H1));
-        txtL2.setText(byteHex(engine.L1));
-        txtHL2.setText(wordHex(engine.H1, engine.L1));
+        txtA2.setText(byteHex(engine.regs2[REG_A]));
+        txtF2.setText(byteHex(engine.flags2));
+        txtB2.setText(byteHex(engine.regs2[REG_B]));
+        txtC2.setText(byteHex(engine.regs2[REG_C]));
+        txtBC2.setText(wordHex(engine.regs2[REG_B], engine.regs2[REG_C]));
+        txtD2.setText(byteHex(engine.regs2[REG_D]));
+        txtE2.setText(byteHex(engine.regs2[REG_E]));
+        txtDE2.setText(wordHex(engine.regs2[REG_D], engine.regs2[REG_E]));
+        txtH2.setText(byteHex(engine.regs2[REG_H]));
+        txtL2.setText(byteHex(engine.regs2[REG_L]));
+        txtHL2.setText(wordHex(engine.regs2[REG_H], engine.regs2[REG_L]));
         flagModel2.fireTableDataChanged();
 
         txtSP.setText(getWordHexString(engine.SP));
@@ -146,8 +153,7 @@ public class StatusPanel extends javax.swing.JPanel {
             spnTestPeriode.setEnabled(true);
         }
     }
-    
-    
+       
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
