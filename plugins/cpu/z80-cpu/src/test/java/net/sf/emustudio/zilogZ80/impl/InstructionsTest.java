@@ -157,15 +157,28 @@ public abstract class InstructionsTest {
     protected void checkRunState(CPU.RunState runState) {
         assertEquals(runState, runStateListener.runState);
     }
-
-    protected void stepAndCheck(int value, int register) {
+    
+    private void stepWithAssert() {
         cpu.step();
         assertFalse(CPU.RunState.STATE_STOPPED_ADDR_FALLOUT == runStateListener.runState);
         assertFalse(CPU.RunState.STATE_STOPPED_BAD_INSTR == runStateListener.runState);
-        
+    }
+
+    protected void stepAndCheck(int value, int register) {
+        stepWithAssert();
         assertEquals(value, cpu.getEngine().regs[register]);
     }
 
+    protected void stepAndCheckIX(int value) {
+        stepWithAssert();
+        assertEquals(value, cpu.getEngine().IX);
+    }
+
+    protected void stepAndCheckIY(int value) {
+        stepWithAssert();
+        assertEquals(value, cpu.getEngine().IY);
+    }
+    
     protected void stepAndCheckAccAndFlags(int value, int flagsMask, int notFlagsMask) {
         stepAndCheck(value, REG_A);
         if (flagsMask != -1) {
@@ -175,7 +188,7 @@ public abstract class InstructionsTest {
     }
 
     protected void stepAndCheckPC(int PC) {
-        cpu.step();
+        stepWithAssert();
         assertEquals(PC, cpu.getEngine().PC);
     }
 
@@ -191,20 +204,22 @@ public abstract class InstructionsTest {
     }
 
     protected void stepAndCheckMemory(int value, int address) {
-        cpu.step();
+        stepWithAssert();
         assertEquals(value, (int)memoryStub.read(address));
     }
 
     protected void stepAndCheckMemoryAndFlags(int value, int address, int flagsMask, int notFlagsMask) {
         stepAndCheckMemory(value, address);
-        checkFlags(flagsMask);
+        if (flagsMask != -1) {
+            checkFlags(flagsMask);
+        }
         checkNotFlags(notFlagsMask);
     }
 
 
     protected void stepAndCheckMemory(int address, int... values) {
         for (int value : values) {
-            cpu.step();
+            stepWithAssert();
             assertEquals(value, (int) memoryStub.read(address));
         }
     }
@@ -223,7 +238,15 @@ public abstract class InstructionsTest {
     protected void setRegister(int register, int value) {
         cpu.getEngine().regs[register] = (short)value;
     }
-
+    
+    protected void setRegisterIX(int value) {
+        cpu.getEngine().IX = value;
+    }
+    
+    protected void setRegisterIY(int value) {
+        cpu.getEngine().IY = value;
+    }
+    
     protected void checkRegister(int register, int value) {
         assertEquals(value, cpu.getEngine().regs[register]);
     }

@@ -27,7 +27,6 @@ import java.util.Objects;
 import java.util.concurrent.locks.LockSupport;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.AND_OR_XOR_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.CBITS2Z80_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.CBITSZ80_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.CBITS_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.CP_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_H_C_TABLE;
@@ -35,9 +34,7 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_H_NOT_C_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_NOT_H_C_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_NOT_H_NOT_C_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DECZ80_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DEC_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.INCZ80_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.INC_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.NEG_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.PARITY_TABLE;
@@ -545,11 +542,7 @@ public class EmulatorEngine {
                 tmp1 = (getreg(tmp) + 1) & 0xFF;
                 flags = INC_TABLE[tmp1] | (flags & FLAG_C);
                 putreg(tmp, tmp1);
-                if (tmp == 6) {
-                    return 11;
-                } else {
-                    return 4;
-                }
+                return (tmp == 6) ? 11 : 4;
             /* DEC r */
             case 0x05:
             case 0x0D:
@@ -563,11 +556,7 @@ public class EmulatorEngine {
                 tmp1 = (getreg(tmp) - 1) & 0xFF;
                 flags = DEC_TABLE[tmp1] | (flags & FLAG_C);
                 putreg(tmp, tmp1);
-                if (tmp == 6) {
-                    return 11;
-                } else {
-                    return 4;
-                }
+                return (tmp == 6) ? 11 : 4;
             /* RET cc */
             case 0xC0:
             case 0xC8:
@@ -1284,16 +1273,16 @@ public class EmulatorEngine {
                         return 15;
                     case 0x23: /* INC ii */
                         if (special == 0xDD) {
-                            IX++;
+                            IX = (IX + 1) & 0xFFFF;
                         } else {
-                            IY++;
+                            IY = (IY + 1) & 0xFFFF;
                         }
                         return 10;
                     case 0x2B: /* DEC ii */
                         if (special == 0xDD) {
-                            IX--;
+                            IX = (IX - 1) & 0xFFFF;
                         } else {
-                            IY--;
+                            IY = (IY - 1) & 0xFFFF;
                         }
                         return 10;
                     case 0xE1: /* POP ii */
@@ -1358,47 +1347,69 @@ public class EmulatorEngine {
                     case 0x75:
                     case 0x77:
                         tmp1 = (OP & 7);
-                        tmp2 = (getspecial(special) + tmp) & 0xffff;
+                        tmp2 = (getspecial(special) + tmp) & 0xFFFF;
                         memory.write(tmp2, (short)getreg2(tmp1));
                         return 19;
                     case 0x34: /* INC (ii+d) */
-                        tmp1 = (getspecial(special) + tmp) & 0xffff;
-                        tmp2 = (memory.read(tmp1) + 1) & 0xff;
+                        tmp1 = (getspecial(special) + tmp) & 0xFFFF;
+                        tmp2 = (memory.read(tmp1) + 1) & 0xFF;
                         memory.write(tmp1, (short)tmp2);
-                        flags =  ((flags & 1) | INCZ80_TABLE[tmp2]);
+                        flags = INC_TABLE[tmp2] | (flags & FLAG_C);
                         return 23;
                     case 0x35: /* DEC (ii+d) */
-                        tmp1 = (getspecial(special) + tmp) & 0xffff;
-                        tmp2 = (memory.read(tmp1) - 1) & 0xff;
-                        flags =  ((flags & 1) | DECZ80_TABLE[tmp2]);
+                        tmp1 = (getspecial(special) + tmp) & 0xFFFF;
+                        tmp2 = (memory.read(tmp1) - 1) & 0xFF;
+                        memory.write(tmp1, (short)tmp2);
+                        flags = DEC_TABLE[tmp2] | (flags & FLAG_C);
                         return 23;
                     case 0x86: /* ADD A,(ii+d) */
-                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
-                        tmp2 = regs[REG_A] + tmp1;
-                        flags =  (CBITSZ80_TABLE[tmp1 ^ tmp2 ^ regs[REG_A]] | (tmp2 & 0x80)
-                                | (((tmp2 & 0xff) == 0) ? FLAG_Z : 0));
-                        regs[REG_A] =  (tmp2 & 0xff);
+                        tmp1 = regs[REG_A];
+                        tmp2 = memory.read(getspecial(special) + tmp) & 0xFF;
+                        
+                        regs[REG_A] += tmp2;
+                        flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
+                        auxCarry(tmp1, tmp2);
+                        addOverflow(tmp1, tmp2);
+                        
+                        regs[REG_A] = regs[REG_A] & 0xFF;
                         return 19;
                     case 0x8E: /* ADC A,(ii+d) */
-                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
-                        tmp2 = regs[REG_A] + tmp1 + (flags & 1);
-                        flags =  (CBITSZ80_TABLE[tmp1 ^ tmp2 ^ regs[REG_A]] | (tmp2 & 0x80)
-                                | (((tmp2 & 0xff) == 0) ? FLAG_Z : 0));
-                        regs[REG_A] =  (tmp2 & 0xff);
+                        tmp1 = regs[REG_A];
+                        tmp2 = memory.read(getspecial(special) + tmp) & 0xFF;
+                        if ((flags & FLAG_C) == FLAG_C) {
+                            tmp2++;
+                        }
+                        regs[REG_A] += tmp2;
+                        flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
+                        auxCarry(tmp1, tmp2);
+                        addOverflow(tmp1, tmp2);
+        
+                        regs[REG_A] = (short) (regs[REG_A] & 0xFF);
                         return 19;
                     case 0x96: /* SUB (ii+d) */
-                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
-                        tmp2 = regs[REG_A] - tmp1;
-                        flags =  (CBITS2Z80_TABLE[(regs[REG_A] ^ tmp1 ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
-                                | (((tmp2 & 0xff) == 0) ? FLAG_Z : 0) | FLAG_N);
-                        regs[REG_A] =  (tmp2 & 0xff);
+                        tmp1 = regs[REG_A];
+                        tmp2 = memory.read(getspecial(special) + tmp) & 0xFF;
+                        
+                        regs[REG_A] -= tmp2;
+                        flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
+                        auxCarry(tmp1, (-tmp2) & 0xFF);
+                        subOverflow(tmp1, tmp2);
+
+                        regs[REG_A] = (short) (regs[REG_A] & 0xFF);
                         return 19;
                     case 0x9E: /* SBC A,(ii+d) */
-                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
-                        tmp2 = regs[REG_A] - tmp1 - (flags & 1);
-                        flags =  (CBITS2Z80_TABLE[(regs[REG_A] ^ tmp1 ^ tmp2) & 0x1ff] | (tmp2 & 0x80)
-                                | (((tmp2 & 0xff) == 0) ? FLAG_Z : 0) | FLAG_N);
-                        regs[REG_A] =  (tmp2 & 0xff);
+                        tmp1 = regs[REG_A];
+                        tmp2 = memory.read(getspecial(special) + tmp) & 0xFF;
+                        if ((flags & FLAG_C) == FLAG_C) {
+                            tmp2++;
+                        }
+                        regs[REG_A] -= tmp2;
+                        
+                        flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
+                        auxCarry(tmp1, (-tmp2) & 0xFF);
+                        subOverflow(tmp1, tmp2);
+                        
+                        regs[REG_A] = regs[REG_A] & 0xFF;
                         return 19;
                     case 0xA6: /* AND (ii+d) */
                         tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
