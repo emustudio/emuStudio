@@ -1,9 +1,5 @@
 /*
- * ExtendedContext.java
- *
- * Created on 18.6.2008, 8:56:44
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -29,8 +25,6 @@ import emulib.plugins.device.DeviceContext;
 
 /**
  * Extended CPU context for 8080 processor.
- * 
- * @author Peter Jakubčo
  */
 @ContextType
 public interface ExtendedContext extends CPUContext {

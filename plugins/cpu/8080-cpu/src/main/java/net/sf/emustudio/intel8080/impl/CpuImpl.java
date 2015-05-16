@@ -1,9 +1,5 @@
 /*
- * Implementation of CPU emulation
- *
- * Created on Piatok, 2007, oktober 26, 10:45
- *
- * Copyright (C) 2007-2014 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -34,13 +30,6 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
-import net.sf.emustudio.intel8080.ExtendedContext;
-import net.sf.emustudio.intel8080.FrequencyChangedListener;
-import net.sf.emustudio.intel8080.gui.DecoderImpl;
-import net.sf.emustudio.intel8080.gui.DisassemblerImpl;
-import net.sf.emustudio.intel8080.gui.StatusPanel;
-
-import javax.swing.JPanel;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Objects;
@@ -51,6 +40,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.JPanel;
+import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.intel8080.FrequencyChangedListener;
+import net.sf.emustudio.intel8080.gui.DecoderImpl;
+import net.sf.emustudio.intel8080.gui.DisassemblerImpl;
+import net.sf.emustudio.intel8080.gui.StatusPanel;
 
 @PluginType(
         type = PLUGIN_TYPE.CPU,
@@ -59,16 +54,16 @@ import java.util.concurrent.atomic.AtomicReference;
         description = "Emulator of Intel 8080 CPU"
 )
 public class CpuImpl extends AbstractCPU {
-    private final ContextImpl context;
-    private Disassembler disassembler;
     private final ScheduledExecutorService frequencyScheduler = Executors.newSingleThreadScheduledExecutor();
     private final AtomicReference<Future> frequencyUpdaterFuture = new AtomicReference<>();
+    private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
 
     private final ContextPool contextPool;
-    private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
+    private final ContextImpl context = new ContextImpl();
 
     private EmulatorEngine engine;
     private StatusPanel statusPanel;
+    private Disassembler disassembler;
 
     private class FrequencyUpdater implements Runnable {
 
@@ -93,7 +88,6 @@ public class CpuImpl extends AbstractCPU {
     public CpuImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
         this.contextPool = Objects.requireNonNull(contextPool);
-        context = new ContextImpl(this);
         try {
             contextPool.register(pluginID, context, ExtendedContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
@@ -251,7 +245,7 @@ public class CpuImpl extends AbstractCPU {
         if (position < 0) {
             return false;
         }
-        engine.PC = position;
+        engine.PC = position & 0xFFFF;
         return true;
     }
 

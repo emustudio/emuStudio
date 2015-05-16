@@ -2,13 +2,12 @@ package net.sf.emustudio.intel8080.impl;
 
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.concurrent.locks.LockSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EmulatorEngine {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
@@ -130,43 +129,24 @@ public class EmulatorEngine {
         }
     }
 
-    /* Put a value into an 8080 register pair */
     void putpair(int reg, int val) {
-        short high, low;
-        high = (short) ((val >>> 8) & 0xFF);
-        low = (short) (val & 0xFF);
-        switch (reg) {
-            case 0:
-                regs[REG_B] = high;
-                regs[REG_C] = low;
-                break;
-            case 1:
-                regs[REG_D] = high;
-                regs[REG_E] = low;
-                break;
-            case 2:
-                regs[REG_H] = high;
-                regs[REG_L] = low;
-                break;
-            case 3:
-                SP = val;
-                break;
+        if (reg == 3) {
+            SP = val;
+        } else {
+            int high = (val >>> 8) & 0xFF;
+            int low = val & 0xFF;
+            int index = reg * 2;
+            regs[index] = (short)high;
+            regs[index+1] = (short)low;
         }
     }
 
-    /* Return the value of a selected register pair */
     int getpair(int reg) {
-        switch (reg) {
-            case 0:
-                return (regs[REG_B] << 8) | regs[REG_C];
-            case 1:
-                return (regs[REG_D] << 8) | regs[REG_E];
-            case 2:
-                return (regs[REG_H] << 8) | regs[REG_L];
-            case 3:
-                return SP;
+        if (reg == 3) {
+            return SP;
         }
-        return 0;
+        int index = reg * 2;
+        return regs[index] << 8 | regs[index + 1];
     }
 
     /* Return the value of a selected register pair, in PUSH
@@ -390,7 +370,7 @@ public class EmulatorEngine {
     }
 
     private int O34_SHLD(short OP) {
-        int DAR = (Integer) memory.readWord(PC);
+        int DAR = memory.readWord(PC);
         PC += 2;
         memory.writeWord(DAR, (regs[REG_H] << 8) | regs[REG_L]);
         return 16;
@@ -418,7 +398,7 @@ public class EmulatorEngine {
     }
 
     private int O42_LHLD(short OP) {
-        int DAR = (Integer) memory.readWord(PC);
+        int DAR = memory.readWord(PC);
         PC += 2;
         regs[REG_L] = memory.read(DAR);
         regs[REG_H] = memory.read(DAR + 1);
@@ -432,7 +412,7 @@ public class EmulatorEngine {
     }
 
     private int O50_STA(short OP) {
-        int DAR = (Integer) memory.readWord(PC);
+        int DAR = memory.readWord(PC);
         PC += 2;
         memory.write(DAR, regs[REG_A]);
         return 13;
@@ -444,7 +424,7 @@ public class EmulatorEngine {
     }
 
     private int O58_LDA(short OP) {
-        int DAR = (Integer) memory.readWord(PC);
+        int DAR = memory.readWord(PC);
         PC += 2;
         regs[REG_A] = memory.read(DAR);
         return 13;
@@ -465,7 +445,7 @@ public class EmulatorEngine {
     }
 
     private int O195_JMP(short OP) {
-        PC = (Integer) memory.readWord(PC);
+        PC = memory.readWord(PC);
         return 10;
     }
 
@@ -482,7 +462,7 @@ public class EmulatorEngine {
     }
 
     private int O201_RET(short OP) {
-        PC = (Integer) memory.readWord(SP);
+        PC = memory.readWord(SP);
         SP += 2;
         return 10;
     }
@@ -490,7 +470,7 @@ public class EmulatorEngine {
     private int O205_CALL(short OP) {
         memory.writeWord(SP - 2, PC + 2);
         SP -= 2;
-        PC = (Integer) memory.readWord(PC);
+        PC = memory.readWord(PC);
         return 17;
     }
 
@@ -549,7 +529,7 @@ public class EmulatorEngine {
     }
 
     private int O227_XTHL(short OP) {
-        int DAR = (Integer) memory.readWord(SP);
+        int DAR = memory.readWord(SP);
         memory.writeWord(SP, (regs[REG_H] << 8) | regs[REG_L]);
         regs[REG_H] = (short) ((DAR >>> 8) & 0xFF);
         regs[REG_L] = (short) (DAR & 0xFF);
@@ -635,7 +615,7 @@ public class EmulatorEngine {
     }
 
     private int MCF_01_LXI(short OP) {
-        putpair((OP >>> 4) & 0x03, (Integer) memory.readWord(PC));
+        putpair((OP >>> 4) & 0x03, memory.readWord(PC));
         PC += 2;
         return 10;
     }
@@ -665,7 +645,7 @@ public class EmulatorEngine {
     private int MC7_C2_JMP(short OP) {
         int index = (OP >>> 3) & 0x07;
         if ((flags & CONDITION[index]) == CONDITION_VALUES[index]) {
-            PC = (Integer) memory.readWord(PC);
+            PC = memory.readWord(PC);
         } else {
             PC += 2;
         }
@@ -675,7 +655,7 @@ public class EmulatorEngine {
     private int MC7_C4_CALL(short OP) {
         int index = (OP >>> 3) & 0x07;
         if ((flags & CONDITION[index]) == CONDITION_VALUES[index]) {
-            int DAR = (Integer) memory.readWord(PC);
+            int DAR = memory.readWord(PC);
             memory.writeWord(SP - 2, PC + 2);
             SP -= 2;
             PC = DAR;
@@ -689,7 +669,7 @@ public class EmulatorEngine {
     private int MC7_C0_RET(short OP) {
         int index = (OP >>> 3) & 0x07;
         if ((flags & CONDITION[index]) == CONDITION_VALUES[index]) {
-            PC = (Integer) memory.readWord(SP);
+            PC = memory.readWord(SP);
             SP += 2;
         }
         return 10;
@@ -710,7 +690,7 @@ public class EmulatorEngine {
     }
 
     private int MCF_C1_POP(short OP) {
-        int DAR = (Integer) memory.readWord(SP);
+        int DAR = memory.readWord(SP);
         SP += 2;
         putpush((OP >>> 4) & 0x03, DAR);
         return 10;
