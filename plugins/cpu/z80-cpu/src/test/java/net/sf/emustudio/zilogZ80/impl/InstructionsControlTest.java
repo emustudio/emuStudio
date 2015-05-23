@@ -18,13 +18,14 @@
  */
 package net.sf.emustudio.zilogZ80.impl;
 
+import org.junit.Test;
+
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_B;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_C;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_D;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_E;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_H;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
-import org.junit.Test;
 
 public class InstructionsControlTest extends InstructionsTest {
     

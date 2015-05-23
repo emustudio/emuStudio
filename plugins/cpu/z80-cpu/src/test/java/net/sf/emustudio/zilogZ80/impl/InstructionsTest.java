@@ -22,6 +22,10 @@ import emulib.emustudio.SettingsManager;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
+import org.easymock.EasyMock;
+import org.junit.After;
+import org.junit.Before;
+
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_C;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_N;
@@ -35,14 +39,11 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_D;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_E;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_H;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
-import org.easymock.EasyMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import org.junit.Before;
 
 public abstract class InstructionsTest {
     protected final static int FLAG_S_Z = FLAG_S | FLAG_Z;

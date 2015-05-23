@@ -1266,9 +1266,12 @@ public class EmulatorEngine {
                     case 0x19:
                     case 0x29:
                     case 0x39:
-                        tmp1 = getpair(special, (OP >>> 4) & 3);
-                        tmp = getspecial(special) + tmp1;
-                        flags =  ((flags & 0xEC) | CBITS_TABLE[(IX ^ tmp1 ^ tmp) >> 8]);
+                        tmp = getspecial(special);
+                        tmp1 = getpair(special, (OP >>> 4) & 0x03);
+                        carry15(tmp, tmp1);
+                        auxCarry11(tmp, tmp1);
+                        flags &= (~FLAG_N);
+                        tmp += tmp1;
                         putspecial(special, tmp);
                         return 15;
                     case 0x23: /* INC ii */

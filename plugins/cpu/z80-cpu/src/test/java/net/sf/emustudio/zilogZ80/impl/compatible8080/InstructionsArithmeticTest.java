@@ -19,14 +19,15 @@
 package net.sf.emustudio.zilogZ80.impl.compatible8080;
 
 import net.sf.emustudio.zilogZ80.impl.EmulatorEngine;
+import net.sf.emustudio.zilogZ80.impl.InstructionsTest;
+import org.junit.Test;
+
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_C;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_N;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_S;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_Z;
-import net.sf.emustudio.zilogZ80.impl.InstructionsTest;
 import static org.junit.Assert.assertEquals;
-import org.junit.Test;
 
 public class InstructionsArithmeticTest extends InstructionsTest {
 

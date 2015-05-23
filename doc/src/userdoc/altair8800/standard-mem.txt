@@ -12,8 +12,12 @@ This plug-in fulfills requirements as RAM and ROM for real computers emulation. 
 - intuitive and useful GUI
 
 
+
+
 [[XASMEML]]
 === Loading image files
+
+
 
 [[XASMEMM]]
 === Manipulation with cells

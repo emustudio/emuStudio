@@ -18,16 +18,13 @@
  */
 package net.sf.emustudio.zilogZ80.impl;
 
+import org.junit.Test;
+
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_C;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_N;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_S;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_Z;
-import static net.sf.emustudio.zilogZ80.impl.InstructionsTest.FLAG_S_H_C;
-import static net.sf.emustudio.zilogZ80.impl.InstructionsTest.FLAG_S_N;
-import static net.sf.emustudio.zilogZ80.impl.InstructionsTest.FLAG_Z_H;
-import static net.sf.emustudio.zilogZ80.impl.InstructionsTest.FLAG_Z_H_N;
-import org.junit.Test;
 
 public class InstructionsArithmeticTest extends InstructionsTest {
     
@@ -720,13 +717,61 @@ public class InstructionsArithmeticTest extends InstructionsTest {
         stepAndCheckMemoryAndFlags(0xFE, 0x1A, FLAG_S_H_N, FLAG_Z_PV_C);
         stepAndCheckMemoryAndFlags(0x0E, 0x1B, FLAG_H_N, FLAG_S_Z_PV_C);
     }
-    
+
+    @Test
     public void testADD_IX__ss() {
-        
+        resetProgram(
+                0xDD, 0x09,
+                0xDD, 0x19,
+                0xDD, 0x29,
+                0xDD, 0x39
+        );
+
+        setRegisters(0x12, 0x34, 0x56, 0x78, 0x90);
+
+        setRegisterIX(0xABCD);
+
+        stepAndCheckIX(0xE023);
+        checkNotFlags(EmulatorEngine.FLAG_C);
+
+        stepAndCheckIX(0x58B3);
+        checkFlags(EmulatorEngine.FLAG_C);
+
+        stepAndCheckIX(0xB166);
+        checkNotFlags(EmulatorEngine.FLAG_C);
+
+        cpu.getEngine().SP = 0x4E9A;
+        stepAndCheckIX(0);
+        checkFlags(EmulatorEngine.FLAG_C);
+        checkNotFlags(EmulatorEngine.FLAG_Z);
     }
-    
+
+    @Test
     public void testADD_IY__ss() {
-        
+        resetProgram(
+                0xFD, 0x09,
+                0xFD, 0x19,
+                0xFD, 0x29,
+                0xFD, 0x39
+        );
+
+        setRegisters(0x12, 0x34, 0x56, 0x78, 0x90);
+
+        setRegisterIY(0xABCD);
+
+        stepAndCheckIY(0xE023);
+        checkNotFlags(EmulatorEngine.FLAG_C);
+
+        stepAndCheckIY(0x58B3);
+        checkFlags(EmulatorEngine.FLAG_C);
+
+        stepAndCheckIY(0xB166);
+        checkNotFlags(EmulatorEngine.FLAG_C);
+
+        cpu.getEngine().SP = 0x4E9A;
+        stepAndCheckIY(0);
+        checkFlags(EmulatorEngine.FLAG_C);
+        checkNotFlags(EmulatorEngine.FLAG_Z);
     }
     
     @Test

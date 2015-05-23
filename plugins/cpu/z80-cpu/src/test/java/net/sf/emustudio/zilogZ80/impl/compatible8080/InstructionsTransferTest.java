@@ -21,9 +21,10 @@ package net.sf.emustudio.zilogZ80.impl.compatible8080;
 import emulib.plugins.cpu.CPU;
 import net.sf.emustudio.zilogZ80.impl.EmulatorEngine;
 import net.sf.emustudio.zilogZ80.impl.InstructionsTest;
-import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class InstructionsTransferTest extends InstructionsTest {
     private int[] defaultValues;
