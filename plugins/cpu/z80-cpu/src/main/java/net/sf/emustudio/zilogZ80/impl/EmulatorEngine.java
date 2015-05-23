@@ -68,7 +68,7 @@ public class EmulatorEngine {
     public int PC = 0, SP = 0, IX = 0, IY = 0;
     public int I = 0, R = 0; // interrupt r., refresh r.
     
-    private byte intMode = 0; // interrupt mode (0,1,2)
+    public byte intMode = 0; // interrupt mode (0,1,2)
     // Interrupt flip-flops
     public final boolean[] IFF = new boolean[2]; // interrupt enable flip-flops
     // No-Extra wait for CPC Interrupt?
@@ -756,7 +756,7 @@ public class EmulatorEngine {
                 regs[REG_B]--;
                 regs[REG_B] &= 0xFF;
                 if (regs[REG_B] != 0) {
-                    PC += (tmp + 1);
+                    PC += (byte)tmp;
                     return 13;
                 }
                 return 8;
@@ -1811,14 +1811,12 @@ public class EmulatorEngine {
             case 0x30:
             case 0x38:
                 if (getCC1((OP >>> 3) & 3)) {
-                    b = (byte) (tmp - 2);
-                    PC += b;
+                    PC += (byte)tmp;
                     return 12;
                 }
                 return 7;
             case 0x18: /* JR e */
-                b = (byte) (tmp - 2);
-                PC += b;
+                PC += (byte)tmp;
                 return 12;
             case 0xC6: /* ADD A,d */
                 int DAR = regs[REG_A];

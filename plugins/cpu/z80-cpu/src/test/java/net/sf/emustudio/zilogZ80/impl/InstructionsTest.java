@@ -159,7 +159,7 @@ public abstract class InstructionsTest {
         assertEquals(runState, runStateListener.runState);
     }
     
-    private void stepWithAssert() {
+    protected void stepWithAssert() {
         cpu.step();
         assertFalse(CPU.RunState.STATE_STOPPED_ADDR_FALLOUT == runStateListener.runState);
         assertFalse(CPU.RunState.STATE_STOPPED_BAD_INSTR == runStateListener.runState);

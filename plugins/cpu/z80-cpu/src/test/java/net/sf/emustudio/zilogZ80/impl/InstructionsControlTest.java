@@ -20,12 +20,8 @@ package net.sf.emustudio.zilogZ80.impl;
 
 import org.junit.Test;
 
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_B;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_C;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_D;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_E;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_H;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.*;
+import static org.junit.Assert.assertEquals;
 
 public class InstructionsControlTest extends InstructionsTest {
     
@@ -44,45 +40,124 @@ public class InstructionsControlTest extends InstructionsTest {
         checkRegister(REG_H, 6);
         checkRegister(REG_L, 7);
     }
-    
+
+    @Test
     public void testIM__0() {
-        
+        resetProgram(0xED, 0x46);
+
+        cpu.getEngine().intMode = 2;
+        stepWithAssert();
+        assertEquals(0, cpu.getEngine().intMode);
     }
-    
+
+    @Test
     public void testIM__1() {
-        
+        resetProgram(0xED, 0x56);
+
+        cpu.getEngine().intMode = 2;
+        stepWithAssert();
+        assertEquals(1, cpu.getEngine().intMode);
     }
-    
+
+    @Test
     public void testIM__2() {
-        
+        resetProgram(0xED, 0x5E);
+
+        cpu.getEngine().intMode = 0;
+        stepWithAssert();
+        assertEquals(2, cpu.getEngine().intMode);
     }
-    
+
+    @Test
     public void testJR__e() {
-        resetProgram(
-                0x18, 4,
-                0, // address 2
-                0x38, 8,
-                0, // address 5
-                0x30, 0xC,
-                0, // address 8
-                0x28, 0x10,
-                0, // address 0xB
-                0x20, 0x14,
-                0, // address 0xE
-                0);
+        resetProgram(0, 0x18, 4, 0x18, 0xFF);
 
+        cpu.getEngine().PC = 1;
+        stepAndCheckPC(1 + 6);
+
+        cpu.getEngine().PC = 3;
+        stepAndCheckPC(3 + 1);
     }
-    
+
+    @Test
+    public void testJR_C__e() {
+        resetProgram(0, 0x38, 4, 0x38, 0xFF);
+
+        setFlags(FLAG_C);
+        cpu.getEngine().PC = 1;
+        stepAndCheckPC(1 + 6);
+
+        cpu.getEngine().PC = 3;
+        stepAndCheckPC(3 + 1);
+    }
+
+    @Test
+    public void testJR_NC__e() {
+        resetProgram(0, 0x30, 4, 0x30, 0xFF);
+
+        cpu.getEngine().PC = 1;
+        stepAndCheckPC(1 + 6);
+
+        cpu.getEngine().PC = 3;
+        stepAndCheckPC(3 + 1);
+    }
+
+    @Test
+    public void testJR_Z__e() {
+        resetProgram(0, 0x28, 4, 0x28, 0xFF);
+
+        setFlags(FLAG_Z);
+        cpu.getEngine().PC = 1;
+        stepAndCheckPC(1 + 6);
+
+        cpu.getEngine().PC = 3;
+        stepAndCheckPC(3 + 1);
+    }
+
+    @Test
+    public void testJR_NZ__e() {
+        resetProgram(0, 0x20, 4, 0x20, 0xFF);
+
+        cpu.getEngine().PC = 1;
+        stepAndCheckPC(1 + 6);
+
+        cpu.getEngine().PC = 3;
+        stepAndCheckPC(3 + 1);
+    }
+
+    @Test
     public void testJP__IX() {
-        
-    }
-    
-    public void testJP__IY() {
-        
+        resetProgram(0xDD, 0xE9);
+        setRegisterIX(0x1234);
+
+        stepAndCheckPC(0x1234);
     }
 
+    @Test
+    public void testJP__IY() {
+        resetProgram(0xFD, 0xE9);
+        setRegisterIY(0x1234);
+
+        stepAndCheckPC(0x1234);
+    }
+
+    @Test
     public void testDJNZ__e() {
-        
+        resetProgram(0, 0x10, 4, 0x10, 0xFF, 0x10, 0xFF);
+        setRegisters(0, 3);
+
+        cpu.getEngine().PC = 1;
+        stepAndCheckPC(1 + 6);
+        checkRegister(EmulatorEngine.REG_B, 2);
+
+        cpu.getEngine().PC = 3;
+        stepAndCheckPC(3 + 1);
+        checkRegister(EmulatorEngine.REG_B, 1);
+
+        cpu.getEngine().PC = 5;
+        stepAndCheckPC(7); // do not jump
+        checkRegister(EmulatorEngine.REG_B, 0);
+        checkNotFlags(FLAG_Z);
     }
     
     public void testRETI() {
