@@ -70,6 +70,7 @@ public abstract class InstructionsTest {
     protected final static int FLAG_S_PV_C = FLAG_S | FLAG_C | FLAG_PV;
     protected final static int FLAG_S_H = FLAG_S | FLAG_H;
     protected final static int FLAG_S_H_PV = FLAG_S | FLAG_H | FLAG_PV;
+    protected final static int FLAG_S_H_PV_N = FLAG_S | FLAG_H | FLAG_PV | FLAG_N;
     protected final static int FLAG_S_H_PV_N_C = FLAG_C | FLAG_S | FLAG_H | FLAG_PV | FLAG_N;
     protected final static int FLAG_S_H_PV_C = FLAG_C | FLAG_S | FLAG_H | FLAG_PV;
     protected final static int FLAG_S_H_N = FLAG_S | FLAG_H | FLAG_N;
@@ -155,6 +156,17 @@ public abstract class InstructionsTest {
         cpu.reset();
     }
 
+    protected void printProgram() {
+        for (short i = 0 ; i < program.length; i++) {
+            System.out.print(String.format("%02X ", i));
+        }
+        System.out.println();
+        for (short i : program) {
+            System.out.print(String.format("%02X ", i));
+        }
+        System.out.println();
+    }
+
     protected void checkRunState(CPU.RunState runState) {
         assertEquals(runState, runStateListener.runState);
     }
@@ -167,7 +179,8 @@ public abstract class InstructionsTest {
 
     protected void stepAndCheck(int value, int register) {
         stepWithAssert();
-        assertEquals(value, cpu.getEngine().regs[register]);
+        assertEquals("Register " + register + " exp=" + value + ", but was " + cpu.getEngine().regs[register],
+                value, cpu.getEngine().regs[register]);
     }
 
     protected void stepAndCheckIX(int value) {
@@ -228,6 +241,17 @@ public abstract class InstructionsTest {
         for (int value : values) {
             stepWithAssert();
             assertEquals(value, (int) memoryStub.read(address));
+        }
+    }
+
+    protected void stepAndCheckAndIncMemory(int address, int... values) {
+        int i = 0;
+        for (int value : values) {
+            stepWithAssert();
+            assertEquals("Memory[" + String.format("%02X", address + i) + "] exp=" + value + "; was=" + memoryStub.read(address + i),
+                    value, (int) memoryStub.read(address + i)
+            );
+            i++;
         }
     }
 

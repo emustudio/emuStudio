@@ -973,14 +973,16 @@ public class EmulatorEngine {
                         return 8;
                     case 0x57: /* LD A,I */
                         regs[REG_A] = I;
-                        flags =  ((I & 0x80) | ((I == 0) ? FLAG_Z : 0) | (IFF[1] ? FLAG_PV : 0) | (flags & 1));
+                        flags = EmulatorTables.SIGN_ZERO_TABLE[(short)(I & 0xFF)]
+                                | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C);
                         return 9;
                     case 0x5E: /* IM 2 */
                         intMode = 2;
                         return 8;
                     case 0x5F: /* LD A,R */
                         regs[REG_A] = R;
-                        flags =  ((R & 0x80) | ((R == 0) ? FLAG_Z : 0) | (IFF[1] ? FLAG_PV : 0) | (flags & 1));
+                        flags = EmulatorTables.SIGN_ZERO_TABLE[(short)(R & 0xFF)]
+                                | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C);
                         return 9;
                     case 0x67: /* RRD */
                         tmp = regs[REG_A] & 0x0F;
@@ -1008,17 +1010,24 @@ public class EmulatorEngine {
                     case 0xA0: /* LDI */
                         tmp1 = (regs[REG_H] << 8) | regs[REG_L];
                         tmp2 = (regs[REG_D] << 8) | regs[REG_E];
+                        tmp = (regs[REG_B] << 8) | regs[REG_C];
+
                         memory.write(tmp2, memory.read(tmp1));
+
                         tmp1 = (tmp1 + 1) & 0xFFFF;
                         tmp2 = (tmp2 + 1) & 0xFFFF;
-                        tmp = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
-                        regs[REG_H] =  ((tmp1 >>> 8) & 0xff);
-                        regs[REG_L] =  (tmp1 & 0xFF);
-                        regs[REG_B] =  ((tmp >>> 8) & 0xff);
-                        regs[REG_C] =  (tmp & 0xFF);
-                        regs[REG_D] =  ((tmp2 >>> 8) & 0xff);
-                        regs[REG_E] =  (tmp2 & 0xFF);
-                        flags =  ((flags & 0xE9) | ((tmp != 0) ? FLAG_PV : 0));
+                        tmp = (tmp - 1) & 0xFFFF;
+
+                        regs[REG_H] = (tmp1 >>> 8) & 0xFF;
+                        regs[REG_L] = tmp1 & 0xFF;
+                        regs[REG_D] = (tmp2 >>> 8) & 0xFF;
+                        regs[REG_E] = tmp2 & 0xFF;
+                        regs[REG_B] = (tmp >>> 8) & 0xFF;
+                        regs[REG_C] = tmp & 0xFF;
+                        flags = ((flags & FLAG_S) | (flags & FLAG_Z) | (flags & FLAG_C)) & (~FLAG_PV);
+                        if (tmp != 0) {
+                            flags |= FLAG_PV;
+                        }
                         return 16;
                     case 0xA1: /* CPI */
                         tmp2 = memory.read((regs[REG_H] << 8) | regs[REG_L]);
@@ -1061,17 +1070,24 @@ public class EmulatorEngine {
                     case 0xA8: /* LDD */
                         tmp1 = (regs[REG_H] << 8) | regs[REG_L];
                         tmp2 = (regs[REG_D] << 8) | regs[REG_E];
+                        tmp = (regs[REG_B] << 8) | regs[REG_C];
+
                         memory.write(tmp2, memory.read(tmp1));
+
                         tmp1 = (tmp1 - 1) & 0xFFFF;
                         tmp2 = (tmp2 - 1) & 0xFFFF;
-                        tmp = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
-                        regs[REG_H] =  ((tmp1 >>> 8) & 0xff);
-                        regs[REG_L] =  (tmp1 & 0xFF);
-                        regs[REG_B] =  ((tmp >>> 8) & 0xff);
-                        regs[REG_C] =  (tmp & 0xFF);
-                        regs[REG_D] =  ((tmp2 >>> 8) & 0xff);
-                        regs[REG_E] =  (tmp2 & 0xFF);
-                        flags =  ((flags & 0xE9) | ((tmp != 0) ? FLAG_PV : 0));
+                        tmp = (tmp - 1) & 0xFFFF;
+
+                        regs[REG_H] = (tmp1 >>> 8) & 0xFF;
+                        regs[REG_L] = tmp1 & 0xFF;
+                        regs[REG_D] = (tmp2 >>> 8) & 0xFF;
+                        regs[REG_E] = tmp2 & 0xFF;
+                        regs[REG_B] = (tmp >>> 8) & 0xFF;
+                        regs[REG_C] = tmp & 0xFF;
+                        flags = ((flags & FLAG_S) | (flags & FLAG_Z) | (flags & FLAG_C)) & (~FLAG_PV);
+                        if (tmp != 0) {
+                            flags |= FLAG_PV;
+                        }
                         return 16;
                     case 0xA9: /* CPD */
                         tmp2 = memory.read((regs[REG_H] << 8) | regs[REG_L]);
@@ -1114,17 +1130,22 @@ public class EmulatorEngine {
                     case 0xB0: /* LDIR */
                         tmp1 = (regs[REG_H] << 8) | regs[REG_L];
                         tmp2 = (regs[REG_D] << 8) | regs[REG_E];
+                        tmp = (regs[REG_B] << 8) | regs[REG_C];
+
                         memory.write(tmp2, memory.read(tmp1));
+
                         tmp1 = (tmp1 + 1) & 0xFFFF;
                         tmp2 = (tmp2 + 1) & 0xFFFF;
-                        regs[REG_H] =  ((tmp1 >>> 8) & 0xff);
-                        regs[REG_L] =  (tmp1 & 0xFF);
-                        regs[REG_D] =  ((tmp2 >>> 8) & 0xff);
-                        regs[REG_E] =  (tmp2 & 0xFF);
-                        tmp = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
-                        regs[REG_B] =  ((tmp >>> 8) & 0xff);
-                        regs[REG_C] =  (tmp & 0xFF);
-                        flags &= 0xE9;
+                        tmp = (tmp - 1) & 0xFFFF;
+
+                        regs[REG_H] = (tmp1 >>> 8) & 0xFF;
+                        regs[REG_L] = tmp1 & 0xFF;
+                        regs[REG_D] = (tmp2 >>> 8) & 0xFF;
+                        regs[REG_E] = tmp2 & 0xFF;
+                        regs[REG_B] = (tmp >>> 8) & 0xFF;
+                        regs[REG_C] = tmp & 0xFF;
+                        flags &= ((~FLAG_PV) & (~FLAG_N) & (~FLAG_H));
+
                         if (tmp == 0) {
                             return 16;
                         }
@@ -1360,7 +1381,7 @@ public class EmulatorEngine {
                     case 0x6E:
                     case 0x7E:
                         tmp1 = (OP >>> 3) & 7;
-                        putreg2(tmp1, memory.read((getspecial(special) + tmp) & 0xffff));
+                        putreg2(tmp1, memory.read(getspecial(special) + (byte) tmp));
                         return 19;
                     /* LD (ii+d),r */
                     case 0x70:
@@ -1371,24 +1392,24 @@ public class EmulatorEngine {
                     case 0x75:
                     case 0x77:
                         tmp1 = (OP & 7);
-                        tmp2 = (getspecial(special) + tmp) & 0xFFFF;
+                        tmp2 = (getspecial(special) + (byte)tmp) & 0xFFFF;
                         memory.write(tmp2, (short)getreg2(tmp1));
                         return 19;
                     case 0x34: /* INC (ii+d) */
-                        tmp1 = (getspecial(special) + tmp) & 0xFFFF;
+                        tmp1 = (getspecial(special) + (byte)tmp) & 0xFFFF;
                         tmp2 = (memory.read(tmp1) + 1) & 0xFF;
                         memory.write(tmp1, (short)tmp2);
                         flags = INC_TABLE[tmp2] | (flags & FLAG_C);
                         return 23;
                     case 0x35: /* DEC (ii+d) */
-                        tmp1 = (getspecial(special) + tmp) & 0xFFFF;
+                        tmp1 = (getspecial(special) + (byte)tmp) & 0xFFFF;
                         tmp2 = (memory.read(tmp1) - 1) & 0xFF;
                         memory.write(tmp1, (short)tmp2);
                         flags = DEC_TABLE[tmp2] | (flags & FLAG_C);
                         return 23;
                     case 0x86: /* ADD A,(ii+d) */
                         tmp1 = regs[REG_A];
-                        tmp2 = memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp2 = memory.read(getspecial(special) + (byte)tmp) & 0xFF;
                         
                         regs[REG_A] += tmp2;
                         flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
@@ -1399,7 +1420,7 @@ public class EmulatorEngine {
                         return 19;
                     case 0x8E: /* ADC A,(ii+d) */
                         tmp1 = regs[REG_A];
-                        tmp2 = memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp2 = memory.read(getspecial(special) + (byte)tmp) & 0xFF;
                         if ((flags & FLAG_C) == FLAG_C) {
                             tmp2++;
                         }
@@ -1412,7 +1433,7 @@ public class EmulatorEngine {
                         return 19;
                     case 0x96: /* SUB (ii+d) */
                         tmp1 = regs[REG_A];
-                        tmp2 = memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp2 = memory.read(getspecial(special) + (byte)tmp) & 0xFF;
                         
                         regs[REG_A] -= tmp2;
                         flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
@@ -1423,7 +1444,7 @@ public class EmulatorEngine {
                         return 19;
                     case 0x9E: /* SBC A,(ii+d) */
                         tmp1 = regs[REG_A];
-                        tmp2 = memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp2 = memory.read(getspecial(special) + (byte)tmp) & 0xFF;
                         if ((flags & FLAG_C) == FLAG_C) {
                             tmp2++;
                         }
@@ -1436,22 +1457,22 @@ public class EmulatorEngine {
                         regs[REG_A] = regs[REG_A] & 0xFF;
                         return 19;
                     case 0xA6: /* AND (ii+d) */
-                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = memory.read(getspecial(special) + (byte)tmp);
                         regs[REG_A] =  ((regs[REG_A] & tmp1) & 0xff);
                         flags = AND_OR_XOR_TABLE[regs[REG_A]];
                         return 19;
                     case 0xAE: /* XOR (ii+d) */
-                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = memory.read(getspecial(special) + (byte)tmp);
                         regs[REG_A] =  ((regs[REG_A] ^ tmp1) & 0xff);
                         flags = DAA_TABLE[regs[REG_A]];
                         return 19;
                     case 0xB6: /* OR (ii+d) */
-                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = memory.read(getspecial(special) + (byte)tmp);
                         regs[REG_A] =  ((regs[REG_A] | tmp1) & 0xff);
                         flags = DAA_TABLE[regs[REG_A]];
                         return 19;
                     case 0xBE: /* CP (ii+d) */
-                        tmp1 = memory.read(getspecial(special) + tmp) & 0xFF;
+                        tmp1 = memory.read(getspecial(special) + (byte)tmp);
                         tmp2 = regs[REG_A] - tmp1;
                         flags =  (CP_TABLE[tmp2 & 0xff] | CBITS2Z80_TABLE[(regs[REG_A] ^ tmp1 ^ tmp2) & 0x1ff]);
                         return 19;
@@ -1468,8 +1489,8 @@ public class EmulatorEngine {
                         tmp1 = memory.readWord(tmp);
                         putspecial(special, tmp1);
                         return 20;
-                    case 0x36: /* LD (ii+d),d */
-                        memory.write(getspecial(special) + (tmp & 0xff), (short)((tmp >>> 8) & 0xff));
+                    case 0x36: /* LD (ii+d),n */
+                        memory.write(getspecial(special) + (byte)(tmp & 0xFF), (short)((tmp >>> 8)));
                         return 19;
                     case 0xCB:
                         OP = (short)((tmp >>> 8) & 0xff);
@@ -1485,7 +1506,7 @@ public class EmulatorEngine {
                             case 0x76:
                             case 0x7E:
                                 tmp2 = (OP >>> 3) & 7;
-                                tmp1 = memory.read((getspecial(special) + tmp) & 0xffff);
+                                tmp1 = memory.read((getspecial(special) + (byte)tmp) & 0xffff);
                                 flags =  ((flags & 0x95) | FLAG_H | (((tmp1 & (1 << tmp2)) == 0) ? FLAG_Z : 0));
                                 return 20;
                             /* RES b,(ii+d) */
@@ -1498,7 +1519,7 @@ public class EmulatorEngine {
                             case 0xB6:
                             case 0xBE:
                                 tmp2 = (OP >>> 3) & 7;
-                                tmp3 = (getspecial(special) + tmp) & 0xffff;
+                                tmp3 = (getspecial(special) + (byte)tmp) & 0xffff;
                                 tmp1 = memory.read(tmp3);
                                 tmp1 = (tmp1 & (~(1 << tmp2)));
                                 memory.write(tmp3, (short)(tmp1 & 0xff));
@@ -1513,13 +1534,13 @@ public class EmulatorEngine {
                             case 0xF6:
                             case 0xFE:
                                 tmp2 = (OP >>> 3) & 7;
-                                tmp3 = (getspecial(special) + tmp) & 0xffff;
+                                tmp3 = (getspecial(special) + (byte)tmp) & 0xffff;
                                 tmp1 = memory.read(tmp3);
                                 tmp1 = (tmp1 | (1 << tmp2));
                                 memory.write(tmp3, (short)(tmp1 & 0xff));
                                 return 23;
                             case 0x06: /* RLC (ii+d) */
-                                tmp2 = (getspecial(special) + tmp) & 0xffff;
+                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
                                 tmp1 = memory.read(tmp2);
                                 flags =  ((tmp1 >>> 7) & 0xff);
                                 tmp1 <<= 1;
@@ -1528,7 +1549,7 @@ public class EmulatorEngine {
                                 flags |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x0E: /* RRC (ii+d) */
-                                tmp2 = (getspecial(special) + tmp) & 0xffff;
+                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
                                 tmp1 = memory.read(tmp2);
                                 flags =  (tmp1 & 1);
                                 tmp1 >>>= 1;
@@ -1537,7 +1558,7 @@ public class EmulatorEngine {
                                 flags |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x16: /* RL (ii+d) */
-                                tmp2 = (getspecial(special) + tmp) & 0xffff;
+                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
                                 tmp3 = flags & 1;
                                 tmp1 = memory.read(tmp2);
                                 flags =  ((tmp1 >>> 7) & 0xff);
@@ -1547,7 +1568,7 @@ public class EmulatorEngine {
                                 flags |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x1E: /* RR (ii+d) */
-                                tmp2 = (getspecial(special) + tmp) & 0xffff;
+                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
                                 tmp1 = memory.read(tmp2);
                                 tmp3 = flags & 1;
                                 flags =  (tmp1 & 1);
@@ -1557,7 +1578,7 @@ public class EmulatorEngine {
                                 flags |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x26: /* SLA (ii+d) */
-                                tmp2 = (getspecial(special) + tmp) & 0xffff;
+                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
                                 tmp1 = memory.read(tmp2);
                                 flags =  ((tmp1 >>> 7) & 0xff);
                                 tmp1 <<= 1;
@@ -1565,7 +1586,7 @@ public class EmulatorEngine {
                                 flags |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x2E: /* SRA (ii+d) */
-                                tmp2 = (getspecial(special) + tmp) & 0xffff;
+                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
                                 tmp1 = memory.read(tmp2);
                                 tmp3 = tmp1 & 0x80;
                                 flags =  (tmp1 & 1);
@@ -1575,7 +1596,7 @@ public class EmulatorEngine {
                                 flags |= DAA_TABLE[tmp1];
                                 return 23;
                             case 0x36: /* SLL (ii+d) unsupported */
-                                tmp2 = (getspecial(special) + tmp) & 0xffff;
+                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
                                 tmp1 = memory.read(tmp2);
                                 flags =  ((tmp1 >>> 7) & 0xff);
                                 tmp3 = tmp1 & 1;
@@ -1585,7 +1606,7 @@ public class EmulatorEngine {
                                 flags |= DAA_TABLE[tmp1 & 0xff];
                                 return 23;
                             case 0x3E: /* SRL (ii+d) */
-                                tmp2 = (getspecial(special) + tmp) & 0xffff;
+                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
                                 tmp1 = memory.read(tmp2);
                                 flags =  (tmp1 & 1);
                                 tmp1 >>>= 1;
