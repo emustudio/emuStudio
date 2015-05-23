@@ -18,30 +18,113 @@
  */
 package net.sf.emustudio.zilogZ80.impl;
 
-public class InstructionsLogicTest {
-    
+import org.junit.Test;
+
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.*;
+import static org.junit.Assert.assertEquals;
+
+public class InstructionsLogicTest extends InstructionsTest{
+
+    @Test
     public void testCPI() {
-        
+        resetProgram(
+                0xED, 0xA1,
+                0,
+                127 // address 3
+        );
+
+        setRegisters(129, 0, 1, 0, 0, 0, 3);
+        setFlags(FLAG_PV_C);
+        stepAndCheckAccAndFlags(129, FLAG_N_C, FLAG_S_Z_H_PV);
+        checkRegister(REG_H, 0);
+        checkRegister(REG_L, 4);
+        checkRegister(REG_B, 0);
+        checkRegister(REG_C, 0);
     }
-    
+
+    @Test
     public void testCPIR() {
-        
+        resetProgram(
+                0xED, 0xB1,
+                0,
+                127 // address 3
+        );
+
+        setRegisters(129, 0, 2, 0, 0, 0, 3);
+        setFlags(FLAG_C);
+        stepAndCheckAccAndFlags(129, FLAG_PV_N_C, FLAG_S_Z_H);
+        checkRegister(REG_H, 0);
+        checkRegister(REG_L, 4);
+        checkRegister(REG_B, 0);
+        checkRegister(REG_C, 1);
+        assertEquals(0, cpu.getEngine().PC);
     }
-    
+
+    @Test
     public void testCPD() {
-        
+        resetProgram(
+                0xED, 0xA9,
+                0,
+                127 // address 3
+        );
+
+        setRegisters(129, 0, 1, 0, 0, 0, 3);
+        setFlags(FLAG_PV_C);
+        stepAndCheckAccAndFlags(129, FLAG_N_C, FLAG_S_Z_H_PV);
+        checkRegister(REG_H, 0);
+        checkRegister(REG_L, 2);
+        checkRegister(REG_B, 0);
+        checkRegister(REG_C, 0);
     }
-    
+
+    @Test
     public void testCPDR() {
-        
+        resetProgram(
+                0xED, 0xB9,
+                0,
+                127 // address 3
+        );
+
+        setRegisters(129, 0, 2, 0, 0, 0, 3);
+        setFlags(FLAG_C);
+        stepAndCheckAccAndFlags(129, FLAG_PV_N_C, FLAG_S_Z_H);
+        checkRegister(REG_H, 0);
+        checkRegister(REG_L, 2);
+        checkRegister(REG_B, 0);
+        checkRegister(REG_C, 1);
+        assertEquals(0, cpu.getEngine().PC);
     }
-    
+
+    @Test
     public void testAND__IX_plus_d() {
-        
+        resetProgram(
+                0xDD, 0xA6,
+                1,
+                0,0,
+                0xC5
+        );
+
+        setRegisterIX(4);
+        setFlags(FLAG_C | FLAG_N);
+        setRegisters(0xC5);
+
+        stepAndCheckAccAndFlags(0xC5, FLAG_S_H_PV, FLAG_Z_N_C);
     }
-    
+
+    @Test
     public void testAND__IY_plus_d() {
-        
+        resetProgram(
+                0xFD, 0xA6,
+                1,
+                0,0,
+                0xC5
+        );
+
+        setRegisterIY(4);
+        setFlags(FLAG_C | FLAG_N);
+        setRegisters(0xC5);
+
+        stepAndCheckAccAndFlags(0xC5, FLAG_S_H_PV, FLAG_Z_N_C);
     }
 
     public void testOR__IX_plus_d() {

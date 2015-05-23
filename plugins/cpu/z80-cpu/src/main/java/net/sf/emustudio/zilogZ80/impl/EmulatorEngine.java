@@ -1029,23 +1029,24 @@ public class EmulatorEngine {
                         }
                         return 16;
                     case 0xA1: /* CPI */
-                        tmp2 = memory.read((regs[REG_H] << 8) | regs[REG_L]);
-                        tmp = (regs[REG_A] - tmp2) & 0xFF;
-                        tmp1 = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
-                        tmp3 = tmp ^ tmp2 ^ regs[REG_A];
-                        regs[REG_B] =  ((tmp1 >>> 8) & 0xff);
-                        regs[REG_C] =  (tmp1 & 0xFF);
-                        // flags borrowed from simh
-                        flags =  ((flags & FLAG_C) | FLAG_N | ((tmp1 != 0) ? FLAG_PV : 0)
-                                | ((tmp == 0) ? FLAG_Z : 0) | (tmp & 0x80)
-                                | (((tmp - ((tmp3 & 16) >>> 4)) & 2) << 4) | (tmp3 & 16)
-                                | ((tmp - ((tmp3 >>> 4) & 1)) & 8));
-                        if (((tmp & 15) == 8) && ((tmp3 & 16) != 0)) {
-                            flags &= 0xF7;
+                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                        tmp2 = (regs[REG_B] << 8) | regs[REG_C];
+
+                        tmp = memory.read(tmp1);
+                        tmp1 = (tmp1 + 1) & 0xFFFF;
+                        tmp2 = (tmp2 - 1) & 0xFFFF;
+
+                        flags = EmulatorTables.SIGN_ZERO_TABLE[(regs[REG_A] - tmp) & 0xFF] | FLAG_N | (flags & FLAG_C);
+                        auxCarry(regs[REG_A], (-tmp) & 0xFF);
+
+                        if (tmp2 != 0) {
+                            flags |= FLAG_PV;
                         }
-                        tmp = (((regs[REG_H] << 8) | regs[REG_L]) + 1) & 0xFFFF;
-                        regs[REG_H] =  ((tmp >>> 8) & 0xff);
-                        regs[REG_L] =  (tmp & 0xFF);
+
+                        regs[REG_H] = (tmp1 >>> 8) & 0xFF;
+                        regs[REG_L] = tmp1 & 0xFF;
+                        regs[REG_B] = (tmp2 >>> 8) & 0xFF;
+                        regs[REG_C] = tmp2 & 0xFF;
                         return 16;
                     case 0xA2: /* INI */
                         tmp = (context.fireIO(regs[REG_C], true,  0) & 0xFF);
@@ -1089,23 +1090,24 @@ public class EmulatorEngine {
                         }
                         return 16;
                     case 0xA9: /* CPD */
-                        tmp2 = memory.read((regs[REG_H] << 8) | regs[REG_L]);
-                        tmp = (regs[REG_A] - tmp2) & 0xFF;
-                        tmp1 = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
-                        tmp3 = tmp ^ tmp2 ^ regs[REG_A];
-                        regs[REG_B] =  ((tmp1 >>> 8) & 0xff);
-                        regs[REG_C] =  (tmp1 & 0xFF);
-                        // flags borrowed from simh
-                        flags =  ((flags & 1) | (tmp & 0x80) | (((tmp & 0xff) == 0) ? FLAG_Z : 0)
-                                | (((tmp - ((tmp3 & 16) >> 4)) & 2) << 4)
-                                | (tmp3 & 16) | ((tmp - ((tmp3 >> 4) & 1)) & 8)
-                                | ((tmp1 != 0) ? FLAG_PV : 0) | FLAG_N);
-                        if (((tmp & 15) == 8) && ((tmp3 & 16) != 0)) {
-                            flags &= 0xF7;
+                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                        tmp2 = (regs[REG_B] << 8) | regs[REG_C];
+
+                        tmp = memory.read(tmp1);
+                        tmp1 = (tmp1 - 1) & 0xFFFF;
+                        tmp2 = (tmp2 - 1) & 0xFFFF;
+
+                        flags = EmulatorTables.SIGN_ZERO_TABLE[(regs[REG_A] - tmp) & 0xFF] | FLAG_N | (flags & FLAG_C);
+                        auxCarry(regs[REG_A], (-tmp) & 0xFF);
+
+                        if (tmp2 != 0) {
+                            flags |= FLAG_PV;
                         }
-                        tmp = (((regs[REG_H] << 8) | regs[REG_L]) - 1) & 0xFFFF;
-                        regs[REG_H] =  ((tmp >>> 8) & 0xff);
-                        regs[REG_L] =  (tmp & 0xFF);
+
+                        regs[REG_H] = (tmp1 >>> 8) & 0xFF;
+                        regs[REG_L] = tmp1 & 0xFF;
+                        regs[REG_B] = (tmp2 >>> 8) & 0xFF;
+                        regs[REG_C] = tmp2 & 0xFF;
                         return 16;
                     case 0xAA: /* IND */
                         tmp = (context.fireIO(regs[REG_C], true,  0) & 0xFF);
@@ -1115,7 +1117,7 @@ public class EmulatorEngine {
                         regs[REG_H] =  ((tmp1 >>> 8) & 0xff);
                         regs[REG_L] =  (tmp1 & 0xFF);
                         regs[REG_B] =  ((regs[REG_B] - 1) & 0xFF);
-                        flags =  ((flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0));
+                        flags = (flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0);
                         return 16;
                     case 0xAB: /* OUTD */
                         tmp1 = (regs[REG_H] << 8) | regs[REG_L];
@@ -1124,7 +1126,7 @@ public class EmulatorEngine {
                         regs[REG_H] =  ((tmp1 >>> 8) & 0xff);
                         regs[REG_L] =  (tmp1 & 0xFF);
                         regs[REG_B] =  ((regs[REG_B] - 1) & 0xFF);
-                        flags =  ((flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0));
+                        flags = (flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0);
                         return 16;
                     case 0xB0: /* LDIR */
                         tmp1 = (regs[REG_H] << 8) | regs[REG_L];
@@ -1148,32 +1150,32 @@ public class EmulatorEngine {
                         if (tmp == 0) {
                             return 16;
                         }
-                        PC -= 2;
+                        PC = (PC - 2) & 0xFFFF;
                         return 21;
                     case 0xB1: /* CPIR */
-                        tmp2 = memory.read((regs[REG_H] << 8) | regs[REG_L]);
-                        tmp = (regs[REG_A] - tmp2) & 0xFF;
-                        tmp1 = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
-                        tmp3 = tmp ^ tmp2 ^ regs[REG_A];
-                        regs[REG_B] =  ((tmp1 >>> 8) & 0xff);
-                        regs[REG_C] =  (tmp1 & 0xFF);
-                        if (tmp == 0) {
-                            // flags borrowed from simh
-                            flags =  ((flags & FLAG_C) | FLAG_N | ((tmp1 != 0) ? FLAG_PV : 0)
-                                    | ((tmp == 0) ? FLAG_Z : 0) | (tmp & 0x80)
-                                    | (((tmp - ((tmp3 & 16) >>> 4)) & 2) << 4) | (tmp3 & 16)
-                                    | ((tmp - ((tmp3 >>> 4) & 1)) & 8));
-                            if (((tmp & 15) == 8) && ((tmp3 & 16) != 0)) {
-                                flags &= 0xF7;
-                            }
+                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                        tmp2 = (regs[REG_B] << 8) | regs[REG_C];
+
+                        tmp = memory.read(tmp1);
+                        tmp1 = (tmp1 + 1) & 0xFFFF;
+                        tmp2 = (tmp2 - 1) & 0xFFFF;
+
+                        flags = EmulatorTables.SIGN_ZERO_TABLE[(regs[REG_A] - tmp) & 0xFF] | FLAG_N | (flags & FLAG_C);
+                        auxCarry(regs[REG_A], (-tmp) & 0xFF);
+
+                        if (tmp2 != 0) {
+                            flags |= FLAG_PV;
                         }
-                        tmp2 = (((regs[REG_H] << 8) | regs[REG_L]) + 1) & 0xFFFF;
-                        regs[REG_H] =  ((tmp2 >>> 8) & 0xff);
-                        regs[REG_L] =  (tmp2 & 0xFF);
-                        if ((tmp1 == 0) || (tmp == 0)) {
+
+                        regs[REG_H] = (tmp1 >>> 8) & 0xFF;
+                        regs[REG_L] = tmp1 & 0xFF;
+                        regs[REG_B] = (tmp2 >>> 8) & 0xFF;
+                        regs[REG_C] = tmp2 & 0xFF;
+
+                        if ((tmp2 == 0) || (regs[REG_A] == tmp)) {
                             return 16;
                         }
-                        PC -= 2;
+                        PC = (PC - 2) & 0xFFFF;
                         return 21;
                     case 0xB2: /* INIR */
                         tmp = (context.fireIO(regs[REG_C], true,  0) & 0xFF);
@@ -1222,29 +1224,29 @@ public class EmulatorEngine {
                         PC -= 2;
                         return 21;
                     case 0xB9: /* CPDR */
-                        tmp2 = memory.read((regs[REG_H] << 8) | regs[REG_L]);
-                        tmp = (regs[REG_A] - tmp2) & 0xFF;
-                        tmp1 = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
-                        tmp3 = tmp ^ tmp2 ^ regs[REG_A];
-                        regs[REG_B] =  ((tmp1 >>> 8) & 0xff);
-                        regs[REG_C] =  (tmp1 & 0xFF);
-                        // flags borrowed from simh
-                        if (tmp == 0) {
-                            flags =  ((flags & 1) | (tmp & 0x80) | (((tmp & 0xff) == 0) ? FLAG_Z : 0)
-                                    | (((tmp - ((tmp3 & 16) >> 4)) & 2) << 4)
-                                    | (tmp3 & 16) | ((tmp - ((tmp3 >> 4) & 1)) & 8)
-                                    | ((tmp1 != 0) ? FLAG_PV : 0) | FLAG_N);
-                            if (((tmp & 15) == 8) && ((tmp3 & 16) != 0)) {
-                                flags &= 0xF7;
-                            }
+                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                        tmp2 = (regs[REG_B] << 8) | regs[REG_C];
+
+                        tmp = memory.read(tmp1);
+                        tmp1 = (tmp1 - 1) & 0xFFFF;
+                        tmp2 = (tmp2 - 1) & 0xFFFF;
+
+                        flags = EmulatorTables.SIGN_ZERO_TABLE[(regs[REG_A] - tmp) & 0xFF] | FLAG_N | (flags & FLAG_C);
+                        auxCarry(regs[REG_A], (-tmp) & 0xFF);
+
+                        if (tmp2 != 0) {
+                            flags |= FLAG_PV;
                         }
-                        tmp2 = (((regs[REG_H] << 8) | regs[REG_L]) - 1) & 0xFFFF;
-                        regs[REG_H] =  (tmp2 >>> 8);
-                        regs[REG_L] =  (tmp2 & 0xFF);
-                        if ((tmp == 0) || (tmp1 == 0)) {
+
+                        regs[REG_H] = (tmp1 >>> 8) & 0xFF;
+                        regs[REG_L] = tmp1 & 0xFF;
+                        regs[REG_B] = (tmp2 >>> 8) & 0xFF;
+                        regs[REG_C] = tmp2 & 0xFF;
+
+                        if ((tmp2 == 0) || (regs[REG_A] == tmp)) {
                             return 16;
                         }
-                        PC -= 2;
+                        PC = (PC - 2) & 0xFFFF;
                         return 21;
                     case 0xBA: /* INDR */
                         tmp = (context.fireIO(regs[REG_C], true,  0) & 0xFF);
@@ -1457,7 +1459,7 @@ public class EmulatorEngine {
                         return 19;
                     case 0xA6: /* AND (ii+d) */
                         tmp1 = memory.read(getspecial(special) + (byte)tmp);
-                        regs[REG_A] =  ((regs[REG_A] & tmp1) & 0xff);
+                        regs[REG_A] = (regs[REG_A] & tmp1) & 0xFF;
                         flags = AND_OR_XOR_TABLE[regs[REG_A]];
                         return 19;
                     case 0xAE: /* XOR (ii+d) */
