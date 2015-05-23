@@ -190,7 +190,7 @@ public class InstructionsArithmeticTest extends InstructionsTest {
 
         setRegisters(1);
 
-        stepAndCheckAccAndFlags(2, FLAG_H_N_C, FLAG_S_Z_PV);
+        stepAndCheckAccAndFlags(2, FLAG_N_C, FLAG_S_Z_H_PV);
     }
 
     @Test

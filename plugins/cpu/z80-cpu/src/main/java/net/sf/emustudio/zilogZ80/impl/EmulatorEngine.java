@@ -27,7 +27,6 @@ import java.util.Objects;
 import java.util.concurrent.locks.LockSupport;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.AND_OR_XOR_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.CBITS2Z80_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.CBITS_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.CP_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_H_C_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_H_NOT_C_TABLE;
@@ -1868,11 +1867,14 @@ public class EmulatorEngine {
                 context.fireIO(tmp, false, (short)regs[REG_A]);
                 return 11;
             case 0xD6: /* SUB d */
-                tmp1 = regs[REG_A] - tmp;
-                tmp2 = regs[REG_A] ^ tmp1 ^ tmp;
-                flags =  ((tmp1 & 0x80) | ((tmp1 == 0) ? FLAG_Z : 0) | CBITS_TABLE[tmp2 & 0x1ff]
-                        | (((tmp2 >> 6) ^ (tmp2 >> 5)) & 4) | FLAG_N);
-                regs[REG_A] =  (tmp1 & 0xff);
+                tmp1 = regs[REG_A];
+                regs[REG_A] -= tmp;
+
+                flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
+                auxCarry(tmp1, (-tmp) & 0xFF);
+                subOverflow(tmp1, tmp);
+
+                regs[REG_A] = (short) (regs[REG_A] & 0xFF);
                 return 7;
             case 0xDB: /* IN A,(d) */
                 regs[REG_A] =  (context.fireIO(tmp, true,  0) & 0xFF);
