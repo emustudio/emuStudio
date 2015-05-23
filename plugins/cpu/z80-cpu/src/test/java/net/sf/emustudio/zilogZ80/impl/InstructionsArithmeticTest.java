@@ -732,18 +732,18 @@ public class InstructionsArithmeticTest extends InstructionsTest {
         setRegisterIX(0xABCD);
 
         stepAndCheckIX(0xE023);
-        checkNotFlags(EmulatorEngine.FLAG_C);
+        checkNotFlags(FLAG_C);
 
         stepAndCheckIX(0x58B3);
-        checkFlags(EmulatorEngine.FLAG_C);
+        checkFlags(FLAG_C);
 
         stepAndCheckIX(0xB166);
-        checkNotFlags(EmulatorEngine.FLAG_C);
+        checkNotFlags(FLAG_C);
 
         cpu.getEngine().SP = 0x4E9A;
         stepAndCheckIX(0);
-        checkFlags(EmulatorEngine.FLAG_C);
-        checkNotFlags(EmulatorEngine.FLAG_Z);
+        checkFlags(FLAG_C);
+        checkNotFlags(FLAG_Z);
     }
 
     @Test
@@ -760,29 +760,72 @@ public class InstructionsArithmeticTest extends InstructionsTest {
         setRegisterIY(0xABCD);
 
         stepAndCheckIY(0xE023);
-        checkNotFlags(EmulatorEngine.FLAG_C);
+        checkNotFlags(FLAG_C);
 
         stepAndCheckIY(0x58B3);
-        checkFlags(EmulatorEngine.FLAG_C);
+        checkFlags(FLAG_C);
 
         stepAndCheckIY(0xB166);
-        checkNotFlags(EmulatorEngine.FLAG_C);
+        checkNotFlags(FLAG_C);
 
         cpu.getEngine().SP = 0x4E9A;
         stepAndCheckIY(0);
-        checkFlags(EmulatorEngine.FLAG_C);
-        checkNotFlags(EmulatorEngine.FLAG_Z);
+        checkFlags(FLAG_C);
+        checkNotFlags(FLAG_Z);
     }
     
     @Test
     public void testADC_HL__ss() throws Exception {
         resetProgram(0xED, 0x4A, 0xED, 0x5A, 0xED, 0x6A, 0xED, 0x7A);
 
+        setRegisters(0, 0x34, 0x55, 0x78, 0x8F, 0xAB, 0xCD);
+
+        setFlags(FLAG_C);
+        stepAndCheckHL(0xE023);
+        checkFlags(FLAG_S_H);
+        checkNotFlags(FLAG_Z_PV_N_C);
+
+        setFlags(FLAG_C);
+        stepAndCheckHL(0x58B3);
+        checkFlags(FLAG_C);
+        checkNotFlags(FLAG_S_Z_H_PV_N);
+
+        stepAndCheckHL(0xB167);
+        checkFlags(FLAG_S_H_PV);
+        checkNotFlags(FLAG_Z_N_C);
+
+        cpu.getEngine().SP = 0x4E98;
+        setFlags(FLAG_C);
+        stepAndCheckHL(0);
+        checkFlags(FLAG_Z_H_C);
+        checkNotFlags(FLAG_S_PV_N);
     }
     
     @Test
     public void testSBC_HL__ss() throws Exception {
+        resetProgram(0xED, 0x42, 0xED, 0x52, 0xED, 0x62, 0xED, 0x72);
 
+        setRegisters(0, 0x0B, 0xAB, 0x07, 0x71, 0x54, 0x33);
+
+        setFlags(FLAG_C);
+        stepAndCheckHL(0x4887);
+        checkFlags(FLAG_N_C);
+        checkNotFlags(FLAG_S_Z_H_PV);
+
+        setFlags(FLAG_C);
+        stepAndCheckHL(0x4115);
+        checkFlags(FLAG_H_N_C);
+        checkNotFlags(FLAG_S_Z_PV);
+
+        stepAndCheckHL(0xFFFF);
+        checkFlags(FLAG_S_N);
+        checkNotFlags(FLAG_Z_H_PV_C);
+
+        cpu.getEngine().SP = 0xFFFE;
+        setFlags(FLAG_C);
+        stepAndCheckHL(0);
+        checkFlags(FLAG_Z_H_N_C);
+        checkNotFlags(FLAG_S_PV);
     }
 
 }

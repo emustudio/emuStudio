@@ -358,7 +358,16 @@ public class EmulatorEngine {
             flags |= FLAG_PV;
         }
     }
-    
+
+    private void subBigOverflow(int i, int j) {
+        int sign = i & 0x8000;
+        if (sign == (j & 0x8000)) {
+            flags &= (~FLAG_PV);
+        } else if (((i-j) & 0x8000) != sign){
+            flags |= FLAG_PV;
+        }
+    }
+
     private void auxCarry(int before, int sumWith) {
         int mask = sumWith & before;
         int xormask = sumWith ^ before;
@@ -887,15 +896,27 @@ public class EmulatorEngine {
                     case 0x52:
                     case 0x62:
                     case 0x72:
-                        tmp = (OP >>> 4) & 3;
-                        tmp2 = (regs[REG_H] << 8) | regs[REG_L];
-                        tmp3 = getpair(tmp);
-                        tmp1 = (tmp2 - tmp3 - (flags & 1)) & 0xFFFF;
-                        // this code taken from: simh
-                        flags =  (((tmp1 == 0) ? FLAG_Z : 0)
-                                | CBITS2Z80_TABLE[((tmp2 ^ tmp3 ^ tmp1) >>> 8) & 0x1ff]);
-                        regs[REG_H] =  ((tmp1 >>> 8) & 0xff);
-                        regs[REG_L] =  (tmp1 & 0xFF);
+                        tmp = getpair((OP >>> 4) & 0x03);
+                        tmp1 = getpair(2);
+                        if ((flags & FLAG_C) == FLAG_C) {
+                            tmp++;
+                        }
+                        int sum = tmp1 - tmp;
+                        if ((sum & 0x8000) != 0) {
+                            flags |= FLAG_S;
+                        } else {
+                            flags &= (~FLAG_S);
+                        }
+                        if ((sum & 0xFFFF) == 0) {
+                            flags |= FLAG_Z;
+                        } else {
+                            flags &= (~FLAG_Z);
+                        }
+                        flags |= FLAG_N;
+                        carry15(tmp1, (-tmp) & 0xFFFF);
+                        auxCarry11(tmp1, (-tmp) & 0xFFFF);
+                        subBigOverflow(tmp1, tmp);
+                        putpair(2, sum & 0xFFFF);
                         return 15;
                     /* ADC HL,ss */
                     case 0x4A:
@@ -907,13 +928,13 @@ public class EmulatorEngine {
                         if ((flags & FLAG_C) == FLAG_C) {
                             tmp1++;
                         }
-                        int sum = tmp + tmp1;
+                        sum = tmp + tmp1;
                         if ((sum & 0x8000) != 0) {
                             flags |= FLAG_S;
                         } else {
                             flags &= (~FLAG_S);
                         }
-                        if (sum == 0) {
+                        if ((sum & 0xFFFF) == 0) {
                             flags |= FLAG_Z;
                         } else {
                             flags &= (~FLAG_Z);

@@ -179,7 +179,13 @@ public abstract class InstructionsTest {
         stepWithAssert();
         assertEquals(value, cpu.getEngine().IY);
     }
-    
+
+    protected void stepAndCheckHL(int value) {
+        stepWithAssert();
+        assertEquals(value & 0xFF, cpu.getEngine().regs[EmulatorEngine.REG_L]);
+        assertEquals(value >>> 8, cpu.getEngine().regs[EmulatorEngine.REG_H]);
+    }
+
     protected void stepAndCheckAccAndFlags(int value, int flagsMask, int notFlagsMask) {
         stepAndCheck(value, REG_A);
         if (flagsMask != -1) {
