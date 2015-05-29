@@ -167,11 +167,8 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short, Integer> imp
     @Override
     public Integer readWord(int from) {
         activeBank = (from < bankCommon) ? bankSelect : 0;
-        if (from == mem[0].length - 1) {
-            return (int)mem[activeBank][from];
-        }
         int low = mem[activeBank][from] & 0xFF;
-        int high = mem[activeBank][from + 1];
+        int high = mem[activeBank][from + 1] & 0xFF;
         return (high << 8) | low;
     }
 
@@ -199,13 +196,11 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short, Integer> imp
         }
         activeBank = (to < bankCommon) ? bankSelect : 0;
         short low = (short) (val & 0xFF);
+        short high = (short) ((val >>> 8) & 0xFF);
         mem[activeBank][to] = low;
+        mem[activeBank][to + 1] = high;
         notifyMemoryChanged(to);
-        if (to < mem.length - 1) {
-            short high = (short) ((val >>> 8) & 0xFF);
-            mem[activeBank][to + 1] = high;
-            notifyMemoryChanged(to + 1);
-        }
+        notifyMemoryChanged(to + 1);
     }
 
     @Override

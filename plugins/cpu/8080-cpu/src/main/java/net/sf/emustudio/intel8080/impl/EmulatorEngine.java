@@ -2,12 +2,13 @@ package net.sf.emustudio.intel8080.impl;
 
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.concurrent.locks.LockSupport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class EmulatorEngine {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
@@ -371,7 +372,7 @@ public class EmulatorEngine {
 
     private int O34_SHLD(short OP) {
         int DAR = memory.readWord(PC);
-        PC += 2;
+        PC = (PC + 2) & 0xFFFF;
         memory.writeWord(DAR, (regs[REG_H] << 8) | regs[REG_L]);
         return 16;
     }
@@ -399,7 +400,7 @@ public class EmulatorEngine {
 
     private int O42_LHLD(short OP) {
         int DAR = memory.readWord(PC);
-        PC += 2;
+        PC = (PC + 2) & 0xFFFF;
         regs[REG_L] = memory.read(DAR);
         regs[REG_H] = memory.read(DAR + 1);
         return 16;
@@ -413,7 +414,7 @@ public class EmulatorEngine {
 
     private int O50_STA(short OP) {
         int DAR = memory.readWord(PC);
-        PC += 2;
+        PC = (PC + 2) & 0xFFFF;
         memory.write(DAR, regs[REG_A]);
         return 13;
     }
@@ -425,7 +426,7 @@ public class EmulatorEngine {
 
     private int O58_LDA(short OP) {
         int DAR = memory.readWord(PC);
-        PC += 2;
+        PC = (PC + 2) & 0xFFFF;
         regs[REG_A] = memory.read(DAR);
         return 13;
     }
@@ -451,7 +452,8 @@ public class EmulatorEngine {
 
     private int O198_ADI(short OP) {
         int DAR = regs[REG_A];
-        int diff = memory.read(PC++);
+        int diff = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
         regs[REG_A] += diff;
 
         flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[regs[REG_A] & 0x1FF];
@@ -463,20 +465,21 @@ public class EmulatorEngine {
 
     private int O201_RET(short OP) {
         PC = memory.readWord(SP);
-        SP += 2;
+        SP = (SP + 2) & 0xFFFF;
         return 10;
     }
 
     private int O205_CALL(short OP) {
-        memory.writeWord(SP - 2, PC + 2);
-        SP -= 2;
+        SP = (SP - 2) & 0xFFFF;
+        memory.writeWord(SP, (PC + 2) & 0xFFFF);
         PC = memory.readWord(PC);
         return 17;
     }
 
     private int O206_ACI(short OP) {
         int DAR = regs[REG_A];
-        int diff = memory.read(PC++);
+        int diff = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
         if ((flags & FLAG_C) != 0) {
             diff++;
         }
@@ -490,14 +493,16 @@ public class EmulatorEngine {
     }
 
     private int O211_OUT(short OP) {
-        int DAR = memory.read(PC++);
+        int DAR = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
         context.fireIO(DAR, false, regs[REG_A]);
         return 10;
     }
 
     private int O214_SUI(short OP) {
         int DAR = regs[REG_A];
-        int diff = memory.read(PC++);
+        int diff = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
         regs[REG_A] -= diff;
 
         flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[regs[REG_A] & 0x1FF];
@@ -508,14 +513,16 @@ public class EmulatorEngine {
     }
 
     private int O219_IN(short OP) {
-        int DAR = memory.read(PC++);
+        int DAR = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
         regs[REG_A] = context.fireIO(DAR, true, (short) 0);
         return 10;
     }
 
     private int O222_SBI(short OP) {
         int DAR = regs[REG_A];
-        int diff = memory.read(PC++);
+        int diff = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
         if ((flags & FLAG_C) != 0) {
             diff++;
         }
@@ -537,7 +544,8 @@ public class EmulatorEngine {
     }
 
     private int O230_ANI(short OP) {
-        regs[REG_A] &= (memory.read(PC++) & 0xFF);
+        regs[REG_A] &= (memory.read(PC) & 0xFF);
+        PC = (PC + 1) & 0xFFFF;
         flags = (short)(EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_AC));
         return 7;
     }
@@ -558,7 +566,8 @@ public class EmulatorEngine {
     }
 
     private int O238_XRI(short OP) {
-        regs[REG_A] ^= (memory.read(PC++) & 0xFF);
+        regs[REG_A] ^= (memory.read(PC) & 0xFF);
+        PC = (PC + 1) & 0xFFFF;
         flags = (short)(EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_AC));
         return 7;
     }
@@ -569,7 +578,8 @@ public class EmulatorEngine {
     }
 
     private int O246_ORI(short OP) {
-        regs[REG_A] |= (memory.read(PC++) & 0xFF);
+        regs[REG_A] |= (memory.read(PC) & 0xFF);
+        PC = (PC + 1) & 0xFFFF;
         flags = (short)(EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_AC));
         return 7;
     }
@@ -587,7 +597,8 @@ public class EmulatorEngine {
     private int O254_CPI(short OP) {
         int X = regs[REG_A];
         int DAR = regs[REG_A] & 0xFF;
-        int diff = memory.read(PC++);
+        int diff = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
         DAR -= diff;
 
         flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[DAR & 0x1FF];
@@ -606,7 +617,8 @@ public class EmulatorEngine {
     }
 
     private int MC7_O6_MVI(short OP) {
-        putreg((OP >>> 3) & 0x07, memory.read(PC++));
+        putreg((OP >>> 3) & 0x07, memory.read(PC));
+        PC = (PC + 1) & 0xFFFF;
         if (((OP >>> 3) & 0x07) == 6) {
             return 10;
         } else {
@@ -616,7 +628,7 @@ public class EmulatorEngine {
 
     private int MCF_01_LXI(short OP) {
         putpair((OP >>> 4) & 0x03, memory.readWord(PC));
-        PC += 2;
+        PC = (PC + 2) & 0xFFFF;
         return 10;
     }
 
@@ -647,7 +659,7 @@ public class EmulatorEngine {
         if ((flags & CONDITION[index]) == CONDITION_VALUES[index]) {
             PC = memory.readWord(PC);
         } else {
-            PC += 2;
+            PC = (PC + 2) & 0xFFFF;
         }
         return 10;
     }
@@ -656,12 +668,12 @@ public class EmulatorEngine {
         int index = (OP >>> 3) & 0x07;
         if ((flags & CONDITION[index]) == CONDITION_VALUES[index]) {
             int DAR = memory.readWord(PC);
-            memory.writeWord(SP - 2, PC + 2);
-            SP -= 2;
+            SP = (SP - 2) & 0xFFFF;
+            memory.writeWord(SP, (PC + 2) & 0xFFFF);
             PC = DAR;
             return 17;
         } else {
-            PC += 2;
+            PC = (PC + 2) & 0xFFFF;
             return 11;
         }
     }
@@ -670,28 +682,28 @@ public class EmulatorEngine {
         int index = (OP >>> 3) & 0x07;
         if ((flags & CONDITION[index]) == CONDITION_VALUES[index]) {
             PC = memory.readWord(SP);
-            SP += 2;
+            SP = (SP + 2) & 0xFFFF;
         }
         return 10;
     }
 
     private int MC7_C7_RST(short OP) {
-        memory.writeWord(SP - 2, PC);
-        SP -= 2;
+        SP = (SP - 2) & 0xFFFF;
+        memory.writeWord(SP, PC);
         PC = OP & 0x38;
         return 11;
     }
 
     private int MCF_C5_PUSH(short OP) {
         int DAR = getpush((OP >>> 4) & 0x03);
-        memory.writeWord(SP - 2, DAR);
-        SP -= 2;
+        SP = (SP - 2) & 0xFFFF;
+        memory.writeWord(SP, DAR);
         return 11;
     }
 
     private int MCF_C1_POP(short OP) {
         int DAR = memory.readWord(SP);
-        SP += 2;
+        SP = (SP + 2) & 0xFFFF;
         putpush((OP >>> 4) & 0x03, DAR);
         return 10;
     }
@@ -820,20 +832,21 @@ public class EmulatorEngine {
         if (isINT == true) {
             if (INTE == true) {
                 if ((b1 & 0xC7) == 0xC7) {                      /* RST */
-                    memory.writeWord(SP - 2, PC);
-                    SP -= 2;
+                    SP = (SP - 2) & 0xFFFF;
+                    memory.writeWord(SP, PC);
                     PC = b1 & 0x38;
                     return 11;
                 } else if (b1 == 0315) {                        /* CALL */
-                    memory.writeWord(SP - 2, PC + 2);
-                    SP -= 2;
+                    SP = (SP - 2) & 0xFFFF;
+                    memory.writeWord(SP, (PC + 2) & 0xFFFF);
                     PC = ((b3 & 0xFF) << 8) | (b2 & 0xFF);
                     return 17;
                 }
             }
             isINT = false;
         }
-        OP = memory.read(PC++);
+        OP = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
 
         /* Handle below all operations which refer to registers or register pairs.
          After that, a large switch statement takes care of all other opcodes */
