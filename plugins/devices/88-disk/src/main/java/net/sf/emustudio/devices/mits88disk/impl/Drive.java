@@ -293,6 +293,9 @@ public class Drive {
         if (mountedFloppy == null) {
             return 0;
         }
+//        LOGGER.info("[T={}, S={}, O={}, imagePos={}] Reading", track, sector, sectorOffset,
+//            sectorsCount * sectorLength * track + sectorLength * sector + sectorOffset
+//        );
         imageChannel.position(sectorsCount * sectorLength * track + sectorLength * sector + sectorOffset);
         try {
             byteBuffer.clear();

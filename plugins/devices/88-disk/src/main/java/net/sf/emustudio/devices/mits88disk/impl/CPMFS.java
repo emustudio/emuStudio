@@ -24,12 +24,21 @@ import emulib.runtime.StaticDialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.LineNumberReader;
+import java.io.PrintStream;
 import java.io.RandomAccessFile;
+import java.io.StringBufferInputStream;
+import java.io.StringReader;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -47,40 +56,71 @@ public class CPMFS {
     private final static int INTERLEAVE = 2;
 
     private final static int MAX_FILES = 256; //64, 256;
-    private final static int DIRECTORY_TRACK = 6;
 
-    // specific for altcpm.dsk
-    private final static int[] DIRECTORY_SECTORS_BITMAP = new int[] {
-            0,17,2,19,4,21,6
-    };
     private final static int DIRECTORY_ENTRY_SIZE = 32;
     private final static int UNUSED_FILE = 0xE5;
 
     private final File imageFile;
+    private final List<TrackAndSector> directoryBitmap;
 
     private int track;
     private int sector;
     private byte[] sectorData;
 
-    public CPMFS(String imageFile) {
-        this(new File(imageFile));
+    private static class TrackAndSector {
+      public final int track;
+      public final int sector;
+
+      private TrackAndSector(int track, int sector) {
+        this.track = track;
+        this.sector = sector;
+      }
+
+      @Override
+      public String toString() {
+        return track + " " + sector;
+      }
     }
 
-    public CPMFS(File imageFile) {
+    public CPMFS(String imageFile, String directoryFile) throws IOException {
+        this(new File(imageFile), new File(directoryFile));
+    }
+
+    public CPMFS(File imageFile, File directoryFile) throws IOException {
         this.imageFile = Objects.requireNonNull(imageFile);
+        this.directoryBitmap = readDirectoryBitmapFile(directoryFile);
         sectorData = new byte[SECTOR_SIZE];
 
         resetPosition();
     }
 
+    private List<TrackAndSector> readDirectoryBitmapFile(File directoryBitmapFile) throws IOException {
+      List<TrackAndSector> directory = new ArrayList<>();
+      String message = "Directory bitmap:\n\t";
+
+      try (BufferedReader reader = new BufferedReader(new FileReader(directoryBitmapFile))) {
+        while(true) {
+          String line = reader.readLine();
+          if (line == null) {
+            break;
+          }
+          String[] trackAndSector = line.split(" ");
+          directory.add(new TrackAndSector(Integer.decode(trackAndSector[0]), Integer.decode(trackAndSector[1])));
+        }
+      }
+      System.out.println(message + Arrays.toString(directory.toArray()));
+      return directory;
+    }
+
     private byte[] readDirectory() throws IOException {
-        byte[] directory = new byte[DIRECTORY_SECTORS_BITMAP.length * SECTOR_SIZE];
+        int size = directoryBitmap.size();
+        byte[] directory = new byte[size * SECTOR_SIZE];
         ByteBuffer directoryBuffer = ByteBuffer.wrap(directory);
 
         try (RandomAccessFile randomFile = new RandomAccessFile(imageFile, "r")) {
-            resetPosition(DIRECTORY_TRACK);
-            for (int i = 0; i < DIRECTORY_SECTORS_BITMAP.length; i++) {
-                sector = DIRECTORY_SECTORS_BITMAP[i];
+            for (TrackAndSector trackAndSector : directoryBitmap) {
+                resetPosition(trackAndSector.track);
+                sector = trackAndSector.sector;
 
                 readSector(randomFile);
                 directoryBuffer.put(sectorData);
@@ -149,8 +189,7 @@ public class CPMFS {
             StaticDialogs.showErrorMessage("The image file was not found!");
         } catch (IOException r) {   
         }
-        return "DISC: " + discLabel + "\n"
-                + "Number of files: " + fileCount;
+        return "DISC: " + discLabel + "\nNumber of files: " + fileCount;
     }
 
     /************************************************************************/

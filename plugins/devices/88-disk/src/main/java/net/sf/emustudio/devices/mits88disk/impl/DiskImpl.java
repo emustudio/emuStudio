@@ -279,6 +279,7 @@ public class DiskImpl extends AbstractDevice {
     private static boolean ARG_HELP = false;
     private static boolean ARG_INFO = false;
     private static boolean ARG_VERSION = false;
+    private static String DIR_FILE = null;
 
     /**
      * This method parsers the command line parameters. It sets internal class
@@ -306,7 +307,19 @@ public class DiskImpl extends AbstractDevice {
                         } else {
                             IMAGE_FILE = args[i];
                             System.out.println("Image file name: " + IMAGE_FILE);
-                        }   break;
+                        }
+                        break;
+                    case "--DIR":
+                        i++;
+                        // the directory bitmap file
+                        if (DIR_FILE != null) {
+                          System.out.println("Directory bitmap file already defined,"
+                              + " ignoring this one: " + args[i]);
+                        } else {
+                          DIR_FILE = args[i];
+                          System.out.println("Directory bitmap file name: " + DIR_FILE);
+                        }
+                        break;
                     case "--VERSION":
                         ARG_VERSION = true;
                         break;
@@ -332,7 +345,7 @@ public class DiskImpl extends AbstractDevice {
      *
      * @param args
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         System.out.println("MITS 88-DISK emuStudio plug-in");
         parseCommandLine(args);
 
@@ -343,6 +356,7 @@ public class DiskImpl extends AbstractDevice {
                     + "\n--list        : list all files in the image"
                     + "\n--info        : return some drive information"
                     + "\n--image name  : use the image file given by the file name"
+                    + "\n--dir name    : directory bitmap file"
                     + "\n--version     : print version"
                     + "\n--help        : output this message");
             return;
@@ -359,7 +373,7 @@ public class DiskImpl extends AbstractDevice {
             return;
         }
 
-        CPMFS cpmfs = new CPMFS(IMAGE_FILE);
+        CPMFS cpmfs = new CPMFS(IMAGE_FILE, DIR_FILE);
 
         if (ARG_INFO) {
             System.out.println(cpmfs.getInfo());
