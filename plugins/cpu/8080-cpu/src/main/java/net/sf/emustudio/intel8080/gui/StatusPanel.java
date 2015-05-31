@@ -108,13 +108,13 @@ public class StatusPanel extends JPanel {
         txtRegA.setText(getByteHexString(engine.regs[EmulatorEngine.REG_A]));
         txtRegB.setText(getByteHexString(engine.regs[EmulatorEngine.REG_B]));
         txtRegC.setText(getByteHexString(engine.regs[EmulatorEngine.REG_C]));
-        txtRegBC.setText(getWordHexString(engine.regs[EmulatorEngine.REG_B], engine.regs[EmulatorEngine.REG_C]));
+        txtRegBC.setText(getWordHexString((short)engine.regs[EmulatorEngine.REG_B], (short)engine.regs[EmulatorEngine.REG_C]));
         txtRegD.setText(getByteHexString(engine.regs[EmulatorEngine.REG_D]));
         txtRegE.setText(getByteHexString(engine.regs[EmulatorEngine.REG_E]));
-        txtRegDE.setText(getWordHexString(engine.regs[EmulatorEngine.REG_D], engine.regs[EmulatorEngine.REG_E]));
+        txtRegDE.setText(getWordHexString((short)engine.regs[EmulatorEngine.REG_D], (short)engine.regs[EmulatorEngine.REG_E]));
         txtRegH.setText(getByteHexString(engine.regs[EmulatorEngine.REG_H]));
         txtRegL.setText(getByteHexString(engine.regs[EmulatorEngine.REG_L]));
-        txtRegHL.setText(getWordHexString(engine.regs[EmulatorEngine.REG_H], engine.regs[EmulatorEngine.REG_L]));
+        txtRegHL.setText(getWordHexString((short)engine.regs[EmulatorEngine.REG_H], (short)engine.regs[EmulatorEngine.REG_L]));
         txtRegSP.setText(getWordHexString(engine.SP));
         txtRegPC.setText(getWordHexString(engine.PC));
 

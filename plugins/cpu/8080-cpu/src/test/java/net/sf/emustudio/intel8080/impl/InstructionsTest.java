@@ -8,6 +8,7 @@ import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 
+import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.*;
@@ -69,8 +70,12 @@ public abstract class InstructionsTest {
         cpu = new CpuImpl(PLUGIN_ID, contextPool);
         cpu.addCPUListener(runStateListener);
 
+        SettingsManager settingsManager = createNiceMock(SettingsManager.class);
+        expect(settingsManager.readSetting(PLUGIN_ID, CpuImpl.PRINT_CODE)).andReturn("true").anyTimes();
+        replay(settingsManager);
+
         // simulate emuStudio boot
-        cpu.initialize(EasyMock.createNiceMock(SettingsManager.class));
+        cpu.initialize(settingsManager);
     }
 
     @After
@@ -168,7 +173,7 @@ public abstract class InstructionsTest {
     protected void setRegisters(int... values) {
         EmulatorEngine engine = cpu.getEngine();
         for (int i = 0; i < values.length; i++) {
-            engine.regs[GENERAL_REGISTERS[i]] = (short)values[i];
+            engine.regs[GENERAL_REGISTERS[i]] = values[i];
         }
     }
 

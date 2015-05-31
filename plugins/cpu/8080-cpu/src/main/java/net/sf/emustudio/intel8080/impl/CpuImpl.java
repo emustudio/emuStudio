@@ -54,6 +54,8 @@ import net.sf.emustudio.intel8080.gui.StatusPanel;
         description = "Emulator of Intel 8080 CPU"
 )
 public class CpuImpl extends AbstractCPU {
+    public static final String PRINT_CODE = "printCode";
+
     private final ScheduledExecutorService frequencyScheduler = Executors.newSingleThreadScheduledExecutor();
     private final AtomicReference<Future> frequencyUpdaterFuture = new AtomicReference<>();
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
@@ -120,6 +122,11 @@ public class CpuImpl extends AbstractCPU {
             // create disassembler and debug columns
             this.disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
             this.engine = new EmulatorEngine(memory, context);
+
+            String setting = settings.readSetting(getPluginID(), PRINT_CODE);
+            if (setting != null && setting.toLowerCase().equals("true")) {
+                this.engine.setDispatchListener(new InstructionPrinter(disassembler, engine));
+            }
             statusPanel = new StatusPanel(this, context);
         } catch (InvalidContextException | ContextNotFoundException e) {
             throw new PluginInitializationException(this, ": Could not get memory context", e);
