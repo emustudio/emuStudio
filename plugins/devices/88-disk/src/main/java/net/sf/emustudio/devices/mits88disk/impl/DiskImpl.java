@@ -31,11 +31,15 @@ import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
+
+import net.sf.emustudio.devices.mits88disk.cpmfs.CpmDirectory;
+import net.sf.emustudio.devices.mits88disk.cpmfs.RawDisc;
 import net.sf.emustudio.devices.mits88disk.gui.DiskFrame;
 import net.sf.emustudio.devices.mits88disk.gui.SettingsDialog;
 import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.IMAGE;
@@ -345,7 +349,7 @@ public class DiskImpl extends AbstractDevice {
      *
      * @param args
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         System.out.println("MITS 88-DISK emuStudio plug-in");
         parseCommandLine(args);
 
@@ -373,14 +377,17 @@ public class DiskImpl extends AbstractDevice {
             return;
         }
 
-        CPMFS cpmfs = new CPMFS(IMAGE_FILE, DIR_FILE);
+        try (RawDisc disc = new RawDisc(new File(IMAGE_FILE).toPath(), StandardOpenOption.READ)) {
+            CpmDirectory directory = CpmDirectory.fromDisc(disc);
 
-        if (ARG_INFO) {
-            System.out.println(cpmfs.getInfo());
-        }
+            if (ARG_INFO) {
+                System.out.println("Disc label: " + directory.findDiscLabel());
+                System.out.println("Number of files: " + directory.filterValidFiles().size());
+            }
 
-        if (ARG_LIST) {
-            System.out.println(cpmfs.getFileNames());
+            if (ARG_LIST) {
+                System.out.println(directory.filterValidFiles());
+            }
         }
     }
 }
