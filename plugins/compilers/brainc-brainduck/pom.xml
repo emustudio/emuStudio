@@ -34,7 +34,7 @@
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
             </manifest>
             <manifestEntries>
-              <Class-Path>lib/java-cup-runtime-0.11a.jar</Class-Path>
+              <Class-Path>lib/java-cup-11b-2015.03.26.jar</Class-Path>
             </manifestEntries>
           </archive>
         </configuration>
@@ -55,7 +55,7 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>edu.tum.cs</groupId>
+        <groupId>com.github.vbmacher</groupId>
         <artifactId>cup-maven-plugin</artifactId>
         <executions>
           <execution>
@@ -86,8 +86,12 @@
       <artifactId>emuLib</artifactId>
     </dependency>
     <dependency>
-      <groupId>cup</groupId>
-      <artifactId>java-cup-runtime</artifactId>
+      <groupId>nz.ac.waikato.cms.weka.thirdparty</groupId>
+      <artifactId>java-cup-11b</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>nz.ac.waikato.cms.weka.thirdparty</groupId>
+      <artifactId>java-cup-11b</artifactId>
     </dependency>
   </dependencies>
 </project>

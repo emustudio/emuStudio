@@ -142,7 +142,7 @@
           <version>1.6.0</version>
         </plugin>
         <plugin>
-          <groupId>edu.tum.cs</groupId>
+          <groupId>com.github.vbmacher</groupId>
           <artifactId>cup-maven-plugin</artifactId>
           <version>1.0.0</version>
         </plugin>
@@ -328,9 +328,9 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>cup</groupId>
-        <artifactId>java-cup-runtime</artifactId>
-        <version>0.11a</version>
+        <groupId>nz.ac.waikato.cms.weka.thirdparty</groupId>
+        <artifactId>java-cup-11b</artifactId>
+        <version>2015.03.26</version>
       </dependency>
       <dependency>
         <groupId>net.sf.emustudio</groupId>
