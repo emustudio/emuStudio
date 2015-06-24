@@ -389,22 +389,29 @@ public class EmulatorEngine {
 
     private int O39_DAA(short OP) {
         int temp = regs[REG_A];
+
         boolean acFlag = (flags & FLAG_AC) == FLAG_AC;
         boolean cFlag = (flags & FLAG_C) == FLAG_C;
 
-        if (!acFlag && !cFlag) {
-            regs[REG_A] = EmulatorTables.DAA_NOT_AC_NOT_C_TABLE[temp] & 0xFF;
-            flags = (short) ((EmulatorTables.DAA_NOT_AC_NOT_C_TABLE[temp] >> 8) & 0xFF);
-        } else if (acFlag && !cFlag) {
-            regs[REG_A] = EmulatorTables.DAA_AC_NOT_C_TABLE[temp] & 0xFF;
-            flags = (short) ((EmulatorTables.DAA_AC_NOT_C_TABLE[temp] >> 8) & 0xFF);
-        } else if (!acFlag && cFlag) {
-            regs[REG_A] = EmulatorTables.DAA_NOT_AC_C_TABLE[temp] & 0xFF;
-            flags = (short) ((EmulatorTables.DAA_NOT_AC_C_TABLE[temp] >> 8) & 0xFF);
-        } else {
-            regs[REG_A] = EmulatorTables.DAA_AC_C_TABLE[temp] & 0xFF;
-            flags = (short) ((EmulatorTables.DAA_AC_C_TABLE[temp] >> 8) & 0xFF);
+        if (acFlag || (temp & 0x0F) > 9) {
+            temp += 6;
+            auxCarry(regs[REG_A], 6);
+            if ((temp & 0x100) == 0x100) {
+                flags |= FLAG_C;
+            } else {
+                flags &= ~FLAG_C;
+            }
         }
+        if (cFlag || ((temp >>> 4) & 0x0F) > 9) {
+            temp += 0x60;
+            if ((temp & 0x100) == 0x100) {
+                flags |= FLAG_C;
+            } else {
+                flags &= ~FLAG_C;
+            }
+        }
+        regs[REG_A] = temp & 0xFF;
+        flags = (short)(EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_C) | (flags & FLAG_AC));
         return 4;
     }
 
@@ -487,16 +494,16 @@ public class EmulatorEngine {
     }
 
     private int O206_ACI(short OP) {
-        int DAR = regs[REG_A];
+        int X = regs[REG_A];
         int diff = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        if ((flags & FLAG_C) != 0) {
+        if ((flags & FLAG_C) == FLAG_C) {
             diff++;
         }
         regs[REG_A] += diff;
 
         flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[regs[REG_A] & 0x1FF];
-        auxCarry(DAR, diff);
+        auxCarry(X, diff);
 
         regs[REG_A] = regs[REG_A] & 0xFF;
         return 7;
@@ -733,7 +740,7 @@ public class EmulatorEngine {
     private int MF8_88_ADC(short OP) {
         int X = regs[REG_A];
         int diff = getreg(OP & 0x07);
-        if ((flags & FLAG_C) != 0) {
+        if ((flags & FLAG_C) == FLAG_C) {
             diff++;
         }
         regs[REG_A] += diff;

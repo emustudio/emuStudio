@@ -5,13 +5,16 @@ import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.cpu.InvalidInstructionException;
 import net.jcip.annotations.ThreadSafe;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_AC;
+import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_C;
+import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_P;
+import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_S;
+import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_Z;
 
 @ThreadSafe
 public class InstructionPrinter implements EmulatorEngine.DispatchListener {
@@ -21,12 +24,14 @@ public class InstructionPrinter implements EmulatorEngine.DispatchListener {
     private final List<Integer> cache = new CopyOnWriteArrayList<>();
     private final AtomicInteger numberOfMatch = new AtomicInteger();
     private volatile int matchPC;
+    private final boolean useCache;
 
     private volatile long creationTimeStamp;
 
-    public InstructionPrinter(Disassembler disassembler, EmulatorEngine emulatorEngine) {
+    public InstructionPrinter(Disassembler disassembler, EmulatorEngine emulatorEngine, boolean useCache) {
         this.disassembler = Objects.requireNonNull(disassembler);
         this.emulatorEngine = Objects.requireNonNull(emulatorEngine);
+        this.useCache = useCache;
     }
 
     @Override
@@ -40,7 +45,7 @@ public class InstructionPrinter implements EmulatorEngine.DispatchListener {
         try {
             DisassembledInstruction instr = disassembler.disassemble(emulatorEngine.PC);
 
-            if (!cache.contains(emulatorEngine.PC)) {
+            if (!useCache || !cache.contains(emulatorEngine.PC)) {
                 if (numberOfMatch.get() != 0) {
                     System.out.println(String.format("%04d | Block from %04X to %04X; count=%d",
                             timeStamp, matchPC, emulatorEngine.PC, numberOfMatch.get())
@@ -67,8 +72,8 @@ public class InstructionPrinter implements EmulatorEngine.DispatchListener {
     @Override
     public void afterDispatch() {
         if (numberOfMatch.get() <= 1) {
-            System.out.println(String.format("|| regs=%s | flags=%02x | SP=%04x | PC=%04x",
-                    regsToString(), emulatorEngine.flags, emulatorEngine.SP, emulatorEngine.PC)
+            System.out.println(String.format("|| regs=%s | flags=%s | SP=%04x | PC=%04x",
+                    regsToString(), intToFlags(emulatorEngine.flags), emulatorEngine.SP, emulatorEngine.PC)
             );
         }
     }
@@ -79,6 +84,36 @@ public class InstructionPrinter implements EmulatorEngine.DispatchListener {
             r += String.format("%02x ", emulatorEngine.regs[i]);
         }
         return r;
+    }
+
+    private String intToFlags(int flags) {
+        String flagsString = "";
+        if ((flags & FLAG_S) == FLAG_S) {
+            flagsString += "S";
+        } else {
+            flagsString += " ";
+        }
+        if ((flags & FLAG_Z) == FLAG_Z) {
+            flagsString += "Z";
+        } else {
+            flagsString += " ";
+        }
+        if ((flags & FLAG_AC) == FLAG_AC) {
+            flagsString += "A";
+        } else {
+            flagsString += " ";
+        }
+        if ((flags & FLAG_P) == FLAG_P) {
+            flagsString += "P";
+        } else {
+            flagsString += " ";
+        }
+        if ((flags & FLAG_C) == FLAG_C) {
+            flagsString += "C";
+        } else {
+            flagsString += " ";
+        }
+        return flagsString;
     }
 
 }
