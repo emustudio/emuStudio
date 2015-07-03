@@ -8,28 +8,22 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class RegisterPairAndFlagsVerifier<T extends Number> implements Consumer<RunnerContext<T>> {
+public class FlagsVerifier<T extends Number> implements Consumer<RunnerContext<T>> {
     private final Function<RunnerContext<T>, Integer> operation;
+    private final FlagsBuilder flagsBuilder;
     private final CpuVerifier verifier;
-    private final int registerPair;
-    private final FlagsBuilder<T> flagsBuilder;
 
-    public RegisterPairAndFlagsVerifier(CpuVerifier verifier, Function<RunnerContext<T>, Integer> operation, int registerPair,
-                                        FlagsBuilder<T> flagsBuilder) {
+    public FlagsVerifier(CpuVerifier verifier, Function<RunnerContext<T>, Integer> operation, FlagsBuilder flagsBuilder) {
         this.operation = Objects.requireNonNull(operation);
-        this.verifier = Objects.requireNonNull(verifier);
-        this.registerPair = registerPair;
         this.flagsBuilder = Objects.requireNonNull(flagsBuilder);
+        this.verifier = Objects.requireNonNull(verifier);
     }
 
     @Override
     public void accept(RunnerContext<T> context) {
-        int expectedResult = operation.apply(context);
-
         flagsBuilder.reset();
-        flagsBuilder.eval(context.first, context.second, expectedResult);
+        flagsBuilder.eval(context.first, context.second, operation.apply(context));
 
-        verifier.checkRegisterPair(registerPair, expectedResult);
         verifier.checkFlags(flagsBuilder.getExpectedFlags());
         verifier.checkNotFlags(flagsBuilder.getNotExpectedFlags());
     }

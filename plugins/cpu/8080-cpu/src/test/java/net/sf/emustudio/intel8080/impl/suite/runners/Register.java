@@ -2,6 +2,7 @@ package net.sf.emustudio.intel8080.impl.suite.runners;
 
 import net.sf.emustudio.intel8080.impl.suite.CpuRunner;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 public class Register implements Function<Byte, RunnerContext<Byte>> {
@@ -11,7 +12,7 @@ public class Register implements Function<Byte, RunnerContext<Byte>> {
     private int flagsBefore;
 
     public Register(CpuRunner runner, int instruction, int register) {
-        this.runner = runner;
+        this.runner = Objects.requireNonNull(runner);
         this.instruction = instruction;
         this.register = register;
     }

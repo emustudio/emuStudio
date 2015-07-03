@@ -43,6 +43,19 @@ public class Generator {
         }
     }
 
+    public static void forSome16bitBinary(int firstStartFrom, BinaryConsumer<Integer>... runners) {
+        Random random = new Random();
+        for (int i = 0; i < RANDOM_TESTS; i++) {
+            for (BinaryConsumer<Integer> runner : runners) {
+                int first = random.nextInt(0xFFFF);
+                if (first < firstStartFrom) {
+                    first += firstStartFrom;
+                }
+                runner.accept(first, random.nextInt(0xFFFF));
+            }
+        }
+    }
+
     public static void forSome16bitBinary(BinaryConsumer<Integer>... runners) {
         Random random = new Random();
         for (int i = 0; i < RANDOM_TESTS; i++) {
@@ -81,11 +94,18 @@ public class Generator {
     }
 
     public static void forSome16bitUnary(Consumer<Integer>... runners) {
+        forSome16bitUnary(0, runners);
+    }
+
+    public static void forSome16bitUnary(int firstStartFrom, Consumer<Integer>... runners) {
         Random random = new Random();
         for (int i = 0; i < RANDOM_TESTS; i++) {
             for (Consumer<Integer> runner : runners) {
-                int k = random.nextInt(0xFFFF);
-                runner.accept(k);
+                int first = random.nextInt(0xFFFF);
+                if (first < firstStartFrom) {
+                    first += firstStartFrom;
+                }
+                runner.accept(first);
             }
         }
     }

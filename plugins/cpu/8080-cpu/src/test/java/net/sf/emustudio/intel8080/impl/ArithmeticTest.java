@@ -73,17 +73,15 @@ public class ArithmeticTest {
     }
 
     private TestBuilder.BinaryByte additionTestBuilder() {
-        FlagsBuilder flagsToCheck = new FlagsBuilder().sign().zero().carry().auxCarry().parity();
         return new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(flagsToCheck)
-                .verifyR(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF));
+                .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF))
+                .verifyFlags(new FlagsBuilder().sign().zero().carry().auxCarry().parity());
     }
 
     private TestBuilder.BinaryByte subtractionTestBuilder() {
-        FlagsBuilder flagsToCheck = new FlagsBuilder().sign().zero().carry().auxCarry().parity();
         return new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(flagsToCheck)
-                .verifyR(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF));
+                .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF))
+                .verifyFlags(new FlagsBuilder().sign().zero().carry().auxCarry().parity());
     }
 
     @Test
@@ -115,27 +113,29 @@ public class ArithmeticTest {
 
     @Test
     public void testADC() throws Exception {
-        TestBuilder.BinaryByte test = additionTestBuilder()
-                .verifyR(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flagsBefore & 1));
+        TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
+                .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flagsBefore & 1))
+                .verifyFlags(new FlagsBuilder().sign().zero().carry().auxCarry().parity());
 
-        Generator.forAll8bitBinaryWhichEqual(
+        Generator.forSome8bitBinaryWhichEqual(
                 test.run(0x8F, REG_A)
         );
-//        Generator.forSome8bitBinary(
-//                test.run(0x88, REG_B),
-//                test.run(0x89, REG_C),
-//                test.run(0x8A, REG_D),
-//                test.run(0x8B, REG_E),
-//                test.run(0x8C, REG_H),
-//                test.run(0x8D, REG_L),
-//                test.runM(0x8E, 1)
-//        );
+        Generator.forSome8bitBinary(
+                test.run(0x88, REG_B),
+                test.run(0x89, REG_C),
+                test.run(0x8A, REG_D),
+                test.run(0x8B, REG_E),
+                test.run(0x8C, REG_H),
+                test.run(0x8D, REG_L),
+                test.runM(0x8E, 1)
+        );
     }
 
     @Test
     public void testACI() throws Exception {
-        TestBuilder.BinaryByte test = additionTestBuilder()
-                .verifyR(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flagsBefore & 1));
+        TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
+                .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flagsBefore & 1))
+                .verifyFlags(new FlagsBuilder().sign().zero().carry().auxCarry().parity());
 
         Generator.forSome8bitBinary(
                 test.runB(0xCE)
@@ -171,8 +171,9 @@ public class ArithmeticTest {
 
     @Test
     public void testSBB() throws Exception {
-        TestBuilder.BinaryByte test = subtractionTestBuilder()
-                .verifyR(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flagsBefore & 1));
+        TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
+                .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flagsBefore & 1))
+                .verifyFlags(new FlagsBuilder().sign().zero().carry().auxCarry().parity());
 
         Generator.forSome8bitBinaryWhichEqual(
                 test.run(0x9F, REG_A)
@@ -190,8 +191,9 @@ public class ArithmeticTest {
 
     @Test
     public void testSBI() throws Exception {
-        TestBuilder.BinaryByte test = subtractionTestBuilder()
-            .verifyR(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flagsBefore & 1));
+        TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
+                .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flagsBefore & 1))
+                .verifyFlags(new FlagsBuilder().sign().zero().carry().auxCarry().parity());
 
         Generator.forSome8bitBinary(
                 test.runB(0xDE)
@@ -201,36 +203,34 @@ public class ArithmeticTest {
     @Test
     public void testINR() throws Exception {
         TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(new FlagsBuilder().sign().zero().parity().auxCarry());
-        Function<RunnerContext<Byte>, Integer> verifier = context -> context.first + 1;
+                .verifyFlags(new FlagsBuilder().sign().zero().parity().auxCarry(), context -> context.first + 1);
 
         Generator.forSome8bitUnary(
-                test.verifyR(REG_B, verifier).run(0x04, REG_B),
-                test.verifyR(REG_C, verifier).run(0x0C, REG_C),
-                test.verifyR(REG_D, verifier).run(0x14, REG_D),
-                test.verifyR(REG_E, verifier).run(0x1C, REG_E),
-                test.verifyR(REG_H, verifier).run(0x24, REG_H),
-                test.verifyR(REG_L, verifier).run(0x2C, REG_L),
-                test.verifyR(REG_A, verifier).run(0x3C, REG_A),
-                test.verifyM(1, verifier).runM(0x34, 1)
+                test.verifyRegister(REG_B).run(0x04, REG_B),
+                test.verifyRegister(REG_C).run(0x0C, REG_C),
+                test.verifyRegister(REG_D).run(0x14, REG_D),
+                test.verifyRegister(REG_E).run(0x1C, REG_E),
+                test.verifyRegister(REG_H).run(0x24, REG_H),
+                test.verifyRegister(REG_L).run(0x2C, REG_L),
+                test.verifyRegister(REG_A).run(0x3C, REG_A),
+                test.verifyByte(1).runM(0x34, 1)
         );
     }
 
     @Test
     public void testDCR() throws Exception {
         TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(new FlagsBuilder().sign().zero().parity().auxCarry());
-        Function<RunnerContext<Byte>, Integer> verifier = context -> context.first - 1;
+                .verifyFlags(new FlagsBuilder().sign().zero().parity().auxCarry(), context -> context.first - 1);
 
         Generator.forSome8bitUnary(
-                test.verifyR(REG_B, verifier).run(0x05, REG_B),
-                test.verifyR(REG_C, verifier).run(0x0D, REG_C),
-                test.verifyR(REG_D, verifier).run(0x15, REG_D),
-                test.verifyR(REG_E, verifier).run(0x1D, REG_E),
-                test.verifyR(REG_H, verifier).run(0x25, REG_H),
-                test.verifyR(REG_L, verifier).run(0x2D, REG_L),
-                test.verifyR(REG_A, verifier).run(0x3D, REG_A),
-                test.verifyM(1, verifier).runM(0x35, 1)
+                test.verifyRegister(REG_B).run(0x05, REG_B),
+                test.verifyRegister(REG_C).run(0x0D, REG_C),
+                test.verifyRegister(REG_D).run(0x15, REG_D),
+                test.verifyRegister(REG_E).run(0x1D, REG_E),
+                test.verifyRegister(REG_H).run(0x25, REG_H),
+                test.verifyRegister(REG_L).run(0x2D, REG_L),
+                test.verifyRegister(REG_A).run(0x3D, REG_A),
+                test.verifyByte(1).runM(0x35, 1)
         );
     }
 
@@ -263,8 +263,8 @@ public class ArithmeticTest {
     @Test
     public void testDAD() throws Exception {
         TestBuilder.BinaryInteger test = new TestBuilder.BinaryInteger(cpuRunner, cpuVerifier)
-                .checkFlags(new FlagsBuilder().carry15())
-                .verifyPair(REG_PAIR_HL, context -> context.first + context.second);
+                .verifyPair(REG_PAIR_HL, context -> context.first + context.second)
+                .verifyFlags(new FlagsBuilder().carry15());
 
         Generator.forSome16bitBinaryWhichEqual(
                 test.runHLWithPair(0x29, REG_PAIR_HL)

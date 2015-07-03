@@ -8,6 +8,7 @@ import net.sf.emustudio.intel8080.impl.RunStateListenerStub;
 
 import java.util.Objects;
 
+import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_A;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_B;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_C;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_D;
@@ -96,8 +97,31 @@ public class CpuRunner {
         cpu.getEngine().regs[lowRegiaster] = value & 0xFF;
     }
 
+    public void setRegisterPairPSW(int registerPair, int value) {
+        if (registerPair < 3) {
+            setRegisterPair(registerPair, value);
+        } else if (registerPair == 3) {
+            cpu.getEngine().regs[REG_A] = (value >>> 8) & 0xFF;
+            cpu.getEngine().flags = (short)(value & 0xD7 | 2);
+        } else {
+            throw new IllegalArgumentException("Expected value between <0,3> !");
+        }
+    }
+
     public Byte getRegister(int register) {
         return new Byte((byte)cpu.getEngine().regs[register]);
+    }
+
+    public int getPC() {
+        return cpu.getEngine().PC;
+    }
+
+    public void setSP(int SP) {
+        cpu.getEngine().SP = SP;
+    }
+
+    public int getSP() {
+        return cpu.getEngine().SP;
     }
 
     public void setFlags(int mask) {

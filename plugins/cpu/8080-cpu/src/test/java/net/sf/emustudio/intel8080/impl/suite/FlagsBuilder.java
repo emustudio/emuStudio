@@ -132,12 +132,20 @@ public class FlagsBuilder<T extends Number> {
 
     public FlagsBuilder auxCarry() {
         evaluators.add((first, second, result) -> {
-            if (isAuxCarry(((Number) first).intValue(), ((Number)second).intValue())) {
+            int firstInt = ((Number)first).intValue();
+            byte diff = (byte)((result - firstInt) & 0xFF);
+
+            if (isAuxCarry(((Number) first).intValue(), diff)) {
                 expectedFlags |= FLAG_AC;
             } else {
                 expectedNotFlags |= FLAG_AC;
             }
         });
+        return this;
+    }
+
+    public FlagsBuilder auxCarryIsReset() {
+        evaluators.add((first, second, result) -> expectedNotFlags |= FLAG_AC);
         return this;
     }
 

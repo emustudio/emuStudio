@@ -10,6 +10,7 @@ import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_AC;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_P;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_S;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_Z;
+import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_A;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_B;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_C;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_D;
@@ -63,6 +64,21 @@ public class CpuVerifier {
                 value, realValue
         );
     }
+
+    public void checkRegisterPairPSW(int registerPair, int value) {
+        if (registerPair < 3) {
+            checkRegisterPair(registerPair, value);
+        } else if (registerPair == 3) {
+            int realValue = (cpu.getEngine().regs[REG_A] << 8) | (cpu.getEngine().flags & 0xD7 | 2);
+            assertEquals(
+                    String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
+                    value, realValue
+            );
+        } else {
+            throw new IllegalArgumentException("Expected value between <0,3> !");
+        }
+    }
+
 
     public void checkAccumulator(int value) {
         checkRegister(EmulatorEngine.REG_A, value);

@@ -34,10 +34,6 @@ import static org.easymock.EasyMock.replay;
 
 public class LogicTest {
     private static final long PLUGIN_ID = 0L;
-    public static final int REG_PAIR_BC = 0;
-    public static final int REG_PAIR_DE = 1;
-    public static final int REG_PAIR_HL = 2;
-    public static final int REG_SP = 3;
 
     private CpuImpl cpu;
     private CpuRunner cpuRunner;
@@ -77,8 +73,8 @@ public class LogicTest {
     @Test
     public void testANA() throws Exception {
         TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(new FlagsBuilder().sign().zero().parity().carryIsReset())
-                .verifyR(REG_A, context -> context.first & context.second);
+                .verifyRegister(REG_A, context -> context.first & context.second)
+                .verifyFlags(new FlagsBuilder().sign().zero().parity().carryIsReset().auxCarryIsReset());
 
         Generator.forSome8bitBinaryWhichEqual(
                 test.run(0xA7, REG_A)
@@ -97,8 +93,8 @@ public class LogicTest {
     @Test
     public void testANI() throws Exception {
         TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(new FlagsBuilder().sign().zero().parity().carryIsReset())
-                .verifyR(REG_A, context -> context.first & context.second);
+                .verifyRegister(REG_A, context -> context.first & context.second)
+                .verifyFlags(new FlagsBuilder().sign().zero().parity().carryIsReset().auxCarryIsReset());
 
         Generator.forSome8bitBinary(
                 test.runB(0xE6)
@@ -108,8 +104,8 @@ public class LogicTest {
     @Test
     public void testXRA() throws Exception {
         TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(new FlagsBuilder().sign().zero().parity().carryIsReset().auxCarry())
-                .verifyR(REG_A, context -> context.first ^ context.second);
+                .verifyRegister(REG_A, context -> context.first ^ context.second)
+                .verifyFlags(new FlagsBuilder().sign().zero().parity().carryIsReset().auxCarryIsReset());
 
         Generator.forSome8bitBinaryWhichEqual(
                 test.run(0xAF, REG_A)
@@ -128,8 +124,8 @@ public class LogicTest {
     @Test
     public void testXRI() throws Exception {
         TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(new FlagsBuilder().sign().zero().parity().carryIsReset())
-                .verifyR(REG_A, context -> context.first ^ context.second);
+                .verifyRegister(REG_A, context -> context.first ^ context.second)
+                .verifyFlags(new FlagsBuilder().sign().zero().parity().carryIsReset().auxCarryIsReset());
 
         Generator.forSome8bitBinary(
                 test.runB(0xEE)
@@ -139,8 +135,8 @@ public class LogicTest {
     @Test
     public void testORA() throws Exception {
         TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(new FlagsBuilder().sign().zero().parity().carryIsReset())
-                .verifyR(REG_A, context -> context.first | context.second);
+                .verifyRegister(REG_A, context -> context.first | context.second)
+                .verifyFlags(new FlagsBuilder().sign().zero().parity().carryIsReset().auxCarryIsReset());
 
         Generator.forSome8bitBinaryWhichEqual(
                 test.run(0xB7, REG_A)
@@ -159,8 +155,8 @@ public class LogicTest {
     @Test
     public void testORI() throws Exception {
         TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(new FlagsBuilder().sign().zero().parity().carryIsReset())
-                .verifyR(REG_A, context -> context.first | context.second);
+                .verifyRegister(REG_A, context -> context.first | context.second)
+                .verifyFlags(new FlagsBuilder().sign().zero().parity().carryIsReset().auxCarryIsReset());
 
         Generator.forSome8bitBinary(
                 test.runB(0xF6)
@@ -170,8 +166,7 @@ public class LogicTest {
     @Test
     public void testDAA() throws Exception {
         TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(new FlagsBuilder().sign().zero().parity().carry().auxCarryDAA())
-                .verifyR(REG_A, context -> {
+                .verifyRegister(REG_A, context -> {
                     int result = ((int)context.first)& 0xFF;
                     if (((context.flagsBefore & FLAG_AC) == FLAG_AC) || (result & 0x0F) > 9) {
                         result += 6;
@@ -180,7 +175,8 @@ public class LogicTest {
                         result += 0x60;
                     }
                     return result;
-                });
+                })
+                .verifyFlags(new FlagsBuilder().sign().zero().parity().carry().auxCarryDAA());
 
         Generator.forSome8bitUnary(
                 test.run(0x27, REG_A)
@@ -190,7 +186,7 @@ public class LogicTest {
     @Test
     public void testCMA() throws Exception {
         TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
-                .verifyR(REG_A, context -> (~context.first) & 0xFF);
+                .verifyRegister(REG_A, context -> (~context.first) & 0xFF);
 
         Generator.forSome8bitUnary(
                 test.run(0x2F, REG_A)
@@ -219,8 +215,8 @@ public class LogicTest {
     @Test
     public void testRLC() throws Exception {
         TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(new FlagsBuilder().carryIsFirstOperandMSB())
-                .verifyR(REG_A, context -> (context.first << 1) | ((context.first >>> 7) & 1));
+                .verifyRegister(REG_A, context -> (context.first << 1) | ((context.first >>> 7) & 1))
+                .verifyFlags(new FlagsBuilder().carryIsFirstOperandMSB());
 
         Generator.forSome8bitUnary(
                 test.run(0x07, REG_A)
@@ -230,8 +226,8 @@ public class LogicTest {
     @Test
     public void testRRC() throws Exception {
         TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(new FlagsBuilder().carryIsFirstOperandLSB())
-                .verifyR(REG_A, context -> (((context.first &0xFF) >>> 1) | ((context.first & 1) << 7)) & 0xFF);
+                .verifyRegister(REG_A, context -> (((context.first &0xFF) >>> 1) | ((context.first & 1) << 7)) & 0xFF)
+                .verifyFlags(new FlagsBuilder().carryIsFirstOperandLSB());
 
         Generator.forSome8bitUnary(
                 test.run(0x0F, REG_A)
@@ -241,8 +237,8 @@ public class LogicTest {
     @Test
     public void testRAL() throws Exception {
         TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(new FlagsBuilder().carryIsFirstOperandMSB())
-                .verifyR(REG_A, context -> (context.first << 1) | (context.flagsBefore & 1));
+                .verifyRegister(REG_A, context -> (context.first << 1) | (context.flagsBefore & 1))
+                .verifyFlags(new FlagsBuilder().carryIsFirstOperandMSB());
 
         Generator.forSome8bitUnary(
                 test.run(0x17, REG_A)
@@ -252,8 +248,8 @@ public class LogicTest {
     @Test
     public void testRAR() throws Exception {
         TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(new FlagsBuilder().carryIsFirstOperandLSB())
-                .verifyR(REG_A, context -> (((context.first &0xFF) >>> 1) | ((context.flagsBefore & 1) << 7)) & 0xFF);
+                .verifyRegister(REG_A, context -> (((context.first &0xFF) >>> 1) | ((context.flagsBefore & 1) << 7)) & 0xFF)
+                .verifyFlags(new FlagsBuilder().carryIsFirstOperandLSB());
 
         Generator.forSome8bitUnary(
                 test.run(0x1F, REG_A)
@@ -264,25 +260,33 @@ public class LogicTest {
     public void testCMP() throws Exception {
         FlagsBuilder flagsToCheck = new FlagsBuilder().sign().zero().carry().auxCarry().parity();
         TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
-                .checkFlags(flagsToCheck)
-                .verifyR(REG_A, context -> ((Number)context.first).intValue(), (context) -> context.first - context.second);
+                .verifyRegister(REG_A, context -> ((Number)context.first).intValue())
+                .verifyFlags(flagsToCheck, context -> (context.first & 0xFF) - (context.second & 0xFF));
 
-        // 0000 0001
-        // 1111 1111
-        //    0 0000
-
-        Generator.forAll8bitBinaryWhichEqual(
+        Generator.forSome8bitBinaryWhichEqual(
                 test.run(0xBF, REG_A)
         );
-//        Generator.forSome8bitBinary(
-//                test.run(0xB8, REG_B, result),
-//                test.run(0xB9, REG_C, result),
-//                test.run(0xBA, REG_D, result),
-//                test.run(0xBB, REG_E, result),
-//                test.run(0xBC, REG_H, result),
-//                test.run(0xBD, REG_L, result),
-//                test.runM(0xBE, 1, result)
-//        );
+        Generator.forSome8bitBinary(
+                test.run(0xB8, REG_B),
+                test.run(0xB9, REG_C),
+                test.run(0xBA, REG_D),
+                test.run(0xBB, REG_E),
+                test.run(0xBC, REG_H),
+                test.run(0xBD, REG_L),
+                test.runM(0xBE, 1)
+        );
+    }
+
+    @Test
+    public void testCPI() throws Exception {
+        FlagsBuilder flagsToCheck = new FlagsBuilder().sign().zero().carry().auxCarry().parity();
+        TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
+                .verifyRegister(REG_A, context -> ((Number)context.first).intValue())
+                .verifyFlags(flagsToCheck, context -> (context.first & 0xFF) - (context.second & 0xFF));
+
+        Generator.forSome8bitBinary(
+                test.runB(0xFE)
+        );
     }
 
 
