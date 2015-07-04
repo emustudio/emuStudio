@@ -9,12 +9,17 @@ import net.sf.emustudio.intel8080.impl.suite.runners.HLWithRegister;
 import net.sf.emustudio.intel8080.impl.suite.runners.HLWithRegisterPair;
 import net.sf.emustudio.intel8080.impl.suite.runners.ImmediateByte;
 import net.sf.emustudio.intel8080.impl.suite.runners.ImmediateWordWithFlags;
+import net.sf.emustudio.intel8080.impl.suite.runners.ImmediateWordWithMemoryByte;
+import net.sf.emustudio.intel8080.impl.suite.runners.ImmediateWordWithMemoryWord;
+import net.sf.emustudio.intel8080.impl.suite.runners.ImmediateWordWithRegister;
+import net.sf.emustudio.intel8080.impl.suite.runners.ImmediateWordWithRegisterPair;
 import net.sf.emustudio.intel8080.impl.suite.runners.ImmediateWordWithSPAndFlags;
 import net.sf.emustudio.intel8080.impl.suite.runners.Register;
 import net.sf.emustudio.intel8080.impl.suite.runners.RegisterPair;
 import net.sf.emustudio.intel8080.impl.suite.runners.RegisterPairWithMemory;
 import net.sf.emustudio.intel8080.impl.suite.runners.RegisterPairWithRegister;
 import net.sf.emustudio.intel8080.impl.suite.runners.SPWithMemoryAndFlags;
+import net.sf.emustudio.intel8080.impl.suite.runners.SPWithMemoryWordAndRegisterPair;
 import net.sf.emustudio.intel8080.impl.suite.runners.SPWithRegisterPairAndPSW;
 import net.sf.emustudio.intel8080.impl.suite.runners.RunnerContext;
 import net.sf.emustudio.intel8080.impl.suite.verifiers.FlagsVerifier;
@@ -183,6 +188,11 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
             return create();
         }
 
+        public Test<Integer>.Unary runB(int instruction) {
+            runner = new ImmediateWordWithFlags(cpuRunner, instruction, 0);
+            return create();
+        }
+
         public Test<Integer>.Unary runB(int instruction, int flags) {
             runner = new ImmediateWordWithFlags(cpuRunner, instruction, flags);
             return create();
@@ -192,6 +202,27 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
             runner = new ImmediateWordWithSPAndFlags(cpuRunner, instruction, SP, flags);
             return create();
         }
+
+        public Test<Integer>.Unary runB(int instruction, byte value) {
+            runner = new ImmediateWordWithMemoryByte(cpuRunner, instruction, value);
+            return create();
+        }
+
+        public Test<Integer>.Unary runBword(int instruction, int value) {
+            runner = new ImmediateWordWithMemoryWord(cpuRunner, instruction, value);
+            return create();
+        }
+
+        public Test<Integer>.Unary runBPair(int instruction, int registerPair, int value) {
+            runner = new ImmediateWordWithRegisterPair(cpuRunner, instruction, registerPair, value);
+            return create();
+        }
+
+        public Test<Integer>.Unary runB(int instruction, int register, byte value) {
+            runner = new ImmediateWordWithRegister(cpuRunner, instruction, register, value);
+            return create();
+        }
+
 
         public UnaryInteger verifyPC(Function<RunnerContext<Integer>, Integer> operation) {
             lastOperation = operation;
@@ -252,6 +283,11 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
 
         public Test<Integer>.Binary runSPWithPairAndPSW(int instruction, int registerPair) {
             runner = new SPWithRegisterPairAndPSW(cpuRunner, instruction, registerPair);
+            return create();
+        }
+
+        public Test<Integer>.Binary runSPWithMemoryWordAndPair(int instruction, int registerPair, int address) {
+            runner = new SPWithMemoryWordAndRegisterPair(cpuRunner, instruction, registerPair, address);
             return create();
         }
 

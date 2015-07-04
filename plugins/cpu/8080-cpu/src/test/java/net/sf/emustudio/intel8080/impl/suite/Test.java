@@ -9,7 +9,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class Test<T> {
+public class Test<T extends Number> {
     private final List<Consumer<RunnerContext<T>>> verifiers = new ArrayList<>();
 
     public Test(List<Consumer<RunnerContext<T>>> verifiers) {
@@ -26,7 +26,7 @@ public class Test<T> {
         return new Unary(runner, verifiers);
     }
 
-    public static <T> Test<T>.Unary create(Function<T, RunnerContext<T>> runner,
+    public static <T extends Number> Test<T>.Unary create(Function<T, RunnerContext<T>> runner,
                                            List<Consumer<RunnerContext<T>>> verifiers) {
         return new Test<>(verifiers).pCreate(runner);
     }
@@ -35,7 +35,7 @@ public class Test<T> {
         return new Binary(runner, verifiers);
     }
 
-    public static <T> Test<T>.Binary create(BiFunction<T, T, RunnerContext<T>> runner,
+    public static <T extends Number> Test<T>.Binary create(BiFunction<T, T, RunnerContext<T>> runner,
                                             List<Consumer<RunnerContext<T>>> verifiers) {
         return new Test<>(verifiers).pCreate(runner);
     }

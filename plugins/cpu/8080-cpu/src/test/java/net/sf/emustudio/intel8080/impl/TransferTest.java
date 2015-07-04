@@ -2,6 +2,7 @@ package net.sf.emustudio.intel8080.impl;
 
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.PluginInitializationException;
+import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
@@ -25,6 +26,7 @@ import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_L;
 import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.assertEquals;
 
 public class TransferTest {
     private static final long PLUGIN_ID = 0L;
@@ -273,6 +275,135 @@ public class TransferTest {
                 test.runPair(0x02, REGISTER_PAIR_BC, REG_A, value),
                 test.runPair(0x12, REGISTER_PAIR_DE, REG_A, value)
         );
+    }
+
+    @Test
+    public void testLDA() throws Exception {
+        byte value = -120;
+
+        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+                .verifyRegister(REG_A, context -> value & 0xFF);
+
+        Generator.forSome16bitUnary(
+                test.runB(0x3A, value)
+        );
+    }
+
+    @Test
+    public void testSTA() throws Exception {
+        byte value = -120;
+
+        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+                .verifyByte(context -> context.first, context -> value & 0xFF);
+
+        Generator.forSome16bitUnary(
+                test.runB(0x32, REG_A, value)
+        );
+    }
+
+    @Test
+    public void testLHLD() throws Exception {
+        int value = 0x1256;
+
+        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+                .verifyPair(REGISTER_PAIR_HL, context -> value);
+
+        Generator.forSome16bitUnary(
+                test.runBword(0x2A, value)
+        );
+    }
+
+    @Test
+    public void testSHLD() throws Exception {
+        int value = 0x1236;
+
+        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+                .verifyWord(context -> value, context -> context.first);
+
+        Generator.forSome16bitUnary(
+                test.runBPair(0x22, REGISTER_PAIR_HL, value)
+        );
+    }
+
+    @Test
+    public void testLXI_B() throws Exception {
+        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+                .verifyPair(REGISTER_PAIR_BC, context -> context.first);
+
+        Generator.forSome16bitUnary(
+                test.runB(0x01)
+        );
+    }
+
+    @Test
+    public void testLXI_D() throws Exception {
+        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+                .verifyPair(REGISTER_PAIR_DE, context -> context.first);
+
+        Generator.forSome16bitUnary(
+                test.runB(0x11)
+        );
+    }
+
+    @Test
+    public void testLXI_H() throws Exception {
+        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+                .verifyPair(REGISTER_PAIR_HL, context -> context.first);
+
+        Generator.forSome16bitUnary(
+                test.runB(0x21)
+        );
+    }
+
+    @Test
+    public void testLXI_SP() throws Exception {
+        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+                .verifyPair(REGISTER_SP, context -> context.first);
+
+        Generator.forSome16bitUnary(
+                test.runB(0x31)
+        );
+    }
+
+    @Test
+    public void testSPHL() throws Exception {
+        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+                .verifyPair(REGISTER_SP, context -> context.first);
+
+        Generator.forSome16bitUnary(
+                test.runPair(0xF9, REGISTER_PAIR_HL)
+        );
+    }
+
+    @Test
+    public void testXCHG() throws Exception {
+        TestBuilder.BinaryInteger test = new TestBuilder.BinaryInteger(cpuRunner, cpuVerifier)
+                .verifyPair(REGISTER_PAIR_DE, context -> context.first)
+                .verifyPair(REGISTER_PAIR_HL, context -> context.second);
+
+        Generator.forSome16bitBinary(
+                test.runHLWithPair(0xEB, REGISTER_PAIR_DE)
+        );
+    }
+
+    @Test
+    public void testXTHL() throws Exception {
+        int address = 0x23;
+
+        TestBuilder.BinaryInteger test = new TestBuilder.BinaryInteger(cpuRunner, cpuVerifier)
+                .verifyWord(context -> context.second, context -> address)
+                .verifyPair(REGISTER_PAIR_HL, context -> context.first);
+
+        Generator.forSome16bitBinary(
+                test.runSPWithMemoryWordAndPair(0xE3, REGISTER_PAIR_HL, address)
+        );
+    }
+
+    @Test
+    public void testMemoryOverflow() throws Exception {
+        cpuRunner.resetProgram(new short[] {});
+        cpuRunner.setExpectedRunState(CPU.RunState.STATE_STOPPED_ADDR_FALLOUT);
+        cpuRunner.step();
     }
 
 
