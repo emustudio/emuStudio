@@ -1,6 +1,7 @@
-# Welcome to emuStudio
+﻿# Welcome to emuStudio
 [![Build Status](https://travis-ci.org/vbmacher/emuStudio.png)](https://travis-ci.org/vbmacher/emuStudio)
 [![Coverage Status](https://coveralls.io/repos/vbmacher/emuStudio/badge.png?branch=branch-0_39)](https://coveralls.io/r/vbmacher/emuStudio?branch=branch-0_39)
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/vbmacher/emustudio/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 
 emuStudio is free and versatile platform for computer emulation. It is written in Java, which makes
 it a naturally cross-platform application.
