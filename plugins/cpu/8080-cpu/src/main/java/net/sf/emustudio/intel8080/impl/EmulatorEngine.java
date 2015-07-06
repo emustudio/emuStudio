@@ -98,6 +98,9 @@ public class EmulatorEngine {
                         throw new Breakpoint();
                     }
                 } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                    if (e.getCause() != null && e.getCause() instanceof IndexOutOfBoundsException) {
+                        return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+                    }
                     return CPU.RunState.STATE_STOPPED_BAD_INSTR;
                 } catch (IndexOutOfBoundsException e) {
                     return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
@@ -136,9 +139,9 @@ public class EmulatorEngine {
     /* Put a value into an 8080 register from memory */
     private void putreg(int reg, int val) {
         if (reg == 6) {
-            memory.write((regs[REG_H] << 8) | regs[REG_L], (short)val);
+            memory.write((regs[REG_H] << 8) | regs[REG_L], (short)(val & 0xFF));
         } else {
-            regs[reg] = val;
+            regs[reg] = val & 0xFF;
         }
     }
 
@@ -173,7 +176,7 @@ public class EmulatorEngine {
             case 2:
                 return (regs[REG_H] << 8) | regs[REG_L];
             case 3:
-                return (regs[REG_A] << 8) | flags | 2;
+                return (regs[REG_A] << 8) | (flags & 0xD7) | 2;
         }
         return 0;
     }
@@ -200,7 +203,7 @@ public class EmulatorEngine {
                 break;
             case 3:
                 regs[REG_A] = high;
-                flags = (short) (low | 2);
+                flags = (short) (low & 0xD7 | 2);
                 break;
         }
     }
@@ -389,22 +392,29 @@ public class EmulatorEngine {
 
     private int O39_DAA(short OP) {
         int temp = regs[REG_A];
+
         boolean acFlag = (flags & FLAG_AC) == FLAG_AC;
         boolean cFlag = (flags & FLAG_C) == FLAG_C;
 
-        if (!acFlag && !cFlag) {
-            regs[REG_A] = EmulatorTables.DAA_NOT_AC_NOT_C_TABLE[temp] & 0xFF;
-            flags = (short) ((EmulatorTables.DAA_NOT_AC_NOT_C_TABLE[temp] >> 8) & 0xFF);
-        } else if (acFlag && !cFlag) {
-            regs[REG_A] = EmulatorTables.DAA_AC_NOT_C_TABLE[temp] & 0xFF;
-            flags = (short) ((EmulatorTables.DAA_AC_NOT_C_TABLE[temp] >> 8) & 0xFF);
-        } else if (!acFlag && cFlag) {
-            regs[REG_A] = EmulatorTables.DAA_NOT_AC_C_TABLE[temp] & 0xFF;
-            flags = (short) ((EmulatorTables.DAA_NOT_AC_C_TABLE[temp] >> 8) & 0xFF);
-        } else {
-            regs[REG_A] = EmulatorTables.DAA_AC_C_TABLE[temp] & 0xFF;
-            flags = (short) ((EmulatorTables.DAA_AC_C_TABLE[temp] >> 8) & 0xFF);
+        if (acFlag || (temp & 0x0F) > 9) {
+            temp += 6;
+            auxCarry(regs[REG_A], 6);
+            if ((temp & 0x100) == 0x100) {
+                flags |= FLAG_C;
+            } else {
+                flags &= ~FLAG_C;
+            }
         }
+        if (cFlag || ((temp >>> 4) & 0x0F) > 9) {
+            temp += 0x60;
+            if ((temp & 0x100) == 0x100) {
+                flags |= FLAG_C;
+            } else {
+                flags &= ~FLAG_C;
+            }
+        }
+        regs[REG_A] = temp & 0xFF;
+        flags = (short)(EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_C) | (flags & FLAG_AC));
         return 4;
     }
 
@@ -487,16 +497,16 @@ public class EmulatorEngine {
     }
 
     private int O206_ACI(short OP) {
-        int DAR = regs[REG_A];
+        int X = regs[REG_A];
         int diff = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
-        if ((flags & FLAG_C) != 0) {
+        if ((flags & FLAG_C) == FLAG_C) {
             diff++;
         }
         regs[REG_A] += diff;
 
         flags = EmulatorTables.SIGN_ZERO_PARITY_CARRY_TABLE[regs[REG_A] & 0x1FF];
-        auxCarry(DAR, diff);
+        auxCarry(X, diff);
 
         regs[REG_A] = regs[REG_A] & 0xFF;
         return 7;
@@ -556,7 +566,7 @@ public class EmulatorEngine {
     private int O230_ANI(short OP) {
         regs[REG_A] &= (memory.read(PC) & 0xFF);
         PC = (PC + 1) & 0xFFFF;
-        flags = (short) (EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_AC));
+        flags = EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]];
         return 7;
     }
 
@@ -578,7 +588,7 @@ public class EmulatorEngine {
     private int O238_XRI(short OP) {
         regs[REG_A] ^= (memory.read(PC) & 0xFF);
         PC = (PC + 1) & 0xFFFF;
-        flags = (short) (EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_AC));
+        flags = EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]];
         return 7;
     }
 
@@ -590,7 +600,7 @@ public class EmulatorEngine {
     private int O246_ORI(short OP) {
         regs[REG_A] |= (memory.read(PC) & 0xFF);
         PC = (PC + 1) & 0xFFFF;
-        flags = (short) (EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_AC));
+        flags = EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]];
         return 7;
     }
 
@@ -733,7 +743,7 @@ public class EmulatorEngine {
     private int MF8_88_ADC(short OP) {
         int X = regs[REG_A];
         int diff = getreg(OP & 0x07);
-        if ((flags & FLAG_C) != 0) {
+        if ((flags & FLAG_C) == FLAG_C) {
             diff++;
         }
         regs[REG_A] += diff;
@@ -813,22 +823,19 @@ public class EmulatorEngine {
 
     private int MF8_A0_ANA(short OP) {
         regs[REG_A] &= getreg(OP & 0x07);
-        flags = (short) (EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_AC));
+        flags = EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]];
         return 4;
     }
 
     private int MF8_A8_XRA(short OP) {
-        int before = regs[REG_A];
-        int diff = getreg(OP & 0x07);
-        regs[REG_A] ^= diff;
+        regs[REG_A] ^= getreg(OP & 0x07);
         flags = EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]];
-        auxCarry(before, diff);
         return 4;
     }
 
     private int MF8_B0_ORA(short OP) {
         regs[REG_A] |= getreg(OP & 0x07);
-        flags = (short) (EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]] | (flags & FLAG_AC));
+        flags = EmulatorTables.SIGN_ZERO_PARITY_TABLE[regs[REG_A]];
         return 4;
     }
 

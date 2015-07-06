@@ -30,6 +30,13 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
+import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.intel8080.FrequencyChangedListener;
+import net.sf.emustudio.intel8080.gui.DecoderImpl;
+import net.sf.emustudio.intel8080.gui.DisassemblerImpl;
+import net.sf.emustudio.intel8080.gui.StatusPanel;
+
+import javax.swing.JPanel;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Objects;
@@ -40,12 +47,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.JPanel;
-import net.sf.emustudio.intel8080.ExtendedContext;
-import net.sf.emustudio.intel8080.FrequencyChangedListener;
-import net.sf.emustudio.intel8080.gui.DecoderImpl;
-import net.sf.emustudio.intel8080.gui.DisassemblerImpl;
-import net.sf.emustudio.intel8080.gui.StatusPanel;
 
 @PluginType(
         type = PLUGIN_TYPE.CPU,
@@ -55,6 +56,7 @@ import net.sf.emustudio.intel8080.gui.StatusPanel;
 )
 public class CpuImpl extends AbstractCPU {
     public static final String PRINT_CODE = "printCode";
+    public static final String PRINT_CODE_USE_CACHE = "printCodeUseCache";
 
     private final ScheduledExecutorService frequencyScheduler = Executors.newSingleThreadScheduledExecutor();
     private final AtomicReference<Future> frequencyUpdaterFuture = new AtomicReference<>();
@@ -124,8 +126,13 @@ public class CpuImpl extends AbstractCPU {
             this.engine = new EmulatorEngine(memory, context);
 
             String setting = settings.readSetting(getPluginID(), PRINT_CODE);
+            String printCodeUseCache = settings.readSetting(getPluginID(), PRINT_CODE_USE_CACHE);
             if (setting != null && setting.toLowerCase().equals("true")) {
-                this.engine.setDispatchListener(new InstructionPrinter(disassembler, engine));
+                if (printCodeUseCache == null || printCodeUseCache.toLowerCase().equals("true")) {
+                    engine.setDispatchListener(new InstructionPrinter(disassembler, engine, true));
+                } else {
+                    engine.setDispatchListener(new InstructionPrinter(disassembler, engine, false));
+                }
             }
             statusPanel = new StatusPanel(this, context);
         } catch (InvalidContextException | ContextNotFoundException e) {
