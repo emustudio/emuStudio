@@ -1,27 +1,20 @@
 package net.sf.emustudio.intel8080.impl.suite;
 
-import net.sf.emustudio.intel8080.impl.suite.runners.AccumulatorWithByte;
-import net.sf.emustudio.intel8080.impl.suite.runners.AccumulatorWithMemory;
-import net.sf.emustudio.intel8080.impl.suite.runners.AccumulatorWithRegister;
-import net.sf.emustudio.intel8080.impl.suite.runners.HLWithOperand;
-import net.sf.emustudio.intel8080.impl.suite.runners.HLWithMemoryByte;
-import net.sf.emustudio.intel8080.impl.suite.runners.HLWithRegister;
-import net.sf.emustudio.intel8080.impl.suite.runners.HLWithRegisterPair;
-import net.sf.emustudio.intel8080.impl.suite.runners.ImmediateByte;
-import net.sf.emustudio.intel8080.impl.suite.runners.ImmediateWordWithFlags;
-import net.sf.emustudio.intel8080.impl.suite.runners.ImmediateWordWithMemoryByte;
-import net.sf.emustudio.intel8080.impl.suite.runners.ImmediateWordWithMemoryWord;
-import net.sf.emustudio.intel8080.impl.suite.runners.ImmediateWordWithRegister;
-import net.sf.emustudio.intel8080.impl.suite.runners.ImmediateWordWithRegisterPair;
-import net.sf.emustudio.intel8080.impl.suite.runners.ImmediateWordWithSPAndFlags;
-import net.sf.emustudio.intel8080.impl.suite.runners.Register;
-import net.sf.emustudio.intel8080.impl.suite.runners.RegisterPair;
-import net.sf.emustudio.intel8080.impl.suite.runners.RegisterPairWithMemory;
-import net.sf.emustudio.intel8080.impl.suite.runners.RegisterPairWithRegister;
-import net.sf.emustudio.intel8080.impl.suite.runners.SPWithMemoryAndFlags;
-import net.sf.emustudio.intel8080.impl.suite.runners.SPWithMemoryWordAndRegisterPair;
-import net.sf.emustudio.intel8080.impl.suite.runners.SPWithRegisterPairAndPSW;
+import net.sf.emustudio.intel8080.impl.suite.injectors.AddressAndMemoryWord;
+import net.sf.emustudio.intel8080.impl.suite.injectors.MemoryAddress;
+import net.sf.emustudio.intel8080.impl.suite.injectors.MemoryByte;
+import net.sf.emustudio.intel8080.impl.suite.injectors.MemoryExpand;
+import net.sf.emustudio.intel8080.impl.suite.injectors.MemoryWord;
+import net.sf.emustudio.intel8080.impl.suite.injectors.Register;
+import net.sf.emustudio.intel8080.impl.suite.injectors.RegisterPair;
+import net.sf.emustudio.intel8080.impl.suite.injectors.RegisterPairPSW;
+import net.sf.emustudio.intel8080.impl.suite.runners.BinaryRunner;
+import net.sf.emustudio.intel8080.impl.suite.injectors.InstructionNoOperands;
+import net.sf.emustudio.intel8080.impl.suite.injectors.InstructionWordOperand;
+import net.sf.emustudio.intel8080.impl.suite.injectors.InstructionByteOperand;
+import net.sf.emustudio.intel8080.impl.suite.runners.RunnerInjector;
 import net.sf.emustudio.intel8080.impl.suite.runners.RunnerContext;
+import net.sf.emustudio.intel8080.impl.suite.runners.UnaryRunner;
 import net.sf.emustudio.intel8080.impl.suite.verifiers.FlagsVerifier;
 import net.sf.emustudio.intel8080.impl.suite.verifiers.MemoryByteVerifier;
 import net.sf.emustudio.intel8080.impl.suite.verifiers.MemoryWordVerifier;
@@ -35,7 +28,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -66,10 +58,10 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
 
     public SpecificTestBuilder verifyFlags(FlagsBuilder flagsBuilder, Function<RunnerContext<K>, Integer> operator) {
         lastOperation = operator;
-        return verifyFlags(flagsBuilder);
+        return verifyFlagsOfLastOp(flagsBuilder);
     }
 
-    public SpecificTestBuilder verifyFlags(FlagsBuilder flagsBuilder) {
+    public SpecificTestBuilder verifyFlagsOfLastOp(FlagsBuilder flagsBuilder) {
         if (lastOperation == null) {
             throw new IllegalStateException("Last operation is not set!");
         }
@@ -127,102 +119,113 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
     }
 
     public static class UnaryByte extends TestBuilder<Byte, UnaryByte> {
-        protected Function<Byte, RunnerContext<Byte>> runner;
+        private final UnaryRunner<Byte> runner = new UnaryRunner<>(cpuRunner);
 
         public UnaryByte(CpuRunner cpuRunner, CpuVerifier cpuVerifier) {
             super(cpuRunner, cpuVerifier);
         }
 
-        public Test<Byte>.Unary run(int instruction, int register) {
-            runner = new Register(cpuRunner, instruction, register);
-            return create();
+        public UnaryByte keepCurrentInjectorsAfterRun() {
+            runner.keepCurrentInjectorsAfterClear();
+            return this;
         }
 
-        public Test<Byte>.Unary runM(int instruction, int address) {
-            runner = new HLWithMemoryByte(cpuRunner, instruction, address);
-            return create();
+        public UnaryByte operandIsRegister(int register) {
+            runner.inject(new Register(register));
+            return this;
         }
 
-        public Test<Byte>.Unary runHL(int instruction, int address) {
-            runner = new HLWithOperand(cpuRunner, instruction, address);
-            return create();
+        public UnaryByte operandIsMemoryByteAt(int address) {
+            runner.inject(new MemoryByte(address));
+            return this;
         }
 
-        public Test<Byte>.Unary runHL(int instruction, int address, int register) {
-            runner = new HLWithRegister(cpuRunner, instruction, address, register);
-            return create();
+        public UnaryByte setPair(int registerPair, int value) {
+            runner.inject((tmpRunner, argument) -> {
+                tmpRunner.ensureProgramSize(value + 1);
+                tmpRunner.setRegisterPair(registerPair, value);
+            });
+            return this;
         }
 
-        public Test<Byte>.Unary runB(int instruction) {
-            runner = new ImmediateByte(cpuRunner, instruction);
-            return create();
+        public Test<Byte>.Unary run(int instruction) {
+            return create(new InstructionNoOperands<>(instruction));
         }
 
-        private Test<Byte>.Unary create() {
-            if (runner == null || verifiers.isEmpty()) {
-                throw new IllegalStateException("Runner and at least one verifier must be set");
+        public Test<Byte>.Unary runWithOperand(int instruction) {
+            return create(new InstructionByteOperand(instruction));
+        }
+
+        private Test<Byte>.Unary create(RunnerInjector<Byte> instruction) {
+            if (verifiers.isEmpty()) {
+                throw new IllegalStateException("At least one verifier must be set");
             }
-            return Test.<Byte>create(runner, verifiers);
+            UnaryRunner<Byte> tmpRunner = runner.clone();
+            tmpRunner.inject(instruction);
+            runner.clearInjectors();
+            return Test.<Byte>create(tmpRunner, verifiers);
         }
     }
 
     public static class UnaryInteger extends TestBuilder<Integer, UnaryInteger> {
-        protected Function<Integer, RunnerContext<Integer>> runner;
+        private final UnaryRunner<Integer> runner = new UnaryRunner<>(cpuRunner);
 
         public UnaryInteger(CpuRunner cpuRunner, CpuVerifier cpuVerifier) {
             super(cpuRunner, cpuVerifier);
         }
 
-        public Test<Integer>.Unary runPair(int instruction, int registerPair) {
-            runner = new RegisterPair(cpuRunner, instruction, registerPair);
-            return create();
+        public UnaryInteger operandIsPair(int registerPair) {
+            runner.inject(
+                    new MemoryExpand(),
+                    new RegisterPair(registerPair)
+            );
+            return this;
         }
 
-        public Test<Integer>.Unary runPair(int instruction, int registerPair, int value) {
-            runner = new RegisterPairWithMemory(cpuRunner, instruction, registerPair, value);
-            return create();
+        public UnaryInteger keepCurrentInjectorsAfterRun() {
+            runner.keepCurrentInjectorsAfterClear();
+            return this;
         }
 
-        public Test<Integer>.Unary runPair(int instruction, int registerPair, int register, int value) {
-            runner = new RegisterPairWithRegister(cpuRunner, instruction, registerPair, register, value);
-            return create();
+        public UnaryInteger operandIsMemoryAddressByte(int value) {
+            runner.inject(new MemoryAddress(Byte.valueOf((byte)value)));
+            return this;
         }
 
-        public Test<Integer>.Unary runB(int instruction) {
-            runner = new ImmediateWordWithFlags(cpuRunner, instruction, 0);
-            return create();
+        public UnaryInteger operandIsMemoryAddressWord(int value) {
+            runner.inject(new MemoryAddress(value));
+            return this;
         }
 
-        public Test<Integer>.Unary runB(int instruction, int flags) {
-            runner = new ImmediateWordWithFlags(cpuRunner, instruction, flags);
-            return create();
+        public UnaryInteger setRegister(int register, int value) {
+            runner.inject((tmpRunner, argument) -> tmpRunner.setRegister(register, value));
+            return this;
         }
 
-        public Test<Integer>.Unary runB(int instruction, int flags, int SP) {
-            runner = new ImmediateWordWithSPAndFlags(cpuRunner, instruction, SP, flags);
-            return create();
+        public UnaryInteger setPair(int registerPair, int value) {
+            runner.inject(
+                    (tmpRunner, argument) -> tmpRunner.ensureProgramSize(value + 2),
+                    (tmpRunner, argument) -> tmpRunner.setRegisterPair(registerPair, value));
+            return this;
         }
 
-        public Test<Integer>.Unary runB(int instruction, byte value) {
-            runner = new ImmediateWordWithMemoryByte(cpuRunner, instruction, value);
-            return create();
+        public UnaryInteger setFlags(int flags) {
+            runner.inject((tmpRunner, argument) -> tmpRunner.setFlags(flags));
+            return this;
         }
 
-        public Test<Integer>.Unary runBword(int instruction, int value) {
-            runner = new ImmediateWordWithMemoryWord(cpuRunner, instruction, value);
-            return create();
+        public UnaryInteger setSP(int SP) {
+            runner.inject((tmpRunner, argument) -> tmpRunner.setSP(SP));
+            return this;
         }
 
-        public Test<Integer>.Unary runBPair(int instruction, int registerPair, int value) {
-            runner = new ImmediateWordWithRegisterPair(cpuRunner, instruction, registerPair, value);
-            return create();
+        public Test<Integer>.Unary run(int instruction) {
+            return create(new InstructionNoOperands<Integer>(instruction));
         }
 
-        public Test<Integer>.Unary runB(int instruction, int register, byte value) {
-            runner = new ImmediateWordWithRegister(cpuRunner, instruction, register, value);
-            return create();
+        public Test<Integer>.Unary runWithOperand(int instruction) {
+            return create(new InstructionWordOperand(instruction));
         }
-
 
         public UnaryInteger verifyPC(Function<RunnerContext<Integer>, Integer> operation) {
             lastOperation = operation;
@@ -230,78 +233,150 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
             return this;
         }
 
-        private Test<Integer>.Unary create() {
-            if (runner == null || verifiers.isEmpty()) {
-                throw new IllegalStateException("Runner and at least one verifier must be set");
+        private Test<Integer>.Unary create(RunnerInjector<Integer> instruction) {
+            if (verifiers.isEmpty()) {
+                throw new IllegalStateException("At least one verifier must be set");
             }
-            return Test.<Integer>create(runner, verifiers);
+            UnaryRunner<Integer> tmpRunner = runner.clone();
+            tmpRunner.inject(instruction);
+            runner.clearInjectors();
+            return Test.<Integer>create(tmpRunner, verifiers);
         }
 
     }
 
     public static class BinaryByte extends TestBuilder<Byte, BinaryByte> {
-        protected BiFunction<Byte, Byte, RunnerContext<Byte>> runner;
+        private final BinaryRunner<Byte> runner = new BinaryRunner<Byte>(cpuRunner);
 
         public BinaryByte(CpuRunner cpuRunner, CpuVerifier cpuVerifier) {
             super(cpuRunner, cpuVerifier);
         }
 
-        public Test<Byte>.Binary run(int instruction, int register) {
-            runner = new AccumulatorWithRegister(cpuRunner, register, instruction);
-            return create();
+        public BinaryByte keepCurrentInjectorsAfterRun() {
+            runner.keepCurrentInjectorsAfterClear();
+            return this;
         }
 
-        public Test<Byte>.Binary runM(int instruction, int address) {
-            runner = new AccumulatorWithMemory(cpuRunner, instruction, address);
-            return create();
+        public BinaryByte firstIsRegister(int register) {
+            runner.injectFirst(new Register(register));
+            return this;
         }
 
-        public Test<Byte>.Binary runB(int instruction) {
-            runner = new AccumulatorWithByte(cpuRunner, instruction);
-            return create();
+        public BinaryByte secondIsRegister(int register) {
+            runner.injectSecond(new Register(register));
+            return this;
         }
 
-        private Test<Byte>.Binary create() {
+        public BinaryByte secondIsMemoryByteAt(int address) {
+            runner.injectSecond(new MemoryByte(address));
+            return this;
+        }
+
+        public BinaryByte setPair(int registerPair, int value) {
+            runner.injectFirst(
+                    (tmpRunner, argument) -> tmpRunner.ensureProgramSize(value + 1),
+                    (tmpRunner, argument) -> tmpRunner.setRegisterPair(registerPair, value)
+            );
+            return this;
+        }
+
+        public Test<Byte>.Binary run(int instruction) {
+            return create(new InstructionNoOperands<>(instruction), true);
+        }
+
+        public Test<Byte>.Binary runWithFirstOperand(int instruction) {
+            return create(new InstructionByteOperand(instruction), true);
+        }
+
+        public Test<Byte>.Binary runWithSecondOperand(int instruction) {
+            return create(new InstructionByteOperand(instruction), false);
+        }
+
+        private Test<Byte>.Binary create(RunnerInjector<Byte> instruction, boolean first) {
             if (runner == null || verifiers.isEmpty()) {
                 throw new IllegalStateException("Runner and at least one verifier must be set");
             }
-            return Test.<Byte>create(runner, verifiers);
+            BinaryRunner<Byte> tmpRunner = runner.clone();
+            if (first) {
+                tmpRunner.injectFirst(instruction);
+            } else {
+                tmpRunner.injectSecond(instruction);
+            }
+            runner.clearInjectors();
+            return Test.<Byte>create(tmpRunner, verifiers);
         }
     }
 
     public static class BinaryInteger extends TestBuilder<Integer, BinaryInteger> {
-        protected BiFunction<Integer, Integer, RunnerContext<Integer>> runner;
+        private final BinaryRunner<Integer> runner = new BinaryRunner<Integer>(cpuRunner);
 
         public BinaryInteger(CpuRunner cpuRunner, CpuVerifier cpuVerifier) {
             super(cpuRunner, cpuVerifier);
         }
 
-        public Test<Integer>.Binary runHLWithPair(int instruction, int registerPair) {
-            runner = new HLWithRegisterPair(cpuRunner, instruction, registerPair);
-            return create();
+        public BinaryInteger keepCurrentInjectorsAfterRun() {
+            runner.keepCurrentInjectorsAfterClear();
+            return this;
         }
 
-        public Test<Integer>.Binary runSPWithPairAndPSW(int instruction, int registerPair) {
-            runner = new SPWithRegisterPairAndPSW(cpuRunner, instruction, registerPair);
-            return create();
+        public BinaryInteger firstIsPair(int registerPair) {
+            runner.injectFirst(new MemoryExpand(), new RegisterPair(registerPair));
+            return this;
         }
 
-        public Test<Integer>.Binary runSPWithMemoryWordAndPair(int instruction, int registerPair, int address) {
-            runner = new SPWithMemoryWordAndRegisterPair(cpuRunner, instruction, registerPair, address);
-            return create();
+        public BinaryInteger secondIsPair(int registerPair) {
+            runner.injectSecond(new MemoryExpand(), new RegisterPair(registerPair));
+            return this;
         }
 
-        public Test<Integer>.Binary runM(int instruction) {
-            runner = new SPWithMemoryAndFlags(cpuRunner, instruction, 0);
-            return create();
+        public BinaryInteger firstIsRegisterPairPSW(int registerPairPSW) {
+            runner.injectFirst(new MemoryExpand(), new RegisterPairPSW(registerPairPSW));
+            return this;
         }
 
-        public Test<Integer>.Binary runM(int instruction, int flags) {
-            runner = new SPWithMemoryAndFlags(cpuRunner, instruction, flags);
-            return create();
+        public BinaryInteger secondIsRegisterPairPSW(int registerPairPSW) {
+            runner.injectSecond(new MemoryExpand(), new RegisterPairPSW(registerPairPSW));
+            return this;
         }
 
-        public BinaryInteger verifyPandPSW(Function<RunnerContext<Integer>, Integer> operation, int registerPair) {
+        public BinaryInteger firstIsMemoryWordAt(int address) {
+            runner.injectFirst(new MemoryWord(address));
+            return this;
+        }
+
+        public BinaryInteger secondIsMemoryWordAt(int address) {
+            runner.injectSecond(new MemoryWord(address));
+            return this;
+        }
+
+        public BinaryInteger firstIsAddressAndSecondIsMemoryWord() {
+            runner.injectBoth(new AddressAndMemoryWord());
+            return this;
+        }
+
+        public BinaryInteger setPair(int registerPair, int value) {
+            runner.injectFirst((tmpRunner, argument) -> tmpRunner.setRegisterPair(registerPair, value));
+            return this;
+        }
+
+        public BinaryInteger setFlags(int flags) {
+            runner.injectFirst((tmpRunner, argument) -> tmpRunner.setFlags(flags));
+            return this;
+        }
+
+        public Test<Integer>.Binary run(int instruction) {
+            return create(new InstructionNoOperands<>(instruction), true);
+        }
+
+        public Test<Integer>.Binary runWithFirstOperand(int instruction) {
+            return create(new InstructionWordOperand(instruction), true);
+        }
+
+        public Test<Integer>.Binary runWithSecondOperand(int instruction) {
+            return create(new InstructionWordOperand(instruction), false);
+        }
+
+        public BinaryInteger verifyPairAndPSW(int registerPair, Function<RunnerContext<Integer>, Integer> operation) {
             lastOperation = operation;
             verifiers.add(new RegisterPair_PSW_Verifier(cpuVerifier, operation, registerPair));
             return this;
@@ -313,11 +388,18 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
             return this;
         }
 
-        private Test<Integer>.Binary create() {
+        private Test<Integer>.Binary create(RunnerInjector<Integer> instruction, boolean first) {
             if (runner == null || verifiers.isEmpty()) {
                 throw new IllegalStateException("Runner and at least one verifier must be set");
             }
-            return Test.<Integer>create(runner, verifiers);
+            BinaryRunner<Integer> tmpRunner = runner.clone();
+            if (first) {
+                tmpRunner.injectFirst(instruction);
+            } else {
+                tmpRunner.injectSecond(instruction);
+            }
+            runner.clearInjectors();
+            return Test.<Integer>create(tmpRunner, verifiers);
         }
 
     }
