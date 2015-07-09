@@ -18,6 +18,7 @@ import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_E;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_H;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_L;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_C;
 
@@ -113,8 +114,12 @@ public class CpuVerifier {
         );
     }
 
-    public int getFlags() {
-        return cpu.getEngine().flags;
+    public void checkInterruptsAreEnabled() {
+        assertTrue(cpu.getEngine().INTE);
+    }
+
+    public void checkInterruptsAreDisabled() {
+        assertFalse(cpu.getEngine().INTE);
     }
 
     public String intToFlags(int flags) {

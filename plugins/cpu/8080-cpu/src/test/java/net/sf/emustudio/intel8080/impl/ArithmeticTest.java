@@ -1,20 +1,9 @@
 package net.sf.emustudio.intel8080.impl;
 
-import emulib.emustudio.SettingsManager;
-import emulib.plugins.PluginInitializationException;
-import emulib.plugins.memory.MemoryContext;
-import emulib.runtime.ContextNotFoundException;
-import emulib.runtime.ContextPool;
-import emulib.runtime.InvalidContextException;
-import net.sf.emustudio.intel8080.impl.suite.CpuRunner;
-import net.sf.emustudio.intel8080.impl.suite.CpuVerifier;
 import net.sf.emustudio.intel8080.impl.suite.FlagsBuilder;
 import net.sf.emustudio.intel8080.impl.suite.Generator;
 import net.sf.emustudio.intel8080.impl.suite.TestBuilder;
 import net.sf.emustudio.intel8080.impl.suite.runners.RunnerContext;
-import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.function.Function;
@@ -26,62 +15,23 @@ import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_D;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_E;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_H;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_L;
-import static org.easymock.EasyMock.createNiceMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
 
-public class ArithmeticTest {
-    private static final long PLUGIN_ID = 0L;
-    public static final int REG_PAIR_BC = 0;
-    public static final int REG_PAIR_DE = 1;
-    public static final int REG_PAIR_HL = 2;
-    public static final int REG_SP = 3;
-
-    private CpuImpl cpu;
-    private CpuRunner cpuRunner;
-    private CpuVerifier cpuVerifier;
-
-    @Before
-    public void setUp() throws ContextNotFoundException, InvalidContextException, PluginInitializationException {
-        MemoryStub memoryStub = new MemoryStub();
-
-        ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);
-        expect(contextPool.getMemoryContext(0, MemoryContext.class))
-                .andReturn(memoryStub)
-                .anyTimes();
-        replay(contextPool);
-
-        RunStateListenerStub runStateListener = new RunStateListenerStub();
-        cpu = new CpuImpl(PLUGIN_ID, contextPool);
-        cpu.addCPUListener(runStateListener);
-
-        SettingsManager settingsManager = createNiceMock(SettingsManager.class);
-        expect(settingsManager.readSetting(PLUGIN_ID, CpuImpl.PRINT_CODE)).andReturn("true").anyTimes();
-        expect(settingsManager.readSetting(PLUGIN_ID, CpuImpl.PRINT_CODE_USE_CACHE)).andReturn("false").anyTimes();
-        replay(settingsManager);
-
-        // simulate emuStudio boot
-        cpu.initialize(settingsManager);
-
-        cpuRunner = new CpuRunner(cpu, memoryStub);
-        cpuVerifier = new CpuVerifier(cpu, memoryStub);
-    }
-
-    @After
-    public void tearDown() {
-        cpu.destroy();
-    }
+public class ArithmeticTest extends InstructionsTest {
 
     private TestBuilder.BinaryByte additionTestBuilder() {
         return new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF))
-                .verifyFlags(new FlagsBuilder().sign().zero().carry().auxCarry().parity());
+                .verifyFlagsOfLastOp(new FlagsBuilder().sign().zero().carry().auxCarry().parity())
+                .firstIsRegister(REG_A)
+                .keepCurrentInjectorsAfterRun();
     }
 
     private TestBuilder.BinaryByte subtractionTestBuilder() {
         return new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF))
-                .verifyFlags(new FlagsBuilder().sign().zero().carry().auxCarry().parity());
+                .verifyFlagsOfLastOp(new FlagsBuilder().sign().zero().carry().auxCarry().parity())
+                .firstIsRegister(REG_A)
+                .keepCurrentInjectorsAfterRun();
     }
 
     @Test
@@ -89,16 +39,16 @@ public class ArithmeticTest {
         TestBuilder.BinaryByte test = additionTestBuilder();
 
         Generator.forSome8bitBinaryWhichEqual(
-                test.run(0x87, REG_A)
+                test.run(0x87)
         );
         Generator.forSome8bitBinary(
-                test.run(0x80, REG_B),
-                test.run(0x81, REG_C),
-                test.run(0x82, REG_D),
-                test.run(0x83, REG_E),
-                test.run(0x84, REG_H),
-                test.run(0x85, REG_L),
-                test.runM(0x86, 1)
+                test.secondIsRegister(REG_B).run(0x80),
+                test.secondIsRegister(REG_C).run(0x81),
+                test.secondIsRegister(REG_D).run(0x82),
+                test.secondIsRegister(REG_E).run(0x83),
+                test.secondIsRegister(REG_H).run(0x84),
+                test.secondIsRegister(REG_L).run(0x85),
+                test.setPair(REG_PAIR_HL, 1).secondIsMemoryByteAt(1).run(0x86)
         );
     }
 
@@ -107,38 +57,41 @@ public class ArithmeticTest {
         TestBuilder.BinaryByte test = additionTestBuilder();
 
         Generator.forSome8bitBinary(
-                test.runB(0xC6)
+                test.runWithSecondOperand(0xC6)
         );
     }
 
     @Test
     public void testADC() throws Exception {
         TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
-                .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flagsBefore & 1))
-                .verifyFlags(new FlagsBuilder().sign().zero().carry().auxCarry().parity());
+                .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flags & 1))
+                .verifyFlagsOfLastOp(new FlagsBuilder().sign().zero().carry().auxCarry().parity())
+                .firstIsRegister(REG_A)
+                .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitBinaryWhichEqual(
-                test.run(0x8F, REG_A)
+                test.run(0x8F)
         );
         Generator.forSome8bitBinary(
-                test.run(0x88, REG_B),
-                test.run(0x89, REG_C),
-                test.run(0x8A, REG_D),
-                test.run(0x8B, REG_E),
-                test.run(0x8C, REG_H),
-                test.run(0x8D, REG_L),
-                test.runM(0x8E, 1)
+                test.secondIsRegister(REG_B).run(0x88),
+                test.secondIsRegister(REG_C).run(0x89),
+                test.secondIsRegister(REG_D).run(0x8A),
+                test.secondIsRegister(REG_E).run(0x8B),
+                test.secondIsRegister(REG_H).run(0x8C),
+                test.secondIsRegister(REG_L).run(0x8D),
+                test.setPair(REG_PAIR_HL, 1).secondIsMemoryByteAt(1).run(0x8E)
         );
     }
 
     @Test
     public void testACI() throws Exception {
         TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
-                .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flagsBefore & 1))
-                .verifyFlags(new FlagsBuilder().sign().zero().carry().auxCarry().parity());
+                .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flags & 1))
+                .verifyFlagsOfLastOp(new FlagsBuilder().sign().zero().carry().auxCarry().parity())
+                .firstIsRegister(REG_A);
 
         Generator.forSome8bitBinary(
-                test.runB(0xCE)
+                test.runWithSecondOperand(0xCE)
         );
     }
 
@@ -147,16 +100,16 @@ public class ArithmeticTest {
         TestBuilder.BinaryByte test = subtractionTestBuilder();
 
         Generator.forSome8bitBinaryWhichEqual(
-                test.run(0x97, REG_A)
+                test.run(0x97)
         );
         Generator.forSome8bitBinary(
-                test.run(0x90, REG_B),
-                test.run(0x91, REG_C),
-                test.run(0x92, REG_D),
-                test.run(0x93, REG_E),
-                test.run(0x94, REG_H),
-                test.run(0x95, REG_L),
-                test.runM(0x96, 1)
+                test.secondIsRegister(REG_B).run(0x90),
+                test.secondIsRegister(REG_C).run(0x91),
+                test.secondIsRegister(REG_D).run(0x92),
+                test.secondIsRegister(REG_E).run(0x93),
+                test.secondIsRegister(REG_H).run(0x94),
+                test.secondIsRegister(REG_L).run(0x95),
+                test.setPair(REG_PAIR_HL, 1).secondIsMemoryByteAt(1).run(0x96)
         );
     }
 
@@ -165,72 +118,133 @@ public class ArithmeticTest {
         TestBuilder.BinaryByte test = subtractionTestBuilder();
 
         Generator.forSome8bitBinary(
-                test.runB(0xD6)
+                test.runWithSecondOperand(0xD6)
         );
     }
 
     @Test
     public void testSBB() throws Exception {
         TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
-                .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flagsBefore & 1))
-                .verifyFlags(new FlagsBuilder().sign().zero().carry().auxCarry().parity());
+                .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flags & 1))
+                .verifyFlagsOfLastOp(new FlagsBuilder().sign().zero().carry().auxCarry().parity())
+                .firstIsRegister(REG_A)
+                .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitBinaryWhichEqual(
-                test.run(0x9F, REG_A)
+                test.run(0x9F)
         );
         Generator.forSome8bitBinary(
-                test.run(0x98, REG_B),
-                test.run(0x99, REG_C),
-                test.run(0x9A, REG_D),
-                test.run(0x9B, REG_E),
-                test.run(0x9C, REG_H),
-                test.run(0x9D, REG_L),
-                test.runM(0x9E, 1)
+                test.secondIsRegister(REG_B).run(0x98),
+                test.secondIsRegister(REG_C).run(0x99),
+                test.secondIsRegister(REG_D).run(0x9A),
+                test.secondIsRegister(REG_E).run(0x9B),
+                test.secondIsRegister(REG_H).run(0x9C),
+                test.secondIsRegister(REG_L).run(0x9D),
+                test.setPair(REG_PAIR_HL, 1).secondIsMemoryByteAt(1).run(0x9E)
         );
     }
 
     @Test
     public void testSBI() throws Exception {
         TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
-                .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flagsBefore & 1))
-                .verifyFlags(new FlagsBuilder().sign().zero().carry().auxCarry().parity());
+                .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flags & 1))
+                .verifyFlagsOfLastOp(new FlagsBuilder().sign().zero().carry().auxCarry().parity())
+                .firstIsRegister(REG_A);
 
         Generator.forSome8bitBinary(
-                test.runB(0xDE)
+                test.runWithSecondOperand(0xDE)
         );
     }
 
     @Test
     public void testINR() throws Exception {
         TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
-                .verifyFlags(new FlagsBuilder().sign().zero().parity().auxCarry(), context -> context.first + 1);
+                .verifyFlags(new FlagsBuilder().sign().zero().parity().auxCarry(), context -> context.first + 1)
+                .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_B).run(0x04, REG_B),
-                test.verifyRegister(REG_C).run(0x0C, REG_C),
-                test.verifyRegister(REG_D).run(0x14, REG_D),
-                test.verifyRegister(REG_E).run(0x1C, REG_E),
-                test.verifyRegister(REG_H).run(0x24, REG_H),
-                test.verifyRegister(REG_L).run(0x2C, REG_L),
-                test.verifyRegister(REG_A).run(0x3C, REG_A),
-                test.verifyByte(1).runM(0x34, 1)
+                test.verifyRegister(REG_B).operandIsRegister(REG_B).run(0x04)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome8bitUnary(
+                test.verifyRegister(REG_C).operandIsRegister(REG_C).run(0x0C)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome8bitUnary(
+                test.verifyRegister(REG_D).operandIsRegister(REG_D).run(0x14)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome8bitUnary(
+                test.verifyRegister(REG_E).operandIsRegister(REG_E).run(0x1C)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome8bitUnary(
+                test.verifyRegister(REG_H).operandIsRegister(REG_H).run(0x24)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome8bitUnary(
+                test.verifyRegister(REG_L).operandIsRegister(REG_L).run(0x2C)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome8bitUnary(
+                test.verifyRegister(REG_A).operandIsRegister(REG_A).run(0x3C)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome8bitUnary(
+                test.verifyByte(1).setPair(REG_PAIR_HL, 1).operandIsMemoryByteAt(1).run(0x34)
         );
     }
 
     @Test
     public void testDCR() throws Exception {
         TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
-                .verifyFlags(new FlagsBuilder().sign().zero().parity().auxCarry(), context -> context.first - 1);
+                .verifyFlags(new FlagsBuilder().sign().zero().parity().auxCarry(), context -> context.first - 1)
+                .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_B).run(0x05, REG_B),
-                test.verifyRegister(REG_C).run(0x0D, REG_C),
-                test.verifyRegister(REG_D).run(0x15, REG_D),
-                test.verifyRegister(REG_E).run(0x1D, REG_E),
-                test.verifyRegister(REG_H).run(0x25, REG_H),
-                test.verifyRegister(REG_L).run(0x2D, REG_L),
-                test.verifyRegister(REG_A).run(0x3D, REG_A),
-                test.verifyByte(1).runM(0x35, 1)
+                test.verifyRegister(REG_B).operandIsRegister(REG_B).run(0x05)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome8bitUnary(
+                test.verifyRegister(REG_C).operandIsRegister(REG_C).run(0x0D)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome8bitUnary(
+                test.verifyRegister(REG_D).operandIsRegister(REG_D).run(0x15)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome8bitUnary(
+                test.verifyRegister(REG_E).operandIsRegister(REG_E).run(0x1D)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome8bitUnary(
+                test.verifyRegister(REG_H).operandIsRegister(REG_H).run(0x25)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome8bitUnary(
+                test.verifyRegister(REG_L).operandIsRegister(REG_L).run(0x2D)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome8bitUnary(
+                test.verifyRegister(REG_A).operandIsRegister(REG_A).run(0x3D)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome8bitUnary(
+                test.verifyByte(1).setPair(REG_PAIR_HL, 1).operandIsMemoryByteAt(1).run(0x35)
         );
     }
 
@@ -240,10 +254,22 @@ public class ArithmeticTest {
         Function<RunnerContext<Integer>, Integer> verifier = context -> context.first + 1;
 
         Generator.forSome16bitUnary(
-                test.verifyPair(REG_PAIR_BC, verifier).runPair(0x03, REG_PAIR_BC),
-                test.verifyPair(REG_PAIR_DE, verifier).runPair(0x13, REG_PAIR_DE),
-                test.verifyPair(REG_PAIR_HL, verifier).runPair(0x23, REG_PAIR_HL),
-                test.verifyPair(REG_SP, verifier).runPair(0x33, REG_SP)
+                test.verifyPair(REG_PAIR_BC, verifier).operandIsPair(REG_PAIR_BC).run(0x03)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome16bitUnary(
+                test.verifyPair(REG_PAIR_DE, verifier).operandIsPair(REG_PAIR_DE).run(0x13)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome16bitUnary(
+                test.verifyPair(REG_PAIR_HL, verifier).operandIsPair(REG_PAIR_HL).run(0x23)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome16bitUnary(
+                test.verifyPair(REG_SP, verifier).operandIsPair(REG_SP).run(0x33)
         );
     }
 
@@ -253,10 +279,22 @@ public class ArithmeticTest {
         Function<RunnerContext<Integer>, Integer> verifier = context -> context.first - 1;
 
         Generator.forSome16bitUnary(
-                test.verifyPair(REG_PAIR_BC, verifier).runPair(0x0B, REG_PAIR_BC),
-                test.verifyPair(REG_PAIR_DE, verifier).runPair(0x1B, REG_PAIR_DE),
-                test.verifyPair(REG_PAIR_HL, verifier).runPair(0x2B, REG_PAIR_HL),
-                test.verifyPair(REG_SP, verifier).runPair(0x3B, REG_SP)
+                test.verifyPair(REG_PAIR_BC, verifier).operandIsPair(REG_PAIR_BC).run(0x0B)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome16bitUnary(
+                test.verifyPair(REG_PAIR_DE, verifier).operandIsPair(REG_PAIR_DE).run(0x1B)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome16bitUnary(
+                test.verifyPair(REG_PAIR_HL, verifier).operandIsPair(REG_PAIR_HL).run(0x2B)
+        );
+
+        test.clearVerifiers();
+        Generator.forSome16bitUnary(
+                test.verifyPair(REG_SP, verifier).operandIsPair(REG_SP).run(0x3B)
         );
     }
 
@@ -264,16 +302,18 @@ public class ArithmeticTest {
     public void testDAD() throws Exception {
         TestBuilder.BinaryInteger test = new TestBuilder.BinaryInteger(cpuRunner, cpuVerifier)
                 .verifyPair(REG_PAIR_HL, context -> context.first + context.second)
-                .verifyFlags(new FlagsBuilder().carry15());
+                .verifyFlagsOfLastOp(new FlagsBuilder().carry15())
+                .firstIsPair(REG_PAIR_HL)
+                .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryWhichEqual(
-                test.runHLWithPair(0x29, REG_PAIR_HL)
+                test.run(0x29)
         );
 
         Generator.forSome16bitBinary(
-                test.runHLWithPair(0x09, REG_PAIR_BC),
-                test.runHLWithPair(0x19, REG_PAIR_DE),
-                test.runHLWithPair(0x39, REG_SP)
+                test.secondIsPair(REG_PAIR_BC).run(0x09),
+                test.secondIsPair(REG_PAIR_DE).run(0x19),
+                test.secondIsPair(REG_SP).run(0x39)
         );
     }
 

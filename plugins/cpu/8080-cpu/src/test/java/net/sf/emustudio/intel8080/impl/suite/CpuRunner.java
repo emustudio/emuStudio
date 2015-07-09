@@ -1,11 +1,14 @@
 package net.sf.emustudio.intel8080.impl.suite;
 
 import emulib.plugins.cpu.CPU;
+import emulib.plugins.memory.Memory;
+import emulib.plugins.memory.MemoryContext;
 import net.sf.emustudio.intel8080.impl.CpuImpl;
 import net.sf.emustudio.intel8080.impl.EmulatorEngine;
 import net.sf.emustudio.intel8080.impl.MemoryStub;
 import net.sf.emustudio.intel8080.impl.RunStateListenerStub;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_A;
@@ -22,7 +25,7 @@ public class CpuRunner {
     private final CpuImpl cpu;
     private final MemoryStub memoryStub;
 
-    private short[] program;
+    private short[] program = new short[1];
     private CPU.RunState expectedRunState = CPU.RunState.STATE_STOPPED_BREAK;
 
     public CpuRunner(CpuImpl cpu, MemoryStub memoryStub) {
@@ -31,10 +34,33 @@ public class CpuRunner {
         cpu.addCPUListener(runStateListener);
     }
 
-    public void resetProgram(int... program) {
-        this.program = new short[program.length];
+    public void ensureProgramSize(int length) {
+        if (program.length < length) {
+            this.program = Arrays.copyOf(this.program, length);
+            resetProgram();
+        }
+    }
+
+    public void setProgram(int... program) {
+        ensureProgramSize(program.length);
         for (int i = 0; i < program.length; i++) {
             this.program[i] = (short)program[i];
+        }
+        resetProgram();
+    }
+
+    public int getProgramSize() {
+        return program.length;
+    }
+
+    public MemoryContext<Short, Integer> getMemory() {
+        return memoryStub;
+    }
+
+    public void setProgram(short... program) {
+        ensureProgramSize(program.length);
+        for (int i = 0; i < program.length; i++) {
+            this.program[i] = program[i];
         }
         resetProgram();
     }
@@ -44,19 +70,27 @@ public class CpuRunner {
         resetProgram();
     }
 
-    public void resetProgram() {
+    public void setByte(int address, int value) {
+        ensureProgramSize(address + 1);
+        program[address] = (short)(value & 0xFF);
+    }
+
+    private void resetProgram() {
         memoryStub.setMemory(program);
+    }
+
+    public void reset() {
         cpu.reset();
     }
 
-    public void setExpectedRunState(CPU.RunState runState) {
+    public void expectRunState(CPU.RunState runState) {
         this.expectedRunState = Objects.requireNonNull(runState);
     }
 
     public void step() {
         cpu.step();
         System.out.flush();
-        assertEquals(expectedRunState, runStateListener.runState);
+        assertEquals("PC=" + cpu.getEngine().PC, expectedRunState, runStateListener.runState);
     }
 
     public void setAccumulator(int value) {
@@ -73,19 +107,19 @@ public class CpuRunner {
 
     public void setRegisterPair(int registerPair, int value) {
         int highRegister;
-        int lowRegiaster;
+        int lowRegister;
         switch (registerPair) {
             case 0:
                 highRegister = REG_B;
-                lowRegiaster = REG_C;
+                lowRegister = REG_C;
                 break;
             case 1:
                 highRegister = REG_D;
-                lowRegiaster = REG_E;
+                lowRegister = REG_E;
                 break;
             case 2:
                 highRegister = REG_H;
-                lowRegiaster = REG_L;
+                lowRegister = REG_L;
                 break;
             case 3:
                 cpu.getEngine().SP = value & 0xFFFF;
@@ -94,7 +128,7 @@ public class CpuRunner {
                 throw new IllegalArgumentException("Expected value between <0,3> !");
         }
         cpu.getEngine().regs[highRegister] = (value >>> 8) & 0xFF;
-        cpu.getEngine().regs[lowRegiaster] = value & 0xFF;
+        cpu.getEngine().regs[lowRegister] = value & 0xFF;
     }
 
     public void setRegisterPairPSW(int registerPair, int value) {
