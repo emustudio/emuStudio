@@ -1,8 +1,8 @@
 package net.sf.emustudio.intel8080.impl;
 
-import net.sf.emustudio.intel8080.impl.suite.Generator;
-import net.sf.emustudio.intel8080.impl.suite.TestBuilder;
-import net.sf.emustudio.intel8080.impl.suite.runners.RunnerContext;
+import net.sf.emustudio.cpu.testsuite.Generator;
+import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
+import net.sf.emustudio.intel8080.impl.suite.IntegerTestBuilder;
 import org.junit.Test;
 
 import java.util.function.Function;
@@ -11,7 +11,7 @@ public class StackTest extends InstructionsTest {
 
     @Test
     public void testPUSH() throws Exception {
-        TestBuilder.BinaryInteger test = new TestBuilder.BinaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyWord(context -> context.second, context -> context.first - 2)
                 .firstIsPair(REG_SP)
                 .keepCurrentInjectorsAfterRun();
@@ -25,7 +25,7 @@ public class StackTest extends InstructionsTest {
 
     @Test
     public void testPUSH_PSW() throws Exception {
-        TestBuilder.BinaryInteger test = new TestBuilder.BinaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyWord(context -> context.second & 0xFFD7 | 2, context -> context.first - 2)
                 .firstIsPair(REG_SP)
                 .keepCurrentInjectorsAfterRun();
@@ -37,7 +37,7 @@ public class StackTest extends InstructionsTest {
 
     @Test
     public void testPOP() throws Exception {
-        TestBuilder.BinaryInteger test = new TestBuilder.BinaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsPair(REG_SP)
                 .firstIsAddressAndSecondIsMemoryWord()
                 .keepCurrentInjectorsAfterRun();

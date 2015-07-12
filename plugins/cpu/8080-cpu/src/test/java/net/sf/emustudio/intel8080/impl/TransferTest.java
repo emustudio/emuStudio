@@ -1,8 +1,9 @@
 package net.sf.emustudio.intel8080.impl;
 
 import emulib.plugins.cpu.CPU;
-import net.sf.emustudio.intel8080.impl.suite.Generator;
-import net.sf.emustudio.intel8080.impl.suite.TestBuilder;
+import net.sf.emustudio.cpu.testsuite.Generator;
+import net.sf.emustudio.intel8080.impl.suite.ByteTestBuilder;
+import net.sf.emustudio.intel8080.impl.suite.IntegerTestBuilder;
 import org.junit.Test;
 
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_A;
@@ -17,173 +18,173 @@ public class TransferTest extends InstructionsTest {
 
     @Test
     public void testMVI() throws Exception {
-        TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier);
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl);
 
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_A, context -> context.first & 0xFF).runWithOperand(0x3E)
+                test.verifyRegister(REG_A, context -> context.first & 0xFF).runWithFirstOperand(0x3E)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_B).runWithOperand(0x06)
+                test.verifyRegister(REG_B).runWithFirstOperand(0x06)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_C).runWithOperand(0x0E)
+                test.verifyRegister(REG_C).runWithFirstOperand(0x0E)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_D).runWithOperand(0x16)
+                test.verifyRegister(REG_D).runWithFirstOperand(0x16)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_E).runWithOperand(0x1E)
+                test.verifyRegister(REG_E).runWithFirstOperand(0x1E)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_H).runWithOperand(0x26)
+                test.verifyRegister(REG_H).runWithFirstOperand(0x26)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_L).runWithOperand(0x2E)
+                test.verifyRegister(REG_L).runWithFirstOperand(0x2E)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
                 test.setPair(REG_PAIR_HL, 0x20)
                         .verifyByte(0x20, context -> context.first & 0xFF)
-                        .runWithOperand(0x36)
+                        .runWithFirstOperand(0x36)
         );
     }
 
     @Test
     public void testMOV_A() throws Exception {
-        TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyRegister(REG_A, context -> context.first & 0xFF)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
-                test.operandIsRegister(REG_A).run(0x7F),
-                test.operandIsRegister(REG_B).run(0x78),
-                test.operandIsRegister(REG_C).run(0x79),
-                test.operandIsRegister(REG_D).run(0x7A),
-                test.operandIsRegister(REG_E).run(0x7B),
-                test.operandIsRegister(REG_H).run(0x7C),
-                test.operandIsRegister(REG_L).run(0x7D),
-                test.setPair(REG_PAIR_HL, 0x20).operandIsMemoryByteAt(0x20).run(0x7E)
+                test.firstIsRegister(REG_A).run(0x7F),
+                test.firstIsRegister(REG_B).run(0x78),
+                test.firstIsRegister(REG_C).run(0x79),
+                test.firstIsRegister(REG_D).run(0x7A),
+                test.firstIsRegister(REG_E).run(0x7B),
+                test.firstIsRegister(REG_H).run(0x7C),
+                test.firstIsRegister(REG_L).run(0x7D),
+                test.setPair(REG_PAIR_HL, 0x20).firstIsMemoryByteAt(0x20).run(0x7E)
         );
     }
 
     @Test
     public void testMOV_B() throws Exception {
-        TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyRegister(REG_B, context -> context.first & 0xFF)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
-                test.operandIsRegister(REG_A).run(0x47),
-                test.operandIsRegister(REG_B).run(0x40),
-                test.operandIsRegister(REG_C).run(0x41),
-                test.operandIsRegister(REG_D).run(0x42),
-                test.operandIsRegister(REG_E).run(0x43),
-                test.operandIsRegister(REG_H).run(0x44),
-                test.operandIsRegister(REG_L).run(0x45),
-                test.setPair(REG_PAIR_HL, 0x20).operandIsMemoryByteAt(0x20).run(0x46)
+                test.firstIsRegister(REG_A).run(0x47),
+                test.firstIsRegister(REG_B).run(0x40),
+                test.firstIsRegister(REG_C).run(0x41),
+                test.firstIsRegister(REG_D).run(0x42),
+                test.firstIsRegister(REG_E).run(0x43),
+                test.firstIsRegister(REG_H).run(0x44),
+                test.firstIsRegister(REG_L).run(0x45),
+                test.setPair(REG_PAIR_HL, 0x20).firstIsMemoryByteAt(0x20).run(0x46)
         );
     }
 
     @Test
     public void testMOV_C() throws Exception {
-        TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyRegister(REG_C, context -> context.first & 0xFF)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
-                test.operandIsRegister(REG_A).run(0x4F),
-                test.operandIsRegister(REG_B).run(0x48),
-                test.operandIsRegister(REG_C).run(0x49),
-                test.operandIsRegister(REG_D).run(0x4A),
-                test.operandIsRegister(REG_E).run(0x4B),
-                test.operandIsRegister(REG_H).run(0x4C),
-                test.operandIsRegister(REG_L).run(0x4D),
-                test.setPair(REG_PAIR_HL, 0x20).operandIsMemoryByteAt(0x20).run(0x4E)
+                test.firstIsRegister(REG_A).run(0x4F),
+                test.firstIsRegister(REG_B).run(0x48),
+                test.firstIsRegister(REG_C).run(0x49),
+                test.firstIsRegister(REG_D).run(0x4A),
+                test.firstIsRegister(REG_E).run(0x4B),
+                test.firstIsRegister(REG_H).run(0x4C),
+                test.firstIsRegister(REG_L).run(0x4D),
+                test.setPair(REG_PAIR_HL, 0x20).firstIsMemoryByteAt(0x20).run(0x4E)
         );
     }
 
     @Test
     public void testMOV_D() throws Exception {
-        TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyRegister(REG_D, context -> context.first & 0xFF)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
-                test.operandIsRegister(REG_A).run(0x57),
-                test.operandIsRegister(REG_B).run(0x50),
-                test.operandIsRegister(REG_C).run(0x51),
-                test.operandIsRegister(REG_D).run(0x52),
-                test.operandIsRegister(REG_E).run(0x53),
-                test.operandIsRegister(REG_H).run(0x54),
-                test.operandIsRegister(REG_L).run(0x55),
-                test.setPair(REG_PAIR_HL, 0x20).operandIsMemoryByteAt(0x20).run(0x56)
+                test.firstIsRegister(REG_A).run(0x57),
+                test.firstIsRegister(REG_B).run(0x50),
+                test.firstIsRegister(REG_C).run(0x51),
+                test.firstIsRegister(REG_D).run(0x52),
+                test.firstIsRegister(REG_E).run(0x53),
+                test.firstIsRegister(REG_H).run(0x54),
+                test.firstIsRegister(REG_L).run(0x55),
+                test.setPair(REG_PAIR_HL, 0x20).firstIsMemoryByteAt(0x20).run(0x56)
         );
     }
 
     @Test
     public void testMOV_E() throws Exception {
-        TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyRegister(REG_E, context -> context.first & 0xFF)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
-                test.operandIsRegister(REG_A).run(0x5F),
-                test.operandIsRegister(REG_B).run(0x58),
-                test.operandIsRegister(REG_C).run(0x59),
-                test.operandIsRegister(REG_D).run(0x5A),
-                test.operandIsRegister(REG_E).run(0x5B),
-                test.operandIsRegister(REG_H).run(0x5C),
-                test.operandIsRegister(REG_L).run(0x5D),
-                test.setPair(REG_PAIR_HL, 0x20).operandIsMemoryByteAt(0x20).run(0x5E)
+                test.firstIsRegister(REG_A).run(0x5F),
+                test.firstIsRegister(REG_B).run(0x58),
+                test.firstIsRegister(REG_C).run(0x59),
+                test.firstIsRegister(REG_D).run(0x5A),
+                test.firstIsRegister(REG_E).run(0x5B),
+                test.firstIsRegister(REG_H).run(0x5C),
+                test.firstIsRegister(REG_L).run(0x5D),
+                test.setPair(REG_PAIR_HL, 0x20).firstIsMemoryByteAt(0x20).run(0x5E)
         );
     }
 
     @Test
     public void testMOV_H() throws Exception {
-        TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyRegister(REG_H, context -> context.first & 0xFF)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
-                test.operandIsRegister(REG_A).run(0x67),
-                test.operandIsRegister(REG_B).run(0x60),
-                test.operandIsRegister(REG_C).run(0x61),
-                test.operandIsRegister(REG_D).run(0x62),
-                test.operandIsRegister(REG_E).run(0x63),
-                test.operandIsRegister(REG_H).run(0x64),
-                test.operandIsRegister(REG_L).run(0x65),
-                test.setPair(REG_PAIR_HL, 0x20).operandIsMemoryByteAt(0x20).run(0x66)
+                test.firstIsRegister(REG_A).run(0x67),
+                test.firstIsRegister(REG_B).run(0x60),
+                test.firstIsRegister(REG_C).run(0x61),
+                test.firstIsRegister(REG_D).run(0x62),
+                test.firstIsRegister(REG_E).run(0x63),
+                test.firstIsRegister(REG_H).run(0x64),
+                test.firstIsRegister(REG_L).run(0x65),
+                test.setPair(REG_PAIR_HL, 0x20).firstIsMemoryByteAt(0x20).run(0x66)
         );
     }
 
     @Test
     public void testMOV_L() throws Exception {
-        TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyRegister(REG_L, context -> context.first & 0xFF)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
-                test.operandIsRegister(REG_A).run(0x6F),
-                test.operandIsRegister(REG_B).run(0x68),
-                test.operandIsRegister(REG_C).run(0x69),
-                test.operandIsRegister(REG_D).run(0x6A),
-                test.operandIsRegister(REG_E).run(0x6B),
-                test.operandIsRegister(REG_H).run(0x6C),
-                test.operandIsRegister(REG_L).run(0x6D),
-                test.setPair(REG_PAIR_HL, 0x20).operandIsMemoryByteAt(0x20).run(0x6E)
+                test.firstIsRegister(REG_A).run(0x6F),
+                test.firstIsRegister(REG_B).run(0x68),
+                test.firstIsRegister(REG_C).run(0x69),
+                test.firstIsRegister(REG_D).run(0x6A),
+                test.firstIsRegister(REG_E).run(0x6B),
+                test.firstIsRegister(REG_H).run(0x6C),
+                test.firstIsRegister(REG_L).run(0x6D),
+                test.setPair(REG_PAIR_HL, 0x20).firstIsMemoryByteAt(0x20).run(0x6E)
         );
     }
 
@@ -191,33 +192,33 @@ public class TransferTest extends InstructionsTest {
     public void testMOV_M_r() throws Exception {
         final int address = 0x35;
 
-        TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyByte(address, context -> context.first & 0xFF)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
-                test.setPair(REG_PAIR_HL, address).operandIsRegister(REG_A).run(0x77),
-                test.setPair(REG_PAIR_HL, address).operandIsRegister(REG_B).run(0x70),
-                test.setPair(REG_PAIR_HL, address).operandIsRegister(REG_C).run(0x71),
-                test.setPair(REG_PAIR_HL, address).operandIsRegister(REG_D).run(0x72),
-                test.setPair(REG_PAIR_HL, address).operandIsRegister(REG_E).run(0x73)
+                test.setPair(REG_PAIR_HL, address).firstIsRegister(REG_A).run(0x77),
+                test.setPair(REG_PAIR_HL, address).firstIsRegister(REG_B).run(0x70),
+                test.setPair(REG_PAIR_HL, address).firstIsRegister(REG_C).run(0x71),
+                test.setPair(REG_PAIR_HL, address).firstIsRegister(REG_D).run(0x72),
+                test.setPair(REG_PAIR_HL, address).firstIsRegister(REG_E).run(0x73)
         );
-        test.setPair(REG_PAIR_HL, address).operandIsRegister(REG_H).run(0x74).accept((byte)0);
-        test.setPair(REG_PAIR_HL, address).operandIsRegister(REG_L).run(0x75).accept((byte)address);
+        test.setPair(REG_PAIR_HL, address).firstIsRegister(REG_H).run(0x74).accept((byte)0, (byte)0);
+        test.setPair(REG_PAIR_HL, address).firstIsRegister(REG_L).run(0x75).accept((byte)address, (byte)0);
     }
 
     @Test
     public void testLDAX() throws Exception {
         final int value = 0x25;
 
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyRegister(REG_A, context -> value)
-                .operandIsMemoryAddressByte(value)
+                .firstIsMemoryAddressByte(value)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitUnary(
-                test.operandIsPair(REG_PAIR_BC).run(0x0A),
-                test.operandIsPair(REG_PAIR_DE).run(0x1A)
+                test.firstIsPair(REG_PAIR_BC).run(0x0A),
+                test.firstIsPair(REG_PAIR_DE).run(0x1A)
         );
     }
 
@@ -225,14 +226,14 @@ public class TransferTest extends InstructionsTest {
     public void testSTAX() throws Exception {
         final int value = 0x25;
 
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyByte(context -> context.first, context -> value)
                 .setRegister(REG_A, value)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitUnary(
-                test.operandIsPair(REG_PAIR_BC).run(0x02),
-                test.operandIsPair(REG_PAIR_DE).run(0x12)
+                test.firstIsPair(REG_PAIR_BC).run(0x02),
+                test.firstIsPair(REG_PAIR_DE).run(0x12)
         );
     }
 
@@ -240,12 +241,12 @@ public class TransferTest extends InstructionsTest {
     public void testLDA() throws Exception {
         byte value = -120;
 
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyRegister(REG_A, context -> value & 0xFF)
-                .operandIsMemoryAddressByte(value);
+                .firstIsMemoryAddressByte(value);
 
         Generator.forSome16bitUnary(
-                test.runWithOperand(0x3A)
+                test.runWithFirstOperand(0x3A)
         );
     }
 
@@ -253,12 +254,12 @@ public class TransferTest extends InstructionsTest {
     public void testSTA() throws Exception {
         byte value = -120;
 
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyByte(context -> context.first, context -> value & 0xFF)
                 .setRegister(REG_A, value);
 
         Generator.forSome16bitUnary(
-                test.runWithOperand(0x32)
+                test.runWithFirstOperand(0x32)
         );
     }
 
@@ -266,12 +267,12 @@ public class TransferTest extends InstructionsTest {
     public void testLHLD() throws Exception {
         int value = 0x1234;
 
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyPair(REG_PAIR_HL, context -> value)
-                .operandIsMemoryAddressWord(value);
+                .firstIsMemoryAddressWord(value);
 
         Generator.forSome16bitUnary(
-                test.runWithOperand(0x2A)
+                test.runWithFirstOperand(0x2A)
         );
     }
 
@@ -279,68 +280,68 @@ public class TransferTest extends InstructionsTest {
     public void testSHLD() throws Exception {
         int value = 0x1236;
 
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyWord(context -> value, context -> context.first)
                 .setPair(REG_PAIR_HL, value);
 
         Generator.forSome16bitUnary(
-                test.runWithOperand(0x22)
+                test.runWithFirstOperand(0x22)
         );
     }
 
     @Test
     public void testLXI_B() throws Exception {
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyPair(REG_PAIR_BC, context -> context.first);
 
         Generator.forSome16bitUnary(
-                test.runWithOperand(0x01)
+                test.runWithFirstOperand(0x01)
         );
     }
 
     @Test
     public void testLXI_D() throws Exception {
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyPair(REG_PAIR_DE, context -> context.first);
 
         Generator.forSome16bitUnary(
-                test.runWithOperand(0x11)
+                test.runWithFirstOperand(0x11)
         );
     }
 
     @Test
     public void testLXI_H() throws Exception {
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyPair(REG_PAIR_HL, context -> context.first);
 
         Generator.forSome16bitUnary(
-                test.runWithOperand(0x21)
+                test.runWithFirstOperand(0x21)
         );
     }
 
     @Test
     public void testLXI_SP() throws Exception {
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyPair(REG_SP, context -> context.first);
 
         Generator.forSome16bitUnary(
-                test.runWithOperand(0x31)
+                test.runWithFirstOperand(0x31)
         );
     }
 
     @Test
     public void testSPHL() throws Exception {
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyPair(REG_SP, context -> context.first);
 
         Generator.forSome16bitUnary(
-                test.operandIsPair(REG_PAIR_HL).run(0xF9)
+                test.firstIsPair(REG_PAIR_HL).run(0xF9)
         );
     }
 
     @Test
     public void testXCHG() throws Exception {
-        TestBuilder.BinaryInteger test = new TestBuilder.BinaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyPair(REG_PAIR_DE, context -> context.first)
                 .verifyPair(REG_PAIR_HL, context -> context.second)
                 .firstIsPair(REG_PAIR_HL)
@@ -355,7 +356,7 @@ public class TransferTest extends InstructionsTest {
     public void testXTHL() throws Exception {
         int address = 0x23;
 
-        TestBuilder.BinaryInteger test = new TestBuilder.BinaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyWord(context -> context.second, context -> address)
                 .verifyPair(REG_PAIR_HL, context -> context.first)
                 .firstIsMemoryWordAt(address)
@@ -369,10 +370,10 @@ public class TransferTest extends InstructionsTest {
 
     @Test
     public void testMemoryOverflow() throws Exception {
-        cpuRunner.resetProgram(new short[]{});
-        cpuRunner.reset();
-        cpuRunner.expectRunState(CPU.RunState.STATE_STOPPED_ADDR_FALLOUT);
-        cpuRunner.step();
+        cpuRunnerImpl.resetProgram(new short[]{});
+        cpuRunnerImpl.reset();
+        cpuRunnerImpl.expectRunState(CPU.RunState.STATE_STOPPED_ADDR_FALLOUT);
+        cpuRunnerImpl.step();
     }
 
 

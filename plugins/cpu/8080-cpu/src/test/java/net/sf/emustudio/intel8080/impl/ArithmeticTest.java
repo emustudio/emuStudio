@@ -1,9 +1,10 @@
 package net.sf.emustudio.intel8080.impl;
 
-import net.sf.emustudio.intel8080.impl.suite.FlagsBuilder;
-import net.sf.emustudio.intel8080.impl.suite.Generator;
-import net.sf.emustudio.intel8080.impl.suite.TestBuilder;
-import net.sf.emustudio.intel8080.impl.suite.runners.RunnerContext;
+import net.sf.emustudio.cpu.testsuite.Generator;
+import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
+import net.sf.emustudio.intel8080.impl.suite.ByteTestBuilder;
+import net.sf.emustudio.intel8080.impl.suite.FlagsBuilderImpl;
+import net.sf.emustudio.intel8080.impl.suite.IntegerTestBuilder;
 import org.junit.Test;
 
 import java.util.function.Function;
@@ -18,25 +19,25 @@ import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_L;
 
 public class ArithmeticTest extends InstructionsTest {
 
-    private TestBuilder.BinaryByte additionTestBuilder() {
-        return new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
-                .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF))
-                .verifyFlagsOfLastOp(new FlagsBuilder().sign().zero().carry().auxCarry().parity())
+    private ByteTestBuilder additionTestBuilder() {
+        return new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(REG_A)
+                .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF))
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity())
                 .keepCurrentInjectorsAfterRun();
     }
 
-    private TestBuilder.BinaryByte subtractionTestBuilder() {
-        return new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
+    private ByteTestBuilder subtractionTestBuilder() {
+        return new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF))
-                .verifyFlagsOfLastOp(new FlagsBuilder().sign().zero().carry().auxCarry().parity())
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity())
                 .firstIsRegister(REG_A)
                 .keepCurrentInjectorsAfterRun();
     }
 
     @Test
     public void testADD() throws Exception {
-        TestBuilder.BinaryByte test = additionTestBuilder();
+        ByteTestBuilder test = additionTestBuilder();
 
         Generator.forSome8bitBinaryWhichEqual(
                 test.run(0x87)
@@ -54,7 +55,7 @@ public class ArithmeticTest extends InstructionsTest {
 
     @Test
     public void testADI() throws Exception {
-        TestBuilder.BinaryByte test = additionTestBuilder();
+        ByteTestBuilder test = additionTestBuilder();
 
         Generator.forSome8bitBinary(
                 test.runWithSecondOperand(0xC6)
@@ -63,9 +64,9 @@ public class ArithmeticTest extends InstructionsTest {
 
     @Test
     public void testADC() throws Exception {
-        TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flags & 1))
-                .verifyFlagsOfLastOp(new FlagsBuilder().sign().zero().carry().auxCarry().parity())
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity())
                 .firstIsRegister(REG_A)
                 .keepCurrentInjectorsAfterRun();
 
@@ -85,9 +86,9 @@ public class ArithmeticTest extends InstructionsTest {
 
     @Test
     public void testACI() throws Exception {
-        TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flags & 1))
-                .verifyFlagsOfLastOp(new FlagsBuilder().sign().zero().carry().auxCarry().parity())
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity())
                 .firstIsRegister(REG_A);
 
         Generator.forSome8bitBinary(
@@ -97,7 +98,7 @@ public class ArithmeticTest extends InstructionsTest {
 
     @Test
     public void testSUB() throws Exception {
-        TestBuilder.BinaryByte test = subtractionTestBuilder();
+        ByteTestBuilder test = subtractionTestBuilder();
 
         Generator.forSome8bitBinaryWhichEqual(
                 test.run(0x97)
@@ -115,7 +116,7 @@ public class ArithmeticTest extends InstructionsTest {
 
     @Test
     public void testSUI() throws Exception {
-        TestBuilder.BinaryByte test = subtractionTestBuilder();
+        ByteTestBuilder test = subtractionTestBuilder();
 
         Generator.forSome8bitBinary(
                 test.runWithSecondOperand(0xD6)
@@ -124,9 +125,9 @@ public class ArithmeticTest extends InstructionsTest {
 
     @Test
     public void testSBB() throws Exception {
-        TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flags & 1))
-                .verifyFlagsOfLastOp(new FlagsBuilder().sign().zero().carry().auxCarry().parity())
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity())
                 .firstIsRegister(REG_A)
                 .keepCurrentInjectorsAfterRun();
 
@@ -146,9 +147,9 @@ public class ArithmeticTest extends InstructionsTest {
 
     @Test
     public void testSBI() throws Exception {
-        TestBuilder.BinaryByte test = new TestBuilder.BinaryByte(cpuRunner, cpuVerifier)
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flags & 1))
-                .verifyFlagsOfLastOp(new FlagsBuilder().sign().zero().carry().auxCarry().parity())
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity())
                 .firstIsRegister(REG_A);
 
         Generator.forSome8bitBinary(
@@ -158,151 +159,151 @@ public class ArithmeticTest extends InstructionsTest {
 
     @Test
     public void testINR() throws Exception {
-        TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
-                .verifyFlags(new FlagsBuilder().sign().zero().parity().auxCarry(), context -> context.first + 1)
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .verifyFlags(new FlagsBuilderImpl().sign().zero().parity().auxCarry(), context -> context.first + 1)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_B).operandIsRegister(REG_B).run(0x04)
+                test.verifyRegister(REG_B).firstIsRegister(REG_B).run(0x04)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_C).operandIsRegister(REG_C).run(0x0C)
+                test.verifyRegister(REG_C).firstIsRegister(REG_C).run(0x0C)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_D).operandIsRegister(REG_D).run(0x14)
+                test.verifyRegister(REG_D).firstIsRegister(REG_D).run(0x14)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_E).operandIsRegister(REG_E).run(0x1C)
+                test.verifyRegister(REG_E).firstIsRegister(REG_E).run(0x1C)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_H).operandIsRegister(REG_H).run(0x24)
+                test.verifyRegister(REG_H).firstIsRegister(REG_H).run(0x24)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_L).operandIsRegister(REG_L).run(0x2C)
+                test.verifyRegister(REG_L).firstIsRegister(REG_L).run(0x2C)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_A).operandIsRegister(REG_A).run(0x3C)
+                test.verifyRegister(REG_A).firstIsRegister(REG_A).run(0x3C)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyByte(1).setPair(REG_PAIR_HL, 1).operandIsMemoryByteAt(1).run(0x34)
+                test.verifyByte(1).setPair(REG_PAIR_HL, 1).firstIsMemoryByteAt(1).run(0x34)
         );
     }
 
     @Test
     public void testDCR() throws Exception {
-        TestBuilder.UnaryByte test = new TestBuilder.UnaryByte(cpuRunner, cpuVerifier)
-                .verifyFlags(new FlagsBuilder().sign().zero().parity().auxCarry(), context -> context.first - 1)
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .verifyFlags(new FlagsBuilderImpl().sign().zero().parity().auxCarry(), context -> context.first - 1)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_B).operandIsRegister(REG_B).run(0x05)
+                test.verifyRegister(REG_B).firstIsRegister(REG_B).run(0x05)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_C).operandIsRegister(REG_C).run(0x0D)
+                test.verifyRegister(REG_C).firstIsRegister(REG_C).run(0x0D)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_D).operandIsRegister(REG_D).run(0x15)
+                test.verifyRegister(REG_D).firstIsRegister(REG_D).run(0x15)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_E).operandIsRegister(REG_E).run(0x1D)
+                test.verifyRegister(REG_E).firstIsRegister(REG_E).run(0x1D)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_H).operandIsRegister(REG_H).run(0x25)
+                test.verifyRegister(REG_H).firstIsRegister(REG_H).run(0x25)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_L).operandIsRegister(REG_L).run(0x2D)
+                test.verifyRegister(REG_L).firstIsRegister(REG_L).run(0x2D)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_A).operandIsRegister(REG_A).run(0x3D)
+                test.verifyRegister(REG_A).firstIsRegister(REG_A).run(0x3D)
         );
 
         test.clearVerifiers();
         Generator.forSome8bitUnary(
-                test.verifyByte(1).setPair(REG_PAIR_HL, 1).operandIsMemoryByteAt(1).run(0x35)
+                test.verifyByte(1).setPair(REG_PAIR_HL, 1).firstIsMemoryByteAt(1).run(0x35)
         );
     }
 
     @Test
     public void testINX() throws Exception {
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier);
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl);
         Function<RunnerContext<Integer>, Integer> verifier = context -> context.first + 1;
 
         Generator.forSome16bitUnary(
-                test.verifyPair(REG_PAIR_BC, verifier).operandIsPair(REG_PAIR_BC).run(0x03)
+                test.verifyPair(REG_PAIR_BC, verifier).firstIsPair(REG_PAIR_BC).run(0x03)
         );
 
         test.clearVerifiers();
         Generator.forSome16bitUnary(
-                test.verifyPair(REG_PAIR_DE, verifier).operandIsPair(REG_PAIR_DE).run(0x13)
+                test.verifyPair(REG_PAIR_DE, verifier).firstIsPair(REG_PAIR_DE).run(0x13)
         );
 
         test.clearVerifiers();
         Generator.forSome16bitUnary(
-                test.verifyPair(REG_PAIR_HL, verifier).operandIsPair(REG_PAIR_HL).run(0x23)
+                test.verifyPair(REG_PAIR_HL, verifier).firstIsPair(REG_PAIR_HL).run(0x23)
         );
 
         test.clearVerifiers();
         Generator.forSome16bitUnary(
-                test.verifyPair(REG_SP, verifier).operandIsPair(REG_SP).run(0x33)
+                test.verifyPair(REG_SP, verifier).firstIsPair(REG_SP).run(0x33)
         );
     }
 
     @Test
     public void testDCX() throws Exception {
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier);
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl);
         Function<RunnerContext<Integer>, Integer> verifier = context -> context.first - 1;
 
         Generator.forSome16bitUnary(
-                test.verifyPair(REG_PAIR_BC, verifier).operandIsPair(REG_PAIR_BC).run(0x0B)
+                test.verifyPair(REG_PAIR_BC, verifier).firstIsPair(REG_PAIR_BC).run(0x0B)
         );
 
         test.clearVerifiers();
         Generator.forSome16bitUnary(
-                test.verifyPair(REG_PAIR_DE, verifier).operandIsPair(REG_PAIR_DE).run(0x1B)
+                test.verifyPair(REG_PAIR_DE, verifier).firstIsPair(REG_PAIR_DE).run(0x1B)
         );
 
         test.clearVerifiers();
         Generator.forSome16bitUnary(
-                test.verifyPair(REG_PAIR_HL, verifier).operandIsPair(REG_PAIR_HL).run(0x2B)
+                test.verifyPair(REG_PAIR_HL, verifier).firstIsPair(REG_PAIR_HL).run(0x2B)
         );
 
         test.clearVerifiers();
         Generator.forSome16bitUnary(
-                test.verifyPair(REG_SP, verifier).operandIsPair(REG_SP).run(0x3B)
+                test.verifyPair(REG_SP, verifier).firstIsPair(REG_SP).run(0x3B)
         );
     }
 
     @Test
     public void testDAD() throws Exception {
-        TestBuilder.BinaryInteger test = new TestBuilder.BinaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyPair(REG_PAIR_HL, context -> context.first + context.second)
-                .verifyFlagsOfLastOp(new FlagsBuilder().carry15())
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl().carry15())
                 .firstIsPair(REG_PAIR_HL)
                 .keepCurrentInjectorsAfterRun();
 

@@ -1,12 +1,9 @@
 package net.sf.emustudio.intel8080.impl.suite.injectors;
 
-import net.sf.emustudio.intel8080.impl.suite.CpuRunner;
-import net.sf.emustudio.intel8080.impl.suite.runners.RunnerInjector;
+import net.sf.emustudio.cpu.testsuite.runners.RunnerInjector;
+import net.sf.emustudio.intel8080.impl.suite.CpuRunnerImpl;
 
-import java.util.Objects;
-import java.util.function.Function;
-
-public class Register implements RunnerInjector<Byte> {
+public class Register implements RunnerInjector<Byte, CpuRunnerImpl> {
     private final int register;
 
     public Register(int register) {
@@ -14,7 +11,7 @@ public class Register implements RunnerInjector<Byte> {
     }
 
     @Override
-    public void inject(CpuRunner cpuRunner, Byte value) {
+    public void inject(CpuRunnerImpl cpuRunner, Byte value) {
         cpuRunner.setRegister(register, value);
     }
 }

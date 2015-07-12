@@ -52,6 +52,7 @@
 
   <modules>
     <module>main-module</module>
+    <module>cpu-testsuite</module>
     <module>release</module>
     <module>doc</module>
     <module>plugins/compilers/ramc-ram</module>
@@ -214,27 +215,6 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>animal-sniffer-maven-plugin</artifactId>
-        <version>1.7</version>
-        <executions>
-          <execution>
-            <id>signature-check</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <signature>
-            <groupId>org.codehaus.mojo.signature</groupId>
-            <artifactId>java17</artifactId>
-            <version>1.0</version>
-          </signature>
-        </configuration>
-      </plugin>
     </plugins>
     <resources>
       <resource>
@@ -315,6 +295,12 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>net.sf.emustudio</groupId>
+        <artifactId>cpu-testsuite</artifactId>
+        <version>0.39-SNAPSHOT</version>
+        <scope>test</scope>
+      </dependency>
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>

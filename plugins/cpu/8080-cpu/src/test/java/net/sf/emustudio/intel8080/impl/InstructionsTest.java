@@ -6,8 +6,10 @@ import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
-import net.sf.emustudio.intel8080.impl.suite.CpuRunner;
-import net.sf.emustudio.intel8080.impl.suite.CpuVerifier;
+import net.sf.emustudio.cpu.testsuite.MemoryStub;
+import net.sf.emustudio.cpu.testsuite.RunStateListenerStub;
+import net.sf.emustudio.intel8080.impl.suite.CpuRunnerImpl;
+import net.sf.emustudio.intel8080.impl.suite.CpuVerifierImpl;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
@@ -26,8 +28,8 @@ public class InstructionsTest {
     public static final int REG_PSW = 3;
 
     private CpuImpl cpu;
-    protected CpuRunner cpuRunner;
-    protected CpuVerifier cpuVerifier;
+    protected CpuRunnerImpl cpuRunnerImpl;
+    protected CpuVerifierImpl cpuVerifierImpl;
 
     @Before
     public void setUp() throws ContextNotFoundException, InvalidContextException, PluginInitializationException {
@@ -51,8 +53,8 @@ public class InstructionsTest {
         // simulate emuStudio boot
         cpu.initialize(settingsManager);
 
-        cpuRunner = new CpuRunner(cpu, memoryStub);
-        cpuVerifier = new CpuVerifier(cpu, memoryStub);
+        cpuRunnerImpl = new CpuRunnerImpl(cpu, memoryStub);
+        cpuVerifierImpl = new CpuVerifierImpl(cpu, memoryStub);
     }
 
     @After

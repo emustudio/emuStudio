@@ -1,9 +1,9 @@
 package net.sf.emustudio.intel8080.impl.suite.injectors;
 
-import net.sf.emustudio.intel8080.impl.suite.CpuRunner;
-import net.sf.emustudio.intel8080.impl.suite.runners.RunnerInjector;
+import net.sf.emustudio.cpu.testsuite.runners.RunnerInjector;
+import net.sf.emustudio.intel8080.impl.suite.CpuRunnerImpl;
 
-public class RegisterPair implements RunnerInjector<Integer> {
+public class RegisterPair implements RunnerInjector<Integer, CpuRunnerImpl> {
     private final int registerPair;
 
     public RegisterPair(int registerPair) {
@@ -11,7 +11,7 @@ public class RegisterPair implements RunnerInjector<Integer> {
     }
 
     @Override
-    public void inject(CpuRunner cpuRunner, Integer value) {
+    public void inject(CpuRunnerImpl cpuRunner, Integer value) {
         cpuRunner.setRegisterPair(registerPair, value & 0xFFFF);
     }
 }

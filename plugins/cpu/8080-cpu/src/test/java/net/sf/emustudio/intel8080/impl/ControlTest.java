@@ -1,9 +1,9 @@
 package net.sf.emustudio.intel8080.impl;
 
 import emulib.plugins.cpu.CPU;
-import net.sf.emustudio.intel8080.impl.suite.Generator;
-import net.sf.emustudio.intel8080.impl.suite.TestBuilder;
-import net.sf.emustudio.intel8080.impl.suite.runners.RunnerContext;
+import net.sf.emustudio.cpu.testsuite.Generator;
+import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
+import net.sf.emustudio.intel8080.impl.suite.IntegerTestBuilder;
 import org.junit.Test;
 
 import java.util.List;
@@ -18,48 +18,48 @@ public class ControlTest extends InstructionsTest {
 
     @Test
     public void testEI_DI() throws Exception {
-        cpuRunner.setProgram(0xFB, 0xF3);
-        cpuRunner.reset();
-        cpuRunner.step();
-        cpuVerifier.checkInterruptsAreEnabled();
-        cpuRunner.step();
-        cpuVerifier.checkInterruptsAreDisabled();
+        cpuRunnerImpl.setProgram(0xFB, 0xF3);
+        cpuRunnerImpl.reset();
+        cpuRunnerImpl.step();
+        cpuVerifierImpl.checkInterruptsAreEnabled();
+        cpuRunnerImpl.step();
+        cpuVerifierImpl.checkInterruptsAreDisabled();
     }
 
     @Test
     public void testJMP() throws Exception {
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyPC(context -> context.first)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitUnary(
-                test.runWithOperand(0xC3),
-                test.runWithOperand(0xC2),
-                test.setFlags(FLAG_Z).runWithOperand(0xCA),
-                test.runWithOperand(0xD2),
-                test.setFlags(FLAG_C).runWithOperand(0xDA),
-                test.runWithOperand(0xE2),
-                test.setFlags(FLAG_P).runWithOperand(0xEA),
-                test.runWithOperand(0xF2),
-                test.setFlags(FLAG_S).runWithOperand(0xFA)
+                test.runWithFirstOperand(0xC3),
+                test.runWithFirstOperand(0xC2),
+                test.setFlags(FLAG_Z).runWithFirstOperand(0xCA),
+                test.runWithFirstOperand(0xD2),
+                test.setFlags(FLAG_C).runWithFirstOperand(0xDA),
+                test.runWithFirstOperand(0xE2),
+                test.setFlags(FLAG_P).runWithFirstOperand(0xEA),
+                test.runWithFirstOperand(0xF2),
+                test.setFlags(FLAG_S).runWithFirstOperand(0xFA)
         );
 
         test.clearVerifiers().verifyPC(context -> (context.PC + 3) & 0xFFFF);
         Generator.forSome16bitUnary(
-                test.setFlags(FLAG_Z).runWithOperand(0xC2),
-                test.runWithOperand(0xCA),
-                test.setFlags(FLAG_C).runWithOperand(0xD2),
-                test.runWithOperand(0xDA),
-                test.setFlags(FLAG_P).runWithOperand(0xE2),
-                test.runWithOperand(0xEA),
-                test.setFlags(FLAG_S).runWithOperand(0xF2),
-                test.runWithOperand(0xFA)
+                test.setFlags(FLAG_Z).runWithFirstOperand(0xC2),
+                test.runWithFirstOperand(0xCA),
+                test.setFlags(FLAG_C).runWithFirstOperand(0xD2),
+                test.runWithFirstOperand(0xDA),
+                test.setFlags(FLAG_P).runWithFirstOperand(0xE2),
+                test.runWithFirstOperand(0xEA),
+                test.setFlags(FLAG_S).runWithFirstOperand(0xF2),
+                test.runWithFirstOperand(0xFA)
         );
     }
 
     @Test
     public void testCALL() throws Exception {
-        TestBuilder.BinaryInteger test = new TestBuilder.BinaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyPC(context -> context.second)
                 .verifyWord(context -> context.PC + 3, context -> context.first - 2)
                 .firstIsPair(REG_SP)
@@ -92,7 +92,7 @@ public class ControlTest extends InstructionsTest {
 
     @Test
     public void testRET() throws Exception {
-        TestBuilder.BinaryInteger test = new TestBuilder.BinaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyPair(REG_SP, context -> context.first + 2)
                 .verifyPC(context -> context.second)
                 .firstIsPair(REG_SP)
@@ -131,10 +131,10 @@ public class ControlTest extends InstructionsTest {
 
     @Test
     public void testRST() throws Exception {
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyPair(REG_SP, context -> context.first - 2)
                 .verifyWord(context -> 1, context -> context.SP - 2)
-                .operandIsPair(REG_SP)
+                .firstIsPair(REG_SP)
                 .keepCurrentInjectorsAfterRun();
 
         List<Consumer<RunnerContext<Integer>>> verifiers = test.getVerifiers();
@@ -181,9 +181,9 @@ public class ControlTest extends InstructionsTest {
 
     @Test
     public void testPCHL() throws Exception {
-        TestBuilder.UnaryInteger test = new TestBuilder.UnaryInteger(cpuRunner, cpuVerifier)
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyPC(context -> context.first)
-                .operandIsPair(REG_PAIR_HL);
+                .firstIsPair(REG_PAIR_HL);
 
         Generator.forSome16bitUnary(
                 test.run(0xE9)
@@ -192,10 +192,10 @@ public class ControlTest extends InstructionsTest {
 
     @Test
     public void testHLT() throws Exception {
-        cpuRunner.setProgram(0x76);
-        cpuRunner.reset();
-        cpuRunner.expectRunState(CPU.RunState.STATE_STOPPED_NORMAL);
-        cpuRunner.step();
+        cpuRunnerImpl.setProgram(0x76);
+        cpuRunnerImpl.reset();
+        cpuRunnerImpl.expectRunState(CPU.RunState.STATE_STOPPED_NORMAL);
+        cpuRunnerImpl.step();
     }
 
 
