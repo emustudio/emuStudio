@@ -108,7 +108,7 @@ public abstract class InstructionsTest {
     };
 
 
-    protected EmulatorPlugin cpu;
+    protected CpuImpl cpu;
     protected MemoryStub memoryStub;
     private RunStateListenerStub runStateListener;
 
@@ -125,7 +125,7 @@ public abstract class InstructionsTest {
         replay(contextPool);
 
         runStateListener = new RunStateListenerStub();
-        cpu = new EmulatorPlugin(PLUGIN_ID, contextPool);
+        cpu = new CpuImpl(PLUGIN_ID, contextPool);
         cpu.addCPUListener(runStateListener);
 
         // simulate emuStudio boot

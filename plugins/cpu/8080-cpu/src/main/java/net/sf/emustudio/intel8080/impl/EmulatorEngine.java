@@ -842,6 +842,11 @@ public class EmulatorEngine {
     private int dispatch() throws InvocationTargetException, IllegalAccessException {
         short OP;
 
+        DispatchListener tmpListener = dispatchListener;
+        if (tmpListener != null) {
+            tmpListener.beforeDispatch();
+        }
+
         /* if interrupt is waiting, instruction won't be read from memory
          * but from one or all of 3 bytes (b1,b2,b3) which represents either
          * rst or call instruction incomed from external peripheral device
@@ -861,11 +866,6 @@ public class EmulatorEngine {
                 }
             }
             isINT = false;
-        }
-
-        DispatchListener tmpListener = dispatchListener;
-        if (tmpListener != null) {
-            tmpListener.beforeDispatch();
         }
 
         OP = memory.read(PC);

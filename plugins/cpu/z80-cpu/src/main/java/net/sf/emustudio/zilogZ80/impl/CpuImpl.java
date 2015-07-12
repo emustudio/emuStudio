@@ -53,7 +53,7 @@ import net.sf.emustudio.zilogZ80.gui.StatusPanel;
         copyright = "\u00A9 Copyright 2008-2015, Peter Jakubčo",
         description = "Emulator of Zilog Z80 CPU"
 )
-public class EmulatorPlugin extends AbstractCPU {
+public class CpuImpl extends AbstractCPU {
     private final ScheduledExecutorService frequencyScheduler = Executors.newSingleThreadScheduledExecutor();
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
     private final AtomicReference<Future> frequencyUpdaterFuture = new AtomicReference<>();
@@ -84,7 +84,7 @@ public class EmulatorPlugin extends AbstractCPU {
         }
     }
     
-    public EmulatorPlugin(Long pluginID, ContextPool contextPool) {
+    public CpuImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
         this.contextPool = Objects.requireNonNull(contextPool);
         try {

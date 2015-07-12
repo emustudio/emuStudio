@@ -25,6 +25,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import net.sf.emustudio.intel8080.ExtendedContext;
 import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
+import net.sf.emustudio.zilogZ80.impl.CpuImpl;
 import net.sf.emustudio.zilogZ80.impl.EmulatorEngine;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_A;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_B;
@@ -33,17 +34,16 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_D;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_E;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_H;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
-import net.sf.emustudio.zilogZ80.impl.EmulatorPlugin;
 
 public class StatusPanel extends javax.swing.JPanel {
-    private final EmulatorPlugin cpu;
+    private final CpuImpl cpu;
     private final ExtendedContext context;
     private final FlagsModel flagModel1;
     private final FlagsModel flagModel2;
 
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_NORMAL;
 
-    public StatusPanel(EmulatorPlugin cpu, ExtendedContext context) {
+    public StatusPanel(CpuImpl cpu, ExtendedContext context) {
         this.cpu = cpu;
         this.context = context;
         this.flagModel1 = new FlagsModel(0, cpu.getEngine());

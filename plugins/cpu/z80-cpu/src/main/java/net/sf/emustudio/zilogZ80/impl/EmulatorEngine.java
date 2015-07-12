@@ -84,10 +84,22 @@ public class EmulatorEngine {
     private RunState currentRunState = RunState.STATE_STOPPED_NORMAL;
     public int checkTimeSlice = 100;
     private long executedCycles = 0;
-    
+
+    private volatile DispatchListener dispatchListener;
+
+    public interface DispatchListener {
+        void beforeDispatch();
+
+        void afterDispatch();
+    }
+
     public EmulatorEngine(MemoryContext<Short, Integer> memory, ContextImpl context) {
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
+    }
+
+    public void setDispatchListener(DispatchListener dispatchListener) {
+        this.dispatchListener = dispatchListener;
     }
 
     public long getAndResetExecutedCycles() {
@@ -440,1546 +452,1557 @@ public class EmulatorEngine {
         short special = 0; // prefix if available = 0xDD or 0xFD
         byte b;
 
+        DispatchListener tmpListener = dispatchListener;
+        if (tmpListener != null) {
+            tmpListener.beforeDispatch();
+        }
+
+        try {
         /* if interrupt is waiting, instruction won't be read from memory
          * but from one or all of 3 bytes (b1,b2,b3) which represents either
          * rst or call instruction incomed from external peripheral device
          */
-        if (isINT) {
-            return doInterrupt();
-        }
-        R = ((R + 1) & 0xFF);
-        if (OP == 0x76) { /* HALT */
-            currentRunState = RunState.STATE_STOPPED_NORMAL;
-            return 4;
-        }
+            if (isINT) {
+                return doInterrupt();
+            }
+            R = ((R + 1) & 0xFF);
+            if (OP == 0x76) { /* HALT */
+                currentRunState = RunState.STATE_STOPPED_NORMAL;
+                return 4;
+            }
 
         /* Handle below all operations which refer to registers or register pairs.
          After that, a large switch statement takes care of all other opcodes */
-        switch (OP & 0xC0) {
-            case 0x40: /* LD r,r' */
-                tmp = (OP >>> 3) & 0x07;
-                tmp1 = OP & 0x07;
-                putreg(tmp, (short)getreg(tmp1));
-                if ((tmp1 == 6) || (tmp == 6)) {
-                    return 7;
-                } else {
+            switch (OP & 0xC0) {
+                case 0x40: /* LD r,r' */
+                    tmp = (OP >>> 3) & 0x07;
+                    tmp1 = OP & 0x07;
+                    putreg(tmp, (short) getreg(tmp1));
+                    if ((tmp1 == 6) || (tmp == 6)) {
+                        return 7;
+                    } else {
+                        return 4;
+                    }
+            }
+            switch (OP) {
+                case 0x00: /* NOP */
                     return 4;
-                }
-        }
-        switch (OP) {
-            case 0x00: /* NOP */
-                return 4;
-            case 0x02: /* LD (BC),A */
-                memory.write(getpair(0), (short)regs[REG_A]);
-                return 7;
-            /* INC ss */
-            case 0x03:
-            case 0x13:
-            case 0x23:
-            case 0x33:
-                tmp = (OP >>> 4) & 0x03;
-                putpair(tmp, (getpair(tmp) + 1) & 0xFFFF);
-                return 6;
-            /* ADD HL, ss*/
-            case 0x09:
-            case 0x19:
-            case 0x29:
-            case 0x39:
-                tmp = getpair((OP >>> 4) & 0x03);
-                tmp1 = getpair(2);
-                carry15(tmp, tmp1);
-                auxCarry11(tmp, tmp1);
-                flags &= (~FLAG_N);
-                tmp += tmp1;
-                putpair(2, tmp & 0xFFFF);
-                return 11;
-            /* DEC ss*/
-            case 0x0B:
-            case 0x1B:
-            case 0x2B:
-            case 0x3B:
-                tmp = (OP >>> 4) & 0x03;
-                putpair(tmp, (getpair(tmp) - 1) & 0xFFFF);
-                return 6;
-            /* POP qq */
-            case 0xC1:
-            case 0xD1:
-            case 0xE1:
-            case 0xF1:
-                tmp = (OP >>> 4) & 0x03;
-                tmp1 = memory.readWord(SP);
-                SP = (SP + 2) & 0xffff;
-                putpair2(tmp, tmp1);
-                return 10;
-            /* PUSH qq */
-            case 0xC5:
-            case 0xD5:
-            case 0xE5:
-            case 0xF5:
-                tmp = (OP >>> 4) & 0x03;
-                tmp1 = getpair2(tmp);
-                SP = (SP - 2) & 0xffff;
-                memory.writeWord(SP, tmp1);
-                return 11;
-            /* LD r,n */
-            case 0x06:
-            case 0x0E:
-            case 0x16:
-            case 0x1E:
-            case 0x26:
-            case 0x2E:
-            case 0x36:
-            case 0x3E:
-                tmp = (OP >>> 3) & 0x07;
-                putreg(tmp, memory.read(PC++));
-                if (tmp == 6) {
-                    return 10;
-                } else {
+                case 0x02: /* LD (BC),A */
+                    memory.write(getpair(0), (short) regs[REG_A]);
                     return 7;
-                }
-            /* INC r */
-            case 0x04:
-            case 0x0C:
-            case 0x14:
-            case 0x1C:
-            case 0x24:
-            case 0x2C:
-            case 0x34:
-            case 0x3C:
-                tmp = (OP >>> 3) & 0x07;
-                tmp1 = (getreg(tmp) + 1) & 0xFF;
-                flags = INC_TABLE[tmp1] | (flags & FLAG_C);
-                putreg(tmp, tmp1);
-                return (tmp == 6) ? 11 : 4;
-            /* DEC r */
-            case 0x05:
-            case 0x0D:
-            case 0x15:
-            case 0x1D:
-            case 0x25:
-            case 0x2D:
-            case 0x35:
-            case 0x3D:
-                tmp = (OP >>> 3) & 0x07;
-                tmp1 = (getreg(tmp) - 1) & 0xFF;
-                flags = DEC_TABLE[tmp1] | (flags & FLAG_C);
-                putreg(tmp, tmp1);
-                return (tmp == 6) ? 11 : 4;
-            /* RET cc */
-            case 0xC0:
-            case 0xC8:
-            case 0xD0:
-            case 0xD8:
-            case 0xE0:
-            case 0xE8:
-            case 0xF0:
-            case 0xF8:
-                tmp = (OP >>> 3) & 7;
-                if ((flags & CONDITION[tmp]) == CONDITION_VALUES[tmp]) {
-                    PC = memory.readWord(SP);
-                    SP = (SP + 2) & 0xffff;
+            /* INC ss */
+                case 0x03:
+                case 0x13:
+                case 0x23:
+                case 0x33:
+                    tmp = (OP >>> 4) & 0x03;
+                    putpair(tmp, (getpair(tmp) + 1) & 0xFFFF);
+                    return 6;
+            /* ADD HL, ss*/
+                case 0x09:
+                case 0x19:
+                case 0x29:
+                case 0x39:
+                    tmp = getpair((OP >>> 4) & 0x03);
+                    tmp1 = getpair(2);
+                    carry15(tmp, tmp1);
+                    auxCarry11(tmp, tmp1);
+                    flags &= (~FLAG_N);
+                    tmp += tmp1;
+                    putpair(2, tmp & 0xFFFF);
                     return 11;
-                }
-                return 5;
-            /* RST p */
-            case 0xC7:
-            case 0xCF:
-            case 0xD7:
-            case 0xDF:
-            case 0xE7:
-            case 0xEF:
-            case 0xF7:
-            case 0xFF:
-                memory.writeWord(SP - 2, PC);
-                SP = (SP - 2) & 0xffff;
-                PC = OP & 0x38;
-                return 11;
-            /* ADD A,r */
-            case 0x80:
-            case 0x81:
-            case 0x82:
-            case 0x83:
-            case 0x84:
-            case 0x85:
-            case 0x86:
-            case 0x87:
-                int X = regs[REG_A];
-                int diff = getreg(OP & 0x07);
-                regs[REG_A] += diff;
-
-                flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
-                auxCarry(X, diff);
-                addOverflow(X, diff);
-
-                regs[REG_A] = (short) (regs[REG_A] & 0xFF);
-                return  ((OP & 0x07) == 6) ? 7 : 4;
-            /* ADC A,r */
-            case 0x88:
-            case 0x89:
-            case 0x8A:
-            case 0x8B:
-            case 0x8C:
-            case 0x8D:
-            case 0x8E:
-            case 0x8F:
-                X = regs[REG_A];
-                diff = getreg(OP & 0x07);
-                if ((flags & FLAG_C) != 0) {
-                    diff++;
-                }
-                regs[REG_A] += diff;
-
-                flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
-                auxCarry(X, diff);
-                addOverflow(X, diff);
-
-                regs[REG_A] = (short) (regs[REG_A] & 0xFF);
-                return  ((OP & 0x07) == 6) ? 7 : 4;
-            /* SUB r */
-            case 0x90:
-            case 0x91:
-            case 0x92:
-            case 0x93:
-            case 0x94:
-            case 0x95:
-            case 0x96:
-            case 0x97:
-                X = regs[REG_A];
-                diff = getreg(OP & 0x07);
-                regs[REG_A] -= diff;
-
-                flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
-                auxCarry(X, (-diff) & 0xFF);
-                subOverflow(X, diff);
-
-                regs[REG_A] = (short) (regs[REG_A] & 0xFF);
-                return ((OP & 0x07) == 6) ? 7 : 4;
-            /* SBC A,r */
-            case 0x98:
-            case 0x99:
-            case 0x9A:
-            case 0x9B:
-            case 0x9C:
-            case 0x9D:
-            case 0x9E:
-            case 0x9F:
-                X = regs[REG_A];
-                diff = getreg(OP & 0x07);
-                if ((flags & FLAG_C) != 0) {
-                    diff++;
-                }
-                regs[REG_A] -= diff;
-
-                flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
-                auxCarry(X, (-diff) & 0xFF);
-                subOverflow(X, diff);
-
-                regs[REG_A] = (short) (regs[REG_A] & 0xFF);
-                return ((OP & 0x07) == 6) ? 7 : 4;
-            /* AND r */
-            case 0xA0:
-            case 0xA1:
-            case 0xA2:
-            case 0xA3:
-            case 0xA4:
-            case 0xA5:
-            case 0xA6:
-            case 0xA7:
-                regs[REG_A] = (regs[REG_A] & getreg(OP & 7)) & 0xFF;
-                flags = AND_OR_XOR_TABLE[regs[REG_A]];
-                return (OP == 0xA6) ? 7 : 4;
-            /* XOR r */
-            case 0xA8:
-            case 0xA9:
-            case 0xAA:
-            case 0xAB:
-            case 0xAC:
-            case 0xAD:
-            case 0xAE:
-            case 0xAF:
-                regs[REG_A] =  ((regs[REG_A] ^ getreg(OP & 7)) & 0xff);
-                flags = AND_OR_XOR_TABLE[regs[REG_A]];
-                return (OP == 0xAE) ? 7 : 4;
-            /* OR r */
-            case 0xB0:
-            case 0xB1:
-            case 0xB2:
-            case 0xB3:
-            case 0xB4:
-            case 0xB5:
-            case 0xB6:
-            case 0xB7:
-                regs[REG_A] = (regs[REG_A] | getreg(OP & 7)) & 0xFF;
-                flags = AND_OR_XOR_TABLE[regs[REG_A]];
-                return (OP == 0xB6) ? 7 : 4;
-            /* CP r */
-            case 0xB8:
-            case 0xB9:
-            case 0xBA:
-            case 0xBB:
-            case 0xBC:
-            case 0xBD:
-            case 0xBE:
-            case 0xBF:
-                diff = getreg(OP & 7);
-                tmp2 = regs[REG_A] - diff;
-                
-                flags = SIGN_ZERO_CARRY_TABLE[tmp2 & 0x1FF] | FLAG_N;
-                auxCarry(regs[REG_A], (-diff) & 0xFF);
-                subOverflow(regs[REG_A], diff);
-
-                return (OP == 0xBE) ? 7 : 4;
-            case 0x07: /* RLCA */
-                tmp = regs[REG_A] >>> 7;
-                regs[REG_A] =  ((((regs[REG_A] << 1) & 0xFF) | tmp) & 0xff);
-                flags =  ((flags & 0xEC) | tmp);
-                return 4;
-            case 0x08: /* EX AF,AF' */
-                tmp = regs[REG_A];
-                regs[REG_A] = regs2[REG_A];
-                regs2[REG_A] =  tmp;
-                tmp = flags;
-                flags = flags2;
-                flags2 =  tmp;
-                return 4;
-            case 0x0A: /* LD A,(BC) */
-                tmp = memory.read(getpair(0));
-                regs[REG_A] =  tmp;
-                return 7;
-            case 0x0F: /* RRCA */
-                flags =  ((flags & 0xFE) | (regs[REG_A] & 1));
-                regs[REG_A] = RRCA_TABLE[regs[REG_A]];
-                return 4;
-            case 0x10: /* DJNZ e */
-                tmp = memory.read(PC++);
-                regs[REG_B]--;
-                regs[REG_B] &= 0xFF;
-                if (regs[REG_B] != 0) {
-                    PC += (byte)tmp;
-                    return 13;
-                }
-                return 8;
-            case 0x12: /* LD (DE), A */
-                memory.write(getpair(1), (short)regs[REG_A]);
-                return 7;
-            case 0x17: /* RLA */
-                tmp = regs[REG_A] >>> 7;
-                regs[REG_A] =  (((regs[REG_A] << 1) | (flags & 1)) & 0xff);
-                flags =  ((flags & 0xEC) | tmp);
-                return 4;
-            case 0x1A: /* LD A,(DE) */
-                tmp = memory.read(getpair(1));
-                regs[REG_A] =  (tmp & 0xff);
-                return 7;
-            case 0x1F: /* RRA */
-                tmp = (flags & 1) << 7;
-                flags =  ((flags & 0xEC) | (regs[REG_A] & 1));
-                regs[REG_A] =  ((regs[REG_A] >>> 1 | tmp) & 0xff);
-                return 4;
-            case 0x27: /* DAA */
-                int temp = regs[REG_A];
-                boolean acFlag = (flags & FLAG_H) == FLAG_H;
-                boolean cFlag = (flags & FLAG_C) == FLAG_C;
-
-                if (!acFlag && !cFlag) {
-                    regs[REG_A] = DAA_NOT_H_NOT_C_TABLE[temp] & 0xFF;
-                    flags = (DAA_NOT_H_NOT_C_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
-                } else if (acFlag && !cFlag) {
-                    regs[REG_A] = DAA_H_NOT_C_TABLE[temp] & 0xFF;
-                    flags = (DAA_H_NOT_C_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
-                } else if (!acFlag && cFlag) {
-                    regs[REG_A] = DAA_NOT_H_C_TABLE[temp] & 0xFF;
-                    flags = (DAA_NOT_H_C_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
-                } else {
-                    regs[REG_A] = DAA_H_C_TABLE[temp] & 0xFF;
-                    flags = (DAA_H_C_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
-                }
-                return 4;
-            case 0x2F: /* CPL */
-                regs[REG_A] =  ((~regs[REG_A]) & 0xFF);
-                flags |= FLAG_N | FLAG_H;
-                return 4;
-            case 0x37: /* SCF */
-                flags |= FLAG_N | FLAG_C;
-                flags &= ~FLAG_H;
-                return 4;
-            case 0x3F: /* CCF */
-                tmp = flags & FLAG_C;
-                if (tmp == 0) {
-                    flags |= FLAG_C;
-                } else {
-                    flags &= ~FLAG_C;
-                }
-                flags &= ~FLAG_N;
-                return 4;
-            case 0xC9: /* RET */
-                PC = memory.readWord(SP);
-                SP += 2;
-                return 10;
-            case 0xD9: /* EXX */
-                tmp = regs[REG_B];
-                regs[REG_B] = regs2[REG_B];
-                regs2[REG_B] =  tmp;
-                tmp = regs[REG_C];
-                regs[REG_C] = regs2[REG_C];
-                regs2[REG_C] = tmp;
-                tmp = regs[REG_D];
-                regs[REG_D] = regs2[REG_D];
-                regs2[REG_D] = tmp;
-                tmp = regs[REG_E];
-                regs[REG_E] = regs2[REG_E];
-                regs2[REG_E] = tmp;
-                tmp = regs[REG_H];
-                regs[REG_H] = regs2[REG_H];
-                regs2[REG_H] = tmp;
-                tmp = regs[REG_L];
-                regs[REG_L] = regs2[REG_L];
-                regs2[REG_L] = tmp;
-                return 4;
-            case 0xE3: /* EX (SP),HL */
-                tmp = memory.read(SP);
-                tmp1 = memory.read(SP + 1);
-                memory.write(SP, (short)regs[REG_L]);
-                memory.write(SP + 1, (short)regs[REG_H]);
-                regs[REG_L] = tmp & 0xFF;
-                regs[REG_H] = tmp1 & 0xFF;
-                return 19;
-            case 0xE9: /* JP (HL) */
-                PC = ((regs[REG_H] << 8) | regs[REG_L]);
-                return 4;
-            case 0xEB: /* EX DE,HL */
-                tmp = regs[REG_D];
-                regs[REG_D] = regs[REG_H];
-                regs[REG_H] =  tmp;
-                tmp = regs[REG_E];
-                regs[REG_E] = regs[REG_L];
-                regs[REG_L] =  tmp;
-                return 4;
-            case 0xF3: /* DI */
-                IFF[0] = IFF[1] = false;
-                return 4;
-            case 0xF9: /* LD SP,HL */
-                SP = ((regs[REG_H] << 8) | regs[REG_L]);
-                return 6;
-            case 0xFB:
-                IFF[0] = IFF[1] = true;
-                return 4;
-            case 0xED:
-                OP = memory.read(PC++);
-                switch (OP) {
-                    /* IN r,(C) */
-                    case 0x40:
-                    case 0x48:
-                    case 0x50:
-                    case 0x58:
-                    case 0x60:
-                    case 0x68:
-                    case 0x78:
-                        tmp = (OP >>> 3) & 0x7;
-                        putreg(tmp, context.fireIO(regs[REG_C], true,  0));
-                        flags =  ((flags & 1) | DAA_TABLE[tmp]);
-                        return 12;
-                    /* OUT (C),r */
-                    case 0x41:
-                    case 0x49:
-                    case 0x51:
-                    case 0x59:
-                    case 0x61:
-                    case 0x69:
-                    case 0x79:
-                        tmp = (OP >>> 3) & 0x7;
-                        context.fireIO(regs[REG_C], false, (short)getreg(tmp));
-                        return 12;
-                    /* SBC HL, ss */
-                    case 0x42:
-                    case 0x52:
-                    case 0x62:
-                    case 0x72:
-                        tmp = getpair((OP >>> 4) & 0x03);
-                        tmp1 = getpair(2);
-                        if ((flags & FLAG_C) == FLAG_C) {
-                            tmp++;
-                        }
-                        int sum = tmp1 - tmp;
-                        if ((sum & 0x8000) != 0) {
-                            flags |= FLAG_S;
-                        } else {
-                            flags &= (~FLAG_S);
-                        }
-                        if ((sum & 0xFFFF) == 0) {
-                            flags |= FLAG_Z;
-                        } else {
-                            flags &= (~FLAG_Z);
-                        }
-                        flags |= FLAG_N;
-                        carry15(tmp1, (-tmp) & 0xFFFF);
-                        auxCarry11(tmp1, (-tmp) & 0xFFFF);
-                        subBigOverflow(tmp1, tmp);
-                        putpair(2, sum & 0xFFFF);
-                        return 15;
-                    /* ADC HL,ss */
-                    case 0x4A:
-                    case 0x5A:
-                    case 0x6A:
-                    case 0x7A:
-                        tmp = getpair((OP >>> 4) & 0x03);
-                        tmp1 = getpair(2);
-                        if ((flags & FLAG_C) == FLAG_C) {
-                            tmp1++;
-                        }
-                        sum = tmp + tmp1;
-                        if ((sum & 0x8000) != 0) {
-                            flags |= FLAG_S;
-                        } else {
-                            flags &= (~FLAG_S);
-                        }
-                        if ((sum & 0xFFFF) == 0) {
-                            flags |= FLAG_Z;
-                        } else {
-                            flags &= (~FLAG_Z);
-                        }
-                        flags &= (~FLAG_N);
-                        carry15(tmp, tmp1);
-                        auxCarry11(tmp, tmp1);
-                        addBigOverflow(tmp, tmp1);
-                        putpair(2, sum & 0xFFFF);
+            /* DEC ss*/
+                case 0x0B:
+                case 0x1B:
+                case 0x2B:
+                case 0x3B:
+                    tmp = (OP >>> 4) & 0x03;
+                    putpair(tmp, (getpair(tmp) - 1) & 0xFFFF);
+                    return 6;
+            /* POP qq */
+                case 0xC1:
+                case 0xD1:
+                case 0xE1:
+                case 0xF1:
+                    tmp = (OP >>> 4) & 0x03;
+                    tmp1 = memory.readWord(SP);
+                    SP = (SP + 2) & 0xffff;
+                    putpair2(tmp, tmp1);
+                    return 10;
+            /* PUSH qq */
+                case 0xC5:
+                case 0xD5:
+                case 0xE5:
+                case 0xF5:
+                    tmp = (OP >>> 4) & 0x03;
+                    tmp1 = getpair2(tmp);
+                    SP = (SP - 2) & 0xffff;
+                    memory.writeWord(SP, tmp1);
+                    return 11;
+            /* LD r,n */
+                case 0x06:
+                case 0x0E:
+                case 0x16:
+                case 0x1E:
+                case 0x26:
+                case 0x2E:
+                case 0x36:
+                case 0x3E:
+                    tmp = (OP >>> 3) & 0x07;
+                    putreg(tmp, memory.read(PC++));
+                    if (tmp == 6) {
+                        return 10;
+                    } else {
+                        return 7;
+                    }
+            /* INC r */
+                case 0x04:
+                case 0x0C:
+                case 0x14:
+                case 0x1C:
+                case 0x24:
+                case 0x2C:
+                case 0x34:
+                case 0x3C:
+                    tmp = (OP >>> 3) & 0x07;
+                    tmp1 = (getreg(tmp) + 1) & 0xFF;
+                    flags = INC_TABLE[tmp1] | (flags & FLAG_C);
+                    putreg(tmp, tmp1);
+                    return (tmp == 6) ? 11 : 4;
+            /* DEC r */
+                case 0x05:
+                case 0x0D:
+                case 0x15:
+                case 0x1D:
+                case 0x25:
+                case 0x2D:
+                case 0x35:
+                case 0x3D:
+                    tmp = (OP >>> 3) & 0x07;
+                    tmp1 = (getreg(tmp) - 1) & 0xFF;
+                    flags = DEC_TABLE[tmp1] | (flags & FLAG_C);
+                    putreg(tmp, tmp1);
+                    return (tmp == 6) ? 11 : 4;
+            /* RET cc */
+                case 0xC0:
+                case 0xC8:
+                case 0xD0:
+                case 0xD8:
+                case 0xE0:
+                case 0xE8:
+                case 0xF0:
+                case 0xF8:
+                    tmp = (OP >>> 3) & 7;
+                    if ((flags & CONDITION[tmp]) == CONDITION_VALUES[tmp]) {
+                        PC = memory.readWord(SP);
+                        SP = (SP + 2) & 0xffff;
                         return 11;
-                    case 0x44: /* NEG */
-                        regs[REG_A] =  ((0 - regs[REG_A]) & 0xFF);
-                        flags = NEG_TABLE[regs[REG_A]];
-                        return 8;
-                    case 0x45: /* RETN */
-                        IFF[0] = IFF[1];
-                        PC = memory.readWord(SP);
-                        SP = (SP + 2) & 0xffff;
-                        return 14;
-                    case 0x46: /* IM 0 */
-                        intMode = 0;
-                        return 8;
-                    case 0x47: /* LD I,A */
-                        I = regs[REG_A];
-                        return 9;
-                    case 0x4D: /* RETI - weird.. */
-                        IFF[0] = IFF[1];
-                        PC = memory.readWord(SP);
-                        SP = (SP + 2) & 0xffff;
-                        return 14;
-                    case 0x4F: /* LD R,A */
-                        R = regs[REG_A];
-                        return 9;
-                    case 0x56: /* IM 1 */
-                        intMode = 1;
-                        return 8;
-                    case 0x57: /* LD A,I */
-                        regs[REG_A] = I;
-                        flags = EmulatorTables.SIGN_ZERO_TABLE[(short)(I & 0xFF)]
-                                | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C);
-                        return 9;
-                    case 0x5E: /* IM 2 */
-                        intMode = 2;
-                        return 8;
-                    case 0x5F: /* LD A,R */
-                        regs[REG_A] = R;
-                        flags = EmulatorTables.SIGN_ZERO_TABLE[(short)(R & 0xFF)]
-                                | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C);
-                        return 9;
-                    case 0x67: /* RRD */
-                        tmp = regs[REG_A] & 0x0F;
-                        tmp1 = memory.read((regs[REG_H] << 8) | regs[REG_L]);
-                        regs[REG_A] =  ((regs[REG_A] & 0xF0) | (tmp1 & 0x0F));
-                        tmp1 = ((tmp1 >>> 4) & 0x0F) | (tmp << 4);
-                        memory.write(((regs[REG_H] << 8) | regs[REG_L]), (short)(tmp1 & 0xff));
-                        flags =  (DAA_TABLE[regs[REG_A]] | (flags & FLAG_C));
-                        return 18;
-                    case 0x6F: /* RLD */
-                        tmp = memory.read((regs[REG_H] << 8) | regs[REG_L]);
-                        tmp1 = (tmp >>> 4) & 0x0F;
-                        tmp = ((tmp << 4) & 0xF0) | (regs[REG_A] & 0x0F);
-                        regs[REG_A] =  ((regs[REG_A] & 0xF0) | tmp1);
-                        memory.write((regs[REG_H] << 8) | regs[REG_L], (short)(tmp & 0xff));
-                        flags =  (DAA_TABLE[regs[REG_A]] | (flags & FLAG_C));
-                        return 18;
-                    case 0x70: /* IN (C) - unsupported */
-                        tmp = (context.fireIO(regs[REG_C], true,  0) & 0xFF);
-                        flags =  ((flags & 1) | DAA_TABLE[tmp]);
-                        return 12;
-                    case 0x71: /* OUT (C),0 - unsupported */
-                        context.fireIO(regs[REG_C], false, 0);
-                        return 12;
-                    case 0xA0: /* LDI */
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        tmp2 = (regs[REG_D] << 8) | regs[REG_E];
-                        tmp = (regs[REG_B] << 8) | regs[REG_C];
+                    }
+                    return 5;
+            /* RST p */
+                case 0xC7:
+                case 0xCF:
+                case 0xD7:
+                case 0xDF:
+                case 0xE7:
+                case 0xEF:
+                case 0xF7:
+                case 0xFF:
+                    memory.writeWord(SP - 2, PC);
+                    SP = (SP - 2) & 0xffff;
+                    PC = OP & 0x38;
+                    return 11;
+            /* ADD A,r */
+                case 0x80:
+                case 0x81:
+                case 0x82:
+                case 0x83:
+                case 0x84:
+                case 0x85:
+                case 0x86:
+                case 0x87:
+                    int X = regs[REG_A];
+                    int diff = getreg(OP & 0x07);
+                    regs[REG_A] += diff;
 
-                        memory.write(tmp2, memory.read(tmp1));
+                    flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
+                    auxCarry(X, diff);
+                    addOverflow(X, diff);
 
-                        tmp1 = (tmp1 + 1) & 0xFFFF;
-                        tmp2 = (tmp2 + 1) & 0xFFFF;
-                        tmp = (tmp - 1) & 0xFFFF;
+                    regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                    return ((OP & 0x07) == 6) ? 7 : 4;
+            /* ADC A,r */
+                case 0x88:
+                case 0x89:
+                case 0x8A:
+                case 0x8B:
+                case 0x8C:
+                case 0x8D:
+                case 0x8E:
+                case 0x8F:
+                    X = regs[REG_A];
+                    diff = getreg(OP & 0x07);
+                    if ((flags & FLAG_C) != 0) {
+                        diff++;
+                    }
+                    regs[REG_A] += diff;
 
-                        regs[REG_H] = (tmp1 >>> 8) & 0xFF;
-                        regs[REG_L] = tmp1 & 0xFF;
-                        regs[REG_D] = (tmp2 >>> 8) & 0xFF;
-                        regs[REG_E] = tmp2 & 0xFF;
-                        regs[REG_B] = (tmp >>> 8) & 0xFF;
-                        regs[REG_C] = tmp & 0xFF;
-                        flags = ((flags & FLAG_S) | (flags & FLAG_Z) | (flags & FLAG_C)) & (~FLAG_PV);
-                        if (tmp != 0) {
-                            flags |= FLAG_PV;
-                        }
-                        return 16;
-                    case 0xA1: /* CPI */
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        tmp2 = (regs[REG_B] << 8) | regs[REG_C];
+                    flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
+                    auxCarry(X, diff);
+                    addOverflow(X, diff);
 
-                        tmp = memory.read(tmp1);
-                        tmp1 = (tmp1 + 1) & 0xFFFF;
-                        tmp2 = (tmp2 - 1) & 0xFFFF;
+                    regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                    return ((OP & 0x07) == 6) ? 7 : 4;
+            /* SUB r */
+                case 0x90:
+                case 0x91:
+                case 0x92:
+                case 0x93:
+                case 0x94:
+                case 0x95:
+                case 0x96:
+                case 0x97:
+                    X = regs[REG_A];
+                    diff = getreg(OP & 0x07);
+                    regs[REG_A] -= diff;
 
-                        flags = EmulatorTables.SIGN_ZERO_TABLE[(regs[REG_A] - tmp) & 0xFF] | FLAG_N | (flags & FLAG_C);
-                        auxCarry(regs[REG_A], (-tmp) & 0xFF);
+                    flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
+                    auxCarry(X, (-diff) & 0xFF);
+                    subOverflow(X, diff);
 
-                        if (tmp2 != 0) {
-                            flags |= FLAG_PV;
-                        }
+                    regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                    return ((OP & 0x07) == 6) ? 7 : 4;
+            /* SBC A,r */
+                case 0x98:
+                case 0x99:
+                case 0x9A:
+                case 0x9B:
+                case 0x9C:
+                case 0x9D:
+                case 0x9E:
+                case 0x9F:
+                    X = regs[REG_A];
+                    diff = getreg(OP & 0x07);
+                    if ((flags & FLAG_C) != 0) {
+                        diff++;
+                    }
+                    regs[REG_A] -= diff;
 
-                        regs[REG_H] = (tmp1 >>> 8) & 0xFF;
-                        regs[REG_L] = tmp1 & 0xFF;
-                        regs[REG_B] = (tmp2 >>> 8) & 0xFF;
-                        regs[REG_C] = tmp2 & 0xFF;
-                        return 16;
-                    case 0xA2: /* INI */
-                        tmp = (context.fireIO(regs[REG_C], true,  0) & 0xFF);
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        memory.write(tmp1,  (short)tmp);
-                        tmp1 = (tmp1 + 1) & 0xFFFF;
-                        regs[REG_H] =  ((tmp1 >>> 8) & 0xff);
-                        regs[REG_L] =  (tmp1 & 0xFF);
-                        regs[REG_B] =  ((regs[REG_B] - 1) & 0xFF);
-                        flags =  ((flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0));
-                        return 16;
-                    case 0xA3: /* OUTI */
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        context.fireIO(regs[REG_C], false, memory.read(tmp1));
-                        tmp1 = (tmp1 + 1) & 0xFFFF;
-                        regs[REG_H] =  ((tmp1 >>> 8) & 0xff);
-                        regs[REG_L] =  (tmp1 & 0xFF);
-                        regs[REG_B] =  ((regs[REG_B] - 1) & 0xFF);
-                        flags =  ((flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0));
-                        return 16;
-                    case 0xA8: /* LDD */
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        tmp2 = (regs[REG_D] << 8) | regs[REG_E];
-                        tmp = (regs[REG_B] << 8) | regs[REG_C];
+                    flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
+                    auxCarry(X, (-diff) & 0xFF);
+                    subOverflow(X, diff);
 
-                        memory.write(tmp2, memory.read(tmp1));
+                    regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                    return ((OP & 0x07) == 6) ? 7 : 4;
+            /* AND r */
+                case 0xA0:
+                case 0xA1:
+                case 0xA2:
+                case 0xA3:
+                case 0xA4:
+                case 0xA5:
+                case 0xA6:
+                case 0xA7:
+                    regs[REG_A] = (regs[REG_A] & getreg(OP & 7)) & 0xFF;
+                    flags = AND_OR_XOR_TABLE[regs[REG_A]];
+                    return (OP == 0xA6) ? 7 : 4;
+            /* XOR r */
+                case 0xA8:
+                case 0xA9:
+                case 0xAA:
+                case 0xAB:
+                case 0xAC:
+                case 0xAD:
+                case 0xAE:
+                case 0xAF:
+                    regs[REG_A] = ((regs[REG_A] ^ getreg(OP & 7)) & 0xff);
+                    flags = AND_OR_XOR_TABLE[regs[REG_A]];
+                    return (OP == 0xAE) ? 7 : 4;
+            /* OR r */
+                case 0xB0:
+                case 0xB1:
+                case 0xB2:
+                case 0xB3:
+                case 0xB4:
+                case 0xB5:
+                case 0xB6:
+                case 0xB7:
+                    regs[REG_A] = (regs[REG_A] | getreg(OP & 7)) & 0xFF;
+                    flags = AND_OR_XOR_TABLE[regs[REG_A]];
+                    return (OP == 0xB6) ? 7 : 4;
+            /* CP r */
+                case 0xB8:
+                case 0xB9:
+                case 0xBA:
+                case 0xBB:
+                case 0xBC:
+                case 0xBD:
+                case 0xBE:
+                case 0xBF:
+                    diff = getreg(OP & 7);
+                    tmp2 = regs[REG_A] - diff;
 
-                        tmp1 = (tmp1 - 1) & 0xFFFF;
-                        tmp2 = (tmp2 - 1) & 0xFFFF;
-                        tmp = (tmp - 1) & 0xFFFF;
+                    flags = SIGN_ZERO_CARRY_TABLE[tmp2 & 0x1FF] | FLAG_N;
+                    auxCarry(regs[REG_A], (-diff) & 0xFF);
+                    subOverflow(regs[REG_A], diff);
 
-                        regs[REG_H] = (tmp1 >>> 8) & 0xFF;
-                        regs[REG_L] = tmp1 & 0xFF;
-                        regs[REG_D] = (tmp2 >>> 8) & 0xFF;
-                        regs[REG_E] = tmp2 & 0xFF;
-                        regs[REG_B] = (tmp >>> 8) & 0xFF;
-                        regs[REG_C] = tmp & 0xFF;
-                        flags = ((flags & FLAG_S) | (flags & FLAG_Z) | (flags & FLAG_C)) & (~FLAG_PV);
-                        if (tmp != 0) {
-                            flags |= FLAG_PV;
-                        }
-                        return 16;
-                    case 0xA9: /* CPD */
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        tmp2 = (regs[REG_B] << 8) | regs[REG_C];
+                    return (OP == 0xBE) ? 7 : 4;
+                case 0x07: /* RLCA */
+                    tmp = regs[REG_A] >>> 7;
+                    regs[REG_A] = ((((regs[REG_A] << 1) & 0xFF) | tmp) & 0xff);
+                    flags = ((flags & 0xEC) | tmp);
+                    return 4;
+                case 0x08: /* EX AF,AF' */
+                    tmp = regs[REG_A];
+                    regs[REG_A] = regs2[REG_A];
+                    regs2[REG_A] = tmp;
+                    tmp = flags;
+                    flags = flags2;
+                    flags2 = tmp;
+                    return 4;
+                case 0x0A: /* LD A,(BC) */
+                    tmp = memory.read(getpair(0));
+                    regs[REG_A] = tmp;
+                    return 7;
+                case 0x0F: /* RRCA */
+                    flags = ((flags & 0xFE) | (regs[REG_A] & 1));
+                    regs[REG_A] = RRCA_TABLE[regs[REG_A]];
+                    return 4;
+                case 0x10: /* DJNZ e */
+                    tmp = memory.read(PC++);
+                    regs[REG_B]--;
+                    regs[REG_B] &= 0xFF;
+                    if (regs[REG_B] != 0) {
+                        PC += (byte) tmp;
+                        return 13;
+                    }
+                    return 8;
+                case 0x12: /* LD (DE), A */
+                    memory.write(getpair(1), (short) regs[REG_A]);
+                    return 7;
+                case 0x17: /* RLA */
+                    tmp = regs[REG_A] >>> 7;
+                    regs[REG_A] = (((regs[REG_A] << 1) | (flags & 1)) & 0xff);
+                    flags = ((flags & 0xEC) | tmp);
+                    return 4;
+                case 0x1A: /* LD A,(DE) */
+                    tmp = memory.read(getpair(1));
+                    regs[REG_A] = (tmp & 0xff);
+                    return 7;
+                case 0x1F: /* RRA */
+                    tmp = (flags & 1) << 7;
+                    flags = ((flags & 0xEC) | (regs[REG_A] & 1));
+                    regs[REG_A] = ((regs[REG_A] >>> 1 | tmp) & 0xff);
+                    return 4;
+                case 0x27: /* DAA */
+                    int temp = regs[REG_A];
+                    boolean acFlag = (flags & FLAG_H) == FLAG_H;
+                    boolean cFlag = (flags & FLAG_C) == FLAG_C;
 
-                        tmp = memory.read(tmp1);
-                        tmp1 = (tmp1 - 1) & 0xFFFF;
-                        tmp2 = (tmp2 - 1) & 0xFFFF;
-
-                        flags = EmulatorTables.SIGN_ZERO_TABLE[(regs[REG_A] - tmp) & 0xFF] | FLAG_N | (flags & FLAG_C);
-                        auxCarry(regs[REG_A], (-tmp) & 0xFF);
-
-                        if (tmp2 != 0) {
-                            flags |= FLAG_PV;
-                        }
-
-                        regs[REG_H] = (tmp1 >>> 8) & 0xFF;
-                        regs[REG_L] = tmp1 & 0xFF;
-                        regs[REG_B] = (tmp2 >>> 8) & 0xFF;
-                        regs[REG_C] = tmp2 & 0xFF;
-                        return 16;
-                    case 0xAA: /* IND */
-                        tmp = (context.fireIO(regs[REG_C], true,  0) & 0xFF);
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        memory.write(tmp1,  (short)tmp);
-                        tmp1 = (tmp1 - 1) & 0xFFFF;
-                        regs[REG_H] =  ((tmp1 >>> 8) & 0xff);
-                        regs[REG_L] =  (tmp1 & 0xFF);
-                        regs[REG_B] =  ((regs[REG_B] - 1) & 0xFF);
-                        flags = (flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0);
-                        return 16;
-                    case 0xAB: /* OUTD */
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        context.fireIO(regs[REG_C], false, memory.read( tmp1));
-                        tmp1 = (tmp1 - 1) & 0xFFFF;
-                        regs[REG_H] =  ((tmp1 >>> 8) & 0xff);
-                        regs[REG_L] =  (tmp1 & 0xFF);
-                        regs[REG_B] =  ((regs[REG_B] - 1) & 0xFF);
-                        flags = (flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0);
-                        return 16;
-                    case 0xB0: /* LDIR */
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        tmp2 = (regs[REG_D] << 8) | regs[REG_E];
-                        tmp = (regs[REG_B] << 8) | regs[REG_C];
-
-                        memory.write(tmp2, memory.read(tmp1));
-
-                        tmp1 = (tmp1 + 1) & 0xFFFF;
-                        tmp2 = (tmp2 + 1) & 0xFFFF;
-                        tmp = (tmp - 1) & 0xFFFF;
-
-                        regs[REG_H] = (tmp1 >>> 8) & 0xFF;
-                        regs[REG_L] = tmp1 & 0xFF;
-                        regs[REG_D] = (tmp2 >>> 8) & 0xFF;
-                        regs[REG_E] = tmp2 & 0xFF;
-                        regs[REG_B] = (tmp >>> 8) & 0xFF;
-                        regs[REG_C] = tmp & 0xFF;
-                        flags &= ((~FLAG_PV) & (~FLAG_N) & (~FLAG_H));
-
-                        if (tmp == 0) {
-                            return 16;
-                        }
-                        PC = (PC - 2) & 0xFFFF;
-                        return 21;
-                    case 0xB1: /* CPIR */
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        tmp2 = (regs[REG_B] << 8) | regs[REG_C];
-
-                        tmp = memory.read(tmp1);
-                        tmp1 = (tmp1 + 1) & 0xFFFF;
-                        tmp2 = (tmp2 - 1) & 0xFFFF;
-
-                        flags = EmulatorTables.SIGN_ZERO_TABLE[(regs[REG_A] - tmp) & 0xFF] | FLAG_N | (flags & FLAG_C);
-                        auxCarry(regs[REG_A], (-tmp) & 0xFF);
-
-                        if (tmp2 != 0) {
-                            flags |= FLAG_PV;
-                        }
-
-                        regs[REG_H] = (tmp1 >>> 8) & 0xFF;
-                        regs[REG_L] = tmp1 & 0xFF;
-                        regs[REG_B] = (tmp2 >>> 8) & 0xFF;
-                        regs[REG_C] = tmp2 & 0xFF;
-
-                        if ((tmp2 == 0) || (regs[REG_A] == tmp)) {
-                            return 16;
-                        }
-                        PC = (PC - 2) & 0xFFFF;
-                        return 21;
-                    case 0xB2: /* INIR */
-                        tmp = (context.fireIO(regs[REG_C], true,  0) & 0xFF);
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        memory.write(tmp1,  (short)tmp);
-                        tmp1 = (tmp1 + 1) & 0xFFFF;
-                        regs[REG_H] =  ((tmp1 >>> 8) & 0xff);
-                        regs[REG_L] =  (tmp1 & 0xFF);
-                        regs[REG_B] =  ((regs[REG_B] - 1) & 0xFF);
-                        flags |=  (FLAG_N | FLAG_Z);
-                        if (regs[REG_B] == 0) {
-                            return 16;
-                        }
-                        PC -= 2;
-                        return 21;
-                    case 0xB3: /* OTIR */
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        context.fireIO(regs[REG_C], false, memory.read(tmp1));
-                        tmp1 = (tmp1 + 1) & 0xFFFF;
-                        regs[REG_H] =  ((tmp1 >>> 8) & 0xff);
-                        regs[REG_L] =  (tmp1 & 0xFF);
-                        regs[REG_B] =  ((regs[REG_B] - 1) & 0xFF);
-                        flags |=  (FLAG_N | FLAG_Z);
-                        if (regs[REG_B] == 0) {
-                            return 16;
-                        }
-                        PC -= 2;
-                        return 21;
-                    case 0xB8: /* LDDR */
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        tmp2 = (regs[REG_D] << 8) | regs[REG_E];
-                        memory.write(tmp2, memory.read(tmp1));
-                        tmp1 = (tmp1 - 1) & 0xFFFF;
-                        tmp2 = (tmp2 - 1) & 0xFFFF;
-                        tmp = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
-                        regs[REG_H] =  ((tmp1 >>> 8) & 0xff);
-                        regs[REG_L] =  (tmp1 & 0xFF);
-                        regs[REG_B] =  ((tmp >>> 8) & 0xff);
-                        regs[REG_C] =  (tmp & 0xFF);
-                        regs[REG_D] =  ((tmp2 >>> 8) & 0xff);
-                        regs[REG_E] =  (tmp2 & 0xFF);
-                        flags &= 0xE9;
-                        if (tmp == 0) {
-                            return 16;
-                        }
-                        PC -= 2;
-                        return 21;
-                    case 0xB9: /* CPDR */
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        tmp2 = (regs[REG_B] << 8) | regs[REG_C];
-
-                        tmp = memory.read(tmp1);
-                        tmp1 = (tmp1 - 1) & 0xFFFF;
-                        tmp2 = (tmp2 - 1) & 0xFFFF;
-
-                        flags = EmulatorTables.SIGN_ZERO_TABLE[(regs[REG_A] - tmp) & 0xFF] | FLAG_N | (flags & FLAG_C);
-                        auxCarry(regs[REG_A], (-tmp) & 0xFF);
-
-                        if (tmp2 != 0) {
-                            flags |= FLAG_PV;
-                        }
-
-                        regs[REG_H] = (tmp1 >>> 8) & 0xFF;
-                        regs[REG_L] = tmp1 & 0xFF;
-                        regs[REG_B] = (tmp2 >>> 8) & 0xFF;
-                        regs[REG_C] = tmp2 & 0xFF;
-
-                        if ((tmp2 == 0) || (regs[REG_A] == tmp)) {
-                            return 16;
-                        }
-                        PC = (PC - 2) & 0xFFFF;
-                        return 21;
-                    case 0xBA: /* INDR */
-                        tmp = (context.fireIO(regs[REG_C], true,  0) & 0xFF);
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        memory.write(tmp1,  (short)tmp);
-                        tmp1 = (tmp1 - 1) & 0xFFFF;
-                        regs[REG_H] =  (tmp1 >>> 8);
-                        regs[REG_L] =  (tmp1 & 0xFF);
-                        regs[REG_B] =  ((regs[REG_B] - 1) & 0xFF);
-                        flags |=  (FLAG_N | FLAG_Z);
-                        if (regs[REG_B] == 0) {
-                            return 16;
-                        }
-                        PC -= 2;
-                        return 21;
-                    case 0xBB: /* OTDR */
-                        tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                        context.fireIO(regs[REG_C], false, memory.read( tmp1));
-                        tmp1 = (tmp1 - 1) & 0xFFFF;
-                        regs[REG_H] =  (tmp1 >>> 8);
-                        regs[REG_L] =  (tmp1 & 0xFF);
-                        regs[REG_B] =  ((regs[REG_B] - 1) & 0xFF);
-                        flags |=  (FLAG_N | FLAG_Z);
-                        if (regs[REG_B] == 0) {
-                            return 16;
-                        }
-                        PC -= 2;
-                        return 21;
-                }
-                tmp = memory.readWord(PC);
-                PC += 2;
-                switch (OP) {
-                    /* LD (nn), ss */
-                    case 0x43:
-                    case 0x53:
-                    case 0x63:
-                    case 0x73:
-                        tmp1 = getpair((OP >>> 4) & 3);
-                        memory.writeWord(tmp, tmp1);
-                        return 20;
-                    /* LD ss,(nn) */
-                    case 0x4B:
-                    case 0x5B:
-                    case 0x6B:
-                    case 0x7B:
-                        tmp1 = memory.readWord(tmp);
-                        putpair((OP >>> 4) & 3, tmp1);
-                        return 20;
-                }
-            case 0xDD:
-                special = 0xDD;
-            case 0xFD:
-                if (OP == 0xFD) {
-                    special = 0xFD;
-                }
-                OP = memory.read(PC++);
-                switch (OP) {
-                    /* ADD ii,pp */
-                    case 0x09:
-                    case 0x19:
-                    case 0x29:
-                    case 0x39:
-                        tmp = getspecial(special);
-                        tmp1 = getpair(special, (OP >>> 4) & 0x03);
-                        carry15(tmp, tmp1);
-                        auxCarry11(tmp, tmp1);
-                        flags &= (~FLAG_N);
-                        tmp += tmp1;
-                        putspecial(special, tmp);
-                        return 15;
-                    case 0x23: /* INC ii */
-                        if (special == 0xDD) {
-                            IX = (IX + 1) & 0xFFFF;
-                        } else {
-                            IY = (IY + 1) & 0xFFFF;
-                        }
-                        return 10;
-                    case 0x2B: /* DEC ii */
-                        if (special == 0xDD) {
-                            IX = (IX - 1) & 0xFFFF;
-                        } else {
-                            IY = (IY - 1) & 0xFFFF;
-                        }
-                        return 10;
-                    case 0xE1: /* POP ii */
-                        if (special == 0xDD) {
-                            IX = memory.readWord(SP);
-                        } else {
-                            IY = memory.readWord(SP);
-                        }
-                        SP += 2;
-                        return 14;
-                    case 0xE3: /* EX (SP),ii */
-                        tmp = memory.readWord(SP);
-                        if (special == 0xDD) {
-                            tmp1 = IX;
-                            IX = tmp;
-                        } else {
-                            tmp1 = IY;
-                            IY = tmp;
-                        }
-                        memory.writeWord(SP, tmp1);
-                        return 23;
-                    case 0xE5: /* PUSH ii */
-                        SP -= 2;
-                        if (special == 0xDD) {
-                            memory.writeWord(SP, IX);
-                        } else {
-                            memory.writeWord(SP, IY);
-                        }
-                        return 15;
-                    case 0xE9: /* JP (ii) */
-                        if (special == 0xDD) {
-                            PC = IX;
-                        } else {
-                            PC = IY;
-                        }
-                        return 8;
-                    case 0xF9: /* LD SP,ii */
-                        SP = (special == 0xDD) ? IX : IY;
-                        return 10;
-                }
-                tmp = memory.read(PC++);
-                switch (OP) {
-                    case 0x76:
-                        break;
-                    /* LD r,(ii+d) */
-                    case 0x46:
-                    case 0x4E:
-                    case 0x56:
-                    case 0x5E:
-                    case 0x66:
-                    case 0x6E:
-                    case 0x7E:
-                        tmp1 = (OP >>> 3) & 7;
-                        putreg2(tmp1, memory.read(getspecial(special) + (byte) tmp));
-                        return 19;
-                    /* LD (ii+d),r */
-                    case 0x70:
-                    case 0x71:
-                    case 0x72:
-                    case 0x73:
-                    case 0x74:
-                    case 0x75:
-                    case 0x77:
-                        tmp1 = (OP & 7);
-                        tmp2 = (getspecial(special) + (byte)tmp) & 0xFFFF;
-                        memory.write(tmp2, (short)getreg2(tmp1));
-                        return 19;
-                    case 0x34: /* INC (ii+d) */
-                        tmp1 = (getspecial(special) + (byte)tmp) & 0xFFFF;
-                        tmp2 = (memory.read(tmp1) + 1) & 0xFF;
-                        memory.write(tmp1, (short)tmp2);
-                        flags = INC_TABLE[tmp2] | (flags & FLAG_C);
-                        return 23;
-                    case 0x35: /* DEC (ii+d) */
-                        tmp1 = (getspecial(special) + (byte)tmp) & 0xFFFF;
-                        tmp2 = (memory.read(tmp1) - 1) & 0xFF;
-                        memory.write(tmp1, (short)tmp2);
-                        flags = DEC_TABLE[tmp2] | (flags & FLAG_C);
-                        return 23;
-                    case 0x86: /* ADD A,(ii+d) */
-                        tmp1 = regs[REG_A];
-                        tmp2 = memory.read(getspecial(special) + (byte)tmp) & 0xFF;
-                        
-                        regs[REG_A] += tmp2;
-                        flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
-                        auxCarry(tmp1, tmp2);
-                        addOverflow(tmp1, tmp2);
-                        
-                        regs[REG_A] = regs[REG_A] & 0xFF;
-                        return 19;
-                    case 0x8E: /* ADC A,(ii+d) */
-                        tmp1 = regs[REG_A];
-                        tmp2 = memory.read(getspecial(special) + (byte)tmp) & 0xFF;
-                        if ((flags & FLAG_C) == FLAG_C) {
-                            tmp2++;
-                        }
-                        regs[REG_A] += tmp2;
-                        flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
-                        auxCarry(tmp1, tmp2);
-                        addOverflow(tmp1, tmp2);
-        
-                        regs[REG_A] = (short) (regs[REG_A] & 0xFF);
-                        return 19;
-                    case 0x96: /* SUB (ii+d) */
-                        tmp1 = regs[REG_A];
-                        tmp2 = memory.read(getspecial(special) + (byte)tmp) & 0xFF;
-                        
-                        regs[REG_A] -= tmp2;
-                        flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
-                        auxCarry(tmp1, (-tmp2) & 0xFF);
-                        subOverflow(tmp1, tmp2);
-
-                        regs[REG_A] = (short) (regs[REG_A] & 0xFF);
-                        return 19;
-                    case 0x9E: /* SBC A,(ii+d) */
-                        tmp1 = regs[REG_A];
-                        tmp2 = memory.read(getspecial(special) + (byte)tmp) & 0xFF;
-                        if ((flags & FLAG_C) == FLAG_C) {
-                            tmp2++;
-                        }
-                        regs[REG_A] -= tmp2;
-                        
-                        flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
-                        auxCarry(tmp1, (-tmp2) & 0xFF);
-                        subOverflow(tmp1, tmp2);
-                        
-                        regs[REG_A] = regs[REG_A] & 0xFF;
-                        return 19;
-                    case 0xA6: /* AND (ii+d) */
-                        tmp1 = memory.read(getspecial(special) + (byte)tmp);
-                        regs[REG_A] = (regs[REG_A] & tmp1) & 0xFF;
-                        flags = AND_OR_XOR_TABLE[regs[REG_A]];
-                        return 19;
-                    case 0xAE: /* XOR (ii+d) */
-                        tmp1 = memory.read(getspecial(special) + (byte)tmp);
-                        regs[REG_A] =  ((regs[REG_A] ^ tmp1) & 0xff);
-                        flags = DAA_TABLE[regs[REG_A]];
-                        return 19;
-                    case 0xB6: /* OR (ii+d) */
-                        tmp1 = memory.read(getspecial(special) + (byte)tmp);
-                        regs[REG_A] =  ((regs[REG_A] | tmp1) & 0xff);
-                        flags = DAA_TABLE[regs[REG_A]];
-                        return 19;
-                    case 0xBE: /* CP (ii+d) */
-                        tmp1 = memory.read(getspecial(special) + (byte)tmp);
-                        tmp2 = regs[REG_A] - tmp1;
-                        flags =  (CP_TABLE[tmp2 & 0xff] | CBITS2Z80_TABLE[(regs[REG_A] ^ tmp1 ^ tmp2) & 0x1ff]);
-                        return 19;
-                }
-                tmp |= ((memory.read(PC++)) << 8);
-                switch (OP) {
-                    case 0x21: /* LD ii,nn */
-                        putspecial(special, tmp);
-                        return 14;
-                    case 0x22: /* LD (nn),ii */
-                        memory.writeWord(tmp, getspecial(special));
-                        return 16;
-                    case 0x2A: /* LD ii,(nn) */
-                        tmp1 = memory.readWord(tmp);
-                        putspecial(special, tmp1);
-                        return 20;
-                    case 0x36: /* LD (ii+d),n */
-                        memory.write(getspecial(special) + (byte)(tmp & 0xFF), (short)((tmp >>> 8)));
-                        return 19;
-                    case 0xCB:
-                        OP = (short)((tmp >>> 8) & 0xff);
-                        tmp &= 0xff;
-                        switch (OP) {
-                            /* BIT b,(ii+d) */
-                            case 0x46:
-                            case 0x4E:
-                            case 0x56:
-                            case 0x5E:
-                            case 0x66:
-                            case 0x6E:
-                            case 0x76:
-                            case 0x7E:
-                                tmp2 = (OP >>> 3) & 7;
-                                tmp1 = memory.read((getspecial(special) + (byte)tmp) & 0xffff);
-                                flags =  ((flags & 0x95) | FLAG_H | (((tmp1 & (1 << tmp2)) == 0) ? FLAG_Z : 0));
-                                return 20;
-                            /* RES b,(ii+d) */
-                            case 0x86:
-                            case 0x8E:
-                            case 0x96:
-                            case 0x9E:
-                            case 0xA6:
-                            case 0xAE:
-                            case 0xB6:
-                            case 0xBE:
-                                tmp2 = (OP >>> 3) & 7;
-                                tmp3 = (getspecial(special) + (byte)tmp) & 0xffff;
-                                tmp1 = memory.read(tmp3);
-                                tmp1 = (tmp1 & (~(1 << tmp2)));
-                                memory.write(tmp3, (short)(tmp1 & 0xff));
-                                return 23;
-                            /* SET b,(ii+d) */
-                            case 0xC6:
-                            case 0xCE:
-                            case 0xD6:
-                            case 0xDE:
-                            case 0xE6:
-                            case 0xEE:
-                            case 0xF6:
-                            case 0xFE:
-                                tmp2 = (OP >>> 3) & 7;
-                                tmp3 = (getspecial(special) + (byte)tmp) & 0xffff;
-                                tmp1 = memory.read(tmp3);
-                                tmp1 = (tmp1 | (1 << tmp2));
-                                memory.write(tmp3, (short)(tmp1 & 0xff));
-                                return 23;
-                            case 0x06: /* RLC (ii+d) */
-                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
-                                tmp1 = memory.read(tmp2);
-                                flags =  ((tmp1 >>> 7) & 0xff);
-                                tmp1 <<= 1;
-                                tmp1 |= (flags & 1);
-                                memory.write(tmp2, (short)(tmp1 & 0xff));
-                                flags |= DAA_TABLE[tmp1 & 0xff];
-                                return 23;
-                            case 0x0E: /* RRC (ii+d) */
-                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
-                                tmp1 = memory.read(tmp2);
-                                flags =  (tmp1 & 1);
-                                tmp1 >>>= 1;
-                                tmp1 |= ((flags & 1) << 7);
-                                memory.write(tmp2, (short)(tmp1 & 0xff));
-                                flags |= DAA_TABLE[tmp1 & 0xff];
-                                return 23;
-                            case 0x16: /* RL (ii+d) */
-                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
-                                tmp3 = flags & 1;
-                                tmp1 = memory.read(tmp2);
-                                flags =  ((tmp1 >>> 7) & 0xff);
-                                tmp1 <<= 1;
-                                tmp1 |= tmp3;
-                                memory.write(tmp2, (short)(tmp1 & 0xff));
-                                flags |= DAA_TABLE[tmp1 & 0xff];
-                                return 23;
-                            case 0x1E: /* RR (ii+d) */
-                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
-                                tmp1 = memory.read(tmp2);
-                                tmp3 = flags & 1;
-                                flags =  (tmp1 & 1);
-                                tmp1 >>>= 1;
-                                tmp1 |= (tmp3 << 7);
-                                memory.write(tmp2, (short)(tmp1 & 0xff));
-                                flags |= DAA_TABLE[tmp1 & 0xff];
-                                return 23;
-                            case 0x26: /* SLA (ii+d) */
-                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
-                                tmp1 = memory.read(tmp2);
-                                flags =  ((tmp1 >>> 7) & 0xff);
-                                tmp1 <<= 1;
-                                memory.write(tmp2, (short)(tmp1 & 0xff));
-                                flags |= DAA_TABLE[tmp1 & 0xff];
-                                return 23;
-                            case 0x2E: /* SRA (ii+d) */
-                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
-                                tmp1 = memory.read(tmp2);
-                                tmp3 = tmp1 & 0x80;
-                                flags =  (tmp1 & 1);
-                                tmp1 >>>= 1;
-                                tmp1 |= tmp3;
-                                memory.write(tmp2, (short)(tmp1 & 0xff));
-                                flags |= DAA_TABLE[tmp1];
-                                return 23;
-                            case 0x36: /* SLL (ii+d) unsupported */
-                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
-                                tmp1 = memory.read(tmp2);
-                                flags =  ((tmp1 >>> 7) & 0xff);
-                                tmp3 = tmp1 & 1;
-                                tmp1 <<= 1;
-                                tmp1 |= tmp3;
-                                memory.write(tmp2, (short)(tmp1 & 0xff));
-                                flags |= DAA_TABLE[tmp1 & 0xff];
-                                return 23;
-                            case 0x3E: /* SRL (ii+d) */
-                                tmp2 = (getspecial(special) + (byte)tmp) & 0xffff;
-                                tmp1 = memory.read(tmp2);
-                                flags =  (tmp1 & 1);
-                                tmp1 >>>= 1;
-                                memory.write(tmp2, (short)(tmp1 & 0xff));
-                                flags |= ((tmp1 == 0) ? FLAG_Z : 0) | PARITY_TABLE[tmp1];
-                                return 23;
-                        }
-                }
-            case 0xCB:
-                OP = memory.read(PC++);
-                switch (OP) {
-                    /* RLC r */
-                    case 0x00:
-                    case 0x01:
-                    case 0x02:
-                    case 0x03:
-                    case 0x04:
-                    case 0x05:
-                    case 0x06:
-                    case 0x07:
-                        tmp = OP & 7;
-                        tmp1 = getreg(tmp);
-                        flags =  (tmp1 >>> 7);
-                        tmp1 <<= 1;
-                        tmp1 |= (flags & 1);
-                        flags |= DAA_TABLE[tmp1 & 0xff];
-                        putreg(tmp,  tmp1);
-                        if (tmp == 6) {
-                            return 15;
-                        } else {
-                            return 8;
-                        }
-                    /* RRC r */
-                    case 0x08:
-                    case 0x09:
-                    case 0x0A:
-                    case 0x0B:
-                    case 0x0C:
-                    case 0x0D:
-                    case 0x0E:
-                    case 0x0F:
-                        tmp = OP & 7;
-                        tmp1 = getreg(tmp);
-                        flags =  (tmp1 & 1);
-                        tmp1 >>>= 1;
-                        tmp1 |= ((flags & 1) << 7);
-                        putreg(tmp,  tmp1);
-                        flags |= DAA_TABLE[tmp1 & 0xff];
-                        if (tmp == 6) {
-                            return 15;
-                        } else {
-                            return 8;
-                        }
-                    /* RL r */
-                    case 0x10:
-                    case 0x11:
-                    case 0x12:
-                    case 0x13:
-                    case 0x14:
-                    case 0x15:
-                    case 0x16:
-                    case 0x17:
-                        tmp = OP & 7;
-                        tmp1 = getreg(tmp);
-                        tmp2 = flags & 1;
-                        flags =  (tmp1 >>> 7);
-                        tmp1 <<= 1;
-                        tmp1 |= tmp2;
-                        putreg(tmp,  tmp1);
-                        flags |= DAA_TABLE[tmp1 & 0xff];
-                        if (tmp == 6) {
-                            return 15;
-                        } else {
-                            return 8;
-                        }
-                    /* RR r */
-                    case 0x18:
-                    case 0x19:
-                    case 0x1A:
-                    case 0x1B:
-                    case 0x1C:
-                    case 0x1D:
-                    case 0x1E:
-                    case 0x1F:
-                        tmp = OP & 7;
-                        tmp1 = getreg(tmp);
-                        tmp2 = flags & 1;
-                        flags =  (tmp1 & 1);
-                        tmp1 >>>= 1;
-                        tmp1 |= (tmp2 << 7);
-                        putreg(tmp,  tmp1);
-                        flags |= DAA_TABLE[tmp1 & 0xff];
-                        if (tmp == 6) {
-                            return 15;
-                        } else {
-                            return 8;
-                        }
-                    /* SLA r */
-                    case 0x20:
-                    case 0x21:
-                    case 0x22:
-                    case 0x23:
-                    case 0x24:
-                    case 0x25:
-                    case 0x26:
-                    case 0x27:
-                        tmp = OP & 7;
-                        tmp1 = getreg(tmp);
-                        flags =  (tmp1 >>> 7);
-                        tmp1 <<= 1;
-                        putreg(tmp,  tmp1);
-                        flags |= DAA_TABLE[tmp1 & 0xff];
-                        if (tmp == 6) {
-                            return 15;
-                        } else {
-                            return 8;
-                        }
-                    /* SRA r */
-                    case 0x28:
-                    case 0x29:
-                    case 0x2A:
-                    case 0x2B:
-                    case 0x2C:
-                    case 0x2D:
-                    case 0x2E:
-                    case 0x2F:
-                        tmp = OP & 7;
-                        tmp1 = getreg(tmp);
-                        tmp2 = tmp1 & 0x80;
-                        flags =  (tmp1 & 1);
-                        tmp1 >>>= 1;
-                        tmp1 |= tmp2;
-                        putreg(tmp,  tmp1);
-                        flags |= DAA_TABLE[tmp1];
-                        if (tmp == 6) {
-                            return 15;
-                        } else {
-                            return 8;
-                        }
-                    /* SLL r - unsupported */
-                    case 0x30:
-                    case 0x31:
-                    case 0x32:
-                    case 0x33:
-                    case 0x34:
-                    case 0x35:
-                    case 0x36:
-                    case 0x37:
-                        tmp = OP & 7;
-                        tmp1 = getreg(tmp);
-                        flags =  (tmp1 >>> 7);
-                        tmp2 = tmp1 & 1;
-                        tmp1 <<= 1;
-                        tmp1 |= tmp2;
-                        putreg(tmp,  tmp1);
-                        flags |= DAA_TABLE[tmp1 & 0xff];
-                        if (tmp == 6) {
-                            return 15;
-                        } else {
-                            return 8;
-                        }
-                    /* SRL r */
-                    case 0x38:
-                    case 0x39:
-                    case 0x3A:
-                    case 0x3B:
-                    case 0x3C:
-                    case 0x3D:
-                    case 0x3E:
-                    case 0x3F:
-                        tmp = OP & 7;
-                        tmp1 = getreg(tmp);
-                        flags =  (tmp1 & 1);
-                        tmp1 >>>= 1;
-                        putreg(tmp,  tmp1);
-                        flags |= ((tmp1 == 0) ? FLAG_Z : 0) | PARITY_TABLE[tmp1];
-                        if (tmp == 6) {
-                            return 15;
-                        } else {
-                            return 8;
-                        }
-                }
-                switch (OP & 0xC0) {
-                    case 0x40: /* BIT b,r */
-                        tmp = (OP >>> 3) & 7;
-                        tmp2 = OP & 7;
-                        tmp1 = getreg(tmp2);
-                        flags =  ((flags & 0x95) | FLAG_H | (((tmp1 & (1 << tmp)) == 0) ? FLAG_Z : 0));
-                        if (tmp2 == 6) {
+                    if (!acFlag && !cFlag) {
+                        regs[REG_A] = DAA_NOT_H_NOT_C_TABLE[temp] & 0xFF;
+                        flags = (DAA_NOT_H_NOT_C_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+                    } else if (acFlag && !cFlag) {
+                        regs[REG_A] = DAA_H_NOT_C_TABLE[temp] & 0xFF;
+                        flags = (DAA_H_NOT_C_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+                    } else if (!acFlag && cFlag) {
+                        regs[REG_A] = DAA_NOT_H_C_TABLE[temp] & 0xFF;
+                        flags = (DAA_NOT_H_C_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+                    } else {
+                        regs[REG_A] = DAA_H_C_TABLE[temp] & 0xFF;
+                        flags = (DAA_H_C_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+                    }
+                    return 4;
+                case 0x2F: /* CPL */
+                    regs[REG_A] = ((~regs[REG_A]) & 0xFF);
+                    flags |= FLAG_N | FLAG_H;
+                    return 4;
+                case 0x37: /* SCF */
+                    flags |= FLAG_N | FLAG_C;
+                    flags &= ~FLAG_H;
+                    return 4;
+                case 0x3F: /* CCF */
+                    tmp = flags & FLAG_C;
+                    if (tmp == 0) {
+                        flags |= FLAG_C;
+                    } else {
+                        flags &= ~FLAG_C;
+                    }
+                    flags &= ~FLAG_N;
+                    return 4;
+                case 0xC9: /* RET */
+                    PC = memory.readWord(SP);
+                    SP += 2;
+                    return 10;
+                case 0xD9: /* EXX */
+                    tmp = regs[REG_B];
+                    regs[REG_B] = regs2[REG_B];
+                    regs2[REG_B] = tmp;
+                    tmp = regs[REG_C];
+                    regs[REG_C] = regs2[REG_C];
+                    regs2[REG_C] = tmp;
+                    tmp = regs[REG_D];
+                    regs[REG_D] = regs2[REG_D];
+                    regs2[REG_D] = tmp;
+                    tmp = regs[REG_E];
+                    regs[REG_E] = regs2[REG_E];
+                    regs2[REG_E] = tmp;
+                    tmp = regs[REG_H];
+                    regs[REG_H] = regs2[REG_H];
+                    regs2[REG_H] = tmp;
+                    tmp = regs[REG_L];
+                    regs[REG_L] = regs2[REG_L];
+                    regs2[REG_L] = tmp;
+                    return 4;
+                case 0xE3: /* EX (SP),HL */
+                    tmp = memory.read(SP);
+                    tmp1 = memory.read(SP + 1);
+                    memory.write(SP, (short) regs[REG_L]);
+                    memory.write(SP + 1, (short) regs[REG_H]);
+                    regs[REG_L] = tmp & 0xFF;
+                    regs[REG_H] = tmp1 & 0xFF;
+                    return 19;
+                case 0xE9: /* JP (HL) */
+                    PC = ((regs[REG_H] << 8) | regs[REG_L]);
+                    return 4;
+                case 0xEB: /* EX DE,HL */
+                    tmp = regs[REG_D];
+                    regs[REG_D] = regs[REG_H];
+                    regs[REG_H] = tmp;
+                    tmp = regs[REG_E];
+                    regs[REG_E] = regs[REG_L];
+                    regs[REG_L] = tmp;
+                    return 4;
+                case 0xF3: /* DI */
+                    IFF[0] = IFF[1] = false;
+                    return 4;
+                case 0xF9: /* LD SP,HL */
+                    SP = ((regs[REG_H] << 8) | regs[REG_L]);
+                    return 6;
+                case 0xFB:
+                    IFF[0] = IFF[1] = true;
+                    return 4;
+                case 0xED:
+                    OP = memory.read(PC++);
+                    switch (OP) {
+                    /* IN r,(C) */
+                        case 0x40:
+                        case 0x48:
+                        case 0x50:
+                        case 0x58:
+                        case 0x60:
+                        case 0x68:
+                        case 0x78:
+                            tmp = (OP >>> 3) & 0x7;
+                            putreg(tmp, context.fireIO(regs[REG_C], true, 0));
+                            flags = ((flags & 1) | DAA_TABLE[tmp]);
                             return 12;
-                        } else {
-                            return 8;
-                        }
-                    case 0x80: /* RES b,r */
-                        tmp = (OP >>> 3) & 7;
-                        tmp2 = OP & 7;
-                        tmp1 = getreg(tmp2);
-                        tmp1 = (tmp1 & (~(1 << tmp)));
-                        putreg(tmp2,  tmp1);
-                        if (tmp2 == 6) {
+                    /* OUT (C),r */
+                        case 0x41:
+                        case 0x49:
+                        case 0x51:
+                        case 0x59:
+                        case 0x61:
+                        case 0x69:
+                        case 0x79:
+                            tmp = (OP >>> 3) & 0x7;
+                            context.fireIO(regs[REG_C], false, (short) getreg(tmp));
+                            return 12;
+                    /* SBC HL, ss */
+                        case 0x42:
+                        case 0x52:
+                        case 0x62:
+                        case 0x72:
+                            tmp = getpair((OP >>> 4) & 0x03);
+                            tmp1 = getpair(2);
+                            if ((flags & FLAG_C) == FLAG_C) {
+                                tmp++;
+                            }
+                            int sum = tmp1 - tmp;
+                            if ((sum & 0x8000) != 0) {
+                                flags |= FLAG_S;
+                            } else {
+                                flags &= (~FLAG_S);
+                            }
+                            if ((sum & 0xFFFF) == 0) {
+                                flags |= FLAG_Z;
+                            } else {
+                                flags &= (~FLAG_Z);
+                            }
+                            flags |= FLAG_N;
+                            carry15(tmp1, (-tmp) & 0xFFFF);
+                            auxCarry11(tmp1, (-tmp) & 0xFFFF);
+                            subBigOverflow(tmp1, tmp);
+                            putpair(2, sum & 0xFFFF);
                             return 15;
-                        } else {
+                    /* ADC HL,ss */
+                        case 0x4A:
+                        case 0x5A:
+                        case 0x6A:
+                        case 0x7A:
+                            tmp = getpair((OP >>> 4) & 0x03);
+                            tmp1 = getpair(2);
+                            if ((flags & FLAG_C) == FLAG_C) {
+                                tmp1++;
+                            }
+                            sum = tmp + tmp1;
+                            if ((sum & 0x8000) != 0) {
+                                flags |= FLAG_S;
+                            } else {
+                                flags &= (~FLAG_S);
+                            }
+                            if ((sum & 0xFFFF) == 0) {
+                                flags |= FLAG_Z;
+                            } else {
+                                flags &= (~FLAG_Z);
+                            }
+                            flags &= (~FLAG_N);
+                            carry15(tmp, tmp1);
+                            auxCarry11(tmp, tmp1);
+                            addBigOverflow(tmp, tmp1);
+                            putpair(2, sum & 0xFFFF);
+                            return 11;
+                        case 0x44: /* NEG */
+                            regs[REG_A] = ((0 - regs[REG_A]) & 0xFF);
+                            flags = NEG_TABLE[regs[REG_A]];
                             return 8;
-                        }
-                    case 0xC0: /* SET b,r */
-                        tmp = (OP >>> 3) & 7;
-                        tmp2 = OP & 7;
-                        tmp1 = getreg(tmp2);
-                        tmp1 = (tmp1 | (1 << tmp));
-                        putreg(tmp2,  tmp1);
-                        if (tmp2 == 6) {
+                        case 0x45: /* RETN */
+                            IFF[0] = IFF[1];
+                            PC = memory.readWord(SP);
+                            SP = (SP + 2) & 0xffff;
+                            return 14;
+                        case 0x46: /* IM 0 */
+                            intMode = 0;
+                            return 8;
+                        case 0x47: /* LD I,A */
+                            I = regs[REG_A];
+                            return 9;
+                        case 0x4D: /* RETI - weird.. */
+                            IFF[0] = IFF[1];
+                            PC = memory.readWord(SP);
+                            SP = (SP + 2) & 0xffff;
+                            return 14;
+                        case 0x4F: /* LD R,A */
+                            R = regs[REG_A];
+                            return 9;
+                        case 0x56: /* IM 1 */
+                            intMode = 1;
+                            return 8;
+                        case 0x57: /* LD A,I */
+                            regs[REG_A] = I;
+                            flags = EmulatorTables.SIGN_ZERO_TABLE[(short) (I & 0xFF)]
+                                    | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C);
+                            return 9;
+                        case 0x5E: /* IM 2 */
+                            intMode = 2;
+                            return 8;
+                        case 0x5F: /* LD A,R */
+                            regs[REG_A] = R;
+                            flags = EmulatorTables.SIGN_ZERO_TABLE[(short) (R & 0xFF)]
+                                    | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C);
+                            return 9;
+                        case 0x67: /* RRD */
+                            tmp = regs[REG_A] & 0x0F;
+                            tmp1 = memory.read((regs[REG_H] << 8) | regs[REG_L]);
+                            regs[REG_A] = ((regs[REG_A] & 0xF0) | (tmp1 & 0x0F));
+                            tmp1 = ((tmp1 >>> 4) & 0x0F) | (tmp << 4);
+                            memory.write(((regs[REG_H] << 8) | regs[REG_L]), (short) (tmp1 & 0xff));
+                            flags = (DAA_TABLE[regs[REG_A]] | (flags & FLAG_C));
+                            return 18;
+                        case 0x6F: /* RLD */
+                            tmp = memory.read((regs[REG_H] << 8) | regs[REG_L]);
+                            tmp1 = (tmp >>> 4) & 0x0F;
+                            tmp = ((tmp << 4) & 0xF0) | (regs[REG_A] & 0x0F);
+                            regs[REG_A] = ((regs[REG_A] & 0xF0) | tmp1);
+                            memory.write((regs[REG_H] << 8) | regs[REG_L], (short) (tmp & 0xff));
+                            flags = (DAA_TABLE[regs[REG_A]] | (flags & FLAG_C));
+                            return 18;
+                        case 0x70: /* IN (C) - unsupported */
+                            tmp = (context.fireIO(regs[REG_C], true, 0) & 0xFF);
+                            flags = ((flags & 1) | DAA_TABLE[tmp]);
+                            return 12;
+                        case 0x71: /* OUT (C),0 - unsupported */
+                            context.fireIO(regs[REG_C], false, 0);
+                            return 12;
+                        case 0xA0: /* LDI */
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            tmp2 = (regs[REG_D] << 8) | regs[REG_E];
+                            tmp = (regs[REG_B] << 8) | regs[REG_C];
+
+                            memory.write(tmp2, memory.read(tmp1));
+
+                            tmp1 = (tmp1 + 1) & 0xFFFF;
+                            tmp2 = (tmp2 + 1) & 0xFFFF;
+                            tmp = (tmp - 1) & 0xFFFF;
+
+                            regs[REG_H] = (tmp1 >>> 8) & 0xFF;
+                            regs[REG_L] = tmp1 & 0xFF;
+                            regs[REG_D] = (tmp2 >>> 8) & 0xFF;
+                            regs[REG_E] = tmp2 & 0xFF;
+                            regs[REG_B] = (tmp >>> 8) & 0xFF;
+                            regs[REG_C] = tmp & 0xFF;
+                            flags = ((flags & FLAG_S) | (flags & FLAG_Z) | (flags & FLAG_C)) & (~FLAG_PV);
+                            if (tmp != 0) {
+                                flags |= FLAG_PV;
+                            }
+                            return 16;
+                        case 0xA1: /* CPI */
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            tmp2 = (regs[REG_B] << 8) | regs[REG_C];
+
+                            tmp = memory.read(tmp1);
+                            tmp1 = (tmp1 + 1) & 0xFFFF;
+                            tmp2 = (tmp2 - 1) & 0xFFFF;
+
+                            flags = EmulatorTables.SIGN_ZERO_TABLE[(regs[REG_A] - tmp) & 0xFF] | FLAG_N | (flags & FLAG_C);
+                            auxCarry(regs[REG_A], (-tmp) & 0xFF);
+
+                            if (tmp2 != 0) {
+                                flags |= FLAG_PV;
+                            }
+
+                            regs[REG_H] = (tmp1 >>> 8) & 0xFF;
+                            regs[REG_L] = tmp1 & 0xFF;
+                            regs[REG_B] = (tmp2 >>> 8) & 0xFF;
+                            regs[REG_C] = tmp2 & 0xFF;
+                            return 16;
+                        case 0xA2: /* INI */
+                            tmp = (context.fireIO(regs[REG_C], true, 0) & 0xFF);
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            memory.write(tmp1, (short) tmp);
+                            tmp1 = (tmp1 + 1) & 0xFFFF;
+                            regs[REG_H] = ((tmp1 >>> 8) & 0xff);
+                            regs[REG_L] = (tmp1 & 0xFF);
+                            regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
+                            flags = ((flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0));
+                            return 16;
+                        case 0xA3: /* OUTI */
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            context.fireIO(regs[REG_C], false, memory.read(tmp1));
+                            tmp1 = (tmp1 + 1) & 0xFFFF;
+                            regs[REG_H] = ((tmp1 >>> 8) & 0xff);
+                            regs[REG_L] = (tmp1 & 0xFF);
+                            regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
+                            flags = ((flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0));
+                            return 16;
+                        case 0xA8: /* LDD */
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            tmp2 = (regs[REG_D] << 8) | regs[REG_E];
+                            tmp = (regs[REG_B] << 8) | regs[REG_C];
+
+                            memory.write(tmp2, memory.read(tmp1));
+
+                            tmp1 = (tmp1 - 1) & 0xFFFF;
+                            tmp2 = (tmp2 - 1) & 0xFFFF;
+                            tmp = (tmp - 1) & 0xFFFF;
+
+                            regs[REG_H] = (tmp1 >>> 8) & 0xFF;
+                            regs[REG_L] = tmp1 & 0xFF;
+                            regs[REG_D] = (tmp2 >>> 8) & 0xFF;
+                            regs[REG_E] = tmp2 & 0xFF;
+                            regs[REG_B] = (tmp >>> 8) & 0xFF;
+                            regs[REG_C] = tmp & 0xFF;
+                            flags = ((flags & FLAG_S) | (flags & FLAG_Z) | (flags & FLAG_C)) & (~FLAG_PV);
+                            if (tmp != 0) {
+                                flags |= FLAG_PV;
+                            }
+                            return 16;
+                        case 0xA9: /* CPD */
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            tmp2 = (regs[REG_B] << 8) | regs[REG_C];
+
+                            tmp = memory.read(tmp1);
+                            tmp1 = (tmp1 - 1) & 0xFFFF;
+                            tmp2 = (tmp2 - 1) & 0xFFFF;
+
+                            flags = EmulatorTables.SIGN_ZERO_TABLE[(regs[REG_A] - tmp) & 0xFF] | FLAG_N | (flags & FLAG_C);
+                            auxCarry(regs[REG_A], (-tmp) & 0xFF);
+
+                            if (tmp2 != 0) {
+                                flags |= FLAG_PV;
+                            }
+
+                            regs[REG_H] = (tmp1 >>> 8) & 0xFF;
+                            regs[REG_L] = tmp1 & 0xFF;
+                            regs[REG_B] = (tmp2 >>> 8) & 0xFF;
+                            regs[REG_C] = tmp2 & 0xFF;
+                            return 16;
+                        case 0xAA: /* IND */
+                            tmp = (context.fireIO(regs[REG_C], true, 0) & 0xFF);
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            memory.write(tmp1, (short) tmp);
+                            tmp1 = (tmp1 - 1) & 0xFFFF;
+                            regs[REG_H] = ((tmp1 >>> 8) & 0xff);
+                            regs[REG_L] = (tmp1 & 0xFF);
+                            regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
+                            flags = (flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0);
+                            return 16;
+                        case 0xAB: /* OUTD */
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            context.fireIO(regs[REG_C], false, memory.read(tmp1));
+                            tmp1 = (tmp1 - 1) & 0xFFFF;
+                            regs[REG_H] = ((tmp1 >>> 8) & 0xff);
+                            regs[REG_L] = (tmp1 & 0xFF);
+                            regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
+                            flags = (flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0);
+                            return 16;
+                        case 0xB0: /* LDIR */
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            tmp2 = (regs[REG_D] << 8) | regs[REG_E];
+                            tmp = (regs[REG_B] << 8) | regs[REG_C];
+
+                            memory.write(tmp2, memory.read(tmp1));
+
+                            tmp1 = (tmp1 + 1) & 0xFFFF;
+                            tmp2 = (tmp2 + 1) & 0xFFFF;
+                            tmp = (tmp - 1) & 0xFFFF;
+
+                            regs[REG_H] = (tmp1 >>> 8) & 0xFF;
+                            regs[REG_L] = tmp1 & 0xFF;
+                            regs[REG_D] = (tmp2 >>> 8) & 0xFF;
+                            regs[REG_E] = tmp2 & 0xFF;
+                            regs[REG_B] = (tmp >>> 8) & 0xFF;
+                            regs[REG_C] = tmp & 0xFF;
+                            flags &= ((~FLAG_PV) & (~FLAG_N) & (~FLAG_H));
+
+                            if (tmp == 0) {
+                                return 16;
+                            }
+                            PC = (PC - 2) & 0xFFFF;
+                            return 21;
+                        case 0xB1: /* CPIR */
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            tmp2 = (regs[REG_B] << 8) | regs[REG_C];
+
+                            tmp = memory.read(tmp1);
+                            tmp1 = (tmp1 + 1) & 0xFFFF;
+                            tmp2 = (tmp2 - 1) & 0xFFFF;
+
+                            flags = EmulatorTables.SIGN_ZERO_TABLE[(regs[REG_A] - tmp) & 0xFF] | FLAG_N | (flags & FLAG_C);
+                            auxCarry(regs[REG_A], (-tmp) & 0xFF);
+
+                            if (tmp2 != 0) {
+                                flags |= FLAG_PV;
+                            }
+
+                            regs[REG_H] = (tmp1 >>> 8) & 0xFF;
+                            regs[REG_L] = tmp1 & 0xFF;
+                            regs[REG_B] = (tmp2 >>> 8) & 0xFF;
+                            regs[REG_C] = tmp2 & 0xFF;
+
+                            if ((tmp2 == 0) || (regs[REG_A] == tmp)) {
+                                return 16;
+                            }
+                            PC = (PC - 2) & 0xFFFF;
+                            return 21;
+                        case 0xB2: /* INIR */
+                            tmp = (context.fireIO(regs[REG_C], true, 0) & 0xFF);
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            memory.write(tmp1, (short) tmp);
+                            tmp1 = (tmp1 + 1) & 0xFFFF;
+                            regs[REG_H] = ((tmp1 >>> 8) & 0xff);
+                            regs[REG_L] = (tmp1 & 0xFF);
+                            regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
+                            flags |= (FLAG_N | FLAG_Z);
+                            if (regs[REG_B] == 0) {
+                                return 16;
+                            }
+                            PC -= 2;
+                            return 21;
+                        case 0xB3: /* OTIR */
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            context.fireIO(regs[REG_C], false, memory.read(tmp1));
+                            tmp1 = (tmp1 + 1) & 0xFFFF;
+                            regs[REG_H] = ((tmp1 >>> 8) & 0xff);
+                            regs[REG_L] = (tmp1 & 0xFF);
+                            regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
+                            flags |= (FLAG_N | FLAG_Z);
+                            if (regs[REG_B] == 0) {
+                                return 16;
+                            }
+                            PC -= 2;
+                            return 21;
+                        case 0xB8: /* LDDR */
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            tmp2 = (regs[REG_D] << 8) | regs[REG_E];
+                            memory.write(tmp2, memory.read(tmp1));
+                            tmp1 = (tmp1 - 1) & 0xFFFF;
+                            tmp2 = (tmp2 - 1) & 0xFFFF;
+                            tmp = (((regs[REG_B] << 8) | regs[REG_C]) - 1) & 0xFFFF;
+                            regs[REG_H] = ((tmp1 >>> 8) & 0xff);
+                            regs[REG_L] = (tmp1 & 0xFF);
+                            regs[REG_B] = ((tmp >>> 8) & 0xff);
+                            regs[REG_C] = (tmp & 0xFF);
+                            regs[REG_D] = ((tmp2 >>> 8) & 0xff);
+                            regs[REG_E] = (tmp2 & 0xFF);
+                            flags &= 0xE9;
+                            if (tmp == 0) {
+                                return 16;
+                            }
+                            PC -= 2;
+                            return 21;
+                        case 0xB9: /* CPDR */
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            tmp2 = (regs[REG_B] << 8) | regs[REG_C];
+
+                            tmp = memory.read(tmp1);
+                            tmp1 = (tmp1 - 1) & 0xFFFF;
+                            tmp2 = (tmp2 - 1) & 0xFFFF;
+
+                            flags = EmulatorTables.SIGN_ZERO_TABLE[(regs[REG_A] - tmp) & 0xFF] | FLAG_N | (flags & FLAG_C);
+                            auxCarry(regs[REG_A], (-tmp) & 0xFF);
+
+                            if (tmp2 != 0) {
+                                flags |= FLAG_PV;
+                            }
+
+                            regs[REG_H] = (tmp1 >>> 8) & 0xFF;
+                            regs[REG_L] = tmp1 & 0xFF;
+                            regs[REG_B] = (tmp2 >>> 8) & 0xFF;
+                            regs[REG_C] = tmp2 & 0xFF;
+
+                            if ((tmp2 == 0) || (regs[REG_A] == tmp)) {
+                                return 16;
+                            }
+                            PC = (PC - 2) & 0xFFFF;
+                            return 21;
+                        case 0xBA: /* INDR */
+                            tmp = (context.fireIO(regs[REG_C], true, 0) & 0xFF);
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            memory.write(tmp1, (short) tmp);
+                            tmp1 = (tmp1 - 1) & 0xFFFF;
+                            regs[REG_H] = (tmp1 >>> 8);
+                            regs[REG_L] = (tmp1 & 0xFF);
+                            regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
+                            flags |= (FLAG_N | FLAG_Z);
+                            if (regs[REG_B] == 0) {
+                                return 16;
+                            }
+                            PC -= 2;
+                            return 21;
+                        case 0xBB: /* OTDR */
+                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            context.fireIO(regs[REG_C], false, memory.read(tmp1));
+                            tmp1 = (tmp1 - 1) & 0xFFFF;
+                            regs[REG_H] = (tmp1 >>> 8);
+                            regs[REG_L] = (tmp1 & 0xFF);
+                            regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
+                            flags |= (FLAG_N | FLAG_Z);
+                            if (regs[REG_B] == 0) {
+                                return 16;
+                            }
+                            PC -= 2;
+                            return 21;
+                    }
+                    tmp = memory.readWord(PC);
+                    PC += 2;
+                    switch (OP) {
+                    /* LD (nn), ss */
+                        case 0x43:
+                        case 0x53:
+                        case 0x63:
+                        case 0x73:
+                            tmp1 = getpair((OP >>> 4) & 3);
+                            memory.writeWord(tmp, tmp1);
+                            return 20;
+                    /* LD ss,(nn) */
+                        case 0x4B:
+                        case 0x5B:
+                        case 0x6B:
+                        case 0x7B:
+                            tmp1 = memory.readWord(tmp);
+                            putpair((OP >>> 4) & 3, tmp1);
+                            return 20;
+                    }
+                case 0xDD:
+                    special = 0xDD;
+                case 0xFD:
+                    if (OP == 0xFD) {
+                        special = 0xFD;
+                    }
+                    OP = memory.read(PC++);
+                    switch (OP) {
+                    /* ADD ii,pp */
+                        case 0x09:
+                        case 0x19:
+                        case 0x29:
+                        case 0x39:
+                            tmp = getspecial(special);
+                            tmp1 = getpair(special, (OP >>> 4) & 0x03);
+                            carry15(tmp, tmp1);
+                            auxCarry11(tmp, tmp1);
+                            flags &= (~FLAG_N);
+                            tmp += tmp1;
+                            putspecial(special, tmp);
                             return 15;
-                        } else {
+                        case 0x23: /* INC ii */
+                            if (special == 0xDD) {
+                                IX = (IX + 1) & 0xFFFF;
+                            } else {
+                                IY = (IY + 1) & 0xFFFF;
+                            }
+                            return 10;
+                        case 0x2B: /* DEC ii */
+                            if (special == 0xDD) {
+                                IX = (IX - 1) & 0xFFFF;
+                            } else {
+                                IY = (IY - 1) & 0xFFFF;
+                            }
+                            return 10;
+                        case 0xE1: /* POP ii */
+                            if (special == 0xDD) {
+                                IX = memory.readWord(SP);
+                            } else {
+                                IY = memory.readWord(SP);
+                            }
+                            SP += 2;
+                            return 14;
+                        case 0xE3: /* EX (SP),ii */
+                            tmp = memory.readWord(SP);
+                            if (special == 0xDD) {
+                                tmp1 = IX;
+                                IX = tmp;
+                            } else {
+                                tmp1 = IY;
+                                IY = tmp;
+                            }
+                            memory.writeWord(SP, tmp1);
+                            return 23;
+                        case 0xE5: /* PUSH ii */
+                            SP -= 2;
+                            if (special == 0xDD) {
+                                memory.writeWord(SP, IX);
+                            } else {
+                                memory.writeWord(SP, IY);
+                            }
+                            return 15;
+                        case 0xE9: /* JP (ii) */
+                            if (special == 0xDD) {
+                                PC = IX;
+                            } else {
+                                PC = IY;
+                            }
                             return 8;
-                        }
-                }
-        }
-        tmp = memory.read(PC++);
-        switch (OP) {
+                        case 0xF9: /* LD SP,ii */
+                            SP = (special == 0xDD) ? IX : IY;
+                            return 10;
+                    }
+                    tmp = memory.read(PC++);
+                    switch (OP) {
+                        case 0x76:
+                            break;
+                    /* LD r,(ii+d) */
+                        case 0x46:
+                        case 0x4E:
+                        case 0x56:
+                        case 0x5E:
+                        case 0x66:
+                        case 0x6E:
+                        case 0x7E:
+                            tmp1 = (OP >>> 3) & 7;
+                            putreg2(tmp1, memory.read(getspecial(special) + (byte) tmp));
+                            return 19;
+                    /* LD (ii+d),r */
+                        case 0x70:
+                        case 0x71:
+                        case 0x72:
+                        case 0x73:
+                        case 0x74:
+                        case 0x75:
+                        case 0x77:
+                            tmp1 = (OP & 7);
+                            tmp2 = (getspecial(special) + (byte) tmp) & 0xFFFF;
+                            memory.write(tmp2, (short) getreg2(tmp1));
+                            return 19;
+                        case 0x34: /* INC (ii+d) */
+                            tmp1 = (getspecial(special) + (byte) tmp) & 0xFFFF;
+                            tmp2 = (memory.read(tmp1) + 1) & 0xFF;
+                            memory.write(tmp1, (short) tmp2);
+                            flags = INC_TABLE[tmp2] | (flags & FLAG_C);
+                            return 23;
+                        case 0x35: /* DEC (ii+d) */
+                            tmp1 = (getspecial(special) + (byte) tmp) & 0xFFFF;
+                            tmp2 = (memory.read(tmp1) - 1) & 0xFF;
+                            memory.write(tmp1, (short) tmp2);
+                            flags = DEC_TABLE[tmp2] | (flags & FLAG_C);
+                            return 23;
+                        case 0x86: /* ADD A,(ii+d) */
+                            tmp1 = regs[REG_A];
+                            tmp2 = memory.read(getspecial(special) + (byte) tmp) & 0xFF;
+
+                            regs[REG_A] += tmp2;
+                            flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
+                            auxCarry(tmp1, tmp2);
+                            addOverflow(tmp1, tmp2);
+
+                            regs[REG_A] = regs[REG_A] & 0xFF;
+                            return 19;
+                        case 0x8E: /* ADC A,(ii+d) */
+                            tmp1 = regs[REG_A];
+                            tmp2 = memory.read(getspecial(special) + (byte) tmp) & 0xFF;
+                            if ((flags & FLAG_C) == FLAG_C) {
+                                tmp2++;
+                            }
+                            regs[REG_A] += tmp2;
+                            flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
+                            auxCarry(tmp1, tmp2);
+                            addOverflow(tmp1, tmp2);
+
+                            regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                            return 19;
+                        case 0x96: /* SUB (ii+d) */
+                            tmp1 = regs[REG_A];
+                            tmp2 = memory.read(getspecial(special) + (byte) tmp) & 0xFF;
+
+                            regs[REG_A] -= tmp2;
+                            flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
+                            auxCarry(tmp1, (-tmp2) & 0xFF);
+                            subOverflow(tmp1, tmp2);
+
+                            regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                            return 19;
+                        case 0x9E: /* SBC A,(ii+d) */
+                            tmp1 = regs[REG_A];
+                            tmp2 = memory.read(getspecial(special) + (byte) tmp) & 0xFF;
+                            if ((flags & FLAG_C) == FLAG_C) {
+                                tmp2++;
+                            }
+                            regs[REG_A] -= tmp2;
+
+                            flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
+                            auxCarry(tmp1, (-tmp2) & 0xFF);
+                            subOverflow(tmp1, tmp2);
+
+                            regs[REG_A] = regs[REG_A] & 0xFF;
+                            return 19;
+                        case 0xA6: /* AND (ii+d) */
+                            tmp1 = memory.read(getspecial(special) + (byte) tmp);
+                            regs[REG_A] = (regs[REG_A] & tmp1) & 0xFF;
+                            flags = AND_OR_XOR_TABLE[regs[REG_A]];
+                            return 19;
+                        case 0xAE: /* XOR (ii+d) */
+                            tmp1 = memory.read(getspecial(special) + (byte) tmp);
+                            regs[REG_A] = ((regs[REG_A] ^ tmp1) & 0xff);
+                            flags = DAA_TABLE[regs[REG_A]];
+                            return 19;
+                        case 0xB6: /* OR (ii+d) */
+                            tmp1 = memory.read(getspecial(special) + (byte) tmp);
+                            regs[REG_A] = ((regs[REG_A] | tmp1) & 0xff);
+                            flags = DAA_TABLE[regs[REG_A]];
+                            return 19;
+                        case 0xBE: /* CP (ii+d) */
+                            tmp1 = memory.read(getspecial(special) + (byte) tmp);
+                            tmp2 = regs[REG_A] - tmp1;
+                            flags = (CP_TABLE[tmp2 & 0xff] | CBITS2Z80_TABLE[(regs[REG_A] ^ tmp1 ^ tmp2) & 0x1ff]);
+                            return 19;
+                    }
+                    tmp |= ((memory.read(PC++)) << 8);
+                    switch (OP) {
+                        case 0x21: /* LD ii,nn */
+                            putspecial(special, tmp);
+                            return 14;
+                        case 0x22: /* LD (nn),ii */
+                            memory.writeWord(tmp, getspecial(special));
+                            return 16;
+                        case 0x2A: /* LD ii,(nn) */
+                            tmp1 = memory.readWord(tmp);
+                            putspecial(special, tmp1);
+                            return 20;
+                        case 0x36: /* LD (ii+d),n */
+                            memory.write(getspecial(special) + (byte) (tmp & 0xFF), (short) ((tmp >>> 8)));
+                            return 19;
+                        case 0xCB:
+                            OP = (short) ((tmp >>> 8) & 0xff);
+                            tmp &= 0xff;
+                            switch (OP) {
+                            /* BIT b,(ii+d) */
+                                case 0x46:
+                                case 0x4E:
+                                case 0x56:
+                                case 0x5E:
+                                case 0x66:
+                                case 0x6E:
+                                case 0x76:
+                                case 0x7E:
+                                    tmp2 = (OP >>> 3) & 7;
+                                    tmp1 = memory.read((getspecial(special) + (byte) tmp) & 0xffff);
+                                    flags = ((flags & 0x95) | FLAG_H | (((tmp1 & (1 << tmp2)) == 0) ? FLAG_Z : 0));
+                                    return 20;
+                            /* RES b,(ii+d) */
+                                case 0x86:
+                                case 0x8E:
+                                case 0x96:
+                                case 0x9E:
+                                case 0xA6:
+                                case 0xAE:
+                                case 0xB6:
+                                case 0xBE:
+                                    tmp2 = (OP >>> 3) & 7;
+                                    tmp3 = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp3);
+                                    tmp1 = (tmp1 & (~(1 << tmp2)));
+                                    memory.write(tmp3, (short) (tmp1 & 0xff));
+                                    return 23;
+                            /* SET b,(ii+d) */
+                                case 0xC6:
+                                case 0xCE:
+                                case 0xD6:
+                                case 0xDE:
+                                case 0xE6:
+                                case 0xEE:
+                                case 0xF6:
+                                case 0xFE:
+                                    tmp2 = (OP >>> 3) & 7;
+                                    tmp3 = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp3);
+                                    tmp1 = (tmp1 | (1 << tmp2));
+                                    memory.write(tmp3, (short) (tmp1 & 0xff));
+                                    return 23;
+                                case 0x06: /* RLC (ii+d) */
+                                    tmp2 = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp2);
+                                    flags = ((tmp1 >>> 7) & 0xff);
+                                    tmp1 <<= 1;
+                                    tmp1 |= (flags & 1);
+                                    memory.write(tmp2, (short) (tmp1 & 0xff));
+                                    flags |= DAA_TABLE[tmp1 & 0xff];
+                                    return 23;
+                                case 0x0E: /* RRC (ii+d) */
+                                    tmp2 = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp2);
+                                    flags = (tmp1 & 1);
+                                    tmp1 >>>= 1;
+                                    tmp1 |= ((flags & 1) << 7);
+                                    memory.write(tmp2, (short) (tmp1 & 0xff));
+                                    flags |= DAA_TABLE[tmp1 & 0xff];
+                                    return 23;
+                                case 0x16: /* RL (ii+d) */
+                                    tmp2 = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp3 = flags & 1;
+                                    tmp1 = memory.read(tmp2);
+                                    flags = ((tmp1 >>> 7) & 0xff);
+                                    tmp1 <<= 1;
+                                    tmp1 |= tmp3;
+                                    memory.write(tmp2, (short) (tmp1 & 0xff));
+                                    flags |= DAA_TABLE[tmp1 & 0xff];
+                                    return 23;
+                                case 0x1E: /* RR (ii+d) */
+                                    tmp2 = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp2);
+                                    tmp3 = flags & 1;
+                                    flags = (tmp1 & 1);
+                                    tmp1 >>>= 1;
+                                    tmp1 |= (tmp3 << 7);
+                                    memory.write(tmp2, (short) (tmp1 & 0xff));
+                                    flags |= DAA_TABLE[tmp1 & 0xff];
+                                    return 23;
+                                case 0x26: /* SLA (ii+d) */
+                                    tmp2 = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp2);
+                                    flags = ((tmp1 >>> 7) & 0xff);
+                                    tmp1 <<= 1;
+                                    memory.write(tmp2, (short) (tmp1 & 0xff));
+                                    flags |= DAA_TABLE[tmp1 & 0xff];
+                                    return 23;
+                                case 0x2E: /* SRA (ii+d) */
+                                    tmp2 = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp2);
+                                    tmp3 = tmp1 & 0x80;
+                                    flags = (tmp1 & 1);
+                                    tmp1 >>>= 1;
+                                    tmp1 |= tmp3;
+                                    memory.write(tmp2, (short) (tmp1 & 0xff));
+                                    flags |= DAA_TABLE[tmp1];
+                                    return 23;
+                                case 0x36: /* SLL (ii+d) unsupported */
+                                    tmp2 = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp2);
+                                    flags = ((tmp1 >>> 7) & 0xff);
+                                    tmp3 = tmp1 & 1;
+                                    tmp1 <<= 1;
+                                    tmp1 |= tmp3;
+                                    memory.write(tmp2, (short) (tmp1 & 0xff));
+                                    flags |= DAA_TABLE[tmp1 & 0xff];
+                                    return 23;
+                                case 0x3E: /* SRL (ii+d) */
+                                    tmp2 = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp2);
+                                    flags = (tmp1 & 1);
+                                    tmp1 >>>= 1;
+                                    memory.write(tmp2, (short) (tmp1 & 0xff));
+                                    flags |= ((tmp1 == 0) ? FLAG_Z : 0) | PARITY_TABLE[tmp1];
+                                    return 23;
+                            }
+                    }
+                case 0xCB:
+                    OP = memory.read(PC++);
+                    switch (OP) {
+                    /* RLC r */
+                        case 0x00:
+                        case 0x01:
+                        case 0x02:
+                        case 0x03:
+                        case 0x04:
+                        case 0x05:
+                        case 0x06:
+                        case 0x07:
+                            tmp = OP & 7;
+                            tmp1 = getreg(tmp);
+                            flags = (tmp1 >>> 7);
+                            tmp1 <<= 1;
+                            tmp1 |= (flags & 1);
+                            flags |= DAA_TABLE[tmp1 & 0xff];
+                            putreg(tmp, tmp1);
+                            if (tmp == 6) {
+                                return 15;
+                            } else {
+                                return 8;
+                            }
+                    /* RRC r */
+                        case 0x08:
+                        case 0x09:
+                        case 0x0A:
+                        case 0x0B:
+                        case 0x0C:
+                        case 0x0D:
+                        case 0x0E:
+                        case 0x0F:
+                            tmp = OP & 7;
+                            tmp1 = getreg(tmp);
+                            flags = (tmp1 & 1);
+                            tmp1 >>>= 1;
+                            tmp1 |= ((flags & 1) << 7);
+                            putreg(tmp, tmp1);
+                            flags |= DAA_TABLE[tmp1 & 0xff];
+                            if (tmp == 6) {
+                                return 15;
+                            } else {
+                                return 8;
+                            }
+                    /* RL r */
+                        case 0x10:
+                        case 0x11:
+                        case 0x12:
+                        case 0x13:
+                        case 0x14:
+                        case 0x15:
+                        case 0x16:
+                        case 0x17:
+                            tmp = OP & 7;
+                            tmp1 = getreg(tmp);
+                            tmp2 = flags & 1;
+                            flags = (tmp1 >>> 7);
+                            tmp1 <<= 1;
+                            tmp1 |= tmp2;
+                            putreg(tmp, tmp1);
+                            flags |= DAA_TABLE[tmp1 & 0xff];
+                            if (tmp == 6) {
+                                return 15;
+                            } else {
+                                return 8;
+                            }
+                    /* RR r */
+                        case 0x18:
+                        case 0x19:
+                        case 0x1A:
+                        case 0x1B:
+                        case 0x1C:
+                        case 0x1D:
+                        case 0x1E:
+                        case 0x1F:
+                            tmp = OP & 7;
+                            tmp1 = getreg(tmp);
+                            tmp2 = flags & 1;
+                            flags = (tmp1 & 1);
+                            tmp1 >>>= 1;
+                            tmp1 |= (tmp2 << 7);
+                            putreg(tmp, tmp1);
+                            flags |= DAA_TABLE[tmp1 & 0xff];
+                            if (tmp == 6) {
+                                return 15;
+                            } else {
+                                return 8;
+                            }
+                    /* SLA r */
+                        case 0x20:
+                        case 0x21:
+                        case 0x22:
+                        case 0x23:
+                        case 0x24:
+                        case 0x25:
+                        case 0x26:
+                        case 0x27:
+                            tmp = OP & 7;
+                            tmp1 = getreg(tmp);
+                            flags = (tmp1 >>> 7);
+                            tmp1 <<= 1;
+                            putreg(tmp, tmp1);
+                            flags |= DAA_TABLE[tmp1 & 0xff];
+                            if (tmp == 6) {
+                                return 15;
+                            } else {
+                                return 8;
+                            }
+                    /* SRA r */
+                        case 0x28:
+                        case 0x29:
+                        case 0x2A:
+                        case 0x2B:
+                        case 0x2C:
+                        case 0x2D:
+                        case 0x2E:
+                        case 0x2F:
+                            tmp = OP & 7;
+                            tmp1 = getreg(tmp);
+                            tmp2 = tmp1 & 0x80;
+                            flags = (tmp1 & 1);
+                            tmp1 >>>= 1;
+                            tmp1 |= tmp2;
+                            putreg(tmp, tmp1);
+                            flags |= DAA_TABLE[tmp1];
+                            if (tmp == 6) {
+                                return 15;
+                            } else {
+                                return 8;
+                            }
+                    /* SLL r - unsupported */
+                        case 0x30:
+                        case 0x31:
+                        case 0x32:
+                        case 0x33:
+                        case 0x34:
+                        case 0x35:
+                        case 0x36:
+                        case 0x37:
+                            tmp = OP & 7;
+                            tmp1 = getreg(tmp);
+                            flags = (tmp1 >>> 7);
+                            tmp2 = tmp1 & 1;
+                            tmp1 <<= 1;
+                            tmp1 |= tmp2;
+                            putreg(tmp, tmp1);
+                            flags |= DAA_TABLE[tmp1 & 0xff];
+                            if (tmp == 6) {
+                                return 15;
+                            } else {
+                                return 8;
+                            }
+                    /* SRL r */
+                        case 0x38:
+                        case 0x39:
+                        case 0x3A:
+                        case 0x3B:
+                        case 0x3C:
+                        case 0x3D:
+                        case 0x3E:
+                        case 0x3F:
+                            tmp = OP & 7;
+                            tmp1 = getreg(tmp);
+                            flags = (tmp1 & 1);
+                            tmp1 >>>= 1;
+                            putreg(tmp, tmp1);
+                            flags |= ((tmp1 == 0) ? FLAG_Z : 0) | PARITY_TABLE[tmp1];
+                            if (tmp == 6) {
+                                return 15;
+                            } else {
+                                return 8;
+                            }
+                    }
+                    switch (OP & 0xC0) {
+                        case 0x40: /* BIT b,r */
+                            tmp = (OP >>> 3) & 7;
+                            tmp2 = OP & 7;
+                            tmp1 = getreg(tmp2);
+                            flags = ((flags & 0x95) | FLAG_H | (((tmp1 & (1 << tmp)) == 0) ? FLAG_Z : 0));
+                            if (tmp2 == 6) {
+                                return 12;
+                            } else {
+                                return 8;
+                            }
+                        case 0x80: /* RES b,r */
+                            tmp = (OP >>> 3) & 7;
+                            tmp2 = OP & 7;
+                            tmp1 = getreg(tmp2);
+                            tmp1 = (tmp1 & (~(1 << tmp)));
+                            putreg(tmp2, tmp1);
+                            if (tmp2 == 6) {
+                                return 15;
+                            } else {
+                                return 8;
+                            }
+                        case 0xC0: /* SET b,r */
+                            tmp = (OP >>> 3) & 7;
+                            tmp2 = OP & 7;
+                            tmp1 = getreg(tmp2);
+                            tmp1 = (tmp1 | (1 << tmp));
+                            putreg(tmp2, tmp1);
+                            if (tmp2 == 6) {
+                                return 15;
+                            } else {
+                                return 8;
+                            }
+                    }
+            }
+            tmp = memory.read(PC++);
+            switch (OP) {
             /* JR cc,d */
-            case 0x20:
-            case 0x28:
-            case 0x30:
-            case 0x38:
-                if (getCC1((OP >>> 3) & 3)) {
-                    PC += (byte)tmp;
+                case 0x20:
+                case 0x28:
+                case 0x30:
+                case 0x38:
+                    if (getCC1((OP >>> 3) & 3)) {
+                        PC += (byte) tmp;
+                        return 12;
+                    }
+                    return 7;
+                case 0x18: /* JR e */
+                    PC += (byte) tmp;
                     return 12;
-                }
-                return 7;
-            case 0x18: /* JR e */
-                PC += (byte)tmp;
-                return 12;
-            case 0xC6: /* ADD A,d */
-                int DAR = regs[REG_A];
-                int diff = tmp;
-                regs[REG_A] += diff;
+                case 0xC6: /* ADD A,d */
+                    int DAR = regs[REG_A];
+                    int diff = tmp;
+                    regs[REG_A] += diff;
 
-                flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
-                auxCarry(DAR, diff);
-                addOverflow(DAR, diff);
+                    flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
+                    auxCarry(DAR, diff);
+                    addOverflow(DAR, diff);
 
-                regs[REG_A] = (short) (regs[REG_A] & 0xFF);
-                return 7;
-            case 0xCE: /* ADC A,d */
-                DAR = regs[REG_A];
-                diff = tmp;
-                if ((flags & FLAG_C) != 0) {
-                    diff++;
-                }
-                regs[REG_A] += diff;
+                    regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                    return 7;
+                case 0xCE: /* ADC A,d */
+                    DAR = regs[REG_A];
+                    diff = tmp;
+                    if ((flags & FLAG_C) != 0) {
+                        diff++;
+                    }
+                    regs[REG_A] += diff;
 
-                flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
-                auxCarry(DAR, diff);
-                addOverflow(DAR, diff);
+                    flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
+                    auxCarry(DAR, diff);
+                    addOverflow(DAR, diff);
 
-                regs[REG_A] = (short) (regs[REG_A] & 0xFF);
-                return 7;
-            case 0xD3: /* OUT (d),A */
-                context.fireIO(tmp, false, (short)regs[REG_A]);
-                return 11;
-            case 0xD6: /* SUB d */
-                tmp1 = regs[REG_A];
-                regs[REG_A] -= tmp;
+                    regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                    return 7;
+                case 0xD3: /* OUT (d),A */
+                    context.fireIO(tmp, false, (short) regs[REG_A]);
+                    return 11;
+                case 0xD6: /* SUB d */
+                    tmp1 = regs[REG_A];
+                    regs[REG_A] -= tmp;
 
-                flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
-                auxCarry(tmp1, (-tmp) & 0xFF);
-                subOverflow(tmp1, tmp);
+                    flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
+                    auxCarry(tmp1, (-tmp) & 0xFF);
+                    subOverflow(tmp1, tmp);
 
-                regs[REG_A] = (short) (regs[REG_A] & 0xFF);
-                return 7;
-            case 0xDB: /* IN A,(d) */
-                regs[REG_A] =  (context.fireIO(tmp, true,  0) & 0xFF);
-                return 11;
-            case 0xDE: /* SBC A,d */
-                tmp2 = regs[REG_A];
-                diff = tmp;
-                if ((flags & FLAG_C) != 0) {
-                    diff++;
-                }
-                regs[REG_A] -= diff;
+                    regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                    return 7;
+                case 0xDB: /* IN A,(d) */
+                    regs[REG_A] = (context.fireIO(tmp, true, 0) & 0xFF);
+                    return 11;
+                case 0xDE: /* SBC A,d */
+                    tmp2 = regs[REG_A];
+                    diff = tmp;
+                    if ((flags & FLAG_C) != 0) {
+                        diff++;
+                    }
+                    regs[REG_A] -= diff;
 
-                flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
-                auxCarry(tmp2, (-diff) & 0xFF);
-                subOverflow(tmp2, diff);
+                    flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
+                    auxCarry(tmp2, (-diff) & 0xFF);
+                    subOverflow(tmp2, diff);
 
-                regs[REG_A] = regs[REG_A] & 0xFF;
-                return 7;
-            case 0xE6: /* AND d */
-                regs[REG_A] = (regs[REG_A] & tmp) & 0xFF;
-                flags = AND_OR_XOR_TABLE[regs[REG_A]];
-                return 7;
-            case 0xEE: /* XOR d */
-                regs[REG_A] =  ((regs[REG_A] ^ tmp) & 0xFF);
-                flags = AND_OR_XOR_TABLE[regs[REG_A]];
-                return 7;
-            case 0xF6: /* OR d */
-                regs[REG_A] = (regs[REG_A] | tmp) & 0xFF;
-                flags = AND_OR_XOR_TABLE[regs[REG_A]];
-                return 7;
-            case 0xFE: /* CP d */
-                tmp2 = regs[REG_A] - tmp;
+                    regs[REG_A] = regs[REG_A] & 0xFF;
+                    return 7;
+                case 0xE6: /* AND d */
+                    regs[REG_A] = (regs[REG_A] & tmp) & 0xFF;
+                    flags = AND_OR_XOR_TABLE[regs[REG_A]];
+                    return 7;
+                case 0xEE: /* XOR d */
+                    regs[REG_A] = ((regs[REG_A] ^ tmp) & 0xFF);
+                    flags = AND_OR_XOR_TABLE[regs[REG_A]];
+                    return 7;
+                case 0xF6: /* OR d */
+                    regs[REG_A] = (regs[REG_A] | tmp) & 0xFF;
+                    flags = AND_OR_XOR_TABLE[regs[REG_A]];
+                    return 7;
+                case 0xFE: /* CP d */
+                    tmp2 = regs[REG_A] - tmp;
 
-                flags = SIGN_ZERO_CARRY_TABLE[tmp2 & 0x1FF] | FLAG_N;
-                auxCarry(regs[REG_A], (-tmp) & 0xFF);
-                subOverflow(regs[REG_A], tmp);
-                
-                return 7;
-        }
-        tmp += (memory.read(PC++) << 8);
-        switch (OP) {
+                    flags = SIGN_ZERO_CARRY_TABLE[tmp2 & 0x1FF] | FLAG_N;
+                    auxCarry(regs[REG_A], (-tmp) & 0xFF);
+                    subOverflow(regs[REG_A], tmp);
+
+                    return 7;
+            }
+            tmp += (memory.read(PC++) << 8);
+            switch (OP) {
             /* LD ss, nn */
-            case 0x01:
-            case 0x11:
-            case 0x21:
-            case 0x31:
-                putpair((OP >>> 4) & 3, tmp);
-                return 10;
+                case 0x01:
+                case 0x11:
+                case 0x21:
+                case 0x31:
+                    putpair((OP >>> 4) & 3, tmp);
+                    return 10;
             /* JP cc,nn */
-            case 0xC2:
-            case 0xCA:
-            case 0xD2:
-            case 0xDA:
-            case 0xE2:
-            case 0xEA:
-            case 0xF2:
-            case 0xFA:
-                tmp1 = (OP >>> 3) & 7;
-                if ((flags & CONDITION[tmp1]) == CONDITION_VALUES[tmp1]) {
-                    PC = tmp;
-                }
-                return 10;
+                case 0xC2:
+                case 0xCA:
+                case 0xD2:
+                case 0xDA:
+                case 0xE2:
+                case 0xEA:
+                case 0xF2:
+                case 0xFA:
+                    tmp1 = (OP >>> 3) & 7;
+                    if ((flags & CONDITION[tmp1]) == CONDITION_VALUES[tmp1]) {
+                        PC = tmp;
+                    }
+                    return 10;
             /* CALL cc,nn */
-            case 0xC4:
-            case 0xCC:
-            case 0xD4:
-            case 0xDC:
-            case 0xE4:
-            case 0xEC:
-            case 0xF4:
-            case 0xFC:
-                tmp1 = (OP >>> 3) & 7;
-                if ((flags & CONDITION[tmp1]) == CONDITION_VALUES[tmp1]) {
+                case 0xC4:
+                case 0xCC:
+                case 0xD4:
+                case 0xDC:
+                case 0xE4:
+                case 0xEC:
+                case 0xF4:
+                case 0xFC:
+                    tmp1 = (OP >>> 3) & 7;
+                    if ((flags & CONDITION[tmp1]) == CONDITION_VALUES[tmp1]) {
+                        SP = (SP - 2) & 0xffff;
+                        memory.writeWord(SP, PC);
+                        PC = tmp;
+                        return 17;
+                    }
+                    return 10;
+                case 0x22: /* LD (nn),HL */
+                    tmp1 = getpair(2);
+                    memory.writeWord(tmp, tmp1);
+                    return 16;
+                case 0x2A: /* LD HL,(nn) */
+                    tmp1 = memory.readWord(tmp);
+                    putpair(2, tmp1);
+                    return 16;
+                case 0x32: /* LD (nn),A */
+                    memory.write(tmp, (short) regs[REG_A]);
+                    return 13;
+                case 0x3A: /* LD A,(nn) */
+                    regs[REG_A] = (memory.read(tmp) & 0xff);
+                    return 13;
+                case 0xC3: /* JP nn */
+                    PC = tmp;
+                    return 10;
+                case 0xCD: /* CALL nn */
                     SP = (SP - 2) & 0xffff;
                     memory.writeWord(SP, PC);
                     PC = tmp;
                     return 17;
-                }
-                return 10;
-            case 0x22: /* LD (nn),HL */
-                tmp1 = getpair(2);
-                memory.writeWord(tmp, tmp1);
-                return 16;
-            case 0x2A: /* LD HL,(nn) */
-                tmp1 = memory.readWord(tmp);
-                putpair(2, tmp1);
-                return 16;
-            case 0x32: /* LD (nn),A */
-                memory.write(tmp, (short)regs[REG_A]);
-                return 13;
-            case 0x3A: /* LD A,(nn) */
-                regs[REG_A] =  (memory.read(tmp) & 0xff);
-                return 13;
-            case 0xC3: /* JP nn */
-                PC = tmp;
-                return 10;
-            case 0xCD: /* CALL nn */
-                SP = (SP - 2) & 0xffff;
-                memory.writeWord(SP, PC);
-                PC = tmp;
-                return 17;
+            }
+            currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
+        } finally {
+            if (tmpListener != null) {
+                tmpListener.afterDispatch();
+            }
         }
-        currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
         return 0;
     }
 
