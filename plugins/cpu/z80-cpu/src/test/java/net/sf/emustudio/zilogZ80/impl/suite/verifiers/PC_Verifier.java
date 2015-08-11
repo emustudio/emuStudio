@@ -7,11 +7,11 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class PCVerifier implements Consumer<RunnerContext<Integer>> {
+public class PC_Verifier implements Consumer<RunnerContext<Integer>> {
     private final Function<RunnerContext<Integer>, Integer> operation;
     private final CpuVerifierImpl verifier;
 
-    public PCVerifier(CpuVerifierImpl verifier, Function<RunnerContext<Integer>, Integer> operation) {
+    public PC_Verifier(CpuVerifierImpl verifier, Function<RunnerContext<Integer>, Integer> operation) {
         this.operation = Objects.requireNonNull(operation);
         this.verifier = Objects.requireNonNull(verifier);
     }

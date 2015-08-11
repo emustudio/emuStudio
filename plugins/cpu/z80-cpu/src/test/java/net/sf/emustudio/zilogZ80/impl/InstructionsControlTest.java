@@ -18,11 +18,13 @@
  */
 package net.sf.emustudio.zilogZ80.impl;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.*;
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class InstructionsControlTest extends InstructionsTest {
     
     @Test

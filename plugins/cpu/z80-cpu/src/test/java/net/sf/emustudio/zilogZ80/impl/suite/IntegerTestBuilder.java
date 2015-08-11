@@ -1,16 +1,23 @@
 package net.sf.emustudio.zilogZ80.impl.suite;
 
+import net.sf.emustudio.cpu.testsuite.Test;
 import net.sf.emustudio.cpu.testsuite.TestBuilder;
+import net.sf.emustudio.cpu.testsuite.injectors.InstructionOperand;
+import net.sf.emustudio.cpu.testsuite.injectors.MemoryByte;
 import net.sf.emustudio.cpu.testsuite.injectors.MemoryExpand;
 import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
 import net.sf.emustudio.zilogZ80.impl.suite.injectors.RegisterPair;
 import net.sf.emustudio.zilogZ80.impl.suite.injectors.RegisterPairPSW;
-import net.sf.emustudio.zilogZ80.impl.suite.verifiers.PCVerifier;
+import net.sf.emustudio.zilogZ80.impl.suite.verifiers.IX_Verifier;
+import net.sf.emustudio.zilogZ80.impl.suite.verifiers.IY_Verifier;
+import net.sf.emustudio.zilogZ80.impl.suite.verifiers.PC_Verifier;
 import net.sf.emustudio.zilogZ80.impl.suite.verifiers.RegisterPair_PSW_Verifier;
 import net.sf.emustudio.zilogZ80.impl.suite.verifiers.RegisterPair_SP_Verifier;
 import net.sf.emustudio.zilogZ80.impl.suite.verifiers.RegisterVerifier;
 
 import java.util.function.Function;
+
+import static net.sf.emustudio.zilogZ80.impl.suite.Utils.get8MSBplus8LSB;
 
 public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder, CpuRunnerImpl, CpuVerifierImpl>  {
 
@@ -28,8 +35,54 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         return this;
     }
 
+    public IntegerTestBuilder secondIsIX() {
+        runner.injectSecond((tmpRunner, argument) -> cpuRunner.setIX(argument.intValue()));
+        return this;
+    }
+
     public IntegerTestBuilder firstIsRegisterPairPSW(int registerPairPSW) {
         runner.injectFirst(new MemoryExpand(), new RegisterPairPSW(registerPairPSW));
+        return this;
+    }
+
+    public IntegerTestBuilder firstIsIX() {
+        runner.injectFirst((tmpRunner, argument) -> cpuRunner.setIX(argument.intValue()));
+        return this;
+    }
+
+    public IntegerTestBuilder firstIsIY() {
+        runner.injectFirst((tmpRunner, argument) -> cpuRunner.setIY(argument.intValue()));
+        return this;
+    }
+
+    public IntegerTestBuilder first8MSBisIX() {
+        runner.injectFirst((tmpRunner, argument) -> cpuRunner.setIX(argument.intValue() & 0xFF00));
+        return this;
+    }
+
+    public IntegerTestBuilder first8LSBisRegister(int register) {
+        runner.injectFirst((tmpRunner, argument) -> cpuRunner.setRegister(register, argument.intValue() & 0xFF));
+        return this;
+    }
+
+    public IntegerTestBuilder first8MSBisIY() {
+        runner.injectFirst((tmpRunner, argument) -> cpuRunner.setIY(argument.intValue() & 0xFF00));
+        return this;
+    }
+
+    public Test<Integer> runWithFirst8bitOperand(int... instruction) {
+        return create(
+                (tmpRunner, argument) ->
+                        new InstructionOperand<Byte, CpuRunnerImpl>(instruction).inject(cpuRunner, (byte)(argument.intValue() & 0xFF)),
+                true
+        );
+    }
+
+    public IntegerTestBuilder first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte() {
+        runner.injectBoth((tmpRunner, first, second) -> {
+                    new MemoryByte(get8MSBplus8LSB(first.intValue())).inject(tmpRunner, (byte) (second.intValue() & 0xFF));
+                }
+        );
         return this;
     }
 
@@ -73,9 +126,21 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         return this;
     }
 
+    public IntegerTestBuilder verifyIX(Function<RunnerContext<Integer>, Integer> operator) {
+        lastOperation = operator;
+        verifiers.add(new IX_Verifier<Integer>(cpuVerifier, operator));
+        return this;
+    }
+
+    public IntegerTestBuilder verifyIY(Function<RunnerContext<Integer>, Integer> operator) {
+        lastOperation = operator;
+        verifiers.add(new IY_Verifier<Integer>(cpuVerifier, operator));
+        return this;
+    }
+
     public IntegerTestBuilder verifyPC(Function<RunnerContext<Integer>, Integer> operator) {
         lastOperation = operator;
-        verifiers.add(new PCVerifier(cpuVerifier, operator));
+        verifiers.add(new PC_Verifier(cpuVerifier, operator));
         return this;
     }
 

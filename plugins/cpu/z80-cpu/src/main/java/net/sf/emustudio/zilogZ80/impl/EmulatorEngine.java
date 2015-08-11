@@ -343,38 +343,21 @@ public class EmulatorEngine {
         return cycles;
     }
     
-    private void addOverflow(int i, int j) {
-        int sign = i & 0x80;
-        if (sign != (j & 0x80)) {
+    private void overflow(int i, int j, int result) {
+        int signFirst = i & 0x80;
+        int signSecond = j & 0x80;
+        if (signFirst != signSecond) {
             flags &= (~FLAG_PV);
-        } else if (((i+j) & 0x80) != sign){
+        } else if ((result & 0x80) != signFirst){
             flags |= FLAG_PV;
         }
     }
 
-    private void addBigOverflow(int i, int j) {
+    private void bigOverflow(int i, int j, int result) {
         int sign = i & 0x8000;
         if (sign != (j & 0x8000)) {
             flags &= (~FLAG_PV);
-        } else if (((i+j) & 0x8000) != sign){
-            flags |= FLAG_PV;
-        }
-    }
-
-    private void subOverflow(int i, int j) {
-        int sign = i & 0x80;
-        if (sign == (j & 0x80)) {
-            flags &= (~FLAG_PV);
-        } else if (((i-j) & 0x80) != sign){
-            flags |= FLAG_PV;
-        }
-    }
-
-    private void subBigOverflow(int i, int j) {
-        int sign = i & 0x8000;
-        if (sign == (j & 0x8000)) {
-            flags &= (~FLAG_PV);
-        } else if (((i-j) & 0x8000) != sign){
+        } else if ((result & 0x8000) != sign){
             flags |= FLAG_PV;
         }
     }
@@ -395,7 +378,7 @@ public class EmulatorEngine {
         }
     }
     
-    private void auxCarry11(int before, int sumWith) {
+    private void halfCarry11(int before, int sumWith) {
         int mask = sumWith & before;
         int xormask = sumWith ^ before;
 
@@ -450,7 +433,6 @@ public class EmulatorEngine {
     private int evalStep(short OP) {
         int tmp, tmp1, tmp2, tmp3;
         short special = 0; // prefix if available = 0xDD or 0xFD
-        byte b;
 
         DispatchListener tmpListener = dispatchListener;
         if (tmpListener != null) {
@@ -506,7 +488,7 @@ public class EmulatorEngine {
                     tmp = getpair((OP >>> 4) & 0x03);
                     tmp1 = getpair(2);
                     carry15(tmp, tmp1);
-                    auxCarry11(tmp, tmp1);
+                    halfCarry11(tmp, tmp1);
                     flags &= (~FLAG_N);
                     tmp += tmp1;
                     putpair(2, tmp & 0xFFFF);
@@ -626,10 +608,11 @@ public class EmulatorEngine {
                     regs[REG_A] += diff;
 
                     flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
-                    auxCarry(X, diff);
-                    addOverflow(X, diff);
+                    regs[REG_A] = regs[REG_A] & 0xFF;
 
-                    regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                    auxCarry(X, diff);
+                    overflow(X, diff, regs[REG_A]);
+
                     return ((OP & 0x07) == 6) ? 7 : 4;
             /* ADC A,r */
                 case 0x88:
@@ -648,10 +631,11 @@ public class EmulatorEngine {
                     regs[REG_A] += diff;
 
                     flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
-                    auxCarry(X, diff);
-                    addOverflow(X, diff);
+                    regs[REG_A] = regs[REG_A] & 0xFF;
 
-                    regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                    auxCarry(X, diff);
+                    overflow(X, diff, regs[REG_A]);
+
                     return ((OP & 0x07) == 6) ? 7 : 4;
             /* SUB r */
                 case 0x90:
@@ -663,14 +647,16 @@ public class EmulatorEngine {
                 case 0x96:
                 case 0x97:
                     X = regs[REG_A];
-                    diff = getreg(OP & 0x07);
-                    regs[REG_A] -= diff;
+                    diff = -getreg(OP & 0x07);
+                    regs[REG_A] += diff;
+                    diff &= 0xFF;
 
                     flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
-                    auxCarry(X, (-diff) & 0xFF);
-                    subOverflow(X, diff);
+                    regs[REG_A] = regs[REG_A] & 0xFF;
 
-                    regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                    auxCarry(X, diff);
+                    overflow(X, diff, regs[REG_A]);
+
                     return ((OP & 0x07) == 6) ? 7 : 4;
             /* SBC A,r */
                 case 0x98:
@@ -682,17 +668,19 @@ public class EmulatorEngine {
                 case 0x9E:
                 case 0x9F:
                     X = regs[REG_A];
-                    diff = getreg(OP & 0x07);
+                    diff = -getreg(OP & 0x07);
                     if ((flags & FLAG_C) != 0) {
-                        diff++;
+                        diff--;
                     }
-                    regs[REG_A] -= diff;
+                    regs[REG_A] += diff;
+                    diff &= 0xFF;
 
                     flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
-                    auxCarry(X, (-diff) & 0xFF);
-                    subOverflow(X, diff);
+                    regs[REG_A] = regs[REG_A] & 0xFF;
 
-                    regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                    auxCarry(X, diff);
+                    overflow(X, diff, regs[REG_A]);
+
                     return ((OP & 0x07) == 6) ? 7 : 4;
             /* AND r */
                 case 0xA0:
@@ -739,12 +727,13 @@ public class EmulatorEngine {
                 case 0xBD:
                 case 0xBE:
                 case 0xBF:
-                    diff = getreg(OP & 7);
-                    tmp2 = regs[REG_A] - diff;
+                    diff = -getreg(OP & 7);
+                    tmp2 = regs[REG_A] + diff;
+                    diff &= 0xFF;
 
                     flags = SIGN_ZERO_CARRY_TABLE[tmp2 & 0x1FF] | FLAG_N;
-                    auxCarry(regs[REG_A], (-diff) & 0xFF);
-                    subOverflow(regs[REG_A], diff);
+                    auxCarry(regs[REG_A], diff);
+                    overflow(regs[REG_A], diff, tmp2 & 0xFF);
 
                     return (OP == 0xBE) ? 7 : 4;
                 case 0x07: /* RLCA */
@@ -913,27 +902,32 @@ public class EmulatorEngine {
                         case 0x52:
                         case 0x62:
                         case 0x72:
-                            tmp = getpair((OP >>> 4) & 0x03);
+                            tmp = -getpair((OP >>> 4) & 0x03);
                             tmp1 = getpair(2);
                             if ((flags & FLAG_C) == FLAG_C) {
-                                tmp++;
+                                tmp--;
                             }
-                            int sum = tmp1 - tmp;
+
+                            int sum = (tmp1 + tmp) & 0xFFFF;
+                            tmp &= 0xFFFF;
+
                             if ((sum & 0x8000) != 0) {
                                 flags |= FLAG_S;
                             } else {
                                 flags &= (~FLAG_S);
                             }
-                            if ((sum & 0xFFFF) == 0) {
+                            if (sum == 0) {
                                 flags |= FLAG_Z;
                             } else {
                                 flags &= (~FLAG_Z);
                             }
                             flags |= FLAG_N;
-                            carry15(tmp1, (-tmp) & 0xFFFF);
-                            auxCarry11(tmp1, (-tmp) & 0xFFFF);
-                            subBigOverflow(tmp1, tmp);
-                            putpair(2, sum & 0xFFFF);
+
+                            carry15(tmp1, tmp);
+                            halfCarry11(tmp1, tmp);
+                            bigOverflow(tmp1, tmp, sum);
+                            putpair(2, sum);
+
                             return 15;
                     /* ADC HL,ss */
                         case 0x4A:
@@ -943,24 +937,28 @@ public class EmulatorEngine {
                             tmp = getpair((OP >>> 4) & 0x03);
                             tmp1 = getpair(2);
                             if ((flags & FLAG_C) == FLAG_C) {
-                                tmp1++;
+                                tmp++;
                             }
                             sum = tmp + tmp1;
+                            tmp1 &= 0xFFFF;
+                            sum &= 0xFFFF;
+
                             if ((sum & 0x8000) != 0) {
                                 flags |= FLAG_S;
                             } else {
                                 flags &= (~FLAG_S);
                             }
-                            if ((sum & 0xFFFF) == 0) {
+                            if (sum == 0) {
                                 flags |= FLAG_Z;
                             } else {
                                 flags &= (~FLAG_Z);
                             }
                             flags &= (~FLAG_N);
                             carry15(tmp, tmp1);
-                            auxCarry11(tmp, tmp1);
-                            addBigOverflow(tmp, tmp1);
-                            putpair(2, sum & 0xFFFF);
+                            halfCarry11(tmp, tmp1);
+                            bigOverflow(tmp, tmp1, sum);
+                            putpair(2, sum);
+
                             return 11;
                         case 0x44: /* NEG */
                             regs[REG_A] = ((0 - regs[REG_A]) & 0xFF);
@@ -1329,9 +1327,11 @@ public class EmulatorEngine {
                         case 0x39:
                             tmp = getspecial(special);
                             tmp1 = getpair(special, (OP >>> 4) & 0x03);
+
                             carry15(tmp, tmp1);
-                            auxCarry11(tmp, tmp1);
+                            halfCarry11(tmp, tmp1);
                             flags &= (~FLAG_N);
+
                             tmp += tmp1;
                             putspecial(special, tmp);
                             return 15;
@@ -1400,7 +1400,7 @@ public class EmulatorEngine {
                         case 0x6E:
                         case 0x7E:
                             tmp1 = (OP >>> 3) & 7;
-                            putreg2(tmp1, memory.read(getspecial(special) + (byte) tmp));
+                            putreg2(tmp1, memory.read((getspecial(special) + (byte) tmp) & 0xFFFF));
                             return 19;
                     /* LD (ii+d),r */
                         case 0x70:
@@ -1417,6 +1417,7 @@ public class EmulatorEngine {
                         case 0x34: /* INC (ii+d) */
                             tmp1 = (getspecial(special) + (byte) tmp) & 0xFFFF;
                             tmp2 = (memory.read(tmp1) + 1) & 0xFF;
+
                             memory.write(tmp1, (short) tmp2);
                             flags = INC_TABLE[tmp2] | (flags & FLAG_C);
                             return 23;
@@ -1428,70 +1429,77 @@ public class EmulatorEngine {
                             return 23;
                         case 0x86: /* ADD A,(ii+d) */
                             tmp1 = regs[REG_A];
-                            tmp2 = memory.read(getspecial(special) + (byte) tmp) & 0xFF;
+                            tmp2 = memory.read((getspecial(special) + (byte) tmp) & 0xFFFF) & 0xFF;
 
                             regs[REG_A] += tmp2;
                             flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
-                            auxCarry(tmp1, tmp2);
-                            addOverflow(tmp1, tmp2);
-
                             regs[REG_A] = regs[REG_A] & 0xFF;
+
+                            auxCarry(tmp1, tmp2);
+                            overflow(tmp1, tmp2, regs[REG_A]);
+
                             return 19;
                         case 0x8E: /* ADC A,(ii+d) */
                             tmp1 = regs[REG_A];
-                            tmp2 = memory.read(getspecial(special) + (byte) tmp) & 0xFF;
+                            tmp2 = memory.read((getspecial(special) + (byte) tmp) & 0xFFFF) & 0xFF;
                             if ((flags & FLAG_C) == FLAG_C) {
                                 tmp2++;
                             }
                             regs[REG_A] += tmp2;
                             flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
-                            auxCarry(tmp1, tmp2);
-                            addOverflow(tmp1, tmp2);
+                            regs[REG_A] = regs[REG_A] & 0xFF;
 
-                            regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                            auxCarry(tmp1, tmp2);
+                            overflow(tmp1, tmp2, regs[REG_A]);
+
                             return 19;
                         case 0x96: /* SUB (ii+d) */
                             tmp1 = regs[REG_A];
-                            tmp2 = memory.read(getspecial(special) + (byte) tmp) & 0xFF;
+                            tmp2 = -(memory.read((getspecial(special) + (byte) tmp) & 0xFFFF) & 0xFF);
 
-                            regs[REG_A] -= tmp2;
+                            regs[REG_A] += tmp2;
+                            tmp2 &= 0xFF;
+
                             flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
-                            auxCarry(tmp1, (-tmp2) & 0xFF);
-                            subOverflow(tmp1, tmp2);
-
                             regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+
+                            auxCarry(tmp1, tmp2);
+                            overflow(tmp1, tmp2, regs[REG_A]);
+
                             return 19;
                         case 0x9E: /* SBC A,(ii+d) */
                             tmp1 = regs[REG_A];
-                            tmp2 = memory.read(getspecial(special) + (byte) tmp) & 0xFF;
+                            tmp2 = -(memory.read((getspecial(special) + (byte) tmp) & 0xFFFF) & 0xFF);
                             if ((flags & FLAG_C) == FLAG_C) {
-                                tmp2++;
+                                tmp2--;
                             }
-                            regs[REG_A] -= tmp2;
+                            regs[REG_A] += tmp2;
+                            tmp2 &= 0xFF;
 
                             flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
-                            auxCarry(tmp1, (-tmp2) & 0xFF);
-                            subOverflow(tmp1, tmp2);
-
                             regs[REG_A] = regs[REG_A] & 0xFF;
+
+                            auxCarry(tmp1, tmp2);
+                            overflow(tmp1, tmp2, regs[REG_A]);
+
                             return 19;
                         case 0xA6: /* AND (ii+d) */
-                            tmp1 = memory.read(getspecial(special) + (byte) tmp);
+                            tmp1 = memory.read((getspecial(special) + (byte) tmp) & 0xFFFF);
                             regs[REG_A] = (regs[REG_A] & tmp1) & 0xFF;
                             flags = AND_OR_XOR_TABLE[regs[REG_A]];
                             return 19;
                         case 0xAE: /* XOR (ii+d) */
-                            tmp1 = memory.read(getspecial(special) + (byte) tmp);
+                            tmp1 = memory.read((getspecial(special) + (byte) tmp) & 0xFFFF);
                             regs[REG_A] = ((regs[REG_A] ^ tmp1) & 0xff);
                             flags = DAA_TABLE[regs[REG_A]];
                             return 19;
                         case 0xB6: /* OR (ii+d) */
-                            tmp1 = memory.read(getspecial(special) + (byte) tmp);
+                            tmp1 = memory.read((getspecial(special) + (byte) tmp) & 0xFFFF);
                             regs[REG_A] = ((regs[REG_A] | tmp1) & 0xff);
                             flags = DAA_TABLE[regs[REG_A]];
                             return 19;
                         case 0xBE: /* CP (ii+d) */
-                            tmp1 = memory.read(getspecial(special) + (byte) tmp);
+                            tmp1 = memory.read((getspecial(special) + (byte) tmp) & 0xFFFF);
                             tmp2 = regs[REG_A] - tmp1;
                             flags = (CP_TABLE[tmp2 & 0xff] | CBITS2Z80_TABLE[(regs[REG_A] ^ tmp1 ^ tmp2) & 0x1ff]);
                             return 19;
@@ -1509,7 +1517,7 @@ public class EmulatorEngine {
                             putspecial(special, tmp1);
                             return 20;
                         case 0x36: /* LD (ii+d),n */
-                            memory.write(getspecial(special) + (byte) (tmp & 0xFF), (short) ((tmp >>> 8)));
+                            memory.write((getspecial(special) + (byte) (tmp & 0xFF)) & 0xFFFF, (short) ((tmp >>> 8)));
                             return 19;
                         case 0xCB:
                             OP = (short) ((tmp >>> 8) & 0xff);
@@ -1864,10 +1872,11 @@ public class EmulatorEngine {
                     regs[REG_A] += diff;
 
                     flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
-                    auxCarry(DAR, diff);
-                    addOverflow(DAR, diff);
+                    regs[REG_A] = regs[REG_A] & 0xFF;
 
-                    regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                    auxCarry(DAR, diff);
+                    overflow(DAR, diff, regs[REG_A]);
+
                     return 7;
                 case 0xCE: /* ADC A,d */
                     DAR = regs[REG_A];
@@ -1878,40 +1887,46 @@ public class EmulatorEngine {
                     regs[REG_A] += diff;
 
                     flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF];
-                    auxCarry(DAR, diff);
-                    addOverflow(DAR, diff);
+                    regs[REG_A] = regs[REG_A] & 0xFF;
 
-                    regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                    auxCarry(DAR, diff);
+                    overflow(DAR, diff, regs[REG_A]);
+
                     return 7;
                 case 0xD3: /* OUT (d),A */
                     context.fireIO(tmp, false, (short) regs[REG_A]);
                     return 11;
                 case 0xD6: /* SUB d */
                     tmp1 = regs[REG_A];
-                    regs[REG_A] -= tmp;
+                    tmp = -tmp;
+                    regs[REG_A] += tmp;
+                    tmp &= 0xFF;
 
                     flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
-                    auxCarry(tmp1, (-tmp) & 0xFF);
-                    subOverflow(tmp1, tmp);
+                    regs[REG_A] = regs[REG_A] & 0xFF;
 
-                    regs[REG_A] = (short) (regs[REG_A] & 0xFF);
+                    auxCarry(tmp1, tmp);
+                    overflow(tmp1, tmp, regs[REG_A]);
+
                     return 7;
                 case 0xDB: /* IN A,(d) */
                     regs[REG_A] = (context.fireIO(tmp, true, 0) & 0xFF);
                     return 11;
                 case 0xDE: /* SBC A,d */
                     tmp2 = regs[REG_A];
-                    diff = tmp;
+                    diff = -tmp;
                     if ((flags & FLAG_C) != 0) {
-                        diff++;
+                        diff--;
                     }
-                    regs[REG_A] -= diff;
+                    regs[REG_A] += diff;
+                    diff &= 0xFF;
 
                     flags = SIGN_ZERO_CARRY_TABLE[regs[REG_A] & 0x1FF] | FLAG_N;
-                    auxCarry(tmp2, (-diff) & 0xFF);
-                    subOverflow(tmp2, diff);
-
                     regs[REG_A] = regs[REG_A] & 0xFF;
+
+                    auxCarry(tmp2, diff);
+                    overflow(tmp2, diff, regs[REG_A]);
+
                     return 7;
                 case 0xE6: /* AND d */
                     regs[REG_A] = (regs[REG_A] & tmp) & 0xFF;
@@ -1926,11 +1941,13 @@ public class EmulatorEngine {
                     flags = AND_OR_XOR_TABLE[regs[REG_A]];
                     return 7;
                 case 0xFE: /* CP d */
-                    tmp2 = regs[REG_A] - tmp;
+                    tmp = -tmp;
+                    tmp2 = regs[REG_A] + tmp;
+                    tmp &= 0xFF;
 
                     flags = SIGN_ZERO_CARRY_TABLE[tmp2 & 0x1FF] | FLAG_N;
-                    auxCarry(regs[REG_A], (-tmp) & 0xFF);
-                    subOverflow(regs[REG_A], tmp);
+                    auxCarry(regs[REG_A], tmp);
+                    overflow(regs[REG_A], tmp, tmp2 & 0xFF);
 
                     return 7;
             }

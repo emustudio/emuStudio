@@ -92,4 +92,11 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         return cpu.getEngine().flags;
     }
 
+    public void setIX(int ix) {
+        cpu.getEngine().IX = ix;
+    }
+
+    public void setIY(int iy) {
+        cpu.getEngine().IY = iy;
+    }
 }

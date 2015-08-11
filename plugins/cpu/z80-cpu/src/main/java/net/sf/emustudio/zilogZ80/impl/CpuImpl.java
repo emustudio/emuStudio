@@ -54,6 +54,9 @@ import net.sf.emustudio.zilogZ80.gui.StatusPanel;
         description = "Emulator of Zilog Z80 CPU"
 )
 public class CpuImpl extends AbstractCPU {
+    public static final String PRINT_CODE = "printCode";
+    public static final String PRINT_CODE_USE_CACHE = "printCodeUseCache";
+
     private final ScheduledExecutorService frequencyScheduler = Executors.newSingleThreadScheduledExecutor();
     private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
     private final AtomicReference<Future> frequencyUpdaterFuture = new AtomicReference<>();
@@ -137,6 +140,17 @@ public class CpuImpl extends AbstractCPU {
             // create disassembler and debug columns
             this.disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
             this.engine = new EmulatorEngine(memory, context);
+
+            String setting = settings.readSetting(getPluginID(), PRINT_CODE);
+            String printCodeUseCache = settings.readSetting(getPluginID(), PRINT_CODE_USE_CACHE);
+            if (setting != null && setting.toLowerCase().equals("true")) {
+                if (printCodeUseCache == null || printCodeUseCache.toLowerCase().equals("true")) {
+                    engine.setDispatchListener(new InstructionPrinter(disassembler, engine, true));
+                } else {
+                    engine.setDispatchListener(new InstructionPrinter(disassembler, engine, false));
+                }
+            }
+
             statusPanel = new StatusPanel(this, context);
         } catch (InvalidContextException | ContextNotFoundException e) {
             throw new PluginInitializationException(this, ": Could not get memory context", e);

@@ -148,7 +148,7 @@ public abstract class TestBuilder<
         return (SpecificTestBuilder)this;
     }
 
-    public Test<K> run(int instruction) {
+    public Test<K> run(int... instruction) {
         return create(new InstructionNoOperands<>(instruction), true);
     }
 
@@ -160,7 +160,7 @@ public abstract class TestBuilder<
         return create(new InstructionOperand<K, CpuRunnerType>(instruction), false);
     }
 
-    private Test<K> create(RunnerInjector<K, CpuRunnerType> instruction, boolean first) {
+    protected Test<K> create(RunnerInjector<K, CpuRunnerType> instruction, boolean first) {
         if (verifiers.isEmpty()) {
             throw new IllegalStateException("At least one verifier must be set");
         }

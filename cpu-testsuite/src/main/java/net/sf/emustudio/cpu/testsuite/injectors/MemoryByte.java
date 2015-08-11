@@ -8,7 +8,7 @@ public class MemoryByte<TCpuRunnerType extends CpuRunner> implements RunnerInjec
 
     public MemoryByte(int address) {
         if (address <= 0) {
-            throw new IllegalArgumentException("Address can be only > 0!");
+            throw new IllegalArgumentException("Address can be only > 0! (was " + address + ")");
         }
 
         this.address = address;

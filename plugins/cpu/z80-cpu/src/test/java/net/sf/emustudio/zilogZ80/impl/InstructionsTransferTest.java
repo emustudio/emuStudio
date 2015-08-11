@@ -18,11 +18,13 @@
  */
 package net.sf.emustudio.zilogZ80.impl;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.*;
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class InstructionsTransferTest extends InstructionsTest {
 
     private short[] generateLD_r__special_plus_d(int prefix, int base, short displacement, int... values) {

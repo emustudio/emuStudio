@@ -4,6 +4,7 @@ import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 import static org.junit.Assert.assertEquals;
@@ -35,6 +36,16 @@ public abstract class CpuRunner<CpuType extends CPU> {
             this.program[i] = (short)program[i];
         }
         resetProgram();
+    }
+
+    public void setProgram(List<? extends Number> program) {
+        int[] array = new int[program.size()];
+
+        int i = 0;
+        for (Number n : program) {
+            array[i++] = n.intValue();
+        }
+        setProgram(array);
     }
 
     public int getProgramSize() {

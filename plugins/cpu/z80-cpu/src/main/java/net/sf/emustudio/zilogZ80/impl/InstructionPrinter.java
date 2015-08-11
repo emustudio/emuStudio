@@ -42,18 +42,19 @@ public class InstructionPrinter implements EmulatorEngine.DispatchListener {
             creationTimeStamp = timeStamp;
             timeStamp = 0;
         }
+        int PC = emulatorEngine.PC - 1;
         try {
-            DisassembledInstruction instr = disassembler.disassemble(emulatorEngine.PC);
+            DisassembledInstruction instr = disassembler.disassemble(PC);
 
-            if (!useCache || !cache.contains(emulatorEngine.PC)) {
+            if (!useCache || !cache.contains(PC)) {
                 if (numberOfMatch.get() != 0) {
                     System.out.println(String.format("%04d | Block from %04X to %04X; count=%d",
-                            timeStamp, matchPC, emulatorEngine.PC, numberOfMatch.get())
+                            timeStamp, matchPC, PC, numberOfMatch.get())
                     );
                 }
                 numberOfMatch.set(0);
-                matchPC = emulatorEngine.PC;
-                cache.add(emulatorEngine.PC);
+                matchPC = PC;
+                cache.add(PC);
             } else {
                 numberOfMatch.incrementAndGet();
             }
@@ -65,15 +66,16 @@ public class InstructionPrinter implements EmulatorEngine.DispatchListener {
             }
 
         } catch (InvalidInstructionException e) {
-            System.out.println(String.format("%04d | Invalid instruction at %04X", timeStamp, emulatorEngine.PC));
+            System.out.println(String.format("%04d | Invalid instruction at %04X", timeStamp, PC));
         }
     }
 
     @Override
     public void afterDispatch() {
         if (numberOfMatch.get() <= 1) {
-            System.out.println(String.format("|| regs=%s | flags=%s | SP=%04x | PC=%04x",
-                    regsToString(), intToFlags(emulatorEngine.flags), emulatorEngine.SP, emulatorEngine.PC)
+            System.out.println(String.format("|| regs=%s IX=%04x IY=%04x | flags=%s | SP=%04x | PC=%04x",
+                    regsToString(), emulatorEngine.IX, emulatorEngine.IY, intToFlags(emulatorEngine.flags),
+                            emulatorEngine.SP, emulatorEngine.PC)
             );
         }
     }
@@ -99,7 +101,7 @@ public class InstructionPrinter implements EmulatorEngine.DispatchListener {
             flagsString += " ";
         }
         if ((flags & FLAG_H) == FLAG_H) {
-            flagsString += "A";
+            flagsString += "H";
         } else {
             flagsString += " ";
         }

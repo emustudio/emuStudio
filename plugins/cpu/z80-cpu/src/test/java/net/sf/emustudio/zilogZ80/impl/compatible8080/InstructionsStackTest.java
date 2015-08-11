@@ -20,8 +20,10 @@ package net.sf.emustudio.zilogZ80.impl.compatible8080;
 
 import net.sf.emustudio.zilogZ80.impl.EmulatorEngine;
 import net.sf.emustudio.zilogZ80.impl.InstructionsTest;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class InstructionsStackTest extends InstructionsTest {
 
     @Test

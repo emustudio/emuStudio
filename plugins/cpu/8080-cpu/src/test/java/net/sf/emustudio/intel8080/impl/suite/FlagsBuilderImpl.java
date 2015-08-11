@@ -2,9 +2,6 @@ package net.sf.emustudio.intel8080.impl.suite;
 
 import net.sf.emustudio.cpu.testsuite.FlagsBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_AC;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_C;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_P;
@@ -80,7 +77,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
 
     public FlagsBuilderImpl carryIsFirstOperandMSB() {
         evaluators.add((first, second, result) -> {
-            if ((((Number)first).intValue() & 0x80) == 0x80) {
+            if ((first.intValue() & 0x80) == 0x80) {
                 expectedFlags |= FLAG_C;
             } else {
                 expectedNotFlags |= FLAG_C;
@@ -91,7 +88,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
 
     public FlagsBuilderImpl carryIsFirstOperandLSB() {
         evaluators.add((first, second, result) -> {
-            if ((((Number)first).intValue() & 1) == 1) {
+            if ((first.intValue() & 1) == 1) {
                 expectedFlags |= FLAG_C;
             } else {
                 expectedNotFlags |= FLAG_C;
@@ -119,10 +116,10 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
 
     public FlagsBuilderImpl auxCarry() {
         evaluators.add((first, second, result) -> {
-            int firstInt = ((Number)first).intValue();
+            int firstInt = first.intValue();
             byte diff = (byte)((result - firstInt) & 0xFF);
 
-            if (isAuxCarry(((Number) first).intValue(), diff)) {
+            if (isAuxCarry(first.intValue(), diff)) {
                 expectedFlags |= FLAG_AC;
             } else {
                 expectedNotFlags |= FLAG_AC;
@@ -138,7 +135,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
 
     public FlagsBuilderImpl auxCarryDAA() {
         evaluators.add((first, second, result) -> {
-            int firstInt = ((Number)first).intValue();
+            int firstInt = first.intValue();
             int diff = (result - firstInt) & 0x0F;
 
             if ((diff == 6) && isAuxCarry(firstInt, 6)) {

@@ -2,7 +2,7 @@ package net.sf.emustudio.zilogZ80.impl.suite;
 
 import net.sf.emustudio.cpu.testsuite.CpuVerifier;
 import net.sf.emustudio.cpu.testsuite.MemoryStub;
-import net.sf.emustudio.intel8080.impl.CpuImpl;
+import net.sf.emustudio.zilogZ80.impl.CpuImpl;
 
 import java.util.Objects;
 
@@ -22,7 +22,6 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-
 
 public class CpuVerifierImpl extends CpuVerifier {
     private final CpuImpl cpu;
@@ -67,6 +66,22 @@ public class CpuVerifierImpl extends CpuVerifier {
         );
     }
 
+    public void checkIX(int value) {
+        value &= 0xFFFF;
+        assertEquals(
+                String.format("Expected IX=%x, but was %x", value, cpu.getEngine().IX),
+                value, cpu.getEngine().IX
+        );
+    }
+
+    public void checkIY(int value) {
+        value &= 0xFFFF;
+        assertEquals(
+                String.format("Expected IY=%x, but was %x", value, cpu.getEngine().IY),
+                value, cpu.getEngine().IY
+        );
+    }
+
     public void checkRegisterPairPSW(int registerPair, int value) {
         if (registerPair < 3) {
             checkRegisterPair(registerPair, value);
@@ -88,12 +103,12 @@ public class CpuVerifierImpl extends CpuVerifier {
         );
     }
 
-    public void checkInterruptsAreEnabled() {
-        assertTrue(cpu.getEngine().INTE);
+    public void checkInterruptsAreEnabled(int set) {
+        assertTrue(cpu.getEngine().IFF[set]);
     }
 
-    public void checkInterruptsAreDisabled() {
-        assertFalse(cpu.getEngine().INTE);
+    public void checkInterruptsAreDisabled(int set) {
+        assertFalse(cpu.getEngine().IFF[set]);
     }
 
     public String intToFlags(int flags) {
@@ -108,7 +123,7 @@ public class CpuVerifierImpl extends CpuVerifier {
             flagsString += "H";
         }
         if ((flags & FLAG_PV) == FLAG_PV) {
-            flagsString += "P/V";
+            flagsString += "P";
         }
         if ((flags & FLAG_C) == FLAG_C) {
             flagsString += "C";

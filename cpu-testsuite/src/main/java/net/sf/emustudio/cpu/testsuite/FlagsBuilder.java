@@ -6,11 +6,12 @@ import java.util.List;
 public abstract class FlagsBuilder<T extends Number, SpecificFlagsBuilder extends FlagsBuilder> {
     protected final List<FlagsEval> evaluators = new ArrayList<>();
 
+    private boolean switchFirstAndSecond;
     protected int expectedFlags = 0;
     protected int expectedNotFlags = 0;
 
     @FunctionalInterface
-    protected interface FlagsEval<T> {
+    protected interface FlagsEval<T extends Number> {
         void eval(T first, T second, int result);
     }
 
@@ -25,6 +26,11 @@ public abstract class FlagsBuilder<T extends Number, SpecificFlagsBuilder extend
         return (SpecificFlagsBuilder)this;
     }
 
+    public SpecificFlagsBuilder switchFirstAndSecond() {
+        switchFirstAndSecond = !switchFirstAndSecond;
+        return (SpecificFlagsBuilder)this;
+    }
+
     public int getExpectedFlags() {
         return expectedFlags;
     }
@@ -35,7 +41,11 @@ public abstract class FlagsBuilder<T extends Number, SpecificFlagsBuilder extend
 
     public void eval(T first, T second, int result) {
         for (FlagsEval evaluator : evaluators) {
-            evaluator.eval(first, second, result);
+            if (switchFirstAndSecond) {
+                evaluator.eval(second, first, result);
+            } else {
+                evaluator.eval(first, second, result);
+            }
         }
     }
 

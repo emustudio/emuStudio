@@ -5,9 +5,9 @@ import net.sf.emustudio.cpu.testsuite.runners.RunnerInjector;
 
 public class InstructionNoOperands<OperandType extends Number, TCpuRunnerType extends CpuRunner>
         implements RunnerInjector<OperandType, TCpuRunnerType> {
-    private final int instruction;
+    private final int[] instruction;
 
-    public InstructionNoOperands(int instruction) {
+    public InstructionNoOperands(int... instruction) {
         this.instruction = instruction;
     }
 
