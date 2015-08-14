@@ -14,10 +14,10 @@
 
   <artifactId>emuStudio-release</artifactId>
   <packaging>pom</packaging>
-  
+
   <name>emuStudio Release</name>
   <description>Project for creating emuStudio releases</description>
-  
+
   <profiles>
     <profile>
       <id>release</id>
@@ -26,8 +26,8 @@
       </build>
       <dependencies>
         <dependency>
-          <groupId>cup</groupId>
-          <artifactId>java-cup-runtime</artifactId>
+          <groupId>nz.ac.waikato.cms.weka.thirdparty</groupId>
+          <artifactId>java-cup-11b</artifactId>
         </dependency>
         <dependency>
           <groupId>net.sf.emustudio</groupId>
