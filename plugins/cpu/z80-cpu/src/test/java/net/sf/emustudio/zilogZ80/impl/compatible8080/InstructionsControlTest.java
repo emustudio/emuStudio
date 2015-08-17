@@ -30,54 +30,7 @@ import static org.junit.Assert.assertTrue;
 @Ignore
 public class InstructionsControlTest extends InstructionsTest {
 
-    @Test
-    public void testEI_DI() throws Exception {
-        resetProgram(0xFB, 0xF3);
 
-        cpu.step();
-        assertTrue(cpu.getEngine().IFF[0]);
-
-        cpu.step();
-        assertFalse(cpu.getEngine().IFF[0]);
-    }
-
-    @Test
-    public void testJP__nn__AND__JP_cc__nn() throws Exception {
-        resetProgram(
-                0xC3, 4, 0,
-                0, // address 3
-                0xC2, 8, 0,
-                0, // address 7
-                0xCA, 0xC, 0,
-                0, // address 0xB
-                0xD2, 0x10, 0,
-                0, // address 0xF
-                0xDA, 0x14, 0,
-                0, // address 0x13
-                0xE2, 0x18, 0,
-                0, // address 0x17
-                0xEA, 0x1C, 0,
-                0, // address 0x1B
-                0xF2, 0x20, 0,
-                0, // address 0x1F
-                0xFA, 0x24, 0,
-                0, // address 0x23
-                0);
-
-        stepAndCheckPC(4);
-        stepAndCheckPC(8);
-        setFlags(EmulatorEngine.FLAG_Z);
-        stepAndCheckPC(0xC);
-        stepAndCheckPC(0x10);
-        setFlags(EmulatorEngine.FLAG_C);
-        stepAndCheckPC(0x14);
-        stepAndCheckPC(0x18);
-        setFlags(EmulatorEngine.FLAG_PV);
-        stepAndCheckPC(0x1C);
-        stepAndCheckPC(0x20);
-        setFlags(EmulatorEngine.FLAG_S);
-        stepAndCheckPC(0x24);
-    }
 
     @Test
     public void testJP__mHL() throws Exception {

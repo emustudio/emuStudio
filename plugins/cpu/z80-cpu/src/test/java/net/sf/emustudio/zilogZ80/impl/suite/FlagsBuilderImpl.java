@@ -120,8 +120,6 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
 
     public FlagsBuilderImpl carry15() {
         evaluators.add((first, second, result) -> {
-            System.out.println(String.format("carry15 result=%x", result));
-
             if ((result & 0x10000) == 0x10000) {
                 expectedFlags |= FLAG_C;
             } else {

@@ -5,7 +5,6 @@ import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
 import net.sf.emustudio.zilogZ80.impl.suite.ByteTestBuilder;
 import net.sf.emustudio.zilogZ80.impl.suite.FlagsBuilderImpl;
 import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.function.Function;
@@ -621,10 +620,10 @@ public class ArithmeticTest extends InstructionsTTest {
     }
 
     @Test
-    @Ignore
     public void testSBC_HL__ss() throws Exception {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .verifyPair(REG_PAIR_HL, context -> context.first -context.second - (context.flags & FLAG_C))
+                .verifyPair(REG_PAIR_HL, context ->
+                        (context.first + ((-context.second - (context.flags & FLAG_C)) & 0xFFFF)))
                 .verifyFlagsOfLastOp(new FlagsBuilderImpl()
                         .sign16bit().zero16bit().overflow16bit().carry15().halfCarry11().subtractionIsSet())
                 .firstIsPair(REG_PAIR_HL)
