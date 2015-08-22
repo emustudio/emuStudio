@@ -60,7 +60,7 @@ public class InstructionPrinter implements EmulatorEngine.DispatchListener {
             }
 
             if (numberOfMatch.get() <= 1) {
-                System.out.print(String.format("%04d | PC=%04x | %12s | %10s ",
+                System.out.print(String.format("%04d | PC=%04x | %15s | %10s ",
                         timeStamp, instr.getAddress(), instr.getMnemo(), instr.getOpCode())
                 );
             }

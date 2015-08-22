@@ -111,6 +111,10 @@ public class CpuVerifierImpl extends CpuVerifier {
         assertFalse(cpu.getEngine().IFF[set]);
     }
 
+    public void checkIntMode(int mode) {
+        assertEquals(mode, cpu.getEngine().intMode);
+    }
+
     public String intToFlags(int flags) {
         String flagsString = "";
         if ((flags & FLAG_S) == FLAG_S) {

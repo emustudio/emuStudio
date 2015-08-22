@@ -99,4 +99,12 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
     public void setIY(int iy) {
         cpu.getEngine().IY = iy;
     }
+
+    public void enableIFF2() {
+        cpu.getEngine().IFF[1] = true;
+    }
+
+    public void disableIFF1() {
+        cpu.getEngine().IFF[0] = false;
+    }
 }

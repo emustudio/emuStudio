@@ -46,13 +46,13 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
         if (lastOperation == null) {
             throw new IllegalStateException("Last operation is not set!");
         }
-        verifiers.add(new RegisterVerifier<>(cpuVerifier, lastOperation, register));
+        addVerifier(new RegisterVerifier<>(cpuVerifier, lastOperation, register));
         return this;
     }
 
     public ByteTestBuilder verifyPair(int registerPair, Function<RunnerContext<Byte>, Integer> operator) {
         lastOperation = operator;
-        verifiers.add(new RegisterPair_SP_Verifier<Byte>(cpuVerifier, operator, registerPair));
+        addVerifier(new RegisterPair_SP_Verifier<Byte>(cpuVerifier, operator, registerPair));
         return this;
     }
 }

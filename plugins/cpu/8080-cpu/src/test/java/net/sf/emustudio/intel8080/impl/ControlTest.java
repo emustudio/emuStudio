@@ -44,7 +44,7 @@ public class ControlTest extends InstructionsTest {
                 test.setFlags(FLAG_S).runWithFirstOperand(0xFA)
         );
 
-        test.clearVerifiers().verifyPC(context -> (context.PC + 3) & 0xFFFF);
+        test.clearAllVerifiers().verifyPC(context -> (context.PC + 3) & 0xFFFF);
         Generator.forSome16bitUnary(
                 test.setFlags(FLAG_Z).runWithFirstOperand(0xC2),
                 test.runWithFirstOperand(0xCA),
@@ -77,7 +77,7 @@ public class ControlTest extends InstructionsTest {
                 test.setFlags(FLAG_S).runWithSecondOperand(0xFC)
         );
 
-        test.clearVerifiers().verifyPC(context -> (context.PC + 3) & 0xFFFF);
+        test.clearAllVerifiers().verifyPC(context -> (context.PC + 3) & 0xFFFF);
         Generator.forSome16bitBinary(3,
                 test.setFlags(FLAG_Z).runWithSecondOperand(0xC4),
                 test.runWithSecondOperand(0xCC),
@@ -112,7 +112,7 @@ public class ControlTest extends InstructionsTest {
         );
 
         // negative tests
-        test.clearVerifiers()
+        test.clearAllVerifiers()
                 .verifyPC(context -> 1)
                 .verifyPair(REG_SP, context -> context.first);
 
@@ -143,37 +143,37 @@ public class ControlTest extends InstructionsTest {
                 test.verifyPC(context -> 0).run(0xC7)
         );
 
-        test.clearVerifiers().verifyAll(verifiers);
+        test.clearAllVerifiers().verifyAll(verifiers);
         Generator.forSome16bitUnary(3,
                 test.verifyPC(context -> 0x8).run(0xCF)
         );
 
-        test.clearVerifiers().verifyAll(verifiers);
+        test.clearAllVerifiers().verifyAll(verifiers);
         Generator.forSome16bitUnary(3,
                 test.verifyPC(context -> 0x10).run(0xD7)
         );
 
-        test.clearVerifiers().verifyAll(verifiers);
+        test.clearAllVerifiers().verifyAll(verifiers);
         Generator.forSome16bitUnary(3,
                 test.verifyPC(context -> 0x18).run(0xDF)
         );
 
-        test.clearVerifiers().verifyAll(verifiers);
+        test.clearAllVerifiers().verifyAll(verifiers);
         Generator.forSome16bitUnary(3,
                 test.verifyPC(context -> 0x20).run(0xE7)
         );
 
-        test.clearVerifiers().verifyAll(verifiers);
+        test.clearAllVerifiers().verifyAll(verifiers);
         Generator.forSome16bitUnary(3,
                 test.verifyPC(context -> 0x28).run(0xEF)
         );
 
-        test.clearVerifiers().verifyAll(verifiers);
+        test.clearAllVerifiers().verifyAll(verifiers);
         Generator.forSome16bitUnary(3,
                 test.verifyPC(context -> 0x30).run(0xF7)
         );
 
-        test.clearVerifiers().verifyAll(verifiers);
+        test.clearAllVerifiers().verifyAll(verifiers);
         Generator.forSome16bitUnary(3,
                 test.verifyPC(context -> 0x38).run(0xFF)
         );

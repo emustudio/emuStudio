@@ -24,37 +24,37 @@ public class TransferTest extends InstructionsTest {
                 test.verifyRegister(REG_A, context -> context.first & 0xFF).runWithFirstOperand(0x3E)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_B).runWithFirstOperand(0x06)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_C).runWithFirstOperand(0x0E)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_D).runWithFirstOperand(0x16)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_E).runWithFirstOperand(0x1E)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_H).runWithFirstOperand(0x26)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_L).runWithFirstOperand(0x2E)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.setPair(REG_PAIR_HL, 0x20)
                         .verifyByte(0x20, context -> context.first & 0xFF)

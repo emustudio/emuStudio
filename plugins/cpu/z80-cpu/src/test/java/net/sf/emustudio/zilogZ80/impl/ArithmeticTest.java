@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2015 Peter Jakubčo
+ * KISS, YAGNI, DRY
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 package net.sf.emustudio.zilogZ80.impl;
 
 import net.sf.emustudio.cpu.testsuite.Generator;
@@ -171,37 +189,37 @@ public class ArithmeticTest extends InstructionsTTest {
                 test.verifyRegister(REG_B).firstIsRegister(REG_B).run(0x04)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_C).firstIsRegister(REG_C).run(0x0C)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_D).firstIsRegister(REG_D).run(0x14)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_E).firstIsRegister(REG_E).run(0x1C)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_H).firstIsRegister(REG_H).run(0x24)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_L).firstIsRegister(REG_L).run(0x2C)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_A).firstIsRegister(REG_A).run(0x3C)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyByte(1).setPair(REG_PAIR_HL, 1).firstIsMemoryByteAt(1).run(0x34)
         );
@@ -217,37 +235,37 @@ public class ArithmeticTest extends InstructionsTTest {
                 test.verifyRegister(REG_B).firstIsRegister(REG_B).run(0x05)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_C).firstIsRegister(REG_C).run(0x0D)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_D).firstIsRegister(REG_D).run(0x15)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_E).firstIsRegister(REG_E).run(0x1D)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_H).firstIsRegister(REG_H).run(0x25)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_L).firstIsRegister(REG_L).run(0x2D)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyRegister(REG_A).firstIsRegister(REG_A).run(0x3D)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome8bitUnary(
                 test.verifyByte(1).setPair(REG_PAIR_HL, 1).firstIsMemoryByteAt(1).run(0x35)
         );
@@ -262,17 +280,17 @@ public class ArithmeticTest extends InstructionsTTest {
                 test.verifyPair(REG_PAIR_BC, verifier).firstIsPair(REG_PAIR_BC).run(0x03)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome16bitUnary(
                 test.verifyPair(REG_PAIR_DE, verifier).firstIsPair(REG_PAIR_DE).run(0x13)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome16bitUnary(
                 test.verifyPair(REG_PAIR_HL, verifier).firstIsPair(REG_PAIR_HL).run(0x23)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome16bitUnary(
                 test.verifyPair(REG_SP, verifier).firstIsPair(REG_SP).run(0x33)
         );
@@ -287,17 +305,17 @@ public class ArithmeticTest extends InstructionsTTest {
                 test.verifyPair(REG_PAIR_BC, verifier).firstIsPair(REG_PAIR_BC).run(0x0B)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome16bitUnary(
                 test.verifyPair(REG_PAIR_DE, verifier).firstIsPair(REG_PAIR_DE).run(0x1B)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome16bitUnary(
                 test.verifyPair(REG_PAIR_HL, verifier).firstIsPair(REG_PAIR_HL).run(0x2B)
         );
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome16bitUnary(
                 test.verifyPair(REG_SP, verifier).firstIsPair(REG_SP).run(0x3B)
         );

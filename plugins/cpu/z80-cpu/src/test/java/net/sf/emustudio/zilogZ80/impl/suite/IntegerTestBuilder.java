@@ -96,6 +96,16 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         return this;
     }
 
+    public IntegerTestBuilder disableIFF1() {
+        runner.injectFirst((tmpRunner, argument) -> cpuRunner.disableIFF1());
+        return this;
+    }
+
+    public IntegerTestBuilder enableIFF2() {
+        runner.injectFirst((tmpRunner, argument) -> cpuRunner.enableIFF2());
+        return this;
+    }
+
     public IntegerTestBuilder setPair(int registerPair, int value) {
         runner.injectFirst((tmpRunner, argument) -> cpuRunner.setRegisterPair(registerPair, value));
         return this;
@@ -103,7 +113,7 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
 
     public IntegerTestBuilder verifyPairAndPSW(int registerPair, Function<RunnerContext<Integer>, Integer> operation) {
         lastOperation = operation;
-        verifiers.add(new RegisterPair_PSW_Verifier(cpuVerifier, operation, registerPair));
+        addVerifier(new RegisterPair_PSW_Verifier(cpuVerifier, operation, registerPair));
         return this;
     }
 
@@ -116,33 +126,37 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         if (lastOperation == null) {
             throw new IllegalStateException("Last operation is not set!");
         }
-        verifiers.add(new RegisterVerifier<>(cpuVerifier, lastOperation, register));
+        addVerifier(new RegisterVerifier<>(cpuVerifier, lastOperation, register));
         return this;
     }
 
     public IntegerTestBuilder verifyPair(int registerPair, Function<RunnerContext<Integer>, Integer> operator) {
         lastOperation = operator;
-        verifiers.add(new RegisterPair_SP_Verifier<>(cpuVerifier, operator, registerPair));
+        addVerifier(new RegisterPair_SP_Verifier<>(cpuVerifier, operator, registerPair));
         return this;
     }
 
     public IntegerTestBuilder verifyIX(Function<RunnerContext<Integer>, Integer> operator) {
         lastOperation = operator;
-        verifiers.add(new IX_Verifier<Integer>(cpuVerifier, operator));
+        addVerifier(new IX_Verifier<Integer>(cpuVerifier, operator));
         return this;
     }
 
     public IntegerTestBuilder verifyIY(Function<RunnerContext<Integer>, Integer> operator) {
         lastOperation = operator;
-        verifiers.add(new IY_Verifier<Integer>(cpuVerifier, operator));
+        addVerifier(new IY_Verifier<Integer>(cpuVerifier, operator));
         return this;
     }
 
     public IntegerTestBuilder verifyPC(Function<RunnerContext<Integer>, Integer> operator) {
         lastOperation = operator;
-        verifiers.add(new PC_Verifier(cpuVerifier, operator));
+        addVerifier(new PC_Verifier(cpuVerifier, operator));
         return this;
     }
 
+    public IntegerTestBuilder verifyIFF1isEnabled() {
+        addVerifier(context -> cpuVerifier.checkInterruptsAreEnabled(0));
+        return this;
+    }
 
 }

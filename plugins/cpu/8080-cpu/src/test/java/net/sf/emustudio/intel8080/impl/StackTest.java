@@ -44,19 +44,19 @@ public class StackTest extends InstructionsTest {
 
         Function<RunnerContext<Integer>, Integer> verifier = context -> context.second;
 
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome16bitBinary(2,
                 test.verifyPair(REG_PAIR_BC, verifier).run(0xC1)
         );
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome16bitBinary(2,
                 test.verifyPair(REG_PAIR_DE, verifier).run(0xD1)
         );
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome16bitBinary(2,
                 test.verifyPair(REG_PAIR_HL, verifier).run(0xE1)
         );
-        test.clearVerifiers();
+        test.clearAllVerifiers();
         Generator.forSome16bitBinary(2,
                 test.verifyPairAndPSW(REG_PSW, context -> context.second & 0xFFD7 | 2).run(0xF1)
         );

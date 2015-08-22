@@ -26,9 +26,13 @@ public abstract class TestBuilder<
         CpuRunnerType extends CpuRunner, CpuVerifierType extends CpuVerifier> {
     protected final CpuRunnerType cpuRunner;
     protected final CpuVerifierType cpuVerifier;
-    protected final List<Consumer<RunnerContext<K>>> verifiers = new ArrayList<Consumer<RunnerContext<K>>>();
-    protected Function<RunnerContext<K>, Integer> lastOperation;
     protected final Runner runner;
+
+    private final List<Consumer<RunnerContext<K>>> verifiers = new ArrayList<Consumer<RunnerContext<K>>>();
+    private final List<Consumer<RunnerContext<K>>> verifiersToClearAfterRun = new ArrayList<Consumer<RunnerContext<K>>>();
+    private boolean newVerifiersShallBeClearedAfterRun = false;
+
+    protected Function<RunnerContext<K>, Integer> lastOperation;
 
     protected TestBuilder(CpuRunnerType cpuRunner, CpuVerifierType cpuVerifier) {
         this.cpuRunner = Objects.requireNonNull(cpuRunner);
@@ -36,18 +40,37 @@ public abstract class TestBuilder<
         this.runner = new Runner<K, CpuRunnerType>(cpuRunner);
     }
 
-    public SpecificTestBuilder clearVerifiers() {
+    public SpecificTestBuilder clearAllVerifiers() {
         verifiers.clear();
+        verifiersToClearAfterRun.clear();
         return (SpecificTestBuilder)this;
     }
 
+    protected void addVerifier(Consumer<RunnerContext<K>> verifier) {
+        if (newVerifiersShallBeClearedAfterRun) {
+            verifiersToClearAfterRun.add(verifier);
+        } else {
+            this.verifiers.add(verifier);
+        }
+    }
+
+    protected void addVerifiers(Collection<Consumer<RunnerContext<K>>> verifiers) {
+        if (newVerifiersShallBeClearedAfterRun) {
+            verifiersToClearAfterRun.addAll(verifiers);
+        } else {
+            this.verifiers.addAll(verifiers);
+        }
+    }
+
     public SpecificTestBuilder verifyAll(Collection<Consumer<RunnerContext<K>>> verifiers) {
-        this.verifiers.addAll(verifiers);
+        addVerifiers(verifiers);
         return (SpecificTestBuilder)this;
     }
 
     public List<Consumer<RunnerContext<K>>> getVerifiers() {
-        return Collections.unmodifiableList(new ArrayList<>(verifiers));
+        List<Consumer<RunnerContext<K>>> list = new ArrayList<>(verifiers);
+        list.addAll(verifiersToClearAfterRun);
+        return Collections.unmodifiableList(list);
     }
 
     public SpecificTestBuilder verifyFlags(FlagsBuilder flagsBuilder, Function<RunnerContext<K>, Integer> operator) {
@@ -59,7 +82,7 @@ public abstract class TestBuilder<
         if (lastOperation == null) {
             throw new IllegalStateException("Last operation is not set!");
         }
-        verifiers.add(new FlagsVerifier<K>(cpuVerifier, lastOperation, flagsBuilder));
+        addVerifier(new FlagsVerifier<K>(cpuVerifier, lastOperation, flagsBuilder));
         return (SpecificTestBuilder)this;
     }
 
@@ -71,7 +94,7 @@ public abstract class TestBuilder<
     public SpecificTestBuilder verifyWord(Function<RunnerContext<K>, Integer> operator,
                                     Function<RunnerContext<K>, Integer> addressOperator) {
         lastOperation = operator;
-        verifiers.add(new MemoryWordVerifier(cpuVerifier, operator, addressOperator));
+        addVerifier(new MemoryWordVerifier(cpuVerifier, operator, addressOperator));
         return (SpecificTestBuilder)this;
     }
 
@@ -89,12 +112,17 @@ public abstract class TestBuilder<
         if (lastOperation == null) {
             throw new IllegalStateException("Last operation is not set!");
         }
-        verifiers.add(new MemoryByteVerifier<K>(cpuVerifier, lastOperation, addressOperator));
+        addVerifier(new MemoryByteVerifier<K>(cpuVerifier, lastOperation, addressOperator));
         return (SpecificTestBuilder)this;
     }
 
     public SpecificTestBuilder keepCurrentInjectorsAfterRun() {
         runner.keepCurrentInjectorsAfterClear();
+        return (SpecificTestBuilder)this;
+    }
+
+    public SpecificTestBuilder clearOtherVerifiersAfterRun() {
+        newVerifiersShallBeClearedAfterRun = true;
         return (SpecificTestBuilder)this;
     }
 
@@ -148,6 +176,11 @@ public abstract class TestBuilder<
         return (SpecificTestBuilder)this;
     }
 
+    public SpecificTestBuilder expandMemory(Function<Number, Integer> address) {
+        runner.injectFirst((tmpRunner, argument) -> tmpRunner.ensureProgramSize(address.apply(argument)));
+        return (SpecificTestBuilder)this;
+    }
+
     public Test<K> run(int... instruction) {
         return create(new InstructionNoOperands<>(instruction), true);
     }
@@ -161,7 +194,8 @@ public abstract class TestBuilder<
     }
 
     protected Test<K> create(RunnerInjector<K, CpuRunnerType> instruction, boolean first) {
-        if (verifiers.isEmpty()) {
+        List<Consumer<RunnerContext<K>>> allVerifiers = getVerifiers();
+        if (allVerifiers.isEmpty()) {
             throw new IllegalStateException("At least one verifier must be set");
         }
         Runner<K, CpuRunnerType> tmpRunner = runner.clone();
@@ -171,6 +205,7 @@ public abstract class TestBuilder<
             tmpRunner.injectSecond(instruction);
         }
         runner.clearInjectors();
-        return new Test<K>(tmpRunner, verifiers);
+        verifiersToClearAfterRun.clear();
+        return new Test<K>(tmpRunner, allVerifiers);
     }
 }

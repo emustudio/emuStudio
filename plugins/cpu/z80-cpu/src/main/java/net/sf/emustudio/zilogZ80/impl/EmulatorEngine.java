@@ -763,6 +763,7 @@ public class EmulatorEngine {
                     regs[REG_B] &= 0xFF;
                     if (regs[REG_B] != 0) {
                         PC += (byte) tmp;
+                        PC &= 0xFFFF;
                         return 13;
                     }
                     return 8;
@@ -1291,15 +1292,14 @@ public class EmulatorEngine {
                             }
                             PC -= 2;
                             return 21;
-                    }
-                    tmp = memory.readWord(PC);
-                    PC += 2;
-                    switch (OP) {
                     /* LD (nn), ss */
                         case 0x43:
                         case 0x53:
                         case 0x63:
                         case 0x73:
+                            tmp = memory.readWord(PC);
+                            PC += 2;
+
                             tmp1 = getpair((OP >>> 4) & 3);
                             memory.writeWord(tmp, tmp1);
                             return 20;
@@ -1308,10 +1308,15 @@ public class EmulatorEngine {
                         case 0x5B:
                         case 0x6B:
                         case 0x7B:
+                            tmp = memory.readWord(PC);
+                            PC += 2;
+
                             tmp1 = memory.readWord(tmp);
                             putpair((OP >>> 4) & 3, tmp1);
                             return 20;
                     }
+                    currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
+                    return 0;
                 case 0xDD:
                     special = 0xDD;
                 case 0xFD:
@@ -1387,6 +1392,7 @@ public class EmulatorEngine {
                             SP = (special == 0xDD) ? IX : IY;
                             return 10;
                     }
+
                     tmp = memory.read(PC++);
                     switch (OP) {
                         case 0x76:
@@ -1641,7 +1647,11 @@ public class EmulatorEngine {
                                     flags |= ((tmp1 == 0) ? FLAG_Z : 0) | PARITY_TABLE[tmp1];
                                     return 23;
                             }
+                            currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
+                            return 0;
                     }
+                    currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
+                    return 0;
                 case 0xCB:
                     OP = memory.read(PC++);
                     switch (OP) {
@@ -1850,6 +1860,8 @@ public class EmulatorEngine {
                                 return 8;
                             }
                     }
+                    currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
+                    return 0;
             }
             tmp = memory.read(PC++);
             switch (OP) {
@@ -1860,11 +1872,13 @@ public class EmulatorEngine {
                 case 0x38:
                     if (getCC1((OP >>> 3) & 3)) {
                         PC += (byte) tmp;
+                        PC &= 0xFFFF;
                         return 12;
                     }
                     return 7;
                 case 0x18: /* JR e */
                     PC += (byte) tmp;
+                    PC &= 0xFFFF;
                     return 12;
                 case 0xC6: /* ADD A,d */
                     int DAR = regs[REG_A];

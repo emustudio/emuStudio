@@ -50,7 +50,7 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
 
     public IntegerTestBuilder verifyPairAndPSW(int registerPair, Function<RunnerContext<Integer>, Integer> operation) {
         lastOperation = operation;
-        verifiers.add(new RegisterPair_PSW_Verifier(cpuVerifier, operation, registerPair));
+        addVerifier(new RegisterPair_PSW_Verifier(cpuVerifier, operation, registerPair));
         return this;
     }
 
@@ -63,21 +63,20 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         if (lastOperation == null) {
             throw new IllegalStateException("Last operation is not set!");
         }
-        verifiers.add(new RegisterVerifier<>(cpuVerifier, lastOperation, register));
+        addVerifier(new RegisterVerifier<>(cpuVerifier, lastOperation, register));
         return this;
     }
 
     public IntegerTestBuilder verifyPair(int registerPair, Function<RunnerContext<Integer>, Integer> operator) {
         lastOperation = operator;
-        verifiers.add(new RegisterPair_SP_Verifier<>(cpuVerifier, operator, registerPair));
+        addVerifier(new RegisterPair_SP_Verifier<>(cpuVerifier, operator, registerPair));
         return this;
     }
 
     public IntegerTestBuilder verifyPC(Function<RunnerContext<Integer>, Integer> operator) {
         lastOperation = operator;
-        verifiers.add(new PCVerifier(cpuVerifier, operator));
+        addVerifier(new PCVerifier(cpuVerifier, operator));
         return this;
     }
-
 
 }
