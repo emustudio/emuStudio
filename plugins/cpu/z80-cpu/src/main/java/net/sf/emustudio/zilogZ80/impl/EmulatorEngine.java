@@ -754,7 +754,7 @@ public class EmulatorEngine {
                     regs[REG_A] = tmp;
                     return 7;
                 case 0x0F: /* RRCA */
-                    flags = ((flags & 0xFE) | (regs[REG_A] & 1));
+                    flags = ((flags & 0xEC) | (regs[REG_A] & 1));
                     regs[REG_A] = RRCA_TABLE[regs[REG_A]];
                     return 4;
                 case 0x10: /* DJNZ e */

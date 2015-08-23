@@ -27,22 +27,6 @@ import static org.junit.Assert.assertEquals;
 @Ignore
 public class InstructionsLogicTest extends InstructionsTest{
 
-    @Test
-    public void testCPI() {
-        resetProgram(
-                0xED, 0xA1,
-                0,
-                127 // address 3
-        );
-
-        setRegisters(129, 0, 1, 0, 0, 0, 3);
-        setFlags(FLAG_PV_C);
-        stepAndCheckAccAndFlags(129, FLAG_N_C, FLAG_S_Z_H_PV);
-        checkRegister(REG_H, 0);
-        checkRegister(REG_L, 4);
-        checkRegister(REG_B, 0);
-        checkRegister(REG_C, 0);
-    }
 
     @Test
     public void testCPIR() {

@@ -11,6 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_N;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_PV;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_S;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_Z;
@@ -109,6 +110,11 @@ public class InstructionPrinter implements EmulatorEngine.DispatchListener {
         }
         if ((flags & FLAG_PV) == FLAG_PV) {
             flagsString += "P";
+        } else {
+            flagsString += " ";
+        }
+        if ((flags & FLAG_N) == FLAG_N) {
+            flagsString += "N";
         } else {
             flagsString += " ";
         }
