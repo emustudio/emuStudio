@@ -171,20 +171,21 @@ public class LogicTest extends InstructionsTTest {
     @Test
     public void testDAA() throws Exception {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .verifyRegister(net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_A, context -> {
+                .verifyRegister(REG_A, context -> {
                     int result = ((int) context.first) & 0xFF;
                     if (((context.flags & FLAG_H) == FLAG_H) || (result & 0x0F) > 9) {
                         result += 6;
                     }
-                    if ((context.flags & FLAG_C) == FLAG_C || (result & 0xF0) > 0x90) {
+                    if (((context.flags & FLAG_C) == FLAG_C) || (result & 0xF0) > 0x90) {
                         result += 0x60;
                     }
                     return result;
                 })
-                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().parity().carry().halfCarryDAA())
-                .firstIsRegister(net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_A);
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().parity().halfCarryDAA().carryDAA())
+                .firstIsRegister(REG_A)
+                .keepCurrentInjectorsAfterRun();
 
-        Generator.forSome8bitUnary(
+        Generator.forAll8bitUnary(
                 test.run(0x27)
         );
     }

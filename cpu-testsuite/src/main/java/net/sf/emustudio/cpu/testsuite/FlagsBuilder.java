@@ -2,6 +2,7 @@ package net.sf.emustudio.cpu.testsuite;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 
 public abstract class FlagsBuilder<T extends Number, SpecificFlagsBuilder extends FlagsBuilder> {
     protected final List<FlagsEval> evaluators = new ArrayList<>();
@@ -28,6 +29,17 @@ public abstract class FlagsBuilder<T extends Number, SpecificFlagsBuilder extend
 
     public SpecificFlagsBuilder switchFirstAndSecond() {
         switchFirstAndSecond = !switchFirstAndSecond;
+        return (SpecificFlagsBuilder)this;
+    }
+
+    public SpecificFlagsBuilder expectFlagOnlyWhen(int flag, BiFunction<Number, Number, Boolean> predicate) {
+        evaluators.add(((first, second, result) -> {
+            if (predicate.apply(first, second)) {
+                expectedFlags |= flag;
+            } else {
+                expectedNotFlags |= flag;
+            }
+        }));
         return (SpecificFlagsBuilder)this;
     }
 

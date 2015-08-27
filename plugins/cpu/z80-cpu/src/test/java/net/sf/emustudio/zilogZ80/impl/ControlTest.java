@@ -116,7 +116,7 @@ public class ControlTest extends InstructionsTTest {
                 .verifyWord(context -> context.PC + 3, context -> (context.second - 2) & 0xFFFF)
                 .keepCurrentInjectorsAfterRun();
 
-        Generator.forSome16bitBinary(3,
+        Generator.forSome16bitBinary(3,5,
                 test.runWithFirstOperand(0xCD),
                 test.runWithFirstOperand(0xC4),
                 test.setFlags(FLAG_Z).runWithFirstOperand(0xCC),
@@ -139,7 +139,7 @@ public class ControlTest extends InstructionsTTest {
                 .verifyWord(context -> 0, context -> context.second)
                 .keepCurrentInjectorsAfterRun();
 
-        Generator.forSome16bitBinary(3,
+        Generator.forSome16bitBinary(3,5,
                 test.setFlags(FLAG_Z).runWithFirstOperand(0xC4),
                 test.runWithFirstOperand(0xCC),
                 test.setFlags(FLAG_C).runWithFirstOperand(0xD4),

@@ -2,8 +2,8 @@ package net.sf.emustudio.zilogZ80.impl.suite;
 
 import net.sf.emustudio.cpu.testsuite.FlagsBuilder;
 
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_C;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_N;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_PV;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_S;
@@ -93,19 +93,25 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
+    public boolean isParity(int value) {
+        int numberOfOnes = 0;
+
+        for (int i = 0; i < 8; i++) {
+            if ((value & 1) == 1) {
+                numberOfOnes++;
+            }
+            value = value >>> 1;
+        }
+
+        if (numberOfOnes % 2 == 0) {
+            return true;
+        }
+        return false;
+    }
+
     public FlagsBuilderImpl<T> parity() {
         evaluators.add((first, second, result) -> {
-            int numberOf1 = 0;
-            int intResult = result & 0xFF;
-
-            for (int i = 0; i < 8; i++) {
-                if ((intResult & 1) == 1) {
-                    numberOf1++;
-                }
-                intResult = intResult >>> 1;
-            }
-
-            if (numberOf1 % 2 == 0) {
+            if (isParity(result & 0xFF)) {
                 expectedFlags |= FLAG_PV;
             } else {
                 expectedNotFlags |= FLAG_PV;
@@ -163,7 +169,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    private boolean isAuxCarry(int first, int sumWith) {
+    public boolean isAuxCarry(int first, int sumWith) {
         int mask = sumWith & first;
         int xormask = sumWith ^ first;
 
@@ -230,13 +236,27 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
 
     public FlagsBuilderImpl<T> halfCarryDAA() {
         evaluators.add((first, second, result) -> {
-            int firstInt = first.intValue();
+            int firstInt = first.intValue() & 0xFF;
             int diff = (result - firstInt) & 0x0F;
 
             if ((diff == 6) && isAuxCarry(firstInt, 6)) {
                 expectedFlags |= FLAG_H;
             } else {
                 expectedNotFlags |= FLAG_H;
+            }
+        });
+        return this;
+    }
+
+    public FlagsBuilderImpl<T> carryDAA() {
+        evaluators.add((first, second, result) -> {
+            int firstInt = first.intValue() & 0xFF;
+            int diff = (result - firstInt) & 0xF0;
+
+            if ((diff == 0x60) && ((result & 0x100) == 0x100)) {
+                expectedFlags |= FLAG_C;
+            } else {
+                expectedNotFlags |= FLAG_C;
             }
         });
         return this;
