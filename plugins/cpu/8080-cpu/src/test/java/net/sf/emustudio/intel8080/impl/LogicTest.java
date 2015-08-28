@@ -125,7 +125,13 @@ public class LogicTest extends InstructionsTest {
                     }
                     return result;
                 })
-                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().parity().carry().auxCarryDAA())
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().parity().carry()
+                        .expectFlagOnlyWhen(FLAG_AC, (context, result) -> {
+                            int firstInt = ((RunnerContext)context).first.intValue();
+                            int diff = (((Number)result).intValue() - firstInt) & 0x0F;
+
+                            return ((diff == 6) && FlagsBuilderImpl.isAuxCarry(firstInt, 6));
+                        }))
                 .firstIsRegister(REG_A);
 
         Generator.forSome8bitUnary(
@@ -215,7 +221,7 @@ public class LogicTest extends InstructionsTest {
     @Test
     public void testCMP() throws Exception {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .verifyRegister(REG_A, context -> ((Number)context.first).intValue())
+                .verifyRegister(REG_A, context -> context.first.intValue())
                 .verifyFlags(
                         new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity(),
                         context -> (context.first & 0xFF) - (context.second & 0xFF))
@@ -240,7 +246,7 @@ public class LogicTest extends InstructionsTest {
     public void testCPI() throws Exception {
         FlagsBuilderImpl flagsToCheck = new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity();
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .verifyRegister(REG_A, context -> ((Number)context.first).intValue())
+                .verifyRegister(REG_A, context -> context.first.intValue())
                 .verifyFlags(flagsToCheck, context -> (context.first & 0xFF) - (context.second & 0xFF))
                 .firstIsRegister(REG_A);
 

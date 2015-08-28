@@ -4,6 +4,9 @@ import net.sf.emustudio.cpu.testsuite.CpuRunner;
 import net.sf.emustudio.cpu.testsuite.MemoryStub;
 import net.sf.emustudio.intel8080.impl.CpuImpl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_A;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_B;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_C;
@@ -18,6 +21,7 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         super(cpu, memoryStub);
     }
 
+    @Override
     public void setRegister(int register, int value) {
         cpu.getEngine().regs[register] = value & 0xFF;
     }
@@ -59,17 +63,9 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         }
     }
 
-    public Byte getRegister(int register) {
-        return new Byte((byte)cpu.getEngine().regs[register]);
-    }
-
     @Override
     public int getPC() {
         return cpu.getEngine().PC;
-    }
-
-    public void setSP(int SP) {
-        cpu.getEngine().SP = SP;
     }
 
     @Override
@@ -92,4 +88,12 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         return cpu.getEngine().flags;
     }
 
+    @Override
+    public List<Integer> getRegisters() {
+        List<Integer> registers = new ArrayList<>();
+        for (int reg : cpu.getEngine().regs) {
+            registers.add(reg);
+        }
+        return registers;
+    }
 }

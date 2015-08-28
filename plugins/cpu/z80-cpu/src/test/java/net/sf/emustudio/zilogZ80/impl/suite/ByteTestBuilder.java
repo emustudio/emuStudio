@@ -3,9 +3,6 @@ package net.sf.emustudio.zilogZ80.impl.suite;
 import net.sf.emustudio.cpu.testsuite.TestBuilder;
 import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
 import net.sf.emustudio.zilogZ80.impl.suite.injectors.Register;
-import net.sf.emustudio.zilogZ80.impl.suite.verifiers.PC_Verifier;
-import net.sf.emustudio.zilogZ80.impl.suite.verifiers.RegisterPair_SP_Verifier;
-import net.sf.emustudio.zilogZ80.impl.suite.verifiers.RegisterVerifier;
 
 import java.util.function.Function;
 
@@ -47,19 +44,20 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
         if (lastOperation == null) {
             throw new IllegalStateException("Last operation is not set!");
         }
-        addVerifier(new RegisterVerifier<>(cpuVerifier, lastOperation, register));
+        Function<RunnerContext<Byte>, Integer> operation = lastOperation;
+        addVerifier(context -> cpuVerifier.checkRegister(register, operation.apply(context)));
         return this;
     }
 
     public ByteTestBuilder verifyPair(int registerPair, Function<RunnerContext<Byte>, Integer> operator) {
         lastOperation = operator;
-        addVerifier(new RegisterPair_SP_Verifier<Byte>(cpuVerifier, operator, registerPair));
+        addVerifier(context -> cpuVerifier.checkRegisterPair(registerPair, operator.apply(context)));
         return this;
     }
 
     public ByteTestBuilder verifyPC(Function<RunnerContext<Byte>, Integer> operator) {
         lastOperation = operator;
-        addVerifier(new PC_Verifier(cpuVerifier, operator));
+        addVerifier(context -> cpuVerifier.checkPC(operator.apply(context)));
         return this;
     }
 }

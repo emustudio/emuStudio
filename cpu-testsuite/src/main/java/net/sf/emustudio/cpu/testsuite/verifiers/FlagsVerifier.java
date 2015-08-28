@@ -22,7 +22,7 @@ public class FlagsVerifier<T extends Number> implements Consumer<RunnerContext<T
     @Override
     public void accept(RunnerContext<T> context) {
         flagsBuilder.reset();
-        flagsBuilder.eval(context.first, context.second, operation.apply(context));
+        flagsBuilder.eval(context, operation.apply(context));
 
         verifier.checkFlags(flagsBuilder.getExpectedFlags());
         verifier.checkNotFlags(flagsBuilder.getNotExpectedFlags());

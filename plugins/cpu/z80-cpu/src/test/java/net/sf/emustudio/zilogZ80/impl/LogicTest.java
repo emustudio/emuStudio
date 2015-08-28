@@ -22,12 +22,14 @@ import net.sf.emustudio.cpu.testsuite.Generator;
 import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
 import net.sf.emustudio.zilogZ80.impl.suite.ByteTestBuilder;
 import net.sf.emustudio.zilogZ80.impl.suite.FlagsBuilderImpl;
+import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
 import org.junit.Test;
 
 import java.util.function.Function;
 
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_C;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_PV;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_A;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_B;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_C;
@@ -181,7 +183,20 @@ public class LogicTest extends InstructionsTTest {
                     }
                     return result;
                 })
-                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().parity().halfCarryDAA().carryDAA())
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().parity()
+                        .expectFlagOnlyWhen(FLAG_H, (context, result) -> {
+                            int firstInt = ((RunnerContext)context).first.intValue() & 0xFF;
+                            int diff = (((Number)result).intValue() - firstInt) & 0x0F;
+
+                            return ((diff == 6) && FlagsBuilderImpl.isAuxCarry(firstInt, 6));
+                        })
+                        .expectFlagOnlyWhen(FLAG_C, ((context, result) -> {
+                            int firstInt = ((RunnerContext)context).first.intValue() & 0xFF;
+                            int diff = (((Number)result).intValue() - firstInt) & 0xF0;
+
+                            return ((diff == 0x60) && ((((Number)result).intValue() & 0x100) == 0x100));
+                        }))
+                )
                 .firstIsRegister(REG_A)
                 .keepCurrentInjectorsAfterRun();
 
@@ -282,21 +297,28 @@ public class LogicTest extends InstructionsTTest {
 
     @Test
     public void testCPI() {
-//
-//
-//        resetProgram(
-//                0xED, 0xA1,
-//                0,
-//                127 // address 3
-//        );
-//
-//        setRegisters(129, 0, 1, 0, 0, 0, 3);
-//        setFlags(FLAG_PV_C);
-//        stepAndCheckAccAndFlags(129, FLAG_N_C, FLAG_S_Z_H_PV);
-//        checkRegister(REG_H, 0);
-//        checkRegister(REG_L, 4);
-//        checkRegister(REG_B, 0);
-//        checkRegister(REG_C, 0);
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsAddressAndSecondIsMemoryByte()
+                .firstIsPair(REG_PAIR_HL)
+                .first8LSBisRegister(REG_A)
+                .registerIsRandom(REG_B, 0xFF)
+                .registerIsRandom(REG_C, 0xFF)
+                .verifyPair(REG_PAIR_HL, context ->
+                                ((context.getRegister(REG_H) << 8 | context.getRegister(REG_L)) + 1)
+                )
+                .verifyPair(REG_PAIR_BC, context ->
+                                ((context.getRegister(REG_B) << 8 | context.getRegister(REG_C)) - 1)
+                )
+                .verifyFlags(new FlagsBuilderImpl<>()
+                        .sign().zero().subtractionIsSet().halfCarry()
+                        .expectFlagOnlyWhen(FLAG_PV, (context, result) ->
+                                        ((context.getRegister(REG_B) << 8 | context.getRegister(REG_C)) - 1) != 0
+                        ), context -> context.registers.get(REG_A) - (context.second & 0xFF))
+                .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome16bitBinary(
+                test.run(0xED, 0xA1)
+        );
     }
 
 }

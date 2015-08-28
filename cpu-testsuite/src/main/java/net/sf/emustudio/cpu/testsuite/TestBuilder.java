@@ -1,6 +1,5 @@
 package net.sf.emustudio.cpu.testsuite;
 
-import net.sf.emustudio.cpu.testsuite.injectors.AddressAndMemoryWord;
 import net.sf.emustudio.cpu.testsuite.injectors.InstructionNoOperands;
 import net.sf.emustudio.cpu.testsuite.injectors.InstructionOperand;
 import net.sf.emustudio.cpu.testsuite.injectors.MemoryAddress;
@@ -18,11 +17,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public abstract class TestBuilder<
-        K extends Number, SpecificTestBuilder extends TestBuilder,
+public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends TestBuilder,
         CpuRunnerType extends CpuRunner, CpuVerifierType extends CpuVerifier> {
     protected final CpuRunnerType cpuRunner;
     protected final CpuVerifierType cpuVerifier;
@@ -67,6 +66,26 @@ public abstract class TestBuilder<
         return (SpecificTestBuilder)this;
     }
 
+    public SpecificTestBuilder registerIsRandom(int register, int maxValue) {
+        Random random = new Random();
+        runner.injectFirst((tmpRunner, argument) -> cpuRunner.setRegister(register, random.nextInt(maxValue + 1)));
+        return (SpecificTestBuilder)this;
+    }
+
+    public SpecificTestBuilder printRegister(int register) {
+        runner.injectBoth((runner, first, second) ->
+                        System.out.println(String.format("REG_%d=%x", register, runner.getRegisters().get(register)))
+        );
+        return (SpecificTestBuilder)this;
+    }
+
+    public SpecificTestBuilder printOperands() {
+        runner.injectBoth((runner, first, second) ->
+                System.out.println(String.format("first=%x, second=%x", first, second))
+        );
+        return (SpecificTestBuilder)this;
+    }
+
     public List<Consumer<RunnerContext<K>>> getVerifiers() {
         List<Consumer<RunnerContext<K>>> list = new ArrayList<>(verifiers);
         list.addAll(verifiersToClearAfterRun);
@@ -82,7 +101,8 @@ public abstract class TestBuilder<
         if (lastOperation == null) {
             throw new IllegalStateException("Last operation is not set!");
         }
-        addVerifier(new FlagsVerifier<K>(cpuVerifier, lastOperation, flagsBuilder));
+        Function<RunnerContext<K>, Integer> operation = lastOperation;
+        addVerifier(new FlagsVerifier<K>(cpuVerifier, operation, flagsBuilder));
         return (SpecificTestBuilder)this;
     }
 
@@ -167,7 +187,19 @@ public abstract class TestBuilder<
     }
 
     public SpecificTestBuilder firstIsAddressAndSecondIsMemoryWord() {
-        runner.injectBoth(new AddressAndMemoryWord());
+        runner.injectBoth((runner, first, second) -> {
+            runner.ensureProgramSize(first.intValue() + 4);
+            runner.setByte(first.intValue(), second.intValue() & 0xFF);
+            runner.setByte(first.intValue() + 1, (second.intValue() >>> 8) & 0xFF);
+        });
+        return (SpecificTestBuilder)this;
+    }
+
+    public SpecificTestBuilder firstIsAddressAndSecondIsMemoryByte() {
+        runner.injectBoth((runner, first, second) -> {
+            runner.ensureProgramSize(first.intValue() + 4);
+            runner.setByte(first.intValue(), second.intValue() & 0xFF);
+        });
         return (SpecificTestBuilder)this;
     }
 

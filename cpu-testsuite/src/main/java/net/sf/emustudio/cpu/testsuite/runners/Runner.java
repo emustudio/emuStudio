@@ -79,7 +79,7 @@ public class Runner<OperandType extends Number, CpuRunnerType extends CpuRunner>
         }
 
         RunnerContext<OperandType> context = new RunnerContext<>(
-                first, second, cpuRunner.getFlags(), cpuRunner.getPC(), cpuRunner.getSP()
+                first, second, cpuRunner.getFlags(), cpuRunner.getPC(), cpuRunner.getSP(), cpuRunner.getRegisters()
         );
 
         cpuRunner.step();

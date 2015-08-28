@@ -1,10 +1,12 @@
 package net.sf.emustudio.cpu.testsuite;
 
+import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
-public abstract class FlagsBuilder<T extends Number, SpecificFlagsBuilder extends FlagsBuilder> {
+public abstract class FlagsBuilder<T extends Number, SpecificFlagsBuilder extends FlagsBuilder<T, ?>> {
     protected final List<FlagsEval> evaluators = new ArrayList<>();
 
     private boolean switchFirstAndSecond;
@@ -13,7 +15,7 @@ public abstract class FlagsBuilder<T extends Number, SpecificFlagsBuilder extend
 
     @FunctionalInterface
     protected interface FlagsEval<T extends Number> {
-        void eval(T first, T second, int result);
+        void eval(RunnerContext<T> context, int result);
     }
 
     public SpecificFlagsBuilder reset() {
@@ -32,9 +34,9 @@ public abstract class FlagsBuilder<T extends Number, SpecificFlagsBuilder extend
         return (SpecificFlagsBuilder)this;
     }
 
-    public SpecificFlagsBuilder expectFlagOnlyWhen(int flag, BiFunction<Number, Number, Boolean> predicate) {
-        evaluators.add(((first, second, result) -> {
-            if (predicate.apply(first, second)) {
+    public SpecificFlagsBuilder expectFlagOnlyWhen(int flag, BiFunction<RunnerContext<T>, Number, Boolean> predicate) {
+        evaluators.add(((context, result) -> {
+            if (predicate.apply(context, result)) {
                 expectedFlags |= flag;
             } else {
                 expectedNotFlags |= flag;
@@ -51,12 +53,12 @@ public abstract class FlagsBuilder<T extends Number, SpecificFlagsBuilder extend
         return expectedNotFlags;
     }
 
-    public void eval(T first, T second, int result) {
+    public void eval(RunnerContext<T> context, int result) {
         for (FlagsEval evaluator : evaluators) {
             if (switchFirstAndSecond) {
-                evaluator.eval(second, first, result);
+                evaluator.eval(context.switchFirstAndSecond(), result);
             } else {
-                evaluator.eval(first, second, result);
+                evaluator.eval(context, result);
             }
         }
     }

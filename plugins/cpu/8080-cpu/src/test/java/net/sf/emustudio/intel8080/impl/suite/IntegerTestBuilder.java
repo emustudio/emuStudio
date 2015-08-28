@@ -5,10 +5,6 @@ import net.sf.emustudio.cpu.testsuite.injectors.MemoryExpand;
 import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
 import net.sf.emustudio.intel8080.impl.suite.injectors.RegisterPair;
 import net.sf.emustudio.intel8080.impl.suite.injectors.RegisterPairPSW;
-import net.sf.emustudio.intel8080.impl.suite.verifiers.PCVerifier;
-import net.sf.emustudio.intel8080.impl.suite.verifiers.RegisterPair_PSW_Verifier;
-import net.sf.emustudio.intel8080.impl.suite.verifiers.RegisterPair_SP_Verifier;
-import net.sf.emustudio.intel8080.impl.suite.verifiers.RegisterVerifier;
 
 import java.util.function.Function;
 
@@ -50,7 +46,7 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
 
     public IntegerTestBuilder verifyPairAndPSW(int registerPair, Function<RunnerContext<Integer>, Integer> operation) {
         lastOperation = operation;
-        addVerifier(new RegisterPair_PSW_Verifier(cpuVerifier, operation, registerPair));
+        addVerifier(context -> cpuVerifier.checkRegisterPairPSW(registerPair, operation.apply(context)));
         return this;
     }
 
@@ -63,19 +59,20 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         if (lastOperation == null) {
             throw new IllegalStateException("Last operation is not set!");
         }
-        addVerifier(new RegisterVerifier<>(cpuVerifier, lastOperation, register));
+        Function<RunnerContext<Integer>, Integer> operation = lastOperation;
+        addVerifier(context -> cpuVerifier.checkRegister(register, operation.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyPair(int registerPair, Function<RunnerContext<Integer>, Integer> operator) {
         lastOperation = operator;
-        addVerifier(new RegisterPair_SP_Verifier<>(cpuVerifier, operator, registerPair));
+        addVerifier(context -> cpuVerifier.checkRegisterPair(registerPair, operator.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyPC(Function<RunnerContext<Integer>, Integer> operator) {
         lastOperation = operator;
-        addVerifier(new PCVerifier(cpuVerifier, operator));
+        addVerifier(context -> cpuVerifier.checkPC(operator.apply(context)));
         return this;
     }
 

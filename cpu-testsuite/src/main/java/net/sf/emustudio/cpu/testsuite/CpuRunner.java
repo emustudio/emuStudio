@@ -96,6 +96,10 @@ public abstract class CpuRunner<CpuType extends CPU> {
 
     public abstract int getSP();
 
+    public abstract List<Integer> getRegisters();
+
+    public abstract void setRegister(int register, int value);
+
     public abstract void setFlags(int mask);
 
     public abstract void resetFlags(int mask);
