@@ -46,7 +46,8 @@ public class InstructionsTest {
         cpu.addCPUListener(runStateListener);
 
         SettingsManager settingsManager = createNiceMock(SettingsManager.class);
-        expect(settingsManager.readSetting(PLUGIN_ID, CpuImpl.PRINT_CODE)).andReturn("true").anyTimes();
+        // CHANGE TO "true" FOR VERBOSE OUTPUT
+        expect(settingsManager.readSetting(PLUGIN_ID, CpuImpl.PRINT_CODE)).andReturn("false").anyTimes();
         expect(settingsManager.readSetting(PLUGIN_ID, CpuImpl.PRINT_CODE_USE_CACHE)).andReturn("false").anyTimes();
         replay(settingsManager);
 
