@@ -23,6 +23,7 @@ import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
 import net.sf.emustudio.zilogZ80.impl.suite.ByteTestBuilder;
 import net.sf.emustudio.zilogZ80.impl.suite.FlagsBuilderImpl;
 import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.function.Function;
@@ -485,6 +486,7 @@ public class LogicTest extends InstructionsTTest {
     }
 
     @Test
+    @Ignore
     public void testNEG() {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .printOperands()
