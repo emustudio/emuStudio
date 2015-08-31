@@ -22,12 +22,12 @@ import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.CPU.RunState;
 import emulib.plugins.device.DeviceContext;
 import emulib.plugins.memory.MemoryContext;
+
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.locks.LockSupport;
+
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.AND_OR_XOR_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.CBITS2Z80_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.CP_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_H_C_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_H_NOT_C_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_NOT_H_C_TABLE;
@@ -1497,17 +1497,22 @@ public class EmulatorEngine {
                         case 0xAE: /* XOR (ii+d) */
                             tmp1 = memory.read((getspecial(special) + (byte) tmp) & 0xFFFF);
                             regs[REG_A] = ((regs[REG_A] ^ tmp1) & 0xff);
-                            flags = DAA_TABLE[regs[REG_A]];
+                            flags = AND_OR_XOR_TABLE[regs[REG_A]];
                             return 19;
                         case 0xB6: /* OR (ii+d) */
                             tmp1 = memory.read((getspecial(special) + (byte) tmp) & 0xFFFF);
                             regs[REG_A] = ((regs[REG_A] | tmp1) & 0xff);
-                            flags = DAA_TABLE[regs[REG_A]];
+                            flags = AND_OR_XOR_TABLE[regs[REG_A]];
                             return 19;
                         case 0xBE: /* CP (ii+d) */
-                            tmp1 = memory.read((getspecial(special) + (byte) tmp) & 0xFFFF);
-                            tmp2 = regs[REG_A] - tmp1;
-                            flags = (CP_TABLE[tmp2 & 0xff] | CBITS2Z80_TABLE[(regs[REG_A] ^ tmp1 ^ tmp2) & 0x1ff]);
+                            diff = -memory.read((getspecial(special) + (byte) tmp) & 0xFFFF);
+                            tmp2 = regs[REG_A] + diff;
+                            diff &= 0xFF;
+
+                            flags = SIGN_ZERO_CARRY_TABLE[tmp2 & 0x1FF] | FLAG_N;
+                            auxCarry(regs[REG_A], diff);
+                            overflow(regs[REG_A], diff, tmp2 & 0xFF);
+
                             return 19;
                     }
                     tmp |= ((memory.read(PC++)) << 8);
