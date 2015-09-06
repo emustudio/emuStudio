@@ -10,6 +10,7 @@ import java.util.List;
 public class InstructionOperand<K extends Number, CpuRunnerType extends CpuRunner>
         implements RunnerInjector<K, CpuRunnerType> {
     private final List<Integer> opcodes;
+    private final List<Integer> opcodesAfterOperand = new ArrayList<>();
 
     public InstructionOperand(int... opcodes) {
         List<Integer> tmpList = new ArrayList<>();
@@ -17,6 +18,15 @@ public class InstructionOperand<K extends Number, CpuRunnerType extends CpuRunne
             tmpList.add(opcode);
         }
         this.opcodes = Collections.unmodifiableList(tmpList);
+    }
+
+    public InstructionOperand placeOpcodesAfterOperand(int... opcodes) {
+        List<Integer> tmpList = new ArrayList<>();
+        for (int opcode : opcodes) {
+            tmpList.add(opcode);
+        }
+        opcodesAfterOperand.addAll(tmpList);
+        return this;
     }
 
     @Override
@@ -29,6 +39,7 @@ public class InstructionOperand<K extends Number, CpuRunnerType extends CpuRunne
             program.add(tmpOperand & 0xFF);
             program.add((tmpOperand >>> 8) & 0xFF);
         }
+        program.addAll(opcodesAfterOperand);
         cpuRunner.setProgram(program);
         cpuRunner.ensureProgramSize(tmpOperand + 2);
     }

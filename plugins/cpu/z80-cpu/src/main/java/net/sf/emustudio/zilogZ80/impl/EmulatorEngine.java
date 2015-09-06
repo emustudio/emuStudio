@@ -39,6 +39,7 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.NEG_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.PARITY_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.RRCA_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.SIGN_ZERO_CARRY_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.SIGN_ZERO_TABLE;
 
 /**
  * Main implementation class for CPU emulation CPU works in a separate thread
@@ -962,8 +963,8 @@ public class EmulatorEngine {
 
                             return 11;
                         case 0x44: /* NEG */
-                            regs[REG_A] = ((0 - regs[REG_A]) & 0xFF);
-                            flags = NEG_TABLE[regs[REG_A]];
+                            flags = NEG_TABLE[regs[REG_A]] & 0xFF;
+                            regs[REG_A] = (NEG_TABLE[regs[REG_A]] >>> 8) & 0xFF;
                             return 8;
                         case 0x45: /* RETN */
                             IFF[0] = IFF[1];
@@ -1578,42 +1579,48 @@ public class EmulatorEngine {
                                     memory.write(tmp3, (short) (tmp1 & 0xff));
                                     return 23;
                                 case 0x06: /* RLC (ii+d) */
-                                    tmp2 = (getspecial(special) + (byte) tmp) & 0xffff;
-                                    tmp1 = memory.read(tmp2);
-                                    flags = ((tmp1 >>> 7) & 0xff);
-                                    tmp1 <<= 1;
-                                    tmp1 |= (flags & 1);
-                                    memory.write(tmp2, (short) (tmp1 & 0xff));
-                                    flags |= DAA_TABLE[tmp1 & 0xff];
+                                    tmp = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp);
+
+                                    tmp2 = (tmp1 >>> 7) & 1;
+                                    tmp1 = ((((tmp1 << 1) & 0xFF) | tmp2) & 0xFF);
+
+                                    memory.write(tmp, (short)(tmp1 & 0xFF));
+                                    flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
+
                                     return 23;
                                 case 0x0E: /* RRC (ii+d) */
-                                    tmp2 = (getspecial(special) + (byte) tmp) & 0xffff;
-                                    tmp1 = memory.read(tmp2);
-                                    flags = (tmp1 & 1);
-                                    tmp1 >>>= 1;
-                                    tmp1 |= ((flags & 1) << 7);
-                                    memory.write(tmp2, (short) (tmp1 & 0xff));
-                                    flags |= DAA_TABLE[tmp1 & 0xff];
+                                    tmp = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp);
+
+                                    tmp2 = tmp1 & 1;
+                                    tmp1 = (((tmp1 >>> 1) & 0x7F) | (tmp2 << 7)) & 0xFF;
+
+                                    memory.write(tmp, (short)(tmp1 & 0xFF));
+                                    flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
+
                                     return 23;
                                 case 0x16: /* RL (ii+d) */
-                                    tmp2 = (getspecial(special) + (byte) tmp) & 0xffff;
-                                    tmp3 = flags & 1;
-                                    tmp1 = memory.read(tmp2);
-                                    flags = ((tmp1 >>> 7) & 0xff);
-                                    tmp1 <<= 1;
-                                    tmp1 |= tmp3;
-                                    memory.write(tmp2, (short) (tmp1 & 0xff));
-                                    flags |= DAA_TABLE[tmp1 & 0xff];
+                                    tmp = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp);
+
+                                    tmp2 = (tmp1 >>> 7) & 1;
+                                    tmp1 = ((((tmp1 << 1) & 0xFF) | flags & FLAG_C) & 0xFF);
+                                    memory.write(tmp, (short)(tmp1 & 0xFF));
+
+                                    flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
+
                                     return 23;
                                 case 0x1E: /* RR (ii+d) */
-                                    tmp2 = (getspecial(special) + (byte) tmp) & 0xffff;
-                                    tmp1 = memory.read(tmp2);
-                                    tmp3 = flags & 1;
-                                    flags = (tmp1 & 1);
-                                    tmp1 >>>= 1;
-                                    tmp1 |= (tmp3 << 7);
-                                    memory.write(tmp2, (short) (tmp1 & 0xff));
-                                    flags |= DAA_TABLE[tmp1 & 0xff];
+                                    tmp = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp);
+
+                                    tmp2 = tmp1 & 1;
+                                    tmp1 = ((((tmp1 >> 1) & 0xFF) | (flags & FLAG_C) << 7) & 0xFF);
+                                    memory.write(tmp, (short)(tmp1 & 0xFF));
+
+                                    flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
+
                                     return 23;
                                 case 0x26: /* SLA (ii+d) */
                                     tmp2 = (getspecial(special) + (byte) tmp) & 0xffff;
@@ -1671,11 +1678,13 @@ public class EmulatorEngine {
                         case 0x07:
                             tmp = OP & 7;
                             tmp1 = getreg(tmp);
-                            flags = (tmp1 >>> 7);
-                            tmp1 <<= 1;
-                            tmp1 |= (flags & 1);
-                            flags |= DAA_TABLE[tmp1 & 0xff];
+
+                            tmp2 = (tmp1 >>> 7) & 1;
+                            tmp1 = (((tmp1 << 1) & 0xFF) | tmp2) & 0xFF;
                             putreg(tmp, tmp1);
+
+                            flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
+
                             if (tmp == 6) {
                                 return 15;
                             } else {
@@ -1692,11 +1701,13 @@ public class EmulatorEngine {
                         case 0x0F:
                             tmp = OP & 7;
                             tmp1 = getreg(tmp);
-                            flags = (tmp1 & 1);
-                            tmp1 >>>= 1;
-                            tmp1 |= ((flags & 1) << 7);
+
+                            tmp2 = tmp1 & 1;
+                            tmp1 = (((tmp1 >>> 1) & 0x7F) | (tmp2 << 7)) & 0xFF;
                             putreg(tmp, tmp1);
-                            flags |= DAA_TABLE[tmp1 & 0xff];
+
+                            flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
+
                             if (tmp == 6) {
                                 return 15;
                             } else {
@@ -1713,12 +1724,13 @@ public class EmulatorEngine {
                         case 0x17:
                             tmp = OP & 7;
                             tmp1 = getreg(tmp);
-                            tmp2 = flags & 1;
-                            flags = (tmp1 >>> 7);
-                            tmp1 <<= 1;
-                            tmp1 |= tmp2;
+
+                            tmp2 = (tmp1 >>> 7) & 1;
+                            tmp1 = ((((tmp1 << 1) & 0xFF) | flags & FLAG_C) & 0xFF);
                             putreg(tmp, tmp1);
-                            flags |= DAA_TABLE[tmp1 & 0xff];
+
+                            flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
+
                             if (tmp == 6) {
                                 return 15;
                             } else {
@@ -1735,12 +1747,13 @@ public class EmulatorEngine {
                         case 0x1F:
                             tmp = OP & 7;
                             tmp1 = getreg(tmp);
-                            tmp2 = flags & 1;
-                            flags = (tmp1 & 1);
-                            tmp1 >>>= 1;
-                            tmp1 |= (tmp2 << 7);
+
+                            tmp2 = tmp1 & 1;
+                            tmp1 = ((((tmp1 >> 1) & 0x7F) | (flags & FLAG_C) << 7) & 0xFF);
                             putreg(tmp, tmp1);
-                            flags |= DAA_TABLE[tmp1 & 0xff];
+
+                            flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
+
                             if (tmp == 6) {
                                 return 15;
                             } else {

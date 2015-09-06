@@ -13,7 +13,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
 
     public FlagsBuilderImpl<T> sign() {
         evaluators.add((context, result) -> {
-            if ((byte)result < 0) {
+            if ((result & 0x80) == 0x80) {
                 expectedFlags |= FLAG_S;
             } else {
                 expectedNotFlags |= FLAG_S;
@@ -24,7 +24,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
 
     public FlagsBuilderImpl<T> sign16bit() {
         evaluators.add((context, result) -> {
-            if ((result & 0x8000) != 0) {
+            if ((result & 0x8000) == 0x8000) {
                 expectedFlags |= FLAG_S;
             } else {
                 expectedNotFlags |= FLAG_S;
