@@ -23,6 +23,7 @@ import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
 import net.sf.emustudio.zilogZ80.impl.suite.ByteTestBuilder;
 import net.sf.emustudio.zilogZ80.impl.suite.FlagsBuilderImpl;
 import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.function.Function;
@@ -711,32 +712,87 @@ public class LogicTest extends InstructionsTTest {
         );
     }
 
+    @Test
     public void testSLA__r() {
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .setFlags(FLAG_H | FLAG_N)
+                .keepCurrentInjectorsAfterRun()
+                .clearOtherVerifiersAfterRun();
 
+        Function<RunnerContext<Byte>, Integer> operator = context -> (context.first << 1) & 0xFE;
+        FlagsBuilderImpl flags = new FlagsBuilderImpl<>()
+                .carryIsFirstOperandMSB().sign().zero().parity().halfCarryIsReset().subtractionIsReset();
+
+        Generator.forSome8bitUnary(
+                test.firstIsRegister(REG_A).verifyRegister(REG_A, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x27),
+                test.firstIsRegister(REG_B).verifyRegister(REG_B, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x20),
+                test.firstIsRegister(REG_C).verifyRegister(REG_C, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x21),
+                test.firstIsRegister(REG_D).verifyRegister(REG_D, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x22),
+                test.firstIsRegister(REG_E).verifyRegister(REG_E, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x23),
+                test.firstIsRegister(REG_H).verifyRegister(REG_H, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x24),
+                test.firstIsRegister(REG_L).verifyRegister(REG_L, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x25),
+                test.setPair(REG_PAIR_HL, 0x301).firstIsMemoryByteAt(0x301).verifyByte(0x301, operator)
+                        .verifyFlagsOfLastOp(flags).run(0xCB, 0x26)
+        );
     }
 
-    public void testSLA__mHL() {
-
-    }
-
+    @Test
     public void testSLA__IX_plus_d() {
+        IntegerTestBuilder test = prepareIXIYRotationMSBTest(context -> (context.second << 1) & 0xFE)
+                .first8MSBisIX()
+                .keepCurrentInjectorsAfterRun();
 
+        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
+                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x26, 0xDD, 0xCB)
+        );
     }
 
+    @Test
     public void testSLA__IY_plus_d() {
+        IntegerTestBuilder test = prepareIXIYRotationMSBTest(context -> (context.second << 1) & 0xFE)
+                .first8MSBisIY()
+                .keepCurrentInjectorsAfterRun();
 
+        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
+                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x26, 0xFD, 0xCB)
+        );
     }
 
+    @Test
     public void testSRA__r() {
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .setFlags(FLAG_H | FLAG_N)
+                .keepCurrentInjectorsAfterRun()
+                .clearOtherVerifiersAfterRun();
 
+        Function<RunnerContext<Byte>, Integer> operator = context -> (context.first >> 1) & 0xFF | (context.first & 0x80);
+        FlagsBuilderImpl flags = new FlagsBuilderImpl<>()
+                .carryIsFirstOperandLSB().sign().zero().parity().halfCarryIsReset().subtractionIsReset();
+
+        Generator.forSome8bitUnary(
+                test.firstIsRegister(REG_A).verifyRegister(REG_A, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x2F),
+                test.firstIsRegister(REG_B).verifyRegister(REG_B, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x28),
+                test.firstIsRegister(REG_C).verifyRegister(REG_C, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x29),
+                test.firstIsRegister(REG_D).verifyRegister(REG_D, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x2A),
+                test.firstIsRegister(REG_E).verifyRegister(REG_E, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x2B),
+                test.firstIsRegister(REG_H).verifyRegister(REG_H, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x2C),
+                test.firstIsRegister(REG_L).verifyRegister(REG_L, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x2D),
+                test.setPair(REG_PAIR_HL, 0x301).firstIsMemoryByteAt(0x301).verifyByte(0x301, operator)
+                        .verifyFlagsOfLastOp(flags).run(0xCB, 0x2E)
+        );
     }
 
-    public void testSRA__mHL() {
-
-    }
-
+    @Test
+    @Ignore
     public void testSRA__IX_plus_d() {
+        IntegerTestBuilder test = prepareIXIYRotationLSBTest(context -> (context.second >> 1) & 0xFF | (context.second & 0x80))
+                .printOperands()
+                .first8MSBisIX()
+                .keepCurrentInjectorsAfterRun();
 
+        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
+                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x2E, 0xDD, 0xCB)
+        );
     }
 
     public void testSRA__IY_plus_d() {
