@@ -39,7 +39,7 @@ import static net.sf.emustudio.zilogZ80.impl.suite.Utils.get8MSBplus8LSB;
 import static net.sf.emustudio.zilogZ80.impl.suite.Utils.predicate8MSBplus8LSB;
 
 @SuppressWarnings("unchecked")
-public class ArithmeticTest extends InstructionsTTest {
+public class ArithmeticTest extends InstructionsTest {
 
     private ByteTestBuilder additionTestBuilder() {
         return new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)

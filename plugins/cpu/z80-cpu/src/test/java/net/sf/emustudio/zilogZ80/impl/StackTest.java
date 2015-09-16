@@ -22,7 +22,7 @@ import net.sf.emustudio.cpu.testsuite.Generator;
 import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
 import org.junit.Test;
 
-public class InstructionsStackTest extends InstructionsTTest {
+public class StackTest extends InstructionsTest {
 
     @Test
     public void testPUSH_qq() throws Exception {

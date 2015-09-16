@@ -18,7 +18,7 @@
  */
 package net.sf.emustudio.zilogZ80.impl;
 
-public class InstructionsIOTest extends InstructionsTest {
+public class IOTest extends InstructionsTest {
     
     public void testIN_A__n() {
         

@@ -38,7 +38,7 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_E;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_H;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
 
-public class ControlTest extends InstructionsTTest {
+public class ControlTest extends InstructionsTest {
 
     @Test
     public void testEI_DI() throws Exception {

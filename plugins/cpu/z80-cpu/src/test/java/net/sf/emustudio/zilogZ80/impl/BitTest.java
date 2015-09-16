@@ -18,7 +18,7 @@
  */
 package net.sf.emustudio.zilogZ80.impl;
 
-public class InstructionsBitTest extends InstructionsTest {
+public class BitTest extends InstructionsTest {
     
     public void testBIT_b__r() {
         

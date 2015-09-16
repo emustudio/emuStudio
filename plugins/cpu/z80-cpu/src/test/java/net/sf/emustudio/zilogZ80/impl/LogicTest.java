@@ -41,7 +41,7 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
 import static net.sf.emustudio.zilogZ80.impl.suite.Utils.get8MSBplus8LSB;
 import static net.sf.emustudio.zilogZ80.impl.suite.Utils.predicate8MSBplus8LSB;
 
-public class LogicTest extends InstructionsTTest {
+public class LogicTest extends InstructionsTest {
 
     private ByteTestBuilder getLogicTestBuilder(Function<RunnerContext<Byte>, Integer> operator) {
         return new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
