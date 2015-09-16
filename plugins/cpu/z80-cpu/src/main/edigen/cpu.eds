@@ -61,7 +61,9 @@ instruction = "nop": 00000000 | "ex (SP),HL": 0xE3 | "ex DE,HL": 0xEB | "ld SP,H
               0xDD ddINSTR | 0xFD fdINSTR | 0xCB cbINSTR | 0xED edINSTR;
 
 cbINSTR = "rlc": 00000 REG | "rl": 00010 REG | "rrc": 00001 REG | "rr": 00011 REG | "bit": 01 BIT(3) REG |
-          "res": 10 BIT(3) REG | "set": 11 BIT(3) REG | "sla": 00100 REG | "sra": 00101 REG | "srl": 00111 REG;
+          "res": 10 BIT(3) REG | "set": 11 BIT(3) REG | "sla": 00100 REG | "sra": 00101 REG | "srl": 00111 REG |
+          "sll": 00110 REG
+        ;
 
 ddINSTR = "ld": 010 REG_BCDE(2) 110 index |
 
@@ -130,10 +132,10 @@ fdINSTR = "ld": 010 REG_BCDE(2) 110 index |
 
 
 ddcbINSTR = "rlc": 00000110 | "rl": 00010110 | "rrc": 00001110 | "rr": 00011110 | "sla": 0x26 | "sra": 0x2E |
-            "srl": 0x3E | "bit": 01 BIT(3) 110 | "res": 10 BIT(3) 110 | "set": 11 BIT(3) 110;
+            "srl": 0x3E | "sll": 0x36 | "bit": 01 BIT(3) 110 | "res": 10 BIT(3) 110 | "set": 11 BIT(3) 110;
 
 fdcbINSTR = "rlc": 00000110 | "rl": 00010110 | "rrc": 00001110 | "rr": 00011110 | "sla": 0x26 | "sra": 0x2E |
-            "srl": 0x3E | "bit": 01 BIT(3) 110 | "res": 10 BIT(3) 110 | "set": 11 BIT(3) 110;
+            "srl": 0x3E | "sll": 0x36 | "bit": 01 BIT(3) 110 | "res": 10 BIT(3) 110 | "set": 11 BIT(3) 110;
 
 edINSTR = "ld": 010 BCDE(1) 1011 imm16 | "ld": 011 HLSP(1) 1011 imm16 |
 

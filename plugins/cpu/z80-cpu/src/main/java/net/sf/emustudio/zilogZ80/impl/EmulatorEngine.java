@@ -1645,22 +1645,26 @@ public class EmulatorEngine {
 
                                     return 23;
                                 case 0x36: /* SLL (ii+d) unsupported */
-                                    tmp2 = (getspecial(special) + (byte) tmp) & 0xffff;
-                                    tmp1 = memory.read(tmp2);
-                                    flags = ((tmp1 >>> 7) & 0xff);
-                                    tmp3 = tmp1 & 1;
-                                    tmp1 <<= 1;
-                                    tmp1 |= tmp3;
-                                    memory.write(tmp2, (short) (tmp1 & 0xff));
-                                    flags |= DAA_TABLE[tmp1 & 0xff];
+                                    tmp = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp);
+
+                                    tmp2 = (tmp1 >>> 7) & 1;
+                                    tmp1 = (tmp1 << 1) & 0xFF | tmp1 & 1;
+                                    memory.write(tmp, (short)tmp1);
+
+                                    flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
+
                                     return 23;
                                 case 0x3E: /* SRL (ii+d) */
-                                    tmp2 = (getspecial(special) + (byte) tmp) & 0xffff;
-                                    tmp1 = memory.read(tmp2);
-                                    flags = (tmp1 & 1);
-                                    tmp1 >>>= 1;
-                                    memory.write(tmp2, (short) (tmp1 & 0xff));
-                                    flags |= ((tmp1 == 0) ? FLAG_Z : 0) | PARITY_TABLE[tmp1];
+                                    tmp = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp);
+
+                                    tmp2 = tmp1 & 1;
+                                    tmp1 = (tmp1 >>> 1) & 0x7F;
+                                    memory.write(tmp, (short)tmp1);
+
+                                    flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
+
                                     return 23;
                             }
                             currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
@@ -1820,12 +1824,13 @@ public class EmulatorEngine {
                         case 0x37:
                             tmp = OP & 7;
                             tmp1 = getreg(tmp);
-                            flags = (tmp1 >>> 7);
-                            tmp2 = tmp1 & 1;
-                            tmp1 <<= 1;
-                            tmp1 |= tmp2;
+
+                            tmp2 = (tmp1 >>> 7) & 1;
+                            tmp1 = (tmp1 << 1) & 0xFF | tmp1 & 1;
                             putreg(tmp, tmp1);
-                            flags |= DAA_TABLE[tmp1 & 0xff];
+
+                            flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
+
                             if (tmp == 6) {
                                 return 15;
                             } else {
@@ -1842,10 +1847,13 @@ public class EmulatorEngine {
                         case 0x3F:
                             tmp = OP & 7;
                             tmp1 = getreg(tmp);
-                            flags = (tmp1 & 1);
-                            tmp1 >>>= 1;
+
+                            tmp2 = tmp1 & 1;
+                            tmp1 = (tmp1 >>> 1) & 0x7F;
                             putreg(tmp, tmp1);
-                            flags |= ((tmp1 == 0) ? FLAG_Z : 0) | PARITY_TABLE[tmp1];
+
+                            flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
+
                             if (tmp == 6) {
                                 return 15;
                             } else {

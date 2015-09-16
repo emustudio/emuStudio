@@ -23,7 +23,6 @@ import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
 import net.sf.emustudio.zilogZ80.impl.suite.ByteTestBuilder;
 import net.sf.emustudio.zilogZ80.impl.suite.FlagsBuilderImpl;
 import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.function.Function;
@@ -783,10 +782,10 @@ public class LogicTest extends InstructionsTTest {
     }
 
     @Test
-    @Ignore
     public void testSRA__IX_plus_d() {
-        IntegerTestBuilder test = prepareIXIYRotationLSBTest(context -> (context.second >> 1) & 0xFF | (context.second & 0x80))
-                .printOperands()
+        IntegerTestBuilder test = prepareIXIYRotationLSBTest(
+                context -> ((context.second & 0xFF) >>> 1) & 0xFF | (context.second & 0x80)
+        )
                 .first8MSBisIX()
                 .keepCurrentInjectorsAfterRun();
 
@@ -795,24 +794,109 @@ public class LogicTest extends InstructionsTTest {
         );
     }
 
+    @Test
     public void testSRA__IY_plus_d() {
+        IntegerTestBuilder test = prepareIXIYRotationLSBTest(
+                context -> ((context.second & 0xFF) >>> 1) & 0xFF | (context.second & 0x80)
+        )
+                .first8MSBisIY()
+                .keepCurrentInjectorsAfterRun();
 
+        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
+                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x2E, 0xFD, 0xCB)
+        );
     }
 
+    @Test
     public void testSRL__r() {
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .setFlags(FLAG_H | FLAG_N)
+                .keepCurrentInjectorsAfterRun()
+                .clearOtherVerifiersAfterRun();
 
+        Function<RunnerContext<Byte>, Integer> operator = context -> (context.first >>> 1) & 0x7F;
+        FlagsBuilderImpl flags = new FlagsBuilderImpl<>()
+                .carryIsFirstOperandLSB().sign().zero().parity().halfCarryIsReset().subtractionIsReset();
+
+        Generator.forSome8bitUnary(
+                test.firstIsRegister(REG_A).verifyRegister(REG_A, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x3F),
+                test.firstIsRegister(REG_B).verifyRegister(REG_B, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x38),
+                test.firstIsRegister(REG_C).verifyRegister(REG_C, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x39),
+                test.firstIsRegister(REG_D).verifyRegister(REG_D, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x3A),
+                test.firstIsRegister(REG_E).verifyRegister(REG_E, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x3B),
+                test.firstIsRegister(REG_H).verifyRegister(REG_H, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x3C),
+                test.firstIsRegister(REG_L).verifyRegister(REG_L, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x3D),
+                test.setPair(REG_PAIR_HL, 0x301).firstIsMemoryByteAt(0x301).verifyByte(0x301, operator)
+                        .verifyFlagsOfLastOp(flags).run(0xCB, 0x3E)
+        );
     }
 
-    public void testSRL__mHL() {
-
-    }
-
+    @Test
     public void testSRL__IX_plus_d() {
+        IntegerTestBuilder test = prepareIXIYRotationLSBTest(context -> ((context.second & 0xFF) >>> 1) & 0x7F)
+                .first8MSBisIX()
+                .keepCurrentInjectorsAfterRun();
 
+        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
+                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x3E, 0xDD, 0xCB)
+        );
     }
 
+    @Test
     public void testSRL__IY_plus_d() {
+        IntegerTestBuilder test = prepareIXIYRotationLSBTest(context -> ((context.second & 0xFF) >>> 1) & 0x7F)
+                .first8MSBisIY()
+                .keepCurrentInjectorsAfterRun();
 
+        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
+                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x3E, 0xFD, 0xCB)
+        );
+    }
+
+    @Test
+    public void testSLL__r() {
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .setFlags(FLAG_H | FLAG_N)
+                .keepCurrentInjectorsAfterRun()
+                .clearOtherVerifiersAfterRun();
+
+        Function<RunnerContext<Byte>, Integer> operator = context -> (context.first << 1) & 0xFF | context.first & 1;
+        FlagsBuilderImpl flags = new FlagsBuilderImpl<>()
+                .carryIsFirstOperandMSB().sign().zero().parity().halfCarryIsReset().subtractionIsReset();
+
+        Generator.forSome8bitUnary(
+                test.firstIsRegister(REG_A).verifyRegister(REG_A, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x37),
+                test.firstIsRegister(REG_B).verifyRegister(REG_B, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x30),
+                test.firstIsRegister(REG_C).verifyRegister(REG_C, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x31),
+                test.firstIsRegister(REG_D).verifyRegister(REG_D, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x32),
+                test.firstIsRegister(REG_E).verifyRegister(REG_E, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x33),
+                test.firstIsRegister(REG_H).verifyRegister(REG_H, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x34),
+                test.firstIsRegister(REG_L).verifyRegister(REG_L, operator).verifyFlagsOfLastOp(flags).run(0xCB, 0x35),
+                test.setPair(REG_PAIR_HL, 0x301).firstIsMemoryByteAt(0x301).verifyByte(0x301, operator)
+                        .verifyFlagsOfLastOp(flags).run(0xCB, 0x36)
+        );
+    }
+
+    @Test
+    public void testSLL_IX_plus_d() throws Exception {
+        IntegerTestBuilder test = prepareIXIYRotationMSBTest(context -> ((context.second << 1) & 0xFF) | context.second & 1)
+                .first8MSBisIX()
+                .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
+                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x36, 0xDD, 0xCB)
+        );
+    }
+
+    @Test
+    public void testSLL_IY_plus_d() throws Exception {
+        IntegerTestBuilder test = prepareIXIYRotationMSBTest(context -> ((context.second << 1) & 0xFF) | context.second & 1)
+                .first8MSBisIY()
+                .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
+                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x36, 0xFD, 0xCB)
+        );
     }
 
     public void testRLD() {
