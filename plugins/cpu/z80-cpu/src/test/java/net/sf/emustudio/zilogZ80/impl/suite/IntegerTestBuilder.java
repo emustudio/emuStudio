@@ -34,8 +34,13 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         return this;
     }
 
-    public IntegerTestBuilder firstIsRegisterPairPSW(int registerPairPSW) {
-        runner.injectFirst(new MemoryExpand(), new RegisterPairPSW(registerPairPSW));
+    public IntegerTestBuilder secondIsIY() {
+        runner.injectSecond((tmpRunner, argument) -> cpuRunner.setIY(argument.intValue()));
+        return this;
+    }
+
+    public IntegerTestBuilder firstIsPSW() {
+        runner.injectFirst(new MemoryExpand(), new RegisterPairPSW(3));
         return this;
     }
 
@@ -90,8 +95,8 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         return this;
     }
 
-    public IntegerTestBuilder secondIsRegisterPairPSW(int registerPairPSW) {
-        runner.injectSecond(new MemoryExpand(), new RegisterPairPSW(registerPairPSW));
+    public IntegerTestBuilder secondIsPSW() {
+        runner.injectSecond(new MemoryExpand(), new RegisterPairPSW(3));
         return this;
     }
 
@@ -115,9 +120,9 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         return this;
     }
 
-    public IntegerTestBuilder verifyPairAndPSW(int registerPair, Function<RunnerContext<Integer>, Integer> operation) {
+    public IntegerTestBuilder verifyPSW(Function<RunnerContext<Integer>, Integer> operation) {
         lastOperation = operation;
-        addVerifier(context -> cpuVerifier.checkRegisterPairPSW(registerPair, operation.apply(context)));
+        addVerifier(context -> cpuVerifier.checkRegisterPairPSW(3, operation.apply(context)));
         return this;
     }
 

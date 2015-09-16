@@ -86,7 +86,7 @@ public class CpuVerifierImpl extends CpuVerifier {
         if (registerPair < 3) {
             checkRegisterPair(registerPair, value);
         } else if (registerPair == 3) {
-            int realValue = (cpu.getEngine().regs[REG_A] << 8) | (cpu.getEngine().flags & 0xD7 | 2);
+            int realValue = (cpu.getEngine().regs[REG_A] << 8) | cpu.getEngine().flags;
             assertEquals(
                     String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
                     value, realValue

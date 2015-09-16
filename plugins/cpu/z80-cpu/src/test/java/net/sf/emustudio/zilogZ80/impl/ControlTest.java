@@ -98,11 +98,11 @@ public class ControlTest extends InstructionsTTest {
     public void testJP__mHL() throws Exception {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsMemoryAddressWord(0)
-                .verifyPC(context -> context.first)
-                .keepCurrentInjectorsAfterRun();
+                .firstIsPair(REG_PAIR_HL)
+                .verifyPC(context -> context.first);
 
         Generator.forSome16bitUnary(1,
-                test.firstIsPair(REG_PAIR_HL).run(0xE9)
+                test.run(0xE9)
         );
     }
 
@@ -113,7 +113,7 @@ public class ControlTest extends InstructionsTTest {
                 .secondIsPair(REG_SP)
                 .verifyPair(REG_SP, context -> (context.second - 2) & 0xFFFF)
                 .verifyPC(context -> context.first)
-                .verifyWord(context -> context.PC + 3, context -> (context.second - 2) & 0xFFFF)
+                .verifyWord(context -> (context.second - 2) & 0xFFFF, context -> context.PC + 3)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinary(3,5,
@@ -136,7 +136,7 @@ public class ControlTest extends InstructionsTTest {
                 .secondIsPair(REG_SP)
                 .verifyPair(REG_SP, context -> context.second)
                 .verifyPC(context -> context.PC + 3)
-                .verifyWord(context -> 0, context -> context.second)
+                .verifyWord(context -> context.second, context -> 0)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinary(3,5,
@@ -200,7 +200,7 @@ public class ControlTest extends InstructionsTTest {
                 .firstIsMemoryAddressWord(0)
                 .firstIsPair(REG_SP)
                 .verifyPair(REG_SP, context -> (context.first - 2) & 0xFFFF)
-                .verifyWord(context -> context.PC + 1, context -> (context.first - 2) & 0xFFFF)
+                .verifyWord(context -> (context.first - 2) & 0xFFFF, context -> context.PC + 1)
                 .keepCurrentInjectorsAfterRun()
                 .clearOtherVerifiersAfterRun();
 
@@ -321,8 +321,7 @@ public class ControlTest extends InstructionsTTest {
     public void testJP__IX() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsIX()
-                .verifyPC(context -> context.first)
-                .keepCurrentInjectorsAfterRun();
+                .verifyPC(context -> context.first);
 
         Generator.forSome16bitUnary(
                 test.run(0xDD, 0xE9)
@@ -333,8 +332,7 @@ public class ControlTest extends InstructionsTTest {
     public void testJP__IY() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsIY()
-                .verifyPC(context -> context.first)
-                .keepCurrentInjectorsAfterRun();
+                .verifyPC(context -> context.first);
 
         Generator.forSome16bitUnary(
                 test.run(0xFD, 0xE9)
@@ -352,8 +350,7 @@ public class ControlTest extends InstructionsTTest {
                     }
                     return (context.PC + 2 + context.first) & 0xFFFF;
                 })
-                .verifyRegister(REG_B, context -> (context.second - 1) & 0xFF)
-                .keepCurrentInjectorsAfterRun();
+                .verifyRegister(REG_B, context -> (context.second - 1) & 0xFF);
 
         Generator.forSome8bitBinary(
                 test.runWithFirstOperand(0x10)
@@ -366,8 +363,7 @@ public class ControlTest extends InstructionsTTest {
                 .firstIsAddressAndSecondIsMemoryWord()
                 .firstIsPair(REG_SP)
                 .verifyPC(context -> context.second)
-                .verifyPair(REG_SP, context -> (context.first + 2) & 0xFFFF)
-                .keepCurrentInjectorsAfterRun();
+                .verifyPair(REG_SP, context -> (context.first + 2) & 0xFFFF);
 
         Generator.forSome16bitBinary(2,
                 test.run(0xED, 0x4D)
@@ -383,8 +379,7 @@ public class ControlTest extends InstructionsTTest {
                 .verifyPair(REG_SP, context -> (context.first + 2) & 0xFFFF)
                 .enableIFF2()
                 .disableIFF1()
-                .verifyIFF1isEnabled()
-                .keepCurrentInjectorsAfterRun();
+                .verifyIFF1isEnabled();
 
         Generator.forSome16bitBinary(2,
                 test.run(0xED, 0x45)

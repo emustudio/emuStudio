@@ -57,7 +57,7 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
             setRegisterPair(registerPair, value);
         } else if (registerPair == 3) {
             cpu.getEngine().regs[REG_A] = (value >>> 8) & 0xFF;
-            cpu.getEngine().flags = (short)(value & 0xD7 | 2);
+            cpu.getEngine().flags = value & 0xFF;
         } else {
             throw new IllegalArgumentException("Expected value between <0,3> !");
         }

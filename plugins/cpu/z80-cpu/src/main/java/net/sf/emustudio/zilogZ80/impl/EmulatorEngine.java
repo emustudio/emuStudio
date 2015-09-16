@@ -1007,7 +1007,7 @@ public class EmulatorEngine {
                             regs[REG_A] = ((regs[REG_A] & 0xF0) | (tmp1 & 0x0F));
                             tmp1 = ((tmp1 >>> 4) & 0x0F) | (tmp << 4);
                             memory.write(((regs[REG_H] << 8) | regs[REG_L]), (short) (tmp1 & 0xff));
-                            flags = (DAA_TABLE[regs[REG_A]] | (flags & FLAG_C));
+                            flags = SIGN_ZERO_TABLE[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | (flags & FLAG_C);
                             return 18;
                         case 0x6F: /* RLD */
                             tmp = memory.read((regs[REG_H] << 8) | regs[REG_L]);
@@ -1015,7 +1015,7 @@ public class EmulatorEngine {
                             tmp = ((tmp << 4) & 0xF0) | (regs[REG_A] & 0x0F);
                             regs[REG_A] = ((regs[REG_A] & 0xF0) | tmp1);
                             memory.write((regs[REG_H] << 8) | regs[REG_L], (short) (tmp & 0xff));
-                            flags = (DAA_TABLE[regs[REG_A]] | (flags & FLAG_C));
+                            flags = SIGN_ZERO_TABLE[regs[REG_A]] | PARITY_TABLE[regs[REG_A]] | (flags & FLAG_C);
                             return 18;
                         case 0x70: /* IN (C) - unsupported */
                             tmp = (context.fireIO(regs[REG_C], true, 0) & 0xFF);

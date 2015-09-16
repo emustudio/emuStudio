@@ -18,44 +18,17 @@ public class TransferTest extends InstructionsTest {
 
     @Test
     public void testMVI() throws Exception {
-        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl);
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .clearOtherVerifiersAfterRun();
 
         Generator.forSome8bitUnary(
-                test.verifyRegister(REG_A, context -> context.first & 0xFF).runWithFirstOperand(0x3E)
-        );
-
-        test.clearAllVerifiers();
-        Generator.forSome8bitUnary(
-                test.verifyRegister(REG_B).runWithFirstOperand(0x06)
-        );
-
-        test.clearAllVerifiers();
-        Generator.forSome8bitUnary(
-                test.verifyRegister(REG_C).runWithFirstOperand(0x0E)
-        );
-
-        test.clearAllVerifiers();
-        Generator.forSome8bitUnary(
-                test.verifyRegister(REG_D).runWithFirstOperand(0x16)
-        );
-
-        test.clearAllVerifiers();
-        Generator.forSome8bitUnary(
-                test.verifyRegister(REG_E).runWithFirstOperand(0x1E)
-        );
-
-        test.clearAllVerifiers();
-        Generator.forSome8bitUnary(
-                test.verifyRegister(REG_H).runWithFirstOperand(0x26)
-        );
-
-        test.clearAllVerifiers();
-        Generator.forSome8bitUnary(
-                test.verifyRegister(REG_L).runWithFirstOperand(0x2E)
-        );
-
-        test.clearAllVerifiers();
-        Generator.forSome8bitUnary(
+                test.verifyRegister(REG_A, context -> context.first & 0xFF).runWithFirstOperand(0x3E),
+                test.verifyRegister(REG_B).runWithFirstOperand(0x06),
+                test.verifyRegister(REG_C).runWithFirstOperand(0x0E),
+                test.verifyRegister(REG_D).runWithFirstOperand(0x16),
+                test.verifyRegister(REG_E).runWithFirstOperand(0x1E),
+                test.verifyRegister(REG_H).runWithFirstOperand(0x26),
+                test.verifyRegister(REG_L).runWithFirstOperand(0x2E),
                 test.setPair(REG_PAIR_HL, 0x20)
                         .verifyByte(0x20, context -> context.first & 0xFF)
                         .runWithFirstOperand(0x36)
@@ -281,7 +254,7 @@ public class TransferTest extends InstructionsTest {
         int value = 0x1236;
 
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .verifyWord(context -> value, context -> context.first)
+                .verifyWord(context -> context.first, context -> value)
                 .setPair(REG_PAIR_HL, value);
 
         Generator.forSome16bitUnary(
@@ -342,10 +315,11 @@ public class TransferTest extends InstructionsTest {
     @Test
     public void testXCHG() throws Exception {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsPair(REG_PAIR_HL)
+                .secondIsPair(REG_PAIR_DE)
                 .verifyPair(REG_PAIR_DE, context -> context.first)
                 .verifyPair(REG_PAIR_HL, context -> context.second)
-                .firstIsPair(REG_PAIR_HL)
-                .secondIsPair(REG_PAIR_DE);
+                .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinary(
                 test.run(0xEB)
@@ -357,11 +331,12 @@ public class TransferTest extends InstructionsTest {
         int address = 0x23;
 
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .verifyWord(context -> context.second, context -> address)
-                .verifyPair(REG_PAIR_HL, context -> context.first)
                 .firstIsMemoryWordAt(address)
                 .secondIsPair(REG_PAIR_HL)
-                .setPair(REG_SP, address);
+                .setPair(REG_SP, address)
+                .verifyWord(context -> address, context -> context.second)
+                .verifyPair(REG_PAIR_HL, context -> context.first)
+                .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinary(
                 test.run(0xE3)

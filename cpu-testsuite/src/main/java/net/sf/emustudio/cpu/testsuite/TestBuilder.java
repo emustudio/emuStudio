@@ -111,8 +111,8 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
         return verifyByte(address);
     }
 
-    public SpecificTestBuilder verifyWord(Function<RunnerContext<K>, Integer> operator,
-                                    Function<RunnerContext<K>, Integer> addressOperator) {
+    public SpecificTestBuilder verifyWord(Function<RunnerContext<K>, Integer> addressOperator,
+                                          Function<RunnerContext<K>, Integer> operator) {
         lastOperation = operator;
         addVerifier(new MemoryWordVerifier(cpuVerifier, operator, addressOperator));
         return (SpecificTestBuilder)this;

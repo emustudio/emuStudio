@@ -2,12 +2,8 @@ package net.sf.emustudio.intel8080.impl;
 
 import emulib.plugins.cpu.CPU;
 import net.sf.emustudio.cpu.testsuite.Generator;
-import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
 import net.sf.emustudio.intel8080.impl.suite.IntegerTestBuilder;
 import org.junit.Test;
-
-import java.util.List;
-import java.util.function.Consumer;
 
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_C;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_P;
@@ -61,7 +57,7 @@ public class ControlTest extends InstructionsTest {
     public void testCALL() throws Exception {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .verifyPC(context -> context.second)
-                .verifyWord(context -> context.PC + 3, context -> context.first - 2)
+                .verifyWord(context -> context.first - 2, context -> context.PC + 3)
                 .firstIsPair(REG_SP)
                 .keepCurrentInjectorsAfterRun();
 
@@ -132,49 +128,20 @@ public class ControlTest extends InstructionsTest {
     @Test
     public void testRST() throws Exception {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .verifyPair(REG_SP, context -> context.first - 2)
-                .verifyWord(context -> 1, context -> context.SP - 2)
                 .firstIsPair(REG_SP)
+                .verifyPair(REG_SP, context -> context.first - 2)
+                .verifyWord(context -> context.SP - 2, context -> 1)
+                .clearOtherVerifiersAfterRun()
                 .keepCurrentInjectorsAfterRun();
 
-        List<Consumer<RunnerContext<Integer>>> verifiers = test.getVerifiers();
-
         Generator.forSome16bitUnary(3,
-                test.verifyPC(context -> 0).run(0xC7)
-        );
-
-        test.clearAllVerifiers().verifyAll(verifiers);
-        Generator.forSome16bitUnary(3,
-                test.verifyPC(context -> 0x8).run(0xCF)
-        );
-
-        test.clearAllVerifiers().verifyAll(verifiers);
-        Generator.forSome16bitUnary(3,
-                test.verifyPC(context -> 0x10).run(0xD7)
-        );
-
-        test.clearAllVerifiers().verifyAll(verifiers);
-        Generator.forSome16bitUnary(3,
-                test.verifyPC(context -> 0x18).run(0xDF)
-        );
-
-        test.clearAllVerifiers().verifyAll(verifiers);
-        Generator.forSome16bitUnary(3,
-                test.verifyPC(context -> 0x20).run(0xE7)
-        );
-
-        test.clearAllVerifiers().verifyAll(verifiers);
-        Generator.forSome16bitUnary(3,
-                test.verifyPC(context -> 0x28).run(0xEF)
-        );
-
-        test.clearAllVerifiers().verifyAll(verifiers);
-        Generator.forSome16bitUnary(3,
-                test.verifyPC(context -> 0x30).run(0xF7)
-        );
-
-        test.clearAllVerifiers().verifyAll(verifiers);
-        Generator.forSome16bitUnary(3,
+                test.verifyPC(context -> 0).run(0xC7),
+                test.verifyPC(context -> 0x8).run(0xCF),
+                test.verifyPC(context -> 0x10).run(0xD7),
+                test.verifyPC(context -> 0x18).run(0xDF),
+                test.verifyPC(context -> 0x20).run(0xE7),
+                test.verifyPC(context -> 0x28).run(0xEF),
+                test.verifyPC(context -> 0x30).run(0xF7),
                 test.verifyPC(context -> 0x38).run(0xFF)
         );
     }
@@ -182,8 +149,8 @@ public class ControlTest extends InstructionsTest {
     @Test
     public void testPCHL() throws Exception {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .verifyPC(context -> context.first)
-                .firstIsPair(REG_PAIR_HL);
+                .firstIsPair(REG_PAIR_HL)
+                .verifyPC(context -> context.first);
 
         Generator.forSome16bitUnary(
                 test.run(0xE9)

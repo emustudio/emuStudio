@@ -12,8 +12,8 @@ public class StackTest extends InstructionsTest {
     @Test
     public void testPUSH() throws Exception {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .verifyWord(context -> context.second, context -> context.first - 2)
                 .firstIsPair(REG_SP)
+                .verifyWord(context -> context.first - 2, context -> context.second)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinary(2,
@@ -26,8 +26,8 @@ public class StackTest extends InstructionsTest {
     @Test
     public void testPUSH_PSW() throws Exception {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .verifyWord(context -> context.second & 0xFFD7 | 2, context -> context.first - 2)
                 .firstIsPair(REG_SP)
+                .verifyWord(context -> context.first - 2, context -> context.second & 0xFFD7 | 2)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinary(2,
@@ -40,27 +40,17 @@ public class StackTest extends InstructionsTest {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsPair(REG_SP)
                 .firstIsAddressAndSecondIsMemoryWord()
-                .keepCurrentInjectorsAfterRun();
+                .keepCurrentInjectorsAfterRun()
+                .clearOtherVerifiersAfterRun();
 
         Function<RunnerContext<Integer>, Integer> verifier = context -> context.second;
 
-        test.clearAllVerifiers();
         Generator.forSome16bitBinary(2,
-                test.verifyPair(REG_PAIR_BC, verifier).run(0xC1)
-        );
-        test.clearAllVerifiers();
-        Generator.forSome16bitBinary(2,
-                test.verifyPair(REG_PAIR_DE, verifier).run(0xD1)
-        );
-        test.clearAllVerifiers();
-        Generator.forSome16bitBinary(2,
-                test.verifyPair(REG_PAIR_HL, verifier).run(0xE1)
-        );
-        test.clearAllVerifiers();
-        Generator.forSome16bitBinary(2,
+                test.verifyPair(REG_PAIR_BC, verifier).run(0xC1),
+                test.verifyPair(REG_PAIR_DE, verifier).run(0xD1),
+                test.verifyPair(REG_PAIR_HL, verifier).run(0xE1),
                 test.verifyPairAndPSW(REG_PSW, context -> context.second & 0xFFD7 | 2).run(0xF1)
         );
     }
-
 
 }

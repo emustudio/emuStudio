@@ -139,10 +139,10 @@ public class LogicTest extends InstructionsTTest {
     @Test
     public void testCP__r() throws Exception {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsRegister(REG_A)
                 .verifyRegister(REG_A, context -> context.first.intValue() & 0xFF)
                 .verifyFlags(new FlagsBuilderImpl().sign().zero().carry().halfCarry().overflow().subtractionIsSet(),
                         context -> (context.first & 0xFF) - (context.second & 0xFF))
-                .firstIsRegister(REG_A)
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitBinaryWhichEqual(
@@ -162,11 +162,10 @@ public class LogicTest extends InstructionsTTest {
     @Test
     public void testCP__n() throws Exception {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsRegister(REG_A)
                 .verifyRegister(REG_A, context -> context.first.intValue() & 0xFF)
                 .verifyFlags(new FlagsBuilderImpl().sign().zero().carry().halfCarry().overflow().subtractionIsSet(),
-                        context -> (context.first & 0xFF) - (context.second & 0xFF))
-                .firstIsRegister(REG_A)
-                .keepCurrentInjectorsAfterRun();
+                        context -> (context.first & 0xFF) - (context.second & 0xFF));
 
         Generator.forSome8bitBinary(
                 test.runWithSecondOperand(0xFE)
@@ -176,6 +175,7 @@ public class LogicTest extends InstructionsTTest {
     @Test
     public void testDAA() throws Exception {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsRegister(REG_A)
                 .verifyRegister(REG_A, context -> {
                     int result = ((int) context.first) & 0xFF;
                     if (((context.flags & FLAG_H) == FLAG_H) || (result & 0x0F) > 9) {
@@ -199,9 +199,7 @@ public class LogicTest extends InstructionsTTest {
 
                                     return ((diff == 0x60) && ((((Number) result).intValue() & 0x100) == 0x100));
                                 }))
-                )
-                .firstIsRegister(REG_A)
-                .keepCurrentInjectorsAfterRun();
+                );
 
         Generator.forAll8bitUnary(
                 test.run(0x27)
@@ -213,8 +211,7 @@ public class LogicTest extends InstructionsTTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(REG_A)
                 .verifyRegister(REG_A, context -> ~context.first)
-                .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsSet())
-                .keepCurrentInjectorsAfterRun();
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsSet());
 
         Generator.forSome8bitUnary(
                 test.run(0x2F)
@@ -246,13 +243,13 @@ public class LogicTest extends InstructionsTTest {
     public void testRLCA() throws Exception {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(REG_A)
-                .verifyRegister(REG_A, context ->  ((context.first << 1) & 0xFF) | (context.first >>> 7) & 1)
+                .setFlags(FLAG_H | FLAG_H)
+                .verifyRegister(REG_A, context -> ((context.first << 1) & 0xFF) | (context.first >>> 7) & 1)
                 .verifyFlagsOfLastOp(new FlagsBuilderImpl<>()
-                        .carryIsFirstOperandMSB().halfCarryIsReset().subtractionIsReset())
-                .keepCurrentInjectorsAfterRun();
+                        .carryIsFirstOperandMSB().halfCarryIsReset().subtractionIsReset());
 
         Generator.forSome8bitUnary(
-                test.setFlags(FLAG_H | FLAG_H).run(0x07)
+                test.run(0x07)
         );
     }
 
@@ -260,13 +257,13 @@ public class LogicTest extends InstructionsTTest {
     public void testRRCA() throws Exception {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(REG_A)
+                .setFlags(FLAG_H | FLAG_H)
                 .verifyRegister(REG_A, context -> ((context.first >> 1) & 0x7F) | ((context.first & 1) << 7))
                 .verifyFlagsOfLastOp(new FlagsBuilderImpl<>()
-                        .carryIsFirstOperandLSB().halfCarryIsReset().subtractionIsReset())
-                .keepCurrentInjectorsAfterRun();
+                        .carryIsFirstOperandLSB().halfCarryIsReset().subtractionIsReset());
 
         Generator.forSome8bitUnary(
-                test.setFlags(FLAG_H | FLAG_H).run(0x0F)
+                test.run(0x0F)
         );
     }
 
@@ -274,13 +271,13 @@ public class LogicTest extends InstructionsTTest {
     public void testRLA() throws Exception {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(REG_A)
-                .verifyRegister(REG_A, context ->  ((context.first << 1) & 0xFE) | (context.flags & 1))
+                .setFlags(FLAG_H | FLAG_H)
+                .verifyRegister(REG_A, context -> ((context.first << 1) & 0xFE) | (context.flags & 1))
                 .verifyFlagsOfLastOp(new FlagsBuilderImpl<>()
-                        .carryIsFirstOperandMSB().halfCarryIsReset().subtractionIsReset())
-                .keepCurrentInjectorsAfterRun();
+                        .carryIsFirstOperandMSB().halfCarryIsReset().subtractionIsReset());
 
         Generator.forSome8bitUnary(
-                test.setFlags(FLAG_H | FLAG_H).run(0x17)
+                test.run(0x17)
         );
     }
 
@@ -288,13 +285,13 @@ public class LogicTest extends InstructionsTTest {
     public void testRRA() throws Exception {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(REG_A)
+                .setFlags(FLAG_H | FLAG_H)
                 .verifyRegister(REG_A, context -> ((context.first >> 1) & 0x7F) | ((context.flags & 1) << 7))
                 .verifyFlagsOfLastOp(new FlagsBuilderImpl<>()
-                        .carryIsFirstOperandLSB().halfCarryIsReset().subtractionIsReset())
-                .keepCurrentInjectorsAfterRun();
+                        .carryIsFirstOperandLSB().halfCarryIsReset().subtractionIsReset());
 
         Generator.forSome8bitUnary(
-                test.setFlags(FLAG_H | FLAG_H).run(0x1F)
+                test.run(0x1F)
         );
     }
 
@@ -319,8 +316,7 @@ public class LogicTest extends InstructionsTTest {
     @Test
     public void testCPI() {
         IntegerTestBuilder test = prepareCPxTest(context ->
-                ((context.getRegister(REG_H) << 8 | context.getRegister(REG_L)) + 1))
-                .keepCurrentInjectorsAfterRun();
+                ((context.getRegister(REG_H) << 8 | context.getRegister(REG_L)) + 1));
 
         Generator.forSome16bitBinary(
                 test.run(0xED, 0xA1)
@@ -338,8 +334,7 @@ public class LogicTest extends InstructionsTTest {
                         return context.PC + 2;
                     }
                     return context.PC;
-                })
-                .keepCurrentInjectorsAfterRun();
+                });
 
         Generator.forSome16bitBinary(
                 test.run(0xED, 0xB1)
@@ -349,8 +344,7 @@ public class LogicTest extends InstructionsTTest {
     @Test
     public void testCPD() {
         IntegerTestBuilder test = prepareCPxTest(context ->
-                ((context.getRegister(REG_H) << 8 | context.getRegister(REG_L)) - 1))
-                .keepCurrentInjectorsAfterRun();
+                ((context.getRegister(REG_H) << 8 | context.getRegister(REG_L)) - 1));
 
         Generator.forSome16bitBinary(
                 test.run(0xED, 0xA9)
@@ -368,8 +362,7 @@ public class LogicTest extends InstructionsTTest {
                         return context.PC + 2;
                     }
                     return context.PC;
-                })
-                .keepCurrentInjectorsAfterRun();
+                });
 
         Generator.forSome16bitBinary(
                 test.run(0xED, 0xB9)
@@ -387,77 +380,43 @@ public class LogicTest extends InstructionsTTest {
 
 
     @Test
-    public void testAND__IX_plus_d() {
+    public void testAND__IX_IY_plus_d() {
         IntegerTestBuilder test = prepareLogicIXYtest(context -> (context.first & 0xFF) & (context.second & 0xFF))
-                .first8MSBisIX()
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(3),
-                test.runWithFirst8bitOperand(0xDD, 0xA6)
+                test.first8MSBisIX().runWithFirst8bitOperand(0xDD, 0xA6),
+                test.first8MSBisIY().runWithFirst8bitOperand(0xFD, 0xA6)
         );
     }
 
     @Test
-    public void testAND__IY_plus_d() {
-        IntegerTestBuilder test = prepareLogicIXYtest(context -> (context.first & 0xFF) & (context.second & 0xFF))
-                .first8MSBisIY()
-                .keepCurrentInjectorsAfterRun();
-
-        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(3),
-                test.runWithFirst8bitOperand(0xFD, 0xA6)
-        );
-    }
-
-    @Test
-    public void testOR__IX_plus_d() {
+    public void testOR__IX_IY_plus_d() {
         IntegerTestBuilder test = prepareLogicIXYtest(context -> (context.first & 0xFF) | (context.second & 0xFF))
-                .first8MSBisIX()
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(3),
-                test.runWithFirst8bitOperand(0xDD, 0xB6)
+                test.first8MSBisIX().runWithFirst8bitOperand(0xDD, 0xB6),
+                test.first8MSBisIY().runWithFirst8bitOperand(0xFD, 0xB6)
         );
     }
 
     @Test
-    public void testOR__IY_plus_d() {
-        IntegerTestBuilder test = prepareLogicIXYtest(context -> (context.first & 0xFF) | (context.second & 0xFF))
-                .first8MSBisIY()
-                .keepCurrentInjectorsAfterRun();
-
-        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(3),
-                test.runWithFirst8bitOperand(0xFD, 0xB6)
-        );
-    }
-
-    @Test
-    public void testXOR__IX_plus_d() {
+    public void testXOR__IX_IY_plus_d() {
         IntegerTestBuilder test = prepareLogicIXYtest(context -> (context.first & 0xFF) ^ (context.second & 0xFF))
-                .first8MSBisIX()
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(3),
-                test.runWithFirst8bitOperand(0xDD, 0xAE)
+                test.first8MSBisIX().runWithFirst8bitOperand(0xDD, 0xAE),
+                test.first8MSBisIY().runWithFirst8bitOperand(0xFD, 0xAE)
         );
     }
 
     @Test
-    public void testXOR__IY_plus_d() {
-        IntegerTestBuilder test = prepareLogicIXYtest(context -> (context.first & 0xFF) ^ (context.second & 0xFF))
-                .first8MSBisIY()
-                .keepCurrentInjectorsAfterRun();
-
-        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(3),
-                test.runWithFirst8bitOperand(0xFD, 0xAE)
-        );
-    }
-
-    @Test
-    public void testCP__IX_plus_d() {
+    public void testCP__IX_IY_plus_d() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
                 .first8LSBisRegister(REG_A)
-                .first8MSBisIX()
                 .verifyRegister(REG_A, context -> context.first & 0xFF)
                 .verifyFlags(new FlagsBuilderImpl().sign().zero().carry().halfCarry().overflow().subtractionIsSet(),
                         context -> (context.first & 0xFF) - (context.second & 0xFF)
@@ -465,24 +424,8 @@ public class LogicTest extends InstructionsTTest {
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(3),
-                test.runWithFirst8bitOperand(0xDD, 0xBE)
-        );
-    }
-
-    @Test
-    public void testCP__IY_plus_d() {
-        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
-                .first8LSBisRegister(REG_A)
-                .first8MSBisIY()
-                .verifyRegister(REG_A, context -> context.first & 0xFF)
-                .verifyFlags(new FlagsBuilderImpl().sign().zero().carry().halfCarry().overflow().subtractionIsSet(),
-                        context -> (context.first & 0xFF) - (context.second & 0xFF)
-                )
-                .keepCurrentInjectorsAfterRun();
-
-        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(3),
-                test.runWithFirst8bitOperand(0xFD, 0xBE)
+                test.first8MSBisIX().runWithFirst8bitOperand(0xDD, 0xBE),
+                test.first8MSBisIY().runWithFirst8bitOperand(0xFD, 0xBE)
         );
     }
 
@@ -549,24 +492,14 @@ public class LogicTest extends InstructionsTTest {
     }
 
     @Test
-    public void testRLC__IX_plus_d() {
+    public void testRLC__IX_IY_plus_d() {
         IntegerTestBuilder test = prepareIXIYRotationMSBTest(
                 context -> ((context.second << 1) & 0xFF) | (context.second >>> 7) & 1
-        ).first8MSBisIX().keepCurrentInjectorsAfterRun();
+        ).keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(06, 0xDD, 0xCB)
-        );
-    }
-
-    @Test
-    public void testRLC__IY_plus_d() {
-        IntegerTestBuilder test = prepareIXIYRotationMSBTest(
-                context -> ((context.second << 1) & 0xFF) | (context.second >>> 7) & 1
-        ).first8MSBisIY().keepCurrentInjectorsAfterRun();
-
-        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(06, 0xFD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(06, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(06, 0xFD, 0xCB)
         );
     }
 
@@ -596,24 +529,14 @@ public class LogicTest extends InstructionsTTest {
     }
 
     @Test
-    public void testRL__IX_plus_d() {
+    public void testRL__IX_IY_plus_d() {
         IntegerTestBuilder test = prepareIXIYRotationMSBTest(
                 context -> ((context.second << 1) & 0xFF) | (context.flags & FLAG_C)
-        ).first8MSBisIX().keepCurrentInjectorsAfterRun();
+        ).keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x16, 0xDD, 0xCB)
-        );
-    }
-
-    @Test
-    public void testRL__IY_plus_d() {
-        IntegerTestBuilder test = prepareIXIYRotationMSBTest(
-                context -> ((context.second << 1) & 0xFF) | (context.flags & FLAG_C)
-        ).first8MSBisIY().keepCurrentInjectorsAfterRun();
-
-        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x16, 0xFD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(0x16, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(0x16, 0xFD, 0xCB)
         );
     }
 
@@ -643,24 +566,14 @@ public class LogicTest extends InstructionsTTest {
     }
 
     @Test
-    public void testRRC__IX_plus_d() {
+    public void testRRC__IX_IY_plus_d() {
         IntegerTestBuilder test = prepareIXIYRotationLSBTest(
                 context -> ((context.second >>> 1) & 0x7F) | (((context.second & 1) << 7))
-        ).first8MSBisIX().keepCurrentInjectorsAfterRun();
+        ).keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x0E, 0xDD, 0xCB)
-        );
-    }
-
-    @Test
-    public void testRRC__IY_plus_d() {
-        IntegerTestBuilder test = prepareIXIYRotationLSBTest(
-                context -> ((context.second >>> 1) & 0x7F) | (((context.second & 1) << 7))
-        ).first8MSBisIY().keepCurrentInjectorsAfterRun();
-
-        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x0E, 0xFD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(0x0E, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(0x0E, 0xFD, 0xCB)
         );
     }
 
@@ -690,24 +603,14 @@ public class LogicTest extends InstructionsTTest {
     }
 
     @Test
-    public void testRR__IX_plus_d() {
+    public void testRR__IX_IY_plus_d() {
         IntegerTestBuilder test = prepareIXIYRotationLSBTest(
                 context -> ((context.second >> 1) & 0x7F) | ((context.flags & FLAG_C) << 7)
-        ).first8MSBisIX().keepCurrentInjectorsAfterRun();
+        ).keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x1E, 0xDD, 0xCB)
-        );
-    }
-
-    @Test
-    public void testRR__IY_plus_d() {
-        IntegerTestBuilder test = prepareIXIYRotationLSBTest(
-                context -> ((context.second >> 1) & 0x7F) | ((context.flags & FLAG_C) << 7)
-        ).first8MSBisIY().keepCurrentInjectorsAfterRun();
-
-        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x1E, 0xFD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(0x1E, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(0x1E, 0xFD, 0xCB)
         );
     }
 
@@ -736,24 +639,13 @@ public class LogicTest extends InstructionsTTest {
     }
 
     @Test
-    public void testSLA__IX_plus_d() {
+    public void testSLA__IX_IY_plus_d() {
         IntegerTestBuilder test = prepareIXIYRotationMSBTest(context -> (context.second << 1) & 0xFE)
-                .first8MSBisIX()
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x26, 0xDD, 0xCB)
-        );
-    }
-
-    @Test
-    public void testSLA__IY_plus_d() {
-        IntegerTestBuilder test = prepareIXIYRotationMSBTest(context -> (context.second << 1) & 0xFE)
-                .first8MSBisIY()
-                .keepCurrentInjectorsAfterRun();
-
-        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x26, 0xFD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(0x26, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(0x26, 0xFD, 0xCB)
         );
     }
 
@@ -782,28 +674,14 @@ public class LogicTest extends InstructionsTTest {
     }
 
     @Test
-    public void testSRA__IX_plus_d() {
+    public void testSRA__IX_IY_plus_d() {
         IntegerTestBuilder test = prepareIXIYRotationLSBTest(
                 context -> ((context.second & 0xFF) >>> 1) & 0xFF | (context.second & 0x80)
-        )
-                .first8MSBisIX()
-                .keepCurrentInjectorsAfterRun();
+        ).keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x2E, 0xDD, 0xCB)
-        );
-    }
-
-    @Test
-    public void testSRA__IY_plus_d() {
-        IntegerTestBuilder test = prepareIXIYRotationLSBTest(
-                context -> ((context.second & 0xFF) >>> 1) & 0xFF | (context.second & 0x80)
-        )
-                .first8MSBisIY()
-                .keepCurrentInjectorsAfterRun();
-
-        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x2E, 0xFD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(0x2E, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(0x2E, 0xFD, 0xCB)
         );
     }
 
@@ -832,24 +710,13 @@ public class LogicTest extends InstructionsTTest {
     }
 
     @Test
-    public void testSRL__IX_plus_d() {
+    public void testSRL__IX_IY_plus_d() {
         IntegerTestBuilder test = prepareIXIYRotationLSBTest(context -> ((context.second & 0xFF) >>> 1) & 0x7F)
-                .first8MSBisIX()
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x3E, 0xDD, 0xCB)
-        );
-    }
-
-    @Test
-    public void testSRL__IY_plus_d() {
-        IntegerTestBuilder test = prepareIXIYRotationLSBTest(context -> ((context.second & 0xFF) >>> 1) & 0x7F)
-                .first8MSBisIY()
-                .keepCurrentInjectorsAfterRun();
-
-        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x3E, 0xFD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(0x3E, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(0x3E, 0xFD, 0xCB)
         );
     }
 
@@ -878,33 +745,44 @@ public class LogicTest extends InstructionsTTest {
     }
 
     @Test
-    public void testSLL_IX_plus_d() throws Exception {
+    public void testSLL_IX_IY_plus_d() throws Exception {
         IntegerTestBuilder test = prepareIXIYRotationMSBTest(context -> ((context.second << 1) & 0xFF) | context.second & 1)
-                .first8MSBisIX()
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x36, 0xDD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(0x36, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(0x36, 0xFD, 0xCB)
         );
     }
 
     @Test
-    public void testSLL_IY_plus_d() throws Exception {
-        IntegerTestBuilder test = prepareIXIYRotationMSBTest(context -> ((context.second << 1) & 0xFF) | context.second & 1)
-                .first8MSBisIY()
-                .keepCurrentInjectorsAfterRun();
+    public void testRLD() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsAddressAndSecondIsMemoryByte()
+                .firstIsPair(REG_PAIR_HL)
+                .first8LSBisRegister(REG_A)
+                .verifyByte(context -> context.first, context -> (context.second << 4) & 0xF0 | context.first & 0x0F)
+                .verifyRegister(REG_A, context -> (context.first & 0xF0) | (context.second >>> 4) & 0x0F)
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().sign().zero().parity().subtractionIsReset().halfCarryIsReset());
 
-        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.runWithFirst8bitOperandWithOpcodeAfterOperand(0x36, 0xFD, 0xCB)
+        Generator.forSome16bitBinary(
+                test.run(0xED, 0x6F)
         );
     }
 
-    public void testRLD() {
-
-    }
-
+    @Test
     public void testRRD() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsAddressAndSecondIsMemoryByte()
+                .firstIsPair(REG_PAIR_HL)
+                .first8LSBisRegister(REG_A)
+                .verifyByte(context -> context.first, context -> (context.first << 4) & 0xF0 | (context.second >>> 4) & 0x0F)
+                .verifyRegister(REG_A, context -> (context.first & 0xF0) | context.second & 0x0F)
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().sign().zero().parity().subtractionIsReset().halfCarryIsReset());
 
+        Generator.forSome16bitBinary(
+                test.run(0xED, 0x67)
+        );
     }
 
 }
