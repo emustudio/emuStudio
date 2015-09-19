@@ -498,8 +498,8 @@ public class LogicTest extends InstructionsTest {
         ).keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(06, 0xDD, 0xCB),
-                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(06, 0xFD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfter(06, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfter(06, 0xFD, 0xCB)
         );
     }
 
@@ -535,8 +535,8 @@ public class LogicTest extends InstructionsTest {
         ).keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(0x16, 0xDD, 0xCB),
-                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(0x16, 0xFD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfter(0x16, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfter(0x16, 0xFD, 0xCB)
         );
     }
 
@@ -572,8 +572,8 @@ public class LogicTest extends InstructionsTest {
         ).keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(0x0E, 0xDD, 0xCB),
-                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(0x0E, 0xFD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfter(0x0E, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfter(0x0E, 0xFD, 0xCB)
         );
     }
 
@@ -609,8 +609,8 @@ public class LogicTest extends InstructionsTest {
         ).keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(0x1E, 0xDD, 0xCB),
-                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(0x1E, 0xFD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfter(0x1E, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfter(0x1E, 0xFD, 0xCB)
         );
     }
 
@@ -644,8 +644,8 @@ public class LogicTest extends InstructionsTest {
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(0x26, 0xDD, 0xCB),
-                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(0x26, 0xFD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfter(0x26, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfter(0x26, 0xFD, 0xCB)
         );
     }
 
@@ -680,8 +680,8 @@ public class LogicTest extends InstructionsTest {
         ).keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(0x2E, 0xDD, 0xCB),
-                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(0x2E, 0xFD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfter(0x2E, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfter(0x2E, 0xFD, 0xCB)
         );
     }
 
@@ -715,8 +715,8 @@ public class LogicTest extends InstructionsTest {
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(0x3E, 0xDD, 0xCB),
-                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(0x3E, 0xFD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfter(0x3E, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfter(0x3E, 0xFD, 0xCB)
         );
     }
 
@@ -750,8 +750,8 @@ public class LogicTest extends InstructionsTest {
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
-                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfterOperand(0x36, 0xDD, 0xCB),
-                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfterOperand(0x36, 0xFD, 0xCB)
+                test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfter(0x36, 0xDD, 0xCB),
+                test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfter(0x36, 0xFD, 0xCB)
         );
     }
 

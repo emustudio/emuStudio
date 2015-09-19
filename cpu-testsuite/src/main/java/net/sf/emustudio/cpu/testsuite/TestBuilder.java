@@ -1,13 +1,15 @@
 package net.sf.emustudio.cpu.testsuite;
 
 import net.sf.emustudio.cpu.testsuite.injectors.InstructionNoOperands;
-import net.sf.emustudio.cpu.testsuite.injectors.InstructionOperand;
+import net.sf.emustudio.cpu.testsuite.injectors.InstructionSingleOperand;
+import net.sf.emustudio.cpu.testsuite.injectors.InstructionTwoOperands;
 import net.sf.emustudio.cpu.testsuite.injectors.MemoryAddress;
 import net.sf.emustudio.cpu.testsuite.injectors.MemoryByte;
 import net.sf.emustudio.cpu.testsuite.injectors.MemoryWord;
-import net.sf.emustudio.cpu.testsuite.runners.Runner;
+import net.sf.emustudio.cpu.testsuite.runners.TestRunner;
 import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
-import net.sf.emustudio.cpu.testsuite.runners.RunnerInjector;
+import net.sf.emustudio.cpu.testsuite.runners.SingleOperandInjector;
+import net.sf.emustudio.cpu.testsuite.runners.TwoOperandsInjector;
 import net.sf.emustudio.cpu.testsuite.verifiers.FlagsVerifier;
 import net.sf.emustudio.cpu.testsuite.verifiers.MemoryByteVerifier;
 import net.sf.emustudio.cpu.testsuite.verifiers.MemoryWordVerifier;
@@ -18,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -25,7 +28,7 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
         CpuRunnerType extends CpuRunner, CpuVerifierType extends CpuVerifier> {
     protected final CpuRunnerType cpuRunner;
     protected final CpuVerifierType cpuVerifier;
-    protected final Runner runner;
+    protected final TestRunner runner;
 
     private final List<Consumer<RunnerContext<K>>> verifiers = new ArrayList<Consumer<RunnerContext<K>>>();
     private final List<Consumer<RunnerContext<K>>> verifiersToClearAfterRun = new ArrayList<Consumer<RunnerContext<K>>>();
@@ -36,7 +39,7 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
     protected TestBuilder(CpuRunnerType cpuRunner, CpuVerifierType cpuVerifier) {
         this.cpuRunner = Objects.requireNonNull(cpuRunner);
         this.cpuVerifier = Objects.requireNonNull(cpuVerifier);
-        this.runner = new Runner<K, CpuRunnerType>(cpuRunner);
+        this.runner = new TestRunner<K, CpuRunnerType>(cpuRunner);
     }
 
     public SpecificTestBuilder clearAllVerifiers() {
@@ -73,16 +76,21 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
     }
 
     public SpecificTestBuilder printRegister(int register) {
-        runner.injectBoth((runner, first, second) ->
+        runner.injectTwoOperands((runner, first, second) ->
                         System.out.println(String.format("REG_%d=%x", register, runner.getRegisters().get(register)))
         );
         return (SpecificTestBuilder)this;
     }
 
     public SpecificTestBuilder printOperands() {
-        runner.injectBoth((runner, first, second) ->
-                System.out.println(String.format("first=%x, second=%x", first, second))
+        runner.injectTwoOperands((runner, first, second) ->
+                        System.out.println(String.format("first=%x, second=%x", first, second))
         );
+        return (SpecificTestBuilder)this;
+    }
+
+    public SpecificTestBuilder printInjectingProcess() {
+        runner.printInjectingProcess();
         return (SpecificTestBuilder)this;
     }
 
@@ -187,7 +195,7 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
     }
 
     public SpecificTestBuilder firstIsAddressAndSecondIsMemoryWord() {
-        runner.injectBoth((runner, first, second) -> {
+        runner.injectTwoOperands((runner, first, second) -> {
             runner.ensureProgramSize(first.intValue() + 4);
             runner.setByte(first.intValue(), second.intValue() & 0xFF);
             runner.setByte(first.intValue() + 1, (second.intValue() >>> 8) & 0xFF);
@@ -196,7 +204,7 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
     }
 
     public SpecificTestBuilder firstIsAddressAndSecondIsMemoryByte() {
-        runner.injectBoth((runner, first, second) -> {
+        runner.injectTwoOperands((runner, first, second) -> {
             runner.ensureProgramSize(first.intValue() + 4);
             runner.setByte(first.intValue(), second.intValue() & 0xFF);
         });
@@ -217,27 +225,77 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
         return create(new InstructionNoOperands<>(instruction), true);
     }
 
-    public Test<K> runWithFirstOperand(int instruction) {
-        return create(new InstructionOperand<K, CpuRunnerType>(instruction), true);
+    public Test<K> runWithFirstOperand(int... instruction) {
+        return create(new InstructionSingleOperand<K, CpuRunnerType>(instruction), true);
     }
 
-    public Test<K> runWithSecondOperand(int instruction) {
-        return create(new InstructionOperand<K, CpuRunnerType>(instruction), false);
+    public Test<K> runWithSecondOperand(int... instruction) {
+        return create(new InstructionSingleOperand<K, CpuRunnerType>(instruction), false);
     }
 
-    protected Test<K> create(RunnerInjector<K, CpuRunnerType> instruction, boolean first) {
-        List<Consumer<RunnerContext<K>>> allVerifiers = getVerifiers();
-        if (allVerifiers.isEmpty()) {
-            throw new IllegalStateException("At least one verifier must be set");
-        }
-        Runner<K, CpuRunnerType> tmpRunner = runner.clone();
+    public Test<K> runWithFirst8bitOperandWithOpcodeAfter(int opcodeAfterOperand, int... instruction) {
+        return create(
+                (tmpRunner, argument) ->
+                        new InstructionSingleOperand<Byte, CpuRunnerType>(instruction)
+                                .placeOpcodesAfterOperand(opcodeAfterOperand)
+                                .inject(cpuRunner, (byte)(argument.intValue() & 0xFF)),
+                true
+        );
+    }
+
+    public Test<K> runWithFirst8bitOperand(int... instruction) {
+        return create((tmpRunner, first) ->
+                        new InstructionSingleOperand<Byte, CpuRunnerType>(instruction)
+                                .inject(tmpRunner, (byte)(first.intValue() & 0xFF)),
+                true
+        );
+    }
+
+    public Test<K> runWithFirst8bitOperandTwoTimes(int... instruction) {
+        return create((tmpRunner, first, second) ->
+                new InstructionTwoOperands<Byte, CpuRunnerType>(instruction)
+                .inject(tmpRunner, (byte)(first.intValue() & 0xFF), (byte)(first.intValue() & 0xFF))
+        );
+    }
+
+    public Test<K> runWithBothOperandsWithOpcodeAfter(int opcodeAfter, int... instruction) {
+        return create(new InstructionTwoOperands<K, CpuRunnerType>(instruction).placeOpcodesAfterOperands(opcodeAfter));
+    }
+
+    protected Test<K> create(TwoOperandsInjector<K, CpuRunnerType> instruction) {
+        List<Consumer<RunnerContext<K>>> allVerifiers = getAndCheckVerifiers();
+
+        TestRunner<K, CpuRunnerType> tmpRunner = runner.clone();
+        tmpRunner.injectTwoOperands(instruction);
+
+        return createPreparedTest(allVerifiers, tmpRunner);
+    }
+
+    protected Test<K> create(SingleOperandInjector<K, CpuRunnerType> instruction, boolean first) {
+        List<Consumer<RunnerContext<K>>> allVerifiers = getAndCheckVerifiers();
+
+        TestRunner<K, CpuRunnerType> tmpRunner = runner.clone();
         if (first) {
             tmpRunner.injectFirst(instruction);
         } else {
             tmpRunner.injectSecond(instruction);
         }
+
+        return createPreparedTest(allVerifiers, tmpRunner);
+    }
+
+    private List<Consumer<RunnerContext<K>>> getAndCheckVerifiers() {
+        List<Consumer<RunnerContext<K>>> allVerifiers = getVerifiers();
+        if (allVerifiers.isEmpty()) {
+            throw new IllegalStateException("At least one verifier must be set");
+        }
+        return allVerifiers;
+    }
+
+    private Test<K> createPreparedTest(List<Consumer<RunnerContext<K>>> allVerifiers,
+                                       TestRunner<K, CpuRunnerType> tmpRunner) {
         runner.clearInjectors();
         verifiersToClearAfterRun.clear();
-        return new Test<K>(tmpRunner, allVerifiers);
+        return new Test<>(tmpRunner, allVerifiers);
     }
 }

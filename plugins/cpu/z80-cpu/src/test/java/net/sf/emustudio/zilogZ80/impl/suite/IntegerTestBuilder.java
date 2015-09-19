@@ -1,8 +1,6 @@
 package net.sf.emustudio.zilogZ80.impl.suite;
 
-import net.sf.emustudio.cpu.testsuite.Test;
 import net.sf.emustudio.cpu.testsuite.TestBuilder;
-import net.sf.emustudio.cpu.testsuite.injectors.InstructionOperand;
 import net.sf.emustudio.cpu.testsuite.injectors.MemoryByte;
 import net.sf.emustudio.cpu.testsuite.injectors.MemoryExpand;
 import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
@@ -69,26 +67,8 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         return this;
     }
 
-    public Test<Integer> runWithFirst8bitOperand(int... instruction) {
-        return create(
-                (tmpRunner, argument) ->
-                        new InstructionOperand<Byte, CpuRunnerImpl>(instruction).inject(cpuRunner, (byte)(argument.intValue() & 0xFF)),
-                true
-        );
-    }
-
-    public Test<Integer> runWithFirst8bitOperandWithOpcodeAfterOperand(int opcodeAfterOperand, int... instruction) {
-        return create(
-                (tmpRunner, argument) ->
-                        new InstructionOperand<Byte, CpuRunnerImpl>(instruction)
-                                .placeOpcodesAfterOperand(opcodeAfterOperand)
-                                .inject(cpuRunner, (byte)(argument.intValue() & 0xFF)),
-                true
-        );
-    }
-
     public IntegerTestBuilder first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte() {
-        runner.injectBoth((tmpRunner, first, second) -> {
+        runner.injectTwoOperands((tmpRunner, first, second) -> {
                     new MemoryByte(get8MSBplus8LSB(first.intValue())).inject(tmpRunner, (byte) (second.intValue() & 0xFF));
                 }
         );

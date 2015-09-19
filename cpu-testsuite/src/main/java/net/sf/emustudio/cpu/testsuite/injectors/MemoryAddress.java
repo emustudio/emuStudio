@@ -1,10 +1,10 @@
 package net.sf.emustudio.cpu.testsuite.injectors;
 
 import net.sf.emustudio.cpu.testsuite.CpuRunner;
-import net.sf.emustudio.cpu.testsuite.runners.RunnerInjector;
+import net.sf.emustudio.cpu.testsuite.runners.SingleOperandInjector;
 
 public class MemoryAddress<TCpuRunnerType extends CpuRunner>
-        implements RunnerInjector<Integer, TCpuRunnerType> {
+        implements SingleOperandInjector<Integer, TCpuRunnerType> {
     private final int value;
     private final boolean word;
 
@@ -25,4 +25,10 @@ public class MemoryAddress<TCpuRunnerType extends CpuRunner>
             cpuRunner.setByte(address + 1, (value >>> 8) & 0xFF);
         }
     }
+
+    @Override
+    public String toString() {
+        return String.format("memory[address] = %04x (word=%s)", value, word);
+    }
+
 }

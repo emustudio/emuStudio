@@ -18,156 +18,235 @@
  */
 package net.sf.emustudio.zilogZ80.impl;
 
-public class TransferTest extends InstructionsTest {
-//
-//    @Test
-//    public void testLD_r__n() throws Exception {
-//
-//
-//        resetProgram(generateLD_r__n(defaultValues));
-//        stepAndCheckRegisters(defaultValues);
-//    }
+import net.sf.emustudio.cpu.testsuite.Generator;
+import net.sf.emustudio.zilogZ80.impl.suite.ByteTestBuilder;
+import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
+import net.sf.emustudio.zilogZ80.impl.suite.Utils;
+import org.junit.Test;
 
-//    private int[] defaultValues;
-//
-//    private short[] generateLD_r__n(int... values) {
-//        int[] opcodes = new int[] {
-//                0x3E, 0x06, 0x0E, 0x16, 0x1E, 0x26, 0x2E
-//        };
-//        short[] result = new short[values.length * 2];
-//        for (int i = 0, j = 0; i < values.length; i++, j+=2) {
-//            result[j] = (short)opcodes[i];
-//            result[j+1] = (short)values[i];
-//        }
-//        return result;
-//    }
-//
-//    @Before
-//    public void setupValues() {
-//        defaultValues = new int[] { 1,2,3,4,5,6,7 };
-//    }
-//
-//    @Test
-//    public void testMemoryOverflow() throws Exception {
-//        resetProgram(new short[] {});
-//
-//        cpu.step();
-//        checkRunState(CPU.RunState.STATE_STOPPED_ADDR_FALLOUT);
-//    }
-//
-//    @Test
-//    public void testLD_mHL__n() throws Exception {
-//        resetProgram(
-//                0x36, 0xAB, 0, 0, 0,
-//                0xFF //address 5
-//        );
-//
-//        setRegister(EmulatorEngine.REG_L, 5);
-//        stepAndCheckMemory(0xAB, 5);
-//    }
-//
-//    @Test
-//    public void testLD_A__r() throws Exception {
-//        resetProgram(0x7F, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D);
-//        setRegisters(defaultValues);
-//
-//        stepAndCheckRegister(EmulatorEngine.REG_A, defaultValues);
-//    }
-//
-//    @Test
-//    public void testLD_B__r() throws Exception {
-//        resetProgram(0x47, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45);
-//
-//        setRegisters(defaultValues);
-//        stepAndCheckRegister(EmulatorEngine.REG_B, 1,1,3,4,5,6,7);
-//    }
-//
-//    @Test
-//    public void testLD_C__r() throws Exception {
-//        resetProgram(0x4F, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D);
-//
-//        setRegisters(defaultValues);
-//        stepAndCheckRegister(EmulatorEngine.REG_C, 1,2,2,4,5,6,7);
-//    }
-//
-//    @Test
-//    public void testLD_D__r() throws Exception {
-//        resetProgram(0x57, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55);
-//
-//        setRegisters(defaultValues);
-//        stepAndCheckRegister(EmulatorEngine.REG_D, 1,2,3,3,5,6,7);
-//    }
-//
-//    @Test
-//    public void testLD_E__r() throws Exception {
-//        resetProgram(0x5F, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D);
-//
-//        setRegisters(defaultValues);
-//        stepAndCheckRegister(EmulatorEngine.REG_E, 1,2,3,4,4,6,7);
-//    }
-//
-//    @Test
-//    public void testLD_H__r() throws Exception {
-//        resetProgram(0x67, 0x60, 0x61, 0x62, 0x63, 0x64, 0x65);
-//
-//        setRegisters(defaultValues);
-//        stepAndCheckRegister(EmulatorEngine.REG_H, 1,2,3,4,5,5,7);
-//    }
-//
-//    @Test
-//    public void testLD_L__r() throws Exception {
-//        resetProgram(0x6F, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D);
-//
-//        setRegisters(defaultValues);
-//        stepAndCheckRegister(EmulatorEngine.REG_L, 1,2,3,4,5,6,6);
-//    }
-//
-//    @Test
-//    public void testLD_r__mHL() throws Exception {
-//        resetProgram(
-//                0x7E, 0x46, 0x4E, 0x56, 0x5E, 0x66, 0x6E,0,
-//                0xFF // address 8
-//        );
-//
-//        setRegisters(0,0,0,0,0,0,8);
-//        stepAndCheckRegisters(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
-//        setRegister(EmulatorEngine.REG_H, 0); // hack
-//        stepAndCheck(0xFF, EmulatorEngine.REG_L);
-//    }
-//
-//    @Test
-//    public void testLD_mHL__r() throws Exception {
-//        resetProgram(
-//                0x77, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75,0,
-//                0xFF // address 8
-//        );
-//
-//        setRegisters(1,2,3,4,5,0,8);
-//        stepAndCheckMemory(8, 1,2,3,4,5,0,8);
-//    }
-//
-//    @Test
-//    public void testLD_A__dd() throws Exception {
-//        resetProgram(
-//                0x0A, 0x1A, 0,
-//                0xFF // address 3
-//        );
-//
-//        setRegisters(0,0,3,0,3,0,0);
-//        stepAndCheck(0xFF, EmulatorEngine.REG_A);
-//        setRegister(EmulatorEngine.REG_A,  0); // hack
-//        stepAndCheck(0xFF, EmulatorEngine.REG_A);
-//    }
-//
-//    @Test
-//    public void testLD_A__nn() throws Exception {
-//        resetProgram(
-//                0x3A, 5, 0, 0, 0,
-//                0xFF //address 5
-//        );
-//
-//        stepAndCheck(0xFF, EmulatorEngine.REG_A);
-//    }
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_A;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_B;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_C;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_D;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_E;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_H;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
+import static net.sf.emustudio.zilogZ80.impl.suite.Utils.predicate8MSBplus8LSB;
+
+public class TransferTest extends InstructionsTest {
+
+    private void runLD_r_r_test(int register, int... opcodes) {
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsRegister(register)
+                .verifyRegister(register, context -> context.second.intValue() & 0xFF)
+                .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome8bitBinary(
+                test.secondIsRegister(REG_B).run(opcodes[0]),
+                test.secondIsRegister(REG_C).run(opcodes[1]),
+                test.secondIsRegister(REG_D).run(opcodes[2]),
+                test.secondIsRegister(REG_E).run(opcodes[3]),
+                test.secondIsRegister(REG_H).run(opcodes[4]),
+                test.secondIsRegister(REG_L).run(opcodes[5]),
+                test.secondIsMemoryByteAt(0x303).setPair(REG_PAIR_HL, 0x303).run(opcodes[6]),
+                test.secondIsRegister(REG_A).run(opcodes[7])
+        );
+
+    }
+
+    @Test
+    public void testLD_r__r() throws Exception {
+        runLD_r_r_test(REG_A, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F);
+        runLD_r_r_test(REG_B, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47);
+        runLD_r_r_test(REG_C, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F);
+        runLD_r_r_test(REG_D, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57);
+        runLD_r_r_test(REG_E, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F);
+        runLD_r_r_test(REG_H, 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67);
+        runLD_r_r_test(REG_L, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F);
+    }
+
+
+    private void runLD_r_n_test(int register, int... opcodes) {
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsRegister(register)
+                .verifyRegister(register, context -> context.second.intValue() & 0xFF)
+                .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome8bitBinary(
+                test.runWithSecondOperand(opcodes[0])
+        );
+    }
+
+    @Test
+    public void testLD_r__n() throws Exception {
+        runLD_r_n_test(REG_A, 0x3E);
+        runLD_r_n_test(REG_B, 0x06);
+        runLD_r_n_test(REG_C, 0x0E);
+        runLD_r_n_test(REG_D, 0x16);
+        runLD_r_n_test(REG_E, 0x1E);
+        runLD_r_n_test(REG_H, 0x26);
+        runLD_r_n_test(REG_L, 0x2E);
+    }
+
+    @Test
+    public void testLD_mHL__n() throws Exception {
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsMemoryByteAt(0x303)
+                .setPair(REG_PAIR_HL, 0x303)
+                .verifyByte(0x303, context -> context.second.intValue() & 0xFF)
+                .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome8bitBinary(
+                test.runWithSecondOperand(0x36)
+        );
+    }
+
+    @Test
+    public void testLD_mHL__r() throws Exception {
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsMemoryByteAt(0x303)
+                .setPair(REG_PAIR_HL, 0x303)
+                .verifyByte(0x303, context -> context.second.intValue() & 0xFF)
+                .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome8bitBinary(
+                test.secondIsRegister(REG_B).run(0x70),
+                test.secondIsRegister(REG_C).run(0x71),
+                test.secondIsRegister(REG_D).run(0x72),
+                test.secondIsRegister(REG_E).run(0x73),
+                test.secondIsRegister(REG_A).run(0x77)
+        );
+    }
+
+    @Test
+    public void testLD_mHL__H_L() throws Exception {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsAddressAndSecondIsMemoryByte()
+                .firstIsPair(REG_PAIR_HL)
+                .keepCurrentInjectorsAfterRun()
+                .clearOtherVerifiersAfterRun();
+
+        Generator.forSome16bitBinary(1,
+                test.verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF).run(0x74),
+                test.verifyByte(context -> context.first, context -> context.first & 0xFF).run(0x75)
+        );
+    }
+
+
+    private void runLD_r__IX_IY_plus_d(int register, int opcode) {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
+                .first8LSBisRegister(register)
+                .verifyRegister(register, context -> context.second & 0xFF)
+                .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(3),
+                test.first8MSBisIX().runWithFirst8bitOperand(0xDD, opcode),
+                test.first8MSBisIY().runWithFirst8bitOperand(0xFD, opcode)
+        );
+    }
+
+    @Test
+    public void testLD_r__IX_IY_plus_d() throws Exception {
+        runLD_r__IX_IY_plus_d(REG_A, 0x7E);
+        runLD_r__IX_IY_plus_d(REG_B, 0x46);
+        runLD_r__IX_IY_plus_d(REG_C, 0x4E);
+        runLD_r__IX_IY_plus_d(REG_D, 0x56);
+        runLD_r__IX_IY_plus_d(REG_E, 0x5E);
+        runLD_r__IX_IY_plus_d(REG_H, 0x66);
+        runLD_r__IX_IY_plus_d(REG_L, 0x6E);
+    }
+
+    @Test
+    public void testLD_IX_plus_d__r() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
+                .first8MSBisIX()
+                .verifyByte(context -> Utils.get8MSBplus8LSB(context.first), context -> context.first & 0xFF)
+                .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome16bitBinary(
+                test.first8LSBisRegister(REG_A).runWithFirst8bitOperand(0xDD, 0x77),
+                test.first8LSBisRegister(REG_B).runWithFirst8bitOperand(0xDD, 0x70),
+                test.first8LSBisRegister(REG_C).runWithFirst8bitOperand(0xDD, 0x71),
+                test.first8LSBisRegister(REG_D).runWithFirst8bitOperand(0xDD, 0x72),
+                test.first8LSBisRegister(REG_E).runWithFirst8bitOperand(0xDD, 0x73),
+                test.first8LSBisRegister(REG_H).runWithFirst8bitOperand(0xDD, 0x74),
+                test.first8LSBisRegister(REG_L).runWithFirst8bitOperand(0xDD, 0x75)
+        );
+    }
+
+    @Test
+    public void testLD_IY_plus_d__r() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
+                .first8MSBisIY()
+                .verifyByte(context -> Utils.get8MSBplus8LSB(context.first), context -> context.first & 0xFF)
+                .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome16bitBinary(
+                test.first8LSBisRegister(REG_A).runWithFirst8bitOperand(0xFD, 0x77),
+                test.first8LSBisRegister(REG_B).runWithFirst8bitOperand(0xFD, 0x70),
+                test.first8LSBisRegister(REG_C).runWithFirst8bitOperand(0xFD, 0x71),
+                test.first8LSBisRegister(REG_D).runWithFirst8bitOperand(0xFD, 0x72),
+                test.first8LSBisRegister(REG_E).runWithFirst8bitOperand(0xFD, 0x73),
+                test.first8LSBisRegister(REG_H).runWithFirst8bitOperand(0xFD, 0x74),
+                test.first8LSBisRegister(REG_L).runWithFirst8bitOperand(0xFD, 0x75)
+        );
+    }
+
+    @Test
+    public void testLD_IX_plus_d__n() throws Exception {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
+                .verifyByte(context -> Utils.get8MSBplus8LSB(context.first), context -> context.first & 0xFF)
+                .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome16bitBinary(
+                test.first8MSBisIX().runWithFirst8bitOperandTwoTimes(0xDD, 0x36),
+                test.first8MSBisIY().runWithFirst8bitOperandTwoTimes(0xFD, 0x36)
+        );
+    }
+
+    @Test
+    public void testLD_A__dd() throws Exception {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsAddressAndSecondIsMemoryByte()
+                .verifyRegister(REG_A, context -> context.second & 0xFF)
+                .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome16bitBinary(
+                test.firstIsPair(REG_PAIR_BC).run(0x0A),
+                test.firstIsPair(REG_PAIR_DE).run(0x1A)
+        );
+    }
+
+    @Test
+    public void testLD_A__nn() throws Exception {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsAddressAndSecondIsMemoryByte()
+                .verifyRegister(REG_A, context -> context.second & 0xFF);
+
+        Generator.forSome16bitBinary(
+                test.runWithFirstOperand(0x3A)
+        );
+    }
+
+    @Test
+    public void testLD_dd__A() throws Exception {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsAddressAndSecondIsMemoryByte()
+                .first8LSBisRegister(REG_A)
+                .verifyByte(context -> context.first, context -> context.first & 0xFF)
+                .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome16bitBinary(
+                test.firstIsPair(REG_PAIR_BC).run(0x02),
+                test.firstIsPair(REG_PAIR_DE).run(0x12)
+        );
+    }
+
+
 //
 //    @Test
 //    public void testLD_dd__A() throws Exception {
@@ -343,46 +422,6 @@ public class TransferTest extends InstructionsTest {
 //        resetProgram(generateLD_r__special_plus_d(0xFD, 25, (short)-2, values));
 //        cpu.getEngine().IY = 25;
 //        stepAndCheckRegisters(values);
-//    }
-//
-//    @Test
-//    public void testLD_IX_plus_d__r() {
-//        int[] values = new int[] {1,2,3,4,5,6,7};
-//        resetProgram(
-//                0xDD, 0x77, 1,
-//                0xDD, 0x70, 2,
-//                0xDD, 0x71, 3,
-//                0xDD, 0x72, 4,
-//                0xDD, 0x73, 5,
-//                0xDD, 0x74, 6,
-//                0xDD, 0x75, 7,
-//                0,0,0,0,0,0,0,0,0
-//        );
-//
-//        cpu.getEngine().IX = 22;
-//        setRegisters(values);
-//
-//        stepAndCheckAndIncMemory(23, values);
-//    }
-//
-//    @Test
-//    public void testLD_IY_plus_d__r() {
-//        int[] values = new int[] {1,2,3,4,5,6,7};
-//        resetProgram(
-//                0xFD, 0x77, 1,
-//                0xFD, 0x70, 2,
-//                0xFD, 0x71, 3,
-//                0xFD, 0x72, 4,
-//                0xFD, 0x73, 5,
-//                0xFD, 0x74, 6,
-//                0xFD, 0x75, 7,
-//                0,0,0,0,0,0,0,0,0
-//        );
-//
-//        cpu.getEngine().IY = 22;
-//        setRegisters(values);
-//
-//        stepAndCheckAndIncMemory(23, values);
 //    }
 //
 //    @Test

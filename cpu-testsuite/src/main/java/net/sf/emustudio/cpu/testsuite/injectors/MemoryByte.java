@@ -1,9 +1,9 @@
 package net.sf.emustudio.cpu.testsuite.injectors;
 
 import net.sf.emustudio.cpu.testsuite.CpuRunner;
-import net.sf.emustudio.cpu.testsuite.runners.RunnerInjector;
+import net.sf.emustudio.cpu.testsuite.runners.SingleOperandInjector;
 
-public class MemoryByte<TCpuRunnerType extends CpuRunner> implements RunnerInjector<Byte, TCpuRunnerType> {
+public class MemoryByte<TCpuRunnerType extends CpuRunner> implements SingleOperandInjector<Byte, TCpuRunnerType> {
     private final int address;
 
     public MemoryByte(int address) {
@@ -18,4 +18,10 @@ public class MemoryByte<TCpuRunnerType extends CpuRunner> implements RunnerInjec
     public void inject(CpuRunner cpuRunner, Byte value) {
         cpuRunner.setByte(address, value);
     }
+
+    @Override
+    public String toString() {
+        return String.format("memoryByte[%04x]", address);
+    }
+
 }
