@@ -26,6 +26,10 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         cpu.getEngine().regs[register] = value & 0xFF;
     }
 
+    public void setRegister2(int register, int value) {
+        cpu.getEngine().regs2[register] = value & 0xFF;
+    }
+
     public void setRegisterPair(int registerPair, int value) {
         int highRegister;
         int lowRegister;
@@ -63,8 +67,35 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         }
     }
 
+    public void setRegisterPair2(int registerPair, int value) {
+        int highRegister;
+        int lowRegister;
+        switch (registerPair) {
+            case 0:
+                highRegister = REG_B;
+                lowRegister = REG_C;
+                break;
+            case 1:
+                highRegister = REG_D;
+                lowRegister = REG_E;
+                break;
+            case 2:
+                highRegister = REG_H;
+                lowRegister = REG_L;
+                break;
+            default:
+                throw new IllegalArgumentException("Expected value between <0,2> !");
+        }
+        cpu.getEngine().regs2[highRegister] = (value >>> 8) & 0xFF;
+        cpu.getEngine().regs2[lowRegister] = value & 0xFF;
+    }
+
     public Byte getRegister(int register) {
         return new Byte((byte)cpu.getEngine().regs[register]);
+    }
+
+    public boolean getIFF(int index) {
+        return cpu.getEngine().IFF[index];
     }
 
     @Override
@@ -86,9 +117,21 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         cpu.getEngine().flags |= mask;
     }
 
+    public void setFlags2(int mask) {
+        cpu.getEngine().flags2 |= mask;
+    }
+
     @Override
     public void resetFlags(int mask) {
         cpu.getEngine().flags &= ~mask;
+    }
+
+    public void resetFlags() {
+        cpu.getEngine().flags = 0;
+    }
+
+    public void resetFlags2() {
+        cpu.getEngine().flags2 = 0;
     }
 
     @Override
@@ -98,6 +141,14 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
 
     public void setIX(int ix) {
         cpu.getEngine().IX = ix;
+    }
+
+    public void setI(int value) {
+        cpu.getEngine().I = value & 0xFF;
+    }
+
+    public void setR(int value) {
+        cpu.getEngine().R = value & 0xFF;
     }
 
     public void setIY(int iy) {

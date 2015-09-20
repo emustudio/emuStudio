@@ -40,31 +40,63 @@ public class CpuVerifierImpl extends CpuVerifier {
     }
 
     public void checkRegisterPair(int registerPair, int value) {
-        value &= 0xFFFF;
-
-        int realValue;
+        int highRegister;
+        int lowRegister;
         switch (registerPair) {
             case 0:
-                realValue = cpu.getEngine().regs[REG_B] << 8 | (cpu.getEngine().regs[REG_C]);
+                highRegister = REG_B;
+                lowRegister = REG_C;
                 break;
             case 1:
-                realValue = cpu.getEngine().regs[REG_D] << 8 | (cpu.getEngine().regs[REG_E]);
+                highRegister = REG_D;
+                lowRegister = REG_E;
                 break;
             case 2:
-                realValue = cpu.getEngine().regs[REG_H] << 8 | (cpu.getEngine().regs[REG_L]);
-                break;
-            case 3:
-                realValue = cpu.getEngine().SP;
+                highRegister = REG_H;
+                lowRegister = REG_L;
                 break;
             default:
-                throw new IllegalArgumentException("Expected value between <0,3> !");
+                throw new IllegalArgumentException("Expected value between <0,2> !");
         }
+
+        value &= 0xFFFF;
+        int realValue = cpu.getEngine().regs[highRegister] << 8 | (cpu.getEngine().regs[lowRegister]);
 
         assertEquals(
                 String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
                 value, realValue
         );
     }
+
+    public void checkRegisterPair2(int registerPair, int value) {
+        int highRegister;
+        int lowRegister;
+        switch (registerPair) {
+            case 0:
+                highRegister = REG_B;
+                lowRegister = REG_C;
+                break;
+            case 1:
+                highRegister = REG_D;
+                lowRegister = REG_E;
+                break;
+            case 2:
+                highRegister = REG_H;
+                lowRegister = REG_L;
+                break;
+            default:
+                throw new IllegalArgumentException("Expected value between <0,2> !");
+        }
+
+        value &= 0xFFFF;
+        int realValue = cpu.getEngine().regs2[highRegister] << 8 | (cpu.getEngine().regs2[lowRegister]);
+
+        assertEquals(
+                String.format("Expected regPair2[%02x]=%04x, but was %04x", registerPair, value, realValue),
+                value, realValue
+        );
+    }
+
 
     public void checkIX(int value) {
         value &= 0xFFFF;
@@ -152,4 +184,38 @@ public class CpuVerifierImpl extends CpuVerifier {
                 (cpu.getEngine().flags & mask) == 0
         );
     }
+
+    public void checkI(int value) {
+        assertEquals(
+                String.format("Expected I=%02x, but was %02x", value, cpu.getEngine().I),
+                value, cpu.getEngine().I
+        );
+    }
+
+    public void checkR(int value) {
+        assertEquals(
+                String.format("Expected R=%02x, but was %02x", value, cpu.getEngine().R),
+                value, cpu.getEngine().R
+        );
+    }
+
+    public void checkAF(int value) {
+        int af = (cpu.getEngine().regs[REG_A] << 8) | cpu.getEngine().flags;
+
+        assertEquals(
+                String.format("Expected AF=%04x, but was %04x", value, af),
+                value, af
+        );
+    }
+
+
+    public void checkAF2(int value) {
+        int af = (cpu.getEngine().regs2[REG_A] << 8) | cpu.getEngine().flags2;
+
+        assertEquals(
+                String.format("Expected AF2=%04x, but was %04x", value, af),
+                value, af
+        );
+    }
+
 }

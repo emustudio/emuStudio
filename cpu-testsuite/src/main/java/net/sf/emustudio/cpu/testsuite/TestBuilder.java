@@ -203,10 +203,27 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
         return (SpecificTestBuilder)this;
     }
 
+    public SpecificTestBuilder secondIsAddressAndFirstIsMemoryWord() {
+        runner.injectTwoOperands((runner, first, second) -> {
+            runner.ensureProgramSize(second.intValue() + 4);
+            runner.setByte(second.intValue(), first.intValue() & 0xFF);
+            runner.setByte(second.intValue() + 1, (first.intValue() >>> 8) & 0xFF);
+        });
+        return (SpecificTestBuilder)this;
+    }
+
     public SpecificTestBuilder firstIsAddressAndSecondIsMemoryByte() {
         runner.injectTwoOperands((runner, first, second) -> {
             runner.ensureProgramSize(first.intValue() + 4);
             runner.setByte(first.intValue(), second.intValue() & 0xFF);
+        });
+        return (SpecificTestBuilder)this;
+    }
+
+    public SpecificTestBuilder secondIsAddressAndFirstIsMemoryByte() {
+        runner.injectTwoOperands((runner, first, second) -> {
+            runner.ensureProgramSize(second.intValue() + 4);
+            runner.setByte(second.intValue(), first.intValue() & 0xFF);
         });
         return (SpecificTestBuilder)this;
     }

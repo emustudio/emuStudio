@@ -4,6 +4,7 @@ import net.sf.emustudio.cpu.testsuite.TestBuilder;
 import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
 import net.sf.emustudio.zilogZ80.impl.suite.injectors.Register;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunnerImpl, CpuVerifierImpl>  {
@@ -22,6 +23,26 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
         return this;
     }
 
+    public ByteTestBuilder firstIsRegisterI() {
+        runner.injectFirst((tmpRunner, argument) -> cpuRunner.setI(argument.intValue()));
+        return this;
+    }
+
+    public ByteTestBuilder firstIsRegisterR() {
+        runner.injectFirst((tmpRunner, argument) -> cpuRunner.setR(argument.intValue()));
+        return this;
+    }
+
+    public ByteTestBuilder secondIsRegisterI() {
+        runner.injectSecond((tmpRunner, argument) -> cpuRunner.setI(argument.intValue()));
+        return this;
+    }
+
+    public ByteTestBuilder secondIsRegisterR() {
+        runner.injectSecond((tmpRunner, argument) -> cpuRunner.setR(argument.intValue()));
+        return this;
+    }
+
     public ByteTestBuilder setRegister(int register, int value) {
         runner.injectFirst((tmpRunner, argument) -> cpuRunner.setRegister(register, value));
         return this;
@@ -36,8 +57,20 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
     }
 
     public ByteTestBuilder verifyRegister(int register, Function<RunnerContext<Byte>, Integer> operator) {
-        lastOperation = operator;
+        lastOperation = Objects.requireNonNull(operator);
         return verifyRegister(register);
+    }
+
+    public ByteTestBuilder verifyRegisterI(Function<RunnerContext<Byte>, Integer> operator) {
+        lastOperation = Objects.requireNonNull(operator);
+        addVerifier(context -> cpuVerifier.checkI(operator.apply(context)));
+        return this;
+    }
+
+    public ByteTestBuilder verifyRegisterR(Function<RunnerContext<Byte>, Integer> operator) {
+        lastOperation = Objects.requireNonNull(operator);
+        addVerifier(context -> cpuVerifier.checkR(operator.apply(context)));
+        return this;
     }
 
     public ByteTestBuilder verifyRegister(int register) {
@@ -50,13 +83,13 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
     }
 
     public ByteTestBuilder verifyPair(int registerPair, Function<RunnerContext<Byte>, Integer> operator) {
-        lastOperation = operator;
+        lastOperation = Objects.requireNonNull(operator);
         addVerifier(context -> cpuVerifier.checkRegisterPair(registerPair, operator.apply(context)));
         return this;
     }
 
     public ByteTestBuilder verifyPC(Function<RunnerContext<Byte>, Integer> operator) {
-        lastOperation = operator;
+        lastOperation = Objects.requireNonNull(operator);
         addVerifier(context -> cpuVerifier.checkPC(operator.apply(context)));
         return this;
     }

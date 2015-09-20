@@ -156,8 +156,10 @@ edINSTR = "ld": 010 BCDE(1) 1011 imm16 | "ld": 011 HLSP(1) 1011 imm16 |
 BCDEIXSP = "BC": 00 | "DE": 01 | "IX": 10 | "SP": 11;
 BCDEIYSP = "BC": 00 | "DE": 01 | "IY": 10 | "SP": 11;
 
-BCDE_STAX,BCDE_LDAX,BCDE = "BC" : 0 | "DE" : 1;
-HLSP = "HL" : 0 | "SP" : 1;
+BCDE = "BC" : 0 | "DE" : 1;
+HLSP = "HL": 0 | "SP" : 1;
+
+BCDE_STAX,BCDE_LDAX = "BC" : 0 | "DE" : 1;
 HLPSW = "HL" : 0 | "AF" : 1;
 REG,REG_OUT = "B": 000 | "C": 001 | "D": 010 | "E": 011 | "H": 100 | "L": 101 | "(HL)": 110 | "A": 111;
 
@@ -235,8 +237,8 @@ imm16,address,address_LDIX,imm16_SHLD,imm16_LHLD,imm16_LDA,imm16_STA = imm16: im
 
 "%s %s,%X" = edINSTR BCDE imm16;
 "%s %s,%X" = edINSTR HLSP imm16;
-"%s (%X),%s" = edINSTR BCDE address;
-"%s (%X),%s" = edINSTR HLSP address;
+"%s (%X),%s" = edINSTR address BCDE;
+"%s (%X),%s" = edINSTR address HLSP;
 "%s%s" = edINSTR BCDE;
 "%s%s" = edINSTR HLSP;
 "%s %s,(C)" = edINSTR REG;

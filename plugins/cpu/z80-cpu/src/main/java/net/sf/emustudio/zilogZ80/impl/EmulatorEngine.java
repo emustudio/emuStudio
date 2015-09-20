@@ -448,7 +448,7 @@ public class EmulatorEngine {
             if (isINT) {
                 return doInterrupt();
             }
-            R = ((R + 1) & 0xFF);
+            R = (R & 0x80) | (((R & 0x7F) + 1) & 0x7F);
             if (OP == 0x76) { /* HALT */
                 currentRunState = RunState.STATE_STOPPED_NORMAL;
                 return 4;
@@ -989,17 +989,15 @@ public class EmulatorEngine {
                             intMode = 1;
                             return 8;
                         case 0x57: /* LD A,I */
-                            regs[REG_A] = I;
-                            flags = EmulatorTables.SIGN_ZERO_TABLE[(short) (I & 0xFF)]
-                                    | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C);
+                            regs[REG_A] = I & 0xFF;
+                            flags = SIGN_ZERO_TABLE[regs[REG_A]] | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C);
                             return 9;
                         case 0x5E: /* IM 2 */
                             intMode = 2;
                             return 8;
                         case 0x5F: /* LD A,R */
-                            regs[REG_A] = R;
-                            flags = EmulatorTables.SIGN_ZERO_TABLE[(short) (R & 0xFF)]
-                                    | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C);
+                            regs[REG_A] = R & 0xFF;
+                            flags = SIGN_ZERO_TABLE[regs[REG_A]] | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C);
                             return 9;
                         case 0x67: /* RRD */
                             tmp = regs[REG_A] & 0x0F;
@@ -1025,9 +1023,9 @@ public class EmulatorEngine {
                             context.fireIO(regs[REG_C], false, 0);
                             return 12;
                         case 0xA0: /* LDI */
-                            tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                            tmp2 = (regs[REG_D] << 8) | regs[REG_E];
-                            tmp = (regs[REG_B] << 8) | regs[REG_C];
+                            tmp1 = getpair(2);
+                            tmp2 = getpair(1);
+                            tmp = getpair(0);
 
                             memory.write(tmp2, memory.read(tmp1));
 

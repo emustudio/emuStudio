@@ -74,9 +74,10 @@ public class InstructionPrinter implements EmulatorEngine.DispatchListener {
     @Override
     public void afterDispatch() {
         if (numberOfMatch.get() <= 1) {
-            System.out.println(String.format("|| regs=%s IX=%04x IY=%04x IFF=%1x | flags=%s | SP=%04x | PC=%04x",
+            System.out.println(String.format("|| regs=%s IX=%04x IY=%04x IFF=%1x I=%02x R=%02x | flags=%s | SP=%04x | PC=%04x",
                     regsToString(), emulatorEngine.IX, emulatorEngine.IY,
                             emulatorEngine.IFF[0] ? 1 : 0,
+                            emulatorEngine.I, emulatorEngine.R,
                             intToFlags(emulatorEngine.flags),
                             emulatorEngine.SP, emulatorEngine.PC)
             );

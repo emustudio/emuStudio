@@ -116,6 +116,11 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
+    public FlagsBuilderImpl<T> parityIsReset() {
+        evaluators.add((context, result) -> expectedNotFlags |= FLAG_PV);
+        return this;
+    }
+
     public FlagsBuilderImpl<T> carry15() {
         evaluators.add((context, result) -> {
             if ((result & 0x10000) == 0x10000) {
