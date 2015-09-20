@@ -16,17 +16,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package net.sf.emustudio.zilogZ80.impl.suite;
+package net.sf.emustudio.zilogZ80.impl;
 
-import java.util.function.Predicate;
+import emulib.plugins.device.DeviceContext;
 
-public class Utils {
+public class FakeDevice implements DeviceContext<Short> {
+    private byte value;
 
-    public static int get8MSBplus8LSB(int value) {
-        return ((value & 0xFF00) + (byte)(value & 0xFF)) & 0xFFFF;
+    public void setValue(byte value) {
+        this.value = value;
     }
 
-    public static Predicate<Integer> predicate8MSBplus8LSB(int minimum) {
-        return value -> get8MSBplus8LSB(value) > minimum;
+    public byte getValue() {
+        return value;
+    }
+
+    @Override
+    public Short read() {
+        return (short)(value & 0xFF);
+    }
+
+    @Override
+    public void write(Short value) {
+        this.value = value.byteValue();
+    }
+
+    @Override
+    public Class getDataType() {
+        return Short.class;
     }
 }

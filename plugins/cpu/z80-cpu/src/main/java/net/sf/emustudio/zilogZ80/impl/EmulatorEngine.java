@@ -128,7 +128,9 @@ public class EmulatorEngine {
         boolean oldIFF = IFF[0];
         noWait = false;
         currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
-        evalStep(memory.read(PC++));
+        int opcode = memory.read(PC);
+        PC = (PC + 1) & 0xFFFF;
+        evalStep(opcode);
         isINT = (interruptPending != 0) && oldIFF && IFF[0];
         if (PC > 0xffff) {
             PC = 0xffff;
@@ -150,7 +152,9 @@ public class EmulatorEngine {
             cycles_executed = 0;
             while ((cycles_executed < cycles_to_execute) && !Thread.currentThread().isInterrupted() && (currentRunState == CPU.RunState.STATE_RUNNING)) {
                 try {
-                    cycles = evalStep(memory.read(PC++));
+                    int opcode = memory.read(PC);
+                    PC = (PC + 1) & 0xFFFF;
+                    cycles = evalStep(opcode);
                     cycles_executed += cycles;
                     executedCycles += cycles;
                     if (cpu.isBreakpointSet(PC)) {
@@ -431,7 +435,7 @@ public class EmulatorEngine {
         }
     }
     
-    private int evalStep(short OP) {
+    private int evalStep(int OP) {
         int tmp, tmp1, tmp2, tmp3;
         short special = 0; // prefix if available = 0xDD or 0xFD
 
@@ -532,7 +536,8 @@ public class EmulatorEngine {
                 case 0x36:
                 case 0x3E:
                     tmp = (OP >>> 3) & 0x07;
-                    putreg(tmp, memory.read(PC++));
+                    putreg(tmp, memory.read(PC));
+                    PC = (PC + 1) & 0xFFFF;
                     if (tmp == 6) {
                         return 10;
                     } else {
@@ -759,7 +764,8 @@ public class EmulatorEngine {
                     regs[REG_A] = RRCA_TABLE[regs[REG_A]];
                     return 4;
                 case 0x10: /* DJNZ e */
-                    tmp = memory.read(PC++);
+                    tmp = memory.read(PC);
+                    PC = (PC + 1) & 0xFFFF;
                     regs[REG_B]--;
                     regs[REG_B] &= 0xFF;
                     if (regs[REG_B] != 0) {
@@ -874,7 +880,8 @@ public class EmulatorEngine {
                     IFF[0] = IFF[1] = true;
                     return 4;
                 case 0xED:
-                    OP = memory.read(PC++);
+                    OP = memory.read(PC);
+                    PC = (PC + 1) & 0xFFFF;
                     switch (OP) {
                     /* IN r,(C) */
                         case 0x40:
@@ -886,7 +893,7 @@ public class EmulatorEngine {
                         case 0x78:
                             tmp = (OP >>> 3) & 0x7;
                             putreg(tmp, context.fireIO(regs[REG_C], true, 0));
-                            flags = ((flags & 1) | DAA_TABLE[tmp]);
+                            flags = (flags & 1) | SIGN_ZERO_TABLE[regs[tmp]] | PARITY_TABLE[regs[tmp]];
                             return 12;
                     /* OUT (C),r */
                         case 0x41:
@@ -1205,7 +1212,7 @@ public class EmulatorEngine {
                             if (regs[REG_B] == 0) {
                                 return 16;
                             }
-                            PC -= 2;
+                            PC = (PC - 2) & 0xFFFF;
                             return 21;
                         case 0xB3: /* OTIR */
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
@@ -1218,7 +1225,7 @@ public class EmulatorEngine {
                             if (regs[REG_B] == 0) {
                                 return 16;
                             }
-                            PC -= 2;
+                            PC = (PC - 2) & 0xFFFF;
                             return 21;
                         case 0xB8: /* LDDR */
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
@@ -1237,7 +1244,7 @@ public class EmulatorEngine {
                             if (tmp == 0) {
                                 return 16;
                             }
-                            PC -= 2;
+                            PC = (PC - 2) & 0xFFFF;
                             return 21;
                         case 0xB9: /* CPDR */
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
@@ -1276,7 +1283,7 @@ public class EmulatorEngine {
                             if (regs[REG_B] == 0) {
                                 return 16;
                             }
-                            PC -= 2;
+                            PC = (PC - 2) & 0xFFFF;
                             return 21;
                         case 0xBB: /* OTDR */
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
@@ -1289,7 +1296,7 @@ public class EmulatorEngine {
                             if (regs[REG_B] == 0) {
                                 return 16;
                             }
-                            PC -= 2;
+                            PC = (PC - 2) & 0xFFFF;
                             return 21;
                     /* LD (nn), ss */
                         case 0x43:
@@ -1297,7 +1304,7 @@ public class EmulatorEngine {
                         case 0x63:
                         case 0x73:
                             tmp = memory.readWord(PC);
-                            PC += 2;
+                            PC = (PC + 2) & 0xFFFF;
 
                             tmp1 = getpair((OP >>> 4) & 3);
                             memory.writeWord(tmp, tmp1);
@@ -1308,7 +1315,7 @@ public class EmulatorEngine {
                         case 0x6B:
                         case 0x7B:
                             tmp = memory.readWord(PC);
-                            PC += 2;
+                            PC = (PC + 2) & 0xFFFF;
 
                             tmp1 = memory.readWord(tmp);
                             putpair((OP >>> 4) & 3, tmp1);
@@ -1322,7 +1329,8 @@ public class EmulatorEngine {
                     if (OP == 0xFD) {
                         special = 0xFD;
                     }
-                    OP = memory.read(PC++);
+                    OP = memory.read(PC);
+                    PC = (PC + 1) & 0xFFFF;
                     switch (OP) {
                     /* ADD ii,pp */
                         case 0x09:
@@ -1392,7 +1400,8 @@ public class EmulatorEngine {
                             return 10;
                     }
 
-                    tmp = memory.read(PC++);
+                    tmp = memory.read(PC);
+                    PC = (PC + 1) & 0xFFFF;
                     switch (OP) {
                         case 0x76:
                             break;
@@ -1514,7 +1523,8 @@ public class EmulatorEngine {
 
                             return 19;
                     }
-                    tmp |= ((memory.read(PC++)) << 8);
+                    tmp |= ((memory.read(PC)) << 8);
+                    PC = (PC + 1) & 0xFFFF;
                     switch (OP) {
                         case 0x21: /* LD ii,nn */
                             putspecial(special, tmp);
@@ -1671,7 +1681,8 @@ public class EmulatorEngine {
                     currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
                     return 0;
                 case 0xCB:
-                    OP = memory.read(PC++);
+                    OP = memory.read(PC);
+                    PC = (PC + 1) & 0xFFFF;
                     switch (OP) {
                     /* RLC r */
                         case 0x00:
@@ -1895,7 +1906,8 @@ public class EmulatorEngine {
                     currentRunState = RunState.STATE_STOPPED_BAD_INSTR;
                     return 0;
             }
-            tmp = memory.read(PC++);
+            tmp = memory.read(PC);
+            PC = (PC + 1) & 0xFFFF;
             switch (OP) {
             /* JR cc,d */
                 case 0x20:
@@ -1997,7 +2009,8 @@ public class EmulatorEngine {
 
                     return 7;
             }
-            tmp += (memory.read(PC++) << 8);
+            tmp += (memory.read(PC) << 8);
+            PC = (PC + 1) & 0xFFFF;
             switch (OP) {
             /* LD ss, nn */
                 case 0x01:

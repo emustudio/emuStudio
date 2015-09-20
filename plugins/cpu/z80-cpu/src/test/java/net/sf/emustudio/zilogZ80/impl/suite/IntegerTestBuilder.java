@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2015 Peter Jakubčo
+ * KISS, YAGNI, DRY
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
 package net.sf.emustudio.zilogZ80.impl.suite;
 
 import net.sf.emustudio.cpu.testsuite.TestBuilder;
@@ -75,6 +93,11 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         return this;
     }
 
+    public IntegerTestBuilder first8MSBisRegister(int register) {
+        runner.injectFirst((tmpRunner, argument) -> cpuRunner.setRegister(register, (argument.intValue() >>> 8) & 0xFF));
+        return this;
+    }
+
     public IntegerTestBuilder first8MSBisIY() {
         runner.injectFirst((tmpRunner, argument) -> cpuRunner.setIY(argument.intValue() & 0xFF00));
         return this;
@@ -108,6 +131,12 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
             cpuRunner.setFlags2(argument.intValue() & 0xFF);
             cpuRunner.setRegister2(REG_A, (argument.intValue() >>> 8) & 0xFF);
         });
+        return this;
+    }
+
+    public IntegerTestBuilder first8MSBisDeviceAndFirst8LSBIsPort() {
+        runner.injectFirst((tmpRunner, first) ->
+                cpuRunner.getDevice(first.intValue() & 0xFF).setValue((byte)((first.intValue() >>> 8) & 0xFF)));
         return this;
     }
 

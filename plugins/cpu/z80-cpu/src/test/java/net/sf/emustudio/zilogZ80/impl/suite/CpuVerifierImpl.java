@@ -1,9 +1,31 @@
+/*
+ * Copyright (C) 2015 Peter Jakubčo
+ * KISS, YAGNI, DRY
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
 package net.sf.emustudio.zilogZ80.impl.suite;
 
 import net.sf.emustudio.cpu.testsuite.CpuVerifier;
 import net.sf.emustudio.cpu.testsuite.MemoryStub;
 import net.sf.emustudio.zilogZ80.impl.CpuImpl;
+import net.sf.emustudio.zilogZ80.impl.FakeDevice;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_C;
@@ -25,10 +47,12 @@ import static org.junit.Assert.assertTrue;
 
 public class CpuVerifierImpl extends CpuVerifier {
     private final CpuImpl cpu;
+    private final List<FakeDevice> devices;
 
-    public CpuVerifierImpl(CpuImpl cpu, MemoryStub memoryStub) {
+    public CpuVerifierImpl(CpuImpl cpu, MemoryStub memoryStub, List<FakeDevice> devices) {
         super(memoryStub);
         this.cpu = Objects.requireNonNull(cpu);
+        this.devices = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(devices)));
     }
 
     public void checkRegister(int register, int value) {
@@ -40,27 +64,32 @@ public class CpuVerifierImpl extends CpuVerifier {
     }
 
     public void checkRegisterPair(int registerPair, int value) {
-        int highRegister;
-        int lowRegister;
-        switch (registerPair) {
-            case 0:
-                highRegister = REG_B;
-                lowRegister = REG_C;
-                break;
-            case 1:
-                highRegister = REG_D;
-                lowRegister = REG_E;
-                break;
-            case 2:
-                highRegister = REG_H;
-                lowRegister = REG_L;
-                break;
-            default:
-                throw new IllegalArgumentException("Expected value between <0,2> !");
-        }
-
         value &= 0xFFFF;
-        int realValue = cpu.getEngine().regs[highRegister] << 8 | (cpu.getEngine().regs[lowRegister]);
+        int realValue;
+
+        if (registerPair == 3) {
+            realValue = cpu.getEngine().SP;
+        } else {
+            int highRegister;
+            int lowRegister;
+            switch (registerPair) {
+                case 0:
+                    highRegister = REG_B;
+                    lowRegister = REG_C;
+                    break;
+                case 1:
+                    highRegister = REG_D;
+                    lowRegister = REG_E;
+                    break;
+                case 2:
+                    highRegister = REG_H;
+                    lowRegister = REG_L;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Expected value between <0,2> !");
+            }
+            realValue = cpu.getEngine().regs[highRegister] << 8 | (cpu.getEngine().regs[lowRegister]);
+        }
 
         assertEquals(
                 String.format("Expected regPair[%02x]=%04x, but was %04x", registerPair, value, realValue),
@@ -218,4 +247,11 @@ public class CpuVerifierImpl extends CpuVerifier {
         );
     }
 
+    public void checkDeviceValue(int port, int expected) {
+        int value = devices.get(port & 0xFF).getValue() & 0xFF;
+        assertEquals(
+                String.format("Expected device[%02x]=%02x, but was %02x", port, expected, value),
+                expected, value
+        );
+    }
 }

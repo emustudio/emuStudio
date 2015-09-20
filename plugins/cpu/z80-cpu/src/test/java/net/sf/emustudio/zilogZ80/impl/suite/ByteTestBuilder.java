@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2015 Peter Jakubčo
+ * KISS, YAGNI, DRY
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
 package net.sf.emustudio.zilogZ80.impl.suite;
 
 import net.sf.emustudio.cpu.testsuite.TestBuilder;
@@ -43,6 +61,12 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
         return this;
     }
 
+    public ByteTestBuilder firstIsDeviceAndSecondIsPort() {
+        runner.injectTwoOperands((tmpRunner, first, second) ->
+                cpuRunner.getDevice(second.intValue() & 0xFF).setValue(first.byteValue()));
+        return this;
+    }
+
     public ByteTestBuilder setRegister(int register, int value) {
         runner.injectFirst((tmpRunner, argument) -> cpuRunner.setRegister(register, value));
         return this;
@@ -56,8 +80,8 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
         return this;
     }
 
-    public ByteTestBuilder verifyRegister(int register, Function<RunnerContext<Byte>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
+    public ByteTestBuilder verifyRegister(int register, Function<RunnerContext<Byte>, Integer> operation) {
+        lastOperation = Objects.requireNonNull(operation);
         return verifyRegister(register);
     }
 
@@ -67,9 +91,9 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
         return this;
     }
 
-    public ByteTestBuilder verifyRegisterR(Function<RunnerContext<Byte>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
-        addVerifier(context -> cpuVerifier.checkR(operator.apply(context)));
+    public ByteTestBuilder verifyRegisterR(Function<RunnerContext<Byte>, Integer> operation) {
+        lastOperation = Objects.requireNonNull(operation);
+        addVerifier(context -> cpuVerifier.checkR(operation.apply(context)));
         return this;
     }
 
@@ -82,15 +106,21 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
         return this;
     }
 
-    public ByteTestBuilder verifyPair(int registerPair, Function<RunnerContext<Byte>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
-        addVerifier(context -> cpuVerifier.checkRegisterPair(registerPair, operator.apply(context)));
+    public ByteTestBuilder verifyPair(int registerPair, Function<RunnerContext<Byte>, Integer> operation) {
+        lastOperation = Objects.requireNonNull(operation);
+        addVerifier(context -> cpuVerifier.checkRegisterPair(registerPair, operation.apply(context)));
         return this;
     }
 
-    public ByteTestBuilder verifyPC(Function<RunnerContext<Byte>, Integer> operator) {
-        lastOperation = Objects.requireNonNull(operator);
-        addVerifier(context -> cpuVerifier.checkPC(operator.apply(context)));
+    public ByteTestBuilder verifyPC(Function<RunnerContext<Byte>, Integer> operation) {
+        lastOperation = Objects.requireNonNull(operation);
+        addVerifier(context -> cpuVerifier.checkPC(operation.apply(context)));
+        return this;
+    }
+
+    public ByteTestBuilder verifyDeviceWhenSecondIsPort(Function<RunnerContext<Byte>, Integer> operation) {
+        lastOperation = Objects.requireNonNull(operation);
+        addVerifier(context -> cpuVerifier.checkDeviceValue(context.second, operation.apply(context)));
         return this;
     }
 }
