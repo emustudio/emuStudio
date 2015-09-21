@@ -188,21 +188,85 @@ public class IOTest extends InstructionsTest {
         );
 
     }
-    
-    public void testOUTI() {
 
+    @Test
+    public void testOUTI() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsAddressAndSecondIsMemoryByte()
+                .firstIsPair(REG_PAIR_HL)
+                .first8LSBisRegister(REG_C)
+                .first8MSBisRegister(REG_B)
+                .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
+                .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
+                .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().zero().subtractionIsSet());
+
+        Generator.forSome16bitBinary(2,
+                test.run(0xED, 0xA3)
+        );
     }
-    
+
+    @Test
     public void testOUTIR() {
-        
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsAddressAndSecondIsMemoryByte()
+                .firstIsPair(REG_PAIR_HL)
+                .first8LSBisRegister(REG_C)
+                .first8MSBisRegister(REG_B)
+                .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
+                .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
+                .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().zeroIsSet().subtractionIsSet())
+                .verifyPC(context -> {
+                    if (((((context.first >>> 8) & 0xFF) - 1) & 0xFF) != 0) {
+                        return context.PC;
+                    }
+                    return context.PC + 2;
+                });
+
+        Generator.forSome16bitBinary(2,
+                test.run(0xED, 0xB3)
+        );
     }
-    
+
+    @Test
     public void testOUTD() {
-        
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsAddressAndSecondIsMemoryByte()
+                .firstIsPair(REG_PAIR_HL)
+                .first8LSBisRegister(REG_C)
+                .first8MSBisRegister(REG_B)
+                .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
+                .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
+                .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().zero().subtractionIsSet());
+
+        Generator.forSome16bitBinary(2,
+                test.run(0xED, 0xAB)
+        );
     }
-    
+
+    @Test
     public void testOUTDR() {
-        
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+                .firstIsAddressAndSecondIsMemoryByte()
+                .firstIsPair(REG_PAIR_HL)
+                .first8LSBisRegister(REG_C)
+                .first8MSBisRegister(REG_B)
+                .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
+                .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
+                .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
+                .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().zeroIsSet().subtractionIsSet())
+                .verifyPC(context -> {
+                    if (((((context.first >>> 8) & 0xFF) - 1) & 0xFF) != 0) {
+                        return context.PC;
+                    }
+                    return context.PC + 2;
+                });
+
+        Generator.forSome16bitBinary(2,
+                test.run(0xED, 0xBB)
+        );
     }
 }
     

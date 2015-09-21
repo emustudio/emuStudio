@@ -227,4 +227,10 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         return this;
     }
 
+    public IntegerTestBuilder verifyDeviceWhenFirst8LSBisPort(Function<RunnerContext<Integer>, Integer> operation) {
+        lastOperation = Objects.requireNonNull(operation);
+        addVerifier(context -> cpuVerifier.checkDeviceValue(context.first & 0xFF, operation.apply(context)));
+        return this;
+    }
+
 }
