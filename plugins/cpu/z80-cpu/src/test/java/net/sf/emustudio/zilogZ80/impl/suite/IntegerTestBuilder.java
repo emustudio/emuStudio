@@ -111,6 +111,14 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         return this;
     }
 
+    public IntegerTestBuilder first8MSBplus8LSBisMemoryByte(int value) {
+        runner.injectTwoOperands((tmpRunner, first, second) -> {
+                    new MemoryByte(get8MSBplus8LSB(first.intValue())).inject(tmpRunner, (byte) (value & 0xFF));
+                }
+        );
+        return this;
+    }
+
     public IntegerTestBuilder secondIsPSW() {
         runner.injectSecond(new MemoryExpand(), new RegisterPairPSW(3));
         return this;
