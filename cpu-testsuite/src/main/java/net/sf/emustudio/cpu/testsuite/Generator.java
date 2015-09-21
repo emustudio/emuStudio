@@ -151,4 +151,10 @@ public class Generator {
         }
     }
 
+    public static <T extends Number> void forGivenOperandsAndSingleRun(T operand, BiConsumer<T, T>... runners) {
+        for (BiConsumer<T,T> runner : runners) {
+            runner.accept(operand, operand);
+        }
+    }
+
 }
