@@ -1223,8 +1223,8 @@ public class StudioFrame extends JFrame {
             Main.tryShowErrorMessage("Typed address is incorrect !" + maxSize, "Jump");
             return;
         }
-        paneDebug.revalidate();
-        debugTable.refresh();
+        debugTable.currentPage();
+//        debugTable.refresh();
     }
 
     private void mnuHelpAboutActionPerformed(ActionEvent evt) {

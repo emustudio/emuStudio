@@ -120,7 +120,7 @@ public class DebugTableImpl extends JTable  implements DebugTable {
 
     public DebugTableImpl(Computer computer) {
         super();
-        debugModel = new DebugTableModel(computer.getCPU());
+        debugModel = new DebugTableModel(computer.getCPU(), computer.getMemory().getSize());
         setModel(debugModel);
         textRenderer = new TextCellRenderer();
         boolRenderer = new BooleanCellRenderer();
@@ -129,7 +129,6 @@ public class DebugTableImpl extends JTable  implements DebugTable {
 
         setAllBooleanCellEditor();
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        debugModel.setRowCount(textRenderer.estimateRowCount(getPreferredSize().height));
         int breakIndex = debugModel.getBreakpointColumnIndex();
         if (breakIndex >= 0) {
             getColumn(getColumnName(breakIndex)).setPreferredWidth(20);
@@ -153,7 +152,6 @@ public class DebugTableImpl extends JTable  implements DebugTable {
     }
 
     public void fireResized(int height) {
-        debugModel.setRowCount(textRenderer.estimateRowCount(height));
         repaint();
     }
 
