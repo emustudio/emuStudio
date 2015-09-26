@@ -27,7 +27,7 @@ select those components, connect them with lines into a schema, and the computer
 
 * Source code editor with support of syntax highlighting
 
-* CPU debugger with basic and advanced abilities
+* CPU debugger with interactive disassembler other features
 
 * Operating memory and devices can have their own GUI windows
 
@@ -44,7 +44,7 @@ select those components, connect them with lines into a schema, and the computer
 
 * Random Access Machine simulator
 
-* Brainfuck simulator
+* Brainfuck simulator (I call it BrainDuck)
 
 # Compiling
 
@@ -56,7 +56,9 @@ module directory):
 mvn clean install
 ```
 
-In order to package complete emuStudio with examples and all plug-ins, please go to subdirectory `release` and then
+## Preparing emuStudio distribution
+
+In order to package complete emuStudio with examples and all predefined computers, please go to subdirectory `release` and then
 invoke the following command:
 
 ```
@@ -67,16 +69,40 @@ Inside `target` subdirectory will be a zip file containing full distribution of 
 
 # Running / installation
 
-Prerequisite is to have a full distribution of emuStudio, which can be either downloaded from [project's web page](http://emustudio.sourceforge.net/downloads.html),
-or when the project was compiled, in a project subdirectory `release/target/emuStudio-xxx-release.zip`.
+There are two ways of how to run emuStudio. In both cases, a prerequisite is to have a full distribution of emuStudio.
+You can either download it from [project's web page](http://emustudio.sourceforge.net/downloads.html),
+or you can prepare the distribution by yourself as was explained in the previous section.
 
-Requirement is to have installed Java Runtime Environment (JRE) 1.8.
+## The "classic" way
 
-Then unzip the emuStudio distribution file, and run it using command:
+The requirement is to have installed Java Runtime Environment (JRE) 1.8.
+
+Unzip the emuStudio distribution zip file (`emuStudio-xxx-release.zip`) and run it using command:
 
 ```
 java -jar emuStudio.jar
 ```
+
+## Running using Vagrant
+
+It is also possible to use [vagrant](https://www.vagrantup.com/) in order to run emuStudio. It works only when emuStudio
+distribution is prepared manually.
+
+After building the release, in the root directory of emuStudio source, run a script (now only for bash (Linux)):
+
+```
+bash> ./emuStudio-vagrant.sh
+```
+
+The script does this:
+
+1. Bring up virtual machine using vagrant
+2. Synchronize `release/target/` subdirectory with the machine,
+3. Unzip the distribution zip file into VM's `/emustudio/` directory
+4. Run emuStudio from there through SSH (with X forwarding). 
+
+I see this very beneficial for developers, because this way is much faster and cleaner, especially when developers
+want to try their changes. 
 
 # License
 
