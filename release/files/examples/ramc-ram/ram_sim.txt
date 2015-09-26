@@ -1,0 +1,469 @@
+#TURING MACHINES FILE#
+
+#LANGUAGE#
+//finite set of language characters
+RWLSAXMDJPH$#=*:10B23456789abcdefghijkl
+
+// instructions mapping:
+//
+// R = READ
+// W = WRITE
+// L = LOAD
+// S = STORE
+// A = ADD
+// X = SUB
+// M = MUL
+// D = DIV
+// J = JMP
+// P = JZ
+// H = HALT
+//
+// Other symbols:
+//
+// B       = Blank symbol
+// 111...1 = number > 0
+// 0       = number = 0
+// =       = literal in instructions
+// *       = address in instructions (pointer)
+// $       = beginning of program tape
+// #       = separator
+// other symbols are used by internals of simulator
+
+#INITIAL STATE#
+//name of initial state
+q0
+
+#TAPE0#
+//PROGRAM (P)
+//$W=111#HBBB
+//$L=111#W0#HBBB
+//$L=111#S11#W11#HBBB
+//$L=111#R*0#W111#HBBB
+//$L=1#S1111#R1#R11#L*11#S*1#W11111#W1111#HBBB
+//$L=1#S1111#R1#R11#L*11#S111#L*1#S*11#L111#S*1#W11111#W1111#HBBB
+//$L=11#X=1#W0#HBB
+//$L=11#X=111#W0#HBB
+//$L=11#X=11#W0#HBB
+//$L=11#A=111#W0#HBB
+//$L=111#M=111#W0#HBB
+$L=111111#D=11#W0#HBB
+
+#TAPE1#
+//INPUT (I)
+#111110#BBBBBBBBB
+
+#TAPE2#
+//OUTPUT (O)
+BBBBBBBBBBBBBBBBB
+
+#TAPE3#
+//STORAGE (S)
+BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+
+#TAPE4#
+//ADRESSES (A)
+BBBBBBBBBBBBBBBBBBBBBBBBBBBB
+
+#TAPE5#
+//VALUES (V)
+BBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+
+#TAPE6#
+//TEMP (T)
+BBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+
+
+#CODE#
+//states code format
+//set of states = {r - right, l - left, s - stop}
+
+//SIMULATOR
+(q0, ($,#,B,B,B,B,B)) (q1, ($,#,B,$,#,#,$), (s,s,s,r,r,r,r))
+
+(q1, ($,#,B,B,B,B,B)) (q2, ($,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+
+(q2, (H,#,B,B,B,B,B)) (q3, (H,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q2, (R,#,B,B,B,B,B)) (q4, (R,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q2, (W,#,B,B,B,B,B)) (q5, (W,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q2, (L,#,B,B,B,B,B)) (q6, (L,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+(q2, (S,#,B,B,B,B,B)) (q7, (S,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q2, (A,#,B,B,B,B,B)) (q8, (A,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q2, (X,#,B,B,B,B,B)) (q9, (X,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q2, (D,#,B,B,B,B,B)) (q10, (D,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+(q2, (M,#,B,B,B,B,B)) (q11, (M,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q2, (P,#,B,B,B,B,B)) (q12, (P,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q2, (J,#,B,B,B,B,B)) (q13, (J,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+
+(q4, (*,#,B,B,B,B,B)) (q14, (*,#,B,B,B,B,2), (r,s,s,s,s,s,r))
+(q4, (1,#,B,B,B,B,B)) (q14, (1,#,B,B,B,B,h), (s,s,s,s,s,s,r))
+(q4, (0,#,B,B,B,B,B)) (q14, (0,#,B,B,B,B,h), (s,s,s,s,s,s,r))
+(q4-1, (#,1,B,B,B,B,B)) (q4-1, (#,1,B,B,B,1,B), (s,r,s,s,s,r,s))
+(q4-1, (#,0,B,B,B,B,B)) (q4-1, (#,0,B,B,B,0,B), (s,r,s,s,s,r,s))
+(q4-1, (#,#,B,B,B,B,B)) (q16, (#,#,B,B,B,#,B), (s,s,s,s,s,r,s))
+
+(q5, (*,#,B,B,B,B,B)) (q14, (*,#,B,B,B,B,4), (r,s,s,s,s,s,r))
+(q5, (1,#,B,B,B,B,B)) (q14, (1,#,B,B,B,B,3), (s,s,s,s,s,s,r))
+(q5, (0,#,B,B,B,B,B)) (q14, (0,#,B,B,B,B,3), (s,s,s,s,s,s,r))
+(q5, (=,#,B,B,B,B,B)) (q5-1, (=,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q5-1, (1,#,B,B,B,B,B)) (q5-1, (1,#,1,B,B,B,B), (r,s,r,s,s,s,s))
+(q5-1, (0,#,B,B,B,B,B)) (q5-1, (0,#,0,B,B,B,B), (r,s,r,s,s,s,s))
+(q5-1, (#,#,B,B,B,B,B)) (q2, (#,#,#,B,B,B,B), (r,s,r,s,s,s,s))
+(q5-2, (#,#,B,B,B,#,B)) (q5-3, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q5-3, (#,#,B,B,B,1,B)) (q5-3, (#,#,1,B,B,B,B), (s,s,r,s,s,l,s))
+(q5-3, (#,#,B,B,B,0,B)) (q5-3, (#,#,0,B,B,B,B), (s,s,r,s,s,l,s))
+(q5-3, (#,#,B,B,B,#,B)) (q2, (#,#,#,B,B,#,B), (r,s,r,s,s,r,s))
+(q5-4, (#,#,B,B,B,#,B)) (q15, (#,#,B,B,B,B,2), (s,s,s,s,s,l,r))
+
+(q6, (L,#,B,B,B,B,B)) (q6-1, (L,#,B,B,0,B,B), (r,s,s,s,r,s,s))
+(q6-1, (=,#,B,B,B,B,B)) (q19, (=,#,B,B,#,B,8), (r,s,s,s,r,s,r))
+(q6-1, (1,#,B,B,B,B,B)) (q14, (1,#,B,B,#,B,5), (s,s,s,s,r,s,r))
+(q6-1, (0,#,B,B,B,B,B)) (q14, (0,#,B,B,#,B,5), (s,s,s,s,r,s,r))
+(q6-1, (*,#,B,B,B,B,B)) (q14, (*,#,B,B,#,B,6), (r,s,s,s,r,s,r))
+
+(q7, (1,#,B,B,B,B,B)) (q7, (1,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q7, (0,#,B,B,B,B,B)) (q7, (0,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q7, (=,#,B,B,B,B,B)) (q7, (=,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q7, (*,#,B,B,B,B,B)) (q7, (*,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q7, (#,#,B,B,B,B,B)) (q7-1, (#,#,B,B,0,B,B), (s,s,s,s,r,s,s))
+(q7-1, (#,#,B,B,B,B,B)) (q17, (#,#,B,B,#,B,6), (s,s,s,s,r,s,r))
+(q7-2, (1,#,B,B,B,B,B)) (q7-2, (1,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q7-2, (0,#,B,B,B,B,B)) (q7-2, (0,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q7-2, (*,#,B,B,B,B,B)) (q7-2, (*,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q7-2, (S,#,B,B,B,B,B)) (q7-3, (S,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q7-3, (*,#,B,B,B,B,B)) (q14, (*,#,B,B,B,B,8), (r,s,s,s,s,s,r))
+(q7-3, (1,#,B,B,B,B,B)) (q14, (1,#,B,B,B,B,7), (s,s,s,s,s,s,r))
+(q7-3, (0,#,B,B,B,B,B)) (q14, (0,#,B,B,B,B,7), (s,s,s,s,s,s,r))
+
+(q8, (1,#,B,B,B,B,B)) (q8, (1,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q8, (0,#,B,B,B,B,B)) (q8, (0,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q8, (=,#,B,B,B,B,B)) (q8, (=,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q8, (*,#,B,B,B,B,B)) (q8, (*,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q8, (#,#,B,B,B,B,B)) (q8-1, (#,#,B,B,0,B,B), (s,s,s,s,r,s,s))
+(q8-1, (#,#,B,B,B,B,B)) (q17, (#,#,B,B,#,B,9), (s,s,s,s,r,s,r))
+(q8-2, (1,#,B,B,B,B,B)) (q8-2, (1,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q8-2, (0,#,B,B,B,B,B)) (q8-2, (0,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q8-2, (=,#,B,B,B,B,B)) (q8-2, (=,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q8-2, (*,#,B,B,B,B,B)) (q8-2, (*,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q8-2, (A,#,B,B,B,B,B)) (q8-3, (A,#,B,B,#,B,B), (r,s,s,s,r,s,s))
+(q8-3, (1,#,B,B,B,B,B)) (q14, (1,#,B,B,B,B,9), (s,s,s,s,s,s,r))
+(q8-3, (0,#,B,B,B,B,B)) (q14, (0,#,B,B,B,B,9), (s,s,s,s,s,s,r))
+(q8-3, (*,#,B,B,B,B,B)) (q14, (*,#,B,B,B,B,a), (r,s,s,s,s,s,r))
+(q8-3, (=,#,B,B,B,B,B)) (q19, (=,#,B,B,B,B,4), (r,s,s,s,s,s,r))
+
+(q9, (1,#,B,B,B,B,B)) (q9, (1,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q9, (0,#,B,B,B,B,B)) (q9, (0,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q9, (=,#,B,B,B,B,B)) (q9, (=,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q9, (*,#,B,B,B,B,B)) (q9, (*,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q9, (#,#,B,B,B,B,B)) (q9-1, (#,#,B,B,0,B,B), (s,s,s,s,r,s,s))
+(q9-1, (#,#,B,B,B,B,B)) (q17, (#,#,B,B,#,B,c), (s,s,s,s,r,s,r))
+(q9-2, (1,#,B,B,B,B,B)) (q9-2, (1,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q9-2, (0,#,B,B,B,B,B)) (q9-2, (0,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q9-2, (=,#,B,B,B,B,B)) (q9-2, (=,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q9-2, (*,#,B,B,B,B,B)) (q9-2, (*,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q9-2, (X,#,B,B,B,B,B)) (q9-3, (X,#,B,B,#,B,B), (r,s,s,s,r,s,s))
+(q9-3, (1,#,B,B,B,B,B)) (q14, (1,#,B,B,B,B,b), (s,s,s,s,s,s,r))
+(q9-3, (0,#,B,B,B,B,B)) (q14, (0,#,B,B,B,B,b), (s,s,s,s,s,s,r))
+(q9-3, (*,#,B,B,B,B,B)) (q14, (*,#,B,B,B,B,c), (r,s,s,s,s,s,r))
+(q9-3, (=,#,B,B,B,B,B)) (q19, (=,#,B,B,B,B,5), (r,s,s,s,s,s,r))
+
+(q10, (D,#,B,B,B,B,B)) (q10-1, (D,#,B,B,0,B,B), (s,s,s,s,r,s,s))
+(q10-1, (D,#,B,B,B,B,B)) (q10-21, (D,#,B,B,#,B,B), (r,s,s,s,r,s,s))
+(q10-21, (1,#,B,B,B,B,B)) (q10-21, (1,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q10-21, (0,#,B,B,B,B,B)) (q10-21, (0,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q10-21, (*,#,B,B,B,B,B)) (q10-21, (*,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q10-21, (=,#,B,B,B,B,B)) (q10-21, (=,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q10-21, (#,#,B,B,B,B,B)) (q17, (#,#,B,B,B,B,i), (s,s,s,s,s,s,r))
+(q10-2, (1,#,B,B,B,#,B)) (q10-2, (1,#,B,B,B,#,B), (l,s,s,s,s,s,s))
+(q10-2, (0,#,B,B,B,#,B)) (q10-2, (0,#,B,B,B,#,B), (l,s,s,s,s,s,s))
+(q10-2, (=,#,B,B,B,#,B)) (q10-2, (=,#,B,B,B,#,B), (l,s,s,s,s,s,s))
+(q10-2, (*,#,B,B,B,#,B)) (q10-2, (*,#,B,B,B,#,B), (l,s,s,s,s,s,s))
+(q10-2, (D,#,B,B,B,#,B)) (q10-3, (D,#,B,B,B,#,B), (s,s,s,s,s,l,s))
+(q10-3, (D,#,B,B,B,1,B)) (q10-5, (D,#,B,B,B,1,B), (r,s,s,s,s,r,s))
+(q10-3, (D,#,B,B,B,0,B)) (q10-4, (D,#,B,B,B,0,B), (r,s,s,s,s,r,s))
+(q10-4, (1,#,B,B,B,#,B)) (q10-4, (1,#,B,B,B,#,B), (r,s,s,s,s,s,s))
+(q10-4, (0,#,B,B,B,#,B)) (q10-4, (0,#,B,B,B,#,B), (r,s,s,s,s,s,s))
+(q10-4, (=,#,B,B,B,#,B)) (q10-4, (=,#,B,B,B,#,B), (r,s,s,s,s,s,s))
+(q10-4, (*,#,B,B,B,#,B)) (q10-4, (*,#,B,B,B,#,B), (r,s,s,s,s,s,s))
+(q10-4, (#,#,B,B,B,#,B)) (q18, (#,#,B,B,B,#,6), (s,s,s,s,s,r,r))
+(q10-5, (*,#,B,B,B,#,B)) (q14, (*,#,B,B,B,#,g), (r,s,s,s,s,r,r))
+(q10-5, (=,#,B,B,B,#,B)) (q19, (=,#,B,B,B,#,7), (r,s,s,s,s,r,r))
+(q10-5, (1,#,B,B,B,#,B)) (q14, (1,#,B,B,B,#,f), (s,s,s,s,s,r,r))
+(q10-5, (0,#,B,B,B,#,B)) (q14, (0,#,B,B,B,#,f), (s,s,s,s,s,r,r))
+(q10-6, (#,#,B,B,B,B,B)) (q10-7, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q10-7, (#,#,B,B,B,#,B)) (q10-8, (#,#,B,B,B,#,B), (s,s,s,s,s,l,s))
+(q10-8, (#,#,B,B,B,1,B)) (q10-8, (#,#,B,B,B,1,1), (s,s,s,s,s,l,r))
+(q10-8, (#,#,B,B,B,#,B)) (q10-9, (#,#,B,B,B,#,#), (s,s,s,s,s,s,r))
+(q10-9, (#,#,B,B,B,#,B)) (q20, (#,#,B,B,B,#,6), (s,s,s,s,s,r,r))
+(q10-10, (#,#,B,B,B,#,B)) (q10-11, (#,#,B,B,B,#,B), (s,s,s,s,s,l,s))
+(q10-11, (#,#,B,B,B,1,B)) (q10-16, (#,#,B,B,B,1,1), (s,s,s,s,s,r,s))
+(q10-11, (#,#,B,B,B,0,B)) (q10-22, (#,#,B,B,B,0,1), (s,s,s,s,s,r,r))
+(q10-22, (#,#,B,B,B,#,B)) (q18, (#,#,B,B,B,#,7), (s,s,s,s,s,r,r))
+(q10-16, (#,#,B,B,B,#,1)) (q10-16, (#,#,B,B,B,#,1), (s,s,s,s,s,s,l))
+(q10-16, (#,#,B,B,B,#,0)) (q10-16, (#,#,B,B,B,#,0), (s,s,s,s,s,s,l))
+(q10-16, (#,#,B,B,B,#,#)) (q10-16, (#,#,B,B,B,#,#), (s,s,s,s,s,s,l))
+(q10-16, (#,#,B,B,B,#,$)) (q10-17, (#,#,B,B,B,#,$), (s,s,s,s,s,r,r))
+(q10-17, (#,#,B,B,B,B,1)) (q10-17, (#,#,B,B,B,1,1), (s,s,s,s,s,r,r))
+(q10-17, (#,#,B,B,B,B,#)) (q10-18, (#,#,B,B,B,#,#), (s,s,s,s,s,r,r))
+(q10-18, (#,#,B,B,B,B,1)) (q10-18, (#,#,B,B,B,B,1), (s,s,s,s,s,s,r))
+(q10-18, (#,#,B,B,B,B,0)) (q10-18, (#,#,B,B,B,B,0), (s,s,s,s,s,s,r))
+(q10-18, (#,#,B,B,B,B,#)) (q10-18, (#,#,B,B,B,B,#), (s,s,s,s,s,s,r))
+(q10-18, (#,#,B,B,B,B,B)) (q21, (#,#,B,B,B,B,2), (s,s,s,s,s,s,r))
+(q10-12, (#,#,B,B,B,B,#)) (q10-13, (#,#,B,B,B,0,B), (s,s,s,s,s,r,s))
+(q10-12, (#,#,B,B,B,B,1)) (q10-14, (#,#,B,B,B,1,B), (s,s,s,s,s,r,l))
+(q10-14, (#,#,B,B,B,B,1)) (q10-14, (#,#,B,B,B,1,B), (s,s,s,s,s,r,l))
+(q10-14, (#,#,B,B,B,B,#)) (q10-13, (#,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+(q10-13, (#,#,B,B,B,B,B)) (q10-19, (#,#,B,B,B,#,B), (s,s,s,s,s,r,l))
+(q10-19, (#,#,B,B,B,B,1)) (q10-19, (#,#,B,B,B,B,B), (s,s,s,s,s,s,l))
+(q10-19, (#,#,B,B,B,B,0)) (q10-19, (#,#,B,B,B,B,B), (s,s,s,s,s,s,l))
+(q10-19, (#,#,B,B,B,B,#)) (q10-19, (#,#,B,B,B,B,B), (s,s,s,s,s,s,l))
+(q10-19, (#,#,B,B,B,B,$)) (q10-20, (#,#,B,B,0,B,$), (s,s,s,s,r,s,r))
+(q10-20, (#,#,B,B,B,B,B)) (q16, (#,#,B,B,#,B,B), (s,s,s,s,r,s,s))
+
+(q11, (1,#,B,B,B,B,B)) (q14, (1,#,B,B,B,B,d), (s,s,s,s,s,s,r))
+(q11, (0,#,B,B,B,B,B)) (q14, (0,#,B,B,B,B,d), (s,s,s,s,s,s,r))
+(q11, (*,#,B,B,B,B,B)) (q14, (*,#,B,B,B,B,e), (r,s,s,s,s,s,r))
+(q11, (=,#,B,B,B,B,B)) (q19, (=,#,B,B,B,B,6), (r,s,s,s,s,s,r))
+(q11-1, (#,#,B,B,B,#,B)) (q11-2, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q11-2, (#,#,B,B,B,0,B)) (q11-4, (#,#,B,B,0,0,B), (s,s,s,s,r,r,s))
+(q11-2, (#,#,B,B,B,1,B)) (q11-3, (#,#,B,B,B,B,1), (s,s,s,s,s,l,r))
+(q11-4, (#,#,B,B,B,B,B)) (q16, (#,#,B,B,#,#,B), (s,s,s,s,r,r,s))
+(q11-3, (#,#,B,B,B,1,B)) (q11-3, (#,#,B,B,B,B,1), (s,s,s,s,s,l,r))
+(q11-3, (#,#,B,B,B,#,B)) (q11-9, (#,#,B,B,B,#,B), (s,s,s,s,s,r,s))
+(q11-9, (#,#,B,B,B,B,B)) (q11-5, (#,#,B,B,0,B,B), (s,s,s,s,r,s,s))
+(q11-5, (#,#,B,B,B,B,B)) (q11-6, (#,#,B,B,#,B,B), (s,s,s,s,r,s,l))
+(q11-6, (#,#,B,B,B,B,$)) (q11-10, (#,#,B,B,B,B,$), (s,s,s,s,s,s,r))
+(q11-6, (#,#,B,B,B,B,1)) (q17, (#,#,B,B,B,B,h), (s,s,s,s,s,s,r))
+(q11-10, (#,#,B,B,B,B,B)) (q16, (#,#,B,B,B,#,B), (s,s,s,s,s,r,s))
+(q11-7, (#,#,B,B,B,#,B)) (q11-8, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q11-8, (#,#,B,B,B,1,B)) (q11-9, (#,#,B,B,B,1,B), (s,s,s,s,s,r,s))
+(q11-8, (#,#,B,B,B,0,B)) (q11-11, (#,#,B,B,B,B,B), (s,s,s,s,s,s,l))
+(q11-11, (#,#,B,B,B,B,#)) (q11-11, (#,#,B,B,B,B,B), (s,s,s,s,s,s,l))
+(q11-11, (#,#,B,B,B,B,1)) (q11-11, (#,#,B,B,B,B,B), (s,s,s,s,s,s,l))
+(q11-11, (#,#,B,B,B,B,0)) (q11-11, (#,#,B,B,B,B,B), (s,s,s,s,s,s,l))
+(q11-11, (#,#,B,B,B,B,$)) (q2, (#,#,B,B,B,B,$), (r,s,s,s,s,s,r))
+
+(q12, (1,#,B,B,B,B,B)) (q12, (1,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q12, (0,#,B,B,B,B,B)) (q12, (0,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q12, (#,#,B,B,B,B,B)) (q12-1, (#,#,B,B,0,B,B), (s,s,s,s,r,s,s))
+(q12-1, (#,#,B,B,B,B,B)) (q17, (#,#,B,B,#,B,8), (s,s,s,s,r,s,r))
+(q12-2, (#,#,B,B,B,#,B)) (q12-3, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q12-3, (#,#,B,B,B,1,B)) (q18, (#,#,B,B,B,B,3), (s,s,s,s,s,s,r))
+(q12-3, (#,#,B,B,B,0,B)) (q12-4, (#,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q12-4, (1,#,B,B,B,B,B)) (q12-4, (1,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q12-4, (0,#,B,B,B,B,B)) (q12-4, (0,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q12-4, (P,#,B,B,B,B,B)) (q13, (P,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+
+(q13, (1,#,B,B,B,B,B)) (q19, (1,#,B,B,B,B,2), (s,s,s,s,s,s,r))
+(q13, (0,#,B,B,B,B,B)) (q19, (0,#,B,B,B,B,2), (s,s,s,s,s,s,r))
+(q13-1, (1,#,B,B,B,B,B)) (q13-1, (1,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, (0,#,B,B,B,B,B)) (q13-1, (0,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, (=,#,B,B,B,B,B)) (q13-1, (=,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, (*,#,B,B,B,B,B)) (q13-1, (*,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, (#,#,B,B,B,B,B)) (q13-1, (#,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, (R,#,B,B,B,B,B)) (q13-1, (R,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, (W,#,B,B,B,B,B)) (q13-1, (W,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, (L,#,B,B,B,B,B)) (q13-1, (L,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, (S,#,B,B,B,B,B)) (q13-1, (S,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, (A,#,B,B,B,B,B)) (q13-1, (A,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, (X,#,B,B,B,B,B)) (q13-1, (X,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, (M,#,B,B,B,B,B)) (q13-1, (M,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, (D,#,B,B,B,B,B)) (q13-1, (D,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, (J,#,B,B,B,B,B)) (q13-1, (J,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, (P,#,B,B,B,B,B)) (q13-1, (P,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, (H,#,B,B,B,B,B)) (q13-1, (H,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q13-1, ($,#,B,B,B,B,B)) (q13-2, ($,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q13-2, ($,#,B,B,B,#,B)) (q13-3, ($,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q13-3, ($,#,B,B,B,1,B)) (q13-4, ($,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-3, (#,#,B,B,B,1,B)) (q13-4, (#,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-3, ($,#,B,B,B,0,B)) (q2, ($,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-3, (#,#,B,B,B,#,B)) (q2, (#,#,B,B,B,#,B), (r,s,s,s,s,r,s))
+(q13-4, (1,#,B,B,B,B,B)) (q13-4, (1,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-4, (0,#,B,B,B,B,B)) (q13-4, (0,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-4, (=,#,B,B,B,B,B)) (q13-4, (=,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-4, (*,#,B,B,B,B,B)) (q13-4, (*,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-4, (R,#,B,B,B,B,B)) (q13-4, (R,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-4, (W,#,B,B,B,B,B)) (q13-4, (W,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-4, (L,#,B,B,B,B,B)) (q13-4, (L,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-4, (S,#,B,B,B,B,B)) (q13-4, (S,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-4, (A,#,B,B,B,B,B)) (q13-4, (A,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-4, (X,#,B,B,B,B,B)) (q13-4, (X,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-4, (M,#,B,B,B,B,B)) (q13-4, (M,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-4, (D,#,B,B,B,B,B)) (q13-4, (D,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-4, (J,#,B,B,B,B,B)) (q13-4, (J,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-4, (P,#,B,B,B,B,B)) (q13-4, (P,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-4, (H,#,B,B,B,B,B)) (q13-4, (H,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q13-4, (#,#,B,B,B,B,B)) (q13-3, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+
+(q14, (1,#,B,B,B,B,B)) (q14, (1,#,B,B,1,B,B), (r,s,s,s,r,s,s))
+(q14, (0,#,B,B,B,B,B)) (q14, (0,#,B,B,0,B,B), (r,s,s,s,r,s,s))
+(q14, (#,#,B,B,B,B,B)) (q14-1, (#,#,B,B,#,B,B), (s,s,s,s,r,s,l))
+(q14-1, (#,#,B,B,B,B,c)) (q17, (#,#,B,B,B,B,d), (s,s,s,s,s,s,r))
+(q14-1, (#,#,B,B,B,B,d)) (q17, (#,#,B,B,B,B,g), (s,s,s,s,s,s,r))
+(q14-1, (#,#,B,B,B,B,e)) (q17, (#,#,B,B,B,B,f), (s,s,s,s,s,s,r))
+(q14-1, (#,#,B,B,B,B,h)) (q4-1, (#,#,B,B,B,B,B), (s,r,s,s,s,s,s))
+(q14-1, (#,#,B,B,B,B,g)) (q17, (#,#,B,B,B,B,j), (s,s,s,s,s,s,r))
+(q14-1, (#,#,B,B,B,B,b)) (q17, (#,#,B,B,B,B,e), (s,s,s,s,s,s,r))
+(q14-1, (#,#,B,B,B,B,2)) (q17, (#,#,B,B,B,B,l), (s,s,s,s,s,s,r))
+(q14-1, (#,#,B,B,B,B,3)) (q17, (#,#,B,B,B,B,3), (s,s,s,s,s,s,r))
+(q14-1, (#,#,B,B,B,B,4)) (q17, (#,#,B,B,B,B,2), (s,s,s,s,s,s,r))
+(q14-1, (#,#,B,B,B,B,5)) (q17, (#,#,B,B,B,B,4), (s,s,s,s,s,s,r))
+(q14-1, (#,#,B,B,B,B,6)) (q17, (#,#,B,B,B,B,5), (s,s,s,s,s,s,r))
+(q14-1, (#,#,B,B,B,B,7)) (q16, (#,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+(q14-1, (#,#,B,B,B,B,8)) (q17, (#,#,B,B,B,B,7), (s,s,s,s,s,s,r))
+(q14-1, (#,#,B,B,B,B,f)) (q17, (#,#,B,B,B,B,k), (s,s,s,s,s,s,r))
+(q14-1, (#,#,B,B,B,B,a)) (q17, (#,#,B,B,B,B,a), (s,s,s,s,s,s,r))
+(q14-1, (#,#,B,B,B,B,9)) (q17, (#,#,B,B,B,B,b), (s,s,s,s,s,s,r))
+
+(q15, (#,#,B,B,B,B,B)) (q15-1, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q15-1, (#,#,B,B,B,#,B)) (q15-2, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q15-2, (#,#,B,B,B,1,B)) (q15-2, (#,#,B,B,1,B,B), (s,s,s,s,r,l,s))
+(q15-2, (#,#,B,B,B,0,B)) (q15-2, (#,#,B,B,0,B,B), (s,s,s,s,r,l,s))
+(q15-2, (#,#,B,B,B,#,B)) (q15-3, (#,#,B,B,#,#,B), (s,s,s,s,r,r,l))
+(q15-3, (#,#,B,B,B,B,5)) (q17, (#,#,B,B,B,B,b), (s,s,s,s,s,s,r))
+(q15-3, (#,#,B,B,B,B,3)) (q17, (#,#,B,B,B,B,4), (s,s,s,s,s,s,r))
+(q15-3, (#,#,B,B,B,B,4)) (q16, (#,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+(q15-3, (#,#,B,B,B,B,2)) (q17, (#,#,B,B,B,B,3), (s,s,s,s,s,s,r))
+(q15-3, (#,#,B,B,B,B,6)) (q17, (#,#,B,B,B,B,e), (s,s,s,s,s,s,r))
+(q15-3, (#,#,B,B,B,B,7)) (q17, (#,#,B,B,B,B,g), (s,s,s,s,s,s,r))
+(q15-3, (#,#,B,B,B,B,8)) (q17, (#,#,B,B,B,B,k), (s,s,s,s,s,s,r))
+(q15-3, (#,#,B,B,B,B,9)) (q4-1, (#,#,B,B,B,B,B), (s,r,s,s,s,s,s))
+
+(q16, (#,#,B,B,B,B,B)) (q16-1, (#,#,B,B,B,B,B), (s,s,s,s,l,l,s))
+(q16-1, (#,#,B,B,#,#,B)) (q16-2, (#,#,B,#,B,#,B), (s,s,s,r,l,s,s))
+(q16-2, (#,#,B,B,1,#,B)) (q16-2, (#,#,B,1,B,#,B), (s,s,s,r,l,s,s))
+(q16-2, (#,#,B,B,0,#,B)) (q16-2, (#,#,B,0,B,#,B), (s,s,s,r,l,s,s))
+(q16-2, (#,#,B,B,#,#,B)) (q16-3, (#,#,B,:,#,B,B), (s,s,s,r,r,l,s))
+(q16-3, (#,#,B,B,B,1,B)) (q16-3, (#,#,B,1,B,B,B), (s,s,s,r,s,l,s))
+(q16-3, (#,#,B,B,B,0,B)) (q16-3, (#,#,B,0,B,B,B), (s,s,s,r,s,l,s))
+(q16-3, (#,#,B,B,B,#,B)) (q2, (#,#,B,B,B,#,B), (r,s,s,s,s,r,s))
+
+(q17, (#,#,B,B,B,B,B)) (q17-1, (#,#,B,B,B,B,B), (s,s,s,l,l,s,s))
+(q17-1, (#,#,B,1,#,B,B)) (q17-1, (#,#,B,1,#,B,B), (s,s,s,l,s,s,s))
+(q17-1, (#,#,B,0,#,B,B)) (q17-1, (#,#,B,0,#,B,B), (s,s,s,l,s,s,s))
+(q17-1, (#,#,B,#,#,B,B)) (q17-1, (#,#,B,#,#,B,B), (s,s,s,l,s,s,s))
+(q17-1, (#,#,B,$,#,B,B)) (q17-2, (#,#,B,$,B,0,B), (s,s,s,s,l,r,s))
+(q17-1, (#,#,B,:,#,B,B)) (q17-4, (#,#,B,:,#,B,B), (s,s,s,l,l,s,s))
+(q17-2, (#,#,B,$,1,B,B)) (q17-2, (#,#,B,$,B,B,B), (s,s,s,s,l,s,s))
+(q17-2, (#,#,B,$,0,B,B)) (q17-2, (#,#,B,$,B,B,B), (s,s,s,s,l,s,s))
+(q17-2, (#,#,B,$,#,B,B)) (q17-3, (#,#,B,$,#,#,B), (s,s,s,r,r,r,s))
+(q17-3, (#,#,B,1,B,B,B)) (q17-3, (#,#,B,1,B,B,B), (s,s,s,r,s,s,s))
+(q17-3, (#,#,B,0,B,B,B)) (q17-3, (#,#,B,0,B,B,B), (s,s,s,r,s,s,s))
+(q17-3, (#,#,B,:,B,B,B)) (q17-3, (#,#,B,:,B,B,B), (s,s,s,r,s,s,s))
+(q17-3, (#,#,B,#,B,B,B)) (q17-3, (#,#,B,#,B,B,B), (s,s,s,r,s,s,s))
+(q17-3, (#,#,B,B,B,B,B)) (q17-10, (#,#,B,B,B,B,B), (s,s,s,s,s,s,l))
+(q17-4, (#,#,B,1,1,B,B)) (q17-4, (#,#,B,1,1,B,B), (s,s,s,l,l,s,s))
+(q17-4, (#,#,B,0,0,B,B)) (q17-4, (#,#,B,0,0,B,B), (s,s,s,l,l,s,s))
+(q17-4, (#,#,B,1,0,B,B)) (q17-5, (#,#,B,1,0,B,B), (s,s,s,s,s,s,s))
+(q17-4, (#,#,B,0,1,B,B)) (q17-5, (#,#,B,0,1,B,B), (s,s,s,s,s,s,s))
+(q17-4, (#,#,B,1,#,B,B)) (q17-5, (#,#,B,1,#,B,B), (s,s,s,s,r,s,s))
+(q17-4, (#,#,B,0,#,B,B)) (q17-5, (#,#,B,0,#,B,B), (s,s,s,s,r,s,s))
+(q17-4, (#,#,B,#,1,B,B)) (q17-5, (#,#,B,#,1,B,B), (s,s,s,r,s,s,s))
+(q17-4, (#,#,B,#,0,B,B)) (q17-5, (#,#,B,#,0,B,B), (s,s,s,r,s,s,s))
+(q17-4, (#,#,B,#,#,B,B)) (q17-6, (#,#,B,#,#,B,B), (s,s,s,r,s,s,s))
+(q17-5, (#,#,B,1,1,B,B)) (q17-5, (#,#,B,1,1,B,B), (s,s,s,s,r,s,s))
+(q17-5, (#,#,B,0,0,B,B)) (q17-5, (#,#,B,0,0,B,B), (s,s,s,s,r,s,s))
+(q17-5, (#,#,B,1,0,B,B)) (q17-5, (#,#,B,1,0,B,B), (s,s,s,s,r,s,s))
+(q17-5, (#,#,B,0,1,B,B)) (q17-5, (#,#,B,0,1,B,B), (s,s,s,s,r,s,s))
+(q17-5, (#,#,B,1,#,B,B)) (q17-1, (#,#,B,1,#,B,B), (s,s,s,s,s,s,s))
+(q17-5, (#,#,B,0,#,B,B)) (q17-1, (#,#,B,0,#,B,B), (s,s,s,s,s,s,s))
+(q17-6, (#,#,B,1,#,B,B)) (q17-6, (#,#,B,1,#,B,B), (s,s,s,r,s,s,s))
+(q17-6, (#,#,B,0,#,B,B)) (q17-6, (#,#,B,0,#,B,B), (s,s,s,r,s,s,s))
+(q17-6, (#,#,B,:,#,B,B)) (q17-7, (#,#,B,:,#,B,B), (s,s,s,r,s,s,s))
+(q17-7, (#,#,B,1,#,B,B)) (q17-7, (#,#,B,1,#,1,B), (s,s,s,r,s,r,s))
+(q17-7, (#,#,B,0,#,B,B)) (q17-7, (#,#,B,0,#,0,B), (s,s,s,r,s,r,s))
+(q17-7, (#,#,B,#,#,B,B)) (q17-11, (#,#,B,#,#,#,B), (s,s,s,r,s,r,s))
+(q17-7, (#,#,B,B,#,B,B)) (q17-11, (#,#,B,B,#,#,B), (s,s,s,s,s,r,s))
+(q17-11, (#,#,B,1,#,B,B)) (q17-11, (#,#,B,1,#,B,B), (s,s,s,r,s,s,s))
+(q17-11, (#,#,B,0,#,B,B)) (q17-11, (#,#,B,0,#,B,B), (s,s,s,r,s,s,s))
+(q17-11, (#,#,B,:,#,B,B)) (q17-11, (#,#,B,:,#,B,B), (s,s,s,r,s,s,s))
+(q17-11, (#,#,B,#,#,B,B)) (q17-11, (#,#,B,#,#,B,B), (s,s,s,r,s,s,s))
+(q17-11, (#,#,B,B,#,B,B)) (q17-8, (#,#,B,B,#,B,B), (s,s,s,s,r,s,s))
+(q17-8, (#,#,B,B,1,B,B)) (q17-8, (#,#,B,B,1,B,B), (s,s,s,s,r,s,s))
+(q17-8, (#,#,B,B,0,B,B)) (q17-8, (#,#,B,B,0,B,B), (s,s,s,s,r,s,s))
+(q17-8, (#,#,B,B,#,B,B)) (q17-9, (#,#,B,B,B,B,B), (s,s,s,s,l,s,s))
+(q17-9, (#,#,B,B,1,B,B)) (q17-9, (#,#,B,B,B,B,B), (s,s,s,s,l,s,s))
+(q17-9, (#,#,B,B,0,B,B)) (q17-9, (#,#,B,B,B,B,B), (s,s,s,s,l,s,s))
+(q17-9, (#,#,B,B,#,B,B)) (q17-10, (#,#,B,B,#,B,B), (s,s,s,s,r,s,l))
+(q17-10, (#,#,B,B,B,B,i)) (q10-2, (#,#,B,B,B,B,B), (l,s,s,s,s,l,s))
+(q17-10, (#,#,B,B,B,B,h)) (q11-7, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q17-10, (#,#,B,B,B,B,g)) (q11-1, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q17-10, (#,#,B,B,B,B,f)) (q15, (#,#,B,B,B,B,7), (s,s,s,s,s,s,r))
+(q17-10, (#,#,B,B,B,B,e)) (q21, (#,#,B,B,B,B,3), (s,s,s,s,s,s,r))
+(q17-10, (#,#,B,B,B,B,d)) (q15, (#,#,B,B,B,B,6), (s,s,s,s,s,s,r))
+(q17-10, (#,#,B,B,B,B,j)) (q15, (#,#,B,B,B,B,8), (s,s,s,s,s,s,r))
+(q17-10, (#,#,B,B,B,B,k)) (q10-6, (#,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+(q17-10, (#,#,B,B,B,B,l)) (q15, (#,#,B,B,B,B,9), (s,s,s,s,s,s,r))
+(q17-10, (#,#,B,B,B,B,c)) (q9-2, (#,#,B,B,0,B,B), (l,s,s,s,r,s,s))
+(q17-10, (#,#,B,B,B,B,b)) (q23, (#,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+(q17-10, (#,#,B,B,B,B,a)) (q15, (#,#,B,B,B,B,5), (s,s,s,s,s,s,r))
+(q17-10, (#,#,B,B,B,B,9)) (q8-2, (#,#,B,B,0,B,B), (l,s,s,s,r,s,s))
+(q17-10, (#,#,B,B,B,B,8)) (q12-2, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q17-10, (#,#,B,B,B,B,2)) (q15, (#,#,B,B,B,B,2), (s,s,s,s,s,s,r))
+(q17-10, (#,#,B,B,B,B,3)) (q5-2, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q17-10, (#,#,B,B,B,B,4)) (q16, (#,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+(q17-10, (#,#,B,B,B,B,5)) (q15, (#,#,B,B,B,B,3), (s,s,s,s,s,s,r))
+(q17-10, (#,#,B,B,B,B,6)) (q7-2, (#,#,B,B,B,B,B), (l,s,s,s,s,s,s))
+(q17-10, (#,#,B,B,B,B,7)) (q15, (#,#,B,B,B,B,4), (s,s,s,s,s,s,r))
+
+(q18, (#,#,B,B,B,B,B)) (q18-1, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q18-1, (#,#,B,B,B,#,B)) (q18-2, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q18-2, (#,#,B,B,B,1,B)) (q18-2, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q18-2, (#,#,B,B,B,0,B)) (q18-2, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q18-2, (#,#,B,B,B,#,B)) (q18-3, (#,#,B,B,B,#,B), (s,s,s,s,s,r,l))
+(q18-3, (#,#,B,B,B,B,3)) (q2, (#,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+(q18-3, (#,#,B,B,B,B,5)) (q21-10, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q18-3, (#,#,B,B,B,B,7)) (q10-12, (#,#,B,B,B,B,B), (s,s,s,s,s,s,l))
+(q18-3, (#,#,B,B,B,B,6)) (q2, (#,#,B,B,B,B,B), (r,s,s,s,s,s,s))
+
+(q19, (1,#,B,B,B,B,B)) (q19, (1,#,B,B,B,1,B), (r,s,s,s,s,r,s))
+(q19, (0,#,B,B,B,B,B)) (q19, (0,#,B,B,B,0,B), (r,s,s,s,s,r,s))
+(q19, (#,#,B,B,B,B,B)) (q19-1, (#,#,B,B,B,#,B), (s,s,s,s,s,r,l))
+(q19-1, (#,#,B,B,B,B,2)) (q13-1, (#,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+(q19-1, (#,#,B,B,B,B,4)) (q23, (#,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+(q19-1, (#,#,B,B,B,B,5)) (q21, (#,#,B,B,B,B,3), (s,s,s,s,s,s,r))
+(q19-1, (#,#,B,B,B,B,6)) (q11-1, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q19-1, (#,#,B,B,B,B,7)) (q10-6, (#,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+(q19-1, (#,#,B,B,B,B,8)) (q16, (#,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+
+(q20, (#,#,B,B,B,1,B)) (q20, (#,#,B,B,B,1,B), (s,s,s,s,s,r,s))
+(q20, (#,#,B,B,B,0,B)) (q20, (#,#,B,B,B,0,B), (s,s,s,s,s,r,s))
+(q20, (#,#,B,B,B,#,B)) (q20, (#,#,B,B,B,#,B), (s,s,s,s,s,r,s))
+(q20, (#,#,B,B,B,B,B)) (q20-1, (#,#,B,B,B,B,B), (s,s,s,s,s,s,l))
+(q20-1, (#,#,B,B,B,B,2)) (q16, (#,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+(q20-1, (#,#,B,B,B,B,3)) (q23, (#,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+(q20-1, (#,#,B,B,B,B,4)) (q21-5, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q20-1, (#,#,B,B,B,B,5)) (q18, (#,#,B,B,B,#,5), (s,s,s,s,s,r,r))
+(q20-1, (#,#,B,B,B,B,6)) (q21, (#,#,B,B,B,B,2), (s,s,s,s,s,s,r))
+
+(q21, (#,#,B,B,B,B,B)) (q21-1, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q21-1, (#,#,B,B,B,#,B)) (q21-2, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q21-2, (#,#,B,B,B,0,B)) (q21-12, (#,#,B,B,B,B,B), (s,s,s,s,s,s,l))
+(q21-2, (#,#,B,B,B,1,B)) (q21-3, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q21-3, (#,#,B,B,B,1,B)) (q21-3, (#,#,B,B,B,1,B), (s,s,s,s,s,l,s))
+(q21-3, (#,#,B,B,B,#,B)) (q21-4, (#,#,B,B,B,#,B), (s,s,s,s,s,l,s))
+(q21-4, (#,#,B,B,B,0,B)) (q21-4, (#,#,B,B,B,0,B), (s,s,s,s,s,l,s))
+(q21-4, (#,#,B,B,B,#,B)) (q20, (#,#,B,B,B,#,5), (s,s,s,s,s,r,r))
+(q21-4, (#,#,B,B,B,1,B)) (q20, (#,#,B,B,B,0,4), (s,s,s,s,s,r,r))
+(q21-5, (#,#,B,B,B,1,B)) (q21-3, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q21-5, (#,#,B,B,B,#,B)) (q21-6, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q21-6, (#,#,B,B,B,0,B)) (q21-7, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q21-7, (#,#,B,B,B,0,B)) (q21-7, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q21-7, (#,#,B,B,B,1,B)) (q21-8, (#,#,B,B,B,1,B), (s,s,s,s,s,r,s))
+(q21-7, (#,#,B,B,B,#,B)) (q21-9, (#,#,B,B,B,#,B), (s,s,s,s,s,r,s))
+(q21-9, (#,#,B,B,B,B,B)) (q21-8, (#,#,B,B,B,0,B), (s,s,s,s,s,r,s))
+(q21-8, (#,#,B,B,B,B,B)) (q21-12, (#,#,B,B,B,#,B), (s,s,s,s,s,r,l))
+(q21-10, (#,#,B,B,B,#,B)) (q21-11, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q21-11, (#,#,B,B,B,0,B)) (q21-7, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q21-12, (#,#,B,B,B,B,2)) (q10-10, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q21-12, (#,#,B,B,B,B,3)) (q16, (#,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+
+(q23, (#,#,B,B,B,B,B)) (q23-1, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q23-1, (#,#,B,B,B,#,B)) (q23-2, (#,#,B,B,B,B,B), (s,s,s,s,s,l,s))
+(q23-2, (#,#,B,B,B,0,B)) (q16, (#,#,B,B,B,B,B), (s,s,s,s,s,s,s))
+(q23-2, (#,#,B,B,B,1,B)) (q23-3, (#,#,B,B,B,#,B), (s,s,s,s,s,l,s))
+(q23-3, (#,#,B,B,B,1,B)) (q23-3, (#,#,B,B,B,1,B), (s,s,s,s,s,l,s))
+(q23-3, (#,#,B,B,B,#,B)) (q23-4, (#,#,B,B,B,1,B), (s,s,s,s,s,l,s))
+(q23-4, (#,#,B,B,B,0,B)) (q20, (#,#,B,B,B,#,3), (s,s,s,s,s,r,r))
+(q23-4, (#,#,B,B,B,#,B)) (q20, (#,#,B,B,B,#,2), (s,s,s,s,s,r,r))
+(q23-4, (#,#,B,B,B,1,B)) (q20, (#,#,B,B,B,1,2), (s,s,s,s,s,r,r))
+
