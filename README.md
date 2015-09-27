@@ -19,22 +19,15 @@ select those components, connect them with lines into a schema, and the computer
 
 # Features highlight
 
-* Written in Java
-
-* Main module with Graphical User Interface (GUI)
-
-* Simple computer schema editor
-
-* Source code editor with support of syntax highlighting
-
-* CPU debugger with interactive disassembler other features
-
-* Operating memory and devices can have their own GUI windows
-
+* Computer schema designer / editor
+* Simple IDE
+    - Source code editor with syntax highlighting
+    - Ability to compile and directly transfer code to emulator
+    - CPU debugger with interactive disassembler
+* Components of a computer are independent plug-ins like CPU, memory and devices
+    - Operating memory and devices can have their own GUI windows
 * Automatic emulation run from command line
-
 * Several predefined computer sets and plug-ins
-
 * Consistent API for development of custom plug-ins
 
 # Predefined computers, and hardware

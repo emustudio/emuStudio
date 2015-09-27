@@ -244,6 +244,7 @@ public class InteractiveDisassemblerTest {
         // advance for updating cache
         ida.rowToLocation(0, InteractiveDisassembler.INSTRUCTIONS_IN_GAP);
         ida.pageNext();
+        ida.rowToLocation(InteractiveDisassembler.BYTES_PER_PAGE, InteractiveDisassembler.INSTRUCTIONS_IN_GAP);
         ida.rowToLocation(0, InteractiveDisassembler.INSTRUCTIONS_IN_GAP); // jump back
 
         assertEquals(InteractiveDisassembler.BYTES_PER_PAGE, ida.rowToLocation(0, InteractiveDisassembler.INSTRUCTIONS_IN_GAP));
@@ -251,8 +252,46 @@ public class InteractiveDisassemblerTest {
 
     @Test
     public void testPreviousPageThenJumpToTheFirstInstructionUpdatesPage() throws Exception {
+        int[] program = new int[] {
+                1,
+                3,3,
+                5,5,
+                6,
+                9,9,9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34
+        };
+        InteractiveDisassembler ida = new InteractiveDisassembler(makeDisassembler(program), MEMORY_SIZE);
 
+        // advance for updating cache
+        ida.rowToLocation(24, InteractiveDisassembler.INSTRUCTIONS_IN_GAP);
+        ida.pagePrevious();
+        ida.rowToLocation(25, InteractiveDisassembler.INSTRUCTIONS_IN_GAP); // jump back
 
+        assertEquals(0, ida.rowToLocation(25, InteractiveDisassembler.INSTRUCTIONS_IN_GAP));
     }
 
     @Test
@@ -263,8 +302,17 @@ public class InteractiveDisassemblerTest {
 
     @Test
     public void testFirstPageReturnsZeroAsTheFirstRowLocation() throws Exception {
+        InteractiveDisassembler ida = new InteractiveDisassembler(makeDisassembler(
+                1,
+                3,3,
+                5,5,
+                6,
+                9,9,9,
+                10
+        ), MEMORY_SIZE);
 
-
+        ida.pageFirst();
+        assertEquals(0, ida.rowToLocation(1, InteractiveDisassembler.INSTRUCTIONS_IN_GAP));
     }
 
     @Test
