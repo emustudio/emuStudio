@@ -54,7 +54,7 @@ public class DebugTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return InteractiveDisassembler.INSTRUCTIONS_IN_GAP * 2 + 1;
+        return InteractiveDisassembler.INSTRUCTIONS_PER_PAGE;
     }
 
     public int getBreakpointColumnIndex() {
@@ -149,4 +149,7 @@ public class DebugTableModel extends AbstractTableModel {
         return (cpu.getInstructionPosition() == location);
     }
 
+    public void memoryChanged(int from, int to) {
+        ida.flushCache(from, to + 1);
+    }
 }

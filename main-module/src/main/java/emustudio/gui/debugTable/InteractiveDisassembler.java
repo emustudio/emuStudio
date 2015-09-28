@@ -1,3 +1,21 @@
+/*
+ * (c) Copyright 2006-2015, Peter Jakubčo
+ * KISS, YAGNI, DRY
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 package emustudio.gui.debugTable;
 
 import emulib.plugins.cpu.Disassembler;
@@ -13,9 +31,10 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 public class InteractiveDisassembler {
-    public final static int INSTRUCTIONS_IN_GAP = 8;
+    public final static int INSTRUCTIONS_PER_PAGE = 2 * 15 + 1;
+    public final static int CURRENT_INSTRUCTION = 4;
     private final static int AVG_INSTRUCTION_SIZE = 2;
-    public final static int BYTES_PER_PAGE = 2 * INSTRUCTIONS_IN_GAP * AVG_INSTRUCTION_SIZE;
+    public final static int BYTES_PER_PAGE = INSTRUCTIONS_PER_PAGE * AVG_INSTRUCTION_SIZE;
 
     private final Disassembler disassembler;
     private final int memorySize;
@@ -131,7 +150,8 @@ public class InteractiveDisassembler {
         }
         int indexOfCurrentLocation = locations.indexOf(currentLocationInPage);
 
-        while (locations.size() < (indexOfCurrentLocation + INSTRUCTIONS_IN_GAP)) {
+        int instructionsToLoad = INSTRUCTIONS_PER_PAGE / 2;
+        while (locations.size() < (indexOfCurrentLocation + instructionsToLoad)) {
             try {
                 locations.add(disassembler.getNextInstructionPosition(locations.get(locations.size() - 1)));
             } catch (IndexOutOfBoundsException e) {
@@ -142,19 +162,20 @@ public class InteractiveDisassembler {
         return locations;
     }
 
+    public void flushCache(int fromLocationInclusive, int toLocationExclusive) {
+        flowGraph.subMap(fromLocationInclusive, toLocationExclusive).clear();
+    }
+
     public int rowToLocation(int currentLocation, int row) {
         updateCache(currentLocation);
 
-        int currentLocationInPage = currentLocation + addressOffset;
-        int instructionGap = INSTRUCTIONS_IN_GAP * AVG_INSTRUCTION_SIZE;
+        int currentLocationInPage = Math.min(memorySize - 1, Math.max(currentLocation, currentLocation + addressOffset));
+        int instructionGapBefore = CURRENT_INSTRUCTION * AVG_INSTRUCTION_SIZE;
+        int instructionGapAfter = (INSTRUCTIONS_PER_PAGE - CURRENT_INSTRUCTION) * AVG_INSTRUCTION_SIZE;
 
         // recompute current page
-        int from = Math.max(0, currentLocationInPage - instructionGap);
-        int to = Math.min(memorySize - 1, currentLocationInPage + instructionGap);
-
-        if (from > to) {
-            to = from;
-        }
+        int from = Math.max(0, currentLocationInPage - instructionGapBefore);
+        int to = Math.min(memorySize - 1, currentLocationInPage + instructionGapAfter);
 
         SortedMap<Integer, List<Integer>> interval = flowGraph.subMap(from, true, to, true);
 
@@ -166,12 +187,10 @@ public class InteractiveDisassembler {
         }
 
         int index;
-        if (row == INSTRUCTIONS_IN_GAP) {
+        if (row == CURRENT_INSTRUCTION) {
             return Math.max(0, currentLocationInPage);
-        } else if (row < INSTRUCTIONS_IN_GAP) {
-            index = indexOfCurrentLocation - (INSTRUCTIONS_IN_GAP - row);
         } else {
-            index = indexOfCurrentLocation + (row - INSTRUCTIONS_IN_GAP);
+            index = indexOfCurrentLocation + row - CURRENT_INSTRUCTION;
         }
 
         if (index < 0) {

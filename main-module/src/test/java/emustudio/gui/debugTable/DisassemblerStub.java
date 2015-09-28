@@ -23,6 +23,10 @@ public class DisassemblerStub extends AbstractDisassembler {
         }
     }
 
+    public void set(int address, int value) {
+        nextPositions[address] = value;
+    }
+
     @Override
     public DisassembledInstruction disassemble(int i) throws InvalidInstructionException {
         throw new UnsupportedOperationException();

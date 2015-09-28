@@ -32,6 +32,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.util.Objects;
 
 public class DebugTableImpl extends JTable  implements DebugTable {
     private final DebugTableModel debugModel;
@@ -118,10 +119,10 @@ public class DebugTableImpl extends JTable  implements DebugTable {
         }
     }
 
-    public DebugTableImpl(Computer computer) {
+    public DebugTableImpl(DebugTableModel debugModel) {
         super();
-        debugModel = new DebugTableModel(computer.getCPU(), computer.getMemory().getSize());
-        setModel(debugModel);
+        this.debugModel = Objects.requireNonNull(debugModel);
+        setModel(this.debugModel);
         textRenderer = new TextCellRenderer();
         boolRenderer = new BooleanCellRenderer();
         setDefaultRenderer(Boolean.class, boolRenderer);
@@ -142,8 +143,8 @@ public class DebugTableImpl extends JTable  implements DebugTable {
     }
 
     private void setAllBooleanCellEditor() {
-        int j = debugModel.getColumnCount();
-        for (int i = 0; i < j; i++) {
+        int columnCount = debugModel.getColumnCount();
+        for (int i = 0; i < columnCount; i++) {
             if (debugModel.getColumnClass(i) == Boolean.class) {
                 this.getColumn(this.getColumnName(i)).setCellEditor(
                         new DefaultCellEditor(new BooleanEditComponent()));

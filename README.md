@@ -15,19 +15,24 @@ implementing them using emuStudio.
 
 From the user perspective, emuStudio is a desktop application which can emulate some predefined virtual computer.
 The computers consist of components, which are separate modules and can be programmed independently. User just
-select those components, connect them with lines into a schema, and the computer is ready for emulation.
+selects those components, connects them with lines into a schema, and the computer is ready for emulation.
 
 # Features highlight
 
 * Computer schema designer / editor
+
 * Simple IDE
     - Source code editor with syntax highlighting
     - Ability to compile and directly transfer code to emulator
     - CPU debugger with interactive disassembler
+    
 * Components of a computer are independent plug-ins like CPU, memory and devices
     - Operating memory and devices can have their own GUI windows
+    
 * Automatic emulation run from command line
+
 * Several predefined computer sets and plug-ins
+
 * Consistent API for development of custom plug-ins
 
 # Predefined computers, and hardware
@@ -41,7 +46,7 @@ select those components, connect them with lines into a schema, and the computer
 
 # Compiling
 
-The project is using Maven for managing dependencies and build process. Each module can be compiled separately,
+The project uses Maven for managing dependencies and build process. Each module can be compiled separately,
 but if you run the following command in the root directory, it will compile each module (results will be in particular
 module directory):
 
