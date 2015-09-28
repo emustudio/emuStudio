@@ -401,7 +401,7 @@ public class BitTest extends InstructionsTest {
                 .clearOtherVerifiersAfterRun();
 
         Function<RunnerContext<Integer>, Integer> address = context -> get8MSBplus8LSB(context.first);
-        Generator.forSome16bitUnary(2,
+        Generator.forSome16bitUnary(0x100,
                 test.verifyByte(address, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC6, 0xDD, 0xCB),
                 test.verifyByte(address, context -> 2).runWithFirst8bitOperandWithOpcodeAfter(0xCE, 0xDD, 0xCB),
                 test.verifyByte(address, context -> 4).runWithFirst8bitOperandWithOpcodeAfter(0xD6, 0xDD, 0xCB),
@@ -422,7 +422,7 @@ public class BitTest extends InstructionsTest {
                 .clearOtherVerifiersAfterRun();
 
         Function<RunnerContext<Integer>, Integer> address = context -> get8MSBplus8LSB(context.first);
-        Generator.forSome16bitUnary(2,
+        Generator.forSome16bitUnary(0x100,
                 test.verifyByte(address, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC6, 0xFD, 0xCB),
                 test.verifyByte(address, context -> 2).runWithFirst8bitOperandWithOpcodeAfter(0xCE, 0xFD, 0xCB),
                 test.verifyByte(address, context -> 4).runWithFirst8bitOperandWithOpcodeAfter(0xD6, 0xFD, 0xCB),
@@ -597,7 +597,7 @@ public class BitTest extends InstructionsTest {
                 .clearOtherVerifiersAfterRun();
 
         Function<RunnerContext<Integer>, Integer> address = context -> get8MSBplus8LSB(context.first);
-        Generator.forSome16bitUnary(2,
+        Generator.forSome16bitUnary(0x100,
                 test.verifyByte(address, context -> 0xFE).runWithFirst8bitOperandWithOpcodeAfter(0x86, 0xDD, 0xCB),
                 test.verifyByte(address, context -> 0xFD).runWithFirst8bitOperandWithOpcodeAfter(0x8E, 0xDD, 0xCB),
                 test.verifyByte(address, context -> 0xFB).runWithFirst8bitOperandWithOpcodeAfter(0x96, 0xDD, 0xCB),
@@ -618,7 +618,7 @@ public class BitTest extends InstructionsTest {
                 .clearOtherVerifiersAfterRun();
 
         Function<RunnerContext<Integer>, Integer> address = context -> get8MSBplus8LSB(context.first);
-        Generator.forSome16bitUnary(2,
+        Generator.forSome16bitUnary(0x100,
                 test.verifyByte(address, context -> 0xFE).runWithFirst8bitOperandWithOpcodeAfter(0x86, 0xFD, 0xCB),
                 test.verifyByte(address, context -> 0xFD).runWithFirst8bitOperandWithOpcodeAfter(0x8E, 0xFD, 0xCB),
                 test.verifyByte(address, context -> 0xFB).runWithFirst8bitOperandWithOpcodeAfter(0x96, 0xFD, 0xCB),

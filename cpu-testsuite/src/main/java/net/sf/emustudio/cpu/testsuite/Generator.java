@@ -151,6 +151,18 @@ public class Generator {
         }
     }
 
+    public static void forAll16bitUnary(int firstStartFrom, BiConsumer<Integer, Integer>... runners) {
+        for (int i = 0; i < 0xffff; i++) {
+            for (BiConsumer<Integer, Integer> runner : runners) {
+                int first = i;
+                if (first < firstStartFrom) {
+                    first += firstStartFrom;
+                }
+                runner.accept(first, 0);
+            }
+        }
+    }
+
     public static <T extends Number> void forGivenOperandsAndSingleRun(T operand, BiConsumer<T, T>... runners) {
         for (BiConsumer<T,T> runner : runners) {
             runner.accept(operand, operand);
