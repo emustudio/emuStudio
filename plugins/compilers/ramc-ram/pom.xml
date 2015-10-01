@@ -85,12 +85,12 @@
       <artifactId>emuLib</artifactId>
     </dependency>
     <dependency>
-      <groupId>nz.ac.waikato.cms.weka.thirdparty</groupId>
-      <artifactId>java-cup-11b</artifactId>
-    </dependency>
-    <dependency>
       <groupId>net.sf.emustudio</groupId>
       <artifactId>ram-mem</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.vbmacher</groupId>
+      <artifactId>java-cup-runtime</artifactId>
     </dependency>
   </dependencies>
 </project>

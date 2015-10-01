@@ -86,12 +86,8 @@
       <artifactId>emuLib</artifactId>
     </dependency>
     <dependency>
-      <groupId>nz.ac.waikato.cms.weka.thirdparty</groupId>
-      <artifactId>java-cup-11b</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>nz.ac.waikato.cms.weka.thirdparty</groupId>
-      <artifactId>java-cup-11b</artifactId>
+      <groupId>com.github.vbmacher</groupId>
+      <artifactId>java-cup-runtime</artifactId>
     </dependency>
   </dependencies>
 </project>
