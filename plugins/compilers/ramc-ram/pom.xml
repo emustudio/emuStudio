@@ -33,7 +33,7 @@
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
             </manifest>
             <manifestEntries>
-              <Class-Path>mem/ram-mem.jar lib/java-cup-11b-2015.03.26.jar</Class-Path>
+              <Class-Path>mem/ram-mem.jar lib/java-cup-runtime-11b.jar</Class-Path>
             </manifestEntries>
           </archive>
         </configuration>
