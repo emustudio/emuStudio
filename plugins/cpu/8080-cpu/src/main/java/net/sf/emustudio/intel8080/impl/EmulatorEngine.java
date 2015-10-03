@@ -34,7 +34,7 @@ public class EmulatorEngine {
     public short flags = 2; // registers
     public volatile CPU.RunState currentRunState = CPU.RunState.STATE_STOPPED_NORMAL;
 
-    private final MemoryContext<Short, Integer> memory;
+    private final MemoryContext<Short> memory;
     private final ContextImpl context;
 
     public int checkTimeSlice = 100;
@@ -48,7 +48,7 @@ public class EmulatorEngine {
         void afterDispatch();
     }
 
-    public EmulatorEngine(MemoryContext<Short, Integer> memory, ContextImpl context) {
+    public EmulatorEngine(MemoryContext<Short> memory, ContextImpl context) {
         this.memory = memory;
         this.context = context;
     }
@@ -224,6 +224,15 @@ public class EmulatorEngine {
         }
     }
 
+    private int readWord(int address) {
+        Short[] read = memory.readWord(address);
+        return (read[1] << 8) | read[0];
+    }
+
+    private void writeWord(int address, int value) {
+        memory.writeWord(address, new Short[] { (short)(value & 0xFF), (short)((value >>> 8) & 0xFF) } );
+    }
+
     private static final Method[] DISPATCH_TABLE = new Method[256];
 
     static {
@@ -384,9 +393,9 @@ public class EmulatorEngine {
     }
 
     private int O34_SHLD(short OP) {
-        int DAR = memory.readWord(PC);
+        int DAR = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
-        memory.writeWord(DAR, (regs[REG_H] << 8) | regs[REG_L]);
+        memory.writeWord(DAR, new Short[] { (short)regs[REG_L] , (short) regs[REG_H] });
         return 16;
     }
 
@@ -419,7 +428,7 @@ public class EmulatorEngine {
     }
 
     private int O42_LHLD(short OP) {
-        int DAR = memory.readWord(PC);
+        int DAR = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
         regs[REG_L] = memory.read(DAR);
         regs[REG_H] = memory.read(DAR + 1);
@@ -433,7 +442,7 @@ public class EmulatorEngine {
     }
 
     private int O50_STA(short OP) {
-        int DAR = memory.readWord(PC);
+        int DAR = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
         memory.write(DAR, (short)regs[REG_A]);
         return 13;
@@ -445,7 +454,7 @@ public class EmulatorEngine {
     }
 
     private int O58_LDA(short OP) {
-        int DAR = memory.readWord(PC);
+        int DAR = readWord(PC);
         PC = (PC + 2) & 0xFFFF;
         regs[REG_A] = memory.read(DAR);
         return 13;
@@ -466,7 +475,7 @@ public class EmulatorEngine {
     }
 
     private int O195_JMP(short OP) {
-        PC = memory.readWord(PC);
+        PC = readWord(PC);
         return 10;
     }
 
@@ -484,15 +493,15 @@ public class EmulatorEngine {
     }
 
     private int O201_RET(short OP) {
-        PC = memory.readWord(SP);
+        PC = readWord(SP);
         SP = (SP + 2) & 0xFFFF;
         return 10;
     }
 
     private int O205_CALL(short OP) {
         SP = (SP - 2) & 0xFFFF;
-        memory.writeWord(SP, (PC + 2) & 0xFFFF);
-        PC = memory.readWord(PC);
+        writeWord(SP, (PC + 2) & 0xFFFF);
+        PC = readWord(PC);
         return 17;
     }
 
@@ -556,8 +565,8 @@ public class EmulatorEngine {
     }
 
     private int O227_XTHL(short OP) {
-        int DAR = memory.readWord(SP);
-        memory.writeWord(SP, (regs[REG_H] << 8) | regs[REG_L]);
+        int DAR = readWord(SP);
+        writeWord(SP, (regs[REG_H] << 8) | regs[REG_L]);
         regs[REG_H] = (DAR >>> 8) & 0xFF;
         regs[REG_L] = DAR & 0xFF;
         return 18;
@@ -647,7 +656,7 @@ public class EmulatorEngine {
     }
 
     private int MCF_01_LXI(short OP) {
-        putpair((OP >>> 4) & 0x03, memory.readWord(PC));
+        putpair((OP >>> 4) & 0x03, readWord(PC));
         PC = (PC + 2) & 0xFFFF;
         return 10;
     }
@@ -677,7 +686,7 @@ public class EmulatorEngine {
     private int MC7_C2_JMP(short OP) {
         int index = (OP >>> 3) & 0x07;
         if ((flags & CONDITION[index]) == CONDITION_VALUES[index]) {
-            PC = memory.readWord(PC);
+            PC = readWord(PC);
         } else {
             PC = (PC + 2) & 0xFFFF;
         }
@@ -687,9 +696,9 @@ public class EmulatorEngine {
     private int MC7_C4_CALL(short OP) {
         int index = (OP >>> 3) & 0x07;
         if ((flags & CONDITION[index]) == CONDITION_VALUES[index]) {
-            int DAR = memory.readWord(PC);
+            int DAR = readWord(PC);
             SP = (SP - 2) & 0xFFFF;
-            memory.writeWord(SP, (PC + 2) & 0xFFFF);
+            writeWord(SP, (PC + 2) & 0xFFFF);
             PC = DAR;
             return 17;
         } else {
@@ -701,7 +710,7 @@ public class EmulatorEngine {
     private int MC7_C0_RET(short OP) {
         int index = (OP >>> 3) & 0x07;
         if ((flags & CONDITION[index]) == CONDITION_VALUES[index]) {
-            PC = memory.readWord(SP);
+            PC = readWord(SP);
             SP = (SP + 2) & 0xFFFF;
         }
         return 10;
@@ -709,7 +718,7 @@ public class EmulatorEngine {
 
     private int MC7_C7_RST(short OP) {
         SP = (SP - 2) & 0xFFFF;
-        memory.writeWord(SP, PC);
+        writeWord(SP, PC);
         PC = OP & 0x38;
         return 11;
     }
@@ -717,12 +726,12 @@ public class EmulatorEngine {
     private int MCF_C5_PUSH(short OP) {
         int DAR = getpush((OP >>> 4) & 0x03);
         SP = (SP - 2) & 0xFFFF;
-        memory.writeWord(SP, DAR);
+        writeWord(SP, DAR);
         return 11;
     }
 
     private int MCF_C1_POP(short OP) {
-        int DAR = memory.readWord(SP);
+        int DAR = readWord(SP);
         SP = (SP + 2) & 0xFFFF;
         putpush((OP >>> 4) & 0x03, DAR);
         return 10;
@@ -855,12 +864,12 @@ public class EmulatorEngine {
             if (INTE == true) {
                 if ((b1 & 0xC7) == 0xC7) {                      /* RST */
                     SP = (SP - 2) & 0xFFFF;
-                    memory.writeWord(SP, PC);
+                    writeWord(SP, PC);
                     PC = b1 & 0x38;
                     return 11;
                 } else if (b1 == 0315) {                        /* CALL */
                     SP = (SP - 2) & 0xFFFF;
-                    memory.writeWord(SP, (PC + 2) & 0xFFFF);
+                    writeWord(SP, (PC + 2) & 0xFFFF);
                     PC = ((b3 & 0xFF) << 8) | (b2 & 0xFF);
                     return 17;
                 }

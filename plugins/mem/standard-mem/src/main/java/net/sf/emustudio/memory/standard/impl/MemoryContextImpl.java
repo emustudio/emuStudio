@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.List;
 
 @ContextType(id = "Standard Memory")
-public class MemoryContextImpl extends AbstractMemoryContext<Short, Integer> implements StandardMemoryContext {
+public class MemoryContextImpl extends AbstractMemoryContext<Short> implements StandardMemoryContext {
     public final static int DEFAULT_MEM_SIZE = 65536;
 
     private final List<AddressRange> romList = new ArrayList<>();
@@ -104,7 +104,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short, Integer> imp
     @Override
     public boolean loadHex(String filename, int bank) {
         try {
-            lastImageStart = HEXFileManager.loadIntoMemory(filename, this);
+            lastImageStart = HEXFileManager.loadIntoMemory(new File(filename), this);
         } catch (FileNotFoundException ex) {
             StaticDialogs.showErrorMessage("File not found: " + filename);
             return false;
@@ -165,11 +165,9 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short, Integer> imp
     }
 
     @Override
-    public Integer readWord(int from) {
+    public Short[] readWord(int from) {
         activeBank = (from < bankCommon) ? bankSelect : 0;
-        int low = mem[activeBank][from] & 0xFF;
-        int high = mem[activeBank][from + 1] & 0xFF;
-        return (high << 8) | low;
+        return new Short[] { mem[activeBank][from] , mem[activeBank][from + 1] };
     }
 
     @Override
@@ -190,15 +188,13 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short, Integer> imp
     }
 
     @Override
-    public void writeWord(int to, Integer val) {
+    public void writeWord(int to, Short[] cells) {
         if (isROM(to)) {
             return;
         }
         activeBank = (to < bankCommon) ? bankSelect : 0;
-        short low = (short) (val & 0xFF);
-        short high = (short) ((val >>> 8) & 0xFF);
-        mem[activeBank][to] = low;
-        mem[activeBank][to + 1] = high;
+        mem[activeBank][to] = cells[0];
+        mem[activeBank][to + 1] = cells[1];
         notifyMemoryChanged(to);
         notifyMemoryChanged(to + 1);
     }

@@ -30,6 +30,13 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
+import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
+import net.sf.emustudio.zilogZ80.gui.DecoderImpl;
+import net.sf.emustudio.zilogZ80.gui.DisassemblerImpl;
+import net.sf.emustudio.zilogZ80.gui.StatusPanel;
+
+import javax.swing.JPanel;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Objects;
@@ -40,12 +47,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.JPanel;
-import net.sf.emustudio.intel8080.ExtendedContext;
-import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
-import net.sf.emustudio.zilogZ80.gui.DecoderImpl;
-import net.sf.emustudio.zilogZ80.gui.DisassemblerImpl;
-import net.sf.emustudio.zilogZ80.gui.StatusPanel;
 
 @PluginType(
         type = PLUGIN_TYPE.CPU,
@@ -128,7 +129,7 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         try {
-            MemoryContext<Short, Integer> memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
+            MemoryContext<Short> memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
 
             if (memory.getDataType() != Short.class) {
                 throw new PluginInitializationException(

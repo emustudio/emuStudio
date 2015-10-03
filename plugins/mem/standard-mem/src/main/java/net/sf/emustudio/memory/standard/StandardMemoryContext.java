@@ -30,7 +30,7 @@ import java.util.List;
  * Supports bank switching, ROM ranges, and loading HEX/BIN files.
  */
 @ContextType(id = "Standard memory")
-public interface StandardMemoryContext extends MemoryContext<Short, Integer> {
+public interface StandardMemoryContext extends MemoryContext<Short> {
     
     /**
      * This interface represents a range of addresses in the memory.

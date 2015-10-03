@@ -21,7 +21,7 @@ package emustudio.gui.debugTable;
 import emulib.plugins.cpu.Disassembler;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -37,7 +37,7 @@ public class InteractiveDisassembler {
     public final static int BYTES_PER_PAGE = INSTRUCTIONS_PER_PAGE * AVG_INSTRUCTION_SIZE;
 
     private final Disassembler disassembler;
-    private final int memorySize;
+    private volatile int memorySize;
     private final NavigableMap<Integer, List<Integer>> flowGraph = new TreeMap<>();
 
     private volatile int addressOffset;
@@ -52,20 +52,24 @@ public class InteractiveDisassembler {
     }
 
     public void pagePrevious() {
+        int tmpMemorySize = memorySize;
+
         // do not go over "backwards maximum"
-        if (addressOffset - BYTES_PER_PAGE < memorySize) {
+        if (addressOffset - BYTES_PER_PAGE < tmpMemorySize) {
             addressOffset -= BYTES_PER_PAGE;
         } else {
-            addressOffset = -memorySize;
+            addressOffset = -tmpMemorySize;
         }
     }
 
     public void pageNext() {
+        int tmpMemorySize = memorySize;
+
         // do not go over "forwards maximum"
-        if (addressOffset + BYTES_PER_PAGE < memorySize) {
+        if (addressOffset + BYTES_PER_PAGE < tmpMemorySize) {
             addressOffset += BYTES_PER_PAGE;
         } else {
-            addressOffset = memorySize;
+            addressOffset = tmpMemorySize;
         }
     }
 
@@ -74,11 +78,15 @@ public class InteractiveDisassembler {
     }
 
     public void pageFirst() {
-        addressOffset = -memorySize;
+        int tmpMemorySize = memorySize;
+
+        addressOffset = -tmpMemorySize;
     }
 
     public void pageLast() {
-        addressOffset = memorySize;
+        int tmpMemorySize = memorySize;
+
+        addressOffset = tmpMemorySize;
     }
 
     private void updateCache(int currentLocation) {
@@ -87,7 +95,7 @@ public class InteractiveDisassembler {
         // determine if currentLocation is already present in the cache
         if (!tail.containsKey(currentLocation)) {
             flowGraph.put(
-                    currentLocation, Arrays.asList(disassembler.getNextInstructionPosition(currentLocation))
+                    currentLocation, Collections.singletonList(disassembler.getNextInstructionPosition(currentLocation))
             );
         } else {
             List<Integer> oldList = tail.get(currentLocation);
@@ -166,16 +174,26 @@ public class InteractiveDisassembler {
         flowGraph.subMap(fromLocationInclusive, toLocationExclusive).clear();
     }
 
+    public void setMemorySize(int memorySize) {
+        this.memorySize = memorySize;
+    }
+
     public int rowToLocation(int currentLocation, int row) {
+        int tmpMemorySize = memorySize;
+
+        if (tmpMemorySize <= 0) {
+            return -1;
+        }
+
         updateCache(currentLocation);
 
-        int currentLocationInPage = Math.min(memorySize - 1, Math.max(currentLocation, currentLocation + addressOffset));
+        int currentLocationInPage = Math.min(tmpMemorySize - 1, Math.max(currentLocation, currentLocation + addressOffset));
         int instructionGapBefore = CURRENT_INSTRUCTION * AVG_INSTRUCTION_SIZE;
         int instructionGapAfter = (INSTRUCTIONS_PER_PAGE - CURRENT_INSTRUCTION) * AVG_INSTRUCTION_SIZE;
 
         // recompute current page
         int from = Math.max(0, currentLocationInPage - instructionGapBefore);
-        int to = Math.min(memorySize - 1, currentLocationInPage + instructionGapAfter);
+        int to = Math.min(tmpMemorySize - 1, currentLocationInPage + instructionGapAfter);
 
         SortedMap<Integer, List<Integer>> interval = flowGraph.subMap(from, true, to, true);
 

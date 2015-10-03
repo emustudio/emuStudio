@@ -21,7 +21,7 @@ package net.sf.emustudio.cpu.testsuite;
 import emulib.plugins.memory.Memory;
 import emulib.plugins.memory.MemoryContext;
 
-public class MemoryStub implements MemoryContext<Short, Integer> {
+public class MemoryStub implements MemoryContext<Short> {
     private short[] memory;
 
     public void setMemory(short[] memory) {
@@ -34,10 +34,8 @@ public class MemoryStub implements MemoryContext<Short, Integer> {
     }
 
     @Override
-    public Integer readWord(int memoryPosition) {
-        int low = memory[memoryPosition] & 0xFF;
-        int high = memory[memoryPosition + 1];
-        return (high << 8) | low;
+    public Short[] readWord(int memoryPosition) {
+        return new Short[] { memory[memoryPosition], memory[memoryPosition + 1] };
     }
 
     @Override
@@ -46,11 +44,9 @@ public class MemoryStub implements MemoryContext<Short, Integer> {
     }
 
     @Override
-    public void writeWord(int memoryPosition, Integer value) {
-        short low = (short) (value & 0xFF);
-        memory[memoryPosition] = low;
-        short high = (short) ((value >>> 8) & 0xFF);
-        memory[memoryPosition + 1] = high;
+    public void writeWord(int memoryPosition, Short[] cells) {
+        memory[memoryPosition] = cells[0];
+        memory[memoryPosition + 1] = cells[1];
     }
 
     @Override

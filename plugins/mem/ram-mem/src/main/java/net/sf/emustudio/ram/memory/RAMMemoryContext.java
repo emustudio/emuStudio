@@ -25,14 +25,16 @@ import emulib.plugins.memory.MemoryContext;
 import java.util.List;
 
 @ContextType
-public interface RAMMemoryContext extends MemoryContext<RAMInstruction, RAMInstruction> {
-	public void addLabel(int pos, String label);
-	public String getLabel(int pos);
+public interface RAMMemoryContext extends MemoryContext<RAMInstruction> {
+
+    void addLabel(int pos, String label);
+
+    String getLabel(int pos);
 	
 	// from Compiler
-	public void addInputs(List<String> inputs);
+	void addInputs(List<String> inputs);
 	
 	// for CPU
-	public List<String> getInputs();
+	List<String> getInputs();
         
 }

@@ -57,7 +57,7 @@ public class EmulatorEngine {
     };
     
     private final ContextImpl context;
-    private final MemoryContext<Short, Integer> memory;
+    private final MemoryContext<Short> memory;
 
     public final int[] regs = new int[8];
     public final int[] regs2 = new int[8];
@@ -94,7 +94,7 @@ public class EmulatorEngine {
         void afterDispatch();
     }
 
-    public EmulatorEngine(MemoryContext<Short, Integer> memory, ContextImpl context) {
+    public EmulatorEngine(MemoryContext<Short> memory, ContextImpl context) {
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
     }
@@ -313,6 +313,15 @@ public class EmulatorEngine {
         return 0;
     }
 
+    private int readWord(int address) {
+        Short[] read = memory.readWord(address);
+        return (read[1] << 8) | read[0];
+    }
+
+    private void writeWord(int address, int value) {
+        memory.writeWord(address, new Short[] { (short)(value & 0xFF), (short)((value >>> 8) & 0xFF) } );
+    }
+
     private int doInterrupt() {
         isINT = false;
         int cycles = 0;
@@ -335,14 +344,14 @@ public class EmulatorEngine {
                 break;
             case 1: // rst 0xFF
                 cycles += 12;
-                memory.writeWord(SP - 2, PC);
+                writeWord(SP - 2, PC);
                 SP = (SP - 2) & 0xffff;
                 PC = 0xFF & 0x38;
                 break;
             case 2:
                 cycles += 13;
-                memory.writeWord(SP - 2, PC);
-                PC = memory.readWord((I << 8) | interruptVector);
+                writeWord(SP - 2, PC);
+                PC = readWord((I << 8) | interruptVector);
                 break;
         }
         return cycles;
@@ -512,7 +521,7 @@ public class EmulatorEngine {
                 case 0xE1:
                 case 0xF1:
                     tmp = (OP >>> 4) & 0x03;
-                    tmp1 = memory.readWord(SP);
+                    tmp1 = readWord(SP);
                     SP = (SP + 2) & 0xffff;
                     putpair2(tmp, tmp1);
                     return 10;
@@ -524,7 +533,7 @@ public class EmulatorEngine {
                     tmp = (OP >>> 4) & 0x03;
                     tmp1 = getpair2(tmp);
                     SP = (SP - 2) & 0xffff;
-                    memory.writeWord(SP, tmp1);
+                    writeWord(SP, tmp1);
                     return 11;
             /* LD r,n */
                 case 0x06:
@@ -582,7 +591,7 @@ public class EmulatorEngine {
                 case 0xF8:
                     tmp = (OP >>> 3) & 7;
                     if ((flags & CONDITION[tmp]) == CONDITION_VALUES[tmp]) {
-                        PC = memory.readWord(SP);
+                        PC = readWord(SP);
                         SP = (SP + 2) & 0xffff;
                         return 11;
                     }
@@ -596,7 +605,7 @@ public class EmulatorEngine {
                 case 0xEF:
                 case 0xF7:
                 case 0xFF:
-                    memory.writeWord(SP - 2, PC);
+                    writeWord(SP - 2, PC);
                     SP = (SP - 2) & 0xffff;
                     PC = OP & 0x38;
                     return 11;
@@ -828,7 +837,7 @@ public class EmulatorEngine {
                     flags &= ~FLAG_N;
                     return 4;
                 case 0xC9: /* RET */
-                    PC = memory.readWord(SP);
+                    PC = readWord(SP);
                     SP += 2;
                     return 10;
                 case 0xD9: /* EXX */
@@ -975,7 +984,7 @@ public class EmulatorEngine {
                             return 8;
                         case 0x45: /* RETN */
                             IFF[0] = IFF[1];
-                            PC = memory.readWord(SP);
+                            PC = readWord(SP);
                             SP = (SP + 2) & 0xffff;
                             return 14;
                         case 0x46: /* IM 0 */
@@ -986,7 +995,7 @@ public class EmulatorEngine {
                             return 9;
                         case 0x4D: /* RETI - weird.. */
                             IFF[0] = IFF[1];
-                            PC = memory.readWord(SP);
+                            PC = readWord(SP);
                             SP = (SP + 2) & 0xffff;
                             return 14;
                         case 0x4F: /* LD R,A */
@@ -1303,21 +1312,21 @@ public class EmulatorEngine {
                         case 0x53:
                         case 0x63:
                         case 0x73:
-                            tmp = memory.readWord(PC);
+                            tmp = readWord(PC);
                             PC = (PC + 2) & 0xFFFF;
 
                             tmp1 = getpair((OP >>> 4) & 3);
-                            memory.writeWord(tmp, tmp1);
+                            writeWord(tmp, tmp1);
                             return 20;
                     /* LD ss,(nn) */
                         case 0x4B:
                         case 0x5B:
                         case 0x6B:
                         case 0x7B:
-                            tmp = memory.readWord(PC);
+                            tmp = readWord(PC);
                             PC = (PC + 2) & 0xFFFF;
 
-                            tmp1 = memory.readWord(tmp);
+                            tmp1 = readWord(tmp);
                             putpair((OP >>> 4) & 3, tmp1);
                             return 20;
                     }
@@ -1363,14 +1372,14 @@ public class EmulatorEngine {
                             return 10;
                         case 0xE1: /* POP ii */
                             if (special == 0xDD) {
-                                IX = memory.readWord(SP);
+                                IX = readWord(SP);
                             } else {
-                                IY = memory.readWord(SP);
+                                IY = readWord(SP);
                             }
                             SP += 2;
                             return 14;
                         case 0xE3: /* EX (SP),ii */
-                            tmp = memory.readWord(SP);
+                            tmp = readWord(SP);
                             if (special == 0xDD) {
                                 tmp1 = IX;
                                 IX = tmp;
@@ -1378,14 +1387,14 @@ public class EmulatorEngine {
                                 tmp1 = IY;
                                 IY = tmp;
                             }
-                            memory.writeWord(SP, tmp1);
+                            writeWord(SP, tmp1);
                             return 23;
                         case 0xE5: /* PUSH ii */
                             SP -= 2;
                             if (special == 0xDD) {
-                                memory.writeWord(SP, IX);
+                                writeWord(SP, IX);
                             } else {
-                                memory.writeWord(SP, IY);
+                                writeWord(SP, IY);
                             }
                             return 15;
                         case 0xE9: /* JP (ii) */
@@ -1530,10 +1539,10 @@ public class EmulatorEngine {
                             putspecial(special, tmp);
                             return 14;
                         case 0x22: /* LD (nn),ii */
-                            memory.writeWord(tmp, getspecial(special));
+                            writeWord(tmp, getspecial(special));
                             return 16;
                         case 0x2A: /* LD ii,(nn) */
-                            tmp1 = memory.readWord(tmp);
+                            tmp1 = readWord(tmp);
                             putspecial(special, tmp1);
                             return 20;
                         case 0x36: /* LD (ii+d),n */
@@ -2045,17 +2054,17 @@ public class EmulatorEngine {
                     tmp1 = (OP >>> 3) & 7;
                     if ((flags & CONDITION[tmp1]) == CONDITION_VALUES[tmp1]) {
                         SP = (SP - 2) & 0xffff;
-                        memory.writeWord(SP, PC);
+                        writeWord(SP, PC);
                         PC = tmp;
                         return 17;
                     }
                     return 10;
                 case 0x22: /* LD (nn),HL */
                     tmp1 = getpair(2);
-                    memory.writeWord(tmp, tmp1);
+                    writeWord(tmp, tmp1);
                     return 16;
                 case 0x2A: /* LD HL,(nn) */
-                    tmp1 = memory.readWord(tmp);
+                    tmp1 = readWord(tmp);
                     putpair(2, tmp1);
                     return 16;
                 case 0x32: /* LD (nn),A */
@@ -2069,7 +2078,7 @@ public class EmulatorEngine {
                     return 10;
                 case 0xCD: /* CALL nn */
                     SP = (SP - 2) & 0xffff;
-                    memory.writeWord(SP, PC);
+                    writeWord(SP, PC);
                     PC = tmp;
                     return 17;
             }

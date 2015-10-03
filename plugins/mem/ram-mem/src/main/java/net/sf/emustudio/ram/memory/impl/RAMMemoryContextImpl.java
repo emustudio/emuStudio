@@ -21,6 +21,9 @@
 package net.sf.emustudio.ram.memory.impl;
 
 import emulib.plugins.memory.AbstractMemoryContext;
+import net.sf.emustudio.ram.memory.RAMInstruction;
+import net.sf.emustudio.ram.memory.RAMMemoryContext;
+
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -30,20 +33,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import net.sf.emustudio.ram.memory.RAMInstruction;
-import net.sf.emustudio.ram.memory.RAMMemoryContext;
 
-public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction, RAMInstruction> implements RAMMemoryContext {
-    private List<RAMInstruction> memory;
-    private Map<Integer, String> labels;
-    private List<String> inputs; // not for memory, but for CPU. Memory holds program so...
-
-    public RAMMemoryContextImpl() {
-        super();
-        memory = new ArrayList<RAMInstruction>();
-        labels = new HashMap<Integer, String>();
-        inputs = new ArrayList<String>();
-    }
+public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction> implements RAMMemoryContext {
+    private final List<RAMInstruction> memory = new ArrayList<>();
+    private final Map<Integer, String> labels = new HashMap<>();
+    private final List<String> inputs = new ArrayList<>(); // not for memory, but for CPU. Memory holds program so...
 
     @Override
     public void clear() {
@@ -51,6 +45,7 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction, 
         labels.clear();
         inputs.clear();
         notifyMemoryChanged(-1);
+        notifyMemorySizeChanged();
     }
 
     public void clearInputs() {
@@ -69,18 +64,12 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction, 
 
     @Override
     public RAMInstruction read(int pos) {
-        if (pos >= memory.size()) {
-            return null;
-        }
         return memory.get(pos);
     }
 
     @Override
-    public RAMInstruction readWord(int pos) {
-        if (pos >= memory.size()) {
-            return null;
-        }
-        return memory.get(pos);
+    public RAMInstruction[] readWord(int pos) {
+        return new RAMInstruction[] { memory.get(pos), null } ;
     }
 
     // This method is not and won't be implemented.
@@ -88,6 +77,7 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction, 
     public void write(int pos, RAMInstruction instr) {
         if (pos >= memory.size()) {
             memory.add(pos, instr);
+            notifyMemoryChanged(memory.size());
         } else {
             memory.set(pos, instr);
         }
@@ -96,7 +86,8 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction, 
 
     // This method is not and won't be implemented.
     @Override
-    public void writeWord(int pos, RAMInstruction instr) {
+    public void writeWord(int pos, RAMInstruction[] instr) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -110,7 +101,7 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction, 
     }
 
     public Map<String, Integer> getSwitchedLabels() {
-        Map<String, Integer> h = new HashMap<String, Integer>();
+        Map<String, Integer> h = new HashMap<>();
         for (Map.Entry<Integer, String> entry : labels.entrySet()) {
             h.put(entry.getValue(), entry.getKey());
         }
@@ -136,9 +127,13 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction, 
             InputStream buffer = new BufferedInputStream(file);
             ObjectInput input = new ObjectInputStream(buffer);
 
-            labels = (Map<Integer, String>)input.readObject();
-            inputs = (List<String>)input.readObject();
-            memory = (List<RAMInstruction>)input.readObject();
+            labels.clear();
+            inputs.clear();
+            memory.clear();
+
+            labels.putAll((Map<Integer, String>)input.readObject());
+            inputs.addAll((List<String>)input.readObject());
+            memory.addAll((List<RAMInstruction>)input.readObject());
 
             input.close();
         } catch (Exception e) {
@@ -150,7 +145,6 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction, 
 
     public void destroy() {
         memory.clear();
-        memory = null;
     }
 
 }

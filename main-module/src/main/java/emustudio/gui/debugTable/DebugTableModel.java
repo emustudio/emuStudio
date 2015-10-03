@@ -152,4 +152,8 @@ public class DebugTableModel extends AbstractTableModel {
     public void memoryChanged(int from, int to) {
         ida.flushCache(from, to + 1);
     }
+
+    public void setMemorySize(int memorySize) {
+        ida.setMemorySize(memorySize);
+    }
 }

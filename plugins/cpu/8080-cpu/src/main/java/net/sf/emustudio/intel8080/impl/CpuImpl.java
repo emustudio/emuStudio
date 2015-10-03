@@ -110,9 +110,11 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public void initialize(SettingsManager settings) throws PluginInitializationException{
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
+        Objects.requireNonNull(settings);
+
         try {
-            MemoryContext<Short, Integer> memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
+            MemoryContext<Short> memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
 
             if (memory.getDataType() != Short.class) {
                 throw new PluginInitializationException(

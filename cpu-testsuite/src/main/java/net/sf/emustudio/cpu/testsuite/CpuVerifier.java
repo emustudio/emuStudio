@@ -38,9 +38,12 @@ public abstract class CpuVerifier {
     }
 
     public void checkMemoryWord(int address, int value) {
+        Short[] read = memoryStub.readWord(address);
+        int memoryWord = (read[1] << 8) | read[0];
+
         assertEquals(
-                String.format("Expected word mem[%04x]=%04x, but was %04x", address, value, memoryStub.readWord(address)),
-                value, memoryStub.readWord(address).intValue()
+                String.format("Expected word mem[%04x]=%04x, but was %04x", address, value, memoryWord),
+                value, memoryWord
         );
     }
 

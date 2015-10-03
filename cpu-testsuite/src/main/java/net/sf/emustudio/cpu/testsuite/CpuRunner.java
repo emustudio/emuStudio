@@ -70,7 +70,7 @@ public abstract class CpuRunner<CpuType extends CPU> {
         return program.length;
     }
 
-    public MemoryContext<Short, Integer> getMemory() {
+    public MemoryContext<Short> getMemory() {
         return memoryStub;
     }
 

@@ -201,10 +201,13 @@ public class ComputerFactory {
     	return nextPluginID++;
     }
 
-    private Class<Plugin> loadPlugin(String dirname, String pluginName) throws InvalidPluginException {
+    private Class<Plugin> loadPlugin(String directory, String pluginName) throws InvalidPluginException {
         try {
-            return pluginLoader.loadPlugin(ConfigurationFactory.getConfigurationBaseDirectory() + File.separator
-                    + dirname + File.separator + pluginName + ".jar", Main.password);
+            File file = new File(
+                    ConfigurationFactory.getConfigurationBaseDirectory() + File.separator + directory
+                            + File.separator + pluginName + ".jar"
+            );
+            return pluginLoader.loadPlugin(file, Main.password);
         } catch (InvalidPasswordException e) {
             throw new InvalidPluginException("Could not load plugin " + pluginName, e);
         }

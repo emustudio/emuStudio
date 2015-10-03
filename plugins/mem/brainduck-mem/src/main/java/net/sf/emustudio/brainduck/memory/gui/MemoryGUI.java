@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Peter Jakubčo
+ * Copyright (C) 2014-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,11 @@ public class MemoryGUI extends JDialog {
         public void memoryChanged(int memoryPosition) {
             tableModel.dataChangedAt(memoryPosition);
         }
-        
+
+        @Override
+        public void memorySizeChanged() {
+            tableModel.fireTableDataChanged();
+        }
     }
 
     public MemoryGUI(MemoryContext memory) {

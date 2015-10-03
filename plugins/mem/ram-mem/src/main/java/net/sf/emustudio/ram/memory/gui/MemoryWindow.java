@@ -23,14 +23,9 @@ package net.sf.emustudio.ram.memory.gui;
 import emulib.plugins.memory.Memory.MemoryListener;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.UniversalFileFilter;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import net.sf.emustudio.ram.memory.RAMInstruction;
+import net.sf.emustudio.ram.memory.impl.RAMMemoryContextImpl;
+
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
@@ -46,8 +41,14 @@ import javax.swing.LayoutStyle;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
-import net.sf.emustudio.ram.memory.RAMInstruction;
-import net.sf.emustudio.ram.memory.impl.RAMMemoryContextImpl;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class MemoryWindow extends JFrame {
     private RAMMemoryContextImpl memory;
@@ -63,6 +64,11 @@ public class MemoryWindow extends JFrame {
         mem.addMemoryListener(new MemoryListener() {
             @Override
             public void memoryChanged(int memoryPosition) {
+                refillTable();
+            }
+
+            @Override
+            public void memorySizeChanged() {
                 refillTable();
             }
         });

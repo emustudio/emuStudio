@@ -61,7 +61,7 @@ public class EmulatorImpl extends AbstractCPU {
     private final Deque<Integer> loopPointers = new LinkedList<>();
 
     private Disassembler disassembler;
-    private MemoryContext<Short, Integer> memory;
+    private MemoryContext<Short> memory;
     private volatile int IP, P; // registers of the CPU
     private int memorySize; // cached memory size
 

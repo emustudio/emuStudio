@@ -69,15 +69,10 @@ import javax.swing.LayoutStyle;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
-import javax.swing.event.CaretEvent;
-import javax.swing.event.CaretListener;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.FlavorEvent;
-import java.awt.datatransfer.FlavorListener;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.InputEvent;
@@ -124,9 +119,17 @@ public class StudioFrame extends JFrame {
         systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
         memoryContext = contextPool.getMemoryContext(Main.password.hashCode(), MemoryContext.class);
-        memoryListener = adr -> {
-            debugTableModel.memoryChanged(adr, adr + 1);
-            debugTable.refresh();
+        memoryListener = new MemoryListener() {
+            @Override
+            public void memoryChanged(int memoryPosition) {
+                debugTableModel.memoryChanged(memoryPosition, memoryPosition + 1);
+                debugTable.refresh();
+            }
+
+            @Override
+            public void memorySizeChanged() {
+                debugTableModel.setMemorySize(memoryContext.getSize());
+            }
         };
 
         initComponents();

@@ -5,7 +5,7 @@ import emulib.plugins.memory.Memory;
 import emulib.plugins.memory.MemoryContext;
 
 @ContextType
-public class MemoryStub implements MemoryContext<Short, Integer> {
+public class MemoryStub implements MemoryContext<Short> {
     private final short[] memory;
     private int afterProgram;
 
@@ -54,17 +54,15 @@ public class MemoryStub implements MemoryContext<Short, Integer> {
 
     @Override
     public Short read(int from) {
-        return (short)memory[from];
+        return memory[from];
     }
 
     @Override
-    public Integer readWord(int from) {
+    public Short[] readWord(int from) {
         if (from == memory.length - 1) {
-            return (int)memory[from];
+            return new Short[] { memory[from] };
         }
-        int low = memory[from] & 0xFF;
-        int high = memory[from + 1];
-        return (high << 8) | low;
+        return new Short[] { memory[from], memory[from + 1] };
     }
 
     @Override
@@ -73,12 +71,10 @@ public class MemoryStub implements MemoryContext<Short, Integer> {
     }
 
     @Override
-    public void writeWord(int to, Integer val) {
-        short low = (byte) (val & 0xFF);
-        memory[to] = low;
+    public void writeWord(int to, Short[] cells) {
+        memory[to] = cells[0];
         if (to < memory.length - 1) {
-            short high = (byte) ((val >>> 8) & 0xFF);
-            memory[to + 1] = high;
+            memory[to + 1] = cells[1];
         }
     }
 
