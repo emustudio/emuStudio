@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2015, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -18,38 +20,30 @@
 
 package emustudio.gui.debugTable;
 
+import emulib.emustudio.debugtable.AddressColumn;
+import emulib.emustudio.debugtable.BreakpointColumn;
+import emulib.emustudio.debugtable.MnemoColumn;
+import emulib.emustudio.debugtable.OpcodeColumn;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.DebugColumn;
 import emulib.plugins.cpu.Disassembler;
+
 import javax.swing.table.AbstractTableModel;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 public class DebugTableModel extends AbstractTableModel {
-    private final DebugColumn[] columns;
+    private DebugColumn[] columns;
     private final CPU cpu;
     private final InteractiveDisassembler ida;
-    private final int breakpointColumnIndex;
 
     public DebugTableModel(CPU cpu, int memorySize) {
         this.cpu = Objects.requireNonNull(cpu);
 
         Disassembler dis = cpu.getDisassembler();
         this.ida = new InteractiveDisassembler(dis, memorySize);
-
-        if (cpu.isBreakpointSupported()) {
-            columns = new DebugColumn[4];
-            columns[0] = new BreakpointColumn(cpu);
-            columns[1] = new AddressColumn();
-            columns[2] = new MnemoColumn(dis);
-            columns[3] = new OpcodeColumn(dis);
-            breakpointColumnIndex = 0;
-        } else {
-            columns = new DebugColumn[3];
-            columns[0] = new AddressColumn();
-            columns[1] = new MnemoColumn(dis);
-            columns[2] = new OpcodeColumn(dis);
-            breakpointColumnIndex = -1;
-        }
+        setDefaultColumns();
     }
 
     @Override
@@ -57,8 +51,8 @@ public class DebugTableModel extends AbstractTableModel {
         return InteractiveDisassembler.INSTRUCTIONS_PER_PAGE;
     }
 
-    public int getBreakpointColumnIndex() {
-        return breakpointColumnIndex;
+    public DebugColumn getColumnAt(int index) {
+        return columns[index];
     }
 
     @Override
@@ -155,5 +149,25 @@ public class DebugTableModel extends AbstractTableModel {
 
     public void setMemorySize(int memorySize) {
         ida.setMemorySize(memorySize);
+        fireTableDataChanged();
     }
+
+    public void setColumns(List<DebugColumn> columns) {
+        this.columns = columns.toArray(new DebugColumn[0]);
+
+    }
+
+    public void setDefaultColumns() {
+        Disassembler dis = cpu.getDisassembler();
+        if (cpu.isBreakpointSupported()) {
+            setColumns(Arrays.asList(
+                    new BreakpointColumn(cpu), new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
+            ));
+        } else {
+            setColumns(Arrays.asList(
+                    new AddressColumn(), new MnemoColumn(dis), new OpcodeColumn(dis)
+            ));
+        }
+    }
+
 }

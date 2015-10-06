@@ -20,6 +20,10 @@
  */
 package net.sf.emustudio.ram.compiler.impl;
 
+import net.sf.emustudio.ram.compiler.tree.Label;
+import net.sf.emustudio.ram.memory.RAMInstruction;
+import net.sf.emustudio.ram.memory.RAMMemoryContext;
+
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectOutput;
@@ -29,9 +33,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import net.sf.emustudio.ram.compiler.tree.Label;
-import net.sf.emustudio.ram.memory.RAMInstruction;
-import net.sf.emustudio.ram.memory.RAMMemoryContext;
 
 public class CompiledCode {
     private final List<RAMInstruction> program = new ArrayList<>();
@@ -48,18 +49,17 @@ public class CompiledCode {
      * @param mem context of operating memory
      */
     public void loadIntoMemory(RAMMemoryContext mem) {
-        RAMMemoryContext rmem = mem;
         // load labels
         for (Label label : CompilerEnvironment.getLabels()) {
-            rmem.addLabel(label.getAddress(), label.getValue());
+            mem.addLabel(label.getAddress(), label.getValue());
         }
 
         // load input tape
-        rmem.addInputs(CompilerEnvironment.getInputs());
+        mem.addInputs(CompilerEnvironment.getInputs());
 
         // load program
         for (int i = 0; i < program.size(); i++) {
-            rmem.write(i, program.get(i));
+            mem.write(i, program.get(i));
         }
     }
 

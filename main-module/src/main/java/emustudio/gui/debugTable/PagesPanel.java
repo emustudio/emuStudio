@@ -1,8 +1,30 @@
+/*
+ * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2015, Peter Jakubčo
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 package emustudio.gui.debugTable;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.LayoutStyle;
 
 public class PagesPanel extends JPanel {
     private static final String PAGE_FIRST_PNG = "/emustudio/gui/page-first.png";
@@ -50,48 +72,13 @@ public class PagesPanel extends JPanel {
         btnSeekForward.setIcon(new ImageIcon(getClass().getResource(PAGE_SEEK_FORWARD_PNG)));
         btnSeekForward.setToolTipText("Go to the current page");
 
-        btnFirst.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent evt) {
-                gotoFirstPage();
-            }
-        });
-        btnBackward.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent evt) {
-                gotoPreviousPage();
-            }
-        });
-        btnForward.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent evt) {
-                gotoNextPage();
-            }
-        });
-        btnCurrentPage.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent evt) {
-                gotoCurrentPage();
-            }
-        });
-        btnLast.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent evt) {
-                gotoLastPage();
-            }
-        });
-        btnSeekBackward.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent evt) {
-                seekBackward();
-            }
-        });
-        btnSeekForward.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent evt) {
-                seekForward();
-            }
-        });
+        btnFirst.addActionListener(evt -> gotoFirstPage());
+        btnBackward.addActionListener(evt -> gotoPreviousPage());
+        btnForward.addActionListener(evt -> gotoNextPage());
+        btnCurrentPage.addActionListener(evt -> gotoCurrentPage());
+        btnLast.addActionListener(evt -> gotoLastPage());
+        btnSeekBackward.addActionListener(evt -> seekBackward());
+        btnSeekForward.addActionListener(evt -> seekForward());
 
         GroupLayout pagesLayout = new GroupLayout(this);
         setLayout(pagesLayout);
@@ -127,23 +114,23 @@ public class PagesPanel extends JPanel {
     }
 
     private void gotoFirstPage() {
-        debugTable.firstPage();
+        debugTable.getModel().firstPage();
     }
 
     private void gotoPreviousPage() {
-        debugTable.previousPage();
+        debugTable.getModel().previousPage();
     }
 
     private void gotoCurrentPage() {
-        debugTable.currentPage();
+        debugTable.getModel().currentPage();
     }
 
     private void gotoNextPage() {
-        debugTable.nextPage();
+        debugTable.getModel().nextPage();
     }
 
     private void gotoLastPage() {
-        debugTable.lastPage();
+        debugTable.getModel().lastPage();
     }
 
     private boolean gatherPageValue(String message) {
@@ -157,13 +144,13 @@ public class PagesPanel extends JPanel {
 
     private void seekBackward() {
         if (gatherPageValue("Please enter number of pages to backward")) {
-            debugTable.pageSeekBackward(pageSeekLastValue);
+            debugTable.getModel().seekBackwardPage(pageSeekLastValue);
         }
     }
 
     private void seekForward() {
         if (gatherPageValue("Please enter number of pages to forward")) {
-            debugTable.pageSeekForward(pageSeekLastValue);
+            debugTable.getModel().seekForwardPage(pageSeekLastValue);
         }
     }
 

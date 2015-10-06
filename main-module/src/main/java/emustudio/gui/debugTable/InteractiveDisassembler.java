@@ -19,6 +19,7 @@
 package emustudio.gui.debugTable;
 
 import emulib.plugins.cpu.Disassembler;
+import net.jcip.annotations.ThreadSafe;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,9 +28,10 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
+@ThreadSafe
 public class InteractiveDisassembler {
     public final static int INSTRUCTIONS_PER_PAGE = 2 * 15 + 1;
     public final static int CURRENT_INSTRUCTION = 4;
@@ -38,7 +40,7 @@ public class InteractiveDisassembler {
 
     private final Disassembler disassembler;
     private volatile int memorySize;
-    private final NavigableMap<Integer, List<Integer>> flowGraph = new TreeMap<>();
+    private final NavigableMap<Integer, List<Integer>> flowGraph = new ConcurrentSkipListMap<>();
 
     private volatile int addressOffset;
 
@@ -78,15 +80,11 @@ public class InteractiveDisassembler {
     }
 
     public void pageFirst() {
-        int tmpMemorySize = memorySize;
-
-        addressOffset = -tmpMemorySize;
+        addressOffset = -memorySize;
     }
 
     public void pageLast() {
-        int tmpMemorySize = memorySize;
-
-        addressOffset = tmpMemorySize;
+        addressOffset = memorySize;
     }
 
     private void updateCache(int currentLocation) {

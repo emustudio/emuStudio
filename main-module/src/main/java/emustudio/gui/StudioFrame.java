@@ -73,8 +73,6 @@ import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.event.ActionEvent;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -100,7 +98,7 @@ public class StudioFrame extends JFrame {
     private final MemoryListener memoryListener;
 
     private volatile UndoActionListener undoStateListener;
-    private volatile RunState run_state = RunState.STATE_STOPPED_BREAK;
+    private volatile RunState runState = RunState.STATE_STOPPED_BREAK;
 
     public StudioFrame(ContextPool contextPool, Computer computer, String fileName, SettingsManagerImpl settings) throws ContextNotFoundException, InvalidContextException {
         this(contextPool, computer, settings);
@@ -138,30 +136,9 @@ public class StudioFrame extends JFrame {
         editorScrollPane.setViewportView(txtSource);
         paneDebug.setViewportView(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        paneDebug.addComponentListener(new ComponentListener() {
-
-            @Override
-            public void componentResized(ComponentEvent e) {
-                debugTable.fireResized(paneDebug.getHeight());
-            }
-
-            @Override
-            public void componentMoved(ComponentEvent e) {
-            }
-
-            @Override
-            public void componentShown(ComponentEvent e) {
-            }
-
-            @Override
-            public void componentHidden(ComponentEvent e) {
-            }
-
-        });
 
         this.setStatusGUI();
         pack();
-        debugTable.fireResized(paneDebug.getHeight());
 
         try {
             API.getInstance().setDebugTable(debugTable, Main.password);
@@ -207,6 +184,7 @@ public class StudioFrame extends JFrame {
 
         setupCompiler();
         setupCPU();
+        setStateNotRunning(runState);
     }
 
     private void setupCPU() {
@@ -220,46 +198,54 @@ public class StudioFrame extends JFrame {
 
             @Override
             public void runStateChanged(RunState state) {
-                run_state = state;
+                runState = state;
                 if (state == RunState.STATE_RUNNING) {
-                    btnStop.setEnabled(true);
-                    btnBack.setEnabled(false);
-                    btnRun.setEnabled(false);
-                    btnStep.setEnabled(false);
-                    btnBeginning.setEnabled(false);
-                    btnPause.setEnabled(true);
-                    btnRunTime.setEnabled(false);
-                    debugTable.setEnabled(false);
-                    debugTable.setVisible(false);
-                    paneDebug.setEnabled(false);
-
-                    memoryContext.removeMemoryListener(memoryListener);
+                    setStateRunning();
                 } else {
-                    btnPause.setEnabled(false);
-                    if (state == RunState.STATE_STOPPED_BREAK) {
-                        btnStop.setEnabled(true);
-                        btnRunTime.setEnabled(true);
-                        btnRun.setEnabled(true);
-                        btnStep.setEnabled(true);
-                    } else {
-                        btnStop.setEnabled(false);
-                        btnRunTime.setEnabled(false);
-                        btnRun.setEnabled(false);
-                        btnStep.setEnabled(false);
-                    }
-                    btnBack.setEnabled(true);
-                    btnBeginning.setEnabled(true);
-                    paneDebug.setEnabled(true);
-                    debugTable.setEnabled(true);
-                    debugTable.setVisible(true);
-                    debugTable.refresh();
-                    debugTable.currentPage();
-
-                    memoryContext.addMemoryListener(memoryListener);
+                    setStateNotRunning(state);
                 }
             }
         });
         btnBreakpoint.setEnabled(cpu.isBreakpointSupported());
+    }
+
+    private void setStateNotRunning(RunState state) {
+        btnPause.setEnabled(false);
+        if (state == RunState.STATE_STOPPED_BREAK) {
+            btnStop.setEnabled(true);
+            btnRunTime.setEnabled(true);
+            btnRun.setEnabled(true);
+            btnStep.setEnabled(true);
+        } else {
+            btnStop.setEnabled(false);
+            btnRunTime.setEnabled(false);
+            btnRun.setEnabled(false);
+            btnStep.setEnabled(false);
+        }
+        btnBack.setEnabled(true);
+        btnBeginning.setEnabled(true);
+        paneDebug.setEnabled(true);
+        debugTable.setEnabled(true);
+        debugTable.setVisible(true);
+        debugTableModel.currentPage();
+        debugTable.refresh();
+
+        memoryContext.addMemoryListener(memoryListener);
+    }
+
+    private void setStateRunning() {
+        btnStop.setEnabled(true);
+        btnBack.setEnabled(false);
+        btnRun.setEnabled(false);
+        btnStep.setEnabled(false);
+        btnBeginning.setEnabled(false);
+        btnPause.setEnabled(true);
+        btnRunTime.setEnabled(false);
+        debugTable.setEnabled(false);
+        debugTable.setVisible(false);
+        paneDebug.setEnabled(false);
+
+        memoryContext.removeMemoryListener(memoryListener);
     }
 
     private void setupUndoRedo() {
@@ -319,6 +305,7 @@ public class StudioFrame extends JFrame {
 
                 @Override
                 public void onStart() {
+                    txtOutput.append("Compiling started...\n");
                 }
 
                 @Override
@@ -328,6 +315,7 @@ public class StudioFrame extends JFrame {
 
                 @Override
                 public void onFinish(int errorCode) {
+                    txtOutput.append("Compiling has finished.\n");
                 }
             });
             if (!compiler.isShowSettingsSupported()) {
@@ -419,7 +407,7 @@ public class StudioFrame extends JFrame {
 
             @Override
             public void windowClosing(WindowEvent evt) {
-                formWindowClosing(evt);
+                formWindowClosing();
             }
         });
 
@@ -961,9 +949,9 @@ public class StudioFrame extends JFrame {
         CPU cpu = computer.getCPU();
         Memory memory = computer.getMemory();
 
-        if (cpu.setInstructionPosition(address) == false) {
+        if (!cpu.setInstructionPosition(address)) {
             String maxSize = (memory != null) ?
-                    "\n (expected range from 0 to " + String.valueOf(memory.getSize()) + ")"
+                    "\n (expected range from 0 to " + String.valueOf(memory.getSize() - 1) + ")"
                     : "";
             Main.tryShowErrorMessage("Typed address is incorrect !" + maxSize, "Jump");
         }
@@ -979,7 +967,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void btnCompileActionPerformed(ActionEvent evt) {
-        if (run_state == RunState.STATE_RUNNING) {
+        if (runState == RunState.STATE_RUNNING) {
             Main.tryShowErrorMessage("You must first stop running emulation.", "Compile");
             return;
         }
@@ -1067,13 +1055,12 @@ public class StudioFrame extends JFrame {
         this.processWindowEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
     }
 
-    private void formWindowClosing(WindowEvent evt) {
-        if (txtSource.confirmSave() == true) {
-            return;
+    private void formWindowClosing() {
+        if (!txtSource.confirmSave()) {
+            computer.destroy();
+            dispose();
+            System.exit(0); //calling the method is a must
         }
-        computer.destroy();
-        dispose();
-        System.exit(0); //calling the method is a must
     }
 
     private void btnOpenActionPerformed(ActionEvent evt) {

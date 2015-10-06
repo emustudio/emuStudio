@@ -72,12 +72,12 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction> 
         return new RAMInstruction[] { memory.get(pos), null } ;
     }
 
-    // This method is not and won't be implemented.
     @Override
     public void write(int pos, RAMInstruction instr) {
         if (pos >= memory.size()) {
             memory.add(pos, instr);
             notifyMemoryChanged(memory.size());
+            notifyMemorySizeChanged();
         } else {
             memory.set(pos, instr);
         }
