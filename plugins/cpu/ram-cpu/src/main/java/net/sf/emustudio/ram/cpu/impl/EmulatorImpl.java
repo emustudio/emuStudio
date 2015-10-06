@@ -20,7 +20,11 @@ package net.sf.emustudio.ram.cpu.impl;
 
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
+import emulib.emustudio.API;
 import emulib.emustudio.SettingsManager;
+import emulib.emustudio.debugtable.BreakpointColumn;
+import emulib.emustudio.debugtable.DebugTable;
+import emulib.emustudio.debugtable.MnemoColumn;
 import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.CPUContext;
@@ -31,6 +35,7 @@ import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
+import net.sf.emustudio.ram.cpu.gui.LabelDebugColumn;
 import net.sf.emustudio.ram.cpu.gui.RAMDisassembler;
 import net.sf.emustudio.ram.cpu.gui.RAMStatusPanel;
 import net.sf.emustudio.ram.memory.RAMInstruction;
@@ -39,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.JPanel;
+import java.util.Arrays;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Objects;
@@ -52,12 +58,16 @@ import java.util.ResourceBundle;
 )
 public class EmulatorImpl extends AbstractCPU {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorImpl.class);
-    private RAMMemoryContext memory;
+
     private final RAMContext context;
-    private RAMDisassembler dis;     // disassembler
-    private int IP; // instruction position
-    private volatile SettingsManager settings;
     private final ContextPool contextPool;
+
+    private volatile SettingsManager settings;
+
+    private RAMMemoryContext memory;
+    private RAMDisassembler disassembler;
+    private boolean debugTableInitialized = false;
+    private int IP;
 
     public EmulatorImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
@@ -99,7 +109,7 @@ public class EmulatorImpl extends AbstractCPU {
             );
         }
 
-        dis = new RAMDisassembler(this.memory);
+        disassembler = new RAMDisassembler(this.memory);
         context.init(getPluginID());
     }
 
@@ -118,6 +128,15 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public JPanel getStatusPanel() {
+        if (!debugTableInitialized) {
+            DebugTable debugTable = API.getInstance().getDebugTable();
+            if (debugTable != null) {
+                debugTable.setCustomColumns(Arrays.asList(
+                        new BreakpointColumn(this), new LabelDebugColumn(memory), new MnemoColumn(disassembler)
+                ));
+            }
+            debugTableInitialized = true;
+        }
         return new RAMStatusPanel(this, memory);
     }
 
@@ -656,6 +675,6 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public Disassembler getDisassembler() {
-        return dis;
+        return disassembler;
     }
 }

@@ -36,19 +36,14 @@ public class RAMDisassembler extends AbstractDisassembler {
     @Override
     public DisassembledInstruction disassemble(int memLocation) {
         String mnemo, oper = "";
-        int addr = memLocation;
 
-        RAMInstruction in = (RAMInstruction) memory.read(memLocation++);
+        RAMInstruction in = memory.read(memLocation);
         if (in == null) {
             mnemo = "unknown instruction";
-            return new DisassembledInstruction(addr, mnemo, oper);
+            return new DisassembledInstruction(memLocation, mnemo, oper);
         }
-        String label = memory.getLabel(addr);
-        if (label == null) {
-            label = "";
-        }
-        mnemo = label + " " + in.getCodeStr() + " " + in.getOperandStr();
-        return new DisassembledInstruction(addr, mnemo, oper);
+        mnemo = in.getCodeStr() + " " + in.getOperandStr();
+        return new DisassembledInstruction(memLocation, mnemo, oper);
     }
 
     @Override

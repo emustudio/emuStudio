@@ -18,7 +18,6 @@
  */
 package emustudio.gui;
 
-import emulib.emustudio.API;
 import emulib.plugins.compiler.Compiler;
 import emulib.plugins.compiler.Compiler.CompilerListener;
 import emulib.plugins.compiler.Message;
@@ -30,7 +29,6 @@ import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
-import emulib.runtime.InvalidPasswordException;
 import emulib.runtime.RadixUtils;
 import emulib.runtime.StaticDialogs;
 import emustudio.architecture.Computer;
@@ -100,20 +98,24 @@ public class StudioFrame extends JFrame {
     private volatile UndoActionListener undoStateListener;
     private volatile RunState runState = RunState.STATE_STOPPED_BREAK;
 
-    public StudioFrame(ContextPool contextPool, Computer computer, String fileName, SettingsManagerImpl settings) throws ContextNotFoundException, InvalidContextException {
-        this(contextPool, computer, settings);
+    public StudioFrame(ContextPool contextPool, Computer computer, String fileName, SettingsManagerImpl settings,
+                       DebugTableImpl debugTable)
+            throws ContextNotFoundException, InvalidContextException {
+        this(contextPool, computer, settings, debugTable);
         txtSource.openFile(fileName);
     }
 
-    public StudioFrame(ContextPool contextPool, final Computer computer, SettingsManagerImpl settings) throws ContextNotFoundException, InvalidContextException {
+    public StudioFrame(ContextPool contextPool, final Computer computer, SettingsManagerImpl settings,
+                       DebugTableImpl debugTable)
+            throws ContextNotFoundException, InvalidContextException {
         this.computer = Objects.requireNonNull(computer);
         this.settings = Objects.requireNonNull(settings);
+        this.debugTable = Objects.requireNonNull(debugTable);
+        this.debugTableModel = Objects.requireNonNull(debugTable.getModel());
 
         emulationController = new EmulationController(computer);
 
         txtSource = new EmuTextPane(computer.getCompiler());
-        debugTableModel = new DebugTableModel(computer.getCPU(), computer.getMemory().getSize());
-        debugTable = new DebugTableImpl(debugTableModel);
         systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
         memoryContext = contextPool.getMemoryContext(Main.password.hashCode(), MemoryContext.class);
@@ -139,12 +141,6 @@ public class StudioFrame extends JFrame {
 
         this.setStatusGUI();
         pack();
-
-        try {
-            API.getInstance().setDebugTable(debugTable, Main.password);
-        } catch (InvalidPasswordException e) {
-            LOGGER.error("Could not register debug table", e);
-        }
 
         setupListeners();
 

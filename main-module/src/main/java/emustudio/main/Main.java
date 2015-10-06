@@ -19,6 +19,7 @@
  */
 package emustudio.main;
 
+import emulib.emustudio.API;
 import emulib.plugins.PluginInitializationException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidPasswordException;
@@ -34,6 +35,8 @@ import emustudio.architecture.SettingsManagerImpl;
 import emustudio.gui.LoadingDialog;
 import emustudio.gui.OpenComputerDialog;
 import emustudio.gui.StudioFrame;
+import emustudio.gui.debugTable.DebugTableImpl;
+import emustudio.gui.debugTable.DebugTableModel;
 import emustudio.main.CommandLineFactory.CommandLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -199,12 +202,20 @@ public class Main {
 
         if (!commandLine.autoWanted()) {
             try {
+                DebugTableImpl debugTable = new DebugTableImpl(
+                        new DebugTableModel(computer.getCPU(), computer.getMemory().getSize())
+                );
+                API.getInstance().setDebugTable(debugTable, Main.password);
+
                 // if the automatization is turned off, start the emuStudio normally
-                if (commandLine.getInputFileName() != null) {
-                    new StudioFrame(contextPool, computer, commandLine.getInputFileName(), settingsManager).setVisible(true);
+                String inputFileName = commandLine.getInputFileName();
+                if (inputFileName != null) {
+                    new StudioFrame(contextPool, computer, inputFileName, settingsManager, debugTable).setVisible(true);
                 } else {
-                    new StudioFrame(contextPool, computer, settingsManager).setVisible(true);
+                    new StudioFrame(contextPool, computer, settingsManager, debugTable).setVisible(true);
                 }
+            } catch (InvalidPasswordException e) {
+                LOGGER.error("Could not register debug table", e);
             } catch (Exception e) {
                 LOGGER.error("Could not start main window.", e);
                 tryShowErrorMessage("Could not start main window.");
@@ -212,7 +223,9 @@ public class Main {
             }
         } else {
             try {
-              new Automatization(settingsManager, computer, commandLine.getInputFileName(), commandLine.noGUIWanted()).run();
+              new Automatization(
+                      settingsManager, computer, commandLine.getInputFileName(), commandLine.noGUIWanted()
+              ).run();
             } catch (AutomatizationException e) {
                 LOGGER.error("Error during automatization.", e);
                 tryShowErrorMessage("Error: " + e.getMessage());

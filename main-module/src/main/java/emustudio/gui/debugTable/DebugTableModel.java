@@ -154,7 +154,7 @@ public class DebugTableModel extends AbstractTableModel {
 
     public void setColumns(List<DebugColumn> columns) {
         this.columns = columns.toArray(new DebugColumn[0]);
-
+        fireTableStructureChanged();
     }
 
     public void setDefaultColumns() {
