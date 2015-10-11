@@ -1,0 +1,191 @@
+= Guide for writing virtual computers
+(c) Copyright 2007-2015, Peter Jakubčo
+Version 0.39
+:toc:
+:numbered:
+
+This guide shall help you, the developer, to write your own virtual computer for emuStudio. From now on, every time
+a 'virtual computer' will be mentioned, it should be always understood as a computer emulator written for emuStudio, if
+it won't be said otherwise.
+
+= Introduction
+
+== What is emuStudio
+
+From user's point of view, emuStudio can be understood as an *emulation platform*, because it can run various emulators
+in the same environment. It has a simple IDE, debugger and other features like automatic emulation, which makes emuStudio
+quite powerful.
+
+From developer's point of view, it is also a *framework*, because it provides API and lifecycle management for virtual
+computers. There are some contracts how things work, what developer can count with, and what is not defined. This
+tutorial shall guide the developer through these waters, hopefully at the end there won't be any serious problems with
+writing custom virtual computers.
+
+=== Core technologies
+
+During programming, there are some commonly used technologies, which are mandatory when relevant. These are the "core
+technologies", which are listed in the following table:
+
+.Core technologies used in emuStudio
+|===
+|Technology | Description | Relevancy | Link
+
+|Git
+|Version control system
+|All
+|https://git-scm.com/
+
+|Java 8 SE
+|Main programming language
+|All
+|http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
+
+|Maven 3
+|Build lifecycle management
+|All
+|https://maven.apache.org/download.cgi
+
+|SLF4J
+|Facade for logger implementation
+|All
+|http://www.slf4j.org/
+
+|JFlex
+|Lexical analyzer generator
+|Compilers
+|http://jflex.de/
+
+|Java CUP
+|LR parser generator
+|Compilers
+|http://www2.cs.tum.edu/projects/cup/
+
+|Edigen
+|Disassembler generator
+|CPU
+|https://github.com/sulir/edigen
+
+|JUnit
+|Java unit testing framework
+|All
+|http://junit.org/
+
+|EasyMock
+|Mock library
+|All
+|http://easymock.org/
+
+|Asciidoctor
+|Documentation generator
+|Documentation module
+|http://asciidoctor.org/
+|===
+
+CAUTION: emuStudio uses Maven for the build lifecycle management. All dependencies and their versions are defined in
+      the root `pom.xml` file. When you use a library or some technology which is listed there, please use the
+      same version as it is used by emuStudio. You will avoid unexpected conflicts or behavior of your plug-ins.
+
+=== Contributing
+
+Anyone can contribute to emuStudio. It is a free software, licensed with GNU GPL 2 license. The source code is available
+on GitHub, at https://github.com/vbmacher/emuStudio.
+
+emuStudio project has some predefined set of virtual computers. So far, this set is contained within each emuStudio
+distribution. However, adding new computers to standard emuStudio must be consulted with the author in advance. While
+I encourage people writing their own computers, I assume they will be mostly students having only little experience
+and/or per-semester projects which will end when the student passes. This is perfectly fine, but those projects should
+be kept rather in different repositories.
+
+Also, in the future there might be something like plug-in repository, and user would download what he wants manually.
+So far, it is not like that and it is too soon to consider this.
+
+== What is a virtual computer
+
+A computer generally can be decomposed to some cooperating components (still very high-level), like CPU, bus, memory,
+or devices. It is not far different from how it is in emuStudio. As the basic concept for virtual computer was taken the
+https://en.wikipedia.org/wiki/Von_Neumann_architecture[von Neumann model of a computer]. The computer defines three
+types of core components: CPU (control unit and arithmetic-logic unit), memory, and input/output devices. In emuStudio,
+virtual computer also has those components, but the possibilities of interconnection and cooperation are not bound
+to hardware limits or philosophy.
+
+Each component of a virtual computer is a separate plug-in written in Java. A virtual computer is then just a set of
+cooperating plug-ins which are loaded and initialized by emuStudio. The selection of plugins is handled externally, by
+the user of emuStudio. The plugins list is extended with information about plug-in interconnection, which is specific
+for each computer. Then we have something which is called *abstract schema*. But as was said, abstract schemas are
+prepared by user, not plug-in developer.
+
+For more information about how to create such a schema, please read the user manual. The whole process of loading and
+initializing the plug-ins into working emulator is completely handled by emuStudio. Developer must hold to some
+contracts, and principles of good object-oriented design, which are enough for ensuring that everything will work as
+expected.
+
+The following schema defines all plug-in types and their possible interconnections, as it is currently in emuStudio.
+
+[graphviz]
+---------------------------------------------------------------------
+graph virtual_computer {
+  splines=true;
+  sep="+25,125";
+  overlap=scalexy;
+  nodesep=1;
+  ranksep=1;
+  node [shape = rect];
+
+  Compiler -- Device [headlabel="0..N", taillabel="0..1" , labeldistance=2.5];
+  Compiler -- CPU [headlabel="0..1", taillabel="0..1" ];
+  Compiler -- Memory [headlabel="0..1", taillabel="0..1" ];
+
+  CPU -- Memory [headlabel="0..1", labeldistance=2.5, taillabel="0..1" ];
+  CPU -- Device [headlabel="0..N", taillabel="0..1" ];
+
+  Memory -- Device [headlabel="0..N", taillabel="0..1" ];
+  Device -- Device [ label = "0..N" ];
+
+  {rank=same; Compiler Memory};
+  {rank=same; CPU Device};
+}
+---------------------------------------------------------------------
+
+As you can see, there are no restrictions about which plug-in can "see" or cooperate with another plug-in. For example,
+a compiler can access all computer components, including CPU, devices and memory.
+
+TIP: Most probably a compiler would want to access memory, it which case it would be able to load a compiled program
+     directly there. But the reason why the compiler is allowed to access also other components is that the compiled
+     program can contain either some information about initial states, or initial data which are needed to be preloaded
+     into other components before program can be started (for example, content of abstract tapes in the case of RAM
+     machine).
+
+== Emulation lifecycle and behavior contracts
+
+emuStudio is also a framework, which not only defines the API, but also the whole life cycle of plug-ins, and has the
+control of all emulation processes. It proactively loads, initializes and initiates plug-in actions. That way, a plug-in
+developer does not have to care about it, and can safely focus on what the plug-in should do in the first place.
+
+Behavior contracts define the operations and their order in all phases of emulation life cycle, which plug-ins must
+count with. Taken that, plug-ins can then assume the state in which are the other plug-ins, or emuStudio itself and
+shape their own behavior accordingly. emuStudio is also assuming that plug-ins will "behave good", and if not, it can
+affect or possibly corrupt the whole emulator. In that case the state of emuStudio and other plug-ins is not defined.
+
+More details, including programming examples about the life cycle and behavior contracts will be presented later.
+
+== Plug-in basics
+
+Each plug-in is a separate Java module, usually single jar file, placed in the proper directory. As it is necessary
+to place the plug-in to proper location (`compilers/`, `cpu/`, `mem/`, and `devices/`), dependencies of both emuStudio
+and all plug-ins should be included in `lib/` directory. The reason is to help ensuring that versions of shared
+dependencies across plug-ins themselves and across emuStudio must be the same within single emuStudio distribution.
+
+In emuStudio, plug-in source codes are located in `plugins/` subdirectory, then separated by plug-in type. For example:
+
+https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins
+
+In order to contribute to an existing plug-in, you can find the plug-in in some subdirectory. If you want to add a
+new plug-in which should exist in the default emuStudio distribution, you would create new plug-in in that place as well.
+
+CAUTION: Standard or "default" plug-ins force to use Maven and you must follow the standard which will be defined later.
+      Also, before making any design changes or new plug-in development, please contact the emuStudio author.
+
+Usually, your plug-ins will not be the standard part of default emuStudio distribution. In that case, you are not forced
+to use Maven or any other technology, except of emuStudio API, contracts and the limits which might exist when involving
+unknown third party dependencies. Also, you can use your own code style if you like.
+

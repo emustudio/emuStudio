@@ -43,34 +43,45 @@
             <groupId>org.asciidoctor</groupId>
             <artifactId>asciidoctor-maven-plugin</artifactId>
             <configuration>
-              <sourceDirectory>src/userdoc</sourceDirectory>
-              <sourceHighlighter>coderay</sourceHighlighter>
-
               <!-- The gem-maven-plugin appends the scope (e.g., provided) to the gemPath defined in the plugin configuration -->
               <gemPath>${project.build.directory}/gems-provided</gemPath>
               <requires>
                 <require>asciidoctor-diagram</require>
               </requires>
+
+              <backend>html</backend>
+              <doctype>article</doctype>
+              <sourceHighlighter>coderay</sourceHighlighter>
+              <attributes>
+                <imagesdir>.</imagesdir>
+                <!-- Display anchors on html document-->
+                <sectanchors>true</sectanchors>
+                <toclevels>3</toclevels>
+                <!-- Parse link attributes such as window="_blank"   -->
+                <linkattrs>true</linkattrs>
+              </attributes>
+
             </configuration>
 
             <executions>
               <execution>
-                <id>output-html</id>
+                <id>user-manual</id>
                 <phase>generate-resources</phase>
                 <goals>
                   <goal>process-asciidoc</goal>
                 </goals>
                 <configuration>
-                  <backend>html</backend>
-                  <doctype>article</doctype>
-                  <attributes>
-                    <imagesdir>.</imagesdir>
-                    <!-- Display anchors on html document-->
-                    <sectanchors>true</sectanchors>
-                    <toclevels>3</toclevels>
-                    <!-- Parse link attributes such as window="_blank"   -->
-                    <linkattrs>true</linkattrs>
-                  </attributes>
+                  <sourceDirectory>src/user-manual</sourceDirectory>
+                </configuration>
+              </execution>
+              <execution>
+                <id>tutorials</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>process-asciidoc</goal>
+                </goals>
+                <configuration>
+                  <sourceDirectory>src/tutorials</sourceDirectory>
                 </configuration>
               </execution>
             </executions>
