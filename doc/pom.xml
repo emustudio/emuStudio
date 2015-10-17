@@ -72,6 +72,7 @@
                 </goals>
                 <configuration>
                   <sourceDirectory>src/user-manual</sourceDirectory>
+                  <outputDirectory>${project.build.directory}/user-manual</outputDirectory>
                 </configuration>
               </execution>
               <execution>
@@ -82,6 +83,7 @@
                 </goals>
                 <configuration>
                   <sourceDirectory>src/tutorials</sourceDirectory>
+                  <outputDirectory>${project.build.directory}/tutorials</outputDirectory>
                 </configuration>
               </execution>
             </executions>

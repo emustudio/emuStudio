@@ -8,8 +8,6 @@ This guide shall help you, the developer, to write your own virtual computer for
 a 'virtual computer' will be mentioned, it should be always understood as a computer emulator written for emuStudio, if
 it won't be said otherwise.
 
-= Introduction
-
 == What is emuStudio
 
 From user's point of view, emuStudio can be understood as an *emulation platform*, because it can run various emulators
@@ -64,6 +62,11 @@ technologies", which are listed in the following table:
 |Disassembler generator
 |CPU
 |https://github.com/sulir/edigen
+
+|emuLib
+|Plugin API and runtime library
+|All
+|https://github.com/vbmacher/emuLib
 
 |JUnit
 |Java unit testing framework
@@ -158,7 +161,7 @@ TIP: Most probably a compiler would want to access memory, it which case it woul
 == Emulation lifecycle and behavior contracts
 
 emuStudio is also a framework, which not only defines the API, but also the whole life cycle of plug-ins, and has the
-control of all emulation processes. It proactively loads, initializes and initiates plug-in actions. That way, a plug-in
+control of all emulation processes. It proactively loads, initializes and initiates plug-ins. That way, a plug-in
 developer does not have to care about it, and can safely focus on what the plug-in should do in the first place.
 
 Behavior contracts define the operations and their order in all phases of emulation life cycle, which plug-ins must
@@ -189,3 +192,78 @@ Usually, your plug-ins will not be the standard part of default emuStudio distri
 to use Maven or any other technology, except of emuStudio API, contracts and the limits which might exist when involving
 unknown third party dependencies. Also, you can use your own code style if you like.
 
+=== Naming conventions
+
+Plug-in names (jar file names) follow naming conventions. The names differ based on plug-in types. From the jar file
+name it should be clear what plug-in we are talking about. Generally, the jar file should begin with some custom
+abbreviation of the real world "model" optionally preceded with the manufacturer (e.g. intel-8080, lsi-adm-3A, etc.).
+Then plug-in type follows, as it is shown in the following table:
+
+.Naming conventions for plug-in jar files
+|===
+|Plug-in type |Naming convention |Example
+
+|Compiler
+|`<language_abbreviation>-compiler`, or `as-<language_abbreviation>` for assemblers
+|`as-8080`, `brainc-compiler`
+
+|CPU
+|`<optional_manufacturer>-<model_abbreviation>-cpu`
+|`8080-cpu`, `z80-cpu`
+
+|Memory
+|`<model_or_main_features_abbreviation>-mem`
+|`standard-mem`, `ram-mem`
+
+|Device
+|`<optional_manufacturer>-<model_abbreviation>-<device_type>`
+|`88-disk`, `adm3a-terminal`
+
+|===
+
+Plug-in names can contain digits, small and capital letters (regex: `[a-zA-Z0-9]+`). Capital letters shall be used only
+for the following reasons:
+
+- word separation (e.g. zilogZ80),
+- acronyms (e.g. RAM, standing for "Random Access Machine")
+
+NOTE: Using naming conventions for development of official plug-ins is a must; for custom projects it is highly
+      recommended. emuStudio does not use the naming convention for searching for plugins.
+
+=== Coding Style
+
+Unified coding style is as important as being a team player. It is the commonly-accepted order, which puts the code
+readability at the same level everywhere. It is as in a classical book - you don't usually see multiple writing styles
+or text organizations throughout the book. It is written as by only one author, even if it has more. The same purpose
+has the code style, because the reader is always just one.
+
+I encourage you to read a book called Clean Code from Robert Martin. You can find there many inspiring thoughts and
+ideas how to write the code in a clean way.
+
+==== License information
+
+Each file must start with a comment with the license information. Please read part "How to Apply These
+Terms to Your New Programs" at link http://www.gnu.org/licenses/gpl.html.
+
+==== Indentation
+
+I consider this section as very important, so as there is lots of time consuming debates about the "indentation problem".
+Therefore I "codify" this to 4 spaces.
+
+== Use Maven if you can
+
+Maven is a standard for Java projects today. It helps with the build process and manages dependencies in satisfying
+and reusable way.
+
+Each official emuStudio module (artifact) is available in custom Maven repository, including emuLib. In order to be able
+to use them from Maven, put the following code into your `pom.xml` file:
+
+    <distributionManagement>
+      <repository>
+        <id>emustudio-repository</id>
+        <name>emuStudio Repository</name>
+        <url>sftp://web.sourceforge.net:/home/project-web/emustudio/htdocs/repository</url>
+      </repository>
+    </distributionManagement>
+
+NOTE: Development of official standard plug-ins require using Maven.

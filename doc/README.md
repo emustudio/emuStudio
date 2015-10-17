@@ -1,9 +1,9 @@
 # emuStudio documentation
 
-In this module, you can see documentation for emuStudio in its "book"-like form. Specific documentation of plug-ins
-should be located in place where the plug-ins are.
+This module contains all the official documentation for emuStudio. Besides user manual it contains also a set of
+tutorials for plug-in development.
 
-So far, there is only user documentation, in folder `userdoc`. It is written in Asciidoc format. 
+All the documentation is written in Asciidoc format. 
 
 ## How to "compile" the documentation?
 
