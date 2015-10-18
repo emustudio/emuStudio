@@ -1,7 +1,5 @@
 /*
- * Created on 14.8.2008, 9:27:10
- *
- * Copyright (C) 2008-2014 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -21,6 +19,8 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.exceptions.CompilerException;
+import net.sf.emustudio.intel8080.assembler.exceptions.UnexpectedEOFException;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.impl.CompilerImpl;
 import net.sf.emustudio.intel8080.assembler.impl.LexerImpl;
@@ -85,8 +85,7 @@ public class IncludePseudoNode extends PseudoNode {
             parser.setReportPrefixString(null);
 
             if (s == null) {
-                throw new Exception("[" + line + "," + column + "] "
-                        + "Error: Unexpected end of file (" + file.getName() + ")");
+                throw new UnexpectedEOFException(line, column, file.getAbsolutePath());
             }
 
             program = (Statement) s;
@@ -94,15 +93,13 @@ public class IncludePseudoNode extends PseudoNode {
             namespace = parentEnv;
 
             if (program.getIncludeLoops(file.getAbsolutePath())) {
-                throw new Exception("[" + line + "," + column + "] "
-                        + "Error: Infinite INCLUDE loop (" + file.getName() + ")");
+                throw new CompilerException(line, column, "Infinite INCLUDE loop (" + file.getAbsolutePath() + ")");
             }
             program.pass1(namespace); // create symbol table
         } catch (IOException e) {
-            throw new Exception(fileName + ": I/O Error");
+            throw new CompilerException(line, column, fileName + ": I/O Error");
         } catch (Exception e) {
-            throw new Exception("[" + line + "," + column + "] "
-                    + e.getMessage());
+            throw new CompilerException(line, column, e.getMessage());
         }
     }
 
@@ -117,7 +114,7 @@ public class IncludePseudoNode extends PseudoNode {
         while (program.pass3(namespace) == true) {
         }
         if (namespace.getPassNeedCount() != 0) {
-            throw new Exception("Error: can't evaulate all expressions");
+            throw new Exception("Error: can't evaluate all expressions");
         }
         program.pass4(hex);
     }

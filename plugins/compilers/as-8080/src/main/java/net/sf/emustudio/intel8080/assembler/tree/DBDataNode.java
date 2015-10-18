@@ -1,9 +1,5 @@
 /*
- * DBDataNode.java
- *
- * Created on Sobota, 2007, september 22, 9:13
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,6 +19,7 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.exceptions.ValueTooBigException;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.DataValueNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
@@ -34,7 +31,6 @@ public class DBDataNode extends DataValueNode {
     private String literalString = null;
     private OpCodeNode opcode = null;
 
-    /** Creates a new instance of DBData */
     public DBDataNode(ExprNode expression, int line, int column) {
         super(line, column);
         this.expression = expression;
@@ -79,8 +75,11 @@ public class DBDataNode extends DataValueNode {
     @Override
     public void pass4(HEXFileManager hex) throws Exception {
         if (expression != null) {
-            if (expression.getEncValue(true).length() > 2) {
-                throw new Exception("[" + line + "," + column + "] value too large");
+            if (expression.getValue() > 0xFF) {
+                throw new ValueTooBigException(line, column, expression.getValue(), 0xFF);
+            }
+            if (expression.getValue() < -128) {
+                throw new ValueTooBigException(line, column, expression.getValue(), -128);
             }
             hex.putCode(expression.getEncValue(true));
         } else if (literalString != null) {

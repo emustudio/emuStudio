@@ -1,9 +1,5 @@
 /*
- * MacroCallPseudo.java
- *
- * Created on Pondelok, 2007, október 8, 17:03
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,12 +19,15 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
-import java.util.ArrayList;
-import java.util.List;
+import net.sf.emustudio.intel8080.assembler.exceptions.AmbiguousException;
+import net.sf.emustudio.intel8080.assembler.exceptions.UndefinedMacroException;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
-import net.sf.emustudio.intel8080.assembler.impl.NeedMorePassException;
+import net.sf.emustudio.intel8080.assembler.exceptions.NeedMorePassException;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoNode;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MacroCallPseudo extends PseudoNode {
 
@@ -41,7 +40,7 @@ public class MacroCallPseudo extends PseudoNode {
         super(line, column);
         this.mnemo = name;
         if (params == null) {
-            this.params = new ArrayList<ExprNode>();
+            this.params = new ArrayList<>();
         } else {
             this.params = params;
         }
@@ -60,12 +59,12 @@ public class MacroCallPseudo extends PseudoNode {
         // first find a macro
         this.macro = env.getMacro(this.mnemo);
         if (macro == null) {
-            throw new Exception("[" + line + "," + column + "] Undefined macro: " + this.mnemo);
+            throw new UndefinedMacroException(line, column, this.mnemo);
         }
         // do pass2 for expressions (real macro parameters)
         try {
-            for (int i = 0; i < params.size(); i++) {
-                params.get(i).eval(env, addr_start);
+            for (ExprNode param : params) {
+                param.eval(env, addr_start);
             }
             macro.setCallParams(params);
             int a = macro.pass2(env, addr_start);
@@ -73,7 +72,7 @@ public class MacroCallPseudo extends PseudoNode {
             macro.pass4(statHex); // generate code for concrete macro
             return a;
         } catch (NeedMorePassException e) {
-            throw new Exception("[" + line + "," + column + "] MACRO expression can't be ambiguous");
+            throw new AmbiguousException(line, column, "MACRO expression");
         }
     }
 

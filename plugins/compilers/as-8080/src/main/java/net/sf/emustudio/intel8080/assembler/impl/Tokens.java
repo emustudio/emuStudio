@@ -1,7 +1,5 @@
 /*
- * Created on Pondelok, 2007, august 20, 15:41
- *
- * Copyright (C) 2007-2014 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -70,11 +68,11 @@ public class Tokens extends Symbol implements Token, Symbols {
     public String getErrorString() {
         switch (super.sym) {
             case ERROR_DECIMAL_SIZE:
-                return "Lieral has too big size (max. is 65535)";
+                return "Literal has too big size (max. is 65535)";
             case ERROR_UNCLOSED_CHAR:
-                return "Char isn't closed with single quote (')";
+                return "Char is not closed with single quote (')";
             case ERROR_UNCLOSED_STRING:
-                return "String isn't closed with single quote (')";
+                return "String is not closed with single quote (')";
             case ERROR_UNKNOWN_TOKEN:
                 return "Unknown token";
         }

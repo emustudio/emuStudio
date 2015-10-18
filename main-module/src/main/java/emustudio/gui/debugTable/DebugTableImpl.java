@@ -26,14 +26,11 @@ import javax.swing.DefaultCellEditor;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableColumn;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.util.List;
 import java.util.Objects;
 
 public class DebugTableImpl extends JTable implements DebugTable {
-    public static final Color EVEN_ROW_COLOR = new Color(241, 245, 250);
-    public static final Color TABLE_GRID_COLOR = new Color(0xd9d9d9);
 
     private final DebugTableModel debugModel;
     private final TextCellRenderer textRenderer;
@@ -56,7 +53,7 @@ public class DebugTableImpl extends JTable implements DebugTable {
 
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         setOpaque(false);
-        setGridColor(TABLE_GRID_COLOR);
+        setGridColor(Colors.TABLE_GRID_COLOR);
         setIntercellSpacing(new Dimension(0, 0));
         // turn off grid painting as we'll handle this manually in order to paint
         // grid lines over the entire viewport.
@@ -75,7 +72,7 @@ public class DebugTableImpl extends JTable implements DebugTable {
             DebugColumn debugColumn = debugModel.getColumnAt(i);
 
             if (debugColumn.getClassType() == Boolean.class) {
-                tableColumn.setCellEditor(new DefaultCellEditor(new BooleanEditComponent()));
+                tableColumn.setCellEditor(new DefaultCellEditor(new InvisibleJCheckBox()));
             }
             if (debugColumn.getDefaultWidth() != -1)
             tableColumn.setPreferredWidth(debugColumn.getDefaultWidth());

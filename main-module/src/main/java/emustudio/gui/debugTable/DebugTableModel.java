@@ -131,16 +131,8 @@ public class DebugTableModel extends AbstractTableModel {
         return columns[columnIndex].isEditable();
     }
 
-    /**
-     * Determine if the instruction at rowIndex is current
-     * instruction.
-     *
-     * @param rowIndex The row in the debug table
-     * @return true if the row represents current instruction
-     */
-    public boolean isCurrent(int rowIndex) {
-        int location = ida.rowToLocation(cpu.getInstructionPosition(), rowIndex);
-        return (cpu.getInstructionPosition() == location);
+    public boolean isRowAtCurrentInstruction(int rowIndex) {
+        return InteractiveDisassembler.CURRENT_INSTRUCTION == rowIndex;
     }
 
     public void memoryChanged(int from, int to) {

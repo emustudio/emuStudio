@@ -3,7 +3,7 @@
  *
  * Lexical analyser for 8080 compiler
  *
- * Copyright (C) 2008-2012 Peter Jakubco
+ * Copyright (C) 2008-2015  Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -68,8 +68,7 @@ import java.io.Reader;
 %eofval{
     lastToken = Tokens.EOF;
     String text = yytext();
-    return (new Tokens(lastToken,lastToken,text,null,yyline,yycolumn,yychar,
-        yychar+text.length(),true));
+    return (new Tokens(lastToken,lastToken,text,null,yyline,yycolumn,yychar, yychar+text.length(),true));
 %eofval}
 
 Comment =(";"[^\r\n]*)

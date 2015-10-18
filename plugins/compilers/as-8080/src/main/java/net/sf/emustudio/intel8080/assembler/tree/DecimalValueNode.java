@@ -1,9 +1,5 @@
 /*
- * DecimalValueNode.java
- *
- * Created on Sobota, 2007, september 29, 9:56
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify

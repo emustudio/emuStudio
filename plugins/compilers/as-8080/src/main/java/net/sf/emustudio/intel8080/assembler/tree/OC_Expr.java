@@ -23,76 +23,97 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.exceptions.ValueTooBigException;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.OpCodeNode;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 public class OC_Expr extends OpCodeNode {
+    private final static Set<String> INSTRUCTION_WITH_SIZE_3 = new HashSet<>();
+    private final static Map<String, Integer> OPCODES_BASE_198 = new HashMap<>();
+    private final static Map<String, Integer> OPCODES_BASE_34 = new HashMap<>();
+    private final static Map<String, Integer> OPCODES_BASE_194 = new HashMap<>();
+    private final static Map<String, Integer> OPCODES_BASE_196 = new HashMap<>();
 
-    private ExprNode expr;
+    static {
+        INSTRUCTION_WITH_SIZE_3.add("sta");
+        INSTRUCTION_WITH_SIZE_3.add("lda");
+        INSTRUCTION_WITH_SIZE_3.add("shld");
+        INSTRUCTION_WITH_SIZE_3.add("lhld");
+        INSTRUCTION_WITH_SIZE_3.add("jmp");
+        INSTRUCTION_WITH_SIZE_3.add("jc");
+        INSTRUCTION_WITH_SIZE_3.add("jnc");
+        INSTRUCTION_WITH_SIZE_3.add("jz");
+        INSTRUCTION_WITH_SIZE_3.add("jnz");
+        INSTRUCTION_WITH_SIZE_3.add("jm");
+        INSTRUCTION_WITH_SIZE_3.add("jp");
+        INSTRUCTION_WITH_SIZE_3.add("jpe");
+        INSTRUCTION_WITH_SIZE_3.add("jpo");
+        INSTRUCTION_WITH_SIZE_3.add("call");
+        INSTRUCTION_WITH_SIZE_3.add("cc");
+        INSTRUCTION_WITH_SIZE_3.add("cnc");
+        INSTRUCTION_WITH_SIZE_3.add("cz");
+        INSTRUCTION_WITH_SIZE_3.add("cnz");
+        INSTRUCTION_WITH_SIZE_3.add("cm");
+        INSTRUCTION_WITH_SIZE_3.add("cp");
+        INSTRUCTION_WITH_SIZE_3.add("cpe");
+        INSTRUCTION_WITH_SIZE_3.add("cpo");
+        INSTRUCTION_WITH_SIZE_3.add("cpe");
+        INSTRUCTION_WITH_SIZE_3.add("rst");
 
-    /** Creates a new instance of OC_Expr */
+        OPCODES_BASE_198.put("adi", 0);
+        OPCODES_BASE_198.put("aci", 8);
+        OPCODES_BASE_198.put("sui", 16);
+        OPCODES_BASE_198.put("sbi", 24);
+        OPCODES_BASE_198.put("xri", 40);
+        OPCODES_BASE_198.put("ori", 48);
+        OPCODES_BASE_198.put("cpi", 0x38);
+
+        OPCODES_BASE_34.put("shld", 0);
+        OPCODES_BASE_34.put("lhld", 8);
+        OPCODES_BASE_34.put("sta", 16);
+        OPCODES_BASE_34.put("lda", 24);
+
+        OPCODES_BASE_194.put("jmp", 1);
+        OPCODES_BASE_194.put("jnz", 0);
+        OPCODES_BASE_194.put("jz", 8);
+        OPCODES_BASE_194.put("jnc", 16);
+        OPCODES_BASE_194.put("jc", 24);
+        OPCODES_BASE_194.put("jpo", 32);
+        OPCODES_BASE_194.put("jpe", 40);
+        OPCODES_BASE_194.put("jp", 48);
+        OPCODES_BASE_194.put("jm", 56);
+
+        OPCODES_BASE_196.put("call", 9);
+        OPCODES_BASE_196.put("cnz", 0);
+        OPCODES_BASE_196.put("cz", 8);
+        OPCODES_BASE_196.put("cnc", 16);
+        OPCODES_BASE_196.put("cc", 24);
+        OPCODES_BASE_196.put("cpo", 32);
+        OPCODES_BASE_196.put("cpe", 40);
+        OPCODES_BASE_196.put("cp", 48);
+        OPCODES_BASE_196.put("cm", 56);
+        OPCODES_BASE_196.put("cp", 48);
+
+    }
+    private final ExprNode expr;
+
     public OC_Expr(String mnemo, ExprNode expr, int line, int column) {
         super(mnemo, line, column);
-        this.mnemo = mnemo;
         this.expr = expr;
     }
 
     @Override
     public int getSize() {
-        int rval;
-        if (mnemo.equals("sta")) {
-            rval = 3;
-        } else if (mnemo.equals("lda")) {
-            rval = 3;
-        } else if (mnemo.equals("shld")) {
-            rval = 3;
-        } else if (mnemo.equals("lhld")) {
-            rval = 3;
-        } else if (mnemo.equals("jmp")) {
-            rval = 3;
-        } else if (mnemo.equals("jc")) {
-            rval = 3;
-        } else if (mnemo.equals("jnc")) {
-            rval = 3;
-        } else if (mnemo.equals("jz")) {
-            rval = 3;
-        } else if (mnemo.equals("jnz")) {
-            rval = 3;
-        } else if (mnemo.equals("jm")) {
-            rval = 3;
-        } else if (mnemo.equals("jp")) {
-            rval = 3;
-        } else if (mnemo.equals("jpe")) {
-            rval = 3;
-        } else if (mnemo.equals("jpo")) {
-            rval = 3;
-        } else if (mnemo.equals("call")) {
-            rval = 3;
-        } else if (mnemo.equals("cc")) {
-            rval = 3;
-        } else if (mnemo.equals("cnc")) {
-            rval = 3;
-        } else if (mnemo.equals("cz")) {
-            rval = 3;
-        } else if (mnemo.equals("cnz")) {
-            rval = 3;
-        } else if (mnemo.equals("cm")) {
-            rval = 3;
-        } else if (mnemo.equals("cp")) {
-            rval = 3;
-        } else if (mnemo.equals("cpe")) {
-            rval = 3;
-        } else if (mnemo.equals("cpo")) {
-            rval = 3;
-        } else if (mnemo.equals("cpe")) {
-            rval = 3;
-        } else if (mnemo.equals("rst")) {
-            rval = 1;
-        } else {
-            rval = 2;
+        if (INSTRUCTION_WITH_SIZE_3.contains(mnemo)) {
+            return 3;
         }
-        return rval;
+        return 2;
     }
 
     @Override
@@ -103,136 +124,56 @@ public class OC_Expr extends OpCodeNode {
 
     @Override
     public void pass4(HEXFileManager hex) throws Exception {
-        short opCode = 198; // opcode for adi: 11 (000adi) 110
+        short opCode = 0xC6; // opcode for adi: 11 (000adi) 110
         boolean oneDataByte = true; // how many data bytes
         boolean insertAfter = true; // if expression have to be written after opcode
         boolean found = false;
         String code;
 
-        if (mnemo.equals("adi")) {
-            found = true;
-        } else if (mnemo.equals("aci")) {
-            opCode |= 8;
-            found = true;
-        } else if (mnemo.equals("sui")) {
-            opCode |= 16;
-            found = true;
-        } else if (mnemo.equals("sbi")) {
-            opCode |= 24;
-            found = true;
-        } else if (mnemo.equals("ani")) {
-            opCode |= 32;
-            found = true;
-        } else if (mnemo.equals("xri")) {
-            opCode |= 40;
-            found = true;
-        } else if (mnemo.equals("ori")) {
-            opCode |= 48;
-            found = true;
-        } else if (mnemo.equals("cpi")) {
-            opCode |= 56;
+        if (OPCODES_BASE_198.containsKey(mnemo)) {
+            opCode |= OPCODES_BASE_198.get(mnemo);
             found = true;
         } else {
             opCode = 34;
             oneDataByte = false;
         }
 
-        if (found == false) {
-            if (mnemo.equals("shld")) {
-                found = true;
-            } else if (mnemo.equals("lhld")) {
-                opCode |= 8;
-                found = true;
-            } else if (mnemo.equals("sta")) {
-                opCode |= 16;
-                found = true;
-            } else if (mnemo.equals("lda")) {
-                opCode |= 24;
-                found = true;
-            } else {
-                opCode = 194;
-            }
+        if (!found && OPCODES_BASE_34.containsKey(mnemo)) {
+            opCode |= OPCODES_BASE_34.get(mnemo);
+            found = true;
+        } else if (!found) {
+            opCode = 194;
         }
 
-        if (found == false) {
-            if (mnemo.equals("jmp")) {
-                opCode |= 1;
-                found = true;
-            } else if (mnemo.equals("jnz")) {
-                found = true;
-            } else if (mnemo.equals("jz")) {
-                opCode |= 8;
-                found = true;
-            } else if (mnemo.equals("jnc")) {
-                opCode |= 16;
-                found = true;
-            } else if (mnemo.equals("jc")) {
-                opCode |= 24;
-                found = true;
-            } else if (mnemo.equals("jpo")) {
-                opCode |= 32;
-                found = true;
-            } else if (mnemo.equals("jpe")) {
-                opCode |= 40;
-                found = true;
-            } else if (mnemo.equals("jp")) {
-                opCode |= 48;
-                found = true;
-            } else if (mnemo.equals("jm")) {
-                opCode |= 56;
-                found = true;
-            } else {
-                opCode = 196;
-            }
+        if (!found && OPCODES_BASE_194.containsKey(mnemo)) {
+            opCode |= OPCODES_BASE_194.get(mnemo);
+            found = true;
+        } else if (!found) {
+            opCode = 196;
         }
 
-        if (found == false) {
-            if (mnemo.equals("call")) {
-                opCode |= 9;
-                found = true;
-            } else if (mnemo.equals("cnz")) {
-                found = true;
-            } else if (mnemo.equals("cz")) {
-                opCode |= 8;
-                found = true;
-            } else if (mnemo.equals("cnc")) {
-                opCode |= 16;
-                found = true;
-            } else if (mnemo.equals("cc")) {
-                opCode |= 24;
-                found = true;
-            } else if (mnemo.equals("cpo")) {
-                opCode |= 32;
-                found = true;
-            } else if (mnemo.equals("cpe")) {
-                opCode |= 40;
-                found = true;
-            } else if (mnemo.equals("cp")) {
-                opCode |= 48;
-                found = true;
-            } else if (mnemo.equals("cm")) {
-                opCode |= 56;
-                found = true;
-            } else {
-                opCode = 199;
-            }
+        if (!found && OPCODES_BASE_196.containsKey(mnemo)) {
+            opCode |= OPCODES_BASE_196.get(mnemo);
+            found = true;
+        } else if (!found) {
+            opCode = 199;
         }
 
-        if ((found == false) && mnemo.equals("rst")) {
+        if (!found && mnemo.equals("rst")) {
             int v = expr.getValue();
             if (v > 7) {
-                throw new Exception("[" + line + "," + column + "] value too large (maximum is 7)");
+                throw new ValueTooBigException(line, column, v, 7);
             }
             opCode |= (expr.getValue() << 3);
             insertAfter = false;
             found = true;
         }
-        if ((found == false) && mnemo.equals("in")) {
+        if (!found && mnemo.equals("in")) {
             opCode = 219;
             oneDataByte = true;
             found = true;
         }
-        if ((found == false) && mnemo.equals("out")) {
+        if (!found && mnemo.equals("out")) {
             opCode = 211;
             oneDataByte = true;
         }
@@ -241,7 +182,7 @@ public class OC_Expr extends OpCodeNode {
         if (insertAfter) {
             if (oneDataByte) {
                 if (expr.getValue() > 0xFF) {
-                    throw new Exception("[" + line + "," + column + "] value too large (maximum is 0FFh)");
+                    throw new ValueTooBigException(line, column, expr.getValue(), 0xFF);
                 }
                 code += expr.getEncValue(true);
             } else {

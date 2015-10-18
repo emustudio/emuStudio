@@ -1,9 +1,5 @@
 /*
- * InstructionNode.java
- *
- * Created on Piatok, 2007, september 21, 8:12
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -24,11 +20,12 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
-import java.util.List;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
-import net.sf.emustudio.intel8080.assembler.impl.NeedMorePassException;
+import net.sf.emustudio.intel8080.assembler.exceptions.NeedMorePassException;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.CodePseudoNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoBlock;
+
+import java.util.List;
 
 public class InstructionNode {
     protected LabelNode label;
@@ -65,20 +62,18 @@ public class InstructionNode {
     public int pass2(CompileEnv prev_env, int addr_start) throws Exception {
         this.current_address = addr_start;
         if (label != null) {
-            label.setAddress(new Integer(addr_start));
+            label.setAddress(addr_start);
         }
         // pass2 pre definiciu makra nemozem volat. ide totiz o samotnu expanziu
         // makra. preto pass2 mozem volat az pri samotnom volani makra (pass2 triedy
         // MacroCallPseudo)
         if (codePseudo != null) { 
-            if ((codePseudo instanceof MacroPseudoNode) == false) {
+            if (!(codePseudo instanceof MacroPseudoNode)) {
                 addr_start = codePseudo.pass2(prev_env, addr_start);
             }
         }
         return addr_start;
     }
-    
-    public int getCurrentAddress() { return this.current_address; }
     
     public boolean pass3(CompileEnv env) throws Exception {
         try {
@@ -94,17 +89,14 @@ public class InstructionNode {
     // code generation
     public void pass4(HEXFileManager hex) throws Exception {
         if (codePseudo != null) { 
-            if ((codePseudo instanceof MacroPseudoNode) == false) {
+            if (!(codePseudo instanceof MacroPseudoNode)) {
                 codePseudo.pass4(hex);
             }
         }
     }
 
     public boolean getIncludeLoops(String filename) {
-        if (codePseudo == null) {
-            return false;
-        }
-        if (codePseudo instanceof IncludePseudoNode) {
+        if (codePseudo != null && codePseudo instanceof IncludePseudoNode) {
             IncludePseudoNode i = (IncludePseudoNode)codePseudo;
             if (i.isEqualName(filename)) {
                 return true;

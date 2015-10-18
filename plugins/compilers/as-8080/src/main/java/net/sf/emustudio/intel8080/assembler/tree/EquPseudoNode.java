@@ -1,9 +1,5 @@
 /*
- * EquPseudoNode.java
- *
- * Created on Sobota, 2007, september 29, 10:37
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,6 +19,7 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.exceptions.AlreadyDefinedException;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoNode;
@@ -53,8 +50,8 @@ public class EquPseudoNode extends PseudoNode {
 
     @Override
     public int pass2(CompileEnv env, int addr_start) throws Exception {
-        if (env.addEquDef(this) == false) {
-            throw new Exception("[" + line + "," + column + "] Constant already defined: " + mnemo);
+        if (!env.addConstant(this)) {
+            throw new AlreadyDefinedException(line, column, "Constant(" + mnemo + ")");
         }
         expr.eval(env, addr_start);
         return addr_start;

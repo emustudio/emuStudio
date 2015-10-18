@@ -1,9 +1,5 @@
 /*
- * DWDataNode.java
- *
- * Created on Sobota, 2007, september 29, 9:30
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,6 +19,7 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.exceptions.ValueTooBigException;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.DataValueNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
@@ -48,6 +45,13 @@ public class DWDataNode extends DataValueNode {
 
     @Override
     public void pass4(HEXFileManager hex) throws Exception {
+        if (expression.getValue() > 0xFFFF) {
+            throw new ValueTooBigException(line, column, expression.getValue(), 0xFFFF);
+        }
+        if (expression.getValue() < -32768) {
+            throw new ValueTooBigException(line, column, expression.getValue(), -32768);
+        }
+
         hex.putCode(expression.getEncValue(false));
     }
 }

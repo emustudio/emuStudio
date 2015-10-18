@@ -3,7 +3,7 @@
  *
  * Parser (syntactic analyzer for 8080 compiler)
  *
- * Copyright (C) 2008-2014 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify

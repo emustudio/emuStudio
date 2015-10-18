@@ -1,9 +1,5 @@
 /*
- * CodeNode.java
- *
- * Created on Piatok, 2007, september 21, 11:09
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,8 +23,4 @@ public abstract class CodeNode extends CodePseudoNode {
         super(line, column);
     }
 
-    @Override
-    public boolean isPseudo() {
-        return false;
-    }
 }

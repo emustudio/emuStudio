@@ -1,9 +1,5 @@
 /*
- * PseudoNode.java
- *
- * Created on Piatok, 2007, september 21, 11:17
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -27,11 +23,6 @@ package net.sf.emustudio.intel8080.assembler.treeAbstract;
  * are treated as local if theyre set in a macro. (see LabelNode class)
  */
 public abstract class PseudoNode extends CodePseudoNode {
-
-    @Override
-    public boolean isPseudo() {
-        return true;
-    }
 
     public PseudoNode(int line, int column) {
         super(line, column);

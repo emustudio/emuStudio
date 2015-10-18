@@ -1,9 +1,5 @@
 /*
- * DSDataNode.java
- *
- * Created on Sobota, 2007, september 29, 9:36
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,8 +19,11 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.exceptions.AmbiguousException;
+import net.sf.emustudio.intel8080.assembler.exceptions.NegativeValueException;
+import net.sf.emustudio.intel8080.assembler.exceptions.ValueTooBigException;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
-import net.sf.emustudio.intel8080.assembler.impl.NeedMorePassException;
+import net.sf.emustudio.intel8080.assembler.exceptions.NeedMorePassException;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.DataValueNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 
@@ -48,8 +47,7 @@ public class DSDataNode extends DataValueNode {
             int val = expression.eval(env, addr_start);
             return addr_start + val;
         } catch (NeedMorePassException e) {
-            throw new Exception("[" + line + "," + column
-                    + "] DS expression can't be ambiguous");
+            throw new AmbiguousException(line, column, "DS expression");
         }
     }
 
@@ -57,11 +55,10 @@ public class DSDataNode extends DataValueNode {
     public void pass4(HEXFileManager hex) throws Exception {
         String str = "";
 
-        if (expression.getEncValue(true).length() > 2) {
-            throw new Exception("[" + line + "," + column + "] value too large");
-        }
-        if (expression.getValue() < 0) {
-            throw new Exception("[" + line + "," + column + "] value can't be negative");
+        if (expression.getValue() > 0xFF) {
+            throw new ValueTooBigException(line, column, expression.getValue(), 0xFF);
+        } else if (expression.getValue() < 0) {
+            throw new NegativeValueException(line, column, expression.getValue());
         }
 
         for (int i = 0; i < expression.getValue(); i++) {

@@ -1,9 +1,5 @@
 /*
- * OrgPseudoNode.java
- *
- * Created on Sobota, 2007, september 29, 10:32
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,13 +19,14 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.exceptions.AmbiguousException;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
-import net.sf.emustudio.intel8080.assembler.impl.NeedMorePassException;
+import net.sf.emustudio.intel8080.assembler.exceptions.NeedMorePassException;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoNode;
 
 public class OrgPseudoNode extends PseudoNode {
-    private ExprNode expr;
+    private final ExprNode expr;
 
     public OrgPseudoNode(ExprNode expr, int line, int column) {
         super(line, column);
@@ -55,13 +52,11 @@ public class OrgPseudoNode extends PseudoNode {
     // label address cant be evaluated
     @Override
     public int pass2(CompileEnv parentEnv, int addr_start) throws Exception {
-        int val = addr_start;
         try {
-            val = expr.eval(parentEnv, addr_start);
+            return expr.eval(parentEnv, addr_start);
         } catch (NeedMorePassException e) {
-            throw new Exception("[" + line + "," + column + "] ORG expression can't be ambiguous");
+            throw new AmbiguousException(line, column, "ORG expression");
         }
-        return val;
     }
 
     @Override

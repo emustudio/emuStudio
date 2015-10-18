@@ -1,9 +1,5 @@
 /*
- * OC_RegpairExpr.java
- *
- * Created on Sobota, 2007, september 29, 20:47
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -29,11 +25,10 @@ import net.sf.emustudio.intel8080.assembler.treeAbstract.OpCodeNode;
 
 // this class uses only lxi instruction
 public class OC_RegpairExpr extends OpCodeNode {
-    private byte regpair;
-    private ExprNode expr;
+    private final byte regpair;
+    private final ExprNode expr;
 
-    public OC_RegpairExpr(String mnemo, byte regpair, ExprNode expr, int line,
-            int column) {
+    public OC_RegpairExpr(String mnemo, byte regpair, ExprNode expr, int line, int column) {
         super(mnemo, line, column);
         this.regpair = regpair;
         this.expr = expr;

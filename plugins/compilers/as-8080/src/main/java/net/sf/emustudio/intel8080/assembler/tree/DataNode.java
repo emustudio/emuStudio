@@ -1,9 +1,5 @@
 /*
- * DataNode.java
- *
- * Created on Sobota, 2007, september 22, 9:05
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,55 +19,45 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
-import java.util.ArrayList;
-import java.util.List;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.CodeNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.DataValueNode;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DataNode extends CodeNode {
-    private List<DataValueNode> list; // this vector stores only data values
+    private final List<DataValueNode> dataValues = new ArrayList<>();
 
     public void addElement(DataValueNode node) {
-        list.add(node);
-    }
-
-    public void addAll(List<DataValueNode> vec) {
-        list.addAll(vec);
+        dataValues.add(node);
     }
 
     public DataNode(int line, int column) {
         super(line, column);
-        this.list = new ArrayList<DataValueNode>();
     }
 
     @Override
     public int getSize() {
-        DataValueNode dv;
         int size = 0;
-        for (int i = 0; i < list.size(); i++) {
-            dv = (DataValueNode) list.get(i);
-            size += dv.getSize();
+        for (DataValueNode dataValue : dataValues) {
+            size += dataValue.getSize();
         }
         return size;
     }
 
     @Override
     public int pass2(CompileEnv env, int addr_start) throws Exception {
-        DataValueNode dv;
-        for (int i = 0; i < list.size(); i++) {
-            dv = (DataValueNode) list.get(i);
-            addr_start = dv.pass2(env, addr_start);
+        for (DataValueNode dataValue : dataValues) {
+            addr_start = dataValue.pass2(env, addr_start);
         }
         return addr_start;
     }
 
     @Override
     public void pass4(HEXFileManager hex) throws Exception {
-        DataValueNode dv;
-        for (int i = 0; i < list.size(); i++) {
-            dv = (DataValueNode) list.get(i);
-            dv.pass4(hex);
+        for (DataValueNode dataValue : dataValues) {
+            dataValue.pass4(hex);
         }
     }
 }

@@ -1,9 +1,5 @@
 /*
- * DataValueNode.java
- *
- * Created on Sobota, 2007, september 29, 8:54
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -40,13 +36,13 @@ public abstract class DataValueNode {
     public abstract int pass2(CompileEnv env, int addr_start) throws Exception;
     public abstract void pass4(HEXFileManager hex) throws Exception;
     
-        // encode string to hex codes
+    // encode string to hex codes
     protected String getEncString(String literal) {
         byte[] byts = literal.getBytes();
         String enc = "";
-        
-        for (int i = 0; i < byts.length; i++) {
-            enc += ExprNode.getEncValue((int)byts[i],true);
+
+        for (byte byt : byts) {
+            enc += ExprNode.getEncValue((int) byt, true);
         }
         return enc;
     }

@@ -1,9 +1,5 @@
 /*
- * ExprNode.java
- *
- * Created on Sobota, 2007, september 22, 8:30
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -26,19 +22,10 @@ import emulib.runtime.RadixUtils;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 
 public abstract class ExprNode {
-
     protected int value;
 
     public int getValue() {
         return value;
-    }
-
-    public boolean is8Bit() {
-        if (value <= 255 && value >= -128) {
-            return true;
-        } else {
-            return false;
-        }
     }
 
     public abstract int eval(CompileEnv env, int curr_addr) throws Exception;
@@ -51,11 +38,9 @@ public abstract class ExprNode {
         }
     }
 
-    ;
-    
     public String getEncValue(boolean oneByte) {
         if (oneByte) {
-            return String.format("%02X", (value & 0xFF));
+            return RadixUtils.getByteHexString(value & 0xFF);
         } else {
             return String.format("%02X%02X", (value & 0xFF), ((value >> 8) & 0xFF));
         }

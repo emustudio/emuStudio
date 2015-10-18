@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2014 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  *
  * KISS, YAGNI, DRY
  *
@@ -20,11 +20,14 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
-import java.util.ArrayList;
-import java.util.List;
+import net.sf.emustudio.intel8080.assembler.exceptions.InvalidMacroParamsCountException;
+import net.sf.emustudio.intel8080.assembler.exceptions.UnknownMacroParametersException;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoBlock;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MacroPseudoNode extends PseudoBlock {
     private CompileEnv newEnv;
@@ -81,16 +84,14 @@ public class MacroPseudoNode extends PseudoBlock {
         }
         // check of call_params
         if (call_params == null) {
-            throw new Exception("[" + line + "," + column
-                    + "] Unknown macro parameters");
+            throw new UnknownMacroParametersException(line, column, mnemo);
         }
         if (call_params.size() != params.size()) {
-            throw new Exception("[" + line + "," + column
-                    + "] Incorrect macro paramers count");
+            throw new InvalidMacroParamsCountException(line, column, mnemo, params.size(), call_params.size());
         }
         // create/rewrite symbols => parameters as equ pseudo instructions
         for (int i = 0; i < params.size(); i++) {
-            newEnv.addEquDef(new EquPseudoNode(params.get(i), call_params.get(i),
+            newEnv.addConstant(new EquPseudoNode(params.get(i), call_params.get(i),
                     line, column));
         }
         return stat.pass2(newEnv, addr_start);

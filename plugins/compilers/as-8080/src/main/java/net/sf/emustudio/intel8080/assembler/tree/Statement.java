@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2014 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  *
  * KISS, YAGNI, DRY
  *
@@ -20,11 +20,12 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
+import net.sf.emustudio.intel8080.assembler.exceptions.NeedMorePassException;
+import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoBlock;
+
 import java.util.ArrayList;
 import java.util.List;
-import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
-import net.sf.emustudio.intel8080.assembler.impl.NeedMorePassException;
-import net.sf.emustudio.intel8080.assembler.treeAbstract.PseudoBlock;
 
 public class Statement {
     /* PASS1 = symbol table
@@ -41,15 +42,9 @@ public class Statement {
         list.add(node);
     }
 
-    public void addVector(List<InstructionNode> vec) {
-        list.addAll(vec);
-    }
-
     public int getSize() {
-        InstructionNode in;
         int size = 0;
-        for (InstructionNode list1 : list) {
-            in = (InstructionNode) list1;
+        for (InstructionNode in : list) {
             size += in.getSize();
         }
         return size;
@@ -63,24 +58,20 @@ public class Statement {
         this.env = env;
         pass1();
     }
+
     // creates symbol table
     // return next current address
-
     public void pass1() throws Exception {
-        int i;
-        InstructionNode in;
         // only labels and macros have right to be all added to symbol table at once
-        for (i = 0; i < list.size(); i++) {
-            in = (InstructionNode) list.get(i);
+        for (InstructionNode in : list) {
             if (in.label != null) {
-                if (env.addLabelDef(in.label) == false) {
+                if (!env.addLabel(in.label)) {
                     throw new Exception("Label already defined: " + in.label.getName());
                 }
             }
             if ((in.codePseudo != null) && (in.codePseudo instanceof MacroPseudoNode)) {
-                if (env.addMacroDef((MacroPseudoNode) in.codePseudo) == false) {
-                    throw new Exception("Macro already defined: "
-                            + ((MacroPseudoNode) in.codePseudo).getName());
+                if (!env.addMacro((MacroPseudoNode) in.codePseudo)) {
+                    throw new Exception("Macro already defined: " + ((MacroPseudoNode) in.codePseudo).getName());
                 }
             }
             if ((in.codePseudo != null) && (in.codePseudo instanceof IncludePseudoNode)) {
@@ -113,7 +104,7 @@ public class Statement {
     public boolean pass3(CompileEnv parentEnv) throws Exception {
         int pnCount = parentEnv.getPassNeedCount();
         for (int i = parentEnv.getPassNeedCount() - 1; i >= 0; i--) {
-            if (parentEnv.getPassNeed(i).pass3(parentEnv) == true) {
+            if (parentEnv.getPassNeed(i).pass3(parentEnv)) {
                 pnCount--;
                 parentEnv.removePassNeed(i);
             }
@@ -150,8 +141,8 @@ public class Statement {
         includefiles.add(filename);
         InstructionNode in;
         for (i = 0; i < list.size(); i++) {
-            in = (InstructionNode) list.get(i);
-            if (in.getIncludeLoops(filename) == true) {
+            in = list.get(i);
+            if (in.getIncludeLoops(filename)) {
                 return true;
             }
         }

@@ -20,17 +20,18 @@
  */
 package net.sf.emustudio.ram.cpu.gui;
 
-import emulib.plugins.cpu.AbstractDisassembler;
 import emulib.plugins.cpu.DisassembledInstruction;
+import emulib.plugins.cpu.Disassembler;
 import net.sf.emustudio.ram.memory.RAMInstruction;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;
 
-public class RAMDisassembler extends AbstractDisassembler {
+import java.util.Objects;
+
+public class RAMDisassembler implements Disassembler {
     private RAMMemoryContext memory;
 
     public RAMDisassembler(RAMMemoryContext memory) {
-        super (new RAMDecoder(memory));
-        this.memory = memory;
+        this.memory = Objects.requireNonNull(memory);
     }
 
     @Override

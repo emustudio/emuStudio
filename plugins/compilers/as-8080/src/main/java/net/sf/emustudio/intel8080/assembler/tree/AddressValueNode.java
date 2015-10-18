@@ -1,9 +1,5 @@
 /*
- * AddressValueNode.java
- *
- * Created on Sobota, 2007, september 29, 10:07
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -30,10 +26,6 @@ public class AddressValueNode extends ExprNode {
 
     public void setAddress(int address) {
         this.value = address;
-    }
-
-    public int getAddress() {
-        return value;
     }
 
     @Override

@@ -1,9 +1,5 @@
 /*
- * ArithNode.java
- *
- * Created on Sobota, 2007, september 22, 8:35
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -31,7 +27,6 @@ public class ArithNode extends ExprNode {
     private ExprNode right;
     private String operator;
     
-    /** Creates a new instance of ArithNode */
     public ArithNode(ExprNode left, ExprNode right, String operator) {
         this.left = left;
         this.right = right;

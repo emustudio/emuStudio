@@ -1,9 +1,5 @@
 /*
- * OC_RegReg.java
- *
- * Created on Sobota, 2007, september 29, 20:08
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,13 +19,14 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.exceptions.CompilerException;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.OpCodeNode;
 
 // only for mov instruction
 public class OC_RegReg extends OpCodeNode {
-    private byte reg_src;
-    private byte reg_dst;
+    private final byte reg_src;
+    private final byte reg_dst;
 
     public OC_RegReg(String mnemo, byte reg_dst, byte reg_src, int line,
             int column) {
@@ -46,7 +43,7 @@ public class OC_RegReg extends OpCodeNode {
     @Override
     public int pass2(CompileEnv parentEnv, int addr_start) throws Exception {
         if ((reg_src == reg_dst) && (reg_src == 6)) {
-            throw new Exception("[" + line + "," + column + "] Can't use M register on both src and dst");
+            throw new CompilerException(line, column, "Can't use M register on both src and dst");
         }
         return addr_start + 1;
     }

@@ -1,9 +1,5 @@
 /*
- * OC_Regpair.java
- *
- * Created on Sobota, 2007, september 29, 20:15
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -27,10 +23,9 @@ import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.OpCodeNode;
 
 public class OC_Regpair extends OpCodeNode {
-    private byte regpair;
+    private final byte regpair;
 
-    public OC_Regpair(String mnemo, byte regpair, boolean psw, int line,
-            int column) {
+    public OC_Regpair(String mnemo, byte regpair, boolean psw, int line, int column) {
         super(mnemo, line, column);
         this.regpair = regpair;
     }

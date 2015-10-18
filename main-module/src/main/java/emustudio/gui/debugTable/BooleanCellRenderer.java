@@ -9,7 +9,6 @@ import java.awt.Component;
 import java.awt.Graphics;
 
 public class BooleanCellRenderer extends JLabel implements TableCellRenderer {
-
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                    boolean hasFocus, int row, int column) {
@@ -20,7 +19,7 @@ public class BooleanCellRenderer extends JLabel implements TableCellRenderer {
         } else {
             setIcon(null);
         }
-        setBackground((row % 2 == 0) ? Color.WHITE : DebugTableImpl.EVEN_ROW_COLOR);
+        setBackground((row % 2 == 0) ? Colors.ODD_ROW_COLOR : Colors.EVEN_ROW_COLOR);
         setText(" ");
         this.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         return this;

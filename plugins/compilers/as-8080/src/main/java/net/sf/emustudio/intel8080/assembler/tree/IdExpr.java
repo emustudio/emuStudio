@@ -1,9 +1,5 @@
 /*
- * IdExpr.java
- *
- * Created on Streda, 2007, október 10, 15:50
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,8 +18,9 @@
  */
 package net.sf.emustudio.intel8080.assembler.tree;
 
+import net.sf.emustudio.intel8080.assembler.exceptions.UnknownIdentifierException;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
-import net.sf.emustudio.intel8080.assembler.impl.NeedMorePassException;
+import net.sf.emustudio.intel8080.assembler.exceptions.NeedMorePassException;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 
 public class IdExpr extends ExprNode {
@@ -39,28 +36,27 @@ public class IdExpr extends ExprNode {
 
     @Override
     public int eval(CompileEnv env, int curr_addr) throws Exception {
-        // identifier in expression can be only label, equ, or set statement. macro NOT
-        // search in env for labels
+        // identifier in expression can be only label, equ, or set statement. macro does NOT search in env for labels
         LabelNode lab = env.getLabel(this.name);
         if ((lab != null) && (lab.getAddress() == null)) {
-            throw new NeedMorePassException(this, lab.getLine(), lab.getColumn());
+            throw new NeedMorePassException(lab.getLine(), lab.getColumn());
         } else if (lab != null) {
             this.value = lab.getAddress();
             return this.value;
         }
 
-        EquPseudoNode equ = env.getEqu(this.name);
+        EquPseudoNode equ = env.getConstant(this.name);
         if (equ != null) {
             this.value = equ.getValue();
             return this.value;
         }
 
-        SetPseudoNode set = env.getSet(this.name);
+        SetPseudoNode set = env.getVariable(this.name);
         if (set != null) {
             this.value = set.getValue();
             return this.value;
         } else {
-            throw new Exception("Unknown identifier (" + this.name + ")");
+            throw new UnknownIdentifierException(this.name);
         }
     }
 }

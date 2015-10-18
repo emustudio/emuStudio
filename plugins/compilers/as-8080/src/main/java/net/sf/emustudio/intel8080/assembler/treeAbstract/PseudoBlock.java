@@ -1,7 +1,5 @@
 /*
- * PseudoBlock.java
- *
- * Copyright (C) 2012 P. Jakubco
+ * Copyright (C) 2012-2015 Peter Jakubčo
  *
  * KISS, YAGNI, DRY
  * 

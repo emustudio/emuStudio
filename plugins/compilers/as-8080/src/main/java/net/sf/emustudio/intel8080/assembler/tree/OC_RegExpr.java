@@ -1,9 +1,5 @@
 /*
- * OC_RegExpr.java
- *
- * Created on Sobota, 2007, september 29, 20:51
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,17 +19,17 @@
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.intel8080.assembler.exceptions.ValueTooBigException;
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.ExprNode;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.OpCodeNode;
 
 // this class uses only mvi instruction
 public class OC_RegExpr extends OpCodeNode {
-    private byte reg;
-    private ExprNode expr;
+    private final byte reg;
+    private final ExprNode expr;
 
-    public OC_RegExpr(String mnemo, byte reg, ExprNode expr,
-            int line, int column) {
+    public OC_RegExpr(String mnemo, byte reg, ExprNode expr, int line, int column) {
         super(mnemo, line, column);
         this.reg = reg;
         this.expr = expr;
@@ -49,7 +45,7 @@ public class OC_RegExpr extends OpCodeNode {
         expr.eval(parentEnv, addr_start);
 
         if (expr.getValue() > 0xff) {
-            throw new Exception("[" + line + "," + column + "] Expression is too big (maximum is 0FFh)");
+            throw new ValueTooBigException(line, column, expr.getValue(), 0xFF);
         }
         return addr_start + 2;
     }
@@ -60,7 +56,7 @@ public class OC_RegExpr extends OpCodeNode {
         int opCode = 6;
 
         if (expr.getEncValue(true).length() > 2) {
-            throw new Exception("[" + line + "," + column + "] Expression is too big (maximum is 0FFh)");
+            throw new ValueTooBigException(line, column, expr.getValue(), 0xFF);
         }
         opCode |= (reg << 3);
         hex.putCode(String.format("%1$02X", opCode));

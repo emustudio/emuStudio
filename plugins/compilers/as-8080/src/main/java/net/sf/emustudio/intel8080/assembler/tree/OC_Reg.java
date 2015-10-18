@@ -1,9 +1,5 @@
 /*
- * OC_Reg.java
- *
- * Created on Sobota, 2007, september 29, 15:07
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -27,7 +23,7 @@ import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
 import net.sf.emustudio.intel8080.assembler.treeAbstract.OpCodeNode;
 
 public class OC_Reg extends OpCodeNode {
-    private byte reg;
+    private final byte reg;
 
     public OC_Reg(String mnemo, byte reg, int line, int column) {
         super(mnemo, line, column);
