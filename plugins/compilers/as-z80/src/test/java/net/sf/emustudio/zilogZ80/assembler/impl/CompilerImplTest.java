@@ -121,4 +121,21 @@ public class CompilerImplTest {
         assertFalse(errorCode == 0);
     }
 
+    @Test
+    public void testRelativeJump() throws Exception {
+        compile(
+                        "loop: ld A, 0\n" +
+                        "cp 0\n" +
+                        "jr Z, end\n" +
+                        "jp loop\n" +
+                        "\n" +
+                        "end:\n" +
+                        "halt\n"
+        );
+
+        assertProgram(
+                0x3E, 0, 0xFE, 0, 0x28, 3, 0xC3, 0, 0, 0x76
+        );
+
+    }
 }

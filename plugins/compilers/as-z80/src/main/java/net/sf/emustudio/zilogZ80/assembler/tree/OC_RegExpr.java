@@ -43,6 +43,7 @@ public class OC_RegExpr extends Instruction {
     private final Expression expr;
     private final boolean oneByte;
     private final boolean bitInstr; // bit instruction? (BIT,SET,RES)
+    private final boolean relativeAddress;
 
     /**
      *
@@ -54,6 +55,7 @@ public class OC_RegExpr extends Instruction {
 
     public OC_RegExpr(int opcode, int reg, int pos, Expression expr, boolean oneByte, int line, int column) {
         super(opcode, line, column);
+        relativeAddress = opcode == JR;
         this.opcode += (reg << ((getSize() - 1 - pos) * 8));
         this.oneByte = oneByte;
         this.expr = expr;
@@ -65,6 +67,7 @@ public class OC_RegExpr extends Instruction {
      */
     public OC_RegExpr(int opcode, Expression bit, int reg, int line, int column) {
         super(opcode, line, column);
+        relativeAddress = false;
         oneByte = true;
         this.expr = bit;
         this.opcode += reg;
@@ -89,6 +92,9 @@ public class OC_RegExpr extends Instruction {
             opcode += (8 * val);
         } else {
             if (oneByte) {
+                if (relativeAddress) {
+                    val = val - addr_start - 2;
+                }
                 opcode += Expression.reverseBytes(val, 1);
             } else {
                 opcode += Expression.reverseBytes(val, 2);

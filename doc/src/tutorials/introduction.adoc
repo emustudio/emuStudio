@@ -161,15 +161,29 @@ TIP: Most probably a compiler would want to access memory, it which case it woul
 == Emulation lifecycle and behavior contracts
 
 emuStudio is also a framework, which not only defines the API, but also the whole life cycle of plug-ins, and has the
-control of all emulation processes. It proactively loads, initializes and initiates plug-ins. That way, a plug-in
-developer does not have to care about it, and can safely focus on what the plug-in should do in the first place.
+control of all emulation processes. It proactively loads, instantiates and initializes plug-ins. That way, a plug-in
+developer does not have to care about messing with class loaders, and can safely focus on what the plug-in should do
+in the first place.
 
 Behavior contracts define the operations and their order in all phases of emulation life cycle, which plug-ins must
-count with. Taken that, plug-ins can then assume the state in which are the other plug-ins, or emuStudio itself and
-shape their own behavior accordingly. emuStudio is also assuming that plug-ins will "behave good", and if not, it can
-affect or possibly corrupt the whole emulator. In that case the state of emuStudio and other plug-ins is not defined.
+count with. Taken that, plug-ins can assume the state in which the other plug-ins are, or in which emuStudio itself is
+and shape their own behavior accordingly. emuStudio is also assuming that plug-ins will "behave good", and if not, they
+can affect or possibly corrupt the whole emulator. In that case the state of emuStudio and other plug-ins is not defined.
 
-More details, including programming examples about the life cycle and behavior contracts will be presented later.
+More details, including programming examples about the life cycle and behavior contracts will be presented in further
+sections, for each plug-in type separately.
+
+== Platform architecture
+
+The platform architecture is shown in the following picture:
+
+[graphviz]
+---------------------------------------------------------------------
+graph platform_architecture {
+
+}
+---------------------------------------------------------------------
+
 
 == Plug-in basics
 
