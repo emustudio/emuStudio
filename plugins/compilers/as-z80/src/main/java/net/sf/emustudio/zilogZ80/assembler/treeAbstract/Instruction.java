@@ -19,6 +19,8 @@
 
 package net.sf.emustudio.zilogZ80.assembler.treeAbstract;
 
+import net.sf.emustudio.zilogZ80.assembler.exceptions.ValueOutOfBoundsException;
+
 public abstract class Instruction extends InstrData {
     protected int opcode;
     
@@ -26,6 +28,15 @@ public abstract class Instruction extends InstrData {
         super(line,column);
         this.opcode = opcode;
     }
+
+    protected static int computeRelativeAddress(int line, int column, int addressStart, int val) throws ValueOutOfBoundsException {
+        int relativeAddress = (val - addressStart - 2);
+        if (relativeAddress > 129 || relativeAddress < -126) {
+            throw new ValueOutOfBoundsException(line, column, -126, 129, val);
+        }
+        return relativeAddress & 0xFF;
+    }
+
 
     @Override
     public int getSize() { 

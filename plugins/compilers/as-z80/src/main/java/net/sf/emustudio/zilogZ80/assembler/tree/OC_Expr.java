@@ -20,6 +20,7 @@ package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
 import net.sf.emustudio.zilogZ80.assembler.exceptions.CompilerException;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.ValueOutOfBoundsException;
 import net.sf.emustudio.zilogZ80.assembler.exceptions.ValueTooBigException;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
@@ -140,19 +141,16 @@ public class OC_Expr extends Instruction {
         expr.eval(parentEnv, addr_start);
         int val = expr.getValue();
 
-        if (oneByte && (val & 0xFFF) > 0xFF) {
-            throw new ValueTooBigException(line, column, val, 0xFF);
-        }
         opcode = old_opcode;
         switch (opcode) {
             case DJNZ:
-                val--;
+                opcode += computeRelativeAddress(line, column, addr_start, val);
                 break;
             case BIT:
             case RES:
             case SET:
                 if ((val > 7) || (val < 0)) {
-                    throw new CompilerException(line, column, "Error: value can be only in range 0-7");
+                    throw new ValueOutOfBoundsException(line, column, 0, 7, val);
                 }
                 opcode += (8 * val);
                 break;
@@ -187,6 +185,9 @@ public class OC_Expr extends Instruction {
             case SLL_IIY_NN:
             case SRL_IIX_NN:
             case SRL_IIY_NN:
+                if (oneByte && (val & 0xFFF) > 0xFF) {
+                    throw new ValueTooBigException(line, column, val, 0xFF);
+                }
                 opcode += ((val << 8) & 0xFF00);
                 break;
             case RST:
@@ -219,10 +220,13 @@ public class OC_Expr extends Instruction {
                 }
                 break;
             case JR:
-                opcode += Expression.reverseBytes(val & 0xff, 1);
+                opcode += computeRelativeAddress(line, column, addr_start, val);
                 break;
             default:
                 if (oneByte) {
+                    if (oneByte && (val & 0xFFF) > 0xFF) {
+                        throw new ValueTooBigException(line, column, val, 0xFF);
+                    }
                     opcode += Expression.reverseBytes(val, 1);
                 } else {
                     opcode += Expression.reverseBytes(val, 2);

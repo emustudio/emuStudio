@@ -261,6 +261,17 @@ public class PseudoNodesTest {
     }
 
     @Test
+    public void testTwoSuccessiveORG() throws Exception {
+        compile(
+                "org 2\norg 3\nhalt"
+        );
+        assertProgram(
+                0, 0, 0, 0x76
+        );
+    }
+
+
+    @Test
     public void testDBwithNegativeValueWorks() throws Exception {
         compile(
                 "db -1"
