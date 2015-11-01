@@ -3,7 +3,7 @@
  *
  * Lexical analyser for Z80 assembler
  *
- * Copyright (C) 2008-2012 Peter Jakubco
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify

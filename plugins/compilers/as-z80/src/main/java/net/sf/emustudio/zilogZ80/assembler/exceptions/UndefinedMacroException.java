@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2015 Peter Jakubčo
+ * Copyright (C) 2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,19 +16,11 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+package net.sf.emustudio.zilogZ80.assembler.exceptions;
 
-package net.sf.emustudio.zilogZ80.assembler.treeAbstract;
+public class UndefinedMacroException extends CompilerException {
 
-public abstract class Instruction extends InstrData {
-    protected int opcode;
-    
-    public Instruction(int opcode, int line, int column) {
-        super(line,column);
-        this.opcode = opcode;
-    }
-
-    @Override
-    public int getSize() { 
-        return Expression.getSize(opcode);
+    public UndefinedMacroException(int column, int line, String macroName) {
+        super(column, line, "Undefined macro: " + macroName);
     }
 }

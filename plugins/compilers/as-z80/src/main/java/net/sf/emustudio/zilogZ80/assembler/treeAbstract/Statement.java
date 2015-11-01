@@ -1,9 +1,5 @@
 /*
- * Statement.java
- *
- * Created on Piatok, 2007, september 21, 8:56
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -32,7 +28,6 @@ public abstract class Statement {
     public abstract boolean isPseudo();
 
     public Statement(int line, int column) {
-        // this.mnemo = mnemo;
         this.line = line;
         this.column = column;
     }
@@ -44,5 +39,5 @@ public abstract class Statement {
 
     public abstract int pass2(Namespace parentEnv, int addr_start) throws Exception;
 
-    public abstract void pass4(HEXFileManager hex) throws Exception;
+    public abstract void generateCode(HEXFileManager hex) throws Exception;
 }

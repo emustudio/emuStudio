@@ -19,6 +19,8 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.CompilerException;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.ValueTooBigException;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Instruction;
@@ -28,7 +30,6 @@ import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Instruction;
  * opcode = (first_byte+reg) expr
  */
 public class OC_RegExpr extends Instruction {
-
     public static final int CALL = 0xC40000; // CALL cc,NN
     public static final int JP = 0xC20000; // JP cc,NN
     public static final int JR = 0x2000; // JR cc,N
@@ -42,7 +43,6 @@ public class OC_RegExpr extends Instruction {
     private final Expression expr;
     private final boolean oneByte;
     private final boolean bitInstr; // bit instruction? (BIT,SET,RES)
-    private final int old_opcode;
 
     /**
      *
@@ -51,11 +51,10 @@ public class OC_RegExpr extends Instruction {
      * @param pos index of byte where add register value; e.g. DD 70+reg XX XX
      * => pos = 1; C4+reg 00 00 => pos = 0;
      */
-    public OC_RegExpr(int opcode, int reg, int pos, Expression expr,
-            boolean oneByte, int line, int column) {
+
+    public OC_RegExpr(int opcode, int reg, int pos, Expression expr, boolean oneByte, int line, int column) {
         super(opcode, line, column);
         this.opcode += (reg << ((getSize() - 1 - pos) * 8));
-        this.old_opcode = opcode; //this.opcode;
         this.oneByte = oneByte;
         this.expr = expr;
         this.bitInstr = false;
@@ -64,13 +63,11 @@ public class OC_RegExpr extends Instruction {
     /**
      * Special constructor for BIT,RES and SET instructions
      */
-    public OC_RegExpr(int opcode, Expression bit, int reg,
-            int line, int column) {
+    public OC_RegExpr(int opcode, Expression bit, int reg, int line, int column) {
         super(opcode, line, column);
         oneByte = true;
         this.expr = bit;
         this.opcode += reg;
-        old_opcode = opcode; //this.opcode;
         bitInstr = true;
     }
 
@@ -83,13 +80,11 @@ public class OC_RegExpr extends Instruction {
         expr.eval(parentEnv, addr_start);
         int val = expr.getValue();
         if (oneByte && (Expression.getSize(val) > 1)) {
-            throw new Exception("[" + line + "," + column + "] Error:"
-                    + " value too large");
+            throw new ValueTooBigException(line, column, val, 0xFF);
         }
         if (bitInstr) {
             if ((val > 7) || (val < 0)) {
-                throw new Exception("[" + line + "," + column + "] Error:"
-                        + " value can be only in range 0-7");
+                throw new CompilerException(line, column, "Error: value can be only in range 0-7");
             }
             opcode += (8 * val);
         } else {
@@ -104,7 +99,7 @@ public class OC_RegExpr extends Instruction {
 
     // this can be only mvi instr
     @Override
-    public void pass4(HEXFileManager hex) throws Exception {
+    public void generateCode(HEXFileManager hex) throws Exception {
         String s;
         if (getSize() == 1) {
             s = "%1$02X";

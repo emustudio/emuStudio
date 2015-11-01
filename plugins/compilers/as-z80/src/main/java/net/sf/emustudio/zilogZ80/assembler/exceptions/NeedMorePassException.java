@@ -20,37 +20,19 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.zilogZ80.assembler.impl;
+package net.sf.emustudio.zilogZ80.assembler.exceptions;
 
 /**
- * This exception might be thrown when compiling forward references that are in
- * expressions. Expression with forward reference for label can't be evaulated
- * without knowing a value of the label (its address that label is pointing at).
+ * This exception can be thrown during compiling forward references that are in expressions.
  *
- * @author Peter Jakubčo
+ * Expression with forward reference for label can't be evaulated without knowing a value of the label (its address that
+ * label is pointing at).
+ *
  */
-public class NeedMorePassException extends Exception {
+public class NeedMorePassException extends CompilerException {
 
-    private static final long serialVersionUID = 1L;
-    private Object obj;
-    private int line;
-    private int column;
-
-    public NeedMorePassException(Object o, int line, int column) {
-        this.obj = o;
-        this.line = line;
-        this.column = column;
+    public NeedMorePassException(int line, int column) {
+        super(line, column, "");
     }
 
-    public Object getObject() {
-        return obj;
-    }
-
-    public int getLine() {
-        return this.line;
-    }
-
-    public int getColumn() {
-        return this.column;
-    }
 }

@@ -1,7 +1,5 @@
 /*
- * Created on 14.8.2008, 9:27:10
- *
- * Copyright (C) 2008-2014 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -21,6 +19,8 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.CompilerException;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.UnexpectedEOFException;
 import net.sf.emustudio.zilogZ80.assembler.impl.CompilerImpl;
 import net.sf.emustudio.zilogZ80.assembler.impl.LexerImpl;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
@@ -88,16 +88,14 @@ public class PseudoINCLUDE extends Pseudo {
             Object s = parser.parse().value;
             parser.setReportPrefixString(null);
             if (s == null) {
-                throw new Exception("[" + line + "," + column + "] "
-                        + "Error: Unexpected end of file (" + file.getName() + ")");
+                throw new UnexpectedEOFException(line, column, file.getAbsolutePath());
             }
             program = (Program) s;
             program.addIncludeFiles(includefiles);
             namespace = parent;
 
             if (program.getIncludeLoops(fileName)) {
-                throw new Exception("[" + line + "," + column + "] "
-                        + "Error: Infinite INCLUDE loop (" + file.getName() + ")");
+                throw new CompilerException(line, column, "Error: Infinite INCLUDE loop (" + file.getAbsolutePath() + ")");
             }
             program.pass1(namespace); // create symbol table
         } catch (IOException e) {
@@ -114,7 +112,7 @@ public class PseudoINCLUDE extends Pseudo {
     }
 
     @Override
-    public void pass4(HEXFileManager hex) throws Exception {
+    public void generateCode(HEXFileManager hex) throws Exception {
         while (program.pass3(namespace) == true) {
             // :-)
         }

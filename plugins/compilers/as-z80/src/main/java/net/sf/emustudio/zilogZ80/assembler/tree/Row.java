@@ -1,9 +1,5 @@
 /*
- * Row.java
- *
- * Created on Streda, 2008, august 13, 11:25
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,10 +19,11 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
-import java.util.List;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.NeedMorePassException;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
-import net.sf.emustudio.zilogZ80.assembler.impl.NeedMorePassException;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Statement;
+
+import java.util.List;
 
 public class Row {
 
@@ -80,6 +77,7 @@ public class Row {
     public int pass2(Namespace prev_env, int addr_start) throws Exception {
         this.current_address = addr_start;
         if (label != null) {
+            System.out.println("Label" + label.getName() + " starts at " + String.format("%X", addr_start));
             label.setAddress(addr_start);
         }
         // pass2 pre definiciu makra nemozem volat. ide totiz o samotnu expanziu
@@ -91,10 +89,6 @@ public class Row {
             }
         }
         return addr_start;
-    }
-
-    public int getCurrentAddress() {
-        return this.current_address;
     }
 
     public boolean pass3(Namespace env) throws Exception {
@@ -112,7 +106,7 @@ public class Row {
     public void pass4(HEXFileManager hex) throws Exception {
         if (statement != null) {
             if ((statement instanceof PseudoMACRO) == false) {
-                statement.pass4(hex);
+                statement.generateCode(hex);
             }
         }
     }

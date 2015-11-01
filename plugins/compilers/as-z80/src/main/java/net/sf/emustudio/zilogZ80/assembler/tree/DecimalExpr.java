@@ -1,9 +1,5 @@
 /*
- * DecimalExpr.java
- *
- * Created on Sobota, 2007, september 29, 9:56
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -26,19 +22,12 @@ package net.sf.emustudio.zilogZ80.assembler.tree;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 
-/**
- *
- * @author vbmacher
- */
 public class DecimalExpr extends Expression {
     
-    /** Creates a new instance of DecimalExpr */
     public DecimalExpr(int value) {
         this.value = value;
     }
     
-    /// compile time ///
-
     public int getSize() {
         if ((value & 0xFF) == value) {
             return 1;

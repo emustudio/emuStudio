@@ -1,9 +1,5 @@
 /*
- * OC_NoParams.java
- *
- * Created on Štvrtok, 2008, august 14, 12:49
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -27,7 +23,6 @@ import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Instruction;
 
 public class OC_NoParams extends Instruction {
-
     public static final int ADC_A_HHLL = 0x8E;
     public static final int ADD_A_HHLL = 0x86;
     public static final int AND_HHLL = 0xA6;
@@ -145,12 +140,10 @@ public class OC_NoParams extends Instruction {
     public static final int SUB_HHLL = 0x96;
     public static final int XOR_HHLL = 0xAE;
 
-    /** Creates a new instance of OpcodeWParamsNode */
     public OC_NoParams(int opcode, int line, int column) {
         super(opcode, line, column);
     }
 
-    /// compile time ///
     @Override
     public void pass1() {
     }
@@ -161,7 +154,7 @@ public class OC_NoParams extends Instruction {
     }
 
     @Override
-    public void pass4(HEXFileManager hex) throws Exception {
+    public void generateCode(HEXFileManager hex) throws Exception {
         String s = (getSize() == 1) ? "%1$02X" : "%1$04X";
         hex.putCode(String.format(s, opcode));
     }

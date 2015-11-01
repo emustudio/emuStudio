@@ -1,9 +1,5 @@
 /*
- * DataDW.java
- *
- * Created on Streda, 2008, august 13, 11:48
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,6 +19,7 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.ValueTooBigException;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.DataValue;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
@@ -31,7 +28,6 @@ public class DataDW extends DataValue {
 
     private Expression expression = null;
 
-    /** Creates a new instance of DataDW */
     public DataDW(Expression expr, int line, int column) {
         super(line, column);
         this.expression = expr;
@@ -54,6 +50,13 @@ public class DataDW extends DataValue {
 
     @Override
     public void pass4(HEXFileManager hex) throws Exception {
+        if (expression.getValue() > 0xFFFF) {
+            throw new ValueTooBigException(line, column, expression.getValue(), 0xFFFF);
+        }
+        if (expression.getValue() < -32768) {
+            throw new ValueTooBigException(line, column, expression.getValue(), -32768);
+        }
+
         hex.putCode(expression.encodeValue(2));
     }
 }

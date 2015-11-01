@@ -1,9 +1,5 @@
 /*
- * Identifier.java
- *
- * Created on Streda, 2007, október 10, 15:50
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,16 +18,12 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
+import net.sf.emustudio.zilogZ80.assembler.exceptions.NeedMorePassException;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.UnknownIdentifierException;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
-import net.sf.emustudio.zilogZ80.assembler.impl.NeedMorePassException;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 
-/**
- *
- * @author vbmacher
- */
 public class Identifier extends Expression {
-
     private String name;
     private int line;
     private int col;
@@ -52,25 +44,24 @@ public class Identifier extends Expression {
         // search in env for labels
         Label lab = env.getLabel(this.name);
         if ((lab != null) && (lab.getAddress() == null)) {
-            throw new NeedMorePassException(this, lab.getLine(), lab.getColumn());
+            throw new NeedMorePassException(lab.getLine(), lab.getColumn());
         } else if (lab != null) {
             this.value = lab.getAddress();
             return this.value;
         }
 
-        PseudoEQU equ = env.getEqu(this.name);
+        PseudoEQU equ = env.getConstant(this.name);
         if (equ != null) {
             this.value = equ.getValue();
             return this.value;
         }
 
-        PseudoVAR set = env.getVar(this.name);
+        PseudoVAR set = env.getVariable(this.name);
         if (set != null) {
             this.value = set.getValue();
             return this.value;
         } else {
-            throw new Exception("[" + line + "," + col
-                    + "] Error: Unknown identifier (" + this.name + ")");
+            throw new UnknownIdentifierException(line, col, this.name);
         }
     }
 }

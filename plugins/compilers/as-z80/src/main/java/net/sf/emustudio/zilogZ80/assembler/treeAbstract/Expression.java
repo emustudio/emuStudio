@@ -1,9 +1,5 @@
 /*
- * Expression.java
- *
- * Created on Sobota, 2007, september 22, 8:30
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -32,36 +28,27 @@ public abstract class Expression {
         return value;
     }
 
-    public boolean is8Bit() {
-        if (value <= 255 && value >= -128) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public static boolean is8Bit(int val) {
-        if (val <= 255 && val >= -128) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private static double log2(double val) {
-        return Math.log(val) / Math.log(2.0);
-    }
-
     public static int getSize(int val) {
-        int y = (int) (Math.ceil(log2(val + 1) / 8.0));
-        return (y == 0) ? 1 : y;
+        if (val <= 255 && val >= -128) {
+            return 1;
+        } else if (val <= 65535 && val >= -32768) {
+            return 2;
+        } else if (val <= 16777215 && val >= -8388608) {
+            return 3;
+        }
+        return 4;
     }
 
     public abstract int eval(Namespace env, int curr_addr) throws Exception;
 
     public static String encodeValue(int val, int neededSize) {
+
         int size = getSize(val);
+        if (size < neededSize) {
+            size = neededSize;
+        }
         String s;
+
         if (size == 1) {
             s = String.format("%02X", (val & 0xFF));
         } else if (size == 2) {
@@ -74,21 +61,13 @@ public abstract class Expression {
                     (val & 0xFF), ((val >> 8) & 0xFF), ((val >> 16) & 0xFF),
                     ((val >> 24) & 0xFF));
         }
-        for (int j = size; j < neededSize; j++) {
-            s += "00";
-        }
         return s;
     }
 
-    ;
-    
     public static int reverseBytes(int val, int neededSize) {
         int i = 0;
         int size = getSize(val);
         for (int j = 0; j < size; j++) {
-//            System.out.println(Integer.toHexString(val) + " : " 
-            //                  + Integer.toHexString(val&0xFF) + " : " 
-            //                + Integer.toHexString(val>>8));
             i += (val & 0xFF);
             val >>= 8;
             i <<= 8;

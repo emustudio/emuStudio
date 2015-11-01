@@ -1,9 +1,5 @@
 /*
- * PseudoMACROCall.java
- *
- * Created on Pondelok, 2007, október 8, 17:03
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,11 +19,14 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
-import java.util.ArrayList;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.AmbiguousException;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.NeedMorePassException;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.UndefinedMacroException;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
-import net.sf.emustudio.zilogZ80.assembler.impl.NeedMorePassException;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Pseudo;
+
+import java.util.ArrayList;
 
 public class PseudoMACROCall extends Pseudo {
 
@@ -57,14 +56,13 @@ public class PseudoMACROCall extends Pseudo {
     }
 
     // this is a call for expanding a macro
-    // also generate code for pass4
+    // also generate code for generateCode
     @Override
     public int pass2(Namespace env, int addr_start) throws Exception {
         // first find a macro
         this.macro = env.getMacro(this.mnemo);
         if (macro == null) {
-            throw new Exception("[" + line + "," + column
-                    + "] Error: Undefined macro: " + this.mnemo);
+            throw new UndefinedMacroException(line, column, mnemo);
         }
         // do pass2 for expressions (real macro parameters)
         try {
@@ -74,16 +72,15 @@ public class PseudoMACROCall extends Pseudo {
             macro.setCallParams(params);
             int a = macro.pass2(env, addr_start);
             statHex.setNextAddress(addr_start);
-            macro.pass4(statHex); // generate code for concrete macro
+            macro.generateCode(statHex); // generate code for concrete macro
             return a;
         } catch (NeedMorePassException e) {
-            throw new Exception("[" + line + "," + column
-                    + "] Error: MACRO expression can't be ambiguous");
+            throw new AmbiguousException(line, column, "MACRO expression");
         }
     }
 
     @Override
-    public void pass4(HEXFileManager hex) {
+    public void generateCode(HEXFileManager hex) {
         hex.addTable(statHex.getTable());
     }
 }

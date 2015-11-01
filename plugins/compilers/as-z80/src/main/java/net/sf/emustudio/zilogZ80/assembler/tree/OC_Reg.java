@@ -1,9 +1,5 @@
 /*
- * OC_Reg.java
- *
- * Created on Piatok, 2008, august 15, 11:03
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -26,12 +22,7 @@ import emulib.runtime.HEXFileManager;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Instruction;
 
-/**
- *
- * @author vbmacher
- */
 public class OC_Reg extends Instruction {
-
     public static final int ADC = 0x88; //ADC A,r
     public static final int ADC_HL = 0xED4A; //ADC HL,rr
     public static final int ADD = 0x80; //ADD A,r
@@ -67,12 +58,10 @@ public class OC_Reg extends Instruction {
     public static final int SUB = 0x90; // SUB r
     public static final int XOR = 0xA8; // XOR r
 
-    /** Creates a new instance of OC_RegNode */
     public OC_Reg(int opcode, int reg, int line, int column) {
         super(opcode + reg, line, column);
     }
 
-    /// compile time ///
     @Override
     public void pass1() {
     }
@@ -83,7 +72,7 @@ public class OC_Reg extends Instruction {
     }
 
     @Override
-    public void pass4(HEXFileManager hex) throws Exception {
+    public void generateCode(HEXFileManager hex) throws Exception {
         String s = (getSize() == 1) ? "%1$02X" : "%1$04X";
         hex.putCode(String.format(s, opcode));
     }

@@ -1,9 +1,5 @@
 /*
- * DataNode.java
- *
- * Created on Streda, 2008, august 13, 11:35
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,70 +19,53 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
-import java.util.ArrayList;
-import java.util.List;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.DataValue;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.InstrData;
 
-/**
- *
- * @author vbmacher
- */
-public class DataNode extends InstrData {
+import java.util.ArrayList;
+import java.util.List;
 
-    private List<DataValue> list; // this list stores only data values
+public class DataNode extends InstrData {
+    private final List<DataValue> dataValues = new ArrayList<>();
 
     public void addElement(DataValue node) {
-        list.add(node);
+        dataValues.add(node);
     }
 
-    public void addAll(ArrayList<DataValue> vec) {
-        list.addAll(vec);
-    }
-
-    /** Creates a new instance of DataNode */
     public DataNode(int line, int column) {
         super(line, column);
-        this.list = new ArrayList<DataValue>();
     }
 
-    /// compile time ///
     @Override
     public int getSize() {
-        DataValue dv;
         int size = 0;
-        for (int i = 0; i < list.size(); i++) {
-            dv = (DataValue) list.get(i);
-            size += dv.getSize();
+        for (DataValue dataValue : dataValues) {
+            size += dataValue.getSize();
         }
         return size;
     }
 
     @Override
     public void pass1() throws Exception {
-        for (int i = 0; i < list.size(); i++) {
-            DataValue n = (DataValue) list.get(i);
-            n.pass1();
+        for (DataValue dataValue : dataValues) {
+            dataValue.pass1();
         }
     }
 
     @Override
     public int pass2(Namespace env, int addr_start) throws Exception {
-        DataValue dv;
-        for (int i = 0; i < list.size(); i++) {
-            dv = (DataValue) list.get(i);
-            addr_start = dv.pass2(env, addr_start);
+        for (DataValue dataValue : dataValues) {
+            addr_start = dataValue.pass2(env, addr_start);
         }
         return addr_start;
     }
 
     @Override
-    public void pass4(HEXFileManager hex) throws Exception {
-        DataValue dv;
-        for (int i = 0; i < list.size(); i++) {
-            dv = (DataValue) list.get(i);
-            dv.pass4(hex);
+    public void generateCode(HEXFileManager hex) throws Exception {
+        for (DataValue dataValue : dataValues) {
+            dataValue.pass4(hex);
         }
     }
+
 }

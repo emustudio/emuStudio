@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2015 Peter Jakubčo
+ * Copyright (C) 2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,42 +16,24 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.zilogZ80.assembler.tree;
+package net.sf.emustudio.zilogZ80.assembler.exceptions;
 
-import java.util.Objects;
-
-public class Label {
-    private final String name;
+public class CompilerException extends Exception {
     private final int line;
     private final int column;
 
-    private Integer address;
+    public CompilerException(int column, int line, String message) {
+        super("[" + line + "," + column + "] " + message);
 
-    public Label(String name, int line, int column) {
-        this.name = Objects.requireNonNull(name);
-        this.address = null;
-
-        this.line = line;
         this.column = column;
-    }
-
-    public void setAddress(Integer address) {
-        this.address = address;
-    }
-
-    public Integer getAddress() {
-        return this.address;
-    }
-
-    public int getLine() {
-        return line;
+        this.line = line;
     }
 
     public int getColumn() {
         return column;
     }
 
-    public String getName() {
-        return name;
+    public int getLine() {
+        return line;
     }
 }

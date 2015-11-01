@@ -1,9 +1,5 @@
 /*
- * DataDS.java
- *
- * Created on Streda, 2008, august 13, 11:47
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,13 +19,15 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.AmbiguousException;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.NeedMorePassException;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.NegativeValueException;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.ValueTooBigException;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
-import net.sf.emustudio.zilogZ80.assembler.impl.NeedMorePassException;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.DataValue;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 
 public class DataDS extends DataValue {
-
     private Expression expression = null;
 
     public DataDS(Expression expr, int line, int column) {
@@ -52,23 +50,18 @@ public class DataDS extends DataValue {
             int val = expression.eval(env, addr_start);
             return addr_start + val;
         } catch (NeedMorePassException e) {
-            throw new Exception("[" + line + "," + column
-                    + "] Error: DS expression can't be ambiguous");
+            throw new AmbiguousException(line, column, "DS expression");
         }
     }
 
     @Override
     public void pass4(HEXFileManager hex) throws Exception {
         String str = "";
-        if (!expression.is8Bit()) {
-            throw new Exception("[" + line + "," + column + "] Error:"
-                    + " value too large");
+        if (expression.getValue() > 0xFF) {
+            throw new ValueTooBigException(line, column, expression.getValue(), 0xFF);
+        } else if (expression.getValue() < 0) {
+            throw new NegativeValueException(line, column, expression.getValue());
         }
-        if (expression.getValue() < 0) {
-            throw new Exception("[" + line + "," + column + "] Error:"
-                    + " value can't be negative");
-        }
-
         for (int i = 0; i < expression.getValue(); i++) {
             str += "00";
         }

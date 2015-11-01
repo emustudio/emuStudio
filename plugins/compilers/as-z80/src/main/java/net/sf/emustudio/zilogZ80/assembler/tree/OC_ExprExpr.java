@@ -1,9 +1,5 @@
 /*
- * OC_ExprExpr.java
- *
- * Created on 18.8.2008, 9:54:33
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,6 +19,8 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.CompilerException;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.ValueTooBigException;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Instruction;
@@ -41,8 +39,7 @@ public class OC_ExprExpr extends Instruction {
     private boolean bitInstr;
     private int old_opcode;
 
-    public OC_ExprExpr(int opcode, Expression e1, Expression e2,
-            boolean bitInstr, int line, int column) {
+    public OC_ExprExpr(int opcode, Expression e1, Expression e2, boolean bitInstr, int line, int column) {
         super(opcode, line, column);
         this.e1 = e1;
         this.e2 = e2;
@@ -62,18 +59,15 @@ public class OC_ExprExpr extends Instruction {
         int val1 = e1.getValue();
         int val2 = e2.getValue();
         if (Expression.getSize(val1) > 1) {
-            throw new Exception("[" + line + "," + column + "] "
-                    + "Error: value(1) too large");
+            throw new ValueTooBigException(line, column, val1, 0xFF);
         }
         if (Expression.getSize(val2) > 1) {
-            throw new Exception("[" + line + "," + column + "] "
-                    + "Error: value(2) too large");
+            throw new ValueTooBigException(line, column, val2, 0xFF);
         }
         opcode = old_opcode;
         if (bitInstr) {
             if ((val1 > 7) || (val1 < 0)) {
-                throw new Exception("[" + line + "," + column + "] "
-                        + "Error: value(1) can be only in range 0-7");
+                throw new CompilerException(line, column, "Error: value(1) can be only in range 0-7");
             }
             opcode += (val2 << 8) + (8 * val1);
         } else {
@@ -83,7 +77,7 @@ public class OC_ExprExpr extends Instruction {
     }
 
     @Override
-    public void pass4(HEXFileManager hex) throws Exception {
+    public void generateCode(HEXFileManager hex) throws Exception {
         String s;
         if (getSize() == 1) {
             s = "%1$02X";

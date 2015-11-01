@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2014 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  *
  * KISS, YAGNI, DRY
  *
@@ -20,18 +20,21 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
-import java.util.ArrayList;
-import java.util.List;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.InvalidMacroParamsCountException;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.UnknownMacroParametersException;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Pseudo;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PseudoMACRO extends Pseudo {
     private final List<String> params; // macro parameters
     private List<Expression> call_params; // concrete parameters, they can change
     private final Program subprogram;
     private final String mnemo;
-    // for pass4
+    // for generateCode
     private Namespace newEnv;
 
     public PseudoMACRO(String name, ArrayList<String> params, Program s, int line,
@@ -82,23 +85,21 @@ public class PseudoMACRO extends Pseudo {
         }
         // check of call_params
         if (call_params == null) {
-            throw new Exception("[" + line + "," + column
-                    + "] Error: Unknown macro parameters");
+            throw new UnknownMacroParametersException(line, column, mnemo);
         }
         if (call_params.size() != params.size()) {
-            throw new Exception("[" + line + "," + column
-                    + "] Error: Incorrect macro paramers count");
+            throw new InvalidMacroParamsCountException(line, column, mnemo, params.size(), call_params.size());
         }
         // create/rewrite symbols => parameters as equ pseudo instructions
         for (int i = 0; i < params.size(); i++) {
-            newEnv.addEquDef(new PseudoEQU(params.get(i),
+            newEnv.addConstant(new PseudoEQU(params.get(i),
                     call_params.get(i), line, column));
         }
         return subprogram.pass2(newEnv, addr_start);
     }
 
     @Override
-    public void pass4(HEXFileManager hex) throws Exception {
+    public void generateCode(HEXFileManager hex) throws Exception {
         subprogram.pass4(hex, newEnv);
     }
 }

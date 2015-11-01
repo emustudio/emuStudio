@@ -1,9 +1,5 @@
 /*
- * PseudoORG.java
- *
- * Created on Sobota, 2007, september 29, 10:32
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,18 +19,20 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.AmbiguousException;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.NeedMorePassException;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
-import net.sf.emustudio.zilogZ80.assembler.impl.NeedMorePassException;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Pseudo;
 
-public class PseudoORG extends Pseudo {
+import java.util.Objects;
 
+public class PseudoORG extends Pseudo {
     private Expression expr;
 
     public PseudoORG(Expression expr, int line, int column) {
         super(line, column);
-        this.expr = expr;
+        this.expr = Objects.requireNonNull(expr);
     }
 
     @Override
@@ -55,18 +53,15 @@ public class PseudoORG extends Pseudo {
     // label address cant be evaluated
     @Override
     public int pass2(Namespace parentEnv, int addr_start) throws Exception {
-        int val = addr_start;
         try {
-            val = expr.eval(parentEnv, addr_start);
+            return expr.eval(parentEnv, addr_start);
         } catch (NeedMorePassException e) {
-            throw new Exception("[" + line + "," + column
-                    + "] Error: ORG expression can't be ambiguous");
+            throw new AmbiguousException(line, column, "ORG expression");
         }
-        return val;
     }
 
     @Override
-    public void pass4(HEXFileManager hex) throws Exception {
+    public void generateCode(HEXFileManager hex) throws Exception {
         hex.setNextAddress(expr.getValue());
     }
 }

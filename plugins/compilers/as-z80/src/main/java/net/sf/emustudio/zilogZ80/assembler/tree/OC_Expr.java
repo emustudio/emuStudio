@@ -19,6 +19,8 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.CompilerException;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.ValueTooBigException;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Instruction;
@@ -138,9 +140,8 @@ public class OC_Expr extends Instruction {
         expr.eval(parentEnv, addr_start);
         int val = expr.getValue();
 
-        if (oneByte && (Expression.getSize(val) > 1)) {
-            throw new Exception("[" + line + "," + column
-                    + "] Error: value too large");
+        if (oneByte && (val & 0xFFF) > 0xFF) {
+            throw new ValueTooBigException(line, column, val, 0xFF);
         }
         opcode = old_opcode;
         switch (opcode) {
@@ -151,8 +152,7 @@ public class OC_Expr extends Instruction {
             case RES:
             case SET:
                 if ((val > 7) || (val < 0)) {
-                    throw new Exception("[" + line + "," + column + "]"
-                            + " Error: value can be only in range 0-7");
+                    throw new CompilerException(line, column, "Error: value can be only in range 0-7");
                 }
                 opcode += (8 * val);
                 break;
@@ -168,8 +168,7 @@ public class OC_Expr extends Instruction {
                         opcode += 0x5E;
                         break;
                     default:
-                        throw new Exception("[" + line + "," + column + "]"
-                                + " Error: value can be only 0,1 or 2");
+                        throw new CompilerException(line, column, "Error: value can be only 0,1 or 2");
                 }
                 break;
             case RL_IIX_NN:
@@ -216,9 +215,7 @@ public class OC_Expr extends Instruction {
                         opcode = 0xFF;
                         break;
                     default:
-                        throw new Exception("[" + line + "," + column + "]"
-                                + " Error: value can be only 0,8h,10h,18h,20h,"
-                                + "28h,30h or 38h");
+                        throw new CompilerException(line, column, " Error: value can be only 0,8h,10h,18h,20h,28h,30h or 38h");
                 }
                 break;
             case JR:
@@ -235,7 +232,7 @@ public class OC_Expr extends Instruction {
     }
 
     @Override
-    public void pass4(HEXFileManager hex) throws Exception {
+    public void generateCode(HEXFileManager hex) throws Exception {
         String s;
         if (getSize() == 1) {
             s = "%1$02X";

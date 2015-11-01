@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2014 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  *
  * KISS, YAGNI, DRY
  *
@@ -20,10 +20,11 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.NeedMorePassException;
+import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
+
 import java.util.ArrayList;
 import java.util.List;
-import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
-import net.sf.emustudio.zilogZ80.assembler.impl.NeedMorePassException;
 
 public class Program {
     private final List<Row> list = new ArrayList<>();
@@ -96,12 +97,12 @@ public class Program {
         // only labels and macros have right to be all added to symbol table at once
         for (Row row : list) {
             if (row.label != null) {
-                if (namespace.addLabelDef(row.label) == false) {
+                if (namespace.addLabel(row.label) == false) {
                     throw new Exception("Error: Label already defined: " + row.label.getName());
                 }
             }
             if ((row.statement != null) && (row.statement instanceof PseudoMACRO)) {
-                if (namespace.addMacroDef((PseudoMACRO) row.statement) == false) {
+                if (namespace.addMacro((PseudoMACRO) row.statement) == false) {
                     throw new Exception("Error: Macro already defined: "
                             + ((PseudoMACRO) row.statement).getName());
                 }

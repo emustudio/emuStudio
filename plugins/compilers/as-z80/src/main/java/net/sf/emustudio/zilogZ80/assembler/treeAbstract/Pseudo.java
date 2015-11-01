@@ -1,9 +1,5 @@
 /*
- * Pseudo.java
- *
- * Created on Štvrtok, 2008, august 14, 9:03
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify

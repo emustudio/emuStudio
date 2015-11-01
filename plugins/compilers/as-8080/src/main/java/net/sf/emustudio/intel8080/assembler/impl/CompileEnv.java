@@ -100,11 +100,11 @@ public class CompileEnv {
         return constants.get(name);
     }
 
-    public boolean setVariable(SetPseudoNode s) {
-        if (identifierExists(s.getName()) && !variables.containsKey(s.getName())) {
+    public boolean setVariable(SetPseudoNode variable) {
+        if (identifierExists(variable.getName()) && !variables.containsKey(variable.getName())) {
             return false;
         }
-        variables.put(s.getName(), s);
+        variables.put(variable.getName(), variable);
         return true;
     }
 

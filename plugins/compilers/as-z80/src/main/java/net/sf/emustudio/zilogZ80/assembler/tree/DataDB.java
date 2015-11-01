@@ -1,9 +1,5 @@
 /*
- * DBData.java
- *
- * Created on Streda, 2008, august 13, 11:46
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
+ * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,22 +19,18 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.ValueTooBigException;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.DataValue;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Instruction;
 
-/**
- *
- * @author vbmacher
- */
 public class DataDB extends DataValue {
 
     private Expression expression = null;
     private String literalString = null;
     private Instruction opcode = null;
 
-    /** Creates a new instance of DBData */
     public DataDB(Expression expression, int line, int column) {
         super(line, column);
         this.expression = expression;
@@ -93,16 +85,17 @@ public class DataDB extends DataValue {
     @Override
     public void pass4(HEXFileManager hex) throws Exception {
         if (expression != null) {
-            String s = expression.encodeValue(1);
-            if (s.length() > 2) {
-                throw new Exception("[" + line + "," + column
-                        + "] Error: value too large");
+            if (expression.getValue() > 0xFF) {
+                throw new ValueTooBigException(line, column, expression.getValue(), 0xFF);
             }
-            hex.putCode(s);
+            if (expression.getValue() < -128) {
+                throw new ValueTooBigException(line, column, expression.getValue(), -128);
+            }
+            hex.putCode(expression.encodeValue(1));
         } else if (literalString != null) {
             hex.putCode(this.encodeValue(literalString));
         } else if (opcode != null) {
-            opcode.pass4(hex);
+            opcode.generateCode(hex);
         }
     }
 }

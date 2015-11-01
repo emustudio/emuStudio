@@ -99,7 +99,7 @@ public class CompilerImpl extends AbstractCompiler {
             Namespace env = new Namespace(inputFileName);
             stat.pass1(env); // create symbol table
             stat.pass2(0); // try to evaluate all expressions + compute relative addresses
-            while (stat.pass3(env) == true) {
+            while (stat.pass3(env)) {
                 // don't worry about deadlock
             }
             if (env.getPassNeedCount() != 0) {
@@ -133,6 +133,7 @@ public class CompilerImpl extends AbstractCompiler {
             return true;
         } catch (Exception e) {
             notifyError("Compilation error: " + e.getMessage());
+            notifyCompileFinish(1);
             return false;
         }
     }
@@ -156,7 +157,7 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public void showSettings() {
-        // TODO Auto-generated method stub
+
     }
 
     @Override

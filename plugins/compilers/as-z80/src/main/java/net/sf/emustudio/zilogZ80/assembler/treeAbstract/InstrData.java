@@ -1,9 +1,5 @@
 /*
- * InstrData.java
- *
- * Created on Piatok, 2007, september 21, 11:09
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify

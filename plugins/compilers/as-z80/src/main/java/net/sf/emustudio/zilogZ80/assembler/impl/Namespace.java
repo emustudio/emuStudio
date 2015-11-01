@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2014 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  *
  * KISS, YAGNI, DRY
  *
@@ -19,32 +19,33 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.impl;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import net.sf.emustudio.zilogZ80.assembler.tree.Label;
 import net.sf.emustudio.zilogZ80.assembler.tree.PseudoEQU;
 import net.sf.emustudio.zilogZ80.assembler.tree.PseudoMACRO;
 import net.sf.emustudio.zilogZ80.assembler.tree.PseudoVAR;
 import net.sf.emustudio.zilogZ80.assembler.tree.Row;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 /**
  * Namespace is used in compile time.
  *
  * It is a compile environment. It stores needed values for all compiler passes.
- * sets, macros and equs are pseudoinstructions that arent added to symbol table
- * in pass1. This means that if eg. equ wasnt defined before first use error
+ * sets, macros and equs are pseudo-instructions that aren't added to symbol table
+ * in pass1. This means that if eg. equ wasn't defined before first use error
  * comes.
  *
  */
 public class Namespace {
-    private final Map<String, Label> defLabels = new HashMap<>();
-    private final Map<String, PseudoMACRO> defMacros = new HashMap<>();
-    private final Map<String, PseudoEQU> defEqus = new HashMap<>();
-    private final Map<String, PseudoVAR> defVars = new HashMap<>();
+    private final Map<String, Label> labels = new HashMap<>();
+    private final Map<String, PseudoMACRO> macros = new HashMap<>();
+    private final Map<String, PseudoEQU> constants = new HashMap<>();
+    private final Map<String, PseudoVAR> variables = new HashMap<>();
     private final List<Row> passNeed = new ArrayList<>();
     private final File inputFile;
 
@@ -56,99 +57,82 @@ public class Namespace {
         return inputFile;
     }
 
-    // check if id is already defined (as whatever)
-    private boolean idExists(String name) {
-        if (defLabels.containsKey(name)) {
-            return true;
-        }
-        if (defMacros.containsKey(name)) {
-            return true;
-        }
-        if (defEqus.containsKey(name)) {
-            return true;
-        }
-        return defVars.containsKey(name);
+    private boolean identifierExists(String name) {
+        Objects.requireNonNull(name);
+
+        return labels.containsKey(name)
+                || macros.containsKey(name)
+                || constants.containsKey(name)
+                || variables.containsKey(name);
     }
 
-    public boolean addLabelDef(Label l) {
-        String n = l.getName();
-        if (idExists(n) == true) {
+    private <T> boolean addIdentifier(Map<String, T> identifiers, T identifier, String name) {
+        if (identifiers.get(name) == identifier) {
+            return true;
+        } else if (identifierExists(name)) {
             return false;
-        } else {
-            defLabels.put(n, l);
         }
+        identifiers.put(name, identifier);
         return true;
+    }
+
+    public boolean addLabel(Label label) {
+        return addIdentifier(labels, label, label.getName());
     }
 
     public Label getLabel(String name) {
-        return defLabels.get(name);
+        return labels.get(name);
     }
 
-    public boolean addMacroDef(PseudoMACRO m) {
-        String n = m.getName();
-        if (idExists(n) == true) {
-            return false;
-        } else {
-            defMacros.put(n, m);
-        }
-        return true;
+    public boolean addMacro(PseudoMACRO macro) {
+        return addIdentifier(macros, macro, macro.getName());
     }
 
-    // search for macro definition in symbol table
     public PseudoMACRO getMacro(String name) {
-        return defMacros.get(name);
+        return macros.get(name);
     }
 
-    public boolean addEquDef(PseudoEQU e) {
-        String n = e.getName();
-        if (idExists(n) == true) {
+    public boolean addConstant(PseudoEQU constant) {
+        return addIdentifier(constants, constant, constant.getName());
+    }
+
+    public PseudoEQU getConstant(String name) {
+        return constants.get(name);
+    }
+
+    public boolean setVariable(PseudoVAR variable) {
+        if (identifierExists(variable.getName()) && !variables.containsKey(variable.getName())) {
             return false;
-        } else {
-            defEqus.put(n, e);
         }
+        variables.put(variable.getName(), variable);
         return true;
     }
 
-    public PseudoEQU getEqu(String name) {
-        return defEqus.get(name);
-    }
-
-    // prida alebo prepise existujucu definiciu
-    // pridava sa samozrejme az v pass2
-    public boolean addVarDef(PseudoVAR s) {
-        defVars.put(s.getName(), s);
-        return true;
-    }
-
-    public PseudoVAR getVar(String name) {
-        return defVars.get(name);
+    public PseudoVAR getVariable(String name) {
+        return variables.get(name);
     }
 
     // odstrani vsetky existujuce definicie s danym nazvom
     // vyuziva sa pri bloku macro
     public void removeAllDefinitions(String name) {
-        defLabels.remove(name);
-        defMacros.remove(name);
-        defEqus.remove(name);
-        defVars.remove(name);
+        labels.remove(name);
+        macros.remove(name);
+        constants.remove(name);
+        variables.remove(name);
     }
 
     public void copyTo(Namespace env) {
-        Iterator<?> i = defLabels.values().iterator();
-        while (i.hasNext()) {
-            env.addLabelDef((Label) i.next());
+        for (Label label : labels.values()) {
+            env.addLabel(label);
         }
-        i = defMacros.values().iterator();
-        while (i.hasNext()) {
-            env.addMacroDef((PseudoMACRO) i.next());
+        for (PseudoMACRO macro : macros.values()) {
+            env.addMacro(macro);
         }
-        i = defEqus.values().iterator();
-        while (i.hasNext()) {
-            env.addEquDef((PseudoEQU) i.next());
+        for (PseudoEQU equ : constants.values()) {
+            env.addConstant(equ);
         }
-        i = defVars.values().iterator();
-        while (i.hasNext()) {
-            env.addVarDef((PseudoVAR) i.next());
+        for (PseudoVAR set : variables.values()) {
+            env.setVariable(set);
         }
     }
 
@@ -161,7 +145,7 @@ public class Namespace {
     }
 
     public Row getPassNeed(int index) {
-        return (Row) passNeed.get(index);
+        return passNeed.get(index);
     }
 
     public void removePassNeed(Row n) {
@@ -172,7 +156,4 @@ public class Namespace {
         passNeed.remove(index);
     }
 
-    public void clearPassNeeds() {
-        passNeed.clear();
-    }
 }

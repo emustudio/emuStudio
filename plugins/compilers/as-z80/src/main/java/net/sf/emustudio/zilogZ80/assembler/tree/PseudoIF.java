@@ -1,9 +1,5 @@
 /*
- * PseudoIF.java
- *
- * Created on Sobota, 2007, september 29, 13:39
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
+ * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,8 +19,9 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.AmbiguousException;
+import net.sf.emustudio.zilogZ80.assembler.exceptions.NeedMorePassException;
 import net.sf.emustudio.zilogZ80.assembler.impl.Namespace;
-import net.sf.emustudio.zilogZ80.assembler.impl.NeedMorePassException;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Pseudo;
 
@@ -32,7 +29,7 @@ public class PseudoIF extends Pseudo {
 
     private Expression expr;
     private Program subprogram;
-    private boolean condTrue; // => for pass4; if this is true,
+    private boolean condTrue; // => for generateCode; if this is true,
     // then generate code, otherwise not.
 
     public PseudoIF(Expression expr, Program stat, int line, int column) {
@@ -67,13 +64,12 @@ public class PseudoIF extends Pseudo {
                 return addr_start;
             }
         } catch (NeedMorePassException e) {
-            throw new Exception("[" + line + "," + column
-                    + "] Error: IF expression can't be ambiguous");
+            throw new AmbiguousException(line, column, "IF expression");
         }
     }
 
     @Override
-    public void pass4(HEXFileManager hex) throws Exception {
+    public void generateCode(HEXFileManager hex) throws Exception {
         if (condTrue) {
             subprogram.pass4(hex);
         }
