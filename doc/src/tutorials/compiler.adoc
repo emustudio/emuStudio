@@ -1,0 +1,12 @@
+= How to write a compiler for emuStudio
+(c) Copyright 2007-2015, Peter Jakubčo
+Version 0.39
+:toc:
+:numbered:
+
+This guide shall help you, the developer, to write your own virtual computer for emuStudio. From now on, every time
+a 'virtual computer' will be mentioned, it should be always understood as a computer emulator written for emuStudio, if
+it won't be said otherwise.
+
+== What is emuStudio
+QQWE
