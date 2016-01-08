@@ -105,6 +105,33 @@ public class PseudoNodesTest {
     }
 
     @Test
+    public void testORGwithJumpBackwards() throws Exception {
+        compile(
+                "sample:\n"
+                        + "org 2\n"
+                        + "jmp sample"
+        );
+
+        assertProgram(
+                0, 0, 0xC3, 0, 0
+        );
+    }
+
+    @Test
+    public void testORGwithJumpForwards() throws Exception {
+        compile(
+                "jmp sample\n"
+                        + "org 5\n"
+                        + "sample:\n"
+                + "mov a, b"
+        );
+
+        assertProgram(
+                0xC3, 0x05, 0, 0, 0, 0x78
+        );
+    }
+
+    @Test
     public void testORGdoesNotBreakPreviousMemoryContent() throws Exception {
         memoryStub.write(0, (short)0x10);
         memoryStub.write(1, (short) 0x11);
@@ -303,4 +330,155 @@ public class PseudoNodesTest {
         );
         assertFalse(errorCode == 0);
     }
+
+    @Test
+    public void testIncludeAndForwardCall() throws Exception {
+        File includeFile = new File(getClass().getResource("/sample.asm").toURI());
+        compile(
+                "call sample\n"
+                        + "include '" + includeFile.getAbsolutePath() + "'\n"
+        );
+
+        assertProgram(
+                0xCD, 03, 00, 0x3E, 0, 0xC9
+        );
+    }
+
+    @Test
+    public void testDoubleIncludeAndForwardCall() throws Exception {
+        File first = new File(getClass().getResource("/sample.asm").toURI());
+        File second = new File(getClass().getResource("/sample2.asm").toURI());
+        compile(
+                "call sample2\n"
+                        + "include '" + first.getAbsolutePath() + "'\n"
+                        + "include '" + second.getAbsolutePath() + "'\n"
+        );
+
+        assertProgram(
+                0xCD, 06, 00, 0x3E, 0, 0xC9, 0x3E, 0 ,0xC9
+        );
+    }
+
+    @Test
+    public void testIncludeAndBackwardCall() throws Exception {
+        File includeFile = new File(getClass().getResource("/sample.asm").toURI());
+        compile(
+                "include '" + includeFile.getAbsolutePath() + "'\n"
+                        + "call sample\n"
+        );
+
+        assertProgram(
+                0x3E, 0, 0xC9, 0xCD, 0, 0
+        );
+    }
+
+    @Test
+    public void testDoubleIncludeAndBackwardCall() throws Exception {
+        File first = new File(getClass().getResource("/sample.asm").toURI());
+        File second = new File(getClass().getResource("/sample2.asm").toURI());
+        compile(
+                "include '" + first.getAbsolutePath() + "'\n"
+                        + "include '" + second.getAbsolutePath() + "'\n"
+                        + "call sample\n"
+        );
+
+        assertProgram(
+                0x3E, 0, 0xC9, 0x3E, 0, 0xC9, 0xCD, 0, 0
+        );
+    }
+
+    @Test
+    public void testIncludeAndJMPafter() throws Exception {
+        File includeFile = new File(getClass().getResource("/sample.asm").toURI());
+        compile(
+                "jmp next\n"
+                + "include '" + includeFile.getAbsolutePath() + "'\n"
+                + "next:\n"
+                + "mov a, b\n"
+        );
+
+        assertProgram(
+                0xC3, 0x06, 0, 0x3E, 0, 0xC9, 0x78
+        );
+    }
+
+    @Test
+    public void testDoubleIncludeAndJMPafter() throws Exception {
+        File first = new File(getClass().getResource("/sample.asm").toURI());
+        File second = new File(getClass().getResource("/sample2.asm").toURI());
+        compile(
+                "jmp next\n"
+                        + "include '" + first.getAbsolutePath() + "'\n"
+                        + "include '" + second.getAbsolutePath() + "'\n"
+                        + "next:\n"
+                        + "mov a, b\n"
+        );
+
+        assertProgram(
+                0xC3, 0x09, 0, 0x3E, 0, 0xC9, 0x3E, 0, 0xC9, 0x78
+        );
+    }
+
+    @Test
+    public void testORGwithInclude() throws Exception {
+        File includeFile = new File(getClass().getResource("/sample.asm").toURI());
+        compile(
+                "org 3\n"
+                        + "call sample\n"
+                        + "include '" + includeFile.getAbsolutePath() + "'\n"
+        );
+
+        assertProgram(
+                0, 0, 0, 0xCD, 06, 00, 0x3E, 0, 0xC9
+        );
+    }
+
+    @Test
+    public void testORGwithDoubleInclude() throws Exception {
+        File first = new File(getClass().getResource("/sample.asm").toURI());
+        File second = new File(getClass().getResource("/sample2.asm").toURI());
+        compile(
+                "org 3\n"
+                        + "call sample\n"
+                        + "include '" + second.getAbsolutePath() + "'\n"
+                        + "include '" + first.getAbsolutePath() + "'\n"
+        );
+
+        assertProgram(
+                0, 0, 0, 0xCD, 0x09, 0, 0x3E, 0, 0xC9, 0x3E, 0, 0xC9
+        );
+    }
+
+    @Test
+    public void testORGwithDoubleIncludeAndJMPafter() throws Exception {
+        File first = new File(getClass().getResource("/sample.asm").toURI());
+        File second = new File(getClass().getResource("/sample2.asm").toURI());
+        compile(
+                "org 3\n"
+                        + "jmp next\n"
+                        + "include '" + first.getAbsolutePath() + "'\n"
+                        + "include '" + second.getAbsolutePath() + "'\n"
+                        + "next:\n"
+                        + "mov a, b\n"
+        );
+
+        assertProgram(
+                0, 0, 0, 0xC3, 0x0C, 0, 0x3E, 0, 0xC9, 0x3E, 0, 0xC9, 0x78
+        );
+    }
+
+    @Test
+    public void testORGwithDB() throws Exception {
+        compile(
+                "org 3\n"
+                + "lxi h, text\n"
+                + "text:\n"
+                + "db 'ahoj'"
+        );
+
+        assertProgram(
+                0, 0, 0, 0x21, 0x06, 0, 'a', 'h', 'o', 'j'
+        );
+    }
+
 }

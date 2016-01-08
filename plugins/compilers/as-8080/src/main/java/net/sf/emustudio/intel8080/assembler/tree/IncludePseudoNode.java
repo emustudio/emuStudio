@@ -54,9 +54,8 @@ public class IncludePseudoNode extends PseudoNode {
         if (tmpFile.isAbsolute()) {
             return tmpFile;
         } else {
-            return new File(namespace.getInputFile().getParent()
-                    + File.separator + tmpFileName);
-        }        
+            return new File(namespace.getInputFile().getParent() + File.separator + tmpFileName);
+        }
     }
 
     /**

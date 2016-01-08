@@ -70,6 +70,7 @@ public class OC_Expr extends OpCodeNode {
         OPCODES_BASE_198.put("aci", 8);
         OPCODES_BASE_198.put("sui", 16);
         OPCODES_BASE_198.put("sbi", 24);
+        OPCODES_BASE_198.put("ani", 32);
         OPCODES_BASE_198.put("xri", 40);
         OPCODES_BASE_198.put("ori", 48);
         OPCODES_BASE_198.put("cpi", 0x38);
@@ -101,6 +102,7 @@ public class OC_Expr extends OpCodeNode {
         OPCODES_BASE_196.put("cp", 48);
 
     }
+
     private final ExprNode expr;
 
     public OC_Expr(String mnemo, ExprNode expr, int line, int column) {

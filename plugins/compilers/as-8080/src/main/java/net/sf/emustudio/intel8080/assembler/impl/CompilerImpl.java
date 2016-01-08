@@ -47,7 +47,8 @@ public class CompilerImpl extends AbstractCompiler {
     private final LexerImpl lexer;
     private final ParserImpl parser;
     private final SourceFileExtension[] suffixes = new SourceFileExtension[] {
-            new SourceFileExtension("asm", "8080 assembler source")
+            new SourceFileExtension("asm", "Assembler source file"),
+            new SourceFileExtension("inc", "Include file")
     };
     private final ContextPool contextPool;
 
@@ -120,7 +121,7 @@ public class CompilerImpl extends AbstractCompiler {
             HEXFileManager hex = compileToHex(inputFileName);
 
             hex.generateFile(outputFileName);
-            notifyInfo("Compile was sucessfull. Output: " + outputFileName);
+            notifyInfo("Compile was successful. Output: " + outputFileName);
 
             MemoryContext memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
             if (memory != null) {
