@@ -1,7 +1,5 @@
 /*
- * MemoryWindow.java
- *
- * Copyright (C) 2009-2013 Peter Jakubčo
+ * Copyright (C) 2009-2016 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,6 +23,8 @@ import emulib.runtime.StaticDialogs;
 import emulib.runtime.UniversalFileFilter;
 import net.sf.emustudio.ram.memory.RAMInstruction;
 import net.sf.emustudio.ram.memory.impl.RAMMemoryContextImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
@@ -51,6 +51,8 @@ import java.util.List;
 import java.util.Map;
 
 public class MemoryWindow extends JFrame {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MemoryWindow.class);
+
     private RAMMemoryContextImpl memory;
     private RAMTableModel ram;
 
@@ -77,8 +79,8 @@ public class MemoryWindow extends JFrame {
     // TODO: bug: S(n) computation is not always correct
     private void computeComplexity() {
         Map<String, Integer> labels;
-        Map<Integer, Integer> levels = new HashMap<Integer, Integer>();
-        List<Integer> registers = new ArrayList<Integer>();
+        Map<Integer, Integer> levels = new HashMap<>();
+        List<Integer> registers = new ArrayList<>();
         int memcompl = 0;
 
         labels = memory.getSwitchedLabels();
@@ -90,7 +92,7 @@ public class MemoryWindow extends JFrame {
 
         // bottom-up cycles search
         for (i = j - 1; i >= 0; i--) {
-            RAMInstruction in = (RAMInstruction) memory.read(i);
+            RAMInstruction in = memory.read(i);
             switch (in.getCode()) {
                 case RAMInstruction.JMP:
                 case RAMInstruction.JGTZ:
@@ -175,7 +177,7 @@ public class MemoryWindow extends JFrame {
         j = memory.getSize();
         for (i = 0; i < j; i++) {
             count++;
-            switch (((RAMInstruction) memory.read(i)).getCode()) {
+            switch ((memory.read(i)).getCode()) {
                 case RAMInstruction.LOAD:
                     load++;
                     break;
@@ -236,8 +238,8 @@ public class MemoryWindow extends JFrame {
         UniversalFileFilter f1 = new UniversalFileFilter();
         UniversalFileFilter f2 = new UniversalFileFilter();
 
-        f1.addExtension("ram");
-        f1.setDescription("RAM program file (*.ram)");
+        f1.addExtension("ro");
+        f1.setDescription("RAM compiled file (*.ro)");
         f2.addExtension("*");
         f2.setDescription("All files (*.*)");
 
@@ -253,31 +255,32 @@ public class MemoryWindow extends JFrame {
         f.setVisible(true);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File fileSource = f.getSelectedFile();
-            if (fileSource.canRead() == true) {
+            try {
                 memory.deserialize(fileSource.getAbsolutePath());
                 tableProgram.revalidate();
                 tableProgram.repaint();
                 refillTable();
-            } else {
-                StaticDialogs.showErrorMessage("File " + fileSource.getPath() + " can't be read.");
+            } catch (Exception e) {
+                StaticDialogs.showErrorMessage("File " + fileSource.getPath() + " can't be read: " + e.getMessage());
+                LOGGER.error("Could not open file {}", fileSource, e);
             }
         }
     }
 
     private void initComponents() {
-        toolMemory = new JToolBar();
-        btnOpen = new JButton();
-        btnClear = new JButton();
-        scrollProgram = new JScrollPane();
+        JToolBar toolMemory = new JToolBar();
+        JButton btnOpen = new JButton();
+        JButton btnClear = new JButton();
+        JScrollPane scrollProgram = new JScrollPane();
         tableProgram = new JTable();
-        lblTapeContent = new JLabel("Tape content:");
-        panelInfo = new JPanel();
-        panelComplexity = new JPanel();
-        lblTimeLBL = new JLabel("Time T(n):");
+        JLabel lblTapeContent = new JLabel("Tape content:");
+        JPanel panelInfo = new JPanel();
+        JPanel panelComplexity = new JPanel();
+        JLabel lblTimeLBL = new JLabel("Time T(n):");
         JLabel lblMemoryLBL = new JLabel("Memory S(n):");
         lblTime = new JLabel("0");
         lblMemory = new JLabel("0");
-        panelInstr = new JPanel();
+        JPanel panelInstr = new JPanel();
         JLabel lblCountLBL = new JLabel("Instructions count:");
         lblCount = new JLabel("0");
         JLabel lblAddLBL = new JLabel("ADD:");
@@ -397,20 +400,14 @@ public class MemoryWindow extends JFrame {
         pack();
     }
 
-    private JButton btnOpen;
-    private JButton btnClear;
     private JLabel lblHALT;
     private JLabel lblJZ;
     private JLabel lblJGTZ;
     private JLabel lblJMP;
     private JLabel lblSTORE;
     private JLabel lblLOAD;
-    private JLabel lblTimeLBL;
     private JLabel lblWRITE;
     private JLabel lblREAD;
-    private JPanel panelComplexity;
-    private JPanel panelInstr;
-    private JScrollPane scrollProgram;
     private JLabel lblADD;
     private JLabel lblCount;
     private JLabel lblDIV;
@@ -418,8 +415,5 @@ public class MemoryWindow extends JFrame {
     private JLabel lblMUL;
     private JLabel lblSUB;
     private JLabel lblMemory;
-    private JLabel lblTapeContent;
     private JTable tableProgram;
-    private JPanel panelInfo;
-    private JToolBar toolMemory;
 }

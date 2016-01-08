@@ -1,7 +1,5 @@
 /*
- * RAMMemoryContextImpl.java
- *
- * Copyright (C) 2009-2013 Peter Jakubčo
+ * Copyright (C) 2009-2016 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -26,6 +24,7 @@ import net.sf.emustudio.ram.memory.RAMMemoryContext;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
@@ -121,7 +120,7 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction> 
         return inputs;
     }
 
-    public boolean deserialize(String filename) {
+    public void deserialize(String filename) throws IOException, ClassNotFoundException {
         try {
             InputStream file = new FileInputStream(filename);
             InputStream buffer = new BufferedInputStream(file);
@@ -131,15 +130,14 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction> 
             inputs.clear();
             memory.clear();
 
-            labels.putAll((Map<Integer, String>)input.readObject());
-            inputs.addAll((List<String>)input.readObject());
-            memory.addAll((List<RAMInstruction>)input.readObject());
+            labels.putAll((Map<Integer, String>) input.readObject());
+            inputs.addAll((List<String>) input.readObject());
+            memory.addAll((List<RAMInstruction>) input.readObject());
 
             input.close();
-        } catch (Exception e) {
-            return false;
+        } finally {
+            notifyMemoryChanged(-1);
         }
-        return true;
     }
 
 

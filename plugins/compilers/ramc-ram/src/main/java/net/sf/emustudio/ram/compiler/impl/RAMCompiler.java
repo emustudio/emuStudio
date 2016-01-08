@@ -52,7 +52,6 @@ public class RAMCompiler extends AbstractCompiler {
     private final LexerImpl lexer;
     private final ParserImpl parser;
     private RAMMemoryContext memory;
-    private RAMInstructionImpl context;
     private final SourceFileExtension[] suffixes = new SourceFileExtension[] {
             new SourceFileExtension("ram", "Random Access Machine source")
     };
@@ -65,7 +64,7 @@ public class RAMCompiler extends AbstractCompiler {
         // lexer has to be reset WITH a reader object before compile
         lexer = new LexerImpl((Reader) null);
         parser = new ParserImpl(lexer);
-        context = new RAMInstructionImpl(0, null);
+        RAMInstructionImpl context = new RAMInstructionImpl(0, null);
         try {
             contextPool.register(pluginID, context, RAMInstruction.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
@@ -119,7 +118,7 @@ public class RAMCompiler extends AbstractCompiler {
             program.pass1(0);
             program.pass2(compiledProgram);
 
-            notifyInfo("Compile was sucessfull.");
+            notifyInfo("Compile was successful.");
             if (memory != null) {
                 compiledProgram.loadIntoMemory(memory);
                 notifyInfo("Compiled file was loaded into operating memory.");

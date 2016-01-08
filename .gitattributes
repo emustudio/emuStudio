@@ -1,0 +1,24 @@
+# This file has been generated using '.gitattributes Generator'.
+# You can generate yours at http://ihopepeace.github.io/gitattributes_generator
+
+* text=auto
+
+# Explicitly declare text files that should be normalized and converted
+# to native line endings on checkout.
+*.java text eol=lf
+*.sh text eol=lf
+*.props text eol=lf
+*.properties text eol=lf
+*.conf text eol=lf
+
+# Declare files that are truly binary and shouldn't be modified.
+*.jpeg binary
+*.jpg binary
+*.png binary
+*.gif binary
+*.ttf binary
+*.jar binary
+*.zip binary
+*.hex binary
+*.ro binary
+

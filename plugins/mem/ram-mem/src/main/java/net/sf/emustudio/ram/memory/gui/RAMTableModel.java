@@ -20,9 +20,10 @@
  */
 package net.sf.emustudio.ram.memory.gui;
 
-import javax.swing.table.AbstractTableModel;
 import net.sf.emustudio.ram.memory.RAMInstruction;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;
+
+import javax.swing.table.AbstractTableModel;
 
 class RAMTableModel extends AbstractTableModel {
     private final RAMMemoryContext memory;
