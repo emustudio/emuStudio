@@ -189,7 +189,7 @@ public class TransferTest extends InstructionsTest {
                 .firstIsMemoryAddressByte(value)
                 .keepCurrentInjectorsAfterRun();
 
-        Generator.forSome16bitUnary(
+        Generator.forSome16bitUnary(3,
                 test.firstIsPair(REG_PAIR_BC).run(0x0A),
                 test.firstIsPair(REG_PAIR_DE).run(0x1A)
         );
@@ -204,7 +204,7 @@ public class TransferTest extends InstructionsTest {
                 .setRegister(REG_A, value)
                 .keepCurrentInjectorsAfterRun();
 
-        Generator.forSome16bitUnary(
+        Generator.forSome16bitUnary(3,
                 test.firstIsPair(REG_PAIR_BC).run(0x02),
                 test.firstIsPair(REG_PAIR_DE).run(0x12)
         );
@@ -218,7 +218,7 @@ public class TransferTest extends InstructionsTest {
                 .verifyRegister(REG_A, context -> value & 0xFF)
                 .firstIsMemoryAddressByte(value);
 
-        Generator.forSome16bitUnary(
+        Generator.forSome16bitUnary(3,
                 test.runWithFirstOperand(0x3A)
         );
     }
@@ -231,7 +231,7 @@ public class TransferTest extends InstructionsTest {
                 .verifyByte(context -> context.first, context -> value & 0xFF)
                 .setRegister(REG_A, value);
 
-        Generator.forSome16bitUnary(
+        Generator.forSome16bitUnary(3,
                 test.runWithFirstOperand(0x32)
         );
     }
@@ -244,7 +244,7 @@ public class TransferTest extends InstructionsTest {
                 .verifyPair(REG_PAIR_HL, context -> value)
                 .firstIsMemoryAddressWord(value);
 
-        Generator.forSome16bitUnary(
+        Generator.forSome16bitUnary(3,
                 test.runWithFirstOperand(0x2A)
         );
     }
@@ -257,7 +257,7 @@ public class TransferTest extends InstructionsTest {
                 .verifyWord(context -> context.first, context -> value)
                 .setPair(REG_PAIR_HL, value);
 
-        Generator.forSome16bitUnary(
+        Generator.forSome16bitUnary(3,
                 test.runWithFirstOperand(0x22)
         );
     }
