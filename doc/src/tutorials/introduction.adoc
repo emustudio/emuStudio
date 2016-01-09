@@ -1,4 +1,4 @@
-= Guide for writing virtual computers
+= Introduction for writing virtual computers
 (c) Copyright 2007-2015, Peter Jakubčo
 Version 0.39
 :toc:
@@ -247,6 +247,57 @@ CAUTION: Standard or "default" plug-ins force to use Maven and you must follow t
 Usually, your plug-ins will not be the standard part of default emuStudio distribution. In that case, you are not forced
 to use Maven or any other technology, except of emuStudio API, contracts and the limits which might exist when involving
 unknown third party dependencies. Also, you can use your own code style if you like.
+
+=== Plug-in API
+
+The basic idea of the development of the plug-in is to implement an API of that specific plug-in. This is actually only
+thing which is required.
+
+Plug-in API is stored in emuLib library (see <<Core technologies>>), so each plug-in must have emuLib as dependency.
+This and following guides will show you some examples of how to implement a plug-in. For deeper details of all available
+API, it is recommended to check the Javadoc.
+
+=== Third-party dependencies
+
+Each plug-in can depend on third-party libraries. It is recommended way how to avoid code duplication and reinventing
+a wheel. If a plug-in depend on some third-party library, it is required to put the class path to the Manifest file
+of the plug-in.
+
+What is not required, however, is to define some default dependencies (listed below). emuStudio uses custom class-loader
+for loading plug-ins, which handles the default dependencies automatically.
+
+[horizontal]
+emuLib:: Plugin API and runtime library
+slf4J:: Facade for logger implementation
+logback:: Logger implementation, successor of log4j
+
+These dependencies should not be present in plug-in manifest files, they will be automatically loaded with emuStudio.
+Please see emuStudio main POM file to determine the library versions.
+
+In order to use other third-party dependencies, they must be mentioned in Manifest. The recommended way is to put the
+dependencies in `/lib` subdirectory, and define relative path in Manifest from the root directory of where the emuStudio
+is installed. For example, here is a Manifest file for RAM compiler plug-in:
+
+[source]
+---
+    Manifest-Version: 1.0
+    Implementation-Title: RAM Compiler
+    Implementation-Version: 0.39-SNAPSHOT
+    Archiver-Version: Plexus Archiver
+    Built-By: vbmacher
+    Specification-Title: RAM Compiler
+    Implementation-Vendor-Id: net.sf.emustudio
+    Class-Path: mem/ram-mem.jar lib/java-cup-runtime-11b.jar
+    Created-By: Apache Maven 3.3.3
+    Build-Jdk: 1.8.0_65
+    Specification-Version: 0.39-SNAPSHOT
+---
+
+The plug-in uses two non-default dependencies: RAM memory plug-in, and java-cup library. The first one is a memory
+plug-in for emuStudio, so it is placed in `mem/` subdirectory, but java-cup library is completely third-party, and
+non-default. The recommended place for storing these kind of libraries is `lib/` subdirectory.
+
+NOTE: Cyclic dependencies are also supported.
 
 === Naming conventions
 
