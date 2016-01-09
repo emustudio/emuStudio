@@ -544,7 +544,7 @@ class Value implements AST {
   public Value(int value) {
     this.value = value;
   }
-  
+
   @Override
   public int evaluate() {
     return value;

@@ -14,7 +14,7 @@ project ["QuickCheck"](https://github.com/pholser/junit-quickcheck), like genera
 
 If you are using Maven, the best would be to include this as test dependency in your CPU plug-in:
 
-```Maven POM
+```
   <dependencies>
     <dependency>
       <groupId>net.sf.emustudio</groupId>
@@ -36,14 +36,13 @@ NOTE: Realize that instructions in CPU always operate either on a state or with 
 Imagine we have 8080 CPU, and we want to test instruction `SUB`. The test might look as follows:
 
 ```Java
-   @Test
+    @Test
     public void testSUB() throws Exception {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(REG_A)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF))
                 .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity())
                 .keepCurrentInjectorsAfterRun();
-
         Generator.forSome8bitBinaryWhichEqual(
                 test.run(0x97)
         );
