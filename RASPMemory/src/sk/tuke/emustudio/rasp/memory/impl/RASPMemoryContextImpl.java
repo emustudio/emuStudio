@@ -21,7 +21,7 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<RASPInstruction
 
     @Override
     public void write(int position, RASPInstruction instruction) {
-         if (position >= memory.size()) {
+        if (position >= memory.size()) {
             memory.add(position, instruction);
             notifyMemoryChanged(memory.size());
             notifyMemorySizeChanged();
@@ -71,20 +71,7 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<RASPInstruction
     }
 
     @Override
-    public void addInputs(List<String> inputs) {
-        if (inputs == null) {
-            return;
-        }
-        this.inputs.addAll(inputs);
-    }
-
-    @Override
-    public List<String> getInputs() {
-        return inputs;
-    }
-    
-    @Override
-     public void destroy() {
+    public void destroy() {
         memory.clear();
     }
 

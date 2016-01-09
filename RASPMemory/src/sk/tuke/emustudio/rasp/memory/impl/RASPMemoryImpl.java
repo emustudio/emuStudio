@@ -18,12 +18,22 @@ import sk.tuke.emustudio.rasp.memory.gui.MemoryWindow;
         description = "RASP memory containing program as well as data",
         copyright = ""
 )
+
+/**
+ * Class representing memory plugin for RASP.
+ */
 public class RASPMemoryImpl extends AbstractMemory {
 
     private final RASPMemoryContextImpl context;
     private final ContextPool contextPool;
     private MemoryWindow gui;
 
+    /**
+     * Constructor.
+     *
+     * @param pluginID ID of the plugin
+     * @param contextPool the contextPool to register this plugin to
+     */
     public RASPMemoryImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
         this.contextPool = Objects.requireNonNull(contextPool);
@@ -38,11 +48,19 @@ public class RASPMemoryImpl extends AbstractMemory {
         }
     }
 
+    /**
+     * Get number of items in the memory.
+     *
+     * @return the number of items in the memory.
+     */
     @Override
     public int getSize() {
         return context.getSize();
     }
 
+    /**
+     * Clears the memory and distroys the GUI windows.
+     */
     @Override
     public void destroy() {
         context.destroy();
@@ -52,6 +70,9 @@ public class RASPMemoryImpl extends AbstractMemory {
         }
     }
 
+    /**
+     * Shows memory window.
+     */
     @Override
     public void showSettings() {
         if (gui == null) {
@@ -60,11 +81,21 @@ public class RASPMemoryImpl extends AbstractMemory {
         gui.setVisible(true);
     }
 
+    /**
+     * This plugin has GUI window implemented, so true is returned.
+     *
+     * @return always true
+     */
     @Override
     public boolean isShowSettingsSupported() {
         return true;
     }
 
+    /**
+     * This method is not yet needed.
+     *
+     * @return empty string
+     */
     @Override
     public String getVersion() {
         return "";
