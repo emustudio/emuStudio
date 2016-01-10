@@ -5,7 +5,7 @@ package sk.tuke.emustudio.rasp.memory;
  *
  * @author miso
  */
-public interface RASPInstruction {
+public interface RASPInstruction extends MemoryItem{
 
     /**
      * Operation code of RASP instruction.
