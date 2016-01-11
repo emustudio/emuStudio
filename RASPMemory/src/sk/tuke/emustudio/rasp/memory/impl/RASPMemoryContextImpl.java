@@ -10,19 +10,12 @@ import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 
 public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> implements RASPMemoryContext {
 
-    private final List<MemoryItem> memory = new ArrayList();
+    private final List<MemoryItem> memory = new ArrayList<>();
     private int programStart;
 
-    private final Map<Integer, String> labels = new HashMap();
+    private final Map<Integer, String> labels = new HashMap<>();
 
     private final Map<String, Integer> switchedLabels = new HashMap<>();
-
-    /**
-     * Default constructor.
-     */
-    public RASPMemoryContextImpl() {
-
-    }
 
     /**
      * Get address of the first instruction of the program.

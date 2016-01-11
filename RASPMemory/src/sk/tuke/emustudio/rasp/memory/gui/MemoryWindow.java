@@ -5,8 +5,12 @@
  */
 package sk.tuke.emustudio.rasp.memory.gui;
 
-import emulib.plugins.Context;
 import emulib.plugins.memory.Memory;
+import sk.tuke.emustudio.rasp.memory.MemoryItem;
+import sk.tuke.emustudio.rasp.memory.NumberMemoryItemImpl;
+import sk.tuke.emustudio.rasp.memory.OperandType;
+import sk.tuke.emustudio.rasp.memory.RASPInstruction;
+import sk.tuke.emustudio.rasp.memory.RASPInstructionImpl;
 import sk.tuke.emustudio.rasp.memory.impl.RASPMemoryContextImpl;
 
 /**
@@ -17,12 +21,15 @@ import sk.tuke.emustudio.rasp.memory.impl.RASPMemoryContextImpl;
 public class MemoryWindow extends javax.swing.JFrame {
 
     private RASPMemoryContextImpl memory;
-    private RASPTableModel tableModel;
+    private final RASPTableModel tableModel;
 
     /**
      * Creates new form MemoryWindow
+     *
+     * @param context the memory context
      */
-    public MemoryWindow(Context context) {
+    public MemoryWindow(RASPMemoryContextImpl context) {
+        this.memory = context;
         initComponents();
         tableModel = new RASPTableModel(memory);
         memoryTable.setModel(tableModel);
@@ -111,31 +118,95 @@ public class MemoryWindow extends javax.swing.JFrame {
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(MemoryWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(MemoryWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(MemoryWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(MemoryWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
+////        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+////         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+////         */
+////        try {
+////            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+////                if ("Nimbus".equals(info.getName())) {
+////                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+////                    break;
+////                }
+////            }
+////        } catch (ClassNotFoundException ex) {
+////            java.util.logging.Logger.getLogger(MemoryWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+////        } catch (InstantiationException ex) {
+////            java.util.logging.Logger.getLogger(MemoryWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+////        } catch (IllegalAccessException ex) {
+////            java.util.logging.Logger.getLogger(MemoryWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+////        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+////            java.util.logging.Logger.getLogger(MemoryWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+////        }
+////        //</editor-fold>
 
-        /* Create and display the form */
+        /**
+         * Testing method to test loading example program to memory, here is the
+         * example program: READ 1 LOAD =1 STORE 2 LOAD 1 SUB =1 JGTZ OK JMP
+         * FINISH OK: LOAD 2 MUL 1 STORE 2 LOAD 1 SUB =1 STORE 1 SUB =1 JGTZ OK
+         * JMP FINISH FINISH: WRITE 2 HALT
+         */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new MemoryWindow(new RASPMemoryContextImpl()).setVisible(true);
+                RASPMemoryContextImpl memory = new RASPMemoryContextImpl();
+
+                memory.setProgramStart(5);
+
+                memory.addLabel(19, "OK");
+                memory.addLabel(37, "FINISH");
+
+                MemoryItem[] memoryItems = new MemoryItem[]{
+                    new RASPInstructionImpl(RASPInstruction.READ, OperandType.REGISTER),
+                    new NumberMemoryItemImpl(1),
+                    new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.CONSTANT),
+                    new NumberMemoryItemImpl(1),
+                    new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
+                    new NumberMemoryItemImpl(2),
+                    new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
+                    new NumberMemoryItemImpl(1),
+                    new RASPInstructionImpl(RASPInstruction.SUB, OperandType.CONSTANT),
+                    new NumberMemoryItemImpl(1),
+                    new RASPInstructionImpl(RASPInstruction.JGTZ, OperandType.REGISTER),
+                    new NumberMemoryItemImpl(19),
+                    new RASPInstructionImpl(RASPInstruction.JMP, OperandType.REGISTER),
+                    new NumberMemoryItemImpl(37),
+                    new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
+                    new NumberMemoryItemImpl(2),
+                    new RASPInstructionImpl(RASPInstruction.MUL, OperandType.REGISTER),
+                    new NumberMemoryItemImpl(2),
+                    new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
+                    new NumberMemoryItemImpl(2),
+                    new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
+                    new NumberMemoryItemImpl(1),
+                    new RASPInstructionImpl(RASPInstruction.SUB, OperandType.CONSTANT),
+                    new NumberMemoryItemImpl(1),
+                    new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
+                    new NumberMemoryItemImpl(1),
+                    new RASPInstructionImpl(RASPInstruction.SUB, OperandType.CONSTANT),
+                    new NumberMemoryItemImpl(1),
+                    new RASPInstructionImpl(RASPInstruction.JGTZ, OperandType.REGISTER),
+                    new NumberMemoryItemImpl(19),
+                    new RASPInstructionImpl(RASPInstruction.JMP, OperandType.REGISTER),
+                    new NumberMemoryItemImpl(37),
+                    new RASPInstructionImpl(RASPInstruction.WRITE, OperandType.REGISTER),
+                    new NumberMemoryItemImpl(2),
+                    new RASPInstructionImpl(RASPInstruction.HALT, OperandType.REGISTER),
+                    new NumberMemoryItemImpl(0)
+                };
+
+                int programStart = memory.getProgramStart();
+
+                //write null to pre-program area
+                for (int i = 0; i < programStart; i++) {
+                    memory.write(i, null);
+                }
+
+                int positionAtProgram = 0;
+                for (int i = programStart; i < programStart + memoryItems.length; i++) {
+                    memory.write(i, memoryItems[positionAtProgram++]);
+                }
+
+                new MemoryWindow(memory).setVisible(true);
+
             }
         });
     }
