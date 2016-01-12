@@ -109,4 +109,11 @@ public class RASPTableModel extends AbstractTableModel {
         return null;
     }
 
+    @Override
+    public String getColumnName(int column) {
+        return (column==0) ? ("Address") : ("Cell Value");
+    }
+    
+    
+
 }

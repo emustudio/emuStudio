@@ -1,6 +1,11 @@
 package sk.tuke.emustudio.rasp.memory.impl;
 
 import emulib.plugins.memory.AbstractMemoryContext;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -152,6 +157,42 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
     @Override
     public void destroy() {
         memory.clear();
+    }
+
+    /**
+     * Loads compiled program to memory from file.
+     *
+     * @param filename the name of the file
+     * @throws FileNotFoundException
+     * @throws ClassNotFoundException
+     * @throws IOException
+     */
+    public void loadFromFile(String filename) throws FileNotFoundException, IOException, ClassNotFoundException {
+        try {
+            FileInputStream fileInputStream = new FileInputStream(filename);
+            BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+            //clear labels and memory before loading
+            try (ObjectInputStream objectInputStream = new ObjectInputStream(bufferedInputStream)) {
+                //clear labels and memory before loading
+                labels.clear();
+                memory.clear();
+
+                labels.putAll((HashMap<Integer, String>) objectInputStream.readObject());
+                Integer startOfProgram = (Integer) objectInputStream.readObject();
+                setProgramStart(startOfProgram);
+                //pad the pre-program area with null-s
+                for (int i = 0; i < startOfProgram; i++) {
+                    memory.add(i, null);
+                }
+                memory.addAll(startOfProgram, (List<MemoryItem>) objectInputStream.readObject());
+            }
+        } finally {
+            /*any number can be put in this method, handling of the notification
+             is just updating the whole table
+             */
+            notifyMemoryChanged(0);
+        }
+
     }
 
 }
