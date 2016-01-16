@@ -70,4 +70,20 @@ public class RASPInstructionImpl implements RASPInstruction {
         return "unknown";
     }
 
+    /**
+     * Returns string representation of the instruction.
+     *
+     * @return string representation of the instruction
+     */
+    @Override
+    public String toString() {
+        if (operandType == OperandType.REGISTER) {
+            return getCodeStr();
+        } else if (operandType == OperandType.CONSTANT) {
+            return getCodeStr() + " =";
+        } else {
+            return "";
+        }
+    }
+
 }
