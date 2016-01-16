@@ -21,10 +21,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import sk.tuke.emustudio.rasp.memory.MemoryItem;
-import sk.tuke.emustudio.rasp.memory.NumberMemoryItemImpl;
 import sk.tuke.emustudio.rasp.memory.OperandType;
 import sk.tuke.emustudio.rasp.memory.RASPInstruction;
 import sk.tuke.emustudio.rasp.memory.RASPInstructionImpl;
+import sk.tuke.emustudio.rasp.memory.ValueMemoryItem;
 import sk.tuke.emustudio.rasp.memory.impl.RASPMemoryContextImpl;
 
 /**
@@ -230,41 +230,41 @@ public class MemoryWindow extends javax.swing.JFrame {
                 //program as array of items
                 MemoryItem[] memoryItems = new MemoryItem[]{
                     new RASPInstructionImpl(RASPInstruction.READ, OperandType.REGISTER),
-                    new NumberMemoryItemImpl(1),
+                    new ValueMemoryItem("1"),
                     new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.CONSTANT),
-                    new NumberMemoryItemImpl(1),
+                    new ValueMemoryItem("1"),
                     new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
-                    new NumberMemoryItemImpl(2),
+                    new ValueMemoryItem("2"),
                     new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
-                    new NumberMemoryItemImpl(1),
+                    new ValueMemoryItem("1"),
                     new RASPInstructionImpl(RASPInstruction.SUB, OperandType.CONSTANT),
-                    new NumberMemoryItemImpl(1),
+                    new ValueMemoryItem("1"),
                     new RASPInstructionImpl(RASPInstruction.JGTZ, OperandType.REGISTER),
-                    new NumberMemoryItemImpl(19),
+                    new ValueMemoryItem("19"),
                     new RASPInstructionImpl(RASPInstruction.JMP, OperandType.REGISTER),
-                    new NumberMemoryItemImpl(37),
+                    new ValueMemoryItem("37"),
                     new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
-                    new NumberMemoryItemImpl(2),
+                    new ValueMemoryItem("2"),
                     new RASPInstructionImpl(RASPInstruction.MUL, OperandType.REGISTER),
-                    new NumberMemoryItemImpl(2),
+                    new ValueMemoryItem("2"),
                     new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
-                    new NumberMemoryItemImpl(2),
+                    new ValueMemoryItem("2"),
                     new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
-                    new NumberMemoryItemImpl(1),
+                    new ValueMemoryItem("1"),
                     new RASPInstructionImpl(RASPInstruction.SUB, OperandType.CONSTANT),
-                    new NumberMemoryItemImpl(1),
+                    new ValueMemoryItem("1"),
                     new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
-                    new NumberMemoryItemImpl(1),
+                    new ValueMemoryItem("1"),
                     new RASPInstructionImpl(RASPInstruction.SUB, OperandType.CONSTANT),
-                    new NumberMemoryItemImpl(1),
+                    new ValueMemoryItem("1"),
                     new RASPInstructionImpl(RASPInstruction.JGTZ, OperandType.REGISTER),
-                    new NumberMemoryItemImpl(19),
+                    new ValueMemoryItem("19"),
                     new RASPInstructionImpl(RASPInstruction.JMP, OperandType.REGISTER),
-                    new NumberMemoryItemImpl(37),
+                    new ValueMemoryItem("37"),
                     new RASPInstructionImpl(RASPInstruction.WRITE, OperandType.REGISTER),
-                    new NumberMemoryItemImpl(2),
+                    new ValueMemoryItem("2"),
                     new RASPInstructionImpl(RASPInstruction.HALT, OperandType.REGISTER),
-                    new NumberMemoryItemImpl(0)
+                    new ValueMemoryItem("0")
                 };
 
                 //construct HashMap with labels
