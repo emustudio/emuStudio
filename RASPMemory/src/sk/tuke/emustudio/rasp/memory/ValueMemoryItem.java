@@ -13,8 +13,9 @@ package sk.tuke.emustudio.rasp.memory;
 public class ValueMemoryItem implements MemoryItem {
 
     /**
-     * This value will be Integer if it serves as register operand, e.g. ADD 3, value will be an Integer with value 3.
-     * Otherwise, this value will be String.
+     * This value will be Integer if it serves as register operand, e.g. ADD 3,
+     * value will be an Integer with value 3. Otherwise, this value will be
+     * String.
      */
     private final Object value;
 
@@ -34,6 +35,11 @@ public class ValueMemoryItem implements MemoryItem {
      */
     public Object getValue() {
         return value;
+    }
+
+    @Override
+    public String toString() {
+        return value.toString();
     }
 
 }
