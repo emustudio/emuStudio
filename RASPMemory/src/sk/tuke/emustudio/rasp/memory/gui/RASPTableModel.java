@@ -51,7 +51,7 @@ public class RASPTableModel extends AbstractTableModel {
     }
 
     /**
-     * Returns string reprezentation of memory table cell at given position.
+     * Returns the value in the memory table cell at given position.
      *
      * @param rowIndex
      * @param columnIndex
@@ -79,8 +79,8 @@ public class RASPTableModel extends AbstractTableModel {
                         //if the instruction is a jump instruction
                         if (code == RASPInstruction.JMP || code == RASPInstruction.JZ || code == RASPInstruction.JGTZ) {
                             /*for sure, previous is a jump instruction, so this
-                             item is a label, so look for corressponding label in memory*/
-                            String label = memory.getLabel(Integer.valueOf(((ValueMemoryItem) item).getValue()));
+                             item is an address, so look for corressponding label in memory*/
+                            String label = memory.getLabel((Integer) ((ValueMemoryItem) item).getValue());
                             if (label != null) {
                                 return label;
                             } else {
