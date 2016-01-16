@@ -80,7 +80,7 @@ public class RASPTableModel extends AbstractTableModel {
                         if (code == RASPInstruction.JMP || code == RASPInstruction.JZ || code == RASPInstruction.JGTZ) {
                             /*for sure, previous is a jump instruction, so this
                              item is an address, so look for corressponding label in memory*/
-                            String label = memory.getLabel((Integer) ((ValueMemoryItem) item).getValue());
+                            String label = memory.getLabel(Integer.valueOf((String)((ValueMemoryItem) item).getValue()));
                             if (label != null) {
                                 return label;
                             } else {
