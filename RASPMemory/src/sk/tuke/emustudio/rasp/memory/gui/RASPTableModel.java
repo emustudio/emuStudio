@@ -7,7 +7,7 @@ package sk.tuke.emustudio.rasp.memory.gui;
 
 import javax.swing.table.AbstractTableModel;
 import sk.tuke.emustudio.rasp.memory.MemoryItem;
-import sk.tuke.emustudio.rasp.memory.ValueMemoryItem;
+import sk.tuke.emustudio.rasp.memory.NumberMemoryItem;
 import sk.tuke.emustudio.rasp.memory.OperandType;
 import sk.tuke.emustudio.rasp.memory.RASPInstruction;
 import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
@@ -51,7 +51,8 @@ public class RASPTableModel extends AbstractTableModel {
     }
 
     /**
-     * Returns the value in the memory table cell at given position.
+     * Returns the string representation of cell in the memory table cell at
+     * given position.
      *
      * @param rowIndex
      * @param columnIndex
@@ -68,7 +69,7 @@ public class RASPTableModel extends AbstractTableModel {
             }
         } else {
             MemoryItem item = (MemoryItem) memory.read(rowIndex);
-            if (item instanceof ValueMemoryItem) {
+            if (item instanceof NumberMemoryItem) {
                 //if this is not the zeroth item
                 if (rowIndex != 0) {
                     MemoryItem previousItem = memory.read(rowIndex - 1);
@@ -80,26 +81,26 @@ public class RASPTableModel extends AbstractTableModel {
                         if (code == RASPInstruction.JMP || code == RASPInstruction.JZ || code == RASPInstruction.JGTZ) {
                             /*for sure, previous is a jump instruction, so this
                              item is an address, so look for corressponding label in memory*/
-                            String label = memory.getLabel(Integer.valueOf((String)((ValueMemoryItem) item).getValue()));
+                            String label = memory.getLabel(((NumberMemoryItem) item).getValue());
                             if (label != null) {
                                 return label;
                             } else {
                                 //if no label at the address, simply return the number
-                                return ((ValueMemoryItem) item).getValue();
+                                return ((NumberMemoryItem) item).toString();
                             }
                         } else if (instruction.getOperandType() == OperandType.CONSTANT) {
-                            return "= " + ((ValueMemoryItem) item).getValue();
+                            return "= " + ((NumberMemoryItem) item).toString();
                         } else if (instruction.getOperandType() == OperandType.REGISTER) {
-                            return ((ValueMemoryItem) item).getValue();
+                            return ((NumberMemoryItem) item).toString();
                         }
                     } else {
                         //if previous item is not an instruction, simply return the number
-                        return ((ValueMemoryItem) item).getValue();
+                        return ((NumberMemoryItem) item).toString();
                     }
 
                 } else {
                     //if item is the zeroth one, and is a number, it is definitelly not an operand, so just return it
-                    return ((ValueMemoryItem) item).getValue();
+                    return ((NumberMemoryItem) item).toString();
                 }
             } else if (item instanceof RASPInstruction) {
                 //if item is an instruction, just return its mnemonics
