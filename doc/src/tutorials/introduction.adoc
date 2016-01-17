@@ -279,19 +279,19 @@ dependencies in `/lib` subdirectory, and define relative path in Manifest from t
 is installed. For example, here is a Manifest file for RAM compiler plug-in:
 
 [source]
----
-    Manifest-Version: 1.0
-    Implementation-Title: RAM Compiler
-    Implementation-Version: 0.39-SNAPSHOT
-    Archiver-Version: Plexus Archiver
-    Built-By: vbmacher
-    Specification-Title: RAM Compiler
-    Implementation-Vendor-Id: net.sf.emustudio
-    Class-Path: mem/ram-mem.jar lib/java-cup-runtime-11b.jar
-    Created-By: Apache Maven 3.3.3
-    Build-Jdk: 1.8.0_65
-    Specification-Version: 0.39-SNAPSHOT
----
+----
+Manifest-Version: 1.0
+Implementation-Title: RAM Compiler
+Implementation-Version: 0.39-SNAPSHOT
+Archiver-Version: Plexus Archiver
+Built-By: vbmacher
+Specification-Title: RAM Compiler
+Implementation-Vendor-Id: net.sf.emustudio
+Class-Path: mem/ram-mem.jar lib/java-cup-runtime-11b.jar
+Created-By: Apache Maven 3.3.3
+Build-Jdk: 1.8.0_65
+Specification-Version: 0.39-SNAPSHOT
+----
 
 The plug-in uses two non-default dependencies: RAM memory plug-in, and java-cup library. The first one is a memory
 plug-in for emuStudio, so it is placed in `mem/` subdirectory, but java-cup library is completely third-party, and
@@ -365,13 +365,16 @@ and reusable way.
 Each official emuStudio module (artifact) is available in custom Maven repository, including emuLib. In order to be able
 to use them from Maven, put the following code into your `pom.xml` file:
 
-    <distributionManagement>
-      <repository>
-        <id>emustudio-repository</id>
-        <name>emuStudio Repository</name>
-        <url>sftp://web.sourceforge.net:/home/project-web/emustudio/htdocs/repository</url>
-      </repository>
-    </distributionManagement>
+[source,xml]
+----
+<distributionManagement>
+  <repository>
+    <id>emustudio-repository</id>
+    <name>emuStudio Repository</name>
+    <url>sftp://web.sourceforge.net:/home/project-web/emustudio/htdocs/repository</url>
+  </repository>
+</distributionManagement>
+----
 
 NOTE: Development of official standard plug-ins require using Maven.
 

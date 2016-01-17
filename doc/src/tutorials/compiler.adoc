@@ -146,11 +146,11 @@ The complete grammar of presented SSEM assembler looks as follows:
 
 [source,bison]
 ----
-    Program     : Statement Program | &Epsilon;
-    Statement   : Instruction Comment eol | eol
+Program     : Statement Program | &Epsilon;
+Statement   : Instruction Comment eol | eol
 
-    Instruction : JMP number | JRP number | LDN number | STO number | SUB number | CMP | STP
-    Comment     : comment | &Epsilon;
+Instruction : JMP number | JRP number | LDN number | STO number | SUB number | CMP | STP
+Comment     : comment | &Epsilon;
 ----
 
 == Preparing the environment
@@ -174,7 +174,7 @@ NOTE: Note the naming of the plug-in. It follows the naming convention as descri
 
 The POM file of the project might look as follows:
 
-[source]
+[source,xml]
 ----
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
