@@ -76,13 +76,15 @@ NOTE: The bit-representation was kind of reversed. E.g., value `3` was represent
 
 The instruction format is as follows:
 
-[width="50%",cols=">s,^2m,^2e",frame="topbot",options="header,footer"]
-|===================================================================================
-| SSEM Instruction Format
-| Bit: | `00` | `01` | `02` | `03` | `04` | `...` | `13` | `14` | `15` | `...` | 31
-| Use: | `L`  | `L`  | `L`  | `L`  | `L`  |       | `F`  | `F`  | `F`  |       |
-| Value:|`2^0` |     |      |      |      |       |      |      |      |       | `2^31`
-|===================================================================================
+[width="50%",cols=">2s,<m,<m,<m,<m,<m,<m,<m,<m,<m,<m,<m",frame="topbot",options="footer"]
+.SSEM Instruction Format
+|===================================================================
+| Bit:  | 00  | 01 | 02 | 03 | 04 | ... | 13 | 14 | 15 | ... | 31
+| Use:  | L   | L  | L  | L  | L  |  0  | F  | F  | F  | 0   | 0
+| Value:| 2^0 |    |    |    |    |     |    |    |    |     | 2^31
+|===================================================================
+
+where bits `LLLLL` denote address (instruction operand), and bits `FFF` specify the instruction opcode.
 
 
 == Language specification
@@ -282,6 +284,13 @@ one argument of the constructor to the super class. The code snippet looks as fo
 
 [source,java]
 ----
+package net.sf.emustudio.ssem.assembler;
+
+import emulib.annotations.PLUGIN_TYPE;
+import emulib.annotations.PluginType;
+import emulib.plugins.compiler.AbstractCompiler;
+import emulib.runtime.ContextPool;
+
 @PluginType(
         type = PLUGIN_TYPE.COMPILER,
         title = "SSEM Assembler",
@@ -290,7 +299,7 @@ one argument of the constructor to the super class. The code snippet looks as fo
 )
 public class CompilerImpl extends AbstractCompiler {
 
-    public CompilerImpl(Long pluginID) {
+    public CompilerImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
     }
 
