@@ -1,7 +1,10 @@
-[[XB]]
-== Booting operating systems
+= Altair8800: Software, operating systems
+(c) Copyright 2007-2016, Peter Jakubčo
+Version 0.39
+:toc:
+:numbered:
 
-Since this virtual computer emulates a real machine, it's possible to use real software written for the computer.
+Since Altair8800 virtual computer emulates a real machine, it's possible to use real software written for the computer.
 As was mentioned in <<XA,Altair for emuStudio>> section, several operating systems and programs can be run on Altair.
 There are many disk and memory images of those systems available online, but only some were tested and proved to work.
 
@@ -18,7 +21,7 @@ Tested and fully-functional images were:
 The following subsections describe in short how to boot those systems, along with screen-shots how it looks.
 
 [[XBBR]]
-=== Boot ROM
+== Boot ROM
 
 Booting operating systems on Altair requires special ROM image to be <<XASMEML,loaded in operating memory>>
 footnote:[The purpose of a boot ROM is to load specific block of data from a device and then run it as if it was code.
@@ -37,7 +40,7 @@ when operating system image file is mounted.
 
 NOTE: All subsequent sections assume that the boot loader has been loaded in the operating memory.
 
-=== CP/M 2.2
+== CP/M 2.2
 
 During Altair8800 computer era, many operating systems, applications and programming languages have been developed.
 On of the most known operating systems is CP/M. It was written by Gary Kildall from Digital Research, Inc. At first
@@ -67,7 +70,7 @@ image::altair8800/images/cpm22.png[Operating system CP/M 2.2]
 NOTE: Command `dir` is working, `ls` is better `dir`. More information about CP/M commands can be found at
       http://www.classiccmp.org/dunfield/r/cpm22.pdf[this link].
 
-=== CP/M 3
+== CP/M 3
 
 Steps for running CP/M 3 operating systems are not that different from CP/M 2. The disk image file is called
 `cpm3.dsk` and can be downloaded at http://schorn.ch/cpm/zip/cpm3.zip[this link]. CP/M 3 came with two versions:
@@ -79,25 +82,25 @@ NOTE: Manual of CP/M 3 can be found at http://www.cpm.z80.de/manuals/cpm3-usr.pd
 
 There are some requirements for the computer architecture, a bit different for CP/M 2.2.
 
-==== CPU
+=== CPU
 
 It is recommended to use Z80 version of the computer as was presented in the section <<XA, Altair8800 for emuStudio>>.
 CPU Intel 8080 will work for the operating system itself, but most provided applications require Z80.
 
-==== Operating memory
+=== Operating memory
 Also, the operating memory needs to be set for memory banks footnote:[Please see section <<XASMEMB, Bank switching>>].
 The following parameters were borrowed from `simh` and were tested:
 
 - 8 memory banks
 - common address `C000h`
 
-==== Boot ROM
+=== Boot ROM
 
 There exist specific version of boot loader (modified probably by `simh` authors) to load CP/M into banked memory.
 It has name `mboot.bin` and you can find it at the http://emustudio.sourceforge.net/downloads.html[download page].
 Before other steps, please <<XASMEML, load this image into operating memory>> at address 0xFF00 (hexadecimal).
 
-==== Steps for booting CP/M 3
+=== Steps for booting CP/M 3
 
 Specific steps how to boot CP/M 3 in emuStudio follow:
 
@@ -111,11 +114,11 @@ The following image shows the look right after the boot:
 
 image::altair8800/images/cpm3.png[Operating system CP/M 3 (banked version)]
 
-=== Altair DOS v1.0
+== Altair DOS v1.0
 
 TODO
 
-=== BASIC
+== BASIC
 
 In this section will be presented how to boot MITS BASIC version 4.1. There is possible to boot also other versions,
 but the principle is always the same.

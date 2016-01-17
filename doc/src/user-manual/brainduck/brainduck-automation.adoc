@@ -1,11 +1,14 @@
-[[XE]]
-== Emulation automation
+= BrainDuck: Emulation automation
+(c) Copyright 2009-2016, Peter Jakubčo
+Version 0.39
+:toc:
+:numbered:
 
 BrainDuck is one of computers which allows automatic emulation. It means that it is possible to run the emulation from
 command line, while all necessary input and output is redirected from/to files. If user interaction is necessary, it is
 possible to run an interactive automation.
 
-Suppose the BrainDuck computer is represented by abstract schema presented in <<XIIS,Introduction>> section. In that
+Suppose the BrainDuck computer is represented by abstract schema shown in `brainduck-intro` document. In that
 case, BrainDuck terminal is the only device dealing with I/O. If the emulation was executed in automatic non-interactive
 mode, it will recognize it and the input/output will be redirected from/to files.
 

@@ -1,5 +1,8 @@
-[[XAZ80]]
-== Assembler `as-z80`
+= Altair8800: Assembler `as-z80`
+(c) Copyright 2007-2016, Peter Jakubčo
+Version 0.39
+:toc:
+:numbered:
 
 The assembler syntax is inspired by `as-8080` compiler, and by instruction set described
 http://www.z80.info/zip/z80cpu_um.pdf[here]. The assembler supports following features:

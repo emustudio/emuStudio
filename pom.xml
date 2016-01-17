@@ -53,8 +53,6 @@
   <modules>
     <module>main-module</module>
     <module>cpu-testsuite</module>
-    <module>release</module>
-    <module>doc</module>
     <module>plugins/compilers/ramc-ram</module>
     <module>plugins/cpu/ram-cpu</module>
     <module>plugins/mem/ram-mem</module>
@@ -264,11 +262,20 @@
       </build>
     </profile>
     <profile>
+      <id>doc</id>
+      <modules>
+        <module>doc</module>
+      </modules>
+    </profile>
+    <profile>
       <!--
             Profile for creating emuStudio distribution. Use with command:
               mvn -P release assembly:single
       -->
       <id>release</id>
+      <modules>
+        <module>release</module>
+      </modules>
       <build>
         <plugins>
           <plugin>

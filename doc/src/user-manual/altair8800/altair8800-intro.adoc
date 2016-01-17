@@ -1,3 +1,9 @@
+= MITS Altair8800 - emulator of famous personal computer
+(c) Copyright 2009-2015, Peter Jakubčo
+Version 0.39
+:toc:
+:numbered:
+
 [[XI]]
 == Introduction
 
@@ -9,7 +15,7 @@ As Wikipedia states:
 [quote, Wikipedia, Altair 8800]
 The Altair is widely recognized as the spark that ignited the microcomputer revolution.
 
-image::altair8800/images/altair8800.png[MITS Altair8800 with LSI ADM-3A terminal and floppy drive]
+image::images/altair8800.png[MITS Altair8800 with LSI ADM-3A terminal and floppy drive]
 
 Altair 8800 is one of the oldest commercially available computers overall. Ed Roberts (founder and CEO of MITS
 corporation) was selling these machines by mail directly from the factory.
@@ -45,21 +51,20 @@ http://simh.trailing-edge.com/[simh] emulator.
 
 Abstract schema for emuStudio (Intel 8080):
 
-image::altair8800/images/altairscheme.png[Abstract schema of MITS Altair8800 (with Intel 8080)]
+image::images/altairscheme.png[Abstract schema of MITS Altair8800 (with Intel 8080)]
 
 Abstract schema for emuStudio (Zilog Z80):
 
-image::altair8800/images/altairz80.png[Abstract schema of MITS Altair8800 (with Zilog Z80)]
+image::images/altairz80.png[Abstract schema of MITS Altair8800 (with Zilog Z80)]
 
-The following plug-ins are used in the schemas. Each plug-in is described in much more detail in its own section.
+The following plug-ins are used in the schemas. Each plug-in is described in much more detail in its own document.
 
-- Compiler: <<XA8080,as-8080>>
-- Compiler: <<XAZ80,as-z80>>
-- Operating memory (RAM): <<XASMEM,standard-mem>>
-- CPU: `8080-cpu`
-- CPU: `z80-cpu`
-- Device: <<XS,88-sio>>
-- Device: <<XD,88-disk>>
-- Device: <<XSPSEUDO,simhPseudo-z80>>
-- Device: <<XADM3A,adm3A-terminal>>
-
+- Compiler: https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/compilers/as-8080[as-8080]
+- Compiler: https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/compilers/as-z80[as-z80]
+- Operating memory (RAM): https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/mem/standard-mem[standard-mem]
+- CPU: https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/cpu/8080-cpu[8080-cpu]
+- Another CPU: https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/cpu/z80-cpu[z80-cpu]
+- Device: https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/devices/88-sio[88-sio]
+- Device: https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/devices/88-disk[88-disk]
+- Device: https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/devices/simhPseudo-z80[simhPseudo-z80]
+- Device: https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/devices/adm3A-terminal[adm3A-terminal]

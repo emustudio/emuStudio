@@ -1,5 +1,8 @@
-[[XM]]
-== BrainDuck memory `brainduck-mem`
+= BrainDuck: Memory `brainduck-mem`
+(c) Copyright 2009-2016, Peter Jakubčo
+Version 0.39
+:toc:
+:numbered:
 
 BrainDuck memory is used as a part of BrainDuck computer, which acts as the operating memory, holding both of brainfuck
 program and data.
@@ -14,13 +17,13 @@ The memory plug-in contains simple graphical window, a GUI, which provides a set
 - there are hard-coded 256 pages, so the memory size is 256 * (16x16) = 64 kB
 
 [[XMI]]
-=== Installation and run
+== Installation and run
 
 The BrainDuck memory can be run only as a part of emuStudio. It is installed in location
 `mem/brainduck-mem.jar`.
 
 [[XMG]]
-=== Graphical user interface (GUI)
+== Graphical user interface (GUI)
 
 In the following screenshot, it is possible to see GUI of `brainduck-mem`.
 

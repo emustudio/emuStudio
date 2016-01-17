@@ -1,5 +1,8 @@
-[[XADM3A]]
-== Virtual device: `adm3a-terminal`
+= Altair8800: Terminal `adm3a-terminal`
+(c) Copyright 2007-2016, Peter Jakubčo
+Version 0.39
+:toc:
+:numbered:
 
 Emulation of famous terminal from Lear Siegler, Inc. - ADM-3A. Features include:
 

@@ -1,5 +1,8 @@
-[[XT]]
-== BrainDuck terminal `brainduck-terminal`
+= BrainDuck: Terminal `brainduck-terminal`
+(c) Copyright 2009-2016, Peter Jakubčo
+Version 0.39
+:toc:
+:numbered:
 
 BrainDuck terminal is used as a part of BrainDuck computer, which acts as an interactive console, or generally
 interactive input/output provider. It was written with support of GUI, but can be used also in emulation automation,
@@ -13,13 +16,13 @@ Supported features are:
 - terminal interprets some special characters like 0x8 (backspace), 0x9 (tab), 0xA (LF), and 0x10 (CR)
 
 [[XTI]]
-=== Installation and run
+== Installation and run
 
 The BrainDuck terminal can be run only as a part of emuStudio. It is installed in location
 `devices/brainduck-terminal.jar`.
 
 [[XTG]]
-=== Graphical User Interface (GUI)
+== Graphical User Interface (GUI)
 
 In the following image, BrainDuck terminal window is shown:
 

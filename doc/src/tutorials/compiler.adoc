@@ -28,45 +28,44 @@ general-purpose computer.
 
 In this tutorial, there won't be any deep description of the computer, rather the focus will be on the instruction set
 itself, because it is very simple. The processor had only 7 instructions, each is 3-bit long. The instructions table
-follows (taken from https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine#Programming[Wikipedia]):
+follows (modified from https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine#Programming[Wikipedia]):
 
 |===
-|Binary code |Original notation |Modern mnemonic |Operation
+|Binary code |Modern mnemonic |Action |Operation
 
 |`000`
-|`S, Cl`
 |`JMP S`
-|Jump to the instruction at the address obtained from the specified memory address `S[a]` (absolute unconditional jump)
+|`S(L) --> CI`
+|Jump to the instruction at the address obtained from the specified memory address `S(L)` (absolute unconditional jump)
 
 |`100`
-|`Add S, Cl`
 |`JRP S`
-|Jump to the instruction at the program counter plus (`+`) the relative value obtained from the specified memory
- address `S[a]` (relative unconditional jump)
+|`CI + S(L) --> CI`
+|Jump to the instruction at the program counter (`CI`) plus the relative value obtained from the specified memory
+ address `S(L)` (relative unconditional jump)
 
 |`010`
-|`-S, C`
 |`LDN S`
-|Take the number from the specified memory address `S`, negate it, and load it into the accumulator
+|`-S(L) --> A`
+|Take the number from the specified memory address `S(L)`, negate it, and load it into the accumulator
 
 |`110`
-|`c, S`
 |`STO S`
-|Store the number in the accumulator to the specified memory address `S`
+|`A --> S(L)`
+|Store the number in the accumulator to the specified memory address `S(L)`
 
 |`001` or `101`[b]
 |`SUB S`
-|`SUB S`
-|Subtract the number at the specified memory address `S` from the value in accumulator, and store the result
+|`A - S(L) --> A`
+|Subtract the number at the specified memory address `S(L)` from the value in accumulator, and store the result
  in the accumulator
 
 |`011`
-|`Test`
 |`CMP`
+|`if A<0 then CI+1-->CI`
 |Skip next instruction if the accumulator contains a negative value
 
 |`111`
-|`Stop`
 |`STP`
 |Stop
 
@@ -74,6 +73,17 @@ follows (taken from https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experim
 
 
 NOTE: The bit-representation was kind of reversed. E.g., value `3` was represented by binary `110`, rather than `011`.
+
+The instruction format is as follows:
+
+[width="50%",cols=">s,^2m,^2e",frame="topbot",options="header,footer"]
+|===================================================================================
+| SSEM Instruction Format
+| Bit: | `00` | `01` | `02` | `03` | `04` | `...` | `13` | `14` | `15` | `...` | 31
+| Use: | `L`  | `L`  | `L`  | `L`  | `L`  |       | `F`  | `F`  | `F`  |       |
+| Value:|`2^0` |     |      |      |      |       |      |      |      |       | `2^31`
+|===================================================================================
+
 
 == Language specification
 
@@ -109,7 +119,7 @@ The following table shows which categories of lexical symbols will exist:
 [horizontal]
 Reserved words:: `JMP`, `JRP`, `LDN`, `STO`, `SUB`, `CMP`, `STP`
 Literals::
- - `number = (\-)?[0-9]+`
+ - `number = (\-)?[0-9]+`, range: `<-128, +127)` for signed, or `<0, 255>` for unsigned
 Comment::
  - `comment = //[^\r\n]*`
 Separator::
@@ -122,23 +132,23 @@ NOTE: Literals, comments and separator are described using regular expressions u
 These categories correspond to which compiler API supports. For all possible categories see class
 https://github.com/vbmacher/emuLib/blob/branch-9_0/src/main/java/emulib/plugins/compiler/Token.java[Token.java].
 
-
+[[GRAMMAR]]
 === Grammar for parser
 
-The grammar presented here will be a https://en.wikipedia.org/wiki/LR_parser[LR(1)] grammar, for bottom-up parsing.
-It is because http://www2.cs.tum.edu/projects/cup/[Java cup] is used as parser generator, which utilizes only LR
-grammars. It has some implications to grammar design, when compared with LL grammars. The easiest way how to design
+The grammar presented here will be a deterministic context-free grammar, specifically LALR for bottom-up
+parsing. It is because http://www2.cs.tum.edu/projects/cup/[Java cup] is used as parser generator, which produces only
+LALR parsers. It has some implications to grammar design, when compared with LL grammars. The easiest way how to design
 a grammar is to put recursive non-terminals close to beginning, and terminals close to the end of a grammar rule.
 
 The complete grammar of presented SSEM assembler looks as follows:
 
 [source,bison]
 ----
-    Program     : Program Statement eol | eol
-    Statement   : Instruction | Instruction Comment | Comment
+    Program     : Statement Program | &Epsilon;
+    Statement   : Instruction Comment eol | eol
 
     Instruction : JMP number | JRP number | LDN number | STO number | SUB number | CMP | STP
-    Comment     : comment
+    Comment     : comment | &Epsilon;
 ----
 
 == Preparing the environment
@@ -299,8 +309,7 @@ http://jflex.sourceforge.net/maven-jflex-plugin/generate-mojo.html[JFlex Maven p
 
 Before the implementation of the specfile, we need to implement `TokenImpl` class. This class holds the basic
 information about the parsed token, and it extends `java_cup.runtime.Symbol` class, and implements
-`emulib.plugins.compiler.Token` interface. This is quite complicated, and it might be simplified in future versions to
-use just plan `java_cup.runtime.Symbol` class.
+`emulib.plugins.compiler.Token` and `Symbols` interface. We will talk about `Symbols` in parser section.
 
 The content of the `net.sf.emustudio.ssem.assembler.TokenImpl` class is:
 
@@ -311,7 +320,7 @@ package net.sf.emustudio.ssem.assembler;
 import emulib.plugins.compiler.Token;
 import java_cup.runtime.Symbol;
 
-public class TokenImpl extends Symbol implements Token {
+public class TokenImpl extends Symbol implements Token, Symbols {
     private final String text;
     private final int category;
     private final int cchar;
@@ -337,7 +346,7 @@ public class TokenImpl extends Symbol implements Token {
 
     @Override
     public int getType() {
-        return super.sym;
+        return category;
     }
 
     @Override
@@ -381,113 +390,234 @@ Now, we can define the lexical analyzer in `src/main/jflex/ssem.jflex`:
 
 [source,flex]
 ----
-    package net.sf.emustudio.ssem.assembler;
+package net.sf.emustudio.ssem.assembler;
 
-    import emulib.plugins.compiler.LexicalAnalyzer;
-    import emulib.plugins.compiler.Token;
-    import java.io.IOException;
-    import java.io.Reader;
+import emulib.plugins.compiler.LexicalAnalyzer;
+import emulib.plugins.compiler.Token;
+import java.io.IOException;
+import java.io.Reader;
 
-    %%
+%%
 
-    /* options */
-    %class LexerImpl
-    %cup
-    %public
-    %implements LexicalAnalyzer, Symbols
-    %line
-    %column
-    %char
-    %caseless
-    %unicode
-    %type TokenImpl
+/* options */
+%class LexerImpl
+%cup
+%public
+%implements LexicalAnalyzer, Symbols
+%line
+%column
+%char
+%caseless
+%unicode
+%type TokenImpl
 
-    %{
-        @Override
-        public Token getSymbol() throws IOException {
-            return next_token();
+%{
+    @Override
+    public Token getSymbol() throws IOException {
+        return next_token();
+    }
+
+    @Override
+    public void reset(Reader in, int yyline, int yychar, int yycolumn) {
+        yyreset(in);
+        this.yyline = yyline;
+        this.yychar = yychar;
+        this.yycolumn = yycolumn;
+    }
+
+    @Override
+    public void reset() {
+        this.yyline = 0;
+        this.yychar = 0;
+        this.yycolumn = 0;
+    }
+
+    private TokenImpl token(int type, int category) {
+        return new TokenImpl(type, category, yytext(), yyline, yycolumn, yychar);
+    }
+
+    private TokenImpl token(int type, int category, Object value) {
+        return new TokenImpl(type, category, yytext(), yyline, yycolumn, yychar, value);
+    }
+%}
+
+%eofval{
+    return token(EOF, Token.TEOF);
+%eofval}
+
+comment = "//"[^\r\n]*
+eol = \r|\n|\r\n
+space = [ \t\f]+
+number = \-?[0-9]+
+
+%%
+
+/* reserved words */
+"jmp" {
+    return token(JMP, Token.RESERVED);
+}
+"jrp" {
+    return token(JRP, Token.RESERVED);
+}
+"ldn" {
+    return token(LDN, Token.RESERVED);
+}
+"sto" {
+    return token(STO, Token.RESERVED);
+}
+"sub" {
+    return token(SUB, Token.RESERVED);
+}
+"cmp" {
+    return token(CMP, Token.RESERVED);
+}
+"stp" {
+    return token(STP, Token.RESERVED);
+}
+
+/* separators */
+{eol} {
+    return token(SEPARATOR_EOL, Token.SEPARATOR);
+}
+{space} { /* ignore white spaces */ }
+
+/* comment */
+{comment} {
+    return token(TCOMMENT, Token.COMMENT);
+}
+
+/* literals */
+{number} {
+    try {
+        int num = Integer.parseInt(yytext(), 10);
+
+        if (num < -128 || num > 255) {
+          throw new NumberFormatException("Number must be either signed or unsigned 8 bits!");
         }
-
-        @Override
-        public void reset(Reader in, int yyline, int yychar, int yycolumn) {
-            yyreset(in);
-            this.yyline = yyline;
-            this.yychar = yychar;
-            this.yycolumn = yycolumn;
-        }
-
-        @Override
-        public void reset() {
-            this.yyline = 0;
-            this.yychar = 0;
-            this.yycolumn = 0;
-        }
-
-        private TokenImpl token(int type, int category) {
-            return new TokenImpl(type, category, yytext(), yyline, yycolumn, yychar);
-        }
-
-        private TokenImpl token(int type, int category, Object value) {
-            return new TokenImpl(type, category, yytext(), yyline, yycolumn, yychar, value);
-        }
-    %}
-
-    comment = "//"[^\r\n]*
-    eol = \r|\n|\r\n
-    space = [ \t\f]+
-    number = \-?[0-9]+
-
-    %%
-
-    /* reserved words */
-    "jmp" {
-        return token(JMP, Token.RESERVED);
+        return token(NUMBER, Token.LITERAL, (byte)(num & 0xFF));
+    } catch (NumberFormatException e) {
+        return token(NUMBER, Token.ERROR, e.getMessage());
     }
-    "jrp" {
-        return token(JRP, Token.RESERVED);
-    }
-    "ldn" {
-        return token(LDN, Token.RESERVED);
-    }
-    "sto" {
-        return token(STO, Token.RESERVED);
-    }
-    "sub" {
-        return token(SUB, Token.RESERVED);
-    }
-    "cmp" {
-        return token(CMP, Token.RESERVED);
-    }
-    "stp" {
-        return token(STP, Token.RESERVED);
-    }
+}
 
-    /* separators */
-    {eol} {
-        return token(SEPARATOR_EOL, Token.SEPARATOR);
-    }
-    {space} { /* ignore white spaces */ }
-
-    /* comment */
-    {comment} {
-        return token(TCOMMENT, Token.COMMENT);
-    }
-
-    /* literals */
-    {number} {
-        try {
-            int num = Integer.parseInt(yytext(), 10);
-            return token(NUMBER, Token.LITERAL, num);
-        } catch (NumberFormatException e) {
-            return token(NUMBER, Token.ERROR, e.getMessage());
-        }
-    }
-
-    /* error fallback */
-    [^] {
-        return token(ERROR_UNKNOWN_TOKEN, Token.ERROR);
-    }
+/* error fallback */
+[^] {
+    return token(ERROR_UNKNOWN_TOKEN, Token.ERROR);
+}
 ----
+
+Token in emuStudio is very important also for syntax highlighting in the editor. For parsing, each token must have
+its unique identification number (token ID), such as `JMP`, `SEPARATOR_EOL`, `NUMBER`, etc. from the above file.
+However, for doing syntax highlighting, it wouldn't be that beneficial if the color of a token was based on its
+ID, because for example each instruction would have different color. Rather, in emuLib there exist token categories,
+which are used when considering token color. Token categories are defined in the class `emulib.plugins.compiler.Token`.
+
+=== Test it!
+
+It is now very required practice to write unit tests, this is especially useful when very concrete specification
+is available. Here are some code snippets, which can be implemented right away for testing the lexer:
+
+[source,java]
+----
+package net.sf.emustudio.ssem.assembler;
+
+import emulib.plugins.compiler.Token;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.io.StringReader;
+
+import static org.junit.Assert.assertEquals;
+
+public class LexerTest {
+
+    LexerImpl lexer(String tokens) {
+        return new LexerImpl(new StringReader(tokens));
+    }
+
+    @Test
+    public void testNumberUpperBoundary() throws Exception {
+        LexerImpl lexer = lexer("255");
+
+        TokenImpl token = lexer.next_token();
+        assertEquals(Token.LITERAL, token.getType());
+        assertEquals(TokenImpl.NUMBER, token.getID());
+    }
+
+    @Test
+    public void testNumberLowerBoundary() throws Exception {
+        LexerImpl lexer = lexer("-128");
+
+        TokenImpl token = lexer.next_token();
+        assertEquals(Token.LITERAL, token.getType());
+        assertEquals(TokenImpl.NUMBER, token.getID());
+    }
+
+    @Test
+    public void testTooBigNumber() throws Exception {
+        LexerImpl lexer = lexer("256");
+
+        TokenImpl token = lexer.next_token();
+        assertEquals(Token.ERROR, token.getType());
+        assertEquals(TokenImpl.NUMBER, token.getID());
+    }
+
+    @Test
+    public void testTooSmallNumber() throws Exception {
+        LexerImpl lexer = lexer("-129");
+
+        TokenImpl token = lexer.next_token();
+        assertEquals(Token.ERROR, token.getType());
+        assertEquals(TokenImpl.NUMBER, token.getID());
+    }
+
+    private void checkInstruction(int id, LexerImpl lexer) throws IOException {
+        TokenImpl token = lexer.next_token();
+        assertEquals(Token.RESERVED, token.getType());
+        assertEquals(id, token.getID());
+    }
+
+    private void checkInstructionWithOperand(int id, LexerImpl lexer) throws IOException {
+        checkInstruction(id, lexer);
+
+        TokenImpl token = lexer.next_token();
+        assertEquals(Token.LITERAL, token.getType());
+        assertEquals(TokenImpl.NUMBER, token.getID());
+    }
+
+    @Test
+    public void testInstructionsWithOperand() throws Exception {
+        checkInstructionWithOperand(TokenImpl.JMP, lexer("jmp 125"));
+        checkInstructionWithOperand(TokenImpl.JRP, lexer("jrp 125"));
+        checkInstructionWithOperand(TokenImpl.LDN, lexer("ldn 125"));
+        checkInstructionWithOperand(TokenImpl.STO, lexer("sto 125"));
+        checkInstructionWithOperand(TokenImpl.SUB, lexer("sub 125"));
+    }
+
+    @Test
+    public void testInstructionsWithoutOperand() throws Exception {
+        checkInstruction(TokenImpl.CMP, lexer("cmp"));
+        checkInstruction(TokenImpl.STP, lexer("stp"));
+    }
+
+    @Test
+    public void testInstructionInComment() throws Exception {
+        LexerImpl lexer = lexer("// cmp tadaa test comment stp jmp 123");
+        TokenImpl token = lexer.next_token();
+
+        assertEquals(TokenImpl.TCOMMENT, token.getID());
+        assertEquals(Token.COMMENT, token.getType());
+
+        token = lexer.next_token();
+        assertEquals(Token.TEOF, token.getType());
+        assertEquals(TokenImpl.EOF, token.getID());
+    }
+}
+----
+
+Lexer and parser are very interconnected in this case, because Java Cup defines symbol table, which is used by
+`TokenImpl` class. It does not yet exist when we have only lexer, so I guess the best way is to continue with parser
+and then make it work together.
 
 == Implement parser
 
@@ -501,8 +631,10 @@ the definition in the POM file.
 
 There are more options of how to create the parser. The provided URL of Java cup contains lots of documentation. In
 this tutorial, an abstract syntax tree will be implemented and created by the parser. Abstract Syntax Tree (or AST) is
-a representation of the parsed program source code. For example, expression "2+2" can be represented using the following
-AST:
+a representation of the parsed program source code in a form plausible for further compilation process. It is different
+from Parse Syntax Tree, which represents the tree of grammar derivations for the program.
+
+For example, expression "2+2" can be represented using the following AST:
 
 [graphviz]
 ---------------------------------------------------------------------
@@ -560,12 +692,283 @@ AST program = parser.parse("2+2"); // The parser returns: new PlusOperator(new V
 System.out.println(program.evaluate()); // prints "4"
 ----
 
-This is the basic ide of how it works. So now we need to create:
+This is the basic idea of how parsing works. Now, it is needed to create:
 
 1. Abstract syntax tree classes for our SSEM assembler program
 2. Write parser definition file itself, which will contain the grammar and will build the AST for the program
 
-Let's start with the parser definition file (or parser specfile). It will be put to `src/main/cup/ssem.cup`.
+=== Grammar file
+
+Let's start with the parser definition file (or parser specfile). It will be put to `src/main/cup/parser.cup`.
 The content is as follows:
 
+[source]
+----
+/*
+ * Parser (syntactic analyzer for SSEM assembler)
+ *
+ * Copyright (C) 2016 Peter Jakubčo
+ * KISS, YAGNI, DRY
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ */
+package net.sf.emustudio.ssem.assembler;
 
+import java.util.Objects;
+
+import java_cup.runtime.*;
+import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
+import net.sf.emustudio.ssem.assembler.tree.*;
+
+parser code {:
+  private LexerImpl lexer;
+  public boolean syntaxErrors;
+
+  public ParserImpl(LexerImpl lex, ComplexSymbolFactory csf) {
+    super(lex, csf);
+    lexer = Objects.requireNonNull(lex);
+  }
+:};
+
+terminal JMP, JRP, LDN, STO, SUB, CMP, STP, SEPARATOR_EOL, TCOMMENT, ERROR_UNKNOWN_TOKEN;
+terminal Byte NUMBER;
+
+non terminal Program Program;
+non terminal Instruction Statement;
+non terminal Instruction Instruction;
+non terminal Comment;
+
+start with Program;
+
+Program ::= Statement:s Program:p                       {: if (s != null) p.statement(s); RESULT = p;  :}
+    | /* empty program */                               {: RESULT = new Program(); :}
+    ;
+
+Statement ::= Instruction:i Comment SEPARATOR_EOL       {: RESULT = i; :}
+    | SEPARATOR_EOL
+    | error:e                                           {: parser.report_error("Syntax error, skip rest",e); :}
+    ;
+
+Instruction ::= JMP NUMBER:address                      {: RESULT = Instruction.jmp(address); :}
+    | JRP NUMBER:address                                {: RESULT = Instruction.jrp(address); :}
+    | LDN NUMBER:address                                {: RESULT = Instruction.ldn(address); :}
+    | STO NUMBER:address                                {: RESULT = Instruction.sto(address); :}
+    | SUB NUMBER:address                                {: RESULT = Instruction.sub(address); :}
+    | CMP                                               {: RESULT = Instruction.cmp(); :}
+    | STP                                               {: RESULT = Instruction.stp(); :}
+    ;
+
+Comment ::= TCOMMENT
+    | /* no comment*/
+    ;
+----
+
+More-less it is possible to recognize grammar which was defined in section <<GRAMMAR, Grammar for parser>>. The right
+side, code snippets wrapped between `{:` and `:}` is Java code which will be executed when particular rule of the
+grammar applies. There exist a special variable `RESULT`, which should return some Java object of type which the
+non-terminal defines footnote:[For example, `non terminal Instruction Statement;` in the gramamr above defines a
+non-terminal `Statement`, which should return an instance of `Instruction` class. The class `Instruction` must be
+implemented manually - it is part of AST; there are no special requirements for the implementation.].
+I suggest to read Java Cup documentation for more information.
+
+=== Abstract Syntax Tree
+
+Classes which non-terminals use are in fact parts of abstract syntax tree of the compiler, namely only these two:
+
+- `Program`
+- `Instruction`
+
+Both classes are part of AST, so they both inherit from AST interface, which define common operations, like generating
+code:
+
+[source, java]
+----
+package net.sf.emustudio.ssem.assembler.tree;
+
+import net.sf.emustudio.ssem.assembler.CodeGenerator;
+import net.sf.emustudio.ssem.assembler.CompileException;
+
+import java.io.IOException;
+
+public interface ASTnode {
+
+    void accept(CodeGenerator codeGenerator) throws CompileException, IOException;
+
+}
+----
+
+Now the implementation of the classes follows:
+
+[source, java]
+.Program.java
+----
+package net.sf.emustudio.ssem.assembler.tree;
+
+import net.sf.emustudio.ssem.assembler.CodeGenerator;
+import net.sf.emustudio.ssem.assembler.CompileException;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Program implements ASTnode {
+    private final List<Instruction> instructions = new ArrayList<>();
+
+    public void statement(Instruction instruction) {
+        instructions.add(instruction);
+    }
+
+    @Override
+    public void accept(CodeGenerator codeGenerator) throws CompileException, IOException {
+        for (Instruction instruction : instructions) {
+            instruction.accept(codeGenerator);
+        }
+    }
+}
+----
+
+[source,java]
+.Instruction.java
+----
+package net.sf.emustudio.ssem.assembler.tree;
+
+import net.sf.emustudio.ssem.assembler.CodeGenerator;
+import net.sf.emustudio.ssem.assembler.CompileException;
+
+import java.io.IOException;
+import java.util.Optional;
+
+public class Instruction implements ASTnode {
+    private final static byte JMP = 0; // 000
+    private final static byte JRP = 4; // 100
+    private final static byte LDN = 2; // 010
+    private final static byte STO = 6; // 110
+    private final static byte SUB = 1; // 001
+    private final static byte CMP = 3; // 011
+    private final static byte STP = 7; // 111
+
+    private final int opcode;
+    private final Optional<Byte> operand;
+
+    private Instruction(int opcode, byte operand) {
+        this.operand = Optional.of(operand);
+        this.opcode = opcode;
+    }
+
+    private Instruction(int opcode) {
+        this.operand = Optional.empty();
+        this.opcode = opcode;
+    }
+
+    public int getOpcode() {
+        return opcode;
+    }
+
+    public Optional<Byte> getOperand() {
+        return operand;
+    }
+
+    public static Instruction jmp(byte address) {
+        return new Instruction(JMP, address);
+    }
+
+    public static Instruction jrp(byte address) {
+        return new Instruction(JRP, address);
+    }
+
+    public static Instruction ldn(byte address) {
+        return new Instruction(LDN, address);
+    }
+
+    public static Instruction sto(byte address) {
+        return new Instruction(STO, address);
+    }
+
+    public static Instruction sub(byte address) {
+        return new Instruction(SUB, address);
+    }
+
+    public static Instruction cmp() {
+        return new Instruction(CMP);
+    }
+
+    public static Instruction stp() {
+        return new Instruction(STP);
+    }
+
+    @Override
+    public void accept(CodeGenerator codeGenerator) throws CompileException, IOException {
+         codeGenerator.generate(this);
+    }
+}
+----
+
+=== Generating code
+
+As you can see, AST interface defines a method `accept`, which has one argument: some `CodeGenerator`. The name `accept`
+comes from https://en.wikipedia.org/wiki/Visitor_pattern[Visitor pattern], because code generation will be implemented
+elsewhere, not in AST directly. The code generator will traverse the tree and generate code. This is exactly what the
+Visitor pattern is for.
+
+The code generator class will implement code generation for all relevant nodes of the AST. It is better if algorithmic
+classes work with IO streams, buffers or channels like with files. This code generator will be implemented in similar
+fashion. The code is as follows:
+
+[source,java]
+----
+package net.sf.emustudio.ssem.assembler;
+
+import net.sf.emustudio.ssem.assembler.tree.Instruction;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Objects;
+
+public class CodeGenerator implements AutoCloseable {
+    private final DataOutputStream writer;
+
+    public CodeGenerator(OutputStream writer) {
+        this.writer= new DataOutputStream(Objects.requireNonNull(writer));
+    }
+
+    public void generate(Instruction instruction) throws CompileException, IOException {
+        byte address = instruction.getOperand().orElse((byte)0);
+
+        if (address > 32) {
+            throw new CompileException("Operand is larger than 32: " + address);
+        }
+
+        writer.writeByte((address >> 4) & 1);
+        writer.writeByte((address >> 3) & 1);
+        writer.writeByte((address >> 2) & 1);
+        writer.writeByte((address >> 1) & 1);
+        writer.writeByte(address & 1);
+
+        writer.write(new byte[8]);
+
+        int opcode = instruction.getOpcode();
+        writer.writeByte((opcode >> 2) & 1);
+        writer.writeByte((opcode >> 1) & 1);
+        writer.writeByte(opcode & 1);
+    }
+
+    @Override
+    public void close() throws Exception {
+        writer.close();
+    }
+}
+----

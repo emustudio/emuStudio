@@ -1,5 +1,8 @@
-[[XI]]
-== Introduction
+= BrainDuck: A virtual computer based on `brainfuck`
+(c) Copyright 2009-2016, Peter Jakubčo
+Version 0.39
+:toc:
+:numbered:
 
 BrainDuck is an abstract computer for emuStudio, which mimics http://en.wikipedia.org/wiki/Brainfuck[brainfuck] programming language. Originally, brainfuck was developped by
 http://esolangs.org/wiki/Urban_M%C3%BCller[Urban Miller] and it is well-known fact that the language
@@ -10,7 +13,7 @@ brainfuck worldwide. But all of that can be read at Wikipedia or at other source
 BrainDuck architecture is just a name for virtual computer in emuStudio, and consists of these
 plug-ins:
 
-- `brainc-compiler`: Compiler of brainfuck language (original, without extensions)
+- `brainc-brainduck`: Compiler of brainfuck language (original, without extensions)
 - `brainduck-cpu`: Brainfuck emulator acting like CPU with two registers
 - `brainduck-mem`: Virtual operating memory which holds both compiled brainfuck program and data
 - `brainduck-terminal`: Virtual terminal for displaying the output and requesting for input.
@@ -22,7 +25,7 @@ Implementation language is Java SE 7. The implementation technology of visual co
 Swing. All plug-ins use library `emuLib` version `9.0.0`.
 
 [[XIB]]
-=== Brief description
+== Brief description
 
 BrainDuck is implemented as http://en.wikipedia.org/wiki/Von_Neumann_architecture[von Neumann architecture]. It implies that the program and data are shared in the single memory. This is not
 a common approach of implementing brainfuck interpreters, and it might be changed in the future.
@@ -38,13 +41,13 @@ The solution is spread across the plug-ins, as you can see in the parentheses. C
 to plug-ins' description contain specific information.
 
 [[XII]]
-=== Installation and run
+== Installation and run
 
 At first, please download and install emuStudio distribution. BrainDuck is already included and
 ready for use.
 
 [[XIID]]
-==== Directory structure
+=== Directory structure
 
 For further manipulation with BrainDuck-specific files, here's the file organization in directories:
 
@@ -59,7 +62,7 @@ BrainDuck compiler (as many other compilers in emuStudio) depends on Java CUP pa
 which is located at `lib/java-cup-runtime-0.11a.jar`.
 
 [[XIIS]]
-==== Abstract schema
+=== Abstract schema
 
 In order to use BrainDuck, there must be drawn the abstract schema, saved in the configuration
 file. Abstract schemas are drawn in the schema editor in emuStudio (please see emuStudio User
@@ -75,7 +78,7 @@ digraph brainduck_schema {
   "brainduck-cpu" -> "brainduck-mem";
   "brainduck-cpu" -> "brainduck-terminal";
   "brainduck-terminal" -> "brainduck-cpu";
-}  
+}
 ---------------------------------------------------------------------
 
 The "->" arrows are in direction of dependency. So for example `brainc-brainduck` depends on

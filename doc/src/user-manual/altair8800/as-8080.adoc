@@ -1,5 +1,8 @@
-[[XA8080]]
-== Assembler `as-8080`
+= Altair8800: Assembler `as-8080`
+(c) Copyright 2007-2016, Peter Jakubčo
+Version 0.39
+:toc:
+:numbered:
 
 Assembler for Intel 8080 CPU in emuStudio is very similar to
 http://altairclone.com/downloads/manuals/8080%20Programmers%20Manual.pdf[Intel assembler], but has some little

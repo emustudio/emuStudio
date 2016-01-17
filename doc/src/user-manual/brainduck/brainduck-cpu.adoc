@@ -1,5 +1,8 @@
-[[XC]]
-== BrainDuck CPU `brainduck-cpu`
+= BrainDuck: CPU `brainduck-cpu`
+(c) Copyright 2009-2016, Peter Jakubčo
+Version 0.39
+:toc:
+:numbered:
 
 BrainDuck CPU is used as a part of BrainDuck computer, which acts as the interpreter of BrainDuck
 instructions. Those instructions correspond with brainfuck language.
@@ -16,13 +19,12 @@ panel in the main window.
 Breakpoints are supported, so as "jump" to specific location, which might be actually dangerous to use.
 
 [[XCI]]
-=== Installation and run
+== Installation and run
 
-The BrainDuck CPU can be run only as a part of emuStudio. It is installed in location
-`cpu/brainduck-cpu.jar`.
+The BrainDuck CPU can be run only as a part of emuStudio. It is installed in location `cpu/brainduck-cpu.jar`.
 
 [[XCS]]
-=== Status panel
+== Status panel
 
 In the following image, you can see the status panel of `brainduck-cpu`. 
 
@@ -39,7 +41,7 @@ Loop level shows the depth level of brainfuck loop the program is in. For exampl
 into middle of the program `[[-]]`, to the `-` instruction, loop level is 2.
 
 [[XCR]]
-=== Running brainfuck programs
+== Running brainfuck programs
 
 It is very important to reset CPU after each source code compilation. The reason is that after compilation register
 `P` is not changed. It therefore might point somewhere into compiled code in the memory. If the program was executed,
