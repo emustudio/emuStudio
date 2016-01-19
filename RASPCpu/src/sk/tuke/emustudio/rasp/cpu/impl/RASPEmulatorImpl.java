@@ -5,7 +5,6 @@
  */
 package sk.tuke.emustudio.rasp.cpu.impl;
 
-import com.oracle.jrockit.jfr.ContentType;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.API;
@@ -24,14 +23,12 @@ import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.util.ArrayList;
 import java.util.Objects;
-import javafx.animation.Animation;
 import javax.swing.JPanel;
 import sk.tuke.emustudio.rasp.cpu.gui.LabelDebugColumn;
 import sk.tuke.emustudio.rasp.cpu.gui.RASPCpuStatusPanel;
 import sk.tuke.emustudio.rasp.cpu.gui.RASPDisassembler;
 import sk.tuke.emustudio.rasp.memory.MemoryItem;
 import sk.tuke.emustudio.rasp.memory.NumberMemoryItem;
-import sk.tuke.emustudio.rasp.memory.IntegerMemoryItem;
 import sk.tuke.emustudio.rasp.memory.OperandType;
 import sk.tuke.emustudio.rasp.memory.RASPInstruction;
 import sk.tuke.emustudio.rasp.memory.impl.RASPMemoryContextImpl;
@@ -85,6 +82,25 @@ public class RASPEmulatorImpl extends AbstractCPU {
          */
         public RunState execute(NumberMemoryItem operand, OperandType operandType);
     }
+
+    /**
+     * Array of implementations of "execute()" method.
+     */
+    private ExecutableInstruction[] executableInstructions = new ExecutableInstruction[]{
+        null,
+        this::read,
+        this::write,
+        this::load,
+        this::store,
+        this::add,
+        this::sub,
+        this::mul,
+        this::div,
+        this::jmp,
+        this::jz,
+        this::jgtz,
+        this::halt
+    };
 
     /**
      * Executes READ instruction.
@@ -169,7 +185,7 @@ public class RASPEmulatorImpl extends AbstractCPU {
      */
     private RunState store(NumberMemoryItem operand, OperandType operandType) {
         if (operandType == OperandType.REGISTER) {
-            memory.write(operand.getValue(), memory.read(getACC()));
+            memory.write(operand.getValue(), memory.read(0));
             return RunState.STATE_STOPPED_BREAK;
         }
         return RunState.STATE_STOPPED_BAD_INSTR;
@@ -177,6 +193,7 @@ public class RASPEmulatorImpl extends AbstractCPU {
 
     /**
      * Executes ADD instruction.
+     *
      * @param operand register or constant
      * @param operandType the type of the operand
      * @return run state after executing the instruction
@@ -218,8 +235,220 @@ public class RASPEmulatorImpl extends AbstractCPU {
 
         return RunState.STATE_STOPPED_BAD_INSTR;
     }
-    
-    
+
+    /**
+     * Executes SUB instruction.
+     *
+     * @param operand register or constant
+     * @param operandType the type of the operand
+     * @return run state after executing the instruction
+     */
+    private RunState sub(NumberMemoryItem operand, OperandType operandType) {
+        if (operandType == OperandType.REGISTER) {
+            //get accumulator
+            MemoryItem item = memory.read(0);
+            if (!(item instanceof NumberMemoryItem)) {
+                return RunState.STATE_STOPPED_BAD_INSTR;
+            }
+            NumberMemoryItem r0 = (NumberMemoryItem) item;
+
+            //get i-th register
+            item = memory.read(operand.getValue());
+            if (!(item instanceof NumberMemoryItem)) {
+                return RunState.STATE_STOPPED_BAD_INSTR;
+            }
+            NumberMemoryItem ri = (NumberMemoryItem) item;
+
+            //write result to acc
+            memory.write(0, new NumberMemoryItem(r0.getValue() - ri.getValue()));
+            return RunState.STATE_STOPPED_BREAK;
+        } else if (operandType == OperandType.CONSTANT) {
+            //get accumulator
+            MemoryItem item = memory.read(0);
+            if (!(item instanceof NumberMemoryItem)) {
+                return RunState.STATE_STOPPED_BAD_INSTR;
+            }
+            NumberMemoryItem r0 = (NumberMemoryItem) item;
+
+            //write result to acc
+            memory.write(0, new NumberMemoryItem(r0.getValue() - operand.getValue()));
+            return RunState.STATE_STOPPED_BREAK;
+        }
+        return RunState.STATE_STOPPED_BAD_INSTR;
+    }
+
+    /**
+     * Executes MUL instruction.
+     *
+     * @param operand register or constant
+     * @param operandType the type of the operand
+     * @return run state after executing the instruction
+     */
+    private RunState mul(NumberMemoryItem operand, OperandType operandType) {
+        if (operandType == OperandType.REGISTER) {
+
+            //get accumulator
+            MemoryItem item = memory.read(0);
+            if (!(item instanceof NumberMemoryItem)) {
+                return RunState.STATE_STOPPED_BAD_INSTR;
+            }
+            NumberMemoryItem r0 = (NumberMemoryItem) item;
+
+            //get i-th register
+            item = memory.read(operand.getValue());
+            if (!(item instanceof NumberMemoryItem)) {
+                return RunState.STATE_STOPPED_BAD_INSTR;
+            }
+            NumberMemoryItem ri = (NumberMemoryItem) item;
+
+            memory.write(0, new NumberMemoryItem(r0.getValue() * ri.getValue()));
+
+            return RunState.STATE_STOPPED_BREAK;
+        } else if (operandType == OperandType.CONSTANT) {
+            //get accumulator
+            MemoryItem item = memory.read(0);
+            if (!(item instanceof NumberMemoryItem)) {
+                return RunState.STATE_STOPPED_BAD_INSTR;
+            }
+            NumberMemoryItem r0 = (NumberMemoryItem) item;
+
+            memory.write(0, new NumberMemoryItem(r0.getValue() * operand.getValue()));
+
+            return RunState.STATE_STOPPED_BREAK;
+        }
+        return RunState.STATE_STOPPED_BAD_INSTR;
+    }
+
+    /**
+     * Executes DIV instruction.
+     *
+     * @param operand register or constant
+     * @param operandType the type of the operand
+     * @return run state after executing the instruction
+     */
+    private RunState div(NumberMemoryItem operand, OperandType operandType) {
+        if (operandType == OperandType.REGISTER) {
+            //get accumulator
+            MemoryItem item = memory.read(0);
+            if (!(item instanceof NumberMemoryItem)) {
+                return RunState.STATE_STOPPED_BAD_INSTR;
+            }
+            NumberMemoryItem r0 = (NumberMemoryItem) item;
+
+            //get i-th register
+            item = memory.read(operand.getValue());
+            if (!(item instanceof NumberMemoryItem)) {
+                return RunState.STATE_STOPPED_BAD_INSTR;
+            }
+            NumberMemoryItem ri = (NumberMemoryItem) item;
+
+            //prevent zero division
+            if (ri.getValue() == 0) {
+                return RunState.STATE_STOPPED_BAD_INSTR;
+            }
+
+            memory.write(0, new NumberMemoryItem(r0.getValue() / ri.getValue()));
+
+            return RunState.STATE_STOPPED_BREAK;
+        } else if (operandType == OperandType.CONSTANT) {
+            //get accumulator
+            MemoryItem item = memory.read(0);
+            if (!(item instanceof NumberMemoryItem)) {
+                return RunState.STATE_STOPPED_BAD_INSTR;
+            }
+            NumberMemoryItem r0 = (NumberMemoryItem) item;
+
+            //prevent zero divison
+            if (operand.getValue() == 0) {
+                return RunState.STATE_STOPPED_BAD_INSTR;
+            }
+
+            memory.write(0, new NumberMemoryItem(r0.getValue() / operand.getValue()));
+            return RunState.STATE_STOPPED_BREAK;
+        }
+        return RunState.STATE_STOPPED_BAD_INSTR;
+    }
+
+    /**
+     * Executes JMP instruction.
+     *
+     * @param operand register (labeled address in memory)
+     * @param operandType the type of the operand, should be a register
+     * @return run state after executing the instruction
+     */
+    private RunState jmp(NumberMemoryItem operand, OperandType operandType) {
+        if (operandType == OperandType.REGISTER) {
+            //assign new value to IP (jump to address)
+            IP = operand.getValue();
+            return RunState.STATE_STOPPED_BREAK;
+        }
+        return RunState.STATE_STOPPED_BAD_INSTR;
+    }
+
+    /**
+     * Executes JZ instruction.
+     *
+     * @param operand register (labeled address in memory)
+     * @param operandType the type of the operand, should be a register
+     * @return run state after executing the instruction
+     */
+    private RunState jz(NumberMemoryItem operand, OperandType operandType) {
+        if (operandType == OperandType.REGISTER) {
+
+            //get accumulator
+            MemoryItem item = memory.read(0);
+            if (!(item instanceof NumberMemoryItem)) {
+                return RunState.STATE_STOPPED_BAD_INSTR;
+            }
+            NumberMemoryItem r0 = (NumberMemoryItem) item;
+
+            //if accumulator is 0, jump to address
+            if (r0.getValue() == 0) {
+                IP = operand.getValue();
+            }
+
+            return RunState.STATE_STOPPED_BREAK;
+        }
+        return RunState.STATE_STOPPED_BAD_INSTR;
+    }
+
+    /**
+     * Executes JGTZ instruction.
+     *
+     * @param operand register (labeled address in memory)
+     * @param operandType the type of the operand, should be a register
+     * @return run state after executing the instruction
+     */
+    private RunState jgtz(NumberMemoryItem operand, OperandType operandType) {
+        if (operandType == OperandType.REGISTER) {
+
+            //get accumulator
+            MemoryItem item = memory.read(0);
+            if (!(item instanceof NumberMemoryItem)) {
+                return RunState.STATE_STOPPED_BAD_INSTR;
+            }
+            NumberMemoryItem r0 = (NumberMemoryItem) item;
+
+            //if accumulator is greater than 0, jump to address
+            if (r0.getValue() > 0) {
+                IP = operand.getValue();
+            }
+
+            return RunState.STATE_STOPPED_BREAK;
+        }
+        return RunState.STATE_STOPPED_BAD_INSTR;
+    }
+
+    /**
+     * Executes HALT instruction, no need for checking parameters, they are not
+     * used.
+     *
+     * @return run state after executing the insstruction, i.e.
+     * RunState.STATE_STOPPED_NORMAL
+     */
+    private RunState halt(NumberMemoryItem operand, OperandType operandType) {
+        return RunState.STATE_STOPPED_NORMAL;
+    }
 
     /**
      * Destroy.
@@ -233,16 +462,24 @@ public class RASPEmulatorImpl extends AbstractCPU {
     public RunState call() throws Exception {
         while (!Thread.currentThread().isInterrupted()) {
             try {
+                //if breakpoint is set, throw it
                 if (isBreakpointSet(IP)) {
                     throw new Breakpoint();
                 }
+                //execute one step (executes one instruction of the CPU)
                 RunState tmpRunState = stepInternal();
+
+                /*if RunState.STATE_STOPPED_BREAK is returned, it means that 
+                 the instruction was successful so just go on executing next instruction. 
+                 If HALT was executed or something else was returned, just return it*/
                 if (tmpRunState != RunState.STATE_STOPPED_BREAK) {
                     return tmpRunState;
                 }
             } catch (IndexOutOfBoundsException e) {
+                //can happen if trying to get instruction from invalid address
                 return RunState.STATE_STOPPED_ADDR_FALLOUT;
             } catch (Breakpoint breakpoint) {
+                //if breakpoint was set at particular instruction
                 return RunState.STATE_STOPPED_BREAK;
             }
         }
@@ -256,23 +493,29 @@ public class RASPEmulatorImpl extends AbstractCPU {
             return RunState.STATE_STOPPED_ADDR_FALLOUT;
         }
 
+        //get instruction
         MemoryItem item = memory.read(IP++);
         if (!(item instanceof RASPInstruction)) {
             return RunState.STATE_STOPPED_BAD_INSTR;
         }
-
         RASPInstruction instruction = (RASPInstruction) item;
 
+        //get the operand of the instruction
         item = memory.read(IP++);
         if (!(item instanceof NumberMemoryItem)) {
             return RunState.STATE_STOPPED_BAD_INSTR;
         }
-
         NumberMemoryItem operand = (NumberMemoryItem) item;
 
         int instructionCode = instruction.getCode();
 
-        
+        //if instruction is valid, execute it
+        if (instructionCode >= RASPInstruction.READ && instructionCode <= RASPInstruction.HALT) {
+            return executableInstructions[instruction.getCode()].execute(operand, instruction.getOperandType());
+        }
+
+        //if invalid, return "bad instruction"
+        return RunState.STATE_STOPPED_BAD_INSTR;
     }
 
     @Override
@@ -349,14 +592,17 @@ public class RASPEmulatorImpl extends AbstractCPU {
         this.settings = settings;
 
         try {
-            memory = (RASPMemoryContextImpl) contextPool.getMemoryContext(getPluginID(), RASPMemoryContextImpl.class);
+            memory = (RASPMemoryContextImpl) contextPool.getMemoryContext(getPluginID(), RASPMemoryContextImpl.class
+            );
         } catch (InvalidContextException | ContextNotFoundException ex) {
             throw new PluginInitializationException(this, "Could not get memory context.", ex);
+
         }
 
         //check if memory is compatible with this CPU emulator
         if (memory.getDataType() != MemoryItem.class) {
-            throw new PluginInitializationException(this, "Specified memory uses "
+            throw new PluginInitializationException(this,
+                    "Specified memory uses "
                     + "incompatible data type, this CPU emulator does not support such kind of memory.");
         }
 
