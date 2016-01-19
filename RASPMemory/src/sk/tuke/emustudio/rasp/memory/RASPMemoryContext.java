@@ -1,5 +1,6 @@
 package sk.tuke.emustudio.rasp.memory;
 
+import emulib.annotations.ContextType;
 import emulib.plugins.memory.MemoryContext;
 
 /**
@@ -7,6 +8,7 @@ import emulib.plugins.memory.MemoryContext;
  *
  * @author miso
  */
+@ContextType
 public interface RASPMemoryContext extends MemoryContext<MemoryItem> {
 
     /**
