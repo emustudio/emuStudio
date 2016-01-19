@@ -14,6 +14,7 @@ import emulib.emustudio.debugtable.DebugTable;
 import emulib.emustudio.debugtable.MnemoColumn;
 import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.AbstractCPU;
+import emulib.plugins.cpu.CPUContext;
 import emulib.plugins.cpu.DebugColumn;
 import emulib.plugins.cpu.Disassembler;
 import emulib.runtime.AlreadyRegisteredException;
@@ -31,7 +32,7 @@ import sk.tuke.emustudio.rasp.memory.MemoryItem;
 import sk.tuke.emustudio.rasp.memory.NumberMemoryItem;
 import sk.tuke.emustudio.rasp.memory.OperandType;
 import sk.tuke.emustudio.rasp.memory.RASPInstruction;
-import sk.tuke.emustudio.rasp.memory.impl.RASPMemoryContextImpl;
+import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 
 @PluginType(
         type = PLUGIN_TYPE.CPU,
@@ -49,7 +50,7 @@ public class RASPEmulatorImpl extends AbstractCPU {
     private RASPCpuContext context;
     private ContextPool contextPool;
     private volatile SettingsManager settings;
-    private RASPMemoryContextImpl memory;
+    private RASPMemoryContext memory;
     private RASPDisassembler disassembler;
 
     private boolean debugTableInitialized = false;
@@ -60,7 +61,7 @@ public class RASPEmulatorImpl extends AbstractCPU {
         this.contextPool = Objects.requireNonNull(contextPool);
         context = new RASPCpuContext(this, contextPool);
         try {
-            contextPool.register(pluginID, context, RASPCpuContext.class);
+            contextPool.register(pluginID, context, CPUContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException ex) {
             StaticDialogs.showErrorMessage("Could not register RASP CPU context", RASPEmulatorImpl.class.getAnnotation(PluginType.class).title());
         }
@@ -592,8 +593,7 @@ public class RASPEmulatorImpl extends AbstractCPU {
         this.settings = settings;
 
         try {
-            memory = (RASPMemoryContextImpl) contextPool.getMemoryContext(getPluginID(), RASPMemoryContextImpl.class
-            );
+            memory = (RASPMemoryContext) contextPool.getMemoryContext(getPluginID(), RASPMemoryContext.class);
         } catch (InvalidContextException | ContextNotFoundException ex) {
             throw new PluginInitializationException(this, "Could not get memory context.", ex);
 
