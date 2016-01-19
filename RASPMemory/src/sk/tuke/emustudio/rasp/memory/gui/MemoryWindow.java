@@ -86,7 +86,7 @@ public class MemoryWindow extends javax.swing.JFrame {
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("RASP Memory");
 
         memoryTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -219,48 +219,50 @@ public class MemoryWindow extends javax.swing.JFrame {
 ////        //</editor-fold>
 
         /**
-         * Testing method it constructs a mock compiler result file (mock
-         * compiled program), here is the example program: READ 1 LOAD =1 STORE
-         * 2 LOAD 1 SUB =1 JGTZ OK JMP FINISH OK: LOAD 2 MUL 1 STORE 2 LOAD 1
-         * SUB =1 STORE 1 SUB =1 JGTZ OK JMP FINISH FINISH: WRITE 2 HALT
+         * Testing method; it constructs a mock compiler result file (mock
+         * compiled program), here is the example program: LOAD =1 STORE 2 STORE
+         * 3 READ 1 LOAD 1 JGTZ OK JMP FIN OK: LOAD 3 SUB 1 JZ FIN LOAD 3 ADD =1
+         * STORE 3 MUL 2 STORE 2 JMP OK FIN: WRITE 2 HALT
+         *
+         * This example program takes one input and calculates its factorial.
          */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
 
                 //program as array of items
                 MemoryItem[] memoryItems = new MemoryItem[]{
-                    new RASPInstructionImpl(RASPInstruction.READ, OperandType.REGISTER),
-                    new NumberMemoryItem(1),
                     new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.CONSTANT),
                     new NumberMemoryItem(1),
                     new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
                     new NumberMemoryItem(2),
-                    new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
+                    new NumberMemoryItem(3),
+                    new RASPInstructionImpl(RASPInstruction.READ, OperandType.REGISTER),
                     new NumberMemoryItem(1),
-                    new RASPInstructionImpl(RASPInstruction.SUB, OperandType.CONSTANT),
+                    new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
                     new NumberMemoryItem(1),
                     new RASPInstructionImpl(RASPInstruction.JGTZ, OperandType.REGISTER),
                     new NumberMemoryItem(19),
                     new RASPInstructionImpl(RASPInstruction.JMP, OperandType.REGISTER),
                     new NumberMemoryItem(37),
                     new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
-                    new NumberMemoryItem(2),
+                    new NumberMemoryItem(3),
+                    new RASPInstructionImpl(RASPInstruction.SUB, OperandType.REGISTER),
+                    new NumberMemoryItem(1),
+                    new RASPInstructionImpl(RASPInstruction.JZ, OperandType.REGISTER),
+                    new NumberMemoryItem(37),
+                    new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
+                    new NumberMemoryItem(3),
+                    new RASPInstructionImpl(RASPInstruction.ADD, OperandType.CONSTANT),
+                    new NumberMemoryItem(1),
+                    new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
+                    new NumberMemoryItem(3),
                     new RASPInstructionImpl(RASPInstruction.MUL, OperandType.REGISTER),
                     new NumberMemoryItem(2),
                     new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
                     new NumberMemoryItem(2),
-                    new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
-                    new NumberMemoryItem(1),
-                    new RASPInstructionImpl(RASPInstruction.SUB, OperandType.CONSTANT),
-                    new NumberMemoryItem(1),
-                    new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
-                    new NumberMemoryItem(1),
-                    new RASPInstructionImpl(RASPInstruction.SUB, OperandType.CONSTANT),
-                    new NumberMemoryItem(1),
-                    new RASPInstructionImpl(RASPInstruction.JGTZ, OperandType.REGISTER),
-                    new NumberMemoryItem(19),
                     new RASPInstructionImpl(RASPInstruction.JMP, OperandType.REGISTER),
-                    new NumberMemoryItem(37),
+                    new NumberMemoryItem(19),
                     new RASPInstructionImpl(RASPInstruction.WRITE, OperandType.REGISTER),
                     new NumberMemoryItem(2),
                     new RASPInstructionImpl(RASPInstruction.HALT, OperandType.REGISTER),
@@ -280,7 +282,7 @@ public class MemoryWindow extends javax.swing.JFrame {
 
                 //save program to file
                 try {
-                    FileOutputStream fileOutputStream = new FileOutputStream("example.bin");
+                    FileOutputStream fileOutputStream = new FileOutputStream("factorial.bin");
                     BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
                     try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(bufferedOutputStream)) {
                         objectOutputStream.writeObject(labels);
