@@ -525,8 +525,8 @@ public class RASPEmulatorImpl extends AbstractCPU {
             DebugTable debugTable = API.getInstance().getDebugTable();
             if (debugTable != null) {
                 ArrayList<DebugColumn> debugColumns = new ArrayList<>();
-                debugColumns.add(new LabelDebugColumn(memory));
                 debugColumns.add(new BreakpointColumn(this));
+                debugColumns.add(new LabelDebugColumn(memory));
                 debugColumns.add(new MnemoColumn(disassembler));
                 debugTable.setCustomColumns(debugColumns);
             }
