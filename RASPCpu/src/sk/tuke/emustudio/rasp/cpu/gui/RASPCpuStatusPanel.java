@@ -10,7 +10,7 @@ import sk.tuke.emustudio.rasp.cpu.impl.RASPEmulatorImpl;
 import sk.tuke.emustudio.rasp.memory.impl.RASPMemoryContextImpl;
 
 /**
- *
+ * GUI of the status panel for RASP CPU.
  * @author miso
  */
 public class RASPCpuStatusPanel extends javax.swing.JPanel {
@@ -18,8 +18,8 @@ public class RASPCpuStatusPanel extends javax.swing.JPanel {
     /**
      * Creates new form RASPCpuStatusPanel
      *
-     * @param cpu
-     * @param memory
+     * @param cpu associated cpu    
+     * @param memory associated memory
      */
     public RASPCpuStatusPanel(RASPEmulatorImpl cpu, RASPMemoryContextImpl memory) {
         initComponents();
