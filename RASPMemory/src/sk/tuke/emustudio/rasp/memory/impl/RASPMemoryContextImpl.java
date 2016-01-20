@@ -191,6 +191,7 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
              is just updating the whole table
              */
             notifyMemoryChanged(0);
+            notifyMemorySizeChanged();
         }
 
     }
