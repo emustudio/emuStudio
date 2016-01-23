@@ -31,48 +31,23 @@ In this tutorial, there won't be any deep description of the computer, rather th
 itself, because it is very simple. The processor had only 7 instructions, each is 3-bit long. The instructions table
 follows (modified from https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine#Programming[Wikipedia]):
 
-[width="100%"]
-|============
-|Binary code |Modern mnemonic |Action |Operation
 
-|`000`
-|`JMP S`
-|`S(L) -> CI`
-|Jump to the instruction at the address obtained from the specified memory address `S(L)` (absolute unconditional jump)
-
-|`100`
-|`JRP S`
-|`CI + S(L) -> CI`
-|Jump to the instruction at the program counter (`CI`) plus the relative value obtained from the specified memory
- address `S(L)` (relative unconditional jump)
-
-|`010`
-|`LDN S`
-|`-S(L) -> A`
-|Take the number from the specified memory address `S(L)`, negate it, and load it into the accumulator
-
-|`110`
-|`STO S`
-|`A -> S(L)`
-|Store the number in the accumulator to the specified memory address `S(L)`
-
-|`001` or `101`[b]
-|`SUB S`
-|`A - S(L) -> A`
-|Subtract the number at the specified memory address `S(L)` from the value in accumulator, and store the result
- in the accumulator
-
-|`011`
-|`CMP`
-|`if A\<0 then CI+1->CI`
-|Skip next instruction if the accumulator contains a negative value
-
-|`111`
-|`STP`
-|Stop
-
-|===========
-
+[width="50%",cols=">2m,<m,<m,<",frame="topbot",options="header,footer"]
+|===================================================================
+|Binary code |Modern mnemonic |Action            |Operation
+|000         |JMP S           | S(L) -> CI      |Jump to the instruction at the address obtained from the specified memory
+                                                  address `S(L)` (absolute unconditional jump)
+|100         |JRP S           | CI + S(L) -> CI |Jump to the instruction at the program counter (`CI`) plus the
+                                                  relative value obtained from the specified memory address `S(L)`
+                                                  (relative unconditional jump)
+|010         |LDN S           |-S(L) -> A       |Take the number from the specified memory address `S(L)`, negate it,
+                                                  and load it into the accumulator
+|110         |STO S           |A -> S(L)        |Store the number in the accumulator to the specified memory address `S(L)`
+|001 or 101  |SUB S           |A - S(L) -> A    |Subtract the number at the specified memory address `S(L)` from the
+                                                  value in accumulator, and store the result in the accumulator
+|011         |CMP             |if A<0 then CI+1->CI |Skip next instruction if the accumulator contains a negative value
+|111         |STP             |Stop              |
+|===================================================================
 
 NOTE: The bit-representation was kind of reversed. E.g., value `3` was represented by binary `110`, rather than `011`.
 
@@ -1244,6 +1219,8 @@ Let's do it.
 
 The most interesting is the `compile()` method. So let's begin with it first.
 
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/assembler/CompilerImpl.java`
 ----
 public class CompilerImpl extends AbstractCompiler {
 
