@@ -17,7 +17,8 @@
 *.cup eol=lf
 *.flex eol=lf
 *.jflex eol=lf
-*.md
+*.md eol=lf
+*.b eol=lf
 
 # Declare files that are truly binary and shouldn't be modified.
 *.jpeg binary
