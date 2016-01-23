@@ -14,6 +14,10 @@
 *.adoc eol=lf
 *.inc eol=lf
 *.eds eol=lf
+*.cup eol=lf
+*.flex eol=lf
+*.jflex eol=lf
+*.md
 
 # Declare files that are truly binary and shouldn't be modified.
 *.jpeg binary

@@ -337,4 +337,4 @@ Reg ::= REGISTERS_A {: RESULT = 7; :} | REGISTERS_B {: RESULT = 0; :}
  | REGISTERS_C {: RESULT = 1; :} | REGISTERS_D {: RESULT = 2; :}
  | REGISTERS_E {: RESULT = 3; :} | REGISTERS_H {: RESULT = 4; :}
  | REGISTERS_L {: RESULT = 5; :} | REGISTERS_M {: RESULT = 6; :};
- 
+
