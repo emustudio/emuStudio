@@ -10,6 +10,10 @@
 *.props text eol=lf
 *.properties text eol=lf
 *.conf text eol=lf
+*.asm eol=lf
+*.adoc eol=lf
+*.inc eol=lf
+*.eds eol=lf
 
 # Declare files that are truly binary and shouldn't be modified.
 *.jpeg binary
