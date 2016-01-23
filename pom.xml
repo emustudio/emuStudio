@@ -70,6 +70,7 @@
     <module>plugins/mem/brainduck-mem</module>
     <module>plugins/cpu/brainduck-cpu</module>
     <module>plugins/devices/brainduck-terminal</module>
+    <module>plugins/compilers/as-ssem</module>
   </modules>
 
   <build>
