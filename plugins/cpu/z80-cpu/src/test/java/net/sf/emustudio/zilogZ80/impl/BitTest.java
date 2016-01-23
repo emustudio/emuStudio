@@ -23,7 +23,6 @@ import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
 import net.sf.emustudio.zilogZ80.impl.suite.ByteTestBuilder;
 import net.sf.emustudio.zilogZ80.impl.suite.FlagsBuilderImpl;
 import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
-import net.sf.emustudio.zilogZ80.impl.suite.Utils;
 import org.junit.Test;
 
 import java.util.function.Function;
@@ -202,7 +201,7 @@ public class BitTest extends InstructionsTest {
                 .clearOtherVerifiersAfterRun();
 
         FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().zero();
-        Generator.forSome16bitBinary(2,
+        Generator.forSome16bitBinary(0x100,
                 test.verifyFlags(flagsBuilder, context -> context.second & 1).runWithFirst8bitOperandWithOpcodeAfter(0x46, 0xDD, 0xCB),
                 test.verifyFlags(flagsBuilder, context -> (context.second >>> 1) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x4E, 0xDD, 0xCB),
                 test.verifyFlags(flagsBuilder, context -> (context.second >>> 2) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x56, 0xDD, 0xCB),
@@ -225,7 +224,7 @@ public class BitTest extends InstructionsTest {
                 .clearOtherVerifiersAfterRun();
 
         FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().zero();
-        Generator.forSome16bitBinary(2,
+        Generator.forSome16bitBinary(0x100,
                 test.verifyFlags(flagsBuilder, context -> context.second & 1).runWithFirst8bitOperandWithOpcodeAfter(0x46, 0xFD, 0xCB),
                 test.verifyFlags(flagsBuilder, context -> (context.second >>> 1) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x4E, 0xFD, 0xCB),
                 test.verifyFlags(flagsBuilder, context -> (context.second >>> 2) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x56, 0xFD, 0xCB),
