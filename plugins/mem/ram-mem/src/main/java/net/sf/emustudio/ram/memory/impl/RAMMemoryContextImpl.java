@@ -137,6 +137,7 @@ public class RAMMemoryContextImpl extends AbstractMemoryContext<RAMInstruction> 
             input.close();
         } finally {
             notifyMemoryChanged(-1);
+            notifyMemorySizeChanged();
         }
     }
 
