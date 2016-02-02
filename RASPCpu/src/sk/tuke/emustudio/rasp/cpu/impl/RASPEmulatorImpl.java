@@ -127,6 +127,7 @@ public class RASPEmulatorImpl extends AbstractCPU {
             }
             //write to input value to specified register
             memory.write(operand.getValue(), new NumberMemoryItem(inputInt));
+            return RunState.STATE_STOPPED_BREAK;
         }
         return RunState.STATE_STOPPED_BAD_INSTR;
     }
@@ -521,6 +522,7 @@ public class RASPEmulatorImpl extends AbstractCPU {
 
     @Override
     public JPanel getStatusPanel() {
+        //also initialize debug table
         if (!debugTableInitialized) {
             DebugTable debugTable = API.getInstance().getDebugTable();
             if (debugTable != null) {
@@ -606,7 +608,7 @@ public class RASPEmulatorImpl extends AbstractCPU {
                     + "incompatible data type, this CPU emulator does not support such kind of memory.");
         }
 
-        disassembler = new RASPDisassembler();
+        disassembler = new RASPDisassembler(memory);
         context.init(getPluginID());
 
     }
