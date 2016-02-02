@@ -99,6 +99,11 @@ public class RASPMemoryImpl extends AbstractMemory {
     @Override
     public String getVersion() {
         return "";
-    }
+    } 
 
+    @Override
+    public int getProgramStart() {
+        return context.getProgramStart();
+    } 
+    
 }

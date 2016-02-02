@@ -16,31 +16,11 @@ import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> implements RASPMemoryContext {
 
     private final List<MemoryItem> memory = new ArrayList<>();
-    private int programStart;
+    private Integer programStart;
 
     private final Map<Integer, String> labels = new HashMap<>();
 
     private final Map<String, Integer> switchedLabels = new HashMap<>();
-
-    /**
-     * Get address of the first instruction of the program.
-     *
-     * @return address of the first instruction of the program
-     */
-    @Override
-    public int getProgramStart() {
-        return programStart;
-    }
-
-    /**
-     * Set address of the first instruction of the program.
-     *
-     * @param programStart address of the first instruction of the program
-     */
-    @Override
-    public void setProgramStart(int programStart) {
-        this.programStart = programStart;
-    }
 
     /**
      * Reads memory item from given address.
@@ -158,6 +138,10 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
     public void destroy() {
         memory.clear();
     }
+    
+    public int getProgramStart(){
+        return programStart;
+    }
 
     /**
      * Loads compiled program to memory from file.
@@ -177,14 +161,13 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
                 labels.clear();
                 memory.clear();
 
-                labels.putAll((HashMap<Integer, String>) objectInputStream.readObject());
-                Integer startOfProgram = (Integer) objectInputStream.readObject();
-                setProgramStart(startOfProgram);
+                labels.putAll((Map<Integer, String>) objectInputStream.readObject());
+                programStart = (Integer) objectInputStream.readObject();
                 //pad the pre-program area with null-s
-                for (int i = 0; i < startOfProgram; i++) {
+                for (int i = 0; i < programStart; i++) {
                     memory.add(i, null);
                 }
-                memory.addAll(startOfProgram, (List<MemoryItem>) objectInputStream.readObject());
+                memory.addAll(programStart, (List<MemoryItem>) objectInputStream.readObject());
             }
         } finally {
             /*any number can be put in this method, handling of the notification

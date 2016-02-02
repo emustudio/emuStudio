@@ -30,20 +30,6 @@ public interface RASPMemoryContext extends MemoryContext<MemoryItem> {
     /**
      * Destroys the memory content.
      */
-    public void destroy();
-
-    /**
-     * Get address of the first instruction of the program.
-     *
-     * @return address of the first instruction of the program
-     */
-    int getProgramStart();
-
-    /**
-     * Set address of the first instruction of the program.
-     *
-     * @param programStart address of the first instruction of the program
-     */
-    void setProgramStart(int programStart);
+    public void destroy();    
 
 }

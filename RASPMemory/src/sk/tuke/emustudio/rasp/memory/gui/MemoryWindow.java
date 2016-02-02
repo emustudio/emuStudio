@@ -242,15 +242,15 @@ public class MemoryWindow extends javax.swing.JFrame {
                     new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
                     new NumberMemoryItem(1),
                     new RASPInstructionImpl(RASPInstruction.JGTZ, OperandType.REGISTER),
-                    new NumberMemoryItem(19),
+                    new NumberMemoryItem(20),
                     new RASPInstructionImpl(RASPInstruction.JMP, OperandType.REGISTER),
-                    new NumberMemoryItem(37),
+                    new NumberMemoryItem(38),
                     new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
                     new NumberMemoryItem(3),
                     new RASPInstructionImpl(RASPInstruction.SUB, OperandType.REGISTER),
                     new NumberMemoryItem(1),
                     new RASPInstructionImpl(RASPInstruction.JZ, OperandType.REGISTER),
-                    new NumberMemoryItem(37),
+                    new NumberMemoryItem(38),
                     new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
                     new NumberMemoryItem(3),
                     new RASPInstructionImpl(RASPInstruction.ADD, OperandType.CONSTANT),
@@ -262,7 +262,7 @@ public class MemoryWindow extends javax.swing.JFrame {
                     new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
                     new NumberMemoryItem(2),
                     new RASPInstructionImpl(RASPInstruction.JMP, OperandType.REGISTER),
-                    new NumberMemoryItem(19),
+                    new NumberMemoryItem(20),
                     new RASPInstructionImpl(RASPInstruction.WRITE, OperandType.REGISTER),
                     new NumberMemoryItem(2),
                     new RASPInstructionImpl(RASPInstruction.HALT, OperandType.REGISTER),
@@ -271,11 +271,11 @@ public class MemoryWindow extends javax.swing.JFrame {
 
                 //construct HashMap with labels
                 HashMap<Integer, String> labels = new HashMap<>();
-                labels.put(19, "OK");
-                labels.put(37, "FINISH");
+                labels.put(20, "OK");
+                labels.put(38, "FINISH");
 
                 //prepare program start attribute
-                Integer programStart = 5;
+                Integer programStart = 6;
 
                 //construct list with memory items
                 ArrayList<MemoryItem> memory = new ArrayList<>(Arrays.asList(memoryItems));
