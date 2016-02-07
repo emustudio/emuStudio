@@ -35,30 +35,42 @@ public class RASPDisassembler implements Disassembler {
 
     @Override
     public DisassembledInstruction disassemble(int memoryPosition) throws InvalidInstructionException {
-         //retrieve the instruction
-         MemoryItem item = memory.read(memoryPosition);
-         if (!(item instanceof RASPInstruction)) {
-         return new DisassembledInstruction(memoryPosition, "unknown", "");
-         }
-         RASPInstruction instruction = (RASPInstruction) item;
 
-         //retrieve its operand
-         item = memory.read(memoryPosition + 1);
-         if (!(item instanceof NumberMemoryItem)) {
-         return new DisassembledInstruction(memoryPosition, "unknown", "");
-         }
-         NumberMemoryItem operand = (NumberMemoryItem) item;
+        //retrieve the instruction
+        MemoryItem item = memory.read(memoryPosition);
+        if (!(item instanceof RASPInstruction)) {
+            //what we retrieved is not a valid instruction, it can be either invalid, or it is a data memory item before the program start
+            return new DisassembledInstruction(memoryPosition, "unknown", "");
+        }
+        RASPInstruction instruction = (RASPInstruction) item;
 
-         //prepare the mnemonic form
-         String operandType = (instruction.getOperandType() == OperandType.CONSTANT) ? "=" : "";
-         String mnemo = instruction.getCodeStr() + " " + operandType + " " + operand.toString();
-         return new DisassembledInstruction(memoryPosition, mnemo, "");
+        //retrieve its operand
+        item = memory.read(memoryPosition + 1);
+        if (!(item instanceof NumberMemoryItem)) {
+            return new DisassembledInstruction(memoryPosition, "unknown", "");
+        }
+        NumberMemoryItem operand = (NumberMemoryItem) item;
+
+        //prepare the mnemonic form
+        String operandType = (instruction.getOperandType() == OperandType.CONSTANT) ? "=" : "";
+        String mnemo = instruction.getCodeStr() + " " + operandType + " " + operand.toString();
+        return new DisassembledInstruction(memoryPosition, mnemo, "");
     }
 
     @Override
     public int getNextInstructionPosition(int memoryPosition) throws IndexOutOfBoundsException {
-        //RASP instruction is followed by its operand, so next instruction is at the memoryPosition + 2 
-        return memoryPosition + 2;
+        if (memoryPosition >= memory.getSize()) {
+            return memoryPosition + 1;
+        }
+        MemoryItem item = memory.read(memoryPosition);
+        if (item instanceof RASPInstruction) {
+            RASPInstruction instruction = (RASPInstruction) item;
+            if(instruction.getCode()==RASPInstruction.HALT){
+                return memoryPosition+1;
+            }
+            return memoryPosition + 2;
+        }
+        return memoryPosition + 1;
     }
 
 }
