@@ -635,8 +635,8 @@ public class RASPEmulatorImpl extends AbstractCPU {
 
     @Override
     public void reset(int addr) {
-        super.reset(addr);
         IP = addr;
+        super.reset(addr);
     }
 
 }
