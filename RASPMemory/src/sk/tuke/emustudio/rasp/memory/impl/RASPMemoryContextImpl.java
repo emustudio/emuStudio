@@ -138,8 +138,8 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
     public void destroy() {
         memory.clear();
     }
-    
-    public int getProgramStart(){
+
+    public int getProgramStart() {
         return programStart;
     }
 
@@ -165,9 +165,15 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
                 programStart = (Integer) objectInputStream.readObject();
                 //pad the pre-program area with null-s
                 for (int i = 0; i < programStart; i++) {
-                    memory.add(i, null);
+                    write(i, null);
                 }
-                memory.addAll(programStart, (List<MemoryItem>) objectInputStream.readObject());
+                //load program from file
+                List<MemoryItem> program = (List<MemoryItem>) objectInputStream.readObject();
+                int position = programStart;
+                //write all the program, beginning at programStart (the area before)
+                for (MemoryItem item : program) {
+                    write(position++, item);
+                }
             }
         } finally {
             /*any number can be put in this method, handling of the notification
