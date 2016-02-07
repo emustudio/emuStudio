@@ -136,6 +136,7 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
      */
     @Override
     public void destroy() {
+        labels.clear();
         memory.clear();
     }
 
