@@ -26,9 +26,9 @@ env:
       BgteCsFztnGT0oZfkT6Yb9a11m5ahUZ5nXrwMu5MDqklsFgxplM=
 
 after_success:
-- mvn -P coveralls clean cobertura:cobertura coveralls:report
+- mvn -B -U -P coveralls clean cobertura:cobertura coveralls:report
 - python ci-tools/add_server.py
-- mvn clean deploy -DskipTests=true
+- mvn -B clean deploy -Dmaven.test.skip=true
 - python ci-tools/restore_backups.py
 
 notifications:
