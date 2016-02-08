@@ -43,7 +43,7 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
     public void write(int position, MemoryItem item) {
         if (position >= memory.size()) {
             memory.add(position, item);
-            notifyMemoryChanged(memory.size());
+            notifyMemoryChanged(memory.size()-1);
             notifyMemorySizeChanged();
         } else {
             memory.set(position, item);
