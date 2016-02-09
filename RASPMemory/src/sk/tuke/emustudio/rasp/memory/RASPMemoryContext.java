@@ -27,9 +27,4 @@ public interface RASPMemoryContext extends MemoryContext<MemoryItem> {
      */
     public String getLabel(int pos);
 
-    /**
-     * Destroys the memory content.
-     */
-    public void destroy();    
-
 }
