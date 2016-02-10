@@ -266,6 +266,10 @@ public class MemoryWindow extends javax.swing.JFrame {
                     new NumberMemoryItem(19),
                     new RASPInstructionImpl(RASPInstruction.WRITE, OperandType.REGISTER),
                     new NumberMemoryItem(2),
+                    new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.CONSTANT),
+                    new NumberMemoryItem(25),
+                    new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
+                    new NumberMemoryItem(60),
                     new RASPInstructionImpl(RASPInstruction.HALT, OperandType.REGISTER),
                     new NumberMemoryItem(0)
                 };

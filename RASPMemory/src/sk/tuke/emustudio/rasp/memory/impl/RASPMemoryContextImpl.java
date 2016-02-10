@@ -43,8 +43,8 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
     public void write(int position, MemoryItem item) {
         if (position >= memory.size()) {
             //padd with nulls to prevent IndexOutOfBoundsException
-            for(int i=memory.size();i<position; i++){
-                memory.add(i,null);
+            for (int i = memory.size(); i < position; i++) {
+                memory.add(i, null);
             }
             memory.add(position, item);
             notifyMemoryChanged(memory.size());
@@ -142,6 +142,10 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
         memory.clear();
     }
 
+    /**
+     * Get the address from which the program starts; this method is called by RASPMemoryImpl::destroy()
+     * @return
+     */
     public int getProgramStart() {
         return programStart;
     }
@@ -158,7 +162,6 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
         try {
             FileInputStream fileInputStream = new FileInputStream(filename);
             BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-            //clear labels and memory before loading
             try (ObjectInputStream objectInputStream = new ObjectInputStream(bufferedInputStream)) {
                 //clear labels and memory before loading
                 labels.clear();
@@ -166,14 +169,10 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
 
                 labels.putAll((Map<Integer, String>) objectInputStream.readObject());
                 programStart = (Integer) objectInputStream.readObject();
-                //pad the pre-program area with null-s
-                for (int i = 0; i < programStart; i++) {
-                    write(i, null);
-                }
                 //load program from file
                 List<MemoryItem> program = (List<MemoryItem>) objectInputStream.readObject();
                 int position = programStart;
-                //write all the program, beginning at programStart (the area before)
+                //write all the program, beginning at programStart
                 for (MemoryItem item : program) {
                     write(position++, item);
                 }
