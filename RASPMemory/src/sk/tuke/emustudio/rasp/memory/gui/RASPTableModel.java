@@ -60,6 +60,7 @@ public class RASPTableModel extends AbstractTableModel {
      */
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
+        //column with addresses, optionally marked with label
         if (columnIndex == 0) {
             String label = memory.getLabel(rowIndex);
             if (label != null) {
@@ -67,11 +68,15 @@ public class RASPTableModel extends AbstractTableModel {
             } else {
                 return String.valueOf(rowIndex);
             }
-        } else {
+        } //column with cell value
+        else {
+            //get item at given position
             MemoryItem item = (MemoryItem) memory.read(rowIndex);
+            //item is a number
             if (item instanceof NumberMemoryItem) {
-                //if this is not the zeroth item
+                //if this is not the zeroth item (not the ACC)
                 if (rowIndex != 0) {
+                    //get the item at the previous position
                     MemoryItem previousItem = memory.read(rowIndex - 1);
                     //if previos item is an instruction
                     if (previousItem instanceof RASPInstruction) {
@@ -107,7 +112,7 @@ public class RASPTableModel extends AbstractTableModel {
                 return ((RASPInstruction) item).getCodeStr();
             }
         }
-        return null;
+        return null;        
     }
 
     @Override
