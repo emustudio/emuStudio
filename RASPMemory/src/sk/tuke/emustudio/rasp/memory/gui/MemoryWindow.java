@@ -55,7 +55,7 @@ public class MemoryWindow extends javax.swing.JFrame {
         memory.addMemoryListener(new Memory.MemoryListener() {
 
             @Override
-            public void memoryChanged(int i) {
+            public void memoryChanged(int position) {
                 updateTable();
             }
 
@@ -69,7 +69,7 @@ public class MemoryWindow extends javax.swing.JFrame {
     /**
      * Update the table.
      */
-    public final void updateTable() {
+    private void updateTable() {
         tableModel.fireTableDataChanged();
     }
 
@@ -164,8 +164,8 @@ public class MemoryWindow extends javax.swing.JFrame {
 
     private void onOpenClick(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onOpenClick
         JFileChooser chooser = new JFileChooser();
+        
         UniversalFileFilter binaryFileFilter = new UniversalFileFilter();
-        UniversalFileFilter allFilesFilter = new UniversalFileFilter();
         binaryFileFilter.addExtension("bin");
         binaryFileFilter.setDescription("Compiled program for RASP (*.bin)");
 
