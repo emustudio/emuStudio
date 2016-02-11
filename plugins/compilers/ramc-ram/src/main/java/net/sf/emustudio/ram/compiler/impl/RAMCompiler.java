@@ -120,6 +120,8 @@ public class RAMCompiler extends AbstractCompiler {
 
             notifyInfo("Compile was successful.");
             if (memory != null) {
+                //clear the memory before loading new image
+                memory.clear();
                 compiledProgram.loadIntoMemory(memory);
                 notifyInfo("Compiled file was loaded into operating memory.");
             }
