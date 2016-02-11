@@ -549,18 +549,18 @@ public class RASPEmulatorImpl extends AbstractCPU {
 
     /**
      * Get current value of the accumulator (memory cell at address [0]). If the
-     * item is not a NumberMemoryItem, i.e. it is an instruction, -1 is
-     * returned.
+     * item is not a NumberMemoryItem, i.e. it is an instruction, its opcode is returned.
      *
      * @return current value of the accumulator (memory cell at address [0]), or
-     * -1 if the item is not a NumberMemoryItem
+     * the opcode if the item is a RASPInstruction
      */
     public int getACC() {
         MemoryItem memoryItem = memory.read(0);
         if (memoryItem instanceof NumberMemoryItem) {
             return ((NumberMemoryItem) memoryItem).getValue();
         }
-        return -1;
+        //if RASPInstruction is located in the ACC, return its opcode
+        return ((RASPInstruction) memoryItem).getCode();
     }
 
     /**
@@ -598,7 +598,6 @@ public class RASPEmulatorImpl extends AbstractCPU {
             memory = (RASPMemoryContext) contextPool.getMemoryContext(getPluginID(), RASPMemoryContext.class);
         } catch (InvalidContextException | ContextNotFoundException ex) {
             throw new PluginInitializationException(this, "Could not get memory context.", ex);
-
         }
 
         //check if memory is compatible with this CPU emulator
@@ -610,12 +609,11 @@ public class RASPEmulatorImpl extends AbstractCPU {
 
         disassembler = new RASPDisassembler(memory);
         context.init(getPluginID());
-
     }
 
     @Override
     public void showSettings() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+
     }
 
     @Override
