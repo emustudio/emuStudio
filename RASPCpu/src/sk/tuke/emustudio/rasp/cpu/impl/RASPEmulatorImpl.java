@@ -125,7 +125,7 @@ public class RASPEmulatorImpl extends AbstractCPU {
                 StaticDialogs.showErrorMessage("The input tape only supports valid integer values.");
                 return RunState.STATE_STOPPED_BAD_INSTR;
             }
-            //write to input value to specified register
+            //write input value to specified register
             memory.write(operand.getValue(), new NumberMemoryItem(inputInt));
             return RunState.STATE_STOPPED_BREAK;
         }
