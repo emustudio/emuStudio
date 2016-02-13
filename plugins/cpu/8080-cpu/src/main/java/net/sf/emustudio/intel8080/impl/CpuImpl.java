@@ -153,9 +153,9 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public void reset(int startPos) {
-        super.reset(startPos);
+    public void reset(int startPos) {        
         engine.reset(startPos);
+        super.reset(startPos);        
         stopFrequencyUpdater();
     }
 
