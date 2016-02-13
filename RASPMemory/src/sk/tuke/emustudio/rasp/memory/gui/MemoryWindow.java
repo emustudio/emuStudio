@@ -8,22 +8,9 @@ package sk.tuke.emustudio.rasp.memory.gui;
 import emulib.plugins.memory.Memory;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.UniversalFileFilter;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JFileChooser;
-import sk.tuke.emustudio.rasp.memory.MemoryItem;
-import sk.tuke.emustudio.rasp.memory.RASPInstruction;
-import sk.tuke.emustudio.rasp.memory.RASPInstructionImpl;
-import sk.tuke.emustudio.rasp.memory.NumberMemoryItem;
 import sk.tuke.emustudio.rasp.memory.impl.RASPMemoryContextImpl;
 
 /**
@@ -44,7 +31,7 @@ public class MemoryWindow extends javax.swing.JFrame {
      */
     public MemoryWindow(RASPMemoryContextImpl context) {
         this.memory = context;
-        this.recentOpenPath =  new File("/home/miso/3.ROCNIK/MVP-Bakalarka/RASP/RASPMemory");
+        this.recentOpenPath = new File("/home/miso/3.ROCNIK/MVP-Bakalarka/RASP/RASPMemory");
         //this.recentOpenPath = new File(System.getProperty("user.home"));
 
         initComponents();
@@ -163,7 +150,7 @@ public class MemoryWindow extends javax.swing.JFrame {
 
     private void onOpenClick(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onOpenClick
         JFileChooser chooser = new JFileChooser();
-        
+
         UniversalFileFilter binaryFileFilter = new UniversalFileFilter();
         binaryFileFilter.addExtension("bin");
         binaryFileFilter.setDescription("Compiled program for RASP (*.bin)");
@@ -218,90 +205,9 @@ public class MemoryWindow extends javax.swing.JFrame {
 ////        }
 ////        //</editor-fold>
 
-        /**
-         * Testing method; it constructs a mock compiler result file (mock
-         * compiled program), here is the example program: LOAD =1 STORE 2 STORE
-         * 3 READ 1 LOAD 1 JGTZ OK JMP FIN OK: LOAD 3 SUB 1 JZ FIN LOAD 3 ADD =1
-         * STORE 3 MUL 2 STORE 2 JMP OK FIN: WRITE 2 HALT
-         *
-         * This example program takes one input and calculates its factorial.
-         */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-
-                //program as array of items
-                MemoryItem[] memoryItems = new MemoryItem[]{
-                    new RASPInstructionImpl(RASPInstruction.LOAD_CONSTANT),
-                    new NumberMemoryItem(1),
-                    new RASPInstructionImpl(RASPInstruction.STORE),
-                    new NumberMemoryItem(2),
-                    new RASPInstructionImpl(RASPInstruction.STORE),
-                    new NumberMemoryItem(3),
-                    new RASPInstructionImpl(RASPInstruction.READ),
-                    new NumberMemoryItem(1),
-                    new RASPInstructionImpl(RASPInstruction.LOAD_REGISTER),
-                    new NumberMemoryItem(1),
-                    new RASPInstructionImpl(RASPInstruction.JGTZ),
-                    new NumberMemoryItem(19),
-                    new RASPInstructionImpl(RASPInstruction.JMP),
-                    new NumberMemoryItem(37),
-                    new RASPInstructionImpl(RASPInstruction.LOAD_REGISTER),
-                    new NumberMemoryItem(3),
-                    new RASPInstructionImpl(RASPInstruction.SUB_REGISTER),
-                    new NumberMemoryItem(1),
-                    new RASPInstructionImpl(RASPInstruction.JZ),
-                    new NumberMemoryItem(37),
-                    new RASPInstructionImpl(RASPInstruction.LOAD_REGISTER),
-                    new NumberMemoryItem(3),
-                    new RASPInstructionImpl(RASPInstruction.ADD_CONSTANT),
-                    new NumberMemoryItem(1),
-                    new RASPInstructionImpl(RASPInstruction.STORE),
-                    new NumberMemoryItem(3),
-                    new RASPInstructionImpl(RASPInstruction.MUL_REGISTER),
-                    new NumberMemoryItem(2),
-                    new RASPInstructionImpl(RASPInstruction.STORE),
-                    new NumberMemoryItem(2),
-                    new RASPInstructionImpl(RASPInstruction.JMP),
-                    new NumberMemoryItem(19),
-                    new RASPInstructionImpl(RASPInstruction.WRITE_REGISTER),
-                    new NumberMemoryItem(2),
-                    new RASPInstructionImpl(RASPInstruction.LOAD_CONSTANT),
-                    new NumberMemoryItem(25),
-                    new RASPInstructionImpl(RASPInstruction.STORE),
-                    new NumberMemoryItem(60),
-                    new RASPInstructionImpl(RASPInstruction.HALT),
-                    new NumberMemoryItem(0)
-                };
-
-                //construct HashMap with labels
-                HashMap<Integer, String> labels = new HashMap<>();
-                labels.put(19, "OK");
-                labels.put(37, "FINISH");
-
-                //prepare program start attribute
-                Integer programStart = 5;
-
-                //construct list with memory items
-                ArrayList<MemoryItem> memory = new ArrayList<>(Arrays.asList(memoryItems));
-
-                //save program to file
-                try {
-                    FileOutputStream fileOutputStream = new FileOutputStream("factorial.bin");
-                    BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
-                    try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(bufferedOutputStream)) {
-                        objectOutputStream.writeObject(labels);
-                        objectOutputStream.writeObject(programStart);
-                        objectOutputStream.writeObject(memory);
-                    }
-
-                } catch (FileNotFoundException ex) {
-                    Logger.getLogger(MemoryWindow.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (IOException ex) {
-                    Logger.getLogger(MemoryWindow.class.getName()).log(Level.SEVERE, null, ex);
-                }
-
                 new MemoryWindow(new RASPMemoryContextImpl()).setVisible(true);
-
             }
         });
     }
