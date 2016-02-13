@@ -11,7 +11,6 @@ import emulib.plugins.cpu.InvalidInstructionException;
 import java.util.Objects;
 import sk.tuke.emustudio.rasp.memory.MemoryItem;
 import sk.tuke.emustudio.rasp.memory.NumberMemoryItem;
-import sk.tuke.emustudio.rasp.memory.OperandType;
 import sk.tuke.emustudio.rasp.memory.RASPInstruction;
 import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 
@@ -52,8 +51,7 @@ public class RASPDisassembler implements Disassembler {
         NumberMemoryItem operand = (NumberMemoryItem) item;
 
         //prepare the mnemonic form
-        String operandType = (instruction.getOperandType() == OperandType.CONSTANT) ? "=" : "";
-        String mnemo = instruction.getCodeStr() + " " + operandType + " " + operand.toString();
+        String mnemo = instruction.getCodeStr() + " " + operand.toString();
         return new DisassembledInstruction(memoryPosition, mnemo, "");
     }
 
@@ -65,8 +63,8 @@ public class RASPDisassembler implements Disassembler {
         MemoryItem item = memory.read(memoryPosition);
         if (item instanceof RASPInstruction) {
             RASPInstruction instruction = (RASPInstruction) item;
-            if(instruction.getCode()==RASPInstruction.HALT){
-                return memoryPosition+1;
+            if (instruction.getCode() == RASPInstruction.HALT) {
+                return memoryPosition + 1;
             }
             return memoryPosition + 2;
         }
