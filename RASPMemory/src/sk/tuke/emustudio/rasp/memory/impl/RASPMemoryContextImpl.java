@@ -11,6 +11,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import sk.tuke.emustudio.rasp.memory.MemoryItem;
+import sk.tuke.emustudio.rasp.memory.NumberMemoryItem;
+import sk.tuke.emustudio.rasp.memory.RASPInstruction;
+import sk.tuke.emustudio.rasp.memory.RASPInstructionImpl;
 import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 
 public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> implements RASPMemoryContext {
@@ -50,7 +53,15 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
             notifyMemoryChanged(memory.size());
             notifyMemorySizeChanged();
         } else {
-            memory.set(position, item);
+            //if there is an instruction at "position", modify its opcode
+            MemoryItem currentValue = read(position);
+            if (currentValue instanceof RASPInstruction) {
+                int number = ((NumberMemoryItem) item).getValue();
+                memory.set(position, new RASPInstructionImpl(number));
+            } //if there is not an instruction, i.e. its a NumberMemoryItem or null
+            else {
+                memory.set(position, item);
+            }
         }
         notifyMemoryChanged(position);
     }
@@ -143,7 +154,9 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
     }
 
     /**
-     * Get the address from which the program starts; this method is called by RASPMemoryImpl::destroy()
+     * Get the address from which the program starts; this method is called by
+     * RASPMemoryImpl::destroy()
+     *
      * @return
      */
     public int getProgramStart() {
