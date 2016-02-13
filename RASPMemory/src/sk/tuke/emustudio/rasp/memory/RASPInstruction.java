@@ -1,12 +1,12 @@
 package sk.tuke.emustudio.rasp.memory;
 
 /**
- * Class representing RASP instruction together with its code and operand type.
+ * Interface representing RASP instruction.
  *
  * @author miso
  */
-public interface RASPInstruction extends MemoryItem{
-
+public interface RASPInstruction extends MemoryItem {
+    
     /**
      * Operation code of RASP instruction.
      */
@@ -14,47 +14,71 @@ public interface RASPInstruction extends MemoryItem{
     /**
      * Operation code of RASP instruction.
      */
-    public final static int WRITE = 2;
+    public final static int WRITE_CONSTANT = 2;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int LOAD = 3;
+    public final static int WRITE_REGISTER = 3;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int STORE = 4;
+    public final static int LOAD_CONSTANT = 4;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int ADD = 5;
+    public final static int LOAD_REGISTER = 5;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int SUB = 6;
+    public final static int STORE = 6;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int MUL = 7;
+    public final static int ADD_CONSTANT = 7;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int DIV = 8;
+    public final static int ADD_REGISTER = 8;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int JMP = 9;
+    public final static int SUB_CONSTANT = 9;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int JZ = 10;
+    public final static int SUB_REGISTER = 10;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int JGTZ = 11;
+    public final static int MUL_CONSTANT = 11;
     /**
      * Operation code of RASP instruction.
      */
-    public final static int HALT = 12;
+    public final static int MUL_REGISTER = 12;
+    /**
+     * Operation code of RASP instruction.
+     */
+    public final static int DIV_CONSTANT = 13;
+    /**
+     * Operation code of RASP instruction.
+     */
+    public static final int DIV_REGISTER = 14;
+    /**
+     * Operation code of RASP instruction.
+     */
+    public static final int JMP = 15;
+    /**
+     * Operation code of RASP instruction.
+     */
+    public static final int JZ = 16;
+    /**
+     * Operation code of RASP instruction.
+     */
+    public static final int JGTZ = 17;
+    /**
+     * Operation code of RASP instruction.
+     */
+    public static final int HALT = 18;
 
     /**
      * Get operation code of the instruction.
@@ -62,13 +86,6 @@ public interface RASPInstruction extends MemoryItem{
      * @return operation code of the instruction.
      */
     public int getCode();
-
-    /**
-     * Get operand type of the instruction; either constant or register.
-     *
-     * @return operand type of the instruction; either constant or register
-     */
-    public OperandType getOperandType();
 
     /**
      * Get string representation of the RASP instruction (mnemonic code).

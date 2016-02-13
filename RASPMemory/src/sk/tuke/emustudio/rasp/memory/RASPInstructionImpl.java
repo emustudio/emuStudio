@@ -13,20 +13,12 @@ public class RASPInstructionImpl implements RASPInstruction {
     private final int instructionCode;
 
     /**
-     * the type of the operand of the instruction; it determines how the
-     * subsequent number will be interpreted
-     */
-    private final OperandType operandType;
-
-    /**
      * Constructor.
      *
      * @param instructionCode the machine code of the instruction
-     * @param operandType the type of the operand of the instruction
      */
-    public RASPInstructionImpl(int instructionCode, OperandType operandType) {
+    public RASPInstructionImpl(int instructionCode) {
         this.instructionCode = instructionCode;
-        this.operandType = operandType;
     }
 
     @Override
@@ -35,28 +27,35 @@ public class RASPInstructionImpl implements RASPInstruction {
     }
 
     @Override
-    public OperandType getOperandType() {
-        return operandType;
-    }
-
-    @Override
     public String getCodeStr() {
         switch (instructionCode) {
-            case LOAD:
+            case READ:
+                return "READ";
+            case WRITE_CONSTANT:
+                return "WRITE =";
+            case WRITE_REGISTER:
+                return "WRITE";
+            case LOAD_CONSTANT:
+                return "LOAD =";
+            case LOAD_REGISTER:
                 return "LOAD";
             case STORE:
                 return "STORE";
-            case READ:
-                return "READ";
-            case WRITE:
-                return "WRITE";
-            case ADD:
+            case ADD_CONSTANT:
+                return "ADD =";
+            case ADD_REGISTER:
                 return "ADD";
-            case SUB:
+            case SUB_CONSTANT:
+                return "SUB =";
+            case SUB_REGISTER:
                 return "SUB";
-            case MUL:
+            case MUL_CONSTANT:
+                return "MUL =";
+            case MUL_REGISTER:
                 return "MUL";
-            case DIV:
+            case DIV_CONSTANT:
+                return "DIV =";
+            case DIV_REGISTER:
                 return "DIV";
             case JMP:
                 return "JMP";
@@ -70,20 +69,9 @@ public class RASPInstructionImpl implements RASPInstruction {
         return "unknown";
     }
 
-    /**
-     * Returns string representation of the instruction.
-     *
-     * @return string representation of the instruction
-     */
     @Override
     public String toString() {
-        if (operandType == OperandType.REGISTER) {
-            return getCodeStr();
-        } else if (operandType == OperandType.CONSTANT) {
-            return getCodeStr() + " =";
-        } else {
-            return "";
-        }
-    }
+        return getCodeStr();
+    } 
 
 }

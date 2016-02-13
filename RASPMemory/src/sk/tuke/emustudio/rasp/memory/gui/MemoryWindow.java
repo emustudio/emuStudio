@@ -21,7 +21,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import sk.tuke.emustudio.rasp.memory.MemoryItem;
-import sk.tuke.emustudio.rasp.memory.OperandType;
 import sk.tuke.emustudio.rasp.memory.RASPInstruction;
 import sk.tuke.emustudio.rasp.memory.RASPInstructionImpl;
 import sk.tuke.emustudio.rasp.memory.NumberMemoryItem;
@@ -232,45 +231,45 @@ public class MemoryWindow extends javax.swing.JFrame {
 
                 //program as array of items
                 MemoryItem[] memoryItems = new MemoryItem[]{
-                    new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.CONSTANT),
+                    new RASPInstructionImpl(RASPInstruction.LOAD_CONSTANT),
                     new NumberMemoryItem(1),
-                    new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.STORE),
                     new NumberMemoryItem(2),
-                    new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.STORE),
                     new NumberMemoryItem(3),
-                    new RASPInstructionImpl(RASPInstruction.READ, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.READ),
                     new NumberMemoryItem(1),
-                    new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.LOAD_REGISTER),
                     new NumberMemoryItem(1),
-                    new RASPInstructionImpl(RASPInstruction.JGTZ, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.JGTZ),
                     new NumberMemoryItem(19),
-                    new RASPInstructionImpl(RASPInstruction.JMP, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.JMP),
                     new NumberMemoryItem(37),
-                    new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.LOAD_REGISTER),
                     new NumberMemoryItem(3),
-                    new RASPInstructionImpl(RASPInstruction.SUB, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.SUB_REGISTER),
                     new NumberMemoryItem(1),
-                    new RASPInstructionImpl(RASPInstruction.JZ, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.JZ),
                     new NumberMemoryItem(37),
-                    new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.LOAD_REGISTER),
                     new NumberMemoryItem(3),
-                    new RASPInstructionImpl(RASPInstruction.ADD, OperandType.CONSTANT),
+                    new RASPInstructionImpl(RASPInstruction.ADD_CONSTANT),
                     new NumberMemoryItem(1),
-                    new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.STORE),
                     new NumberMemoryItem(3),
-                    new RASPInstructionImpl(RASPInstruction.MUL, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.MUL_REGISTER),
                     new NumberMemoryItem(2),
-                    new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.STORE),
                     new NumberMemoryItem(2),
-                    new RASPInstructionImpl(RASPInstruction.JMP, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.JMP),
                     new NumberMemoryItem(19),
-                    new RASPInstructionImpl(RASPInstruction.WRITE, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.WRITE_REGISTER),
                     new NumberMemoryItem(2),
-                    new RASPInstructionImpl(RASPInstruction.LOAD, OperandType.CONSTANT),
+                    new RASPInstructionImpl(RASPInstruction.LOAD_CONSTANT),
                     new NumberMemoryItem(25),
-                    new RASPInstructionImpl(RASPInstruction.STORE, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.STORE),
                     new NumberMemoryItem(60),
-                    new RASPInstructionImpl(RASPInstruction.HALT, OperandType.REGISTER),
+                    new RASPInstructionImpl(RASPInstruction.HALT),
                     new NumberMemoryItem(0)
                 };
 

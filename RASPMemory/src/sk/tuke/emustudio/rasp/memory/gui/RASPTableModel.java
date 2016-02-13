@@ -8,7 +8,6 @@ package sk.tuke.emustudio.rasp.memory.gui;
 import javax.swing.table.AbstractTableModel;
 import sk.tuke.emustudio.rasp.memory.MemoryItem;
 import sk.tuke.emustudio.rasp.memory.NumberMemoryItem;
-import sk.tuke.emustudio.rasp.memory.OperandType;
 import sk.tuke.emustudio.rasp.memory.RASPInstruction;
 import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 
@@ -93,9 +92,7 @@ public class RASPTableModel extends AbstractTableModel {
                                 //if no label at the address, simply return the number
                                 return ((NumberMemoryItem) item).toString();
                             }
-                        } else if (instruction.getOperandType() == OperandType.CONSTANT) {
-                            return "= " + ((NumberMemoryItem) item).toString();
-                        } else if (instruction.getOperandType() == OperandType.REGISTER) {
+                        } else {
                             return ((NumberMemoryItem) item).toString();
                         }
                     } else {
@@ -112,7 +109,7 @@ public class RASPTableModel extends AbstractTableModel {
                 return ((RASPInstruction) item).getCodeStr();
             }
         }
-        return null;        
+        return null;
     }
 
     @Override
