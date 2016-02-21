@@ -42,7 +42,7 @@ for fun. Everything must be usually well-thought and wise, writing a good emulat
 There exist plenty of theory and practice behind, and therefore the emulator complexity might arise. But -
 and this is a really big But - we are in a Java world. Java is itself "emulated" language (running in a virtual machine),
 so we are doing emulation inside an emulation. This is not good for the performance, therefore emuStudio is and always
-will be a toy projects only for students, for nothing serious. Emulators are usually written in more low-level language
+will be a toy project only for students, for nothing serious. Emulators are usually written in more low-level language
 like C or C++, because the languages utilize native performance and allow more advanced emulation techniques, which
 perform very well when they are implemented wisely.
 
