@@ -1,0 +1,59 @@
+= How to write a CPU for emuStudio
+(c) Copyright 2007-2016, Peter Jakubčo
+Version 0.39
+:toc:
+:numbered:
+
+This tutorial will describe some basic knowledge about how to create a CPU to be used in emuStudio. The tutorial
+does not aim to explain emulation techniques in much detail, nor it is exhaustive. This is left for the programmer.
+The tutorial focuses on how to use emuLib API in a CPU project so it can be used in emuStudio.
+
+[[GETTING_STARTED]]
+== Getting started
+
+Before reading on, please read the "Introduction for writing virtual computers" document. It gives the information
+needed for setting up the development environment and for basic understanding how the emuStudio/plug-ins lifecycle
+work.
+
+When writing a fresh new emulator, including compiler and everything, I usually start with compiler, because I am lazy
+and I want to get programs loaded into memory immediately after clicking "compiler" button. However, it is not
+necessarily the best approach. Anyway, CPU probably shouldn't be the first plug-in you implement. The reason is that
+it is very useful / convenient for testing to have some environment prepared already - such as memory, or compiler.
+
+A CPU is just another plug-in, which means that it is enough to implement some API and that's it. The CPU
+API can be found in `emulib.plugins.cpu` project package.
+
+CPU is supposed to be the core of the emulator. There exist many techniques for CPU emulation out there, however,
+in Java, usage of some (like dynamic translation) is very limited / impossible / not worth doing. In my experience
+what is possible is doing a threaded code at most. However, in this tutorial we'll be focusing on basic interpretation
+technique, which is the simplest one - and very OK in terms of performance for the computer we are going to emulate.
+
+In my experience, programming a CPU emulator is hard / easy depending on how complex the original CPU is and depending
+on how accurate we want it to be. If we emulate some abstract machine, or we do not insist on timing accuracy, it might
+be quite easy, and theoretically we will implement this very quickly.
+
+The problem will arise when we dig deeper into accuracy, like timing. For example, communication with I/O devices,
+e.g. display or audio might require passing special signals at specific time intervals. Or there might exist programs,
+like software timers in e.g. Z80, which depend on instruction timing. In that case, we must implement some time-accuracy
+algorithm and take real care about emulator performance. Therefore emulators are implemented usually in a very flat way,
+they usually do not utilize high-level and convenient data structures, or they do not "print" something on console just
+for fun. Everything must be usually well-thought and wise, writing a good emulator is an art.
+
+There exist plenty of theory and practice behind, and therefore the emulator complexity might arise. But -
+and this is a really big But - we are in a Java world. Java is itself "emulated" language (running in a virtual machine),
+so we are doing emulation inside an emulation. This is not good for the performance, therefore emuStudio is and always
+will be a toy projects only for students, for nothing serious. Emulators are usually written in more low-level language
+like C or C++, because the languages utilize native performance and allow more advanced emulation techniques, which
+perform very well when they are implemented wisely.
+
+In the "emuStudio practice", only interpretation or threaded code is feasible / possible / worth considering as an
+emulation technique. The first complexity which we will "touch" is parsing of binary instructions. Depending on how
+complex the instructions are in the CPU (e.g. varying number of bytes, prefixes, etc.), the parsing itself might be
+quite complex problem. There are not much tools for helping with this problem out there, so one student wrote a tool,
+which is called `edigen` (emulator / disassembler generator). This tool might be useful and it is used throughout all
+CPU emulators in official emuStudio source code.
+
+In this tutorial, a simple CPU will be implemented for the world's very first stored-program computer,
+https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine[SSEM], nicknamed
+"Baby". It was a predecessor of Manchester Mark 1 which led to Ferranti Mark 1, the world's first commercially available
+general-purpose computer.
