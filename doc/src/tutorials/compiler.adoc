@@ -1277,3 +1277,8 @@ parsing errors. For this purpose, `emulib.plugins.compiler.AbstractCompiler` cla
 - `notifyWarning()` - compiler warning
 - `notifyError()` - compilation error
 - `notifyInfo()` - informational message
+
+=== Loading compiler program into memory
+
+The very last part I leave as an excercise. In provided source codes this functionality is ofcourse implemented,
+but at the end - it is up to you if you'll use my solution or not.

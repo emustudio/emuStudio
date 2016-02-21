@@ -24,11 +24,13 @@ import emulib.annotations.PluginType;
 import emulib.plugins.compiler.AbstractCompiler;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
+import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import java_cup.runtime.ComplexSymbolFactory;
 import net.sf.emustudio.ssem.assembler.tree.Program;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.Objects;
@@ -41,12 +43,15 @@ import java.util.Objects;
 )
 public class CompilerImpl extends AbstractCompiler {
     private static final String OUTPUT_FILE_EXTENSION = ".bin";
+    private static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
     private static final SourceFileExtension[] SOURCE_FILE_EXTENSIONS = new SourceFileExtension[]{
         new SourceFileExtension("ssem", "SSEM source file")
     };
+    private final ContextPool contextPool;
 
     public CompilerImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
     }
 
     @Override
@@ -55,7 +60,9 @@ public class CompilerImpl extends AbstractCompiler {
 
         int errorCode = 0;
         try (Reader reader = new FileReader(inputFileName)) {
-            try (CodeGenerator codeGenerator = new CodeGenerator(new FileOutputStream(outputFileName))) {
+            MemoryContext memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
+
+            try (CodeGenerator codeGenerator = new CodeGenerator(new MemoryAndFileOutputStream(outputFileName, memory))) {
                 LexerImpl lexer = new LexerImpl(reader);
                 ParserImpl parser = new ParserImpl(lexer, new ComplexSymbolFactory(), this);
 
@@ -72,6 +79,9 @@ public class CompilerImpl extends AbstractCompiler {
             }
         } catch (Exception e) {
             errorCode = 1;
+            LOGGER.error("Compilation error.", e);
+            notifyError("Compilation error.");
+
             return false;
         } finally {
             notifyCompileFinish(errorCode);

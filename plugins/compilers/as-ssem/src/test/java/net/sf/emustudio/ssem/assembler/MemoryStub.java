@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2016 Peter Jakubčo
+ * Copyright (C) 2016 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.intel8080.assembler.impl;
+package net.sf.emustudio.ssem.assembler;
 
 import emulib.plugins.memory.AbstractMemoryContext;
 
