@@ -1,0 +1,66 @@
+package sk.tuke.emustudio.rasp.compiler;
+
+import emulib.plugins.compiler.Message;
+import emulib.plugins.compiler.Token;
+import java_cup.runtime.ComplexSymbolFactory;
+import java_cup.runtime.Symbol;
+
+import sk.tuke.emustudio.rasp.compiler.tree.*;.
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+parser code{:
+	private LexerImpl lexer;
+	private boolean syntaxErrors;
+	private CompilerImpl compiler;
+		
+	public ParserImpl(LexerImpl lexer, ComplexSymbolFactory csf, CompilerImpl compiler){
+		super(lex, csf);
+		this.lexer = Objects.requireNotNull(lexer);
+		this.compiler = Objects.requireNotNull(compiler);
+	}
+
+	@Override
+	public void report_fatal_error(String message, Object info) throws Exception{
+		//cancel parsing
+		done_parsing();
+		report_error(message, info);
+		throw new Exception("Cannot recover from previous error(s)");
+	}
+
+	@Override
+	public void report_error(String messageText, Object current){
+		syntaxErrors = true;
+		Token token = (Token) current;
+		messageText+=":" + token.getErrorString()+" (\'" + token.getText() + "\')";
+
+		List<Integer> expectedTokenIds = expected_token_ids();
+		StringBuilder sb = new StringBuilder();
+		for(int ID: expectedTokenIds){
+			String nameOfNonTerminal = symbl_name_from_id(ID);
+			sb.append(nameOfNonTerminal + " ");			
+		}
+
+		messageText+="\nExpected tokens: " + sb.toString();
+
+		Message message = new Message(
+			Message.MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(), null, 0
+		);
+
+		if(compiler!=null){
+			compiler.notifyOnMessage(message);
+		}else{
+			System.err.println(message.getFormattedMessage());
+		}
+	}
+
+	public boolean hasSyntaxErrors(){
+		return syntaxErrors;
+	}
+
+:};
+
+terminal READ,
+

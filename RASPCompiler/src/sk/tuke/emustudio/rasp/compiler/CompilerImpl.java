@@ -5,19 +5,31 @@
  */
 package sk.tuke.emustudio.rasp.compiler;
 
+import emulib.annotations.PLUGIN_TYPE;
+import emulib.annotations.PluginType;
 import emulib.plugins.compiler.AbstractCompiler;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
+import emulib.runtime.ContextPool;
 import java.io.Reader;
+import java.util.Objects;
 
 /**
- *
- * @author miso
+ * The implementation of the compiler of RASP abstract machine assembly language.
  */
-public class RASPCompiler extends AbstractCompiler{
 
-    public RASPCompiler(Long pluginID) {
+@PluginType(
+        type = PLUGIN_TYPE.COMPILER,
+        title = "RASP Assembler",
+        copyright = "\u00A9 Copyright 2016, Michal Sipos",
+        description = "Assembler of RASP machine language"
+)
+public class CompilerImpl extends AbstractCompiler{
+    private final ContextPool contextPool;
+
+    public CompilerImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
     }
 
     @Override
