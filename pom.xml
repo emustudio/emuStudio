@@ -25,8 +25,6 @@
     <jruby.version>1.7.17</jruby.version>
     <maven.compiler.target>1.8</maven.compiler.target>
     <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.testTarget>1.8</maven.compiler.testTarget>
-    <maven.compiler.testSource>1.8</maven.compiler.testSource>
   </properties>
 
   <licenses>
@@ -89,17 +87,6 @@
                 <compilerArguments>
                   <source>${maven.compiler.target}</source>
                   <target>${maven.compiler.source}</target>
-                </compilerArguments>
-              </configuration>
-            </execution>
-            <execution>
-              <id>default-testCompile</id>
-              <configuration>
-                <showDeprecation>true</showDeprecation>
-                <showWarnings>true</showWarnings>
-                <compilerArguments>
-                  <source>${maven.compiler.testTarget}</source>
-                  <target>${maven.compiler.testSource}</target>
                 </compilerArguments>
               </configuration>
             </execution>
@@ -193,26 +180,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <version>1.4</version>
-        <executions>
-          <execution>
-            <id>enforce-java</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <requireJavaVersion>
-                  <version>${maven.compiler.testTarget}</version>
-                </requireJavaVersion>
-              </rules>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
     <resources>
@@ -465,19 +432,6 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.easymock</groupId>
-      <artifactId>easymock</artifactId>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
 
   <repositories>
     <repository>

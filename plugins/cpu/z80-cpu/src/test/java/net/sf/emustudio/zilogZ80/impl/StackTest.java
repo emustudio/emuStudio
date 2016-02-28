@@ -63,7 +63,7 @@ public class StackTest extends InstructionsTest {
                 .keepCurrentInjectorsAfterRun()
                 .clearOtherVerifiersAfterRun();
 
-        Generator.forSome16bitBinary(
+        Generator.forSome16bitBinary(3,
                 test.secondIsPair(REG_PAIR_BC).verifyPair(REG_PAIR_BC, context -> context.second).run(0xC1),
                 test.secondIsPair(REG_PAIR_DE).verifyPair(REG_PAIR_DE, context -> context.second).run(0xD1),
                 test.secondIsPair(REG_PAIR_HL).verifyPair(REG_PAIR_HL, context -> context.second).run(0xE1),
@@ -80,7 +80,7 @@ public class StackTest extends InstructionsTest {
                 .keepCurrentInjectorsAfterRun()
                 .clearOtherVerifiersAfterRun();
 
-        Generator.forSome16bitBinary(
+        Generator.forSome16bitBinary(3,
                 test.verifyIX(context -> context.second).run(0xDD, 0xE1),
                 test.verifyIY(context -> context.second).run(0xFD, 0xE1)
         );
