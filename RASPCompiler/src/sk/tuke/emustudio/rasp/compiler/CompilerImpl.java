@@ -13,7 +13,7 @@ import emulib.plugins.compiler.SourceFileExtension;
 import emulib.runtime.ContextPool;
 import java.io.Reader;
 import java.util.Objects;
-
+        
 /**
  * The implementation of the compiler of RASP abstract machine assembly language.
  */

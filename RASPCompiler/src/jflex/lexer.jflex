@@ -62,7 +62,8 @@ comment = ";"[^\r\n]*
 eol = \r | \n | \r\n
 space = [ \t\f]+ /*\f is page break*/
 number = \-?[0-9]+
-label = [a-zA-Z][a-zA-Z0-9]*\:
+identifier = [a-zA-Z][a-zA-Z0-9]*
+label = {identifier}[\:]
 operator_constant = "="
 
 /*reserved words*/
@@ -128,9 +129,13 @@ operator_constant = "="
 	return token(NUMBER, Token.LITERAL, value);
 }
 
+{identifier} {
+	return token(IDENT, Token.IDENTIFIER, yytext());
+}
+
 /*label*/
-{label} {
-	return token(LABEL, Token.LABEL, yytext());
+{label} {	
+	return token(TLABEL, Token.LABEL, yytext());
 }
 
 /*operator for constants as operands*/
