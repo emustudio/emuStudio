@@ -92,7 +92,7 @@ Label ::= TLABEL:l 								{: RESULT = new Label(l); :}
 
 Statement ::= Instruction:i NUMBER:operand 		{: RESULT = new Statement(i,o) :}
 			| JumpInstruction:i IDENT:label		{: RESULT = new Statement(i,label) :}	
-			| HALT;								{: RESULT = new Statement(new RASPInstructionImpl(RASPInstruction.HALT), 0); :}
+			| HALT;					{: RESULT = new Statement(new RASPInstructionImpl(RASPInstruction.HALT), 0); :}
 
 Comment ::= TCOMMENT | /*no comment*/;     /*no action - ignore the comment*/
 
