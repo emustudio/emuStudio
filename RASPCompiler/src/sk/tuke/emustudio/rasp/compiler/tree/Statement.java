@@ -11,7 +11,7 @@ import sk.tuke.emustudio.rasp.memory.RASPInstructionImpl;
  *
  * @author miso
  */
-public class Statement implements ASTNode{
+public class Statement {
 
     private final RASPInstructionImpl instruction;
     private final Integer operand;
@@ -29,9 +29,16 @@ public class Statement implements ASTNode{
         this.operand = null;
     }
 
-    @Override
-    public void accept(ASTVisitor visitor) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public RASPInstructionImpl getInstruction() {
+        return instruction;
+    }
+
+    public Integer getOperand() {
+        return operand;
+    }
+
+    public String getLabelOperand() {
+        return labelOperand;
     }
 
 }

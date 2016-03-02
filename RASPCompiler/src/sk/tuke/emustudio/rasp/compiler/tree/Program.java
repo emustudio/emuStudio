@@ -7,20 +7,47 @@ package sk.tuke.emustudio.rasp.compiler.tree;
 
 import java.util.ArrayList;
 import java.util.List;
+import sk.tuke.emustudio.rasp.compiler.CompilerOutput;
+import sk.tuke.emustudio.rasp.memory.NumberMemoryItem;
+import sk.tuke.emustudio.rasp.memory.RASPInstructionImpl;
 
 /**
  *
  * @author miso
  */
-public class Program implements ASTNode{
+public class Program {
+
     private final List<Row> rows = new ArrayList<Row>();
-    
-    public void addRow(Row r){
+
+    public void addRow(Row r) {
         rows.add(r);
     }
 
-    @Override
-    public void accept(ASTVisitor visitor) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void pass() {
+        int programStart = CompilerOutput.getInstance().getProgramStart();
+        for (Row row : rows) {
+            Label label = row.getLabel();
+            //add label
+            if (label != null) {
+                label.setAddress(programStart + rows.indexOf(row) * 2);
+                CompilerOutput.getInstance().addLabel(label);
+            }
+            Statement statement = row.getStatement();
+            RASPInstructionImpl instruction = statement.getInstruction();
+            //add instruction
+            CompilerOutput.getInstance().addMemoryItem(instruction);
+            Integer operand = statement.getOperand();
+            String labelOperand = statement.getLabelOperand();
+            if (operand != null) {
+                CompilerOutput.getInstance().addMemoryItem(new NumberMemoryItem(operand));
+            } else if (labelOperand != null) {
+                //operand is label, so we are working with jump instructions
+                int address = CompilerOutput.getInstance().getAddressForLabel(labelOperand);
+                CompilerOutput.getInstance().addMemoryItem(new NumberMemoryItem(address));
+            }
+
+        }
+
     }
+
 }

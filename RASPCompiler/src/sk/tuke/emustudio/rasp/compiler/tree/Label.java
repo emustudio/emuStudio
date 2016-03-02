@@ -9,16 +9,24 @@ package sk.tuke.emustudio.rasp.compiler.tree;
  *
  * @author miso
  */
-public class Label implements ASTNode{
-    private final String label;
+public class Label {
 
-    public Label(String label) {
-        this.label = label;
-    }   
+    private final String value;
+    private int address;
 
-    @Override
-    public void accept(ASTVisitor visitor) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public int getAddress() {
+        return address;
     }
-    
+
+    public String getValue() {
+        return value;
+    }
+
+    public Label(String value) {
+        this.value = value;
+    }
+
+    public void setAddress(int address) {
+        this.address = address;
+    }
 }

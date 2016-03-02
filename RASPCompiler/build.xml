@@ -70,4 +70,31 @@
     nbproject/build-impl.xml file. 
 
     -->
+	<taskdef name="cup"
+             classname="java_cup.anttask.CUPTask"
+             classpath="../java-cup-bin-11b-20151001/java-cup-11b.jar"	
+    />
+
+
+    <taskdef classname="jflex.anttask.JFlexTask" name="jflex"
+             classpath="../jflex-1.6.1/jflex-1.6.1/lib/jflex-1.6.1.jar"/>
+
+    <target name="-pre-compile">
+        <jflex
+            file="src/jflex/lexer.jflex"
+            destdir="build/generated-sources/jflex"
+        />
+        
+        <cup srcfile="/home/miso/3.ROCNIK/Zimny/MVP-Bakalarka/RASP/RASPCompiler/src/cup/parser.cup"
+             destdir="/home/miso/3.ROCNIK/Zimny/MVP-Bakalarka/RASP/RASPCompiler/build/generated-sources/cup"
+             interface="true"
+             parser="ParserImpl"
+             symbols="Symbols"
+        />
+        
+        
+    </target>
+
+
+
 </project>

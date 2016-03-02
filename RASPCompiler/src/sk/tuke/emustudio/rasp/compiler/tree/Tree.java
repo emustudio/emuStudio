@@ -5,23 +5,27 @@
  */
 package sk.tuke.emustudio.rasp.compiler.tree;
 
+import sk.tuke.emustudio.rasp.compiler.CompilerOutput;
+
+
 /**
  *
  * @author miso
  */
-public class Code implements ASTNode{
+public class Tree {
 
     private final int programStart;
     private final Program program;
 
-    public Code(int programStart, Program program) {
-        this.programStart = programStart;
+    public Tree(int programStart, Program program) {
+        this.programStart=programStart;
         this.program = program;
     }
 
-    @Override
-    public void accept(ASTVisitor visitor) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void pass(){
+        CompilerOutput.getInstance().setProgramStart(programStart);
+        program.pass();
     }
+    
 
 }

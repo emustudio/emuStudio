@@ -11,21 +11,30 @@ import emulib.plugins.compiler.AbstractCompiler;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
 import emulib.runtime.ContextPool;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.Reader;
 import java.util.Objects;
-        
-/**
- * The implementation of the compiler of RASP abstract machine assembly language.
- */
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java_cup.runtime.ComplexSymbolFactory;
+import sk.tuke.emustudio.rasp.compiler.tree.Tree;
 
+/**
+ * The implementation of the compiler of RASP abstract machine assembly
+ * language.
+ */
 @PluginType(
         type = PLUGIN_TYPE.COMPILER,
         title = "RASP Assembler",
         copyright = "\u00A9 Copyright 2016, Michal Sipos",
         description = "Assembler of RASP machine language"
 )
-public class CompilerImpl extends AbstractCompiler{
+public class CompilerImpl extends AbstractCompiler {
+
     private final ContextPool contextPool;
+    private static final SourceFileExtension[] SOURCE_FILE_EXTENSIONS = new SourceFileExtension[]{new SourceFileExtension("rasp", "RASP source file")};
+    private static final String OUTPUT_FILE_EXTENSION = "bin";
 
     public CompilerImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
@@ -33,43 +42,63 @@ public class CompilerImpl extends AbstractCompiler{
     }
 
     @Override
-    public boolean compile(String string, String string1) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public boolean compile(String inputFileName, String outputFileName) {
+        notifyCompileStart();
+
+        int errorCode = 0;
+        try (Reader reader = new FileReader(inputFileName)) {
+            LexerImpl lexer = new LexerImpl(reader);
+            ParserImpl parser = new ParserImpl(lexer, new ComplexSymbolFactory(), this);
+            Tree tree = (Tree) parser.parse().value;
+            if (tree == null) {
+                throw new Exception("Unexpected end of file.");
+            }
+            if(parser.hasSyntaxErrors()){
+                throw  new Exception("One ore more errors in the source code.");
+            }
+            tree.pass();
+            notifyInfo("Compile was successfull.");
+        } catch (Exception ex) {
+            errorCode = 1;
+            return false;
+        } finally {
+            notifyCompileFinish(errorCode);
+        }
+        return true;
+
     }
 
     @Override
-    public boolean compile(String string) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public boolean compile(String inputFileName) {
+        return compile(inputFileName, "out.bin");
     }
 
     @Override
     public LexicalAnalyzer getLexer(Reader reader) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new LexerImpl(reader);
     }
 
     @Override
     public SourceFileExtension[] getSourceSuffixList() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return SOURCE_FILE_EXTENSIONS;
     }
 
     @Override
     public void destroy() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void showSettings() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public boolean isShowSettingsSupported() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return false;
     }
 
     @Override
     public String getVersion() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return "1.0";
     }
-    
+
 }

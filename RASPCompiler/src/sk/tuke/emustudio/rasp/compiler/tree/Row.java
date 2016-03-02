@@ -5,27 +5,29 @@
  */
 package sk.tuke.emustudio.rasp.compiler.tree;
 
+import sk.tuke.emustudio.rasp.compiler.CompilerOutput;
+
 /**
  *
  * @author miso
  */
-public class Row implements ASTNode{
+public class Row {
 
-    private final Label label;
-    private final Statement statement;
+    private Label label;
+    private Statement statement;
 
     public Row(Label label, Statement statement) {
-        this.label = label;
         this.statement = statement;
+        this.label = label;
     }
 
-    public Row(Label label) {
-        this(label, null);
+    public Label getLabel() {
+        return label;
     }
 
-    @Override
-    public void accept(ASTVisitor visitor) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public Statement getStatement() {
+        return statement;
     }
+
 
 }

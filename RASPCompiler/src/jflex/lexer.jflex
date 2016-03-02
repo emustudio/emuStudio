@@ -21,11 +21,11 @@ import java.io.Reader;
 %caseless /*ignore case in source file*/
 %unicode
 /*specify type of the return value of the scanning method*/
-%TokenImpl
+%type TokenImpl
         
 %{
     @Override
-	public Token getSymbol() throws Exception{
+	public Token getSymbol() throws IOException{
 		return next_token();
 	}
 
@@ -44,11 +44,15 @@ import java.io.Reader;
 		this.yycolumn = 0;
 	}	
 
-	private TokenImp token(int id, int type){
+	private TokenImpl token(int id, int type){
+		System.out.println(Integer.toHexString(type));
+		System.out.println("====");
 		return new TokenImpl(id, type, yytext(), yyline, yycolumn, yychar);
 	}
 	
 	private TokenImpl token(int id, int type, Object value){
+		System.out.println(Integer.toHexString(type));
+		System.out.println("====");
 		return new TokenImpl(id, type, yytext(), yyline, yycolumn, yychar, value);
 	}
 
@@ -59,53 +63,55 @@ import java.io.Reader;
 %eofval}
 
 comment = ";"[^\r\n]*
-eol = \r | \n | \r\n
-space = [ \t\f]+ /*\f is page break*/
+eol = \r|\n|\r\n
+space = [\ \t\f]+ /*\f is page break*/
 number = \-?[0-9]+
 identifier = [a-zA-Z][a-zA-Z0-9]*
 label = {identifier}[\:]
 operator_constant = "="
 
+%%
+
 /*reserved words*/
-"read"{
+"read" {
 	return token(READ, Token.RESERVED);
 }
-"write"{
+"write" {
 	return token(WRITE, Token.RESERVED);
 }
-"load"{
+"load" {
 	return token(LOAD, Token.RESERVED);
 }
-"store"{
+"store" {
 	return token(STORE, Token.RESERVED);
 }       
-"add"{
+"add" {
 	return token(ADD, Token.RESERVED);
 }
-"sub"{
+"sub" {
 	return token(SUB, Token.RESERVED);
 }
-"mul"{
+"mul" {
 	return token(MUL, Token.RESERVED);
 }
-"div"{
+"div" {
 	return token(DIV, Token.RESERVED);
 }
-"jmp"{
+"jmp" {
 	return token(JMP, Token.RESERVED);
 }
-"jz"{
+"jz" {
 	return token(JZ, Token.RESERVED);
 }
-"jgtz"{
+"jgtz" {
 	return token(JGTZ, Token.RESERVED);
 }
-"halt"{
+"halt" {
 	return token(HALT, Token.RESERVED);
 }
 
 /*preprocessor directives*/
-".org"{
+"\.org" {
 	return token(ORG, Token.PREPROCESSOR); 
 }
 
@@ -139,7 +145,7 @@ operator_constant = "="
 }
 
 /*operator for constants as operands*/
-{operator_constant}{
+{operator_constant} {
 	return token(OPERATOR_CONSTANT, Token.OPERATOR);
 }
 
