@@ -64,7 +64,7 @@ public class TokenImpl extends ComplexSymbolFactory.ComplexSymbol implements Tok
 
     @Override
     public int getLength() {
-        return offset + getName().length();
+        return getName().length();
     }
 
     @Override
