@@ -5,6 +5,11 @@
  */
 package sk.tuke.emustudio.rasp.compiler;
 
+import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,12 +44,12 @@ public class CompilerOutput {
         labels.put(label.getAddress(), label.getValue());
         reversedLabels.put(label.getValue(), label.getAddress());
     }
-    
-    public int getAddressForLabel(String labelValue){
+
+    public int getAddressForLabel(String labelValue) {
         return reversedLabels.get(labelValue);
     }
-    
-    public void addMemoryItem(MemoryItem item){
+
+    public void addMemoryItem(MemoryItem item) {
         memoryItems.add(item);
     }
 
@@ -54,5 +59,21 @@ public class CompilerOutput {
 
     public void setProgramStart(int programStart) {
         this.programStart = programStart;
+    }
+
+    public void saveToFile(String outputFile) {
+        try {
+            FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
+            try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(bufferedOutputStream)) {
+                objectOutputStream.writeObject(labels);
+                objectOutputStream.writeObject(programStart);
+                objectOutputStream.writeObject(memoryItems);
+            }
+        } catch (FileNotFoundException ex) {
+            System.out.println("Error saving to file.");
+        } catch (IOException ex) {
+            System.out.println("Error saving to file.");
+        }
     }
 }
