@@ -10,13 +10,11 @@ import emulib.annotations.PluginType;
 import emulib.plugins.compiler.AbstractCompiler;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
+import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java_cup.runtime.ComplexSymbolFactory;
 import sk.tuke.emustudio.rasp.compiler.tree.Tree;
 
@@ -47,19 +45,24 @@ public class CompilerImpl extends AbstractCompiler {
 
         int errorCode = 0;
         try (Reader reader = new FileReader(inputFileName)) {
+
+            MemoryContext memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
             LexerImpl lexer = new LexerImpl(reader);
             ParserImpl parser = new ParserImpl(lexer, new ComplexSymbolFactory(), this);
             Tree tree = (Tree) parser.parse().value;
             if (tree == null) {
                 throw new Exception("Unexpected end of file.");
             }
-            if(parser.hasSyntaxErrors()){
-                throw  new Exception("One ore more errors in the source code.");
+            if (parser.hasSyntaxErrors()) {
+                throw new Exception("One ore more errors in the source code.");
             }
             tree.pass();
+            CompilerOutput.getInstance().saveToFile(outputFileName);
             notifyInfo("Compile was successfull.");
         } catch (Exception ex) {
             errorCode = 1;
+            System.out.println("Compilation error " + ex.getMessage());
+            notifyError("Compilation error");
             return false;
         } finally {
             notifyCompileFinish(errorCode);
@@ -70,7 +73,15 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public boolean compile(String inputFileName) {
-        return compile(inputFileName, "out.bin");
+        String outputFileName = Objects.requireNonNull(inputFileName);
+        for (SourceFileExtension srcExtension : SOURCE_FILE_EXTENSIONS) {
+            int i = inputFileName.lastIndexOf("." + srcExtension.getExtension());
+            if (i >= 0) {
+                outputFileName = outputFileName.substring(0, i);
+                break;
+            }
+        }
+        return compile(inputFileName, outputFileName + OUTPUT_FILE_EXTENSION);
     }
 
     @Override
