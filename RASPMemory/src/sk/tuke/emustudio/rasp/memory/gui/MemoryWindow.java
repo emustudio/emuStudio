@@ -31,8 +31,7 @@ public class MemoryWindow extends javax.swing.JFrame {
      */
     public MemoryWindow(RASPMemoryContextImpl context) {
         this.memory = context;
-        this.recentOpenPath = new File("/home/miso/3.ROCNIK/MVP-Bakalarka/RASP/RASPMemory");
-        //this.recentOpenPath = new File(System.getProperty("user.home"));
+        this.recentOpenPath = new File(System.getProperty("user.home"));
 
         initComponents();
         tableModel = new RASPTableModel(memory);
