@@ -65,7 +65,7 @@ parser code{:
 :};
 
 terminal READ, WRITE, LOAD, STORE, ADD, SUB, MUL, DIV, JMP, JZ, JGTZ, HALT, ORG, SEPARATOR_EOL, TCOMMENT, OPERATOR_CONSTANT, ERROR_UNKNOWN_TOKEN;
-terminal int NUMBER;
+terminal Integer NUMBER;
 terminal String TLABEL, IDENT;
 
 non terminal Tree Tree;
@@ -83,7 +83,8 @@ start with Tree;
 Tree ::= ORG NUMBER:programStart Program:p		{: RESULT = new Tree(programStart, p); :}
 ;
 
-Program ::= Row:r Program:p						{: if(r != null) p.addRow(r); RESULT = p; :}
+Program ::= Row:r Program:p                                         {: if(r != null) p.addRow(r); RESULT = p; :}
+            | /*empty program*/                                     {: RESULT = new Program(); :}
 ;
 
 Row ::= Label:l Statement:s Comment SEPARATOR_EOL                   {: RESULT = new Row(l,s); :}
