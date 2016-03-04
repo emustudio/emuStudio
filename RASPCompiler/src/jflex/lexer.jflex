@@ -45,14 +45,10 @@ import java.io.Reader;
 	}	
 
 	private TokenImpl token(int id, int type){
-		System.out.println(Integer.toHexString(type));
-		System.out.println("====");
 		return new TokenImpl(id, type, yytext(), yyline, yycolumn, yychar);
 	}
 	
 	private TokenImpl token(int id, int type, Object value){
-		System.out.println(Integer.toHexString(type));
-		System.out.println("====");
 		return new TokenImpl(id, type, yytext(), yyline, yycolumn, yychar, value);
 	}
 
@@ -111,7 +107,7 @@ operator_constant = "="
 }
 
 /*preprocessor directives*/
-"\.org" {
+"org" {
 	return token(ORG, Token.PREPROCESSOR); 
 }
 
