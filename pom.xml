@@ -344,6 +344,11 @@
         <artifactId>brainc-brainduck</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>net.sf.emustudio</groupId>
+        <artifactId>as-ssem</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <!-- devices -->
       <dependency>

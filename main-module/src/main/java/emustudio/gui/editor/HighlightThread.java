@@ -24,11 +24,11 @@ package emustudio.gui.editor;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.Token;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.Queue;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -49,7 +49,7 @@ public class HighlightThread extends Thread {
      * and we need to be able to retrieve ranges from it, it is stored in a
      * balanced tree.
      */
-    private final SortedSet<DocPosition> iniPositions = new TreeSet<>(new DocPositionComparator());
+    private final SortedSet<DocPosition> initPositions = new TreeSet<>();
     /**
      * As we go through and remove invalid positions we will also be finding
      * new valid positions.
@@ -63,7 +63,7 @@ public class HighlightThread extends Thread {
      * A simple wrapper representing something that needs to be colored.
      * Placed into an object so that it can be stored in a Vector.
      */
-    private class RecolorEvent {
+    private static class RecolorEvent {
 
         public int position;
         public int adjustment;
@@ -76,7 +76,8 @@ public class HighlightThread extends Thread {
     /**
      * Vector that stores the communication between the two threads.
      */
-    private volatile ArrayList<RecolorEvent> v = new ArrayList<>();
+    private volatile Queue<RecolorEvent> recolorEvents = new LinkedList<>();
+
     /**
      * The amount of change that has occurred before the place in the
      * document that we are currently highlighting (lastPosition).
@@ -86,7 +87,7 @@ public class HighlightThread extends Thread {
      * The last position colored
      */
     private int lastPosition = -1;
-    private volatile boolean asleep = false;
+    private volatile boolean isSleeping = false;
 
     private volatile boolean shouldStop;
     /**
@@ -127,8 +128,8 @@ public class HighlightThread extends Thread {
         start();
     }
 
-    private SimpleAttributeSet getStyle(int type) {
-        return ((SimpleAttributeSet) styles.get(type));
+    private SimpleAttributeSet getStyle(int tokenType) {
+        return styles.get(tokenType);
     }
 
     /**
@@ -151,8 +152,8 @@ public class HighlightThread extends Thread {
                     change += adjustment;
                 }
             }
-            v.add(new RecolorEvent(position, adjustment));
-            if (asleep) {
+            recolorEvents.add(new RecolorEvent(position, adjustment));
+            if (isSleeping) {
                 this.interrupt();
             }
         }
@@ -166,18 +167,18 @@ public class HighlightThread extends Thread {
     @Override
     public void run() {
         int position;
-        int adjustment;
         // if we just finish, we can't go to sleep until we
         // ensure there is nothing else for us to do.
         // use try again to keep track of this.
         boolean tryAgain = false;
-        while (!shouldStop) {  // forever
+        while (!shouldStop) {
+            final int adjustment;
+
             synchronized (lock) {
-                if (v.size() > 0) {
-                    RecolorEvent re = (RecolorEvent) (v.get(0));
-                    v.remove(0);
-                    position = re.position;
-                    adjustment = re.adjustment;
+                if (!recolorEvents.isEmpty()) {
+                    RecolorEvent recolorEvent = recolorEvents.poll();
+                    position = recolorEvent.position;
+                    adjustment = recolorEvent.adjustment;
                 } else {
                     tryAgain = false;
                     position = -1;
@@ -195,43 +196,32 @@ public class HighlightThread extends Thread {
 
                 // find the starting position.  We must start at least one
                 // token before the current position
-                try {
-                    // all the good positions before
-                    workingSet = iniPositions.headSet(startRequest);
-                    // the last of the stuff before
-                    dpStart = ((DocPosition) workingSet.last());
-                } catch (NoSuchElementException x) {
-                    // if there were no good positions before the requested start,
-                    // we can always start at the very beginning.
+                workingSet = initPositions.headSet(startRequest);
+                if (workingSet.isEmpty()) {
                     dpStart = new DocPosition(0);
+                } else {
+                    dpStart = workingSet.last();
                 }
 
                 // if stuff was removed, take any removed positions off the list.
                 if (adjustment < 0) {
-                    workingSet = iniPositions.subSet(startRequest, endRequest);
-                    workingIt = workingSet.iterator();
-                    while (workingIt.hasNext()) {
-                        workingIt.next();
-                        workingIt.remove();
-                    }
+                    initPositions.subSet(startRequest, endRequest).clear();
                 }
 
                 // adjust the positions of everything after the insertion/removal.
-                workingSet = iniPositions.tailSet(startRequest);
-                workingIt = workingSet.iterator();
-                while (workingIt.hasNext()) {
-                    ((DocPosition) workingIt.next()).adjustPosition(adjustment);
-                }
+                initPositions.tailSet(startRequest).forEach(
+                    pos -> pos.adjustPosition(adjustment)
+                );
 
                 // now go through and highlight as much as needed
-                workingSet = iniPositions.tailSet(dpStart);
+                workingSet = initPositions.tailSet(dpStart);
                 workingIt = workingSet.iterator();
                 dp = null;
                 if (workingIt.hasNext()) {
-                    dp = (DocPosition) workingIt.next();
+                    dp = workingIt.next();
                 }
                 try {
-                    Token t;
+                    Token token;
                     boolean done = false;
                     dpEnd = dpStart;
                     // we are playing some games with the lexer for efficiency.
@@ -249,17 +239,17 @@ public class HighlightThread extends Thread {
                     // the first obvious stopping place is the end of the document.
                     // the lexer will return null at the end of the document and wee
                     // need to stop there.
-                    t = syntaxLexer.getSymbol();
+                    token = syntaxLexer.getSymbol();
                     newPositions.add(dpStart);
-                    while (!done && t != null && t.getType() != Token.TEOF) {
+                    while (!done && token != null && token.getType() != Token.TEOF) {
                         // this is the actual command that colors the stuff.
                         // Color stuff with the description of the style matched
                         // to the hash table that has been set up ahead of time.
-                        int tEnd = t.getOffset() + t.getLength();
+                        int tEnd = token.getOffset() + token.getLength();
 
-                        int tBegin = 0;
+                        int tBegin;
                         synchronized (lock) {
-                            tBegin = t.getOffset() + change;
+                            tBegin = token.getOffset() + change;
                         }
                         int docLen = 0;
                         document.readLock();
@@ -270,11 +260,12 @@ public class HighlightThread extends Thread {
                         }
                         if (tEnd <= docLen) {
                             try {
-                                document.setCharacterAttributes(tBegin, t.getLength(), getStyle(t.getType()), true);
+                                document.setCharacterAttributes(tBegin, token.getLength(), getStyle(token.getType()), true);
                             } catch (Exception e) {
-                                logger.error(new StringBuilder().append("Could not set character attributes [pos=")                                        .append(tBegin).append(",len=").append(t.getLength())
-                                        .append(",style=").append(getStyle(t.getType()).toString()).append("]")
-                                        .toString(), e);
+                                logger.error(
+                                    "[pos={},style={},,len={}] Could not set character attributes",
+                                    tBegin, getStyle(token.getType()).toString(), token.getLength(), e
+                                );
                                 continue;
                             }
                             // record the position of the last bit of text that we colored
@@ -290,11 +281,11 @@ public class HighlightThread extends Thread {
                         // place that returned to the initial state this time.
                         // As long as that place is after the last changed text, everything
                         // from there on is fine already.
-                        if (t.isInitialLexicalState()) {
+                        if (token.isInitialLexicalState() && token.getType() != Token.ERROR) {
                             //System.out.println(t);
                             // look at all the positions from last time that are less than or
                             // equal to the current position
-                            tEnd = t.getOffset() + t.getLength();
+                            tEnd = token.getOffset() + token.getLength();
                             while (dp != null && dp.getPosition() <= tEnd) {
                                 if (dp.getPosition() == tEnd && dp.getPosition() >= endRequest.getPosition()) {
                                     // we have found a state that is the same
@@ -302,7 +293,7 @@ public class HighlightThread extends Thread {
                                     dp = null;
                                 } else if (workingIt.hasNext()) {
                                     // didn't find it, try again.
-                                    dp = (DocPosition) workingIt.next();
+                                    dp = workingIt.next();
                                 } else {
                                     // didn't find it, and there is no more info from last
                                     // time.  This means that we will just continue
@@ -314,12 +305,12 @@ public class HighlightThread extends Thread {
                             // initial states from this time.
                             newPositions.add(dpEnd);
                         }
-                        t = syntaxLexer.getSymbol();
+                        token = syntaxLexer.getSymbol();
                     }
                     // remove all the old initial positions from the place where
                     // we started doing the highlighting right up through the last
                     // bit of text we touched.
-                    workingIt = iniPositions.subSet(dpStart, dpEnd).iterator();
+                    workingIt = initPositions.subSet(dpStart, dpEnd).iterator();
                     while (workingIt.hasNext()) {
                         workingIt.next();
                         workingIt.remove();
@@ -333,23 +324,15 @@ public class HighlightThread extends Thread {
                     } finally {
                         document.readUnlock();
                     }
-                    workingIt = iniPositions.tailSet(new DocPosition(docLen)).iterator();
+                    workingIt = initPositions.tailSet(new DocPosition(docLen)).iterator();
                     while (workingIt.hasNext()) {
                         workingIt.next();
                         workingIt.remove();
                     }
 
                     // and put the new initial positions that we have found on the list.
-                    iniPositions.addAll(newPositions);
+                    initPositions.addAll(newPositions);
                     newPositions.clear();
-
-                    /*workingIt = iniPositions.iterator();
-                    while (workingIt.hasNext()){
-                    System.out.println(workingIt.next());
-                    }*/
-
-                    //logger.trace(new StringBuilder().append("Started: ").append(dpStart.getPosition()).append(" Ended: ")
-                      //      .append(dpEnd.getPosition()).toString());
                 } catch (IOException x) {
                     logger.error("There was an exception while performing syntax highlighting", x);
                 }
@@ -361,28 +344,29 @@ public class HighlightThread extends Thread {
                 // nothing else to do before going back to sleep.
                 tryAgain = true;
             }
-            asleep = true;
             if (!tryAgain) {
+                isSleeping = true;
                 try {
                     Thread.sleep(0xffffff);
                 } catch (InterruptedException x) {
+                } finally {
+                    isSleeping = false;
                 }
-
             }
-            asleep = false;
         }
     }
 
     public void stopMe() {
         shouldStop = true;
         synchronized (lock) {
-            v.clear();
-            if (asleep) {
+            recolorEvents.clear();
+            if (isSleeping) {
                 this.interrupt();
             }
             try {
                 this.join();
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
             document.setThread(null);
         }
@@ -390,7 +374,7 @@ public class HighlightThread extends Thread {
 
     public void colorAll() {
         synchronized (lock) {
-            v.clear();
+            recolorEvents.clear();
         }
         int docLen = 0;
         document.readLock();

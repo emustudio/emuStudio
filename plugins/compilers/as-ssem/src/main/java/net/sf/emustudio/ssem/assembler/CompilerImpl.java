@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.Reader;
 import java.util.Objects;
 
@@ -43,7 +44,7 @@ import java.util.Objects;
 )
 public class CompilerImpl extends AbstractCompiler {
     private static final String OUTPUT_FILE_EXTENSION = ".bin";
-    private static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
     private static final SourceFileExtension[] SOURCE_FILE_EXTENSIONS = new SourceFileExtension[]{
         new SourceFileExtension("ssem", "SSEM source file")
     };
@@ -106,7 +107,19 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public LexicalAnalyzer getLexer(Reader reader) {
-        return new LexerImpl(reader);
+        return new LexerImpl(new Reader() {
+            @Override
+            public int read(char[] cbuf, int off, int len) throws IOException {
+                int result = reader.read(cbuf, off, len);
+                System.out.println("reading : " + new String(cbuf, off, len));
+                return result;
+            }
+
+            @Override
+            public void close() throws IOException {
+                reader.close();
+            }
+        });
     }
 
     @Override

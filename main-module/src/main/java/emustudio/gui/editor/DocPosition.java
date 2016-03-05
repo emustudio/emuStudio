@@ -22,7 +22,7 @@ package emustudio.gui.editor;
  * A wrapper for a position in a document appropriate for storing
  * in a collection.
  */
-class DocPosition {
+class DocPosition implements Comparable<DocPosition> {
     private int position;
 
     int getPosition(){
@@ -71,5 +71,10 @@ class DocPosition {
     @Override
     public String toString(){
         return "" + position;
+    }
+
+    @Override
+    public int compareTo(DocPosition o) {
+        return position - o.getPosition();
     }
 }

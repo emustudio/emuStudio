@@ -15,6 +15,7 @@
         <include>net.sf.emustudio:as-z80</include>
         <include>net.sf.emustudio:ramc-ram</include>
         <include>net.sf.emustudio:brainc-brainduck</include>
+        <include>net.sf.emustudio:as-ssem</include>
       </includes>
       <useProjectArtifact>false</useProjectArtifact>
       <useTransitiveDependencies>false</useTransitiveDependencies>

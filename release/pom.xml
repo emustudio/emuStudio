@@ -62,6 +62,10 @@
           <groupId>net.sf.emustudio</groupId>
           <artifactId>brainc-brainduck</artifactId>
         </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>as-ssem</artifactId>
+        </dependency>
 
         <!-- devices -->
         <dependency>

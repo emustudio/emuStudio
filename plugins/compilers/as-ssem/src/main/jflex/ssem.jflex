@@ -77,7 +77,6 @@ comment = "//"[^\r\n]*
 eol = \r|\n|\r\n
 space = [ \t\f]+
 number = \-?[0-9]+
-inputLetter = [a-zA-Z]
 
 %%
 
@@ -120,8 +119,6 @@ inputLetter = [a-zA-Z]
     int num = Integer.parseInt(yytext(), 10);
     return token(NUMBER, Token.LITERAL, (byte)(num & 0xFF));
 }
-
-{inputLetter} { /* do nothing, just continue reading */ }
 
 /* error fallback */
 [^] {

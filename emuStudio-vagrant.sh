@@ -15,5 +15,5 @@ fi
 set -e
 
 vagrant provision
-vagrant ssh -c "cd /emustudio && java -jar emuStudio.jar" -- -X
+vagrant ssh -c "cd /home/vagrant && java -jar emuStudio.jar" -- -X
 
