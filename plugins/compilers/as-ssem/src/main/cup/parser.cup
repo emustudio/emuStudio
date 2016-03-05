@@ -40,7 +40,7 @@ parser code {:
     public ParserImpl(LexerImpl lex, ComplexSymbolFactory csf, CompilerImpl compiler) {
         super(lex, csf);
         lexer = Objects.requireNonNull(lex);
-        compiler = Objects.requireNonNull(compiler);
+        this.compiler = Objects.requireNonNull(compiler);
     }
 
     @Override
