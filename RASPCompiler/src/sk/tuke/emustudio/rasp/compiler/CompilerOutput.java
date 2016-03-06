@@ -98,7 +98,6 @@ public class CompilerOutput {
         }
         int position = programStart;
         memory.setProgramStart(programStart);
-        System.out.println("COUNT: "+memoryItems.size());
         for (MemoryItem item : memoryItems) {
             memory.write(position++, item);
         }

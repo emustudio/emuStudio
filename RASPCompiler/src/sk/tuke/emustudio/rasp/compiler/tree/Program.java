@@ -27,7 +27,6 @@ public class Program {
     public void pass() {
         Collections.reverse(rows);
         translateLabels();
-        System.out.println(CompilerOutput.getInstance().getReversedLabels());
 
         int programStart = CompilerOutput.getInstance().getProgramStart();
         for (Row row : rows) {
