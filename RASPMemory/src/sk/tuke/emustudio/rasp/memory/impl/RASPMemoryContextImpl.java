@@ -155,12 +155,17 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
 
     /**
      * Get the address from which the program starts; this method is called by
-     * RASPMemoryImpl::destroy()
+     * RASPMemoryImpl::getProgramStart()
      *
      * @return
      */
     public int getProgramStart() {
         return programStart;
+    }
+
+    @Override
+    public void setProgramStart(Integer programStart) {
+        this.programStart = programStart;
     }
 
     /**

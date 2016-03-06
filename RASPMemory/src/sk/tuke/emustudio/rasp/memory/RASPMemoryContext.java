@@ -27,4 +27,6 @@ public interface RASPMemoryContext extends MemoryContext<MemoryItem> {
      */
     public String getLabel(int pos);
 
+    void setProgramStart(Integer programStart);
+
 }

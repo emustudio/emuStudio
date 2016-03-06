@@ -87,6 +87,8 @@ public class RASPTableModel extends AbstractTableModel {
                              item is an address, so look for corressponding label in memory*/
                             String label = memory.getLabel(((NumberMemoryItem) item).getValue());
                             if (label != null) {
+                                int index = label.lastIndexOf(':');
+                                label = label.substring(0, index);
                                 return label;
                             } else {
                                 //if no label at the address, simply return the number
