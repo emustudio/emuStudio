@@ -24,14 +24,11 @@ public class Program {
     }
 
     public void pass() {
+        translateLabels();
+        System.out.println(CompilerOutput.getInstance().getReversedLabels());
+        
         int programStart = CompilerOutput.getInstance().getProgramStart();
         for (Row row : rows) {
-            Label label = row.getLabel();
-            //add label
-            if (label != null) {
-                label.setAddress(programStart + rows.indexOf(row) * 2);
-                CompilerOutput.getInstance().addLabel(label);
-            }
             Statement statement = row.getStatement();
             RASPInstructionImpl instruction = statement.getInstruction();
             //add instruction
@@ -41,13 +38,25 @@ public class Program {
             if (operand != null) {
                 CompilerOutput.getInstance().addMemoryItem(new NumberMemoryItem(operand));
             } else if (labelOperand != null) {
+                System.out.println("Getting address for label at line: "+ rows.indexOf(row));
                 //operand is label, so we are working with jump instructions
                 int address = CompilerOutput.getInstance().getAddressForLabel(labelOperand);
+                
                 CompilerOutput.getInstance().addMemoryItem(new NumberMemoryItem(address));
             }
-
         }
-
+    }
+    
+    private void translateLabels(){
+        int programStart = CompilerOutput.getInstance().getProgramStart();
+        for(Row row: rows){
+            Label label = row.getLabel();
+            if(label!=null){
+                label.setAddress(programStart + rows.indexOf(row)*2);
+                System.out.println("LABEL: "+label.getValue() + ", @"+label.getAddress());
+                CompilerOutput.getInstance().addLabel(label);
+            }
+        }
     }
 
 }

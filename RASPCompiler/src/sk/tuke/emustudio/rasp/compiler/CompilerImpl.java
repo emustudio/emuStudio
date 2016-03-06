@@ -62,6 +62,7 @@ public class CompilerImpl extends AbstractCompiler {
         } catch (Exception ex) {
             errorCode = 1;
             System.out.println("Compilation error " + ex.getMessage());
+            ex.printStackTrace();
             notifyError("Compilation error");
             return false;
         } finally {
@@ -81,7 +82,7 @@ public class CompilerImpl extends AbstractCompiler {
                 break;
             }
         }
-        return compile(inputFileName, outputFileName + OUTPUT_FILE_EXTENSION);
+        return compile(inputFileName, outputFileName + "." + OUTPUT_FILE_EXTENSION);
     }
 
     @Override
