@@ -13,6 +13,7 @@ import emulib.plugins.compiler.SourceFileExtension;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.Reader;
 import java.util.Objects;
 import java_cup.runtime.ComplexSymbolFactory;
@@ -56,13 +57,14 @@ public class CompilerImpl extends AbstractCompiler {
             if (parser.hasSyntaxErrors()) {
                 throw new Exception("One ore more errors in the source code.");
             }
+
             tree.pass();
             CompilerOutput.getInstance().saveToFile(outputFileName);
+
             notifyInfo("Compile was successfull.");
         } catch (Exception ex) {
             errorCode = 1;
-            System.out.println("Compilation error " + ex.getMessage());
-            ex.printStackTrace();
+            System.err.println("Compilation error " + ex.getMessage());
             notifyError("Compilation error");
             return false;
         } finally {
@@ -87,7 +89,20 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public LexicalAnalyzer getLexer(Reader reader) {
-        return new LexerImpl(reader);
+        return new LexerImpl(new Reader() {
+            @Override
+            public int read(char[] cbuf, int off, int len) throws IOException {
+                int result = reader.read(cbuf, off, len);
+                System.out.println("reading : " + new String(cbuf, off, len));
+                return result;
+            }
+
+            @Override
+            public void close() throws IOException {
+                reader.close();
+            }
+        });
+        
     }
 
     @Override
