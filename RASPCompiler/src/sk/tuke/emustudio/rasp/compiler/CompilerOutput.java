@@ -5,6 +5,7 @@
  */
 package sk.tuke.emustudio.rasp.compiler;
 
+import emulib.plugins.memory.MemoryContext;
 import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -13,8 +14,10 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import sk.tuke.emustudio.rasp.compiler.tree.Label;
 import sk.tuke.emustudio.rasp.memory.MemoryItem;
+import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 
 /**
  *
@@ -46,11 +49,11 @@ public class CompilerOutput {
     }
 
     public int getAddressForLabel(String labelValue) {
-        if(reversedLabels.containsKey(labelValue)){
+        if (reversedLabels.containsKey(labelValue)) {
             return reversedLabels.get(labelValue);
-        }else {
-            throw new RuntimeException("NO MAPPING for "+labelValue);
-        }        
+        } else {
+            throw new RuntimeException("NO MAPPING for " + labelValue);
+        }
     }
 
     public void addMemoryItem(MemoryItem item) {
@@ -88,9 +91,20 @@ public class CompilerOutput {
         }
     }
 
+    public void loadIntoMemory(RASPMemoryContext memory) {
+        memory.clear();
+        
+        for (Map.Entry<Integer, String> entry : labels.entrySet()) {
+            memory.addLabel(entry.getKey(), entry.getValue());
+        }
+        int position = programStart;
+        for (MemoryItem item : memoryItems) {
+            memory.write(position++, item);
+        }
+    }
+
     public HashMap<String, Integer> getReversedLabels() {
         return reversedLabels;
     }
-    
-   
+
 }

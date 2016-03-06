@@ -18,6 +18,7 @@ import java.io.Reader;
 import java.util.Objects;
 import java_cup.runtime.ComplexSymbolFactory;
 import sk.tuke.emustudio.rasp.compiler.tree.Tree;
+import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 
 /**
  * The implementation of the compiler of RASP abstract machine assembly
@@ -47,7 +48,7 @@ public class CompilerImpl extends AbstractCompiler {
         int errorCode = 0;
         try (Reader reader = new FileReader(inputFileName)) {
 
-            MemoryContext memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
+            RASPMemoryContext memory = (RASPMemoryContext) contextPool.getMemoryContext(pluginID, RASPMemoryContext.class);
             LexerImpl lexer = new LexerImpl(reader);
             ParserImpl parser = new ParserImpl(lexer, new ComplexSymbolFactory(), this);
             Tree tree = (Tree) parser.parse().value;
@@ -60,6 +61,7 @@ public class CompilerImpl extends AbstractCompiler {
 
             tree.pass();
             CompilerOutput.getInstance().saveToFile(outputFileName);
+            CompilerOutput.getInstance().loadIntoMemory(memory);
 
             notifyInfo("Compile was successfull.");
         } catch (Exception ex) {
