@@ -23,7 +23,7 @@ public class Label {
     }
 
     public Label(String value) {
-        this.value = value;
+        this.value = value.toUpperCase();
     }
 
     public void setAddress(int address) {

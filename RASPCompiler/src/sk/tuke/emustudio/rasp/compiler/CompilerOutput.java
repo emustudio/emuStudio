@@ -49,8 +49,8 @@ public class CompilerOutput {
     }
 
     public int getAddressForLabel(String labelValue) {
-        if (reversedLabels.containsKey(labelValue)) {
-            return reversedLabels.get(labelValue);
+        if (reversedLabels.containsKey(labelValue+":")) {
+            return reversedLabels.get(labelValue+":");
         } else {
             throw new RuntimeException("NO MAPPING for " + labelValue);
         }
@@ -68,7 +68,7 @@ public class CompilerOutput {
         this.programStart = programStart;
     }
 
-    private void clear() {
+    public void clear() {
         labels.clear();
         reversedLabels.clear();
         memoryItems.clear();
@@ -83,7 +83,6 @@ public class CompilerOutput {
                 objectOutputStream.writeObject(programStart);
                 objectOutputStream.writeObject(memoryItems);
             }
-            clear();
         } catch (FileNotFoundException ex) {
             System.out.println("Error saving to file.");
         } catch (IOException ex) {
@@ -98,11 +97,13 @@ public class CompilerOutput {
             memory.addLabel(entry.getKey(), entry.getValue());
         }
         int position = programStart;
+        memory.setProgramStart(programStart);
+        System.out.println("COUNT: "+memoryItems.size());
         for (MemoryItem item : memoryItems) {
             memory.write(position++, item);
         }
     }
-
+    
     public HashMap<String, Integer> getReversedLabels() {
         return reversedLabels;
     }

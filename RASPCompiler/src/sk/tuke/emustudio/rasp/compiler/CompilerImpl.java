@@ -59,14 +59,17 @@ public class CompilerImpl extends AbstractCompiler {
                 throw new Exception("One ore more errors in the source code.");
             }
 
+            
             tree.pass();
             CompilerOutput.getInstance().saveToFile(outputFileName);
             CompilerOutput.getInstance().loadIntoMemory(memory);
+            CompilerOutput.getInstance().clear();
 
             notifyInfo("Compile was successfull.");
         } catch (Exception ex) {
             errorCode = 1;
             System.err.println("Compilation error " + ex.getMessage());
+            ex.printStackTrace();
             notifyError("Compilation error");
             return false;
         } finally {

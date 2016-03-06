@@ -7,7 +7,6 @@ package sk.tuke.emustudio.rasp.compiler.tree;
 
 import sk.tuke.emustudio.rasp.compiler.CompilerOutput;
 
-
 /**
  *
  * @author miso
@@ -18,14 +17,14 @@ public class Tree {
     private final Program program;
 
     public Tree(int programStart, Program program) {
-        this.programStart=programStart;
+        this.programStart = programStart;
         this.program = program;
     }
 
-    public void pass(){
+    public void pass() {
         CompilerOutput.getInstance().setProgramStart(programStart);
         program.pass();
+
     }
-    
 
 }

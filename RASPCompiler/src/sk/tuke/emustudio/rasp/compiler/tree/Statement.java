@@ -25,7 +25,7 @@ public class Statement {
 
     public Statement(RASPInstructionImpl instruction, String labelOperand) {
         this.instruction = instruction;
-        this.labelOperand = labelOperand;
+        this.labelOperand = labelOperand.toUpperCase();
         this.operand = null;
     }
 
