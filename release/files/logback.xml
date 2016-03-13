@@ -1,8 +1,26 @@
 <configuration>
 
-  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>emuStudio.log</file>
 
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- daily rollover. Make sure the path matches the one in the file element or else
+       the rollover logs are placed in the working directory. -->
+      <fileNamePattern>emuStudio_%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+
+      <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+        <maxFileSize>1MB</maxFileSize>
+      </timeBasedFileNamingAndTriggeringPolicy>
+      <!-- keep 10 days' worth of history -->
+      <maxHistory>10</maxHistory>
+    </rollingPolicy>
+
+    <encoder>
+      <pattern>%date [%level][%logger{10}] %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <pattern>%date [%level][%logger{10}] %msg%n</pattern>
     </encoder>
@@ -19,7 +37,7 @@
   </appender>
 
   <root level="debug">
-    <appender-ref ref="FILE" />
+    <appender-ref ref="STDOUT" />
   </root>
 
   <logger name="automatization" level="debug">
