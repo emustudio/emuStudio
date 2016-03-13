@@ -434,10 +434,24 @@ This is an advanced topic, but you might need it if something goes wrong. No sof
 these days, and not a person is perfect. Sometimes it might happen that emuStudio is not working
 as expected, either it does not start (with weird message on screen), or it fails while running.
 
-For that purpose, everything important is being logged (by default) in a log file. The log file
-is named `emuStudio.log` and should be located in the location where `emuStudio.jar` is located.
-Every new run of emuStudio appends log messages from time-to-time into that file until emuStudio
-is terminated.
+For that purpose, everything important is being logged (by default) in a console. If you encounter some problem
+and either want to fix it or report it, the logs, except steps to reproduce are the most important thing.
+
+By default, logging is written to the standard output, however in case of a problem it is a good practice to enable
+file logging. To enable file logging, open `logback.xml` file located in the root directory of emuStudio. Find a
+section named `<root ..>`, and change `appender-ref` from `STDOUT` to `FILE` as follows:
+
+----
+  <root level="debug">
+    <appender-ref ref="FILE" />
+  </root>
+----
+
+The log file is named `emuStudio.log` and should be located in the location where `emuStudio.jar` is
+located. Every new run of emuStudio will append log messages into that file until emuStudio is terminated.
+
+NOTE: By default, a rolling policy is enabled, which deletes logs older than 2 days and keeps the log in maximum
+      size of 1 MB. It is of course configurable.
 
 TIP: The log file is the best help about what went wrong for a developer which is trying to analyze
      or fix the problem. If you have encountered a problem with emuStudio, you should provide the log
