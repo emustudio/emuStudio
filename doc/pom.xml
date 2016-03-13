@@ -86,6 +86,17 @@
                   <outputDirectory>${project.build.directory}/tutorials</outputDirectory>
                 </configuration>
               </execution>
+              <execution>
+                <id>roadmap</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>process-asciidoc</goal>
+                </goals>
+                <configuration>
+                  <sourceDirectory>src/roadmap</sourceDirectory>
+                  <outputDirectory>${project.build.directory}/roadmap</outputDirectory>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
         </plugins>

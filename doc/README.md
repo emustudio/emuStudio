@@ -16,7 +16,21 @@ Then, run the following command:
 mvn clean install -P doc
 ```
 
-## Advices for documenting a feature
+## How to contribute
+
+The documentation is split into several subdirectories:
+
+- `src/tutorials` - contains developer's documentation of how plug-ins should be written. People reading tutorials
+                    should be regular Java developers.
+- `src/user-manual` - contains user's manual. There should be documented all computers and used plug-ins so the user
+                      of emuStudio will know how to work with it. Here should be also placed all programming examples
+                      used in virtual machines.
+- `src/roadmap` - this is a "scratchpad" directory where new ideas and roadmap is written for the next development of
+                  emuStudio. Files placed there should contain decisions, strategies, motivations and explanations
+                  of "how,why,when" of emuStudio. The directory is not named "RFC" or similarly, because the files
+                  are allowed to be written informally.
+
+## Advices for documenting a feature in user manual
 
 Documentation should be clear and balanced in both form and content. In order to achieve that, the following
 questions should be helpful:

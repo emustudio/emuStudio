@@ -378,6 +378,90 @@ to use them from Maven, put the following code into your `pom.xml` file:
 
 NOTE: Development of official standard plug-ins require using Maven.
 
+== How to document plug-ins
+
+There are two types of documentation:
+
+- user documentation
+- developer's documentation (not javadoc)
+
+For now, the way how it is done is to place all the documentation in the `doc/` submodule of emuStudio. Please see
+the `README.md` file of that submodule for more information how to do it.
+
+== How to incorporate a plug-in into emuStudio release
+
+The philosophy about releasing is to keep everything as automatic as possible. The main reason is that if it was manual,
+it would take some time which can be spent on something better. Of course there will be always some manual steps, but
+it is better to keep them minimal.
+
+The submodule `release/` is used now to create emuStudio releases. It expects that emuStudio artifacts are either
+installed in local Maven repository, or they will be downloaded from emuStudio repository.
+
+The submodule uses `maven-assembly-plugin` is used, and `assembly.xml` file exists which describes which artifacts
+and files should be placed in which directories.
+
+The following artifacts can be included in the release:
+
+- Plug-in artifact (JAR file)
+- Plug-in examples
+- New computer configuration (if applicable)
+
+=== Plug-in artifact
+
+The condition is ofcourse that the plug-in must be a submodule in the main emuStudio repository. As an example,
+let's use plug-in `plugins/compilers/as-ssem`. The point is to edit `release/assembly.xml` file, find the dependency
+set for compilers (look for the line `<outputDirectory>/compilers</outputDirectory>`) and add the plug-in in that
+set:
+
+----
+    <dependencySet>
+      <includes>
+        ...
+        <include>net.sf.emustudio:as-ssem</include>
+      </includes>
+      ...
+      <outputDirectory>/compilers</outputDirectory>
+    </dependencySet>
+----
+
+Similarly, for other types of plug-ins there exist corresponding sections which should be used.
+
+=== Plug-in examples
+
+Similarly as was said in the previous subsection, the file which should be edited is `release/assembly.xml`. Examples
+section is located in the bottom part, in a `fileSet` section. Examples are usually bound with specific compiler - and
+they are also physically placed.
+
+NOTE: Compilation of compiler plug-ins does not create examples artifacts (maybe it should in the future). The assembly
+      therefore points to relative path of the example files.
+
+For example, example files for plug-in `as-8080` are stored in the following section:
+
+----
+    <fileSet>
+      <directory>../plugins/compilers/as-8080/examples</directory>
+      <directoryMode></directoryMode>
+      <includes>
+        <include>**/*.asm</include>
+        <include>**/*.inc</include>
+      </includes>
+      <outputDirectory>/examples/as-8080</outputDirectory>
+    </fileSet>
+----
+
+The subdirectories in target `examples/` directory are organized by compiler plug-in names, or machine names if
+the examples are rather bound to the whole virtual computer (e.g. disk images, etc.). Examples for whole virtual
+computers are usually not bound with specific plug-ins and should be placed directly in the `release/files/examples/`
+directory.
+
+All files in the `release/files` are automatically included in the release.
+
+=== New computer configuration
+
+All predefined computer configurations are placed in directory `release/files/config`. The only step needed to be
+done here is to create a computer configuration file and place it there. The `maven-assembly-plugin` will take care
+of it and the configuration will be included in the release automatically.
+
 == What to do next
 
 Somewhere around you should be able to find tutorials for developing specific emuStudio plug-in, e.g. a compiler,

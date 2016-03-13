@@ -97,33 +97,34 @@
     </fileSet>
     <fileSet>
       <directory>../plugins/compilers/as-8080/examples</directory>
+      <directoryMode></directoryMode>
       <includes>
-        <include>*.asm</include>
-        <include>*.inc</include>
+        <include>**/*.asm</include>
+        <include>**/*.inc</include>
       </includes>
       <outputDirectory>/examples/as-8080</outputDirectory>
     </fileSet>
     <fileSet>
       <directory>../plugins/compilers/as-z80/examples</directory>
       <includes>
-        <include>*.asm</include>
-        <include>*.inc</include>
+        <include>**/*.asm</include>
+        <include>**/*.inc</include>
       </includes>
       <outputDirectory>/examples/as-z80</outputDirectory>
     </fileSet>
     <fileSet>
       <directory>../plugins/compilers/brainc-brainduck/examples</directory>
       <includes>
-        <include>*.b</include>
+        <include>**/*.b</include>
       </includes>
       <outputDirectory>/examples/brainc-brainduck</outputDirectory>
     </fileSet>
     <fileSet>
       <directory>../plugins/compilers/ramc-ram/examples</directory>
       <includes>
-        <include>*.ram</include>
-        <include>*.txt</include>
-        <include>*.pdf</include>
+        <include>**/*.ram</include>
+        <include>**/*.txt</include>
+        <include>**/*.pdf</include>
       </includes>
       <outputDirectory>/examples/ramc-ram</outputDirectory>
     </fileSet>
