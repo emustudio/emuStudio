@@ -25,10 +25,15 @@ env:
       zBqoVamVO6RZMkV5cwkeT4qhdmuolH+GPy/hqVtR7U1l+0BuCO6JpWdcP5DX
       BgteCsFztnGT0oZfkT6Yb9a11m5ahUZ5nXrwMu5MDqklsFgxplM=
 
+before_script:
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 3 # give xvfb some time to start
+
 after_success:
 - mvn -B -U -P coveralls clean cobertura:cobertura coveralls:report
 - python ci-tools/add_server.py
-- mvn -B clean deploy -Dmaven.test.skip=true
+- mvn -B deploy -Dmaven.test.skip=true
 - python ci-tools/restore_backups.py
 
 notifications:
