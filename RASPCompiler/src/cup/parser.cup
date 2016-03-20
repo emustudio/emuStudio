@@ -36,7 +36,13 @@ parser code{:
 	public void report_error(String messageText, Object current){
 		syntaxErrors = true;
 		Token token = (Token) current;
-		messageText+=":" + token.getErrorString()+" (\'" + token.getText() + "\')";
+                String tokenText;
+                if(token.getID() == TokenImpl.SEPARATOR_EOL){
+                    tokenText = "End of line";
+                }else {
+                    tokenText = token.getText();
+                }
+		messageText+=": " + token.getErrorString()+" (\'" + tokenText + "\')";
 
 		List<Integer> expectedTokenIds = expected_token_ids();
 		StringBuilder sb = new StringBuilder();

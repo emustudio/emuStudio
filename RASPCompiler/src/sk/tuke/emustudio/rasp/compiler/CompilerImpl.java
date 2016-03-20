@@ -69,7 +69,6 @@ public class CompilerImpl extends AbstractCompiler {
         } catch (Exception ex) {
             errorCode = 1;
             System.err.println("Compilation error " + ex.getMessage());
-            ex.printStackTrace();
             notifyError("Compilation error");
             return false;
         } finally {

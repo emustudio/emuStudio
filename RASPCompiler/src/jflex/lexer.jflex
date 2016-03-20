@@ -24,7 +24,7 @@ import java.io.Reader;
 %type TokenImpl
         
 %{
-    @Override
+        @Override
 	public Token getSymbol() throws IOException{
 		return next_token();
 	}

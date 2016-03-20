@@ -69,7 +69,7 @@ public class TokenImpl extends ComplexSymbolFactory.ComplexSymbol implements Tok
 
     @Override
     public String getErrorString() {
-        return "Unknown token";
+        return "Invalid token";
     }
 
     @Override

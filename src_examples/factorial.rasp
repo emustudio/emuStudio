@@ -1,0 +1,25 @@
+org 5
+
+load =1
+store 2 ;comment
+store 3
+read 1
+load 1
+jgtz ok
+jmp finish
+
+ok: 
+load 3
+sub 1
+jz finish
+load 3
+add =1
+store 3
+mul 2
+store 2
+jmp ok
+
+finish: write 2
+load =25
+store 60
+halt
