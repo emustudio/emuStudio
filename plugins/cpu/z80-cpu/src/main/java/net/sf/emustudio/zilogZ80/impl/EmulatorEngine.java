@@ -788,7 +788,7 @@ public class EmulatorEngine {
                     return 7;
                 case 0x17: /* RLA */
                     tmp = regs[REG_A] >>> 7;
-                    regs[REG_A] = (((regs[REG_A] << 1) | (flags & 1)) & 0xff);
+                    regs[REG_A] = (((regs[REG_A] << 1) | (flags & FLAG_C)) & 0xff);
                     flags = ((flags & 0xEC) | tmp);
                     return 4;
                 case 0x1A: /* LD A,(DE) */
@@ -796,7 +796,7 @@ public class EmulatorEngine {
                     regs[REG_A] = (tmp & 0xff);
                     return 7;
                 case 0x1F: /* RRA */
-                    tmp = (flags & 1) << 7;
+                    tmp = (flags & FLAG_C) << 7;
                     flags = ((flags & 0xEC) | (regs[REG_A] & 1));
                     regs[REG_A] = ((regs[REG_A] >>> 1 | tmp) & 0xff);
                     return 4;
@@ -892,6 +892,9 @@ public class EmulatorEngine {
                     OP = memory.read(PC);
                     PC = (PC + 1) & 0xFFFF;
                     switch (OP) {
+                        case 0x77:
+                        case 0x7F:// undocumented NOP
+                            return 4;
                     /* IN r,(C) */
                         case 0x40:
                         case 0x48:
@@ -902,7 +905,7 @@ public class EmulatorEngine {
                         case 0x78:
                             tmp = (OP >>> 3) & 0x7;
                             putreg(tmp, context.fireIO(regs[REG_C], true, 0));
-                            flags = (flags & 1) | SIGN_ZERO_TABLE[regs[tmp]] | PARITY_TABLE[regs[tmp]];
+                            flags = (flags & FLAG_C) | SIGN_ZERO_TABLE[regs[tmp]] | PARITY_TABLE[regs[tmp]];
                             return 12;
                     /* OUT (C),r */
                         case 0x41:
@@ -979,15 +982,31 @@ public class EmulatorEngine {
 
                             return 11;
                         case 0x44: /* NEG */
+                        case 0x4C:
+                        case 0x54:
+                        case 0x5C:
+                        case 0x64:
+                        case 0x6C:
+                        case 0x74:
+                        case 0x7C:
                             flags = NEG_TABLE[regs[REG_A]] & 0xFF;
                             regs[REG_A] = (NEG_TABLE[regs[REG_A]] >>> 8) & 0xFF;
                             return 8;
                         case 0x45: /* RETN */
+                        case 0x55:
+                        case 0x5D:
+                        case 0x65:
+                        case 0x6D:
+                        case 0x75:
+                        case 0x7D:
                             IFF[0] = IFF[1];
                             PC = readWord(SP);
                             SP = (SP + 2) & 0xffff;
                             return 14;
                         case 0x46: /* IM 0 */
+                        case 0x4E:
+                        case 0x66:
+                        case 0x6E:
                             intMode = 0;
                             return 8;
                         case 0x47: /* LD I,A */
@@ -1002,6 +1021,7 @@ public class EmulatorEngine {
                             R = regs[REG_A];
                             return 9;
                         case 0x56: /* IM 1 */
+                        case 0x76:
                             intMode = 1;
                             return 8;
                         case 0x57: /* LD A,I */
@@ -1009,6 +1029,7 @@ public class EmulatorEngine {
                             flags = SIGN_ZERO_TABLE[regs[REG_A]] | (IFF[1] ? FLAG_PV : 0) | (flags & FLAG_C);
                             return 9;
                         case 0x5E: /* IM 2 */
+                        case 0x7E:
                             intMode = 2;
                             return 8;
                         case 0x5F: /* LD A,R */
@@ -1033,7 +1054,7 @@ public class EmulatorEngine {
                             return 18;
                         case 0x70: /* IN (C) - unsupported */
                             tmp = (context.fireIO(regs[REG_C], true, 0) & 0xFF);
-                            flags = ((flags & 1) | DAA_TABLE[tmp]);
+                            flags = SIGN_ZERO_TABLE[tmp] | PARITY_TABLE[tmp] | (flags & FLAG_C);
                             return 12;
                         case 0x71: /* OUT (C),0 - unsupported */
                             context.fireIO(regs[REG_C], false, 0);
@@ -1178,8 +1199,9 @@ public class EmulatorEngine {
                             regs[REG_B] = (tmp >>> 8) & 0xFF;
                             regs[REG_C] = tmp & 0xFF;
                             flags &= ((~FLAG_PV) & (~FLAG_N) & (~FLAG_H));
-
-                            if (tmp == 0) {
+                            if (tmp != 0) {
+                                flags |= FLAG_PV;
+                            } else {
                                 return 16;
                             }
                             PC = (PC - 2) & 0xFFFF;
@@ -1250,7 +1272,9 @@ public class EmulatorEngine {
                             regs[REG_D] = ((tmp2 >>> 8) & 0xff);
                             regs[REG_E] = (tmp2 & 0xFF);
                             flags &= 0xE9;
-                            if (tmp == 0) {
+                            if (tmp != 0) {
+                                flags |= FLAG_PV;
+                            } else {
                                 return 16;
                             }
                             PC = (PC - 2) & 0xFFFF;
@@ -1563,7 +1587,21 @@ public class EmulatorEngine {
                                 case 0x7E:
                                     tmp2 = (OP >>> 3) & 7;
                                     tmp1 = memory.read((getspecial(special) + (byte) tmp) & 0xffff);
-                                    flags = ((flags & 0x95) | FLAG_H | (((tmp1 & (1 << tmp2)) == 0) ? FLAG_Z : 0));
+                                    flags = ((flags & FLAG_C) | FLAG_H | (((tmp1 & (1 << tmp2)) == 0) ? (FLAG_Z | FLAG_PV) : 0));
+                                    if (tmp2 == 7) {
+                                        flags |= (((tmp1 & (1 << 7)) == 0x80) ? FLAG_S : 0);
+                                    }
+                                    return 20;
+                                case 0x78: // undocumented BIT 7,(ii+d)
+                                case 0x79:
+                                case 0x7A:
+                                case 0x7B:
+                                case 0x7C:
+                                case 0x7D:
+                                case 0x7F:
+                                    tmp1 = memory.read((getspecial(special) + (byte) tmp) & 0xffff);
+                                    flags = ((flags & FLAG_C) | FLAG_H | (((tmp1 & (1 << 7)) == 0) ? (FLAG_Z | FLAG_PV) : 0))
+                                        | (((tmp1 & (1 << 7)) == 0x80) ? FLAG_S : 0);
                                     return 20;
                             /* RES b,(ii+d) */
                                 case 0x86:
@@ -1595,7 +1633,23 @@ public class EmulatorEngine {
                                     tmp1 = (tmp1 | (1 << tmp2));
                                     memory.write(tmp3, (short) (tmp1 & 0xff));
                                     return 23;
+                            /* SET 0,(ii+d),reg (undocumented) */
+                                case 0xC0:
+                                case 0xC1:
+                                case 0xC2:
+                                case 0xC3:
+                                case 0xC4:
+                                case 0xC5:
+                                case 0xC7:
+                                    tmp2 = (OP >>> 3) & 7;
+                                    tmp3 = (getspecial(special) + (byte) tmp) & 0xffff;
+                                    tmp1 = memory.read(tmp3);
+                                    tmp1 = (tmp1 | (1 << tmp2));
+                                    memory.write(tmp3, (short) (tmp1 & 0xff));
+                                    regs[OP & 7] = tmp1 & 0xFF;
+                                    return 23;
                                 case 0x06: /* RLC (ii+d) */
+                                case 0: // undocumented
                                     tmp = (getspecial(special) + (byte) tmp) & 0xffff;
                                     tmp1 = memory.read(tmp);
 
@@ -1605,6 +1659,9 @@ public class EmulatorEngine {
                                     memory.write(tmp, (short)(tmp1 & 0xFF));
                                     flags = SIGN_ZERO_TABLE[tmp1] | PARITY_TABLE[tmp1] | tmp2;
 
+                                    if (OP == 0) {
+                                        regs[REG_B] = (short)(tmp1 & 0xFF);
+                                    }
                                     return 23;
                                 case 0x0E: /* RRC (ii+d) */
                                     tmp = (getspecial(special) + (byte) tmp) & 0xffff;
@@ -1883,7 +1940,10 @@ public class EmulatorEngine {
                             tmp = (OP >>> 3) & 7;
                             tmp2 = OP & 7;
                             tmp1 = getreg(tmp2);
-                            flags = ((flags & 0x95) | FLAG_H | (((tmp1 & (1 << tmp)) == 0) ? FLAG_Z : 0));
+                            flags = ((flags & FLAG_C) | FLAG_H | (((tmp1 & (1 << tmp)) == 0) ? (FLAG_Z | FLAG_PV) : 0));
+                            if (tmp == 7) {
+                                flags |= (((tmp1 & (1 << tmp)) == 0x80) ? FLAG_S : 0);
+                            }
                             if (tmp2 == 6) {
                                 return 12;
                             } else {

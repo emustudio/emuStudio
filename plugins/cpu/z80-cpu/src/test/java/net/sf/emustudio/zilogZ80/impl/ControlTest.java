@@ -226,7 +226,7 @@ public class ControlTest extends InstructionsTest {
 
     @Test
     public void testInvalidInstruction() throws Exception {
-        cpuRunnerImpl.setProgram(0xED, 0x55);
+        cpuRunnerImpl.setProgram(0xED, 0x80);
         cpuRunnerImpl.reset();
         cpuRunnerImpl.expectRunState(CPU.RunState.STATE_STOPPED_BAD_INSTR);
         cpuRunnerImpl.step();
@@ -256,34 +256,34 @@ public class ControlTest extends InstructionsTest {
         cpuVerifierImpl.checkPC(1);
     }
 
-    @Test
-    public void testIM__0() {
-        cpuRunnerImpl.setProgram(0xED, 0x46);
+    private void checkIm(int opcode, int intModeSetting, int intModeCheck) {
+        cpuRunnerImpl.setProgram(0xED, opcode);
         cpuRunnerImpl.reset();
+        cpuRunnerImpl.setIntMode((byte)intModeSetting);
 
         cpuRunnerImpl.step();
 
-        cpuVerifierImpl.checkIntMode(0);
+        cpuVerifierImpl.checkIntMode(intModeCheck);
+    }
+
+    @Test
+    public void testIM__0() {
+        checkIm(0x46, 1, 0);
+        checkIm(0x4E, 1, 0); // undocumented
+        checkIm(0x66, 1, 0); // undocumented
+        checkIm(0x6E, 1, 0); // undocumented
     }
 
     @Test
     public void testIM__1() {
-        cpuRunnerImpl.setProgram(0xED, 0x56);
-        cpuRunnerImpl.reset();
-
-        cpuRunnerImpl.step();
-
-        cpuVerifierImpl.checkIntMode(1);
+        checkIm(0x56, 0, 1);
+        checkIm(0x76, 0, 1); // undocumented
     }
 
     @Test
     public void testIM__2() {
-        cpuRunnerImpl.setProgram(0xED, 0x5E);
-        cpuRunnerImpl.reset();
-
-        cpuRunnerImpl.step();
-
-        cpuVerifierImpl.checkIntMode(2);
+        checkIm(0x5E, 0, 2);
+        checkIm(0x7E, 0, 2); // undocumented
     }
 
     @Test
@@ -379,10 +379,17 @@ public class ControlTest extends InstructionsTest {
                 .verifyPair(REG_SP, context -> (context.first + 2) & 0xFFFF)
                 .enableIFF2()
                 .disableIFF1()
-                .verifyIFF1isEnabled();
+                .verifyIFF1isEnabled()
+                .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinary(2,
-                test.run(0xED, 0x45)
+                test.run(0xED, 0x45),
+                test.run(0xED, 0x55),
+                test.run(0xED, 0x5D),
+                test.run(0xED, 0x65),
+                test.run(0xED, 0x6D),
+                test.run(0xED, 0x75),
+                test.run(0xED, 0x7D)
         );
     }
 

@@ -27,14 +27,7 @@ import org.junit.Test;
 
 import java.util.function.Function;
 
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_N;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_A;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_B;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_C;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_D;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_E;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_H;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.*;
 import static net.sf.emustudio.zilogZ80.impl.suite.Utils.get8MSBplus8LSB;
 
 public class BitTest extends InstructionsTest {
@@ -43,25 +36,35 @@ public class BitTest extends InstructionsTest {
         return new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(register)
                 .setFlags(FLAG_N)
-                .verifyFlags(new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset(), context -> 0)
                 .keepCurrentInjectorsAfterRun()
                 .clearOtherVerifiersAfterRun();
+    }
+
+    private ByteTestBuilder verifyFlags(ByteTestBuilder test, FlagsBuilderImpl<Number> flagsBuilder, int bitShift) {
+        return test.verifyFlags(flagsBuilder, context -> (context.first & (1 << bitShift)));
+    }
+
+    private IntegerTestBuilder verifyFlags(IntegerTestBuilder test, FlagsBuilderImpl<Number> flagsBuilder, int bitShift) {
+        return test.verifyFlags(flagsBuilder, context -> (context.second & (1 << bitShift)));
     }
 
     @Test
     public void testBIT_b__A() {
         ByteTestBuilder test = prepareBITtest(REG_A);
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().zero();
+        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+            .parity();
+        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+            .zero().parity();
         Generator.forSome8bitUnary(
-                test.verifyFlags(flagsBuilder, context -> context.first & 1).run(0xCB, 0x47),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 1) & 1).run(0xCB, 0x4F),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 2) & 1).run(0xCB, 0x57),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 3) & 1).run(0xCB, 0x5F),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 4) & 1).run(0xCB, 0x67),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 5) & 1).run(0xCB, 0x6F),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 6) & 1).run(0xCB, 0x77),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 7) & 1).run(0xCB, 0x7F)
+            verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x47),
+            verifyFlags(test, flagsBuilder, 1).run(0xCB, 0x4F),
+            verifyFlags(test, flagsBuilder, 2).run(0xCB, 0x57),
+            verifyFlags(test, flagsBuilder, 3).run(0xCB, 0x5F),
+            verifyFlags(test, flagsBuilder, 4).run(0xCB, 0x67),
+            verifyFlags(test, flagsBuilder, 5).run(0xCB, 0x6F),
+            verifyFlags(test, flagsBuilder, 6).run(0xCB, 0x77),
+            verifyFlags(test, signFlagBuilder, 7).run(0xCB, 0x7F)
         );
     }
 
@@ -69,16 +72,19 @@ public class BitTest extends InstructionsTest {
     public void testBIT_b__B() {
         ByteTestBuilder test = prepareBITtest(REG_B);
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().zero();
+        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+            .parity();
+        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+            .zero().parity();
         Generator.forSome8bitUnary(
-                test.verifyFlags(flagsBuilder, context -> context.first & 1).run(0xCB, 0x40),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 1) & 1).run(0xCB, 0x48),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 2) & 1).run(0xCB, 0x50),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 3) & 1).run(0xCB, 0x58),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 4) & 1).run(0xCB, 0x60),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 5) & 1).run(0xCB, 0x68),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 6) & 1).run(0xCB, 0x70),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 7) & 1).run(0xCB, 0x78)
+                verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x40),
+                verifyFlags(test, flagsBuilder, 1).run(0xCB, 0x48),
+                verifyFlags(test, flagsBuilder, 2).run(0xCB, 0x50),
+                verifyFlags(test, flagsBuilder, 3).run(0xCB, 0x58),
+                verifyFlags(test, flagsBuilder, 4).run(0xCB, 0x60),
+                verifyFlags(test, flagsBuilder, 5).run(0xCB, 0x68),
+                verifyFlags(test, flagsBuilder, 6).run(0xCB, 0x70),
+                verifyFlags(test, signFlagBuilder, 7).run(0xCB, 0x78)
         );
     }
 
@@ -86,16 +92,19 @@ public class BitTest extends InstructionsTest {
     public void testBIT_b__C() {
         ByteTestBuilder test = prepareBITtest(REG_C);
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().zero();
+        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+            .parity();
+        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+            .zero().parity();
         Generator.forSome8bitUnary(
-                test.verifyFlags(flagsBuilder, context -> context.first & 1).run(0xCB, 0x41),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 1) & 1).run(0xCB, 0x49),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 2) & 1).run(0xCB, 0x51),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 3) & 1).run(0xCB, 0x59),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 4) & 1).run(0xCB, 0x61),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 5) & 1).run(0xCB, 0x69),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 6) & 1).run(0xCB, 0x71),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 7) & 1).run(0xCB, 0x79)
+            verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x41),
+            verifyFlags(test, flagsBuilder, 1).run(0xCB, 0x49),
+            verifyFlags(test, flagsBuilder, 2).run(0xCB, 0x51),
+            verifyFlags(test, flagsBuilder, 3).run(0xCB, 0x59),
+            verifyFlags(test, flagsBuilder, 4).run(0xCB, 0x61),
+            verifyFlags(test, flagsBuilder, 5).run(0xCB, 0x69),
+            verifyFlags(test, flagsBuilder, 6).run(0xCB, 0x71),
+            verifyFlags(test, signFlagBuilder, 7).run(0xCB, 0x79)
         );
     }
 
@@ -103,16 +112,19 @@ public class BitTest extends InstructionsTest {
     public void testBIT_b__D() {
         ByteTestBuilder test = prepareBITtest(REG_D);
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().zero();
+        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+            .parity();
+        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+            .zero().parity();
         Generator.forSome8bitUnary(
-                test.verifyFlags(flagsBuilder, context -> context.first & 1).run(0xCB, 0x42),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 1) & 1).run(0xCB, 0x4A),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 2) & 1).run(0xCB, 0x52),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 3) & 1).run(0xCB, 0x5A),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 4) & 1).run(0xCB, 0x62),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 5) & 1).run(0xCB, 0x6A),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 6) & 1).run(0xCB, 0x72),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 7) & 1).run(0xCB, 0x7A)
+                verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x42),
+                verifyFlags(test, flagsBuilder, 1).run(0xCB, 0x4A),
+                verifyFlags(test, flagsBuilder, 2).run(0xCB, 0x52),
+                verifyFlags(test, flagsBuilder, 3).run(0xCB, 0x5A),
+                verifyFlags(test, flagsBuilder, 4).run(0xCB, 0x62),
+                verifyFlags(test, flagsBuilder, 5).run(0xCB, 0x6A),
+                verifyFlags(test, flagsBuilder, 6).run(0xCB, 0x72),
+                verifyFlags(test, signFlagBuilder, 7).run(0xCB, 0x7A)
         );
     }
 
@@ -120,16 +132,19 @@ public class BitTest extends InstructionsTest {
     public void testBIT_b__E() {
         ByteTestBuilder test = prepareBITtest(REG_E);
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().zero();
+        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+            .parity();
+        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+            .zero().parity();
         Generator.forSome8bitUnary(
-                test.verifyFlags(flagsBuilder, context -> context.first & 1).run(0xCB, 0x43),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 1) & 1).run(0xCB, 0x4B),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 2) & 1).run(0xCB, 0x53),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 3) & 1).run(0xCB, 0x5B),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 4) & 1).run(0xCB, 0x63),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 5) & 1).run(0xCB, 0x6B),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 6) & 1).run(0xCB, 0x73),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 7) & 1).run(0xCB, 0x7B)
+                verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x43),
+                verifyFlags(test, flagsBuilder, 1).run(0xCB, 0x4B),
+                verifyFlags(test, flagsBuilder, 2).run(0xCB, 0x53),
+                verifyFlags(test, flagsBuilder, 3).run(0xCB, 0x5B),
+                verifyFlags(test, flagsBuilder, 4).run(0xCB, 0x63),
+                verifyFlags(test, flagsBuilder, 5).run(0xCB, 0x6B),
+                verifyFlags(test, flagsBuilder, 6).run(0xCB, 0x73),
+                verifyFlags(test, signFlagBuilder, 7).run(0xCB, 0x7B)
         );
     }
 
@@ -137,16 +152,19 @@ public class BitTest extends InstructionsTest {
     public void testBIT_b__H() {
         ByteTestBuilder test = prepareBITtest(REG_H);
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().zero();
+        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+            .parity();
+        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+            .zero().parity();
         Generator.forSome8bitUnary(
-                test.verifyFlags(flagsBuilder, context -> context.first & 1).run(0xCB, 0x44),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 1) & 1).run(0xCB, 0x4C),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 2) & 1).run(0xCB, 0x54),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 3) & 1).run(0xCB, 0x5C),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 4) & 1).run(0xCB, 0x64),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 5) & 1).run(0xCB, 0x6C),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 6) & 1).run(0xCB, 0x74),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 7) & 1).run(0xCB, 0x7C)
+                verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x44),
+                verifyFlags(test, flagsBuilder, 1).run(0xCB, 0x4C),
+                verifyFlags(test, flagsBuilder, 2).run(0xCB, 0x54),
+                verifyFlags(test, flagsBuilder, 3).run(0xCB, 0x5C),
+                verifyFlags(test, flagsBuilder, 4).run(0xCB, 0x64),
+                verifyFlags(test, flagsBuilder, 5).run(0xCB, 0x6C),
+                verifyFlags(test, flagsBuilder, 6).run(0xCB, 0x74),
+                verifyFlags(test, signFlagBuilder, 7).run(0xCB, 0x7C)
         );
     }
 
@@ -154,16 +172,19 @@ public class BitTest extends InstructionsTest {
     public void testBIT_b__L() {
         ByteTestBuilder test = prepareBITtest(REG_L);
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().zero();
+        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+            .parity();
+        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+            .zero().parity();
         Generator.forSome8bitUnary(
-                test.verifyFlags(flagsBuilder, context -> context.first & 1).run(0xCB, 0x45),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 1) & 1).run(0xCB, 0x4D),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 2) & 1).run(0xCB, 0x55),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 3) & 1).run(0xCB, 0x5D),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 4) & 1).run(0xCB, 0x65),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 5) & 1).run(0xCB, 0x6D),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 6) & 1).run(0xCB, 0x75),
-                test.verifyFlags(flagsBuilder, context -> (context.first >>> 7) & 1).run(0xCB, 0x7D)
+                verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x45),
+                verifyFlags(test, flagsBuilder, 1).run(0xCB, 0x4D),
+                verifyFlags(test, flagsBuilder, 2).run(0xCB, 0x55),
+                verifyFlags(test, flagsBuilder, 3).run(0xCB, 0x5D),
+                verifyFlags(test, flagsBuilder, 4).run(0xCB, 0x65),
+                verifyFlags(test, flagsBuilder, 5).run(0xCB, 0x6D),
+                verifyFlags(test, flagsBuilder, 6).run(0xCB, 0x75),
+                verifyFlags(test, signFlagBuilder, 7).run(0xCB, 0x7D)
         );
     }
 
@@ -173,20 +194,22 @@ public class BitTest extends InstructionsTest {
                 .firstIsAddressAndSecondIsMemoryByte()
                 .firstIsPair(REG_PAIR_HL)
                 .setFlags(FLAG_N)
-                .verifyFlags(new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset(), context -> 0)
                 .keepCurrentInjectorsAfterRun()
                 .clearOtherVerifiersAfterRun();
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().zero();
+        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+            .parity();
+        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+            .zero().parity();
         Generator.forSome16bitBinary(2,
-                test.verifyFlags(flagsBuilder, context -> context.second & 1).run(0xCB, 0x46),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 1) & 1).run(0xCB, 0x4E),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 2) & 1).run(0xCB, 0x56),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 3) & 1).run(0xCB, 0x5E),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 4) & 1).run(0xCB, 0x66),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 5) & 1).run(0xCB, 0x6E),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 6) & 1).run(0xCB, 0x76),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 7) & 1).run(0xCB, 0x7E)
+                verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x46),
+                verifyFlags(test, flagsBuilder, 1).run(0xCB, 0x4E),
+                verifyFlags(test, flagsBuilder, 2).run(0xCB, 0x56),
+                verifyFlags(test, flagsBuilder, 3).run(0xCB, 0x5E),
+                verifyFlags(test, flagsBuilder, 4).run(0xCB, 0x66),
+                verifyFlags(test, flagsBuilder, 5).run(0xCB, 0x6E),
+                verifyFlags(test, flagsBuilder, 6).run(0xCB, 0x76),
+                verifyFlags(test, signFlagBuilder, 7).run(0xCB, 0x7E)
         );
     }
 
@@ -196,20 +219,45 @@ public class BitTest extends InstructionsTest {
                 .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
                 .first8MSBisIX()
                 .setFlags(FLAG_N)
-                .verifyFlags(new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset(), context -> 0)
                 .keepCurrentInjectorsAfterRun()
                 .clearOtherVerifiersAfterRun();
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().zero();
+        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+            .parity();
+        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+            .zero().parity();
         Generator.forSome16bitBinary(0x100,
-                test.verifyFlags(flagsBuilder, context -> context.second & 1).runWithFirst8bitOperandWithOpcodeAfter(0x46, 0xDD, 0xCB),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 1) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x4E, 0xDD, 0xCB),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 2) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x56, 0xDD, 0xCB),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 3) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x5E, 0xDD, 0xCB),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 4) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x66, 0xDD, 0xCB),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 5) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x6E, 0xDD, 0xCB),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 6) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x76, 0xDD, 0xCB),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 7) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x7E, 0xDD, 0xCB)
+                verifyFlags(test, flagsBuilder, 0).runWithFirst8bitOperandWithOpcodeAfter(0x46, 0xDD, 0xCB),
+                verifyFlags(test, flagsBuilder, 1).runWithFirst8bitOperandWithOpcodeAfter(0x4E, 0xDD, 0xCB),
+                verifyFlags(test, flagsBuilder, 2).runWithFirst8bitOperandWithOpcodeAfter(0x56, 0xDD, 0xCB),
+                verifyFlags(test, flagsBuilder, 3).runWithFirst8bitOperandWithOpcodeAfter(0x5E, 0xDD, 0xCB),
+                verifyFlags(test, flagsBuilder, 4).runWithFirst8bitOperandWithOpcodeAfter(0x66, 0xDD, 0xCB),
+                verifyFlags(test, flagsBuilder, 5).runWithFirst8bitOperandWithOpcodeAfter(0x6E, 0xDD, 0xCB),
+                verifyFlags(test, flagsBuilder, 6).runWithFirst8bitOperandWithOpcodeAfter(0x76, 0xDD, 0xCB),
+                verifyFlags(test, signFlagBuilder, 7).runWithFirst8bitOperandWithOpcodeAfter(0x7E, 0xDD, 0xCB)
+        );
+    }
+
+    @Test
+    public void testBIT_b__IX_plus_d_undocumented() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
+            .first8MSBisIX()
+            .setFlags(FLAG_N)
+            .verifyFlags(new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero().parity().sign(),
+                context -> (context.second & (1 << 7)))
+            .keepCurrentInjectorsAfterRun()
+            .clearOtherVerifiersAfterRun();
+
+        Generator.forSome16bitBinary(0x100,
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x78, 0xDD, 0xCB),
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x79, 0xDD, 0xCB),
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x7A, 0xDD, 0xCB),
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x7B, 0xDD, 0xCB),
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x7C, 0xDD, 0xCB),
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x7D, 0xDD, 0xCB),
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x7E, 0xDD, 0xCB),
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x7F, 0xDD, 0xCB)
         );
     }
 
@@ -219,20 +267,46 @@ public class BitTest extends InstructionsTest {
                 .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
                 .first8MSBisIY()
                 .setFlags(FLAG_N)
-                .verifyFlags(new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset(), context -> 0)
                 .keepCurrentInjectorsAfterRun()
                 .clearOtherVerifiersAfterRun();
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().zero();
+        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+            .parity();
+        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+            .zero().parity();
         Generator.forSome16bitBinary(0x100,
-                test.verifyFlags(flagsBuilder, context -> context.second & 1).runWithFirst8bitOperandWithOpcodeAfter(0x46, 0xFD, 0xCB),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 1) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x4E, 0xFD, 0xCB),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 2) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x56, 0xFD, 0xCB),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 3) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x5E, 0xFD, 0xCB),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 4) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x66, 0xFD, 0xCB),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 5) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x6E, 0xFD, 0xCB),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 6) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x76, 0xFD, 0xCB),
-                test.verifyFlags(flagsBuilder, context -> (context.second >>> 7) & 1).runWithFirst8bitOperandWithOpcodeAfter(0x7E, 0xFD, 0xCB)
+                verifyFlags(test, flagsBuilder, 0).runWithFirst8bitOperandWithOpcodeAfter(0x46, 0xFD, 0xCB),
+                verifyFlags(test, flagsBuilder, 1).runWithFirst8bitOperandWithOpcodeAfter(0x4E, 0xFD, 0xCB),
+                verifyFlags(test, flagsBuilder, 2).runWithFirst8bitOperandWithOpcodeAfter(0x56, 0xFD, 0xCB),
+                verifyFlags(test, flagsBuilder, 3).runWithFirst8bitOperandWithOpcodeAfter(0x5E, 0xFD, 0xCB),
+                verifyFlags(test, flagsBuilder, 4).runWithFirst8bitOperandWithOpcodeAfter(0x66, 0xFD, 0xCB),
+                verifyFlags(test, flagsBuilder, 5).runWithFirst8bitOperandWithOpcodeAfter(0x6E, 0xFD, 0xCB),
+                verifyFlags(test, flagsBuilder, 6).runWithFirst8bitOperandWithOpcodeAfter(0x76, 0xFD, 0xCB),
+                verifyFlags(test, signFlagBuilder, 7).runWithFirst8bitOperandWithOpcodeAfter(0x7E, 0xFD, 0xCB)
+        );
+    }
+
+
+    @Test
+    public void testBIT_b__IY_plus_d_undocumented() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
+            .first8MSBisIY()
+            .setFlags(FLAG_N)
+            .verifyFlags(new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero().parity().sign(),
+                context -> (context.second & (1 << 7)))
+            .keepCurrentInjectorsAfterRun()
+            .clearOtherVerifiersAfterRun();
+
+        Generator.forSome16bitBinary(0x100,
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x78, 0xFD, 0xCB),
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x79, 0xFD, 0xCB),
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x7A, 0xFD, 0xCB),
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x7B, 0xFD, 0xCB),
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x7C, 0xFD, 0xCB),
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x7D, 0xFD, 0xCB),
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x7E, 0xFD, 0xCB),
+            test.runWithFirst8bitOperandWithOpcodeAfter(0x7F, 0xFD, 0xCB)
         );
     }
 
@@ -411,7 +485,27 @@ public class BitTest extends InstructionsTest {
                 test.verifyByte(address, context -> 128).runWithFirst8bitOperandWithOpcodeAfter(0xFE, 0xDD, 0xCB)
         );
     }
-    
+
+    @Test
+    public void testSET_b__IX_plus_d_undocumented() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8MSBisIX()
+            .first8MSBplus8LSBisMemoryByte(0)
+            .verifyByte(context -> get8MSBplus8LSB(context.first), context -> 1)
+            .keepCurrentInjectorsAfterRun()
+            .clearOtherVerifiersAfterRun();
+
+        Generator.forSome16bitUnary(0x100,
+            test.verifyRegister(REG_B, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC0, 0xDD, 0xCB),
+            test.verifyRegister(REG_C, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC1, 0xDD, 0xCB),
+            test.verifyRegister(REG_D, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC2, 0xDD, 0xCB),
+            test.verifyRegister(REG_E, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC3, 0xDD, 0xCB),
+            test.verifyRegister(REG_H, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC4, 0xDD, 0xCB),
+            test.verifyRegister(REG_L, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC5, 0xDD, 0xCB),
+            test.verifyRegister(REG_A, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC7, 0xDD, 0xCB)
+        );
+    }
+
     @Test
     public void testSET_b__IY_plus_d() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
@@ -430,6 +524,27 @@ public class BitTest extends InstructionsTest {
                 test.verifyByte(address, context -> 32).runWithFirst8bitOperandWithOpcodeAfter(0xEE, 0xFD, 0xCB),
                 test.verifyByte(address, context -> 64).runWithFirst8bitOperandWithOpcodeAfter(0xF6, 0xFD, 0xCB),
                 test.verifyByte(address, context -> 128).runWithFirst8bitOperandWithOpcodeAfter(0xFE, 0xFD, 0xCB)
+        );
+    }
+
+
+    @Test
+    public void testSET_b__IY_plus_d_undocumented() {
+        IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .first8MSBisIY()
+            .first8MSBplus8LSBisMemoryByte(0)
+            .verifyByte(context -> get8MSBplus8LSB(context.first), context -> 1)
+            .keepCurrentInjectorsAfterRun()
+            .clearOtherVerifiersAfterRun();
+
+        Generator.forSome16bitUnary(0x100,
+            test.verifyRegister(REG_B, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC0, 0xFD, 0xCB),
+            test.verifyRegister(REG_C, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC1, 0xFD, 0xCB),
+            test.verifyRegister(REG_D, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC2, 0xFD, 0xCB),
+            test.verifyRegister(REG_E, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC3, 0xFD, 0xCB),
+            test.verifyRegister(REG_H, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC4, 0xFD, 0xCB),
+            test.verifyRegister(REG_L, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC5, 0xFD, 0xCB),
+            test.verifyRegister(REG_A, context -> 1).runWithFirst8bitOperandWithOpcodeAfter(0xC7, 0xFD, 0xCB)
         );
     }
 

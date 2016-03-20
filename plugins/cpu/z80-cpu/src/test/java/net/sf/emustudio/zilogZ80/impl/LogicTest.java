@@ -442,7 +442,14 @@ public class LogicTest extends InstructionsTest {
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitUnary(
-                test.run(0xED, 0x44)
+                test.run(0xED, 0x44),
+                test.run(0xED, 0x4C),
+                test.run(0xED, 0x54),
+                test.run(0xED, 0x5C),
+                test.run(0xED, 0x64),
+                test.run(0xED, 0x6C),
+                test.run(0xED, 0x74),
+                test.run(0xED, 0x7C)
         );
     }
 
@@ -502,6 +509,22 @@ public class LogicTest extends InstructionsTest {
                 test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfter(06, 0xFD, 0xCB)
         );
     }
+
+    @Test
+    public void testRLC__IX_IY_plus_d_undocumented() {
+        Function<RunnerContext<Integer>, Integer> operation =
+            context -> ((context.second << 1) & 0xFF) | (context.second >>> 7) & 1;
+
+        IntegerTestBuilder test = prepareIXIYRotationMSBTest(operation)
+            .verifyRegister(REG_B, operation)
+            .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome16bitBinaryFirstSatisfying(predicate8MSBplus8LSB(4),
+            test.first8MSBisIX().runWithFirst8bitOperandWithOpcodeAfter(00, 0xDD, 0xCB),
+            test.first8MSBisIY().runWithFirst8bitOperandWithOpcodeAfter(00, 0xFD, 0xCB)
+        );
+    }
+
 
     @Test
     public void testRL__r() {

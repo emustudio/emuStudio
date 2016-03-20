@@ -190,6 +190,10 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         cpu.getEngine().IFF[0] = false;
     }
 
+    public void setIntMode(byte intMode) {
+        cpu.getEngine().intMode = intMode;
+    }
+
     @Override
     public List<Integer> getRegisters() {
         List<Integer> registers = new ArrayList<>();

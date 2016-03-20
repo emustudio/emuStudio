@@ -73,6 +73,23 @@ public class IOTest extends InstructionsTest {
     }
 
     @Test
+    public void testIN__C() {
+        Function<RunnerContext<Byte>, Integer> operation = context -> context.first.intValue() & 0xFF;
+
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .firstIsDeviceAndSecondIsPort()
+            .secondIsRegister(REG_C)
+            .verifyFlags(new FlagsBuilderImpl<>().sign().zero().parity().halfCarryIsReset().subtractionIsReset(),
+                operation)
+            .keepCurrentInjectorsAfterRun()
+            .clearOtherVerifiersAfterRun();
+
+        Generator.forSome8bitBinary(
+            test.runWithSecondOperand(0xED, 0x70)
+        );
+    }
+
+    @Test
     public void testINI() {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .first8MSBisDeviceAndFirst8LSBIsPort()
@@ -186,7 +203,18 @@ public class IOTest extends InstructionsTest {
                 test.firstIsRegister(REG_L).run(0xED, 0x69),
                 test.firstIsRegister(REG_A).run(0xED, 0x79)
         );
+    }
 
+    @Test
+    public void testOUT_C_0() throws Exception {
+        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
+            .secondIsRegister(REG_C)
+            .verifyDeviceWhenSecondIsPort(context -> 0)
+            .keepCurrentInjectorsAfterRun();
+
+        Generator.forSome8bitBinaryWhichEqual(
+            test.firstIsRegister(REG_C).run(0xED, 0x71)
+        );
     }
 
     @Test
