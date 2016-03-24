@@ -10,7 +10,6 @@ import emulib.annotations.PluginType;
 import emulib.plugins.compiler.AbstractCompiler;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
-import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import java.io.FileReader;
 import java.io.IOException;
