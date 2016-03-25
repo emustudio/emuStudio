@@ -25,7 +25,7 @@ public class Program {
     }
 
     public void pass() {
-        Collections.reverse(rows);
+        //Collections.reverse(rows);
         translateLabels();
 
         int programStart = CompilerOutput.getInstance().getProgramStart();
