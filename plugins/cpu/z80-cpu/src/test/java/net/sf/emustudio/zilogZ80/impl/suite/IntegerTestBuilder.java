@@ -32,7 +32,7 @@ import java.util.function.Function;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_A;
 import static net.sf.emustudio.zilogZ80.impl.suite.Utils.get8MSBplus8LSB;
 
-public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder, CpuRunnerImpl, CpuVerifierImpl>  {
+public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder, CpuRunnerImpl, CpuVerifierImpl> {
 
     public IntegerTestBuilder(CpuRunnerImpl cpuRunner, CpuVerifierImpl cpuVerifier) {
         super(cpuRunner, cpuVerifier);
@@ -105,16 +105,16 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
 
     public IntegerTestBuilder first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte() {
         runner.injectTwoOperands((tmpRunner, first, second) -> {
-                    new MemoryByte(get8MSBplus8LSB(first.intValue())).inject(tmpRunner, (byte) (second.intValue() & 0xFF));
-                }
+                new MemoryByte(get8MSBplus8LSB(first.intValue())).inject(tmpRunner, (byte) (second.intValue() & 0xFF));
+            }
         );
         return this;
     }
 
     public IntegerTestBuilder first8MSBplus8LSBisMemoryByte(int value) {
         runner.injectTwoOperands((tmpRunner, first, second) -> {
-                    new MemoryByte(get8MSBplus8LSB(first.intValue())).inject(tmpRunner, (byte) (value & 0xFF));
-                }
+                new MemoryByte(get8MSBplus8LSB(first.intValue())).inject(tmpRunner, (byte) (value & 0xFF));
+            }
         );
         return this;
     }
@@ -144,7 +144,7 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
 
     public IntegerTestBuilder first8MSBisDeviceAndFirst8LSBIsPort() {
         runner.injectFirst((tmpRunner, first) ->
-                cpuRunner.getDevice(first.intValue() & 0xFF).setValue((byte)((first.intValue() >>> 8) & 0xFF)));
+            cpuRunner.getDevice(first.intValue() & 0xFF).setValue((byte) ((first.intValue() >>> 8) & 0xFF)));
         return this;
     }
 

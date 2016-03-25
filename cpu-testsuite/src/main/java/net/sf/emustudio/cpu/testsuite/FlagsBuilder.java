@@ -22,19 +22,15 @@ import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 public abstract class FlagsBuilder<T extends Number, SpecificFlagsBuilder extends FlagsBuilder<T, ?>> {
-    protected final List<FlagsEval> evaluators = new ArrayList<>();
+    protected final List<BiConsumer<RunnerContext<T>, Integer>> evaluators = new ArrayList<>();
 
     private boolean switchFirstAndSecond;
     protected int expectedFlags = 0;
     protected int expectedNotFlags = 0;
-
-    @FunctionalInterface
-    protected interface FlagsEval<T extends Number> {
-        void eval(RunnerContext<T> context, int result);
-    }
 
     public SpecificFlagsBuilder reset() {
         expectedFlags = 0;
@@ -72,11 +68,11 @@ public abstract class FlagsBuilder<T extends Number, SpecificFlagsBuilder extend
     }
 
     public void eval(RunnerContext<T> context, int result) {
-        for (FlagsEval evaluator : evaluators) {
+        for (BiConsumer<RunnerContext<T>, Integer> evaluator : evaluators) {
             if (switchFirstAndSecond) {
-                evaluator.eval(context.switchFirstAndSecond(), result);
+                evaluator.accept(context.switchFirstAndSecond(), result);
             } else {
-                evaluator.eval(context, result);
+                evaluator.accept(context, result);
             }
         }
     }

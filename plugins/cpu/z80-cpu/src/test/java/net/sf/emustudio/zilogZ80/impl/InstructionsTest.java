@@ -65,8 +65,8 @@ public class InstructionsTest {
         Capture<ExtendedContext> cpuContext = new Capture<>();
         ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);
         expect(contextPool.getMemoryContext(0, MemoryContext.class))
-                .andReturn(memoryStub)
-                .anyTimes();
+            .andReturn(memoryStub)
+            .anyTimes();
         contextPool.register(anyLong(), capture(cpuContext), same(ExtendedContext.class));
         expectLastCall().anyTimes();
         replay(contextPool);

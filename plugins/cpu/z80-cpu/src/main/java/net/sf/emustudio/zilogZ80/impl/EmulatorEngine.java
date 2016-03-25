@@ -445,7 +445,7 @@ public class EmulatorEngine {
     }
     
     private int evalStep(int OP) {
-        int tmp, tmp1, tmp2, tmp3;
+        int tmp, tmp1, tmp2, tmp3, tmp4;
         short special = 0; // prefix if available = 0xDD or 0xFD
 
         DispatchListener tmpListener = dispatchListener;
@@ -1113,12 +1113,22 @@ public class EmulatorEngine {
                             return 16;
                         case 0xA3: /* OUTI */
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                            context.fireIO(regs[REG_C], false, memory.read(tmp1));
+                            tmp2 = memory.read(tmp1) & 0xFF;
+                            tmp3 = regs[REG_B];
+                            tmp4 = regs[REG_L];
+
+                            context.fireIO(regs[REG_C], false, tmp2);
                             tmp1 = (tmp1 + 1) & 0xFFFF;
                             regs[REG_H] = ((tmp1 >>> 8) & 0xff);
                             regs[REG_L] = (tmp1 & 0xFF);
-                            regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
-                            flags = ((flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0));
+                            regs[REG_B] = (tmp3 - 1) & 0xFF;
+                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[((tmp2 + tmp4) & 7) ^ tmp3];
+                            if ((tmp2 & 0x80) == 0x80) {
+                                flags |= FLAG_N;
+                            }
+                            if ((tmp2 + tmp4) > 0xFF) {
+                                flags |= FLAG_C | FLAG_H;
+                            }
                             return 16;
                         case 0xA8: /* LDD */
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
@@ -1174,12 +1184,23 @@ public class EmulatorEngine {
                             return 16;
                         case 0xAB: /* OUTD */
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                            context.fireIO(regs[REG_C], false, memory.read(tmp1));
+                            tmp2 = memory.read(tmp1) & 0xFF;
+                            tmp3 = regs[REG_B];
+                            tmp4 = regs[REG_L];
+
+                            context.fireIO(regs[REG_C], false, tmp2);
                             tmp1 = (tmp1 - 1) & 0xFFFF;
                             regs[REG_H] = ((tmp1 >>> 8) & 0xff);
                             regs[REG_L] = (tmp1 & 0xFF);
-                            regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
-                            flags = (flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0);
+                            regs[REG_B] = (tmp3 - 1) & 0xFF;
+
+                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[((tmp2 + tmp4) & 7) ^ tmp3];
+                            if ((tmp2 & 0x80) == 0x80) {
+                                flags |= FLAG_N;
+                            }
+                            if ((tmp2 + tmp4) > 0xFF) {
+                                flags |= FLAG_C | FLAG_H;
+                            }
                             return 16;
                         case 0xB0: /* LDIR */
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
@@ -1247,12 +1268,24 @@ public class EmulatorEngine {
                             return 21;
                         case 0xB3: /* OTIR */
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                            context.fireIO(regs[REG_C], false, memory.read(tmp1));
+                            tmp2 = memory.read(tmp1) & 0xFF;
+                            tmp3 = regs[REG_B];
+                            tmp4 = regs[REG_L];
+
+                            context.fireIO(regs[REG_C], false, tmp2);
                             tmp1 = (tmp1 + 1) & 0xFFFF;
                             regs[REG_H] = ((tmp1 >>> 8) & 0xff);
                             regs[REG_L] = (tmp1 & 0xFF);
-                            regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
-                            flags |= (FLAG_N | FLAG_Z);
+                            regs[REG_B] = ((tmp3 - 1) & 0xFF);
+
+                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[((tmp2 + tmp4) & 7) ^ tmp3];
+                            if ((tmp2 & 0x80) == 0x80) {
+                                flags |= FLAG_N;
+                            }
+                            if ((tmp2 + tmp4) > 0xFF) {
+                                flags |= FLAG_C | FLAG_H;
+                            }
+
                             if (regs[REG_B] == 0) {
                                 return 16;
                             }
@@ -1320,12 +1353,24 @@ public class EmulatorEngine {
                             return 21;
                         case 0xBB: /* OTDR */
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
-                            context.fireIO(regs[REG_C], false, memory.read(tmp1));
+                            tmp2 = memory.read(tmp1) & 0xFF;
+                            tmp3 = regs[REG_B];
+                            tmp4 = regs[REG_L];
+
+                            context.fireIO(regs[REG_C], false, tmp2);
                             tmp1 = (tmp1 - 1) & 0xFFFF;
                             regs[REG_H] = (tmp1 >>> 8);
                             regs[REG_L] = (tmp1 & 0xFF);
-                            regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
-                            flags |= (FLAG_N | FLAG_Z);
+                            regs[REG_B] = (tmp3 - 1) & 0xFF;
+
+                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[((tmp2 + tmp4) & 7) ^ tmp3];
+                            if ((tmp2 & 0x80) == 0x80) {
+                                flags |= FLAG_N;
+                            }
+                            if ((tmp2 + tmp4) > 0xFF) {
+                                flags |= FLAG_C | FLAG_H;
+                            }
+
                             if (regs[REG_B] == 0) {
                                 return 16;
                             }

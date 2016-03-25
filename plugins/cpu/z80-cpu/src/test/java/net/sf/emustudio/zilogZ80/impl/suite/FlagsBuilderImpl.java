@@ -31,7 +31,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
 
     public FlagsBuilderImpl<T> sign() {
         evaluators.add((context, result) -> {
-            if ((result & 0x80) == 0x80) {
+            if ((result.intValue() & 0x80) == 0x80) {
                 expectedFlags |= FLAG_S;
             } else {
                 expectedNotFlags |= FLAG_S;
@@ -42,7 +42,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
 
     public FlagsBuilderImpl<T> sign16bit() {
         evaluators.add((context, result) -> {
-            if ((result & 0x8000) == 0x8000) {
+            if ((result.intValue() & 0x8000) == 0x8000) {
                 expectedFlags |= FLAG_S;
             } else {
                 expectedNotFlags |= FLAG_S;
@@ -53,7 +53,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
 
     public FlagsBuilderImpl<T> zero() {
         evaluators.add((context, result) -> {
-            if ((byte)result == 0) {
+            if (result.byteValue() == 0) {
                 expectedFlags |= FLAG_Z;
             } else {
                 expectedNotFlags |= FLAG_Z;
@@ -64,7 +64,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
 
     public FlagsBuilderImpl<T> zero16bit() {
         evaluators.add((context, result) -> {
-            if ((result & 0xFFFF)== 0) {
+            if ((result.intValue() & 0xFFFF)== 0) {
                 expectedFlags |= FLAG_Z;
             } else {
                 expectedNotFlags |= FLAG_Z;
@@ -86,11 +86,11 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
     public FlagsBuilderImpl<T> overflow() {
         evaluators.add((context, result) -> {
             int sign = context.first.intValue() & 0x80;
-            int trueSecond = result - context.first.intValue();
+            int trueSecond = result.intValue() - context.first.intValue();
 
             if (sign != (trueSecond & 0x80)) {
                 expectedNotFlags |= FLAG_PV;
-            } else if ((result & 0x80) != sign){
+            } else if ((result.intValue() & 0x80) != sign){
                 expectedFlags |= FLAG_PV;
             }
         });
@@ -100,11 +100,11 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
     public FlagsBuilderImpl<T> overflow16bit() {
         evaluators.add((context, result) -> {
             int sign = context.first.intValue() & 0x8000;
-            int trueSecond = result - context.first.intValue();
+            int trueSecond = result.intValue() - context.first.intValue();
 
             if (sign != (trueSecond & 0x8000)) {
                 expectedNotFlags |= FLAG_PV;
-            } else if ((result & 0x8000) != sign){
+            } else if ((result.intValue() & 0x8000) != sign){
                 expectedFlags |= FLAG_PV;
             }
         });
@@ -125,7 +125,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
 
     public FlagsBuilderImpl<T> parity() {
         evaluators.add((context, result) -> {
-            if (isParity(result & 0xFF)) {
+            if (isParity(result.intValue() & 0xFF)) {
                 expectedFlags |= FLAG_PV;
             } else {
                 expectedNotFlags |= FLAG_PV;
@@ -134,14 +134,9 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl<T> parityIsReset() {
-        evaluators.add((context, result) -> expectedNotFlags |= FLAG_PV);
-        return this;
-    }
-
     public FlagsBuilderImpl<T> carry15() {
         evaluators.add((context, result) -> {
-            if ((result & 0x10000) == 0x10000) {
+            if ((result.intValue() & 0x10000) == 0x10000) {
                 expectedFlags |= FLAG_C;
             } else {
                 expectedNotFlags |= FLAG_C;
@@ -152,7 +147,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
 
     public FlagsBuilderImpl<T> carry() {
         evaluators.add((context, result) -> {
-            if ((result & 0x100) == 0x100) {
+            if ((result.intValue() & 0x100) == 0x100) {
                 expectedFlags |= FLAG_C;
             } else {
                 expectedNotFlags |= FLAG_C;
@@ -203,7 +198,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
     public FlagsBuilderImpl<T> halfCarry() {
         evaluators.add((context, result) -> {
             int firstInt = context.first.intValue();
-            byte diff = (byte)((result - firstInt) & 0xFF);
+            byte diff = (byte)((result.intValue() - firstInt) & 0xFF);
 
             if (isAuxCarry(firstInt & 0xFF, diff)) {
                 expectedFlags |= FLAG_H;
@@ -216,7 +211,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
 
     public FlagsBuilderImpl<T> halfCarry11() {
         evaluators.add((context, result) -> {
-            int second = (result - context.first.intValue()) & 0xFFFF;
+            int second = (result.intValue() - context.first.intValue()) & 0xFFFF;
 
             int mask = second & context.first.intValue();
             int xormask = second ^ context.first.intValue();
