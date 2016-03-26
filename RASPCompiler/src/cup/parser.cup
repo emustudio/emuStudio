@@ -86,7 +86,7 @@ non terminal RASPInstructionImpl JumpInstruction;
 
 start with Tree;
 
-Tree ::= ORG NUMBER:programStart Program:p                          {: RESULT = new Tree(programStart, p); :}
+Tree ::= ORG NUMBER:programStart Program:p                          {: if(programStart==0) programStart=1; RESULT = new Tree(programStart, p); :}
         | Program:p                                                 {: RESULT = new Tree(20, p); :} /*default program start is 20, if not specified*/
         ;
 
