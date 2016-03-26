@@ -2,6 +2,13 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/home/miso/3.ROCNIK/Zimny/MVP-Bakalarka/RASP/RASPCompiler/src/cup/parser.cup</file>
+            <file>file:/home/miso/3.ROCNIK/Zimny/MVP-Bakalarka/RASP/RASPCompiler/src/jflex/lexer.jflex</file>
+            <file>file:/home/miso/3.ROCNIK/Zimny/MVP-Bakalarka/RASP/RASPCompiler/src/sk/tuke/emustudio/rasp/compiler/TokenImpl.java</file>
+            <file>file:/home/miso/3.ROCNIK/Zimny/MVP-Bakalarka/RASP/RASPCompiler/build/generated-sources/cup/sk/tuke/emustudio/rasp/compiler/ParserImpl.java</file>
+            <file>file:/home/miso/3.ROCNIK/Zimny/MVP-Bakalarka/RASP/RASPCompiler/src/sk/tuke/emustudio/rasp/compiler/tree/SourceCode.java</file>
+            <file>file:/home/miso/3.ROCNIK/Zimny/MVP-Bakalarka/RASP/RASPCompiler/src/sk/tuke/emustudio/rasp/compiler/CompilerImpl.java</file>
+        </group>
     </open-files>
 </project-private>

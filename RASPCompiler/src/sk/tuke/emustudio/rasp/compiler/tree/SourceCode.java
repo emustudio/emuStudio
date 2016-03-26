@@ -11,12 +11,12 @@ import sk.tuke.emustudio.rasp.compiler.CompilerOutput;
  *
  * @author miso
  */
-public class Tree {
+public class SourceCode {
 
     private final int programStart;
     private final Program program;
 
-    public Tree(int programStart, Program program) {
+    public SourceCode(int programStart, Program program) {
         this.programStart = programStart;
         this.program = program;
     }

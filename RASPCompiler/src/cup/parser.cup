@@ -74,7 +74,7 @@ terminal READ, WRITE, LOAD, STORE, ADD, SUB, MUL, DIV, JMP, JZ, JGTZ, HALT, ORG,
 terminal Integer NUMBER;
 terminal String TLABEL, IDENT;
 
-non terminal Tree Tree;
+non terminal SourceCode SourceCode;
 non terminal Program Program;
 non terminal Row Row;
 non terminal Label Label;
@@ -84,10 +84,10 @@ non terminal RASPInstructionImpl Instruction;
 non terminal RASPInstructionImpl JumpInstruction;
 
 
-start with Tree;
+start with SourceCode;
 
-Tree ::= ORG NUMBER:programStart Program:p                          {: if(programStart==0) programStart=1; RESULT = new Tree(programStart, p); :}
-        | Program:p                                                 {: RESULT = new Tree(20, p); :} /*default program start is 20, if not specified*/
+SourceCode ::= ORG NUMBER:programStart Program:p                    {: if(programStart==0) programStart=1; RESULT = new SourceCode(programStart, p); :}
+        | Program:p                                                 {: RESULT = new SourceCode(20, p); :} /*default program start is 20, if not specified*/
         ;
 
 Program ::= Program:p Row:r                                         {: if(r != null) p.addRow(r); RESULT = p; :}

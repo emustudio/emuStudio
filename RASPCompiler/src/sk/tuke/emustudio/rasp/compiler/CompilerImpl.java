@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Objects;
 import java_cup.runtime.ComplexSymbolFactory;
-import sk.tuke.emustudio.rasp.compiler.tree.Tree;
+import sk.tuke.emustudio.rasp.compiler.tree.SourceCode;
 import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 
 /**
@@ -50,8 +50,8 @@ public class CompilerImpl extends AbstractCompiler {
             RASPMemoryContext memory = (RASPMemoryContext) contextPool.getMemoryContext(pluginID, RASPMemoryContext.class);
             LexerImpl lexer = new LexerImpl(reader);
             ParserImpl parser = new ParserImpl(lexer, new ComplexSymbolFactory(), this);
-            Tree tree = (Tree) parser.parse().value;
-            if (tree == null) {
+            SourceCode sourceCode = (SourceCode) parser.parse().value;
+            if (sourceCode == null) {
                 throw new Exception("Unexpected end of file.");
             }
             if (parser.hasSyntaxErrors()) {
@@ -59,7 +59,7 @@ public class CompilerImpl extends AbstractCompiler {
             }
 
             
-            tree.pass();
+            sourceCode.pass();
             CompilerOutput.getInstance().saveToFile(outputFileName);
             CompilerOutput.getInstance().loadIntoMemory(memory);
             CompilerOutput.getInstance().clear();
