@@ -48,7 +48,7 @@ public abstract class TestBuilder<K extends Number, SpecificTestBuilder extends 
     protected final CpuVerifierType cpuVerifier;
     protected final TestRunner runner;
 
-    private final List<Consumer<RunnerContext<K>>> verifiers = new ArrayList<Consumer<RunnerContext<K>>>();
+    private final List<Consumer<RunnerContext<K>>> verifiers = new ArrayList<>();
     private final List<Consumer<RunnerContext<K>>> verifiersToClearAfterRun = new ArrayList<Consumer<RunnerContext<K>>>();
     private boolean newVerifiersShallBeClearedAfterRun = false;
 

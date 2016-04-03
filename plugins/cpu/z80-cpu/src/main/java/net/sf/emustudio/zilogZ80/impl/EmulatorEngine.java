@@ -1102,31 +1102,38 @@ public class EmulatorEngine {
                             regs[REG_C] = tmp2 & 0xFF;
                             return 16;
                         case 0xA2: /* INI */
-                            tmp = (context.fireIO(regs[REG_C], true, 0) & 0xFF);
+                            tmp = context.fireIO(regs[REG_C], true, 0) & 0xFF;
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            tmp2 = tmp + (regs[REG_C] + 1) & 0xFF;
+
                             memory.write(tmp1, (short) tmp);
                             tmp1 = (tmp1 + 1) & 0xFFFF;
                             regs[REG_H] = ((tmp1 >>> 8) & 0xff);
                             regs[REG_L] = (tmp1 & 0xFF);
                             regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
-                            flags = ((flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0));
+
+                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[(tmp2 & 7) ^ regs[REG_B]];
+                            if ((tmp & 0x80) == 0x80) {
+                                flags |= FLAG_N;
+                            }
+                            if (tmp2 > 0xFF) {
+                                flags |= (FLAG_H | FLAG_C);
+                            }
                             return 16;
                         case 0xA3: /* OUTI */
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
                             tmp2 = memory.read(tmp1) & 0xFF;
-                            tmp3 = regs[REG_B];
-                            tmp4 = regs[REG_L];
 
                             context.fireIO(regs[REG_C], false, tmp2);
                             tmp1 = (tmp1 + 1) & 0xFFFF;
                             regs[REG_H] = ((tmp1 >>> 8) & 0xff);
                             regs[REG_L] = (tmp1 & 0xFF);
-                            regs[REG_B] = (tmp3 - 1) & 0xFF;
-                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[((tmp2 + tmp4) & 7) ^ tmp3];
+                            regs[REG_B] = (regs[REG_B]- 1) & 0xFF;
+                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[((tmp2 + regs[REG_L]) & 7) ^ regs[REG_B]];
                             if ((tmp2 & 0x80) == 0x80) {
                                 flags |= FLAG_N;
                             }
-                            if ((tmp2 + tmp4) > 0xFF) {
+                            if ((tmp2 + regs[REG_L]) > 0xFF) {
                                 flags |= FLAG_C | FLAG_H;
                             }
                             return 16;
@@ -1173,32 +1180,40 @@ public class EmulatorEngine {
                             regs[REG_C] = tmp2 & 0xFF;
                             return 16;
                         case 0xAA: /* IND */
-                            tmp = (context.fireIO(regs[REG_C], true, 0) & 0xFF);
+                            tmp = context.fireIO(regs[REG_C], true, 0) & 0xFF;
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            tmp2 = tmp + ((regs[REG_C] - 1) & 0xFF);
+
                             memory.write(tmp1, (short) tmp);
                             tmp1 = (tmp1 - 1) & 0xFFFF;
                             regs[REG_H] = ((tmp1 >>> 8) & 0xff);
                             regs[REG_L] = (tmp1 & 0xFF);
                             regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
-                            flags = (flags & 0xBF) | FLAG_N | ((regs[REG_B] == 0) ? FLAG_Z : 0);
+
+                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[(tmp2 & 7) ^ regs[REG_B]];
+                            if ((tmp & 0x80) == 0x80) {
+                                flags |= FLAG_N;
+                            }
+                            if (tmp2 > 0xFF) {
+                                flags |= (FLAG_H | FLAG_C);
+                            }
+
                             return 16;
                         case 0xAB: /* OUTD */
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
                             tmp2 = memory.read(tmp1) & 0xFF;
-                            tmp3 = regs[REG_B];
-                            tmp4 = regs[REG_L];
 
                             context.fireIO(regs[REG_C], false, tmp2);
                             tmp1 = (tmp1 - 1) & 0xFFFF;
                             regs[REG_H] = ((tmp1 >>> 8) & 0xff);
                             regs[REG_L] = (tmp1 & 0xFF);
-                            regs[REG_B] = (tmp3 - 1) & 0xFF;
+                            regs[REG_B] = (regs[REG_B] - 1) & 0xFF;
 
-                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[((tmp2 + tmp4) & 7) ^ tmp3];
+                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[((tmp2 + regs[REG_L]) & 7) ^ regs[REG_B]];
                             if ((tmp2 & 0x80) == 0x80) {
                                 flags |= FLAG_N;
                             }
-                            if ((tmp2 + tmp4) > 0xFF) {
+                            if ((tmp2 + regs[REG_L]) > 0xFF) {
                                 flags |= FLAG_C | FLAG_H;
                             }
                             return 16;
@@ -1253,14 +1268,24 @@ public class EmulatorEngine {
                             PC = (PC - 2) & 0xFFFF;
                             return 21;
                         case 0xB2: /* INIR */
-                            tmp = (context.fireIO(regs[REG_C], true, 0) & 0xFF);
+                            tmp = context.fireIO(regs[REG_C], true, 0) & 0xFF;
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            tmp2 = tmp + (regs[REG_C] + 1) & 0xFF;
+
                             memory.write(tmp1, (short) tmp);
                             tmp1 = (tmp1 + 1) & 0xFFFF;
                             regs[REG_H] = ((tmp1 >>> 8) & 0xff);
                             regs[REG_L] = (tmp1 & 0xFF);
                             regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
-                            flags |= (FLAG_N | FLAG_Z);
+
+                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[(tmp2 & 7) ^ regs[REG_B]];
+                            if ((tmp & 0x80) == 0x80) {
+                                flags |= FLAG_N;
+                            }
+                            if (tmp2 > 0xFF) {
+                                flags |= (FLAG_H | FLAG_C);
+                            }
+
                             if (regs[REG_B] == 0) {
                                 return 16;
                             }
@@ -1269,20 +1294,18 @@ public class EmulatorEngine {
                         case 0xB3: /* OTIR */
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
                             tmp2 = memory.read(tmp1) & 0xFF;
-                            tmp3 = regs[REG_B];
-                            tmp4 = regs[REG_L];
 
                             context.fireIO(regs[REG_C], false, tmp2);
                             tmp1 = (tmp1 + 1) & 0xFFFF;
                             regs[REG_H] = ((tmp1 >>> 8) & 0xff);
                             regs[REG_L] = (tmp1 & 0xFF);
-                            regs[REG_B] = ((tmp3 - 1) & 0xFF);
+                            regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
 
-                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[((tmp2 + tmp4) & 7) ^ tmp3];
+                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[((tmp2 + regs[REG_L]) & 7) ^ regs[REG_B]];
                             if ((tmp2 & 0x80) == 0x80) {
                                 flags |= FLAG_N;
                             }
-                            if ((tmp2 + tmp4) > 0xFF) {
+                            if ((tmp2 + regs[REG_L]) > 0xFF) {
                                 flags |= FLAG_C | FLAG_H;
                             }
 
@@ -1338,14 +1361,24 @@ public class EmulatorEngine {
                             PC = (PC - 2) & 0xFFFF;
                             return 21;
                         case 0xBA: /* INDR */
-                            tmp = (context.fireIO(regs[REG_C], true, 0) & 0xFF);
+                            tmp = context.fireIO(regs[REG_C], true, 0) & 0xFF;
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
+                            tmp2 = tmp + ((regs[REG_C] - 1) & 0xFF);
+
                             memory.write(tmp1, (short) tmp);
                             tmp1 = (tmp1 - 1) & 0xFFFF;
-                            regs[REG_H] = (tmp1 >>> 8);
+                            regs[REG_H] = ((tmp1 >>> 8) & 0xff);
                             regs[REG_L] = (tmp1 & 0xFF);
                             regs[REG_B] = ((regs[REG_B] - 1) & 0xFF);
-                            flags |= (FLAG_N | FLAG_Z);
+
+                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[(tmp2 & 7) ^ regs[REG_B]];
+                            if ((tmp & 0x80) == 0x80) {
+                                flags |= FLAG_N;
+                            }
+                            if (tmp2 > 0xFF) {
+                                flags |= (FLAG_H | FLAG_C);
+                            }
+
                             if (regs[REG_B] == 0) {
                                 return 16;
                             }
@@ -1354,20 +1387,18 @@ public class EmulatorEngine {
                         case 0xBB: /* OTDR */
                             tmp1 = (regs[REG_H] << 8) | regs[REG_L];
                             tmp2 = memory.read(tmp1) & 0xFF;
-                            tmp3 = regs[REG_B];
-                            tmp4 = regs[REG_L];
 
                             context.fireIO(regs[REG_C], false, tmp2);
                             tmp1 = (tmp1 - 1) & 0xFFFF;
                             regs[REG_H] = (tmp1 >>> 8);
                             regs[REG_L] = (tmp1 & 0xFF);
-                            regs[REG_B] = (tmp3 - 1) & 0xFF;
+                            regs[REG_B] = (regs[REG_B] - 1) & 0xFF;
 
-                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[((tmp2 + tmp4) & 7) ^ tmp3];
+                            flags = SIGN_ZERO_TABLE[regs[REG_B]] | PARITY_TABLE[((tmp2 + regs[REG_L]) & 7) ^ regs[REG_B]];
                             if ((tmp2 & 0x80) == 0x80) {
                                 flags |= FLAG_N;
                             }
-                            if ((tmp2 + tmp4) > 0xFF) {
+                            if ((tmp2 + regs[REG_L]) > 0xFF) {
                                 flags |= FLAG_C | FLAG_H;
                             }
 

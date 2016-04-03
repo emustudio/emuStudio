@@ -23,6 +23,7 @@ import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
 import net.sf.emustudio.zilogZ80.impl.suite.ByteTestBuilder;
 import net.sf.emustudio.zilogZ80.impl.suite.FlagsBuilderImpl;
 import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.function.BiFunction;
@@ -86,6 +87,13 @@ public class IOTest extends InstructionsTest {
 
     @Test
     public void testINI() {
+        BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
+            (((context.first >>> 8) & 0xFF) + ((context.first & 0xFF + 1) & 0xFF)) > 0xFF;
+        BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
+            FlagsBuilderImpl.isParity(
+                ((((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) + 1) & 0xFF)) & 7) ^ result.byteValue()
+            );
+
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .first8MSBisDeviceAndFirst8LSBIsPort()
             .first8LSBisRegister(REG_C)
@@ -95,7 +103,14 @@ public class IOTest extends InstructionsTest {
             .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().zero().subtractionIsSet());
+            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>().sign().zero()
+                .expectFlagOnlyWhen(FLAG_N,
+                    (context, result) -> (((context.first >>> 8) & 0x80) == 0x80)
+                )
+                .expectFlagOnlyWhen(FLAG_H, flagHCtest)
+                .expectFlagOnlyWhen(FLAG_C, flagHCtest)
+                .expectFlagOnlyWhen(FLAG_PV, flagPVtest)
+            );
 
         Generator.forSome16bitBinary(2,
             test.run(0xED, 0xA2)
@@ -104,6 +119,13 @@ public class IOTest extends InstructionsTest {
 
     @Test
     public void testINIR() {
+        BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
+            (((context.first >>> 8) & 0xFF) + ((context.first & 0xFF + 1) & 0xFF)) > 0xFF;
+        BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
+            FlagsBuilderImpl.isParity(
+                ((((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) + 1) & 0xFF)) & 7) ^ result.byteValue()
+            );
+
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .first8MSBisDeviceAndFirst8LSBIsPort()
             .first8LSBisRegister(REG_C)
@@ -113,7 +135,14 @@ public class IOTest extends InstructionsTest {
             .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().zeroIsSet().subtractionIsSet())
+            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>().sign().zero()
+                .expectFlagOnlyWhen(FLAG_N,
+                    (context, result) -> (((context.first >>> 8) & 0x80) == 0x80)
+                )
+                .expectFlagOnlyWhen(FLAG_H, flagHCtest)
+                .expectFlagOnlyWhen(FLAG_C, flagHCtest)
+                .expectFlagOnlyWhen(FLAG_PV, flagPVtest)
+            )
             .verifyPC(context -> {
                 if (((((context.first >>> 8) & 0xFF) - 1) & 0xFF) != 0) {
                     return context.PC;
@@ -128,6 +157,13 @@ public class IOTest extends InstructionsTest {
 
     @Test
     public void testIND() {
+        BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
+            (((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) - 1) & 0xFF)) > 0xFF;
+        BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
+            FlagsBuilderImpl.isParity(
+                ((((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) - 1) & 0xFF)) & 7) ^ result.byteValue()
+            );
+
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .first8MSBisDeviceAndFirst8LSBIsPort()
             .first8LSBisRegister(REG_C)
@@ -137,7 +173,14 @@ public class IOTest extends InstructionsTest {
             .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().zero().subtractionIsSet());
+            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>().sign().zero()
+                .expectFlagOnlyWhen(FLAG_N,
+                    (context, result) -> (((context.first >>> 8) & 0x80) == 0x80)
+                )
+                .expectFlagOnlyWhen(FLAG_H, flagHCtest)
+                .expectFlagOnlyWhen(FLAG_C, flagHCtest)
+                .expectFlagOnlyWhen(FLAG_PV, flagPVtest)
+            );
 
         Generator.forSome16bitBinary(2,
             test.run(0xED, 0xAA)
@@ -146,6 +189,13 @@ public class IOTest extends InstructionsTest {
 
     @Test
     public void testINDR() {
+        BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
+            (((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) - 1) & 0xFF)) > 0xFF;
+        BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
+            FlagsBuilderImpl.isParity(
+                ((((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) - 1) & 0xFF)) & 7) ^ result.byteValue()
+            );
+
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .first8MSBisDeviceAndFirst8LSBIsPort()
             .first8LSBisRegister(REG_C)
@@ -155,7 +205,14 @@ public class IOTest extends InstructionsTest {
             .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().zeroIsSet().subtractionIsSet())
+            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>().sign().zero()
+                .expectFlagOnlyWhen(FLAG_N,
+                    (context, result) -> (((context.first >>> 8) & 0x80) == 0x80)
+                )
+                .expectFlagOnlyWhen(FLAG_H, flagHCtest)
+                .expectFlagOnlyWhen(FLAG_C, flagHCtest)
+                .expectFlagOnlyWhen(FLAG_PV, flagPVtest)
+            )
             .verifyPC(context -> {
                 if (((((context.first >>> 8) & 0xFF) - 1) & 0xFF) != 0) {
                     return context.PC;
@@ -212,15 +269,13 @@ public class IOTest extends InstructionsTest {
         );
     }
 
-    // (66 + 8d)
-
     @Test
     public void testOUTI() {
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
-            ((context.second & 0xFF) + (context.first & 0xFF)) > 0xFF;
+            ((context.second & 0xFF) + ((context.first+1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
             FlagsBuilderImpl.isParity(
-                (((context.second & 0xFF) + (context.first & 0xFF)) & 7) ^ ((context.first >>> 8) & 0xFF)
+                (((context.second & 0xFF) + ((context.first+1) & 0xFF)) & 7) ^ result.byteValue()
             );
 
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
@@ -248,10 +303,10 @@ public class IOTest extends InstructionsTest {
     @Test
     public void testOTIR() {
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
-            ((context.second & 0xFF) + (context.first & 0xFF)) > 0xFF;
+            ((context.second & 0xFF) + ((context.first + 1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
             FlagsBuilderImpl.isParity(
-                (((context.second & 0xFF) + context.first & 0xFF) & 7) ^ ((context.first >>> 8) & 0xFF)
+                (((context.second & 0xFF) + (context.first+1) & 0xFF) & 7) ^ result.byteValue()
             );
 
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
@@ -285,10 +340,10 @@ public class IOTest extends InstructionsTest {
     @Test
     public void testOUTD() {
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
-            ((context.second & 0xFF) + (context.first & 0xFF)) > 0xFF;
+            ((context.second & 0xFF) + ((context.first-1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
             FlagsBuilderImpl.isParity(
-                (((context.second & 0xFF) + context.first & 0xFF) & 7) ^ ((context.first >>> 8) & 0xFF)
+                (((context.second & 0xFF) + ((context.first-1) & 0xFF)) & 7) ^ result.byteValue()
             );
 
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
@@ -316,10 +371,10 @@ public class IOTest extends InstructionsTest {
     @Test
     public void testOTDR() {
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
-            ((context.second & 0xFF) + (context.first & 0xFF)) > 0xFF;
+            ((context.second & 0xFF) + ((context.first-1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
             FlagsBuilderImpl.isParity(
-                (((context.second & 0xFF) + context.first & 0xFF) & 7) ^ ((context.first >>> 8) & 0xFF)
+                (((context.second & 0xFF) + ((context.first-1) & 0xFF)) & 7) ^ result.byteValue()
             );
 
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)

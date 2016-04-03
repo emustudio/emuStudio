@@ -38,7 +38,12 @@ public class Test<T extends Number> implements BiConsumer<T, T> {
 
     private void verify(RunnerContext<T> context) {
         for (Consumer<RunnerContext<T>> verifier : verifiers) {
-            verifier.accept(context);
+            try {
+                verifier.accept(context);
+            } catch (Throwable e) {
+                System.out.println("Verifier failed: " + context);
+                throw e;
+            }
         }
     }
 

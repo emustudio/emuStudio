@@ -106,6 +106,31 @@ public class Generator {
         }
     }
 
+    private static int adjustInteger(int value) {
+        if (value > 100 && value < 32000) {
+            return 32900;
+        }
+        if (value > 33000 && value < 65000) {
+            return  65500;
+        }
+        return value;
+    }
+
+    /**
+     * Select values: 0-100, 32900-33000, and 65500-65535
+     */
+    public static void forAdjusted16bitBinary(int firstStartFrom, BiConsumer<Integer, Integer>... runners) {
+        for (int first = firstStartFrom; first < 65536; first++) {
+            for (int second = 0; second < 65536; second++) {
+                for (BiConsumer<Integer, Integer> runner : runners) {
+                    runner.accept(first, second);
+                }
+                second = adjustInteger(second);
+            }
+            first = adjustInteger(first);
+        }
+    }
+
     public static void forSome16bitBinaryWhichEqual(BiConsumer<Integer, Integer>... runners) {
         Random random = new Random();
         for (int i = 0; i < RANDOM_TESTS; i++) {
@@ -169,4 +194,9 @@ public class Generator {
         }
     }
 
+    public static <T extends Number> void forGivenOperandsAndSingleRun(T first, T second, BiConsumer<T, T>... runners) {
+        for (BiConsumer<T,T> runner : runners) {
+            runner.accept(first, second);
+        }
+    }
 }

@@ -55,4 +55,16 @@ public class RunnerContext<T extends Number> {
     public int getRegister(int register) {
         return registers.get(register);
     }
+
+    @Override
+    public String toString() {
+        return "RunnerContext{" +
+            "first=" + first +
+            ", second=" + second +
+            ", flags=" + flags +
+            ", PC=" + PC +
+            ", SP=" + SP +
+            ", registers=" + registers +
+            '}';
+    }
 }
