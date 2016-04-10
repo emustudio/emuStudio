@@ -318,7 +318,7 @@ public class LogicTest extends InstructionsTest {
         IntegerTestBuilder test = prepareCPxTest(context ->
             ((context.getRegister(REG_H) << 8 | context.getRegister(REG_L)) + 1));
 
-        Generator.forSome16bitBinary(
+        Generator.forSome16bitBinary(3,
             test.run(0xED, 0xA1)
         );
     }
@@ -336,7 +336,7 @@ public class LogicTest extends InstructionsTest {
                 return context.PC;
             });
 
-        Generator.forSome16bitBinary(
+        Generator.forSome16bitBinary(3,
             test.run(0xED, 0xB1)
         );
     }
@@ -346,7 +346,7 @@ public class LogicTest extends InstructionsTest {
         IntegerTestBuilder test = prepareCPxTest(context ->
             ((context.getRegister(REG_H) << 8 | context.getRegister(REG_L)) - 1));
 
-        Generator.forSome16bitBinary(
+        Generator.forSome16bitBinary(3,
             test.run(0xED, 0xA9)
         );
     }
@@ -364,7 +364,7 @@ public class LogicTest extends InstructionsTest {
                 return context.PC;
             });
 
-        Generator.forSome16bitBinary(
+        Generator.forSome16bitBinary(3,
             test.run(0xED, 0xB9)
         );
     }
