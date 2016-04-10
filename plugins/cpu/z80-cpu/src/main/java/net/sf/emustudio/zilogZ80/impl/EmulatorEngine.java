@@ -32,7 +32,6 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_H_C_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_H_NOT_C_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_NOT_H_C_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_NOT_H_NOT_C_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DEC_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.INC_TABLE;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.NEG_TABLE;
@@ -503,8 +502,11 @@ public class EmulatorEngine {
                     tmp1 = getpair(2);
                     carry15(tmp, tmp1);
                     halfCarry11(tmp, tmp1);
-                    flags &= (~FLAG_N);
+                    flags &= (~(FLAG_N | FLAG_S | FLAG_Z));
                     tmp += tmp1;
+
+                    flags |= ((tmp & 0x8000) == 0x8000) ? FLAG_S : 0;
+                    flags |= (tmp == 0) ? FLAG_Z : 0;
                     putpair(2, tmp & 0xFFFF);
                     return 11;
             /* DEC ss*/
@@ -1451,9 +1453,11 @@ public class EmulatorEngine {
 
                             carry15(tmp, tmp1);
                             halfCarry11(tmp, tmp1);
-                            flags &= (~FLAG_N);
+                            flags &= (~(FLAG_N | FLAG_S | FLAG_Z));
 
                             tmp += tmp1;
+                            flags |= ((tmp & 0x8000) == 0x8000) ? FLAG_S : 0;
+                            flags |= (tmp == 0) ? FLAG_Z : 0;
                             putspecial(special, tmp);
                             return 15;
                         case 0x23: /* INC ii */

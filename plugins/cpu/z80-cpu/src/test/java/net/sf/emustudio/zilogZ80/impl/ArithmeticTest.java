@@ -254,13 +254,14 @@ public class ArithmeticTest extends InstructionsTest {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsPair(REG_PAIR_HL)
             .verifyPair(REG_PAIR_HL, context -> context.first + context.second)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl().carry15().halfCarry11().subtractionIsReset())
+            .verifyFlagsOfLastOp(new FlagsBuilderImpl()
+                .sign16bit().zero16bit().carry15().halfCarry11().subtractionIsReset()
+            )
             .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryWhichEqual(
             test.run(0x29)
         );
-
         Generator.forSome16bitBinary(
             test.secondIsPair(REG_PAIR_BC).run(0x09),
             test.secondIsPair(REG_PAIR_DE).run(0x19),
@@ -390,7 +391,7 @@ public class ArithmeticTest extends InstructionsTest {
             .firstIsIX()
             .verifyIX(context -> context.first + context.second)
             .verifyFlagsOfLastOp(new FlagsBuilderImpl<>()
-                .halfCarry11().carry15().subtractionIsReset()
+                .sign16bit().zero16bit().halfCarry11().carry15().subtractionIsReset()
             )
             .keepCurrentInjectorsAfterRun();
 
@@ -411,7 +412,7 @@ public class ArithmeticTest extends InstructionsTest {
             .firstIsIY()
             .verifyIY(context -> context.first + context.second)
             .verifyFlagsOfLastOp(new FlagsBuilderImpl<>()
-                .halfCarry11().carry15().subtractionIsReset()
+                .sign16bit().zero16bit().halfCarry11().carry15().subtractionIsReset()
             )
             .keepCurrentInjectorsAfterRun();
 
