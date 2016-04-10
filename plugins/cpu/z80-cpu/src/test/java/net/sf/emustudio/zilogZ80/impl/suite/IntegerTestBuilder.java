@@ -218,6 +218,12 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         return this;
     }
 
+    public IntegerTestBuilder verifyR(Function<RunnerContext<Integer>, Integer> operator) {
+        lastOperation = Objects.requireNonNull(operator);
+        addVerifier(context -> cpuVerifier.checkR(operator.apply(context)));
+        return this;
+    }
+
     public IntegerTestBuilder verifyIFF1isEnabled() {
         addVerifier(context -> cpuVerifier.checkInterruptsAreEnabled(0));
         return this;

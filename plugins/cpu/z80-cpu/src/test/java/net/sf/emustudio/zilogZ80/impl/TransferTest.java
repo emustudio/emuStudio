@@ -25,6 +25,8 @@ import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
 import net.sf.emustudio.zilogZ80.impl.suite.Utils;
 import org.junit.Test;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_N;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_PV;
@@ -555,6 +557,7 @@ public class TransferTest extends InstructionsTest {
             .verifyPair(REG_PAIR_DE, context -> (context.first + 1) & 0xFFFF)
             .verifyPair(REG_PAIR_HL, context -> (context.second + 1) & 0xFFFF)
             .verifyPair(REG_PAIR_BC, context -> (context.first - 1) & 0xFFFF)
+            .verifyR(context -> 2)
             .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>()
                 .halfCarryIsReset().subtractionIsReset()
                 .expectFlagOnlyWhen(FLAG_PV, (context, result) -> ((context.first - 1) & 0xFFFF) != 0)
@@ -568,6 +571,7 @@ public class TransferTest extends InstructionsTest {
         Generator.forSome16bitBinary(2, 2,
             test.run(0xED, 0xB0)
         );
+
     }
 
     @Test

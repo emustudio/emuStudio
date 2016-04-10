@@ -442,6 +442,10 @@ public class EmulatorEngine {
             flags &= (~FLAG_C);
         }
     }
+
+    private void incrementR() {
+        R = (R & 0x80) | (((R & 0x7F) + 1) & 0x7F);
+    }
     
     private int evalStep(int OP) {
         int tmp, tmp1, tmp2, tmp3, tmp4;
@@ -460,7 +464,7 @@ public class EmulatorEngine {
             if (isINT) {
                 return doInterrupt();
             }
-            R = (R & 0x80) | (((R & 0x7F) + 1) & 0x7F);
+            incrementR();
             if (OP == 0x76) { /* HALT */
                 currentRunState = RunState.STATE_STOPPED_NORMAL;
                 return 4;
@@ -892,6 +896,7 @@ public class EmulatorEngine {
                     return 4;
                 case 0xED:
                     OP = memory.read(PC);
+                    incrementR();
                     PC = (PC + 1) & 0xFFFF;
                     switch (OP) {
                         case 0x77:
@@ -1442,6 +1447,7 @@ public class EmulatorEngine {
                     }
                     OP = memory.read(PC);
                     PC = (PC + 1) & 0xFFFF;
+                    incrementR();
                     switch (OP) {
                     /* ADD ii,pp */
                         case 0x09:
@@ -1829,6 +1835,7 @@ public class EmulatorEngine {
                 case 0xCB:
                     OP = memory.read(PC);
                     PC = (PC + 1) & 0xFFFF;
+                    incrementR();
                     switch (OP) {
                     /* RLC r */
                         case 0x00:
