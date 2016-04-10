@@ -16,13 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package net.sf.emustudio.cpu.testsuite.runners;
+package net.sf.emustudio.cpu.testsuite.injectors;
 
 import net.sf.emustudio.cpu.testsuite.CpuRunner;
 
+/**
+ * Injector used with two operands (standard Java does not have 3-argument consumer).
+ *
+ * @param <T> CpuRunner type
+ * @param <OperandType> type of operands (Byte or Integer). Both are of the same type.
+ */
 @FunctionalInterface
-public interface SingleOperandInjector<OperandType extends Number, CpuRunnerType extends CpuRunner> {
-
-    void inject(CpuRunnerType cpuRunner, OperandType value);
-
+public interface TwoOperandsInjector<T extends CpuRunner, OperandType extends Number> {
+    void inject(T cpuRunner, OperandType first, OperandType second);
 }

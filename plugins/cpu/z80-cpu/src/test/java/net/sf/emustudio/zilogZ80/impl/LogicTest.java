@@ -19,9 +19,9 @@
 package net.sf.emustudio.zilogZ80.impl;
 
 import net.sf.emustudio.cpu.testsuite.Generator;
-import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
+import net.sf.emustudio.cpu.testsuite.RunnerContext;
 import net.sf.emustudio.zilogZ80.impl.suite.ByteTestBuilder;
-import net.sf.emustudio.zilogZ80.impl.suite.FlagsBuilderImpl;
+import net.sf.emustudio.zilogZ80.impl.suite.FlagsCheckImpl;
 import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
 import org.junit.Test;
 
@@ -47,7 +47,7 @@ public class LogicTest extends InstructionsTest {
         return new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(REG_A)
             .verifyRegister(REG_A, operator)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl()
                 .carryIsReset().subtractionIsReset().halfCarryIsSet().parity().sign().zero())
             .keepCurrentInjectorsAfterRun();
     }
@@ -141,7 +141,7 @@ public class LogicTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(REG_A)
             .verifyRegister(REG_A, context -> context.first & 0xFF)
-            .verifyFlags(new FlagsBuilderImpl().sign().zero().carry().halfCarry().overflow().subtractionIsSet(),
+            .verifyFlags(new FlagsCheckImpl().sign().zero().carry().halfCarry().overflow().subtractionIsSet(),
                 context -> (context.first & 0xFF) - (context.second & 0xFF))
             .keepCurrentInjectorsAfterRun();
 
@@ -164,7 +164,7 @@ public class LogicTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(REG_A)
             .verifyRegister(REG_A, context -> context.first & 0xFF)
-            .verifyFlags(new FlagsBuilderImpl().sign().zero().carry().halfCarry().overflow().subtractionIsSet(),
+            .verifyFlags(new FlagsCheckImpl().sign().zero().carry().halfCarry().overflow().subtractionIsSet(),
                 context -> (context.first & 0xFF) - (context.second & 0xFF));
 
         Generator.forSome8bitBinary(
@@ -174,31 +174,25 @@ public class LogicTest extends InstructionsTest {
 
     @Test
     public void testDAA() throws Exception {
+        Function<RunnerContext<Byte>, Integer> daaFunc = context -> FlagsTableGeneratorTest.daa(
+            ((context.flags & FLAG_C) == FLAG_C),
+            ((context.flags & FLAG_H) == FLAG_H),
+            (byte) (((int) context.first) & 0xFF)
+        );
+
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(REG_A)
-            .verifyRegister(REG_A, context -> {
-                int result = ((int) context.first) & 0xFF;
-                if (((context.flags & FLAG_H) == FLAG_H) || (result & 0x0F) > 9) {
-                    result += 6;
-                }
-                if (((context.flags & FLAG_C) == FLAG_C) || (result & 0xF0) > 0x90) {
-                    result += 0x60;
-                }
-                return result;
-            })
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Byte>().sign().zero().parity()
-                .expectFlagOnlyWhen(FLAG_H, (context, result) -> {
-                    int firstInt = context.first & 0xFF;
-                    int diff = (result.intValue() - firstInt) & 0x0F;
-
-                    return ((diff == 6) && FlagsBuilderImpl.isAuxCarry(firstInt, 6));
-                })
-                .expectFlagOnlyWhen(FLAG_C, ((context, result) -> {
-                    int firstInt = context.first & 0xFF;
-                    int diff = (result.intValue() - firstInt) & 0xF0;
-
-                    return ((diff == 0x60) && ((result.intValue() & 0x100) == 0x100));
-                }))
+            .verifyRegister(REG_A, context -> daaFunc.apply(context) & 0xFF)
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>().sign().zero().parity()
+                .expectFlagOnlyWhen(FLAG_H, (context, result) ->
+                    FlagsTableGeneratorTest.daa_hf(
+                        (context.flags & FLAG_N) == FLAG_N,
+                        (context.flags & FLAG_H) == FLAG_H,
+                        (byte) (((int) context.first) & 0xFF)
+                    ) == FLAG_H
+                )
+                .expectFlagOnlyWhen(FLAG_C, ((context, result) ->
+                    (daaFunc.apply(context) >>> 8) == FLAG_C))
             );
 
         Generator.forAll8bitUnary(
@@ -211,7 +205,7 @@ public class LogicTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(REG_A)
             .verifyRegister(REG_A, context -> ~context.first)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsSet());
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<>().halfCarryIsSet().subtractionIsSet());
 
         Generator.forSome8bitUnary(
             test.run(0x2F)
@@ -245,7 +239,7 @@ public class LogicTest extends InstructionsTest {
             .firstIsRegister(REG_A)
             .setFlags(FLAG_H | FLAG_H)
             .verifyRegister(REG_A, context -> ((context.first << 1) & 0xFF) | (context.first >>> 7) & 1)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<>()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<>()
                 .carryIsFirstOperandMSB().halfCarryIsReset().subtractionIsReset());
 
         Generator.forSome8bitUnary(
@@ -259,7 +253,7 @@ public class LogicTest extends InstructionsTest {
             .firstIsRegister(REG_A)
             .setFlags(FLAG_H | FLAG_H)
             .verifyRegister(REG_A, context -> ((context.first >> 1) & 0x7F) | ((context.first & 1) << 7))
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<>()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<>()
                 .carryIsFirstOperandLSB().halfCarryIsReset().subtractionIsReset());
 
         Generator.forSome8bitUnary(
@@ -273,7 +267,7 @@ public class LogicTest extends InstructionsTest {
             .firstIsRegister(REG_A)
             .setFlags(FLAG_H | FLAG_H)
             .verifyRegister(REG_A, context -> ((context.first << 1) & 0xFE) | (context.flags & 1))
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<>()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<>()
                 .carryIsFirstOperandMSB().halfCarryIsReset().subtractionIsReset());
 
         Generator.forSome8bitUnary(
@@ -287,7 +281,7 @@ public class LogicTest extends InstructionsTest {
             .firstIsRegister(REG_A)
             .setFlags(FLAG_H | FLAG_H)
             .verifyRegister(REG_A, context -> ((context.first >> 1) & 0x7F) | ((context.flags & 1) << 7))
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<>()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<>()
                 .carryIsFirstOperandLSB().halfCarryIsReset().subtractionIsReset());
 
         Generator.forSome8bitUnary(
@@ -306,7 +300,7 @@ public class LogicTest extends InstructionsTest {
             .verifyPair(REG_PAIR_BC, context ->
                 ((context.getRegister(REG_B) << 8 | context.getRegister(REG_C)) - 1)
             )
-            .verifyFlags(new FlagsBuilderImpl<>()
+            .verifyFlags(new FlagsCheckImpl<>()
                 .sign().zero().subtractionIsSet().halfCarry()
                 .expectFlagOnlyWhen(FLAG_PV, (context, result) ->
                     ((context.getRegister(REG_B) << 8 | context.getRegister(REG_C)) - 1) != 0
@@ -374,7 +368,7 @@ public class LogicTest extends InstructionsTest {
             .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
             .first8LSBisRegister(REG_A)
             .verifyRegister(REG_A, operation)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl()
                 .sign().zero().carryIsReset().halfCarryIsSet().parity().subtractionIsReset());
     }
 
@@ -418,7 +412,7 @@ public class LogicTest extends InstructionsTest {
             .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
             .first8LSBisRegister(REG_A)
             .verifyRegister(REG_A, context -> context.first & 0xFF)
-            .verifyFlags(new FlagsBuilderImpl().sign().zero().carry().halfCarry().overflow().subtractionIsSet(),
+            .verifyFlags(new FlagsCheckImpl().sign().zero().carry().halfCarry().overflow().subtractionIsSet(),
                 context -> (context.first & 0xFF) - (context.second & 0xFF)
             )
             .keepCurrentInjectorsAfterRun();
@@ -434,7 +428,7 @@ public class LogicTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsRegister(REG_A)
             .verifyRegister(REG_A, context -> (0 - context.first) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Byte>()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Byte>()
                 .switchFirstAndSecond().sign().zero().halfCarry().subtractionIsSet()
                 .expectFlagOnlyWhen(FLAG_C, (context, result) -> context.second.byteValue() != 0)
                // .expectFlagOnlyWhen(FLAG_PV, (context, result) -> (context.second & 0xFF) == 0x80)
@@ -462,7 +456,7 @@ public class LogicTest extends InstructionsTest {
 
         Function<RunnerContext<Byte>, Integer> operator = context ->
             ((context.first << 1) & 0xFF) | (context.first >>> 7) & 1;
-        FlagsBuilderImpl flags = new FlagsBuilderImpl<>()
+        FlagsCheckImpl flags = new FlagsCheckImpl<>()
             .carryIsFirstOperandMSB().sign().zero().parity().halfCarryIsReset().subtractionIsReset();
 
         Generator.forSome8bitUnary(
@@ -482,7 +476,7 @@ public class LogicTest extends InstructionsTest {
         return new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
             .verifyByte(context -> get8MSBplus8LSB(context.first), operator)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<>()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<>()
                 .switchFirstAndSecond().carryIsFirstOperandMSB().sign().zero().halfCarryIsReset().parity()
                 .subtractionIsReset())
             .setFlags(FLAG_H | FLAG_N);
@@ -492,7 +486,7 @@ public class LogicTest extends InstructionsTest {
         return new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
             .verifyByte(context -> get8MSBplus8LSB(context.first), operator)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<>()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<>()
                 .switchFirstAndSecond().carryIsFirstOperandLSB().sign().zero().halfCarryIsReset().parity()
                 .subtractionIsReset())
             .setFlags(FLAG_H | FLAG_N);
@@ -535,7 +529,7 @@ public class LogicTest extends InstructionsTest {
 
         Function<RunnerContext<Byte>, Integer> operator = context ->
             ((context.first << 1) & 0xFF) | (context.flags & FLAG_C);
-        FlagsBuilderImpl flags = new FlagsBuilderImpl<>()
+        FlagsCheckImpl flags = new FlagsCheckImpl<>()
             .carryIsFirstOperandMSB().sign().zero().parity().halfCarryIsReset().subtractionIsReset();
 
         Generator.forSome8bitUnary(
@@ -572,7 +566,7 @@ public class LogicTest extends InstructionsTest {
 
         Function<RunnerContext<Byte>, Integer> operator = context ->
             ((context.first >>> 1) & 0x7F) | (((context.first & 1) << 7));
-        FlagsBuilderImpl flags = new FlagsBuilderImpl<>()
+        FlagsCheckImpl flags = new FlagsCheckImpl<>()
             .carryIsFirstOperandLSB().sign().zero().parity().halfCarryIsReset().subtractionIsReset();
 
         Generator.forSome8bitUnary(
@@ -609,7 +603,7 @@ public class LogicTest extends InstructionsTest {
 
         Function<RunnerContext<Byte>, Integer> operator = context ->
             ((context.first >> 1) & 0x7F) | ((context.flags & FLAG_C) << 7);
-        FlagsBuilderImpl flags = new FlagsBuilderImpl<>()
+        FlagsCheckImpl flags = new FlagsCheckImpl<>()
             .carryIsFirstOperandLSB().sign().zero().parity().halfCarryIsReset().subtractionIsReset();
 
         Generator.forSome8bitUnary(
@@ -645,7 +639,7 @@ public class LogicTest extends InstructionsTest {
             .clearOtherVerifiersAfterRun();
 
         Function<RunnerContext<Byte>, Integer> operator = context -> (context.first << 1) & 0xFE;
-        FlagsBuilderImpl flags = new FlagsBuilderImpl<>()
+        FlagsCheckImpl flags = new FlagsCheckImpl<>()
             .carryIsFirstOperandMSB().sign().zero().parity().halfCarryIsReset().subtractionIsReset();
 
         Generator.forSome8bitUnary(
@@ -680,7 +674,7 @@ public class LogicTest extends InstructionsTest {
             .clearOtherVerifiersAfterRun();
 
         Function<RunnerContext<Byte>, Integer> operator = context -> (context.first >> 1) & 0xFF | (context.first & 0x80);
-        FlagsBuilderImpl flags = new FlagsBuilderImpl<>()
+        FlagsCheckImpl flags = new FlagsCheckImpl<>()
             .carryIsFirstOperandLSB().sign().zero().parity().halfCarryIsReset().subtractionIsReset();
 
         Generator.forSome8bitUnary(
@@ -716,7 +710,7 @@ public class LogicTest extends InstructionsTest {
             .clearOtherVerifiersAfterRun();
 
         Function<RunnerContext<Byte>, Integer> operator = context -> (context.first >>> 1) & 0x7F;
-        FlagsBuilderImpl flags = new FlagsBuilderImpl<>()
+        FlagsCheckImpl flags = new FlagsCheckImpl<>()
             .carryIsFirstOperandLSB().sign().zero().parity().halfCarryIsReset().subtractionIsReset();
 
         Generator.forSome8bitUnary(
@@ -751,7 +745,7 @@ public class LogicTest extends InstructionsTest {
             .clearOtherVerifiersAfterRun();
 
         Function<RunnerContext<Byte>, Integer> operator = context -> (context.first << 1) & 0xFF | context.first & 1;
-        FlagsBuilderImpl flags = new FlagsBuilderImpl<>()
+        FlagsCheckImpl flags = new FlagsCheckImpl<>()
             .carryIsFirstOperandMSB().sign().zero().parity().halfCarryIsReset().subtractionIsReset();
 
         Generator.forSome8bitUnary(
@@ -786,7 +780,7 @@ public class LogicTest extends InstructionsTest {
             .first8LSBisRegister(REG_A)
             .verifyByte(context -> context.first, context -> (context.second << 4) & 0xF0 | context.first & 0x0F)
             .verifyRegister(REG_A, context -> (context.first & 0xF0) | (context.second >>> 4) & 0x0F)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().sign().zero().parity().subtractionIsReset().halfCarryIsReset());
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<>().sign().zero().parity().subtractionIsReset().halfCarryIsReset());
 
         Generator.forSome16bitBinary(
             test.run(0xED, 0x6F)
@@ -801,7 +795,7 @@ public class LogicTest extends InstructionsTest {
             .first8LSBisRegister(REG_A)
             .verifyByte(context -> context.first, context -> (context.first << 4) & 0xF0 | (context.second >>> 4) & 0x0F)
             .verifyRegister(REG_A, context -> (context.first & 0xF0) | context.second & 0x0F)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().sign().zero().parity().subtractionIsReset().halfCarryIsReset());
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<>().sign().zero().parity().subtractionIsReset().halfCarryIsReset());
 
         Generator.forSome16bitBinary(
             test.run(0xED, 0x67)

@@ -79,11 +79,6 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
     }
 
     @Override
-    public void resetFlags(int mask) {
-        cpu.getEngine().flags &= ~mask;
-    }
-
-    @Override
     public int getFlags() {
         return cpu.getEngine().flags;
     }

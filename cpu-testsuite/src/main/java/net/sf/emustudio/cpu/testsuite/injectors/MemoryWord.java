@@ -19,11 +19,24 @@
 package net.sf.emustudio.cpu.testsuite.injectors;
 
 import net.sf.emustudio.cpu.testsuite.CpuRunner;
-import net.sf.emustudio.cpu.testsuite.runners.SingleOperandInjector;
 
-public class MemoryWord<CpuRunnerType extends CpuRunner> implements SingleOperandInjector<Integer, CpuRunnerType> {
+import java.util.function.BiConsumer;
+
+/**
+ * Injector of a integer (2 bytes) value at specified memory address.
+ *
+ * Given memory address, test runner will inject a 16-bit value there.
+ * Higher than 16-bit value will be truncated.
+ *
+ */
+public class MemoryWord<T extends CpuRunner, OperandType extends Number> implements BiConsumer<T, OperandType> {
     private final int address;
 
+    /**
+     * Creates an integer memory value injector.
+     *
+     * @param address address at which the test runner will inject a value
+     */
     public MemoryWord(int address) {
         if (address <= 0) {
             throw new IllegalArgumentException("Address can be only > 0!");
@@ -33,9 +46,10 @@ public class MemoryWord<CpuRunnerType extends CpuRunner> implements SingleOperan
     }
 
     @Override
-    public void inject(CpuRunner cpuRunner, Integer value) {
-        cpuRunner.setByte(address, value & 0xFF);
-        cpuRunner.setByte(address + 1, (value >>> 8) & 0xFF);
+    public void accept(T cpuRunner, OperandType value) {
+        int tmp = value.intValue();
+        cpuRunner.setByte(address, tmp & 0xFF);
+        cpuRunner.setByte(address + 1, (tmp >>> 8) & 0xFF);
     }
 
     @Override

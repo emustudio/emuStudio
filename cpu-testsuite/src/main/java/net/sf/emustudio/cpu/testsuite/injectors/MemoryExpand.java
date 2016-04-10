@@ -19,12 +19,21 @@
 package net.sf.emustudio.cpu.testsuite.injectors;
 
 import net.sf.emustudio.cpu.testsuite.CpuRunner;
-import net.sf.emustudio.cpu.testsuite.runners.SingleOperandInjector;
 
-public class MemoryExpand<CpuRunnerType extends CpuRunner> implements SingleOperandInjector<Integer, CpuRunnerType> {
+import java.util.function.BiConsumer;
+
+/**
+ * Program memory expander.
+ *
+ * Used as an injector for TestRunner.
+ *
+ * Ensures that memory has at least specified size. The size is injected from TestRunner.
+ *
+ */
+public class MemoryExpand<T extends CpuRunner> implements BiConsumer<T, Integer> {
 
     @Override
-    public void inject(CpuRunner cpuRunner, Integer address) {
+    public void accept(T cpuRunner, Integer address) {
         cpuRunner.ensureProgramSize(address + 4);
     }
 

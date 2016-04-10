@@ -19,7 +19,7 @@
 package net.sf.emustudio.zilogZ80.impl.suite;
 
 import net.sf.emustudio.cpu.testsuite.TestBuilder;
-import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
+import net.sf.emustudio.cpu.testsuite.RunnerContext;
 import net.sf.emustudio.zilogZ80.impl.suite.injectors.Register;
 
 import java.util.Objects;
@@ -87,13 +87,13 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
 
     public ByteTestBuilder verifyRegisterI(Function<RunnerContext<Byte>, Integer> operator) {
         lastOperation = Objects.requireNonNull(operator);
-        addVerifier(context -> cpuVerifier.checkI(operator.apply(context)));
+        runner.verifyAfterTest(context -> cpuVerifier.checkI(operator.apply(context)));
         return this;
     }
 
     public ByteTestBuilder verifyRegisterR(Function<RunnerContext<Byte>, Integer> operation) {
         lastOperation = Objects.requireNonNull(operation);
-        addVerifier(context -> cpuVerifier.checkR(operation.apply(context)));
+        runner.verifyAfterTest(context -> cpuVerifier.checkR(operation.apply(context)));
         return this;
     }
 
@@ -102,25 +102,19 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
             throw new IllegalStateException("Last operation is not set!");
         }
         Function<RunnerContext<Byte>, Integer> operation = lastOperation;
-        addVerifier(context -> cpuVerifier.checkRegister(register, operation.apply(context)));
-        return this;
-    }
-
-    public ByteTestBuilder verifyPair(int registerPair, Function<RunnerContext<Byte>, Integer> operation) {
-        lastOperation = Objects.requireNonNull(operation);
-        addVerifier(context -> cpuVerifier.checkRegisterPair(registerPair, operation.apply(context)));
+        runner.verifyAfterTest(context -> cpuVerifier.checkRegister(register, operation.apply(context)));
         return this;
     }
 
     public ByteTestBuilder verifyPC(Function<RunnerContext<Byte>, Integer> operation) {
         lastOperation = Objects.requireNonNull(operation);
-        addVerifier(context -> cpuVerifier.checkPC(operation.apply(context)));
+        runner.verifyAfterTest(context -> cpuVerifier.checkPC(operation.apply(context)));
         return this;
     }
 
     public ByteTestBuilder verifyDeviceWhenSecondIsPort(Function<RunnerContext<Byte>, Integer> operation) {
         lastOperation = Objects.requireNonNull(operation);
-        addVerifier(context -> cpuVerifier.checkDeviceValue(context.second, operation.apply(context)));
+        runner.verifyAfterTest(context -> cpuVerifier.checkDeviceValue(context.second, operation.apply(context)));
         return this;
     }
 }

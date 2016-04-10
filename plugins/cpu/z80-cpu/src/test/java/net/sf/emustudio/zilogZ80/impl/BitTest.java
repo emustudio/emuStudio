@@ -19,9 +19,9 @@
 package net.sf.emustudio.zilogZ80.impl;
 
 import net.sf.emustudio.cpu.testsuite.Generator;
-import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
+import net.sf.emustudio.cpu.testsuite.RunnerContext;
 import net.sf.emustudio.zilogZ80.impl.suite.ByteTestBuilder;
-import net.sf.emustudio.zilogZ80.impl.suite.FlagsBuilderImpl;
+import net.sf.emustudio.zilogZ80.impl.suite.FlagsCheckImpl;
 import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
 import org.junit.Test;
 
@@ -40,11 +40,11 @@ public class BitTest extends InstructionsTest {
             .clearOtherVerifiersAfterRun();
     }
 
-    private ByteTestBuilder verifyFlags(ByteTestBuilder test, FlagsBuilderImpl<Number> flagsBuilder, int bitShift) {
+    private ByteTestBuilder verifyFlags(ByteTestBuilder test, FlagsCheckImpl<Number> flagsBuilder, int bitShift) {
         return test.verifyFlags(flagsBuilder, context -> (context.first & (1 << bitShift)));
     }
 
-    private IntegerTestBuilder verifyFlags(IntegerTestBuilder test, FlagsBuilderImpl<Number> flagsBuilder, int bitShift) {
+    private IntegerTestBuilder verifyFlags(IntegerTestBuilder test, FlagsCheckImpl<Number> flagsBuilder, int bitShift) {
         return test.verifyFlags(flagsBuilder, context -> (context.second & (1 << bitShift)));
     }
 
@@ -52,9 +52,9 @@ public class BitTest extends InstructionsTest {
     public void testBIT_b__A() {
         ByteTestBuilder test = prepareBITtest(REG_A);
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+        FlagsCheckImpl<Number> flagsBuilder = new FlagsCheckImpl<>().halfCarryIsSet().subtractionIsReset().zero()
             .parity();
-        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+        FlagsCheckImpl<Number> signFlagBuilder = new FlagsCheckImpl<>().sign().halfCarryIsSet().subtractionIsReset()
             .zero().parity();
         Generator.forSome8bitUnary(
             verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x47),
@@ -72,9 +72,9 @@ public class BitTest extends InstructionsTest {
     public void testBIT_b__B() {
         ByteTestBuilder test = prepareBITtest(REG_B);
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+        FlagsCheckImpl<Number> flagsBuilder = new FlagsCheckImpl<>().halfCarryIsSet().subtractionIsReset().zero()
             .parity();
-        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+        FlagsCheckImpl<Number> signFlagBuilder = new FlagsCheckImpl<>().sign().halfCarryIsSet().subtractionIsReset()
             .zero().parity();
         Generator.forSome8bitUnary(
             verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x40),
@@ -92,9 +92,9 @@ public class BitTest extends InstructionsTest {
     public void testBIT_b__C() {
         ByteTestBuilder test = prepareBITtest(REG_C);
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+        FlagsCheckImpl<Number> flagsBuilder = new FlagsCheckImpl<>().halfCarryIsSet().subtractionIsReset().zero()
             .parity();
-        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+        FlagsCheckImpl<Number> signFlagBuilder = new FlagsCheckImpl<>().sign().halfCarryIsSet().subtractionIsReset()
             .zero().parity();
         Generator.forSome8bitUnary(
             verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x41),
@@ -112,9 +112,9 @@ public class BitTest extends InstructionsTest {
     public void testBIT_b__D() {
         ByteTestBuilder test = prepareBITtest(REG_D);
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+        FlagsCheckImpl<Number> flagsBuilder = new FlagsCheckImpl<>().halfCarryIsSet().subtractionIsReset().zero()
             .parity();
-        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+        FlagsCheckImpl<Number> signFlagBuilder = new FlagsCheckImpl<>().sign().halfCarryIsSet().subtractionIsReset()
             .zero().parity();
         Generator.forSome8bitUnary(
             verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x42),
@@ -132,9 +132,9 @@ public class BitTest extends InstructionsTest {
     public void testBIT_b__E() {
         ByteTestBuilder test = prepareBITtest(REG_E);
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+        FlagsCheckImpl<Number> flagsBuilder = new FlagsCheckImpl<>().halfCarryIsSet().subtractionIsReset().zero()
             .parity();
-        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+        FlagsCheckImpl<Number> signFlagBuilder = new FlagsCheckImpl<>().sign().halfCarryIsSet().subtractionIsReset()
             .zero().parity();
         Generator.forSome8bitUnary(
             verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x43),
@@ -152,9 +152,9 @@ public class BitTest extends InstructionsTest {
     public void testBIT_b__H() {
         ByteTestBuilder test = prepareBITtest(REG_H);
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+        FlagsCheckImpl<Number> flagsBuilder = new FlagsCheckImpl<>().halfCarryIsSet().subtractionIsReset().zero()
             .parity();
-        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+        FlagsCheckImpl<Number> signFlagBuilder = new FlagsCheckImpl<>().sign().halfCarryIsSet().subtractionIsReset()
             .zero().parity();
         Generator.forSome8bitUnary(
             verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x44),
@@ -172,9 +172,9 @@ public class BitTest extends InstructionsTest {
     public void testBIT_b__L() {
         ByteTestBuilder test = prepareBITtest(REG_L);
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+        FlagsCheckImpl<Number> flagsBuilder = new FlagsCheckImpl<>().halfCarryIsSet().subtractionIsReset().zero()
             .parity();
-        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+        FlagsCheckImpl<Number> signFlagBuilder = new FlagsCheckImpl<>().sign().halfCarryIsSet().subtractionIsReset()
             .zero().parity();
         Generator.forSome8bitUnary(
             verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x45),
@@ -197,9 +197,9 @@ public class BitTest extends InstructionsTest {
             .keepCurrentInjectorsAfterRun()
             .clearOtherVerifiersAfterRun();
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+        FlagsCheckImpl<Number> flagsBuilder = new FlagsCheckImpl<>().halfCarryIsSet().subtractionIsReset().zero()
             .parity();
-        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+        FlagsCheckImpl<Number> signFlagBuilder = new FlagsCheckImpl<>().sign().halfCarryIsSet().subtractionIsReset()
             .zero().parity();
         Generator.forSome16bitBinary(2,
             verifyFlags(test, flagsBuilder, 0).run(0xCB, 0x46),
@@ -222,9 +222,9 @@ public class BitTest extends InstructionsTest {
             .keepCurrentInjectorsAfterRun()
             .clearOtherVerifiersAfterRun();
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+        FlagsCheckImpl<Number> flagsBuilder = new FlagsCheckImpl<>().halfCarryIsSet().subtractionIsReset().zero()
             .parity();
-        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+        FlagsCheckImpl<Number> signFlagBuilder = new FlagsCheckImpl<>().sign().halfCarryIsSet().subtractionIsReset()
             .zero().parity();
         Generator.forSome16bitBinary(0x100,
             verifyFlags(test, flagsBuilder, 0).runWithFirst8bitOperandWithOpcodeAfter(0x46, 0xDD, 0xCB),
@@ -244,7 +244,7 @@ public class BitTest extends InstructionsTest {
             .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
             .first8MSBisIX()
             .setFlags(FLAG_N)
-            .verifyFlags(new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero().parity().sign(),
+            .verifyFlags(new FlagsCheckImpl<>().halfCarryIsSet().subtractionIsReset().zero().parity().sign(),
                 context -> (context.second & (1 << 7)))
             .keepCurrentInjectorsAfterRun()
             .clearOtherVerifiersAfterRun();
@@ -270,9 +270,9 @@ public class BitTest extends InstructionsTest {
             .keepCurrentInjectorsAfterRun()
             .clearOtherVerifiersAfterRun();
 
-        FlagsBuilderImpl<Number> flagsBuilder = new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero()
+        FlagsCheckImpl<Number> flagsBuilder = new FlagsCheckImpl<>().halfCarryIsSet().subtractionIsReset().zero()
             .parity();
-        FlagsBuilderImpl<Number> signFlagBuilder = new FlagsBuilderImpl<>().sign().halfCarryIsSet().subtractionIsReset()
+        FlagsCheckImpl<Number> signFlagBuilder = new FlagsCheckImpl<>().sign().halfCarryIsSet().subtractionIsReset()
             .zero().parity();
         Generator.forSome16bitBinary(0x100,
             verifyFlags(test, flagsBuilder, 0).runWithFirst8bitOperandWithOpcodeAfter(0x46, 0xFD, 0xCB),
@@ -293,7 +293,7 @@ public class BitTest extends InstructionsTest {
             .first8MSBplus8LSBisMemoryAddressAndSecondIsMemoryByte()
             .first8MSBisIY()
             .setFlags(FLAG_N)
-            .verifyFlags(new FlagsBuilderImpl<>().halfCarryIsSet().subtractionIsReset().zero().parity().sign(),
+            .verifyFlags(new FlagsCheckImpl<>().halfCarryIsSet().subtractionIsReset().zero().parity().sign(),
                 context -> (context.second & (1 << 7)))
             .keepCurrentInjectorsAfterRun()
             .clearOtherVerifiersAfterRun();

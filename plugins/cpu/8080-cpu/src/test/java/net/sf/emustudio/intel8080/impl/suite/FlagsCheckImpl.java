@@ -1,6 +1,6 @@
 package net.sf.emustudio.intel8080.impl.suite;
 
-import net.sf.emustudio.cpu.testsuite.FlagsBuilder;
+import net.sf.emustudio.cpu.testsuite.FlagsCheck;
 
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_AC;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_C;
@@ -8,9 +8,9 @@ import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_P;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_S;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_Z;
 
-public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBuilderImpl<T>> {
+public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckImpl<T>> {
 
-    public FlagsBuilderImpl sign() {
+    public FlagsCheckImpl sign() {
         evaluators.add((context, result) -> {
             if (result.byteValue() < 0) {
                 expectedFlags |= FLAG_S;
@@ -21,7 +21,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl zero() {
+    public FlagsCheckImpl zero() {
         evaluators.add((context, result) -> {
             if (result.byteValue() == 0) {
                 expectedFlags |= FLAG_Z;
@@ -32,7 +32,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl parity() {
+    public FlagsCheckImpl parity() {
         evaluators.add((context, result) -> {
             int numberOf1 = 0;
             int intResult = result.intValue() & 0xFF;
@@ -53,7 +53,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl carry15() {
+    public FlagsCheckImpl carry15() {
         evaluators.add((context, result) -> {
             if ((result.intValue() & 0x10000) == 0x10000) {
                 expectedFlags |= FLAG_C;
@@ -64,7 +64,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl carry() {
+    public FlagsCheckImpl carry() {
         evaluators.add((context, result) -> {
             if ((result.intValue() & 0x100) == 0x100) {
                 expectedFlags |= FLAG_C;
@@ -75,7 +75,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl carryIsFirstOperandMSB() {
+    public FlagsCheckImpl carryIsFirstOperandMSB() {
         evaluators.add((context, result) -> {
             if ((context.first.intValue() & 0x80) == 0x80) {
                 expectedFlags |= FLAG_C;
@@ -86,7 +86,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl carryIsFirstOperandLSB() {
+    public FlagsCheckImpl carryIsFirstOperandLSB() {
         evaluators.add((context, result) -> {
             if ((context.first.intValue() & 1) == 1) {
                 expectedFlags |= FLAG_C;
@@ -97,7 +97,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl carryIsReset() {
+    public FlagsCheckImpl carryIsReset() {
         evaluators.add((context, result) -> expectedNotFlags |= FLAG_C);
         return this;
     }
@@ -114,7 +114,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return (C3 != 0);
     }
 
-    public FlagsBuilderImpl auxCarry() {
+    public FlagsCheckImpl auxCarry() {
         evaluators.add((context, result) -> {
             int firstInt = context.first.intValue();
             byte diff = (byte)((result.intValue() - firstInt) & 0xFF);
@@ -128,7 +128,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl auxCarryIsReset() {
+    public FlagsCheckImpl auxCarryIsReset() {
         evaluators.add((context, result) -> expectedNotFlags |= FLAG_AC);
         return this;
     }

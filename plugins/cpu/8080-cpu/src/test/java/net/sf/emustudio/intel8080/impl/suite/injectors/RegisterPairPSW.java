@@ -1,9 +1,10 @@
 package net.sf.emustudio.intel8080.impl.suite.injectors;
 
-import net.sf.emustudio.cpu.testsuite.runners.SingleOperandInjector;
 import net.sf.emustudio.intel8080.impl.suite.CpuRunnerImpl;
 
-public class RegisterPairPSW implements SingleOperandInjector<Integer, CpuRunnerImpl> {
+import java.util.function.BiConsumer;
+
+public class RegisterPairPSW implements BiConsumer<CpuRunnerImpl, Integer> {
     private final int registerPairPSW;
 
     public RegisterPairPSW(int registerPairPSW) {
@@ -11,7 +12,7 @@ public class RegisterPairPSW implements SingleOperandInjector<Integer, CpuRunner
     }
 
     @Override
-    public void inject(CpuRunnerImpl cpuRunner, Integer value) {
+    public void accept(CpuRunnerImpl cpuRunner, Integer value) {
         cpuRunner.setRegisterPairPSW(registerPairPSW, value & 0xFFFF);
     }
 }

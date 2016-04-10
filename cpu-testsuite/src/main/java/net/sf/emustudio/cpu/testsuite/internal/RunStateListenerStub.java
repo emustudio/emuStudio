@@ -16,11 +16,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package net.sf.emustudio.cpu.testsuite.runners;
+package net.sf.emustudio.cpu.testsuite.internal;
 
-import net.sf.emustudio.cpu.testsuite.CpuRunner;
+import emulib.plugins.cpu.CPU;
 
-@FunctionalInterface
-public interface TwoOperandsInjector<OperandType extends Number, CpuRunnerType extends CpuRunner> {
-    void inject(CpuRunnerType cpuRunner, OperandType first, OperandType second);
+/**
+ * INTERNAL CLASS. DO NOT USE DIRECTLY.
+ *
+ */
+public class RunStateListenerStub implements CPU.CPUListener {
+    public CPU.RunState runState;
+
+    @Override
+    public void runStateChanged(CPU.RunState runState) {
+        this.runState = runState;
+    }
+
+    @Override
+    public void internalStateChanged() {
+
+    }
 }

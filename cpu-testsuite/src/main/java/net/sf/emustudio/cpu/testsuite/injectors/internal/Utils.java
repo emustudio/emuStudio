@@ -16,10 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package net.sf.emustudio.cpu.testsuite.injectors;
+package net.sf.emustudio.cpu.testsuite.injectors.internal;
 
 import java.util.Arrays;
 
+/**
+ * INTERNAL CLASS. DO NOT USE DIRECTLY.
+ *
+ */
 public class Utils {
 
     public static <T> String toHexString(T... array) {

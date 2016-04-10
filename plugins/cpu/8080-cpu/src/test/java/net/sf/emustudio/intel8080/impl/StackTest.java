@@ -1,7 +1,7 @@
 package net.sf.emustudio.intel8080.impl;
 
 import net.sf.emustudio.cpu.testsuite.Generator;
-import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
+import net.sf.emustudio.cpu.testsuite.RunnerContext;
 import net.sf.emustudio.intel8080.impl.suite.IntegerTestBuilder;
 import org.junit.Test;
 

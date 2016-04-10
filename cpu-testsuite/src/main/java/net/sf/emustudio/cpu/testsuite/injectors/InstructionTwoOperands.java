@@ -19,18 +19,41 @@
 package net.sf.emustudio.cpu.testsuite.injectors;
 
 import net.sf.emustudio.cpu.testsuite.CpuRunner;
-import net.sf.emustudio.cpu.testsuite.runners.TwoOperandsInjector;
+import net.sf.emustudio.cpu.testsuite.injectors.internal.Utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class InstructionTwoOperands<K extends Number, CpuRunnerType extends CpuRunner>
-    implements TwoOperandsInjector<K, CpuRunnerType> {
+/**
+ * Instruction with two operands.
+ *
+ * It is used as an injector for the test runner.
+ *
+ * The order of bytes is as follows:
+ *
+ * 1. Initial opcodes (1 or more)
+ * 2. First Operand
+ * 3. Second Operand
+ * 4. Possibly more opcodes (0 or more)
+ *
+ * @param <OperandType> type of the operand (Byte or Integer)
+ */
+public class InstructionTwoOperands<T extends CpuRunner, OperandType extends Number>
+        implements TwoOperandsInjector<T, OperandType> {
     private final List<Integer> opcodes;
     private final List<Integer> opcodesAfterOperand = new ArrayList<>();
 
+    /**
+     * Create Instruction with two opcodes injector.
+     *
+     * @param opcodes 1 or more opcode(s) of the instruction. Each opcode must be a byte (don't get confused by int).
+     */
     public InstructionTwoOperands(int... opcodes) {
+        if (opcodes.length <= 0) {
+            throw new IndexOutOfBoundsException("Expected 1 or more opcodes");
+        }
+
         List<Integer> tmpList = new ArrayList<>();
         for (int opcode : opcodes) {
             tmpList.add(opcode);
@@ -38,6 +61,14 @@ public class InstructionTwoOperands<K extends Number, CpuRunnerType extends CpuR
         this.opcodes = Collections.unmodifiableList(tmpList);
     }
 
+    /**
+     * Will place more opcodes after the instruction operands.
+     *
+     * NOTE: size of operands is given by OperandType parameter (Byte = 8 bits, Integer = 16 bits)
+     *
+     * @param opcodes opcode(s). Each opcode must be a byte (don't get confused by int).
+     * @return this
+     */
     public InstructionTwoOperands placeOpcodesAfterOperands(int... opcodes) {
         List<Integer> tmpList = new ArrayList<>();
         for (int opcode : opcodes) {
@@ -48,7 +79,7 @@ public class InstructionTwoOperands<K extends Number, CpuRunnerType extends CpuR
     }
 
     @Override
-    public void inject(CpuRunnerType cpuRunner, K first, K second) {
+    public void inject(T cpuRunner, OperandType first, OperandType second) {
         int tmpFirst = first.intValue() & 0xFFFF;
         int tmpSecond = second.intValue() & 0xFFFF;
 
@@ -70,9 +101,9 @@ public class InstructionTwoOperands<K extends Number, CpuRunnerType extends CpuR
 
     @Override
     public String toString() {
-        return String.format(
-                "instruction: %s",
-                Utils.toHexString(opcodes.toArray()) + " (operand) (operand) " + Utils.toHexString(opcodesAfterOperand.toArray())
+        return String.format("instruction: %s",
+                Utils.toHexString(opcodes.toArray()) + " (operand) (operand) "
+                    + Utils.toHexString(opcodesAfterOperand.toArray())
         );
     }
 

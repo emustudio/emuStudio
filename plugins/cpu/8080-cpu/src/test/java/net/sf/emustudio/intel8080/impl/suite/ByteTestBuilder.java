@@ -1,7 +1,7 @@
 package net.sf.emustudio.intel8080.impl.suite;
 
 import net.sf.emustudio.cpu.testsuite.TestBuilder;
-import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
+import net.sf.emustudio.cpu.testsuite.RunnerContext;
 import net.sf.emustudio.intel8080.impl.suite.injectors.Register;
 
 import java.util.function.Function;
@@ -19,11 +19,6 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
 
     public ByteTestBuilder secondIsRegister(int register) {
         runner.injectSecond(new Register(register));
-        return this;
-    }
-
-    public ByteTestBuilder setRegister(int register, int value) {
-        runner.injectFirst((tmpRunner, argument) -> cpuRunner.setRegister(register, value));
         return this;
     }
 
@@ -45,7 +40,7 @@ public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, CpuRunne
             throw new IllegalStateException("Last operation is not set!");
         }
         Function<RunnerContext<Byte>, Integer> operation = lastOperation;
-        addVerifier(context -> cpuVerifier.checkRegister(register, operation.apply(context)));
+        runner.verifyAfterTest(context -> cpuVerifier.checkRegister(register, operation.apply(context)));
         return this;
     }
 

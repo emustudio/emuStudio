@@ -19,7 +19,7 @@
 package net.sf.emustudio.cpu.testsuite.verifiers;
 
 import net.sf.emustudio.cpu.testsuite.CpuVerifier;
-import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
+import net.sf.emustudio.cpu.testsuite.RunnerContext;
 
 import java.util.Objects;
 import java.util.function.Consumer;

@@ -18,10 +18,11 @@
  */
 package net.sf.emustudio.zilogZ80.impl.suite.injectors;
 
-import net.sf.emustudio.cpu.testsuite.runners.SingleOperandInjector;
 import net.sf.emustudio.zilogZ80.impl.suite.CpuRunnerImpl;
 
-public class RegisterPair2 implements SingleOperandInjector<Integer, CpuRunnerImpl> {
+import java.util.function.BiConsumer;
+
+public class RegisterPair2 implements BiConsumer<CpuRunnerImpl, Integer> {
     private final int registerPair;
 
     public RegisterPair2(int registerPair) {
@@ -29,7 +30,7 @@ public class RegisterPair2 implements SingleOperandInjector<Integer, CpuRunnerIm
     }
 
     @Override
-    public void inject(CpuRunnerImpl cpuRunner, Integer value) {
+    public void accept(CpuRunnerImpl cpuRunner, Integer value) {
         cpuRunner.setRegisterPair2(registerPair, value & 0xFFFF);
     }
 

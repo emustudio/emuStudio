@@ -1,9 +1,9 @@
 package net.sf.emustudio.intel8080.impl;
 
 import net.sf.emustudio.cpu.testsuite.Generator;
-import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
+import net.sf.emustudio.cpu.testsuite.RunnerContext;
 import net.sf.emustudio.intel8080.impl.suite.ByteTestBuilder;
-import net.sf.emustudio.intel8080.impl.suite.FlagsBuilderImpl;
+import net.sf.emustudio.intel8080.impl.suite.FlagsCheckImpl;
 import net.sf.emustudio.intel8080.impl.suite.IntegerTestBuilder;
 import org.junit.Test;
 
@@ -23,7 +23,7 @@ public class ArithmeticTest extends InstructionsTest {
         return new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(REG_A)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF))
-                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity())
+                .verifyFlagsOfLastOp(new FlagsCheckImpl().sign().zero().carry().auxCarry().parity())
                 .keepCurrentInjectorsAfterRun();
     }
 
@@ -31,7 +31,7 @@ public class ArithmeticTest extends InstructionsTest {
         return new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(REG_A)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF))
-                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity())
+                .verifyFlagsOfLastOp(new FlagsCheckImpl().sign().zero().carry().auxCarry().parity())
                 .keepCurrentInjectorsAfterRun();
     }
 
@@ -67,7 +67,7 @@ public class ArithmeticTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(REG_A)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flags & 1))
-                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity())
+                .verifyFlagsOfLastOp(new FlagsCheckImpl().sign().zero().carry().auxCarry().parity())
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitBinaryWhichEqual(
@@ -89,7 +89,7 @@ public class ArithmeticTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(REG_A)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) + (context.second & 0xFF) + (context.flags & 1))
-                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity());
+                .verifyFlagsOfLastOp(new FlagsCheckImpl().sign().zero().carry().auxCarry().parity());
 
         Generator.forSome8bitBinary(
                 test.runWithSecondOperand(0xCE)
@@ -128,7 +128,7 @@ public class ArithmeticTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(REG_A)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flags & 1))
-                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity())
+                .verifyFlagsOfLastOp(new FlagsCheckImpl().sign().zero().carry().auxCarry().parity())
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome8bitBinaryWhichEqual(
@@ -150,7 +150,7 @@ public class ArithmeticTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(REG_A)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF) - (context.flags & 1))
-                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity());
+                .verifyFlagsOfLastOp(new FlagsCheckImpl().sign().zero().carry().auxCarry().parity());
 
         Generator.forSome8bitBinary(
                 test.runWithSecondOperand(0xDE)
@@ -160,7 +160,7 @@ public class ArithmeticTest extends InstructionsTest {
     @Test
     public void testINR() throws Exception {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .verifyFlags(new FlagsBuilderImpl().sign().zero().parity().auxCarry(), context -> context.first + 1)
+                .verifyFlags(new FlagsCheckImpl().sign().zero().parity().auxCarry(), context -> context.first + 1)
                 .keepCurrentInjectorsAfterRun()
                 .clearOtherVerifiersAfterRun();
 
@@ -179,7 +179,7 @@ public class ArithmeticTest extends InstructionsTest {
     @Test
     public void testDCR() throws Exception {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .verifyFlags(new FlagsBuilderImpl().sign().zero().parity().auxCarry(), context -> context.first - 1)
+                .verifyFlags(new FlagsCheckImpl().sign().zero().parity().auxCarry(), context -> context.first - 1)
                 .keepCurrentInjectorsAfterRun()
                 .clearOtherVerifiersAfterRun();
 
@@ -228,7 +228,7 @@ public class ArithmeticTest extends InstructionsTest {
         IntegerTestBuilder test = new IntegerTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsPair(REG_PAIR_HL)
                 .verifyPair(REG_PAIR_HL, context -> context.first + context.second)
-                .verifyFlagsOfLastOp(new FlagsBuilderImpl().carry15())
+                .verifyFlagsOfLastOp(new FlagsCheckImpl().carry15())
                 .keepCurrentInjectorsAfterRun();
 
         Generator.forSome16bitBinaryWhichEqual(

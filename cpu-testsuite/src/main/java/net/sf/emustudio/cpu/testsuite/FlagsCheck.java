@@ -18,14 +18,13 @@
  */
 package net.sf.emustudio.cpu.testsuite;
 
-import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
-public abstract class FlagsBuilder<T extends Number, SpecificFlagsBuilder extends FlagsBuilder<T, ?>> {
+@SuppressWarnings("unchecked")
+public abstract class FlagsCheck<T extends Number, SpecificFlagsBuilder extends FlagsCheck<T, ?>> {
     protected final List<BiConsumer<RunnerContext<T>, Integer>> evaluators = new ArrayList<>();
 
     private boolean switchFirstAndSecond;

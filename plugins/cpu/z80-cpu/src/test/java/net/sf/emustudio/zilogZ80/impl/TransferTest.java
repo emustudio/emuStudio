@@ -20,12 +20,10 @@ package net.sf.emustudio.zilogZ80.impl;
 
 import net.sf.emustudio.cpu.testsuite.Generator;
 import net.sf.emustudio.zilogZ80.impl.suite.ByteTestBuilder;
-import net.sf.emustudio.zilogZ80.impl.suite.FlagsBuilderImpl;
+import net.sf.emustudio.zilogZ80.impl.suite.FlagsCheckImpl;
 import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
 import net.sf.emustudio.zilogZ80.impl.suite.Utils;
 import org.junit.Test;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_N;
@@ -271,7 +269,7 @@ public class TransferTest extends InstructionsTest {
             .secondIsRegisterI()
             .setFlags(FLAG_H | FLAG_N)
             .verifyRegister(REG_A, context -> context.second & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().sign().zero().halfCarryIsReset().subtractionIsReset()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<>().sign().zero().halfCarryIsReset().subtractionIsReset()
                 .expectFlagOnlyWhen(FLAG_PV, (context, result) -> cpuRunnerImpl.getIFF(1))
             );
 
@@ -286,8 +284,8 @@ public class TransferTest extends InstructionsTest {
             .firstIsRegister(REG_A)
             .secondIsRegisterR()
             .setFlags(FLAG_H | FLAG_N)
-            .verifyRegister(REG_A, context -> (context.second & 0x80) | ((context.second & 0x7F) + 1) & 0x7F)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<>().sign().zero().halfCarryIsReset().subtractionIsReset()
+            .verifyRegister(REG_A, context -> (context.second & 0x80) | ((context.second & 0x7F) + 2) & 0x7F)
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<>().sign().zero().halfCarryIsReset().subtractionIsReset()
                 .expectFlagOnlyWhen(FLAG_PV, (context, result) -> cpuRunnerImpl.getIFF(1))
             );
 
@@ -535,7 +533,7 @@ public class TransferTest extends InstructionsTest {
             .verifyPair(REG_PAIR_DE, context -> (context.first + 1) & 0xFFFF)
             .verifyPair(REG_PAIR_HL, context -> (context.second + 1) & 0xFFFF)
             .verifyPair(REG_PAIR_BC, context -> (context.first - 1) & 0xFFFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
                 .halfCarryIsReset().subtractionIsReset()
                 .expectFlagOnlyWhen(FLAG_PV, (context, result) -> ((context.first - 1) & 0xFFFF) != 0)
             );
@@ -558,7 +556,7 @@ public class TransferTest extends InstructionsTest {
             .verifyPair(REG_PAIR_HL, context -> (context.second + 1) & 0xFFFF)
             .verifyPair(REG_PAIR_BC, context -> (context.first - 1) & 0xFFFF)
             .verifyR(context -> 2)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>()
                 .halfCarryIsReset().subtractionIsReset()
                 .expectFlagOnlyWhen(FLAG_PV, (context, result) -> ((context.first - 1) & 0xFFFF) != 0)
             ).verifyPC(context -> {
@@ -586,7 +584,7 @@ public class TransferTest extends InstructionsTest {
             .verifyPair(REG_PAIR_DE, context -> (context.first - 1) & 0xFFFF)
             .verifyPair(REG_PAIR_HL, context -> (context.second - 1) & 0xFFFF)
             .verifyPair(REG_PAIR_BC, context -> (context.first - 1) & 0xFFFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>().halfCarryIsReset().subtractionIsReset()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().halfCarryIsReset().subtractionIsReset()
                 .expectFlagOnlyWhen(FLAG_PV, (context, result) -> ((context.first - 1) & 0xFFFF) != 0)
             );
 
@@ -607,7 +605,7 @@ public class TransferTest extends InstructionsTest {
             .verifyPair(REG_PAIR_DE, context -> (context.first - 1) & 0xFFFF)
             .verifyPair(REG_PAIR_HL, context -> (context.second - 1) & 0xFFFF)
             .verifyPair(REG_PAIR_BC, context -> (context.first - 1) & 0xFFFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>().halfCarryIsReset().subtractionIsReset()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().halfCarryIsReset().subtractionIsReset()
                 .expectFlagOnlyWhen(FLAG_PV, (context, result) -> ((context.first - 1) & 0xFFFF) != 0)
             ).verifyPC(context -> {
                 if (((context.first - 1) & 0xFFFF) != 0) {

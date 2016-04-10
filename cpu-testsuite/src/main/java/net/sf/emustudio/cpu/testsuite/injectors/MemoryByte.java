@@ -19,11 +19,23 @@
 package net.sf.emustudio.cpu.testsuite.injectors;
 
 import net.sf.emustudio.cpu.testsuite.CpuRunner;
-import net.sf.emustudio.cpu.testsuite.runners.SingleOperandInjector;
 
-public class MemoryByte<TCpuRunnerType extends CpuRunner> implements SingleOperandInjector<Byte, TCpuRunnerType> {
+import java.util.function.BiConsumer;
+
+/**
+ * Injector of a byte value at specified memory address.
+ *
+ * Given memory address, test runner will inject a 8-bit value there.
+ * Higher than 8-bit value will be truncated.
+ */
+public class MemoryByte<T extends CpuRunner, OperandType extends Number> implements BiConsumer<T, OperandType> {
     private final int address;
 
+    /**
+     * Creates new memory byte injector
+     *
+     * @param address memory address where the byte will be injected
+     */
     public MemoryByte(int address) {
         if (address <= 0) {
             throw new IllegalArgumentException("Address can be only > 0! (was " + address + ")");
@@ -33,8 +45,8 @@ public class MemoryByte<TCpuRunnerType extends CpuRunner> implements SingleOpera
     }
 
     @Override
-    public void inject(CpuRunner cpuRunner, Byte value) {
-        cpuRunner.setByte(address, value);
+    public void accept(T cpuRunner, OperandType value) {
+        cpuRunner.setByte(address, value.byteValue());
     }
 
     @Override

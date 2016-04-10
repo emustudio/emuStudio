@@ -19,26 +19,42 @@
 package net.sf.emustudio.cpu.testsuite.injectors;
 
 import net.sf.emustudio.cpu.testsuite.CpuRunner;
-import net.sf.emustudio.cpu.testsuite.runners.SingleOperandInjector;
+import net.sf.emustudio.cpu.testsuite.injectors.internal.Utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
-public class InstructionNoOperands<OperandType extends Number, CpuRunnerType extends CpuRunner>
-        implements SingleOperandInjector<OperandType, CpuRunnerType> {
+/**
+ * Instruction without operands.
+ *
+ * It is used as an injector for the test runner.
+ *
+ * Can have 1 or more opcodes.
+ */
+public class InstructionNoOperands<T extends CpuRunner> implements Consumer<T> {
     private final List<Integer> opcodes;
 
-    public InstructionNoOperands(int... instruction) {
+    /**
+     * Creates instruction with no operands injector.
+     *
+     * @param opcodes 1 or more opcode(s) of the instruction. Each opcode must be a byte (don't get confused by int).
+     */
+    public InstructionNoOperands(int... opcodes) {
+        if (opcodes.length <= 0) {
+            throw new IndexOutOfBoundsException("Expected 1 or more opcodes");
+        }
+
         List<Integer> tmpList = new ArrayList<>();
-        for (int opcode : instruction) {
+        for (int opcode : opcodes) {
             tmpList.add(opcode);
         }
         this.opcodes = Collections.unmodifiableList(tmpList);
     }
 
     @Override
-    public void inject(CpuRunnerType cpuRunner, OperandType unused) {
+    public void accept(T cpuRunner) {
         cpuRunner.setProgram(opcodes);
     }
 

@@ -20,6 +20,7 @@ package net.sf.emustudio.cpu.testsuite;
 
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
+import net.sf.emustudio.cpu.testsuite.internal.RunStateListenerStub;
 
 import java.util.Arrays;
 import java.util.List;
@@ -64,10 +65,6 @@ public abstract class CpuRunner<CpuType extends CPU> {
             array[i++] = n.intValue();
         }
         setProgram(array);
-    }
-
-    public int getProgramSize() {
-        return program.length;
     }
 
     public MemoryContext<Short> getMemory() {
@@ -120,11 +117,6 @@ public abstract class CpuRunner<CpuType extends CPU> {
 
     public abstract void setFlags(int mask);
 
-    public abstract void resetFlags(int mask);
-
     public abstract int getFlags();
 
-    public int readByte(int address) {
-        return program[address];
-    }
 }

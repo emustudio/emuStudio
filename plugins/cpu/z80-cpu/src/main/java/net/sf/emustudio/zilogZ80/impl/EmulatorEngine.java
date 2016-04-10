@@ -27,18 +27,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.locks.LockSupport;
 
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.AND_OR_XOR_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_H_C_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_H_NOT_C_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_NOT_H_C_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_NOT_H_NOT_C_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DEC_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.INC_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.NEG_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.PARITY_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.RRCA_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.SIGN_ZERO_CARRY_TABLE;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.SIGN_ZERO_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.*;
 
 /**
  * Main implementation class for CPU emulation CPU works in a separate thread
@@ -810,20 +799,42 @@ public class EmulatorEngine {
                     int temp = regs[REG_A];
                     boolean acFlag = (flags & FLAG_H) == FLAG_H;
                     boolean cFlag = (flags & FLAG_C) == FLAG_C;
+                    boolean nFlag = (flags & FLAG_N) == FLAG_N;
 
                     if (!acFlag && !cFlag) {
-                        regs[REG_A] = DAA_NOT_H_NOT_C_TABLE[temp] & 0xFF;
-                        flags = (DAA_NOT_H_NOT_C_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+                        regs[REG_A] = DAA_NOT_C_NOT_H_TABLE[temp] & 0xFF;
+                        flags = (DAA_NOT_C_NOT_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+                        if (nFlag) {
+                            flags |= DAA_N_NOT_H_FOR_H_TABLE[temp];
+                        } else {
+                            flags |= DAA_NOT_N_NOT_H_FOR_H_TABLE[temp];
+                        }
                     } else if (acFlag && !cFlag) {
-                        regs[REG_A] = DAA_H_NOT_C_TABLE[temp] & 0xFF;
-                        flags = (DAA_H_NOT_C_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+                        regs[REG_A] = DAA_NOT_C_H_TABLE[temp] & 0xFF;
+                        flags = (DAA_NOT_C_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+                        if (nFlag) {
+                            flags |= DAA_N_H_FOR_H_TABLE[temp];
+                        } else {
+                            flags |= DAA_NOT_N_H_FOR_H_TABLE[temp];
+                        }
                     } else if (!acFlag && cFlag) {
-                        regs[REG_A] = DAA_NOT_H_C_TABLE[temp] & 0xFF;
-                        flags = (DAA_NOT_H_C_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+                        regs[REG_A] = DAA_C_NOT_H_TABLE[temp] & 0xFF;
+                        flags = (DAA_C_NOT_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+                        if (nFlag) {
+                            flags |= DAA_N_NOT_H_FOR_H_TABLE[temp];
+                        } else {
+                            flags |= DAA_NOT_N_NOT_H_FOR_H_TABLE[temp];
+                        }
                     } else {
-                        regs[REG_A] = DAA_H_C_TABLE[temp] & 0xFF;
-                        flags = (DAA_H_C_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+                        regs[REG_A] = DAA_C_H_TABLE[temp] & 0xFF;
+                        flags = (DAA_C_H_TABLE[temp] >> 8) & 0xFF | (flags & FLAG_N);
+                        if (nFlag) {
+                            flags |= DAA_N_H_FOR_H_TABLE[temp];
+                        } else {
+                            flags |= DAA_NOT_N_H_FOR_H_TABLE[temp];
+                        }
                     }
+                    flags |= PARITY_TABLE[regs[REG_A]] | SIGN_ZERO_TABLE[regs[REG_A]];
                     return 4;
                 case 0x2F: /* CPL */
                     regs[REG_A] = ((~regs[REG_A]) & 0xFF);

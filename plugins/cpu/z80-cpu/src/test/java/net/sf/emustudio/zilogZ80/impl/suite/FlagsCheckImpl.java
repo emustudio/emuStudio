@@ -18,7 +18,7 @@
  */
 package net.sf.emustudio.zilogZ80.impl.suite;
 
-import net.sf.emustudio.cpu.testsuite.FlagsBuilder;
+import net.sf.emustudio.cpu.testsuite.FlagsCheck;
 
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_C;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
@@ -27,9 +27,9 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_PV;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_S;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_Z;
 
-public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBuilderImpl<T>> {
+public class FlagsCheckImpl<T extends Number> extends FlagsCheck<T, FlagsCheckImpl<T>> {
 
-    public FlagsBuilderImpl<T> sign() {
+    public FlagsCheckImpl<T> sign() {
         evaluators.add((context, result) -> {
             if ((result.intValue() & 0x80) == 0x80) {
                 expectedFlags |= FLAG_S;
@@ -40,7 +40,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl<T> sign16bit() {
+    public FlagsCheckImpl<T> sign16bit() {
         evaluators.add((context, result) -> {
             if ((result.intValue() & 0x8000) == 0x8000) {
                 expectedFlags |= FLAG_S;
@@ -51,7 +51,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl<T> zero() {
+    public FlagsCheckImpl<T> zero() {
         evaluators.add((context, result) -> {
             if (result.byteValue() == 0) {
                 expectedFlags |= FLAG_Z;
@@ -62,7 +62,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl<T> zero16bit() {
+    public FlagsCheckImpl<T> zero16bit() {
         evaluators.add((context, result) -> {
             if ((result.intValue() & 0xFFFF)== 0) {
                 expectedFlags |= FLAG_Z;
@@ -73,17 +73,17 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl<T> subtractionIsReset() {
+    public FlagsCheckImpl<T> subtractionIsReset() {
         evaluators.add((context, result) -> expectedNotFlags |= FLAG_N);
         return this;
     }
 
-    public FlagsBuilderImpl<T> subtractionIsSet() {
+    public FlagsCheckImpl<T> subtractionIsSet() {
         evaluators.add((context, result) -> expectedFlags |= FLAG_N);
         return this;
     }
 
-    public FlagsBuilderImpl<T> overflow() {
+    public FlagsCheckImpl<T> overflow() {
         evaluators.add((context, result) -> {
             int sign = context.first.intValue() & 0x80;
             int trueSecond = result.intValue() - context.first.intValue();
@@ -97,7 +97,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl<T> overflow16bit() {
+    public FlagsCheckImpl<T> overflow16bit() {
         evaluators.add((context, result) -> {
             int sign = context.first.intValue() & 0x8000;
             int trueSecond = result.intValue() - context.first.intValue();
@@ -123,7 +123,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return  numberOfOnes % 2 == 0;
     }
 
-    public FlagsBuilderImpl<T> parity() {
+    public FlagsCheckImpl<T> parity() {
         evaluators.add((context, result) -> {
             if (isParity(result.intValue() & 0xFF)) {
                 expectedFlags |= FLAG_PV;
@@ -134,7 +134,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl<T> carry15() {
+    public FlagsCheckImpl<T> carry15() {
         evaluators.add((context, result) -> {
             if ((result.intValue() & 0x10000) == 0x10000) {
                 expectedFlags |= FLAG_C;
@@ -145,7 +145,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl<T> carry() {
+    public FlagsCheckImpl<T> carry() {
         evaluators.add((context, result) -> {
             if ((result.intValue() & 0x100) == 0x100) {
                 expectedFlags |= FLAG_C;
@@ -156,7 +156,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl<T> carryIsFirstOperandMSB() {
+    public FlagsCheckImpl<T> carryIsFirstOperandMSB() {
         evaluators.add((context, result) -> {
             if ((context.first.intValue() & 0x80) == 0x80) {
                 expectedFlags |= FLAG_C;
@@ -167,7 +167,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl<T> carryIsFirstOperandLSB() {
+    public FlagsCheckImpl<T> carryIsFirstOperandLSB() {
         evaluators.add((context, result) -> {
             if ((context.first.intValue() & 1) == 1) {
                 expectedFlags |= FLAG_C;
@@ -178,7 +178,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl<T> carryIsReset() {
+    public FlagsCheckImpl<T> carryIsReset() {
         evaluators.add((context, result) -> expectedNotFlags |= FLAG_C);
         return this;
     }
@@ -195,7 +195,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return (C3 != 0);
     }
 
-    public FlagsBuilderImpl<T> halfCarry() {
+    public FlagsCheckImpl<T> halfCarry() {
         evaluators.add((context, result) -> {
             int firstInt = context.first.intValue();
             byte diff = (byte)((result.intValue() - firstInt) & 0xFF);
@@ -209,7 +209,7 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl<T> halfCarry11() {
+    public FlagsCheckImpl<T> halfCarry11() {
         evaluators.add((context, result) -> {
             int second = (result.intValue() - context.first.intValue()) & 0xFFFF;
 
@@ -238,17 +238,17 @@ public class FlagsBuilderImpl<T extends Number> extends FlagsBuilder<T, FlagsBui
         return this;
     }
 
-    public FlagsBuilderImpl<T> halfCarryIsReset() {
+    public FlagsCheckImpl<T> halfCarryIsReset() {
         evaluators.add((context, result) -> expectedNotFlags |= FLAG_H);
         return this;
     }
 
-    public FlagsBuilderImpl<T> halfCarryIsSet() {
+    public FlagsCheckImpl<T> halfCarryIsSet() {
         evaluators.add((context, result) -> expectedFlags |= FLAG_H);
         return this;
     }
 
-    public FlagsBuilderImpl<T> zeroIsSet() {
+    public FlagsCheckImpl<T> zeroIsSet() {
         evaluators.add((context, result) -> expectedFlags |= FLAG_Z);
         return this;
     }

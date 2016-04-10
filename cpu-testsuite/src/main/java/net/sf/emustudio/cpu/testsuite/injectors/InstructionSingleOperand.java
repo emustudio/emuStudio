@@ -19,19 +19,41 @@
 package net.sf.emustudio.cpu.testsuite.injectors;
 
 import net.sf.emustudio.cpu.testsuite.CpuRunner;
-import net.sf.emustudio.cpu.testsuite.runners.SingleOperandInjector;
+import net.sf.emustudio.cpu.testsuite.injectors.internal.Utils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 
-public class InstructionSingleOperand<K extends Number, CpuRunnerType extends CpuRunner>
-        implements SingleOperandInjector<K, CpuRunnerType> {
+/**
+ * Instruction with single operand.
+ *
+ * It is used as an injector for the test runner.
+ *
+ * The order of bytes is as follows:
+ *
+ * 1. Initial opcodes (1 or more)
+ * 2. Operand
+ * 3. Possibly more opcodes (0 or more)
+ *
+ * @param <OperandType> type of operand (Byte or Integer)
+ */
+public class InstructionSingleOperand<T extends CpuRunner, OperandType extends Number>
+        implements BiConsumer<T, OperandType> {
     private final List<Integer> opcodes;
     private final List<Integer> opcodesAfterOperand = new ArrayList<>();
 
+    /**
+     * Create instruction with single operand injector.
+     *
+     * @param opcodes 1 or more opcode(s) of the instruction. Each opcode must be a byte (don't get confused by int).
+     */
     public InstructionSingleOperand(int... opcodes) {
+        if (opcodes.length <= 0) {
+            throw new IndexOutOfBoundsException("Expected 1 or more opcodes");
+        }
+
         List<Integer> tmpList = new ArrayList<>();
         for (int opcode : opcodes) {
             tmpList.add(opcode);
@@ -39,6 +61,14 @@ public class InstructionSingleOperand<K extends Number, CpuRunnerType extends Cp
         this.opcodes = Collections.unmodifiableList(tmpList);
     }
 
+    /**
+     * Inserts opcodes after operand.
+     *
+     * NOTE: size of operands is given by OperandType parameter (Byte = 8 bits, Integer = 16 bits)
+     *
+     * @param opcodes opcode(s). Each opcode must be a byte (don't get confused by int).
+     * @return
+     */
     public InstructionSingleOperand placeOpcodesAfterOperand(int... opcodes) {
         List<Integer> tmpList = new ArrayList<>();
         for (int opcode : opcodes) {
@@ -49,7 +79,7 @@ public class InstructionSingleOperand<K extends Number, CpuRunnerType extends Cp
     }
 
     @Override
-    public void inject(CpuRunnerType cpuRunner, K operand) {
+    public void accept(T cpuRunner, OperandType operand) {
         int tmpOperand = operand.intValue() & 0xFFFF;
         List<Integer> program = new ArrayList<>(opcodes);
         if (operand instanceof Byte) {

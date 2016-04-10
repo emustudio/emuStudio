@@ -7,7 +7,6 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import net.sf.emustudio.cpu.testsuite.MemoryStub;
-import net.sf.emustudio.cpu.testsuite.RunStateListenerStub;
 import net.sf.emustudio.intel8080.impl.suite.CpuRunnerImpl;
 import net.sf.emustudio.intel8080.impl.suite.CpuVerifierImpl;
 import org.easymock.EasyMock;
@@ -41,9 +40,7 @@ public class InstructionsTest {
                 .anyTimes();
         replay(contextPool);
 
-        RunStateListenerStub runStateListener = new RunStateListenerStub();
         cpu = new CpuImpl(PLUGIN_ID, contextPool);
-        cpu.addCPUListener(runStateListener);
 
         SettingsManager settingsManager = createNiceMock(SettingsManager.class);
         // CHANGE TO "true" FOR VERBOSE OUTPUT

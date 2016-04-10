@@ -19,7 +19,7 @@
 package net.sf.emustudio.cpu.testsuite.verifiers;
 
 import net.sf.emustudio.cpu.testsuite.CpuVerifier;
-import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
+import net.sf.emustudio.cpu.testsuite.RunnerContext;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -34,7 +34,7 @@ public class MemoryByteVerifier<T extends Number> implements Consumer<RunnerCont
                               Function<RunnerContext<T>, Integer> addressOperator) {
         this.operation = Objects.requireNonNull(operation);
         this.verifier = Objects.requireNonNull(verifier);
-        this.address = addressOperator;
+        this.address = Objects.requireNonNull(addressOperator);
     }
 
     @Override

@@ -113,10 +113,6 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
         cpu.getEngine().regs2[lowRegister] = value & 0xFF;
     }
 
-    public Byte getRegister(int register) {
-        return new Byte((byte)cpu.getEngine().regs[register]);
-    }
-
     public boolean getIFF(int index) {
         return cpu.getEngine().IFF[index];
     }
@@ -128,10 +124,6 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
     @Override
     public int getPC() {
         return cpu.getEngine().PC;
-    }
-
-    public void setSP(int SP) {
-        cpu.getEngine().SP = SP;
     }
 
     @Override
@@ -146,11 +138,6 @@ public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
 
     public void setFlags2(int mask) {
         cpu.getEngine().flags2 |= mask;
-    }
-
-    @Override
-    public void resetFlags(int mask) {
-        cpu.getEngine().flags &= ~mask;
     }
 
     public void resetFlags() {

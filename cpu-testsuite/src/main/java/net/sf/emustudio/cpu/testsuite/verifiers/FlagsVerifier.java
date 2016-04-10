@@ -19,30 +19,44 @@
 package net.sf.emustudio.cpu.testsuite.verifiers;
 
 import net.sf.emustudio.cpu.testsuite.CpuVerifier;
-import net.sf.emustudio.cpu.testsuite.FlagsBuilder;
-import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
+import net.sf.emustudio.cpu.testsuite.FlagsCheck;
+import net.sf.emustudio.cpu.testsuite.RunnerContext;
 
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class FlagsVerifier<T extends Number> implements Consumer<RunnerContext<T>> {
-    private final Function<RunnerContext<T>, Integer> operation;
-    private final FlagsBuilder flagsBuilder;
+/**
+ * Flags verifier.
+ *
+ * Used as a test verifier.
+ *
+ * @param <OperandType> operands type (Byte or Integer)
+ */
+public class FlagsVerifier<OperandType extends Number> implements Consumer<RunnerContext<OperandType>> {
+    private final Function<RunnerContext<OperandType>, Integer> operation;
+    private final FlagsCheck flagsCheck;
     private final CpuVerifier verifier;
 
-    public FlagsVerifier(CpuVerifier verifier, Function<RunnerContext<T>, Integer> operation, FlagsBuilder flagsBuilder) {
+    /**
+     * Creates new flags verifier.
+     *
+     * @param verifier CPU verifier
+     * @param operation operation which will be used for checking flags
+     * @param flagsCheck flags checker
+     */
+    public FlagsVerifier(CpuVerifier verifier, Function<RunnerContext<OperandType>, Integer> operation, FlagsCheck flagsCheck) {
         this.operation = Objects.requireNonNull(operation);
-        this.flagsBuilder = Objects.requireNonNull(flagsBuilder);
+        this.flagsCheck = Objects.requireNonNull(flagsCheck);
         this.verifier = Objects.requireNonNull(verifier);
     }
 
     @Override
-    public void accept(RunnerContext<T> context) {
-        flagsBuilder.reset();
-        flagsBuilder.eval(context, operation.apply(context));
+    public void accept(RunnerContext<OperandType> context) {
+        flagsCheck.reset();
+        flagsCheck.eval(context, operation.apply(context));
 
-        verifier.checkFlags(flagsBuilder.getExpectedFlags());
-        verifier.checkNotFlags(flagsBuilder.getNotExpectedFlags());
+        verifier.checkFlags(flagsCheck.getExpectedFlags());
+        verifier.checkNotFlags(flagsCheck.getNotExpectedFlags());
     }
 }

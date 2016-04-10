@@ -2,7 +2,7 @@ package net.sf.emustudio.intel8080.impl.suite;
 
 import net.sf.emustudio.cpu.testsuite.TestBuilder;
 import net.sf.emustudio.cpu.testsuite.injectors.MemoryExpand;
-import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
+import net.sf.emustudio.cpu.testsuite.RunnerContext;
 import net.sf.emustudio.intel8080.impl.suite.injectors.RegisterPair;
 import net.sf.emustudio.intel8080.impl.suite.injectors.RegisterPairPSW;
 
@@ -24,11 +24,6 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
         return this;
     }
 
-    public IntegerTestBuilder firstIsRegisterPairPSW(int registerPairPSW) {
-        runner.injectFirst(new MemoryExpand(), new RegisterPairPSW(registerPairPSW));
-        return this;
-    }
-
     public IntegerTestBuilder secondIsRegisterPairPSW(int registerPairPSW) {
         runner.injectSecond(new MemoryExpand(), new RegisterPairPSW(registerPairPSW));
         return this;
@@ -46,7 +41,7 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
 
     public IntegerTestBuilder verifyPairAndPSW(int registerPair, Function<RunnerContext<Integer>, Integer> operation) {
         lastOperation = operation;
-        addVerifier(context -> cpuVerifier.checkRegisterPairPSW(registerPair, operation.apply(context)));
+        runner.verifyAfterTest(context -> cpuVerifier.checkRegisterPairPSW(registerPair, operation.apply(context)));
         return this;
     }
 
@@ -60,19 +55,19 @@ public class IntegerTestBuilder extends TestBuilder<Integer, IntegerTestBuilder,
             throw new IllegalStateException("Last operation is not set!");
         }
         Function<RunnerContext<Integer>, Integer> operation = lastOperation;
-        addVerifier(context -> cpuVerifier.checkRegister(register, operation.apply(context)));
+        runner.verifyAfterTest(context -> cpuVerifier.checkRegister(register, operation.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyPair(int registerPair, Function<RunnerContext<Integer>, Integer> operator) {
         lastOperation = operator;
-        addVerifier(context -> cpuVerifier.checkRegisterPair(registerPair, operator.apply(context)));
+        runner.verifyAfterTest(context -> cpuVerifier.checkRegisterPair(registerPair, operator.apply(context)));
         return this;
     }
 
     public IntegerTestBuilder verifyPC(Function<RunnerContext<Integer>, Integer> operator) {
         lastOperation = operator;
-        addVerifier(context -> cpuVerifier.checkPC(operator.apply(context)));
+        runner.verifyAfterTest(context -> cpuVerifier.checkPC(operator.apply(context)));
         return this;
     }
 

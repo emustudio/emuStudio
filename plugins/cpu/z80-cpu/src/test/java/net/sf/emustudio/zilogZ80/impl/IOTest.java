@@ -19,11 +19,10 @@
 package net.sf.emustudio.zilogZ80.impl;
 
 import net.sf.emustudio.cpu.testsuite.Generator;
-import net.sf.emustudio.cpu.testsuite.runners.RunnerContext;
+import net.sf.emustudio.cpu.testsuite.RunnerContext;
 import net.sf.emustudio.zilogZ80.impl.suite.ByteTestBuilder;
-import net.sf.emustudio.zilogZ80.impl.suite.FlagsBuilderImpl;
+import net.sf.emustudio.zilogZ80.impl.suite.FlagsCheckImpl;
 import net.sf.emustudio.zilogZ80.impl.suite.IntegerTestBuilder;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.function.BiFunction;
@@ -52,7 +51,7 @@ public class IOTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsDeviceAndSecondIsPort()
             .secondIsRegister(REG_C)
-            .verifyFlags(new FlagsBuilderImpl<>().sign().zero().parity().halfCarryIsReset().subtractionIsReset(),
+            .verifyFlags(new FlagsCheckImpl<>().sign().zero().parity().halfCarryIsReset().subtractionIsReset(),
                 operation)
             .keepCurrentInjectorsAfterRun()
             .clearOtherVerifiersAfterRun();
@@ -75,7 +74,7 @@ public class IOTest extends InstructionsTest {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
             .firstIsDeviceAndSecondIsPort()
             .secondIsRegister(REG_C)
-            .verifyFlags(new FlagsBuilderImpl<>().sign().zero().parity().halfCarryIsReset().subtractionIsReset(),
+            .verifyFlags(new FlagsCheckImpl<>().sign().zero().parity().halfCarryIsReset().subtractionIsReset(),
                 operation)
             .keepCurrentInjectorsAfterRun()
             .clearOtherVerifiersAfterRun();
@@ -90,7 +89,7 @@ public class IOTest extends InstructionsTest {
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
             (((context.first >>> 8) & 0xFF) + ((context.first & 0xFF + 1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsBuilderImpl.isParity(
+            FlagsCheckImpl.isParity(
                 ((((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) + 1) & 0xFF)) & 7) ^ result.byteValue()
             );
 
@@ -103,7 +102,7 @@ public class IOTest extends InstructionsTest {
             .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>().sign().zero()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
                 .expectFlagOnlyWhen(FLAG_N,
                     (context, result) -> (((context.first >>> 8) & 0x80) == 0x80)
                 )
@@ -122,7 +121,7 @@ public class IOTest extends InstructionsTest {
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
             (((context.first >>> 8) & 0xFF) + ((context.first & 0xFF + 1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsBuilderImpl.isParity(
+            FlagsCheckImpl.isParity(
                 ((((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) + 1) & 0xFF)) & 7) ^ result.byteValue()
             );
 
@@ -135,7 +134,7 @@ public class IOTest extends InstructionsTest {
             .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>().sign().zero()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
                 .expectFlagOnlyWhen(FLAG_N,
                     (context, result) -> (((context.first >>> 8) & 0x80) == 0x80)
                 )
@@ -160,7 +159,7 @@ public class IOTest extends InstructionsTest {
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
             (((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) - 1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsBuilderImpl.isParity(
+            FlagsCheckImpl.isParity(
                 ((((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) - 1) & 0xFF)) & 7) ^ result.byteValue()
             );
 
@@ -173,7 +172,7 @@ public class IOTest extends InstructionsTest {
             .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>().sign().zero()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
                 .expectFlagOnlyWhen(FLAG_N,
                     (context, result) -> (((context.first >>> 8) & 0x80) == 0x80)
                 )
@@ -192,7 +191,7 @@ public class IOTest extends InstructionsTest {
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
             (((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) - 1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsBuilderImpl.isParity(
+            FlagsCheckImpl.isParity(
                 ((((context.first >>> 8) & 0xFF) + (((context.first & 0xFF) - 1) & 0xFF)) & 7) ^ result.byteValue()
             );
 
@@ -205,7 +204,7 @@ public class IOTest extends InstructionsTest {
             .verifyByte(context -> context.first, context -> (context.first >>> 8) & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>().sign().zero()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
                 .expectFlagOnlyWhen(FLAG_N,
                     (context, result) -> (((context.first >>> 8) & 0x80) == 0x80)
                 )
@@ -274,7 +273,7 @@ public class IOTest extends InstructionsTest {
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
             ((context.second & 0xFF) + ((context.first+1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsBuilderImpl.isParity(
+            FlagsCheckImpl.isParity(
                 (((context.second & 0xFF) + ((context.first+1) & 0xFF)) & 7) ^ result.byteValue()
             );
 
@@ -286,7 +285,7 @@ public class IOTest extends InstructionsTest {
             .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>().sign().zero()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
                 .expectFlagOnlyWhen(FLAG_N,
                     (context, result) -> ((context.second & 0x80) == 0x80)
                 )
@@ -305,7 +304,7 @@ public class IOTest extends InstructionsTest {
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
             ((context.second & 0xFF) + ((context.first + 1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsBuilderImpl.isParity(
+            FlagsCheckImpl.isParity(
                 (((context.second & 0xFF) + (context.first+1) & 0xFF) & 7) ^ result.byteValue()
             );
 
@@ -317,7 +316,7 @@ public class IOTest extends InstructionsTest {
             .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first + 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>().sign().zero()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
                 .expectFlagOnlyWhen(FLAG_N,
                     (context, result) -> ((context.second & 0x80) == 0x80)
                 )
@@ -342,7 +341,7 @@ public class IOTest extends InstructionsTest {
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
             ((context.second & 0xFF) + ((context.first-1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsBuilderImpl.isParity(
+            FlagsCheckImpl.isParity(
                 (((context.second & 0xFF) + ((context.first-1) & 0xFF)) & 7) ^ result.byteValue()
             );
 
@@ -354,7 +353,7 @@ public class IOTest extends InstructionsTest {
             .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>().sign().zero()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
                 .expectFlagOnlyWhen(FLAG_N,
                     (context, result) -> ((context.second & 0x80) == 0x80)
                 )
@@ -373,7 +372,7 @@ public class IOTest extends InstructionsTest {
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagHCtest = (context, result) ->
             ((context.second & 0xFF) + ((context.first-1) & 0xFF)) > 0xFF;
         BiFunction<RunnerContext<Integer>, Number, Boolean> flagPVtest = (context, result) ->
-            FlagsBuilderImpl.isParity(
+            FlagsCheckImpl.isParity(
                 (((context.second & 0xFF) + ((context.first-1) & 0xFF)) & 7) ^ result.byteValue()
             );
 
@@ -385,7 +384,7 @@ public class IOTest extends InstructionsTest {
             .verifyDeviceWhenFirst8LSBisPort(context -> context.second & 0xFF)
             .verifyPair(REG_PAIR_HL, context -> (context.first - 1) & 0xFFFF)
             .verifyRegister(REG_B, context -> (((context.first >>> 8) & 0xFF) - 1) & 0xFF)
-            .verifyFlagsOfLastOp(new FlagsBuilderImpl<Integer>().sign().zero()
+            .verifyFlagsOfLastOp(new FlagsCheckImpl<Integer>().sign().zero()
                 .expectFlagOnlyWhen(FLAG_N,
                     (context, result) -> ((context.second & 0x80) == 0x80)
                 )
