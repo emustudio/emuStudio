@@ -99,15 +99,13 @@ public class StudioFrame extends JFrame {
     private volatile RunState runState = RunState.STATE_STOPPED_BREAK;
 
     public StudioFrame(ContextPool contextPool, Computer computer, String fileName, SettingsManagerImpl settings,
-                       DebugTableImpl debugTable)
-            throws ContextNotFoundException, InvalidContextException {
+                       DebugTableImpl debugTable) throws ContextNotFoundException, InvalidContextException {
         this(contextPool, computer, settings, debugTable);
         txtSource.openFile(fileName);
     }
 
     public StudioFrame(ContextPool contextPool, final Computer computer, SettingsManagerImpl settings,
-                       DebugTableImpl debugTable)
-            throws ContextNotFoundException, InvalidContextException {
+                       DebugTableImpl debugTable) throws ContextNotFoundException, InvalidContextException {
         this.computer = Objects.requireNonNull(computer);
         this.settings = Objects.requireNonNull(settings);
         this.debugTable = Objects.requireNonNull(debugTable);
@@ -912,7 +910,7 @@ public class StudioFrame extends JFrame {
         CPU cpu = computer.getCPU();
         int pc = cpu.getInstructionPosition();
         if (pc > 0) {
-            cpu.setInstructionPosition(pc - 1);
+            cpu.setInstructionPosition(debugTableModel.guessPreviousInstructionPosition());
             paneDebug.revalidate();
             debugTable.refresh();
         }

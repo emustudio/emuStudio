@@ -162,4 +162,12 @@ public class DebugTableModel extends AbstractTableModel {
         }
     }
 
+    public int guessPreviousInstructionPosition() {
+        int location = ida.rowToLocation(cpu.getInstructionPosition(), InteractiveDisassembler.CURRENT_INSTRUCTION - 1);
+        if (location < 0) {
+            return Math.max(0, cpu.getInstructionPosition() - 1);
+        }
+        return location;
+    }
+
 }
