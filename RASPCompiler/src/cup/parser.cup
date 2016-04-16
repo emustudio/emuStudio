@@ -97,7 +97,7 @@ Program ::= Program:p Row:r                                         {: if(r != n
 Row ::= Label:l Statement:s Comment SEPARATOR_EOL                   {: RESULT = new Row(l,s); :}
       | Label:l SEPARATOR_EOL Statement:s Comment SEPARATOR_EOL     {: RESULT = new Row(l,s); :}
       | Statement:s Comment SEPARATOR_EOL                           {: RESULT = new Row(null,s); :}
-      | SEPARATOR_EOL                                               {: RESULT = null; :}
+      | Comment SEPARATOR_EOL                                       {: RESULT = null; :}
         ;
 
 Label ::= TLABEL:l                                                  {: RESULT = new Label(l); :}
