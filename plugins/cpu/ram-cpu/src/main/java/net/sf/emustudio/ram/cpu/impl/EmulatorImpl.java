@@ -176,11 +176,6 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    public void showSettings() {
-        // no settings
-    }
-
-    @Override
     public RunState call() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
@@ -666,11 +661,6 @@ public class EmulatorImpl extends AbstractCPU {
                 return RunState.STATE_STOPPED_BAD_INSTR;
         }
         return RunState.STATE_STOPPED_BREAK;
-    }
-
-    @Override
-    public boolean isShowSettingsSupported() {
-        return false;
     }
 
     @Override

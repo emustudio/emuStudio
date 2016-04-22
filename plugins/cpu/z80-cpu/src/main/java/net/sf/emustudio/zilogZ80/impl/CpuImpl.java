@@ -238,16 +238,6 @@ public class CpuImpl extends AbstractCPU {
     }
     
     @Override
-    public boolean isShowSettingsSupported() {
-        return false;
-    }
-
-    @Override
-    public void showSettings() {
-
-    }
-    
-    @Override
     protected void destroyInternal() {
         context.clearDevices();
         frequencyChangedListeners.clear();

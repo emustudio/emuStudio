@@ -132,11 +132,6 @@ public class EmulatorImpl extends AbstractCPU {
         return new StatusPanel(memory, this);
     }
 
-    @Override
-    public void showSettings() {
-        // We don't use any GUI for the settings
-    }
-
     public int getP() {
         return P;
     }
@@ -374,11 +369,6 @@ public class EmulatorImpl extends AbstractCPU {
                 return RunState.STATE_STOPPED_BAD_INSTR;
         }
         return RunState.STATE_STOPPED_BREAK;
-    }
-
-    @Override
-    public boolean isShowSettingsSupported() {
-        return false;
     }
 
     @Override

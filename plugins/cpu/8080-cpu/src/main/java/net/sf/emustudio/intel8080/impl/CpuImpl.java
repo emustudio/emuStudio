@@ -237,16 +237,6 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public void showSettings() {
-
-    }
-
-    @Override
-    public boolean isShowSettingsSupported() {
-        return false;
-    }
-
-    @Override
     public Disassembler getDisassembler() {
         return disassembler;
     }

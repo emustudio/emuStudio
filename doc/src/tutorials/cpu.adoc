@@ -15,45 +15,207 @@ Before reading on, please read the "Introduction for writing virtual computers" 
 needed for setting up the development environment and for basic understanding how the emuStudio/plug-ins lifecycle
 work.
 
-When writing a fresh new emulator, including compiler and everything, I usually start with compiler, because I am lazy
-and I want to get programs loaded into memory immediately after clicking "compiler" button. However, it is not
-necessarily the best approach. Anyway, CPU probably shouldn't be the first plug-in you implement. The reason is that
-it is very useful / convenient for testing to have some environment prepared already - such as memory, or compiler.
-
 A CPU is just another plug-in, which means that it is enough to implement some API and that's it. The CPU
 API can be found in `emulib.plugins.cpu` project package.
 
-CPU is supposed to be the core of the emulator. There exist many techniques for CPU emulation out there, however,
-in Java, usage of some (like dynamic translation) is very limited / impossible / not worth doing. In my experience
-what is possible is doing a threaded code at most. However, in this tutorial we'll be focusing on basic interpretation
-technique, which is the simplest one - and very OK in terms of performance for the computer we are going to emulate.
+CPU is supposed to be the core of the emulator in the similar way as the real CPU is core to the computer.
+The term "emulation technique" is usually used when we talk about CPU emulation. This tutorial will focus on
+the interpretation technique, because it is the most basic one and simple one. Also, the advanced techniques, like
+dynamic translation (which translates target code snippets into native host code in the runtime) is probably not
+feasible to do in Java.
 
-In my experience, programming a CPU emulator is hard / easy depending on how complex the original CPU is and depending
-on how accurate we want it to be. If we emulate some abstract machine, or we do not insist on timing accuracy, it might
-be quite easy, and theoretically we will implement this very quickly.
-
-The problem will arise when we dig deeper into accuracy, like timing. For example, communication with I/O devices,
-e.g. display or audio might require passing special signals at specific time intervals. Or there might exist programs,
-like software timers in e.g. Z80, which depend on instruction timing. In that case, we must implement some time-accuracy
-algorithm and take real care about emulator performance. Therefore emulators are implemented usually in a very flat way,
-they usually do not utilize high-level and convenient data structures, or they do not "print" something on console just
-for fun. Everything must be usually well-thought and wise, writing a good emulator is an art.
-
-There exist plenty of theory and practice behind, and therefore the emulator complexity might arise. But -
-and this is a really big But - we are in a Java world. Java is itself "emulated" language (running in a virtual machine),
-so we are doing emulation inside an emulation. This is not good for the performance, therefore emuStudio is and always
-will be a toy project only for students, for nothing serious. Emulators are usually written in more low-level language
-like C or C++, because the languages utilize native performance and allow more advanced emulation techniques, which
-perform very well when they are implemented wisely.
-
-In the "emuStudio practice", only interpretation or threaded code is feasible / possible / worth considering as an
-emulation technique. The first complexity which we will "touch" is parsing of binary instructions. Depending on how
-complex the instructions are in the CPU (e.g. varying number of bytes, prefixes, etc.), the parsing itself might be
-quite complex problem. There are not much tools for helping with this problem out there, so one student wrote a tool,
-which is called `edigen` (emulator / disassembler generator). This tool might be useful and it is used throughout all
-CPU emulators in official emuStudio source code.
+NOTE: More information about emulation techniques can be found for example at
+      http://www.xsim.com/papers/Bario.2001.emubook.pdf[this link].
 
 In this tutorial, a simple CPU will be implemented for the world's very first stored-program computer,
 https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine[SSEM], nicknamed
 "Baby". It was a predecessor of Manchester Mark 1 which led to Ferranti Mark 1, the world's first commercially available
 general-purpose computer.
+
+== Boring project files
+
+Since emuStudio uses Maven for project organization and dependency management, this plug-in will be developed also
+in this manner. So lets' start with basic
+https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html[Maven project structure], you can use
+`mvn archetype:generate` command to be faster.
+
+The content of `pom.xml` is as follows:
+
+[source,xml]
+.`pom.xml`
+----
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>net.sf.emustudio</groupId>
+    <artifactId>emustudio-parent</artifactId>
+    <version>0.39-SNAPSHOT</version>
+    <relativePath>../../..</relativePath>
+  </parent>
+
+  <artifactId>ssem-cpu</artifactId>
+  <packaging>jar</packaging>
+
+  <name>SSEM CPU emulator</name>
+  <description>Java-based SSEM CPU emulator</description>
+
+  <build>
+    <finalName>ssem-cpu</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>false</addClasspath>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>net.sf.emustudio</groupId>
+      <artifactId>cpu-testsuite</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-nop</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.sf.emustudio</groupId>
+      <artifactId>emuLib</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymock</artifactId>
+    </dependency>
+  </dependencies>
+</project>
+----
+
+We will maybe extend the content with some plug-ins later.
+
+
+== The main class
+
+So, right to the code. We will start implementing the main class of the CPU. The purpose of the main class is to provide
+information about the plug-in and enable let to control the plug-in running states by emuStudio main module.
+
+The first snippet looks as follows:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java`
+----
+@PluginType(
+    type = PLUGIN_TYPE.CPU,
+    title = "SSEM CPU",
+    copyright = "\u00A9 Copyright 2016, Your Name",
+    description = "Emulator of SSEM CPU"
+)
+public class CpuImpl extends AbstractCPU {
+
+    public CpuImpl(Long pluginID, ContextPool contextPool) {
+        super(pluginID);
+    }
+
+    @Override
+    protected void destroyInternal() {
+
+    }
+
+    @Override
+    protected RunState stepInternal() throws Exception {
+        return null;
+    }
+
+    @Override
+    public JPanel getStatusPanel() {
+        return null;
+    }
+
+    @Override
+    public int getInstructionPosition() {
+        return 0;
+    }
+
+    @Override
+    public boolean setInstructionPosition(int i) {
+        return false;
+    }
+
+    @Override
+    public Disassembler getDisassembler() {
+        return null;
+    }
+
+    @Override
+    public void initialize(SettingsManager settingsManager) throws PluginInitializationException {
+
+    }
+
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public RunState call() throws Exception {
+        return null;
+    }
+}
+----
+
+As you can see, there is a lot of methods which needs attention. And some more (like breakpoint support) are
+already implemented in `AbstractCPU`. Don't worry, we'll get through all of them.
+But first, we need to talk about responsibilities and behavioral contracts of a CPU - emuStudio plug-in.
+
+== CPU in emuStudio: What we have here
+
+Since emuStudio is not only emulator, it is also - and mainly - "development" IDE for people which want to program
+emulated machines. Therefore, emuStudio provides nice debug window and other useful functionality. This functionality
+can work only when all plug-ins allow interactive communication with emuStudio main module.
+
+=== `getDisassembler()`
+
+For example, when we were talking about debug window, CPU plug-in needs to provide a good disassembler to emuStudio,
+which it then uses it and shows nice disassembled instructions to the user. The advantage of this is that emuStudio
+can remain universal - various CPUs implement their own disassemblers.
+
+We will get to it later. Fortunately, there exist tools which will help us to generate one.
+
+=== `getStatusPanel()`
+
+Each CPU in emuStudio must implement a `javax.swing.JPanel`, which should contain graphical components showing
+everything useful to the user (e.g. registers, flags, etc.). The panel is then placed in the emulator
+tab in the emuStudio main module.
+
+
+== Behavioral contracts
+
+TODO
+
