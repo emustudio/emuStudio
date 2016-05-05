@@ -33,7 +33,11 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
      */
     @Override
     public MemoryItem read(int position) {
-        return memory.get(position);
+        if (position >= 0 && position < getSize()) {
+            return memory.get(position);
+        } else {
+            return null;
+        }
     }
 
     /**
