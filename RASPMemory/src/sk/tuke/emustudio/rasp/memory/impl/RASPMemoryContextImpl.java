@@ -51,7 +51,7 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
         if (position >= memory.size()) {
             //padd with nulls to prevent IndexOutOfBoundsException
             for (int i = memory.size(); i < position; i++) {
-                memory.add(i, null);
+                memory.add(i, new NumberMemoryItem(0));
             }
             memory.add(position, item);
             notifyMemoryChanged(memory.size());

@@ -92,6 +92,11 @@ public class MemoryWindow extends javax.swing.JFrame {
                 return types [columnIndex];
             }
         });
+        memoryTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                memoryTableMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(memoryTable);
         if (memoryTable.getColumnModel().getColumnCount() > 0) {
             memoryTable.getColumnModel().getColumn(0).setResizable(false);
@@ -167,6 +172,21 @@ public class MemoryWindow extends javax.swing.JFrame {
     private void onClearClick(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onClearClick
         memory.clear();
     }//GEN-LAST:event_onClearClick
+
+    /**
+     * Called when user double-clicks at a row; editor is displayed at the
+     * "Numeric value" column. It is to make UI more user friendly as user does
+     * not have to click at an editable cell, he/she just double-clicks the row.
+     *
+     * @param evt the click event
+     */
+    private void memoryTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_memoryTableMouseClicked
+        int row = memoryTable.rowAtPoint(evt.getPoint());
+        //check if double-click
+        if (evt.getClickCount() == 2) {
+            memoryTable.editCellAt(row, 1);
+        }
+    }//GEN-LAST:event_memoryTableMouseClicked
 
     /**
      * @param args the command line arguments

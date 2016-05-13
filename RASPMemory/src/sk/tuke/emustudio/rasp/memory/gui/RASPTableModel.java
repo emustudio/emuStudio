@@ -29,6 +29,12 @@ public class RASPTableModel extends AbstractTableModel {
         this.memory = memory;
     }
 
+    @Override
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+        //only numeric value (at column 1) is editable
+        return columnIndex == 1;
+    }
+
     /**
      * Get number of items in memory.
      *
@@ -40,13 +46,13 @@ public class RASPTableModel extends AbstractTableModel {
     }
 
     /**
-     * Get number of columns in memory table; it is 2: |"address" |"cell value"|
+     * Get number of columns in memory table; it is 3: |"address" | "numeric value" |"cell value"|
      *
-     * @return 2
+     * @return 3
      */
     @Override
     public int getColumnCount() {
-        return 2;
+        return 3;
     }
 
     /**
@@ -68,7 +74,14 @@ public class RASPTableModel extends AbstractTableModel {
                 return String.valueOf(rowIndex);
             }
         } //column with cell value
-        else {
+        else if (columnIndex == 1) {
+            MemoryItem item = memory.read(rowIndex);
+            if (item instanceof NumberMemoryItem) {
+                return ((NumberMemoryItem) item).toString();
+            } else if (item instanceof RASPInstruction) {
+                return String.valueOf(((RASPInstruction) item).getCode());
+            }
+        } else {
             //get item at given position
             MemoryItem item = (MemoryItem) memory.read(rowIndex);
             //item is a number
@@ -116,7 +129,28 @@ public class RASPTableModel extends AbstractTableModel {
 
     @Override
     public String getColumnName(int column) {
-        return (column == 0) ? ("Address") : ("Cell Value");
+        switch (column) {
+            case 0:
+                return "Address";
+            case 1:
+                return "Numeric Value";
+            case 2:
+                return "Mnemonic";
+            default:
+                return null;
+
+        }
     }
 
+    @Override
+    public void setValueAt(Object value, int rowIndex, int columnIndex) {
+        try {
+            int numberValue = Integer.parseInt((String) value);
+            memory.write(rowIndex, new NumberMemoryItem(numberValue));
+        } catch (NumberFormatException e) {
+            //do nothing, invalid value was inserted
+        }
+
+    }  
+    
 }
