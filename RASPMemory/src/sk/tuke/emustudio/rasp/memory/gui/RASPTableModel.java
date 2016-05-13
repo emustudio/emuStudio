@@ -69,7 +69,7 @@ public class RASPTableModel extends AbstractTableModel {
         if (columnIndex == 0) {
             String label = memory.getLabel(rowIndex);
             if (label != null) {
-                return String.valueOf(rowIndex) + " " + label;
+                return String.valueOf(rowIndex) + " " + label.toLowerCase();
             } else {
                 return String.valueOf(rowIndex);
             }
@@ -102,7 +102,7 @@ public class RASPTableModel extends AbstractTableModel {
                             if (label != null) {
                                 int index = label.lastIndexOf(':');
                                 label = label.substring(0, index);
-                                return label;
+                                return label.toLowerCase();
                             } else {
                                 //if no label at the address, simply return the number
                                 return ((NumberMemoryItem) item).toString();
