@@ -85,8 +85,8 @@
             destdir="build/generated-sources/jflex"
         />
         
-        <cup srcfile="/home/miso/3.ROCNIK/Zimny/MVP-Bakalarka/RASP/RASPCompiler/src/cup/parser.cup"
-             destdir="/home/miso/3.ROCNIK/Zimny/MVP-Bakalarka/RASP/RASPCompiler/build/generated-sources/cup"
+        <cup srcfile="${basedir}/src/cup/parser.cup"
+             destdir="${basedir}/build/generated-sources/cup"
              interface="true"
              parser="ParserImpl"
              symbols="Symbols"
