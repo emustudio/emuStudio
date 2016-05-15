@@ -13,7 +13,6 @@ import java.util.Map;
 import sk.tuke.emustudio.rasp.memory.MemoryItem;
 import sk.tuke.emustudio.rasp.memory.NumberMemoryItem;
 import sk.tuke.emustudio.rasp.memory.RASPInstruction;
-import sk.tuke.emustudio.rasp.memory.RASPInstructionImpl;
 import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 
 public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> implements RASPMemoryContext {

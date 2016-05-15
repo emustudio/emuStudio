@@ -5,7 +5,7 @@
  */
 package sk.tuke.emustudio.rasp.compiler.tree;
 
-import sk.tuke.emustudio.rasp.memory.RASPInstructionImpl;
+import sk.tuke.emustudio.rasp.memory.impl.RASPInstructionImpl;
 
 /**
  *
