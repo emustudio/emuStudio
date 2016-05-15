@@ -35,7 +35,7 @@ public class MemoryWindow extends javax.swing.JFrame {
 
         initComponents();
         tableModel = new RASPTableModel(memory);
-        memoryTable.setModel(tableModel);
+        //memoryTable.setModel(tableModel); - not needed, already set at initComponents()
         updateTable();
         memory.addMemoryListener(new Memory.MemoryListener() {
 
@@ -76,22 +76,7 @@ public class MemoryWindow extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("RASP Memory");
 
-        memoryTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "Address", "Cell value"
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-        });
+        memoryTable.setModel(new RASPTableModel(memory));
         memoryTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 memoryTableMouseClicked(evt);
