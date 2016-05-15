@@ -9,9 +9,9 @@ import emulib.plugins.cpu.DisassembledInstruction;
 import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.cpu.InvalidInstructionException;
 import java.util.Objects;
-import sk.tuke.emustudio.rasp.memory.MemoryItem;
-import sk.tuke.emustudio.rasp.memory.NumberMemoryItem;
-import sk.tuke.emustudio.rasp.memory.RASPInstruction;
+import sk.tuke.emustudio.rasp.memory.memoryitems.MemoryItem;
+import sk.tuke.emustudio.rasp.memory.memoryitems.NumberMemoryItem;
+import sk.tuke.emustudio.rasp.memory.memoryitems.RASPInstruction;
 import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 
 /**

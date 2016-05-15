@@ -1,5 +1,6 @@
 package sk.tuke.emustudio.rasp.memory;
 
+import sk.tuke.emustudio.rasp.memory.memoryitems.MemoryItem;
 import emulib.annotations.ContextType;
 import emulib.plugins.memory.MemoryContext;
 

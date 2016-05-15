@@ -6,8 +6,8 @@ import java_cup.runtime.ComplexSymbolFactory;
 import java_cup.runtime.Symbol;
 
 import sk.tuke.emustudio.rasp.compiler.tree.*;
-import sk.tuke.emustudio.rasp.memory.RASPInstruction;
-import sk.tuke.emustudio.rasp.memory.impl.RASPInstructionImpl;
+import sk.tuke.emustudio.rasp.memory.memoryitems.RASPInstruction;
+import sk.tuke.emustudio.rasp.memory.memoryitems.RASPInstructionImpl;
 
 import java.util.List;
 import java.util.Objects;

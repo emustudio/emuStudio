@@ -6,9 +6,9 @@
 package sk.tuke.emustudio.rasp.memory.gui;
 
 import javax.swing.table.AbstractTableModel;
-import sk.tuke.emustudio.rasp.memory.MemoryItem;
-import sk.tuke.emustudio.rasp.memory.NumberMemoryItem;
-import sk.tuke.emustudio.rasp.memory.RASPInstruction;
+import sk.tuke.emustudio.rasp.memory.memoryitems.MemoryItem;
+import sk.tuke.emustudio.rasp.memory.memoryitems.NumberMemoryItem;
+import sk.tuke.emustudio.rasp.memory.memoryitems.RASPInstruction;
 import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 
 /**

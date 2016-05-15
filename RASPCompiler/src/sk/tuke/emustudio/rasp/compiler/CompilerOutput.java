@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import sk.tuke.emustudio.rasp.compiler.tree.Label;
-import sk.tuke.emustudio.rasp.memory.MemoryItem;
+import sk.tuke.emustudio.rasp.memory.memoryitems.MemoryItem;
 import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 
 /**

@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import sk.tuke.emustudio.rasp.compiler.CompilerOutput;
-import sk.tuke.emustudio.rasp.memory.NumberMemoryItem;
-import sk.tuke.emustudio.rasp.memory.impl.RASPInstructionImpl;
+import sk.tuke.emustudio.rasp.memory.memoryitems.NumberMemoryItem;
+import sk.tuke.emustudio.rasp.memory.memoryitems.RASPInstructionImpl;
 
 /**
  *

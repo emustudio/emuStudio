@@ -1,5 +1,6 @@
 package sk.tuke.emustudio.rasp.memory.impl;
 
+import sk.tuke.emustudio.rasp.memory.memoryitems.RASPInstructionImpl;
 import emulib.plugins.memory.AbstractMemoryContext;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -10,9 +11,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import sk.tuke.emustudio.rasp.memory.MemoryItem;
-import sk.tuke.emustudio.rasp.memory.NumberMemoryItem;
-import sk.tuke.emustudio.rasp.memory.RASPInstruction;
+import sk.tuke.emustudio.rasp.memory.memoryitems.MemoryItem;
+import sk.tuke.emustudio.rasp.memory.memoryitems.NumberMemoryItem;
+import sk.tuke.emustudio.rasp.memory.memoryitems.RASPInstruction;
 import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 
 public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> implements RASPMemoryContext {

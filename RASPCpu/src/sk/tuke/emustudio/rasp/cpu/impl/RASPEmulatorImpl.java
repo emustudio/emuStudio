@@ -28,9 +28,9 @@ import javax.swing.JPanel;
 import sk.tuke.emustudio.rasp.cpu.gui.LabelDebugColumn;
 import sk.tuke.emustudio.rasp.cpu.gui.RASPCpuStatusPanel;
 import sk.tuke.emustudio.rasp.cpu.gui.RASPDisassembler;
-import sk.tuke.emustudio.rasp.memory.MemoryItem;
-import sk.tuke.emustudio.rasp.memory.NumberMemoryItem;
-import sk.tuke.emustudio.rasp.memory.RASPInstruction;
+import sk.tuke.emustudio.rasp.memory.memoryitems.MemoryItem;
+import sk.tuke.emustudio.rasp.memory.memoryitems.NumberMemoryItem;
+import sk.tuke.emustudio.rasp.memory.memoryitems.RASPInstruction;
 import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 
 @PluginType(

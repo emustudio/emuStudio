@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package sk.tuke.emustudio.rasp.memory.impl;
+package sk.tuke.emustudio.rasp.memory.memoryitems;
 
-import sk.tuke.emustudio.rasp.memory.RASPInstruction;
+import sk.tuke.emustudio.rasp.memory.memoryitems.RASPInstruction;
 
 public class RASPInstructionImpl implements RASPInstruction {
 

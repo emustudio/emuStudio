@@ -1,4 +1,4 @@
-package sk.tuke.emustudio.rasp.memory;
+package sk.tuke.emustudio.rasp.memory.memoryitems;
 
 import java.io.Serializable;
 
