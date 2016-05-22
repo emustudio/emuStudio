@@ -11,7 +11,7 @@ import sk.tuke.emustudio.rasp.compiler.CompilerOutput;
  *
  * @author miso
  */
-public class SourceCode {
+public class SourceCode implements AbstractTreeNode{
 
     private final int programStart;
     private final Program program;
@@ -21,10 +21,10 @@ public class SourceCode {
         this.program = program;
     }
 
+    @Override
     public void pass() {
         CompilerOutput.getInstance().setProgramStart(programStart);
         program.pass();
-
     }
 
 }

@@ -5,11 +5,13 @@
  */
 package sk.tuke.emustudio.rasp.compiler.tree;
 
+import sk.tuke.emustudio.rasp.compiler.CompilerOutput;
+
 /**
  *
  * @author miso
  */
-public class Label {
+public class Label implements AbstractTreeNode{
 
     private final String value;
     private int address;
@@ -28,5 +30,10 @@ public class Label {
 
     public void setAddress(int address) {
         this.address = address;
+    }
+    
+    @Override
+    public void pass(){
+        CompilerOutput.getInstance().addLabel(this);
     }
 }

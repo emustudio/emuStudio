@@ -5,16 +5,14 @@
  */
 package sk.tuke.emustudio.rasp.compiler.tree;
 
-import sk.tuke.emustudio.rasp.compiler.CompilerOutput;
-
 /**
  *
  * @author miso
  */
-public class Row {
+public class Row implements AbstractTreeNode {
 
-    private Label label;
-    private Statement statement;
+    private final Label label;
+    private final Statement statement;
 
     public Row(Label label, Statement statement) {
         this.statement = statement;
@@ -29,5 +27,12 @@ public class Row {
         return statement;
     }
 
+    @Override
+    public void pass() {
+        /*pass() only for statement, label was already passed in translateLabels()
+         method in Program node
+         */
+        statement.pass();
+    }
 
 }
