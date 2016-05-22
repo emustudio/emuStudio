@@ -59,7 +59,7 @@ public class RASPDisassembler implements Disassembler {
         NumberMemoryItem operand = (NumberMemoryItem) item;
 
         //prepare the mnemonic form
-        if(jumpInstruction){
+        if(jumpInstruction){ //if we work with jump instr., mnemo should contain the label
             String label = memory.addressToLabelString(operand.getValue());
             String mnemo = instruction.getCodeStr() + " " + label;
             return new DisassembledInstruction(memoryPosition, mnemo, "");
