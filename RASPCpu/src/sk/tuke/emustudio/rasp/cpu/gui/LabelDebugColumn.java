@@ -5,9 +5,9 @@ import java.util.Objects;
 import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
 
 /**
- * Debug colomn with labels.
+ * Debug column with labels, borrowed from RAM memory pluin (Copyright (C)
+ * 2009-2012 Peter Jakubčo).
  *
- * @author miso
  */
 public class LabelDebugColumn extends AbstractDebugColumn {
 
@@ -15,6 +15,7 @@ public class LabelDebugColumn extends AbstractDebugColumn {
 
     /**
      * Constructor.
+     *
      * @param memory memory to read labels from
      */
     public LabelDebugColumn(RASPMemoryContext memory) {
@@ -29,6 +30,7 @@ public class LabelDebugColumn extends AbstractDebugColumn {
 
     /**
      * Get label at given address from the memory.
+     *
      * @param position the position in the memory
      * @return label at given address from the memory
      */

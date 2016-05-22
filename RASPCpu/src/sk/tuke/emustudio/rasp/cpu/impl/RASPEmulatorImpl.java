@@ -51,6 +51,7 @@ public class RASPEmulatorImpl extends AbstractCPU {
     private volatile SettingsManager settings;
     private RASPMemoryContext memory;
     private RASPDisassembler disassembler;
+    private RASPCpuStatusPanel gui;
 
     private boolean debugTableInitialized = false;
     private int IP; //instruction pointer
@@ -426,7 +427,8 @@ public class RASPEmulatorImpl extends AbstractCPU {
             }
             debugTableInitialized = true;
         }
-        return new RASPCpuStatusPanel(this, memory);
+        gui = new RASPCpuStatusPanel(this, memory);
+        return gui;
     }
 
     /**
@@ -440,7 +442,7 @@ public class RASPEmulatorImpl extends AbstractCPU {
     }
 
     /**
-     * Get current value of the accumulator (memory cell at address [0]). 
+     * Get current value of the accumulator (memory cell at address [0]).
      *
      * @return current value of the accumulator (memory cell at address [0])
      */
