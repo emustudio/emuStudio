@@ -43,6 +43,14 @@ public class RASPDisassembler implements Disassembler {
         }
         RASPInstruction instruction = (RASPInstruction) item;
 
+        int opCode = instruction.getCode();
+        //true if instruction is a jump instruction, false otherwise
+        boolean jumpInstruction = false;
+
+        if (opCode == RASPInstruction.JMP || opCode == RASPInstruction.JZ || opCode == RASPInstruction.JGTZ) {
+            jumpInstruction=true;
+        }
+
         //retrieve its operand
         item = memory.read(memoryPosition + 1);
         if (!(item instanceof NumberMemoryItem)) {
@@ -51,6 +59,11 @@ public class RASPDisassembler implements Disassembler {
         NumberMemoryItem operand = (NumberMemoryItem) item;
 
         //prepare the mnemonic form
+        if(jumpInstruction){
+            String label = memory.addressToLabelString(operand.getValue());
+            String mnemo = instruction.getCodeStr() + " " + label;
+            return new DisassembledInstruction(memoryPosition, mnemo, "");
+        }
         String mnemo = instruction.getCodeStr() + " " + operand.toString();
         return new DisassembledInstruction(memoryPosition, mnemo, "");
     }

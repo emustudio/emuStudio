@@ -30,4 +30,15 @@ public interface RASPMemoryContext extends MemoryContext<MemoryItem> {
 
     void setProgramStart(Integer programStart);
 
+    /**
+     * Returns string representation of the label at given address, but if there
+     * is no label for given address, just returns string representation of the
+     * address.
+     *
+     * @param address the address
+     * @return string representation of the label at given address, if there is
+     * any
+     */
+    public String addressToLabelString(int address);
+
 }

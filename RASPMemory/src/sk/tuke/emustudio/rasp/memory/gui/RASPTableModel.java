@@ -87,26 +87,7 @@ public class RASPTableModel extends AbstractTableModel {
         return "";
     }
 
-    /**
-     * Returns string representation of the label at given address, if there is
-     * any.
-     *
-     * @param address the address
-     * @return string representation of the label at given address, if there is
-     * any
-     */
-    private String addressToLabelString(int address) {
-        String label = memory.getLabel(address);
-        if (label != null) {
-            int index = label.lastIndexOf(':');
-            label = label.substring(0, index);
-            return label.toLowerCase();
-        } else {
-            //if no label at the address, simply return the number
-            return String.valueOf(address);
-        }
-    }
-
+    
     /**
      * Returns string contained in the mnemonic column (column No. 2)
      *
@@ -126,7 +107,7 @@ public class RASPTableModel extends AbstractTableModel {
                     int code = instruction.getCode();
                     //the previos instruction is a jump instruction, so this number is an address
                     if (code == RASPInstruction.JMP || code == RASPInstruction.JZ || code == RASPInstruction.JGTZ) {
-                        return addressToLabelString(((NumberMemoryItem) item).getValue());
+                        return memory.addressToLabelString(((NumberMemoryItem) item).getValue());
                     } else {
                         return ((NumberMemoryItem) item).toString(); //previos item is NOT a jump instruction 
                     }

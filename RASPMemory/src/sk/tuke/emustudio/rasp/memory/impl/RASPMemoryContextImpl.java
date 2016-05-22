@@ -134,6 +134,28 @@ public class RASPMemoryContextImpl extends AbstractMemoryContext<MemoryItem> imp
     }
 
     /**
+     * Returns string representation of the label at given address, but if there
+     * is no label for given address, just returns string representation of the
+     * address.
+     *
+     * @param address the address
+     * @return string representation of the label at given address, if there is
+     * any
+     */
+    @Override
+    public String addressToLabelString(int address) {
+        String label = getLabel(address);
+        if (label != null) {
+            int index = label.lastIndexOf(':');
+            label = label.substring(0, index);
+            return label.toLowerCase();
+        } else {
+            //if no label at the address, simply return the number
+            return String.valueOf(address);
+        }
+    }
+
+    /**
      * Get switched map of labels; i.e. keys are the string reprezentations of
      * labels, and values are the addresses.
      *
