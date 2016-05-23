@@ -22,7 +22,7 @@ public class SourceCode implements AbstractTreeNode{
     }
 
     @Override
-    public void pass() {
+    public void pass() throws Exception {
         CompilerOutput.getInstance().setProgramStart(programStart);
         program.pass();
     }

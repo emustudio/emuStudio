@@ -44,7 +44,7 @@ public class Statement implements AbstractTreeNode{
     }
 
     @Override
-    public void pass() {
+    public void pass() throws Exception{
         //add instruction
         CompilerOutput.getInstance().addMemoryItem(instruction);
         if (operand != null) {

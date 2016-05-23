@@ -48,11 +48,11 @@ public class CompilerOutput {
         reversedLabels.put(label.getValue(), label.getAddress());
     }
 
-    public int getAddressForLabel(String labelValue) {
+    public int getAddressForLabel(String labelValue) throws Exception {
         if (reversedLabels.containsKey(labelValue+":")) {
             return reversedLabels.get(labelValue+":");
         } else {
-            throw new RuntimeException("NO MAPPING for " + labelValue);
+            throw new Exception("There is no label " + "\"" + labelValue+ "\"");
         }
     }
 

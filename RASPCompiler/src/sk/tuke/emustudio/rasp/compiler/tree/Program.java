@@ -22,7 +22,7 @@ public class Program implements AbstractTreeNode{
     }
 
     @Override
-    public void pass() {
+    public void pass() throws Exception {
         translateLabels();
 
         for (Row row : rows) {

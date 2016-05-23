@@ -28,7 +28,7 @@ public class Row implements AbstractTreeNode {
     }
 
     @Override
-    public void pass() {
+    public void pass() throws Exception {
         /*pass() only for statement, label was already passed in translateLabels()
          method in Program node
          */

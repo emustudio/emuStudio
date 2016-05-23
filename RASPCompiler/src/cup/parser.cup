@@ -45,13 +45,15 @@ parser code{:
 		messageText+=": " + token.getErrorString()+" (\'" + tokenText + "\')";
 
 		List<Integer> expectedTokenIds = expected_token_ids();
-		StringBuilder sb = new StringBuilder();
-		for(int ID: expectedTokenIds){
-			String nameOfNonTerminal = symbl_name_from_id(ID);
-			sb.append(nameOfNonTerminal + " ");			
-		}
+                if(!expectedTokenIds.isEmpty()){
+                    StringBuilder sb = new StringBuilder();
+                    for(int ID: expectedTokenIds){
+                            String nameOfNonTerminal = symbl_name_from_id(ID);
+                            sb.append(nameOfNonTerminal + " ");			
+                    }
 
-		messageText+="\nExpected tokens: " + sb.toString();
+                    messageText+="\nExpected tokens: " + sb.toString();
+                }
 
 		Message message = new Message(
 			Message.MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(), null, 0

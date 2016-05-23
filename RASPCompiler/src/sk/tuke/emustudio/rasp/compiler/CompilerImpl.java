@@ -67,8 +67,13 @@ public class CompilerImpl extends AbstractCompiler {
             notifyInfo("Compile was successfull.");
         } catch (Exception ex) {
             errorCode = 1;
-            System.err.println("Compilation error " + ex.getMessage());
-            notifyError("Compilation error");
+            if (ex.getMessage() == null) {
+                System.err.println("Compilation error.");
+                notifyError("Compilation error.");
+            } else {
+                System.err.println("Compilation error: " + ex.getMessage());
+                notifyError("Compilation error: " + ex.getMessage());
+            }
             return false;
         } finally {
             notifyCompileFinish(errorCode);
@@ -105,7 +110,7 @@ public class CompilerImpl extends AbstractCompiler {
                 reader.close();
             }
         });
-        
+
     }
 
     @Override
