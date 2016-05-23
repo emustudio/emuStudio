@@ -61,9 +61,9 @@ import java.io.Reader;
 comment = ";"[^\r\n]*
 eol = \r|\n|\r\n
 space = [\ \t\f]+ /*\f is page break*/
-number = \-?[0-9]+
+number = "-"?[0-9]+
 identifier = [a-zA-Z][a-zA-Z0-9]*
-label = {identifier}[\:]
+label = {identifier}[":"]
 operator_constant = "="
 
 %%
