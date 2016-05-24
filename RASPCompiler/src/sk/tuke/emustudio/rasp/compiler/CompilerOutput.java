@@ -5,7 +5,6 @@
  */
 package sk.tuke.emustudio.rasp.compiler;
 
-import emulib.plugins.memory.MemoryContext;
 import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
