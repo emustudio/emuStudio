@@ -11,8 +11,12 @@ import emulib.plugins.compiler.AbstractCompiler;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
 import emulib.runtime.ContextPool;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.util.Objects;
 import java_cup.runtime.ComplexSymbolFactory;
@@ -40,13 +44,36 @@ public class CompilerImpl extends AbstractCompiler {
         this.contextPool = Objects.requireNonNull(contextPool);
     }
 
+    private boolean fileEndsWithNewLine(String fileName) throws IOException {
+        try (RandomAccessFile file = new RandomAccessFile(new File(fileName), "r")) {
+            long lastCharPosition = file.length() - 1;
+            file.seek(lastCharPosition);
+            byte b = file.readByte();
+            if (b == 0xA || b == 0xD) {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    private void appendNewLine(String fileName) throws IOException {
+        if (!fileEndsWithNewLine(fileName)) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true))) {
+                writer.newLine();
+            }
+            notifyInfo("New line character automatically appended, OK.");
+        }
+
+    }
+
     @Override
     public boolean compile(String inputFileName, String outputFileName) {
         notifyCompileStart();
 
         int errorCode = 0;
         try (Reader reader = new FileReader(inputFileName)) {
-
+            //ensure that file ends with a new line
+            appendNewLine(inputFileName);
             RASPMemoryContext memory = (RASPMemoryContext) contextPool.getMemoryContext(pluginID, RASPMemoryContext.class);
             LexerImpl lexer = new LexerImpl(reader);
             ParserImpl parser = new ParserImpl(lexer, new ComplexSymbolFactory(), this);
@@ -58,7 +85,6 @@ public class CompilerImpl extends AbstractCompiler {
                 throw new Exception("One ore more errors in the source code.");
             }
 
-            
             sourceCode.pass();
             CompilerOutput.getInstance().saveToFile(outputFileName);
             CompilerOutput.getInstance().loadIntoMemory(memory);
