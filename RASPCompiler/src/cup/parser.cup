@@ -88,7 +88,7 @@ non terminal RASPInstructionImpl JumpInstruction;
 
 start with SourceCode;
 
-SourceCode ::= ORG NUMBER:programStart Program:p                    {: if(programStart==0) programStart=1; RESULT = new SourceCode(programStart, p); :}
+SourceCode ::= ORG NUMBER:programStart Program:p                    {: if(programStart==0) programStart=20; RESULT = new SourceCode(programStart, p); :}
         | Program:p                                                 {: RESULT = new SourceCode(20, p); :} /*default program start is 20, if not specified*/
         ;
 
@@ -97,7 +97,7 @@ Program ::= Program:p Row:r                                         {: if(r != n
             ;
 
 Row ::= Label:l Statement:s Comment SEPARATOR_EOL                   {: RESULT = new Row(l,s); :}
-      | Label:l SEPARATOR_EOL Statement:s Comment SEPARATOR_EOL     {: RESULT = new Row(l,s); :}
+      | Label:l Comment SEPARATOR_EOL Statement:s Comment SEPARATOR_EOL     {: RESULT = new Row(l,s); :}
       | Statement:s Comment SEPARATOR_EOL                           {: RESULT = new Row(null,s); :}
       | Comment SEPARATOR_EOL                                       {: RESULT = null; :}
         ;
