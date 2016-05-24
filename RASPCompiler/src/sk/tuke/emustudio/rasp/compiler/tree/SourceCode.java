@@ -11,7 +11,7 @@ import sk.tuke.emustudio.rasp.compiler.CompilerOutput;
  *
  * @author miso
  */
-public class SourceCode implements AbstractTreeNode{
+public class SourceCode extends AbstractTreeNode{
 
     private final int programStart;
     private final Program program;

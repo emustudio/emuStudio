@@ -11,7 +11,7 @@ import sk.tuke.emustudio.rasp.compiler.CompilerOutput;
  *
  * @author miso
  */
-public class Label implements AbstractTreeNode{
+public class Label extends AbstractTreeNode{
 
     private final String value;
     private int address;

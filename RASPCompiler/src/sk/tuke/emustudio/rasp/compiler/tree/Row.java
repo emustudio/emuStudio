@@ -9,7 +9,7 @@ package sk.tuke.emustudio.rasp.compiler.tree;
  *
  * @author miso
  */
-public class Row implements AbstractTreeNode {
+public class Row extends AbstractTreeNode {
 
     private final Label label;
     private final Statement statement;

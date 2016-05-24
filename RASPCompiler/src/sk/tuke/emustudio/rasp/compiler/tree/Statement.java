@@ -13,7 +13,7 @@ import sk.tuke.emustudio.rasp.memory.memoryitems.RASPInstructionImpl;
  *
  * @author miso
  */
-public class Statement implements AbstractTreeNode{
+public class Statement extends AbstractTreeNode{
 
     private final RASPInstructionImpl instruction;
     private final Integer operand;

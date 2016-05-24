@@ -13,7 +13,7 @@ import sk.tuke.emustudio.rasp.compiler.CompilerOutput;
  *
  * @author miso
  */
-public class Program implements AbstractTreeNode{
+public class Program extends AbstractTreeNode{
 
     private final List<Row> rows = new ArrayList<>();
 

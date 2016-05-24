@@ -9,6 +9,6 @@ package sk.tuke.emustudio.rasp.compiler.tree;
  *
  * @author miso
  */
-public interface AbstractTreeNode {
-    public void pass() throws Exception;
+public abstract class AbstractTreeNode {
+    public abstract void pass() throws Exception;
 }
