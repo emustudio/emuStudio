@@ -1,6 +1,6 @@
 ORG 10
 
-;ilustracia pouzitia nepriameho adresovania pri odcitani dvoch cisel
+;Program ilustruje pouzitie nepriameho adresovania pri odcitani dvoch cisel
 ;
 ; c = a - b
 
@@ -31,7 +31,7 @@ HALT
 
 
 
-;PROGRAM V JAZYKU RAM ========================================================
+;EKVIVALENTNY PROGRAM V JAZYKU RAM ========================================================
 
 ;LOAD =10  
 ;STORE 1 	

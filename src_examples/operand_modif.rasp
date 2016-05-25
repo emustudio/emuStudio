@@ -1,12 +1,18 @@
 ORG 5
+
+;Program ilustruje modifikáciu operandu inštrukcie.
+
+;priprava operandov
 LOAD =32
 STORE 1
 LOAD =30
 STORE 2
 LOAD =16
 STORE 3
+;modifikacia operandu instrukcie SUB (riadok 16) na 3
 LOAD =3
 STORE 24
+;vykonanie SUB uz s registrom 3 
 LOAD 1
 SUB 2
 HALT

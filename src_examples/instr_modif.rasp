@@ -1,6 +1,6 @@
 org 5
 
-;ILUSTRACIA MODIFIKACIE OPERACNEHO KODU INSTRUKICE
+;Program ilustruje modifikacu operacneho kodu instrukcie.
 
 ;priprava operandov 32 a 30
 LOAD =32

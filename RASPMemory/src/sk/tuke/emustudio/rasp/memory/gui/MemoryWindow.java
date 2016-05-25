@@ -56,6 +56,7 @@ public class MemoryWindow extends javax.swing.JFrame {
      */
     private void updateTable() {
         tableModel.fireTableDataChanged();
+        repaint();
     }
 
     /**
