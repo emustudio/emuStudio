@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2016 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,11 +24,11 @@ import emulib.plugins.memory.AbstractMemoryContext;
 import java.util.Arrays;
 
 public class MemoryContextImpl extends AbstractMemoryContext<Integer> {
-    public static final int NUMBER_OF_CELLS = 32;
+    static final int NUMBER_OF_CELLS = 32;
 
     private final int[] memory = new int[NUMBER_OF_CELLS];
 
-    public MemoryContextImpl() {
+    MemoryContextImpl() {
         super();
     }
 

@@ -1,8 +1,7 @@
 /*
- * BrainCPUContextImpl.java
- * 
- * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,11 +24,11 @@ import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
 
 import java.util.Objects;
 
-public class BrainCPUContextImpl implements BrainCPUContext {
+class BrainCPUContextImpl implements BrainCPUContext {
 
     private DeviceContext<Short> device;
 
-    public BrainCPUContextImpl() {
+    BrainCPUContextImpl() {
         device = null;
     }
 

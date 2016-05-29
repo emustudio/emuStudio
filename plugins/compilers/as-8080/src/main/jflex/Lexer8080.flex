@@ -1,10 +1,7 @@
 /*
- * LexerImpl.java
- *
- * Lexical analyser for 8080 compiler
- *
- * Copyright (C) 2008-2015  Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

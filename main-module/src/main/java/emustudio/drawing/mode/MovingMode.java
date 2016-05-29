@@ -1,19 +1,21 @@
 /*
  * KISS, YAGNI, DRY
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 package emustudio.drawing.mode;
 
@@ -47,9 +49,9 @@ import java.awt.event.MouseEvent;
  *
  * If a user presses left mouse button over empty area, the mode is switched to "selection" mode.
  */
-public class MovingMode extends AbstractMode {
+class MovingMode extends AbstractMode {
 
-    public MovingMode(DrawingPanel panel, Model model) {
+    MovingMode(DrawingPanel panel, Model model) {
         super(panel, model);
     }
 
@@ -80,13 +82,7 @@ public class MovingMode extends AbstractMode {
     @Override
     public SelectMode mousePressed(MouseEvent e) {
         Point p = e.getPoint();
-        if (e.isPopupTrigger()) {
-            model.tmpElem1 = schema.getCrossingElement(p);
-            if (model.tmpElem1 != null) {
-                doPop(e, model.tmpElem1);
-            }
-            model.tmpElem1 = null;
-        }
+        showPopupIfPressed(e);
         if (e.getButton() == MouseEvent.BUTTON1) {
             // detect if user wants to resize an element
             model.tmpElem1 = schema.getElementByBorderPoint(p);
@@ -120,8 +116,7 @@ public class MovingMode extends AbstractMode {
         return SelectMode.MOVING;
     }
 
-    @Override
-    public SelectMode mouseReleased(MouseEvent e) {
+    private void showPopupIfPressed(MouseEvent e) {
         Point p = e.getPoint();
         if (e.isPopupTrigger()) {
             model.tmpElem1 = schema.getCrossingElement(p);
@@ -130,6 +125,12 @@ public class MovingMode extends AbstractMode {
             }
             model.tmpElem1 = null;
         }
+    }
+
+    @Override
+    public SelectMode mouseReleased(MouseEvent e) {
+        Point p = e.getPoint();
+        showPopupIfPressed(e);
         // if an element was clicked, selecting it, if user holds CTRL or SHIFT
         if (e.getButton() == MouseEvent.BUTTON1) {
             int ctrl_shift = e.getModifiersEx() & (MouseEvent.SHIFT_DOWN_MASK

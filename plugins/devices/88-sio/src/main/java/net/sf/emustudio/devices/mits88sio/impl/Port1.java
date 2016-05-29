@@ -1,10 +1,7 @@
 /*
- * StatusCPUPort.java
- *
- * Created on 18.6.2008, 14:27:23
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +16,6 @@
  *  You should have received a copy of the GNU General Public License along
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
  */
 package net.sf.emustudio.devices.mits88sio.impl;
 
@@ -32,10 +28,10 @@ import java.util.Objects;
  * This is the status port of 88-SIO card.
  */
 @ContextType(id = "Status port")
-public class Port1 implements DeviceContext<Short> {
+class Port1 implements DeviceContext<Short> {
     private final Transmitter transmitter;
 
-    public Port1(Transmitter transmitter) {
+    Port1(Transmitter transmitter) {
         this.transmitter = Objects.requireNonNull(transmitter);
     }
 

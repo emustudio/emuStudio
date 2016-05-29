@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,12 +19,12 @@
  */
 package net.sf.emustudio.devices.mits88disk.gui;
 
-public class ImageFilter extends javax.swing.filechooser.FileFilter {
+class ImageFilter extends javax.swing.filechooser.FileFilter {
 
     private String[] exts;
     private String desc;
 
-    public void addExtension(String ext) {
+    void addExtension(String ext) {
         int l = 0;
         String[] tmp;
         if (exts != null) {
@@ -35,13 +36,6 @@ public class ImageFilter extends javax.swing.filechooser.FileFilter {
         }
         tmp[l] = ext;
         exts = tmp;
-    }
-
-    public String getFirstExtension() {
-        if (exts != null) {
-            return exts[0];
-        }
-        return null;
     }
 
     @Override

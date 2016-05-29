@@ -1,8 +1,7 @@
 /*
- * Label.java
- *
- * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,7 +30,7 @@ public class Label implements Serializable {
     	this.value = text.toUpperCase();
     }
     
-    public int pass1(int addr) {
+    int pass1(int addr) {
     	this.address = addr;
     	this.evaluated = true;
     	return addr;

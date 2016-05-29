@@ -1,5 +1,5 @@
 = Introduction for writing virtual computers
-(c) Copyright 2007-2015, Peter Jakubčo
+(c) Copyright 2006-2016, Peter Jakubčo
 Version 0.39
 :toc:
 :numbered:

@@ -1,32 +1,35 @@
 /*
- * Copyright (C) 2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 package net.sf.emustudio.devices.mits88disk.gui;
 
 import emulib.emustudio.SettingsManager;
 import emulib.runtime.StaticDialogs;
+import net.sf.emustudio.devices.mits88disk.impl.DiskImpl;
+import net.sf.emustudio.devices.mits88disk.impl.Drive;
+
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
-import javax.swing.JFileChooser;
-import net.sf.emustudio.devices.mits88disk.impl.DiskImpl;
-import net.sf.emustudio.devices.mits88disk.impl.Drive;
+
 import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.IMAGE;
 import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT1_CPU;
 import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT2_CPU;
@@ -38,13 +41,12 @@ public class SettingsDialog extends javax.swing.JDialog {
     private final SettingsManager settings;
     private final List<Drive> drives;
     private final long pluginId;
-    private final DiskFrame gui;
 
     public SettingsDialog(DiskFrame parent, long pluginId, SettingsManager settings, List<Drive> drives) {
         super(parent);
         
         this.pluginId = pluginId;
-        this.gui = Objects.requireNonNull(parent);
+
         this.settings = Objects.requireNonNull(settings);
         this.drives = Objects.requireNonNull(drives);
 

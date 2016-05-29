@@ -1,8 +1,7 @@
 /*
- * Keyboard.java
- *
- * Copyright (C) 2009-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class Keyboard extends KeyAdapter implements ContainerListener, InputProvider {
+class Keyboard extends KeyAdapter implements ContainerListener, InputProvider {
     private static final int[] CONTROL_KEYCODES = new int[256];
     private static final int[] CONTROL_KEYCODES_ALWAYS_ACTIVE = new int[256];
     private static final int[] ESC_CURSOR_CODES = new int[256];
@@ -196,30 +195,30 @@ public class Keyboard extends KeyAdapter implements ContainerListener, InputProv
     private final Cursor cursor;
     private int expect = 0;
 
-    public Keyboard(Cursor cursor) {
+    Keyboard(Cursor cursor) {
         this.cursor = Objects.requireNonNull(cursor);
     }
 
-    public void addListenerRecursively(Component c) {
+    void addListenerRecursively(Component c) {
         c.addKeyListener(this);
         if (c instanceof Container) {
             Container cont = (Container) c;
             cont.addContainerListener(this);
             Component[] children = cont.getComponents();
-            for (int i = 0; i < children.length; i++) {
-                addListenerRecursively(children[i]);
+            for (Component aChildren : children) {
+                addListenerRecursively(aChildren);
             }
         }
     }
 
-    public void removeListenerRecursively(Component c) {
+    private void removeListenerRecursively(Component c) {
         c.removeKeyListener(this);
         if (c instanceof Container) {
             Container cont = (Container) c;
             cont.removeContainerListener(this);
             Component[] children = cont.getComponents();
-            for (int i = 0; i < children.length; i++) {
-                removeListenerRecursively(children[i]);
+            for (Component aChildren : children) {
+                removeListenerRecursively(aChildren);
             }
         }
     }

@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2007-2015 Peter Jakubčo
- *
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ public class Statement {
         return size;
     }
 
-    public CompileEnv getCompileEnv() {
+    CompileEnv getCompileEnv() {
         return env;
     }
 
@@ -61,7 +61,7 @@ public class Statement {
 
     // creates symbol table
     // return next current address
-    public void pass1() throws Exception {
+    void pass1() throws Exception {
         // only labels and macros have right to be all added to symbol table at once
         for (InstructionNode in : list) {
             if (in.label != null) {
@@ -130,7 +130,7 @@ public class Statement {
      * @param filename name of the file that "include" pseudocode should contain
      * @return true if subprogram contains "include filename" pseudocode
      */
-    public boolean getIncludeLoops(String filename) {
+    boolean getIncludeLoops(String filename) {
         int i;
         for (i = 0; i < includefiles.size(); i++) {
             String s = includefiles.get(i);
@@ -149,7 +149,7 @@ public class Statement {
         return false;
     }
 
-    public void addIncludeFiles(List<String> inclfiles) {
+    void addIncludeFiles(List<String> inclfiles) {
         includefiles.addAll(inclfiles);
     }
 }

@@ -1,6 +1,7 @@
 /*
  * KISS, YAGNI, DRY
- * (c) Copyright 2015, Peter Jakubčo
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,10 +40,10 @@ import java.util.Properties;
  * It is a graphical object representing a plug-in.
  */
 public abstract class Element {
-    public final static int MIN_WIDTH = 80;
-    public final static int MIN_HEIGHT = 50;
+    private final static int MIN_WIDTH = 80;
+    private final static int MIN_HEIGHT = 50;
 
-    public final static int MOUSE_TOLERANCE = 5;
+    final static int MOUSE_TOLERANCE = 5;
 
     private final Properties myProperties;
     private final String pluginName;
@@ -153,7 +154,7 @@ public abstract class Element {
      * @param properties properties of virtual computer
      * @param elementName key setting name of this element within the properies
      */
-    public void saveProperties(Properties properties, String elementName) {
+    void saveProperties(Properties properties, String elementName) {
         updateProperties();
         properties.put(elementName, pluginName);
 
@@ -164,7 +165,7 @@ public abstract class Element {
         }
     }
 
-    public void draw(Graphics2D g) {
+    void draw(Graphics2D g) {
         if (!wasMeasured) {
             measure(g);
         }
@@ -189,7 +190,7 @@ public abstract class Element {
         return move(p.x, p.y);
     }
 
-    public boolean move(int x, int y) {
+    boolean move(int x, int y) {
         if (!wasMeasured) {
             return false;
         }
@@ -234,7 +235,7 @@ public abstract class Element {
      *
      * @param g Graphics object
      */
-    public void measure(Graphics g) {
+    void measure(Graphics g) {
         Font f = g.getFont();
         boldFont = f.deriveFont(Font.BOLD);
         italicFont = f.deriveFont(Font.PLAIN);
@@ -244,13 +245,13 @@ public abstract class Element {
         Rectangle2D r = fm.getStringBounds(getPluginType(), g);
         int tW1 = (int) r.getWidth();
         int tH1 = (int) r.getHeight();
-        int tA1 = (int) fm.getAscent();
+        int tA1 = fm.getAscent();
 
         FontMetrics fm1 = g.getFontMetrics(italicFont);
         Rectangle2D r1 = fm1.getStringBounds(pluginName, g);
         int tW2 = (int) r1.getWidth();
         int tH2 = (int) r1.getHeight();
-        int tA2 = (int) fm1.getAscent();
+        int tA2 = fm1.getAscent();
 
         // text width, text height, text ascent
         int tW = (tW1 > tW2) ? tW1 : tW2;
@@ -280,12 +281,6 @@ public abstract class Element {
         wasMeasured = true;
     }
 
-    public void setDefaultSize() {
-        width = 0;
-        height = 0;
-        wasMeasured = false;
-    }
-
     public int getWidth() {
         return (width == 0) ? MIN_WIDTH : width;
     }
@@ -298,7 +293,7 @@ public abstract class Element {
         return new Point(x, y);
     }
 
-    public Rectangle getRectangle() {
+    Rectangle getRectangle() {
         return new Rectangle(x, y, getWidth(), getHeight());
     }
 
@@ -329,7 +324,7 @@ public abstract class Element {
      * @param selectionEnd the selection end point
      * @return true if the element is crossing
      */
-    public boolean crossesArea(Point selectionStart, Point selectionEnd) {
+    boolean crossesArea(Point selectionStart, Point selectionEnd) {
         if (!wasMeasured) {
             return false;
         }

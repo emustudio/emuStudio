@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,7 +42,7 @@ public abstract class Expression {
 
     public abstract int eval(Namespace env, int curr_addr) throws Exception;
 
-    public static String encodeValue(int val, int neededSize) {
+    static String encodeValue(int val, int neededSize) {
 
         int size = getSize(val);
         if (size < neededSize) {

@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,6 +42,7 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
 import static net.sf.emustudio.zilogZ80.impl.suite.Utils.get8MSBplus8LSB;
 import static net.sf.emustudio.zilogZ80.impl.suite.Utils.predicate8MSBplus8LSB;
 
+@SuppressWarnings("unchecked")
 public class LogicTest extends InstructionsTest {
 
     private ByteTestBuilder getLogicTestBuilder(Function<RunnerContext<Byte>, Integer> operator) {

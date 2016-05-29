@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2006-2016, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -17,20 +19,6 @@
  */
 package emustudio.gui.editor;
 
-/**
- * Copyright 2008 Ayman Al-Sairafi ayman.alsairafi@gmail.com
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License
- *       at http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.CompoundEdit;
@@ -44,13 +32,13 @@ import javax.swing.undo.UndoableEdit;
  * then the two edits are compound.
  *
  */
-public class CompoundUndoManager extends UndoManager {
+class CompoundUndoManager extends UndoManager {
     /**
-     * Delay between consequtive edits in ms where edits are added together.
+     * Delay between consecutive edits in ms where edits are added together.
      * If the delay is greater than this, then separate undo operations are
      * done, otherwise they are combined.
      */
-    public static final int IDLE_DELAY_MS = 390;
+    static final int IDLE_DELAY_MS = 390;
 
     private long startMillis = 0;
     private CompoundEdit compoundEdit = null;
@@ -74,7 +62,7 @@ public class CompoundUndoManager extends UndoManager {
             compoundEdit = null;
         }
         startMillis = now;
-        return result;
+        return true;
     }
 
     @Override
@@ -105,7 +93,7 @@ public class CompoundUndoManager extends UndoManager {
         super.undo();
     }
 
-    public synchronized void commitCompound() {
+    synchronized void commitCompound() {
         if (compoundEdit != null) {
             compoundEdit.end();
             compoundEdit = null;

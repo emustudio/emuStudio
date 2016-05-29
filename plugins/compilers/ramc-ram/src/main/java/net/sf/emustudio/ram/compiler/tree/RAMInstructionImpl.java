@@ -1,8 +1,7 @@
 /*
- * RAMInstructionImpl.java
- * 
- * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,13 +19,13 @@
  */
 package net.sf.emustudio.ram.compiler.tree;
 
-import java.io.Serializable;
 import net.sf.emustudio.ram.compiler.impl.CompilerEnvironment;
 import net.sf.emustudio.ram.memory.RAMInstruction;
 
+import java.io.Serializable;
+
 /**
  * Implementation of interface which is defined in RAM Memory.
- * @author Peter Jakubčo
  */
 public class RAMInstructionImpl implements RAMInstruction, Serializable {
     private int instr;      // instruction code

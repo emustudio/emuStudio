@@ -1,8 +1,7 @@
 /*
- * AbstractTapeContext.java
- *
- * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,7 +28,7 @@ public interface AbstractTapeContext extends DeviceContext<String> {
      * Clear content of the tape leaving only one empty string
      * symbol on the position 0.
      */
-    public void clear();
+    void clear();
 
     /**
      * Set this tape to left-bounded or unbounded.
@@ -37,14 +36,14 @@ public interface AbstractTapeContext extends DeviceContext<String> {
      * @param bounded true if the tape should be left-bounded,
      *                false if unbounded.
      */
-    public void setBounded(boolean bounded);
+    void setBounded(boolean bounded);
 
     /**
      * Method returns if the tape is left-bounded or unbounded.
      *
      * @return true - left-bounded, false - unbounded.
      */
-    public boolean isBounded();
+    boolean isBounded();
 
     /**
      * Method moves the tape to the left. If the tape is left-bounded
@@ -55,13 +54,13 @@ public interface AbstractTapeContext extends DeviceContext<String> {
      * @return true if tape was moved, false if not (if it is left-bounded
      * and we are at position 0).
      */
-    public boolean moveLeft();
+    boolean moveLeft();
 
     /**
      * Move tape to the right. If the tape is too short, it is expanded to
      * the right (added new empty symbol).
      */
-    public void moveRight();
+    void moveRight();
 
     /**
      * Set/unset this tape editable by the user. If the tape is editable,
@@ -70,20 +69,20 @@ public interface AbstractTapeContext extends DeviceContext<String> {
      *
      * @param editable true if yes, false if not.
      */
-    public void setEditable(boolean editable);
+    void setEditable(boolean editable);
 
-    public String getSymbolAt(int pos);
+    String getSymbolAt(int pos);
 
-    public void setSymbolAt(int pos, String symbol);
+    void setSymbolAt(int pos, String symbol);
 
-    public void setPosVisible(boolean visible);
+    void setPosVisible(boolean visible);
 
-    public void setClearAtReset(boolean clear);
+    void setClearAtReset(boolean clear);
 
-    public void setTitle(String title);
+    void setTitle(String title);
 
-    public boolean getDisplayRowNumbers();
+    boolean getDisplayRowNumbers();
 
-    public void setDisplayRowNumbers(boolean displayRowNumbers);
+    void setDisplayRowNumbers(boolean displayRowNumbers);
 
 }

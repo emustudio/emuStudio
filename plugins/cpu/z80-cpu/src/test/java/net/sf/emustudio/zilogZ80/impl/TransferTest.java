@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,6 +38,7 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_H;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
 import static net.sf.emustudio.zilogZ80.impl.suite.Utils.predicate8MSBplus8LSB;
 
+@SuppressWarnings("unchecked")
 public class TransferTest extends InstructionsTest {
 
     private void runLD_r_r_test(int register, int... opcodes) {

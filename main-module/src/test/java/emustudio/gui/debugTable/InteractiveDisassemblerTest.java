@@ -1,5 +1,5 @@
 /*
- * (c) Copyright 2006-2015, Peter Jakubčo
+ * (c) Copyright 2006-2016, Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify

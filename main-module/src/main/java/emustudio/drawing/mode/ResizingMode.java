@@ -1,21 +1,22 @@
 /*
  * KISS, YAGNI, DRY
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.drawing.mode;
 
 import emustudio.drawing.DrawingPanel;
@@ -25,7 +26,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 
-public class ResizingMode extends AbstractMode {
+class ResizingMode extends AbstractMode {
     private final static int RESIZE_TOP = 0;
     private final static int RESIZE_LEFT = 1;
     private final static int RESIZE_BOTTOM = 2;
@@ -33,7 +34,7 @@ public class ResizingMode extends AbstractMode {
 
     private int resizeMode;
 
-    public ResizingMode(DrawingPanel panel, Model model) {
+    ResizingMode(DrawingPanel panel, Model model) {
         super(panel, model);
     }
 
@@ -57,7 +58,7 @@ public class ResizingMode extends AbstractMode {
         return SelectMode.MOVING;
     }
 
-    public void computeResizeMode(Point point) {
+    private void computeResizeMode(Point point) {
         if (model.tmpElem1.crossesBottomBorder(point)) {
             resizeMode = RESIZE_BOTTOM;
         } else if (model.tmpElem1.crossesLeftBorder(point)) {

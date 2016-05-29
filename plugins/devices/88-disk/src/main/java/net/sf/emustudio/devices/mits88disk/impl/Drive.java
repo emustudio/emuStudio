@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,6 +19,10 @@
  */
 package net.sf.emustudio.devices.mits88disk.impl;
 
+import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -27,9 +32,6 @@ import java.nio.file.OpenOption;
 import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
 import java.util.Set;
-import net.jcip.annotations.Immutable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Performs disk operations on single drive.

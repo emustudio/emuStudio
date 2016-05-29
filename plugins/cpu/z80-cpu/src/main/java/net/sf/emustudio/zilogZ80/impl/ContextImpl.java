@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,11 +20,12 @@
 package net.sf.emustudio.zilogZ80.impl;
 
 import emulib.plugins.device.DeviceContext;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import net.sf.emustudio.intel8080.ExtendedContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public final class ContextImpl implements ExtendedContext {
     private final static Logger LOGGER = LoggerFactory.getLogger(net.sf.emustudio.intel8080.impl.ContextImpl.class);

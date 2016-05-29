@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2007-2015 Peter Jakubčo
- *
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ public class MacroPseudoNode extends PseudoBlock {
         return mnemo;
     }
 
-    public void setCallParams(List<ExprNode> params) {
+    void setCallParams(List<ExprNode> params) {
         this.call_params = params;
     }
 
@@ -61,7 +61,7 @@ public class MacroPseudoNode extends PseudoBlock {
         return 0;
     }
 
-    public int getStatSize() {
+    int getStatSize() {
         return stat.getSize();
     }
 

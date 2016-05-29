@@ -18,21 +18,14 @@
 package emustudio.drawing;
 
 import emustudio.drawing.mode.ModeSelector;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.Rectangle;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.JDialog;
-import javax.swing.JPanel;
 
 /**
  * This class handles the drawing canvas - panel by which the user can modelling abstract schemas of virtual computers.
@@ -46,7 +39,7 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
     private final static float DASH[] = {10.0f};
     private final static float DOT[] = {1.0f};
 
-    public final static Integer DEFAULT_GRID_GAP = 20;
+    final static Integer DEFAULT_GRID_GAP = 20;
 
     public final static BasicStroke DASHED_LINE = new BasicStroke(
             1.0f,
@@ -55,7 +48,7 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
             10.0f,
             DASH,
             0.0f);
-    public final static BasicStroke DOTTED_LINE = new BasicStroke(
+    private final static BasicStroke DOTTED_LINE = new BasicStroke(
             1.0f,
             BasicStroke.CAP_BUTT,
             BasicStroke.JOIN_MITER,
@@ -87,7 +80,7 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
 
     public interface ToolListener {
 
-        public void toolWasUsed();
+        void toolWasUsed();
     }
 
     public DrawingPanel(Schema schema, JDialog parent) {
@@ -107,10 +100,6 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
 
     public JDialog getParentDialog() {
         return parentDialog;
-    }
-
-    public void removeToolListener(ToolListener listener) {
-        toolListeners.remove(listener);
     }
 
     public void fireToolWasUsed() {

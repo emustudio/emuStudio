@@ -1,8 +1,7 @@
 /*
- * SettingsDialog.java
- * 
- * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,17 +20,12 @@
 package net.sf.emustudio.ram.abstracttape.gui;
 
 import emulib.emustudio.SettingsManager;
-import java.awt.Container;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.GroupLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JDialog;
-import javax.swing.LayoutStyle;
-import javax.swing.WindowConstants;
 
-@SuppressWarnings("serial")
 public class SettingsDialog extends JDialog {
 
     private SettingsManager settings;
@@ -45,25 +39,17 @@ public class SettingsDialog extends JDialog {
         this.setSize(250, this.getHeight());
         String s = settings.readSetting(hash, "alwaysOnTop");
         boolean b;
-        if (s == null || !s.toLowerCase().equals("true")) {
-            b = false;
-        } else {
-            b = true;
-        }
+        b = !(s == null || !s.toLowerCase().equals("true"));
         chkAlwaysOnTop.setSelected(b);
 
         s = settings.readSetting(hash, "showAtStartup");
-        if (s == null || !s.toLowerCase().equals("true")) {
-            b = false;
-        } else {
-            b = true;
-        }
+        b = !(s == null || !s.toLowerCase().equals("true"));
         chkShowAtStartup.setSelected(b);
 
         this.gui = gui;
     }
 
-    public final void initComponents() {
+    private final void initComponents() {
         chkAlwaysOnTop = new JCheckBox("Always on top");
         chkShowAtStartup = new JCheckBox("Show GUI at startup");
         JButton btnOK = new JButton("OK");

@@ -1,10 +1,7 @@
 /*
- * SettingsDialog.java
- *
- * Created on Štvrtok, 2008, september 25, 9:21
- *
- * Copyright (C) 2008-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -56,7 +53,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SettingsDialog extends JDialog {
+class SettingsDialog extends JDialog {
 
     private MemoryContextImpl memContext;
     private MemoryImpl memory;
@@ -67,9 +64,9 @@ public class SettingsDialog extends JDialog {
     private List<String> imageFullNames = new ArrayList<String>();
     private List<Integer> imageAddresses = new ArrayList<Integer>();
 
-    public SettingsDialog(JDialog parent, long pluginID,
-            MemoryImpl mem, MemoryContextImpl memContext, TableMemory tblMem,
-            SettingsManager settings) {
+    SettingsDialog(JDialog parent, long pluginID,
+                   MemoryImpl mem, MemoryContextImpl memContext, TableMemory tblMem,
+                   SettingsManager settings) {
         super(parent, true);
         this.memory = mem;
         this.memContext = memContext;

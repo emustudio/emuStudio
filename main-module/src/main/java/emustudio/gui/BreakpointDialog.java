@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2006-2016, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -31,19 +33,18 @@ import javax.swing.WindowConstants;
  * The breakpoint dialog - it asks user for the address where should be
  * set or unset the breakpoint.
  */
-@SuppressWarnings("serial")
-public class BreakpointDialog extends JDialog {
+class BreakpointDialog extends JDialog {
     private int adr = -1; // if adr == -1 then it means cancel
     private boolean set = false;
 
-    public BreakpointDialog(java.awt.Frame parent, boolean modal) {
+    BreakpointDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
         this.setLocationRelativeTo(parent);
         txtAddress.grabFocus();
     }
 
-    public int getAddress() {
+    int getAddress() {
         return adr;
     }
 
@@ -52,10 +53,10 @@ public class BreakpointDialog extends JDialog {
     }
 
     private void initComponents() {
-        lblSetUnset = new JLabel();
+        JLabel lblSetUnset = new JLabel();
         txtAddress = new JTextField();
-        btnSet = new ConstantSizeButton();
-        btnUnset = new ConstantSizeButton();
+        ConstantSizeButton btnSet = new ConstantSizeButton();
+        ConstantSizeButton btnUnset = new ConstantSizeButton();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Set/unset breakpoint");
@@ -68,23 +69,11 @@ public class BreakpointDialog extends JDialog {
 
         btnSet.setText("Set");
         btnSet.setFont(btnSet.getFont().deriveFont(btnSet.getFont().getStyle() & ~java.awt.Font.BOLD));
-        btnSet.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnSetActionPerformed(evt);
-            }
-        });
+        btnSet.addActionListener(this::btnSetActionPerformed);
 
         btnUnset.setText("Unset");
         btnUnset.setFont(btnUnset.getFont().deriveFont(btnUnset.getFont().getStyle() & ~java.awt.Font.BOLD));
-        btnUnset.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnUnsetActionPerformed(evt);
-            }
-        });
+        btnUnset.addActionListener(this::btnUnsetActionPerformed);
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -134,8 +123,5 @@ public class BreakpointDialog extends JDialog {
         dispose();
     }
 
-    private ConstantSizeButton btnSet;
-    private ConstantSizeButton btnUnset;
-    private JLabel lblSetUnset;
     private JTextField txtAddress;
 }

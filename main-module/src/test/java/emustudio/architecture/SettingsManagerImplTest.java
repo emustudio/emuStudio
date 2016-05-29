@@ -1,24 +1,25 @@
 /*
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2012-2014, Peter Jakubčo
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 package emustudio.architecture;
 
+import emulib.plugins.Plugin;
 import emulib.plugins.PluginInitializationException;
 import emustudio.architecture.ComputerFactory.PluginInfo;
 import emustudio.main.CommandLineFactory;
@@ -59,7 +60,7 @@ public class SettingsManagerImplTest {
 
     @Test
     public void testReadSetting() throws PluginInitializationException {
-        List<PluginInfo> pluginNames = Arrays.asList(stubPluginInfo("cpu", "8080-cpu", 0));
+        List<PluginInfo> pluginNames = Collections.singletonList(stubPluginInfo("cpu", "8080-cpu", 0));
 
         Configuration configuration = createNiceMock(Configuration.class);
         expect(configuration.get("cpu.test")).andReturn("true").once();
@@ -121,7 +122,7 @@ public class SettingsManagerImplTest {
 
     @Test
     public void testWriteSetting() throws PluginInitializationException, WriteConfigurationException {
-        List<PluginInfo> pluginNames = Arrays.asList(stubPluginInfo("cpu", "8080-cpu", 0));
+        List<PluginInfo> pluginNames = Collections.singletonList(stubPluginInfo("cpu", "8080-cpu", 0));
 
         Configuration configuration = createNiceMock(Configuration.class);
         configuration.set("cpu.test", "true");
@@ -138,7 +139,7 @@ public class SettingsManagerImplTest {
 
     @Test
     public void testRemoveSetting() throws PluginInitializationException {
-        List<PluginInfo> pluginNames = Arrays.asList(stubPluginInfo("cpu", "8080-cpu", 0));
+        List<PluginInfo> pluginNames = Collections.singletonList(stubPluginInfo("cpu", "8080-cpu", 0));
 
         Configuration configuration = createNiceMock(Configuration.class);
         configuration.remove("cpu.test");
@@ -173,6 +174,6 @@ public class SettingsManagerImplTest {
     }
 
     private PluginInfo stubPluginInfo(String pluginConfigName, String pluginName, long pluginId) {
-        return new PluginInfo(pluginConfigName, pluginName, pluginId, new File(""), Object.class);
+        return new PluginInfo<>(pluginConfigName, pluginName, pluginId, new File(""), Plugin.class);
     }
 }

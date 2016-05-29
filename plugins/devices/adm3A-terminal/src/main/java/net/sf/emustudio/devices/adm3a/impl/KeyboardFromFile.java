@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,17 +31,17 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
 
-public class KeyboardFromFile implements InputProvider {
+class KeyboardFromFile implements InputProvider {
     private final static Logger LOGGER = LoggerFactory.getLogger(KeyboardFromFile.class);
 
     private List<DeviceContext<Short>> inputObservers = new CopyOnWriteArrayList<DeviceContext<Short>>();
     private final File inputFile;
 
-    public KeyboardFromFile(File inputFile) {
+    KeyboardFromFile(File inputFile) {
         this.inputFile = inputFile;
     }
 
-    public void processInputFile(int delayInMilliseconds) {
+    void processInputFile(int delayInMilliseconds) {
         if (inputFile == null) {
             return;
         }

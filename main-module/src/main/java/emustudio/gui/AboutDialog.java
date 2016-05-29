@@ -80,7 +80,7 @@ public class AboutDialog extends javax.swing.JDialog {
         lblName.setText("emuStudio");
 
         lblCopyright.setFont(lblCopyright.getFont().deriveFont(lblCopyright.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblCopyright.setText("© Copyright 2006-2013 Peter Jakubčo");
+        lblCopyright.setText("© Copyright 2006-2016 Peter Jakubčo");
 
         lblVersion.setFont(lblVersion.getFont().deriveFont(lblVersion.getFont().getStyle() | java.awt.Font.BOLD));
         lblVersion.setText(getClass().getPackage().getImplementationVersion());

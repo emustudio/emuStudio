@@ -1,8 +1,7 @@
 /*
- * CompilerEnvironment.java
- * 
- * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,9 +19,10 @@
  */
 package net.sf.emustudio.ram.compiler.impl;
 
+import net.sf.emustudio.ram.compiler.tree.Label;
+
 import java.util.ArrayList;
 import java.util.List;
-import net.sf.emustudio.ram.compiler.tree.Label;
 
 public class CompilerEnvironment {
     private static List<Label> labels = new ArrayList<Label>();

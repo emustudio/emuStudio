@@ -1,20 +1,21 @@
 /*
- * Copyright (C) 2015 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 package net.sf.emustudio.zilogZ80.impl;
 
@@ -45,16 +46,16 @@ import static org.junit.Assert.assertTrue;
 public class InstructionsTest {
     private static final long PLUGIN_ID = 0L;
 
-    public static final int REG_PAIR_BC = 0;
-    public static final int REG_PAIR_DE = 1;
-    public static final int REG_PAIR_HL = 2;
-    public static final int REG_SP = 3;
+    static final int REG_PAIR_BC = 0;
+    static final int REG_PAIR_DE = 1;
+    static final int REG_PAIR_HL = 2;
+    static final int REG_SP = 3;
     public static final int REG_PSW = 3;
 
     private CpuImpl cpu;
-    protected CpuRunnerImpl cpuRunnerImpl;
-    protected CpuVerifierImpl cpuVerifierImpl;
-    protected final List<FakeDevice> devices = new ArrayList<>();
+    CpuRunnerImpl cpuRunnerImpl;
+    CpuVerifierImpl cpuVerifierImpl;
+    private final List<FakeDevice> devices = new ArrayList<>();
 
 
     @Before

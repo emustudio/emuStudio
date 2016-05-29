@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2006-2016, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -17,47 +19,36 @@
  */
 package emustudio.gui;
 
-import static emustudio.gui.utils.Components.addKeyListenerRecursively;
 import emustudio.gui.utils.ConstantSizeButton;
 import emustudio.gui.utils.FindText;
 import emustudio.main.Main;
+
+import javax.swing.*;
+import javax.swing.event.ListDataListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.PatternSyntaxException;
-import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
-import javax.swing.ComboBoxModel;
-import javax.swing.GroupLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTextPane;
-import javax.swing.LayoutStyle;
-import javax.swing.WindowConstants;
-import javax.swing.event.ListDataListener;
+
+import static emustudio.gui.utils.Components.addKeyListenerRecursively;
 
 /**
  * The find dialog. It searches for text within the source code editor.
  */
-public class FindDialog extends javax.swing.JDialog {
+class FindDialog extends javax.swing.JDialog {
     private static final List<String> list = new ArrayList<>();
     private static final List<String> rlist = new ArrayList<>();
     private JTextPane textPane;
     private final FindText finder;
     private final DialogKeyListener dialogKeyListener = new DialogKeyListener();
 
-    private class CMBModel implements ComboBoxModel {
+    private class CMBModel implements ComboBoxModel<String> {
 
         private int in = -1;
         private final List<String> clist;
 
-        public CMBModel(List<String> clist) {
+        CMBModel(List<String> clist) {
             this.clist = clist;
         }
 
@@ -81,7 +72,7 @@ public class FindDialog extends javax.swing.JDialog {
         }
 
         @Override
-        public Object getElementAt(int index) {
+        public String getElementAt(int index) {
             return clist.get(index);
         }
 
@@ -113,7 +104,7 @@ public class FindDialog extends javax.swing.JDialog {
         
     }
     
-    public static FindDialog create(JFrame parent, FindText finder, boolean modal, JTextPane pane) {
+    static FindDialog create(JFrame parent, FindText finder, boolean modal, JTextPane pane) {
         FindDialog dialog = new FindDialog(parent, finder, modal, pane);
         dialog.initialize();
         return dialog;
@@ -145,14 +136,14 @@ public class FindDialog extends javax.swing.JDialog {
         String str = finder.getFindExpr();
         String rstr = finder.replacement;
         for (int i = 0; i < list.size(); i++) {
-            if (((String) list.get(i)).equals(str)) {
+            if (list.get(i).equals(str)) {
                 cmbSearch.setSelectedIndex(i);
                 cmbSearch.getEditor().setItem(str);
                 break;
             }
         }
         for (int i = 0; i < rlist.size(); i++) {
-            if (((String) rlist.get(i)).equals(rstr)) {
+            if (rlist.get(i).equals(rstr)) {
                 cmbReplace.setSelectedIndex(i);
                 cmbReplace.getEditor().setItem(rstr);
                 break;
@@ -184,27 +175,26 @@ public class FindDialog extends javax.swing.JDialog {
         finder.setParams(checks);
 
         String str = (String) cmbSearch.getEditor().getItem();
-        if (!str.equals("") && !list.contains(str)) {
-            list.add(str);
-            cmbSearch.setModel(new CMBModel(list));
-            cmbSearch.setSelectedIndex(list.indexOf(str));
-            cmbSearch.getEditor().setItem(str);
-        }
+        fillComboWithPreviousSearches(str, list);
         String rstr = (String) cmbReplace.getEditor().getItem();
         finder.replacement = rstr;
-        if (!rstr.equals("") && !rlist.contains(rstr)) {
-            rlist.add(rstr);
-            cmbReplace.setModel(new CMBModel(rlist));
-            cmbReplace.setSelectedIndex(rlist.indexOf(rstr));
-            cmbReplace.getEditor().setItem(rstr);
-        }
+        fillComboWithPreviousSearches(rstr, rlist);
         return str;
+    }
+
+    private void fillComboWithPreviousSearches(String str, List<String> previousSearches) {
+        if (!str.equals("") && !previousSearches.contains(str)) {
+            previousSearches.add(str);
+            cmbSearch.setModel(new CMBModel(previousSearches));
+            cmbSearch.setSelectedIndex(previousSearches.indexOf(str));
+            cmbSearch.getEditor().setItem(str);
+        }
     }
 
     private void initComponents() {
         ButtonGroup buttonGroup1 = new ButtonGroup();
         JLabel lblSearchFor = new JLabel();
-        cmbSearch = new JComboBox();
+        cmbSearch = new JComboBox<>();
         JPanel panelOptions = new JPanel();
         caseCheck = new JCheckBox();
         wholeCheck = new JCheckBox();
@@ -214,7 +204,7 @@ public class FindDialog extends javax.swing.JDialog {
         allRadio = new JRadioButton();
         ConstantSizeButton btnSearch = new ConstantSizeButton();
         JLabel lblReplaceWith = new JLabel();
-        cmbReplace = new JComboBox();
+        cmbReplace = new JComboBox<>();
         ConstantSizeButton btnReplace = new ConstantSizeButton();
         JButton btnReplaceAll = new JButton();
 
@@ -268,13 +258,7 @@ public class FindDialog extends javax.swing.JDialog {
 
         btnSearch.setText("Search");
         btnSearch.setFont(btnSearch.getFont().deriveFont(btnSearch.getFont().getStyle() & ~java.awt.Font.BOLD));
-        btnSearch.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                searchButtonActionPerformed(evt);
-            }
-        });
+        btnSearch.addActionListener(this::searchButtonActionPerformed);
 
         lblReplaceWith.setText("Replace with:");
         lblReplaceWith.setFont(lblReplaceWith.getFont().deriveFont(lblReplaceWith.getFont().getStyle() & ~java.awt.Font.BOLD));
@@ -284,23 +268,11 @@ public class FindDialog extends javax.swing.JDialog {
 
         btnReplace.setText("Replace");
         btnReplace.setFont(btnReplace.getFont().deriveFont(btnReplace.getFont().getStyle() & ~java.awt.Font.BOLD));
-        btnReplace.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                replaceButtonActionPerformed(evt);
-            }
-        });
+        btnReplace.addActionListener(this::replaceButtonActionPerformed);
 
         btnReplaceAll.setText("Replace all");
         btnReplaceAll.setFont(btnReplaceAll.getFont().deriveFont(btnReplaceAll.getFont().getStyle() & ~java.awt.Font.BOLD));
-        btnReplaceAll.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                replaceAllButtonActionPerformed(evt);
-            }
-        });
+        btnReplaceAll.addActionListener(this::replaceAllButtonActionPerformed);
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -362,12 +334,12 @@ public class FindDialog extends javax.swing.JDialog {
         }
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    JRadioButton allRadio;
-    JCheckBox caseCheck;
-    JRadioButton endRadio;
-    JComboBox cmbReplace;
-    JComboBox cmbSearch;
-    JRadioButton startRadio;
-    JCheckBox wholeCheck;
+    private JRadioButton allRadio;
+    private JCheckBox caseCheck;
+    private JRadioButton endRadio;
+    private JComboBox<String> cmbReplace;
+    private JComboBox<String> cmbSearch;
+    private JRadioButton startRadio;
+    private JCheckBox wholeCheck;
     // End of variables declaration//GEN-END:variables
 }

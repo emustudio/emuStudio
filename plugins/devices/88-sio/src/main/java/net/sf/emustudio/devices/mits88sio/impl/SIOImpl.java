@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,7 +16,6 @@
  *  You should have received a copy of the GNU General Public License along
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
  */
 package net.sf.emustudio.devices.mits88sio.impl;
 
@@ -44,9 +44,10 @@ import java.util.ResourceBundle;
 @PluginType(
         type = PLUGIN_TYPE.DEVICE,
         title = "MITS 88-SIO Board",
-        copyright = "\u00A9 Copyright 2007-2015, Peter Jakubčo",
+        copyright = "\u00A9 Copyright 2006-2016, Peter Jakubčo",
         description = "Custom implementation of MITS 88-SIO serial board."
 )
+@SuppressWarnings("unused")
 public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserver {
     private static final Logger LOGGER = LoggerFactory.getLogger(SIOImpl.class);
 

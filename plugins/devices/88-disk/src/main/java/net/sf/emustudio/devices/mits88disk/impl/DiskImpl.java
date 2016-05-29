@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,7 +16,6 @@
  *  You should have received a copy of the GNU General Public License along
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
  */
 package net.sf.emustudio.devices.mits88disk.impl;
 
@@ -29,6 +29,14 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
+import net.sf.emustudio.devices.mits88disk.cpmfs.CpmDirectory;
+import net.sf.emustudio.devices.mits88disk.cpmfs.RawDisc;
+import net.sf.emustudio.devices.mits88disk.gui.DiskFrame;
+import net.sf.emustudio.devices.mits88disk.gui.SettingsDialog;
+import net.sf.emustudio.intel8080.ExtendedContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.StandardOpenOption;
@@ -38,19 +46,12 @@ import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-import net.sf.emustudio.devices.mits88disk.cpmfs.CpmDirectory;
-import net.sf.emustudio.devices.mits88disk.cpmfs.RawDisc;
-import net.sf.emustudio.devices.mits88disk.gui.DiskFrame;
-import net.sf.emustudio.devices.mits88disk.gui.SettingsDialog;
 import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.IMAGE;
 import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT1_CPU;
 import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT2_CPU;
 import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.PORT3_CPU;
 import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.SECTORS_COUNT;
 import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.SECTOR_LENGTH;
-import net.sf.emustudio.intel8080.ExtendedContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * MITS 88-DISK Floppy Disk controller with up to 16 drives
@@ -58,9 +59,10 @@ import org.slf4j.LoggerFactory;
 @PluginType(
         type = PLUGIN_TYPE.DEVICE,
         title = "MITS 88-DISK device",
-        copyright = "\u00A9 Copyright 2007-2015, Peter Jakubčo",
+        copyright = "\u00A9 Copyright 2006-2016, Peter Jakubčo",
         description = "Implementation of popular floppy disk controller."
 )
+@SuppressWarnings("unused")
 public class DiskImpl extends AbstractDevice {
     private final static Logger LOGGER = LoggerFactory.getLogger(DiskImpl.class);
     

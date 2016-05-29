@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2007-2014 Peter Jakubčo
- *
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -122,18 +122,10 @@ public class CompileEnv {
     }
 
     public void copyTo(CompileEnv env) {
-        for (LabelNode label : labels.values()) {
-            env.addLabel(label);
-        }
-        for (MacroPseudoNode macro : macros.values()) {
-            env.addMacro(macro);
-        }
-        for (EquPseudoNode equ : constants.values()) {
-            env.addConstant(equ);
-        }
-        for (SetPseudoNode set : variables.values()) {
-            env.setVariable(set);
-        }
+        labels.values().forEach(env::addLabel);
+        macros.values().forEach(env::addMacro);
+        constants.values().forEach(env::addConstant);
+        variables.values().forEach(env::setVariable);
     }
 
     public void addPassNeed(InstructionNode n) {

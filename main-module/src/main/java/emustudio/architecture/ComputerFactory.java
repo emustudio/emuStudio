@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016, Peter Jakubčo
+ * Copyright (C) 2006-2016, Peter Jakubčo
  *
  * KISS, YAGNI, DRY
  *
@@ -36,7 +36,13 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static emulib.runtime.PluginLoader.doesImplement;

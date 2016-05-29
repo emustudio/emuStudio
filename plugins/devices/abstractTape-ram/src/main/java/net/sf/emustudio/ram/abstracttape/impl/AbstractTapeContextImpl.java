@@ -1,8 +1,7 @@
 /*
- * AbstractTapeContextImpl.java
- *
- * Copyright (C) 2009-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,7 +16,6 @@
  *  You should have received a copy of the GNU General Public License along
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
  */
 package net.sf.emustudio.ram.abstracttape.impl;
 
@@ -64,10 +62,10 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
 
     public interface TapeListener extends EventListener {
 
-        public void tapeChanged();
+        void tapeChanged();
     }
 
-    public AbstractTapeContextImpl(AbstractTape abst) {
+    AbstractTapeContextImpl(AbstractTape abst) {
         this.abst = abst;
         listener = null;
         tape = new ArrayList<>();

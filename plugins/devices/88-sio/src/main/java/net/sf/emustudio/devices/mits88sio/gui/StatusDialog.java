@@ -1,10 +1,7 @@
 /*
- * StatusDialog.java
- *
- * Created on Nedeľa, 2008, júl 27, 19:52
- *
- * Copyright (C) 2008-2013 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

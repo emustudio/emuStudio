@@ -1,7 +1,7 @@
 /*
  * KISS, YAGNI, DRY
  *
- * (c) Copyright 2015, Peter Jakubčo
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,15 +33,13 @@ import java.util.Objects;
 public class DebugTableImpl extends JTable implements DebugTable {
 
     private final DebugTableModel debugModel;
-    private final TextCellRenderer textRenderer;
-    private final BooleanCellRenderer boolRenderer;
 
     public DebugTableImpl(DebugTableModel debugModel) {
         super();
 
         this.debugModel = Objects.requireNonNull(debugModel);
-        this.textRenderer = new TextCellRenderer(debugModel);
-        this.boolRenderer = new BooleanCellRenderer();
+        TextCellRenderer textRenderer = new TextCellRenderer(debugModel);
+        BooleanCellRenderer boolRenderer = new BooleanCellRenderer();
 
         setModel(debugModel);
 

@@ -1,8 +1,7 @@
 /*
- * RAMStatusPanel.java
- *
- * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,15 +22,10 @@ package net.sf.emustudio.ram.cpu.gui;
 import emulib.plugins.cpu.CPU.CPUListener;
 import emulib.plugins.cpu.CPU.RunState;
 import emulib.plugins.memory.MemoryContext;
-import java.awt.Color;
-import java.awt.Font;
-import javax.swing.BorderFactory;
-import javax.swing.GroupLayout;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.LayoutStyle;
 import net.sf.emustudio.ram.cpu.impl.EmulatorImpl;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class RAMStatusPanel extends JPanel {
 

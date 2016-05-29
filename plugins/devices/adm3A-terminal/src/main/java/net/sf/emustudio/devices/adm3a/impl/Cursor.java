@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2014-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,7 +41,7 @@ public class Cursor {
     private final CursorPainter cursorPainter = new CursorPainter();
     private final Timer cursorPainterTimer = new Timer(0, cursorPainter);
 
-    public interface LineRoller {
+    interface LineRoller {
 
         void rollLine();
     }
@@ -51,11 +52,11 @@ public class Cursor {
         private volatile DisplayParameters displayParameters;
         private volatile Graphics graphics;
 
-        public void setDisplayParameters(DisplayParameters displayParameters) {
+        void setDisplayParameters(DisplayParameters displayParameters) {
             this.displayParameters = Objects.requireNonNull(displayParameters);
         }
 
-        public void setGraphics(Graphics graphics) {
+        void setGraphics(Graphics graphics) {
             this.graphics = Objects.requireNonNull(graphics);
         }
 
@@ -79,36 +80,36 @@ public class Cursor {
         }
     }
 
-    public Cursor(int colCount, int rowCount) {
+    Cursor(int colCount, int rowCount) {
         this.colCount = colCount;
         this.rowCount = rowCount;
     }
 
-    public void home() {
+    void home() {
         cursorPoint.set(new Point());
     }
 
-    public void reset() {
+    void reset() {
         this.reset = true;
     }
 
-    public int getColCount() {
+    int getColCount() {
         return colCount;
     }
 
-    public int getRowCount() {
+    int getRowCount() {
         return rowCount;
     }
 
-    public Point getPoint(){
+    Point getPoint(){
         return new Point(cursorPoint.get());
     }
 
-    public void set(int x, int y) {
+    void set(int x, int y) {
         cursorPoint.set(new Point(x, y));
     }
 
-    public void move(LineRoller lineRoller) {
+    void move(LineRoller lineRoller) {
         Point oldPoint = cursorPoint.get();
         Point newPoint;
         do {
@@ -127,7 +128,7 @@ public class Cursor {
         } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
     }
 
-    public void back() {
+    void back() {
         Point oldPoint = cursorPoint.get();
         Point newPoint;
         do {
@@ -139,7 +140,7 @@ public class Cursor {
         } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
     }
 
-    public void up() {
+    void up() {
         Point oldPoint = cursorPoint.get();
         Point newPoint;
         do {
@@ -151,7 +152,7 @@ public class Cursor {
         } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
     }
 
-    public void down(LineRoller lineRoller) {
+    void down(LineRoller lineRoller) {
         Point oldPoint = cursorPoint.get();
         Point newPoint;
         do {
@@ -165,7 +166,7 @@ public class Cursor {
         } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
     }
 
-    public void forward() {
+    void forward() {
         Point oldPoint = cursorPoint.get();
         Point newPoint;
         do {
@@ -177,7 +178,7 @@ public class Cursor {
         } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
     }
 
-    public void carriageReturn() {
+    void carriageReturn() {
         Point oldPoint = cursorPoint.get();
         Point newPoint;
         do {
@@ -186,7 +187,7 @@ public class Cursor {
         } while (!cursorPoint.compareAndSet(oldPoint, newPoint));
     }
 
-    public synchronized void start(Graphics graphics, DisplayParameters displayParameters) {
+    synchronized void start(Graphics graphics, DisplayParameters displayParameters) {
         cursorPainterTimer.stop();
 
         cursorPainter.setDisplayParameters(displayParameters);
@@ -195,7 +196,7 @@ public class Cursor {
         cursorPainterTimer.start();
     }
 
-    public synchronized void destroy() {
+    synchronized void destroy() {
         cursorPainterTimer.stop();
     }
 }

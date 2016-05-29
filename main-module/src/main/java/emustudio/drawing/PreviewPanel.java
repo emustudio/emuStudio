@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2006-2016, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -18,21 +20,17 @@
 package emustudio.drawing;
 
 import emustudio.main.Main;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Point;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import javax.imageio.ImageIO;
-import javax.swing.JFileChooser;
-import javax.swing.JPanel;
-import javax.swing.filechooser.FileFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PreviewPanel extends JPanel {
     private final static Logger logger = LoggerFactory.getLogger(PreviewPanel.class);
@@ -166,11 +164,11 @@ public class PreviewPanel extends JPanel {
         panelResized = true;
     }
 
-    public int getSchemaWidth() {
+    private int getSchemaWidth() {
         return schemaWidth;
     }
 
-    public int getSchemaHeight() {
+    private int getSchemaHeight() {
         return schemaHeight;
     }
 
@@ -184,10 +182,10 @@ public class PreviewPanel extends JPanel {
         Graphics2D graphics = (Graphics2D) g;
 
         boolean moved = panelResized;
-        if (panelResized == false) {
+        if (!panelResized) {
             resizePanel(g);
         }
-        if (moved == false) {
+        if (!moved) {
             schema.selectAll();
             schema.moveSelection(-leftFactor, -topFactor);
             schema.deselectAll();

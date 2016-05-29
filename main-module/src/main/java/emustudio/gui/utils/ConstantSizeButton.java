@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2006-2016, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -17,9 +19,8 @@
  */
 package emustudio.gui.utils;
 
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import javax.swing.JButton;
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * A button with the constant size.

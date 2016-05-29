@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,28 +34,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.MissingResourceException;
-import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(
         type = PLUGIN_TYPE.CPU,
         title = "Abstract tape",
-        copyright = "\u00A9 Copyright 2008-2015, Peter Jakubčo",
+        copyright = "\u00A9 Copyright 2006-2016, Peter Jakubčo",
         description = "Abstract tape device is used by abstract machines such as RAM or Turing machine"
 )
+@SuppressWarnings("unused")
 public class AbstractTape extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTape.class);
     private String guiTitle;
     private AbstractTapeContextImpl context;
     private TapeDialog gui;
-    private final ContextPool contextPool;
 
     boolean nogui;
     boolean auto;
 
     public AbstractTape(Long pluginID, ContextPool contextPool) {
         super(pluginID);
-        this.contextPool = Objects.requireNonNull(contextPool);
         context = new AbstractTapeContextImpl(this);
         try {
             contextPool.register(pluginID, context, AbstractTapeContext.class);

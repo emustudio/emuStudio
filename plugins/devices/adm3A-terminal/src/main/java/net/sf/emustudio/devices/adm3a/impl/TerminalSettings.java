@@ -1,8 +1,7 @@
 /*
- * TerminalSettings.java
- *
- * Copyright (C) 2013 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -56,23 +55,23 @@ public class TerminalSettings {
     private final List<ChangedObserver> observers = new ArrayList<>();
     private final ReadWriteLock settingsLock = new ReentrantReadWriteLock();
 
-    public interface ChangedObserver {
+    interface ChangedObserver {
         void settingsChanged();
     }
 
-    public TerminalSettings(long pluginID) {
+    TerminalSettings(long pluginID) {
         this.pluginID = pluginID;
     }
 
-    public void addChangedObserver(ChangedObserver observer) {
+    void addChangedObserver(ChangedObserver observer) {
         observers.add(observer);
     }
 
-    public void removeChangedObserver(ChangedObserver observer) {
+    void removeChangedObserver(ChangedObserver observer) {
         observers.remove(observer);
     }
 
-    public void setSettingsManager(SettingsManager settingsManager) {
+    void setSettingsManager(SettingsManager settingsManager) {
         settingsLock.writeLock().lock();
         try {
             this.settingsManager = settingsManager;
@@ -87,7 +86,7 @@ public class TerminalSettings {
         }
     }
 
-    public boolean isNoGUI() {
+    boolean isNoGUI() {
         settingsLock.readLock().lock();
         try {
             return emuStudioNoGUI;
@@ -113,15 +112,6 @@ public class TerminalSettings {
             settingsLock.writeLock().unlock();
         }
         notifyObservers();
-    }
-
-    public boolean isAuto() {
-        settingsLock.readLock().lock();
-        try {
-            return emuStudioAuto;
-        } finally {
-            settingsLock.readLock().unlock();
-        }
     }
 
     public boolean isHalfDuplex() {
@@ -238,7 +228,7 @@ public class TerminalSettings {
         }
     }
 
-    public void read() {
+    void read() {
         settingsLock.writeLock().lock();
         try {
             if (settingsManager == null) {

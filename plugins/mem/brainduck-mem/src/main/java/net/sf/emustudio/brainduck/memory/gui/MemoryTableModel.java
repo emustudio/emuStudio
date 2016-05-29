@@ -1,20 +1,21 @@
 /*
- * Copyright (C) 2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 package net.sf.emustudio.brainduck.memory.gui;
 
@@ -27,7 +28,7 @@ public class MemoryTableModel extends AbstractTableModel {
     private final int ROW_COUNT = 16;
     private final int COLUMN_COUNT = 16;
 
-    public MemoryTableModel(MemoryContext memory) {
+    MemoryTableModel(MemoryContext memory) {
         this.mem = memory;
     }
 
@@ -71,7 +72,7 @@ public class MemoryTableModel extends AbstractTableModel {
         return true;
     }
     
-    public void dataChangedAt(int address) {
+    void dataChangedAt(int address) {
         int page = address / (ROW_COUNT * COLUMN_COUNT);
         if (page == this.currentPage) {
             int positionInPage = address % (ROW_COUNT * COLUMN_COUNT);
@@ -81,7 +82,7 @@ public class MemoryTableModel extends AbstractTableModel {
         }
     }
 
-    public void setPage(int page) throws IndexOutOfBoundsException {
+    void setPage(int page) throws IndexOutOfBoundsException {
         if (page >= getPageCount() || page < 0) {
             throw new IndexOutOfBoundsException();
         }
@@ -89,11 +90,11 @@ public class MemoryTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
-    public int getPage() {
+    int getPage() {
         return currentPage;
     }
 
-    public int getPageCount() {
+    int getPageCount() {
         return mem.getSize() / (ROW_COUNT * COLUMN_COUNT);
     }
 

@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,11 +33,11 @@ public class LabelNode {
         this.column = column;
     }
 
-    public void setAddress(Integer address) {
+    void setAddress(Integer address) {
         this.address = address;
     }
 
-    public Integer getAddress() {
+    Integer getAddress() {
         return this.address;
     }
 

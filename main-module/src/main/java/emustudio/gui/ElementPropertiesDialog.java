@@ -1,22 +1,22 @@
 /*
  * KISS, YAGNI, DRY
- * (c) Copyright 2015, Peter Jakubčo
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.gui;
 
 import emulib.runtime.StaticDialogs;
@@ -58,12 +58,12 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel1 = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
+        javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
         tblSettings = new javax.swing.JTable();
-        btnSave = new javax.swing.JButton();
-        btnNew = new javax.swing.JButton();
-        btnRemove = new javax.swing.JButton();
+        javax.swing.JButton btnSave = new javax.swing.JButton();
+        javax.swing.JButton btnNew = new javax.swing.JButton();
+        javax.swing.JButton btnRemove = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Plug-in settings");
@@ -92,27 +92,15 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
 
         btnSave.setFont(btnSave.getFont().deriveFont(btnSave.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnSave.setText("Save");
-        btnSave.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnSaveActionPerformed(evt);
-            }
-        });
+        btnSave.addActionListener(this::btnSaveActionPerformed);
 
         btnNew.setFont(btnNew.getFont().deriveFont(btnNew.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnNew.setText("Add new");
-        btnNew.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnNewActionPerformed(evt);
-            }
-        });
+        btnNew.addActionListener(this::btnNewActionPerformed);
 
         btnRemove.setFont(btnRemove.getFont().deriveFont(btnRemove.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnRemove.setText("Remove");
-        btnRemove.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnRemoveActionPerformed(evt);
-            }
-        });
+        btnRemove.addActionListener(this::btnRemoveActionPerformed);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -155,8 +143,7 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
         for (int i = 0; i < model.getRowCount(); i++) {
             settings.put((String)model.getValueAt(i, 0), (String)model.getValueAt(i, 1));
         }
-        try { element.refreshSettings(settings); }
-        catch(NumberFormatException e) {}
+        element.refreshSettings(settings);
         dispose();
     }//GEN-LAST:event_btnSaveActionPerformed
 
@@ -188,12 +175,6 @@ public class ElementPropertiesDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_btnRemoveActionPerformed
 
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnNew;
-    private javax.swing.JButton btnRemove;
-    private javax.swing.JButton btnSave;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable tblSettings;
     // End of variables declaration//GEN-END:variables
 }

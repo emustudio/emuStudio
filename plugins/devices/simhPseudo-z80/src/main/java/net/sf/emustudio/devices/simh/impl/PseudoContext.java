@@ -1,9 +1,8 @@
 /*
- * PseudoContext.java
- * 
- * Copyright (C) 2002-2007, Peter Schorn
- * Copyright (C) 2008-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * Copyright (C) 2002-2007, Peter Schorn
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,11 +21,12 @@
 package net.sf.emustudio.devices.simh.impl;
 
 import emulib.plugins.device.DeviceContext;
-import java.io.File;
-import java.util.Calendar;
 import net.sf.emustudio.memory.standard.StandardMemoryContext;
 
-public class PseudoContext implements DeviceContext<Short> {
+import java.io.File;
+import java.util.Calendar;
+
+class PseudoContext implements DeviceContext<Short> {
 
     private StandardMemoryContext mem;
 
@@ -89,7 +89,7 @@ public class PseudoContext implements DeviceContext<Short> {
     private final static int SECONDS_PER_HOUR = (60 * SECONDS_PER_MINUTE);
     private final static int SECONDS_PER_DAY = (24 * SECONDS_PER_HOUR);
 
-    public void setMemory(StandardMemoryContext mem) {
+    void setMemory(StandardMemoryContext mem) {
         this.mem = mem;
     }
     /*  Z80 or 8080 programs communicate with the SIMH pseudo device via port 0xfe.
@@ -185,7 +185,7 @@ public class PseudoContext implements DeviceContext<Short> {
     private final static int getHostFilenames = 29;        /* 29 perform wildcard expansion and obtain list of file names          */
 
 
-    public void reset() {
+    void reset() {
         currentTimeValid = false;
         lastCommand = 0;
         lastCPMStatus = 0;

@@ -1,51 +1,40 @@
 /*
- * Copyright (C) 2014 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 package net.sf.emustudio.brainduck.memory.gui;
 
-import static emulib.runtime.RadixUtils.getWordHexString;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import javax.swing.AbstractCellEditor;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.ListCellRenderer;
-import javax.swing.ListSelectionModel;
-import static javax.swing.SwingConstants.CENTER;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import java.awt.*;
 
-public class MemoryTable extends JTable {
+import static emulib.runtime.RadixUtils.getWordHexString;
+
+class MemoryTable extends JTable {
     private final static int CHAR_WIDTH = 17;
     
     private final MemoryTableModel model;
     private final JScrollPane scrollPane;
 
-    public MemoryTable(MemoryTableModel model, JScrollPane scrollPane) {
+    MemoryTable(MemoryTableModel model, JScrollPane scrollPane) {
         this.scrollPane = scrollPane;
         this.model = model;
         this.setModel(this.model);
@@ -64,9 +53,9 @@ public class MemoryTable extends JTable {
         }
     }
 
-    public class MemRowHeaderRenderer extends JLabel implements ListCellRenderer {
+    private class MemRowHeaderRenderer extends JLabel implements ListCellRenderer {
 
-        public MemRowHeaderRenderer(JTable table) {
+        MemRowHeaderRenderer(JTable table) {
             JTableHeader header = table.getTableHeader();
             setOpaque(true);
             setBorder(UIManager.getBorder("TableHeader.cellBorder"));
@@ -85,12 +74,12 @@ public class MemoryTable extends JTable {
         }
     }
 
-    public class MemCellRenderer extends JLabel implements TableCellRenderer {
+    private class MemCellRenderer extends JLabel implements TableCellRenderer {
         private final JList rowHeader;
         private final String adresses[];
         private int currentPage;
 
-        public MemCellRenderer() {
+        MemCellRenderer() {
             currentPage = model.getPage();
             adresses = new String[model.getRowCount()];
             for (int i = 0; i < adresses.length; i++) {
@@ -146,7 +135,7 @@ public class MemoryTable extends JTable {
     private class MemoryCellEditor extends AbstractCellEditor implements TableCellEditor {
         private final JTextField component = new JTextField();
 
-        public MemoryCellEditor() {
+        MemoryCellEditor() {
             FontMetrics fm = getFontMetrics(getFont());
             if (fm != null) {
                 component.setSize(fm.stringWidth("0xFFFFFF"), fm.getHeight() + 10);

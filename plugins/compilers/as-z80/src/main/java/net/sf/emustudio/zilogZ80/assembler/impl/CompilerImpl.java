@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2007-2015 Peter Jakubčo
- *
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,9 +40,10 @@ import java.util.ResourceBundle;
 @PluginType(
         type=PLUGIN_TYPE.COMPILER,
         title="Zilog Z80 Assembler",
-        copyright="\u00A9 Copyright 2007-2015, Peter Jakubčo",
+        copyright="\u00A9 Copyright 2006-2016, Peter Jakubčo",
         description="Custom version of the assembler. For syntax look at users manual."
 )
+@SuppressWarnings("unused")
 public class CompilerImpl extends AbstractCompiler {
     private final static Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
 

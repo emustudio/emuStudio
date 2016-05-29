@@ -1,7 +1,7 @@
 /*
  * KISS, YAGNI, DRY
  *
- * Copyright (C) 2009-2015 Peter Jakubčo
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,9 +50,10 @@ import java.util.ResourceBundle;
 @PluginType(
         type = PLUGIN_TYPE.CPU,
         title = "BrainCPU",
-        copyright = "\u00A9 Copyright 2009-2015, Peter Jakubčo",
+        copyright = "\u00A9 Copyright 2006-2016, Peter Jakubčo",
         description = "Emulator of CPU for abstract BrainDuck architecture"
 )
+@SuppressWarnings("unused")
 public class EmulatorImpl extends AbstractCPU {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorImpl.class);
 

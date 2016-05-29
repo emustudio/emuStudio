@@ -1,19 +1,21 @@
 /*
  * KISS, YAGNI, DRY
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 package emustudio.main;
 
@@ -24,7 +26,7 @@ import org.slf4j.LoggerFactory;
  * Factory for parsing command lines.
  */
 public class CommandLineFactory {
-    private final static Logger logger = LoggerFactory.getLogger(CommandLineFactory.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(CommandLineFactory.class);
 
     public static class CommandLine {
         private String inputFileName = null;
@@ -34,8 +36,8 @@ public class CommandLineFactory {
         private boolean help = false;
         private boolean noGUI = false;
 
-        public CommandLine(String inputFileName, String outputFileName, String configName, boolean auto,
-                boolean help, boolean noGUI) {
+        CommandLine(String inputFileName, String outputFileName, String configName, boolean auto,
+                    boolean help, boolean noGUI) {
             this.inputFileName = inputFileName;
             this.outputFileName = outputFileName;
             this.auto = auto;
@@ -44,7 +46,7 @@ public class CommandLineFactory {
             this.configName = configName;
         }
 
-        public boolean helpWanted() {
+        boolean helpWanted() {
             return help;
         }
 
@@ -52,19 +54,19 @@ public class CommandLineFactory {
             return noGUI;
         }
 
-        public String getConfigName() {
+        String getConfigName() {
             return configName;
         }
 
-        public void setConfigName(String configName) {
+        void setConfigName(String configName) {
             this.configName = configName;
         }
 
-        public String getInputFileName() {
+        String getInputFileName() {
             return inputFileName;
         }
 
-        public String getOutputFileName() {
+        String getOutputFileName() {
             return outputFileName;
         }
 
@@ -92,52 +94,51 @@ public class CommandLineFactory {
                         i++;
                         // what configuration to load
                         if (configName != null) {
-                            logger.warn(new StringBuilder().append("Config file already defined, ignoring this one: ")
-                                    .append(args[i]).toString());
+                            LOGGER.warn("Config file already defined, ignoring this one: " +
+                                args[i]);
                         } else {
                             configName = args[i];
-                            logger.info(new StringBuilder().append("Loading virtual computer: ").append(configName).toString());
+                            LOGGER.info("Loading virtual computer: " + configName);
                         }   break;
                     case "--INPUT":
                         i++;
                         // what input file take to compiler
                         if (inputFileName != null) {
-                            logger.warn(new StringBuilder().append("Input file already defined, ignoring this one: ")
-                                    .append(args[i]).toString());
+                            LOGGER.warn("Input file already defined, ignoring this one: " +
+                                args[i]);
                         } else {
                             inputFileName = args[i];
-                            logger.info(new StringBuilder().append("Input file name for compiler: ").append(inputFileName)
-                                    .toString());
+                            LOGGER.info("Input file name for compiler: " + inputFileName);
                         }   break;
                     case "--OUTPUT":
                         i++;
                         // what output file take for emuStudio messages during automatization process. This option has a
                         // meaning only if the "--auto" option is set.
                         if (outputFileName != null) {
-                            logger.warn(new StringBuilder().append("Output file already defined, ignoring this one: ")
-                                    .append(args[i]).toString());
+                            LOGGER.warn("Output file already defined, ignoring this one: " +
+                                args[i]);
                         } else {
                             outputFileName = args[i];
-                            logger.info(new StringBuilder().append("Output file name: ").append(outputFileName).toString());
+                            LOGGER.info("Output file name: " + outputFileName);
                         }   break;
                     case "--AUTO":
                         auto = true;
-                        logger.info("Turning automatization on.");
+                        LOGGER.info("Turning automatization on.");
                         break;
                     case "--HELP":
                         help = true;
                         break;
                     case "--NOGUI":
-                        logger.info("Setting GUI off.");
+                        LOGGER.info("Setting GUI off.");
                         noGUI = true;
                         break;
                     default:
-                        throw new InvalidCommandLineException(new StringBuilder().append("Unknown command line argument (")
-                                .append(arg).append(")").toString());
+                        throw new InvalidCommandLineException("Unknown command line argument (" +
+                            arg + ")");
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
-                throw new InvalidCommandLineException(new StringBuilder().append("[").append(arg)
-                        .append("] Missing argument").toString());
+                throw new InvalidCommandLineException("[" + arg +
+                    "] Missing argument");
             }
         }
         return new CommandLine(inputFileName, outputFileName, configName, auto, help, noGUI);

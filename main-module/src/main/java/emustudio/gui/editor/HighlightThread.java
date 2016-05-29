@@ -2,8 +2,7 @@
  * KISS, YAGNI, DRY
  *
  * Copyright (C) 2001, Stephen Ostermiller
- * http://ostermiller.org/contact.pl?regarding=Syntax+Highlighting
- * Copyright (C) 2008-2012, Peter Jakubčo
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +22,10 @@ package emustudio.gui.editor;
 
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.Token;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.text.SimpleAttributeSet;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -32,14 +35,11 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import javax.swing.text.SimpleAttributeSet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The syntax highlighting thread.
  */
-public class HighlightThread extends Thread {
+class HighlightThread extends Thread {
     private final static Logger logger = LoggerFactory.getLogger(HighlightThread.class);
 
     /**
@@ -66,9 +66,9 @@ public class HighlightThread extends Thread {
     private static class RecolorEvent {
 
         public int position;
-        public int adjustment;
+        int adjustment;
 
-        public RecolorEvent(int position, int adjustment) {
+        RecolorEvent(int position, int adjustment) {
             this.position = position;
             this.adjustment = adjustment;
         }
@@ -103,17 +103,17 @@ public class HighlightThread extends Thread {
     /**
      * Reader of the document
      */
-    protected DocumentReader documentReader;
+    private DocumentReader documentReader;
     /**
      * Lexical analyzer object
      */
-    protected LexicalAnalyzer syntaxLexer;
+    private LexicalAnalyzer syntaxLexer;
 
     private final Map<Integer, HighlightStyle> styles;
 
-    public HighlightThread(LexicalAnalyzer lex, DocumentReader lexReader,
-            HighLightedDocument document,
-            Map<Integer, HighlightStyle> styles) {
+    HighlightThread(LexicalAnalyzer lex, DocumentReader lexReader,
+                    HighLightedDocument document,
+                    Map<Integer, HighlightStyle> styles) {
         super("HighlightThread");
         this.syntaxLexer = lex;
         this.document = document;
@@ -356,7 +356,7 @@ public class HighlightThread extends Thread {
         }
     }
 
-    public void stopMe() {
+    void stopMe() {
         shouldStop = true;
         synchronized (lock) {
             recolorEvents.clear();
@@ -372,7 +372,7 @@ public class HighlightThread extends Thread {
         }
     }
 
-    public void colorAll() {
+    void colorAll() {
         synchronized (lock) {
             recolorEvents.clear();
         }

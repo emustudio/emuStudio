@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2006-2016, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -15,7 +17,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.drawing;
 
 import java.awt.BasicStroke;
@@ -220,7 +221,7 @@ public class ConnectionLine {
         } else {
             arrow2 = arrow;
         }
-        computeArrowEnds(lineStart, lineEnd, firstE, secondE);
+        computeArrowEnds(lineStart, lineEnd, firstE);
     }
 
     /**
@@ -231,9 +232,8 @@ public class ConnectionLine {
      * @param lineStart start point of this line
      * @param lineEnd end point of this line
      * @param firstE first (starting) element
-     * @param secondE second (ending) element
      */
-    private void computeArrowEnds(Point lineStart, Point lineEnd, Element firstE, Element secondE) {
+    private void computeArrowEnds(Point lineStart, Point lineEnd, Element firstE) {
 
         double delta = Math.atan2(lineEnd.x - lineStart.x, lineEnd.y-lineStart.y);
 
@@ -277,7 +277,7 @@ public class ConnectionLine {
      * @param selectionEnd the selection end point
      * @return true if the line is crossing the selection area
      */
-    public boolean isAreaCrossing(Point selectionStart, Point selectionEnd) {
+    boolean isAreaCrossing(Point selectionStart, Point selectionEnd) {
         return isAreaCrossing(selectionStart, selectionEnd, 0);
     }
 
@@ -288,7 +288,7 @@ public class ConnectionLine {
      * @param selectionEnd Bottom-right point of the area
      * @return true if the area covers some line point, false otherwise (or if line doesn't have points)
      */
-    public boolean isAreaCrossingPoint(Point selectionStart, Point selectionEnd) {
+    boolean isAreaCrossingPoint(Point selectionStart, Point selectionEnd) {
         if (points.isEmpty()) {
             return false;
         }
@@ -309,7 +309,7 @@ public class ConnectionLine {
      * @param point The point
      * @return true if the area covers the point, false otherwise
      */
-    public static boolean isAreaCrossingPoint(Point selectionStart, Point selectionEnd, Point point) {
+    static boolean isAreaCrossingPoint(Point selectionStart, Point selectionEnd, Point point) {
         return ((point.x >= selectionStart.x) && (point.x <= selectionEnd.x)
                 && (point.y >= selectionStart.y) && (point.y <= selectionEnd.y));
     }
@@ -368,22 +368,10 @@ public class ConnectionLine {
             sign = -1;
         }
         result = a * B.x + b * B.y + c;
-        if ((result > 0) && (sign != 1)) {
-            is = true;
-        } else if ((result == 0) && (sign != 0)) {
-            is = true;
-        } else if ((result < 0) && (sign != -1)) {
-            is = true;
-        }
+        is = isCrossing(sign, is, result);
         if (!is) {
             result = a * C.x + b * C.y + c;
-            if ((result > 0) && (sign != 1)) {
-                is = true;
-            } else if ((result == 0) && (sign != 0)) {
-                is = true;
-            } else if ((result < 0) && (sign != -1)) {
-                is = true;
-            }
+            is = isCrossing(sign, is, result);
         }
 
         if (is) {
@@ -405,6 +393,17 @@ public class ConnectionLine {
         return false;
     }
 
+    private static boolean isCrossing(byte sign, boolean is, int result) {
+        if ((result > 0) && (sign != 1)) {
+            is = true;
+        } else if ((result == 0) && (sign != 0)) {
+            is = true;
+        } else if ((result < 0) && (sign != -1)) {
+            is = true;
+        }
+        return is;
+    }
+
     /**
      * Determines whether a selection area crosses or overlays this line.
      *
@@ -417,7 +416,7 @@ public class ConnectionLine {
      * @param tolerance Tolerance of boundaries
      * @return true if the line is crossing the selection area
      */
-    public boolean isAreaCrossing(Point selectionStart, Point selectionEnd, int tolerance) {
+    private boolean isAreaCrossing(Point selectionStart, Point selectionEnd, int tolerance) {
         Point v0 = selectionStart;
         Point v1 = new Point(selectionEnd.x, selectionStart.y);
         Point v2 = selectionEnd;
@@ -437,27 +436,7 @@ public class ConnectionLine {
             lineEnd = p;
 
             intersection = intersection(v0, v2, lineStart, lineEnd);
-            if (intersection != null) {
-                if ((intersection.x < v0.x) || (intersection.x > v2.x)
-                        || (intersection.y < v0.y) || (intersection.y > v2.y)){
-                    intersection = null;
-                } else if (intersection.x < Math.min(lineStart.x, lineEnd.x)
-                        || (intersection.x > Math.max(lineStart.x, lineEnd.x))
-                        || (intersection.y < Math.min(lineStart.y, lineEnd.y))
-                        || (intersection.y > Math.max(lineStart.y, lineEnd.y))) {
-                    intersection = null;
-                }
-            }
-            if (intersection == null) {
-                // possible crossing (or overlay) can be on triangle (v0, v2, v3)
-                if (liesInTriangle(lineStart, lineEnd, v0, v2, v3)) {
-                    return true;
-                }
-                // possible crossing (or overlay) can be on triangle (v0, v1, v2)
-                if (liesInTriangle(lineStart, lineEnd, v0, v1, v2)) {
-                    return true;
-                }
-            } else {
+            if (checkValidIntersection(v0, v1, v2, v3, lineStart, lineEnd, intersection)) {
                 return true;
             }
             lineStart = lineEnd;
@@ -465,9 +444,13 @@ public class ConnectionLine {
         lineEnd = new Point(arrow2.x, arrow2.y);
 
         intersection = intersection(v0, v2, lineStart, lineEnd);
+        return checkValidIntersection(v0, v1, v2, v3, lineStart, lineEnd, intersection);
+    }
+
+    private static boolean checkValidIntersection(Point v0, Point v1, Point v2, Point v3, Point lineStart, Point lineEnd, Point intersection) {
         if (intersection != null) {
             if ((intersection.x < v0.x) || (intersection.x > v2.x)
-                    || (intersection.y < v0.y) || (intersection.y > v2.y)) {
+                    || (intersection.y < v0.y) || (intersection.y > v2.y)){
                 intersection = null;
             } else if (intersection.x < Math.min(lineStart.x, lineEnd.x)
                     || (intersection.x > Math.max(lineStart.x, lineEnd.x))
@@ -500,41 +483,16 @@ public class ConnectionLine {
      * @param lineEnd End point of the line segment
      * @param selectionStart the selection start point
      * @param selectionEnd the selection end point
-     * @param tolerance Tolerance of boundaries
      * @return true if the line segment is crossing the selection area; false otherwise
      */
-    public static boolean isAreaCrossing(Point lineStart, Point lineEnd, Point selectionStart, Point selectionEnd,
-            int tolerance) {
+    public static boolean isAreaCrossing(Point lineStart, Point lineEnd, Point selectionStart, Point selectionEnd) {
         Point v0 = selectionStart;
         Point v1 = new Point(selectionEnd.x, selectionStart.y);
         Point v2 = selectionEnd;
         Point v3 = new Point(selectionStart.x, selectionEnd.y);
 
         Point intersection = intersection(v0, v2, lineStart, lineEnd);
-        if (intersection != null) {
-            if ((intersection.x < v0.x) || (intersection.x > v2.x)
-                    || (intersection.y < v0.y) || (intersection.y > v2.y)) {
-                intersection = null;
-            } else if (intersection.x < Math.min(lineStart.x, lineEnd.x)
-                    || (intersection.x > Math.max(lineStart.x, lineEnd.x))
-                    || (intersection.y < Math.min(lineStart.y, lineEnd.y))
-                    || (intersection.y > Math.max(lineStart.y, lineEnd.y))) {
-                intersection = null;
-            }
-        }
-        if (intersection == null) {
-            // possible crossing can be on triangle (v0, v2, v3)
-            if (liesInTriangle(lineStart, lineEnd, v0, v2, v3)) {
-                return true;
-            }
-            // possible crossing can be on triangle (v0, v1, v2)
-            if (liesInTriangle(lineStart, lineEnd, v0, v1, v2)) {
-                return true;
-            }
-        } else {
-            return true;
-        }
-        return false;
+        return checkValidIntersection(v0, v1, v2, v3, lineStart, lineEnd, intersection);
     }
 
     /**
@@ -713,7 +671,7 @@ public class ConnectionLine {
         int xx = (int) selPoint.getX();
         int yy = (int) selPoint.getY();
         g.setColor(Color.WHITE);
-        ((Graphics2D) g).setStroke(thickLine);
+        g.setStroke(thickLine);
         g.fillOval(xx - TOLERANCE - 2, yy - TOLERANCE - 2, (TOLERANCE + 2) * 2, (TOLERANCE + 2) * 2);
   // TODO:     if (selected)
   //               g.setColor(Color.BLUE);

@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2006-2016, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -17,11 +19,11 @@
  */
 package emustudio.gui.utils;
 
+import javax.swing.*;
+import javax.swing.text.BadLocationException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import javax.swing.JTextPane;
-import javax.swing.text.BadLocationException;
 
 public class FindText {
     public static final int CASE_SENSITIVE = 1;
@@ -184,16 +186,7 @@ public class FindText {
         if (direction == FindText.DIRECTION_TO_END) {
             matcher.region(curPos, endPos);
             match = matcher.find();
-            if (match) {
-                try {
-                    textPane.getDocument().remove(matcher.start(),
-                            matcher.end() - matcher.start());
-                    textPane.getDocument().insertString(matcher.start(),
-                            replacement, null);
-                    textPane.setCaretPosition(matcher.start() + replacement.length());
-                } catch (BadLocationException e) {
-                }
-            }
+            replaceIfMatched(textPane, match);
         } else if (direction == FindText.DIRECTION_TO_START) {
             matcher.region(0, curPos);
             while (matcher.find(endM)) {
@@ -208,16 +201,7 @@ public class FindText {
             }
             matcher.region(startM, curPos); // here is only one match
             match = matcher.find(startM);
-            if (match) {
-                try {
-                    textPane.getDocument().remove(matcher.start(),
-                            matcher.end() - matcher.start());
-                    textPane.getDocument().insertString(matcher.start(),
-                            replacement, null);
-                    textPane.setCaretPosition(matcher.start() + replacement.length());
-                } catch (BadLocationException e) {
-                }
-            }
+            replaceIfMatched(textPane, match);
         } else if (direction == FindText.DIRECTION_ALL) {
             matcher.region(0, endPos);
             matcher.useTransparentBounds(true);
@@ -225,16 +209,7 @@ public class FindText {
             if (!matcher.find(curPos)) {
                 match = matcher.find(0);
             }
-            if (match) {
-                try {
-                    textPane.getDocument().remove(matcher.start(),
-                            matcher.end() - matcher.start());
-                    textPane.getDocument().insertString(matcher.start(),
-                            replacement, null);
-                    textPane.setCaretPosition(matcher.start() + replacement.length());
-                } catch (BadLocationException e) {
-                }
-            }
+            replaceIfMatched(textPane, match);
         }
         return match;
     }
@@ -269,25 +244,13 @@ public class FindText {
             matcher.region(curPos, endPos);
             while (matcher.find()) {
                 match = true;
-                try {
-                    textPane.getDocument().remove(matcher.start(),
-                            matcher.end() - matcher.start());
-                    textPane.getDocument().insertString(matcher.start(),
-                            replacement, null);
-                } catch (BadLocationException e) {
-                }
+                replaceNow(textPane);
             }
         } else if (direction == FindText.DIRECTION_TO_START) {
             matcher.region(0, curPos);
             match = false;
             while (matcher.find()) {
-                try {
-                    textPane.getDocument().remove(matcher.start(),
-                            matcher.end() - matcher.start());
-                    textPane.getDocument().insertString(matcher.start(),
-                            replacement, null);
-                } catch (BadLocationException e) {
-                }
+                replaceNow(textPane);
             }
         } else if (direction == FindText.DIRECTION_ALL) {
             matcher.region(0, endPos);
@@ -295,15 +258,26 @@ public class FindText {
             match = false;
             while (matcher.find()) {
                 match = true;
-                try {
-                    textPane.getDocument().remove(matcher.start(),
-                            matcher.end() - matcher.start());
-                    textPane.getDocument().insertString(matcher.start(),
-                            replacement, null);
-                } catch (BadLocationException e) {
-                }
+                replaceNow(textPane);
             }
         }
         return match;
+    }
+
+    private void replaceIfMatched(JTextPane textPane, boolean match) {
+        if (match) {
+            replaceNow(textPane);
+            textPane.setCaretPosition(matcher.start() + replacement.length());
+        }
+    }
+
+    private void replaceNow(JTextPane textPane) {
+        try {
+            textPane.getDocument().remove(matcher.start(),
+                    matcher.end() - matcher.start());
+            textPane.getDocument().insertString(matcher.start(),
+                    replacement, null);
+        } catch (BadLocationException ignored) {
+        }
     }
 }

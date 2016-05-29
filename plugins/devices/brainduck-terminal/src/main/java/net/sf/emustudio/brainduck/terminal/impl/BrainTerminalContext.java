@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,23 +20,24 @@
 package net.sf.emustudio.brainduck.terminal.impl;
 
 import emulib.plugins.device.DeviceContext;
-import java.io.IOException;
-import java.util.Objects;
 import net.jcip.annotations.ThreadSafe;
 import net.sf.emustudio.brainduck.terminal.io.IOProvider;
 import net.sf.emustudio.brainduck.terminal.io.InputProvider;
 import net.sf.emustudio.brainduck.terminal.io.OutputProvider;
 
+import java.io.IOException;
+import java.util.Objects;
+
 @ThreadSafe
-public class BrainTerminalContext implements DeviceContext<Short>, IOProvider {
+class BrainTerminalContext implements DeviceContext<Short>, IOProvider {
     private volatile InputProvider inputProvider = InputProvider.DUMMY;
     private volatile OutputProvider outputProvider = OutputProvider.DUMMY;
 
-    public void setInputProvider(InputProvider inputProvider) {
+    void setInputProvider(InputProvider inputProvider) {
         this.inputProvider = Objects.requireNonNull(inputProvider);
     }
 
-    public void setOutputProvider(OutputProvider outputProvider) {
+    void setOutputProvider(OutputProvider outputProvider) {
         this.outputProvider = Objects.requireNonNull(outputProvider);
     }
 

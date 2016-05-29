@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,7 +17,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package net.sf.emustudio.intel8080;
 
 import emulib.annotations.ContextType;
@@ -36,14 +36,14 @@ public interface ExtendedContext extends CPUContext {
      * @param port CPU port where the device should be attached
      * @return true on success, false otherwise
      */
-    public boolean attachDevice(DeviceContext<Short> device, int port);
+    boolean attachDevice(DeviceContext<Short> device, int port);
     
     /**
      * Detach a device from the CPU.
      * 
      * @param port the CPU port number which will be freed.
      */
-    public void detachDevice(int port);
+    void detachDevice(int port);
     
-    public void setCPUFrequency(int freq);
+    void setCPUFrequency(int freq);
 }

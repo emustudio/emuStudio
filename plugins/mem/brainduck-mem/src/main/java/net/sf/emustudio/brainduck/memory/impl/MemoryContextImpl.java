@@ -1,8 +1,7 @@
 /*
- * MemoryContextImpl.java
- * 
- * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,7 +25,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> {
 
     private short[] memory; // this array is the operating memory
 
-    public MemoryContextImpl() {
+    MemoryContextImpl() {
         super();
     }
 
@@ -38,7 +37,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> {
      * @param size  size of the memory
      * @return      true if the initialization was successful, false otherwise
      */
-    public boolean init(int size) {
+    boolean init(int size) {
         memory = new short[size];
         return true;
     }

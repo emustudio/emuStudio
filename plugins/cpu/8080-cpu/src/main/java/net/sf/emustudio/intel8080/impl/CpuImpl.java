@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -9,7 +10,7 @@
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR regs[REG_A] PARTICULAR PURPOSE.  See the
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License along
@@ -51,9 +52,10 @@ import java.util.concurrent.atomic.AtomicReference;
 @PluginType(
         type = PLUGIN_TYPE.CPU,
         title = "Intel 8080 CPU",
-        copyright = "\u00A9 Copyright 2007-2015, Peter Jakubčo",
+        copyright = "\u00A9 Copyright 2006-2016, Peter Jakubčo",
         description = "Emulator of Intel 8080 CPU"
 )
+@SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU {
     public static final String PRINT_CODE = "printCode";
     public static final String PRINT_CODE_USE_CACHE = "printCodeUseCache";

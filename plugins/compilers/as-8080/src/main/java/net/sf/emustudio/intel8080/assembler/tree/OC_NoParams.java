@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -42,54 +43,82 @@ public class OC_NoParams extends OpCodeNode {
     public void pass4(HEXFileManager hex) throws Exception {
         short opCode = 0; // nop
 
-        if (mnemo.equals("stc")) {
-            opCode = 55;
-        } else if (mnemo.equals("cmc")) {
-            opCode = 63;
-        } else if (mnemo.equals("cma")) {
-            opCode = 47;
-        } else if (mnemo.equals("daa")) {
-            opCode = 39;
-        } else if (mnemo.equals("nop")); else if (mnemo.equals("rlc")) {
-            opCode = 7;
-        } else if (mnemo.equals("rrc")) {
-            opCode = 15;
-        } else if (mnemo.equals("ral")) {
-            opCode = 23;
-        } else if (mnemo.equals("rar")) {
-            opCode = 31;
-        } else if (mnemo.equals("xchg")) {
-            opCode = 235;
-        } else if (mnemo.equals("xthl")) {
-            opCode = 227;
-        } else if (mnemo.equals("sphl")) {
-            opCode = 249;
-        } else if (mnemo.equals("pchl")) {
-            opCode = 233;
-        } else if (mnemo.equals("ret")) {
-            opCode = 201;
-        } else if (mnemo.equals("rc")) {
-            opCode = 216;
-        } else if (mnemo.equals("rnc")) {
-            opCode = 208;
-        } else if (mnemo.equals("rz")) {
-            opCode = 200;
-        } else if (mnemo.equals("rnz")) {
-            opCode = 192;
-        } else if (mnemo.equals("rm")) {
-            opCode = 248;
-        } else if (mnemo.equals("rp")) {
-            opCode = 240;
-        } else if (mnemo.equals("rpe")) {
-            opCode = 232;
-        } else if (mnemo.equals("rpo")) {
-            opCode = 224;
-        } else if (mnemo.equals("ei")) {
-            opCode = 251;
-        } else if (mnemo.equals("di")) {
-            opCode = 243;
-        } else if (mnemo.equals("hlt")) {
-            opCode = 118;
+        switch (mnemo) {
+            case "stc":
+                opCode = 55;
+                break;
+            case "cmc":
+                opCode = 63;
+                break;
+            case "cma":
+                opCode = 47;
+                break;
+            case "daa":
+                opCode = 39;
+                break;
+            case "nop":
+                ;
+                break;
+            case "rlc":
+                opCode = 7;
+                break;
+            case "rrc":
+                opCode = 15;
+                break;
+            case "ral":
+                opCode = 23;
+                break;
+            case "rar":
+                opCode = 31;
+                break;
+            case "xchg":
+                opCode = 235;
+                break;
+            case "xthl":
+                opCode = 227;
+                break;
+            case "sphl":
+                opCode = 249;
+                break;
+            case "pchl":
+                opCode = 233;
+                break;
+            case "ret":
+                opCode = 201;
+                break;
+            case "rc":
+                opCode = 216;
+                break;
+            case "rnc":
+                opCode = 208;
+                break;
+            case "rz":
+                opCode = 200;
+                break;
+            case "rnz":
+                opCode = 192;
+                break;
+            case "rm":
+                opCode = 248;
+                break;
+            case "rp":
+                opCode = 240;
+                break;
+            case "rpe":
+                opCode = 232;
+                break;
+            case "rpo":
+                opCode = 224;
+                break;
+            case "ei":
+                opCode = 251;
+                break;
+            case "di":
+                opCode = 243;
+                break;
+            case "hlt":
+                opCode = 118;
+                break;
         }
         hex.putCode(String.format("%1$02X", opCode));
     }

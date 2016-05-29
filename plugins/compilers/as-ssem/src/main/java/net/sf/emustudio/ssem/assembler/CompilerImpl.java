@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2016 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,7 +16,6 @@
  *  You should have received a copy of the GNU General Public License along
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
  */
 package net.sf.emustudio.ssem.assembler;
 
@@ -42,6 +42,7 @@ import java.util.Objects;
     copyright = "\u00A9 Copyright 2016, Peter Jakubčo",
     description = "Assembler of SSEM processor language"
 )
+@SuppressWarnings("unused")
 public class CompilerImpl extends AbstractCompiler {
     private static final String OUTPUT_FILE_EXTENSION = ".bin";
     private static final Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);

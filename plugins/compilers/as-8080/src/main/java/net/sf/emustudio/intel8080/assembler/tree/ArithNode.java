@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,7 +17,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import net.sf.emustudio.intel8080.assembler.impl.CompileEnv;
@@ -42,30 +42,43 @@ public class ArithNode extends ExprNode {
         }
  
         this.value = 0;
-        if (operator.equals("or")) {
-            this.value = lv | rv;
-        } else if (operator.equals("xor")) {
-            this.value = lv ^ rv;
-        } else if (operator.equals("and")) {
-            this.value = lv & rv;
-        } else if (operator.equals("not")) {
-            this.value = ~lv;
-        } else if (operator.equals("+")) {
-            this.value = lv + rv;
-        } else if (operator.equals("-")) {
-            this.value = lv - rv;
-        } else if (operator.equals("*")) {
-            this.value = lv * rv;
-        } else if (operator.equals("/")) {
-            this.value = lv / rv;
-        } else if (operator.equals("mod")) {
-            this.value = lv % rv;
-        } else if (operator.equals("shr")) {
-            this.value = lv >>> rv;
-        } else if (operator.equals("shl")) {
-            this.value = lv << rv;
-        } else if (operator.equals("=")) {
-            this.value = (lv == rv) ? 1 : 0;
+        switch (operator) {
+            case "or":
+                this.value = lv | rv;
+                break;
+            case "xor":
+                this.value = lv ^ rv;
+                break;
+            case "and":
+                this.value = lv & rv;
+                break;
+            case "not":
+                this.value = ~lv;
+                break;
+            case "+":
+                this.value = lv + rv;
+                break;
+            case "-":
+                this.value = lv - rv;
+                break;
+            case "*":
+                this.value = lv * rv;
+                break;
+            case "/":
+                this.value = lv / rv;
+                break;
+            case "mod":
+                this.value = lv % rv;
+                break;
+            case "shr":
+                this.value = lv >>> rv;
+                break;
+            case "shl":
+                this.value = lv << rv;
+                break;
+            case "=":
+                this.value = (lv == rv) ? 1 : 0;
+                break;
         }
         
         return this.value;

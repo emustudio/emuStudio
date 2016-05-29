@@ -1,31 +1,29 @@
 /*
- * Copyright (C) 2014 Peter Jakubčo
+ * KISS, YAGNI, DRY
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 package net.sf.emustudio.brainduck.terminal.io;
 
 import net.jcip.annotations.ThreadSafe;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Point;
+import java.awt.*;
 import java.util.Objects;
-import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -35,7 +33,6 @@ public class Cursor {
     private final int howOften;
     private final TimeUnit timeUnit;
 
-    private final BlockingDeque<PointTask> repaintTasks = new LinkedBlockingDeque<>();
     private volatile Display canvas;
 
     private volatile int charWidth;
@@ -45,17 +42,13 @@ public class Cursor {
 
     private final ScheduledExecutorService repaintScheduler = Executors.newSingleThreadScheduledExecutor();
 
-    private interface PointTask {
-        public void execute(Point point);
-    }
-
-    public Cursor(int howOften, TimeUnit timeUnit) {
+    Cursor(int howOften, TimeUnit timeUnit) {
         this.howOften = howOften;
         this.timeUnit = Objects.requireNonNull(timeUnit);
         reset();
     }
 
-    public void start(Display canvas) {
+    void start(Display canvas) {
         this.canvas = Objects.requireNonNull(canvas);
         this.charWidth = canvas.getCharWidth();
         this.charHeight = canvas.getCharHeight();
@@ -69,7 +62,7 @@ public class Cursor {
         }, 0, howOften, timeUnit);
     }
 
-    public void stop() {
+    void stop() {
         repaintScheduler.shutdownNow();
         try {
             repaintScheduler.awaitTermination(3 * howOften, timeUnit);
@@ -133,7 +126,7 @@ public class Cursor {
         } while (!cursorPoint.compareAndSet(oldPoint, point));
     }
     
-    public Point getLogicalPoint() {
+    Point getLogicalPoint() {
         return new Point(cursorPoint.get());
     }
     

@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2006-2016, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -15,12 +17,11 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.gui.editor;
 
-import java.awt.Color;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
+import java.awt.*;
 
 /**
  * This class represents a style used within the syntax highlighting process.
@@ -29,9 +30,9 @@ import javax.swing.text.StyleConstants;
  * proper places.
  *
  */
-public class HighlightStyle extends SimpleAttributeSet {
+class HighlightStyle extends SimpleAttributeSet {
 
-    public HighlightStyle(boolean italic, boolean bold, Color color) {
+    HighlightStyle(boolean italic, boolean bold, Color color) {
         setStyle(italic, bold, color);
     }
 

@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2006-2016, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -23,16 +25,16 @@ import javax.swing.text.DefaultStyledDocument;
 /**
  * Just like a DefaultStyledDocument but intercepts inserts and removes to color them.
  */
-public class HighLightedDocument extends DefaultStyledDocument {
+class HighLightedDocument extends DefaultStyledDocument {
 
     private HighlightThread high;
     private DocumentReader documentReader;
 
-    public void setDocumentReader(DocumentReader documentReader) {
+    void setDocumentReader(DocumentReader documentReader) {
         this.documentReader = documentReader;
     }
 
-    public synchronized void setThread(HighlightThread high) {
+    synchronized void setThread(HighlightThread high) {
         this.high = high;
     }
 

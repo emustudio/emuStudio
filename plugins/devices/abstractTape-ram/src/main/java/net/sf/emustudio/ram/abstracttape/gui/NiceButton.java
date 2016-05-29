@@ -1,8 +1,7 @@
 /*
- * NiceButton.java
- * 
- * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,16 +19,15 @@
  */
 package net.sf.emustudio.ram.abstracttape.gui;
 
-import java.awt.Dimension;
-import javax.swing.JButton;
+import javax.swing.*;
+import java.awt.*;
 
-@SuppressWarnings("serial")
-public class NiceButton extends JButton {
+class NiceButton extends JButton {
 
     private final static int x_WIDTH = 95;
     private final static int x_HEIGHT = 30;
 
-    public NiceButton() {
+    private NiceButton() {
         super();
         Dimension d = getPreferredSize();
         d.setSize(x_WIDTH, x_HEIGHT); //d.getHeight());
@@ -39,7 +37,7 @@ public class NiceButton extends JButton {
         this.setMaximumSize(d);
     }
 
-    public NiceButton(String text) {
+    NiceButton(String text) {
         this();
         this.setText(text);
     }

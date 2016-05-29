@@ -1,3 +1,22 @@
+/*
+ * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 package net.sf.emustudio.devices.mits88sio.impl;
 
 import emulib.annotations.ContextType;
@@ -12,7 +31,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @ThreadSafe
-public class Transmitter {
+class Transmitter {
     private final static Logger LOGGER = LoggerFactory.getLogger(Transmitter.class);
 
     private final Queue<Short> buffer = new ConcurrentLinkedQueue<>();
@@ -21,12 +40,12 @@ public class Transmitter {
     private volatile DeviceContext<Short> device;
     private volatile short status;
 
-    public void setDevice(DeviceContext<Short> device) {
+    void setDevice(DeviceContext<Short> device) {
         this.device = device;
         LOGGER.info("Attaching device: " + getDeviceId());
     }
 
-    public String getDeviceId() {
+    String getDeviceId() {
         DeviceContext tmpDevice = device;
         if (tmpDevice == null) {
             return "unknown";
@@ -35,11 +54,11 @@ public class Transmitter {
         return  (contextType != null) ? contextType.id() : tmpDevice.toString();
     }
 
-    public void reset() {
+    void reset() {
         writeToStatus((short)0x03);
     }
 
-    public void writeToStatus(short value) {
+    void writeToStatus(short value) {
         bufferAndStatusLock.lock();
         try {
             // TODO: Wrong implementation; buffer SHOULD be emptied.
@@ -52,7 +71,7 @@ public class Transmitter {
         }
     }
 
-    public void writeFromDevice(short data) {
+    void writeFromDevice(short data) {
         bufferAndStatusLock.lock();
         try {
             buffer.add(data);
@@ -62,14 +81,14 @@ public class Transmitter {
         }
     }
 
-    public void writeToDevice(short data) {
+    void writeToDevice(short data) {
         DeviceContext<Short> tmpDevice = device;
         if (tmpDevice != null) {
             tmpDevice.write(data);
         }
     }
 
-    public short readBuffer() {
+    short readBuffer() {
         bufferAndStatusLock.lock();
         try {
             Short result = buffer.poll();
@@ -82,7 +101,7 @@ public class Transmitter {
         }
     }
 
-    public short readStatus() {
+    short readStatus() {
         return status;
     }
 }

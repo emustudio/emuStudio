@@ -1,5 +1,5 @@
 = How to write a memory for emuStudio
-(c) Copyright 2007-2016, Peter Jakubčo
+(c) Copyright 2006-2016, Peter Jakubčo
 Version 0.39
 :toc:
 :numbered:

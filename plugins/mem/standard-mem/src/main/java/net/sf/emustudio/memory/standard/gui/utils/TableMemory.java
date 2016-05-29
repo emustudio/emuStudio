@@ -1,10 +1,7 @@
 /*
- * TableMemory.java
- *
- * Created on Nedeľa, 2007, október 28, 13:06
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -65,9 +62,9 @@ public class TableMemory extends JTable {
         }
     }
 
-    public static class MemRowHeaderRenderer extends JLabel implements ListCellRenderer {
+    private static class MemRowHeaderRenderer extends JLabel implements ListCellRenderer {
 
-        public MemRowHeaderRenderer(JTable table) {
+        MemRowHeaderRenderer(JTable table) {
             JTableHeader header = table.getTableHeader();
             setOpaque(true);
             setBorder(UIManager.getBorder("TableHeader.cellBorder"));
@@ -86,7 +83,7 @@ public class TableMemory extends JTable {
         }
     }
 
-    public class MemCellRenderer extends JLabel implements TableCellRenderer {
+    private class MemCellRenderer extends JLabel implements TableCellRenderer {
 
         private JList rowHeader;
         private String adresses[];
@@ -94,7 +91,7 @@ public class TableMemory extends JTable {
         private TableMemory tm;
         private Color romColor;
 
-        public MemCellRenderer(TableMemory tm) {
+        MemCellRenderer(TableMemory tm) {
             this.tm = tm;
             romColor = new Color(0xE8, 0x68, 0x50);
             currentPage = memModel.getPage();

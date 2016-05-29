@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2006-2016, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -15,23 +17,21 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.gui.editor;
 
+import javax.swing.text.BadLocationException;
 import java.io.IOException;
 import java.io.Reader;
-import javax.swing.text.BadLocationException;
 
 /**
  * Reader of the source code. It is used by syntax highlighter.
  */
-public class DocumentReader extends Reader {
-    private final long mark = -1;
+class DocumentReader extends Reader {
     private long position = 0;
 
     protected HighLightedDocument document;
 
-    public DocumentReader(HighLightedDocument document) {
+    DocumentReader(HighLightedDocument document) {
         this.document = document;
     }
 
@@ -45,7 +45,7 @@ public class DocumentReader extends Reader {
      * @param position the position
      * @param adjustment the adjustment
      */
-    public synchronized void update(int position, int adjustment) {
+    synchronized void update(int position, int adjustment) {
         try {
             document.readLock();
 
@@ -60,8 +60,6 @@ public class DocumentReader extends Reader {
             document.readUnlock();
         }
     }
-
-    public long getPosition() { return position; }
 
     @Override
     public int read() {
@@ -126,11 +124,7 @@ public class DocumentReader extends Reader {
 
     @Override
     public void reset() {
-        if (mark == -1){
-            position = 0;
-        } else {
-            position = mark;
-        }
+        position = 0;
     }
 
     @Override
@@ -152,7 +146,7 @@ public class DocumentReader extends Reader {
         }
     }
 
-    public void seek(long n){
+    void seek(long n){
         document.readLock();
         int docLen = 0;
         try {

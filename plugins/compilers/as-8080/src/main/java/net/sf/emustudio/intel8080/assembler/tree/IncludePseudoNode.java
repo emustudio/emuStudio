@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -65,11 +66,11 @@ public class IncludePseudoNode extends PseudoNode {
      * @param tmpFileName 
      * @return true if filenames equal, false if not
      */
-    public boolean isEqualName(String tmpFileName) {
+    boolean isEqualName(String tmpFileName) {
         return findIncludeFile(fileName).equals(findIncludeFile(tmpFileName));
     }
 
-    public void pass1(List<String> includefiles, CompileEnv parentEnv) throws Exception {
+    void pass1(List<String> includefiles, CompileEnv parentEnv) throws Exception {
         try {
             namespace = new CompileEnv(parentEnv.getInputFile().getAbsolutePath());
             
@@ -110,7 +111,7 @@ public class IncludePseudoNode extends PseudoNode {
 
     @Override
     public void pass4(HEXFileManager hex) throws Exception {
-        while (program.pass3(namespace) == true) {
+        while (program.pass3(namespace)) {
         }
         if (namespace.getPassNeedCount() != 0) {
             throw new Exception("Error: can't evaluate all expressions");

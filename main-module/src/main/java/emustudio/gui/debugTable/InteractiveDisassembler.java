@@ -1,6 +1,7 @@
 /*
- * (c) Copyright 2006-2015, Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,11 +33,11 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
 @ThreadSafe
-public class InteractiveDisassembler {
-    public final static int INSTRUCTIONS_PER_PAGE = 2 * 15 + 1;
-    public final static int CURRENT_INSTRUCTION = 4;
+class InteractiveDisassembler {
+    final static int INSTRUCTIONS_PER_PAGE = 2 * 15 + 1;
+    final static int CURRENT_INSTRUCTION = 4;
     private final static int AVG_INSTRUCTION_SIZE = 2;
-    public final static int BYTES_PER_PAGE = INSTRUCTIONS_PER_PAGE * AVG_INSTRUCTION_SIZE;
+    final static int BYTES_PER_PAGE = INSTRUCTIONS_PER_PAGE * AVG_INSTRUCTION_SIZE;
 
     private final Disassembler disassembler;
     private volatile int memorySize;
@@ -44,7 +45,7 @@ public class InteractiveDisassembler {
 
     private volatile int addressOffset;
 
-    public InteractiveDisassembler(Disassembler disassembler, int memorySize) {
+    InteractiveDisassembler(Disassembler disassembler, int memorySize) {
         if (memorySize < 0) {
             throw new IllegalArgumentException("Memory size < 0");
         }
@@ -53,7 +54,7 @@ public class InteractiveDisassembler {
         this.memorySize = memorySize;
     }
 
-    public void pagePrevious() {
+    void pagePrevious() {
         int tmpMemorySize = memorySize;
 
         // do not go over "backwards maximum"
@@ -64,7 +65,7 @@ public class InteractiveDisassembler {
         }
     }
 
-    public void pageNext() {
+    void pageNext() {
         int tmpMemorySize = memorySize;
 
         // do not go over "forwards maximum"
@@ -75,15 +76,15 @@ public class InteractiveDisassembler {
         }
     }
 
-    public void pageCurrent() {
+    void pageCurrent() {
         addressOffset = 0;
     }
 
-    public void pageFirst() {
+    void pageFirst() {
         addressOffset = -memorySize;
     }
 
-    public void pageLast() {
+    void pageLast() {
         addressOffset = memorySize;
     }
 
@@ -168,15 +169,15 @@ public class InteractiveDisassembler {
         return locations;
     }
 
-    public void flushCache(int fromLocationInclusive, int toLocationExclusive) {
+    void flushCache(int fromLocationInclusive, int toLocationExclusive) {
         flowGraph.subMap(fromLocationInclusive, toLocationExclusive).clear();
     }
 
-    public void setMemorySize(int memorySize) {
+    void setMemorySize(int memorySize) {
         this.memorySize = memorySize;
     }
 
-    public int rowToLocation(int currentLocation, int row) {
+    int rowToLocation(int currentLocation, int row) {
         int tmpMemorySize = memorySize;
 
         if (tmpMemorySize <= 0) {

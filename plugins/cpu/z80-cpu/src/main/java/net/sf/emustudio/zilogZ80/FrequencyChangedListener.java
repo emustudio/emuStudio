@@ -1,10 +1,7 @@
 /*
- * FrequencyChangedListener.java
- *
- * Created on 18.6.2008, 9:31:16
- *
- * Copyright (C) 2008-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,7 +17,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package net.sf.emustudio.zilogZ80;
 
 /**
@@ -33,5 +29,5 @@ public interface FrequencyChangedListener {
      * 
      * @param newFrequency new Frequency in kHz
      */
-    public void frequencyChanged(float newFrequency);
+    void frequencyChanged(float newFrequency);
 }

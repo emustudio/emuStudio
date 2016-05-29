@@ -1,20 +1,21 @@
 /*
- * Copyright (C) 2012-2015, Peter Jakubčo
  * KISS, YAGNI, DRY
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 package emustudio.drawing;
 
@@ -98,9 +99,9 @@ public class SchemaTest {
 
     @Test
     public void testAddDeviceElement() {
-        DeviceElement deviceElement = null;
+        DeviceElement deviceElement;
         Schema instance = new Schema();
-        instance.addDeviceElement(deviceElement);
+        instance.addDeviceElement(null);
         Assert.assertEquals(0, instance.getDeviceElements().size());
 
         for (int i = 0; i < 10; i++) {
@@ -178,8 +179,8 @@ public class SchemaTest {
         instance.setCompilerElement(elem);
         instance.addDeviceElement(elem2);
         instance.setMemoryElement(elem3);
-        ConnectionLine lin0 = new ConnectionLine(elem, elem2, new ArrayList<Point>(), instance);
-        ConnectionLine lin1 = new ConnectionLine(elem, elem3, new ArrayList<Point>(), instance);
+        ConnectionLine lin0 = new ConnectionLine(elem, elem2, new ArrayList<>(), instance);
+        ConnectionLine lin1 = new ConnectionLine(elem, elem3, new ArrayList<>(), instance);
         instance.addConnectionLine(lin0);
         instance.addConnectionLine(lin1);
         List<ConnectionLine> result = instance.getConnectionLines();
@@ -211,8 +212,8 @@ public class SchemaTest {
         schema.setCompilerElement(elem);
         Assert.assertSame(elem, schema.getCompilerElement());
 
-        Point p = null;
-        Assert.assertNull(schema.getCrossingElement(p));
+        Point p;
+        Assert.assertNull(schema.getCrossingElement(null));
 
         p = new Point(110, 110); // somewhere in the middle
         Assert.assertSame(elem, schema.getCrossingElement(p));
@@ -257,8 +258,8 @@ public class SchemaTest {
         instance.setCompilerElement(elem);
         Assert.assertSame(elem, instance.getCompilerElement());
 
-        Point p = null;
-        Element result = instance.getElementByBorderPoint(p);
+        Point p;
+        Element result = instance.getElementByBorderPoint(null);
         Assert.assertNull(result);
 
         p = new Point(50, 100); // left border
@@ -338,9 +339,8 @@ public class SchemaTest {
     @Test
     public void testGetSetUseGrid() {
         Schema instance = new Schema();
-        boolean expResult = true;
         boolean result = instance.isGridUsed();
-        Assert.assertEquals(expResult, result);
+        Assert.assertEquals(true, result);
 
         instance.setUsingGrid(false);
         Assert.assertEquals(false, instance.isGridUsed());
@@ -394,20 +394,19 @@ public class SchemaTest {
         elem3.measure(graphicsMock);
         instance.setMemoryElement(elem3);
 
-        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList(), instance);
+        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList<>(), instance);
         instance.addConnectionLine(line0);
-        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList(), instance);
+        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList<>(), instance);
         instance.addConnectionLine(line1);
 
-        List<Point> points = new ArrayList<Point>();
+        List<Point> points = new ArrayList<>();
         points.add(new Point(250,200));
         ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
         instance.addConnectionLine(line2);
 
-        Point p = null;
-        ConnectionLine expResult = null;
-        ConnectionLine result = instance.getCrossingLine(p);
-        Assert.assertSame(expResult, result);
+        Point p;
+        ConnectionLine result = instance.getCrossingLine(null);
+        Assert.assertSame(null, result);
 
 
        /*             l
@@ -426,21 +425,20 @@ public class SchemaTest {
         *      +---------+
         */
         p = new Point(125, 150);
-        expResult = line0;
         result = instance.getCrossingLine(p);
-        Assert.assertSame(expResult, result);
+        Assert.assertSame(line0, result);
 
         p = new Point(123, 151);
-        expResult = line0;
         result = instance.getCrossingLine(p);
-        Assert.assertSame(expResult, result);
+        Assert.assertSame(line0, result);
 
         /*
          * toleranceFactor = TOLERANCE / sqrt(x^2 + y^2); where AC' = (x,y)
          */
         int maxT = (int)(ConnectionLine.TOLERANCE / Math.sqrt(5)+20);
+        ConnectionLine expResult;
         for (int toleranceFactor = -20; toleranceFactor < maxT; toleranceFactor++) {
-            p = new Point((int) (125 + toleranceFactor * (-2)), (int) (150 + toleranceFactor * 1));
+            p = new Point(125 + toleranceFactor * (-2), 150 + toleranceFactor);
 
             double a = 200 - 100;
             double b = 100 - 150;
@@ -457,24 +455,20 @@ public class SchemaTest {
         }
 
         p = new Point(175, 100);
-        expResult = line1;
         result = instance.getCrossingLine(p);
-        Assert.assertSame(expResult, result);
+        Assert.assertSame(line1, result);
 
         p = new Point(175, 100 + ConnectionLine.TOLERANCE);
-        expResult = line1;
         result = instance.getCrossingLine(p);
-        Assert.assertSame(expResult, result);
+        Assert.assertSame(line1, result);
 
         p = new Point(175, 100 - ConnectionLine.TOLERANCE);
-        expResult = line1;
         result = instance.getCrossingLine(p);
-        Assert.assertSame(expResult, result);
+        Assert.assertSame(line1, result);
 
         p = new Point(250 + ConnectionLine.TOLERANCE, 200);
-        expResult = line2;
         result = instance.getCrossingLine(p);
-        Assert.assertSame(expResult, result);
+        Assert.assertSame(line2, result);
 
         p = new Point(250 + ConnectionLine.TOLERANCE + 1, 200);
         result = instance.getCrossingLine(p);
@@ -527,12 +521,12 @@ public class SchemaTest {
         elem3.measure(graphicsMock);
         instance.setMemoryElement(elem3);
 
-        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList(), instance);
+        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList<>(), instance);
         instance.addConnectionLine(line0);
-        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList(), instance);
+        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList<>(), instance);
         instance.addConnectionLine(line1);
 
-        List<Point> points = new ArrayList<Point>();
+        List<Point> points = new ArrayList<>();
         points.add(new Point(250,200));
         ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
         instance.addConnectionLine(line2);
@@ -716,12 +710,12 @@ public class SchemaTest {
         elem3.measure(graphicsMock);
         instance.setMemoryElement(elem3);
 
-        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList(), instance);
+        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList<>(), instance);
         instance.addConnectionLine(line0);
-        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList(), instance);
+        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList<>(), instance);
         instance.addConnectionLine(line1);
 
-        List<Point> points = new ArrayList<Point>();
+        List<Point> points = new ArrayList<>();
         points.add(new Point(250,200));
         ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
         instance.addConnectionLine(line2);
@@ -918,12 +912,12 @@ public class SchemaTest {
         elem3.measure(graphicsMock);
         instance.setMemoryElement(elem3);
 
-        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList(), instance);
+        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList<>(), instance);
         instance.addConnectionLine(line0);
-        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList(), instance);
+        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList<>(), instance);
         instance.addConnectionLine(line1);
 
-        List<Point> points = new ArrayList<Point>();
+        List<Point> points = new ArrayList<>();
         points.add(new Point(250, 200));
         ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
         instance.addConnectionLine(line2);

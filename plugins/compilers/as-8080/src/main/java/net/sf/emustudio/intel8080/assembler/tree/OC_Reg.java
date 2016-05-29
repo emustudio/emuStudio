@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,26 +45,37 @@ public class OC_Reg extends OpCodeNode {
     public void pass4(HEXFileManager hex) throws Exception {
         int opCode = 0;
 
-        if (mnemo.equals("inr")) {
-            opCode = 4 | (reg << 3);
-        } else if (mnemo.equals("dcr")) {
-            opCode = 5 | (reg << 3);
-        } else if (mnemo.equals("add")) {
-            opCode = 128 | reg;
-        } else if (mnemo.equals("adc")) {
-            opCode = 136 | reg;
-        } else if (mnemo.equals("sub")) {
-            opCode = 144 | reg;
-        } else if (mnemo.equals("sbb")) {
-            opCode = 152 | reg;
-        } else if (mnemo.equals("ana")) {
-            opCode = 160 | reg;
-        } else if (mnemo.equals("xra")) {
-            opCode = 168 | reg;
-        } else if (mnemo.equals("ora")) {
-            opCode = 176 | reg;
-        } else if (mnemo.equals("cmp")) {
-            opCode = 184 | reg;
+        switch (mnemo) {
+            case "inr":
+                opCode = 4 | (reg << 3);
+                break;
+            case "dcr":
+                opCode = 5 | (reg << 3);
+                break;
+            case "add":
+                opCode = 128 | reg;
+                break;
+            case "adc":
+                opCode = 136 | reg;
+                break;
+            case "sub":
+                opCode = 144 | reg;
+                break;
+            case "sbb":
+                opCode = 152 | reg;
+                break;
+            case "ana":
+                opCode = 160 | reg;
+                break;
+            case "xra":
+                opCode = 168 | reg;
+                break;
+            case "ora":
+                opCode = 176 | reg;
+                break;
+            case "cmp":
+                opCode = 184 | reg;
+                break;
         }
 
         hex.putCode(String.format("%1$02X", opCode));

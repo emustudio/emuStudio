@@ -1,7 +1,7 @@
 /*
  * KISS, YAGNI, DRY
-
- * Copyright (C) 2016 Peter Jakubčo
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -42,6 +42,7 @@ import java.util.ResourceBundle;
         copyright = "\u00A9 Copyright 2016, Peter Jakubčo",
         description = "Main store for SSEM machine"
 )
+@SuppressWarnings("unused")
 public class MemoryImpl extends AbstractMemory {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 

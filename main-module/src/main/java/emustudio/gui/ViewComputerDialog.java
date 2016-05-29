@@ -1,19 +1,21 @@
 /*
  * KISS, YAGNI, DRY
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 package emustudio.gui;
 
@@ -72,7 +74,7 @@ class ViewComputerDialog extends javax.swing.JDialog {
                 return;
             }
             try {
-                setInfo(computer.getDevice(i), settings.getDeviceName(i));
+                setInfo(computer.getDevice(i), Device.class, settings.getDeviceName(i));
             } catch (Exception ex) {
                 LOGGER.error("Could not set info", ex);
             }
@@ -95,10 +97,10 @@ class ViewComputerDialog extends javax.swing.JDialog {
         // Select default info
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        setInfo(computer.getCPU(), settings.getCPUName());
+        setInfo(computer.getCPU(), CPU.class, settings.getCPUName());
     }
 
-    private void setInfo(Optional<? extends Plugin> pluginOpt, String pluginName) {
+    private void setInfo(Optional<? extends Plugin> pluginOpt, Class<? extends Plugin> interf, String pluginName) {
         if (!pluginOpt.isPresent()) {
             setVisibleInfo(false);
             return;
@@ -108,7 +110,7 @@ class ViewComputerDialog extends javax.swing.JDialog {
         Plugin plugin = pluginOpt.get();
         PluginType pluginType = plugin.getClass().getAnnotation(PluginType.class);
 
-        Path filePath = ComputerConfig.getPluginDir(plugin.getClass()).resolve(pluginName + ".jar");
+        Path filePath = ComputerConfig.getPluginDir(interf).resolve(pluginName + ".jar");
 
         lblName.setText(pluginType.title());
         lblFileName.setText(filePath.toString());
@@ -389,19 +391,19 @@ class ViewComputerDialog extends javax.swing.JDialog {
     private void btnCompilerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCompilerActionPerformed
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        setInfo(computer.getCompiler(), settings.getCompilerName());
+        setInfo(computer.getCompiler(), Compiler.class, settings.getCompilerName());
     }//GEN-LAST:event_btnCompilerActionPerformed
 
     private void btnCPUActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCPUActionPerformed
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        setInfo(computer.getCPU(), settings.getCPUName());
+        setInfo(computer.getCPU(), CPU.class, settings.getCPUName());
     }//GEN-LAST:event_btnCPUActionPerformed
 
     private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMemoryActionPerformed
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        setInfo(computer.getMemory(), settings.getMemoryName());
+        setInfo(computer.getMemory(), Memory.class, settings.getMemoryName());
     }//GEN-LAST:event_btnMemoryActionPerformed
 
     private void btnDeviceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeviceActionPerformed
@@ -410,7 +412,7 @@ class ViewComputerDialog extends javax.swing.JDialog {
         setVisibleInfo(false);
         if (cmbDevice.getItemCount() > 0) {
             cmbDevice.setSelectedIndex(0);
-            setInfo(computer.getDevice(0), settings.getDeviceName(0));
+            setInfo(computer.getDevice(0), Device.class, settings.getDeviceName(0));
         } else {
             cmbDevice.setEnabled(false);
         }

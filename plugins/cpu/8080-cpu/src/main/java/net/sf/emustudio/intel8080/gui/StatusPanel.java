@@ -1,10 +1,7 @@
 /*
- * StatusPanel.java
- *
- * Created on Pondelok, 2007, december 31, 10:59
- *
- * Copyright (C) 2007-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,7 +35,6 @@ import java.awt.*;
 import static emulib.runtime.RadixUtils.getByteHexString;
 import static emulib.runtime.RadixUtils.getWordHexString;
 
-@SuppressWarnings("serial")
 public class StatusPanel extends JPanel {
     private final CpuImpl cpu;
     private final EmulatorEngine engine;

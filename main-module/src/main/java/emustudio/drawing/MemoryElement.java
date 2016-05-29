@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2006-2016, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -15,7 +17,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.drawing;
 
 import java.awt.Color;
@@ -25,7 +26,7 @@ import java.util.Properties;
 public class MemoryElement extends Element {
     private final static Color BACK_COLOR = new Color(0xeeeeee);
 
-    public MemoryElement(String pluginName, Properties settings, Schema schema) throws NumberFormatException {
+    MemoryElement(String pluginName, Properties settings, Schema schema) throws NumberFormatException {
         super(pluginName, settings, BACK_COLOR, schema);
     }
 

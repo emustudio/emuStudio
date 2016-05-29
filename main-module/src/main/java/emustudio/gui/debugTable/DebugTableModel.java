@@ -1,7 +1,7 @@
 /*
  * KISS, YAGNI, DRY
  *
- * (c) Copyright 2015, Peter Jakubčo
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,7 +17,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.gui.debugTable;
 
 import emulib.emustudio.debugtable.AddressColumn;
@@ -51,7 +50,7 @@ public class DebugTableModel extends AbstractTableModel {
         return InteractiveDisassembler.INSTRUCTIONS_PER_PAGE;
     }
 
-    public DebugColumn getColumnAt(int index) {
+    DebugColumn getColumnAt(int index) {
         return columns[index];
     }
 
@@ -70,36 +69,36 @@ public class DebugTableModel extends AbstractTableModel {
         return columns[columnIndex].getClassType();
     }
 
-    public void previousPage() {
+    void previousPage() {
         ida.pagePrevious();
         fireTableDataChanged();
     }
 
-    public void seekBackwardPage(int value) {
+    void seekBackwardPage(int value) {
         while (value > 0) {
             ida.pagePrevious();
             value--;
         }
     }
 
-    public void firstPage() {
+    void firstPage() {
         ida.pageFirst();
         fireTableDataChanged();
     }
 
-    public void nextPage() {
+    void nextPage() {
         ida.pageNext();
         fireTableDataChanged();
     }
 
-    public void seekForwardPage(int value) {
+    void seekForwardPage(int value) {
         while (value > 0) {
             ida.pageNext();
             value--;
         }
     }
 
-    public void lastPage() {
+    void lastPage() {
         ida.pageLast();
         fireTableDataChanged();
     }
@@ -131,7 +130,7 @@ public class DebugTableModel extends AbstractTableModel {
         return columns[columnIndex].isEditable();
     }
 
-    public boolean isRowAtCurrentInstruction(int rowIndex) {
+    boolean isRowAtCurrentInstruction(int rowIndex) {
         return InteractiveDisassembler.CURRENT_INSTRUCTION == rowIndex;
     }
 
@@ -144,12 +143,12 @@ public class DebugTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
-    public void setColumns(List<DebugColumn> columns) {
+    void setColumns(List<DebugColumn> columns) {
         this.columns = columns.toArray(new DebugColumn[0]);
         fireTableStructureChanged();
     }
 
-    public void setDefaultColumns() {
+    void setDefaultColumns() {
         Disassembler dis = cpu.getDisassembler();
         if (cpu.isBreakpointSupported()) {
             setColumns(Arrays.asList(

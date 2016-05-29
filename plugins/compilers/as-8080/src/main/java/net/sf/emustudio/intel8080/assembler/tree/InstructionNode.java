@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,7 +17,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package net.sf.emustudio.intel8080.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
@@ -29,7 +29,7 @@ import java.util.List;
 
 public class InstructionNode {
     protected LabelNode label;
-    protected CodePseudoNode codePseudo;
+    CodePseudoNode codePseudo;
     private int current_address; // its computed in pass2
     
     public InstructionNode(LabelNode label, CodePseudoNode codePseudo) {
@@ -49,11 +49,11 @@ public class InstructionNode {
         return 0;
     }
 
-    public void pass1(List<String> inclfiles, CompileEnv parentEnv) throws Exception {
+    void pass1(List<String> inclfiles, CompileEnv parentEnv) throws Exception {
         ((IncludePseudoNode)codePseudo).pass1(inclfiles, parentEnv);        
     }
 
-    public void pass1() throws Exception {
+    void pass1() throws Exception {
         if (codePseudo instanceof PseudoBlock) {
             ((PseudoBlock)codePseudo).pass1();
         }
@@ -75,7 +75,7 @@ public class InstructionNode {
         return addr_start;
     }
     
-    public boolean pass3(CompileEnv env) throws Exception {
+    boolean pass3(CompileEnv env) throws Exception {
         try {
             if (codePseudo != null) {
                 codePseudo.pass2(env,this.current_address);
@@ -95,7 +95,7 @@ public class InstructionNode {
         }
     }
 
-    public boolean getIncludeLoops(String filename) {
+    boolean getIncludeLoops(String filename) {
         if (codePseudo != null && codePseudo instanceof IncludePseudoNode) {
             IncludePseudoNode i = (IncludePseudoNode)codePseudo;
             if (i.isEqualName(filename)) {

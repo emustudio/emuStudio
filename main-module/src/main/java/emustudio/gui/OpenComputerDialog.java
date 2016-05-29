@@ -1,33 +1,35 @@
 /*
  * KISS, YAGNI, DRY
  *
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU General Public License
- *  as published by the Free Software Foundation; either version 2
- *  of the License, or (at your option) any later version.
+ * (c) Copyright 2006-2016, Peter Jakubčo
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package emustudio.gui;
 
 import emulib.runtime.StaticDialogs;
-import emustudio.architecture.Configuration;
 import emustudio.architecture.ComputerConfig;
+import emustudio.architecture.Configuration;
 import emustudio.architecture.ReadConfigurationException;
 import emustudio.drawing.PreviewPanel;
 import emustudio.drawing.Schema;
 import emustudio.main.Main;
-import javax.swing.AbstractListModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
 
 /**
  * This dialog manages the virtual computers. It offers a list of all
@@ -59,15 +61,15 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     /**
      * Existing configurations list model
      */
-    private class ConfigurationsListModel extends AbstractListModel {
+    private class ConfigurationsListModel extends AbstractListModel<String> {
         private String[] allModels;
 
-        public ConfigurationsListModel() {
+        ConfigurationsListModel() {
             allModels = ComputerConfig.getAllConfigFiles();
         }
 
         @Override
-        public Object getElementAt(int index) {
+        public String getElementAt(int index) {
             return allModels[index];
         }
 
@@ -76,7 +78,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
             return allModels.length;
         }
 
-        public void update() {
+        void update() {
             allModels = ComputerConfig.getAllConfigFiles();
             this.fireContentsChanged(this, -1, -1);
         }
@@ -85,7 +87,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     /**
      * Updates ArchList model
      */
-    public void update() {
+    void update() {
         amodel.update();
         lblPreview.setText(archName);
         lstConfigValueChanged(null);
@@ -113,7 +115,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
      *
      * @param archName new name of the virtual computer
      */
-    public void setArchName(String archName) {
+    void setArchName(String archName) {
         this.archName = archName;
     }
 
@@ -129,12 +131,12 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         javax.swing.JSplitPane splitConfig = new javax.swing.JSplitPane();
         javax.swing.JPanel panelConfig = new javax.swing.JPanel();
         javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
-        lstConfig = new javax.swing.JList();
+        lstConfig = new javax.swing.JList<>();
         javax.swing.JToolBar toolConfig = new javax.swing.JToolBar();
-        btnAdd = new javax.swing.JButton();
-        btnDelete = new javax.swing.JButton();
-        btnEdit = new javax.swing.JButton();
-        btnSaveSchemaImage = new javax.swing.JButton();
+        JButton btnAdd = new JButton();
+        JButton btnDelete = new JButton();
+        JButton btnEdit = new JButton();
+        JButton btnSaveSchemaImage = new JButton();
         javax.swing.JPanel panelPreview = new javax.swing.JPanel();
         scrollPreview = new javax.swing.JScrollPane();
         javax.swing.JToolBar toolPreview = new javax.swing.JToolBar();
@@ -143,7 +145,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         lblPreview = new javax.swing.JLabel();
         javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
         javax.swing.JButton btnOpen = new javax.swing.JButton();
-        btnClose = new javax.swing.JButton();
+        JButton btnClose = new JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("emuStudio - Open virtual computer");
@@ -160,11 +162,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
                 lstConfigMouseClicked(evt);
             }
         });
-        lstConfig.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
-            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
-                lstConfigValueChanged(evt);
-            }
-        });
+        lstConfig.addListSelectionListener(this::lstConfigValueChanged);
         jScrollPane1.setViewportView(lstConfig);
 
         toolConfig.setFloatable(false);
@@ -175,11 +173,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         btnAdd.setFocusable(false);
         btnAdd.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnAdd.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnAdd.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnAddActionPerformed(evt);
-            }
-        });
+        btnAdd.addActionListener(this::btnAddActionPerformed);
         toolConfig.add(btnAdd);
 
         btnDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/list-remove.png"))); // NOI18N
@@ -187,11 +181,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         btnDelete.setFocusable(false);
         btnDelete.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnDelete.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnDelete.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnDeleteActionPerformed(evt);
-            }
-        });
+        btnDelete.addActionListener(this::btnDeleteActionPerformed);
         toolConfig.add(btnDelete);
 
         btnEdit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/computer.png"))); // NOI18N
@@ -199,11 +189,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         btnEdit.setFocusable(false);
         btnEdit.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnEdit.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnEdit.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnEditActionPerformed(evt);
-            }
-        });
+        btnEdit.addActionListener(this::btnEditActionPerformed);
         toolConfig.add(btnEdit);
 
         btnSaveSchemaImage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/document-save.png"))); // NOI18N
@@ -211,11 +197,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         btnSaveSchemaImage.setFocusable(false);
         btnSaveSchemaImage.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnSaveSchemaImage.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnSaveSchemaImage.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnSaveSchemaImageActionPerformed(evt);
-            }
-        });
+        btnSaveSchemaImage.addActionListener(this::btnSaveSchemaImageActionPerformed);
         toolConfig.add(btnSaveSchemaImage);
 
         javax.swing.GroupLayout panelConfigLayout = new javax.swing.GroupLayout(panelConfig);
@@ -272,19 +254,11 @@ public class OpenComputerDialog extends javax.swing.JDialog {
 
         btnOpen.setFont(btnOpen.getFont().deriveFont(btnOpen.getFont().getStyle() | java.awt.Font.BOLD));
         btnOpen.setText("Open");
-        btnOpen.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnOpenActionPerformed(evt);
-            }
-        });
+        btnOpen.addActionListener(this::btnOpenActionPerformed);
 
         btnClose.setFont(btnClose.getFont().deriveFont(btnClose.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnClose.setText("Close");
-        btnClose.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnCloseActionPerformed(evt);
-            }
-        });
+        btnClose.addActionListener(this::btnCloseActionPerformed);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -332,7 +306,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
             Main.tryShowErrorMessage("A computer has to be selected!");
             return;
         }
-        archName = (String) lstConfig.getSelectedValue();
+        archName = lstConfig.getSelectedValue();
         OOK = true;
         dispose();
     }//GEN-LAST:event_btnOpenActionPerformed
@@ -342,7 +316,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
             Main.tryShowErrorMessage("A computer has to be selected!");
             return;
         }
-        archName = (String) lstConfig.getSelectedValue();
+        archName = lstConfig.getSelectedValue();
         try {
             Configuration configuration = ComputerConfig.read(archName);
             Schema schema = configuration.loadSchema();
@@ -361,7 +335,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         }
         int r = StaticDialogs.confirmMessage("Do you really want to delete"
                 + " selected computer?", "Delete architecture");
-        archName = (String) lstConfig.getSelectedValue();
+        archName = lstConfig.getSelectedValue();
         if (r == StaticDialogs.YES_OPTION) {
             boolean re = ComputerConfig.delete(archName);
             lstConfig.clearSelection();
@@ -386,7 +360,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
             return;
         }
 
-        archName = (String) lstConfig.getSelectedValue();
+        archName = lstConfig.getSelectedValue();
         try {
             Configuration configuration = ComputerConfig.read(archName);
             Schema s = configuration.loadSchema();
@@ -413,14 +387,8 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_btnCloseActionPerformed
 
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnAdd;
-    private javax.swing.JButton btnClose;
-    private javax.swing.JButton btnDelete;
-    private javax.swing.JButton btnEdit;
-    private javax.swing.JButton btnSaveSchemaImage;
     private javax.swing.JLabel lblPreview;
-    private javax.swing.JList lstConfig;
+    private javax.swing.JList<String> lstConfig;
     private javax.swing.JScrollPane scrollPreview;
     // End of variables declaration//GEN-END:variables
 

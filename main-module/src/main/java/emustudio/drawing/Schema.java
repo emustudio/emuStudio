@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2006-2016, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -31,8 +33,8 @@ import java.util.Properties;
  *
  */
 public class Schema {
-    public final static int MIN_LEFT_MARGIN = 5;
-    public final static int MIN_TOP_MARGIN = 5;
+    final static int MIN_LEFT_MARGIN = 5;
+    final static int MIN_TOP_MARGIN = 5;
 
     private CompilerElement compilerElement;
     private CpuElement cpuElement;
@@ -91,27 +93,8 @@ public class Schema {
                 continue;
             }
 
-            Element e1 = null, e2 = null;
-            if (j0.equals("cpu")) {
-                e1 = cpuElement;
-            } else if (j0.equals("memory")) {
-                e1 = memoryElement;
-            } else if (j0.equals("compiler")) {
-                e1 = compilerElement;
-            } else if (j0.startsWith("device")) {
-                int index = Integer.parseInt(j0.substring(6));
-                e1 = deviceElements.get(index);
-            }
-            if (j1.equals("cpu")) {
-                e2 = cpuElement;
-            } else if (j1.equals("memory")) {
-                e2 = memoryElement;
-            } else if (j1.equals("compiler")) {
-                e2 = compilerElement;
-            } else if (j1.startsWith("device")) {
-                int index = Integer.parseInt(j1.substring(6));
-                e2 = deviceElements.get(index);
-            }
+            Element e1 = getElementFromEndpoint(j0);
+            Element e2 = getElementFromEndpoint(j1);
             int x, y;
             if ((e1 != null) && (e2 != null)) {
                 ConnectionLine lin = new ConnectionLine(e1, e2, null, this);
@@ -126,7 +109,21 @@ public class Schema {
         }
     }
 
-    public void destroy() {
+    private Element getElementFromEndpoint(String endpoint) {
+        if (endpoint.equals("cpu")) {
+            return cpuElement;
+        } else if (endpoint.equals("memory")) {
+            return memoryElement;
+        } else if (endpoint.equals("compiler")) {
+            return compilerElement;
+        } else if (endpoint.startsWith("device")) {
+            int index = Integer.parseInt(endpoint.substring(6));
+            return deviceElements.get(index);
+        }
+        return null;
+    }
+
+    void destroy() {
         cpuElement = null;
         compilerElement = null;
         memoryElement = null;
@@ -173,7 +170,7 @@ public class Schema {
     public void setCompilerElement(CompilerElement compiler) {
         if ((compiler == null) && (this.compilerElement != null)) {
             removeIncidentLines(this.compilerElement);
-        } else if ((this.compilerElement != null) && (compiler != null)) {
+        } else if (this.compilerElement != null) {
             updateIncidentLines(this.compilerElement, compiler);
         }
         compilerElement = compiler;
@@ -186,7 +183,7 @@ public class Schema {
     public void setCpuElement(CpuElement cpuElement) {
         if ((cpuElement == null) && (this.cpuElement != null)) {
             removeIncidentLines(this.cpuElement);
-        } else if ((this.cpuElement != null) && (cpuElement != null)) {
+        } else if (this.cpuElement != null) {
             updateIncidentLines(this.cpuElement, cpuElement);
         }
         this.cpuElement = cpuElement;
@@ -199,7 +196,7 @@ public class Schema {
     public void setMemoryElement(MemoryElement memoryElement) {
         if ((memoryElement == null) && (this.memoryElement != null)) {
             removeIncidentLines(this.memoryElement);
-        } else if ((this.memoryElement != null) && (memoryElement != null)) {
+        } else if (this.memoryElement != null) {
             updateIncidentLines(this.memoryElement, memoryElement);
         }
         this.memoryElement = memoryElement;
@@ -220,7 +217,7 @@ public class Schema {
         return deviceElements;
     }
 
-    public void removeDeviceElement(DeviceElement device) {
+    void removeDeviceElement(DeviceElement device) {
         removeIncidentLines(device);
         deviceElements.remove(device);
     }
@@ -237,7 +234,7 @@ public class Schema {
         }
     }
 
-    public List<Element> getAllElements() {
+    List<Element> getAllElements() {
         List<Element> a = new ArrayList<>();
         if (cpuElement != null) {
             a.add(cpuElement);
@@ -256,14 +253,14 @@ public class Schema {
         return lines;
     }
 
-    public void addConnectionLine(ConnectionLine conLine) {
+    void addConnectionLine(ConnectionLine conLine) {
         if (conLine == null) {
             return;
         }
         lines.add(conLine);
     }
 
-    public void removeConnectionLine(int index) {
+    void removeConnectionLine(int index) {
         if ((index < 0) || (index >= lines.size())) {
             return;
         }
@@ -334,7 +331,7 @@ public class Schema {
         return null;
     }
 
-    public ConnectionLine getCrossingLine(Point selectionStart, Point selectionEnd) {
+    private ConnectionLine getCrossingLine(Point selectionStart, Point selectionEnd) {
         for (ConnectionLine line : lines) {
             if (line.isAreaCrossingPoint(selectionStart, selectionEnd)) {
                 return line;
@@ -369,7 +366,7 @@ public class Schema {
         }
     }
 
-    public void selectAll() {
+    void selectAll() {
         for (Element elem : getAllElements()) {
             elem.setSelected(true);
         }
@@ -378,7 +375,7 @@ public class Schema {
         }
     }
 
-    public void deselectAll() {
+    void deselectAll() {
         for (Element elem : getAllElements()) {
             elem.setSelected(false);
         }
@@ -409,7 +406,7 @@ public class Schema {
             }
         }
         for (ConnectionLine line : lines) {
-            if (line.isSelected() && !line.canMoveAllPoints(diffY, diffY)) {
+            if (line.isSelected() && !line.canMoveAllPoints(diffX, diffY)) {
                 return false;
             }
         }
@@ -422,11 +419,7 @@ public class Schema {
                 elem.move(x, y);
             }
         }
-        for (ConnectionLine line : lines) {
-            if (line.isSelected()) {
-                line.moveAllPoints(diffX, diffY);
-            }
-        }
+        lines.stream().filter(ConnectionLine::isSelected).forEach(line -> line.moveAllPoints(diffX, diffY));
         return true;
     }
 
@@ -458,7 +451,7 @@ public class Schema {
         return (x >= MIN_LEFT_MARGIN) && (y >= MIN_TOP_MARGIN);
     }
 
-    public boolean canMoveElement(int newX, int newY, Element element) {
+    boolean canMoveElement(int newX, int newY, Element element) {
         int eW = element.getWidth()/2;
         int eH = element.getHeight()/2;
 
@@ -484,25 +477,25 @@ public class Schema {
 
             // test left line
             if (ConnectionLine.isAreaCrossing(new Point(elem.getX()-elemW, elem.getY()-elemH),
-                    new Point(elem.getX()-elemW, elem.getY()+elemH), elementStart, elementEnd, 0)) {
+                    new Point(elem.getX()-elemW, elem.getY()+elemH), elementStart, elementEnd)) {
                 return false;
             }
 
             // test right line
             if (ConnectionLine.isAreaCrossing(new Point(elem.getX()+elemW, elem.getY()-elemH),
-                    new Point(elem.getX()+elemW, elem.getY()+elemH), elementStart, elementEnd, 0)) {
+                    new Point(elem.getX()+elemW, elem.getY()+elemH), elementStart, elementEnd)) {
                 return false;
             }
 
             // test top line
             if (ConnectionLine.isAreaCrossing(new Point(elem.getX()-elemW, elem.getY()-elemH),
-                    new Point(elem.getX()+elemW, elem.getY()-elemH), elementStart, elementEnd, 0)) {
+                    new Point(elem.getX()+elemW, elem.getY()-elemH), elementStart, elementEnd)) {
                 return false;
             }
 
             // test bottom line
             if (ConnectionLine.isAreaCrossing(new Point(elem.getX()-elemW, elem.getY()+elemH),
-                    new Point(elem.getX()+elemW, elem.getY()+elemH), elementStart, elementEnd, 0)) {
+                    new Point(elem.getX()+elemW, elem.getY()+elemH), elementStart, elementEnd)) {
                 return false;
             }
         }
@@ -516,7 +509,7 @@ public class Schema {
      * @param newY new Y location for the point
      * @return true if the point can be moved, false otherwise (out of margins, or some element is in the way).
      */
-    public boolean canMovePoint(int newX, int newY) {
+    boolean canMovePoint(int newX, int newY) {
         if (!fitToMargins(newX, newY)) {
             return false;
         }
@@ -604,7 +597,7 @@ public class Schema {
             } else if (e instanceof MemoryElement) {
                 settings.put("connection" + i + ".junc0", "memory");
             } else if (e instanceof DeviceElement) {
-                settings.put("connection" + i + ".junc0", devsHash.get((DeviceElement) e));
+                settings.put("connection" + i + ".junc0", devsHash.get(e));
             }
 
             e = line.getJunc1();
@@ -615,7 +608,7 @@ public class Schema {
             } else if (e instanceof MemoryElement) {
                 settings.put("connection" + i + ".junc1", "memory");
             } else if (e instanceof DeviceElement) {
-                settings.put("connection" + i + ".junc1", devsHash.get((DeviceElement) e));
+                settings.put("connection" + i + ".junc1", devsHash.get(e));
             }
             List<Point> points = line.getPoints();
             int pointsCount = points.size();

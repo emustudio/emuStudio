@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2007-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,20 +45,28 @@ public class OC_Regpair extends OpCodeNode {
     public void pass4(HEXFileManager hex) throws Exception {
         int opCode = 0;
 
-        if (mnemo.equals("stax")) {
-            opCode = 2 | (regpair << 4);
-        } else if (mnemo.equals("ldax")) {
-            opCode = 10 | (regpair << 4);
-        } else if (mnemo.equals("push")) {
-            opCode = 197 | (regpair << 4);
-        } else if (mnemo.equals("pop")) {
-            opCode = 193 | (regpair << 4);
-        } else if (mnemo.equals("dad")) {
-            opCode = 9 | (regpair << 4);
-        } else if (mnemo.equals("inx")) {
-            opCode = 3 | (regpair << 4);
-        } else if (mnemo.equals("dcx")) {
-            opCode = 11 | (regpair << 4);
+        switch (mnemo) {
+            case "stax":
+                opCode = 2 | (regpair << 4);
+                break;
+            case "ldax":
+                opCode = 10 | (regpair << 4);
+                break;
+            case "push":
+                opCode = 197 | (regpair << 4);
+                break;
+            case "pop":
+                opCode = 193 | (regpair << 4);
+                break;
+            case "dad":
+                opCode = 9 | (regpair << 4);
+                break;
+            case "inx":
+                opCode = 3 | (regpair << 4);
+                break;
+            case "dcx":
+                opCode = 11 | (regpair << 4);
+                break;
         }
 
         hex.putCode(String.format("%1$02X", opCode));

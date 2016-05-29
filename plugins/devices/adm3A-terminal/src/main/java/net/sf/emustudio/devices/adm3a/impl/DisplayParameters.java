@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,14 +22,14 @@ package net.sf.emustudio.devices.adm3a.impl;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DisplayParameters {
-    public final int charHeight;
-    public final int charWidth;
-    public final int startY;
-    public final int maxWidth;
-    public final int maxHeight;
+class DisplayParameters {
+    final int charHeight;
+    final int charWidth;
+    final int startY;
+    final int maxWidth;
+    final int maxHeight;
 
-    public DisplayParameters(int charHeight, int charWidth, int startY, int maxWidth, int maxHeight) {
+    DisplayParameters(int charHeight, int charWidth, int startY, int maxWidth, int maxHeight) {
         this.charHeight = charHeight;
         this.charWidth = charWidth;
         this.startY = startY;

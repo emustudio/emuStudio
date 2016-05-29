@@ -1,8 +1,7 @@
 /*
- * TapeDialog.java
- * 
- * Copyright (C) 2009-2012 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,27 +21,12 @@ package net.sf.emustudio.ram.abstracttape.gui;
 
 import emulib.emustudio.SettingsManager;
 import emulib.runtime.StaticDialogs;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import javax.swing.AbstractListModel;
-import javax.swing.GroupLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.LayoutStyle;
-import javax.swing.ListCellRenderer;
-import javax.swing.WindowConstants;
 import net.sf.emustudio.ram.abstracttape.impl.AbstractTape;
 import net.sf.emustudio.ram.abstracttape.impl.AbstractTapeContextImpl;
-import net.sf.emustudio.ram.abstracttape.impl.AbstractTapeContextImpl.TapeListener;
 
-@SuppressWarnings("serial")
+import javax.swing.*;
+import java.awt.*;
+
 public class TapeDialog extends JDialog {
     private final AbstractTapeContextImpl tapeContext;
     private TapeListModel listModel;
@@ -56,13 +40,9 @@ public class TapeDialog extends JDialog {
         this.setTitle(tape.getTitle());
         lstTape.setModel(listModel);
         lstTape.setCellRenderer(new TapeCellRenderer());
-        this.tapeContext.setListener(new TapeListener() {
-
-            @Override
-            public void tapeChanged() {
-                listModel.fireChange();
-                lstTape.ensureIndexIsVisible(tapeContext.getPos());
-            }
+        this.tapeContext.setListener(() -> {
+            listModel.fireChange();
+            lstTape.ensureIndexIsVisible(tapeContext.getPos());
         });
         String s = settings.readSetting(pluginID, "alwaysOnTop");
         if (s == null || !s.toLowerCase().equals("true")) {
@@ -102,12 +82,12 @@ public class TapeDialog extends JDialog {
         }
     }
 
-    public class TapeCellRenderer extends JLabel implements ListCellRenderer {
+    private class TapeCellRenderer extends JLabel implements ListCellRenderer {
 
         private Font boldFont;
         private Font plainFont;
 
-        public TapeCellRenderer() {
+        TapeCellRenderer() {
             super();
             setOpaque(true);
             boldFont = getFont().deriveFont(Font.BOLD);
@@ -146,7 +126,7 @@ public class TapeDialog extends JDialog {
         }
     }
 
-    public final void changeEditable() {
+    private final void changeEditable() {
         boolean b = tapeContext.getEditable();
         btnAddFirst.setEnabled(b && !tapeContext.isBounded());
         btnAddLast.setEnabled(b);
@@ -169,57 +149,35 @@ public class TapeDialog extends JDialog {
         scrollTape.setViewportView(lstTape);
 
         btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/ram/abstracttape/gui/go-up.png"))); // NOI18N
-        btnAddFirst.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("Enter symbol value:");
-                tapeContext.addSymbolFirst(s);
-            }
+        btnAddFirst.addActionListener(e -> {
+            String s = JOptionPane.showInputDialog("Enter symbol value:");
+            tapeContext.addSymbolFirst(s);
         });
 
         btnAddLast.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/ram/abstracttape/gui/go-down.png"))); // NOI18N
-        btnAddLast.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("Enter symbol value:");
-                tapeContext.addSymbolLast(s);
-            }
+        btnAddLast.addActionListener(e -> {
+            String s = JOptionPane.showInputDialog("Enter symbol value:");
+            tapeContext.addSymbolLast(s);
         });
 
-        btnEdit.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int i = lstTape.getSelectedIndex();
-                if (i == -1) {
-                    StaticDialogs.showErrorMessage("A symbol must be selected !");
-                    return;
-                }
-                String s = JOptionPane.showInputDialog("Enter symbol value:");
-                tapeContext.editSymbol(i, s);
+        btnEdit.addActionListener(e -> {
+            int i = lstTape.getSelectedIndex();
+            if (i == -1) {
+                StaticDialogs.showErrorMessage("A symbol must be selected !");
+                return;
             }
+            String s = JOptionPane.showInputDialog("Enter symbol value:");
+            tapeContext.editSymbol(i, s);
         });
-        btnRemove.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int i = lstTape.getSelectedIndex();
-                if (i == -1) {
-                    StaticDialogs.showErrorMessage("A symbol must be selected !");
-                    return;
-                }
-                tapeContext.removeSymbol(i);
+        btnRemove.addActionListener(e -> {
+            int i = lstTape.getSelectedIndex();
+            if (i == -1) {
+                StaticDialogs.showErrorMessage("A symbol must be selected !");
+                return;
             }
+            tapeContext.removeSymbol(i);
         });
-        btnClear.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                tapeContext.clear();
-            }
-        });
+        btnClear.addActionListener(e -> tapeContext.clear());
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

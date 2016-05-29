@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2008-2014 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,9 +19,10 @@
  */
 package net.sf.emustudio.devices.adm3a.gui;
 
-import javax.swing.JFrame;
 import net.sf.emustudio.devices.adm3a.impl.Display;
 import net.sf.emustudio.devices.adm3a.impl.TerminalSettings;
+
+import javax.swing.*;
 
 public class ConfigDialog extends javax.swing.JDialog {
     private final TerminalSettings settings;
@@ -80,7 +82,7 @@ public class ConfigDialog extends javax.swing.JDialog {
         javax.swing.JLabel jLabel4 = new javax.swing.JLabel();
         spnInputDelay = new javax.swing.JSpinner();
         javax.swing.JLabel jLabel5 = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
+        JPanel jPanel1 = new JPanel();
         chkHalfDuplex = new javax.swing.JCheckBox();
         chkAlwaysOnTop = new javax.swing.JCheckBox();
         chkAntiAliasing = new javax.swing.JCheckBox();
@@ -204,18 +206,10 @@ public class ConfigDialog extends javax.swing.JDialog {
         chkSaveSettings.setText("Save settings");
 
         btnClearScreen.setText("Clear screen");
-        btnClearScreen.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnClearScreenActionPerformed(evt);
-            }
-        });
+        btnClearScreen.addActionListener(this::btnClearScreenActionPerformed);
 
         btnRollLine.setText("Roll down");
-        btnRollLine.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnRollLineActionPerformed(evt);
-            }
-        });
+        btnRollLine.addActionListener(this::btnRollLineActionPerformed);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -247,11 +241,7 @@ public class ConfigDialog extends javax.swing.JDialog {
         );
 
         btnOK.setText("OK");
-        btnOK.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnOKActionPerformed(evt);
-            }
-        });
+        btnOK.addActionListener(this::btnOKActionPerformed);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -309,7 +299,6 @@ public class ConfigDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkAntiAliasing;
     private javax.swing.JCheckBox chkHalfDuplex;
     private javax.swing.JCheckBox chkSaveSettings;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JSpinner spnInputDelay;
     private javax.swing.JTextField txtInputFileName;
     private javax.swing.JTextField txtOutputFileName;

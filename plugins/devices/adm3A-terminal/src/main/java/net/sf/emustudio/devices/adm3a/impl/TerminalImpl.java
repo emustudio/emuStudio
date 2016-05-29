@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2008-2015 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,13 +44,14 @@ import java.util.ResourceBundle;
 @PluginType(
         type = PLUGIN_TYPE.DEVICE,
         title = "LSI ADM-3A terminal",
-        copyright = "\u00A9 Copyright 2007-2015, Peter Jakubčo",
+        copyright = "\u00A9 Copyright 2006-2016, Peter Jakubčo",
         description = "Custom implementation of LSI ADM-3A terminal"
 )
+@SuppressWarnings("unused")
 public class TerminalImpl extends AbstractDevice implements TerminalSettings.ChangedObserver {
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminalImpl.class);
-    public static final int COLUMNS_COUNT = 80;
-    public static final int ROWS_COUNT = 24;
+    private static final int COLUMNS_COUNT = 80;
+    private static final int ROWS_COUNT = 24;
 
     private final ContextPool contextPool;
     private final Display display;

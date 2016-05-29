@@ -1,5 +1,5 @@
 = MITS Altair8800 - emulator of famous personal computer
-(c) Copyright 2009-2015, Peter Jakubčo
+(c) Copyright 2006-2016, Peter Jakubčo
 Version 0.39
 :toc:
 :numbered:

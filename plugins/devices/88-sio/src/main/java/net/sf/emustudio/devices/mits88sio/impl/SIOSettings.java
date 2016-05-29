@@ -1,8 +1,7 @@
 /*
- * SIOSettings.java
- *
- * Copyright (C) 2013 Peter Jakubčo
  * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,8 +32,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class SIOSettings {
     private final static Logger LOGGER = LoggerFactory.getLogger(SIOSettings.class);
 
-    public static final String STATUS_PORT_NUMBER = "statusPortNumber";
-    public static final String DATA_PORT_NUMBER = "dataPortNumber";
+    static final String STATUS_PORT_NUMBER = "statusPortNumber";
+    static final String DATA_PORT_NUMBER = "dataPortNumber";
     public static final int DEFAULT_STATUS_PORT_NUMBER = 0x10;
     public static final int DEFAULT_DATA_PORT_NUMBER = 0x11;
 
@@ -48,23 +47,23 @@ public class SIOSettings {
 
     private final List<ChangedObserver> observers = new CopyOnWriteArrayList<>();
 
-    public interface ChangedObserver {
+    interface ChangedObserver {
         void settingsChanged();
     }
 
-    public SIOSettings(long pluginID) {
+    SIOSettings(long pluginID) {
         this.pluginID = pluginID;
     }
 
-    public void addChangedObserver(ChangedObserver observer) {
+    void addChangedObserver(ChangedObserver observer) {
         observers.add(observer);
     }
 
-    public void removeChangedObserver(ChangedObserver observer) {
+    void removeChangedObserver(ChangedObserver observer) {
         observers.remove(observer);
     }
 
-    public void setSettingsManager(SettingsManager settingsManager) {
+    void setSettingsManager(SettingsManager settingsManager) {
         this.settingsManager = Objects.requireNonNull(settingsManager);
     }
 
@@ -74,7 +73,7 @@ public class SIOSettings {
         }
     }
 
-    public boolean isNoGUI() {
+    boolean isNoGUI() {
         return emuStudioNoGUI;
     }
 
@@ -106,7 +105,7 @@ public class SIOSettings {
         }
     }
 
-    public void read() {
+    void read() {
         SettingsManager tmpManager = settingsManager;
         if (tmpManager != null) {
             synchronized (this) {

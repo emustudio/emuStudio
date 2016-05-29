@@ -1,20 +1,21 @@
 /*
- * Copyright (C) 2016 Peter Jakubčo
  * KISS, YAGNI, DRY
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * (c) Copyright 2006-2016, Peter Jakubčo
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 package net.sf.emustudio.ssem.memory.gui;
 
@@ -37,7 +38,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 
-public class MemoryTable extends JTable {
+class MemoryTable extends JTable {
     private final static int CHAR_WIDTH = 17;
     private final static int[] COLUMN_WIDTH = new int[] {
         3 * CHAR_WIDTH, 17 * CHAR_WIDTH, 5 * CHAR_WIDTH
@@ -47,7 +48,7 @@ public class MemoryTable extends JTable {
     private final MemoryTableModel model;
     private final JScrollPane scrollPane;
 
-    public MemoryTable(MemoryTableModel model, JScrollPane scrollPane) {
+    MemoryTable(MemoryTableModel model, JScrollPane scrollPane) {
         this.scrollPane = scrollPane;
         this.model = model;
         this.setModel(this.model);
@@ -67,10 +68,10 @@ public class MemoryTable extends JTable {
         }
     }
 
-    public class MemoryRowHeaderRenderer extends JLabel implements ListCellRenderer {
+    private class MemoryRowHeaderRenderer extends JLabel implements ListCellRenderer {
         private final int height;
 
-        public MemoryRowHeaderRenderer(JTable table) {
+        MemoryRowHeaderRenderer(JTable table) {
             JTableHeader header = table.getTableHeader();
             this.height = header.getPreferredSize().height;
             setOpaque(true);
@@ -90,11 +91,11 @@ public class MemoryTable extends JTable {
         }
     }
 
-    public class MemoryCellRenderer extends JLabel implements TableCellRenderer {
+    private class MemoryCellRenderer extends JLabel implements TableCellRenderer {
         private final JList rowHeader;
         private final String columnNames[];
 
-        public MemoryCellRenderer() {
+        MemoryCellRenderer() {
             columnNames = new String[model.getColumnCount()];
             for (int i = 0; i < columnNames.length; i++) {
                 columnNames[i] = model.getColumnName(0);
