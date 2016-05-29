@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014, Peter Jakubčo
+ * Copyright (C) 2014-2016, Peter Jakubčo
  *
  * KISS, YAGNI, DRY
  *
@@ -20,31 +20,52 @@
  */
 package emustudio.architecture;
 
+import emulib.plugins.Plugin;
+import emulib.plugins.compiler.Compiler;
+import emulib.plugins.cpu.CPU;
+import emulib.plugins.device.Device;
+import emulib.plugins.memory.Memory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
-public class ConfigurationFactory {
-    private final static Logger LOGGER = LoggerFactory.getLogger(ConfigurationFactory.class);
+public class ComputerConfig {
+    private final static String CONFIGS_DIR = "config";
+    private final static String CPUS_DIR = "cpu";
+    private final static String COMPILERS_DIR = "compilers";
+    private final static String MEMORIES_DIR = "mem";
+    private final static String DEVICES_DIR = "devices";
 
-    private static String configurationBaseDirectory = System.getProperty("user.dir");
+    public static final String COMPILER = "compiler";
+    public static final String CPU = "cpu";
+    public static final String MEMORY = "memory";
+    public static final String DEVICE = "device";
 
-    public final static String CONFIGS_DIR = "config";
-    public final static String CPUS_DIR = "cpu";
-    public final static String COMPILERS_DIR = "compilers";
-    public final static String MEMORIES_DIR = "mem";
-    public final static String DEVICES_DIR = "devices";
+    private final static Logger LOGGER = LoggerFactory.getLogger(ComputerConfig.class);
+    private final static Map<Class<? extends Plugin>, String> PLUGIN_SUBDIRS = new HashMap<>();
 
-    public static class SortedProperties extends Properties {
+    private static String configBaseDir = System.getProperty("user.dir");
+
+    static {
+        PLUGIN_SUBDIRS.put(Compiler.class, COMPILERS_DIR);
+        PLUGIN_SUBDIRS.put(CPU.class, CPUS_DIR);
+        PLUGIN_SUBDIRS.put(Memory.class, MEMORIES_DIR);
+        PLUGIN_SUBDIRS.put(Device.class, DEVICES_DIR);
+    }
+
+    private final static class SortedProperties extends Properties {
 
         @Override
         public synchronized Enumeration keys() {
@@ -63,12 +84,16 @@ public class ConfigurationFactory {
      *
      * @param baseDirectory Absolute path of the base directory for the configurations
      */
-    public static void setConfigurationBaseDirectory(String baseDirectory) {
-        configurationBaseDirectory = baseDirectory;
+    static void setConfigBaseDir(String baseDirectory) {
+        configBaseDir = baseDirectory;
     }
 
-    public static String getConfigurationBaseDirectory() {
-        return configurationBaseDirectory;
+    public static Path getPluginDir(Class<? extends Plugin> pluginClass) {
+        return Paths.get(configBaseDir, PLUGIN_SUBDIRS.get(pluginClass));
+    }
+
+    static Path getConfigDir() {
+        return Paths.get(configBaseDir, CONFIGS_DIR);
     }
 
     /**
@@ -78,16 +103,11 @@ public class ConfigurationFactory {
      * @param postfix file name postfix, e.g. ".png"
      * @return String array of names
      */
-    public static String[] getAllFileNames(String dirname, final String postfix) {
+    static String[] getAllFiles(Path dirname, final String postfix) {
         String[] allNames = null;
-        File dir = new File(configurationBaseDirectory + File.separator + dirname);
+        File dir = dirname.toFile();
         if (dir.exists() && dir.isDirectory()) {
-            allNames = dir.list(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return name.endsWith(postfix);
-                }
-            });
+            allNames = dir.list((dir1, name) -> name.endsWith(postfix));
             for (int i = 0; i < allNames.length; i++) {
                 allNames[i] = allNames[i].substring(0, allNames[i].lastIndexOf(postfix));
             }
@@ -95,9 +115,16 @@ public class ConfigurationFactory {
         return (allNames == null) ? new String[0] : allNames;
     }
 
+    public static String[] getAllPluginFiles(Class<? extends Plugin> pluginClass, String postfix) {
+        return getAllFiles(getPluginDir(pluginClass), postfix);
+    }
+
+    public static String[] getAllConfigFiles() {
+        return getAllFiles(getConfigDir(), ".conf");
+    }
+
     public static boolean delete(String configName) {
-        File file = new File(configurationBaseDirectory + File.separator + CONFIGS_DIR + File.separator
-                + configName + ".conf");
+        File file = getConfigDir().resolve(configName + ".conf").toFile();
         if (!file.exists()) {
             LOGGER.error("Could not delete configuration: " + file.getAbsolutePath() + ". The file does not exist.");
             return false;
@@ -105,34 +132,34 @@ public class ConfigurationFactory {
         try {
             return file.delete();
         } catch(Exception e) {
-            LOGGER.error("Could not delete configuration: " + file.getAbsolutePath());
+            LOGGER.error("Could not delete configuration: " + file.getAbsolutePath(), e);
         }
         return false;
     }
 
     public static boolean rename(String newName, String oldName) {
-        File oldConfig = new File(configurationBaseDirectory + File.separator + CONFIGS_DIR + File.separator + oldName + ".conf");
+        File oldConfig = getConfigDir().resolve(oldName + ".conf").toFile();
         if (!oldConfig.exists()) {
             LOGGER.error("Could not rename configuration: " + oldConfig.getAbsolutePath() + ". The file does not exist.");
             return false;
         }
         try {
-            return oldConfig.renameTo(new File(configurationBaseDirectory + File.separator + CONFIGS_DIR + File.separator
-                    + newName + ".conf"));
+            return oldConfig.renameTo(getConfigDir().resolve(newName + ".conf").toFile());
         } catch(Exception e) {
-            LOGGER.error("Could not rename configuration: " + oldConfig.getAbsolutePath() + " to (thesamepath)/"
-                    + newName);
+            LOGGER.error(
+                "Could not rename configuration: {}  to (thesamepath)/{}", oldConfig.getAbsolutePath(), newName, e
+            );
         }
         return false;
     }
 
     public static Configuration read(String configName) throws ReadConfigurationException {
         Properties p = new SortedProperties();
-        File configFile = new File(configurationBaseDirectory + File.separator + CONFIGS_DIR + File.separator + configName
-                + ".conf");
+        File configFile = getConfigDir().resolve(configName + ".conf").toFile();
         if (!configFile.exists() || !configFile.canRead()) {
-            throw new ReadConfigurationException("Configuration file: " + configFile.getAbsolutePath()
-                    + " does not exist.");
+            throw new ReadConfigurationException(
+                "Configuration file: " + configFile.getAbsolutePath() + " does not exist."
+            );
         }
         try {
             try (FileInputStream fin = new FileInputStream(configFile)) {

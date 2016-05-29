@@ -35,43 +35,43 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class ConfigurationFactoryTest {
+public class ComputerConfigTest {
 
     @BeforeClass
     public static void setUpClass() throws URISyntaxException {
-        ConfigurationFactory.setConfigurationBaseDirectory(getBaseDirectory().toFile().getAbsolutePath());
+        ComputerConfig.setConfigBaseDir(getBaseDirectory().toFile().getAbsolutePath());
     }
 
     @AfterClass
     public static void tearDownClass() {
-        ConfigurationFactory.setConfigurationBaseDirectory(System.getProperty("user.dir"));
+        ComputerConfig.setConfigBaseDir(System.getProperty("user.dir"));
     }
 
     public static Path getBaseDirectory() throws URISyntaxException {
-        URL resourceUrl = ConfigurationFactoryTest.class.getResource("/");
+        URL resourceUrl = ComputerConfigTest.class.getResource("/");
         return Paths.get(resourceUrl.toURI());
     }
 
     @Test
-    public void testGetAllFileNames() {
-        String tmpfilesDirname = "tmpfiles";
-        String[] result = ConfigurationFactory.getAllFileNames(tmpfilesDirname, ".conf");
+    public void testGetAllFileNames() throws URISyntaxException {
+        Path tmpfilesDirname = getBaseDirectory().resolve("tmpfiles");
+        String[] result = ComputerConfig.getAllFiles(tmpfilesDirname, ".conf");
         assertEquals(1, result.length);
-        result = ConfigurationFactory.getAllFileNames(tmpfilesDirname, ".txt");
+        result = ComputerConfig.getAllFiles(tmpfilesDirname, ".txt");
         assertEquals(2, result.length);
-        result = ConfigurationFactory.getAllFileNames(tmpfilesDirname, ".NONEXISTANT");
+        result = ComputerConfig.getAllFiles(tmpfilesDirname, ".NONEXISTANT");
         assertEquals(0, result.length);
     }
 
     @Test
     public void testDeleteConfiguration() throws Exception {
-        File file = getBaseDirectory().resolve(ConfigurationFactory.CONFIGS_DIR).resolve("test.conf").toFile();
-        System.out.println(file.getAbsolutePath() + " : " + file.exists());
+        File file = ComputerConfig.getConfigDir().resolve("test.conf").toFile();
+        System.out.println("Going to delete file: " + file.getAbsolutePath() + " : " + file.exists());
         assertTrue(file.exists());
 
-        assertTrue(ConfigurationFactory.delete("test"));
+        assertTrue(ComputerConfig.delete("test"));
         assertFalse(file.exists());
-        assertFalse(ConfigurationFactory.delete("test"));
+        assertFalse(ComputerConfig.delete("test"));
 
         assertFalse(file.exists());
         file.createNewFile();
@@ -80,24 +80,22 @@ public class ConfigurationFactoryTest {
 
     @Test
     public void testRenameConfiguration() throws URISyntaxException {
-        File oldFile = getBaseDirectory().resolve(ConfigurationFactory.CONFIGS_DIR).resolve("test.conf")
-                .toFile();
-        File newFile = getBaseDirectory().resolve(ConfigurationFactory.CONFIGS_DIR).resolve("newtest.conf")
-                .toFile();
+        File oldFile = ComputerConfig.getConfigDir().resolve("test.conf").toFile();
+        File newFile = ComputerConfig.getConfigDir().resolve("newtest.conf").toFile();
 
         System.out.println(oldFile.getAbsolutePath() + " : " + oldFile.exists());
 
         assertTrue(oldFile.exists());
         assertFalse(newFile.exists());
 
-        assertTrue(ConfigurationFactory.rename("newtest", "test"));
+        assertTrue(ComputerConfig.rename("newtest", "test"));
         assertFalse(oldFile.exists());
         assertTrue(newFile.exists());
-        assertFalse(ConfigurationFactory.rename("newtest", "test"));
+        assertFalse(ComputerConfig.rename("newtest", "test"));
         assertFalse(oldFile.exists());
         assertTrue(newFile.exists());
 
-        assertTrue(ConfigurationFactory.rename("test", "newtest"));
+        assertTrue(ComputerConfig.rename("test", "newtest"));
         assertTrue(oldFile.exists());
         assertFalse(newFile.exists());
     }

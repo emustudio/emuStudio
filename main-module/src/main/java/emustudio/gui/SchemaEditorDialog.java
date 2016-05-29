@@ -17,13 +17,16 @@
  */
 package emustudio.gui;
 
+import emulib.plugins.compiler.Compiler;
+import emulib.plugins.cpu.CPU;
+import emulib.plugins.device.Device;
+import emulib.plugins.memory.Memory;
 import emulib.runtime.StaticDialogs;
-import emustudio.architecture.ConfigurationFactory;
+import emustudio.architecture.ComputerConfig;
 import emustudio.architecture.ConfigurationImpl;
 import emustudio.architecture.WriteConfigurationException;
 import emustudio.drawing.DrawingPanel;
 import emustudio.drawing.DrawingPanel.Tool;
-import emustudio.drawing.DrawingPanel.ToolListener;
 import emustudio.drawing.Schema;
 import emustudio.main.Main;
 import org.slf4j.Logger;
@@ -39,23 +42,22 @@ import static emustudio.gui.utils.Components.addKeyListenerRecursively;
 /**
  * Editor of abstract schemas of a virtual computer.
  */
-public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
+class SchemaEditorDialog extends javax.swing.JDialog implements KeyListener {
     private final static Logger logger = LoggerFactory.getLogger(SchemaEditorDialog.class);
 
     private final Schema schema;
-    private boolean OOK = false;
     private DrawingPanel panel;
     private final PluginModel empty_model = new PluginModel(null);
     private boolean buttonSelected = false;
     private final boolean editingExistingComputer;
     private OpenComputerDialog odialog;
 
-    private class PluginModel implements ComboBoxModel {
+    private final static class PluginModel implements ComboBoxModel<String> {
 
         private final String[] pluginNames;
         private Object selectedObject = null;
 
-        public PluginModel(String[] pluginNames) {
+        PluginModel(String[] pluginNames) {
             this.pluginNames = pluginNames;
         }
 
@@ -78,7 +80,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         }
 
         @Override
-        public Object getElementAt(int index) {
+        public String getElementAt(int index) {
             return pluginNames[index];
         }
 
@@ -96,7 +98,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
      *
      * @param parent parent GUI - the OpenComputerDialog instance
      */
-    public SchemaEditorDialog(OpenComputerDialog parent) {
+    SchemaEditorDialog(OpenComputerDialog parent) {
         super(parent, true);
         this.schema = new Schema();
         this.editingExistingComputer = false;
@@ -111,7 +113,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
      * @param parent should be the OpenComputerDialog instance
      * @param schema Abstract schema of origin computer
      */
-    public SchemaEditorDialog(OpenComputerDialog parent, Schema schema) {
+    SchemaEditorDialog(OpenComputerDialog parent, Schema schema) {
         super(parent, true);
         this.schema = schema;
         this.editingExistingComputer = true;
@@ -136,15 +138,11 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         panel.addMouseMotionListener(panel);
         addKeyListenerRecursively(this, this);
 
-        panel.addToolListener(new ToolListener() {
-
-            @Override
-            public void toolWasUsed() {
-                panel.setTool(Tool.nothing, null);
-                cmbPlugin.setModel(empty_model);
-                groupDraw.clearSelection();
-                buttonSelected = false;
-            }
+        panel.addToolListener(() -> {
+            panel.setTool(Tool.nothing, null);
+            cmbPlugin.setModel(empty_model);
+            groupDraw.clearSelection();
+            buttonSelected = false;
         });
     }
 
@@ -170,21 +168,29 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
     }
 
     /**
-     * Determine whether user has pressed the OK button.
-     *
-     * @return true if the user pressed OK, false otherwise
-     */
-    public boolean getOK() {
-        return OOK;
-    }
-
-    /**
      * Get the schema of edited virtual computer.
      *
      * @return the schema that was created or modified by this editor
      */
     public Schema getSchema() {
         return schema;
+    }
+
+    private boolean unsetDrawingTool() {
+        if (buttonSelected) {
+            cmbPlugin.setModel(empty_model);
+            groupDraw.clearSelection();
+            panel.setTool(Tool.nothing, "");
+            buttonSelected = false;
+            return true;
+        }
+        return false;
+    }
+
+    private void selectFirstPlugin() {
+        if (cmbPlugin.getItemCount() > 0) {
+            cmbPlugin.setSelectedIndex(0);
+        }
     }
 
     /** This method is called from within the constructor to
@@ -228,11 +234,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         btnSave.setFocusable(false);
         btnSave.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnSave.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnSave.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnSaveActionPerformed(evt);
-            }
-        });
+        btnSave.addActionListener(this::btnSaveActionPerformed);
         toolDraw.add(btnSave);
         toolDraw.add(jSeparator4);
 
@@ -242,16 +244,8 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         btnCompiler.setFocusable(false);
         btnCompiler.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnCompiler.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnCompiler.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                btnCompilerItemStateChanged(evt);
-            }
-        });
-        btnCompiler.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnCompilerActionPerformed(evt);
-            }
-        });
+        btnCompiler.addItemListener(this::btnCompilerItemStateChanged);
+        btnCompiler.addActionListener(this::btnCompilerActionPerformed);
         toolDraw.add(btnCompiler);
 
         groupDraw.add(btnCPU);
@@ -260,16 +254,8 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         btnCPU.setFocusable(false);
         btnCPU.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnCPU.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnCPU.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                btnCPUItemStateChanged(evt);
-            }
-        });
-        btnCPU.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnCPUActionPerformed(evt);
-            }
-        });
+        btnCPU.addItemListener(this::btnCPUItemStateChanged);
+        btnCPU.addActionListener(this::btnCPUActionPerformed);
         toolDraw.add(btnCPU);
 
         groupDraw.add(btnRAM);
@@ -278,16 +264,8 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         btnRAM.setFocusable(false);
         btnRAM.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnRAM.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnRAM.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                btnRAMItemStateChanged(evt);
-            }
-        });
-        btnRAM.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnRAMActionPerformed(evt);
-            }
-        });
+        btnRAM.addItemListener(this::btnRAMItemStateChanged);
+        btnRAM.addActionListener(this::btnRAMActionPerformed);
         toolDraw.add(btnRAM);
 
         groupDraw.add(btnDevice);
@@ -296,16 +274,8 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         btnDevice.setFocusable(false);
         btnDevice.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnDevice.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnDevice.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                btnDeviceItemStateChanged(evt);
-            }
-        });
-        btnDevice.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnDeviceActionPerformed(evt);
-            }
-        });
+        btnDevice.addItemListener(this::btnDeviceItemStateChanged);
+        btnDevice.addActionListener(this::btnDeviceActionPerformed);
         toolDraw.add(btnDevice);
         toolDraw.add(jSeparator5);
 
@@ -315,16 +285,8 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         btnLine.setFocusable(false);
         btnLine.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnLine.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnLine.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                btnLineItemStateChanged(evt);
-            }
-        });
-        btnLine.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnLineActionPerformed(evt);
-            }
-        });
+        btnLine.addItemListener(this::btnLineItemStateChanged);
+        btnLine.addActionListener(this::btnLineActionPerformed);
         toolDraw.add(btnLine);
 
         btnBidirection.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/bidirection.gif"))); // NOI18N
@@ -333,11 +295,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         btnBidirection.setFocusable(false);
         btnBidirection.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnBidirection.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnBidirection.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnBidirectionActionPerformed(evt);
-            }
-        });
+        btnBidirection.addActionListener(this::btnBidirectionActionPerformed);
         toolDraw.add(btnBidirection);
         toolDraw.add(jSeparator2);
 
@@ -347,25 +305,13 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         btnDelete.setFocusable(false);
         btnDelete.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnDelete.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnDelete.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                btnDeleteItemStateChanged(evt);
-            }
-        });
-        btnDelete.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnDeleteActionPerformed(evt);
-            }
-        });
+        btnDelete.addItemListener(this::btnDeleteItemStateChanged);
+        btnDelete.addActionListener(this::btnDeleteActionPerformed);
         toolDraw.add(btnDelete);
         toolDraw.add(jSeparator1);
 
         cmbPlugin.setToolTipText("Select plug-in");
-        cmbPlugin.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbPluginActionPerformed(evt);
-            }
-        });
+        cmbPlugin.addActionListener(this::cmbPluginActionPerformed);
         toolDraw.add(cmbPlugin);
         toolDraw.add(jSeparator3);
 
@@ -375,11 +321,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         btnUseGrid.setFocusable(false);
         btnUseGrid.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnUseGrid.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnUseGrid.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnUseGridActionPerformed(evt);
-            }
-        });
+        btnUseGrid.addActionListener(this::btnUseGridActionPerformed);
         toolDraw.add(btnUseGrid);
 
         sliderGridGap.setMinimum(5);
@@ -388,11 +330,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
         sliderGridGap.setSnapToTicks(true);
         sliderGridGap.setToolTipText("Set grid size");
         sliderGridGap.setValue(30);
-        sliderGridGap.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                sliderGridGapStateChanged(evt);
-            }
-        });
+        sliderGridGap.addChangeListener(this::sliderGridGapStateChanged);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -438,46 +376,26 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             return;
         }
         buttonSelected = true;
-        String[] cpus = ConfigurationFactory.getAllFileNames(ConfigurationFactory.CPUS_DIR, ".jar");
+        String[] cpus = ComputerConfig.getAllPluginFiles(CPU.class, ".jar");
         cmbPlugin.setModel(new PluginModel(cpus));
-        try {
-            cmbPlugin.setSelectedIndex(0);
-        } catch (IllegalArgumentException e) {
-        }
+        selectFirstPlugin();
     }//GEN-LAST:event_btnCPUActionPerformed
 
+
     private void btnRAMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRAMActionPerformed
-        if (buttonSelected) {
-            cmbPlugin.setModel(empty_model);
-            groupDraw.clearSelection();
-            panel.setTool(Tool.nothing, "");
-            buttonSelected = false;
-            return;
-        }
+        if (unsetDrawingTool()) return;
         buttonSelected = true;
-        String[] mems = ConfigurationFactory.getAllFileNames(ConfigurationFactory.MEMORIES_DIR, ".jar");
+        String[] mems = ComputerConfig.getAllPluginFiles(Memory.class, ".jar");
         cmbPlugin.setModel(new PluginModel(mems));
-        try {
-            cmbPlugin.setSelectedIndex(0);
-        } catch (IllegalArgumentException e) {
-        }
+        selectFirstPlugin();
     }//GEN-LAST:event_btnRAMActionPerformed
 
     private void btnDeviceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeviceActionPerformed
-        if (buttonSelected) {
-            cmbPlugin.setModel(empty_model);
-            groupDraw.clearSelection();
-            panel.setTool(Tool.nothing, "");
-            buttonSelected = false;
-            return;
-        }
+        if (unsetDrawingTool()) return;
         buttonSelected = true;
-        String[] devs = ConfigurationFactory.getAllFileNames(ConfigurationFactory.DEVICES_DIR, ".jar");
+        String[] devs = ComputerConfig.getAllPluginFiles(Device.class, ".jar");
         cmbPlugin.setModel(new PluginModel(devs));
-        try {
-            cmbPlugin.setSelectedIndex(0);
-        } catch (IllegalArgumentException e) {
-        }
+        selectFirstPlugin();
     }//GEN-LAST:event_btnDeviceActionPerformed
 
     private void btnLineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLineActionPerformed
@@ -570,43 +488,37 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
 
         if ((name == null) || (name.trim().equals(""))) {
             Main.tryShowErrorMessage("Computer name can not be empty!");
-            OOK = false;
             return;
         } else {
-            OOK = true;
-
             if (editingExistingComputer) {
                 String old = schema.getConfigName();
                 schema.setConfigName(name);
 
                 if (!old.equals(name)) {
-                    ConfigurationFactory.rename(name, old);
+                    ComputerConfig.rename(name, old);
                 }
-                try {
-                    schema.save();
-                    new ConfigurationImpl(name, schema.getSettings()).write();
-                } catch (WriteConfigurationException e) {
-                    String msg = new StringBuilder().append("Could not save schema.").toString();
-                    logger.error(msg, e);
-                    Main.tryShowErrorMessage(msg);
-                }
+                saveSchema(name);
                 odialog.setArchName(name);
                 odialog.update();
             } else {
                 schema.setConfigName(name);
-                try {
-                    schema.save();
-                    new ConfigurationImpl(name, schema.getSettings()).write();
-                } catch (WriteConfigurationException e) {
-                    String msg = new StringBuilder().append("Could not save schema.").toString();
-                    logger.error(msg, e);
-                    Main.tryShowErrorMessage(msg);
-                }
+                saveSchema(name);
                 odialog.update();
             }
         }
         dispose();
     }//GEN-LAST:event_btnSaveActionPerformed
+
+    private void saveSchema(String name) {
+        try {
+            schema.save();
+            new ConfigurationImpl(name, schema.getSettings()).write();
+        } catch (WriteConfigurationException e) {
+            String msg = "Could not save schema.";
+            logger.error(msg, e);
+            Main.tryShowErrorMessage(msg);
+        }
+    }
 
     private void btnUseGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUseGridActionPerformed
         panel.setUsingGrid(btnUseGrid.isSelected());
@@ -624,12 +536,9 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
             return;
         }
         buttonSelected = true;
-        String[] compilers = ConfigurationFactory.getAllFileNames(ConfigurationFactory.COMPILERS_DIR, ".jar");
+        String[] compilers = ComputerConfig.getAllPluginFiles(Compiler.class, ".jar");
         cmbPlugin.setModel(new PluginModel(compilers));
-        try {
-            cmbPlugin.setSelectedIndex(0);
-        } catch (IllegalArgumentException e) {
-        }
+        selectFirstPlugin();
     }//GEN-LAST:event_btnCompilerActionPerformed
 
     private void btnBidirectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBidirectionActionPerformed
@@ -644,7 +553,7 @@ public class SchemaEditorDialog extends javax.swing.JDialog implements KeyListen
     private javax.swing.JToggleButton btnLine;
     private javax.swing.JToggleButton btnRAM;
     private javax.swing.JToggleButton btnUseGrid;
-    private javax.swing.JComboBox cmbPlugin;
+    private javax.swing.JComboBox<String> cmbPlugin;
     private javax.swing.ButtonGroup groupDraw;
     private javax.swing.JScrollPane scrollScheme;
     private javax.swing.JSlider sliderGridGap;

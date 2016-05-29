@@ -1,5 +1,5 @@
 /*
- * (c) Copyright 2006-2015, Peter Jakubčo
+ * (c) Copyright 2006-2016, Peter Jakubčo
  * KISS, YAGNI, DRY
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -45,30 +45,8 @@ import emustudio.main.Main;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.AbstractListModel;
-import javax.swing.BorderFactory;
-import javax.swing.GroupLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JList;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextArea;
-import javax.swing.JToolBar;
-import javax.swing.KeyStroke;
-import javax.swing.LayoutStyle;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
-import java.awt.Font;
-import java.awt.Toolkit;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
@@ -78,6 +56,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public class StudioFrame extends JFrame {
@@ -95,7 +74,6 @@ public class StudioFrame extends JFrame {
     private final MemoryContext memoryContext;
     private final MemoryListener memoryListener;
 
-    private volatile UndoActionListener undoStateListener;
     private volatile RunState runState = RunState.STATE_STOPPED_BREAK;
 
     public StudioFrame(ContextPool contextPool, Computer computer, String fileName, SettingsManagerImpl settings,
@@ -111,7 +89,9 @@ public class StudioFrame extends JFrame {
         this.debugTable = Objects.requireNonNull(debugTable);
         this.debugTableModel = Objects.requireNonNull(debugTable.getModel());
 
-        emulationController = new EmulationController(computer);
+        emulationController = new EmulationController(
+            computer.getCPU().get(), computer.getMemory(), computer::deviceIterator
+        );
 
         txtSource = new EmuTextPane(computer.getCompiler());
         systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -132,7 +112,7 @@ public class StudioFrame extends JFrame {
 
         initComponents();
 
-        btnMemory.setEnabled(computer.getMemory().isShowSettingsSupported());
+        btnMemory.setEnabled(computer.getMemory().isPresent() && computer.getMemory().get().isShowSettingsSupported());
         editorScrollPane.setViewportView(txtSource);
         paneDebug.setViewportView(debugTable);
         paneDebug.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -142,16 +122,16 @@ public class StudioFrame extends JFrame {
 
         setupListeners();
 
-        lstDevices.setModel(new AbstractListModel() {
+        lstDevices.setModel(new AbstractListModel<String>() {
 
             @Override
             public int getSize() {
-                return computer.getDevices().length;
+                return computer.getDeviceCount();
             }
 
             @Override
-            public Object getElementAt(int index) {
-                return computer.getDevices()[index].getTitle();
+            public String getElementAt(int index) {
+                return computer.getDevice(index).get().getTitle();
             }
         });
         this.setLocationRelativeTo(null);
@@ -160,7 +140,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void setStatusGUI() {
-        JPanel statusPanel = computer.getCPU().getStatusPanel();
+        JPanel statusPanel = computer.getCPU().get().getStatusPanel();
         if (statusPanel == null) {
             return;
         }
@@ -182,7 +162,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void setupCPU() {
-        CPU cpu = computer.getCPU();
+        CPU cpu = computer.getCPU().get();
         cpu.addCPUListener(new CPU.CPUListener() {
 
             @Override
@@ -243,7 +223,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void setupUndoRedo() {
-        undoStateListener = new UndoActionListener() {
+        UndoActionListener undoStateListener = new UndoActionListener() {
 
             @Override
             public void undoStateChanged(boolean canUndo, String presentationName) {
@@ -292,10 +272,10 @@ public class StudioFrame extends JFrame {
     }
 
     private void setupCompiler() {
-        Compiler compiler = computer.getCompiler();
+        Optional<Compiler> compiler = computer.getCompiler();
 
-        if (compiler != null) {
-            compiler.addCompilerListener(new CompilerListener() {
+        if (compiler.isPresent()) {
+            compiler.get().addCompilerListener(new CompilerListener() {
 
                 @Override
                 public void onStart() {
@@ -312,7 +292,7 @@ public class StudioFrame extends JFrame {
                     txtOutput.append("Compiling has finished.\n");
                 }
             });
-            if (!compiler.isShowSettingsSupported()) {
+            if (!compiler.get().isShowSettingsSupported()) {
                 mnuProjectCompilerSettings.setEnabled(false);
             }
         } else {
@@ -333,7 +313,7 @@ public class StudioFrame extends JFrame {
         btnCut = new JButton();
         btnCopy = new JButton();
         btnPaste = new JButton();
-        btnFindReplace = new JButton();
+        JButton btnFindReplace = new JButton();
         btnUndo = new JButton();
         btnRedo = new JButton();
         JSeparator jSeparator2 = new JSeparator();
@@ -363,7 +343,7 @@ public class StudioFrame extends JFrame {
 
         JPanel peripheralPanel = new JPanel();
         JScrollPane paneDevices = new JScrollPane();
-        lstDevices = new JList();
+        lstDevices = new JList<>();
         JButton btnShowGUI = new ConstantSizeButton();
         final JButton btnShowSettings = new ConstantSizeButton();
         JMenuBar jMenuBar2 = new JMenuBar();
@@ -647,7 +627,7 @@ public class StudioFrame extends JFrame {
             public void mouseClicked(MouseEvent e) {
                 int i = lstDevices.getSelectedIndex();
                 if (i >= 0) {
-                    btnShowSettings.setEnabled(computer.getDevice(i).isShowSettingsSupported());
+                    btnShowSettings.setEnabled(computer.getDevice(i).get().isShowSettingsSupported());
                 }
 
                 if (e.getClickCount() == 2) {
@@ -848,7 +828,7 @@ public class StudioFrame extends JFrame {
                 Main.tryShowErrorMessage("Device has to be selected!");
                 return;
             }
-            computer.getDevices()[i].showSettings();
+            computer.getDevice(i).get().showSettings();
         } catch (Exception e) {
             LOGGER.error("Can't show settings of the device.", e);
             Main.tryShowErrorMessage("Can't show settings of the device:\n " + e.getMessage());
@@ -862,7 +842,7 @@ public class StudioFrame extends JFrame {
                 Main.tryShowErrorMessage("Device has to be selected!");
                 return;
             }
-            computer.getDevices()[i].showGUI();
+            computer.getDevice(i).get().showGUI();
         } catch (Exception e) {
             LOGGER.error("Can't show GUI of the device.", e);
             Main.tryShowErrorMessage("Can't show GUI of the device:\n " + e.getMessage());
@@ -870,10 +850,10 @@ public class StudioFrame extends JFrame {
     }
 
     private void btnMemoryActionPerformed(ActionEvent evt) {
-        Memory memory = computer.getMemory();
+        Optional<Memory> memory = computer.getMemory();
 
-        if ((memory != null) && (memory.isShowSettingsSupported())) {
-            memory.showSettings();
+        if (memory.isPresent() && (memory.get().isShowSettingsSupported())) {
+            memory.get().showSettings();
         } else {
             Main.tryShowMessage("The GUI is not supported");
         }
@@ -907,7 +887,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void btnBackActionPerformed(ActionEvent evt) {
-        CPU cpu = computer.getCPU();
+        CPU cpu = computer.getCPU().get();
         int pc = cpu.getInstructionPosition();
         if (pc > 0) {
             cpu.setInstructionPosition(debugTableModel.guessPreviousInstructionPosition());
@@ -917,7 +897,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void btnBeginningActionPerformed(ActionEvent evt) {
-        CPU cpu = computer.getCPU();
+        CPU cpu = computer.getCPU().get();
         cpu.setInstructionPosition(0);
         paneDebug.revalidate();
         debugTable.refresh();
@@ -940,12 +920,16 @@ public class StudioFrame extends JFrame {
             return;
         }
 
-        CPU cpu = computer.getCPU();
-        Memory memory = computer.getMemory();
+        CPU cpu = computer.getCPU().get();
+        Optional<Memory> memory = computer.getMemory();
 
         if (!cpu.setInstructionPosition(address)) {
-            String maxSize = (memory != null) ?
-                    "\n (expected range from 0 to " + String.valueOf(memory.getSize() - 1) + ")"
+            int memorySize = 0;
+            if (memory.isPresent()) {
+                memorySize = memory.get().getSize();
+            }
+            String maxSize = memory.isPresent() ?
+                    "\n (expected range from 0 to " + String.valueOf(memorySize - 1) + ")"
                     : "";
             Main.tryShowErrorMessage("Typed address is incorrect !" + maxSize, "Jump");
         }
@@ -966,8 +950,8 @@ public class StudioFrame extends JFrame {
             return;
         }
 
-        Compiler compiler = computer.getCompiler();
-        if (compiler == null) {
+        Optional<Compiler> compiler = computer.getCompiler();
+        if (!compiler.isPresent()) {
             Main.tryShowErrorMessage("Compiler is not defined.", "Compile");
             return;
         }
@@ -978,16 +962,18 @@ public class StudioFrame extends JFrame {
 
             String fn = txtSource.getFileName();
             txtOutput.setText("");
-            Memory memory = computer.getMemory();
-            if (memory != null) {
-                memory.reset();
+
+            Optional<Memory> memory = computer.getMemory();
+
+            if (memory.isPresent()) {
+                memory.get().reset();
             }
-            compiler.compile(fn);
-            int programStart = compiler.getProgramStartAddress();
-            if (memory != null) {
-                memory.setProgramStart(programStart);
+            compiler.get().compile(fn);
+            int programStart = compiler.get().getProgramStartAddress();
+            if (memory.isPresent()) {
+                memory.get().setProgramStart(programStart);
             }
-            computer.getCPU().reset(programStart);
+            computer.getCPU().get().reset(programStart);
         } catch (Exception e) {
             LOGGER.error("Could not compile file.", e);
             txtOutput.append("Could not compile file: " + e.toString() + "\n");
@@ -999,9 +985,9 @@ public class StudioFrame extends JFrame {
     }
 
     private void mnuProjectCompilerSettingsActionPerformed(ActionEvent evt) {
-        Compiler compiler = computer.getCompiler();
-        if ((compiler != null) && (compiler.isShowSettingsSupported())) {
-            compiler.showSettings();
+        Optional<Compiler> compiler = computer.getCompiler();
+        if (compiler.isPresent() && (compiler.get().isShowSettingsSupported())) {
+            compiler.get().showSettings();
         }
     }
 
@@ -1116,7 +1102,7 @@ public class StudioFrame extends JFrame {
         bDialog.setVisible(true);
         int address = bDialog.getAddress();
 
-        CPU cpu = computer.getCPU();
+        CPU cpu = computer.getCPU().get();
         if ((address != -1) && cpu.isBreakpointSupported()) {
             if (bDialog.isSet()) {
                 cpu.setBreakpoint(address);
@@ -1140,32 +1126,31 @@ public class StudioFrame extends JFrame {
         }
     }
 
-    JButton btnBack;
-    JButton btnBeginning;
-    JButton btnBreakpoint;
-    JButton btnFindReplace;
-    JButton btnCopy;
-    JButton btnCut;
-    JButton btnPaste;
-    JButton btnPause;
-    JButton btnRedo;
-    JButton btnRun;
-    JButton btnRunTime;
-    JButton btnStep;
-    JButton btnStop;
-    JButton btnUndo;
-    JScrollPane editorScrollPane;
-    JList lstDevices;
-    JMenuItem mnuEditCopy;
-    JMenuItem mnuEditCut;
-    JMenuItem mnuEditPaste;
-    JMenuItem mnuEditRedo;
-    JMenuItem mnuEditUndo;
-    JScrollPane paneDebug;
-    JPanel statusWindow;
-    JTextArea txtOutput;
-    JMenuItem mnuProjectCompilerSettings;
-    JButton btnMemory;
-    JButton btnCompile;
-    JMenuItem mnuProjectCompile;
+    private JButton btnBack;
+    private JButton btnBeginning;
+    private JButton btnBreakpoint;
+    private JButton btnCopy;
+    private JButton btnCut;
+    private JButton btnPaste;
+    private JButton btnPause;
+    private JButton btnRedo;
+    private JButton btnRun;
+    private JButton btnRunTime;
+    private JButton btnStep;
+    private JButton btnStop;
+    private JButton btnUndo;
+    private JScrollPane editorScrollPane;
+    private JList<String> lstDevices;
+    private JMenuItem mnuEditCopy;
+    private JMenuItem mnuEditCut;
+    private JMenuItem mnuEditPaste;
+    private JMenuItem mnuEditRedo;
+    private JMenuItem mnuEditUndo;
+    private JScrollPane paneDebug;
+    private JPanel statusWindow;
+    private JTextArea txtOutput;
+    private JMenuItem mnuProjectCompilerSettings;
+    private JButton btnMemory;
+    private JButton btnCompile;
+    private JMenuItem mnuProjectCompile;
 }

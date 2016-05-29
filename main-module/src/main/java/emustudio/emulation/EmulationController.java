@@ -3,28 +3,35 @@ package emustudio.emulation;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
-import emustudio.architecture.Computer;
+import net.jcip.annotations.ThreadSafe;
+
 import java.io.Closeable;
+import java.util.ListIterator;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
-import net.jcip.annotations.ThreadSafe;
+import java.util.function.Supplier;
 
 @ThreadSafe
 public class EmulationController implements Closeable {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private final Computer computer;
+    private final CPU cpu;
+    private final Optional<Memory> memory;
+    private final Supplier<ListIterator<Device>> devices;
 
     private volatile CountDownLatch countDownLatch;
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_BREAK;
 
-    private final CPU.CPUListener cpuListener = new TheCPUListener();
+    public EmulationController(CPU cpu, Optional<Memory> memory, Supplier<ListIterator<Device>> devices) {
+        this.cpu = Objects.requireNonNull(cpu);
+        this.memory = Objects.requireNonNull(memory);
+        this.devices = Objects.requireNonNull(devices);
 
-    public EmulationController(Computer computer) {
-        this.computer = computer;
-        this.computer.getCPU().addCPUListener(cpuListener);
+        cpu.addCPUListener(new TheCPUListener());
     }
 
     private void awaitLatch() {
@@ -36,99 +43,76 @@ public class EmulationController implements Closeable {
     }
 
     public void start() {
-        executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                if (runState != CPU.RunState.STATE_STOPPED_BREAK) {
-                    return; // invalid state
-                }
-                countDownLatch = new CountDownLatch(1);
-                computer.getCPU().execute();
-                awaitLatch();
+        executor.submit(() -> {
+            if (runState != CPU.RunState.STATE_STOPPED_BREAK) {
+                return; // invalid state
             }
+            countDownLatch = new CountDownLatch(1);
+            cpu.execute();
+            awaitLatch();
         });
     }
 
     public void stop() {
-        executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                if (runState != CPU.RunState.STATE_STOPPED_BREAK && runState != CPU.RunState.STATE_RUNNING) {
-                    return; // invalid state
-                }
-                countDownLatch = new CountDownLatch(1);
-                computer.getCPU().stop();
-                awaitLatch();
+        executor.submit(() -> {
+            if (runState != CPU.RunState.STATE_STOPPED_BREAK && runState != CPU.RunState.STATE_RUNNING) {
+                return; // invalid state
             }
+            countDownLatch = new CountDownLatch(1);
+            cpu.stop();
+            awaitLatch();
         });
     }
 
     public void step() {
-        executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                if (runState != CPU.RunState.STATE_STOPPED_BREAK) {
-                    return; // invalid state
-                }
-                countDownLatch = new CountDownLatch(1);
-                computer.getCPU().step();
-                awaitLatch();
+        executor.submit(() -> {
+            if (runState != CPU.RunState.STATE_STOPPED_BREAK) {
+                return; // invalid state
             }
+            countDownLatch = new CountDownLatch(1);
+            cpu.step();
+            awaitLatch();
         });
     }
 
     public void step(final long sleep, final TimeUnit timeUnit) {
-        executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                if (runState == CPU.RunState.STATE_STOPPED_BREAK) {
-                    countDownLatch = new CountDownLatch(1);
-                    computer.getCPU().step();
-                    awaitLatch();
+        executor.submit(() -> {
+            if (runState == CPU.RunState.STATE_STOPPED_BREAK) {
+                countDownLatch = new CountDownLatch(1);
+                cpu.step();
+                awaitLatch();
 
-                    LockSupport.parkNanos(timeUnit.toNanos(sleep));
-                    step(sleep, timeUnit);
-                }
+                LockSupport.parkNanos(timeUnit.toNanos(sleep));
+                step(sleep, timeUnit);
             }
         });
     }
 
     public void pause() {
-        executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                if (runState == CPU.RunState.STATE_RUNNING) {
-                    countDownLatch = new CountDownLatch(1);
-                    computer.getCPU().pause();
-                    awaitLatch();
-                }
+        executor.submit(() -> {
+            if (runState == CPU.RunState.STATE_RUNNING) {
+                countDownLatch = new CountDownLatch(1);
+                cpu.pause();
+                awaitLatch();
             }
         });
     }
 
     public void reset() {
-        executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                countDownLatch = new CountDownLatch(1);
+        executor.submit(() -> {
+            countDownLatch = new CountDownLatch(1);
 
-                CPU cpu = computer.getCPU();
-                Memory memory = computer.getMemory();
+            if (memory.isPresent()) {
+                cpu.reset(memory.get().getProgramStart()); // first address of an image??
+                memory.get().reset();
+            } else {
+                cpu.reset();
+            }
+            awaitLatch();
 
-                if (memory != null) {
-                    cpu.reset(memory.getProgramStart()); // first address of an image??
-                    memory.reset();
-                } else {
-                    cpu.reset();
-                }
-                awaitLatch();
-
-                Device devices[] = computer.getDevices();
-                if (devices != null) {
-                    for (Device device : devices) {
-                        device.reset();
-                    }
-                }
+            ListIterator<Device> deviceIterator = devices.get();
+            while (deviceIterator.hasNext()) {
+                deviceIterator.next().reset();
             }
         });
     }

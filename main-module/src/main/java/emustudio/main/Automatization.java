@@ -34,46 +34,35 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.ListIterator;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * This class manages the emuStudio automatization process. In the process
  * the emulation is started automatically and results are collected.
  */
-public class Automatization implements Runnable {
+class Automatization implements Runnable {
     private final static Logger LOGGER = LoggerFactory.getLogger("automatization");
     private final SettingsManagerImpl settings;
 
     private AutoDialog progressGUI;
     private File inputFile;
 
-    private Compiler compiler;
-    private Memory memory;
-    private CPU cpu;
-    private Device[] devices;
+    private final Computer computer;
 
     private RunState resultState;
     private final boolean nogui;
 
-    public Automatization(SettingsManagerImpl settings, Computer computer, String inputFileName, boolean nogui) throws AutomatizationException {
-        Objects.requireNonNull(computer);
-
+    Automatization(SettingsManagerImpl settings, Computer computer, String inputFileName, boolean nogui) throws AutomatizationException {
         this.settings = Objects.requireNonNull(settings);
+        this.computer = Objects.requireNonNull(computer);
         this.nogui = nogui;
         this.inputFile = new File(Objects.requireNonNull(inputFileName));
 
         if (!inputFile.exists()) {
             throw new AutomatizationException("Input file not found");
         }
-
-        cpu = computer.getCPU();
-        if (cpu == null) {
-            throw new AutomatizationException("CPU must be set");
-        }
-        compiler = computer.getCompiler();
-        memory = computer.getMemory();
-        devices = computer.getDevices();
-
         if (!nogui) {
             progressGUI = new AutoDialog(computer);
         }
@@ -86,8 +75,8 @@ public class Automatization implements Runnable {
         }
     }
 
-    private void autoCompile() throws AutomatizationException {
-        if ((compiler == null) || (inputFile == null)) {
+    private void autoCompile(Compiler compiler) throws AutomatizationException {
+        if (inputFile == null) {
             return;
         }
         setProgress("Compiling input file: " + inputFile, false);
@@ -136,24 +125,26 @@ public class Automatization implements Runnable {
     }
 
     private void setProgramStartAddress(int programStart) {
-        if (memory != null) {
+        Optional<Memory> memory = computer.getMemory();
+        if (memory.isPresent()) {
             setProgress("Program start address: " + String.format("%04Xh", programStart), false);
-            memory.setProgramStart(programStart);
+            memory.get().setProgramStart(programStart);
         } else {
             if (programStart > 0) {
                 setProgress("Ignoring program start address: " + String.format("%04Xh", programStart), false);
             }
         }
-        setProgress("Resetting CPU...", false);
     }
 
-    private void autoEmulate() {
+    private void autoEmulate(CPU cpu) {
         setProgress("Running emulation...", true);
 
         final Object resultStateLock = new Object();
 
         // Show all devices if GUI is supported
-        for (Device device : devices) {
+        ListIterator<Device> deviceIterator = computer.deviceIterator();
+        while (deviceIterator.hasNext()) {
+            Device device = deviceIterator.next();
             if (!nogui) {
                 device.showGUI();
             }
@@ -181,6 +172,7 @@ public class Automatization implements Runnable {
             try {
                 resultStateLock.wait();
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
 
@@ -220,9 +212,13 @@ public class Automatization implements Runnable {
             progressGUI.setVisible(true);
         }
 
-        PluginType compilerType = (compiler != null) ? compiler.getClass().getAnnotation(PluginType.class) : null;
-        PluginType cpuType = (cpu != null) ? cpu.getClass().getAnnotation(PluginType.class) : null;
-        PluginType memoryType = (memory != null) ? memory.getClass().getAnnotation(PluginType.class) : null;
+        CPU cpu = computer.getCPU().get();
+        Optional<Compiler> compiler = computer.getCompiler();
+        Optional<Memory> memory = computer.getMemory();
+
+        PluginType compilerType = compiler.isPresent() ? compiler.get().getClass().getAnnotation(PluginType.class) : null;
+        PluginType cpuType = cpu.getClass().getAnnotation(PluginType.class);
+        PluginType memoryType = memory.isPresent() ? memory.get().getClass().getAnnotation(PluginType.class) : null;
 
         try {
             LOGGER.info("Starting emulation automatization...");
@@ -230,20 +226,24 @@ public class Automatization implements Runnable {
             LOGGER.info("CPU: " + ((cpuType == null) ? "none" : cpuType.title()));
             LOGGER.info("Memory: " + ((memoryType == null) ? "none" : memoryType.title()));
 
-            int size = devices.length;
-            for (int i = 0; i < size; i++) {
-                PluginType deviceType = devices[i].getClass().getAnnotation(PluginType.class);
-                LOGGER.info("Device #" + String.format("%02d", i) + ": " + deviceType.title());
+            ListIterator<Device> deviceIterator = computer.deviceIterator();
+            int i = 0;
+            while (deviceIterator.hasNext()) {
+                Device device = deviceIterator.next();
+
+                PluginType deviceType = device.getClass().getAnnotation(PluginType.class);
+                LOGGER.info("Device #" + String.format("%02d", i++) + ": " + deviceType.title());
             }
 
-            if (compiler != null) {
-                autoCompile();
-                int programStart = compiler.getProgramStartAddress();
+            if (compiler.isPresent()) {
+                autoCompile(compiler.get());
+                int programStart = compiler.get().getProgramStartAddress();
                 setProgramStartAddress(programStart);
+                setProgress("Resetting CPU...", false);
                 cpu.reset(programStart);
 
             }
-            autoEmulate();
+            autoEmulate(cpu);
         } catch (AutomatizationException e) {
             LOGGER.error("Error during automatization", e);
             Main.tryShowErrorMessage("Error: " + e.getMessage());

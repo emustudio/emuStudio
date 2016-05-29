@@ -20,7 +20,7 @@ package emustudio.gui;
 
 import emulib.runtime.StaticDialogs;
 import emustudio.architecture.Configuration;
-import emustudio.architecture.ConfigurationFactory;
+import emustudio.architecture.ComputerConfig;
 import emustudio.architecture.ReadConfigurationException;
 import emustudio.drawing.PreviewPanel;
 import emustudio.drawing.Schema;
@@ -63,7 +63,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         private String[] allModels;
 
         public ConfigurationsListModel() {
-            allModels = ConfigurationFactory.getAllFileNames(ConfigurationFactory.CONFIGS_DIR, ".conf");
+            allModels = ComputerConfig.getAllConfigFiles();
         }
 
         @Override
@@ -77,7 +77,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         }
 
         public void update() {
-            allModels = ConfigurationFactory.getAllFileNames(ConfigurationFactory.CONFIGS_DIR, ".conf");
+            allModels = ComputerConfig.getAllConfigFiles();
             this.fireContentsChanged(this, -1, -1);
         }
     }
@@ -344,7 +344,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         }
         archName = (String) lstConfig.getSelectedValue();
         try {
-            Configuration configuration = ConfigurationFactory.read(archName);
+            Configuration configuration = ComputerConfig.read(archName);
             Schema schema = configuration.loadSchema();
             SchemaEditorDialog d = new SchemaEditorDialog(this, schema);
             d.setVisible(true);
@@ -363,7 +363,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
                 + " selected computer?", "Delete architecture");
         archName = (String) lstConfig.getSelectedValue();
         if (r == StaticDialogs.YES_OPTION) {
-            boolean re = ConfigurationFactory.delete(archName);
+            boolean re = ComputerConfig.delete(archName);
             lstConfig.clearSelection();
             if (re) {
                 archName = "";
@@ -388,7 +388,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
 
         archName = (String) lstConfig.getSelectedValue();
         try {
-            Configuration configuration = ConfigurationFactory.read(archName);
+            Configuration configuration = ComputerConfig.read(archName);
             Schema s = configuration.loadSchema();
 
             preview.setSchema(s);

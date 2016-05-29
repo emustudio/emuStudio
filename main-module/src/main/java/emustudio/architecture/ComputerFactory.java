@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014, Peter Jakubčo
+ * Copyright (C) 2014-2016, Peter Jakubčo
  *
  * KISS, YAGNI, DRY
  *
@@ -34,84 +34,144 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static emulib.runtime.PluginLoader.doesImplement;
+import static java.util.stream.Collectors.toList;
 
 public class ComputerFactory {
     private final static Logger LOGGER = LoggerFactory.getLogger(ComputerFactory.class);
+    private final static AtomicInteger NEXT_PLUGIN_ID = new AtomicInteger(0);
 
-    private static long nextPluginID = 0;
     private final PluginLoader pluginLoader;
 
-    private final ConfigurationFactory configurationManager;
+    final static class PluginInfo<T extends Plugin> {
+        final String pluginName;
+        final String pluginConfigName;
+        final long pluginId;
+        final File pluginFile;
+        final Class<T> pluginInterface;
 
-    public static class PluginInfo {
-        public final String pluginSettingsName;
-        public final String pluginName;
-        public final Class<?> pluginInterface;
-        public final long pluginId;
-        public Plugin plugin;
-        public final String dirName;
-        public Class<Plugin> mainClass;
+        Optional<T> plugin = Optional.empty();
+        Optional<Class<T>> mainClass = Optional.empty();
 
-        public PluginInfo(String pluginSettingsName, String dirName,
-                String pluginName, Class<?> pluginInterface, long pluginId) {
-            this.dirName = dirName;
+        PluginInfo(String pluginConfigName, String pluginName, long pluginId, File pluginFile, Class<T> pluginInterface) {
+            this.pluginConfigName = Objects.requireNonNull(pluginConfigName);
+            this.pluginName = Objects.requireNonNull(pluginName);
             this.pluginId = pluginId;
-            this.pluginInterface = pluginInterface;
-            this.pluginName = pluginName;
-            this.pluginSettingsName = pluginSettingsName;
+            this.pluginFile = Objects.requireNonNull(pluginFile);
+            this.pluginInterface = Objects.requireNonNull(pluginInterface);
+        }
+
+        Class<T> getMainClass() {
+            return mainClass.orElse(null);
+        }
+
+        T getPlugin() {
+            return plugin.orElse(null);
+        }
+
+        @Override
+        public String toString() {
+            return pluginName;
         }
     }
 
-    public ComputerFactory(ConfigurationFactory configurationManager, PluginLoader pluginLoader) {
-        this.configurationManager = Objects.requireNonNull(configurationManager);
+    public ComputerFactory(PluginLoader pluginLoader) {
         this.pluginLoader = Objects.requireNonNull(pluginLoader);
     }
 
-    private Map<String, PluginInfo> preparePluginsToLoad(Configuration configuration) {
+    public Computer createComputer(String configName, ContextPool contextPool)
+        throws ReadConfigurationException, InvalidPluginException {
+
+        Configuration configuration = ComputerConfig.read(configName);
+
+        Map<String, PluginInfo> pluginsToLoad = findPluginsToLoad(configuration);
+        loadPlugins(pluginsToLoad.values());
+        createPluginInstances(contextPool, pluginsToLoad.values());
+
+        List<PluginInfo> notLoaded = pluginsToLoad.values().stream()
+            .filter(p -> !p.plugin.isPresent())
+            .collect(toList());
+        if (!notLoaded.isEmpty()) {
+            LOGGER.error("Not all plugins were loaded. List: {}", notLoaded);
+            throw new InvalidPluginException("Not all plugins were loaded.");
+        }
+        LOGGER.info("All plugins were loaded successfully.");
+
+        Map<Long, List<Long>> connections = preparePluginConnections(configuration, pluginsToLoad);
+
+        return new Computer(configName, pluginsToLoad.values(), connections);
+    }
+
+    private Map<String, PluginInfo> findPluginsToLoad(Configuration configuration) {
         Map<String, PluginInfo> pluginsToLoad = new HashMap<>();
 
-        String tmp = configuration.get("compiler");
-        if (tmp != null) {
-            long id = createPluginID();
-            LOGGER.debug("Assigned compiler pluginID=" + id);
-            pluginsToLoad.put("compiler", new PluginInfo("compiler", ConfigurationFactory.COMPILERS_DIR, tmp, Compiler.class, id));
-        }
-        tmp = configuration.get("cpu");
-        if (tmp != null) {
-            long id = createPluginID();
-            LOGGER.debug("Assigned CPU pluginID=" + id);
-            pluginsToLoad.put("cpu", new PluginInfo("cpu", ConfigurationFactory.CPUS_DIR, tmp, CPU.class, id));
-        }
-        tmp = configuration.get("memory");
-        if (tmp != null) {
-            long id = createPluginID();
-            LOGGER.debug("Assigned memory pluginID=" + id);
-            pluginsToLoad.put("memory", new PluginInfo("memory", ConfigurationFactory.MEMORIES_DIR, tmp, Memory.class, id));
-        }
-        for (int i = 0; configuration.contains("device" + i); i++) {
-            tmp = configuration.get("device" + i);
-            if (tmp != null) {
-                long id = createPluginID();
-                LOGGER.debug("Assigned device[" + i + "] pluginID=" + id);
-                pluginsToLoad.put("device" + i, new PluginInfo("device" + i, ConfigurationFactory.DEVICES_DIR, tmp, Device.class, id));
-            }
+        createPluginInfo(configuration, ComputerConfig.COMPILER, Compiler.class).ifPresent(
+            p -> pluginsToLoad.put(ComputerConfig.COMPILER, p)
+        );
+        createPluginInfo(configuration, ComputerConfig.CPU, CPU.class).ifPresent(
+            p -> pluginsToLoad.put(ComputerConfig.CPU, p)
+        );
+        createPluginInfo(configuration, ComputerConfig.MEMORY, Memory.class).ifPresent(
+            p -> pluginsToLoad.put(ComputerConfig.MEMORY, p)
+        );
+
+        for (int i = 0; configuration.contains(ComputerConfig.DEVICE + i); i++) {
+            final int j = i;
+            createPluginInfo(configuration, ComputerConfig.DEVICE + i, Device.class).ifPresent(
+                p -> pluginsToLoad.put(ComputerConfig.DEVICE + j, p)
+            );
         }
         return pluginsToLoad;
     }
 
-    private void loadPlugins(Map<String, PluginInfo> pluginsToLoad) throws InvalidPluginException {
-        for (PluginInfo plugin : pluginsToLoad.values()) {
-            Class<Plugin> mainClass = loadPlugin(plugin.dirName, plugin.pluginName);
-            plugin.mainClass = mainClass;
+    private <T extends Plugin> Optional<PluginInfo> createPluginInfo(Configuration configuration,
+                                                                     String pluginConfigName, Class<T> classs) {
+        String pluginName = configuration.get(pluginConfigName);
+        if (pluginName != null) {
+            long pluginID = NEXT_PLUGIN_ID.incrementAndGet();
+            LOGGER.debug("[{}] Assigned pluginID={}", pluginConfigName, pluginID);
+
+            File pluginFile = ComputerConfig.getPluginDir(classs).resolve(pluginName + ".jar")
+                .toFile();
+
+            return Optional.of(new PluginInfo<>(pluginConfigName, pluginName, pluginID, pluginFile, classs));
         }
-        LOGGER.info("All plugins are loaded and resolved.");
+        return Optional.empty();
+    }
+
+    private void loadPlugins(Collection<PluginInfo> pluginsToLoad) throws InvalidPluginException {
+        File[] pluginsFiles = pluginsToLoad.stream()
+            .map(p -> p.pluginFile)
+            .collect(toList())
+            .toArray(new File[pluginsToLoad.size()]);
+
+        try {
+            List<Class<Plugin>> mainClasses = pluginLoader.loadPlugins(Main.password, pluginsFiles);
+            mainClasses.stream().forEach(
+                mainClass -> pluginsToLoad.stream()
+                    .filter(p -> !p.mainClass.isPresent())
+                    .filter(p -> doesImplement(mainClass, p.pluginInterface))
+                    .findFirst()
+                    .ifPresent(p -> p.mainClass = Optional.of(mainClass))
+            );
+        } catch (InvalidPasswordException | IOException e) {
+            throw new InvalidPluginException("Could not load plugins", e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void createPluginInstances(ContextPool contextPool, Collection<PluginInfo> pluginsToLoad)
+        throws InvalidPluginException {
+
+        for (PluginInfo plugin : pluginsToLoad) {
+            Class<Plugin> mainClass = plugin.getMainClass();
+            plugin.plugin = Optional.of(newPlugin(plugin.pluginId, mainClass, plugin.pluginInterface, contextPool));
+        }
     }
 
     private Map<Long, List<Long>> preparePluginConnections(Configuration configuration, Map<String, PluginInfo> pluginsToLoad) {
@@ -145,83 +205,27 @@ public class ComputerFactory {
             pID2 = pluginInfo.pluginId;
 
             // the first direction
-            if (connections.containsKey(pID1)) {
-                connections.get(pID1).add(pID2);
-            } else {
-                List<Long> ar = new ArrayList<>();
-                ar.add(pID2);
-                connections.put(pID1, ar);
-            }
+            addConnection(connections, pID1, pID2);
             if (bidi) {
                 // if bidirectional, then also the other connection
-                if (connections.containsKey(pID2)) {
-                    connections.get(pID2).add(pID1);
-                } else {
-                    List<Long> ar = new ArrayList<>();
-                    ar.add(pID1);
-                    connections.put(pID2, ar);
-                }
+                addConnection(connections, pID2, pID1);
             }
         }
         return connections;
     }
 
-    public Computer createComputer(String configName, ContextPool contextPool) throws ReadConfigurationException,
-            InvalidPluginException {
-        Configuration configuration = configurationManager.read(configName);
-        Map<String, PluginInfo> pluginsToLoad = preparePluginsToLoad(configuration);
-        loadPlugins(pluginsToLoad);
-
-        Compiler compiler = null;
-        CPU cpu = null;
-        Memory mem = null;
-        List<Device> devList = new ArrayList<>();
-        for (PluginInfo plugin : pluginsToLoad.values()) {
-            plugin.plugin = newPlugin(plugin.pluginId, plugin.mainClass, plugin.pluginInterface, contextPool);
-            if (plugin.plugin instanceof Compiler) {
-                compiler = (Compiler) plugin.plugin;
-            } else if (plugin.plugin instanceof CPU) {
-                cpu = (CPU) plugin.plugin;
-            } else if (plugin.plugin instanceof Memory) {
-                mem = (Memory) plugin.plugin;
-            } else if (plugin.plugin instanceof Device) {
-                devList.add((Device) plugin.plugin);
-            }
+    private void addConnection(Map<Long, List<Long>> connections, long fromPID, long toPID) {
+        if (!connections.containsKey(fromPID)) {
+            connections.put(fromPID, new ArrayList<>());
         }
-
-        Map<Long, List<Long>> connections = preparePluginConnections(configuration, pluginsToLoad);
-        Collections.reverse(devList);
-        Device[] devices = (Device[]) devList.toArray(new Device[0]);
-
-        Computer computer = new Computer(configName, cpu, mem, compiler, devices, pluginsToLoad.values(), connections);
-        return computer;
+        connections.get(fromPID).add(toPID);
     }
 
-    private long createPluginID() {
-    	return nextPluginID++;
-    }
-
-    private Class<Plugin> loadPlugin(String directory, String pluginName) throws InvalidPluginException {
-        try {
-            File file = new File(
-                    ConfigurationFactory.getConfigurationBaseDirectory() + File.separator + directory
-                            + File.separator + pluginName + ".jar"
-            );
-            return pluginLoader.loadPlugin(file, Main.password);
-        } catch (InvalidPasswordException e) {
-            throw new InvalidPluginException("Could not load plugin " + pluginName, e);
-        }
-    }
-
-    private Plugin newPlugin(long pluginID, Class<Plugin> mainClass, Class<?> pluginInterface, ContextPool contextPool)
-            throws InvalidPluginException {
+    private Plugin newPlugin(long pluginID, Class<? extends Plugin> mainClass, Class<? extends Plugin> pluginInterface,
+                             ContextPool contextPool) throws InvalidPluginException {
         Objects.requireNonNull(mainClass);
         Objects.requireNonNull(pluginInterface);
         Objects.requireNonNull(contextPool);
-
-        if (!PluginLoader.doesImplement(mainClass, pluginInterface)) {
-            throw new InvalidPluginException("Plug-in main class does not implement specified interface");
-        }
 
         // First parameter of constructor is plug-in ID
         Class<?>[] conParameters = {Long.class, ContextPool.class};

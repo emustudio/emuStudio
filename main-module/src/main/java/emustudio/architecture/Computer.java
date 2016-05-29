@@ -1,7 +1,7 @@
 /*
  * KISS, YAGNI, DRY
  *
- * (c) Copyright 2014, Peter Jakubčo
+ * (c) Copyright 2014-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,132 +27,102 @@ import emulib.plugins.cpu.CPU;
 import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
 import emulib.runtime.interfaces.PluginConnections;
+import emulib.runtime.internal.Unchecked;
 import emustudio.architecture.ComputerFactory.PluginInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 public class Computer implements PluginConnections {
     private final static Logger LOGGER = LoggerFactory.getLogger(Computer.class);
 
     private final String name;
-    private final CPU cpu;
-    private final Compiler compiler;
-    private final Memory memory;
-    private final Device[] devices;
+    private final List<Device> devices;
 
     private final Map<Long, List<Long>> connections;
-    private final Map<Long, Plugin> plugins;
-    private final Collection<PluginInfo> pluginsInfo;
+    private final Map<Class<? extends Plugin>, Plugin> plugins;
+    private final Collection<PluginInfo> pluginInfos;
 
-    public Computer(String name, CPU cpu, Memory memory, Compiler compiler, Device[] devices,
-            Collection<PluginInfo> plugins, Map<Long, List<Long>> connections) {
-        this.name = name;
-        this.cpu = cpu;
-        this.memory = memory;
-        this.compiler = compiler;
-        this.devices = devices;
-        this.connections = connections;
-        this.plugins = new HashMap<>();
+    @SuppressWarnings("unchecked")
+    public Computer(String name, Collection<PluginInfo> pluginInfos, Map<Long, List<Long>> connections) {
+        this.name = Objects.requireNonNull(name);
+        this.connections = Collections.unmodifiableMap(new HashMap<>(connections));
+        this.pluginInfos = Collections.unmodifiableCollection(new ArrayList<>(pluginInfos));
 
-        this.pluginsInfo = plugins;
-        for (PluginInfo plugin : plugins) {
-            this.plugins.put(plugin.pluginId, plugin.plugin);
+        List<Device> tmpDevices = new ArrayList<>();
+        Map<Class<? extends Plugin>, Plugin> tmpPlugins = new HashMap<>();
+        for (PluginInfo plugin : pluginInfos) {
+            tmpPlugins.put(plugin.pluginInterface, plugin.getPlugin());
+            if (plugin.pluginInterface == Device.class) {
+                tmpDevices.add((Device) plugin.getPlugin());
+            }
         }
+
+        this.plugins = Collections.unmodifiableMap(tmpPlugins);
+        this.devices = Collections.unmodifiableList(tmpDevices);
     }
 
     public String getName() {
         return name;
     }
 
-    public Plugin getPlugin(long pluginID) {
-        return plugins.get(pluginID);
+    @SuppressWarnings("unchecked")
+    public Optional<CPU> getCPU() {
+        return Optional.ofNullable((CPU) plugins.get(CPU.class));
     }
 
-    public Collection<PluginInfo> getPluginsInfo() {
-        return pluginsInfo;
+    @SuppressWarnings("unchecked")
+    public Optional<Compiler> getCompiler() {
+        return Optional.ofNullable((Compiler) plugins.get(Compiler.class));
     }
 
-    public CPU getCPU() {
-        return cpu;
+    @SuppressWarnings("unchecked")
+    public Optional<Memory> getMemory() {
+        return Optional.ofNullable((Memory) plugins.get(Memory.class));
     }
 
-    public Compiler getCompiler() {
-        return compiler;
-    }
-
-    public Memory getMemory() {
-        return memory;
-    }
-
-    public Device[] getDevices() {
-        return devices;
-    }
-
-    public Device getDevice(int index) {
-        return devices[index];
+    public Optional<Device> getDevice(int index) {
+        if (index < 0 || index >= devices.size()) {
+            return Optional.empty();
+        }
+        return Optional.of(devices.get(index));
     }
 
     public int getDeviceCount() {
-        return devices.length;
+        return devices.size();
     }
 
-    public void resetPlugins() {
-        Collection<Plugin> pluginObjects = plugins.values();
-        Iterator<Plugin> iterator = pluginObjects.iterator();
-        while (iterator.hasNext()) {
-            Plugin plugin = iterator.next();
-            plugin.reset();
-        }
+    public ListIterator<Device> deviceIterator() {
+        return devices.listIterator();
+    }
+
+    public Collection<PluginInfo> getPluginInfos() {
+        return pluginInfos;
     }
 
     public void destroy() {
-        if (compiler != null) {
+        for (Plugin plugin : plugins.values()) {
             try {
-                compiler.destroy();
+                plugin.destroy();
             } catch (Exception e) {
-                LOGGER.error("Could not destroy compiler.", e);
+                LOGGER.error("Could not destroy plugin {}", plugin, e);
             }
         }
-        int size = devices.length;
-        for (int i = 0; i < size; i++) {
-            try {
-                devices[i].destroy();
-            } catch (Exception e) {
-                LOGGER.error("Could not destroy device.", e);
-            }
-        }
-        try {
-            cpu.destroy();
-        } catch (Exception e) {
-            LOGGER.error("Could not destroy CPU.", e);
-        }
-        if (memory != null) {
-            try {
-                memory.destroy();
-            } catch (Exception e) {
-                LOGGER.error("Could not destroy memory.", e);
-            }
-        }
-
-        plugins.clear();
-        connections.clear();
     }
 
     public void initialize(SettingsManager settings) throws PluginInitializationException {
-        if (compiler != null) {
-            compiler.initialize(settings);
-        }
-
-        if (memory != null) {
-            memory.initialize(settings);
-        }
-        cpu.initialize(settings);
+        getCompiler().ifPresent(c -> Unchecked.run(() -> c.initialize(settings)));
+        getMemory().ifPresent(m -> Unchecked.run(() -> m.initialize(settings)));
+        getCPU().orElseThrow(() -> new PluginInitializationException(null, "CPU is not set")).initialize(settings);
 
         for (Device device : devices) {
             device.initialize(settings);
@@ -160,6 +130,12 @@ public class Computer implements PluginConnections {
 
         // the last operation - reset of all plugins
         resetPlugins();
+    }
+
+    private void resetPlugins() {
+        for (Plugin plugin : plugins.values()) {
+            plugin.reset();
+        }
     }
 
     /**
@@ -178,12 +154,10 @@ public class Computer implements PluginConnections {
         List<Long> connection = connections.get(pluginID);
 
         if ((connection == null) || connection.isEmpty()) {
-            LOGGER.debug("Could not find connection between pluginID="
-                    + pluginID + " and " + toPluginID);
+            LOGGER.debug("Could not find connection between pluginID {} and {}", pluginID, toPluginID);
             return false;
         }
-        LOGGER.debug("connection(" + pluginID + ").contains(" + toPluginID
-                + ") =" + connection.contains(toPluginID));
+        LOGGER.debug("connection({}).contains({}) = {}", pluginID, toPluginID, connection.contains(toPluginID));
         return connection.contains(toPluginID);
     }
 }

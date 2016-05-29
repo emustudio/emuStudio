@@ -19,30 +19,30 @@ package emustudio.gui;
 
 import emulib.annotations.PluginType;
 import emulib.plugins.Plugin;
-import emustudio.architecture.ConfigurationFactory;
-import emustudio.architecture.SettingsManagerImpl;
+import emulib.plugins.compiler.Compiler;
+import emulib.plugins.cpu.CPU;
+import emulib.plugins.device.Device;
+import emulib.plugins.memory.Memory;
+import emulib.runtime.UniversalFileFilter;
 import emustudio.architecture.Computer;
+import emustudio.architecture.ComputerConfig;
+import emustudio.architecture.SettingsManagerImpl;
 import emustudio.drawing.PreviewPanel;
 import emustudio.main.Main;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
+import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.util.Optional;
 
-public class ViewComputerDialog extends javax.swing.JDialog {
-    private final static Logger logger = LoggerFactory.getLogger(ViewComputerDialog.class);
-    private final static String CPU_CONFIG_DIR = ConfigurationFactory.CPUS_DIR + File.separator;
-    private final static String COMPILER_CONFIG_DIR = ConfigurationFactory.COMPILERS_DIR + File.separator;
-    private final static String MEMORY_CONFIG_DIR = ConfigurationFactory.MEMORIES_DIR + File.separator;
-    private final static String DEVICE_CONFIG_DIR = ConfigurationFactory.DEVICES_DIR + File.separator;
+class ViewComputerDialog extends javax.swing.JDialog {
+    private final static Logger LOGGER = LoggerFactory.getLogger(ViewComputerDialog.class);
 
     private final Computer computer;
     private final PreviewPanel panelSchema;
@@ -50,7 +50,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
 
     private File fileComputerInfo;
 
-    public ViewComputerDialog(JFrame parent, final Computer computer, final SettingsManagerImpl settings) {
+    ViewComputerDialog(JFrame parent, final Computer computer, final SettingsManagerImpl settings) {
         super(parent, true);
         this.computer = computer;
         this.settings = settings;
@@ -65,21 +65,17 @@ public class ViewComputerDialog extends javax.swing.JDialog {
             cmbDevice.addItem(settings.getDeviceName(i));
         }
 
-        cmbDevice.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int i = cmbDevice.getSelectedIndex();
-                if (i < 0) {
-                    setVisibleInfo(false);
-                    return;
-                }
-                try {
-                    setInfo(computer.getDevice(i), DEVICE_CONFIG_DIR + settings.getDeviceName(i));
-                } catch (Exception ex) {
-                }
+        cmbDevice.addActionListener(e -> {
+            int i = cmbDevice.getSelectedIndex();
+            if (i < 0) {
+                setVisibleInfo(false);
+                return;
             }
-
+            try {
+                setInfo(computer.getDevice(i), settings.getDeviceName(i));
+            } catch (Exception ex) {
+                LOGGER.error("Could not set info", ex);
+            }
         });
         panelSchema = new PreviewPanel(settings.getSchema());
         scrollPane.setViewportView(panelSchema);
@@ -99,20 +95,23 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         // Select default info
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        setInfo(computer.getCPU(), CPU_CONFIG_DIR + settings.getCPUName());
+        setInfo(computer.getCPU(), settings.getCPUName());
     }
 
-    private void setInfo(Plugin plugin, String fileName) {
-        if (plugin == null) {
+    private void setInfo(Optional<? extends Plugin> pluginOpt, String pluginName) {
+        if (!pluginOpt.isPresent()) {
             setVisibleInfo(false);
             return;
         } else {
             setVisibleInfo(true);
         }
+        Plugin plugin = pluginOpt.get();
         PluginType pluginType = plugin.getClass().getAnnotation(PluginType.class);
 
+        Path filePath = ComputerConfig.getPluginDir(plugin.getClass()).resolve(pluginName + ".jar");
+
         lblName.setText(pluginType.title());
-        lblFileName.setText(fileName + ".jar");
+        lblFileName.setText(filePath.toString());
         lblCopyright.setText(pluginType.copyright());
         lblVersion.setText(plugin.getVersion());
         txtDescription.setText(pluginType.description());
@@ -142,7 +141,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         javax.swing.JPanel panelTabInfo = new javax.swing.JPanel();
         javax.swing.JToolBar jToolBar1 = new javax.swing.JToolBar();
         btnCompiler = new javax.swing.JToggleButton();
-        btnCPU = new javax.swing.JToggleButton();
+        JToggleButton btnCPU = new JToggleButton();
         btnMemory = new javax.swing.JToggleButton();
         btnDevice = new javax.swing.JToggleButton();
         javax.swing.JToolBar.Separator jSeparator1 = new javax.swing.JToolBar.Separator();
@@ -155,7 +154,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         lblVersion = new javax.swing.JLabel();
         lblCopyright = new javax.swing.JLabel();
         javax.swing.JPanel panelDescription = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        JScrollPane jScrollPane1 = new JScrollPane();
         txtDescription = new javax.swing.JTextArea();
         javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
         javax.swing.JToolBar jToolBar2 = new javax.swing.JToolBar();
@@ -182,11 +181,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         btnCompiler.setFocusable(false);
         btnCompiler.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnCompiler.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnCompiler.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnCompilerActionPerformed(evt);
-            }
-        });
+        btnCompiler.addActionListener(this::btnCompilerActionPerformed);
         jToolBar1.add(btnCompiler);
 
         buttonGroup1.add(btnCPU);
@@ -196,11 +191,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         btnCPU.setFocusable(false);
         btnCPU.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnCPU.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnCPU.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnCPUActionPerformed(evt);
-            }
-        });
+        btnCPU.addActionListener(this::btnCPUActionPerformed);
         jToolBar1.add(btnCPU);
 
         buttonGroup1.add(btnMemory);
@@ -209,11 +200,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         btnMemory.setFocusable(false);
         btnMemory.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnMemory.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnMemory.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnMemoryActionPerformed(evt);
-            }
-        });
+        btnMemory.addActionListener(this::btnMemoryActionPerformed);
         jToolBar1.add(btnMemory);
 
         buttonGroup1.add(btnDevice);
@@ -222,11 +209,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         btnDevice.setFocusable(false);
         btnDevice.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnDevice.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnDevice.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnDeviceActionPerformed(evt);
-            }
-        });
+        btnDevice.addActionListener(this::btnDeviceActionPerformed);
         jToolBar1.add(btnDevice);
         jToolBar1.add(jSeparator1);
 
@@ -235,11 +218,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         btnExport.setFocusable(false);
         btnExport.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnExport.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnExport.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnExportActionPerformed(evt);
-            }
-        });
+        btnExport.addActionListener(this::btnExportActionPerformed);
         jToolBar1.add(btnExport);
 
         lblSelectDevice.setFont(lblSelectDevice.getFont().deriveFont(lblSelectDevice.getFont().getStyle() & ~java.awt.Font.BOLD));
@@ -357,11 +336,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         btnSaveSchema.setFocusable(false);
         btnSaveSchema.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnSaveSchema.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnSaveSchema.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnSaveSchemaActionPerformed(evt);
-            }
-        });
+        btnSaveSchema.addActionListener(this::btnSaveSchemaActionPerformed);
         jToolBar2.add(btnSaveSchema);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -414,19 +389,19 @@ public class ViewComputerDialog extends javax.swing.JDialog {
     private void btnCompilerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCompilerActionPerformed
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        setInfo(computer.getCompiler(), COMPILER_CONFIG_DIR + settings.getCompilerName());
+        setInfo(computer.getCompiler(), settings.getCompilerName());
     }//GEN-LAST:event_btnCompilerActionPerformed
 
     private void btnCPUActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCPUActionPerformed
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        setInfo(computer.getCPU(), CPU_CONFIG_DIR + settings.getCPUName());
+        setInfo(computer.getCPU(), settings.getCPUName());
     }//GEN-LAST:event_btnCPUActionPerformed
 
     private void btnMemoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMemoryActionPerformed
         lblSelectDevice.setVisible(false);
         cmbDevice.setVisible(false);
-        setInfo(computer.getMemory(), MEMORY_CONFIG_DIR + settings.getMemoryName());
+        setInfo(computer.getMemory(), settings.getMemoryName());
     }//GEN-LAST:event_btnMemoryActionPerformed
 
     private void btnDeviceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeviceActionPerformed
@@ -435,7 +410,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         setVisibleInfo(false);
         if (cmbDevice.getItemCount() > 0) {
             cmbDevice.setSelectedIndex(0);
-            setInfo(computer.getDevice(0), DEVICE_CONFIG_DIR + settings.getDeviceName(0));
+            setInfo(computer.getDevice(0), settings.getDeviceName(0));
         } else {
             cmbDevice.setEnabled(false);
         }
@@ -451,22 +426,10 @@ public class ViewComputerDialog extends javax.swing.JDialog {
         f.setDialogTitle("Save computer information");
         f.setAcceptAllFileFilterUsed(false);
 
-        FileFilter filter = new FileFilter() {
+        UniversalFileFilter filter = new UniversalFileFilter();
+        filter.addExtension("txt");
+        filter.setDescription("Text files (*.txt)");
 
-            @Override
-            public boolean accept(File f) {
-                if (f.isDirectory()) {
-                    return true;
-                }
-                return f.getName().toLowerCase().endsWith(".txt");
-            }
-
-            @Override
-            public String getDescription() {
-                return "Text files (*.txt)";
-            }
-
-        };
         f.addChoosableFileFilter(filter);
         f.addChoosableFileFilter(f.getAcceptAllFileFilter());
         f.setFileFilter(filter);
@@ -483,7 +446,7 @@ public class ViewComputerDialog extends javax.swing.JDialog {
             return;
         }
         File selectedFile = f.getSelectedFile();
-        FileFilter selectedFileFilter = (FileFilter)f.getFileFilter();
+        FileFilter selectedFileFilter = f.getFileFilter();
 
         if (selectedFileFilter != filter) {
             fileComputerInfo = selectedFile;
@@ -518,33 +481,33 @@ public class ViewComputerDialog extends javax.swing.JDialog {
             FileWriter outFile = new FileWriter(fileComputerInfo);
             try (PrintWriter out = new PrintWriter(outFile)) {
                 out.println("Computer name: " + computer.getName() + "\n");
-                Plugin plugin = computer.getCompiler();
-                if (plugin != null) {
+                Optional<? extends Plugin> plugin = computer.getCompiler();
+                if (plugin.isPresent()) {
                     out.println("Compiler\n########\n");
                     out.print("File name: ");
                     out.print("[");
-                    out.print(COMPILER_CONFIG_DIR);
+                    out.print(ComputerConfig.getPluginDir(Compiler.class));
                     out.print(settings.getCompilerName());
                     out.println(".jar]");
-                    savePluginInfo(out, plugin);
+                    savePluginInfo(out, plugin.get());
                 }
                 out.println("CPU\n###\n");
                 out.print("File name: ");
                 out.print("[");
-                out.print(CPU_CONFIG_DIR);
+                out.print(ComputerConfig.getPluginDir(CPU.class));
                 out.print(settings.getCPUName());
                 out.println(".jar]");
-                savePluginInfo(out, computer.getCPU());
+                savePluginInfo(out, computer.getCPU().get());
 
                 plugin = computer.getMemory();
-                if (plugin != null) {
+                if (plugin.isPresent()) {
                     out.println("Memory\n######\n");
                     out.print("File name: ");
                     out.print("[");
-                    out.print(MEMORY_CONFIG_DIR);
+                    out.print(ComputerConfig.getPluginDir(Memory.class));
                     out.print(settings.getMemoryName());
                     out.println(".jar]");
-                    savePluginInfo(out, plugin);
+                    savePluginInfo(out, plugin.get());
                 }
                 int j = computer.getDeviceCount();
                 for (int i = 0; i < j; i++) {
@@ -552,25 +515,22 @@ public class ViewComputerDialog extends javax.swing.JDialog {
                     out.println("Device [" + i + "]\n###########\n");
                     out.print("File name: ");
                     out.print("[");
-                    out.print(DEVICE_CONFIG_DIR);
+                    out.print(ComputerConfig.getPluginDir(Device.class));
                     out.print(settings.getDeviceName(i));
                     out.println(".jar]");
-                    savePluginInfo(out, plugin);
+                    savePluginInfo(out, plugin.get());
                 }
             }
         } catch (IOException e) {
-            logger.error("Could not save computer information", e);
+            LOGGER.error("Could not save computer information", e);
             Main.tryShowErrorMessage("Could not save computer information. For details, please see log file.");
         }
     }
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JToggleButton btnCPU;
     private javax.swing.JToggleButton btnCompiler;
     private javax.swing.JToggleButton btnDevice;
     private javax.swing.JToggleButton btnMemory;
-    private javax.swing.JComboBox cmbDevice;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JComboBox<String> cmbDevice;
     private javax.swing.JLabel lblComputerName;
     private javax.swing.JLabel lblCopyright;
     private javax.swing.JLabel lblFileName;

@@ -32,12 +32,23 @@ https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine[SSEM],
 "Baby". It was a predecessor of Manchester Mark 1 which led to Ferranti Mark 1, the world's first commercially available
 general-purpose computer.
 
-== Boring project files
+== Preparing the environment
 
 Since emuStudio uses Maven for project organization and dependency management, this plug-in will be developed also
 in this manner. So lets' start with basic
 https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html[Maven project structure], you can use
 `mvn archetype:generate` command to be faster.
+
+The project should be located at `emuStudio/plugins/cpu/ssem-cpu`, and should contain the following structure:
+
+    src/
+      main/
+        java/
+        resources/
+    test/
+      java/
+    pom.xml
+
 
 The content of `pom.xml` is as follows:
 
@@ -118,7 +129,7 @@ The content of `pom.xml` is as follows:
 </project>
 ----
 
-We will maybe extend the content with some plug-ins later.
+We might extend the content with some plug-ins later.
 
 
 == The main class
@@ -217,5 +228,32 @@ tab in the emuStudio main module.
 
 == Behavioral contracts
 
-TODO
+=== Load and initialization
+
+CPU plug-in is created as a second plug-in (first is compiler).
+
+At first, emuStudio creates an instance of the plug-in.
+
+=== Emulation control
+
+If you are familiar with emuStudio, you know that there is a button above debug window, green filled arrow, by which
+the emulation will be executed. Besides, there are more buttons, for example "step emulation", which will do execute
+just one CPU instruction.
+
+CPU plug-in (when inherited from `AbstractCPU`) supports this behavior by with only methods - `call()`, which should
+start a loop of executing instructions from the current instruction pointer, and `stepInternal()`, which should execute
+just one instruction and then return resulting `RunState` (both methods do).
+
+The contract which needs attention is threading. Execution of mentioned methods is done always from emuStudio, because
+other plug-ins don't have access to it (only if it is accessible from custom context, we'll talk about contexts later).
+emuStudio main module has dedicated one single thread for this purpose. So the methods are not executed from UI thread.
+This means they will not block UI, even if they take long time to execute.
+
+All other methods from the CPU interface are (possibly) executed from UI thread, so they should be implemented in
+a responsive manner, because they block UI.
+
+
+
+
+
 

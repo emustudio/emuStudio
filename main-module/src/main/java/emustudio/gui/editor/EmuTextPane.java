@@ -1,6 +1,8 @@
 /*
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 20010-2016, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -24,22 +26,10 @@ import emulib.plugins.compiler.Token;
 import emulib.runtime.UniversalFileFilter;
 import emustudio.interfaces.ITokenColor;
 import emustudio.main.Main;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Insets;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Reader;
-import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.JTextPane;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
@@ -60,8 +50,17 @@ import javax.swing.text.ViewFactory;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.awt.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * This class is extended JTextPane class. Support some awesome features like
@@ -72,8 +71,8 @@ import org.slf4j.LoggerFactory;
 public class EmuTextPane extends JTextPane {
     private final static Logger logger = LoggerFactory.getLogger(EmuTextPane.class);
 
-    public static final short NUMBERS_WIDTH = 40;
-    public static final short NUMBERS_HEIGHT = 4;
+    private static final short NUMBERS_WIDTH = 40;
+    private static final short NUMBERS_HEIGHT = 4;
 
     private LexicalAnalyzer syntaxLexer = null;
     private DocumentReader reader;
@@ -93,11 +92,11 @@ public class EmuTextPane extends JTextPane {
     private SourceFileExtension[] fileExtensions;
 
     public interface UndoActionListener {
-        public void undoStateChanged(boolean canUndo, String presentationName);
-        public void redoStateChanged(boolean canRedo, String presentationName);
+        void undoStateChanged(boolean canUndo, String presentationName);
+        void redoStateChanged(boolean canRedo, String presentationName);
     }
 
-    public static class MyFlowStrategy extends FlowView.FlowStrategy {
+    private static class MyFlowStrategy extends FlowView.FlowStrategy {
 
         @Override
         public void layout(FlowView fv) {
@@ -106,12 +105,12 @@ public class EmuTextPane extends JTextPane {
         }
     }
 
-    public static class Workaround6606443ViewFactory implements ViewFactory {
+    private static class Workaround6606443ViewFactory implements ViewFactory {
 
         @Override
         public View create(Element element) {
             String name = element.getName();
-            View view = null;
+            View view;
             switch (name) {
                 case AbstractDocument.ContentElementName:
                     view = new LabelView(element);
@@ -146,7 +145,7 @@ public class EmuTextPane extends JTextPane {
         }
     }
 
-    public EmuTextPane(Compiler compiler) {
+    public EmuTextPane(Optional<Compiler> compiler) {
         initStyles();
 
         fileSaved = true;
@@ -164,9 +163,9 @@ public class EmuTextPane extends JTextPane {
         document.setDocumentReader(reader);
         this.setStyledDocument(document);
 
-        if (compiler != null) {
-            this.fileExtensions = compiler.getSourceSuffixList();
-            this.syntaxLexer = compiler.getLexer(reader);
+        if (compiler.isPresent()) {
+            this.fileExtensions = compiler.get().getSourceSuffixList();
+            this.syntaxLexer = compiler.get().getLexer(reader);
         }
 
         undo = new CompoundUndoManager();
@@ -202,7 +201,7 @@ public class EmuTextPane extends JTextPane {
                             }
                             if (undoListener != null) {
                                 undoListener.undoStateChanged(canUndo, undoPresName);
-                                undoListener.redoStateChanged(canRedo, undoPresName);
+                                undoListener.redoStateChanged(canRedo, redoPresName);
                             }
                         }
                     }, CompoundUndoManager.IDLE_DELAY_MS);
@@ -237,13 +236,13 @@ public class EmuTextPane extends JTextPane {
         undoListener = l;
     }
 
-    public boolean canRedo() {
+    private boolean canRedo() {
         synchronized (undoLock) {
             return undo.canRedo();
         }
     }
 
-    public boolean canUndo() {
+    private boolean canUndo() {
         synchronized (undoLock) {
             return undo.canUndo();
         }
@@ -267,18 +266,7 @@ public class EmuTextPane extends JTextPane {
             redoPresName = undo.getRedoPresentationName();
             syntaxStartTimer.cancel();
             syntaxStartTimer = new Timer("SyntaxStartTimer");
-            syntaxStartTimer.schedule(new TimerTask() {
-
-                @Override
-                public void run() {
-                    synchronized (syntaxLock) {
-                        if (syntaxLexer != null) {
-                            highlight = new HighlightThread(syntaxLexer, reader, document, styles);
-                            highlight.colorAll();
-                        }
-                    }
-                }
-            }, CompoundUndoManager.IDLE_DELAY_MS);
+            scheduleHighlighter();
         }
         if (undoListener != null) {
             undoListener.undoStateChanged(canUndo, undoPresName);
@@ -304,18 +292,7 @@ public class EmuTextPane extends JTextPane {
             redoPresName = undo.getRedoPresentationName();
             syntaxStartTimer.cancel();
             syntaxStartTimer = new Timer("SyntaxStartTimer");
-            syntaxStartTimer.schedule(new TimerTask() {
-
-                @Override
-                public void run() {
-                    synchronized (syntaxLock) {
-                        if (syntaxLexer != null) {
-                            highlight = new HighlightThread(syntaxLexer, reader, document, styles);
-                            highlight.colorAll();
-                        }
-                    }
-                }
-            }, CompoundUndoManager.IDLE_DELAY_MS);
+            scheduleHighlighter();
         }
         if (undoListener != null) {
             undoListener.undoStateChanged(canUndo, undoPresName);
@@ -323,8 +300,19 @@ public class EmuTextPane extends JTextPane {
         }
     }
 
-    public Reader getDocumentReader() {
-        return reader;
+    private void scheduleHighlighter() {
+        syntaxStartTimer.schedule(new TimerTask() {
+
+            @Override
+            public void run() {
+                synchronized (syntaxLock) {
+                    if (syntaxLexer != null) {
+                        highlight = new HighlightThread(syntaxLexer, reader, document, styles);
+                        highlight.colorAll();
+                    }
+                }
+            }
+        }, CompoundUndoManager.IDLE_DELAY_MS);
     }
 
     @Override
@@ -358,11 +346,10 @@ public class EmuTextPane extends JTextPane {
         return openFile(new File(fileName));
     }
 
-    public boolean openFile(File file) {
+    private boolean openFile(File file) {
         fileSource = file;
-        if (fileSource.canRead() == false) {
-            String msg = new StringBuilder().append("File: ").append(fileSource.getPath()).append(" cannot be read.")
-                    .toString();
+        if (!fileSource.canRead()) {
+            String msg = "File: " + fileSource.getPath() + " cannot be read.";
             logger.error(msg);
             Main.tryShowErrorMessage(msg);
             return false;
@@ -403,7 +390,7 @@ public class EmuTextPane extends JTextPane {
         UniversalFileFilter f1 = new UniversalFileFilter();
         UniversalFileFilter f2 = new UniversalFileFilter();
 
-        if (this.confirmSave() == true) {
+        if (this.confirmSave()) {
             return false;
         }
 
@@ -445,7 +432,7 @@ public class EmuTextPane extends JTextPane {
     }
 
     public boolean confirmSave() {
-        if (fileSaved == false) {
+        if (!fileSaved) {
             int r = JOptionPane.showConfirmDialog(null, "File is not saved yet. Do you want to save the file ?");
             if (r == JOptionPane.YES_OPTION) {
                 return (!saveFile(true));
@@ -457,12 +444,11 @@ public class EmuTextPane extends JTextPane {
     }
 
     public boolean saveFile(boolean showDialogIfFileIsInvalid) {
-        if ((fileSource == null) || (fileSource.exists() && (fileSource.canWrite() == false))) {
+        if ((fileSource == null) || (fileSource.exists() && (!fileSource.canWrite()))) {
             if (showDialogIfFileIsInvalid) {
                 return saveFileDialog();
-            }
-            else {
-                logger.error("Could not save file, the file is not writable: " + fileSource.getPath());
+            } else {
+                logger.error("Could not save file, the file is not writable: " + fileSource);
                 Main.tryShowErrorMessage("Error: Cannot save the file!\n The selected file is not writable.");
                 return false;
             }
@@ -475,8 +461,8 @@ public class EmuTextPane extends JTextPane {
             return true;
         } catch (IOException e) {
             logger.error("Could not save file: " + fileSource.getPath(), e);
-            Main.tryShowErrorMessage(new StringBuilder().append("Error: Cannot save the file: ")
-                    .append(fileSource.getPath()).append("\n").append(e.getLocalizedMessage()).toString());
+            Main.tryShowErrorMessage("Error: Cannot save the file: " +
+                fileSource.getPath() + "\n" + e.getLocalizedMessage());
             return false;
         }
     }

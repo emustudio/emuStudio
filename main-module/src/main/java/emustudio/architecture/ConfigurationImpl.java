@@ -6,6 +6,7 @@ import emustudio.drawing.Schema;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -48,16 +49,15 @@ public class ConfigurationImpl implements Configuration {
         if ((configurationName == null) || configurationName.isEmpty()) {
             throw new WriteConfigurationException("Configuration name is not set");
         }
-        String dir = ConfigurationFactory.getConfigurationBaseDirectory() + File.separator
-                + ConfigurationFactory.CONFIGS_DIR;
-        File dirFile = new File(dir);
+        Path dirPath = ComputerConfig.getConfigDir();
+        File dirFile = dirPath.toFile();
         if (!dirFile.exists() || (dirFile.exists() && !dirFile.isDirectory())) {
             if (!dirFile.mkdir()) {
                 throw new WriteConfigurationException("Could not create config directory");
             }
         }
         try {
-            File configFile = new File(dir + File.separator + configurationName + ".conf");
+            File configFile = dirPath.resolve(configurationName + ".conf").toFile();
             configFile.createNewFile();
             try (FileOutputStream out = new FileOutputStream(configFile)) {
                 properties.put("emu8Version", "4");

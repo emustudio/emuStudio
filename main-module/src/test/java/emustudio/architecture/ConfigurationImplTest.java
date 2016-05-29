@@ -1,23 +1,36 @@
 package emustudio.architecture;
 
 import emustudio.drawing.Schema;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.URISyntaxException;
 import java.util.Properties;
 
-import static emustudio.architecture.ConfigurationFactoryTest.getBaseDirectory;
+import static emustudio.architecture.ComputerConfigTest.getBaseDirectory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class ConfigurationImplTest {
 
+    @BeforeClass
+    public static void setUpClass() throws URISyntaxException {
+        ComputerConfig.setConfigBaseDir(getBaseDirectory().toFile().getAbsolutePath());
+    }
+
+    @AfterClass
+    public static void tearDownClass() {
+        ComputerConfig.setConfigBaseDir(System.getProperty("user.dir"));
+    }
+
     @Test
     public void testLoadSchema() throws Exception {
         String configName = "tmp";
-        File configFile = getBaseDirectory().resolve(ConfigurationFactory.CONFIGS_DIR).resolve(configName + ".conf").toFile();
+        File configFile = ComputerConfig.getConfigDir().resolve(configName + ".conf").toFile();
 
         Properties properties = new Properties();
         properties.load(new FileInputStream(configFile));

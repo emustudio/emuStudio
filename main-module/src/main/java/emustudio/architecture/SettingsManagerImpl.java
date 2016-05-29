@@ -1,7 +1,7 @@
 /*
  * KISS, YAGNI, DRY
  *
- * (c) Copyright 2010-2014, Peter Jakubčo
+ * (c) Copyright 2010-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,12 +22,13 @@ package emustudio.architecture;
 import emulib.emustudio.SettingsManager;
 import emulib.runtime.InvalidPasswordException;
 import emulib.runtime.StaticDialogs;
-import emustudio.architecture.ComputerFactory.PluginInfo;
 import emustudio.drawing.Schema;
 import emustudio.main.Main;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -36,16 +37,19 @@ public class SettingsManagerImpl implements SettingsManager {
     private final static Logger LOGGER = LoggerFactory.getLogger(SettingsManagerImpl.class);
 
     private final Schema schema;
-    private final Map<Long, String> pluginNames = new HashMap<>();
+    private final Map<Long, String> pluginConfigNames;
     private final Configuration configuration;
 
-    public SettingsManagerImpl(Computer computer, Configuration configuration) {
+    public SettingsManagerImpl(Collection<ComputerFactory.PluginInfo> pluginInfos, Configuration configuration) {
         this.configuration = Objects.requireNonNull(configuration);
         this.schema = configuration.loadSchema();
 
-        for (PluginInfo plugin : computer.getPluginsInfo()) {
-            pluginNames.put(plugin.pluginId, plugin.pluginSettingsName);
+        Map<Long, String> tmpPluginConfigNames = new HashMap<>();
+        for (ComputerFactory.PluginInfo pluginInfo : pluginInfos) {
+            tmpPluginConfigNames.put(pluginInfo.pluginId, pluginInfo.pluginConfigName);
         }
+        this.pluginConfigNames = Collections.unmodifiableMap(tmpPluginConfigNames);
+
         initialize();
     }
 
@@ -59,13 +63,13 @@ public class SettingsManagerImpl implements SettingsManager {
            try {
                StaticDialogs.setGUISupported(false, Main.password);
            } catch (InvalidPasswordException e) {
-               // does not happen
+               LOGGER.error("Unexpected security issue", e);
            }
         }
     }
 
     public void destroy() {
-        pluginNames.clear();
+        pluginConfigNames.clear();
     }
 
     public Schema getSchema() {
@@ -74,7 +78,7 @@ public class SettingsManagerImpl implements SettingsManager {
 
     @Override
     public String readSetting(long pluginID, String settingName) {
-        String pluginName = pluginNames.get(pluginID);
+        String pluginName = pluginConfigNames.get(pluginID);
 
         if ((pluginName == null) || pluginName.isEmpty()) {
             return null;
@@ -112,7 +116,7 @@ public class SettingsManagerImpl implements SettingsManager {
 
     @Override
     public boolean writeSetting(long pluginID, String settingName, String val) {
-        String prop = pluginNames.get(pluginID);
+        String prop = pluginConfigNames.get(pluginID);
 
         if ((prop == null) || prop.isEmpty()) {
             return false;
@@ -134,7 +138,7 @@ public class SettingsManagerImpl implements SettingsManager {
 
     @Override
     public boolean removeSetting(long pluginID, String settingName) {
-        String prop = pluginNames.get(pluginID);
+        String prop = pluginConfigNames.get(pluginID);
 
         if ((prop == null) || prop.isEmpty()) {
             return false;
@@ -154,9 +158,9 @@ public class SettingsManagerImpl implements SettingsManager {
         return true;
     }
 
-    public boolean writeSetting(String settingName, String value) {
+    boolean writeSetting(String settingName, String value) {
         boolean result = true;
-        for (Long pluginID : pluginNames.keySet()) {
+        for (Long pluginID : pluginConfigNames.keySet()) {
             result = result && writeSetting(pluginID, settingName, value);
         }
         return result;

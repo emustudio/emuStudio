@@ -212,21 +212,6 @@ TIP: Most probably a compiler would want to access memory, in which case it woul
      into other components before program can be started (for example, content of abstract tapes in the case of RAM
      machine).
 
-== Emulation lifecycle and behavior contracts
-
-emuStudio is also a framework, which not only defines the API, but also the whole life cycle of plug-ins, and has the
-control of all emulation processes. It proactively loads, instantiates and initializes plug-ins. That way, a plug-in
-developer does not have to care about messing with class loaders, and can safely focus on what the plug-in should do
-in the first place.
-
-Behavior contracts define the operations and their order in all phases of emulation life cycle, which plug-ins must
-count with. Taken that, plug-ins can assume the state in which the other plug-ins are, or in which emuStudio itself is
-and shape their own behavior accordingly. emuStudio is also assuming that plug-ins will "behave good", and if not, they
-can affect or possibly corrupt the whole emulator. In that case the state of emuStudio and other plug-ins is not defined.
-
-More details, including programming examples about the life cycle and behavior contracts will be presented in further
-sections, for each plug-in type separately.
-
 == Plug-in basics
 
 Each plug-in is a separate Java module, usually single jar file, placed in the proper directory. As it is necessary
@@ -298,6 +283,68 @@ plug-in for emuStudio, so it is placed in `mem/` subdirectory, but java-cup libr
 non-default. The recommended place for storing these kind of libraries is `lib/` subdirectory.
 
 NOTE: Cyclic dependencies are also supported.
+
+
+== Emulation lifecycle and behavior contracts
+
+emuStudio is also a framework, which not only defines the API, but also the whole life cycle of plug-ins, and has the
+control of all emulation processes. It proactively loads, instantiates and initializes plug-ins. That way, a plug-in
+developer does not have to care about messing with class loaders, and can safely focus on what the plug-in should do
+in the first place.
+
+Behavior contracts define the operations and their order in all phases of emulation life cycle, which plug-ins must
+count with. Taken that, plug-ins can assume the state in which the other plug-ins are, or in which emuStudio itself is
+and shape their own behavior accordingly. emuStudio is also assuming that plug-ins will "behave good", and if not, they
+can affect or possibly corrupt the whole emulator. In that case the state of emuStudio and other plug-ins is not defined.
+
+More details, including programming examples about the life cycle and behavior contracts will be presented in further
+sections, for each plug-in type separately.
+
+=== Main class
+
+Each plug-in must have exactly one "main class" in Java, which will be annotated with `emulib.annotations.PluginType`
+annotation. This annotation provides several information, like:
+
+- title of the plug-in
+- copyright notice and description of the plug-in
+- what type of the plug-in is (compiler, CPU, memory, device),
+- what version of emuLib it supports
+
+The class must also inherit from `emulib.plugins.Plugin` interface (not necessarily directly).
+
+=== Loading and initialization
+
+Setting up plug-ins is a two-phase process and it is done solely in emuStudio. emuStudio has custom class loader, into
+which it loads all plug-ins (classes and resources) and "registers" them in JVM. The order is as follows:
+
+1. Compiler plug-in
+2. CPU
+3. Memory
+4. Devices in the order as they are defined in the virtual computer configuration file
+
+However, there are still no instances of the found classes. The order is very important, because it has huge
+implications of what plug-in can depend on which. The rule is (theoretically and practically) that only mutual
+dependency is never allowed.
+
+However, there is a possibility, which allow a plug-in with the "lower" number of load order to depend on a plug-in
+with "higher" number of the load order. The solution is to add it to the manifest file of the plug-in JAR file. Then,
+the plug-in and all dependencies defined in the manifest are loaded at once.
+
+
+
+
+ by having all computer
+classes defined in JVM,
+
+
+implications of what plug-in can depend on which. It is obvious that
+
+
+At first, emuStudio loads plug-in by
+plug-in into memory -
+
+
+
 
 === Naming conventions
 

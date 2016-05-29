@@ -2,6 +2,8 @@
  *
  * KISS, YAGNI, DRY
  *
+ * (c) Copyright 2010-2016, Peter Jakubčo
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -20,15 +22,8 @@ package emustudio.gui;
 
 import emustudio.architecture.Computer;
 
-import javax.swing.GroupLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.LayoutStyle;
-import javax.swing.WindowConstants;
+import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Objects;
 
 /**
@@ -60,13 +55,7 @@ public class AutoDialog extends JDialog {
 
         lblAction.setText("Initializing...");
 
-        btnStop.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                btnStopActionPerformed(e);
-            }
-        });
+        btnStop.addActionListener(this::btnStopActionPerformed);
         btnStop.setEnabled(false);
 
         GroupLayout layout = new GroupLayout(getContentPane());
@@ -93,7 +82,7 @@ public class AutoDialog extends JDialog {
     }
 
     private void btnStopActionPerformed(ActionEvent e) {
-        computer.getCPU().stop();
+        computer.getCPU().get().stop();
     }
     private JLabel lblAction;
     private JButton btnStop;

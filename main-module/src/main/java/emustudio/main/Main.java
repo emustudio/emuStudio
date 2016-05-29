@@ -1,7 +1,7 @@
 /*
  * KISS, YAGNI, DRY
  *
- * (c) Copyright 2007-2014, Peter Jakubčo
+ * (c) Copyright 2007-2016, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,9 +27,9 @@ import emulib.runtime.InvalidPluginException;
 import emulib.runtime.PluginLoader;
 import emulib.runtime.StaticDialogs;
 import emustudio.architecture.Computer;
+import emustudio.architecture.ComputerConfig;
 import emustudio.architecture.ComputerFactory;
 import emustudio.architecture.Configuration;
-import emustudio.architecture.ConfigurationFactory;
 import emustudio.architecture.ReadConfigurationException;
 import emustudio.architecture.SettingsManagerImpl;
 import emustudio.gui.LoadingDialog;
@@ -41,7 +41,9 @@ import emustudio.main.CommandLineFactory.CommandLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
@@ -83,7 +85,7 @@ public class Main {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws MalformedURLException {
         try {
             javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
         } catch (javax.swing.UnsupportedLookAndFeelException | ClassNotFoundException
@@ -126,9 +128,8 @@ public class Main {
             return;
         }
 
-        ConfigurationFactory configurationManager = new ConfigurationFactory();
         ContextPool contextPool = new ContextPool();
-        PluginLoader pluginLoader = new PluginLoader();
+        PluginLoader pluginLoader = new PluginLoader(new File("lib").toURI().toURL());
         Computer computer = null;
         Configuration configuration = null;
         SettingsManagerImpl settingsManager = null;
@@ -163,12 +164,12 @@ public class Main {
 
         // load the virtual computer
         try {
-            computer = new ComputerFactory(configurationManager, pluginLoader)
+            computer = new ComputerFactory(pluginLoader)
                     .createComputer(commandLine.getConfigName(), contextPool);
             contextPool.setComputer(password, computer);
 
-            configuration = ConfigurationFactory.read(commandLine.getConfigName());
-            settingsManager = new SettingsManagerImpl(computer, configuration);
+            configuration = ComputerConfig.read(commandLine.getConfigName());
+            settingsManager = new SettingsManagerImpl(computer.getPluginInfos(), configuration);
 
             computer.initialize(settingsManager);
         } catch (InvalidPluginException e) {
@@ -202,8 +203,13 @@ public class Main {
 
         if (!commandLine.autoWanted()) {
             try {
+                int memorySize = 0;
+                if (computer.getMemory().isPresent()) {
+                    memorySize = computer.getMemory().get().getSize();
+                }
+
                 DebugTableImpl debugTable = new DebugTableImpl(
-                        new DebugTableModel(computer.getCPU(), computer.getMemory().getSize())
+                        new DebugTableModel(computer.getCPU().get(), memorySize)
                 );
                 API.getInstance().setDebugTable(debugTable, Main.password);
 
