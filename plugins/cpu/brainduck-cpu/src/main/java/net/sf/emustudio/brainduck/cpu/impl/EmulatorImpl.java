@@ -142,9 +142,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    public void reset(int adr) {
-        super.reset(adr);
-
+    public void resetInternal(int adr) {
         IP = adr; // initialize program counter
         loopPointers.clear();
         loopEndsCache.clear();

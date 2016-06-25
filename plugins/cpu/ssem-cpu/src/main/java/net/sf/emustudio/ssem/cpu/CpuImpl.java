@@ -86,4 +86,9 @@ public class CpuImpl extends AbstractCPU {
     public RunState call() throws Exception {
         return null;
     }
+
+    @Override
+    protected void resetInternal(int startPos) {
+
+    }
 }

@@ -32,7 +32,7 @@ import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import net.sf.emustudio.devices.mits88sio.gui.ConfigDialog;
 import net.sf.emustudio.devices.mits88sio.gui.StatusDialog;
-import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

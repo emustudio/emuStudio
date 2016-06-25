@@ -25,7 +25,6 @@ import emulib.plugins.memory.Memory;
 import net.jcip.annotations.ThreadSafe;
 
 import java.io.Closeable;
-import java.util.ListIterator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -40,12 +39,12 @@ public class EmulationController implements Closeable {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final CPU cpu;
     private final Optional<Memory> memory;
-    private final Supplier<ListIterator<Device>> devices;
+    private final Supplier<Iterable<Device>> devices;
 
     private volatile CountDownLatch countDownLatch;
     private volatile CPU.RunState runState = CPU.RunState.STATE_STOPPED_BREAK;
 
-    public EmulationController(CPU cpu, Optional<Memory> memory, Supplier<ListIterator<Device>> devices) {
+    public EmulationController(CPU cpu, Optional<Memory> memory, Supplier<Iterable<Device>> devices) {
         this.cpu = Objects.requireNonNull(cpu);
         this.memory = Objects.requireNonNull(memory);
         this.devices = Objects.requireNonNull(devices);
@@ -129,9 +128,8 @@ public class EmulationController implements Closeable {
             }
             awaitLatch();
 
-            ListIterator<Device> deviceIterator = devices.get();
-            while (deviceIterator.hasNext()) {
-                deviceIterator.next().reset();
+            for (Device device : devices.get()) {
+                device.reset();
             }
         });
     }

@@ -28,7 +28,7 @@ import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
-import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
 import net.sf.emustudio.memory.standard.StandardMemoryContext;
 
 import java.util.MissingResourceException;

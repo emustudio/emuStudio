@@ -25,24 +25,18 @@ import emulib.emustudio.SettingsManager;
 import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.Disassembler;
-import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.AlreadyRegisteredException;
-import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
-import net.sf.emustudio.intel8080.ExtendedContext;
-import net.sf.emustudio.intel8080.FrequencyChangedListener;
-import net.sf.emustudio.intel8080.gui.DecoderImpl;
-import net.sf.emustudio.intel8080.gui.DisassemblerImpl;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
+import net.sf.emustudio.intel8080.api.FrequencyUpdater;
 import net.sf.emustudio.intel8080.gui.StatusPanel;
 
-import javax.swing.JPanel;
-import java.util.List;
+import javax.swing.*;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -62,7 +56,6 @@ public class CpuImpl extends AbstractCPU {
 
     private final ScheduledExecutorService frequencyScheduler = Executors.newSingleThreadScheduledExecutor();
     private final AtomicReference<Future> frequencyUpdaterFuture = new AtomicReference<>();
-    private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
 
     private final ContextPool contextPool;
     private final ContextImpl context = new ContextImpl();
@@ -70,26 +63,6 @@ public class CpuImpl extends AbstractCPU {
     private EmulatorEngine engine;
     private StatusPanel statusPanel;
     private Disassembler disassembler;
-
-    private class FrequencyUpdater implements Runnable {
-
-        private long startTimeSaved = 0;
-        private float frequency;
-
-        @Override
-        public void run() {
-            double endTime = System.nanoTime();
-            double time = endTime - startTimeSaved;
-            long executedCycles = engine.getAndResetExecutedCycles();
-
-            if (executedCycles == 0) {
-                return;
-            }
-            frequency = (float) (executedCycles / (time / 1000000.0));
-            startTimeSaved = (long) endTime;
-            fireFrequencyChanged(frequency);
-        }
-    }
 
     public CpuImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
@@ -113,41 +86,17 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
-        Objects.requireNonNull(settings);
+        InitializerFor8080 initializer = new InitializerFor8080(this, getPluginID(), contextPool, settings, context);
+        initializer.initialize();
 
-        try {
-            MemoryContext<Short> memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
-
-            if (memory.getDataType() != Short.class) {
-                throw new PluginInitializationException(
-                        this,
-                        "Operating memory type is not supported for this kind of CPU."
-                );
-            }
-
-            // create disassembler and debug columns
-            this.disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
-            this.engine = new EmulatorEngine(memory, context);
-
-            String setting = settings.readSetting(getPluginID(), PRINT_CODE);
-            String printCodeUseCache = settings.readSetting(getPluginID(), PRINT_CODE_USE_CACHE);
-            if (setting != null && setting.toLowerCase().equals("true")) {
-                if (printCodeUseCache == null || printCodeUseCache.toLowerCase().equals("true")) {
-                    engine.setDispatchListener(new InstructionPrinter(disassembler, engine, true));
-                } else {
-                    engine.setDispatchListener(new InstructionPrinter(disassembler, engine, false));
-                }
-            }
-            statusPanel = new StatusPanel(this, context);
-        } catch (InvalidContextException | ContextNotFoundException e) {
-            throw new PluginInitializationException(this, ": Could not get memory context", e);
-        }
+        engine = initializer.getEngine();
+        disassembler = initializer.getDisassembler();
+        statusPanel = new StatusPanel(this, context);
     }
 
     @Override
     protected void destroyInternal() {
         context.clearDevices();
-        frequencyChangedListeners.clear();
     }
 
     public EmulatorEngine getEngine() {
@@ -155,9 +104,8 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public void reset(int startPos) {        
+    public void resetInternal(int startPos) {
         engine.reset(startPos);
-        super.reset(startPos);        
         stopFrequencyUpdater();
     }
 
@@ -176,20 +124,6 @@ public class CpuImpl extends AbstractCPU {
     @Override
     protected RunState stepInternal() throws Exception {
         return engine.step();
-    }
-
-    public void addFrequencyChangedListener(FrequencyChangedListener listener) {
-        frequencyChangedListeners.add(listener);
-    }
-
-    public void removeFrequencyChangedListener(FrequencyChangedListener listener) {
-        frequencyChangedListeners.remove(listener);
-    }
-
-    private void fireFrequencyChanged(float newFrequency) {
-        for (FrequencyChangedListener listener : frequencyChangedListeners) {
-            listener.frequencyChanged(newFrequency);
-        }
     }
 
     @Override
@@ -218,7 +152,7 @@ public class CpuImpl extends AbstractCPU {
 
     private void startFrequencyUpdater() {
         Future tmpFuture;
-        Future newFuture = frequencyScheduler.scheduleAtFixedRate(new FrequencyUpdater(), 0, 1, TimeUnit.SECONDS);
+        Future newFuture = frequencyScheduler.scheduleAtFixedRate(new FrequencyUpdater(engine), 0, 1, TimeUnit.SECONDS);
 
         do {
             tmpFuture = frequencyUpdaterFuture.get();

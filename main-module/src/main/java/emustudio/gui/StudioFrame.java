@@ -91,7 +91,7 @@ public class StudioFrame extends JFrame {
         this.debugTableModel = Objects.requireNonNull(debugTable.getModel());
 
         emulationController = new EmulationController(
-            computer.getCPU().get(), computer.getMemory(), computer::deviceIterator
+            computer.getCPU().get(), computer.getMemory(), computer::getDevices
         );
 
         txtSource = new EmuTextPane(computer.getCompiler());

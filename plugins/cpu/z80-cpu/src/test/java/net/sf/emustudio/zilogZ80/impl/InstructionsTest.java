@@ -23,7 +23,7 @@ import emulib.emustudio.SettingsManager;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import net.sf.emustudio.cpu.testsuite.MemoryStub;
-import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
 import net.sf.emustudio.zilogZ80.impl.suite.CpuRunnerImpl;
 import net.sf.emustudio.zilogZ80.impl.suite.CpuVerifierImpl;
 import org.easymock.Capture;

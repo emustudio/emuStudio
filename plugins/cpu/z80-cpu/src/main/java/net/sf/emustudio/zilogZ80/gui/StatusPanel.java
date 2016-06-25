@@ -20,7 +20,7 @@
 package net.sf.emustudio.zilogZ80.gui;
 
 import emulib.plugins.cpu.CPU;
-import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
 import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
 import net.sf.emustudio.zilogZ80.impl.CpuImpl;
 import net.sf.emustudio.zilogZ80.impl.EmulatorEngine;

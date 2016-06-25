@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(
@@ -50,6 +51,8 @@ public class MemoryImpl extends AbstractMemory {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
 
     private final MemoryContextImpl context = new MemoryContextImpl();
+
+    private SettingsManager settings;
     private MemoryDialog gui;
     private boolean emuStudioNoGUI = false;
 
@@ -100,7 +103,7 @@ public class MemoryImpl extends AbstractMemory {
      */
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
-        super.initialize(settings);
+        this.settings = Objects.requireNonNull(settings);
 
         int banksCount = 0, bankCommon = 0;
         String tmpSetting = settings.readSetting(pluginID, "banksCount");

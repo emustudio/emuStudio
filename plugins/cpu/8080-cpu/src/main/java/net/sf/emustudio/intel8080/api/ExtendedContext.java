@@ -17,17 +17,33 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.intel8080;
+package net.sf.emustudio.intel8080.api;
+
+import emulib.annotations.ContextType;
+import emulib.plugins.cpu.CPUContext;
+import emulib.plugins.device.DeviceContext;
 
 /**
- * Listener of frequency changes
+ * Extended CPU context for 8080 processor.
  */
-public interface FrequencyChangedListener {
-
+@ContextType
+public interface ExtendedContext extends CPUContext {
+    
     /**
-     * Handle frequency changes of the CPU.
-     *
-     * @param newFrequency new Frequency in kHz
+     * Attach a device into the CPU.
+     * 
+     * @param device the device
+     * @param port CPU port where the device should be attached
+     * @return true on success, false otherwise
      */
-    void frequencyChanged(float newFrequency);
+    boolean attachDevice(DeviceContext<Short> device, int port);
+    
+    /**
+     * Detach a device from the CPU.
+     * 
+     * @param port the CPU port number which will be freed.
+     */
+    void detachDevice(int port);
+    
+    void setCPUFrequency(int freq);
 }

@@ -165,9 +165,8 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    public void reset(int pos) {
+    public void resetInternal(int pos) {
         IP = pos;
-        super.reset(pos);
         if (context.checkTapes()) {
             loadTape(context.getInput());
         }

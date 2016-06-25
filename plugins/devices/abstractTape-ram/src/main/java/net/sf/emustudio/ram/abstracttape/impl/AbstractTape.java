@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 @PluginType(
@@ -45,12 +46,15 @@ import java.util.ResourceBundle;
 @SuppressWarnings("unused")
 public class AbstractTape extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTape.class);
+
+    private final AbstractTapeContextImpl context;
+
     private String guiTitle;
-    private AbstractTapeContextImpl context;
     private TapeDialog gui;
 
     boolean nogui;
     boolean auto;
+    private SettingsManager settings;
 
     public AbstractTape(Long pluginID, ContextPool contextPool) {
         super(pluginID);
@@ -74,8 +78,7 @@ public class AbstractTape extends AbstractDevice {
 
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
-        super.initialize(settings);
-        this.settings = settings;
+        this.settings = Objects.requireNonNull(settings);
 
         nogui = Boolean.parseBoolean(settings.readSetting(pluginID, SettingsManager.NO_GUI));
         auto = Boolean.parseBoolean(settings.readSetting(pluginID, SettingsManager.AUTO));
@@ -118,7 +121,6 @@ public class AbstractTape extends AbstractDevice {
             gui.dispose();
         }
         gui = null;
-        context = null;
         settings = null;
     }
 

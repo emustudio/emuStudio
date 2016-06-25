@@ -21,14 +21,11 @@ package net.sf.emustudio.intel8080.gui;
 
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.CPU.RunState;
-import net.sf.emustudio.intel8080.ExtendedContext;
-import net.sf.emustudio.intel8080.FrequencyChangedListener;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
 import net.sf.emustudio.intel8080.impl.CpuImpl;
 import net.sf.emustudio.intel8080.impl.EmulatorEngine;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 
@@ -68,34 +65,21 @@ public class StatusPanel extends JPanel {
             }
 
         });
-        cpu.addFrequencyChangedListener(new FrequencyChangedListener() {
-            @Override
-            public void frequencyChanged(float newFrequency) {
-                lblFrequency.setText(String.format("%.2f kHz", newFrequency));
+        cpu.getEngine().addFrequencyChangedListener(newFrequency -> lblFrequency.setText(String.format("%.2f kHz", newFrequency)));
+        spnFrequency.addChangeListener(e -> {
+            int i = (Integer)spnFrequency.getModel().getValue();
+            try {
+                StatusPanel.this.context.setCPUFrequency(i);
+            } catch (IndexOutOfBoundsException ex) {
+                spnFrequency.getModel().setValue(context.getCPUFrequency());
             }
         });
-        spnFrequency.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                int i = (Integer)spnFrequency.getModel().getValue();
-                try {
-                    StatusPanel.this.context.setCPUFrequency(i);
-                } catch (IndexOutOfBoundsException ex) {
-                    spnFrequency.getModel().setValue(context.getCPUFrequency());
-                }
-            }
-        });
-        spnTestPeriode.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                int i = (Integer) spnTestPeriode.getModel().getValue();
-                try {
-                    StatusPanel.this.cpu.setSliceTime(i);
-                } catch (IndexOutOfBoundsException ex) {
-                    spnTestPeriode.getModel().setValue(cpu.getSliceTime());
-                }
+        spnTestPeriode.addChangeListener(e -> {
+            int i = (Integer) spnTestPeriode.getModel().getValue();
+            try {
+                StatusPanel.this.cpu.setSliceTime(i);
+            } catch (IndexOutOfBoundsException ex) {
+                spnTestPeriode.getModel().setValue(cpu.getSliceTime());
             }
         });
     }

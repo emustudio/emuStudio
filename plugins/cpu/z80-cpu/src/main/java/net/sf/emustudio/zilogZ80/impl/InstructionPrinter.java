@@ -23,21 +23,22 @@ import emulib.plugins.cpu.DisassembledInstruction;
 import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.cpu.InvalidInstructionException;
 import net.jcip.annotations.ThreadSafe;
+import net.sf.emustudio.intel8080.api.DispatchListener;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_C;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_H;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_N;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_PV;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_S;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_Z;
-import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.FLAG_C;
 
 @ThreadSafe
-class InstructionPrinter implements EmulatorEngine.DispatchListener {
+class InstructionPrinter implements DispatchListener {
     private final Disassembler disassembler;
     private final EmulatorEngine emulatorEngine;
 

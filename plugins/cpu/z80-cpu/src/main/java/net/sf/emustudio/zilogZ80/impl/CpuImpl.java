@@ -25,19 +25,16 @@ import emulib.emustudio.SettingsManager;
 import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.Disassembler;
-import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.AlreadyRegisteredException;
-import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
-import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
+import net.sf.emustudio.intel8080.api.FrequencyUpdater;
 import net.sf.emustudio.zilogZ80.FrequencyChangedListener;
-import net.sf.emustudio.zilogZ80.gui.DecoderImpl;
-import net.sf.emustudio.zilogZ80.gui.DisassemblerImpl;
 import net.sf.emustudio.zilogZ80.gui.StatusPanel;
 
-import javax.swing.JPanel;
+import javax.swing.*;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Objects;
@@ -71,25 +68,6 @@ public class CpuImpl extends AbstractCPU {
     private Disassembler disassembler;
     private EmulatorEngine engine;
 
-    private class FrequencyUpdater implements Runnable {
-        private long startTimeSaved = 0;
-        private float frequency;
-
-        @Override
-        public void run() {
-            double endTime = System.nanoTime();
-            double time = endTime - startTimeSaved;
-            long executedCycles = engine.getAndResetExecutedCycles();
-
-            if (executedCycles == 0) {
-                return;
-            }
-            frequency = (float) (executedCycles / (time / 1000000.0));
-            startTimeSaved = (long) endTime;
-            fireFrequencyChanged(frequency);
-        }
-    }
-    
     public CpuImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
         this.contextPool = Objects.requireNonNull(contextPool);
@@ -130,34 +108,12 @@ public class CpuImpl extends AbstractCPU {
     
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
-        try {
-            MemoryContext<Short> memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
+        InitializerForZ80 initializer = new InitializerForZ80(this, getPluginID(), contextPool, settings, context);
+        initializer.initialize();
 
-            if (memory.getDataType() != Short.class) {
-                throw new PluginInitializationException(
-                        this,
-                        "Operating memory type is not supported for this kind of CPU."
-                );
-            }
-
-            // create disassembler and debug columns
-            this.disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
-            this.engine = new EmulatorEngine(memory, context);
-
-            String setting = settings.readSetting(getPluginID(), PRINT_CODE);
-            String printCodeUseCache = settings.readSetting(getPluginID(), PRINT_CODE_USE_CACHE);
-            if (setting != null && setting.toLowerCase().equals("true")) {
-                if (printCodeUseCache == null || printCodeUseCache.toLowerCase().equals("true")) {
-                    engine.setDispatchListener(new InstructionPrinter(disassembler, engine, true));
-                } else {
-                    engine.setDispatchListener(new InstructionPrinter(disassembler, engine, false));
-                }
-            }
-
-            statusPanel = new StatusPanel(this, context);
-        } catch (InvalidContextException | ContextNotFoundException e) {
-            throw new PluginInitializationException(this, ": Could not get memory context", e);
-        }    
+        disassembler = initializer.getDisassembler();
+        engine = initializer.getEngine();
+        statusPanel = new StatusPanel(this, context);
     }
 
     public EmulatorEngine getEngine() {
@@ -190,7 +146,7 @@ public class CpuImpl extends AbstractCPU {
 
     private void startFrequencyUpdater() {
         Future tmpFuture;
-        Future newFuture = frequencyScheduler.scheduleAtFixedRate(new FrequencyUpdater(), 0, 1, TimeUnit.SECONDS);
+        Future newFuture = frequencyScheduler.scheduleAtFixedRate(new FrequencyUpdater(engine), 0, 1, TimeUnit.SECONDS);
 
         do {
             tmpFuture = frequencyUpdaterFuture.get();
@@ -209,10 +165,9 @@ public class CpuImpl extends AbstractCPU {
             stopFrequencyUpdater();
         }
     }
-    
+
     @Override
-    public void reset(int startPos) {
-        super.reset(startPos);
+    protected void resetInternal(int startPos) {
         engine.reset(startPos);
         stopFrequencyUpdater();
     }

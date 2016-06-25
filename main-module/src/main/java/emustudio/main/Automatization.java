@@ -35,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.ListIterator;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -143,9 +142,7 @@ class Automatization implements Runnable {
         final Object resultStateLock = new Object();
 
         // Show all devices if GUI is supported
-        ListIterator<Device> deviceIterator = computer.deviceIterator();
-        while (deviceIterator.hasNext()) {
-            Device device = deviceIterator.next();
+        for (Device device : computer.getDevices()) {
             if (!nogui) {
                 device.showGUI();
             }
@@ -227,11 +224,8 @@ class Automatization implements Runnable {
             LOGGER.info("CPU: " + ((cpuType == null) ? "none" : cpuType.title()));
             LOGGER.info("Memory: " + ((memoryType == null) ? "none" : memoryType.title()));
 
-            ListIterator<Device> deviceIterator = computer.deviceIterator();
             int i = 0;
-            while (deviceIterator.hasNext()) {
-                Device device = deviceIterator.next();
-
+            for (Device device : computer.getDevices()) {
                 PluginType deviceType = device.getClass().getAnnotation(PluginType.class);
                 LOGGER.info("Device #" + String.format("%02d", i++) + ": " + deviceType.title());
             }

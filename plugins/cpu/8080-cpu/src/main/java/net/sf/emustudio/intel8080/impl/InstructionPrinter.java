@@ -23,6 +23,7 @@ import emulib.plugins.cpu.DisassembledInstruction;
 import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.cpu.InvalidInstructionException;
 import net.jcip.annotations.ThreadSafe;
+import net.sf.emustudio.intel8080.api.DispatchListener;
 
 import java.util.List;
 import java.util.Objects;
@@ -36,7 +37,7 @@ import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_S;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_Z;
 
 @ThreadSafe
-class InstructionPrinter implements EmulatorEngine.DispatchListener {
+class InstructionPrinter implements DispatchListener {
     private final Disassembler disassembler;
     private final EmulatorEngine emulatorEngine;
 

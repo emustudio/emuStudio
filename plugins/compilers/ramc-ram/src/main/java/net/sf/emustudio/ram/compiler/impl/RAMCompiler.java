@@ -171,7 +171,6 @@ public class RAMCompiler extends AbstractCompiler {
 
     @Override
     public void destroy() {
-        settings = null;
     }
 
     @Override

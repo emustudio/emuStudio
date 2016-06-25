@@ -37,7 +37,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -101,8 +100,8 @@ public class Computer implements PluginConnections {
         return devices.size();
     }
 
-    public ListIterator<Device> deviceIterator() {
-        return devices.listIterator();
+    public Iterable<Device> getDevices() {
+        return Collections.unmodifiableList(new ArrayList<>(devices));
     }
 
     public Collection<PluginInfo> getPluginInfos() {

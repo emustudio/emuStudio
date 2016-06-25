@@ -23,18 +23,38 @@ import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.CPU.RunState;
 import emulib.plugins.device.DeviceContext;
 import emulib.plugins.memory.MemoryContext;
+import net.sf.emustudio.intel8080.api.CpuEngine;
+import net.sf.emustudio.intel8080.api.DispatchListener;
+import net.sf.emustudio.intel8080.api.FrequencyChangedListener;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
 
-import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.*;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.AND_OR_XOR_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_C_H_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_C_NOT_H_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_NOT_C_H_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_NOT_C_NOT_H_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_NOT_N_H_FOR_H_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_NOT_N_NOT_H_FOR_H_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_N_H_FOR_H_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DAA_N_NOT_H_FOR_H_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.DEC_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.INC_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.NEG_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.PARITY_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.RRCA_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.SIGN_ZERO_CARRY_TABLE;
+import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.SIGN_ZERO_TABLE;
 
 /**
  * Main implementation class for CPU emulation CPU works in a separate thread
  * (parallel with other hardware)
  */
-public class EmulatorEngine {
+public class EmulatorEngine implements CpuEngine {
     public static final int REG_A = 7, REG_B = 0, REG_C = 1, REG_D = 2, REG_E = 3, REG_H = 4, REG_L = 5;
     public static final int FLAG_S = 0x80, FLAG_Z = 0x40, FLAG_H = 0x10, FLAG_PV = 0x4, FLAG_N = 0x02, FLAG_C = 0x1;
 
@@ -47,6 +67,7 @@ public class EmulatorEngine {
     
     private final ContextImpl context;
     private final MemoryContext<Short> memory;
+    private final List<FrequencyChangedListener> frequencyChangedListeners = new CopyOnWriteArrayList<>();
 
     public final int[] regs = new int[8];
     public final int[] regs2 = new int[8];
@@ -77,27 +98,38 @@ public class EmulatorEngine {
 
     private volatile DispatchListener dispatchListener;
 
-    public interface DispatchListener {
-        void beforeDispatch();
-
-        void afterDispatch();
-    }
-
     public EmulatorEngine(MemoryContext<Short> memory, ContextImpl context) {
         this.memory = Objects.requireNonNull(memory);
         this.context = Objects.requireNonNull(context);
     }
 
+    @Override
     public void setDispatchListener(DispatchListener dispatchListener) {
         this.dispatchListener = dispatchListener;
     }
 
+    @Override
     public long getAndResetExecutedCycles() {
         long tmpExecutedCycles = executedCycles;
         executedCycles = 0;
         return tmpExecutedCycles;
     }
-    
+
+    public void addFrequencyChangedListener(FrequencyChangedListener listener) {
+        frequencyChangedListeners.add(listener);
+    }
+
+    public void removeFrequencyChangedListener(FrequencyChangedListener listener) {
+        frequencyChangedListeners.remove(listener);
+    }
+
+    @Override
+    public void fireFrequencyChanged(float newFrequency) {
+        for (FrequencyChangedListener listener : frequencyChangedListeners) {
+            listener.frequencyChanged(newFrequency);
+        }
+    }
+
     public void reset(int startPos) {
         SP = IX = IY = 0;
         I = R = 0;

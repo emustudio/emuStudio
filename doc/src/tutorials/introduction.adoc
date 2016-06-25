@@ -287,18 +287,25 @@ NOTE: Cyclic dependencies are also supported.
 
 == Emulation lifecycle and behavior contracts
 
-emuStudio is also a framework, which not only defines the API, but also the whole life cycle of plug-ins, and has the
-control of all emulation processes. It proactively loads, instantiates and initializes plug-ins. That way, a plug-in
-developer does not have to care about messing with class loaders, and can safely focus on what the plug-in should do
-in the first place.
+emuStudio is also a framework, which not only defines the API, but also the whole life cycle of plug-ins. It has the
+control of all emulation processes, including CPU and all virtual devices. It proactively loads, instantiates and
+initializes plug-ins. That way a plug-in developer can safely focus only on what the plug-in should do in the first place.
 
-Behavior contracts define the operations and their order in all phases of emulation life cycle, which plug-ins must
-count with. Taken that, plug-ins can assume the state in which the other plug-ins are, or in which emuStudio itself is
-and shape their own behavior accordingly. emuStudio is also assuming that plug-ins will "behave good", and if not, they
-can affect or possibly corrupt the whole emulator. In that case the state of emuStudio and other plug-ins is not defined.
+Behavior contracts define rules and assumptions which plug-in developer must hold to. emuStudio is assuming that
+plug-ins "behave good", and if it is true, everything should work as expected. By ignoring the behavioral contracts
+the emuStudio behavior is undefined; it can possibly corrupt the emulation process or crash whole emuStudio.
 
-More details, including programming examples about the life cycle and behavior contracts will be presented in further
-sections, for each plug-in type separately.
+The list of some categories of behavioral contracts include:
+
+- order of operations being called by emuStudio (e.g. order of loading / initialization of plug-ins)
+- rules of allowed / not allowed method calls in particular contexts
+- specification of signature of constructors
+- threading concerns
+- other
+
+The behavioral contracts are described in particular Javadoc for emuLib and all modules to which it may concern.
+The Javadoc contains special note which starts with capital `CONTRACT:`. The contract is mainly in the form of
+explanation which other methods should not be called, or how particular thing should be implemented.
 
 === Main class
 
@@ -312,39 +319,47 @@ annotation. This annotation provides several information, like:
 
 The class must also inherit from `emulib.plugins.Plugin` interface (not necessarily directly).
 
-=== Loading and initialization
+=== Loading and initialization (CONTRACT)
 
 Setting up plug-ins is a two-phase process and it is done solely in emuStudio. emuStudio has custom class loader, into
-which it loads all plug-ins (classes and resources) and "registers" them in JVM. The order is as follows:
+which it loads all plug-ins (classes and resources) and "registers" them in JVM.
 
-1. Compiler plug-in
+==== Phase 1 - plug-in loading
+
+The plug-ins are loaded as a one bunch of extracted JARs mixed together, in a newly created class loader. The class
+loader is immutable so further modification of plug-in loading (e.g. adding another component at run-time) is not
+possible.
+
+Dependencies explicitly specified in manifest files are recognized and loaded as well. With this, plug-ins can depend
+on each other. However, in case of circular dependency, plug-ins loadin will fail.
+
+The result of this phase is that all plug-in classes are loaded in memory and all main-classes instantiated. Each plug-in
+main class must have a constructor with exactly two arguments:
+
+[source,java]
+----
+SamplePlugin(Long pluginId, ContextPool contextPool) {
+    ...
+}
+----
+
+The `ContextPool` can be used (in this phase) only for *registering* custom plug-in contexts, but not for their
+obtaining. More information can be found in emuLib's Javadoc.
+
+
+==== Phase 2 - plug-in initialization
+
+The initialization of plug-ins follows as the second phase. In this phase, plug-ins should ask from given `ContextPool`
+in the previous phase of context(s) of other, already registered plug-ins.
+
+The order in which plug-ins are initialized is:
+
+1. Compiler
 2. CPU
 3. Memory
 4. Devices in the order as they are defined in the virtual computer configuration file
 
-However, there are still no instances of the found classes. The order is very important, because it has huge
-implications of what plug-in can depend on which. The rule is (theoretically and practically) that only mutual
-dependency is never allowed.
-
-However, there is a possibility, which allow a plug-in with the "lower" number of load order to depend on a plug-in
-with "higher" number of the load order. The solution is to add it to the manifest file of the plug-in JAR file. Then,
-the plug-in and all dependencies defined in the manifest are loaded at once.
-
-
-
-
- by having all computer
-classes defined in JVM,
-
-
-implications of what plug-in can depend on which. It is obvious that
-
-
-At first, emuStudio loads plug-in by
-plug-in into memory -
-
-
-
+When following this contract, it cannot happen that a plug-in will ask for context which is not registered.
 
 === Naming conventions
 

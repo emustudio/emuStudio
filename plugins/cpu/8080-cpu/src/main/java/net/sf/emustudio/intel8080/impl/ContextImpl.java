@@ -21,7 +21,7 @@ package net.sf.emustudio.intel8080.impl;
 
 import emulib.plugins.device.DeviceContext;
 import net.jcip.annotations.ThreadSafe;
-import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

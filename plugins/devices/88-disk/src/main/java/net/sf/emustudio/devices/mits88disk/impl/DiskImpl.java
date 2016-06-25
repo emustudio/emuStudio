@@ -33,7 +33,7 @@ import net.sf.emustudio.devices.mits88disk.cpmfs.CpmDirectory;
 import net.sf.emustudio.devices.mits88disk.cpmfs.RawDisc;
 import net.sf.emustudio.devices.mits88disk.gui.DiskFrame;
 import net.sf.emustudio.devices.mits88disk.gui.SettingsDialog;
-import net.sf.emustudio.intel8080.ExtendedContext;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,18 +71,21 @@ public class DiskImpl extends AbstractDevice {
     public final static int DEFAULT_CPU_PORT2 = 0x9;
     public final static int DEFAULT_CPU_PORT3 = 0xA;
 
-    private int port1CPU;
-    private int port2CPU;
-    private int port3CPU;
-    private ExtendedContext cpuContext;
+    private final ContextPool contextPool;
     private final List<Drive> drives = new ArrayList<>();
     private final Port1 port1;
     private final Port2 port2;
     private final Port3 port3;
+
+    private SettingsManager settings;
+    private ExtendedContext cpuContext;
+
+    private int port1CPU;
+    private int port2CPU;
+    private int port3CPU;
     private int currentDrive;
     private DiskFrame gui;
     private boolean noGUI = false;
-    private final ContextPool contextPool;
 
     public DiskImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
@@ -135,7 +138,7 @@ public class DiskImpl extends AbstractDevice {
 
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
-        super.initialize(settings);
+        this.settings = Objects.requireNonNull(settings);
 
         try {
             cpuContext = (ExtendedContext) contextPool.getCPUContext(pluginID, ExtendedContext.class);
