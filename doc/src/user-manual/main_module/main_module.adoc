@@ -4,23 +4,24 @@ Version 0.39
 :toc:
 :numbered:
 
-emuStudio is graphical application allowing software-based computer emulation. Computer emulation can
-be explained as imitation of computer behaviour. There can be various levels of accuracy, or detail.
+emuStudio is a toy-computer emulation platform and framework. A platform, because it supports full emulation
+"life-cycle". From writing and compiling programs for emulated machine, to running and debugging. A framework, because
+it provides Java API and documentation which encourages to implement any custom toy-computer, either real or abstract.
 
 It's free software, released under GNU GPL v2 license. The source code is freely available online.
-Implementation language is Java SE 7, which makes emuStudio a naturally cross-platform application.
-The implementation technology of visual components is Java Swing.
+Implementation language is Java 8, which makes emuStudio a naturally cross-platform application.
+The implementation technology of visual components (GUI) is Java Swing.
 
 [[XIB]]
 == Brief description
 
 Various computers can be emulated. Real computers are assembled using hardware components, which are
-in virtual environment represented by plug-ins. All virtual computers in emuStudio must have compiler,
-one CPU and memory. Devices are optional. The virtual computer model is very similar to von Neumann model.
+in the virtual environment represented by plug-ins. All virtual computers in emuStudio can have a compiler,
+must have one CPU and memory. Devices are optional. The virtual computer model is very similar to von Neumann model.
 
 Plug-ins combinations and computer settings are written in configuration files. Each file represents
 one single computer. These configurations can be created manually (they're Java properties files), but
-more convenient is an abstract schema editor.
+more convenient is the abstract schema editor.
 
 Source code editor enables users to write programs for emulated computer. Very related part is
 compiler, which provides lexical and syntax analysis of the source code for the syntax highlighting. Most compiler
