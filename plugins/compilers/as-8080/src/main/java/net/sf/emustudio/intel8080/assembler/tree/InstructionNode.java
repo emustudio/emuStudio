@@ -29,7 +29,7 @@ import java.util.List;
 
 public class InstructionNode {
     protected LabelNode label;
-    CodePseudoNode codePseudo;
+    final CodePseudoNode codePseudo;
     private int current_address; // its computed in pass2
     
     public InstructionNode(LabelNode label, CodePseudoNode codePseudo) {

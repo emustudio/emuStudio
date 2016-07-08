@@ -67,21 +67,15 @@ public class MacroPseudoNode extends PseudoBlock {
 
     @Override
     public void pass1() throws Exception {
-        stat.pass1(); // pass1 creates block symbol table (local for block)
     }
     
     // this is macro expansion ! can be called only in MacroCallPseudo class
     // call parameters have to be set
     @Override
     public int pass2(CompileEnv env, int addr_start) throws Exception {
-        newEnv = new CompileEnv(env.getInputFile().getAbsolutePath());
-        // add local statement env to newEnv
-        stat.getCompileEnv().copyTo(newEnv);
-        env.copyTo(newEnv); // add parent statement env to newEnv
-        // remove all existing definitions of params name (from level-up environment)
-        for (String param : params) {
-            newEnv.removeAllDefinitions(param);
-        }
+        createNewEnvForMacro(env);
+        stat.pass1(newEnv);
+
         // check of call_params
         if (call_params == null) {
             throw new UnknownMacroParametersException(line, column, mnemo);
@@ -95,6 +89,14 @@ public class MacroPseudoNode extends PseudoBlock {
                     line, column));
         }
         return stat.pass2(newEnv, addr_start);
+    }
+
+    private void createNewEnvForMacro(CompileEnv env) {
+        newEnv = new CompileEnv(env.getInputFile().getAbsolutePath());
+        env.copyTo(newEnv);
+        for (String param : params) {
+            newEnv.removeAllDefinitions(param);
+        }
     }
 
     @Override

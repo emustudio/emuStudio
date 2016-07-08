@@ -55,11 +55,12 @@ public class IfPseudoNode extends PseudoBlock {
 
     @Override
     public void pass1() throws Exception {
-        stat.pass1();
     }
 
     @Override
     public int pass2(CompileEnv env, int addr_start) throws Exception {
+        stat.pass1(env);
+
         // now evaluate expression and then decide if block can be passed
         try {
             if (expr.eval(env, addr_start) != 0) {

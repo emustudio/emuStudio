@@ -136,6 +136,7 @@ public class CompilerImpl extends AbstractCompiler {
             notifyCompileFinish(0);
             return true;
         } catch (Exception e) {
+            LOGGER.trace("Compiler exception", e);
             notifyError("Compilation error: " + e.getMessage());
             notifyCompileFinish(1);
             return false;

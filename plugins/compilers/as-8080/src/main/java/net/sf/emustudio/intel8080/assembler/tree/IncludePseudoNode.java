@@ -105,7 +105,7 @@ public class IncludePseudoNode extends PseudoNode {
 
     @Override
     public int pass2(CompileEnv parentEnv, int addr_start) throws Exception {
-        // try to evaulate all expressions + compute relative addresses
+        // try to evaluate all expressions + compute relative addresses
         return program.pass2(addr_start);
     }
 

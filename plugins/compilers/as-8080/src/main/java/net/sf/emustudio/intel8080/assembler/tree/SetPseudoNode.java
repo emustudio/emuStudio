@@ -52,7 +52,7 @@ public class SetPseudoNode extends PseudoNode {
     @Override
     public int pass2(CompileEnv env, int addr_start) throws Exception {
         if (!env.setVariable(this)) {
-            throw new AlreadyDefinedException(line, column, "Cannot set variable, the identifier(" + mnemo + ")");
+            throw new AlreadyDefinedException(line, column, "identifier(" + mnemo + ")");
         }
         expr.eval(env, addr_start);
         return addr_start;
