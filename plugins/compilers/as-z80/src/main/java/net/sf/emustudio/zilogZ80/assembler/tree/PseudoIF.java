@@ -51,11 +51,11 @@ public class PseudoIF extends Pseudo {
 
     @Override
     public void pass1() throws Exception {
-        subprogram.pass1();
     }
 
     @Override
     public int pass2(Namespace env, int addr_start) throws Exception {
+        subprogram.pass1(env);
         // now evaluate expression and then decide if block can be passed
         try {
             if (expr.eval(env, addr_start) != 0) {

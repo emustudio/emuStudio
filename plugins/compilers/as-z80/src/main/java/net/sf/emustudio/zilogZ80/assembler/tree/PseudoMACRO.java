@@ -68,21 +68,16 @@ public class PseudoMACRO extends Pseudo {
 
     @Override
     public void pass1() throws Exception {
-        subprogram.pass1(); // pass1 creates block symbol table (local for block)
     }
 
     // this is macro expansion ! can be called only in MacroCallPseudo class
     // call parameters have to be set
     @Override
     public int pass2(Namespace env, int addr_start) throws Exception {
-        newEnv = new Namespace(env.getInputFile().getAbsolutePath());
-        // add local statement env to newEnv
-        subprogram.getNamespace().copyTo(newEnv);
-        env.copyTo(newEnv); // add parent statement env to newEnv
-        // remove all existing definitions of params name (from level-up environment)
-        for (String param : params) {
-            newEnv.removeAllDefinitions(param);
-        }
+        createNewEnvironment(env);
+
+        subprogram.pass1(newEnv);
+
         // check of call_params
         if (call_params == null) {
             throw new UnknownMacroParametersException(line, column, mnemo);
@@ -96,6 +91,14 @@ public class PseudoMACRO extends Pseudo {
                     call_params.get(i), line, column));
         }
         return subprogram.pass2(newEnv, addr_start);
+    }
+
+    private void createNewEnvironment(Namespace env) {
+        newEnv = new Namespace(env.getInputFile().getAbsolutePath());
+        env.copyTo(newEnv);
+        for (String param : params) {
+            newEnv.removeAllDefinitions(param);
+        }
     }
 
     @Override

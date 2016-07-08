@@ -78,7 +78,6 @@ public class Row {
     public int pass2(Namespace prev_env, int addr_start) throws Exception {
         this.current_address = addr_start;
         if (label != null) {
-            System.out.println("Label" + label.getName() + " starts at " + String.format("%X", addr_start));
             label.setAddress(addr_start);
         }
         // pass2 pre definiciu makra nemozem volat. ide totiz o samotnu expanziu

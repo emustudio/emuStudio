@@ -76,7 +76,7 @@ public class PseudoINCLUDE extends Pseudo {
 
     public void pass1(List<String> includefiles, Namespace parent) throws Exception {
         try {
-            namespace = new Namespace(namespace.getInputFile().getAbsolutePath());
+            namespace = new Namespace(parent.getInputFile().getAbsolutePath());
             
             File file = findIncludeFile(fileName);
             
@@ -102,6 +102,7 @@ public class PseudoINCLUDE extends Pseudo {
         } catch (IOException e) {
             throw new Exception(fileName + ": I/O Error");
         } catch (Exception e) {
+            e.printStackTrace();
             throw new Exception("[" + line + "," + column + "] " + e.getMessage());
         }
     }

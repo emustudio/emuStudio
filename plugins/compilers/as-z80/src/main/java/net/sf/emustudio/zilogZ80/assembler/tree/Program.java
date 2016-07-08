@@ -31,7 +31,7 @@ public class Program {
     private Namespace namespace;
     private final List<String> includefiles = new ArrayList<>();
 
-    public void addIncludeFiles(List<String> inclfiles) {
+    void addIncludeFiles(List<String> inclfiles) {
         includefiles.addAll(inclfiles);
     }
 
@@ -39,12 +39,7 @@ public class Program {
         list.add(node);
     }
 
-    public void addRowsList(List<Row> vec) {
-        list.addAll(vec);
-    }
-
     public int getSize() {
-        Row in;
         int size = 0;
         for (Row row : list) {
             size += row.getSize();
@@ -67,7 +62,7 @@ public class Program {
      * @param filename name of the file that "include" pseudocode should contain
      * @return true if subprogram contains "include filename" pseudocode
      */
-    public boolean getIncludeLoops(String filename) {
+    boolean getIncludeLoops(String filename) {
         int i;
         for (i = 0; i < includefiles.size(); i++) {
             String s = includefiles.get(i);
@@ -78,8 +73,8 @@ public class Program {
         includefiles.add(filename);
         Row in;
         for (i = 0; i < list.size(); i++) {
-            in = (Row) list.get(i);
-            if (in.getIncludeLoops(filename) == true) {
+            in = list.get(i);
+            if (in.getIncludeLoops(filename)) {
                 return true;
             }
         }
@@ -97,12 +92,12 @@ public class Program {
         // only labels and macros have right to be all added to symbol table at once
         for (Row row : list) {
             if (row.label != null) {
-                if (namespace.addLabel(row.label) == false) {
+                if (!namespace.addLabel(row.label)) {
                     throw new Exception("Error: Label already defined: " + row.label.getName());
                 }
             }
             if ((row.statement != null) && (row.statement instanceof PseudoMACRO)) {
-                if (namespace.addMacro((PseudoMACRO) row.statement) == false) {
+                if (!namespace.addMacro((PseudoMACRO) row.statement)) {
                     throw new Exception("Error: Macro already defined: "
                             + ((PseudoMACRO) row.statement).getName());
                 }
@@ -137,7 +132,7 @@ public class Program {
     public boolean pass3(Namespace parentEnv) throws Exception {
         int pnCount = parentEnv.getPassNeedCount();
         for (int i = parentEnv.getPassNeedCount() - 1; i >= 0; i--) {
-            if (parentEnv.getPassNeed(i).pass3(parentEnv) == true) {
+            if (parentEnv.getPassNeed(i).pass3(parentEnv)) {
                 pnCount--;
                 parentEnv.removePassNeed(i);
             }

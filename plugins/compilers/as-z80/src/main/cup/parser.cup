@@ -803,15 +803,15 @@ Codedef ::= RESERVED_CCF
             RESERVED_RST Expression:e
             {: RESULT = new OC_Expr(OC_Expr.RST,e,true,parser.lastLine,parser.lastColumn); :}|
 
-            RESERVED_SBC REGISTERS_A SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
+            RESERVED_SBC SEPARATOR_LPAR REGISTERS_HL SEPARATOR_RPAR
             {: RESULT = new OC_NoParams(OC_NoParams.SBC_A_HHLL,parser.lastLine,parser.lastColumn); :}|
-            RESERVED_SBC REGISTERS_A SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            RESERVED_SBC SEPARATOR_LPAR REGISTERS_IX OPERATOR_ADD Expression:e SEPARATOR_RPAR
             {: RESULT = new OC_Expr(OC_Expr.SBC_A_IIX_NN,e,true,parser.lastLine,parser.lastColumn); :}|
-            RESERVED_SBC REGISTERS_A SEPARATOR_COMMA SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
+            RESERVED_SBC SEPARATOR_LPAR REGISTERS_IY OPERATOR_ADD Expression:e SEPARATOR_RPAR
             {: RESULT = new OC_Expr(OC_Expr.SBC_A_IIY_NN,e,true,parser.lastLine,parser.lastColumn); :}|
-            RESERVED_SBC REGISTERS_A SEPARATOR_COMMA Expression:e
+            RESERVED_SBC Expression:e
             {: RESULT = new OC_Expr(OC_Expr.SBC,e,true,parser.lastLine,parser.lastColumn); :}|
-            RESERVED_SBC REGISTERS_A SEPARATOR_COMMA Reg:r
+            RESERVED_SBC Reg:r
             {: RESULT = new OC_Reg(OC_Reg.SBC,r,parser.lastLine,parser.lastColumn); :}|
             RESERVED_SBC REGISTERS_HL SEPARATOR_COMMA RegRR:rr
             {: RESULT = new OC_Reg(OC_Reg.SBC_HL,rr,parser.lastLine,parser.lastColumn); :}|
