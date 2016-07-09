@@ -179,7 +179,7 @@ public class CompilerImpl extends AbstractCompiler {
         System.out.println("\t--help, -h\t: this help");
     }
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         System.out.println(CompilerImpl.class.getAnnotation(PluginType.class).title());
 
         String inputFile;
@@ -206,7 +206,13 @@ public class CompilerImpl extends AbstractCompiler {
         }
         inputFile = args[i];
         if (outputFile == null) {
-          outputFile = inputFile.substring(0, inputFile.lastIndexOf('.')) + ".hex";
+            int index = inputFile.lastIndexOf('.');
+            if (index != -1) {
+                outputFile = inputFile.substring(0, index);
+            } else {
+                outputFile = inputFile;
+            }
+            outputFile += ".hex";
         }
 
         CompilerImpl compiler = new CompilerImpl(0L, new ContextPool());

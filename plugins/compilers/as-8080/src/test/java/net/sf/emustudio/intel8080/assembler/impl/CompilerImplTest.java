@@ -137,4 +137,19 @@ public class CompilerImplTest extends AbstractCompilerTest {
                 0xC3, 0x0F, 0, 0xDB, 0x10, 0xE6, 1, 0xCA, 0x03, 0, 0xDB, 0x11, 0xD3, 0x11, 0xC9, 0x78
         );
     }
+
+    @Test
+    public void testCommandLinePrintHelp() throws Exception {
+        CompilerImpl.main("--help");
+    }
+
+    @Test
+    public void testCommandLineNonexistantSourceFileDoesNotThrow() throws Exception {
+        CompilerImpl.main("slfjkdf");
+    }
+
+    @Test
+    public void testCommandLinePrintVersion() throws Exception {
+        CompilerImpl.main("--version");
+    }
 }
