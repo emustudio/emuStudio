@@ -21,11 +21,11 @@ package emustudio.architecture;
 
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.Plugin;
-import emulib.plugins.PluginInitializationException;
 import emulib.plugins.compiler.Compiler;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
+import emulib.runtime.exceptions.PluginInitializationException;
 import emulib.runtime.interfaces.PluginConnections;
 import emulib.runtime.internal.Unchecked;
 import emustudio.architecture.ComputerFactory.PluginInfo;
@@ -121,7 +121,7 @@ public class Computer implements PluginConnections {
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         getCompiler().ifPresent(c -> Unchecked.run(() -> c.initialize(settings)));
         getMemory().ifPresent(m -> Unchecked.run(() -> m.initialize(settings)));
-        getCPU().orElseThrow(() -> new PluginInitializationException(null, "CPU is not set")).initialize(settings);
+        getCPU().orElseThrow(() -> new PluginInitializationException("CPU is not set")).initialize(settings);
 
         for (Device device : devices) {
             device.initialize(settings);

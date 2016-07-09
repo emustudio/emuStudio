@@ -20,8 +20,8 @@
 package emustudio.architecture;
 
 import emulib.emustudio.SettingsManager;
-import emulib.runtime.InvalidPasswordException;
 import emulib.runtime.StaticDialogs;
+import emulib.runtime.exceptions.InvalidPasswordException;
 import emustudio.drawing.Schema;
 import emustudio.main.Main;
 import org.slf4j.Logger;

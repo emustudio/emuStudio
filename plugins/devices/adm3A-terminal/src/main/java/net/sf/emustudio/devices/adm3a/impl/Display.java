@@ -95,7 +95,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
     }
 
     @Override
-    public Class<?> getDataType() {
+    public Class<Short> getDataType() {
         return Short.class;
     }
 

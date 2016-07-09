@@ -24,6 +24,7 @@ import net.sf.emustudio.intel8080.api.ExtendedContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -72,7 +73,7 @@ public final class ContextImpl implements ExtendedContext {
      *            true, then val is ignored.
      * @return value from the port if read is true, otherwise 0
      */
-    public short fireIO(int port, boolean read, int val) {
+    public short fireIO(int port, boolean read, int val) throws IOException {
         DeviceContext<Short> device = devices.get(port);
         if (device != null) {
             if (read) {

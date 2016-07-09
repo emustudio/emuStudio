@@ -324,10 +324,10 @@ class PseudoContext implements DeviceContext<Short> {
     4 BCD byte: SS                              */
     private void setClockCPM3() {
         ClockCPM3Delta = mkCPM3Origin()
-                + ((Short) mem.read(setClockCPM3Adr) + (Short) mem.read(setClockCPM3Adr + 1) * 256)
-                * SECONDS_PER_DAY + fromBCD((Short) mem.read(setClockCPM3Adr + 2))
-                * SECONDS_PER_HOUR + fromBCD((Short) mem.read(setClockCPM3Adr + 3))
-                * SECONDS_PER_MINUTE + fromBCD((Short) mem.read(setClockCPM3Adr + 4))
+                + (mem.read(setClockCPM3Adr) + mem.read(setClockCPM3Adr + 1) * 256)
+                * SECONDS_PER_DAY + fromBCD(mem.read(setClockCPM3Adr + 2))
+                * SECONDS_PER_HOUR + fromBCD(mem.read(setClockCPM3Adr + 3))
+                * SECONDS_PER_MINUTE + fromBCD(mem.read(setClockCPM3Adr + 4))
                 - (short) (Calendar.getInstance().getTimeInMillis() / 1000);
     }
 
@@ -715,7 +715,7 @@ class PseudoContext implements DeviceContext<Short> {
     }
 
     @Override
-    public Class<?> getDataType() {
+    public Class<Short> getDataType() {
         return Short.class;
     }
 

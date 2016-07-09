@@ -22,6 +22,7 @@ package net.sf.emustudio.brainduck.cpu.impl;
 import emulib.plugins.device.DeviceContext;
 import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
 
+import java.io.IOException;
 import java.util.Objects;
 
 class BrainCPUContextImpl implements BrainCPUContext {
@@ -48,7 +49,7 @@ class BrainCPUContextImpl implements BrainCPUContext {
      *
      * @param val value that will be written into the device
      */
-    public void writeToDevice(short val) {
+    public void writeToDevice(short val) throws IOException {
         if (device == null) {
             return;
         }
@@ -63,7 +64,7 @@ class BrainCPUContextImpl implements BrainCPUContext {
      *
      * @return value from the device, or 0 if the device is null or there's anything
      */
-    public short readFromDevice() {
+    public short readFromDevice() throws IOException {
         if (device == null) {
             return 0;
         }

@@ -22,10 +22,10 @@ package net.sf.emustudio.ssem.cpu;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
-import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.Disassembler;
 import emulib.runtime.ContextPool;
+import emulib.runtime.exceptions.PluginInitializationException;
 
 import javax.swing.*;
 

@@ -26,15 +26,15 @@ import emulib.emustudio.SettingsManager;
 import emulib.emustudio.debugtable.BreakpointColumn;
 import emulib.emustudio.debugtable.DebugTable;
 import emulib.emustudio.debugtable.MnemoColumn;
-import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.CPUContext;
 import emulib.plugins.cpu.Disassembler;
-import emulib.runtime.AlreadyRegisteredException;
-import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
-import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
+import emulib.runtime.exceptions.AlreadyRegisteredException;
+import emulib.runtime.exceptions.ContextNotFoundException;
+import emulib.runtime.exceptions.InvalidContextException;
+import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
 import net.sf.emustudio.ram.cpu.gui.LabelDebugColumn;
 import net.sf.emustudio.ram.cpu.gui.RAMDisassembler;
@@ -44,7 +44,8 @@ import net.sf.emustudio.ram.memory.RAMMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.JPanel;
+import javax.swing.*;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -185,6 +186,9 @@ public class EmulatorImpl extends AbstractCPU {
                 }
             } catch (IndexOutOfBoundsException e) {
                 return RunState.STATE_STOPPED_ADDR_FALLOUT;
+            } catch (IOException e) {
+                LOGGER.error("Unexpected error while reading/writing to the tape", e);
+                return RunState.STATE_STOPPED_BAD_INSTR;
             } catch (Breakpoint er) {
                 return RunState.STATE_STOPPED_BREAK;
             }
@@ -192,7 +196,7 @@ public class EmulatorImpl extends AbstractCPU {
         return RunState.STATE_STOPPED_NORMAL;
     }
 
-    public RunState stepInternal() {
+    public RunState stepInternal() throws IOException {
         if (!context.checkTapes()) {
             return RunState.STATE_STOPPED_ADDR_FALLOUT;
         }

@@ -26,7 +26,10 @@ import emulib.plugins.memory.MemoryContext;
 import net.sf.emustudio.intel8080.api.CpuEngine;
 import net.sf.emustudio.intel8080.api.DispatchListener;
 import net.sf.emustudio.intel8080.api.FrequencyChangedListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -55,6 +58,8 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorTables.SIGN_ZERO_TABLE;
  * (parallel with other hardware)
  */
 public class EmulatorEngine implements CpuEngine {
+    private final static Logger LOGGER = LoggerFactory.getLogger(EmulatorEngine.class);
+
     public static final int REG_A = 7, REG_B = 0, REG_C = 1, REG_D = 2, REG_E = 3, REG_H = 4, REG_L = 5;
     public static final int FLAG_S = 0x80, FLAG_Z = 0x40, FLAG_H = 0x10, FLAG_PV = 0x4, FLAG_N = 0x02, FLAG_C = 0x1;
 
@@ -184,7 +189,10 @@ public class EmulatorEngine implements CpuEngine {
                 } catch (IllegalArgumentException e) {
                     return  CPU.RunState.STATE_STOPPED_BAD_INSTR;
                 } catch (IndexOutOfBoundsException e) {
-                    return  CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+                    return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+                } catch (IOException e) {
+                    LOGGER.error("Unexpected error", e);
+                    return RunState.STATE_STOPPED_BAD_INSTR;
                 } catch (Breakpoint e) {
                     return CPU.RunState.STATE_STOPPED_BREAK;
                 }
@@ -343,7 +351,7 @@ public class EmulatorEngine implements CpuEngine {
         memory.writeWord(address, new Short[] { (short)(value & 0xFF), (short)((value >>> 8) & 0xFF) } );
     }
 
-    private int doInterrupt() {
+    private int doInterrupt() throws IOException {
         isINT = false;
         int cycles = 0;
 
@@ -469,7 +477,7 @@ public class EmulatorEngine implements CpuEngine {
         R = (R & 0x80) | (((R & 0x7F) + 1) & 0x7F);
     }
     
-    private int evalStep(int OP) {
+    private int evalStep(int OP) throws IOException {
         int tmp, tmp1, tmp2, tmp3, tmp4;
         short special = 0; // prefix if available = 0xDD or 0xFD
 

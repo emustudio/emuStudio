@@ -21,6 +21,7 @@ package net.sf.emustudio.devices.mits88sio.impl;
 
 import emulib.plugins.device.DeviceContext;
 
+import java.io.IOException;
 import java.util.Objects;
 
 /**
@@ -39,7 +40,7 @@ class Port2 implements DeviceContext<Short> {
     }
 
     @Override
-    public void write(Short data) {
+    public void write(Short data) throws IOException {
         transmitter.writeToDevice(data);
     }
 
@@ -49,7 +50,7 @@ class Port2 implements DeviceContext<Short> {
     }
 
     @Override
-    public Class<?> getDataType() {
+    public Class<Short> getDataType() {
         return Short.class;
     }
 }

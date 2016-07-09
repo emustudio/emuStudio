@@ -2,10 +2,10 @@ package net.sf.emustudio.intel8080.impl;
 
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.Plugin;
-import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
+import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.intel8080.api.DefaultInitializer;
 import net.sf.emustudio.intel8080.api.DispatchListener;
 

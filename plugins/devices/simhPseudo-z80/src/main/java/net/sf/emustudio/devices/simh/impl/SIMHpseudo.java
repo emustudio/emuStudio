@@ -22,12 +22,12 @@ package net.sf.emustudio.devices.simh.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
-import emulib.plugins.PluginInitializationException;
 import emulib.plugins.device.AbstractDevice;
-import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
-import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
+import emulib.runtime.exceptions.ContextNotFoundException;
+import emulib.runtime.exceptions.InvalidContextException;
+import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.intel8080.api.ExtendedContext;
 import net.sf.emustudio.memory.standard.StandardMemoryContext;
 

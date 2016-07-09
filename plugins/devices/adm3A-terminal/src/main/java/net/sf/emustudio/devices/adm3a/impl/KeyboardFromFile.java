@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
@@ -70,7 +71,11 @@ class KeyboardFromFile implements InputProvider {
 
     private void notifyObservers(short input) {
         for (DeviceContext<Short> observer : inputObservers) {
-            observer.write(input);
+            try {
+                observer.write(input);
+            } catch (IOException e) {
+                LOGGER.error("[observer={}, input={}] Could not notify observer about key hit", observer, input, e);
+            }
         }
     }
 

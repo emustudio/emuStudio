@@ -27,6 +27,7 @@ import net.sf.emustudio.intel8080.api.FrequencyChangedListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -557,7 +558,7 @@ public class EmulatorEngine implements CpuEngine {
         return 7;
     }
 
-    private int O211_OUT(short OP) {
+    private int O211_OUT(short OP) throws IOException {
         int DAR = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         context.fireIO(DAR, false, (short)regs[REG_A]);
@@ -577,7 +578,7 @@ public class EmulatorEngine implements CpuEngine {
         return 7;
     }
 
-    private int O219_IN(short OP) {
+    private int O219_IN(short OP) throws IOException {
         int DAR = memory.read(PC);
         PC = (PC + 1) & 0xFFFF;
         regs[REG_A] = context.fireIO(DAR, true, (short) 0);

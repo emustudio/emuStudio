@@ -90,11 +90,6 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         this.displayRowNumbers = displayRowNumbers;
         fireChange();
     }
-    
-    @Override
-    public Class<?> getDataType() {
-        return String.class;
-    }
 
     /**
      * Clears tape and set head position to 0

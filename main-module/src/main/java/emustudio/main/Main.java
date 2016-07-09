@@ -20,12 +20,12 @@
 package emustudio.main;
 
 import emulib.emustudio.API;
-import emulib.plugins.PluginInitializationException;
 import emulib.runtime.ContextPool;
-import emulib.runtime.InvalidPasswordException;
-import emulib.runtime.InvalidPluginException;
 import emulib.runtime.PluginLoader;
 import emulib.runtime.StaticDialogs;
+import emulib.runtime.exceptions.InvalidPasswordException;
+import emulib.runtime.exceptions.InvalidPluginException;
+import emulib.runtime.exceptions.PluginInitializationException;
 import emustudio.architecture.Computer;
 import emustudio.architecture.ComputerConfig;
 import emustudio.architecture.ComputerFactory;

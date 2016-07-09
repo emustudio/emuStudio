@@ -1,12 +1,12 @@
 package emustudio.emulation;
 
 import emulib.emustudio.SettingsManager;
-import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
+import emulib.runtime.exceptions.PluginInitializationException;
 import org.junit.Before;
 import org.junit.Test;
 

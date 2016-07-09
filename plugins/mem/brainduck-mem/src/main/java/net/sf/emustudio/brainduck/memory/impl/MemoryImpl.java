@@ -22,13 +22,13 @@ package net.sf.emustudio.brainduck.memory.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
-import emulib.plugins.PluginInitializationException;
 import emulib.plugins.memory.AbstractMemory;
 import emulib.plugins.memory.MemoryContext;
-import emulib.runtime.AlreadyRegisteredException;
 import emulib.runtime.ContextPool;
-import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
+import emulib.runtime.exceptions.AlreadyRegisteredException;
+import emulib.runtime.exceptions.InvalidContextException;
+import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.brainduck.memory.gui.MemoryGUI;
 
 import java.util.MissingResourceException;

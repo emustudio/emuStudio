@@ -21,18 +21,22 @@ package net.sf.emustudio.devices.adm3a.impl;
 
 import emulib.plugins.device.DeviceContext;
 import net.sf.emustudio.devices.adm3a.InputProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.awt.Component;
-import java.awt.Container;
+import java.awt.*;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 class Keyboard extends KeyAdapter implements ContainerListener, InputProvider {
+    private final static Logger LOGGER = LoggerFactory.getLogger(Keyboard.class);
+
     private static final int[] CONTROL_KEYCODES = new int[256];
     private static final int[] CONTROL_KEYCODES_ALWAYS_ACTIVE = new int[256];
     private static final int[] ESC_CURSOR_CODES = new int[256];
@@ -265,7 +269,11 @@ class Keyboard extends KeyAdapter implements ContainerListener, InputProvider {
 
     private void notifyObservers(short input) {
         for (DeviceContext<Short> observer : observers) {
-            observer.write(input);
+            try {
+                observer.write(input);
+            } catch (IOException e) {
+                LOGGER.error("[observer={}, input={}] Could not notify observer about key hit", observer, input, e);
+            }
         }
     }
 

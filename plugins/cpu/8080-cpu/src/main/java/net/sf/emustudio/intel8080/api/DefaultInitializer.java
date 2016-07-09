@@ -2,12 +2,12 @@ package net.sf.emustudio.intel8080.api;
 
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.Plugin;
-import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.memory.MemoryContext;
-import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
-import emulib.runtime.InvalidContextException;
+import emulib.runtime.exceptions.ContextNotFoundException;
+import emulib.runtime.exceptions.InvalidContextException;
+import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.intel8080.gui.DecoderImpl;
 import net.sf.emustudio.intel8080.gui.DisassemblerImpl;
 

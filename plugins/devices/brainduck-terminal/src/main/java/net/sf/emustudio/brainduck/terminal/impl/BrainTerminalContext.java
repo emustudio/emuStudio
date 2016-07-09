@@ -42,7 +42,7 @@ class BrainTerminalContext implements DeviceContext<Short>, IOProvider {
     }
 
     @Override
-    public Class<?> getDataType() {
+    public Class<Short> getDataType() {
         return Short.class;
     }
 

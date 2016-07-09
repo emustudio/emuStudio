@@ -20,7 +20,7 @@
 package emustudio.architecture;
 
 import emulib.plugins.Plugin;
-import emulib.plugins.PluginInitializationException;
+import emulib.runtime.exceptions.PluginInitializationException;
 import emustudio.architecture.ComputerFactory.PluginInfo;
 import emustudio.main.CommandLineFactory;
 import emustudio.main.Main;

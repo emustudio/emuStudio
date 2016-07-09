@@ -19,12 +19,12 @@
  */
 package net.sf.emustudio.ram.cpu.impl;
 
-import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.CPUContext;
 import emulib.plugins.device.DeviceContext;
-import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
-import emulib.runtime.InvalidContextException;
+import emulib.runtime.exceptions.ContextNotFoundException;
+import emulib.runtime.exceptions.InvalidContextException;
+import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
 
 import java.util.Objects;

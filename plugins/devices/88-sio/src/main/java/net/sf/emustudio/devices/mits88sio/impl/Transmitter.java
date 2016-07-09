@@ -25,6 +25,7 @@ import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
@@ -81,7 +82,7 @@ class Transmitter {
         }
     }
 
-    void writeToDevice(short data) {
+    void writeToDevice(short data) throws IOException {
         DeviceContext<Short> tmpDevice = device;
         if (tmpDevice != null) {
             tmpDevice.write(data);

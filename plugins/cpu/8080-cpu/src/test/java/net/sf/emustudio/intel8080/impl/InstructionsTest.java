@@ -20,11 +20,11 @@
 package net.sf.emustudio.intel8080.impl;
 
 import emulib.emustudio.SettingsManager;
-import emulib.plugins.PluginInitializationException;
 import emulib.plugins.memory.MemoryContext;
-import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
-import emulib.runtime.InvalidContextException;
+import emulib.runtime.exceptions.ContextNotFoundException;
+import emulib.runtime.exceptions.InvalidContextException;
+import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.cpu.testsuite.MemoryStub;
 import net.sf.emustudio.intel8080.impl.suite.CpuRunnerImpl;
 import net.sf.emustudio.intel8080.impl.suite.CpuVerifierImpl;

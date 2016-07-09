@@ -22,15 +22,15 @@ package net.sf.emustudio.brainduck.cpu.impl;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
-import emulib.plugins.PluginInitializationException;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.memory.MemoryContext;
-import emulib.runtime.AlreadyRegisteredException;
-import emulib.runtime.ContextNotFoundException;
 import emulib.runtime.ContextPool;
-import emulib.runtime.InvalidContextException;
 import emulib.runtime.StaticDialogs;
+import emulib.runtime.exceptions.AlreadyRegisteredException;
+import emulib.runtime.exceptions.ContextNotFoundException;
+import emulib.runtime.exceptions.InvalidContextException;
+import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.braincpu.gui.DecoderImpl;
 import net.sf.emustudio.braincpu.gui.DisassemblerImpl;
 import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
@@ -38,7 +38,8 @@ import net.sf.emustudio.brainduck.cpu.gui.StatusPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.JPanel;
+import javax.swing.*;
+import java.io.IOException;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -278,6 +279,9 @@ public class EmulatorImpl extends AbstractCPU {
                     if (tmpRunState != RunState.STATE_STOPPED_BREAK) {
                         return tmpRunState;
                     }
+                } catch (IOException e) {
+                    LOGGER.error("Unexpected error", e);
+                    return RunState.STATE_STOPPED_BAD_INSTR;
                 } catch (Breakpoint er) {
                     return RunState.STATE_STOPPED_BREAK;
                 }
@@ -294,7 +298,7 @@ public class EmulatorImpl extends AbstractCPU {
     }
 
     @Override
-    protected RunState stepInternal() {
+    protected RunState stepInternal() throws IOException {
         short OP;
 
         // FETCH

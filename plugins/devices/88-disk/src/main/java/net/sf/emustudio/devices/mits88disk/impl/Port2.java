@@ -49,7 +49,7 @@ class Port2 implements DeviceContext<Short> {
     }
 
     @Override
-    public Class<?> getDataType() {
+    public Class<Short> getDataType() {
         return Short.class;
     }
 }

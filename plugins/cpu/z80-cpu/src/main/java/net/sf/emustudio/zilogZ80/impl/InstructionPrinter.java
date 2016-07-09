@@ -21,7 +21,7 @@ package net.sf.emustudio.zilogZ80.impl;
 
 import emulib.plugins.cpu.DisassembledInstruction;
 import emulib.plugins.cpu.Disassembler;
-import emulib.plugins.cpu.InvalidInstructionException;
+import emulib.runtime.exceptions.InvalidInstructionException;
 import net.jcip.annotations.ThreadSafe;
 import net.sf.emustudio.intel8080.api.DispatchListener;
 

@@ -21,7 +21,7 @@ package emustudio.gui.debugTable;
 
 import emulib.plugins.cpu.DisassembledInstruction;
 import emulib.plugins.cpu.Disassembler;
-import emulib.plugins.cpu.InvalidInstructionException;
+import emulib.runtime.exceptions.InvalidInstructionException;
 
 class DisassemblerStub implements Disassembler {
     private final int[] nextPositions;
