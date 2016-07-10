@@ -102,17 +102,6 @@ def create_settings(path, userName, password):
     serverElement.appendChild(serverUserElement)
     serverElement.appendChild(serverPasswordElement)
 
-    # Try to disable strict host checking
-    configElement = get_or_create(xmldoc, "configuration", serverElement)
-    knownHostsProviderElement = recreate(xmldoc, "knownHostsProvider", configElement)
-    knownHostsProviderElement.setAttribute('implementation',"org.apache.maven.wagon.providers.ssh.knownhost.NullKnownHostProvider")
-
-    hostKeyCheckingElement = xmldoc.createElement("hostKeyChecking")
-    hostKeyCheckingNode = xmldoc.createTextNode("no")
-
-    hostKeyCheckingElement.appendChild(hostKeyCheckingNode)
-    knownHostsProviderElement.appendChild(hostKeyCheckingElement)
-
     # Turn off interactive mode
     interactiveNode = recreate(xmldoc, "interactiveMode", settingsElement)
     interactiveValue = xmldoc.createTextNode("false")
