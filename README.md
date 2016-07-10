@@ -1,6 +1,7 @@
 # Welcome to emuStudio
 [![Build Status](https://travis-ci.org/vbmacher/emuStudio.svg?branch=branch-0_39)](https://travis-ci.org/vbmacher/emuStudio)
 [![Coverage Status](https://coveralls.io/repos/github/vbmacher/emuStudio/badge.svg?branch=branch-0_39)](https://coveralls.io/github/vbmacher/emuStudio?branch=branch-0_39)
+[![Dependency Status](https://www.versioneye.com/user/projects/578294fb76ef400023bd883e/badge.svg?style=flat-square)](https://www.versioneye.com/user/projects/578294fb76ef400023bd883e)
 
 emuStudio is free and versatile platform/framework for *doing* the computer emulation. It is specially designed for
 students and programmers which want to learn how computers work while having fun in the same time. It has been used
