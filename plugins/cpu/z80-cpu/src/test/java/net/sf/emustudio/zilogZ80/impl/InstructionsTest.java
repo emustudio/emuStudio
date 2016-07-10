@@ -22,6 +22,7 @@ package net.sf.emustudio.zilogZ80.impl;
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
+import net.sf.emustudio.cpu.testsuite.Generator;
 import net.sf.emustudio.cpu.testsuite.MemoryStub;
 import net.sf.emustudio.intel8080.api.ExtendedContext;
 import net.sf.emustudio.zilogZ80.impl.suite.CpuRunnerImpl;
@@ -91,6 +92,8 @@ public class InstructionsTest {
 
         cpuRunnerImpl = new CpuRunnerImpl(cpu, memoryStub, devices);
         cpuVerifierImpl = new CpuVerifierImpl(cpu, memoryStub, devices);
+
+        Generator.setRandomTestsCount(10);
     }
 
     @After

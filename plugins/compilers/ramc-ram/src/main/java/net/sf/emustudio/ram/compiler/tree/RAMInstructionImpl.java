@@ -24,38 +24,36 @@ import net.sf.emustudio.ram.memory.RAMInstruction;
 
 import java.io.Serializable;
 
-/**
- * Implementation of interface which is defined in RAM Memory.
- */
 public class RAMInstructionImpl implements RAMInstruction, Serializable {
-    private int instr;      // instruction code
-    private char direction; // 0 - register, '=' - direct, '*' - indirect
-    private Object operand; // operand
-    private String label;   // label as operand for jmp/jz
+    private final int instructionCode;
+    private final Direction direction;
+    private final String label;
+
+    private Object operand;
     private boolean eval = false;
 
-    // constructor not for jmp/jz
-    public RAMInstructionImpl(int in, char direction, Object operand) {
-        instr = in;
+    public RAMInstructionImpl(int in, Direction direction, Object operand) {
+        instructionCode = in;
         this.direction = direction;
         this.operand = operand;
+        this.label = null;
     }
 
     public RAMInstructionImpl(int in, String label) {
-        this.instr = in;
-        this.direction = 0;
+        this.instructionCode = in;
+        this.direction = Direction.REGISTER;
         this.operand = -1;
         this.label = label;
     }
 
     @Override
     public int getCode() {
-        return instr;
+        return instructionCode;
     }
 
     @Override
     public String getCodeStr() {
-        switch (instr) {
+        switch (instructionCode) {
             case LOAD:
                 return "LOAD";
             case STORE:
@@ -86,14 +84,11 @@ public class RAMInstructionImpl implements RAMInstruction, Serializable {
 
     @Override
     public String getOperandStr() {
-        if (instr == HALT) {
+        if (instructionCode == HALT) {
             return "";
         }
 
-        String s = "";
-        if (direction != 0) {
-            s += direction;
-        }
+        String s = direction.value();
         if (label != null) {
             s += label;
             return s;
@@ -113,7 +108,7 @@ public class RAMInstructionImpl implements RAMInstruction, Serializable {
     }
 
     @Override
-    public char getDirection() {
+    public Direction getDirection() {
         return direction;
     }
 
@@ -131,4 +126,37 @@ public class RAMInstructionImpl implements RAMInstruction, Serializable {
         return true;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        RAMInstructionImpl that = (RAMInstructionImpl) o;
+
+        if (instructionCode != that.instructionCode) return false;
+        if (direction != that.direction) return false;
+        if (label == null && that.label == null) {
+            if (operand != null) return operand.equals(that.operand);
+            else if (that.operand != null) return false;
+        }
+
+        return label != null ? label.equals(that.label) : that.label == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = instructionCode;
+        result = 31 * result +  direction.hashCode();
+        result = 31 * result + (label != null ? label.hashCode() : (operand != null ? operand.hashCode() : 0));
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "RAMInstruction{" + getCodeStr() + " " + getOperandStr() +
+            ", label='" + label + '\'' +
+            ", operand=" + operand +
+            ", eval=" + eval +
+            '}';
+    }
 }

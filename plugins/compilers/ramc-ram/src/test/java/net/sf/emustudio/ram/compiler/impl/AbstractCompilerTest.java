@@ -17,13 +17,14 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.intel8080.assembler.impl;
+package net.sf.emustudio.ram.compiler.impl;
 
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.compiler.Compiler;
 import emulib.plugins.compiler.Message;
-import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
+import net.sf.emustudio.ram.memory.RAMInstruction;
+import net.sf.emustudio.ram.memory.RAMMemoryContext;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
@@ -38,10 +39,11 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractCompilerTest {
-    protected CompilerImpl compiler;
+    protected RAMCompiler compiler;
     protected MemoryStub memoryStub;
     protected int errorCode;
 
@@ -53,11 +55,11 @@ public abstract class AbstractCompilerTest {
         memoryStub = new MemoryStub();
 
         ContextPool pool = createNiceMock(ContextPool.class);
-        expect(pool.getMemoryContext(0, MemoryContext.class))
+        expect(pool.getMemoryContext(0, RAMMemoryContext.class))
             .andReturn(memoryStub).anyTimes();
         replay(pool);
 
-        compiler = new CompilerImpl(0L, pool);
+        compiler = new RAMCompiler(0L, pool);
         compiler.addCompilerListener(new Compiler.CompilerListener() {
             @Override
             public void onStart() {
@@ -70,6 +72,7 @@ public abstract class AbstractCompilerTest {
 
             @Override
             public void onFinish(int errorCode) {
+                System.out.println("Compilation finished with code: " + errorCode);
                 AbstractCompilerTest.this.errorCode = errorCode;
             }
         });
@@ -84,18 +87,18 @@ public abstract class AbstractCompilerTest {
         compiler.compile(sourceFile.getAbsolutePath(), outputFile.getAbsolutePath());
     }
 
-    protected void assertProgram(int... bytes) {
+    protected void assertProgram(RAMInstruction... program) {
         assertTrue(errorCode == 0);
-        for (int i = 0; i < bytes.length; i++) {
+        for (int i = 0; i < program.length; i++) {
             assertEquals(
-                String.format("%d. expected=%x, but was=%x", i, bytes[i], memoryStub.read(i)),
-                bytes[i], (int) memoryStub.read(i)
+                String.format("%d. expected=%s, but was=%s", i, program[i], memoryStub.read(i)),
+                program[i], memoryStub.read(i)
             );
         }
-        for (int i = bytes.length; i < memoryStub.getSize(); i++) {
-            assertEquals(
-                String.format("%d. expected=%x, but was=%x", i, 0, memoryStub.read(i)),
-                0, (int) memoryStub.read(i)
+        for (int i = program.length; i < memoryStub.getSize(); i++) {
+            assertNull(
+                String.format("%d. expected=null, but was=%s", i, memoryStub.read(i)),
+                memoryStub.read(i)
             );
         }
     }
@@ -103,9 +106,9 @@ public abstract class AbstractCompilerTest {
     protected void assertError() {
         assertFalse(errorCode == 0);
         for (int i = 0; i < memoryStub.getSize(); i++) {
-            assertEquals(
-                String.format("%d. expected=%x, but was=%x", i, 0, memoryStub.read(i)),
-                0, (int) memoryStub.read(i)
+            assertNull(
+                String.format("%d. expected=null, but was=%s", i, memoryStub.read(i)),
+                memoryStub.read(i)
             );
         }
     }

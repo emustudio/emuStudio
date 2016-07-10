@@ -120,7 +120,7 @@ public class MemoryWindow extends JFrame {
                     // other instructions has parameters - registers or
                     // direct values
                     if ((in.getCode() != RAMInstruction.HALT)
-                            && (in.getDirection() != '=')) {
+                            && (in.getDirection() != RAMInstruction.Direction.DIRECT)) {
                         int operand = (Integer) in.getOperand();
                         if (!registers.contains(operand)) {
                             memcompl++;

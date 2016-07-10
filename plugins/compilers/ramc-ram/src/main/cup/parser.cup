@@ -27,6 +27,7 @@ import java.util.List;
 import java_cup.runtime.Symbol;
 import net.sf.emustudio.ram.compiler.tree.*;
 import net.sf.emustudio.ram.memory.RAMInstruction;
+import net.sf.emustudio.ram.memory.RAMInstruction.Direction;
 
 init with {: errorCount = 0; :}
 parser code {:
@@ -128,32 +129,32 @@ LabelOpt ::= LABELL:label {: RESULT = new Label(label); :}
            ;
 
 
-Statement ::= READ Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.READ, (char)0, num); :}
-            | READ INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.READ, '*', num); :}
-            | WRITE DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.WRITE, '=', str); :}
-            | WRITE Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.WRITE, (char)0, num); :}
-            | WRITE INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.WRITE, '*', num); :}
-            | LOAD DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.LOAD, '=', str); :}
-            | LOAD Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.LOAD, (char)0, num); :}
-            | LOAD INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.LOAD, '*', num); :}
-            | STORE Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.STORE, (char)0, num); :}
-            | STORE INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.STORE, '*', num); :}
-            | ADD DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.ADD, '=', str); :}
-            | ADD Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.ADD, (char)0, num); :}
-            | ADD INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.ADD, '*', num); :}
-            | SUB DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.SUB, '=', str); :}
-            | SUB Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.SUB, (char)0, num); :}
-            | SUB INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.SUB, '*', num); :}
-            | MUL DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.MUL, '=', str); :}
-            | MUL Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.MUL, (char)0, num); :}
-            | MUL INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.MUL, '*', num); :}
-            | DIV DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.DIV, '=', str); :}
-            | DIV Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.DIV, (char)0, num); :}
-            | DIV INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.DIV, '*', num); :}
+Statement ::= READ Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.READ, Direction.REGISTER, num); :}
+            | READ INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.READ, Direction.INDIRECT, num); :}
+            | WRITE DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.WRITE, Direction.DIRECT, str); :}
+            | WRITE Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.WRITE, Direction.REGISTER, num); :}
+            | WRITE INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.WRITE, Direction.INDIRECT, num); :}
+            | LOAD DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.LOAD, Direction.DIRECT, str); :}
+            | LOAD Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.LOAD, Direction.REGISTER, num); :}
+            | LOAD INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.LOAD, Direction.INDIRECT, num); :}
+            | STORE Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.STORE, Direction.REGISTER, num); :}
+            | STORE INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.STORE, Direction.INDIRECT, num); :}
+            | ADD DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.ADD, Direction.DIRECT, str); :}
+            | ADD Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.ADD, Direction.REGISTER, num); :}
+            | ADD INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.ADD, Direction.INDIRECT, num); :}
+            | SUB DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.SUB, Direction.DIRECT, str); :}
+            | SUB Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.SUB, Direction.REGISTER, num); :}
+            | SUB INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.SUB, Direction.INDIRECT, num); :}
+            | MUL DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.MUL, Direction.DIRECT, str); :}
+            | MUL Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.MUL, Direction.REGISTER, num); :}
+            | MUL INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.MUL, Direction.INDIRECT, num); :}
+            | DIV DIRECT STRING:str {: RESULT = new RAMInstructionImpl(RAMInstruction.DIV, Direction.DIRECT, str); :}
+            | DIV Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.DIV, Direction.REGISTER, num); :}
+            | DIV INDIRECT Number:num {: RESULT = new RAMInstructionImpl(RAMInstruction.DIV, Direction.INDIRECT, num); :}
             | JMP IDENT:label {: RESULT = new RAMInstructionImpl(RAMInstruction.JMP, label); :}
             | JZ IDENT:label {: RESULT = new RAMInstructionImpl(RAMInstruction.JZ, label); :}
             | JGTZ IDENT:label {: RESULT = new RAMInstructionImpl(RAMInstruction.JGTZ, label); :}
-            | HALT  {: RESULT = new RAMInstructionImpl(RAMInstruction.HALT, (char)0,0); :}
+            | HALT  {: RESULT = new RAMInstructionImpl(RAMInstruction.HALT, Direction.REGISTER,0); :}
             ;
 
 Number ::= NUMBER:num {: RESULT = Integer.parseInt((String)num); :};

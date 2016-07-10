@@ -24,12 +24,12 @@ import java_cup.runtime.Symbol;
 
 public class TokenImpl extends Symbol implements Token, Symbols {
     public final static int ERROR_UNKNOWN_TOKEN = 0xA05;
-    private final String text; // hodnota tokenu
-    private final int row;     // číslo riadka
-    private final int col;     // číslo stĺpca
-    private final int offset;  // pozícia tokenu
-    private final int length;  // dĺžka tokenu
-    private final int type;    // typ tokenu
+    private final String text;
+    private final int row;
+    private final int col;
+    private final int offset;
+    private final int length;
+    private final int type;
     private final boolean initial;
 
     public TokenImpl(int ID, int type, String text,

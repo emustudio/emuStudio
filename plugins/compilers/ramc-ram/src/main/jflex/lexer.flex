@@ -79,6 +79,7 @@ Number     = [0-9]+
 Identifier =([a-zA-Z_\?@])[a-zA-Z_\?@0-9]*
 Label ={Identifier}[\:]
 String = [^\ \t\f\n\r;]+
+MultiSpaceString = \"[^\"]*\"
 
 %%
 
@@ -112,8 +113,15 @@ String = [^\ \t\f\n\r;]+
 <IDENTIFIER> {Identifier} { yybegin(YYINITIAL); return token(TokenImpl.IDENT, Token.IDENTIFIER,yytext(),false); }
 
 <STRING> {String} { yybegin(YYINITIAL); return token(TokenImpl.STRING, Token.LITERAL,yytext(),false); }
+<STRING> {MultiSpaceString} {
+          yybegin(YYINITIAL);
+          String tmp = yytext();
+          return token(TokenImpl.STRING, Token.LITERAL,tmp.substring(1,tmp.length()-1),false); }
 
 <INPUT> {String} { return token(TokenImpl.STRING, Token.PREPROCESSOR,yytext(),false); }
+<INPUT> {MultiSpaceString} {
+          String tmp = yytext();
+          return token(TokenImpl.STRING, Token.PREPROCESSOR,tmp.substring(1,tmp.length()-1),false); }
 
 
 //[^\n\r\ \t\f]+ { return token(TokenImpl.error, TokenImpl.ERROR); }

@@ -23,7 +23,11 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 public class Generator {
-    public static final int RANDOM_TESTS = 25;
+    private static int randomTests = 25;
+
+    public static void setRandomTestsCount(int randomTests) {
+        Generator.randomTests = randomTests;
+    }
 
     public static void forAll8bitBinary(BiConsumer<Byte, Byte>... runners) {
         for (int i = 0; i < 256; i++) {
@@ -37,7 +41,7 @@ public class Generator {
 
     public static void forSome8bitBinary(BiConsumer<Byte, Byte>... runners) {
         Random random = new Random();
-        for (int k = 0; k < RANDOM_TESTS; k++) {
+        for (int k = 0; k < randomTests; k++) {
             for (BiConsumer<Byte, Byte> runner : runners) {
                 runner.accept((byte) random.nextInt(256), (byte) random.nextInt(256));
             }
@@ -54,7 +58,7 @@ public class Generator {
 
     public static void forSome8bitBinaryWhichEqual(BiConsumer<Byte, Byte>... runners) {
         Random random = new Random();
-        for (int i = 0; i < RANDOM_TESTS; i++) {
+        for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Byte, Byte> runner : runners) {
                 int k = random.nextInt(256);
                 runner.accept((byte)k, (byte)k);
@@ -64,7 +68,7 @@ public class Generator {
 
     public static void forSome16bitBinary(int firstStartFrom, int secondStartFrom, BiConsumer<Integer, Integer>... runners) {
         Random random = new Random();
-        for (int i = 0; i < RANDOM_TESTS; i++) {
+        for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
                 int first = random.nextInt(0xFFFF);
                 if (first < firstStartFrom) {
@@ -86,7 +90,7 @@ public class Generator {
     public static void forSome16bitBinaryFirstSatisfying(Predicate<Integer> predicate,
                                                          BiConsumer<Integer, Integer>... runners) {
         Random random = new Random();
-        for (int i = 0; i < RANDOM_TESTS; i++) {
+        for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
                 int first = random.nextInt(0xFFFF);
                 while(!predicate.test(first)) {
@@ -99,7 +103,7 @@ public class Generator {
 
     public static void forSome16bitBinary(BiConsumer<Integer, Integer>... runners) {
         Random random = new Random();
-        for (int i = 0; i < RANDOM_TESTS; i++) {
+        for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
                 runner.accept(random.nextInt(0xFFFF), random.nextInt(0xFFFF));
             }
@@ -133,7 +137,7 @@ public class Generator {
 
     public static void forSome16bitBinaryWhichEqual(BiConsumer<Integer, Integer>... runners) {
         Random random = new Random();
-        for (int i = 0; i < RANDOM_TESTS; i++) {
+        for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
                 int k = random.nextInt(0xFFFF);
                 runner.accept(k, k);
@@ -151,7 +155,7 @@ public class Generator {
 
     public static void forSome8bitUnary(BiConsumer<Byte, Byte>... runners) {
         Random random = new Random();
-        for (int i = 0; i < RANDOM_TESTS; i++) {
+        for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Byte, Byte> runner : runners) {
                 int k = random.nextInt(256);
                 runner.accept((byte)k, (byte)0);
@@ -165,7 +169,7 @@ public class Generator {
 
     public static void forSome16bitUnary(int firstStartFrom, BiConsumer<Integer, Integer>... runners) {
         Random random = new Random();
-        for (int i = 0; i < RANDOM_TESTS; i++) {
+        for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
                 int first = random.nextInt(0xFFFF);
                 if (first < firstStartFrom) {

@@ -14,6 +14,7 @@ fi
 
 set -e
 
+
 vagrant provision
-vagrant ssh -c "cd /home/vagrant && java -jar emuStudio.jar" -- -X
+vagrant ssh -c "cd /home/vagrant && java -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dsun.java2d.xrender=true -jar emuStudio.jar"  -- -X
 

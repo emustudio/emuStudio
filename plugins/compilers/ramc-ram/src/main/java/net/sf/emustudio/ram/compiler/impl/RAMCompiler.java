@@ -35,6 +35,8 @@ import net.sf.emustudio.ram.compiler.tree.Program;
 import net.sf.emustudio.ram.compiler.tree.RAMInstructionImpl;
 import net.sf.emustudio.ram.memory.RAMInstruction;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.io.Reader;
@@ -50,13 +52,15 @@ import java.util.ResourceBundle;
 )
 @SuppressWarnings("unused")
 public class RAMCompiler extends AbstractCompiler {
+    private final static Logger LOGGER = LoggerFactory.getLogger(RAMCompiler.class);
+    private static final SourceFileExtension[] SUFFIXES = new SourceFileExtension[] {
+        new SourceFileExtension("ram", "Random Access Machine source")
+    };
+
+    private final ContextPool contextPool;
     private final LexerImpl lexer;
     private final ParserImpl parser;
     private RAMMemoryContext memory;
-    private final SourceFileExtension[] suffixes = new SourceFileExtension[] {
-            new SourceFileExtension("ram", "Random Access Machine source")
-    };
-    private final ContextPool contextPool;
 
     public RAMCompiler(Long pluginID, ContextPool contextPool) {
         super(pluginID);
@@ -132,7 +136,9 @@ public class RAMCompiler extends AbstractCompiler {
 
     @Override
     public boolean compile(String inputFileName, String outputFileName) {
+        int errorCode = 0;
         try {
+            this.notifyCompileStart();
             CompiledCode code = compileFrom(inputFileName);
 
             if (code.serialize(outputFileName)) {
@@ -141,8 +147,12 @@ public class RAMCompiler extends AbstractCompiler {
                 notifyError("Could not save compiled file.");
             }
         } catch (Exception e) {
+            errorCode = 1;
+            LOGGER.trace("[errorCode={}] Compilation failed", errorCode, e);
             notifyError("Compilation failed: " + e.getMessage());
             return false;
+        } finally {
+            notifyCompileFinish(errorCode);
         }
         return true;
     }
@@ -185,6 +195,6 @@ public class RAMCompiler extends AbstractCompiler {
 
     @Override
     public SourceFileExtension[] getSourceSuffixList() {
-        return suffixes;
+        return SUFFIXES;
     }
 }

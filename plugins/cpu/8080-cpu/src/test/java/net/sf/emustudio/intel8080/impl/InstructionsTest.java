@@ -25,6 +25,7 @@ import emulib.runtime.ContextPool;
 import emulib.runtime.exceptions.ContextNotFoundException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
+import net.sf.emustudio.cpu.testsuite.Generator;
 import net.sf.emustudio.cpu.testsuite.MemoryStub;
 import net.sf.emustudio.intel8080.impl.suite.CpuRunnerImpl;
 import net.sf.emustudio.intel8080.impl.suite.CpuVerifierImpl;
@@ -72,6 +73,8 @@ public class InstructionsTest {
 
         cpuRunnerImpl = new CpuRunnerImpl(cpu, memoryStub);
         cpuVerifierImpl = new CpuVerifierImpl(cpu, memoryStub);
+
+        Generator.setRandomTestsCount(10);
     }
 
     @After

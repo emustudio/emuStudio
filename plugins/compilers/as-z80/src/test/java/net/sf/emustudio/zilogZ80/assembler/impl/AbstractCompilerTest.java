@@ -19,6 +19,7 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.impl;
 
+import emulib.emustudio.SettingsManager;
 import emulib.plugins.compiler.Compiler;
 import emulib.plugins.compiler.Message;
 import emulib.plugins.memory.MemoryContext;
@@ -31,6 +32,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
+import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -71,6 +73,7 @@ public abstract class AbstractCompilerTest {
                 AbstractCompilerTest.this.errorCode = errorCode;
             }
         });
+        compiler.initialize(createMock(SettingsManager.class));
     }
 
     protected void compile(String content) throws Exception {

@@ -30,60 +30,44 @@ import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
 import java.util.Objects;
 
 public class RAMContext implements CPUContext {
-    private final EmulatorImpl cpu;
     private final AbstractTapeContext[] tapes;
     private final ContextPool contextPool;
 
-    public RAMContext(EmulatorImpl cpu, ContextPool contextPool) {
-        this.cpu = Objects.requireNonNull(cpu);
+    public RAMContext(ContextPool contextPool) {
         this.contextPool = Objects.requireNonNull(contextPool);
         tapes = new AbstractTapeContext[3];
     }
 
-    public void init(long pluginID) throws PluginInitializationException {
+    public void init(long pluginID, EmulatorEngine engine) throws PluginInitializationException {
         try {
-            tapes[0] = (AbstractTapeContext)
-                    contextPool.getDeviceContext(pluginID, AbstractTapeContext.class, 0);
-            if (tapes[0] == null) {
-                throw new PluginInitializationException(
-                        cpu, "Could not get the Registers (storage tape)"
-                );
-            }
-            tapes[0].setBounded(true);
-            tapes[0].setEditable(true);
-            tapes[0].setPosVisible(false);
-            tapes[0].setClearAtReset(true);
-            tapes[0].setTitle("Registers (storage tape)");
-            tapes[0].setDisplayRowNumbers(true);
+            tapes[0] = prepareTape(pluginID, "Registers (storage tape)", true, false, true, 0);
+            tapes[1] = prepareTape(pluginID, "Input tape", false, true, true, 1);
+            tapes[2] = prepareTape(pluginID, "Output tape", true, true, false, 2);
 
-            tapes[1] = (AbstractTapeContext)
-                    contextPool.getDeviceContext(pluginID, AbstractTapeContext.class, 1);
-            if (tapes[1] == null) {
-                throw new PluginInitializationException(
-                        cpu, "Could not get the Input tape"
-                );
-            }
-            tapes[1].setBounded(true);
-            tapes[1].setEditable(true);
-            tapes[1].setPosVisible(true);
-            tapes[1].setClearAtReset(false);
-            tapes[1].setTitle("Input tape");
-            cpu.loadTape(tapes[1]);
-
-            tapes[2] = (AbstractTapeContext)contextPool.getDeviceContext(pluginID, AbstractTapeContext.class, 2);
-            if (tapes[2] == null) {
-                throw new PluginInitializationException(cpu, "Could not get the Output tape");
-            }
-            tapes[2].setBounded(true);
-            tapes[2].setEditable(false);
-            tapes[2].setPosVisible(true);
-            tapes[2].setClearAtReset(true);
-            tapes[2].setTitle("Output tape");
+            engine.loadInput(tapes[1]);
         } catch (PluginInitializationException e) {
             throw e;
         } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException(cpu, "One or more tapes needs to be connected to the CPU!", e);
+            throw new PluginInitializationException("One or more tapes needs to be connected to the CPU!", e);
         }
+    }
+
+    private AbstractTapeContext prepareTape(long pluginID, String title, boolean clearAfterReset, boolean posVisible,
+                                            boolean editable, int index)
+        throws InvalidContextException, ContextNotFoundException, PluginInitializationException {
+
+        AbstractTapeContext tape = contextPool.getDeviceContext(pluginID, AbstractTapeContext.class, index);
+        if (tape == null) {
+            throw new PluginInitializationException("Could not get tape: \"" + title + "\"");
+        }
+        tape.setBounded(true);
+        tape.setEditable(editable);
+        tape.setPosVisible(posVisible);
+        tape.setClearAtReset(clearAfterReset);
+        tape.setTitle(title);
+        tape.setDisplayRowNumbers(true);
+
+        return tape;
     }
 
     public AbstractTapeContext getStorage() {
@@ -103,22 +87,6 @@ public class RAMContext implements CPUContext {
         for (int i = 0; i < 3; i++) {
             tapes[i] = null;
         }
-    }
-
-    /**
-     * Method checks if the machine contains correct all 3 tapes
-     *  - input
-     *  - output
-     *  - storage
-     * @return true if yes, false otherwise
-     */
-    public boolean checkTapes() {
-        for (int i = 0; i < 3; i++) {
-            if (tapes[i] == null) {
-                return false;
-            }
-        }
-        return true;
     }
 
     @Override

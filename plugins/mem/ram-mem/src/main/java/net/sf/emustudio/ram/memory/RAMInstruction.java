@@ -22,39 +22,52 @@ package net.sf.emustudio.ram.memory;
 import emulib.annotations.ContextType;
 import emulib.plugins.compiler.CompilerContext;
 
+import java.util.Objects;
+
 /**
  * This context will be registered by RAM compiler.
  */
 @ContextType
 public interface RAMInstruction extends CompilerContext {
-	public final static int READ = 1;
-	public final static int WRITE = 2;
-	public final static int LOAD = 3;
-	public final static int STORE = 4;
-	public final static int ADD = 5;
-	public final static int SUB = 6;
-	public final static int MUL = 7;
-	public final static int DIV = 8;
-	public final static int JMP = 9;
-	public final static int JZ = 10;
-	public final static int JGTZ = 11;
-	public final static int HALT = 12;
+	int READ = 1;
+	int WRITE = 2;
+	int LOAD = 3;
+	int STORE = 4;
+	int ADD = 5;
+	int SUB = 6;
+	int MUL = 7;
+	int DIV = 8;
+	int JMP = 9;
+	int JZ = 10;
+	int JGTZ = 11;
+	int HALT = 12;
+
+    enum Direction {
+        REGISTER(""), DIRECT("="), INDIRECT("*");
+
+        private final String value;
+
+        Direction(String value) {
+            this.value = Objects.requireNonNull(value);
+        }
+
+        public String value() {
+            return value;
+        }
+    }
 	
 	/**
 	 * Get machine code of the RAM instruction. 
 	 * @return code of the instruction
 	 */
-	public int getCode();
+	int getCode();
 	
 	/**
 	 * Get direction of the RAM instruction:
-         * 
-	 * 0   - register
-	 * '=' - direct
-	 * '*' - indirect
+     *
 	 * @return direction of the instruction
 	 */
-	public char getDirection();
+	Direction getDirection();
 	
 	/**
 	 * Get operand of the RAM instruction.
@@ -62,21 +75,21 @@ public interface RAMInstruction extends CompilerContext {
 	 * @return operand (number or address, or string). If the operand is direct,
          * it returns a String. Otherwise Integer.
 	 */
-	public Object getOperand();
+	Object getOperand();
 	
 	/**
 	 * Get a string representation of label operand (meaningful only for
          * JMP/JZ instructions)
          * @return label operand
 	 */
-	public String getOperandLabel();
+	String getOperandLabel();
 	
 	/**
 	 * Get string representation of the RAM instruction (mnemonic code).
          * 
 	 * @return string representation of the instruction
 	 */
-	public String getCodeStr();
+	String getCodeStr();
 	
 	/**
 	 * Get string representation of the operand.
@@ -84,5 +97,5 @@ public interface RAMInstruction extends CompilerContext {
 	 * It includes labels, direction and integer operands.
 	 * @return String representation of operand
 	 */
-	public String getOperandStr();
+	String getOperandStr();
 }
