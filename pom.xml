@@ -208,6 +208,7 @@
             <artifactId>cobertura-maven-plugin</artifactId>
             <configuration>
               <check/>
+              <quiet>true</quiet>
               <format>xml</format>
               <maxmem>256m</maxmem>
               <aggregate>true</aggregate>
