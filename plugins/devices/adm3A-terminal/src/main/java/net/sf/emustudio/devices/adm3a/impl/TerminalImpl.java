@@ -27,6 +27,7 @@ import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
+import emulib.runtime.exceptions.ContextNotFoundException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.devices.adm3a.InputProvider;
@@ -81,13 +82,13 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
         terminalSettings.setSettingsManager(settings);
 
         // try to connect to a serial I/O board
-        DeviceContext device = contextPool.getDeviceContext(pluginID, DeviceContext.class);
-        if (device != null) {
+        try {
+            DeviceContext device = contextPool.getDeviceContext(pluginID, DeviceContext.class);
             if (device.getDataType() != Short.class) {
                 throw new PluginInitializationException(this, "Connected device is not supported");
             }
             connectedDevice = device;
-        } else {
+        } catch (ContextNotFoundException e) {
             LOGGER.warn("The terminal is not connected to any I/O device.");
         }
         terminalGUI = new TerminalWindow(display);
