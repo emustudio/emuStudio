@@ -149,7 +149,7 @@ class MemoryTable extends JTable {
             if (isSelected == false) {
                 return null;
             }
-            component.setText("0x" + (String) value);
+            component.setText("0x" + value);
             return component;
         }
 

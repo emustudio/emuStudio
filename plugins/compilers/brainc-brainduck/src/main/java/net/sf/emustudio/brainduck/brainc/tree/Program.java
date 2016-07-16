@@ -28,7 +28,7 @@ public class Program {
     private List<Instruction> instructions;
 
     public Program() {
-        instructions = new ArrayList<Instruction>();
+        instructions = new ArrayList<>();
     }
 
     public void add(Instruction instruction) {
@@ -38,15 +38,15 @@ public class Program {
     }
 
     public int firstPass(int addressStart) throws Exception {
-        for (int i = 0; i < instructions.size(); i++) {
-            addressStart = instructions.get(i).firstPass(addressStart);
+        for (Instruction instruction : instructions) {
+            addressStart = instruction.firstPass(addressStart);
         }
         return addressStart;
     }
 
     public void secondPass(HEXFileManager hex) throws Exception {
-        for (int i = 0; i < instructions.size(); i++) {
-            instructions.get(i).secondPass(hex);
+        for (Instruction instruction : instructions) {
+            instruction.secondPass(hex);
         }
     }
 }

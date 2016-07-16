@@ -103,9 +103,7 @@ public class DrawingPanel extends JPanel implements MouseListener, MouseMotionLi
     }
 
     public void fireToolWasUsed() {
-        for (ToolListener listener : toolListeners) {
-            listener.toolWasUsed();
-        }
+        toolListeners.forEach(ToolListener::toolWasUsed);
     }
 
     public void setUsingGrid(boolean useGrid) {

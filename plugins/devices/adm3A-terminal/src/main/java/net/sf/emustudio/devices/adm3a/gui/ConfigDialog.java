@@ -23,6 +23,7 @@ import net.sf.emustudio.devices.adm3a.impl.Display;
 import net.sf.emustudio.devices.adm3a.impl.TerminalSettings;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class ConfigDialog extends javax.swing.JDialog {
     private final TerminalSettings settings;
@@ -97,7 +98,7 @@ public class ConfigDialog extends javax.swing.JDialog {
         setModal(true);
         setResizable(false);
 
-        panelSimulation.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Redirect I/O", 0, 0, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
+        panelSimulation.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Redirect I/O", 0, 0, new java.awt.Font("Tahoma", Font.BOLD, 11))); // NOI18N
 
         jLabel1.setText("Input file name:");
 
@@ -115,7 +116,7 @@ public class ConfigDialog extends javax.swing.JDialog {
 
         jLabel4.setText("Input delay:");
 
-        spnInputDelay.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(0), Integer.valueOf(0), null, Integer.valueOf(100)));
+        spnInputDelay.setModel(new javax.swing.SpinnerNumberModel(0, 0, null, 100));
 
         jLabel5.setText("ms");
 
@@ -170,7 +171,7 @@ public class ConfigDialog extends javax.swing.JDialog {
                 .addComponent(jLabel3))
         );
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Terminal", 0, 0, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Terminal", 0, 0, new java.awt.Font("Tahoma", Font.BOLD, 11))); // NOI18N
 
         chkHalfDuplex.setText("Half duplex mode");
 

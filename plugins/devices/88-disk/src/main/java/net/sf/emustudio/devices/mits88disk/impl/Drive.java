@@ -97,9 +97,9 @@ public class Drive {
 
     public interface DriveListener {
 
-        public void driveSelect(boolean sel);
+        void driveSelect(boolean sel);
 
-        public void driveParamsChanged(DriveParameters parameters);
+        void driveParamsChanged(DriveParameters parameters);
     }
 
     public Drive() {

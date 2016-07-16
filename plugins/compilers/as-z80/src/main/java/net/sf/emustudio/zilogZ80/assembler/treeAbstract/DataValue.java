@@ -47,8 +47,8 @@ public abstract class DataValue {
         byte[] byts = literal.getBytes();
         String enc = "";
 
-        for (int i = 0; i < byts.length; i++) {
-            enc += Expression.encodeValue((int) byts[i], 1);
+        for (byte byt : byts) {
+            enc += Expression.encodeValue((int) byt, 1);
         }
         return enc;
     }

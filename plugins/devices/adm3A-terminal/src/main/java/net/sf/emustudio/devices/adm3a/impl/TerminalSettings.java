@@ -81,9 +81,7 @@ public class TerminalSettings {
     }
 
     private void notifyObservers() {
-        for (ChangedObserver observer : observers) {
-            observer.settingsChanged();
-        }
+        observers.forEach(ChangedObserver::settingsChanged);
     }
 
     boolean isNoGUI() {

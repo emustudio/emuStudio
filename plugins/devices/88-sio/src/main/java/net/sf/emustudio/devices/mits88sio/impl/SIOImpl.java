@@ -53,7 +53,6 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
     private final Transmitter transmitter = new Transmitter();
     private final Port1 statusPort = new Port1(transmitter);
     private final Port2 dataPort = new Port2(transmitter);
-    private final PhysicalPort physicalPort = new PhysicalPort(transmitter);
     private final ContextPool contextPool;
     private final SIOSettings sioSettings;
 
@@ -69,6 +68,7 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
         sioSettings = new SIOSettings(pluginID);
 
         try {
+            PhysicalPort physicalPort = new PhysicalPort(transmitter);
             contextPool.register(pluginID, physicalPort, DeviceContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             LOGGER.error("Could not register 88-SIO device context", e);

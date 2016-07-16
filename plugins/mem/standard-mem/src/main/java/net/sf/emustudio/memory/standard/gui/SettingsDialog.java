@@ -29,25 +29,7 @@ import net.sf.emustudio.memory.standard.impl.AddressRangeImpl;
 import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
 import net.sf.emustudio.memory.standard.impl.MemoryImpl;
 
-import javax.swing.BorderFactory;
-import javax.swing.GroupLayout;
-import javax.swing.InputVerifier;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.LayoutStyle;
-import javax.swing.ListSelectionModel;
-import javax.swing.WindowConstants;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.io.File;
 import java.util.ArrayList;
@@ -57,12 +39,10 @@ class SettingsDialog extends JDialog {
 
     private MemoryContextImpl memContext;
     private MemoryImpl memory;
-    private ROMmodel romModel;
-    private ImagesModel imagesModel;
     private TableMemory tblMem;
-    private List<String> imageNames = new ArrayList<String>();
-    private List<String> imageFullNames = new ArrayList<String>();
-    private List<Integer> imageAddresses = new ArrayList<Integer>();
+    private List<String> imageNames = new ArrayList<>();
+    private List<String> imageFullNames = new ArrayList<>();
+    private List<Integer> imageAddresses = new ArrayList<>();
 
     SettingsDialog(JDialog parent, long pluginID,
                    MemoryImpl mem, MemoryContextImpl memContext, TableMemory tblMem,
@@ -109,11 +89,10 @@ class SettingsDialog extends JDialog {
             }
             i++;
         }
-        imagesModel = new ImagesModel();
-        tblImages.setModel(imagesModel);
+        tblImages.setModel(new ImagesModel());
 
         // second tab (ROM ranges)
-        romModel = new ROMmodel();
+        ROMmodel romModel = new ROMmodel();
         tblROM.setModel(romModel);
         this.setLocationRelativeTo(null);
         InputVerifier vf = new InputVerifier() {
@@ -131,13 +110,10 @@ class SettingsDialog extends JDialog {
         txtFrom.setInputVerifier(vf);
         txtTo.setInputVerifier(vf);
         tblROM.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tblROM.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                int i = tblROM.getSelectedRow();
-                txtFrom.setText("0x" + tblROM.getValueAt(i, 0).toString());
-                txtTo.setText("0x" + tblROM.getValueAt(i, 1).toString());
-            }
+        tblROM.getSelectionModel().addListSelectionListener(e -> {
+            int i1 = tblROM.getSelectedRow();
+            txtFrom.setText("0x" + tblROM.getValueAt(i1, 0).toString());
+            txtTo.setText("0x" + tblROM.getValueAt(i1, 1).toString());
         });
     }
 
@@ -280,19 +256,8 @@ class SettingsDialog extends JDialog {
         panelImages.setBorder(BorderFactory.createTitledBorder("File images to load"));
         scrollImages.setViewportView(tblImages);
 
-        btnAddImage.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnAddImageActionPerformed(evt);
-            }
-        });
-
-        btnRemoveImage.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnRemoveImageActionPerformed(evt);
-            }
-        });
+        btnAddImage.addActionListener(this::btnAddImageActionPerformed);
+        btnRemoveImage.addActionListener(this::btnRemoveImageActionPerformed);
 
         GroupLayout panelImagesLayout = new GroupLayout(panelImages);
         panelImages.setLayout(panelImagesLayout);
@@ -317,19 +282,8 @@ class SettingsDialog extends JDialog {
 
         panelROM.setBorder(BorderFactory.createTitledBorder("Edit ROM ranges"));
 
-        btnAddRange.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnAddRangeActionPerformed(evt);
-            }
-        });
-
-        btnRemoveRange.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnRemoveRangeActionPerformed(evt);
-            }
-        });
+        btnAddRange.addActionListener(this::btnAddRangeActionPerformed);
+        btnRemoveRange.addActionListener(this::btnRemoveRangeActionPerformed);
 
         GroupLayout panelROMLayout = new GroupLayout(panelROM);
         panelROM.setLayout(panelROMLayout);
@@ -349,12 +303,7 @@ class SettingsDialog extends JDialog {
 
         paneTabs.addTab("ROM ranges", panelROMRanges);
 
-        btnOK.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnOKActionPerformed(evt);
-            }
-        });
+        btnOK.addActionListener(this::btnOKActionPerformed);
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -480,8 +429,9 @@ class SettingsDialog extends JDialog {
             StaticDialogs.showErrorMessage("Image has to be selected!");
             return;
         }
-        if (JOptionPane.showConfirmDialog(this,
-                "Are you sure to remove image from the list?", "Remove image", i) == JOptionPane.YES_OPTION) {
+        if (JOptionPane.showConfirmDialog(
+            this, "Are you sure to remove image from the list?", "Remove image",
+            JOptionPane.YES_NO_CANCEL_OPTION) == JOptionPane.YES_OPTION) {
             imageNames.remove(i);
             imageFullNames.remove(i);
             imageAddresses.remove(i);

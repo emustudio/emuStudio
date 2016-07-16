@@ -124,7 +124,7 @@ public class FlagsTableGeneratorTest {
             .append("TABLE = new int[] {\n");
 
         for (int i = 0; i < 256; i++) {
-            sb.append(daa(cf, hf, (byte)i) + ", ");
+            sb.append(daa(cf, hf, (byte) i)).append(", ");
 
             if (indent++ > MAX_INDENT) {
                 sb.append("\n");
@@ -144,7 +144,7 @@ public class FlagsTableGeneratorTest {
             .append(hf ? "H_" : "NOT_H_")
             .append("FOR_H_TABLE = new int[] {");
         for (int i = 0; i < 256; i++) {
-            sb.append(daa_hf(nf, hf, (byte)i) + ", ");
+            sb.append(daa_hf(nf, hf, (byte) i)).append(", ");
 
             if (indent++ > MAX_INDENT) {
                 sb.append("\n");

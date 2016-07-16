@@ -27,23 +27,7 @@ import net.sf.emustudio.ram.memory.impl.RAMMemoryContextImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.BorderFactory;
-import javax.swing.GroupLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JToolBar;
-import javax.swing.LayoutStyle;
-import javax.swing.ListSelectionModel;
-import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -322,24 +306,14 @@ public class MemoryWindow extends JFrame {
         btnOpen.setHorizontalTextPosition(SwingConstants.CENTER);
         btnOpen.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnOpen.setToolTipText("Open compiled RAM program");
-        btnOpen.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                openRAM();
-            }
-        });
+        btnOpen.addActionListener(e -> openRAM());
 
         btnClear.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/ram/memory/gui/edit-delete.png"))); // NOI18N
         btnClear.setFocusable(false);
         btnClear.setHorizontalTextPosition(SwingConstants.CENTER);
         btnClear.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnClear.setToolTipText("Clear program tape");
-        btnClear.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                memory.clear();
-            }
-        });
+        btnClear.addActionListener(e -> memory.clear());
         toolMemory.add(btnOpen);
         toolMemory.add(btnClear);
 

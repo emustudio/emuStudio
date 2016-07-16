@@ -28,7 +28,7 @@ public class Program {
     private List<Row> instructionsList;
 
     public Program() {
-        instructionsList = new ArrayList<Row>();
+        instructionsList = new ArrayList<>();
     }
 
     public void addRow(Row node) {
@@ -40,15 +40,15 @@ public class Program {
     public int pass1(int addr_start) throws Exception {
         int curr_addr = addr_start;
 
-        for (int i = 0; i < instructionsList.size(); i++) {
-            curr_addr = instructionsList.get(i).pass1(curr_addr);
+        for (Row anInstructionsList : instructionsList) {
+            curr_addr = anInstructionsList.pass1(curr_addr);
         }
         return curr_addr;
     }
 
     public void pass2(CompiledCode hex) throws Exception {
-        for (int i = 0; i < instructionsList.size(); i++) {
-            instructionsList.get(i).pass2(hex);
+        for (Row anInstructionsList : instructionsList) {
+            anInstructionsList.pass2(hex);
         }
     }
 }

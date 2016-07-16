@@ -127,7 +127,7 @@ public class Display extends JPanel {
         g.clearRect(0, 0, getSize().width, getSize().height);
 
         int y = charHeight;
-        int x = 0;
+        int x;
 
         int rowIndex = 0;
         for (Map.Entry<Integer, int[]> entry : memory.entrySet()) {
@@ -138,11 +138,11 @@ public class Display extends JPanel {
 
             int[] row = entry.getValue();
             x = 0;
-            for (int col = 0; col < row.length; col++) {
-                if (row[col] < 32) {
+            for (int aRow : row) {
+                if (aRow < 32) {
                     continue;
                 }
-                g.drawString("" + (char) row[col], x, y);
+                g.drawString("" + (char) aRow, x, y);
                 x += charWidth;
             }
         }

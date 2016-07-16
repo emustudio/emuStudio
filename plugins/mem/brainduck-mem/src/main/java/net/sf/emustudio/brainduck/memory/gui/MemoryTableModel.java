@@ -21,15 +21,16 @@ package net.sf.emustudio.brainduck.memory.gui;
 
 import emulib.plugins.memory.MemoryContext;
 import javax.swing.table.AbstractTableModel;
+import java.util.Objects;
 
 public class MemoryTableModel extends AbstractTableModel {
-    private final MemoryContext mem;
+    private final MemoryContext<Short> mem;
     private int currentPage = 0;
     private final int ROW_COUNT = 16;
     private final int COLUMN_COUNT = 16;
 
-    MemoryTableModel(MemoryContext memory) {
-        this.mem = memory;
+    MemoryTableModel(MemoryContext<Short> memory) {
+        this.mem = Objects.requireNonNull(memory);
     }
 
     @Override

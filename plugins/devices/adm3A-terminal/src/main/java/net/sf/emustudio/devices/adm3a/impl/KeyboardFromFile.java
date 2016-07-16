@@ -35,7 +35,7 @@ import java.util.concurrent.locks.LockSupport;
 class KeyboardFromFile implements InputProvider {
     private final static Logger LOGGER = LoggerFactory.getLogger(KeyboardFromFile.class);
 
-    private List<DeviceContext<Short>> inputObservers = new CopyOnWriteArrayList<DeviceContext<Short>>();
+    private List<DeviceContext<Short>> inputObservers = new CopyOnWriteArrayList<>();
     private final File inputFile;
 
     KeyboardFromFile(File inputFile) {

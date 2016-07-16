@@ -126,7 +126,7 @@ public class TapeDialog extends JDialog {
         }
     }
 
-    private final void changeEditable() {
+    private void changeEditable() {
         boolean b = tapeContext.getEditable();
         btnAddFirst.setEnabled(b && !tapeContext.isBounded());
         btnAddLast.setEnabled(b);

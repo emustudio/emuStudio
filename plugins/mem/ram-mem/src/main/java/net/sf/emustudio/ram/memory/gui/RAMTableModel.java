@@ -51,7 +51,7 @@ class RAMTableModel extends AbstractTableModel {
                 return String.valueOf(rowIndex);
             }
         } else {
-            RAMInstruction i = (RAMInstruction) memory.read(rowIndex);
+            RAMInstruction i = memory.read(rowIndex);
             return i.getCodeStr() + " " + i.getOperandStr();
         }
     }

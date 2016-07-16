@@ -54,7 +54,7 @@ class PseudoContext implements DeviceContext<Short> {
     /* interrupt related                                                                                            */
     private int timeOfNextInterrupt; /* time when next interrupt is scheduled                        */
 
-    private boolean timerInterrupt = false; /* timer interrupt pending                                      */
+    //private boolean timerInterrupt = false; /* timer interrupt pending                                      */
 
     private int timerInterruptHandler = 0x0fc00;  /* default address of interrupt handling routine                */
 
@@ -201,7 +201,7 @@ class PseudoContext implements DeviceContext<Short> {
         setTimerInterruptAdrPos = 0;
         markTimeSP = 0;
         versionPos = 0;
-        timerInterrupt = false;
+      //  timerInterrupt = false;
 //    if (simh_unit.flags & UNIT_SIMH_TIMERON)
 //        simh_dev_set_timeron(NULL, 0, NULL, NULL);
     }
@@ -216,13 +216,13 @@ class PseudoContext implements DeviceContext<Short> {
 
     /* setClockZSDOSAdr points to 6 byte block in M: YY MM DD HH MM SS in BCD notation */
     private void setClockZSDOS() {
-        int year = fromBCD((Short) mem.read(setClockZSDOSAdr));
-        int yy = (year < 50 ? year + 100 : year) + 1900;
-        int mm = fromBCD((Short) mem.read(setClockZSDOSAdr + 1)) - 1;
-        int dd = fromBCD((Short) mem.read(setClockZSDOSAdr + 2));
-        int hh = fromBCD((Short) mem.read(setClockZSDOSAdr + 3));
-        int min = fromBCD((Short) mem.read(setClockZSDOSAdr + 4));
-        int ss = fromBCD((Short) mem.read(setClockZSDOSAdr + 5));
+        int year = fromBCD(mem.read(setClockZSDOSAdr));
+        //int yy = (year < 50 ? year + 100 : year) + 1900;
+        int mm = fromBCD(mem.read(setClockZSDOSAdr + 1)) - 1;
+        int dd = fromBCD(mem.read(setClockZSDOSAdr + 2));
+        int hh = fromBCD(mem.read(setClockZSDOSAdr + 3));
+        int min = fromBCD(mem.read(setClockZSDOSAdr + 4));
+        int ss = fromBCD(mem.read(setClockZSDOSAdr + 5));
         ClockZSDOSDelta.set(year, mm, dd, hh, min, ss);
     }
 

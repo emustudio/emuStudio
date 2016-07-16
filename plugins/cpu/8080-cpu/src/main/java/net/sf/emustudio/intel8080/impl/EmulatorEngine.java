@@ -204,7 +204,6 @@ public class EmulatorEngine implements CpuEngine {
      format where 3 means regs[REG_A]& flags, not SP
      */
     private int getpush(int reg) {
-        int stat;
         switch (reg) {
             case 0:
                 return (regs[REG_B] << 8) | regs[REG_C];

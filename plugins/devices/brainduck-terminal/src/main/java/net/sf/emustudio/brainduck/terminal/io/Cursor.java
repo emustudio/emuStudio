@@ -53,13 +53,7 @@ public class Cursor {
         this.charWidth = canvas.getCharWidth();
         this.charHeight = canvas.getCharHeight();
 
-        repaintScheduler.scheduleWithFixedDelay(new Runnable() {
-
-            @Override
-            public void run() {
-                repaint();
-            }
-        }, 0, howOften, timeUnit);
+        repaintScheduler.scheduleWithFixedDelay(this::repaint, 0, howOften, timeUnit);
     }
 
     void stop() {

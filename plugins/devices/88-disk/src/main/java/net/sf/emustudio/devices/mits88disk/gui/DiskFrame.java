@@ -25,6 +25,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
+import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 
@@ -138,167 +139,103 @@ public class DiskFrame extends JFrame {
         setTitle("MITS 88-DISK (floppy)");
         setResizable(false);
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Disk selection", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Disk selection", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", Font.BOLD, 11))); // NOI18N
 
         buttonGroup1.add(btn0);
         btn0.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn0.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn0.setText("A");
-        btn0.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn0ActionPerformed(evt);
-            }
-        });
+        btn0.addActionListener(this::btn0ActionPerformed);
 
         buttonGroup1.add(btn1);
         btn1.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn1.setText("B");
-        btn1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn1ActionPerformed(evt);
-            }
-        });
+        btn1.addActionListener(this::btn1ActionPerformed);
 
         buttonGroup1.add(btn2);
         btn2.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn2.setText("C");
-        btn2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn2ActionPerformed(evt);
-            }
-        });
+        btn2.addActionListener(this::btn2ActionPerformed);
 
         buttonGroup1.add(btn3);
         btn3.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn3.setText("D");
-        btn3.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn3ActionPerformed(evt);
-            }
-        });
+        btn3.addActionListener(this::btn3ActionPerformed);
 
         buttonGroup1.add(btn4);
         btn4.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn4.setText("E");
-        btn4.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn4ActionPerformed(evt);
-            }
-        });
+        btn4.addActionListener(this::btn4ActionPerformed);
 
         buttonGroup1.add(btn5);
         btn5.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn5.setText("F");
-        btn5.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn5ActionPerformed(evt);
-            }
-        });
+        btn5.addActionListener(this::btn5ActionPerformed);
 
         buttonGroup1.add(btn6);
         btn6.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn6.setText("G");
-        btn6.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn6ActionPerformed(evt);
-            }
-        });
+        btn6.addActionListener(this::btn6ActionPerformed);
 
         buttonGroup1.add(btn7);
         btn7.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn7.setText("H");
-        btn7.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn7ActionPerformed(evt);
-            }
-        });
+        btn7.addActionListener(this::btn7ActionPerformed);
 
         buttonGroup1.add(btn8);
         btn8.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn8.setText("I");
-        btn8.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn8ActionPerformed(evt);
-            }
-        });
+        btn8.addActionListener(this::btn8ActionPerformed);
 
         buttonGroup1.add(btn9);
         btn9.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn9.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn9.setText("J");
-        btn9.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn9ActionPerformed(evt);
-            }
-        });
+        btn9.addActionListener(this::btn9ActionPerformed);
 
         buttonGroup1.add(btn10);
         btn10.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn10.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn10.setText("K");
-        btn10.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn10ActionPerformed(evt);
-            }
-        });
+        btn10.addActionListener(this::btn10ActionPerformed);
 
         buttonGroup1.add(btn11);
         btn11.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn11.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn11.setText("L");
-        btn11.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn11ActionPerformed(evt);
-            }
-        });
+        btn11.addActionListener(this::btn11ActionPerformed);
 
         buttonGroup1.add(btn12);
         btn12.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn12.setText("M");
-        btn12.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn12ActionPerformed(evt);
-            }
-        });
+        btn12.addActionListener(this::btn12ActionPerformed);
 
         buttonGroup1.add(btn13);
         btn13.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn13.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn13.setText("N");
-        btn13.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn13ActionPerformed(evt);
-            }
-        });
+        btn13.addActionListener(this::btn13ActionPerformed);
 
         buttonGroup1.add(btn14);
         btn14.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn14.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn14.setText("O");
-        btn14.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn14ActionPerformed(evt);
-            }
-        });
+        btn14.addActionListener(this::btn14ActionPerformed);
 
         buttonGroup1.add(btn15);
         btn15.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         btn15.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/devices/mits88disk/gui/off.gif"))); // NOI18N
         btn15.setText("P");
-        btn15.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn15ActionPerformed(evt);
-            }
-        });
+        btn15.addActionListener(this::btn15ActionPerformed);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -367,7 +304,7 @@ public class DiskFrame extends JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Flags and settings", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Flags and settings", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", Font.BOLD, 11))); // NOI18N
 
         jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel1.setText("Port 1:");
@@ -375,10 +312,10 @@ public class DiskFrame extends JFrame {
         jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel2.setText("Port 2:");
 
-        lblPort1Status.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        lblPort1Status.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
         lblPort1Status.setText("11100111");
 
-        lblPort2Status.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        lblPort2Status.setFont(new java.awt.Font("Monospaced", Font.BOLD, 12)); // NOI18N
         lblPort2Status.setText("00000000");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
@@ -412,7 +349,7 @@ public class DiskFrame extends JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Mounted image", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Mounted image", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", Font.BOLD, 11))); // NOI18N
 
         txtMountedImage.setEditable(false);
         txtMountedImage.setBackground(javax.swing.UIManager.getDefaults().getColor("TextField.disabledBackground"));
@@ -439,7 +376,7 @@ public class DiskFrame extends JFrame {
                 .addContainerGap())
         );
 
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Position", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
+        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Position", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", Font.BOLD, 11))); // NOI18N
 
         jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel3.setText("Track:");
@@ -527,67 +464,67 @@ public class DiskFrame extends JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btn0ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn0ActionPerformed
-        updateDriveInfo((Drive) drives.get(0));
+        updateDriveInfo(drives.get(0));
     }//GEN-LAST:event_btn0ActionPerformed
 
     private void btn1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn1ActionPerformed
-        updateDriveInfo((Drive) drives.get(1));
+        updateDriveInfo(drives.get(1));
     }//GEN-LAST:event_btn1ActionPerformed
 
     private void btn2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn2ActionPerformed
-        updateDriveInfo((Drive) drives.get(2));
+        updateDriveInfo(drives.get(2));
     }//GEN-LAST:event_btn2ActionPerformed
 
     private void btn3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn3ActionPerformed
-        updateDriveInfo((Drive) drives.get(3));
+        updateDriveInfo(drives.get(3));
     }//GEN-LAST:event_btn3ActionPerformed
 
     private void btn4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn4ActionPerformed
-        updateDriveInfo((Drive) drives.get(4));
+        updateDriveInfo(drives.get(4));
     }//GEN-LAST:event_btn4ActionPerformed
 
     private void btn5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn5ActionPerformed
-        updateDriveInfo((Drive) drives.get(5));
+        updateDriveInfo(drives.get(5));
     }//GEN-LAST:event_btn5ActionPerformed
 
     private void btn6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn6ActionPerformed
-        updateDriveInfo((Drive) drives.get(6));
+        updateDriveInfo(drives.get(6));
     }//GEN-LAST:event_btn6ActionPerformed
 
     private void btn7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn7ActionPerformed
-        updateDriveInfo((Drive) drives.get(7));
+        updateDriveInfo(drives.get(7));
     }//GEN-LAST:event_btn7ActionPerformed
 
     private void btn8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn8ActionPerformed
-        updateDriveInfo((Drive) drives.get(8));
+        updateDriveInfo(drives.get(8));
     }//GEN-LAST:event_btn8ActionPerformed
 
     private void btn9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn9ActionPerformed
-        updateDriveInfo((Drive) drives.get(9));
+        updateDriveInfo(drives.get(9));
     }//GEN-LAST:event_btn9ActionPerformed
 
     private void btn10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn10ActionPerformed
-        updateDriveInfo((Drive) drives.get(10));
+        updateDriveInfo(drives.get(10));
     }//GEN-LAST:event_btn10ActionPerformed
 
     private void btn11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn11ActionPerformed
-        updateDriveInfo((Drive) drives.get(11));
+        updateDriveInfo(drives.get(11));
     }//GEN-LAST:event_btn11ActionPerformed
 
     private void btn12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn12ActionPerformed
-        updateDriveInfo((Drive) drives.get(12));
+        updateDriveInfo(drives.get(12));
     }//GEN-LAST:event_btn12ActionPerformed
 
     private void btn13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn13ActionPerformed
-        updateDriveInfo((Drive) drives.get(13));
+        updateDriveInfo(drives.get(13));
     }//GEN-LAST:event_btn13ActionPerformed
 
     private void btn14ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn14ActionPerformed
-        updateDriveInfo((Drive) drives.get(14));
+        updateDriveInfo(drives.get(14));
     }//GEN-LAST:event_btn14ActionPerformed
 
     private void btn15ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn15ActionPerformed
-        updateDriveInfo((Drive) drives.get(15));
+        updateDriveInfo(drives.get(15));
     }//GEN-LAST:event_btn15ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

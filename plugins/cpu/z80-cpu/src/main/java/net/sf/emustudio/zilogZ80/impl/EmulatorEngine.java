@@ -478,7 +478,7 @@ public class EmulatorEngine implements CpuEngine {
     }
     
     private int evalStep(int OP) throws IOException {
-        int tmp, tmp1, tmp2, tmp3, tmp4;
+        int tmp, tmp1, tmp2, tmp3;
         short special = 0; // prefix if available = 0xDD or 0xFD
 
         DispatchListener tmpListener = dispatchListener;

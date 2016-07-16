@@ -23,8 +23,6 @@ import emulib.emustudio.SettingsManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class SettingsDialog extends JDialog {
 
@@ -49,7 +47,7 @@ public class SettingsDialog extends JDialog {
         this.gui = gui;
     }
 
-    private final void initComponents() {
+    private void initComponents() {
         chkAlwaysOnTop = new JCheckBox("Always on top");
         chkShowAtStartup = new JCheckBox("Show GUI at startup");
         JButton btnOK = new JButton("OK");
@@ -59,29 +57,23 @@ public class SettingsDialog extends JDialog {
         setResizable(false);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-        chkAlwaysOnTop.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (gui != null) {
-                    gui.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
-                }
+        chkAlwaysOnTop.addActionListener(e -> {
+            if (gui != null) {
+                gui.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
             }
         });
-        btnOK.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (chkAlwaysOnTop.isSelected()) {
-                    settings.writeSetting(hash, "alwaysOnTop", "true");
-                } else {
-                    settings.writeSetting(hash, "alwaysOnTop", "false");
-                }
-                if (chkShowAtStartup.isSelected()) {
-                    settings.writeSetting(hash, "showAtStartup", "true");
-                } else {
-                    settings.writeSetting(hash, "showAtStartup", "false");
-                }
-                dispose();
+        btnOK.addActionListener(e -> {
+            if (chkAlwaysOnTop.isSelected()) {
+                settings.writeSetting(hash, "alwaysOnTop", "true");
+            } else {
+                settings.writeSetting(hash, "alwaysOnTop", "false");
             }
+            if (chkShowAtStartup.isSelected()) {
+                settings.writeSetting(hash, "showAtStartup", "true");
+            } else {
+                settings.writeSetting(hash, "showAtStartup", "false");
+            }
+            dispose();
         });
 
         Container pane = this.getContentPane();

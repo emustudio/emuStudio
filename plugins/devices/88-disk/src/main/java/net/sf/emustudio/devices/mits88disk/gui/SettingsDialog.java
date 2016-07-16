@@ -121,7 +121,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         cmbDrive = new javax.swing.JComboBox();
         javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
         txtImageFile = new javax.swing.JTextField();
-        btnBrowse = new javax.swing.JButton();
+        JButton btnBrowse = new JButton();
         javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
         btnMount = new javax.swing.JButton();
         btnUnmount = new javax.swing.JButton();
@@ -129,7 +129,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         javax.swing.JPanel jPanel3 = new javax.swing.JPanel();
         javax.swing.JLabel jLabel10 = new javax.swing.JLabel();
         javax.swing.JLabel jLabel11 = new javax.swing.JLabel();
-        btnDefaultParams = new javax.swing.JButton();
+        JButton btnDefaultParams = new JButton();
         txtSectorsCount = new javax.swing.JTextField();
         txtSectorLength = new javax.swing.JTextField();
         javax.swing.JPanel panelPorts = new javax.swing.JPanel();
@@ -144,8 +144,8 @@ public class SettingsDialog extends javax.swing.JDialog {
         javax.swing.JLabel jLabel7 = new javax.swing.JLabel();
         javax.swing.JLabel jLabel8 = new javax.swing.JLabel();
         javax.swing.JLabel jLabel9 = new javax.swing.JLabel();
-        btnDefault = new javax.swing.JButton();
-        btnOK = new javax.swing.JButton();
+        JButton btnDefault = new JButton();
+        JButton btnOK = new JButton();
         chkSaveSettings = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -155,11 +155,7 @@ public class SettingsDialog extends javax.swing.JDialog {
 
         cmbDrive.setFont(cmbDrive.getFont().deriveFont((cmbDrive.getFont().getStyle() & ~java.awt.Font.ITALIC) & ~java.awt.Font.BOLD));
         cmbDrive.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Drive 0 (A)", "Drive 1 (B)", "Drive 2 (C)", "Drive 3 (D)", "Drive 4 (E)", "Drive 5 (F)", "Drive 6 (G)", "Drive 7 (H)", "Drive 8 (I)", "Drive 9 (J)", "Drive 10 (K)", "Drive 11 (L)", "Drive 12 (M)", "Drive 13 (N)", "Drive 14 (O)", "Drive 15 (P)" }));
-        cmbDrive.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cmbDriveItemStateChanged(evt);
-            }
-        });
+        cmbDrive.addItemListener(this::cmbDriveItemStateChanged);
 
         jLabel1.setFont(jLabel1.getFont().deriveFont((jLabel1.getFont().getStyle() & ~java.awt.Font.ITALIC) & ~java.awt.Font.BOLD));
         jLabel1.setText("Image file name:");
@@ -174,27 +170,15 @@ public class SettingsDialog extends javax.swing.JDialog {
 
         btnBrowse.setFont(btnBrowse.getFont().deriveFont((btnBrowse.getFont().getStyle() & ~java.awt.Font.ITALIC) & ~java.awt.Font.BOLD));
         btnBrowse.setText("Browse...");
-        btnBrowse.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnBrowseActionPerformed(evt);
-            }
-        });
+        btnBrowse.addActionListener(this::btnBrowseActionPerformed);
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Image operations", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 0, 12))); // NOI18N
 
         btnMount.setText("Mount");
-        btnMount.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnMountActionPerformed(evt);
-            }
-        });
+        btnMount.addActionListener(this::btnMountActionPerformed);
 
         btnUnmount.setText("Umount");
-        btnUnmount.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnUnmountActionPerformed(evt);
-            }
-        });
+        btnUnmount.addActionListener(this::btnUnmountActionPerformed);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -230,11 +214,7 @@ public class SettingsDialog extends javax.swing.JDialog {
 
         btnDefaultParams.setFont(btnDefaultParams.getFont().deriveFont(btnDefaultParams.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnDefaultParams.setText("Change to Default");
-        btnDefaultParams.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnDefaultParamsActionPerformed(evt);
-            }
-        });
+        btnDefaultParams.addActionListener(this::btnDefaultParamsActionPerformed);
 
         txtSectorsCount.setText("32");
 
@@ -368,11 +348,7 @@ public class SettingsDialog extends javax.swing.JDialog {
 
         btnDefault.setFont(btnDefault.getFont().deriveFont((btnDefault.getFont().getStyle() & ~java.awt.Font.ITALIC) & ~java.awt.Font.BOLD));
         btnDefault.setText("Change to Default");
-        btnDefault.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnDefaultActionPerformed(evt);
-            }
-        });
+        btnDefault.addActionListener(this::btnDefaultActionPerformed);
 
         javax.swing.GroupLayout panelPortsLayout = new javax.swing.GroupLayout(panelPorts);
         panelPorts.setLayout(panelPortsLayout);
@@ -436,11 +412,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         jTabbedPane1.addTab("CPU Ports", panelPorts);
 
         btnOK.setText("OK");
-        btnOK.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnOKActionPerformed(evt);
-            }
-        });
+        btnOK.addActionListener(this::btnOKActionPerformed);
 
         chkSaveSettings.setFont(chkSaveSettings.getFont().deriveFont((chkSaveSettings.getFont().getStyle() & ~java.awt.Font.ITALIC) & ~java.awt.Font.BOLD));
         chkSaveSettings.setSelected(true);
@@ -589,12 +561,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         txtSectorLength.setText(String.valueOf(Drive.DEFAULT_SECTOR_LENGTH));
     }//GEN-LAST:event_btnDefaultParamsActionPerformed
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnBrowse;
-    private javax.swing.JButton btnDefault;
-    private javax.swing.JButton btnDefaultParams;
     private javax.swing.JButton btnMount;
-    private javax.swing.JButton btnOK;
     private javax.swing.JButton btnUnmount;
     private javax.swing.JCheckBox chkSaveSettings;
     private javax.swing.JComboBox cmbDrive;

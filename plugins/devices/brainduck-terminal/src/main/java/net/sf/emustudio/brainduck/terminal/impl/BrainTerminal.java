@@ -53,7 +53,6 @@ public class BrainTerminal extends AbstractDevice {
     private static final Logger LOGGER = LoggerFactory.getLogger(BrainTerminal.class);
     
     private boolean nogui;
-    private BrainCPUContext cpu;
     private BrainTerminalContext terminal;
     private final ContextPool contextPool;
 
@@ -83,7 +82,7 @@ public class BrainTerminal extends AbstractDevice {
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
-        cpu = contextPool.getCPUContext(pluginID, BrainCPUContext.class);
+        BrainCPUContext cpu = contextPool.getCPUContext(pluginID, BrainCPUContext.class);
 
         String s = settings.readSetting(pluginID, SettingsManager.NO_GUI);
         nogui = (s != null) && s.toUpperCase().equals("TRUE");

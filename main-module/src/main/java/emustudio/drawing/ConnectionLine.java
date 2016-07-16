@@ -636,10 +636,9 @@ public class ConnectionLine {
         int y1 = ee1.getY();
         int x2, y2;
 
-        for (int i = 0; i < ppoints.size(); i++) {
-            Point p = ppoints.get(i);
-            x2 = (int)p.getX();
-            y2 = (int)p.getY();
+        for (Point p : ppoints) {
+            x2 = (int) p.getX();
+            y2 = (int) p.getY();
 
             if (x2 < Schema.MIN_LEFT_MARGIN) {
                 x2 = Schema.MIN_LEFT_MARGIN;
@@ -649,7 +648,7 @@ public class ConnectionLine {
             }
 
             g.drawLine(x1, y1, x2, y2);
-            g.fillOval(x2-3, y2-3, 6, 6);
+            g.fillOval(x2 - 3, y2 - 3, 6, 6);
             x1 = x2;
             y1 = y2;
         }
@@ -729,11 +728,9 @@ public class ConnectionLine {
      * not included
      */
     public Point containsPoint(Point p, int tolerance) {
-        int size = points.size();
-        for (int i = 0; i < size; i++) {
-            Point tmp = points.get(i);
-            if ((tmp.x >= (p.x-tolerance)) && (tmp.x <= (p.x + tolerance))
-                    && (tmp.y >= (p.y-tolerance)) && (tmp.y <= (p.y+tolerance))) {
+        for (Point tmp : points) {
+            if ((tmp.x >= (p.x - tolerance)) && (tmp.x <= (p.x + tolerance))
+                && (tmp.y >= (p.y - tolerance)) && (tmp.y <= (p.y + tolerance))) {
                 return tmp;
             }
         }

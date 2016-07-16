@@ -777,7 +777,7 @@ Label ={Identifier}[\:]
 {DecimalNum} { lastText = yytext(); yybegin(YYINITIAL);
     lastText = lastText.replaceFirst("[dD]","");
     int num=0;
-    int tokenType = 0;
+    int tokenType;
     try {
         num = Integer.parseInt(lastText,10);
         if (num > 65535) { // || num < -32768) {
@@ -799,7 +799,7 @@ Label ={Identifier}[\:]
 }
 {OctalNum} { lastText = yytext(); yybegin(YYINITIAL);
     int num=0;
-    int tokenType=0;
+    int tokenType;
     lastText = lastText.replaceFirst("[oOqQ]","");
     try {
 
@@ -823,7 +823,7 @@ Label ={Identifier}[\:]
 }
 {HexaNum} { lastText = yytext(); yybegin(YYINITIAL);
     int num=0;
-    int tokenType=0;
+    int tokenType;
     lastText = lastText.replaceFirst("[hH]","");
     try {
         num = Integer.parseInt(lastText,16);
@@ -846,7 +846,7 @@ Label ={Identifier}[\:]
 }
 {BinaryNum} { lastText = yytext(); yybegin(YYINITIAL);
     int num=0;
-    int tokenType=0;
+    int tokenType;
     lastText = lastText.replaceFirst("[bB]","");
     try {
         num = Integer.parseInt(lastText,2);

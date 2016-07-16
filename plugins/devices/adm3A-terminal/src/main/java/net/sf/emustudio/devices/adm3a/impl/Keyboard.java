@@ -230,7 +230,7 @@ class Keyboard extends KeyAdapter implements ContainerListener, InputProvider {
     @Override
     public void keyPressed(KeyEvent evt) {
         int originalKeyCode = evt.getKeyCode() & 0xFF;
-        int newKeyCode = 0;
+        int newKeyCode;
 
         if (evt.isControlDown()) {
             newKeyCode = CONTROL_KEYCODES[originalKeyCode];

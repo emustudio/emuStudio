@@ -22,8 +22,6 @@ package net.sf.emustudio.ram.cpu.impl;
 import emulib.plugins.cpu.CPUContext;
 import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
-import emulib.runtime.exceptions.ContextNotFoundException;
-import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
 
@@ -39,22 +37,16 @@ public class RAMContext implements CPUContext {
     }
 
     public void init(long pluginID, EmulatorEngine engine) throws PluginInitializationException {
-        try {
-            tapes[0] = prepareTape(pluginID, "Registers (storage tape)", true, false, true, 0);
-            tapes[1] = prepareTape(pluginID, "Input tape", false, true, true, 1);
-            tapes[2] = prepareTape(pluginID, "Output tape", true, true, false, 2);
+        tapes[0] = prepareTape(pluginID, "Registers (storage tape)", true, false, true, 0);
+        tapes[1] = prepareTape(pluginID, "Input tape", false, true, true, 1);
+        tapes[2] = prepareTape(pluginID, "Output tape", true, true, false, 2);
 
-            engine.loadInput(tapes[1]);
-        } catch (PluginInitializationException e) {
-            throw e;
-        } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException("One or more tapes needs to be connected to the CPU!", e);
-        }
+        engine.loadInput(tapes[1]);
     }
 
     private AbstractTapeContext prepareTape(long pluginID, String title, boolean clearAfterReset, boolean posVisible,
                                             boolean editable, int index)
-        throws InvalidContextException, ContextNotFoundException, PluginInitializationException {
+        throws PluginInitializationException {
 
         AbstractTapeContext tape = contextPool.getDeviceContext(pluginID, AbstractTapeContext.class, index);
         if (tape == null) {

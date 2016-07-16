@@ -22,6 +22,7 @@ package net.sf.emustudio.devices.mits88sio.gui;
 import net.sf.emustudio.devices.mits88sio.impl.SIOSettings;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class ConfigDialog extends javax.swing.JDialog {
     private SIOSettings settings;
@@ -64,13 +65,13 @@ public class ConfigDialog extends javax.swing.JDialog {
         javax.swing.JButton btnStatusDefault = new javax.swing.JButton();
         javax.swing.JButton btnDataDefault = new javax.swing.JButton();
         javax.swing.JButton btnOK = new javax.swing.JButton();
-        chkSaveSettings = new javax.swing.JCheckBox();
+        JCheckBox chkSaveSettings = new JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("MITS 88-SIO Configuration");
         setResizable(false);
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "CPU Connection", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "CPU Connection", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", Font.BOLD, 11))); // NOI18N
 
         jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel1.setText("Status port:");
@@ -84,19 +85,11 @@ public class ConfigDialog extends javax.swing.JDialog {
 
         btnStatusDefault.setFont(btnStatusDefault.getFont().deriveFont(btnStatusDefault.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnStatusDefault.setText("Default");
-        btnStatusDefault.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnStatusDefaultActionPerformed(evt);
-            }
-        });
+        btnStatusDefault.addActionListener(this::btnStatusDefaultActionPerformed);
 
         btnDataDefault.setFont(btnDataDefault.getFont().deriveFont(btnDataDefault.getFont().getStyle() & ~java.awt.Font.BOLD));
         btnDataDefault.setText("Default");
-        btnDataDefault.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnDataDefaultActionPerformed(evt);
-            }
-        });
+        btnDataDefault.addActionListener(this::btnDataDefaultActionPerformed);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -134,11 +127,7 @@ public class ConfigDialog extends javax.swing.JDialog {
         );
 
         btnOK.setText("OK");
-        btnOK.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnOKActionPerformed(evt);
-            }
-        });
+        btnOK.addActionListener(this::btnOKActionPerformed);
 
         chkSaveSettings.setFont(chkSaveSettings.getFont().deriveFont(chkSaveSettings.getFont().getStyle() & ~java.awt.Font.BOLD));
         chkSaveSettings.setSelected(true);
@@ -188,8 +177,6 @@ public class ConfigDialog extends javax.swing.JDialog {
         dispose();
     }//GEN-LAST:event_btnOKActionPerformed
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox chkSaveSettings;
     private javax.swing.JSpinner spnDataPort;
     private javax.swing.JSpinner spnStatusPort;
     // End of variables declaration//GEN-END:variables

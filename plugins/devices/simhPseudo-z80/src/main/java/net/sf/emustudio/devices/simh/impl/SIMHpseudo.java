@@ -45,8 +45,6 @@ import java.util.ResourceBundle;
 @SuppressWarnings("unused")
 public class SIMHpseudo extends AbstractDevice {
     private PseudoContext context;
-    private ExtendedContext cpu;
-    private StandardMemoryContext mem;
     private final ContextPool contextPool;
 
     public SIMHpseudo(Long pluginID, ContextPool contextPool) {
@@ -58,13 +56,13 @@ public class SIMHpseudo extends AbstractDevice {
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
-        cpu = contextPool.getCPUContext(pluginID, ExtendedContext.class);
-        mem = contextPool.getMemoryContext(pluginID, StandardMemoryContext.class);
+        ExtendedContext cpu = contextPool.getCPUContext(pluginID, ExtendedContext.class);
+        StandardMemoryContext mem = contextPool.getMemoryContext(pluginID, StandardMemoryContext.class);
 
         context.setMemory(mem);
 
         // attach IO port
-        if (!this.cpu.attachDevice(context, 0xFE)) {
+        if (!cpu.attachDevice(context, 0xFE)) {
             throw new PluginInitializationException(
                     this, "SIMH device can't be attached to CPU (maybe there is a hardware conflict)"
             );

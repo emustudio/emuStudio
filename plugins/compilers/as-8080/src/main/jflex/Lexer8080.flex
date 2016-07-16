@@ -808,7 +808,7 @@ Label ={Identifier}[\:]
     String text = yytext();
     text = text.replaceFirst("[dD]","");
     int num=0;
-    int tokenType = 0;
+    int tokenType;
     try {
         num = Integer.parseInt(text,10);
         if (num > 65535) { // || num < -32768) {
@@ -831,7 +831,7 @@ Label ={Identifier}[\:]
 {OctalNum} {
     String text = yytext();
     int num=0;
-    int tokenType=0;
+    int tokenType;
     text = text.replaceFirst("[oOqQ]","");
     try {
 
@@ -856,7 +856,7 @@ Label ={Identifier}[\:]
 {HexaNum} {
     String text = yytext();
     int num=0;
-    int tokenType=0;
+    int tokenType;
     text = text.replaceFirst("[hH]","");
     try {
         num = Integer.parseInt(text,16);
@@ -880,7 +880,7 @@ Label ={Identifier}[\:]
 {BinaryNum} {
     String text = yytext();
     int num=0;
-    int tokenType=0;
+    int tokenType;
     text = text.replaceFirst("[bB]","");
     try {
         num = Integer.parseInt(text,2);

@@ -22,6 +22,7 @@ import net.jcip.annotations.NotThreadSafe;
 import net.sf.emustudio.cpu.testsuite.injectors.TwoOperandsInjector;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -203,9 +204,7 @@ public class TestRunner<T extends CpuRunner, OperandType extends Number> impleme
      * @param verifiers array of test verifiers
      */
     public void verifyAfterTest(Consumer<RunnerContext<OperandType>>... verifiers) {
-        for (Consumer<RunnerContext<OperandType>> verifier : verifiers) {
-            this.verifiers.add(verifier);
-        }
+        Collections.addAll(this.verifiers, verifiers);
     }
 
     private void verify(RunnerContext<OperandType> context) {

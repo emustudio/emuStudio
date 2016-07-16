@@ -27,28 +27,7 @@ import net.sf.emustudio.memory.standard.gui.utils.TableMemory;
 import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
 import net.sf.emustudio.memory.standard.impl.MemoryImpl;
 
-import javax.swing.BorderFactory;
-import javax.swing.GroupLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.JTextField;
-import javax.swing.JToolBar;
-import javax.swing.LayoutStyle;
-import javax.swing.SpinnerModel;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
+import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -82,37 +61,23 @@ public class MemoryDialog extends JDialog {
         paneMemory.setViewportView(tblMemory);
         tblMemory.setVisible(true);
         paneMemory.repaint();
-        memModel.addTableModelListener(new TableModelListener() {
-
-            @Override
-            public void tableChanged(TableModelEvent e) {
+        memModel.addTableModelListener(e -> spnPage.getModel().setValue(memModel.getPage()));
+        lblPageCount.setText(String.valueOf(memModel.getPageCount()));
+        lblBanksCount.setText(String.valueOf(memContext.getBanksCount()));
+        spnPage.addChangeListener(e -> {
+            int i = (Integer) spnPage.getModel().getValue();
+            try {
+                memModel.setPage(i);
+            } catch (IndexOutOfBoundsException ex) {
                 spnPage.getModel().setValue(memModel.getPage());
             }
         });
-        lblPageCount.setText(String.valueOf(memModel.getPageCount()));
-        lblBanksCount.setText(String.valueOf(memContext.getBanksCount()));
-        spnPage.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                int i = (Integer) spnPage.getModel().getValue();
-                try {
-                    memModel.setPage(i);
-                } catch (IndexOutOfBoundsException ex) {
-                    spnPage.getModel().setValue(memModel.getPage());
-                }
-            }
-        });
-        spnBank.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                int i = (Integer) ((SpinnerNumberModel) spnBank.getModel()).getValue();
-                try {
-                    memModel.setCurrentBank(i);
-                } catch (IndexOutOfBoundsException ex) {
-                    spnBank.getModel().setValue(memModel.getCurrentBank());
-                }
+        spnBank.addChangeListener(e -> {
+            int i = (Integer) spnBank.getModel().getValue();
+            try {
+                memModel.setCurrentBank(i);
+            } catch (IndexOutOfBoundsException ex) {
+                spnBank.getModel().setValue(memModel.getCurrentBank());
             }
         });
 
@@ -124,14 +89,10 @@ public class MemoryDialog extends JDialog {
             }
         });
 
-        memModel.addTableModelListener(new TableModelListener() {
-
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                int row = e.getFirstRow();
-                int column = e.getColumn();
-                updateMemVal(row, column);
-            }
+        memModel.addTableModelListener(e -> {
+            int row = e.getFirstRow();
+            int column = e.getColumn();
+            updateMemVal(row, column);
         });
         tblMemory.addMouseListener(new MouseAdapter() {
 
@@ -264,7 +225,7 @@ public class MemoryDialog extends JDialog {
     }
 
     private void updateMemVal(int row, int column) {
-        if (tblMemory.isCellSelected(row, column) == false) {
+        if (!tblMemory.isCellSelected(row, column)) {
             return;
         }
         int address = memModel.getRowCount() * memModel.getColumnCount()
@@ -346,38 +307,20 @@ public class MemoryDialog extends JDialog {
         btnClearMemory.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/edit-delete.png"))); // NOI18N
         btnClearMemory.setToolTipText("Clear memory");
         btnClearMemory.setFocusable(false);
-        btnClearMemory.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnClearMemoryActionPerformed(evt);
-            }
-        });
+        btnClearMemory.addActionListener(this::btnClearMemoryActionPerformed);
         toolBar.add(btnClearMemory);
 
         btnRefreshMemory.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/view-refresh.png"))); // NOI18N
         btnRefreshMemory.setToolTipText("Refresh memory");
         btnRefreshMemory.setFocusable(false);
-        btnRefreshMemory.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnRefreshMemoryActionPerformed(evt);
-            }
-        });
+        btnRefreshMemory.addActionListener(this::btnRefreshMemoryActionPerformed);
         toolBar.add(btnRefreshMemory);
         toolBar.add(jSeparator1);
 
         btnOpenImage.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/document-open.png"))); // NOI18N
         btnOpenImage.setToolTipText("Load image");
         btnOpenImage.setFocusable(false);
-        btnOpenImage.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnOpenImageActionPerformed(evt);
-            }
-        });
+        btnOpenImage.addActionListener(this::btnOpenImageActionPerformed);
         toolBar.add(btnOpenImage);
 
         btnDump.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/document-save.png"))); // NOI18N
@@ -385,13 +328,7 @@ public class MemoryDialog extends JDialog {
         btnDump.setFocusable(false);
         btnDump.setHorizontalTextPosition(SwingConstants.CENTER);
         btnDump.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnDump.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnDumpActionPerformed(evt);
-            }
-        });
+        btnDump.addActionListener(this::btnDumpActionPerformed);
         toolBar.add(btnDump);
 
         btnSettings.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/preferences-system.png"))); // NOI18N
@@ -399,26 +336,14 @@ public class MemoryDialog extends JDialog {
         btnSettings.setFocusable(false);
         btnSettings.setHorizontalTextPosition(SwingConstants.CENTER);
         btnSettings.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnSettings.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnSettingsActionPerformed(evt);
-            }
-        });
+        btnSettings.addActionListener(this::btnSettingsActionPerformed);
         toolBar.add(btnSettings);
         toolBar.add(jSeparator2);
 
         btnFindAddress.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/edit-find.png"))); // NOI18N
         btnFindAddress.setToolTipText("Find address");
         btnFindAddress.setFocusable(false);
-        btnFindAddress.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnFindAddressActionPerformed(evt);
-            }
-        });
+        btnFindAddress.addActionListener(this::btnFindAddressActionPerformed);
         toolBar.add(btnFindAddress);
 
         panelMemory.setBorder(BorderFactory.createTitledBorder("Memory control"));
@@ -496,7 +421,7 @@ public class MemoryDialog extends JDialog {
         f.setVisible(true);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File fileSource = f.getSelectedFile();
-            if (fileSource.canRead() == true) {
+            if (fileSource.canRead()) {
                 if (fileSource.getName().toLowerCase().endsWith(".hex")) {
                     memContext.loadHex(fileSource.getAbsolutePath(), 0);
                 } else {
@@ -512,8 +437,7 @@ public class MemoryDialog extends JDialog {
                 this.tblMemory.revalidate();
                 this.tblMemory.repaint();
             } else {
-                StaticDialogs.showErrorMessage("File " + fileSource.getPath()
-                        + " can't be read.");
+                StaticDialogs.showErrorMessage("File " + fileSource.getPath() + " can't be read.");
             }
         }
     }

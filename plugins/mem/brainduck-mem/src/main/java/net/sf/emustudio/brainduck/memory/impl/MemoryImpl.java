@@ -45,12 +45,11 @@ import java.util.ResourceBundle;
 public class MemoryImpl extends AbstractMemory {
     private MemoryContextImpl memContext;
     private int size;
-    private final ContextPool contextPool;
     private MemoryGUI memoryGUI;
 
     public MemoryImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
-        this.contextPool = Objects.requireNonNull(contextPool);
+        ContextPool contextPool1 = Objects.requireNonNull(contextPool);
         memContext = new MemoryContextImpl();
         try {
             contextPool.register(pluginID, memContext, MemoryContext.class);

@@ -26,7 +26,7 @@ import java.util.Arrays;
  */
 public class Utils {
 
-    public static <T> String toHexString(T... array) {
+    public static <T extends Number> String toHexString(T... array) {
         String[] result = new String[array.length];
 
         for (int i = 0; i < array.length; i++) {

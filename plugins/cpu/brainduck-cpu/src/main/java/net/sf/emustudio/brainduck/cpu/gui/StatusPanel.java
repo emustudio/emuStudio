@@ -28,7 +28,7 @@ import javax.swing.*;
 public class StatusPanel extends JPanel {
     private final ColumnsRepainter columnsRepainter = new ColumnsRepainter();
     private final MemoryTableModel tableModel;
-    private final MemoryContext memory;
+    private final MemoryContext<Short> memory;
     private final EmulatorImpl cpu;
 
     private class CPUStatusListener implements CPU.CPUListener {
@@ -71,7 +71,7 @@ public class StatusPanel extends JPanel {
                 txtIP.setText(String.format("%04X", cpu.getInstructionPosition()));
                 lblLoopLevel.setText(String.valueOf(cpu.getLoopLevel()));
                 try {
-                    short value = (Short) memory.read(P);
+                    short value = memory.read(P);
                     txtMemP.setText(String.format("%02X", value));
                 } catch (ArrayIndexOutOfBoundsException e) {
                     txtMemP.setText("[unreachable]");
@@ -85,7 +85,7 @@ public class StatusPanel extends JPanel {
         
     }
     
-    public StatusPanel(MemoryContext memory, EmulatorImpl cpu) {
+    public StatusPanel(MemoryContext<Short> memory, EmulatorImpl cpu) {
         this.memory = memory;
         this.cpu = cpu;
         this.tableModel = new MemoryTableModel(memory);
@@ -123,7 +123,7 @@ public class StatusPanel extends JPanel {
         lblLoopLevel = new javax.swing.JLabel();
         javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
         lblRunState = new javax.swing.JLabel();
-        jPanel3 = new javax.swing.JPanel();
+        JPanel jPanel3 = new JPanel();
         javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
         tblMemory = new javax.swing.JTable();
 
@@ -332,8 +332,6 @@ public class StatusPanel extends JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel jPanel3;
     private javax.swing.JLabel lblLoopLevel;
     private javax.swing.JLabel lblRunState;
     private javax.swing.JLabel lblTime;

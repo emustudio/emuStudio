@@ -23,10 +23,10 @@ import emulib.plugins.memory.MemoryContext;
 import javax.swing.table.AbstractTableModel;
 
 public class MemoryTableModel extends AbstractTableModel {
-    private final MemoryContext memory;
+    private final MemoryContext<Short> memory;
     private volatile int P;
 
-    public MemoryTableModel(MemoryContext memory) {
+    public MemoryTableModel(MemoryContext<Short> memory) {
         this.memory = memory;
     }
     

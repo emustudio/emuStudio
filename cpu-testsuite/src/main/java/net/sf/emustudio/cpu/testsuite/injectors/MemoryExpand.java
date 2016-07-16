@@ -39,6 +39,6 @@ public class MemoryExpand<T extends CpuRunner> implements BiConsumer<T, Integer>
 
     @Override
     public String toString() {
-        return String.format("memoryExpander");
+        return "memoryExpander";
     }
 }

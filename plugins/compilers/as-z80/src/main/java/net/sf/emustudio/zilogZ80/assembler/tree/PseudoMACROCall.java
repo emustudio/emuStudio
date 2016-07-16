@@ -40,7 +40,7 @@ public class PseudoMACROCall extends Pseudo {
         super(line, column);
         this.mnemo = name;
         if (params == null) {
-            this.params = new ArrayList<Expression>();
+            this.params = new ArrayList<>();
         } else {
             this.params = params;
         }
@@ -67,8 +67,8 @@ public class PseudoMACROCall extends Pseudo {
         }
         // do pass2 for expressions (real macro parameters)
         try {
-            for (int i = 0; i < params.size(); i++) {
-                params.get(i).eval(env, addr_start);
+            for (Expression param : params) {
+                param.eval(env, addr_start);
             }
             macro.setCallParams(params);
             int a = macro.pass2(env, addr_start);

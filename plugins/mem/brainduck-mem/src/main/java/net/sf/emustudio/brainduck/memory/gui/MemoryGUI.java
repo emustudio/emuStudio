@@ -24,10 +24,8 @@ import emulib.plugins.memory.MemoryContext;
 import javax.swing.JDialog;
 
 public class MemoryGUI extends JDialog {
-    private final MemoryTable table;
     private final MemoryTableModel tableModel;
-    private final Memory.MemoryListener memoryListener = new MemoryListenerImpl();
-    
+
     private class MemoryListenerImpl implements Memory.MemoryListener {
 
         @Override
@@ -46,12 +44,12 @@ public class MemoryGUI extends JDialog {
         initComponents();
         
         this.tableModel = new MemoryTableModel(memory);
-        this.table = new MemoryTable(tableModel, scrollPane);
+        MemoryTable table = new MemoryTable(tableModel, scrollPane);
         scrollPane.setViewportView(table);
         
         lblPageCount.setText(String.valueOf(tableModel.getPageCount()));
-        
-        memory.addMemoryListener(memoryListener);
+
+        memory.addMemoryListener(new MemoryListenerImpl());
     }
 
     /**
@@ -75,19 +73,11 @@ public class MemoryGUI extends JDialog {
         setTitle("BrainDuck Memory");
 
         btnPageDown.setText("Page Down");
-        btnPageDown.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnPageDownActionPerformed(evt);
-            }
-        });
+        btnPageDown.addActionListener(this::btnPageDownActionPerformed);
 
         btnPageUp.setText("Page Up");
         btnPageUp.setToolTipText("");
-        btnPageUp.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnPageUpActionPerformed(evt);
-            }
-        });
+        btnPageUp.addActionListener(this::btnPageUpActionPerformed);
 
         jLabel1.setFont(jLabel1.getFont());
         jLabel1.setText("Page:");
@@ -97,11 +87,7 @@ public class MemoryGUI extends JDialog {
         lblPageCount.setText("0");
 
         txtPage.setText("0");
-        txtPage.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtPageActionPerformed(evt);
-            }
-        });
+        txtPage.addActionListener(this::txtPageActionPerformed);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);

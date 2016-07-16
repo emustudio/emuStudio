@@ -149,7 +149,7 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        panelStatus = new javax.swing.JPanel();
+        javax.swing.JPanel panelStatus = new javax.swing.JPanel();
         lblStatusIcon = new javax.swing.JLabel();
         btnASCII = new javax.swing.JButton();
         scrollPane = new javax.swing.JScrollPane();
@@ -166,11 +166,7 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
         btnASCII.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         btnASCII.setEnabled(false);
         btnASCII.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        btnASCII.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnASCIIActionPerformed(evt);
-            }
-        });
+        btnASCII.addActionListener(this::btnASCIIActionPerformed);
 
         javax.swing.GroupLayout panelStatusLayout = new javax.swing.GroupLayout(panelStatus);
         panelStatus.setLayout(panelStatusLayout);
@@ -222,7 +218,6 @@ class BrainTerminalDialog extends JDialog implements OutputProvider, Keyboard.Ke
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnASCII;
     private javax.swing.JLabel lblStatusIcon;
-    private javax.swing.JPanel panelStatus;
     private javax.swing.JScrollPane scrollPane;
     // End of variables declaration//GEN-END:variables
 

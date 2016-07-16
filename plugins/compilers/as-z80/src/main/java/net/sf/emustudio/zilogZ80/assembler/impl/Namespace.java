@@ -122,18 +122,10 @@ public class Namespace {
     }
 
     public void copyTo(Namespace env) {
-        for (Label label : labels.values()) {
-            env.addLabel(label);
-        }
-        for (PseudoMACRO macro : macros.values()) {
-            env.addMacro(macro);
-        }
-        for (PseudoEQU equ : constants.values()) {
-            env.addConstant(equ);
-        }
-        for (PseudoVAR set : variables.values()) {
-            env.setVariable(set);
-        }
+        labels.values().forEach(env::addLabel);
+        macros.values().forEach(env::addMacro);
+        constants.values().forEach(env::addConstant);
+        variables.values().forEach(env::setVariable);
     }
 
     public void addPassNeed(Row n) {

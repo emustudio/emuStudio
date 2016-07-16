@@ -25,8 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CompilerEnvironment {
-    private static List<Label> labels = new ArrayList<Label>();
-    private static List<String> inputs = new ArrayList<String>();
+    private static List<Label> labels = new ArrayList<>();
+    private static List<String> inputs = new ArrayList<>();
 
     public static void addLabel(Label label) {
         labels.add(label);
@@ -34,8 +34,7 @@ public class CompilerEnvironment {
 
     public static int getLabelAddr(String label) {
         String l = label.toUpperCase() + ":";
-        for (int i = 0; i < labels.size(); i++) {
-            Label lab = labels.get(i);
+        for (Label lab : labels) {
             String ll = lab.getValue().toUpperCase();
             if (ll.equals(l)) {
                 return lab.getAddress();

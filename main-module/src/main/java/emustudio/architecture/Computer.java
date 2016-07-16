@@ -132,9 +132,7 @@ public class Computer implements PluginConnections {
     }
 
     private void resetPlugins() {
-        for (Plugin plugin : plugins.values()) {
-            plugin.reset();
-        }
+        plugins.values().forEach(Plugin::reset);
     }
 
     /**

@@ -44,15 +44,11 @@ public class Keyboard  implements InputProvider, KeyListener {
     }
 
     private void notifyReadStarted() {
-        for (KeyboardListener listener : listeners) {
-            listener.readStarted();
-        }
+        listeners.forEach(KeyboardListener::readStarted);
     }
 
     private void notifyReadEnded() {
-        for (KeyboardListener listener : listeners) {
-            listener.readEnded();
-        }
+        listeners.forEach(KeyboardListener::readEnded);
     }
 
     @Override
@@ -86,9 +82,8 @@ public class Keyboard  implements InputProvider, KeyListener {
         int keycode = e.getKeyCode();
         if (keycode == KeyEvent.VK_ESCAPE) {
             inputBuffer.add(InputProvider.EOF);
-        } else if (keycode == KeyEvent.VK_SHIFT || keycode == KeyEvent.VK_CONTROL ||
-                keycode == KeyEvent.VK_ALT || keycode == KeyEvent.VK_META) {
-        } else {
+        } else if (!((keycode == KeyEvent.VK_SHIFT || keycode == KeyEvent.VK_CONTROL ||
+                keycode == KeyEvent.VK_ALT || keycode == KeyEvent.VK_META))) {
             inputBuffer.add((int) e.getKeyChar());
         }
     }

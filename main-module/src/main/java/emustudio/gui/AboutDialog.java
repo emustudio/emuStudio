@@ -18,6 +18,8 @@
 
 package emustudio.gui;
 
+import java.awt.*;
+
 /**
  * The about dialog. Shows basic information about the emuStudio.
  */
@@ -38,14 +40,14 @@ public class AboutDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        panelLogo = new javax.swing.JPanel();
-        lblLogo = new javax.swing.JLabel();
-        panelInfo = new javax.swing.JPanel();
-        lblName = new javax.swing.JLabel();
-        lblCopyright = new javax.swing.JLabel();
-        lblVersion = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
+        javax.swing.JPanel panelLogo = new javax.swing.JPanel();
+        javax.swing.JLabel lblLogo = new javax.swing.JLabel();
+        javax.swing.JPanel panelInfo = new javax.swing.JPanel();
+        javax.swing.JLabel lblName = new javax.swing.JLabel();
+        javax.swing.JLabel lblCopyright = new javax.swing.JLabel();
+        javax.swing.JLabel lblVersion = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel4 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("About emuStudio");
@@ -76,7 +78,7 @@ public class AboutDialog extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
-        lblName.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
+        lblName.setFont(new java.awt.Font("Tahoma", Font.BOLD, 18)); // NOI18N
         lblName.setText("emuStudio");
 
         lblCopyright.setFont(lblCopyright.getFont().deriveFont(lblCopyright.getFont().getStyle() & ~java.awt.Font.BOLD));
@@ -145,15 +147,6 @@ public class AboutDialog extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel lblCopyright;
-    private javax.swing.JLabel lblLogo;
-    private javax.swing.JLabel lblName;
-    private javax.swing.JLabel lblVersion;
-    private javax.swing.JPanel panelInfo;
-    private javax.swing.JPanel panelLogo;
     // End of variables declaration//GEN-END:variables
 
 }

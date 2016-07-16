@@ -57,7 +57,6 @@ public class OC_NoParams extends OpCodeNode {
                 opCode = 39;
                 break;
             case "nop":
-                ;
                 break;
             case "rlc":
                 opCode = 7;

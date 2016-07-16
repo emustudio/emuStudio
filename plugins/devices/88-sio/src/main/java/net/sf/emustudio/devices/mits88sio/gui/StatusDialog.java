@@ -20,6 +20,7 @@
 package net.sf.emustudio.devices.mits88sio.gui;
 
 import javax.swing.JFrame;
+import java.awt.*;
 
 public class StatusDialog extends javax.swing.JDialog {
 
@@ -44,18 +45,18 @@ public class StatusDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
+        javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
         lblAttachedDevice = new javax.swing.JLabel();
-        jPanel2 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
+        javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
+        javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
         lblStatusPort = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
         lblDataPort = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("MITS 88-SIO Runtime status");
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Attached device", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Attached device", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", Font.BOLD, 11))); // NOI18N
 
         lblAttachedDevice.setFont(lblAttachedDevice.getFont().deriveFont(lblAttachedDevice.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblAttachedDevice.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -78,18 +79,18 @@ public class StatusDialog extends javax.swing.JDialog {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "CPU Connection", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "CPU Connection", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", Font.BOLD, 11))); // NOI18N
 
         jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel1.setText("Status port:");
 
-        lblStatusPort.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        lblStatusPort.setFont(new java.awt.Font("Tahoma", Font.BOLD, 11)); // NOI18N
         lblStatusPort.setText("17");
 
         jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD));
         jLabel2.setText("Data port:");
 
-        lblDataPort.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        lblDataPort.setFont(new java.awt.Font("Tahoma", Font.BOLD, 11)); // NOI18N
         lblDataPort.setText("18");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
@@ -145,11 +146,6 @@ public class StatusDialog extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
     private javax.swing.JLabel lblAttachedDevice;
     private javax.swing.JLabel lblDataPort;
     private javax.swing.JLabel lblStatusPort;

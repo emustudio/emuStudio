@@ -230,7 +230,7 @@ public abstract class TestBuilder<OperandType extends Number, SpecificTestBuilde
     }
 
     public TestRunner<T, OperandType> run(int... instruction) {
-        return prepareTest().injectNoOperand(new InstructionNoOperands<T>(instruction));
+        return prepareTest().injectNoOperand(new InstructionNoOperands<>(instruction));
     }
 
     public TestRunner<T, OperandType> runWithFirstOperand(int... instruction) {

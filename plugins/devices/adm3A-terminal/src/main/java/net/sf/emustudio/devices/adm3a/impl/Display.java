@@ -261,9 +261,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
     @Override
     public void rollLine() {
         synchronized (videoMemory) {
-            for (int i = colCount; i < (colCount * rowCount); i++) {
-                videoMemory[i - colCount] = videoMemory[i];
-            }
+            System.arraycopy(videoMemory, colCount, videoMemory, 0, colCount * rowCount - colCount);
             for (int i = colCount * rowCount - colCount; i < (colCount * rowCount); i++) {
                 videoMemory[i] = ' ';
             }

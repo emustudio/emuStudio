@@ -73,9 +73,7 @@ public abstract class CpuRunner<CpuType extends CPU> {
 
     public void setProgram(short... program) {
         ensureProgramSize(program.length);
-        for (int i = 0; i < program.length; i++) {
-            this.program[i] = program[i];
-        }
+        System.arraycopy(program, 0, this.program, 0, program.length);
         resetProgram();
     }
 

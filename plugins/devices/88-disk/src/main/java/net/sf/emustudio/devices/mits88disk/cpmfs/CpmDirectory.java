@@ -26,6 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @NotThreadSafe
 public class CpmDirectory {
@@ -43,14 +44,7 @@ public class CpmDirectory {
     }
 
     public List<CpmFile> filterValidFiles() {
-        List<CpmFile> tmpFiles = new ArrayList<>();
-
-        for (CpmFile file : files) {
-            if (file.status < 32) {
-                tmpFiles.add(file);
-            }
-        }
-        return tmpFiles;
+        return files.stream().filter(file -> file.status < 32).collect(Collectors.toList());
     }
 
     public String findDiscLabel() {
@@ -80,13 +74,7 @@ public class CpmDirectory {
     }
 
     private static List<CpmFile> getFilesFromEntries(List<ByteBuffer> entries) {
-        List<CpmFile> files = new ArrayList<>();
-
-        for (ByteBuffer entry : entries) {
-            files.add(CpmFile.fromEntry(entry));
-        }
-
-        return files;
+        return entries.stream().map(CpmFile::fromEntry).collect(Collectors.toList());
     }
 
     public static CpmDirectory fromDisc(RawDisc disc) throws IOException {
