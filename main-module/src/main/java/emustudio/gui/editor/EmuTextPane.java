@@ -24,12 +24,14 @@ import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
 import emulib.plugins.compiler.Token;
 import emulib.runtime.UniversalFileFilter;
-import emustudio.interfaces.ITokenColor;
+import emustudio.Constants;
 import emustudio.main.Main;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.JTextPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
@@ -50,7 +52,9 @@ import javax.swing.text.ViewFactory;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Insets;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -217,17 +221,17 @@ public class EmuTextPane extends JTextPane {
 
     private void initStyles() {
         styles = new HashMap<>();
-        styles.put(Token.COMMENT, new HighlightStyle(true, false, ITokenColor.COMMENT));
-        styles.put(Token.ERROR, new HighlightStyle(false, false, ITokenColor.ERROR));
-        styles.put(Token.IDENTIFIER, new HighlightStyle(false, false, ITokenColor.IDENTIFIER));
-        styles.put(Token.LABEL, new HighlightStyle(false, false, ITokenColor.LABEL));
-        styles.put(Token.LITERAL, new HighlightStyle(false, false, ITokenColor.LITERAL));
-        styles.put(Token.OPERATOR, new HighlightStyle(false, true, ITokenColor.OPERATOR));
-        styles.put(Token.PREPROCESSOR, new HighlightStyle(false, true, ITokenColor.PREPROCESSOR));
-        styles.put(Token.REGISTER, new HighlightStyle(false, false, ITokenColor.REGISTER));
-        styles.put(Token.RESERVED, new HighlightStyle(false, true, ITokenColor.RESERVED));
-        styles.put(Token.SEPARATOR, new HighlightStyle(false, false, ITokenColor.SEPARATOR));
-        this.setFont(new java.awt.Font("monospaced", 0, 12));
+        styles.put(Token.COMMENT, new HighlightStyle(true, false, Constants.TOKEN_COMMENT));
+        styles.put(Token.ERROR, new HighlightStyle(false, false, Constants.TOKEN_ERROR));
+        styles.put(Token.IDENTIFIER, new HighlightStyle(false, false, Constants.TOKEN_IDENTIFIER));
+        styles.put(Token.LABEL, new HighlightStyle(false, false, Constants.TOKEN_LABEL));
+        styles.put(Token.LITERAL, new HighlightStyle(false, false, Constants.TOKEN_LITERAL));
+        styles.put(Token.OPERATOR, new HighlightStyle(false, true, Constants.TOKEN_OPERATOR));
+        styles.put(Token.PREPROCESSOR, new HighlightStyle(false, true, Constants.TOKEN_PREPROCESSOR));
+        styles.put(Token.REGISTER, new HighlightStyle(false, false, Constants.TOKEN_REGISTER));
+        styles.put(Token.RESERVED, new HighlightStyle(false, true, Constants.TOKEN_RESERVED));
+        styles.put(Token.SEPARATOR, new HighlightStyle(false, false, Constants.TOKEN_SEPARATOR));
+        this.setFont(Constants.MONOSPACED_PLAIN_12);
         this.setMargin(new Insets(NUMBERS_HEIGHT, NUMBERS_WIDTH, 0, 0));
         this.setBackground(Color.WHITE);
     }
@@ -331,6 +335,8 @@ public class EmuTextPane extends JTextPane {
             document.readUnlock();
         }
         int fontHeight = g.getFontMetrics(getFont()).getHeight(); // font height
+
+        System.out.println(getFont());
 
         g.setColor(Color.RED);
         for (int line = startline, y = 0; line <= endline; line++, y += fontHeight) {

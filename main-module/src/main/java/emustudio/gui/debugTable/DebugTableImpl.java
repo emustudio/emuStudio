@@ -21,6 +21,7 @@ package emustudio.gui.debugTable;
 
 import emulib.emustudio.debugtable.DebugTable;
 import emulib.plugins.cpu.DebugColumn;
+import emustudio.Constants;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JTable;
@@ -51,7 +52,7 @@ public class DebugTableImpl extends JTable implements DebugTable {
 
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         setOpaque(false);
-        setGridColor(Colors.TABLE_GRID_COLOR);
+        setGridColor(Constants.DEBUGTABLE_COLOR_TABLE_GRID);
         setIntercellSpacing(new Dimension(0, 0));
         // turn off grid painting as we'll handle this manually in order to paint
         // grid lines over the entire viewport.

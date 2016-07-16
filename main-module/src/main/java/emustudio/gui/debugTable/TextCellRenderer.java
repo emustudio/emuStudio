@@ -19,6 +19,8 @@
  */
 package emustudio.gui.debugTable;
 
+import emustudio.Constants;
+
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
@@ -40,10 +42,10 @@ class TextCellRenderer extends JLabel implements TableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus, int row, int column) {
         if (model.isRowAtCurrentInstruction(row)) {
-            setBackground(Colors.CURRENT_INSTRUCTION_COLOR);
+            setBackground(Constants.DEBUGTABLE_COLOR_CURRENT_INSTRUCTION);
             setForeground(Color.WHITE);
         } else {
-            setBackground((row % 2 == 0) ? Colors.ODD_ROW_COLOR : Colors.EVEN_ROW_COLOR);
+            setBackground((row % 2 == 0) ? Constants.DEBUGTABLE_COLOR_ROW_ODD : Constants.DEBUGTABLE_COLOR_ROW_EVEN);
             setForeground(Color.BLACK);
         }
         if (value != null) {

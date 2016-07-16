@@ -22,7 +22,7 @@ package emustudio.architecture;
 import emulib.plugins.Plugin;
 import emulib.runtime.exceptions.PluginInitializationException;
 import emustudio.architecture.ComputerFactory.PluginInfo;
-import emustudio.main.CommandLineFactory;
+import emustudio.main.CommandLine;
 import emustudio.main.Main;
 import org.easymock.EasyMock;
 import org.junit.AfterClass;
@@ -46,9 +46,9 @@ public class SettingsManagerImplTest {
 
     @BeforeClass
     public static void setUpClass() {
-        Main.commandLine = createNiceMock(CommandLineFactory.CommandLine.class);
-        EasyMock.expect(Main.commandLine.autoWanted()).andReturn(Boolean.FALSE).anyTimes();
-        EasyMock.expect(Main.commandLine.noGUIWanted()).andReturn(Boolean.FALSE).anyTimes();
+        Main.commandLine = createNiceMock(CommandLine.class);
+        EasyMock.expect(Main.commandLine.isAuto()).andReturn(Boolean.FALSE).anyTimes();
+        EasyMock.expect(Main.commandLine.isNoGUI()).andReturn(Boolean.FALSE).anyTimes();
 
         EasyMock.replay(Main.commandLine);
     }

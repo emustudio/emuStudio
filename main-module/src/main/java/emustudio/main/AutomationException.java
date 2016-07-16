@@ -19,9 +19,9 @@
  */
 package emustudio.main;
 
-public class AutomatizationException extends Exception {
+public class AutomationException extends Exception {
 
-    public AutomatizationException(String message) {
+    public AutomationException(String message) {
         super(message);
     }
 

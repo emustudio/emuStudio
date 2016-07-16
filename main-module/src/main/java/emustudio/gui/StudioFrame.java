@@ -32,6 +32,7 @@ import emulib.runtime.RadixUtils;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.ContextNotFoundException;
 import emulib.runtime.exceptions.InvalidContextException;
+import emustudio.Constants;
 import emustudio.architecture.Computer;
 import emustudio.architecture.SettingsManagerImpl;
 import emustudio.emulation.EmulationController;
@@ -46,8 +47,29 @@ import emustudio.main.Main;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractListModel;
+import javax.swing.BorderFactory;
+import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
+import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
+import javax.swing.LayoutStyle;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+import javax.swing.WindowConstants;
+import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
@@ -97,7 +119,7 @@ public class StudioFrame extends JFrame {
         txtSource = new EmuTextPane(computer.getCompiler());
         systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
-        memoryContext = contextPool.getMemoryContext(Main.password.hashCode(), MemoryContext.class);
+        memoryContext = contextPool.getMemoryContext(Main.emulibToken.hashCode(), MemoryContext.class);
         memoryListener = new MemoryListener() {
             @Override
             public void memoryChanged(int memoryPosition) {
@@ -321,7 +343,7 @@ public class StudioFrame extends JFrame {
         btnCompile = new JButton();
         JSplitPane splitSource = new JSplitPane();
         editorScrollPane = new JScrollPane();
-        JScrollPane jScrollPane2 = new JScrollPane();
+        JScrollPane compilerPane = new JScrollPane();
         txtOutput = new JTextArea();
         JPanel panelEmulator = new JPanel();
         JSplitPane splitLeftRight = new JSplitPane();
@@ -388,7 +410,7 @@ public class StudioFrame extends JFrame {
 
         tabbedPane.setFocusable(false);
         tabbedPane.setFont(tabbedPane.getFont().deriveFont(tabbedPane.getFont().getStyle() & ~java.awt.Font.BOLD));
-        panelSource.setOpaque(false);
+        panelSource.setOpaque(true);
 
         toolStandard.setFloatable(false);
         toolStandard.setRollover(true);
@@ -480,13 +502,13 @@ public class StudioFrame extends JFrame {
 
         txtOutput.setColumns(20);
         txtOutput.setEditable(false);
-        txtOutput.setFont(new Font("Monospaced", 0, 12));
+        txtOutput.setFont(Constants.MONOSPACED_PLAIN_12);
         txtOutput.setLineWrap(true);
         txtOutput.setRows(3);
         txtOutput.setWrapStyleWord(true);
-        jScrollPane2.setViewportView(txtOutput);
 
-        splitSource.setRightComponent(jScrollPane2);
+        compilerPane.setViewportView(txtOutput);
+        splitSource.setRightComponent(compilerPane);
 
         GroupLayout panelSourceLayout = new GroupLayout(panelSource);
         panelSource.setLayout(panelSourceLayout);
@@ -511,7 +533,7 @@ public class StudioFrame extends JFrame {
 
         tabbedPane.addTab("Source code editor", panelSource);
 
-        panelEmulator.setOpaque(false);
+        panelEmulator.setOpaque(true);
 
         splitLeftRight.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
         splitLeftRight.setContinuousLayout(true);

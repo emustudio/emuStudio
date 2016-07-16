@@ -157,7 +157,7 @@ public class ComputerFactory {
             .toArray(new File[pluginsToLoad.size()]);
 
         try {
-            List<Class<Plugin>> mainClasses = pluginLoader.loadPlugins(Main.password, pluginsFiles);
+            List<Class<Plugin>> mainClasses = pluginLoader.loadPlugins(Main.emulibToken, pluginsFiles);
             mainClasses.stream().forEach(
                 mainClass -> pluginsToLoad.stream()
                     .filter(p -> !p.mainClass.isPresent())

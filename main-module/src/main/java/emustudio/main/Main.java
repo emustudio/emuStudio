@@ -20,224 +20,206 @@
 package emustudio.main;
 
 import emulib.emustudio.API;
+import emulib.plugins.cpu.CPU;
+import emulib.plugins.memory.Memory;
 import emulib.runtime.ContextPool;
 import emulib.runtime.PluginLoader;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.InvalidPasswordException;
-import emulib.runtime.exceptions.InvalidPluginException;
-import emulib.runtime.exceptions.PluginInitializationException;
+import emustudio.Constants;
 import emustudio.architecture.Computer;
-import emustudio.architecture.ComputerConfig;
-import emustudio.architecture.ComputerFactory;
-import emustudio.architecture.Configuration;
-import emustudio.architecture.ReadConfigurationException;
 import emustudio.architecture.SettingsManagerImpl;
 import emustudio.gui.LoadingDialog;
 import emustudio.gui.OpenComputerDialog;
 import emustudio.gui.StudioFrame;
 import emustudio.gui.debugTable.DebugTableImpl;
 import emustudio.gui.debugTable.DebugTableModel;
-import emustudio.main.CommandLineFactory.CommandLine;
+import org.kohsuke.args4j.CmdLineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.UIManager;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
+import java.util.Optional;
 
 public class Main {
-    private final static Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private static final String ERR_CONFIG_WAS_NOT_SPECIFIED = "Virtual computer configuration was not specified.";
 
-    public static String password = null;
+    public static String emulibToken;
     public static CommandLine commandLine;
 
-    public static void tryShowMessage(String message) {
-        if (commandLine != null && !commandLine.noGUIWanted()) {
-            StaticDialogs.showMessage(message);
-        } else {
-            System.out.println(message);
-        }
-    }
-
-    public static void tryShowMessage(String message, String title) {
-        if (commandLine != null && !commandLine.noGUIWanted()) {
-            StaticDialogs.showMessage(message, title);
-        } else {
-            System.out.println("[" + title + "] " + message);
-        }
-    }
-
-    public static void tryShowErrorMessage(String message) {
-        if (commandLine != null && !commandLine.noGUIWanted()) {
-            StaticDialogs.showErrorMessage(message);
-        } else {
-            System.out.println("Error: " + message);
-        }
-    }
-
-    public static void tryShowErrorMessage(String message, String title) {
-        if (commandLine != null && !commandLine.noGUIWanted()) {
-            StaticDialogs.showErrorMessage(message, title);
-        } else {
-            System.out.println("[" + title + "] Error: " + message);
-        }
-    }
-
     public static void main(String[] args) throws MalformedURLException {
-        try {
-            javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-        } catch (javax.swing.UnsupportedLookAndFeelException | ClassNotFoundException
-                | InstantiationException | IllegalAccessException e) {
-            LOGGER.error("Unable to set system look and feel", e);
-        }
-
-        // parse command line arguments
-        try {
-            commandLine = CommandLineFactory.parseCommandLine(args);
-        } catch (InvalidCommandLineException e) {
-            tryShowErrorMessage("Invalid command line: " + e.getMessage());
-            LOGGER.error("Invalid command line.", e);
-            return;
-        }
+        setupLookAndFeel();
 
         try {
-            password = emulib.runtime.ContextPool.SHA1(String.valueOf(Math.random()) + new Date().toString());
-        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-            LOGGER.error("Could not compute hash.");
-            tryShowErrorMessage("Error: Could not compute hash");
-            return;
+            commandLine = CommandLine.parse(args);
+        } catch (CmdLineException e) {
+            System.exit(1);
         }
-        if (!emulib.emustudio.API.assignPassword(password)) {
-            LOGGER.error("Communication with emuLib failed.");
-            tryShowErrorMessage("Error: communication with emuLib failed.");
-            return;
+        if (!setupEmuLibToken()) {
+            System.exit(1);
         }
 
-        if (commandLine.helpWanted()) {
-            // only show help and EXIT (ignore other arguments)
-            System.out.println("emuStudio will accept the following command line"
-                    + " parameters:\n"
-                    + "\n--config name : load configuration with file name"
-                    + "\n--input name  : use the source code given by the file name"
-                    + "\n--output name : output compiler messages into this file name"
-                    + "\n--auto        : run the emulation automatization"
-                    + "\n--nogui       : try to not show GUI in automatization"
-                    + "\n--help        : output this message");
-            return;
+        Optional<String> computerName = determineComputerName();
+        if (!computerName.isPresent()) {
+            System.exit(1);
         }
+
+        Optional<LoadingDialog> splash = showSplashScreen();
 
         ContextPool contextPool = new ContextPool();
         PluginLoader pluginLoader = new PluginLoader();
-        Computer computer = null;
-        Configuration configuration = null;
-        SettingsManagerImpl settingsManager = null;
 
-        // if configuration name has not been specified, let user
-        // to choose the configuration manually
-        if (commandLine.getConfigName() == null) {
-            if (commandLine.noGUIWanted()) {
-                tryShowErrorMessage("Configuration was not specified.");
-                LOGGER.error("Configuration was not specified.");
-                System.exit(0);
-            }
-            OpenComputerDialog odi = new OpenComputerDialog();
-            odi.setVisible(true);
-            if (odi.getOK()) {
-                commandLine.setConfigName(odi.getArchName());
-            }
-            if (commandLine.getConfigName() == null) {
-                LOGGER.error("Configuration was not specified.");
-                System.exit(0);
-            }
+        Optional<Emulator> emulator = Emulator.load(computerName.get(), contextPool, pluginLoader);
+        if (!emulator.isPresent()) {
+            System.exit(1);
+        }
+        SettingsManagerImpl settingsManager = emulator.get().getSettingsManager();
+        Computer computer = emulator.get().getComputer();
+
+        if (splash.isPresent()) {
+            splash.get().dispose();
         }
 
+        if (!commandLine.isAuto()) {
+            showMainWindow(contextPool, settingsManager, computer);
+        } else {
+            runAutomation(settingsManager, computer);
+        }
+        System.exit(0);
+    }
+
+    private static void runAutomation(SettingsManagerImpl settingsManager, Computer computer) {
+        try {
+          new Automatization(
+                  settingsManager, computer, commandLine.getInputFileName(), commandLine.isNoGUI()
+          ).run();
+        } catch (AutomationException e) {
+            LOGGER.error("Unexpected error during automation.", e);
+            tryShowErrorMessage("Error: " + e.getMessage());
+            System.exit(1);
+        }
+        computer.destroy();
+    }
+
+    private static void showMainWindow(ContextPool contextPool, SettingsManagerImpl settingsManager, Computer computer) {
+        try {
+            int memorySize = 0;
+
+            Optional<Memory> memory = computer.getMemory();
+            Optional<CPU> cpu = computer.getCPU();
+
+            if (memory.isPresent()) {
+                memorySize = memory.get().getSize();
+            }
+
+            DebugTableImpl debugTable = new DebugTableImpl(new DebugTableModel(cpu.get(), memorySize));
+            API.getInstance().setDebugTable(debugTable, Main.emulibToken);
+
+            String inputFileName = commandLine.getInputFileName();
+            if (inputFileName != null) {
+                new StudioFrame(contextPool, computer, inputFileName, settingsManager, debugTable).setVisible(true);
+            } else {
+                new StudioFrame(contextPool, computer, settingsManager, debugTable).setVisible(true);
+            }
+        } catch (InvalidPasswordException e) {
+            LOGGER.error("Could not register debug table", e);
+        } catch (Exception e) {
+            LOGGER.error("Could not start main window.", e);
+            tryShowErrorMessage("Could not start main window.");
+            System.exit(1);
+        }
+    }
+
+    private static Optional<LoadingDialog> showSplashScreen() {
         LoadingDialog splash = null;
-        if (!commandLine.noGUIWanted()) {
-            // display splash screen, while loading the virtual computer
+        if (!commandLine.isNoGUI()) {
             splash = new LoadingDialog();
             splash.setVisible(true);
         } else {
             LOGGER.info("Loading virtual computer: {}", commandLine.getConfigName());
         }
+        return Optional.ofNullable(splash);
+    }
 
-        // load the virtual computer
-        try {
-            computer = new ComputerFactory(pluginLoader)
-                    .createComputer(commandLine.getConfigName(), contextPool);
-            contextPool.setComputer(password, computer);
-
-            configuration = ComputerConfig.read(commandLine.getConfigName());
-            settingsManager = new SettingsManagerImpl(computer.getPluginInfos(), configuration);
-
-            computer.initialize(settingsManager);
-        } catch (InvalidPluginException e) {
-            LOGGER.error("Could not load plugin.", e);
-            tryShowErrorMessage("Could not load plugin. Please see log file for details.");
-        } catch (ReadConfigurationException e) {
-            LOGGER.error("Could not read configuration.", e);
-            tryShowErrorMessage("Error: Could not read configuration. Please see log file for details.");
-        } catch (PluginInitializationException e) {
-            LOGGER.error("Could not initialize plugins.", e);
-            tryShowErrorMessage("Error: Could not initialize plugins. Please see log file for details.");
-            computer = null;
-        } catch (InvalidPasswordException e) {
-            LOGGER.error("Could not initialize emuLib.", e);
-            tryShowErrorMessage("Error: Could not initialize emuLib. Please see log file for details.");
-            computer = null;
-        } catch (Throwable e) {
-            LOGGER.error("Unexpected error", e);
-            tryShowErrorMessage("Error: Could not initialize emuLib. Please see log file for details.");
-            computer = null;
-        }
-
-        if (splash != null) {
-            // hide splash screen
-            splash.dispose();
-        }
-
-        if (computer == null || settingsManager == null || configuration == null) {
-            System.exit(1);
-        }
-
-        if (!commandLine.autoWanted()) {
-            try {
-                int memorySize = 0;
-                if (computer.getMemory().isPresent()) {
-                    memorySize = computer.getMemory().get().getSize();
-                }
-
-                DebugTableImpl debugTable = new DebugTableImpl(
-                        new DebugTableModel(computer.getCPU().get(), memorySize)
-                );
-                API.getInstance().setDebugTable(debugTable, Main.password);
-
-                // if the automatization is turned off, start the emuStudio normally
-                String inputFileName = commandLine.getInputFileName();
-                if (inputFileName != null) {
-                    new StudioFrame(contextPool, computer, inputFileName, settingsManager, debugTable).setVisible(true);
-                } else {
-                    new StudioFrame(contextPool, computer, settingsManager, debugTable).setVisible(true);
-                }
-            } catch (InvalidPasswordException e) {
-                LOGGER.error("Could not register debug table", e);
-            } catch (Exception e) {
-                LOGGER.error("Could not start main window.", e);
-                tryShowErrorMessage("Could not start main window.");
-                System.exit(1);
-            }
+    private static Optional<String> determineComputerName() {
+        if (commandLine.getConfigName() != null) {
+            return Optional.of(commandLine.getConfigName());
+        } else if (commandLine.isNoGUI() || commandLine.isAuto()) {
+            tryShowErrorMessage(ERR_CONFIG_WAS_NOT_SPECIFIED);
         } else {
-            try {
-              new Automatization(
-                      settingsManager, computer, commandLine.getInputFileName(), commandLine.noGUIWanted()
-              ).run();
-            } catch (AutomatizationException e) {
-                LOGGER.error("Error during automatization.", e);
-                tryShowErrorMessage("Error: " + e.getMessage());
-                System.exit(1);
+            OpenComputerDialog odi = new OpenComputerDialog();
+            odi.setVisible(true);
+            if (odi.getOK()) {
+                return Optional.ofNullable(odi.getArchName());
             }
-            computer.destroy();
-            System.exit(0);
+            tryShowErrorMessage(ERR_CONFIG_WAS_NOT_SPECIFIED);
+        }
+        return Optional.empty();
+    }
+
+    private static boolean setupEmuLibToken() {
+        try {
+            emulibToken = ContextPool.SHA1(String.valueOf(Math.random()) + new Date().toString());
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            tryShowErrorMessage("Error: Could not compute hash");
+            return false;
+        }
+        if (!API.assignPassword(emulibToken)) {
+            tryShowErrorMessage("Error: communication with emuLib failed.");
+            return false;
+        }
+        return true;
+    }
+
+    private static void setupLookAndFeel() {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (javax.swing.UnsupportedLookAndFeelException | ClassNotFoundException
+                | InstantiationException | IllegalAccessException e) {
+            LOGGER.warn("Unable to set system look and feel", e);
+        }
+        UIManager.put("TabbedPane.selected", UIManager.get("Panel.background"));
+        UIManager.put("TabbedPane.background", UIManager.get("Panel.background"));
+        UIManager.put("TabbedPane.contentAreaColor", UIManager.get("Panel.background"));
+        UIManager.put("TextPane.font", Constants.MONOSPACED_PLAIN_12);
+        UIManager.put("TextArea.font", Constants.MONOSPACED_PLAIN_12);
+    }
+
+    public static void tryShowMessage(String message) {
+        if (commandLine != null && !commandLine.isNoGUI()) {
+            StaticDialogs.showMessage(message);
+        } else {
+            LOGGER.info(message);
         }
     }
+
+    public static void tryShowMessage(String message, String title) {
+        if (commandLine != null && !commandLine.isNoGUI()) {
+            StaticDialogs.showMessage(message, title);
+        } else {
+            LOGGER.info("[{}] {}", title, message);
+        }
+    }
+
+    public static void tryShowErrorMessage(String message) {
+        if (commandLine != null && !commandLine.isNoGUI()) {
+            StaticDialogs.showErrorMessage(message);
+        } else {
+            LOGGER.error("Error: {}", message);
+        }
+    }
+
+    public static void tryShowErrorMessage(String message, String title) {
+        if (commandLine != null && !commandLine.isNoGUI()) {
+            StaticDialogs.showErrorMessage(message, title);
+        } else {
+            LOGGER.error("[{}] Error: {}", title, message);
+        }
+    }
+
 }

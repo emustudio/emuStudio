@@ -19,6 +19,8 @@
  */
 package emustudio.gui.debugTable;
 
+import emustudio.Constants;
+
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JTable;
@@ -39,7 +41,7 @@ class BooleanCellRenderer extends JLabel implements TableCellRenderer {
         } else {
             setIcon(null);
         }
-        setBackground((row % 2 == 0) ? Colors.ODD_ROW_COLOR : Colors.EVEN_ROW_COLOR);
+        setBackground((row % 2 == 0) ? Constants.DEBUGTABLE_COLOR_ROW_ODD : Constants.DEBUGTABLE_COLOR_ROW_EVEN);
         setText(" ");
         this.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         return this;

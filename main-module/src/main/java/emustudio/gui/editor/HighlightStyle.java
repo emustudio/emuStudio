@@ -19,6 +19,7 @@
  */
 package emustudio.gui.editor;
 
+import javax.swing.plaf.FontUIResource;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import java.awt.*;
@@ -37,7 +38,7 @@ class HighlightStyle extends SimpleAttributeSet {
     }
 
     private void setStyle(boolean italic, boolean bold, Color color) {
-        StyleConstants.setFontFamily(this, "Monospaced");
+        StyleConstants.setFontFamily(this, FontUIResource.MONOSPACED);
         StyleConstants.setFontSize(this, 12);
         StyleConstants.setBackground(this, Color.white);
         StyleConstants.setItalic(this, italic);

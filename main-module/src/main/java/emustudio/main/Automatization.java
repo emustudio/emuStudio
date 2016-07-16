@@ -54,14 +54,14 @@ class Automatization implements Runnable {
     private RunState resultState;
     private final boolean nogui;
 
-    Automatization(SettingsManagerImpl settings, Computer computer, String inputFileName, boolean nogui) throws AutomatizationException {
+    Automatization(SettingsManagerImpl settings, Computer computer, String inputFileName, boolean nogui) throws AutomationException {
         this.settings = Objects.requireNonNull(settings);
         this.computer = Objects.requireNonNull(computer);
         this.nogui = nogui;
         this.inputFile = new File(Objects.requireNonNull(inputFileName));
 
         if (!inputFile.exists()) {
-            throw new AutomatizationException("Input file not found");
+            throw new AutomationException("Input file not found");
         }
         if (!nogui) {
             progressGUI = new AutoDialog(computer);
@@ -75,7 +75,7 @@ class Automatization implements Runnable {
         }
     }
 
-    private void autoCompile(Compiler compiler) throws AutomatizationException {
+    private void autoCompile(Compiler compiler) throws AutomationException {
         if (inputFile == null) {
             return;
         }
@@ -120,7 +120,7 @@ class Automatization implements Runnable {
 
         String fileName = inputFile.getAbsolutePath();
         if (!compiler.compile(fileName)) {
-            throw new AutomatizationException("Error: compile failed. Automatization cannot continue.");
+            throw new AutomationException("Error: compile failed. Automatization cannot continue.");
         }
     }
 
@@ -239,7 +239,7 @@ class Automatization implements Runnable {
 
             }
             autoEmulate(cpu);
-        } catch (AutomatizationException e) {
+        } catch (AutomationException e) {
             LOGGER.error("Error during automatization", e);
             Main.tryShowErrorMessage("Error: " + e.getMessage());
         } finally {

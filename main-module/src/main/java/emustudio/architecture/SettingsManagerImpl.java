@@ -54,14 +54,14 @@ public class SettingsManagerImpl implements SettingsManager {
     }
 
     private void initialize()  {
-        if (Main.commandLine.autoWanted()) {
+        if (Main.commandLine.isAuto()) {
            // Set "auto" setting to "true" to all plugins
            writeSetting(SettingsManager.AUTO, "true");
         }
-        if (Main.commandLine.noGUIWanted()) {
+        if (Main.commandLine.isNoGUI()) {
            writeSetting(SettingsManager.NO_GUI, "true");
            try {
-               StaticDialogs.setGUISupported(false, Main.password);
+               StaticDialogs.setGUISupported(false, Main.emulibToken);
            } catch (InvalidPasswordException e) {
                LOGGER.error("Unexpected security issue", e);
            }
