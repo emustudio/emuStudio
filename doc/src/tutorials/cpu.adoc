@@ -15,31 +15,57 @@ Before reading on, please read the "Introduction for writing virtual computers" 
 needed for setting up the development environment and for basic understanding how the emuStudio/plug-ins lifecycle
 work.
 
-A CPU is just another plug-in, which means that it is enough to implement some API and that's it. The CPU
+A CPU is just another plug-in, which means that it is enough to implement some API. The CPU
 API can be found in `emulib.plugins.cpu` project package.
 
 CPU is supposed to be the core of the emulator in the similar way as the real CPU is core to the computer.
-The term "emulation technique" is usually used when we talk about CPU emulation. This tutorial will focus on
-the interpretation technique, because it is the most basic one and simple one. Also, the advanced techniques, like
-dynamic translation (which translates target code snippets into native host code in the runtime) is probably not
-feasible to do in Java.
+The term "emulation technique" is usually used when we talk about CPU emulation. This tutorial will not cover
+the techniques in much detail. Furthermore, only instruction interpretation will be used for its simplicity.
 
 NOTE: More information about emulation techniques can be found for example at
       http://www.xsim.com/papers/Bario.2001.emubook.pdf[this link].
+
 
 In this tutorial, a simple CPU will be implemented for the world's very first stored-program computer,
 https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine[SSEM], nicknamed
 "Baby". It was a predecessor of Manchester Mark 1 which led to Ferranti Mark 1, the world's first commercially available
 general-purpose computer.
 
+[[WHAT_CPU_DOES]]
+== What emuStudio's CPU can do
+
+CPU emulators in emuStudio are not just plain emulators. Besides, they must cooperate with emuStudio and provide
+capabilities allowing debugging and some visualization.
+
+The CPU must, besides the emulation "engine", implement:
+
+- Disassembler
+- Java Swing GUI panel
+
+Disassembler will be used by emuStudio for creating the list of instructions in the debugger panel. The visualization
+of CPU registers, possibly current frequency and run state must be implemented by the CPU plug-in. For that purpose
+the plug-in must provide the GUI panel to CPU.
+
+Both the disassembler and GUI panel should be instantiated only once. emuStudio will ask for them also only once, during
+the process of loading of the virtual computer.
+
+For developing disassembler, there is good news. There exist a tool which can generate emuStudio disassembler from
+a specification file. We will use this tool also in this tutorial. For more information, see
+https://github.com/sulir/edigen
+
+
 == Preparing the environment
 
-Since emuStudio uses Maven for project organization and dependency management, this plug-in will be developed also
-in this manner. So lets' start with basic
-https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html[Maven project structure], you can use
-`mvn archetype:generate` command to be faster.
+We will use Maven for managing the source code and dependencies.
 
-The project should be located at `emuStudio/plugins/cpu/ssem-cpu`, and should contain the following structure:
+NOTE: If you are new to Maven, please read
+      https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html[Maven in 5 minutes] tutorial.
+
+
+The project should be located in `emuStudio/plugins/cpu/ssem-cpu`.
+In order to create the initial project structure, run `mvn archetype:generate` in that directory.
+
+The following structure should now exist:
 
     src/
       main/
@@ -50,87 +76,13 @@ The project should be located at `emuStudio/plugins/cpu/ssem-cpu`, and should co
     pom.xml
 
 
-The content of `pom.xml` is as follows:
+We will start with the `pom.xml` file, which follows.
 
 [source,xml]
 .`pom.xml`
 ----
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-
-  <parent>
-    <groupId>net.sf.emustudio</groupId>
-    <artifactId>emustudio-parent</artifactId>
-    <version>0.39-SNAPSHOT</version>
-    <relativePath>../../..</relativePath>
-  </parent>
-
-  <artifactId>ssem-cpu</artifactId>
-  <packaging>jar</packaging>
-
-  <name>SSEM CPU emulator</name>
-  <description>Java-based SSEM CPU emulator</description>
-
-  <build>
-    <finalName>ssem-cpu</finalName>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifest>
-              <addClasspath>false</addClasspath>
-              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-            </manifest>
-          </archive>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
-
-  <dependencies>
-    <dependency>
-      <groupId>net.sf.emustudio</groupId>
-      <artifactId>cpu-testsuite</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-nop</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>net.sf.emustudio</groupId>
-      <artifactId>emuLib</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.easymock</groupId>
-      <artifactId>easymock</artifactId>
-    </dependency>
-  </dependencies>
-</project>
+include::../../../plugins/cpu/ssem-cpu/pom.xml[]
 ----
-
-We might extend the content with some plug-ins later.
-
 
 == The main class
 
@@ -201,59 +153,196 @@ public class CpuImpl extends AbstractCPU {
 }
 ----
 
-As you can see, there is a lot of methods which needs attention. And some more (like breakpoint support) are
-already implemented in `AbstractCPU`. Don't worry, we'll get through all of them.
-But first, we need to talk about responsibilities and behavioral contracts of a CPU - emuStudio plug-in.
+As you can see, there is a lot of methods which needs attention. Note two methods especially - `getStatusPanel()`
+and `getDisassembler()`. Those two methods should return the components mentioned in section <<WHAT_CPU_DOES>>.
 
-== CPU in emuStudio: What we have here
+Also note that the class extends from `AbstractCPU`. The `AbstractCPU` class lies in emuLib library. It implements
+some fundamental methods required by `CPU` interface. For example, managing breakpoints and controlling the
+high-level emulation lifecycle in a thread-safe way. Generally speaking, the class eliminates lots of repeated
+boiler-plate code needed to be done in every CPU plug-in.
 
-Since emuStudio is not only emulator, it is also - and mainly - "development" IDE for people which want to program
-emulated machines. Therefore, emuStudio provides nice debug window and other useful functionality. This functionality
-can work only when all plug-ins allow interactive communication with emuStudio main module.
-
-=== `getDisassembler()`
-
-For example, when we were talking about debug window, CPU plug-in needs to provide a good disassembler to emuStudio,
-which it then uses it and shows nice disassembled instructions to the user. The advantage of this is that emuStudio
-can remain universal - various CPUs implement their own disassemblers.
-
-We will get to it later. Fortunately, there exist tools which will help us to generate one.
-
-=== `getStatusPanel()`
-
-Each CPU in emuStudio must implement a `javax.swing.JPanel`, which should contain graphical components showing
-everything useful to the user (e.g. registers, flags, etc.). The panel is then placed in the emulator
-tab in the emuStudio main module.
-
-
+[[BEHAVIORAL_CONTRACTS]]
 == Behavioral contracts
 
 === Load and initialization
 
-CPU plug-in is created as a second plug-in (first is compiler).
+Loading the virtual computer starts with creating separate class loader derived from the one emuStudio is using,
+so each plug-in can see everything what emuStudio can see (except potentionally other virtual computers).
 
-At first, emuStudio creates an instance of the plug-in.
+The CPU plug-in JAR file is loaded using the class loader as a second in order.
 
-=== Emulation control
+The loading process is as follows:
 
-If you are familiar with emuStudio, you know that there is a button above debug window, green filled arrow, by which
+1. Plug-in content is searched for main class. Main class must be annotated with `@PluginType(type = PLUGIN_TYPE.CPU)`
+   annotation and it does not matter in which package it resists. However, there must be just one main class in the
+   plug-in. If there are more, the first one found will be used; however there is a problem to clearly state which
+   will be the first.
+
+2. The class is checked if it implements `CPU` interface (in any depth of inheritance). If not, it is not considered
+   as the main class.
+
+3. Plug-in is instantiated by calling the main class constructor. The constructor must be public and must have two
+   parameters of type: `Long` (first) and `ContextPool` (second). The first parameter is a unique plug-in ID assigned
+   by emuStudio. This ID can be then used to access configuration of the virtual computer. The second parameter is
+   a context pool, object which holds runtime entities which plugins can register. Plugins communicate to each other
+   by those entities, called contexts.
+
+4. emuStudio calls method `initialize(SettingsManager settingsManager)`. In this step the plug-in can be initialized.
+   The initialization might involve reading settings using provided `SettingsManager` object, or retrieving contexts
+   of other plug-in by already obtained `ContextPool` object.
+
+5. Specifically for CPU, emuStudio calls `getDisassembler()` and `getStatusPanel()` methods in not specified order.
+
+After those steps, the plug-in is ready. Further work of the CPU is event-based. emuStudio will handle UI events
+and control the plug-in by calling appropriate methods of the main class instance. In case of automatic emulation,
+the behavior is more deterministic.
+
+=== Emulation lifecycle
+
+As it was described in section "Emulation lifecycle" in the user manual of the main module, the emulation "life"
+is a state machine. This state machine can react on events from outside world which cause changes, so-called transitions
+to another state.
+
+For example, you know that there is a button above debug window, green-filled arrow, by which
 the emulation will be executed. Besides, there are more buttons, for example "step emulation", which will do execute
 just one CPU instruction.
 
-CPU plug-in (when inherited from `AbstractCPU`) supports this behavior by with only methods - `call()`, which should
-start a loop of executing instructions from the current instruction pointer, and `stepInternal()`, which should execute
-just one instruction and then return resulting `RunState` (both methods do).
+The state machine can be seen in the following diagram:
 
-The contract which needs attention is threading. Execution of mentioned methods is done always from emuStudio, because
-other plug-ins don't have access to it (only if it is accessible from custom context, we'll talk about contexts later).
-emuStudio main module has dedicated one single thread for this purpose. So the methods are not executed from UI thread.
-This means they will not block UI, even if they take long time to execute.
+[graphviz]
+---------------------------------------------------------------------
+digraph emulation_states {
+  ratio = 1;
+  node [shape = rect];
 
-All other methods from the CPU interface are (possibly) executed from UI thread, so they should be implemented in
-a responsive manner, because they block UI.
+  breakpoint [ style = filled, fillcolor=lightgrey ];
+  stopped [shape = doubleoctagon ];
+
+  breakpoint -> running [ label = "run " ];
+  breakpoint -> stopped [ label = "stop " ];
+  breakpoint -> breakpoint   [ label = "step " ];
+  running -> stopped [ label = "stop, error " ];
+  running -> breakpoint [ label = "pause, reset " ];
+  stopped -> breakpoint [ label = "reset " ];
+}
+---------------------------------------------------------------------
+
+The states of the state machine are coded into a enum in emuLib:
+
+[source,java]
+.`emulib.plugins.cpu.CPU.RunState`
+----
+public static enum RunState {
+    STATE_STOPPED_NORMAL("stopped"),
+    STATE_STOPPED_BREAK("breakpoint"),
+    STATE_STOPPED_ADDR_FALLOUT("stopped (address fallout)"),
+    STATE_STOPPED_BAD_INSTR("stopped (instruction fallout)"),
+    STATE_RUNNING("running");
+
+    ...
+}
+----
+
+The initial state is `breakpoint`. This is a behavioral contract which all CPUs must fulfil.
+
+The `AbstractCPU` class implements the state machine by implementing fundamental methods of the `CPU` interface:
+
+[source,java]
+.`emulib.plugins.cpu.CPU`
+----
+public interface CPU extends Plugin {
+
+    void step();
+
+    void execute();
+
+    void pause();
+
+    void stop();
+
+    void reset(int memoryLocation);
+
+    ...
+}
+----
+
+The CPU plug-in developer using `AbstractCPU` must implement only the following methods:
+
+[source,java]
+.`emulib.plugins.cpu.AbstractCPU`
+----
+@ThreadSafe
+public abstract class AbstractCPU implements CPU, Callable<RunState> {
+    protected abstract RunState stepInternal() throws Exception;
+
+    protected abstract void resetInternal(int var1);
+
+    protected abstract void destroyInternal();
+
+    ...
+}
+----
+
+==== CPU emulation modes
 
 
+The CPU can work in two modes while performing the emulation: "step" and "run" mode. The modes are disjunct - only one
+of them can be active in time. In addition, these modes are not "real" in terms of implementation requirements, but they
+serve as a good abstraction.
+
+===== "Step" mode
+
+In the "step" mode, the CPU emulates instructions in "steps", one-by-one. One instruction should be emulated by calling
+`step()` method. After the emulation of the instruction is finished, the CPU run state should be returned back to
+`STATE_STOPPED_BREAK`.
+
+In case of error, the run state should change to `STATE_STOPPED_(how)`, where `(how)` is the general root cause of the
+error (e.g. `BAD_INSTR` or `ADDR_FALLOUT`).
+
+In this mode, it is not required to emulate the instruction in a performance-optimized manner.
+
+===== "Run" mode
+
+In the "run" mode, the CPU should emulate instructions infinitely until either some CPU-halt instruction is encountered
+or user stops the emulation by external GUI event. Within this mode the developer is encouraged to use some good
+emulation technique, which can focus on performance. The code paths which will be run by JVM in this mode should be
+optimized for performance.
+
+Furthermore, emuStudio will stop disassembling instructions and also other performance-consuming tasks to let the CPU
+and other virtual computer components provide the best emulation experience.
+
+When the emulation is finished, the run state should be set accordingly.
+
+===== Final notes
+
+Those modes are reflected in methods of `AbstractCPU` class. The `call()` method representing the "run" mode, and
+`stepInternal()` method, representing the `step` mode.
+
+The contract which needs attention is threading. Execution of mentioned methods is done always by emuStudio.
+It has dedicated one thread for this purpose. The methods are never executed from UI thread, but from the dedicated
+thread, using a work-queue for the upcoming events.
+
+This means that CPU emulation control will not block UI, even if the execution takes longer time.
+However, all the other methods from the CPU interface are (possibly) executed from UI thread, so they should be
+implemented in a responsive manner; they can block.
+
+== Implementing CPU fundamentals
+
+The fundamental steps when building a CPU involves the initialization and destruction code. After reading the
+<<BEHAVIORAL_CONTRACTS>>, you should be aware of how the code should look like.
+
+The initialization code is represented by the constructor and the `initialize()` method.
 
 
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java`
+----
+public class CpuImpl extends AbstractCPU {
+    private final ContextPool contextPool;
+
+    public CpuImpl(Long pluginID, ContextPool contextPool) {
+        super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
+    }
 
 

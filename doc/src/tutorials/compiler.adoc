@@ -32,7 +32,7 @@ itself, because it is very simple. The processor had only 7 instructions, each i
 follows (modified from https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine#Programming[Wikipedia]):
 
 
-[width="50%",cols=">2m,<m,<m,<",frame="topbot",options="header,footer"]
+[cols=">2m,<m,<5%m,<20%",frame="topbot",options="header,footer"]
 |===================================================================
 |Binary code |Modern mnemonic |Action            |Operation
 |000         |JMP S           | S(L) -> CI      |Jump to the instruction at the address obtained from the specified memory
@@ -151,104 +151,9 @@ NOTE: Note the naming of the plug-in. It follows the naming convention as descri
 The POM file of the project might look as follows:
 
 [source,xml]
+.`pom.xml`
 ----
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <parent>
-    <artifactId>emustudio-parent</artifactId>
-    <groupId>net.sf.emustudio</groupId>
-    <version>0.39-SNAPSHOT</version>
-    <relativePath>../../../pom.xml</relativePath>
-  </parent>
-  <modelVersion>4.0.0</modelVersion>
-
-  <artifactId>as-ssem</artifactId>
-
-  <name>SSEM assembler</name>
-  <description>Assembler of SSEM processor language</description>
-
-  <build>
-    <finalName>as-ssem</finalName>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifest>
-              <addClasspath>false</addClasspath>
-              <mainClass>net.sf.emustudio.ssem.assembler.CompilerImpl</mainClass>
-              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-            </manifest>
-            <manifestEntries>
-              <Class-Path>lib/java-cup-runtime-11b.jar</Class-Path>
-            </manifestEntries>
-          </archive>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>de.jflex</groupId>
-        <artifactId>jflex-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>com.github.vbmacher</groupId>
-        <artifactId>cup-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <className>ParserImpl</className>
-          <symbolsName>Symbols</symbolsName>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-
-  <dependencies>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>net.sf.emustudio</groupId>
-      <artifactId>emuLib</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.github.vbmacher</groupId>
-      <artifactId>java-cup-runtime</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.easymock</groupId>
-      <artifactId>easymock</artifactId>
-    </dependency>
-  </dependencies>
-</project>
+include::../../../plugins/compilers/as-ssem/pom.xml[]
 ----
 
 And let's start with the first Java class, the main plug-in class. Let's put it to package
@@ -310,76 +215,7 @@ The content of the `net.sf.emustudio.ssem.assembler.TokenImpl` class is:
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java`
 ----
-package net.sf.emustudio.ssem.assembler;
-
-import emulib.plugins.compiler.Token;
-import java_cup.runtime.ComplexSymbolFactory;
-
-public class TokenImpl extends ComplexSymbolFactory.ComplexSymbol implements Token, Symbols {
-    private final int category;
-    private final int cchar;
-
-    public TokenImpl(int id, int category, String text, int line, int column, int cchar) {
-        super(
-            text, id, new ComplexSymbolFactory.Location(line, column), new ComplexSymbolFactory.Location(line, column)
-        );
-        this.category = category;
-        this.cchar = cchar;
-    }
-
-    public TokenImpl(int id, int category, String text, int line, int column, int cchar, Object value) {
-        super(
-            text, id, new ComplexSymbolFactory.Location(line, column), new ComplexSymbolFactory.Location(line, column), value
-        );
-        this.category = category;
-        this.cchar = cchar;
-    }
-
-    @Override
-    public int getID() {
-        return super.sym;
-    }
-
-    @Override
-    public int getType() {
-        return category;
-    }
-
-    @Override
-    public int getLine() {
-        return super.getLeft().getLine();
-    }
-
-    @Override
-    public int getColumn() {
-        return super.getLeft().getColumn();
-    }
-
-    @Override
-    public int getOffset() {
-        return cchar;
-    }
-
-    @Override
-    public int getLength() {
-        return cchar + getName().length();
-    }
-
-    @Override
-    public String getErrorString() {
-        return "Unknown token";
-    }
-
-    @Override
-    public String getText() {
-        return getName();
-    }
-
-    @Override
-    public boolean isInitialLexicalState() {
-        return true;
-    }
-}
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java[]
 ----
 
 Now, we can define the lexical analyzer:
@@ -387,112 +223,7 @@ Now, we can define the lexical analyzer:
 [source,flex]
 .`src/main/jflex/ssem.jflex`
 ----
-package net.sf.emustudio.ssem.assembler;
-
-import emulib.plugins.compiler.LexicalAnalyzer;
-import emulib.plugins.compiler.Token;
-import java.io.IOException;
-import java.io.Reader;
-
-%%
-
-/* options */
-%class LexerImpl
-%cup
-%public
-%implements LexicalAnalyzer, Symbols
-%line
-%column
-%char
-%caseless
-%unicode
-%type TokenImpl
-
-%{
-    @Override
-    public Token getSymbol() throws IOException {
-        return next_token();
-    }
-
-    @Override
-    public void reset(Reader in, int yyline, int yychar, int yycolumn) {
-        yyreset(in);
-        this.yyline = yyline;
-        this.yychar = yychar;
-        this.yycolumn = yycolumn;
-    }
-
-    @Override
-    public void reset() {
-        this.yyline = 0;
-        this.yychar = 0;
-        this.yycolumn = 0;
-    }
-
-    private TokenImpl token(int type, int category) {
-        return new TokenImpl(type, category, yytext(), yyline, yycolumn, yychar);
-    }
-
-    private TokenImpl token(int type, int category, Object value) {
-        return new TokenImpl(type, category, yytext(), yyline, yycolumn, yychar, value);
-    }
-%}
-
-%eofval{
-    return token(EOF, Token.TEOF);
-%eofval}
-
-comment = "//"[^\r\n]*
-eol = \r|\n|\r\n
-space = [ \t\f]+
-number = \-?[0-9]+
-
-%%
-
-/* reserved words */
-"jmp" {
-    return token(JMP, Token.RESERVED);
-}
-"jrp" {
-    return token(JRP, Token.RESERVED);
-}
-"ldn" {
-    return token(LDN, Token.RESERVED);
-}
-"sto" {
-    return token(STO, Token.RESERVED);
-}
-"sub" {
-    return token(SUB, Token.RESERVED);
-}
-"cmp" {
-    return token(CMP, Token.RESERVED);
-}
-"stp" {
-    return token(STP, Token.RESERVED);
-}
-
-/* separators */
-{eol} {
-    return token(SEPARATOR_EOL, Token.SEPARATOR);
-}
-{space} { /* ignore white spaces */ }
-
-/* comment */
-{comment} {
-    return token(TCOMMENT, Token.COMMENT);
-}
-
-/* literals */
-{number} {
-    int num = Integer.parseInt(yytext(), 10);
-    return token(NUMBER, Token.LITERAL, (byte)(num & 0xFF));
-}
-
-/* error fallback */
-[^] {
-    return token(ERROR_UNKNOWN_TOKEN, Token.ERROR);
-}
+include::../../../plugins/compilers/as-ssem/src/main/jflex/ssem.jflex[]
 ----
 
 Token in emuStudio is very important also for syntax highlighting in the editor. For parsing, each token must have
@@ -509,94 +240,7 @@ is available. Here are some code snippets, which can be implemented right away f
 [source,java]
 .`src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java`
 ----
-package net.sf.emustudio.ssem.assembler;
-
-import emulib.plugins.compiler.Token;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.io.StringReader;
-
-import static org.junit.Assert.assertEquals;
-
-public class LexerTest {
-
-    LexerImpl lexer(String tokens) {
-        return new LexerImpl(new StringReader(tokens));
-    }
-
-    @Test
-    public void testNumberUpperBoundary() throws Exception {
-        LexerImpl lexer = lexer("31");
-
-        TokenImpl token = lexer.next_token();
-        assertEquals(Token.LITERAL, token.getType());
-        assertEquals(TokenImpl.NUMBER, token.getID());
-        assertEquals((byte)31, token.value);
-    }
-
-    @Test
-    public void testNumberLowerBoundary() throws Exception {
-        LexerImpl lexer = lexer("0");
-
-        TokenImpl token = lexer.next_token();
-        assertEquals(Token.LITERAL, token.getType());
-        assertEquals(TokenImpl.NUMBER, token.getID());
-        assertEquals((byte)0, token.value);
-    }
-
-    @Test
-    public void testNumber() throws Exception {
-        LexerImpl lexer = lexer("22");
-
-        TokenImpl token = lexer.next_token();
-        assertEquals(Token.LITERAL, token.getType());
-        assertEquals(TokenImpl.NUMBER, token.getID());
-        assertEquals((byte)22, token.value);
-    }
-
-    private void checkInstruction(int id, LexerImpl lexer) throws IOException {
-        TokenImpl token = lexer.next_token();
-        assertEquals(Token.RESERVED, token.getType());
-        assertEquals(id, token.getID());
-    }
-
-    private void checkInstructionWithOperand(int id, LexerImpl lexer) throws IOException {
-        checkInstruction(id, lexer);
-
-        TokenImpl token = lexer.next_token();
-        assertEquals(Token.LITERAL, token.getType());
-        assertEquals(TokenImpl.NUMBER, token.getID());
-    }
-
-    @Test
-    public void testInstructionsWithOperand() throws Exception {
-        checkInstructionWithOperand(TokenImpl.JMP, lexer("jmp 12"));
-        checkInstructionWithOperand(TokenImpl.JRP, lexer("jrp 12"));
-        checkInstructionWithOperand(TokenImpl.LDN, lexer("ldn 12"));
-        checkInstructionWithOperand(TokenImpl.STO, lexer("sto 12"));
-        checkInstructionWithOperand(TokenImpl.SUB, lexer("sub 12"));
-    }
-
-    @Test
-    public void testInstructionsWithoutOperand() throws Exception {
-        checkInstruction(TokenImpl.CMP, lexer("cmp"));
-        checkInstruction(TokenImpl.STP, lexer("stp"));
-    }
-
-    @Test
-    public void testInstructionInComment() throws Exception {
-        LexerImpl lexer = lexer("// cmp");
-        TokenImpl token = lexer.next_token();
-
-        assertEquals(TokenImpl.TCOMMENT, token.getID());
-        assertEquals(Token.COMMENT, token.getType());
-
-        token = lexer.next_token();
-        assertEquals(Token.TEOF, token.getType());
-        assertEquals(TokenImpl.EOF, token.getID());
-    }
-}
+include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java[]
 ----
 
 Lexer and parser are very interconnected in this case, because Java Cup defines symbol table, which is used by
@@ -689,102 +333,7 @@ The content is as follows:
 [source]
 .`src/main/cup/parser.cup`
 ----
-package net.sf.emustudio.ssem.assembler;
-
-import emulib.plugins.compiler.Message;
-import emulib.plugins.compiler.Token;
-import java_cup.runtime.ComplexSymbolFactory;
-import java_cup.runtime.Symbol;
-import net.sf.emustudio.ssem.assembler.tree.Instruction;
-import net.sf.emustudio.ssem.assembler.tree.Program;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-parser code {:
-    private LexerImpl lexer;
-    private boolean syntaxErrors;
-    private CompilerImpl compiler;
-
-    public ParserImpl(LexerImpl lex, ComplexSymbolFactory csf, CompilerImpl compiler) {
-        super(lex, csf);
-        lexer = Objects.requireNonNull(lex);
-        compiler = Objects.requireNonNull(compiler);
-    }
-
-    @Override
-    public void report_fatal_error(String message, Object info) throws Exception {
-        done_parsing();
-        report_error(message, info);
-        throw new Exception("Can\'t recover from previous error(s)");
-    }
-
-    @Override
-    public void report_error(String messageText, Object current) {
-        syntaxErrors = true;
-
-        Token token = (Token)current;
-
-        messageText += ":" + token.getErrorString() + " ('" + token.getText() + "')";
-
-        List expectedTokenIds = expected_token_ids()
-            .stream()
-            .map(id -> symbl_name_from_id(id.intValue()))
-            .collect(Collectors.toList());
-
-        if (!expectedTokenIds.isEmpty()) {
-            messageText += "\nExpected tokens: " + expectedTokenIds;
-        }
-
-        Message message = new Message(
-            Message.MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(), null, 0
-        );
-
-        if (compiler != null) {
-            compiler.notifyOnMessage(message);
-        } else {
-            System.err.println(message.getFormattedMessage());
-        }
-    }
-
-    public boolean hasSyntaxErrors() {
-        return syntaxErrors;
-    }
-
-:};
-
-terminal JMP, JRP, LDN, STO, SUB, CMP, STP, SEPARATOR_EOL, TCOMMENT, ERROR_UNKNOWN_TOKEN;
-terminal Byte NUMBER;
-
-non terminal Program Program;
-non terminal Instruction Statement;
-non terminal Instruction Instruction;
-non terminal Comment;
-
-start with Program;
-
-Program ::= Statement:s Program:p                       {: if (s != null) p.statement(s); RESULT = p;  :}
-    | /* empty program */                               {: RESULT = new Program(); :}
-    ;
-
-Statement ::= Instruction:i Comment SEPARATOR_EOL       {: RESULT = i; :}
-    | SEPARATOR_EOL
-    ;
-
-Instruction ::= JMP NUMBER:address                      {: RESULT = Instruction.jmp(address); :}
-    | JRP NUMBER:address                                {: RESULT = Instruction.jrp(address); :}
-    | LDN NUMBER:address                                {: RESULT = Instruction.ldn(address); :}
-    | STO NUMBER:address                                {: RESULT = Instruction.sto(address); :}
-    | SUB NUMBER:address                                {: RESULT = Instruction.sub(address); :}
-    | CMP                                               {: RESULT = Instruction.cmp(); :}
-    | STP                                               {: RESULT = Instruction.stp(); :}
-    | error
-    ;
-
-Comment ::= TCOMMENT
-    | /* no comment*/
-    ;
+include::../../../plugins/compilers/as-ssem/src/main/cup/parser.cup[]
 ----
 
 More-less it is possible to recognize grammar which was defined in section <<GRAMMAR, Grammar for parser>>. The right
@@ -906,71 +455,7 @@ implemented right away for testing the parser:
 [source,java]
 .`src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java`
 ----
-package net.sf.emustudio.ssem.assembler;
-
-import java_cup.runtime.ComplexSymbolFactory;
-import net.sf.emustudio.ssem.assembler.tree.Instruction;
-import net.sf.emustudio.ssem.assembler.tree.Program;
-import org.junit.Test;
-
-import java.io.StringReader;
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.LinkedList;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-public class ParserTest {
-
-    private ParserImpl program(String program) {
-        return new ParserImpl(new LexerImpl(new StringReader(program)), new ComplexSymbolFactory());
-    }
-
-    @Test
-    public void testInstructions() throws Exception {
-        ParserImpl parser = program(
-            "cmp // comment\n" +
-            "stp\n" +
-            "jmp 22\n" +
-            "jrp 0\n" +
-            "ldn 31\n" +
-            "sto 10\n" +
-            "sub 15\n"
-        );
-
-        Program program = (Program) parser.parse().value;
-        assertFalse(parser.hasSyntaxErrors());
-
-        Deque<Instruction> expectedInstructions = new LinkedList<>(Arrays.asList(
-            Instruction.cmp(),
-            Instruction.stp(),
-            Instruction.jmp((byte)22),
-            Instruction.jrp((byte)0),
-            Instruction.ldn((byte)31),
-            Instruction.sto((byte)10),
-            Instruction.sub((byte)15)
-        ));
-        program.accept(instruction -> assertEquals(expectedInstructions.removeLast(), instruction));
-    }
-
-
-    @Test(expected = Exception.class)
-    public void testInstructionWithoutEOL() throws Exception {
-        ParserImpl parser = program("jmp 1");
-
-        parser.parse();
-    }
-
-    @Test
-    public void testInstructionWithoutProperArgument() throws Exception {
-        ParserImpl parser = program("jmp ffff\n");
-
-        parser.parse();
-        assertTrue(parser.hasSyntaxErrors());
-    }
-}
+include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java[]
 ----
 
 == Generating code
@@ -994,14 +479,7 @@ only `Instruction` node is worth of something. So the visitor interface will loo
 [source, java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java`
 ----
-package net.sf.emustudio.ssem.assembler.tree;
-
-@FunctionalInterface
-public interface ASTvisitor {
-
-    void visit(Instruction instruction) throws Exception;
-
-}
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java[]
 ----
 
 Now, we can implement a code generator, which will be a visitor. For each encountered instruction it will generate
@@ -1014,18 +492,7 @@ method for traversing:
 [source, java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java`
 ----
-package net.sf.emustudio.ssem.assembler.tree;
-
-import net.sf.emustudio.ssem.assembler.CodeGenerator;
-import net.sf.emustudio.ssem.assembler.CompileException;
-
-import java.io.IOException;
-
-public interface ASTnode {
-
-    void accept(ASTvisitor visitor) throws Exception;
-
-}
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java[]
 ----
 
 This interface will be implemented by AST nodes. The weird `accept()` method implements the traversing. So it in fact
@@ -1036,17 +503,7 @@ children nodes. So, let's modify our AST nodes:
 [source, java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java`
 ----
-public class Program implements ASTnode {
-
-    ....
-
-    @Override
-    public void accept(ASTvisitor visitor) throws Exception {
-        for (Instruction instruction : instructions) {
-            instruction.accept(visitor);
-        }
-    }
-}
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java[]
 ----
 
 
@@ -1058,8 +515,8 @@ public class Instruction implements ASTnode {
     ....
 
     @Override
-    public void accept(CodeGenerator codeGenerator) throws CompileException, IOException {
-         codeGenerator.generate(this);
+    public void accept(ASTvisitor visitor) throws Exception {
+         visitor.visit(this);
     }
 }
 ----
@@ -1071,58 +528,7 @@ than specific objects, e.g. files. This code generator will be implemented in a 
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java`
 ----
-package net.sf.emustudio.ssem.assembler;
-
-import net.sf.emustudio.ssem.assembler.tree.ASTvisitor;
-import net.sf.emustudio.ssem.assembler.tree.Instruction;
-
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Objects;
-
-public class CodeGenerator implements ASTvisitor, AutoCloseable {
-    private final DataOutputStream writer;
-
-    public CodeGenerator(OutputStream writer) {
-        this.writer= new DataOutputStream(Objects.requireNonNull(writer));
-    }
-
-    @Override
-    public void visit(Instruction instruction) throws CompileException, IOException {
-        byte address = instruction.getOperand().orElse((byte)0);
-
-        if (address < 0 || address > 31) {
-            throw new CompileException("Operand must be between <0, 31>; it was " + address);
-        }
-
-        // Instruction has 32 bits, i.e. 4 bytes
-
-        int addressSSEM = (((address >> 4) & 1)
-            | ((address >> 3) & 1)
-            | ((address >> 2) & 1)
-            | ((address >> 1) & 1)
-            | (address & 1)) << 3;
-
-        writer.writeByte(addressSSEM); // address + 3 empty bits
-
-        // next: 5 empty bits + 3 bit instruction
-        int opcode = instruction.getOpcode();
-        int opcodeSSEM =((opcode >> 2) & 1)
-            | ((opcode >> 1) & 1)
-            | (opcode & 1);
-
-        writer.writeByte(opcodeSSEM);
-
-        // 16 empty bits
-        writer.write(new byte[2]);
-    }
-
-    @Override
-    public void close() throws Exception {
-        writer.close();
-    }
-}
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java[]
 ----
 
 What it does is basically creating a 4-byte SSEM instruction, its binary format. As was mentioned before, SSEM uses
@@ -1137,83 +543,7 @@ As being our practice, we must test it.
 [source,java]
 .`src/test/java/net/sf/emustudio/ssem/assembler/CodeGeneratorTest.java`
 ----
-package net.sf.emustudio.ssem.assembler;
-
-import net.sf.emustudio.ssem.assembler.tree.Instruction;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.io.ByteArrayOutputStream;
-
-import static org.junit.Assert.assertArrayEquals;
-
-public class CodeGeneratorTest {
-
-    private ByteArrayOutputStream out;
-    private CodeGenerator codeGenerator;
-
-    @Before
-    public void setUp() throws Exception {
-        out = new ByteArrayOutputStream(32);
-        codeGenerator = new CodeGenerator(out);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        codeGenerator.close();
-    }
-
-    @Test
-    public void testCMP() throws Exception {
-        codeGenerator.visit(Instruction.cmp());
-
-        assertArrayEquals(new byte[] {0,Instruction.CMP,0,0}, out.toByteArray());
-    }
-
-    @Test
-    public void testSTP() throws Exception {
-        codeGenerator.visit(Instruction.stp());
-
-        assertArrayEquals(new byte[] {0,Instruction.STP,0,0}, out.toByteArray());
-    }
-
-    @Test
-    public void testJMP() throws Exception {
-        codeGenerator.visit(Instruction.jmp((byte)6));
-
-        assertArrayEquals(new byte[] {0x60,Instruction.JMP,0,0}, out.toByteArray());
-    }
-
-    @Test
-    public void testJRP() throws Exception {
-        codeGenerator.visit(Instruction.jrp((byte)23));
-
-        assertArrayEquals(new byte[] {(byte)0xE8,Instruction.JRP,0,0}, out.toByteArray());
-    }
-
-    @Test
-    public void testLDN() throws Exception {
-        codeGenerator.visit(Instruction.ldn((byte)12));
-
-        assertArrayEquals(new byte[] {(byte)0x30,Instruction.LDN,0,0}, out.toByteArray());
-    }
-
-    @Test
-    public void testSTO() throws Exception {
-        codeGenerator.visit(Instruction.sto((byte)30));
-
-        assertArrayEquals(new byte[] {(byte)0x78,Instruction.STO,0,0}, out.toByteArray());
-    }
-
-    @Test
-    public void testSUB() throws Exception {
-        codeGenerator.visit(Instruction.sub((byte)18));
-
-        assertArrayEquals(new byte[] {(byte)0x48,Instruction.SUB,0,0}, out.toByteArray());
-    }
-
-}
+include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/CodeGeneratorTest.java[]
 ----
 
 == Finalizing, implementing the rest

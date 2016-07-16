@@ -25,8 +25,6 @@ import emulib.emustudio.SettingsManager;
 import emulib.plugins.device.AbstractDevice;
 import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
-import emulib.runtime.exceptions.ContextNotFoundException;
-import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.intel8080.api.ExtendedContext;
 import net.sf.emustudio.memory.standard.StandardMemoryContext;
@@ -60,22 +58,13 @@ public class SIMHpseudo extends AbstractDevice {
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
-        try {
-            cpu = (ExtendedContext)contextPool.getCPUContext(pluginID, ExtendedContext.class);
-        } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException(this, "Could not get CPU context", e);
-        }
-
-        try {
-            mem = (StandardMemoryContext) contextPool.getMemoryContext(pluginID, StandardMemoryContext.class);
-        } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException(this, "Could not get memory context", e);
-        }
+        cpu = contextPool.getCPUContext(pluginID, ExtendedContext.class);
+        mem = contextPool.getMemoryContext(pluginID, StandardMemoryContext.class);
 
         context.setMemory(mem);
 
         // attach IO port
-        if (this.cpu.attachDevice(context, 0xFE) == false) {
+        if (!this.cpu.attachDevice(context, 0xFE)) {
             throw new PluginInitializationException(
                     this, "SIMH device can't be attached to CPU (maybe there is a hardware conflict)"
             );

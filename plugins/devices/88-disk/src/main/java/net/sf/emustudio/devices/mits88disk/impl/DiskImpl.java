@@ -26,8 +26,6 @@ import emulib.plugins.device.AbstractDevice;
 import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
-import emulib.runtime.exceptions.ContextNotFoundException;
-import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.devices.mits88disk.cpmfs.CpmDirectory;
 import net.sf.emustudio.devices.mits88disk.cpmfs.RawDisc;
@@ -139,12 +137,7 @@ public class DiskImpl extends AbstractDevice {
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         this.settings = Objects.requireNonNull(settings);
-
-        try {
-            cpuContext = (ExtendedContext) contextPool.getCPUContext(pluginID, ExtendedContext.class);
-        } catch (InvalidContextException | ContextNotFoundException e) {
-            throw new PluginInitializationException(this, ": Cannot connect to the CPU", e);
-        }
+        cpuContext = contextPool.getCPUContext(pluginID, ExtendedContext.class);
 
         readSettings();
         // attach device to CPU

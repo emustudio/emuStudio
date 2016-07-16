@@ -27,7 +27,6 @@ import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
-import emulib.runtime.exceptions.ContextNotFoundException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
@@ -84,15 +83,15 @@ public class BrainTerminal extends AbstractDevice {
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
+        cpu = contextPool.getCPUContext(pluginID, BrainCPUContext.class);
+
+        String s = settings.readSetting(pluginID, SettingsManager.NO_GUI);
+        nogui = (s != null) && s.toUpperCase().equals("TRUE");
+
+        InputProvider inputProvider;
+        OutputProvider outputProvider;
 
         try {
-            // read settings
-            String s = settings.readSetting(pluginID, SettingsManager.NO_GUI);
-            nogui = (s != null) && s.toUpperCase().equals("TRUE");
-
-            InputProvider inputProvider;
-            OutputProvider outputProvider;
-
             if (nogui) {
                 FileIOProvider fileIOProvider = new FileIOProvider();
                 inputProvider = fileIOProvider;
@@ -105,14 +104,9 @@ public class BrainTerminal extends AbstractDevice {
             terminal.setInputProvider(inputProvider);
             terminal.setOutputProvider(outputProvider);
 
-            cpu = (BrainCPUContext) contextPool.getCPUContext(pluginID, BrainCPUContext.class);
             cpu.attachDevice(terminal);
         } catch (IOException e) {
             throw new PluginInitializationException(this, e);
-        } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException(
-                    this, "BrainTerminal needs to be connected to the BrainCPU.", e
-            );
         }
     }
 

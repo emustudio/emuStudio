@@ -32,7 +32,6 @@ import emulib.plugins.cpu.Disassembler;
 import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
-import emulib.runtime.exceptions.ContextNotFoundException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
@@ -94,12 +93,7 @@ public class EmulatorImpl extends AbstractCPU {
 
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
-        try {
-            memory = contextPool.getMemoryContext(getPluginID(), RAMMemoryContext.class);
-        } catch (ContextNotFoundException | InvalidContextException e) {
-            // Will be processed later on
-            throw new PluginInitializationException(this, "Could not get memory context", e);
-        }
+        memory = contextPool.getMemoryContext(getPluginID(), RAMMemoryContext.class);
 
         if (memory.getDataType() != RAMInstruction.class) {
             throw new PluginInitializationException(

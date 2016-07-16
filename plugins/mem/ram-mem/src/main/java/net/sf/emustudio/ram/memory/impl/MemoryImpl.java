@@ -21,14 +21,12 @@ package net.sf.emustudio.ram.memory.impl;
 
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
-import emulib.emustudio.SettingsManager;
 import emulib.plugins.memory.AbstractMemory;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.InvalidContextException;
-import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;
 import net.sf.emustudio.ram.memory.gui.MemoryWindow;
 
@@ -70,11 +68,6 @@ public class MemoryImpl extends AbstractMemory {
         } catch (MissingResourceException e) {
             return "(unknown)";
         }
-    }
-
-    @Override
-    public void initialize(SettingsManager settings) throws PluginInitializationException {
-        super.initialize(settings);
     }
 
     @Override

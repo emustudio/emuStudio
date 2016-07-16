@@ -27,7 +27,6 @@ import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
-import emulib.runtime.exceptions.ContextNotFoundException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.devices.mits88sio.gui.ConfigDialog;
@@ -96,25 +95,17 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
+        cpu = contextPool.getCPUContext(pluginID, ExtendedContext.class);
+
         sioSettings.setSettingsManager(settings);
         sioSettings.addChangedObserver(this);
 
-        try {
-            cpu = (ExtendedContext) contextPool.getCPUContext(pluginID, ExtendedContext.class);
-        } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException(this, ": Could not get CPU", e);
-        }
-
         // get a device attached to this board
-        try {
-            DeviceContext device = contextPool.getDeviceContext(pluginID, DeviceContext.class);
-            if (device != null) {
-                transmitter.setDevice(device);
-            } else {
-                LOGGER.warn("No device is connected into the 88-SIO.");
-            }
-        } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException(this, ": Could not get connected device", e);
+        DeviceContext device = contextPool.getDeviceContext(pluginID, DeviceContext.class);
+        if (device != null) {
+            transmitter.setDevice(device);
+        } else {
+            LOGGER.warn("No device is connected into the 88-SIO.");
         }
         sioSettings.read();
     }

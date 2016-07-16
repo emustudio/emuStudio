@@ -28,7 +28,6 @@ import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
-import emulib.runtime.exceptions.ContextNotFoundException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.braincpu.gui.DecoderImpl;
@@ -100,19 +99,15 @@ public class EmulatorImpl extends AbstractCPU {
     
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
-        try {
-            memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
+        memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
 
-            if (memory.getDataType() != Short.class) {
-                throw new PluginInitializationException(
-                        this, "Selected operating memory is not supported."
-                );
-            }
-            memorySize = memory.getSize();
-            disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
-        } catch (InvalidContextException | ContextNotFoundException e) {
-            throw new PluginInitializationException(this, "Could not get memory context", e);
+        if (memory.getDataType() != Short.class) {
+            throw new PluginInitializationException(
+                    this, "Selected operating memory is not supported."
+            );
         }
+        memorySize = memory.getSize();
+        disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
     }
 
     @Override

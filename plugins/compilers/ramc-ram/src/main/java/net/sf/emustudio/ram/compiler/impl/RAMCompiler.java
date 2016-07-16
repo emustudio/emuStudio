@@ -28,7 +28,6 @@ import emulib.plugins.compiler.SourceFileExtension;
 import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
-import emulib.runtime.exceptions.ContextNotFoundException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.ram.compiler.tree.Program;
@@ -67,7 +66,7 @@ public class RAMCompiler extends AbstractCompiler {
         this.contextPool = Objects.requireNonNull(contextPool);
 
         // lexer has to be reset WITH a reader object before compile
-        lexer = new LexerImpl((Reader) null);
+        lexer = new LexerImpl(null);
         parser = new ParserImpl(lexer);
         RAMInstructionImpl context = new RAMInstructionImpl(0, null);
         try {
@@ -90,11 +89,7 @@ public class RAMCompiler extends AbstractCompiler {
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         super.initialize(settings);
-        try {
-            memory = (RAMMemoryContext) contextPool.getMemoryContext(pluginID, RAMMemoryContext.class);
-        } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException(this, "Could not access RAM program memory", e);
-        }
+        memory = contextPool.getMemoryContext(pluginID, RAMMemoryContext.class);
     }
 
     private CompiledCode compileFrom(String inputFileName) throws Exception {

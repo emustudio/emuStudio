@@ -24,10 +24,14 @@ import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.Disassembler;
+import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.exceptions.PluginInitializationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.util.Objects;
 
 @PluginType(
     type = PLUGIN_TYPE.CPU,
@@ -37,9 +41,13 @@ import javax.swing.*;
 )
 @SuppressWarnings("unused")
 public class CpuImpl extends AbstractCPU {
+    private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
+
+    private final ContextPool contextPool;
 
     public CpuImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        this.contextPool = Objects.requireNonNull(contextPool);
     }
 
     @Override
@@ -74,7 +82,7 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public void initialize(SettingsManager settingsManager) throws PluginInitializationException {
-
+        MemoryContext<Integer> memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
     }
 
     @Override

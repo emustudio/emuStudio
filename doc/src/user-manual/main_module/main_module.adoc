@@ -84,7 +84,7 @@ argument:
 
 Most of these arguments are self-explanatory. Some of them have meaning only when emulation
 automatization is turned on (`--nogui`). For more information, please refer to section
-<<XA,Automatic emulation>>.
+<<XA>>.
 
 [[XA]]
 == Automatic emulation
@@ -136,14 +136,14 @@ Usually the most important messages are those if everything went fine, and the l
 keep it that simple. The final messages just say that the automatic emulation has finished and the
 state how it finished.
 
-The log file format, and columns of the table can be of course customized, see chapter
-<<XLC, Logger configuration>> for more details.
+The log file format, and columns of the table can be of course customized, see section
+<<XLC>> for more details.
 
 [[XO]]
 == Opening a computer
 
 The first action which emuStudio does is loading a computer to be emulated. Virtual computers are
-described in abstract schemas, which are stored in configuration files (see <<XIID,Directory structure>> section).
+described in abstract schemas, which are stored in configuration files (see <<XIID>> section).
 
 Computers can be loaded either from <<XC,command line>> or manually in GUI (by default). The
 open dialog is the first thing which appears to a user.
@@ -173,7 +173,7 @@ Then using connection lines those elements can be connected together to express 
 can "see" each other).
 
 When the abstract schema is completed, user must save it and then it will appear in the
-<<XOM,Open a computer>> dialog.
+<<XOM>> dialog.
 
 image::main_module/images/schema-editor.png[Abstract schema editor]
 
@@ -193,7 +193,7 @@ image::main_module/images/schema-editor-panel.png[Control panel in the abstract 
 - *H*: Remove an element from the schema.
 - *I*: This drop-down list is used for selecting specific plug-in (element) in the abstract schema.
        See icons `B`, `C`, `D`, and `E`. Those names are just file names of plug-ins located in
-       corresponding directory (see <<XIID,Directory structure>> section).
+       corresponding directory (see <<XIID>> section).
 - *J*: Use / do not use a grid in the editor. Elements are "snapped" to the grid if it is used
        and it's easier to draw the schema which looks good. The slider on the right then controls
        density of the grid. The density is saved in the configuration file of the edited computer.
@@ -305,7 +305,7 @@ The last part on the right displays status of the CPU used in this computer. Eac
 implementation of how the status window look and what it displays.
 
 [[XMEE]]
-==== Emulation work-flow
+==== Emulation lifecycle
 
 In real world, users control the power of computer. Computers can be turned on, or turned off if it
 is running, basically by pressing a button. It's obvious that we can turn on only not running or

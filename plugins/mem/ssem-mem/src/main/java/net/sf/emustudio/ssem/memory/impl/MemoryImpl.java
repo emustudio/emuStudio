@@ -71,8 +71,6 @@ public class MemoryImpl extends AbstractMemory {
 
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
-        super.initialize(settings);
-
         if (!Boolean.parseBoolean(settings.readSetting(pluginID, SettingsManager.NO_GUI))) {
             memoryGUI = new MemoryGUI(memContext);
         }

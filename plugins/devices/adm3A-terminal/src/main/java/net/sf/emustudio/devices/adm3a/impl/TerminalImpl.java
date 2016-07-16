@@ -27,7 +27,6 @@ import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
-import emulib.runtime.exceptions.ContextNotFoundException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.devices.adm3a.InputProvider;
@@ -81,23 +80,19 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
         terminalSettings.addChangedObserver(this);
         terminalSettings.setSettingsManager(settings);
 
-        try {
-            // try to connect to a serial I/O board
-            DeviceContext device = contextPool.getDeviceContext(pluginID, DeviceContext.class);
-            if (device != null) {
-                if (device.getDataType() != Short.class) {
-                    throw new PluginInitializationException(this, "Connected device is not supported");
-                }
-                connectedDevice = device;
-            } else {
-                LOGGER.warn("The terminal is not connected to any I/O device.");
+        // try to connect to a serial I/O board
+        DeviceContext device = contextPool.getDeviceContext(pluginID, DeviceContext.class);
+        if (device != null) {
+            if (device.getDataType() != Short.class) {
+                throw new PluginInitializationException(this, "Connected device is not supported");
             }
-            terminalGUI = new TerminalWindow(display);
-            display.start();
-            terminalSettings.read();
-        } catch (ContextNotFoundException | InvalidContextException e) {
-            throw new PluginInitializationException(this, ": Could not get serial I/O board Context", e);
+            connectedDevice = device;
+        } else {
+            LOGGER.warn("The terminal is not connected to any I/O device.");
         }
+        terminalGUI = new TerminalWindow(display);
+        display.start();
+        terminalSettings.read();
     }
 
     @Override

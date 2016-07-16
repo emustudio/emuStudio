@@ -14,7 +14,9 @@ fi
 
 set -e
 
+cd release && mvn clean install -P release && cd ..
+
 
 vagrant provision
-vagrant ssh -c "cd /home/vagrant && java -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dsun.java2d.xrender=true -jar emuStudio.jar"  -- -X
+vagrant ssh -c "cd /home/vagrant && java -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dsun.java2d.xrender=true -Dsun.java2d.dpiaware=false -jar emuStudio.jar"  -- -X
 
