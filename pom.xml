@@ -73,6 +73,8 @@
     <module>plugins/compilers/as-ssem</module>
     <module>plugins/mem/ssem-mem</module>
     <module>plugins/cpu/ssem-cpu</module>
+    <module>plugins/compilers/raspc-rasp</module>
+    <module>plugins/mem/rasp-mem</module>
   </modules>
 
   <build>

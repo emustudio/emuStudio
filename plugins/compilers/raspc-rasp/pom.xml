@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>net.sf.emustudio</groupId>
+        <artifactId>emustudio-parent</artifactId>
+        <version>0.39-SNAPSHOT</version>
+        <relativePath>../../../pom.xml</relativePath>
+    </parent>
+    <artifactId>raspc-rasp</artifactId>
+    
+    <name>RASP Compiler</name>
+    <description>Compiler for Random Access Stored Program machine emulator</description>
+    <packaging>jar</packaging>
+    
+    <build>
+        <finalName>raspc-rasp</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addclasspath>false</addclasspath>
+                            <mainclass>net.sf.emustudio.rasp.compiler.CompilerImpl</mainclass>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Class-Path>lib/java-cup-runtime-11b.jar</Class-Path>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>de.jflex</groupId>
+                <artifactId>jflex-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.github.vbmacher</groupId>
+                <artifactId>cup-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <className>ParserImpl</className>
+                    <symbolsName>Symbols</symbolsName>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.emustudio</groupId>
+            <artifactId>emuLib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.vbmacher</groupId>
+            <artifactId>java-cup-runtime</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.easymock</groupId>
+            <artifactId>easymock</artifactId>
+        </dependency>
+    </dependencies>
+</project>
