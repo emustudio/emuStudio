@@ -75,6 +75,7 @@
     <module>plugins/cpu/ssem-cpu</module>
     <module>plugins/compilers/raspc-rasp</module>
     <module>plugins/mem/rasp-mem</module>
+    <module>plugins/cpu/rasp-cpu</module>
   </modules>
 
   <build>
@@ -437,6 +438,11 @@
       <dependency>
         <groupId>net.sf.emustudio</groupId>
         <artifactId>brainduck-cpu</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.sf.emustudio</groupId>
+        <artifactId>rasp-cpu</artifactId>
         <version>${project.version}</version>
       </dependency>
 
