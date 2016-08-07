@@ -5,10 +5,10 @@
  */
 package net.sf.emustudio.rasp.compiler;
 
-import sk.tuke.emustudio.rasp.compiler.CompilerOutput;
-import sk.tuke.emustudio.rasp.compiler.tree.AbstractTreeNode;
-import sk.tuke.emustudio.rasp.memory.memoryitems.NumberMemoryItem;
-import sk.tuke.emustudio.rasp.memory.memoryitems.RASPInstructionImpl;
+import net.sf.emustudio.rasp.compiler.CompilerOutput;
+import net.sf.emustudio.rasp.compiler.tree.AbstractTreeNode;
+import net.sf.emustudio.rasp.memory.memoryitems.NumberMemoryItem;
+import net.sf.emustudio.rasp.memory.memoryitems.RASPInstructionImpl;
 
 /**
  *

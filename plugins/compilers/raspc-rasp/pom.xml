@@ -26,13 +26,13 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <addclasspath>false</addclasspath>
-                            <mainclass>net.sf.emustudio.rasp.compiler.CompilerImpl</mainclass>
+                            <addClasspath>false</addClasspath>
+                            <mainClass>net.sf.emustudio.rasp.compiler.CompilerImpl</mainClass>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                         </manifest>
                         <manifestEntries>
-                            <Class-Path>lib/java-cup-runtime-11b.jar</Class-Path>
+                            <Class-Path>mem/rasp-mem.jar lib/java-cup-runtime-11b.jar</Class-Path>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -78,6 +78,10 @@
         <dependency>
             <groupId>net.sf.emustudio</groupId>
             <artifactId>emuLib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.emustudio</groupId>
+            <artifactId>rasp-mem</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.vbmacher</groupId>

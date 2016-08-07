@@ -1,4 +1,4 @@
-package sk.tuke.emustudio.rasp.compiler;
+package net.sf.emustudio.rasp.compiler;
 
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.Token;

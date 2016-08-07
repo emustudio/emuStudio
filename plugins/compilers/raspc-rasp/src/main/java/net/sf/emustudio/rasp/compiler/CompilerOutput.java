@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import sk.tuke.emustudio.rasp.compiler.tree.Label;
-import sk.tuke.emustudio.rasp.memory.memoryitems.MemoryItem;
-import sk.tuke.emustudio.rasp.memory.RASPMemoryContext;
+import net.sf.emustudio.rasp.compiler.tree.Label;
+import net.sf.emustudio.rasp.memory.memoryitems.MemoryItem;
+import net.sf.emustudio.rasp.memory.RASPMemoryContext;
 
 /**
  *

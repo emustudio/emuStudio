@@ -358,6 +358,11 @@
         <artifactId>as-ssem</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>raspc-rasp</artifactId>
+          <version>${project.version}</version>
+      </dependency>
 
       <!-- devices -->
       <dependency>
@@ -406,6 +411,11 @@
         <groupId>net.sf.emustudio</groupId>
         <artifactId>brainduck-mem</artifactId>
         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>rasp-mem</artifactId>
+          <version>${project.version}</version>
       </dependency>
 
       <!-- cpus -->
