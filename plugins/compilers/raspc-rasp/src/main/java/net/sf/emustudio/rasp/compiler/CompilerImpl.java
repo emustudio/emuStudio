@@ -7,10 +7,12 @@ package net.sf.emustudio.rasp.compiler;
 
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
+import emulib.emustudio.SettingsManager;
 import emulib.plugins.compiler.AbstractCompiler;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
 import emulib.runtime.ContextPool;
+import emulib.runtime.exceptions.PluginInitializationException;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
@@ -30,7 +32,7 @@ import net.sf.emustudio.rasp.memory.RASPMemoryContext;
 @PluginType(
         type = PLUGIN_TYPE.COMPILER,
         title = "RASP Assembler",
-        copyright = "\u00A9 Copyright 2016, Michal Sipos",
+        copyright = "\u00A9 Copyright 2016, Michal Šipoš",
         description = "Assembler of RASP machine language"
 )
 public class CompilerImpl extends AbstractCompiler {
@@ -39,9 +41,24 @@ public class CompilerImpl extends AbstractCompiler {
     private static final SourceFileExtension[] SOURCE_FILE_EXTENSIONS = new SourceFileExtension[]{new SourceFileExtension("rasp", "RASP source file")};
     private static final String OUTPUT_FILE_EXTENSION = "bin";
 
+    private RASPMemoryContext memory;
+    private final ParserImpl parser;
+    private final LexerImpl lexer;
+
     public CompilerImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
+        
         this.contextPool = Objects.requireNonNull(contextPool);
+
+        //compiler will be reset before compilation
+        lexer = new LexerImpl(null);
+        parser = new ParserImpl(lexer, new ComplexSymbolFactory(), this);
+    }
+
+    @Override
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
+        super.initialize(settings);
+        memory = (RASPMemoryContext) contextPool.getMemoryContext(pluginID, RASPMemoryContext.class);
     }
 
     private boolean fileEndsWithNewLine(String fileName) throws IOException {
@@ -49,10 +66,7 @@ public class CompilerImpl extends AbstractCompiler {
             long lastCharPosition = file.length() - 1;
             file.seek(lastCharPosition);
             byte b = file.readByte();
-            if (b == 0xA || b == 0xD) {
-                return true;
-            }
-            return false;
+            return b == 0xA || b == 0xD;
         }
     }
 
@@ -72,11 +86,9 @@ public class CompilerImpl extends AbstractCompiler {
 
         int errorCode = 0;
         try (Reader reader = new FileReader(inputFileName)) {
+            lexer.reset(reader, 0, 0, 0);
             //ensure that file ends with a new line
             appendNewLine(inputFileName);
-            RASPMemoryContext memory = (RASPMemoryContext) contextPool.getMemoryContext(pluginID, RASPMemoryContext.class);
-            LexerImpl lexer = new LexerImpl(reader);
-            ParserImpl parser = new ParserImpl(lexer, new ComplexSymbolFactory(), this);
             SourceCode sourceCode = (SourceCode) parser.parse().value;
             if (sourceCode == null) {
                 throw new Exception("Unexpected end of file.");
@@ -107,7 +119,7 @@ public class CompilerImpl extends AbstractCompiler {
         return true;
 
     }
-
+    
     @Override
     public boolean compile(String inputFileName) {
         String outputFileName = Objects.requireNonNull(inputFileName);

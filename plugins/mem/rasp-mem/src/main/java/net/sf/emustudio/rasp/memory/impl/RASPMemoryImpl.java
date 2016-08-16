@@ -15,8 +15,8 @@ import net.sf.emustudio.rasp.memory.gui.MemoryWindow;
 @PluginType(
         type = PLUGIN_TYPE.MEMORY,
         title = "RASP Memory",
-        description = "RASP memory containing program as well as data",
-        copyright = ""
+        description = "RASP memory containing the program as well as the data",
+        copyright = "\u00A9 Copyright 2016, Michal Šipoš"
 )
 
 /**

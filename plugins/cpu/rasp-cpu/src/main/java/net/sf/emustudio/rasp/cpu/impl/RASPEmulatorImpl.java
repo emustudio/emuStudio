@@ -37,7 +37,7 @@ import net.sf.emustudio.rasp.memory.RASPMemoryContext;
 @PluginType(
         type = PLUGIN_TYPE.CPU,
         title = "Random access stored program (RASP)",
-        copyright = "",
+        copyright = "\u00A9 Copyright 2016, Michal Šipoš",
         description = "CPU emulator for abstract RASP machine"
 )
 /**
