@@ -133,5 +133,14 @@
       </includes>
       <outputDirectory>/examples/ramc-ram</outputDirectory>
     </fileSet>
+    <fileSet>
+        <directory>../plugins/compilers/raspc-rasp/examples</directory>
+        <includes>
+            <include>**/*.rasp</include>
+            <include>**/*.ram</include>
+            <include>**/*.txt</include>
+        </includes>
+        <outputDirectory>/examples/raspc-rasp</outputDirectory>
+    </fileSet>
   </fileSets>
 </assembly>

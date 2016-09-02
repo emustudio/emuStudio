@@ -1,0 +1,411 @@
+;===============registre stroja RAM (kazdy register Ri stroja RASP - ulozeny v Ri+3 stroja RAM)====
+
+;	------------------------------------------
+;	 R0	| RAM akumulator		
+;	------------------------------------------
+;	 R1	| reg. na nepriame adresovanie	
+;	------------------------------------------
+;	 R2	| PC pre program RASP	
+;	------------------------------------------
+;	 R3	| RASP akumulator		
+;	------------------------------------------
+;	 R4	| zaciatok RASP programu	    
+;	------------------------------------------     
+;	 R5	| 			
+;	------------------------------------------
+;	 ...	|			
+;	------------------------------------------
+;	 ...	|			
+;	------------------------------------------
+;	 Rn	| zaciatok dat	
+;	------------------------------------------
+;	 ...	|			
+;	------------------------------------------
+
+
+;===============kody instrukcii stroja RASP:==========================================================
+;READ i 	- 1
+;WRITE =i	- 2
+;WRITE i	- 3
+;LOAD =i	- 4
+;LOAD i	- 5
+;STORE i 	- 6
+;ADD =i	- 7
+;ADD i	- 8
+;SUB =i	- 9
+;SUB i 	- 10
+;MUL =i	- 11
+;MUL i	- 12
+;DIV =i	- 13
+;DIV i	- 14
+;JMP 	- 15
+;JZ	- 16
+;JGTZ	- 17
+;HALT	- 18
+
+;==============nacitanie programu RASP zo vstupnej pasky==============================================
+ 
+  LOAD =4
+  STORE 1  	;v R1 je smernik pre zapis nasledujucej instrukcie resp. operandu z pasky
+vstup: 
+  READ  2   	;nacita vstup z pasky do R2
+  LOAD  2
+  SUB  =-1 
+  JZ   inicializacia	;je vstup rovny -1? ak ano skoc na inicializaciu
+  LOAD 2
+  STORE *1 	;ak nie, uloz
+  LOAD 1
+  ADD =1		
+  STORE 1		;zvys smernik
+  JMP vstup	;dalsi vstup
+
+;===============inicializacia registrov================================================================
+inicializacia:
+;R1=0
+  LOAD =0
+  STORE 1
+;R2=4 - smernik na zaciatok programu RASP
+  LOAD =4
+  STORE 2
+;R3=0
+  LOAD =0
+  STORE 3
+;================simulacna slucka - simulacia RASP v pamati RAM========================================
+zaciatok:
+  LOAD *2 			;nacitanie instrukcie stroja RASP z pamate stroja RAM
+  STORE 1 			;ulozenie instrukcie do R1 
+  SUB = 1  
+  JZ readRegInstr		;ak je instrukcia READ, skoc na "readRegister"
+  LOAD 1			;ak nie, nacitaj instrukciu znovu, je v R1 
+  SUB =2
+  JZ  writeConstInstr	;pokracuj test pre dalsie instrukcie...
+  LOAD 1
+  SUB =3
+  JZ writeRegInstr
+  LOAD 1
+  SUB =4
+  JZ loadConstInstr
+  LOAD 1
+  SUB =5
+  JZ loadRegInstr
+  LOAD 1
+  SUB =6
+  JZ storeRegInstr
+  LOAD 1
+  SUB =7
+  JZ addConstInstr
+  LOAD 1
+  SUB =8
+  JZ addRegInstr
+  LOAD 1
+  SUB =9
+  JZ subConstInstr
+  LOAD 1
+  SUB =10
+  JZ subRegInstr
+  LOAD 1
+  SUB =11
+  JZ mulConstInstr
+  LOAD 1
+  SUB =12
+  JZ mulRegInstr
+  LOAD 1
+  SUB =13
+  JZ divConstInstr
+  LOAD 1
+  SUB =14
+  JZ divRegInstr
+  LOAD 1
+  SUB =15
+  JZ jmpInstr
+  LOAD 1
+  SUB =16
+  JZ jzInstr
+  LOAD 1
+  SUB =17
+  JZ jgtzInstr
+  LOAD 1
+  SUB =18
+  JZ haltInstr
+
+;==========simulacie jednotlivych instrukcii stroja RASP================================
+readRegInstr:
+  LOAD 2	
+  ADD =1
+  STORE 2		;inkrementacia PC na adresu operandu instrukcie
+
+  LOAD *2	
+  ADD =3
+  STORE 1		;uprava adresy operandu i+3, vid vysvetl. na riadku 1
+
+  READ *1		;realizacia READ
+
+  LOAD 2
+  ADD =1
+  STORE 2		;inkrementovanie PC
+  JMP zaciatok	;opakuj simulacnu slucku
+writeConstInstr:
+  LOAD 2	
+  ADD =1
+  STORE 2
+ 
+  LOAD *2	
+  STORE 1	
+ 
+  WRITE 1
+ 
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP zaciatok
+writeRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD *2
+  ADD =3
+  STORE 1
+  
+  WRITE *1
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP zaciatok 
+loadConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD *2
+  STORE 1
+    
+  LOAD 1		;nacitaj konstantu
+  STORE 3 		;uloz do registra 3 = RASP akumulator
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP zaciatok
+loadRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD *2
+  ADD =3
+  STORE 1
+
+  LOAD *1
+  STORE 3
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP zaciatok
+storeRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD *2
+  ADD =3
+  STORE 1
+  
+  LOAD 3
+  STORE *1
+
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP zaciatok
+addConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD *2
+  STORE 1
+ 
+  LOAD 3
+  ADD 1
+  STORE 3
+
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP zaciatok
+addRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD *2
+  ADD =3
+  STORE 1
+
+  LOAD 3
+  ADD *1
+  STORE 3
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP zaciatok
+subConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2		;inkrementacia PC na adresu operandu instrukcie  
+ 
+  LOAD *2
+  STORE 1		;nacitanie operandu (operand je konstanta)  
+ 
+  LOAD 3		;nacitanie hodnoty z akumulatora RASP
+  SUB 1		;odpocitanie hodnoty v R1 (realizacia SUB =i s RASP akumulatorom)
+  STORE 3		;ulozenie vysledku do RASP akumulatora  
+ 
+  LOAD 2
+  ADD =1
+  STORE 2		;inkrementovanie PC
+  JMP zaciatok	;opakuj simulacnu slucku
+subRegInstr: 
+  LOAD 2
+  ADD =1
+  STORE 2		;inkrementacia PC na adresu operandu instrukcie 
+ 
+  LOAD *2 
+  ADD =3  
+  STORE 1 		;uprava adresy operandu i+3, vid vysvetl. na riadku 1
+  
+  LOAD 3		;nacitanie hodnoty z akumulatora RASP
+  SUB *1		;odpocitanie hodnoty registra, ktoreho adresa je v R1 (realizacia SUB i s RASP akumulatorom)
+  STORE 3		;ulozenie vysledku do RASP akumulatora
+
+  LOAD 2
+  ADD =1
+  STORE 2 		;inkrementovanie PC
+  JMP zaciatok 	;opakuj simulacnu slucku
+mulConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD *2
+  STORE 1
+ 
+  LOAD 3
+  MUL 1
+  STORE 3
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP zaciatok
+mulRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD *2
+  ADD =3
+  STORE 1
+
+  LOAD 3
+  MUL *1
+  STORE 3
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP zaciatok
+divConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD *2
+  STORE 1
+ 
+  LOAD 3
+  DIV 1
+  STORE 3
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP zaciatok
+divRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD *2
+  ADD =3
+  STORE 1
+
+  LOAD 3
+  DIV *1
+  STORE 3
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP zaciatok
+jmpInstr:
+  LOAD 2
+  ADD =1
+  STORE 2 ;	;inkrementacia PC na adresu operandu instrukcie
+  
+  LOAD *2
+  ADD =3
+  STORE 1		;uprava adresy operandu i+3, vid vysvetl. na riadku 1
+
+  LOAD 1 		;nacitanie operandu (adresa skoku)
+  STORE 2 		;nastavenie PC stroja RASP na adresu skoku
+  
+  JMP zaciatok	;opakuj simulacnu slucku
+jzInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD *2
+  ADD =3
+  STORE 1
+
+  LOAD 3
+  JZ isZero	;ak je RASP akumulator 0, skok
+   
+  LOAD 2		;inak, inkrementuj PC
+  ADD =1
+  STORE 2
+  JMP zaciatok
+
+ isZero:
+   LOAD 1
+   STORE 2
+   JMP zaciatok
+jgtzInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD *2
+  ADD =3
+  STORE 1
+
+  LOAD 3
+  JZ isGTZero
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP zaciatok
+
+  isGTZero:
+    LOAD 1
+    STORE 2
+    JMP zaciatok
+haltInstr:
+  HALT

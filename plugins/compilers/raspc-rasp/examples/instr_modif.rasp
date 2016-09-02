@@ -1,0 +1,18 @@
+org 5
+
+;Program ilustruje modifikacu operacneho kodu instrukcie.
+
+;priprava operandov 32 a 30
+LOAD =32
+STORE 1
+LOAD =30
+STORE 2
+;8 je operacny kod instrukcie ADD_REGISTER, teda ADD i
+LOAD =8
+;kod 8 je ulozeny na adresu 19, teda na adresu, kde bola povodne ulozena instrukcia SUB (riadok 13)
+STORE 19
+;operand 32 je nacitany
+LOAD 1
+;instrukcia SUB je uz zmenena na ADD, teda dojde k pripocitaniu cisla 30
+SUB 2
+HALT

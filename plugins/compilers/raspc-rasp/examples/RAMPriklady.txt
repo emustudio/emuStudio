@@ -1,0 +1,49 @@
+;program načíta dve čísla a, b zo vstupu, vydelí a/b, pričom pred delením vykoná kontrolu,
+;či b je rôzne od nuly (prevencia delenia nulou) 
+
+READ 1
+READ 2
+LOAD 2 
+JZ zero 
+LOAD 1 
+DIV 2
+STORE 1
+WRITE 1
+JMP koniec
+zero:
+  WRITE =0
+koniec:
+  HALT
+
+Kód programu:
+	1, 1, 1, 2, 5, 2, 16, 18, 5, 1, 14, 2, 6, 1, 3, 1, 15, 20, 2, 0, 18
+
+Výstup:
+	podiel a/b
+
+;program odčíta dve konštanty (nepriame adresovanie)
+
+LOAD =20
+STORE 1
+LOAD =16
+STORE 2
+LOAD =2
+STORE 3
+LOAD 1
+SUB *3
+STORE 1
+WRITE 1
+HALT
+
+Kód programu:
+	4, 20, 6, 1, 4, 16, 6, 2, 4, 2, 6, 3, 5, 1, 24, 3, 6, 1, 3, 1, 18
+Výstup:
+	4
+
+
+
+
+
+
+
+

@@ -1,0 +1,30 @@
+org 5
+
+;Program nacita cislo zo vstupnej pasky, vypocita jeho faktorial a vypise vysledok
+;na vystupnu pasku.
+
+;ulozi konstantu 1 do registrov R2 a R3
+load =1
+store 2 
+store 3
+;precita zo vstupnej pasky cislo
+read 1
+;ak je cislo vacsie ako 0, skoc na "ok", inak skoc na "finish"
+load 1
+jgtz ok
+jmp finish
+;slucka pre vypocet faktorialu
+ok: 
+load 3
+sub 1
+jz finish
+load 3
+add =1
+store 3
+mul 2
+store 2
+jmp ok
+;vypis vysledku
+finish: 
+write 2
+halt

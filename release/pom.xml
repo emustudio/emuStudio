@@ -71,6 +71,10 @@
           <groupId>net.sf.emustudio</groupId>
           <artifactId>as-ssem</artifactId>
         </dependency>
+        <dependency>
+            <groupId>net.sf.emustudio</groupId>
+            <artifactId>raspc-rasp</artifactId>
+        </dependency>
 
         <!-- devices -->
         <dependency>
@@ -111,6 +115,10 @@
           <groupId>net.sf.emustudio</groupId>
           <artifactId>brainduck-mem</artifactId>
         </dependency>
+        <dependency>
+            <groupId>net.sf.emustudio</groupId>
+            <artifactId>rasp-mem</artifactId>
+        </dependency>
 
         <!-- cpus -->
         <dependency>
@@ -128,6 +136,10 @@
         <dependency>
           <groupId>net.sf.emustudio</groupId>
           <artifactId>brainduck-cpu</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.emustudio</groupId>
+            <artifactId>rasp-cpu</artifactId>
         </dependency>
 
         <!-- emuStudio -->
