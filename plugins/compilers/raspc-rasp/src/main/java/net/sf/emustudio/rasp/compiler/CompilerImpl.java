@@ -131,8 +131,8 @@ public class CompilerImpl extends AbstractCompiler {
         } finally {
             notifyCompileFinish(errorCode);
         }
+        programStart = CompilerOutput.getInstance().getProgramStart();
         return true;
-
     }
     
     @Override
