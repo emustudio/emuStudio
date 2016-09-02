@@ -86,7 +86,7 @@ public class RASPEmulatorImpl extends AbstractCPU {
 
     @Override
     protected void resetInternal(int startPos) {
-        reset(startPos);
+        IP = startPos;
     }
 
     /**
@@ -544,12 +544,6 @@ public class RASPEmulatorImpl extends AbstractCPU {
     @Override
     public String getVersion() {
         return "";
-    }
-
-    @Override
-    public void reset(int addr) {
-        IP = addr;
-        super.reset(addr);
     }
 
 }
