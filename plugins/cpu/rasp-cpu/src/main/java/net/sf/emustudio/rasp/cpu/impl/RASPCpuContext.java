@@ -58,7 +58,7 @@ public class RASPCpuContext implements CPUContext {
      * Initialization of the CPU context.
      *
      * @param pluginID the ID of the plugin
-     * @throws emulib.plugins.PluginInitializationException
+     * @throws emulib.runtime.exceptions.PluginInitializationException
      */
     public void init(long pluginID) throws PluginInitializationException {
         try {

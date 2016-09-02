@@ -83,7 +83,7 @@
         <Component class="javax.swing.JButton" name="jButton1">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/sk/tuke/emustudio/rasp/memory/gui/document-open.png"/>
+              <Image iconType="3" name="/net/sf/emustudio/rasp/memory/gui/document-open.png"/>
             </Property>
             <Property name="focusable" type="boolean" value="false"/>
           </Properties>
@@ -94,7 +94,7 @@
         <Component class="javax.swing.JButton" name="jButton2">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/sk/tuke/emustudio/rasp/memory/gui/edit-delete.png"/>
+              <Image iconType="3" name="/net/sf/emustudio/rasp/memory/gui/edit-delete.png"/>
             </Property>
             <Property name="focusable" type="boolean" value="false"/>
           </Properties>
