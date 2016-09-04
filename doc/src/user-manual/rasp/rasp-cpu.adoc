@@ -19,6 +19,7 @@ RASP CPU plugin is already included in emuStudio distribution, in location `cpu/
 RASP CPU emulator supports the following instructions:
 
 .RASP instructions
+[width="70%"]
 |===
 |Operation code|Instruction mnemonic code|Semantics 
 

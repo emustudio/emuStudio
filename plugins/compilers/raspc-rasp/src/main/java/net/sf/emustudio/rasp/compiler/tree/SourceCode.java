@@ -17,7 +17,6 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package net.sf.emustudio.rasp.compiler.tree;
 
 import net.sf.emustudio.rasp.compiler.CompilerOutput;
@@ -26,13 +25,23 @@ import net.sf.emustudio.rasp.compiler.CompilerOutput;
  *
  * @author miso
  */
-public class SourceCode extends AbstractTreeNode{
+public class SourceCode extends AbstractTreeNode {
 
     private final int programStart;
     private final Program program;
+    private boolean programStartZero;
+    private boolean programStartUndefined;
 
     public SourceCode(int programStart, Program program) {
-        this.programStart = programStart;
+        if (programStart == 0) {
+            this.programStart = 20;
+            this.programStartZero = true;
+        } else if (programStart == -1) {
+            this.programStart = 20;
+            this.programStartUndefined = true;
+        } else {
+            this.programStart = programStart;
+        }
         this.program = program;
     }
 
@@ -41,5 +50,13 @@ public class SourceCode extends AbstractTreeNode{
         CompilerOutput.getInstance().setProgramStart(programStart);
         program.pass();
     }
+
+    public boolean isProgramStartZero() {
+        return programStartZero;
+    }
+
+    public boolean isProgramStartUndefined() {
+        return programStartUndefined;
+    } 
 
 }

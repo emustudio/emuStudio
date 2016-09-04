@@ -111,7 +111,13 @@ public class CompilerImpl extends AbstractCompiler {
             if (parser.hasSyntaxErrors()) {
                 throw new Exception("One ore more errors in the source code.");
             }
-
+            
+            if(sourceCode.isProgramStartZero()){
+                notifyWarning("Program start must not be 0. It was automatically set to 20.");
+            }else if(sourceCode.isProgramStartUndefined()){
+                notifyWarning("Program start was not defined. It was automatically set to 20.");
+            }
+            
             sourceCode.pass();
             CompilerOutput.getInstance().saveToFile(outputFileName);
             CompilerOutput.getInstance().loadIntoMemory(memory);

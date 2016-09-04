@@ -108,8 +108,8 @@ non terminal RASPInstructionImpl JumpInstruction;
 
 start with SourceCode;
 
-SourceCode ::= ORG NUMBER:programStart Program:p                    {: if(programStart==0) programStart=20; RESULT = new SourceCode(programStart, p); :}
-        | Program:p                                                 {: RESULT = new SourceCode(20, p); :} /*default program start is 20, if not specified*/
+SourceCode ::= ORG NUMBER:programStart Program:p                    {: RESULT = new SourceCode(programStart, p); :}
+        | Program:p                                                 {: RESULT = new SourceCode(-1, p); :}
         ;
 
 Program ::= Program:p Row:r                                         {: if(r != null) p.addRow(r); RESULT = p; :}
