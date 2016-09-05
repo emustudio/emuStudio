@@ -89,8 +89,8 @@ public class Main {
             showMainWindow(contextPool, settingsManager, computer);
         } else {
             runAutomation(settingsManager, computer);
+            System.exit(0);
         }
-        System.exit(0);
     }
 
     private static void runAutomation(SettingsManagerImpl settingsManager, Computer computer) {
