@@ -1,14 +1,14 @@
 org 3
 
-;začiatok RAM programu:	1000
-;začiatok RAM dát:		2000
+;start of the RAM program: 1000
+;start of the RAM data:    2000
 
-;R0 = RASP akumulátor
-;R1 = úložisko pre inštrukcie / operandy načítavané z programu RAM
-;R2 = PC pre program RAM
-;R3 = začiatok simulačného programu
+;R0 = RASP accumulator
+;R1 = storage for instructions and operands loaded from the RAM program
+;R2 = PC for the RAM program
+;R3 = start of the simulation program
 
-;===============kódy inštrukcií stroja RAM:==========================================================
+;===============RAM machine instructions operation codes:==========================================================
 ;READ i 	- 1                	
 ;WRITE =i	- 2		
 ;WRITE i	- 3		
@@ -38,36 +38,36 @@ org 3
 
 
   LOAD =1000		
-  STORE 1 		;v R1 je smerník pre zápis nasledujúcej inštrukcie rep. operandu z pásky
-vstup:
-  READ 2		;načíta vstup z pásky do R2
+  STORE 1 		;in R1 there is the pointer for writing the next instruction or operand from the input tape
+input:
+  READ 2		;loads the input from the input tape into R2 register
   LOAD 2
   SUB =-1
-  JZ inicializacia	;je vstup rovný -1? ak áno skoč na inicializáciu
+  JZ initialisation	 ;if the input is equal to -1, jump to initialisation
 
   LOAD 1	
   STORE 22
   LOAD 2
-  STORE 0		;ak nie, ulož
+  STORE 0		;if not, store it
  
   LOAD 1
   ADD =1
-  STORE 1		;zvýš smerník
-  JMP vstup  	;ďalší vstup
+  STORE 1		;increase the pointer
+  JMP input  	;the next input
 
-inicializacia:
+initialisation:
   LOAD =1000	;R2=1000	 
   STORE 2		
 
-zaciatok:
+start:
   LOAD 2		
   STORE 40
   LOAD 0	
-  STORE 1		;načítanie inštrukcie RAM a uloženie do R1
+  STORE 1		;load RAM instruction and save it to R1
 
   SUB =1		
-  JZ readRegInstr	;ak je inštrukcia READ, skoč na "readRegister"
-  LOAD 1		;ak nie, načítaj inštrukciu znovu, je v R1
+  JZ readRegInstr	;if the instruction is READ, jump to "readRegister"
+  LOAD 1		 ;if not, load the instruction again, it is in R1
   SUB =2
   JZ writeConstInstr
   LOAD 1
@@ -143,26 +143,26 @@ zaciatok:
   SUB =26
   JZ divIndirInstr
 
-;==========simulácie jednotlivých inštrukcií stroja RAM================================
+;==========simulation of particular RAM instructions================================
 readRegInstr:
   LOAD 2
   ADD =1		
-  STORE 2 		;inkrementácia PC na adresu operandu inštrukcie
+  STORE 2 		;increment PC to the address of the operand of instruction
   
   LOAD  2
   STORE 208
   LOAD  0			
-  ADD =2000	;úprava adresy operandu, registre RAM sú posunuté o začiatok dát, ten je 2000
-  STORE 1		;uloženie operandu
+  ADD =2000	;adjust the operand address; RAM registers are shifted by the data start address, which is 2000
+  STORE 1		;store the operand
 
   LOAD 1
   STORE 218
-  READ 0		;realizácia READ i
+  READ 0		;perform the READ i operation
   
   LOAD 2		
   ADD =1
-  STORE 2		;inkrementácia PC
-  JMP zaciatok	;opakuj simulačnú slučku
+  STORE 2		;increment the PC
+  JMP start	;repeat the simulation loop
 readIndirInstr:
   LOAD 2		
   ADD =1
@@ -177,12 +177,12 @@ readIndirInstr:
   LOAD 0  
   ADD =2000	
   STORE 250
-  READ 0		;realizácia READ *i
+  READ 0		;perform the READ *i operation
 
   LOAD 2		
   ADD =1
   STORE 2
-  JMP zaciatok  
+  JMP start  
 loadConstInstr:
   LOAD 2
   ADD =1
@@ -192,12 +192,12 @@ loadConstInstr:
   STORE 270
   LOAD 0
  
-  STORE 2000	;uloženie konštanty do akumulátora RAM, teda realizácia LOAD =i
+  STORE 2000	;store the constant into RAM accumulator, which is equal to executing LOAD =i
 
   LOAD 2
   ADD =1
   STORE 2
-  JMP zaciatok
+  JMP start
 loadRegInstr:
   LOAD 2
   ADD =1
@@ -212,12 +212,12 @@ loadRegInstr:
   LOAD 1
   STORE 302
   LOAD 0
-  STORE 2000 	;uloženie obsahu registra i do akumulátora RAM, teda realizácia LOAD i
+  STORE 2000 	;store the Ri register content into RAM accumulator, which is equal to executing LOAD i
   
   LOAD 2
   ADD =1
   STORE 2
-  JMP zaciatok
+  JMP start
 loadIndirInstr:	
   LOAD 2		
   ADD =1
@@ -233,12 +233,12 @@ loadIndirInstr:
   ADD =2000	
   STORE 336
   LOAD 0  
-  STORE 2000	;uloženie obsahu registra [i] do akumulátora RAM, teda realizácia LOAD *i
+  STORE 2000	;store the [i] register content into RAM accumulator, which is equal to executing LOAD *i
 
   LOAD 2		
   ADD =1
   STORE 2
-  JMP zaciatok
+  JMP start
 storeRegInstr:
   LOAD 2
   ADD =1
@@ -252,13 +252,13 @@ storeRegInstr:
 
   LOAD 1
   STORE 370
-  LOAD 2000	;príprava obsahu akumulátora RAM
-  STORE 0 		;uloženie obsahu akumulátora RAM do registra i, teda realizácia STORE i
+  LOAD 2000	;prepare the RAM accumulator content
+  STORE 0 		;store the RAM accumulator content into Ri register, which is equal to executing STORE i
 
   LOAD 2
   ADD =1
   STORE 2
-  JMP zaciatok 
+  JMP start 
 storeIndirInstr:
   LOAD 2
   ADD =1
@@ -273,13 +273,12 @@ storeIndirInstr:
   LOAD 0
   ADD =2000	
   STORE 404
-  LOAD 2000	;príprava obsahu akumulátora RAM
-  STORE 0 		;uloženie obsahu akumulátora RAM do registra [i], teda realizácia STORE *i
-
+  LOAD 2000	;prepare the RAM accumulator content
+  STORE 0 		;store the RAM accumulator content into [i] register, which is equal to executing STORE *i
   LOAD 2
   ADD =1
   STORE 2
-  JMP zaciatok
+  JMP start
 writeConstInstr:
   LOAD 2
   ADD =1
@@ -292,7 +291,7 @@ writeConstInstr:
   LOAD 2
   ADD =1
   STORE 2
-  JMP zaciatok      
+  JMP start      
 writeRegInstr:
   LOAD 2
   ADD =1
@@ -311,7 +310,7 @@ writeRegInstr:
   LOAD 2
   ADD =1
   STORE 2
-  JMP zaciatok 
+  JMP start 
 writeIndirInstr:
   LOAD 2
   ADD =1
@@ -331,7 +330,7 @@ writeIndirInstr:
   LOAD 2
   ADD =1
   STORE 2
-  JMP zaciatok 
+  JMP start 
 jmpInstr:
   LOAD 2
   ADD =1
@@ -340,13 +339,13 @@ jmpInstr:
   LOAD 2
   STORE 506
   LOAD 0
-  ADD =1000	;úprava operandu, program začína od 1000, teda pripočítaj k adrese skoku 1000
+  ADD =1000	;adjust the operand, the program starts form 1000, so add 1000 to the jump address
   STORE 1 
 
   LOAD 1
-  STORE 2		;nastavenie PC stroja RAM na adresu skoku
+  STORE 2		;set the RAM PC to the jump address
 
-  JMP zaciatok 
+  JMP start 
 jzInstr:
   LOAD 2
   ADD =1
@@ -355,21 +354,21 @@ jzInstr:
   LOAD 2
   STORE 528
   LOAD 0
-  ADD =1000	;úprava operandu, program začína od 1000, teda pripočítaj k adrese skoku 1000
+  ADD =1000	;adjust the operand, the program starts form 1000, so add 1000 to the jump address
   STORE 1 
   
   LOAD 2000	
-  JZ isZero	;ak je RAM akumulátor 0, skok
+  JZ isZero	;if RAM accumulator is equal to 0, jump
 
-  LOAD 2		;inak, inkrementuj PC
+  LOAD 2		;otherwise, increment PC
   ADD =1
   STORE 2
-  JMP zaciatok
+  JMP start
 
  isZero:
    LOAD 1
    STORE 2
-   JMP zaciatok  
+   JMP start  
 jgtzInstr:
   LOAD 2
   ADD =1
@@ -378,7 +377,7 @@ jgtzInstr:
   LOAD 2
   STORE 562
   LOAD 0
-  ADD =1000	;úprava operandu, program začína od 1000, teda pripočítaj k adrese skoku 1000
+  ADD =1000	;adjust the operand, the program starts form 1000, so add 1000 to the jump address
   STORE 1 
   
   LOAD 2000	
@@ -387,12 +386,12 @@ jgtzInstr:
   LOAD 2		
   ADD =1
   STORE 2
-  JMP zaciatok
+  JMP start
 
  isGTZero:
    LOAD 1
    STORE 2
-   JMP zaciatok  
+   JMP start  
 haltInstr:
   HALT  
 addConstInstr:
@@ -402,14 +401,14 @@ addConstInstr:
 
   LOAD 2	
   STORE 600
-  LOAD 2000	;načítaj akumulátor RAM 
-  ADD 0		;realizácia ADD =i
-  STORE 2000	;uloženie výsledku do späť do akumulátora RAM
+  LOAD 2000	;load the RAM accumulator
+  ADD 0		;execute ADD =i
+  STORE 2000	;write the result back to RAM accumulator
 
   LOAD 2		
   ADD =1
   STORE 2
-  JMP zaciatok
+  JMP start
 addRegInstr:
   LOAD 2
   ADD =1
@@ -430,7 +429,7 @@ addRegInstr:
   LOAD 2		
   ADD =1
   STORE 2
-  JMP zaciatok
+  JMP start
 addIndirInstr:
   LOAD 2
   ADD =1
@@ -452,7 +451,7 @@ addIndirInstr:
   LOAD 2
   ADD =1
   STORE 2
-  JMP zaciatok  
+  JMP start  
 subConstInstr:
   LOAD 2
   ADD =1
@@ -460,14 +459,14 @@ subConstInstr:
 
   LOAD 2	
   STORE 694
-  LOAD 2000	;načítaj akumulátor RAM 
-  SUB 0		;realizácia SUB =i
-  STORE 2000	;uloženie výsledku do späť do akumulátora RAM
+  LOAD 2000	;load the RAM accumulator
+  SUB 0		;execute SUB =i
+  STORE 2000	;write the result back to RAM accumulator
 
   LOAD 2		
   ADD =1
   STORE 2
-  JMP zaciatok
+  JMP start
 subRegInstr:
   LOAD 2
   ADD =1
@@ -488,7 +487,7 @@ subRegInstr:
   LOAD 2		
   ADD =1
   STORE 2
-  JMP zaciatok
+  JMP start
 subIndirInstr:
   LOAD 2
   ADD =1
@@ -510,7 +509,7 @@ subIndirInstr:
   LOAD 2
   ADD =1
   STORE 2
-  JMP zaciatok  
+  JMP start  
 mulConstInstr:
   LOAD 2
   ADD =1
@@ -518,14 +517,14 @@ mulConstInstr:
 
   LOAD 2	
   STORE 788
-  LOAD 2000	;načítaj akumulátor RAM 
-  MUL 0		;realizácia MUL =i
-  STORE 2000	;uloženie výsledku do späť do akumulátora RAM
+  LOAD 2000	;load the RAM accumulator 
+  MUL 0		;execute MUL =i
+  STORE 2000	;write the result back to RAM accumulator
 
   LOAD 2		
   ADD =1
   STORE 2
-  JMP zaciatok
+  JMP start
 mulRegInstr:
   LOAD 2
   ADD =1
@@ -546,7 +545,7 @@ mulRegInstr:
   LOAD 2		
   ADD =1
   STORE 2
-  JMP zaciatok
+  JMP start
 mulIndirInstr:
   LOAD 2
   ADD =1
@@ -568,7 +567,7 @@ mulIndirInstr:
   LOAD 2
   ADD =1
   STORE 2
-  JMP zaciatok  
+  JMP start  
 divConstInstr:
   LOAD 2
   ADD =1
@@ -576,14 +575,14 @@ divConstInstr:
 
   LOAD 2	
   STORE 882
-  LOAD 2000	;načítaj akumulátor RAM 
-  DIV 0		;realizácia DIV =i
-  STORE 2000	;uloženie výsledku do späť do akumulátora RAM
+  LOAD 2000	;load the RAM accumulator 
+  DIV 0		;execute DIV =i
+  STORE 2000	;write the result back to RAM accumulator
 
   LOAD 2		
   ADD =1
   STORE 2
-  JMP zaciatok
+  JMP start
 divRegInstr:
   LOAD 2
   ADD =1
@@ -604,7 +603,7 @@ divRegInstr:
   LOAD 2		
   ADD =1
   STORE 2
-  JMP zaciatok
+  JMP start
 divIndirInstr: 
   LOAD 2
   ADD =1
@@ -626,5 +625,5 @@ divIndirInstr:
   LOAD 2
   ADD =1
   STORE 2
-  JMP zaciatok  
+  JMP start  
   
