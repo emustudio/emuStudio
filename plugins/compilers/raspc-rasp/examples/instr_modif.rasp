@@ -1,18 +1,18 @@
 org 5
 
-;Program ilustruje modifikacu operacneho kodu instrukcie.
+;Program illustrates modification of the instruction operation code.
 
-;priprava operandov 32 a 30
+;prepare the operands: 32 and 30
 LOAD =32
 STORE 1
 LOAD =30
 STORE 2
-;8 je operacny kod instrukcie ADD_REGISTER, teda ADD i
+;8 is the operation code of the ADD i instruction
 LOAD =8
-;kod 8 je ulozeny na adresu 19, teda na adresu, kde bola povodne ulozena instrukcia SUB (riadok 13)
+;operation code 8 is saved to the address 19; that is the address where SUB i instruction was originally stored (see the line marked with ***)
 STORE 19
-;operand 32 je nacitany
+;operand 32 is loaded
 LOAD 1
-;instrukcia SUB je uz zmenena na ADD, teda dojde k pripocitaniu cisla 30
-SUB 2
+;instruction SUB i has already been changed to ADD i. This means that what will be executed will be the ADD operation instead of SUB.
+SUB 2 ;***
 HALT

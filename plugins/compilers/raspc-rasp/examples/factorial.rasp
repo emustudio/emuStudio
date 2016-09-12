@@ -1,19 +1,19 @@
 org 5
 
-;Program nacita cislo zo vstupnej pasky, vypocita jeho faktorial a vypise vysledok
-;na vystupnu pasku.
+;Program reads an integer number from the input tape, calculates its factorial and prints the result onto the output tape.
 
-;ulozi konstantu 1 do registrov R2 a R3
+
+;saves the constant 1 into R2 and R3 registers
 load =1
 store 2 
 store 3
-;precita zo vstupnej pasky cislo
+;reads a number from the input tape
 read 1
-;ak je cislo vacsie ako 0, skoc na "ok", inak skoc na "finish"
+;if the number is greater than 0, jump to "ok", otherwise, jump to "finish"
 load 1
 jgtz ok
 jmp finish
-;slucka pre vypocet faktorialu
+;the loop to calculate the factorial value
 ok: 
 load 3
 sub 1
@@ -24,7 +24,7 @@ store 3
 mul 2
 store 2
 jmp ok
-;vypis vysledku
+;print the result
 finish: 
 write 2
 halt
