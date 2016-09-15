@@ -1,5 +1,4 @@
-;program načíta dve čísla a, b zo vstupu, vydelí a/b, pričom pred delením vykoná kontrolu,
-;či b je rôzne od nuly (prevencia delenia nulou) 
+;Program loads two numbers, a and b, calculates a/b, but before the division, b is checked for zero division prevention.
 
 READ 100
 READ 101
@@ -9,19 +8,23 @@ LOAD 100
 DIV 101
 STORE 100
 WRITE 100
-JMP koniec
+JMP end
 zero:
   WRITE =0
-koniec:
+end:
   HALT
 
-Kód programu:
+Program code:
 	1, 100, 1, 101, 5, 101, 16, 19, 5, 100, 14, 101, 6, 100, 3, 100, 15, 21, 2, 0, 18
-Výstup:
-	podiel a/b
+
+Input: 
+	a,b
+
+Output:
+	a/b
 
 ========================================================================================================
-;program odčíta dve konštanty
+;Program substracts one constant from the other one (indirect addressing is used).
 
 LOAD =20
 STORE 100
@@ -33,7 +36,8 @@ STORE 100
 WRITE 100
 HALT
 
-Kód programu: 
+Program code: 
 	4, 20, 6, 100, 4, 16, 6, 101, 5, 100, 10, 101, 6, 100, 3, 100, 18
-Výstup:
+Output:
 	4
+
