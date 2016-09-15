@@ -116,7 +116,7 @@ public class RASPMemoryImpl extends AbstractMemory {
     @Override
     public String getVersion() {
         try {
-            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.rasp.mem.version");
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.rasp.memory.version");
             return bundle.getString("version");
         } catch (MissingResourceException e) {
             return "(unknown)";
