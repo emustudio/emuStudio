@@ -28,7 +28,9 @@ import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.ContextPool;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.StaticDialogs;
+import java.util.MissingResourceException;
 import java.util.Objects;
+import java.util.ResourceBundle;
 import net.sf.emustudio.rasp.memory.RASPMemoryContext;
 import net.sf.emustudio.rasp.memory.gui.MemoryWindow;
 
@@ -111,14 +113,14 @@ public class RASPMemoryImpl extends AbstractMemory {
         return true;
     }
 
-    /**
-     * This method is not yet needed.
-     *
-     * @return empty string
-     */
     @Override
     public String getVersion() {
-        return "";
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.rasp.mem.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            return "(unknown)";
+        }
     }
 
     @Override

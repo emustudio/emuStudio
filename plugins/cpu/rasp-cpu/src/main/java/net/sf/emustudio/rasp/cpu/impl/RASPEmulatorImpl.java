@@ -39,7 +39,9 @@ import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.StaticDialogs;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.MissingResourceException;
 import java.util.Objects;
+import java.util.ResourceBundle;
 import javax.swing.JPanel;
 import net.sf.emustudio.rasp.cpu.gui.LabelDebugColumn;
 import net.sf.emustudio.rasp.cpu.gui.RASPCpuStatusPanel;
@@ -536,14 +538,14 @@ public class RASPEmulatorImpl extends AbstractCPU {
         return false;
     }
 
-    /**
-     * Not needed method.
-     *
-     * @return empty string
-     */
     @Override
     public String getVersion() {
-        return "";
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.rasp.cpu.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            return "(unknown)";
+        }
     }
 
 }

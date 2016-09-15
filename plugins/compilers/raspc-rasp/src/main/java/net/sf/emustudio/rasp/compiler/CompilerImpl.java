@@ -35,7 +35,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.Reader;
+import java.util.MissingResourceException;
 import java.util.Objects;
+import java.util.ResourceBundle;
 import java_cup.runtime.ComplexSymbolFactory;
 import net.sf.emustudio.rasp.compiler.tree.SourceCode;
 import net.sf.emustudio.rasp.memory.RASPMemoryContext;
@@ -192,7 +194,12 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public String getVersion() {
-        return "1.0";
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.rasp.compiler.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            return "(unknown)";
+        }
     }
 
 }
