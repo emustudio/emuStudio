@@ -66,7 +66,7 @@ start:
   STORE 1		;load RAM instruction and save it to R1
 
   SUB =1		
-  JZ readRegInstr	;if the instruction is READ, jump to "readRegister"
+  JZ readRegInstr	;if the instruction is READ, jump to "readRegInstr"
   LOAD 1		 ;if not, load the instruction again, it is in R1
   SUB =2
   JZ writeConstInstr
@@ -152,7 +152,7 @@ readRegInstr:
   LOAD  2
   STORE 208
   LOAD  0			
-  ADD =2000	;adjust the operand address; RAM registers are shifted by the data start address, which is 2000
+  ADD =2000	;correct the operand address; RAM registers are shifted by the data start address, which is 2000
   STORE 1		;store the operand
 
   LOAD 1
