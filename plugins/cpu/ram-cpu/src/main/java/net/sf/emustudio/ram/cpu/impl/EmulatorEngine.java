@@ -98,9 +98,9 @@ public class EmulatorEngine {
                 try {
                     operand = Integer.decode(context.getStorage().getSymbolAt(operand));
                     if (operand < 0) {
-                        return operand;
+                        throw new IOException("[" + instruction + "] Indirect operand must be > 0");
                     }
-                    throw new IOException("[" + instruction + "] Indirect operand must be > 0");
+                    return operand;
                 } catch (NumberFormatException e) {
                     throw new IOException("[" + instruction + "] Could not parse number", e);
                 }
@@ -141,6 +141,7 @@ public class EmulatorEngine {
                 String input = context.getInput().read();
                 context.getInput().moveRight();
                 storage.setSymbolAt(operand, input);
+                break;
             case RAMInstruction.WRITE:
                 if (in.getDirection() == RAMInstruction.Direction.DIRECT) {
                     context.getOutput().write(String.valueOf(in.getOperand()));
@@ -214,7 +215,7 @@ public class EmulatorEngine {
                 try {
                     int rr0 = Integer.decode(r0);
                     if (rr0 == 0) {
-                        IP = rr0;
+                        IP = (Integer) in.getOperand();
                     }
                 } catch (NumberFormatException e) {
                     LOGGER.error("Cannot parse JZ operand (expected integer)", e);
@@ -231,7 +232,7 @@ public class EmulatorEngine {
                 try {
                     int rr0 = Integer.decode(r0);
                     if (rr0 > 0) {
-                        IP = rr0;
+                        IP = (Integer) in.getOperand();
                     }
                 } catch (NumberFormatException e) {
                     LOGGER.error("Cannot parse JZ operand (expected integer)", e);
