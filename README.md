@@ -2,74 +2,73 @@
 [![Build Status](https://travis-ci.org/vbmacher/emuStudio.svg?branch=branch-0_39)](https://travis-ci.org/vbmacher/emuStudio)
 [![Coverage Status](https://coveralls.io/repos/github/vbmacher/emuStudio/badge.svg?branch=branch-0_39)](https://coveralls.io/github/vbmacher/emuStudio?branch=branch-0_39)
 
-emuStudio is free and versatile platform/framework for *doing* the computer emulation. It is specially designed for
-students and programmers which want to learn how computers work while having fun in the same time. It has been used
-at Technical University of Košice (Slovakia) with very good responses of students and teachers since 2007.
+emuStudio is a desktop application which allows to write programs and emulate computers.
+More generally, it is a platform for using, and framework for programming various computer emulators.
+It is versatile, free, and written in Java.
 
-Computer emulation has been always fun, since it's a process of "building a machine" in front of you, no matter if you
-are a professional or amateur. When finished, it is then able to run programs or games written by other people, while
-these programs don't even recognize they are being run in *your* software, not on a hardware.
+The main goal is to support teaching older but important computers and abstract machines. For example,
+students can write their programming assignments in emuStudio IDE, which then will be run on the emulated
+computer. The output might be displayed on emulated screen, or written to some file having the advantage
+of a possibility of creating automation "assignment checking" process.
 
-There are many tutorials for emulation of various CPUs or other hardware and they might be useful when
+emuStudio is used at [Technical University of Košice](http://www.fei.tuke.sk/en) since 2007.
+
+Besides, developer's API is very simple and powerful enough to enable to write own computer components.
+The components are implemented as emuStudio plugins: compilers, CPUs, operating memories, and I/O devices.
+Some can be compatible, some not. Compatible components can be arranged into working schemas of computer which
+makes the versatility of emuStudio.
+ 
+NOTE: There are many tutorials for emulation of various CPUs or other hardware and they might be useful when
 implementing them using emuStudio.
 
-From the user perspective, emuStudio is a desktop application which can emulate some predefined virtual computer.
-The computers consist of components, which are separate modules and can be programmed independently. User just
-selects those components, connects them with lines into a schema, and the computer is ready for emulation.
+# License
 
-# Features highlight
+This project is released under GNU GPL v2 license.
 
-* Computer schema designer / editor
+# Supported host platform
 
-* Simple IDE
-    - Source code editor with syntax highlighting
-    - Ability to compile and directly transfer code to emulator
-    - CPU debugger with interactive disassembler
-    
-* Components of a computer are independent plug-ins like CPU, memory and devices
-    - Operating memory and devices can have their own GUI windows
-    
-* Automatic emulation run from command line
+Currently supported are Linux and Windows. Mac is NOT supported, but it might work to some extent.
 
-* Several predefined computer sets and plug-ins
+# Available computer emulators
 
-* Consistent API for development of custom plug-ins
+* MITS Altair8800 with choosable processor: Intel 8080 or Zilog Z80 CPU. Includes 88-DISK drive, 88-SIO board,
+  LSI ADM-3A terminal, SIMH pseudo device (partially reimplemented from simh emulator), operating memory,
+  and 8080 + Z80 assembler compilers
 
-# Predefined computers, and hardware
+* Manchester Small-Scale Experimental Machine (SSEM) emulator, with programming tutorials
 
-* MITS Altair8800 including Intel 8080 or Zilog Z80 CPU, 88-DISK drive, 88-SIO board,
-  LSI ADM-3A terminal, SIMH pseudo device, operating memory, including assembler compilers
+* Random Access Machine (RAM) simulator
 
-* Random Access Machine simulator
+* Random Access Stored Program (RASP) machine simulator 
 
-* Brainfuck simulator (I call it BrainDuck)
+* Brainfuck interpreter (designed as a "computer" which I called BrainDuck)
 
-# Compiling
+# For developers
 
 The project uses Maven for managing dependencies and build process. Each module can be compiled separately,
-but if you run the following command in the root directory, it will compile each module (results will be in particular
-module directory):
+but if you run the following command in the root directory, it will compile each module (results will be in
+particular module directory):
 
 ```
 mvn clean install
 ```
 
-## Preparing emuStudio distribution
+## Creating a custom "release"
 
-In order to package complete emuStudio with examples and all predefined computers, please go to subdirectory `release` and then
-invoke the following command:
+In order to package complete emuStudio with examples and all predefined computers, at first compile the whole
+project. Then go to directory `release` and invoke the following command:
 
 ```
 mvn clean install -P release
 ```
 
-Inside `target` subdirectory will be a zip file containing full distribution of emuStudio.
+Inside the `target` subdirectory will be a zip file containing the custom release of emuStudio.
 
 # Running / installation
 
-There are two ways of how to run emuStudio. In both cases, a prerequisite is to have a full distribution of emuStudio.
+There are two ways of how to run emuStudio. In both cases, a prerequisite is to have a full release of emuStudio.
 You can either download it from [project's web page](http://emustudio.sourceforge.net/downloads.html),
-or you can prepare the distribution by yourself as was explained in the previous section.
+or you can prepare it according to the previous section.
 
 ## The "classic" way
 
@@ -81,27 +80,22 @@ Unzip the emuStudio distribution zip file (`emuStudio-xxx-release.zip`) and run 
 java -jar emuStudio.jar
 ```
 
-## Running using Vagrant
+## Using Vagrant
 
-It is also possible to use [vagrant](https://www.vagrantup.com/) in order to run emuStudio. It works only when emuStudio
-distribution is prepared manually.
+It is also possible to use [Vagrant](https://www.vagrantup.com/) in order to run emuStudio. This way does not
+require to install JRE, but virtual box must be installed. Also it works only for custom releases, as described
+above.
 
-After building the release, in the root directory of emuStudio source, run a script (now only for bash (Linux)):
+Assuming the release is prepared, run the script in the root directory of emuStudio:
 
 ```
-bash> ./emuStudio-vagrant.sh
+> ./emuStudio-vagrant.sh
 ```
 
-The script does this:
+The script does the following:
 
-1. Bring up virtual machine using vagrant
-2. Synchronize `release/target/` subdirectory with the machine,
-3. Unzip the distribution zip file into VM's `/emustudio/` directory
-4. Run emuStudio from there through SSH (with X forwarding). 
-
-I see this very beneficial for developers, because this way is much faster and cleaner, especially when developers
-want to try their changes. 
-
-# License
-
-This project is released under GNU GPL v2 license.
+1. It boots or resumes the already-prepared virtual machine with preinstalled Linux and Java using
+   [Vagrant](https://www.vagrantup.com/).
+2. Synchronizes `release/target/` subdirectory with the machine.
+3. Then it unzips the release zip file into VM's `/emustudio/` directory
+4. Finally, it runs emuStudio from the virtual machine (using SSH with X forwarding). 
