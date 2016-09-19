@@ -336,8 +336,6 @@ public class EmuTextPane extends JTextPane {
         }
         int fontHeight = g.getFontMetrics(getFont()).getHeight(); // font height
 
-        System.out.println(getFont());
-
         g.setColor(Color.RED);
         for (int line = startline, y = 0; line <= endline; line++, y += fontHeight) {
             g.drawString(Integer.toString(line), 0, y);
