@@ -1,0 +1,47 @@
+ORG 10
+
+;Program illustrates application of simulation of indirect addressing. It just substracts one number from the other one.
+;
+; c = a - b
+
+;PROGRAM IN RASP LANGUAGE===================================================
+
+LOAD =10 	;loads a=10
+STORE 1   ;stores it to R1 register
+LOAD =6	;loads b=6
+STORE 2	;stores it to R2 register
+LOAD =2	;loads the address of b operand
+STORE 3	;stores it to R3 register
+LOAD  1	;prepares the a operand
+
+;............................SIMULATED INSTRUCTION SUB *3...................
+
+STORE 4	;save the accumulator content into R4 register
+LOAD  3	;load b operand address
+STORE 33  ;modification of the operand of the SUB instruction from 100 to 33
+LOAD  4	;recover the accumulator content
+SUB   100	;execute the SUB operation with already modified operand
+;............................................................................
+
+STORE 4	;store the result into R4 register
+WRITE 4	;print the result
+HALT
+
+;=============================================================================
+
+
+
+;EQUIVALENT PROGRAM IN RAM LANGUAGE ==========================================
+
+;LOAD =10  
+;STORE 1 	
+;LOAD =6	
+;STORE 2	
+;LOAD =2	
+;STORE 3	
+;LOAD  1   
+;SUB  *3   
+;STORE 4	
+;WRITE 4  	
+;HALT
+;=============================================================================

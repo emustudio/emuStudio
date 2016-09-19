@@ -1,0 +1,629 @@
+org 3
+
+;start of the RAM program: 1000
+;start of the RAM data:    2000
+
+;R0 = RASP accumulator
+;R1 = storage for instructions and operands loaded from the RAM program
+;R2 = PC for the RAM program
+;R3 = start of the simulation program
+
+;===============RAM machine instructions operation codes:==========================================================
+;READ i 	- 1                	
+;WRITE =i	- 2		
+;WRITE i	- 3		
+;LOAD =i	- 4	         	
+;LOAD i	- 5		
+;STORE i 	- 6		
+;ADD =i	- 7		
+;ADD i	- 8		
+;SUB =i	- 9
+;SUB i 	- 10
+;MUL =i	- 11
+;MUL i	- 12
+;DIV =i	- 13
+;DIV i	- 14
+;JMP 	- 15		
+;JZ	- 16		
+;JGTZ	- 17
+;HALT	- 18		
+;READ *i	- 19		
+;WRITE *i	- 20		
+;LOAD *i	- 21		
+;STORE *i	- 22		
+;ADD *i	- 23		
+;SUB *i	- 24
+;MUL *i	- 25
+;DIV *i	- 26
+
+
+  LOAD =1000		
+  STORE 1 		;in R1 there is the pointer for writing the next instruction or operand from the input tape
+input:
+  READ 2		;loads the input from the input tape into R2 register
+  LOAD 2
+  SUB =-1
+  JZ initialisation	 ;if the input is equal to -1, jump to initialisation
+
+  LOAD 1	
+  STORE 22
+  LOAD 2
+  STORE 0		;if not, store it
+ 
+  LOAD 1
+  ADD =1
+  STORE 1		;increase the pointer
+  JMP input  	;the next input
+
+initialisation:
+  LOAD =1000	;R2=1000	 
+  STORE 2		
+
+start:
+  LOAD 2		
+  STORE 40
+  LOAD 0	
+  STORE 1		;load RAM instruction and save it to R1
+
+  SUB =1		
+  JZ readRegInstr	;if the instruction is READ, jump to "readRegInstr"
+  LOAD 1		 ;if not, load the instruction again, it is in R1
+  SUB =2
+  JZ writeConstInstr
+  LOAD 1
+  SUB =3
+  JZ writeRegInstr	
+  LOAD 1
+  SUB =4
+  JZ loadConstInstr
+  LOAD 1
+  SUB =5		
+  JZ loadRegInstr
+  LOAD 1
+  SUB =6
+  JZ storeRegInstr
+  LOAD 1		
+  SUB =7
+  JZ addConstInstr
+  LOAD 1
+  SUB =8
+  JZ addRegInstr	
+  LOAD 1
+  SUB =9
+  JZ subConstInstr
+  LOAD 1
+  SUB =10
+  JZ subRegInstr	
+  LOAD 1
+  SUB =11
+  JZ mulConstInstr
+  LOAD 1		
+  SUB =12
+  JZ mulRegInstr
+  LOAD 1
+  SUB =13
+  JZ divConstInstr
+  LOAD 1		
+  SUB =14
+  JZ divRegInstr
+  LOAD 1
+  SUB =15		
+  JZ jmpInstr
+  LOAD 1
+  SUB =16
+  JZ jzInstr
+  LOAD 1
+  SUB =17	
+  JZ jgtzInstr
+  LOAD 1
+  SUB =18
+  JZ haltInstr	
+  LOAD 1
+  SUB =19
+  JZ readIndirInstr
+  LOAD 1
+  SUB =20
+  JZ writeIndirInstr	
+  LOAD 1
+  SUB =21
+  JZ loadIndirInstr
+  LOAD 1		
+  SUB =22
+  JZ storeIndirInstr
+  LOAD 1
+  SUB =23
+  JZ addIndirInstr
+  LOAD 1	
+  SUB =24
+  JZ subIndirInstr
+  LOAD 1
+  SUB =25		
+  JZ mulIndirInstr
+  LOAD 1
+  SUB =26
+  JZ divIndirInstr
+
+;==========simulation of particular RAM instructions================================
+readRegInstr:
+  LOAD 2
+  ADD =1		
+  STORE 2 		;increment PC to the address of the operand of instruction
+  
+  LOAD  2
+  STORE 208
+  LOAD  0			
+  ADD =2000	;correct the operand address; RAM registers are shifted by the data start address, which is 2000
+  STORE 1		;store the operand
+
+  LOAD 1
+  STORE 218
+  READ 0		;perform the READ i operation
+  
+  LOAD 2		
+  ADD =1
+  STORE 2		;increment the PC
+  JMP start	;repeat the simulation loop
+readIndirInstr:
+  LOAD 2		
+  ADD =1
+  STORE 2
+
+  LOAD 2
+  STORE 238
+  LOAD 0             
+  ADD =2000	
+  STORE 244
+ 
+  LOAD 0  
+  ADD =2000	
+  STORE 250
+  READ 0		;perform the READ *i operation
+
+  LOAD 2		
+  ADD =1
+  STORE 2
+  JMP start  
+loadConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2		
+
+  LOAD 2		
+  STORE 270
+  LOAD 0
+ 
+  STORE 2000	;store the constant into RAM accumulator, which is equal to executing LOAD =i
+
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start
+loadRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD 2		
+  STORE 292
+  LOAD 0
+  ADD =2000
+  STORE 1
+
+  LOAD 1
+  STORE 302
+  LOAD 0
+  STORE 2000 	;store the Ri register content into RAM accumulator, which is equal to executing LOAD i
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start
+loadIndirInstr:	
+  LOAD 2		
+  ADD =1
+  STORE 2
+
+  LOAD 2
+  STORE 324
+  LOAD 0             
+  ADD =2000	
+  STORE 330
+
+  LOAD 0
+  ADD =2000	
+  STORE 336
+  LOAD 0  
+  STORE 2000	;store the [i] register content into RAM accumulator, which is equal to executing LOAD *i
+
+  LOAD 2		
+  ADD =1
+  STORE 2
+  JMP start
+storeRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD 2
+  STORE 358
+  LOAD 0
+  ADD =2000
+  STORE 1
+
+  LOAD 1
+  STORE 370
+  LOAD 2000	;prepare the RAM accumulator content
+  STORE 0 		;store the RAM accumulator content into Ri register, which is equal to executing STORE i
+
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start 
+storeIndirInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD 2
+  STORE 390
+  LOAD 0
+  ADD =2000
+  STORE 396
+
+  LOAD 0
+  ADD =2000	
+  STORE 404
+  LOAD 2000	;prepare the RAM accumulator content
+  STORE 0 		;store the RAM accumulator content into [i] register, which is equal to executing STORE *i
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start
+writeConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD 2	
+  STORE 424
+  WRITE 0
+
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start      
+writeRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD 2
+  STORE 444
+  LOAD 0
+  ADD =2000
+  STORE 1
+
+  LOAD 1
+  STORE 454
+  WRITE 0  
+
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start 
+writeIndirInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD 2
+  STORE 474
+  LOAD 0
+  ADD =2000
+  STORE 480
+
+  LOAD 0
+  ADD =2000	
+  STORE 486
+  WRITE 0
+
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start 
+jmpInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD 2
+  STORE 506
+  LOAD 0
+  ADD =1000	;adjust the operand, the program starts form 1000, so add 1000 to the jump address
+  STORE 1 
+
+  LOAD 1
+  STORE 2		;set the RAM PC to the jump address
+
+  JMP start 
+jzInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD 2
+  STORE 528
+  LOAD 0
+  ADD =1000	;adjust the operand, the program starts form 1000, so add 1000 to the jump address
+  STORE 1 
+  
+  LOAD 2000	
+  JZ isZero	;if RAM accumulator is equal to 0, jump
+
+  LOAD 2		;otherwise, increment PC
+  ADD =1
+  STORE 2
+  JMP start
+
+ isZero:
+   LOAD 1
+   STORE 2
+   JMP start  
+jgtzInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD 2
+  STORE 562
+  LOAD 0
+  ADD =1000	;adjust the operand, the program starts form 1000, so add 1000 to the jump address
+  STORE 1 
+  
+  LOAD 2000	
+  JZ isGTZero	
+
+  LOAD 2		
+  ADD =1
+  STORE 2
+  JMP start
+
+ isGTZero:
+   LOAD 1
+   STORE 2
+   JMP start  
+haltInstr:
+  HALT  
+addConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD 2	
+  STORE 600
+  LOAD 2000	;load the RAM accumulator
+  ADD 0		;execute ADD =i
+  STORE 2000	;write the result back to RAM accumulator
+
+  LOAD 2		
+  ADD =1
+  STORE 2
+  JMP start
+addRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD 2
+  STORE 622
+  LOAD 0
+  ADD =2000
+  STORE 1
+
+  LOAD 1
+  STORE 634
+  LOAD 2000
+  ADD 0
+  STORE 2000
+
+  LOAD 2		
+  ADD =1
+  STORE 2
+  JMP start
+addIndirInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD 2
+  STORE 656
+  LOAD 0
+  ADD =2000
+  STORE 662
+  
+  LOAD 0
+  ADD =2000	
+  STORE 670
+  LOAD 2000
+  ADD 0
+  STORE 2000
+
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start  
+subConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD 2	
+  STORE 694
+  LOAD 2000	;load the RAM accumulator
+  SUB 0		;execute SUB =i
+  STORE 2000	;write the result back to RAM accumulator
+
+  LOAD 2		
+  ADD =1
+  STORE 2
+  JMP start
+subRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD 2
+  STORE 716
+  LOAD 0
+  ADD =2000
+  STORE 1
+
+  LOAD 1
+  STORE 728
+  LOAD 2000
+  SUB 0
+  STORE 2000
+
+  LOAD 2		
+  ADD =1
+  STORE 2
+  JMP start
+subIndirInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD 2
+  STORE 750
+  LOAD 0
+  ADD =2000
+  STORE 756
+  
+  LOAD 0
+  ADD =2000	
+  STORE 764
+  LOAD 2000
+  SUB 0
+  STORE 2000
+
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start  
+mulConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD 2	
+  STORE 788
+  LOAD 2000	;load the RAM accumulator 
+  MUL 0		;execute MUL =i
+  STORE 2000	;write the result back to RAM accumulator
+
+  LOAD 2		
+  ADD =1
+  STORE 2
+  JMP start
+mulRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD 2
+  STORE 810
+  LOAD 0
+  ADD =2000
+  STORE 1
+
+  LOAD 1
+  STORE 822
+  LOAD 2000
+  MUL 0
+  STORE 2000
+
+  LOAD 2		
+  ADD =1
+  STORE 2
+  JMP start
+mulIndirInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD 2
+  STORE 844
+  LOAD 0
+  ADD =2000
+  STORE 850
+  
+  LOAD 0
+  ADD =2000	
+  STORE 858
+  LOAD 2000
+  MUL 0
+  STORE 2000
+
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start  
+divConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD 2	
+  STORE 882
+  LOAD 2000	;load the RAM accumulator 
+  DIV 0		;execute DIV =i
+  STORE 2000	;write the result back to RAM accumulator
+
+  LOAD 2		
+  ADD =1
+  STORE 2
+  JMP start
+divRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD 2
+  STORE 904
+  LOAD 0
+  ADD =2000
+  STORE 1
+
+  LOAD 1
+  STORE 916
+  LOAD 2000
+  DIV 0
+  STORE 2000
+
+  LOAD 2		
+  ADD =1
+  STORE 2
+  JMP start
+divIndirInstr: 
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD 2
+  STORE 938
+  LOAD 0
+  ADD =2000
+  STORE 944
+  
+  LOAD 0
+  ADD =2000	
+  STORE 952
+  LOAD 2000
+  DIV 0
+  STORE 2000
+
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start  
+  

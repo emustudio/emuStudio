@@ -1,0 +1,411 @@
+;===============registers of RAM machine (each register Ri of RASP is stored in Ri+3 of RAM)
+
+;	------------------------------------------
+;	 R0	| RAM accumulator	
+;	------------------------------------------
+;	 R1	| reg. for indirect addressing	
+;	------------------------------------------
+;	 R2	| PC for RASP program
+;	------------------------------------------
+;	 R3	| RASP accumulator		
+;	------------------------------------------
+;	 R4	| RASP program start
+;	------------------------------------------     
+;	 R5	| 			
+;	------------------------------------------
+;	 ...	|			
+;	------------------------------------------
+;	 ...	|			
+;	------------------------------------------
+;	 Rn	| data start	
+;	------------------------------------------
+;	 ...	|			
+;	------------------------------------------
+
+
+;=============== RASP machine instructions operation codes:===========================================
+;READ i 	- 1
+;WRITE =i	- 2
+;WRITE i	- 3
+;LOAD =i	- 4
+;LOAD i	- 5
+;STORE i 	- 6
+;ADD =i	- 7
+;ADD i	- 8
+;SUB =i	- 9
+;SUB i 	- 10
+;MUL =i	- 11
+;MUL i	- 12
+;DIV =i	- 13
+;DIV i	- 14
+;JMP 	- 15
+;JZ	- 16
+;JGTZ	- 17
+;HALT	- 18
+
+;==============loading the RASP program from the input tape============================================
+ 
+  LOAD =4
+  STORE 1  	;R1 contains the pointer for writing the next instruction or operand loaded from the input tape
+input: 
+  READ  2   	;loads the input from the tape into R2
+  LOAD  2
+  SUB  =-1 
+  JZ   initialisation ;if the input is equal to -1, jump to initialisation
+  LOAD 2
+  STORE *1 	;otherwise, store it
+  LOAD 1
+  ADD =1		
+  STORE 1		;increment the pointer
+  JMP input	;the next input
+
+;=============== registers initialisation===============================================================
+initialisation:
+;R1=0
+  LOAD =0
+  STORE 1
+;R2=4 - pointer to RASP program start
+  LOAD =4
+  STORE 2
+;R3=0
+  LOAD =0
+  STORE 3
+;================simulation loop=========================================================================
+start:
+  LOAD *2 			;load RASP instruction from the RAM machine's memory
+  STORE 1 			;store the instruction into R1
+  SUB = 1  
+  JZ readRegInstr		;if the instruction is READ, jump to "readRegInstr"
+  LOAD 1			;otherwise, load the instruction again, it is in R1
+  SUB =2
+  JZ  writeConstInstr	;continue testing for other instructions...
+  LOAD 1
+  SUB =3
+  JZ writeRegInstr
+  LOAD 1
+  SUB =4
+  JZ loadConstInstr
+  LOAD 1
+  SUB =5
+  JZ loadRegInstr
+  LOAD 1
+  SUB =6
+  JZ storeRegInstr
+  LOAD 1
+  SUB =7
+  JZ addConstInstr
+  LOAD 1
+  SUB =8
+  JZ addRegInstr
+  LOAD 1
+  SUB =9
+  JZ subConstInstr
+  LOAD 1
+  SUB =10
+  JZ subRegInstr
+  LOAD 1
+  SUB =11
+  JZ mulConstInstr
+  LOAD 1
+  SUB =12
+  JZ mulRegInstr
+  LOAD 1
+  SUB =13
+  JZ divConstInstr
+  LOAD 1
+  SUB =14
+  JZ divRegInstr
+  LOAD 1
+  SUB =15
+  JZ jmpInstr
+  LOAD 1
+  SUB =16
+  JZ jzInstr
+  LOAD 1
+  SUB =17
+  JZ jgtzInstr
+  LOAD 1
+  SUB =18
+  JZ haltInstr
+
+;========== particular RASP instructions simulations================================
+readRegInstr:
+  LOAD 2	
+  ADD =1
+  STORE 2		;increment PC to the address of operand of the instruction
+
+  LOAD *2	
+  ADD =3
+  STORE 1		;correct the address of the operand (i+3), see line 1 for explanation
+
+  READ *1		;execute READ operation
+
+  LOAD 2
+  ADD =1
+  STORE 2		;increment PC
+  JMP start	;repeat the simulation loop
+writeConstInstr:
+  LOAD 2	
+  ADD =1
+  STORE 2
+ 
+  LOAD *2	
+  STORE 1	
+ 
+  WRITE 1
+ 
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start
+writeRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD *2
+  ADD =3
+  STORE 1
+  
+  WRITE *1
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start 
+loadConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD *2
+  STORE 1
+    
+  LOAD 1		;load the constant
+  STORE 3 		;store it into R3 = RASP accumulator
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start
+loadRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD *2
+  ADD =3
+  STORE 1
+
+  LOAD *1
+  STORE 3
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start
+storeRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD *2
+  ADD =3
+  STORE 1
+  
+  LOAD 3
+  STORE *1
+
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start
+addConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD *2
+  STORE 1
+ 
+  LOAD 3
+  ADD 1
+  STORE 3
+
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start
+addRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD *2
+  ADD =3
+  STORE 1
+
+  LOAD 3
+  ADD *1
+  STORE 3
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start
+subConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2		;increment PC to the address of the operand of the instruction
+ 
+  LOAD *2
+  STORE 1		;load the operand (it is a constant)
+ 
+  LOAD 3		;load RASP accumulor value
+  SUB 1		;substract the value in R1 (execute the SUB =i operation with RASP accumulator)
+  STORE 3		;store the result into RASP accumulator
+ 
+  LOAD 2
+  ADD =1
+  STORE 2		;increment PC
+  JMP start	;repeate the simulation loop
+subRegInstr: 
+  LOAD 2
+  ADD =1
+  STORE 2		;increment PC to the address of the operand of the instruction
+ 
+  LOAD *2 
+  ADD =3  
+  STORE 1 		;correct the address of the operand (i+3), see line 1 for explanation
+  
+  LOAD 3		;load RASP accumulator value
+  SUB *1		;substract the value of the register whose address is in R1 (execute SUB i operation with the RASP accumulator)
+  STORE 3		;store the result into RASP accumulator
+
+  LOAD 2
+  ADD =1
+  STORE 2 		;increment PC
+  JMP start 	;repeate the simulation loop
+mulConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD *2
+  STORE 1
+ 
+  LOAD 3
+  MUL 1
+  STORE 3
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start
+mulRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD *2
+  ADD =3
+  STORE 1
+
+  LOAD 3
+  MUL *1
+  STORE 3
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start
+divConstInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD *2
+  STORE 1
+ 
+  LOAD 3
+  DIV 1
+  STORE 3
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start
+divRegInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD *2
+  ADD =3
+  STORE 1
+
+  LOAD 3
+  DIV *1
+  STORE 3
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start
+jmpInstr:
+  LOAD 2
+  ADD =1
+  STORE 2 ;	;increment PC to the address of the operand of the instruction
+  
+  LOAD *2
+  ADD =3
+  STORE 1		;correct the address of the operand (i+3), see line 1 for explanation
+
+  LOAD 1 		;load the operand (the jump address)
+  STORE 2 		;set the PC of RASP to the jump address
+  
+  JMP start	;repeate the simulation loop
+jzInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+
+  LOAD *2
+  ADD =3
+  STORE 1
+
+  LOAD 3
+  JZ isZero	;if RASP accumulator is equal to 0, jump
+   
+  LOAD 2		;otherwise, increment PC
+  ADD =1
+  STORE 2
+  JMP start
+
+ isZero:
+   LOAD 1
+   STORE 2
+   JMP start
+jgtzInstr:
+  LOAD 2
+  ADD =1
+  STORE 2
+  
+  LOAD *2
+  ADD =3
+  STORE 1
+
+  LOAD 3
+  JZ isGTZero
+  
+  LOAD 2
+  ADD =1
+  STORE 2
+  JMP start
+
+  isGTZero:
+    LOAD 1
+    STORE 2
+    JMP start
+haltInstr:
+  HALT

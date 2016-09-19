@@ -1,0 +1,160 @@
+/*
+ * KISS, YAGNI, DRY
+ *
+ * (c) Copyright 2016, Michal Šipoš
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+package net.sf.emustudio.rasp.compiler;
+
+import emulib.plugins.compiler.Message;
+import emulib.plugins.compiler.Token;
+import java_cup.runtime.ComplexSymbolFactory;
+import java_cup.runtime.Symbol;
+
+import net.sf.emustudio.rasp.compiler.tree.*;
+import net.sf.emustudio.rasp.memory.memoryitems.RASPInstruction;
+import net.sf.emustudio.rasp.memory.memoryitems.RASPInstructionImpl;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+init with{: syntaxErrors = false; :}
+parser code{:
+	private LexerImpl lexer;
+	private boolean syntaxErrors;
+	private CompilerImpl compiler;
+		
+	public ParserImpl(LexerImpl lexer, ComplexSymbolFactory csf, CompilerImpl compiler){
+		super(lexer, csf);
+		this.lexer = Objects.requireNonNull(lexer);
+		this.compiler = Objects.requireNonNull(compiler);
+	}
+
+	@Override
+	public void report_fatal_error(String message, Object info) throws Exception{
+		//cancel parsing
+		done_parsing();
+		report_error(message, info);
+		throw new Exception("Cannot recover from previous error(s)");
+	}
+
+	@Override
+	public void report_error(String messageText, Object current){
+		syntaxErrors = true;
+		Token token = (Token) current;
+                String tokenText;
+                if(token.getID() == TokenImpl.SEPARATOR_EOL){
+                    tokenText = "End of line";
+                }else {
+                    tokenText = token.getText();
+                }
+		messageText+=": " + token.getErrorString()+" (\'" + tokenText + "\')";
+
+		List<Integer> expectedTokenIds = expected_token_ids();
+                if(!expectedTokenIds.isEmpty()){
+                    StringBuilder sb = new StringBuilder();
+                    for(int ID: expectedTokenIds){
+                            String nameOfNonTerminal = symbl_name_from_id(ID);
+                            sb.append(nameOfNonTerminal + " ");			
+                    }
+
+                    messageText+="\nExpected tokens: " + sb.toString();
+                }
+
+		Message message = new Message(
+			Message.MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(), null, 0
+		);
+
+		if(compiler!=null){
+			compiler.notifyOnMessage(message);
+		}else{
+			System.err.println(message.getFormattedMessage());
+		}
+	}
+
+	public boolean hasSyntaxErrors(){
+		return syntaxErrors;
+	}
+
+:};
+
+terminal READ, WRITE, LOAD, STORE, ADD, SUB, MUL, DIV, JMP, JZ, JGTZ, HALT, ORG, SEPARATOR_EOL, TCOMMENT, OPERATOR_CONSTANT, ERROR_UNKNOWN_TOKEN;
+terminal Integer NUMBER;
+terminal String TLABEL, IDENT;
+
+non terminal SourceCode SourceCode;
+non terminal Program Program;
+non terminal Row Row;
+non terminal Label Label;
+non terminal Comment;
+non terminal Statement Statement;
+non terminal RASPInstructionImpl Instruction;
+non terminal RASPInstructionImpl JumpInstruction;
+
+
+start with SourceCode;
+
+SourceCode ::= ORG NUMBER:programStart Program:p                    {: RESULT = new SourceCode(programStart, p); :}
+        | Program:p                                                 {: RESULT = new SourceCode(-1, p); :}
+        ;
+
+Program ::= Program:p Row:r                                         {: if(r != null) p.addRow(r); RESULT = p; :}
+            | /*empty program*/                                     {: RESULT = new Program(); :}
+            ;
+
+Row ::= Label:l Statement:s Comment SEPARATOR_EOL                   {: RESULT = new Row(l,s); :}
+      | Label:l Comment SEPARATOR_EOL Statement:s Comment SEPARATOR_EOL     {: RESULT = new Row(l,s); :}
+      | Statement:s Comment SEPARATOR_EOL                           {: RESULT = new Row(null,s); :}
+      | Comment SEPARATOR_EOL                                       {: RESULT = null; :}
+        ;
+
+Label ::= TLABEL:l                                                  {: RESULT = new Label(l); :}
+        ;
+
+Statement ::= Instruction:i NUMBER:operand 		{: RESULT = new Statement(i,operand); :}
+            | JumpInstruction:i IDENT:label		{: RESULT = new Statement(i,label); :}	
+            | HALT					{: RESULT = new Statement(new RASPInstructionImpl(RASPInstruction.HALT), 0); :}
+;
+
+Comment ::= TCOMMENT | /*no comment*/;     /*no action - ignore the comment*/
+
+Instruction ::=	READ				{: RESULT = new RASPInstructionImpl(RASPInstruction.READ); :}
+              |	WRITE OPERATOR_CONSTANT		{: RESULT = new RASPInstructionImpl(RASPInstruction.WRITE_CONSTANT); :}
+              |	WRITE 				{: RESULT = new RASPInstructionImpl(RASPInstruction.WRITE_REGISTER); :}
+              | LOAD OPERATOR_CONSTANT		{: RESULT = new RASPInstructionImpl(RASPInstruction.LOAD_CONSTANT); :}
+              | LOAD				{: RESULT = new RASPInstructionImpl(RASPInstruction.LOAD_REGISTER); :}
+              | STORE				{: RESULT = new RASPInstructionImpl(RASPInstruction.STORE); :}
+              | ADD OPERATOR_CONSTANT		{: RESULT = new RASPInstructionImpl(RASPInstruction.ADD_CONSTANT); :}
+              | ADD				{: RESULT = new RASPInstructionImpl(RASPInstruction.ADD_REGISTER); :}
+              | SUB OPERATOR_CONSTANT		{: RESULT = new RASPInstructionImpl(RASPInstruction.SUB_CONSTANT); :}
+              | SUB				{: RESULT = new RASPInstructionImpl(RASPInstruction.SUB_REGISTER); :}
+              | MUL OPERATOR_CONSTANT		{: RESULT = new RASPInstructionImpl(RASPInstruction.MUL_CONSTANT); :}
+              | MUL				{: RESULT = new RASPInstructionImpl(RASPInstruction.MUL_REGISTER); :}
+              | DIV OPERATOR_CONSTANT		{: RESULT = new RASPInstructionImpl(RASPInstruction.DIV_CONSTANT); :}
+              | DIV				{: RESULT = new RASPInstructionImpl(RASPInstruction.DIV_REGISTER); :}			
+; 
+
+JumpInstruction ::= JMP 			{: RESULT =  new RASPInstructionImpl(RASPInstruction.JMP); :}
+		| JZ				{: RESULT =  new RASPInstructionImpl(RASPInstruction.JZ); :}
+		| JGTZ                          {: RESULT =  new RASPInstructionImpl(RASPInstruction.JGTZ); :}
+;
+
+
+
+	
+

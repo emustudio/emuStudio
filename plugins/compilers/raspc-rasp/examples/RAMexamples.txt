@@ -1,0 +1,47 @@
+;Program loads two numbers, a and b, calculates a/b, but before the division, b is checked for zero division prevention.
+
+READ 1
+READ 2
+LOAD 2 
+JZ zero 
+LOAD 1 
+DIV 2
+STORE 1
+WRITE 1
+JMP end
+zero:
+  WRITE =0
+end:
+  HALT
+
+Program code:
+	1, 1, 1, 2, 5, 2, 16, 18, 5, 1, 14, 2, 6, 1, 3, 1, 15, 20, 2, 0, 18
+
+Input:
+	a,b
+
+Output:
+	a/b   if b is not equal to 0
+	0     if b=0
+
+==================================================================================
+
+;Program substracts one constant from the other one (indirect addressing is used).
+
+LOAD =20
+STORE 1
+LOAD =16
+STORE 2
+LOAD =2
+STORE 3
+LOAD 1
+SUB *3
+STORE 1
+WRITE 1
+HALT
+
+Program code:
+	4, 20, 6, 1, 4, 16, 6, 2, 4, 2, 6, 3, 5, 1, 24, 3, 6, 1, 3, 1, 18
+Output:
+	4
+

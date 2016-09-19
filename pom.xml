@@ -73,6 +73,9 @@
     <module>plugins/compilers/as-ssem</module>
     <module>plugins/mem/ssem-mem</module>
     <module>plugins/cpu/ssem-cpu</module>
+    <module>plugins/compilers/raspc-rasp</module>
+    <module>plugins/mem/rasp-mem</module>
+    <module>plugins/cpu/rasp-cpu</module>
   </modules>
 
   <build>
@@ -356,6 +359,11 @@
         <artifactId>as-ssem</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>raspc-rasp</artifactId>
+          <version>${project.version}</version>
+      </dependency>
 
       <!-- devices -->
       <dependency>
@@ -405,6 +413,11 @@
         <artifactId>brainduck-mem</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>rasp-mem</artifactId>
+          <version>${project.version}</version>
+      </dependency>
 
       <!-- cpus -->
       <dependency>
@@ -425,6 +438,11 @@
       <dependency>
         <groupId>net.sf.emustudio</groupId>
         <artifactId>brainduck-cpu</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.sf.emustudio</groupId>
+        <artifactId>rasp-cpu</artifactId>
         <version>${project.version}</version>
       </dependency>
 

@@ -1,0 +1,51 @@
+= RASP: Random Access Stored Program abstract machine emulator
+(c) Copyright 2016, Michal Šipoš
+Version 0.39
+:toc:
+:numbered:
+
+== Brief description
+
+Random Access Stored Program machine (RASP) is an abstract von-Neumann computer. It means it does not represent a physical device,
+but ranther it is intended to work as a model to study von-Neumann architecture, without the need to care about specific manufacturer's 
+hardware details. 
+
+Firstly, it is usefull to present Random Access Stored Program (RASP) machine's architecture -- it is schematically depicted in the following figure.
+
+image::rasp/images/RASP.png[RASP architecture]
+
+As we can see, the control unit, i.e. processor, reads data from the input tape and writes results of executed operations onto the output tape. 
+The tapes serve as a form of I/O devices. The two heads -- reading (R) and writing (W), are pointers to current reading/writing position. 
+
+As already stated, RASP machine represents a von Neumann computer. 
+This implies that the operating memory exists as a single unit in which both program and data can reside. 
+The segment containing the program is organised in the way that two adjacent cells contain instruction/operand alternately. 
+The memory can be read as well as written to by the control unit.  
+
+== Installation and run
+
+There is no need to download/install RASP separately as it is included in the emuStudio distribution. Here is the structure of the directories
+containing the files neccessary for our RASP virtual computer:
+
+=== Directory structure
+
+- `config/RASP.conf`: configuration file of RASP architecture.
+- `compilers/raspc-rasp.jar`: RASP compiler plug-in.
+- `cpu/rasp-cpu.jar`: RASP CPU emulator - CPU plug-in.
+- `mem/rasp-mem.jar`: RASP main memory plug-in.
+
+RASP virtual computer in emuStudio uses with tapes as I/O devices. For this purpose, `abstractTape-ram.jar` plug-in is used ((C) P. Jakubčo).
+
+=== Abstract schema
+
+Each virtual computer in emuStudio is defined by so called 'abstract schema' (please see emuStudio User documentation).
+It defines all the parts of its architecture (what it consists of) and inner communication (how architecture components are interconnected).
+Following figure presents RASP abstact schema:
+
+image::rasp/images/abstract_scheme.png[RASP abstract schema]
+
+
+
+
+
+

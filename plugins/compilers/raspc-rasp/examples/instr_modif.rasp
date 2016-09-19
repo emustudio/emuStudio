@@ -1,0 +1,18 @@
+org 5
+
+;Program illustrates modification of the instruction operation code.
+
+;prepare the operands: 32 and 30
+LOAD =32
+STORE 1
+LOAD =30
+STORE 2
+;8 is the operation code of the ADD i instruction
+LOAD =8
+;operation code 8 is saved to the address 19; that is the address where SUB i instruction was originally stored (see the line marked with ***)
+STORE 19
+;operand 32 is loaded
+LOAD 1
+;instruction SUB i has already been changed to ADD i. This means that what will be executed will be the ADD operation instead of SUB.
+SUB 2 ;***
+HALT

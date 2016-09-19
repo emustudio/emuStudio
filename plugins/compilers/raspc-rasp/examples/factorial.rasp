@@ -1,0 +1,30 @@
+org 5
+
+;Program reads an integer number from the input tape, calculates its factorial and prints the result onto the output tape.
+
+
+;saves the constant 1 into R2 and R3 registers
+load =1
+store 2 
+store 3
+;reads a number from the input tape
+read 1
+;if the number is greater than 0, jump to "ok", otherwise, jump to "finish"
+load 1
+jgtz ok
+jmp finish
+;the loop to calculate the factorial value
+ok: 
+load 3
+sub 1
+jz finish
+load 3
+add =1
+store 3
+mul 2
+store 2
+jmp ok
+;print the result
+finish: 
+write 2
+halt
