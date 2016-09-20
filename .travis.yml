@@ -18,13 +18,13 @@ install: true
 before_script:
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
-  - sleep 3
-  - python add_server.py
+  - sleep 2
 
 script:
   - mvn -B -U -P coveralls clean cobertura:cobertura coveralls:report
 
 after_success:
+  - python add_server.py
   - mvn deploy -Dmaven.test.skip=True
 
 after_script:
