@@ -8,8 +8,8 @@ It is versatile, free, and written in Java.
 
 The main goal is to support teaching older but important computers and abstract machines. For example,
 students can write their programming assignments in emuStudio IDE, which then will be run on the emulated
-computer. The output might be displayed on emulated screen, or written to some file having the advantage
-of a possibility of creating automation "assignment checking" process.
+computer. The output might be displayed on emulated screen, or written to some file having the possibility
+of creating automated "assignment checking" process.
 
 emuStudio is used at [Technical University of Košice](http://www.fei.tuke.sk/en) since 2007.
 
