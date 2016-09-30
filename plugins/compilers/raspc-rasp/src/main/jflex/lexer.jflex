@@ -29,7 +29,8 @@ import java.io.Reader;
 
 /*options for the lexer*/
 
-%class LexerImpl  /*name of lexer class*/
+/*name of lexer class*/
+%class LexerImpl  
 %cup  /*switch to CUP parser generator compatibility*/
 %public  
 %implements LexicalAnalyzer, Symbols /*interfaces that resulting lexer implements*/
