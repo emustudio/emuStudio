@@ -60,6 +60,7 @@
         <include>net.sf.emustudio:z80-cpu</include>
         <include>net.sf.emustudio:brainduck-cpu</include>
         <include>net.sf.emustudio:rasp-cpu</include>
+        <include>net.sf.emustudio:ssem-cpu</include>
       </includes>
       <useProjectArtifact>false</useProjectArtifact>
       <useTransitiveDependencies>false</useTransitiveDependencies>

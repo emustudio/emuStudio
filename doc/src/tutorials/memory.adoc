@@ -14,9 +14,11 @@ component. The tutorial focuses on how to use emuLib API in a Memory project so 
 Within this tutorial, we will implement a main store of SSEM "Baby" machine, to conform with other tutorials for other
 plug-ins. Before we start, here's a few words about what purpose and capabilities memories in emuStudio can have.
 
-In von Neumann architecture, operating memory is connected only with CPU. All data exchange between the memory and
-devices was done through CPU. Modern CPUs introduced DMA (direct memory access) capability, which allowed devices to
-directly access the memory. In emuStudio, this capability and much more can be provided.
+In first computers, operating memory was connected only with CPU. It means that all data transfer between the memory
+and devices was done only through CPU. When data from memory was required, CPU "paused" executing instructions and
+accessed the memory in the meantime. Later, DMA (direct memory access) capability was introduced, which allowed devices
+to directly access the memory. In emuStudio, you can connect the memory with devices, or even with a compiler which
+is the source of the emuStudio versatility and power.
 
 There are three main behavioral contracts which need to be taken into account, when creating memory plug-in:
 
@@ -36,9 +38,11 @@ used principle was the same as in standard Cathode-Ray-Tubes (CRTs). Original ED
 von Neumann architecture) did not have random-access memory.
 
 The memory had 32 memory cells (called words), each had size of 32 bits. The memory could contain instructions and
-data. So, one SSEM instruction perfectly fit in the single memory word.
+data. So, one SSEM instruction perfectly fits in the single memory word.
 
 Within this tutorial, we will hardcode the word size and memory size. But we'll also implement a GUI for the memory.
+The code might seem complicated and bloated with a boiler-plate. For this simple computer, it definitely is. However,
+much of which must be done will be really handy when implementing more complex computers.
 
 == Preparing the environment
 

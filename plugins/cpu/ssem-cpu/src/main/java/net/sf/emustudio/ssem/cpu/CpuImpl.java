@@ -23,15 +23,20 @@ import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.cpu.AbstractCPU;
+import emulib.plugins.cpu.Decoder;
 import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.exceptions.PluginInitializationException;
+import net.sf.emustudio.ssem.DecoderImpl;
+import net.sf.emustudio.ssem.DisassemblerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.util.MissingResourceException;
 import java.util.Objects;
+import java.util.ResourceBundle;
 
 @PluginType(
     type = PLUGIN_TYPE.CPU,
@@ -44,6 +49,10 @@ public class CpuImpl extends AbstractCPU {
     private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
     private final ContextPool contextPool;
+    private MemoryContext<Integer> memory;
+    private Decoder decoder;
+    private Disassembler disasm;
+    private EmulatorEngine engine;
 
     public CpuImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
@@ -57,46 +66,61 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     protected RunState stepInternal() throws Exception {
-        return null;
+        return engine.step();
     }
 
     @Override
     public JPanel getStatusPanel() {
-        return null;
+        return new CpuPanel(this, engine);
     }
 
     @Override
     public int getInstructionPosition() {
-        return 0;
+        return engine.CI;
     }
 
     @Override
     public boolean setInstructionPosition(int i) {
-        return false;
+        int memSize = memory.getSize();
+        if (i < 0 || i >= memSize) {
+            throw new IllegalArgumentException("Instruction position can be in <0," + memSize +">, but was: " + i);
+        }
+        engine.CI = i;
+        return true;
     }
 
     @Override
     public Disassembler getDisassembler() {
-        return null;
+        return disasm;
     }
 
     @Override
     public void initialize(SettingsManager settingsManager) throws PluginInitializationException {
-        MemoryContext<Integer> memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
+        memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
+        decoder = new DecoderImpl(memory);
+        disasm = new DisassemblerImpl(memory, decoder);
+        
+        engine = new EmulatorEngine(memory, this);
     }
 
     @Override
     public String getVersion() {
-        return "1.0.0";
+       try {
+            ResourceBundle bundle = ResourceBundle.getBundle("net.sf.emustudio.ssem.cpu.version");
+            return bundle.getString("version");
+        } catch (MissingResourceException e) {
+            LOGGER.error("Could not load resource file", e);
+            return "(unknown)";
+        }
     }
 
     @Override
     public RunState call() throws Exception {
-        return null;
+        return engine.run();
     }
 
     @Override
     protected void resetInternal(int startPos) {
-
+        engine.reset(startPos);
     }
 }

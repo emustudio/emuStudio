@@ -12,7 +12,7 @@
   <artifactId>emuStudio</artifactId>
   <packaging>jar</packaging>
 
-  <name>emuStudio Main Module</name>
+  <name>Main Module</name>
 
   <build>
     <finalName>emustudio</finalName>

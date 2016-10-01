@@ -22,15 +22,14 @@ package net.sf.emustudio.ssem.memory.impl;
 import emulib.plugins.memory.AbstractMemoryContext;
 
 import java.util.Arrays;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class MemoryContextImpl extends AbstractMemoryContext<Integer> {
     static final int NUMBER_OF_CELLS = 32;
 
+    // int type is atomic in JVM memory model
     private final int[] memory = new int[NUMBER_OF_CELLS];
-
-    MemoryContextImpl() {
-        super();
-    }
 
     @Override
     public void clear() {

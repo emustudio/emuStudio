@@ -39,6 +39,21 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>edigen</groupId>
+        <artifactId>edigen-maven-plugin</artifactId>
+        <configuration>
+          <decoderName>net.sf.emustudio.ssem.DecoderImpl</decoderName>
+          <disassemblerName>net.sf.emustudio.ssem.DisassemblerImpl</disassemblerName>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 

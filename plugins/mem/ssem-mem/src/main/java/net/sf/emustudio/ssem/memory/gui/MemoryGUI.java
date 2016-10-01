@@ -40,8 +40,8 @@ public class MemoryGUI extends JDialog {
     }
 
     public MemoryGUI(MemoryContext<Integer> memory) {
-        setLocationRelativeTo(null);
         initComponents();
+        setLocationRelativeTo(null);
         
         this.tableModel = new MemoryTableModel(memory);
         scrollPane.setViewportView(new MemoryTable(tableModel, scrollPane));

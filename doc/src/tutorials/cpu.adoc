@@ -167,35 +167,40 @@ boiler-plate code needed to be done in every CPU plug-in.
 === Load and initialization
 
 Loading the virtual computer starts with creating separate class loader derived from the one emuStudio is using,
-so each plug-in can see everything what emuStudio can see (except potentionally other virtual computers).
+so each plug-in can see everything what emuStudio can see. There can be loaded only one computer in emuStudio.
 
 The CPU plug-in JAR file is loaded using the class loader as a second in order.
 
-The loading process is as follows:
+The loading process follows:
 
-1. Plug-in content is searched for main class. Main class must be annotated with `@PluginType(type = PLUGIN_TYPE.CPU)`
-   annotation and it does not matter in which package it resists. However, there must be just one main class in the
-   plug-in. If there are more, the first one found will be used; however there is a problem to clearly state which
-   will be the first.
+1. JAR content is searched for a main class. Main class must be annotated with `@PluginType(type = PLUGIN_TYPE.CPU)`
+   annotation and it does not matter in which package it resists.
 
-2. The class is checked if it implements `CPU` interface (in any depth of inheritance). If not, it is not considered
-   as the main class.
+2. There must be just one main class in the JAR. If there are more classes annotated with mentioned annotation, the
+   first found will be used; however the search order is non-deterministic.
+
+2. The main class must implement `emulib.plugins.cpu.CPU` interface (in any depth of inheritance).
 
 3. Plug-in is instantiated by calling the main class constructor. The constructor must be public and must have two
-   parameters of type: `Long` (first) and `ContextPool` (second). The first parameter is a unique plug-in ID assigned
-   by emuStudio. This ID can be then used to access configuration of the virtual computer. The second parameter is
-   a context pool, object which holds runtime entities which plugins can register. Plugins communicate to each other
-   by those entities, called contexts.
+   parameters of type: `java.lang.Long` (as the first) and `emulib.runtime.ContextPool` (as the second). The first
+   parameter represents a unique plug-in ID assigned by emuLib. This ID can then be used to access configuration
+   of the emulated computer. The second parameter is a context pool object. It is a pool of plugin contexts, runtime
+   entities intended for the plug-in intercommunication. In the constructor, the CPU should initialize its context to
+   the context pool. However; it must not retrieve the contexts of other plugins now, because they are not present at
+   this point, except compiler.
 
-4. emuStudio calls method `initialize(SettingsManager settingsManager)`. In this step the plug-in can be initialized.
-   The initialization might involve reading settings using provided `SettingsManager` object, or retrieving contexts
-   of other plug-in by already obtained `ContextPool` object.
+4. Plug-in is initialized by calling method `emulib.plugins.Plugin.initialize(SettingsManager settingsManager)` from
+   the main thread of emuStudio (not UI thread). This method is intended for all the initialization which could not be
+   performed in the constructor, such as reading plug-in settings, or retrieving contexts of other plug-in(s) from
+   the context pool.
 
-5. Specifically for CPU, emuStudio calls `getDisassembler()` and `getStatusPanel()` methods in not specified order.
+5. Specifically for CPU, emuStudio calls `getDisassembler()` and `getStatusPanel()` methods in unspecified order.
 
-After those steps, the plug-in is ready. Further work of the CPU is event-based. emuStudio will handle UI events
-and control the plug-in by calling appropriate methods of the main class instance. In case of automatic emulation,
-the behavior is more deterministic.
+After those steps, the CPU plug-in is ready. Further work of the CPU is event-based. emuStudio will handle UI events
+and control the plug-in by calling appropriate methods of the main class instance. CPU emulators are run in
+different thread than UI thread, so all method calls come from the same "controller" thread.
+
+In case of automatic emulation, the emulation control is performed only in the main thread.
 
 === Emulation lifecycle
 
@@ -326,6 +331,65 @@ This means that CPU emulation control will not block UI, even if the execution t
 However, all the other methods from the CPU interface are (possibly) executed from UI thread, so they should be
 implemented in a responsive manner; they can block.
 
+[[SSEM_ARCHITECTURE]]
+== Architecture of SSEM CPU emulator
+
+SSEM is one of the first implementations of the von-Neumann design of a computer. It contained control unit,
+arithmetic-logic unit and I/O subsystem (CRT display). More information about the real architecture can be found
+at http://www.cs.ubc.ca/~hilpert/e/SSEM/[this link].
+
+The architecture of our SSEM CPU emulator will look as follows (below is Display and Memory just to show how it
+is connected overall):
+
+[graphviz]
+---------------------------------------------------------------------
+digraph ssem_cpu_architecture {
+  node [shape = rect];
+
+  subgraph clustercpu {
+    style=filled;
+    color=lightgrey;
+    fillcolor=lightgrey;
+
+    subgraph regs {
+      rank ="source";
+
+      CI [ label = "CI" ];
+      ACC [ label = "Accumulator" ];
+    }
+
+    subgraph other {
+      rank ="same";
+
+      E [ label ="Engine" ];
+      D [ label ="Disassembler" ];
+      P [label = "GUI Panel" ];
+    }
+
+    label = <<B>SSEM CPU</B>>;
+  }
+
+  subgraph a {
+    rank = "same";
+    node [style=filled];
+
+    M [label = <<B>Memory</B>> ];
+    DIS [label =<<B>Display</B>>];
+  }
+
+  E -> CI;
+  E -> ACC;
+  P -> CI;
+  P -> ACC;
+
+  D -> M;
+  E -> M;
+  DIS -> M;
+}
+---------------------------------------------------------------------
+
+
+
 == Implementing CPU fundamentals
 
 The fundamental steps when building a CPU involves the initialization and destruction code. After reading the
@@ -345,4 +409,403 @@ public class CpuImpl extends AbstractCPU {
         this.contextPool = Objects.requireNonNull(contextPool);
     }
 
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    ...
+}
+----
+
+We will leave the other methods unimplemented for now.
+
+While getting to the initialization part, what the CPU needs in order to operate? Especially, our SSEM "CPU". It
+requires memory. The I/O subsystem, as can be seen at the picture under <<SSEM_ARCHITECTURE>> section, will not be
+implemented here. As we will do in another tutorial, our "display" device will show only the memory content and will
+not have any connection to CPU.
+
+So let's initialize the CPU by getting the memory.
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java`
+----
+public class CpuImpl extends AbstractCPU {
+    private MemoryContext<Integer> memory;
+
+    @Override
+    public void initialize(SettingsManager settingsManager) throws PluginInitializationException {
+        memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
+    }
+}
+----
+
+Now we see what the context pool is used for. It is a "storage" of communication objects which plug-ins provide
+(contexts). Other plug-ins, which are connected with the one they want to communicate with, ask for the context.
+There exist many specific contexts - for CPU, for Compiler, Memory or Device. Also, the context can be extended
+with another non-standard methods. In that case, the context class should be passed as the second argument when
+calling `get...Context()`. In our case, we expect the standard one, so we pass `MemoryContext.class` as the second
+argument.
+
+What now? We need to implement three fundamental things - GUI panel, Disassembler and the emulator engine itself.
+We can start with the interesting stuff right away.
+
+== Emulator engine
+
+Emulator engine is the core of the emulator. As we all probably know, the CPU interprets some binary-encoded commands,
+which are stored in memory. Basic von-Neumann CPUs work sequentially. Performing one instruction consists of four
+steps: fetch, decode and execute, store. When we would like to program these steps in a programming language like Java,
+the phases will be probably overlap and they can be quite hard to distinguish. It is not our intent to preserve the
+exact phases in the emulator. This is the main difference from a simulator. Emulator "looks" like real computer,
+"behaves" like the real one, but inside it is normal program which was written by any programming style, uses various
+variables, methods and other language features.
+
+The pseudo-algorithm for performing one instruction can look as follows:
+
+----
+step() {
+  // fetch phase
+  instruction = memory.read(current_instruction);
+  current_instruction = current_instruction + 1;
+
+  // decode phase
+  line = parseLine(instruction);
+  opcode = parseOpcode(instruction);
+
+  // execute phase
+  switch (opcode) {
+    case 0: // JMP
+      ...
+    case 4: // JPR
+      ...
+    ...
+  }
+}
+----
+
+And what CPU does when it runs? It does these steps in a infinite loop. So the main CPU emulation algorithm, also
+called "interpretation" can look as follows:
+
+----
+run() {
+  while (!stopped) {
+    step();
+  }
+}
+----
+
+NOTE: In Java, besides interpretation it is possible to write threaded dispatch algorithm, with usage of Reflection or
+      lambdas feature. Threaded dispatch stores the execution implementation of each instruction in separate method.
+      Then, there is a dispatch table (array of method references), which maps the methods by opcode. Then, after the
+      decoding the opcode, the instruction is executed just by indexing that table and executing the method it
+      references to. This algorithm is faster than interpretation.
+
+Our emulator engine will be constructed as a separate class. Besides the emulation methods it will contain the
+variables representing CPU registers - `CI` (current instruction) and `Acc` (accumulator). In SSEM, both are 32-bit
+values.
+
+The class looks as follows:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/cpu/EmulatorEngine.java`
+----
+public class EmulatorEngine {
+
+    private final MemoryContext<Integer> memory;
+    private volatile CPU.RunState currentRunState;
+
+    public volatile int Acc;
+    public volatile int CI;
+
+    public EmulatorEngine(MemoryContext<Integer> memory) {
+        this.memory = Objects.requireNonNull(memory);
+    }
+
+    public void reset(int startingPos) {
+        Acc = 0;
+        CI = startingPos;
+    }
+
+    public CPU.RunState step() {
+        int instruction = memory.read(CI);
+        CI++;
+
+        int line = parseLine(instruction);
+        int opcode = parseOpcode(instruction);
+
+        switch (opcode) {
+            case 0: // JMP
+                CI = memory.read(line);
+                break;
+            case 4: // JPR
+                CI = CI + memory.read(line);
+                break;
+            case 2: // LDN
+                Acc = -memory.read(line);
+                break;
+            case 6: // STO
+                memory.write(line, Acc);
+                break;
+            case 1: // SUB
+                Acc = Acc - memory.read(line);
+                break;
+            case 3: // CMP / SKN
+                if (Acc < 0) {
+                    CI++;
+                }
+                break;
+            case 7: // STP / HLT
+                return CPU.RunState.STATE_STOPPED_NORMAL;
+        }
+        return CPU.RunState.STATE_STOPPED_BAD_INSTR;
+    }
+
+    private int parseLine(int instruction) {
+        int line = instruction >> 27;
+        return ((line & 1) << 4)
+                | ((line & 2) << 2)
+                | (line & 4)
+                | ((line & 8) >> 2)
+                | ((line & 16) >> 4);
+    }
+
+    private int parseOpcode(int instruction) {
+        return (instruction >> 16) & 3;
+    }
+
+    public CPU.RunState run() {
+        while (!Thread.currentThread().isInterrupted() && currentRunState == CPU.RunState.STATE_RUNNING) {
+            try {
+                currentRunState = step();
+            } catch (IllegalArgumentException e) {
+                if (e.getCause() != null && e.getCause() instanceof IndexOutOfBoundsException) {
+                    return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+                }
+                return CPU.RunState.STATE_STOPPED_BAD_INSTR;
+            } catch (IndexOutOfBoundsException e) {
+                return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+            }
+        }
+        return currentRunState;
+    }
+
+}
+----
+
+Pretty short, huh? Method `step()` and `run()` return `CPU.RunState` enum, which is used by emuStudio to determine
+if the emulator is still running or in what state it is. The `step()` method is the most fundamental regarding the
+instruction emulation, but it is so easy that we'll rather talk about the `run()` method.
+
+The `run()` method begins with the already described cycle. However, the conditions of determining if the CPU should
+be running can look complex at the first sight. However, we are checking just two conditions - if the current run state
+has changed (look at the `step()` method - it can change there), or if the current thread is interrupted. It can
+interrupt by external condition, e.g. when somebody quits the emulator during CPU emulation.
+
+Then, there are many catches. They are quite required because of many possible situations which can happen - when the
+CPU gets to the end of the memory, what it should do? It does nothing, so the memory will throw some variant of
+`IndexOutOfBoundsException`. For this purpose, CPU state contains one which is called `STATE_STOPPED_ADDR_FALLOUT`,
+meaning "address fallout", like if the address "fell out" of allowed range.
+
+And the last bad thing which can happen is when the memory at the current instruction position contains some unknown
+data, not recognized by CPU. For this situation, we have `STATE_STOPPED_BAD_INSTR` state.
+
+That's pretty it. We will now extend the engine to support breakpoints and controlling the speed.
+
+=== Breakpoints support
+
+Since emuStudio is mainly intended for students, as they should get in touch with emulated computers and how they work,
+it should allow sometimes to pause the emulation at a point where student wants. This capability is also useful when
+our program written for the emulated computer does not work and we want to know what happens after executing specific
+instruction. We can then set a "breakpoint" to that instruction, and emuStudio will stop just before its execution.
+
+Breakpoint is in fact an address - memory location, at which the CPU should pause its execution. It is used only when
+CPU is running. Breakpoints are usually stored in a set. The class `emulib.plugins.cpu.AbstractCPU` has already this
+set and implements all the breakpoints setting/unsetting. What is still left to do for us is to check if at specific
+address (current instruction position) the breakpoint is set, and if yes, somehow "pause" the CPU.
+
+We implement this in the `run()` method, right before instruction execution:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/cpu/EmulatorEngine.java`
+----
+public class EmulatorEngine {
+    ...
+    private final CPU cpu;
+
+    public EmulatorEngine(Memorytry {Context<Integer> memory, CPU cpu) {
+        this.memory = Objects.requireNonNull(memory);
+        this.cpu = Objects.requireNonNull(cpu);
+    }
+
+    public CPU.RunState run() {
+        while (...) {
+            try {
+                if (cpu.isBreakpointSet(CI)) {
+                    return CPU.RunState.STATE_STOPPED_BREAK;
+                }
+                currentRunState = step();
+            } catch (...) {
+              ...
+            }
+        }
+        return currentRunState;
+    }
+
+    ...
+}
+----
+
+Now the engine besides memory requires also the CPU instance, needed for checking if the breakpoint is set at current
+instruction, denoted by `CI` register. If the breakpoint is set, the resulting state is `STATE_STOPPED_BREAK`, and
+emuStudio will take care about the pausing and updating GUI.
+
+=== Preserving the speed
+
+Every real computer runs at some speed, usually referring only CPU speed. Baby "CPU" could perform about 700
+instructions per second. How we should achieve that? The simplest method would be something like that:
+
+----
+run() {
+    while (!stopped) {
+        start = measureTime();
+        ... perform 700 instructions ...
+        end = measureTime();
+
+        to_wait = 1.second - (end - start);
+        if (to_wait > 0) {
+            wait_time(to_wait);
+        }
+    }
+}
+----
+
+So perform 700 instructions, then wait until one second elapses, and go again. What's wrong about this solution?
+That the algorithm is not "smooth". 700 instructions will be performed at full blast, and then there will be something
+like a "break", and the situation will repeat. Real CPU certainly didn't work like that and we can do better.
+
+In reality, every instruction is performed in some number of machine "cycles". We can imagine the machine cycle
+as a time of elementary phase when performing the instruction. For example, instruction phases are fetch, decode,
+execute and store. Each of these phases can take various time for particular instruction. Instructions which operate
+with memory can have shorter execute phase, but longer fetch/store phases. On the other hand, arithmetic instructions
+can have shorter fetch/store phases but a bit longer execute phase. And so on. Based on this information which is
+usually available, can be build a technique for preserving speed even better.
+
+NOTE: Description of the speed-preservation technique can be seen e.g. at
+      http://emustudio.sourceforge.net/downloads/2010-cse.pdf[this link].
+
+However, for purposes of this tutorial we will implement different algorithm, but also quite interesting. The idea
+is based on measuring average time which takes the execution of one instruction. The measurement will not be very
+accurate, since perfect or almost perfect measuring of method execution in Java has some rules, like warming up JVM
+before measurement, etc.
+
+NOTE: For time measurement it is necessary to use `System.nanoTime()` method instead of `System.currentTimeMillis()`.
+      The reason is that the latter is corrected time-to-time by operating system because of errors caused by not
+      really accurate timer in your computer. Then, the time difference can give invalid values, sometimes even
+      negative ones. The `System.nanoTime()` is not corrected, so time difference works well.
+
+The algorithm will work in the following steps:
+
+----
+1. Measure average instruction time
+2. Compute how much CPU should wait after executing each instruction
+3. Wait after each instruction for the computed time
+----
+
+The third step will be performed only if the time we should wait is greater than zero. It means that the host computer
+is faster than Baby computer (which is expected).
+
+The algorithm can be implemented as follows:
+
+[source,java]
+----
+public class EmulatorEngine {
+    ...
+    private volatile long averageInstructionNanos;
+
+    public CPU.RunState run() {
+        if (averageInstructionNanos == 0) {
+            measureAverageInstructionNanos();
+        }
+        long waitNanos = TimeUnit.SECONDS.toNanos(1) / averageInstructionNanos;
+        while (...) {
+            ...
+            if (waitNanos > 0) {
+                LockSupport.parkNanos(waitNanos);
+            }
+        }
+        return currentRunState;
+    }
+
+    ...
+}
+----
+
+Quite simple, so far. We will measure the instruction speed just once, on the first call of the `run()` method. The
+measured value will be reused for later executions and will not slow down the whole emulator.
+
+However, how we should measure the average time which is taken by the instruction execution?
+Well, if we want to be at least somehow accurate, we should emulate the `step()` method several times, and then compute
+the average. However, we can't. The reason is that `step()` method uses real memory and CPU registers. We should use
+kind of "fake" the `step()` method which will not change the emulator state or memory. But the fake step should implement
+instruction with the average "complexity", which we will do just with some estimation or better - feeling. The
+algorithm can look as follows (there's lot to improve ofcourse):
+
+.`src/main/java/net/sf/emustudio/ssem/cpu/EmulatorEngine.java`
+----
+public class EmulatorEngine {
+    ...
+
+    private void fakeStep() {
+        int instruction = memory.read(CI);
+        CI++;
+
+        int line = parseLine(instruction);
+        int opcode = parseOpcode(instruction);
+
+        switch (opcode) {
+            case 0: break;
+            case 1: break;
+            case 2: break;
+            case 3: break;
+            case 4: break;
+            case 6: break;
+            case 7: break;
+        }
+
+        Acc -= memory.read(line);
+    }
+
+
+    private void measureAverageInstructionNanos() {
+        int oldCI = CI;
+        int oldAcc = Acc;
+
+        long start = System.nanoTime();
+        for (int i = 0; i < INSTRUCTIONS_PER_SECOND; i++) {
+            fakeStep();
+        }
+        long elapsed = System.nanoTime() - start;
+
+        averageInstructionNanos = elapsed / INSTRUCTIONS_PER_SECOND;
+
+        CI = oldCI;
+        Acc = oldAcc;
+    }
+
+    ...
+}
+----
+
+At first, we will save the registers (emulator state). Then, we will execute the fake step for 700 times and then
+compute the average time. At the end we restore the state, and that's it. As you might notice, we tried to use
+real things in this "fake" step method like real memory (but just for reading), and emulator registers, which we backed
+up and then restored.
+
+That's about it! If we had disassembler and GUI, the emulator is now ready - we just implemented the core of the CPU.
+
+== Disassembler
+
+Disassembler is not needed for the emulation itself. It is needed for emuStudio to be able to visually show the
+instructions. Instructions are encoded in binary form and reside in memory. Disassembler "disassembles" - decodes the
+instructions and transforms them into string representation which can be easily shown on screen.
 

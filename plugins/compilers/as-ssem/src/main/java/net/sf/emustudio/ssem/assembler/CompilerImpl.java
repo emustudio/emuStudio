@@ -112,7 +112,6 @@ public class CompilerImpl extends AbstractCompiler {
             @Override
             public int read(char[] cbuf, int off, int len) throws IOException {
                 int result = reader.read(cbuf, off, len);
-                System.out.println("reading : " + new String(cbuf, off, len));
                 return result;
             }
 
