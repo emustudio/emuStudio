@@ -43,6 +43,7 @@ public abstract class CpuRunner<CpuType extends CPU> {
     }
 
     public void ensureProgramSize(int length) {
+        length = Math.max(length, 65536);
         if (program.length < length) {
             this.program = Arrays.copyOf(this.program, length);
             resetProgram();

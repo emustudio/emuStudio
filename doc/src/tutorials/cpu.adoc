@@ -809,3 +809,385 @@ Disassembler is not needed for the emulation itself. It is needed for emuStudio 
 instructions. Instructions are encoded in binary form and reside in memory. Disassembler "disassembles" - decodes the
 instructions and transforms them into string representation which can be easily shown on screen.
 
+Decoding binary instructions for disassembler can be a bit different from decoding used in the emulator. For example,
+instructions binary code can use constants which can be used directly in the emulator, but which must be translated
+in the disassembler. Also, decoding code is usually mixed up with emulator code for performance reasons, so it's
+hard to reuse it. For these reasons, the programmer often need to implement the decoding part again and duplicate the
+work a bit. But not in emuStudio.
+
+Fortunatelly, there exist a project called `edigen` ( ... .. ... .), a disassembler generator. It works similarly as
+a parser generator: developer writes a specification file with all the instructions of the CPU. Then, edigen (either
+from the command line or from Maven) generates disassembler and decoder source code from predefined templates. These
+generally do not need any further attention from the developer and can be used right away.
+
+SSEM CPU specification file should be put in `ssem-cpu/src/main/edigen/cpu.eds`, and it looks as follows:
+
+[source]
+.`ssem-cpu/src/main/edigen/cpu.eds`
+----
+include::../../../plugins/cpu/ssem-cpu/main/edigen/cpu.eds[]
+----
+
+The specification file might look a bit cryptic at first sight, but it's quite easy. The content is divided into two
+sections, separated with two `%%` chars on a separate line. The first section contains rules which are used for parsing
+the instruction binary codes and assign labels to the codes. The second section specifies the disassembled string
+formats for particular rules.
+
+There can exist multiple rules, and rules can include another rules. If the rule includes the same rule recursively,
+it means it's a constant. In that case, in the parenthesis after the rule inclusion must be a number of bits
+which the constant takes.
+
+=== Using generated disassembler
+
+When you look into our `pom.xml` file, you can find a section:
+
+[source,xml]
+----
+...
+      <plugin>
+        <groupId>edigen</groupId>
+        <artifactId>edigen-maven-plugin</artifactId>
+        <configuration>
+          <decoderName>net.sf.emustudio.ssem.DecoderImpl</decoderName>
+          <disassemblerName>net.sf.emustudio.ssem.DisassemblerImpl</disassemblerName>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+...
+----
+
+The disassembler will be generated in the class `net.sf.emustudio.ssem.DisassemblerImpl`. The class already implements
+the interface `emulib.plugins.cpu.Disassembler`, which is exactly what method `CPU.getDisassembler()` returns.
+Disassembler is an independent component so it also uses the memory from where it reads the instructions. Therefore,
+disassembler can be initialized _after_ the memory. Now we are ready to do full initialization of the emulator, with
+the engine as well as disassembler. The code looks as follows:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java`
+----
+public class CpuImpl extends AbstractCPU {
+    ...
+    private EmulatorEngine engine;
+    private Disassembler disasm;
+
+    ...
+
+    @Override
+    public void initialize(SettingsManager settingsManager) throws PluginInitializationException {
+        memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
+        disasm = new DisassemblerImpl(memory, new DecoderImpl(memory));
+        engine = new EmulatorEngine(memory, this);
+    }
+
+    @Override
+    public Disassembler getDisassembler() {
+        return disasm;
+    }
+
+    @Override
+    public RunState call() throws Exception {
+        return engine.run();
+    }
+
+    @Override
+    protected RunState stepInternal() throws Exception {
+        return engine.step();
+    }
+
+    @Override
+    protected void resetInternal(int startPos) {
+        engine.reset(startPos);
+    }
+
+    @Override
+    public int getInstructionPosition() {
+        return engine.CI;
+    }
+
+    @Override
+    public boolean setInstructionPosition(int i) {
+        int memSize = memory.getSize();
+        if (i < 0 || i >= memSize) {
+            throw new IllegalArgumentException("Instruction position can be in <0," + memSize +">, but was: " + i);
+        }
+        engine.CI = i;
+        return true;
+    }
+
+}
+----
+
+We are approaching the end of our road. The last thing to do is to implement a status panel GUI of the CPU.
+
+== Status panel
+
+The status panel is a Java Swing panel (class extending `java.swing.JPanel`). The GUI can be "drawn" in any favorite
+IDE, like NetBeans or IntelliJ IDEA. The status panel should show the following:
+
+- CPU run state
+- Internal state: registers or possibly portion of memory
+- Optionally, speed (running frequency)
+
+The status panel is the interaction point between CPU and the user. With it, the user can be allowed to modify or
+view the internal status of the CPU emulator which is very handy when learning or checking how it works, what the
+registers' values really are (and compare them with those shown on a display), etc.
+
+SSEM CPU status panel will look as follows:
+
+image::tutorials/images/cpu-status-panel.png[SSEM CPU Status panel GUI]
+
+The class code is:
+
+[source,java]
+.`ssem-cpu/src/main/java/net/sf/emustudio/ssem/cpu/CpuPanel.java`
+----
+public class CpuPanel extends javax.swing.JPanel {
+    private final EmulatorEngine engine;
+    private final Updater updater;
+
+    public CpuPanel(CPU cpu, EmulatorEngine engine) {
+        this.engine = Objects.requireNonNull(engine);
+        this.updater = new Updater();
+
+        initComponents();
+        cpu.addCPUListener(updater);
+        lblSpeed.setText(String.valueOf(EmulatorEngine.INSTRUCTIONS_PER_SECOND));
+    }
+
+    private final class Updater implements CPU.CPUListener {
+
+        @Override
+        public void runStateChanged(CPU.RunState rs) {
+            lblRunState.setText(rs.toString().toUpperCase());
+        }
+
+        @Override
+        public void internalStateChanged() {
+            int acc = engine.Acc;
+            int ci = engine.CI;
+
+            txtA.setText(String.format("%8x", acc));
+            txtCI.setText(String.format("%8x", ci));
+
+            txtBinA.setText(formatBinary(acc));
+            txtBinCI.setText(formatBinary(ci));
+        }
+
+        private String formatBinary(int number) {
+            String binNumber = Integer.toBinaryString(number);
+            binNumber = String.format("%32s", binNumber).replace(" ", "0");
+
+            String[] splitted = binNumber.split("\\d\\d\\d\\d");
+            return splitted[0] + ' ' + splitted[1] + "  "
+                    + splitted[2] + ' ' + splitted[3] + "  "
+                    + splitted[4] + ' ' + splitted[5] + "  "
+                    + splitted[6] + ' ' + splitted[7];
+        }
+
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
+        lblRunState = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel7 = new javax.swing.JLabel();
+        lblSpeed = new javax.swing.JLabel();
+        javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
+        javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel3 = new javax.swing.JLabel();
+        txtCI = new javax.swing.JTextField();
+        txtA = new javax.swing.JTextField();
+        txtBinA = new javax.swing.JTextField();
+        txtBinCI = new javax.swing.JTextField();
+
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Run control", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
+
+        lblRunState.setFont(new java.awt.Font("Monospaced", 0, 18)); // NOI18N
+        lblRunState.setForeground(java.awt.Color.blue);
+        lblRunState.setText("BREAKPOINT");
+
+        jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel7.setText("ins/s");
+
+        lblSpeed.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        lblSpeed.setText("0");
+        lblSpeed.setToolTipText("Speed");
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblRunState)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(lblSpeed)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel7)
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblRunState)
+                    .addComponent(jLabel7)
+                    .addComponent(lblSpeed))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Registers", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
+
+        jLabel2.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        jLabel2.setText("A");
+        jLabel2.setToolTipText("Accumulator");
+
+        jLabel3.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        jLabel3.setText("CI");
+        jLabel3.setToolTipText("Control Instruction");
+
+        txtCI.setEditable(false);
+        txtCI.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtCI.setText("0");
+
+        txtA.setEditable(false);
+        txtA.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtA.setText("0");
+
+        txtBinA.setEditable(false);
+        txtBinA.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtBinA.setText("0000 0000  0000 0000  0000 0000  0000 0000");
+
+        txtBinCI.setEditable(false);
+        txtBinCI.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtBinCI.setText("0000 0000  0000 0000  0000 0000  0000 0000");
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addGap(11, 11, 11)
+                        .addComponent(txtA, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtCI, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtBinA)
+                    .addComponent(txtBinCI))
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(txtA, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtBinA, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(txtCI, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtBinCI, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel lblRunState;
+    private javax.swing.JLabel lblSpeed;
+    private javax.swing.JTextField txtA;
+    private javax.swing.JTextField txtBinA;
+    private javax.swing.JTextField txtBinCI;
+    private javax.swing.JTextField txtCI;
+    // End of variables declaration//GEN-END:variables
+}
+----
+
+We don't have to care about method `initComponents()` and the fields at the end of the class. Those are generated by
+the NetBeans by its GUI designer. I have included it just because the overall look and how the variables - text fields
+etc. are named.
+
+The only thing which should grasp our attention is the nested `Updater` class. The class implements the mechanism of
+updating values of the GUI. The mechanism is the observer pattern, as you might have recognized. The updater implements
+`CPU.CPUListener` interface, with two methods. The `runStateChanged()` method is called by the CPU when the run state
+has changed. The argument is the new run state. The second method, `internalStateChanged()` is called by CPU always
+when the internal state of a CPU has changed - ie. values of registers. When the CPU is in running state, this method
+is not called for performance reasons.
+
+NOTE: Don't forget to register the updater by calling `cpu.addCPUListener()`. The proper way upon shutting down should
+      be to remove it, but the class `AbstractCPU` will take care about it.
+
+Now we need to incorporate the panel into the main class. It's easy:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java`
+----
+public class CpuImpl extends AbstractCPU {
+
+    @Override
+    public JPanel getStatusPanel() {
+        return new CpuPanel(this, engine);
+    }
+
+}
+----
+
+== Testing the CPU
+
+Now you have implemented complete CPU emulator. It should work. Should. But how do we now until we try? Every program
+can have bugs. And most likely it does. It is crucial for CPU emulator to work literally exactly as the real CPU. With
+little playing we can't test all instructions, all their variants and check all possible inputs. This must be done
+systematically.
+
+In languages which have mutable state ("inpure languages"), like Java, it is quite hard to reason about the correctness.
+There are some ways, but instead of formal reasoning became very popular a technique called automated testing. There
+exist several levels of automated tests. Those which are usually placed very close to the source code of the project,
+and which tests a single "unit" - the smallest entity - are called unit tests.
+
+In object oriented languages, unit tests should test production classes and their behavior in the isolated
+environment. Each unit test is also a class. Maven uses standard path where the unit tests should be put.
+
+Testing of SSEM CPU is left as an excercise for the plug-in developer.

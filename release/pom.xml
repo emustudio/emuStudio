@@ -116,8 +116,12 @@
           <artifactId>brainduck-mem</artifactId>
         </dependency>
         <dependency>
-            <groupId>net.sf.emustudio</groupId>
-            <artifactId>rasp-mem</artifactId>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>rasp-mem</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>ssem-mem</artifactId>
         </dependency>
 
         <!-- cpus -->
@@ -138,8 +142,12 @@
           <artifactId>brainduck-cpu</artifactId>
         </dependency>
         <dependency>
-            <groupId>net.sf.emustudio</groupId>
-            <artifactId>rasp-cpu</artifactId>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>rasp-cpu</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>ssem-cpu</artifactId>
         </dependency>
 
         <!-- emuStudio -->

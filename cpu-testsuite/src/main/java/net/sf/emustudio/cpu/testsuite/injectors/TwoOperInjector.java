@@ -24,9 +24,9 @@ import net.sf.emustudio.cpu.testsuite.CpuRunner;
  * Injector used with two operands (standard Java does not have 3-argument consumer).
  *
  * @param <T> CpuRunner type
- * @param <OperandType> type of operands (Byte or Integer). Both are of the same type.
+ * @param <OperandT> type of operands (Byte or Integer). Both are of the same type.
  */
 @FunctionalInterface
-public interface TwoOperandsInjector<T extends CpuRunner, OperandType extends Number> {
-    void inject(T cpuRunner, OperandType first, OperandType second);
+public interface TwoOperInjector<T extends CpuRunner, OperandT extends Number> {
+    void inject(T cpuRunner, OperandT first, OperandT second);
 }

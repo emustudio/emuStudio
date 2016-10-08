@@ -19,11 +19,8 @@
 package net.sf.emustudio.cpu.testsuite.injectors;
 
 import net.sf.emustudio.cpu.testsuite.CpuRunner;
-import net.sf.emustudio.cpu.testsuite.injectors.internal.Utils;
+import net.sf.emustudio.cpu.testsuite.injectors.internal.DefaultProgramGenerator;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -33,34 +30,27 @@ import java.util.function.Consumer;
  *
  * Can have 1 or more opcodes.
  */
-public class InstructionNoOperands<T extends CpuRunner> implements Consumer<T> {
-    private final List<Integer> opcodes;
+public class NoOperInstr<T extends CpuRunner> implements Consumer<T> {
+    private final DefaultProgramGenerator strategy = new DefaultProgramGenerator();
 
     /**
      * Creates instruction with no operands injector.
      *
      * @param opcodes 1 or more opcode(s) of the instruction. Each opcode must be a byte (don't get confused by int).
      */
-    public InstructionNoOperands(int... opcodes) {
-        if (opcodes.length <= 0) {
-            throw new IndexOutOfBoundsException("Expected 1 or more opcodes");
-        }
-
-        List<Integer> tmpList = new ArrayList<>();
-        for (int opcode : opcodes) {
-            tmpList.add(opcode);
-        }
-        this.opcodes = Collections.unmodifiableList(tmpList);
+    public NoOperInstr(int... opcodes) {
+        strategy.addOpcodes(opcodes);
     }
 
     @Override
     public void accept(T cpuRunner) {
-        cpuRunner.setProgram(opcodes);
+        cpuRunner.setProgram(strategy.generate());
+        strategy.clearOperands();
     }
 
     @Override
     public String toString() {
-        return String.format("instruction: %s", Utils.toHexString(opcodes.toArray()));
+        return strategy.toString();
     }
 
 }

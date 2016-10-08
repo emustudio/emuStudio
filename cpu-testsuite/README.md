@@ -25,6 +25,16 @@ If you are using Maven, the best would be to include this as test dependency in 
   </dependencies>
 ```
 
+# When to use CPU Test Suite
+
+This project can be used for testing CPU emulators for emuStudio, which fulfill the following requirements:
+
+- operating memory is a collection of linearly ordered cells
+- operating memory cell type is `Short`
+- CPU is using little endian
+- CPU has a program counter register (or "instruction pointer") or similar
+- Instruction operands are either `Byte` (8-bit) or `Integer` (16-bit)
+
 # Getting started
 
 Here are presented some code snippets, to let you imagine how CPU Test Suite works. 

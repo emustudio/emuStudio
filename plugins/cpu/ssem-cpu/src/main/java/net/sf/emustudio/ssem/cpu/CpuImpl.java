@@ -50,7 +50,6 @@ public class CpuImpl extends AbstractCPU {
 
     private final ContextPool contextPool;
     private MemoryContext<Integer> memory;
-    private Decoder decoder;
     private Disassembler disasm;
     private EmulatorEngine engine;
 
@@ -97,9 +96,8 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public void initialize(SettingsManager settingsManager) throws PluginInitializationException {
         memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
-        decoder = new DecoderImpl(memory);
+        Decoder decoder = new DecoderImpl(memory);
         disasm = new DisassemblerImpl(memory, decoder);
-        
         engine = new EmulatorEngine(memory, this);
     }
 
@@ -122,5 +120,9 @@ public class CpuImpl extends AbstractCPU {
     @Override
     protected void resetInternal(int startPos) {
         engine.reset(startPos);
+    }
+
+    public EmulatorEngine getEngine() {
+        return engine;
     }
 }

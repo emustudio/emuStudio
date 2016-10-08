@@ -34,4 +34,9 @@ public class Register implements BiConsumer<CpuRunnerImpl, Byte> {
     public void accept(CpuRunnerImpl cpuRunner, Byte value) {
         cpuRunner.setRegister(register, value);
     }
+
+    @Override
+    public String toString() {
+        return String.format("reg[%02x]", register);
+    }
 }

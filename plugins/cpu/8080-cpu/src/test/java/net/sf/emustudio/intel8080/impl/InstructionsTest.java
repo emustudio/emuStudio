@@ -22,8 +22,6 @@ package net.sf.emustudio.intel8080.impl;
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
-import emulib.runtime.exceptions.ContextNotFoundException;
-import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.cpu.testsuite.Generator;
 import net.sf.emustudio.cpu.testsuite.MemoryStub;
@@ -51,7 +49,7 @@ public class InstructionsTest {
     protected CpuVerifierImpl cpuVerifierImpl;
 
     @Before
-    public void setUp() throws ContextNotFoundException, InvalidContextException, PluginInitializationException {
+    public void setUp() throws PluginInitializationException {
         MemoryStub memoryStub = new MemoryStub();
 
         ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);

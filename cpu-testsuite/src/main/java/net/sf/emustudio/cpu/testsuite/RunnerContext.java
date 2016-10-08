@@ -19,6 +19,7 @@
 package net.sf.emustudio.cpu.testsuite;
 
 import net.jcip.annotations.Immutable;
+import net.sf.emustudio.cpu.testsuite.injectors.internal.Utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -98,12 +99,11 @@ public class RunnerContext<OperandType extends Number> {
     @Override
     public String toString() {
         return "RunnerContext{" +
-            "first=" + first +
-            ", second=" + second +
-            ", flags=" + flags +
-            ", PC=" + PC +
-            ", SP=" + SP +
-            ", registers=" + registers +
+            "operands=" + Utils.toHexString(first, second) +
+            ", flags=" + Integer.toHexString(flags) +
+            ", PC=" + Integer.toHexString(PC) +
+            ", SP=" + Integer.toHexString(SP) +
+            ", registers=" + Utils.toHexString(registers.toArray()) +
             '}';
     }
 }

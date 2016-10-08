@@ -421,9 +421,14 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
-          <groupId>net.sf.emustudio</groupId>
-          <artifactId>rasp-mem</artifactId>
-          <version>${project.version}</version>
+        <groupId>net.sf.emustudio</groupId>
+        <artifactId>rasp-mem</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.sf.emustudio</groupId>
+        <artifactId>ssem-mem</artifactId>
+        <version>${project.version}</version>
       </dependency>
 
       <!-- cpus -->
@@ -450,6 +455,11 @@
       <dependency>
         <groupId>net.sf.emustudio</groupId>
         <artifactId>rasp-cpu</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.sf.emustudio</groupId>
+        <artifactId>ssem-cpu</artifactId>
         <version>${project.version}</version>
       </dependency>
 

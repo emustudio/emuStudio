@@ -19,7 +19,7 @@
 package net.sf.emustudio.cpu.testsuite;
 
 import net.jcip.annotations.NotThreadSafe;
-import net.sf.emustudio.cpu.testsuite.injectors.TwoOperandsInjector;
+import net.sf.emustudio.cpu.testsuite.injectors.TwoOperInjector;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,8 +45,8 @@ import java.util.function.Consumer;
 public class TestRunner<T extends CpuRunner, OperandType extends Number> implements BiConsumer<OperandType, OperandType> {
     private final T cpuRunner;
 
-    private final List<TwoOperandsInjector<T, OperandType>> injectors = new ArrayList<>();
-    private final List<TwoOperandsInjector<T, OperandType>> injectorsToKeep = new ArrayList<>();
+    private final List<TwoOperInjector<T, OperandType>> injectors = new ArrayList<>();
+    private final List<TwoOperInjector<T, OperandType>> injectorsToKeep = new ArrayList<>();
 
     private final List<Consumer<RunnerContext<OperandType>>> verifiers = new ArrayList<>();
     private final List<Consumer<RunnerContext<OperandType>>> verifiersToKeep = new ArrayList<>();
@@ -158,8 +158,8 @@ public class TestRunner<T extends CpuRunner, OperandType extends Number> impleme
      * @param injectors injectors requiring CpuRunner and two operand
      * @return this
      */
-    public TestRunner<T, OperandType> injectTwoOperands(TwoOperandsInjector<T, OperandType>... injectors) {
-        for (TwoOperandsInjector<T, OperandType> injector : injectors) {
+    public TestRunner<T, OperandType> injectTwoOperands(TwoOperInjector<T, OperandType>... injectors) {
+        for (TwoOperInjector<T, OperandType> injector : injectors) {
             this.injectors.add((cpuRunner, first, second) -> {
                 printInjectionIfEnabled("(first,second)", first, second, injector);
                 injector.inject(cpuRunner, first, second);

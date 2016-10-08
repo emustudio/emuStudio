@@ -365,7 +365,7 @@ public class TransferTest extends InstructionsTest {
 
     @Test
     public void testMemoryOverflow() throws Exception {
-        cpuRunnerImpl.resetProgram(new short[]{});
+        cpuRunnerImpl.resetProgram(new short[0]);
         cpuRunnerImpl.reset();
         cpuRunnerImpl.expectRunState(CPU.RunState.STATE_STOPPED_ADDR_FALLOUT);
         cpuRunnerImpl.step();
