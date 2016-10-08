@@ -23,16 +23,20 @@ import net.sf.emustudio.ssem.assembler.tree.ASTvisitor;
 import net.sf.emustudio.ssem.assembler.tree.Constant;
 import net.sf.emustudio.ssem.assembler.tree.Instruction;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Objects;
 
 public class CodeGenerator implements ASTvisitor, AutoCloseable {
-    private final DataOutputStream writer;
+    private final MemoryAndFileOutput writer;
+    private int currentLine;
 
-    public CodeGenerator(OutputStream writer) {
-        this.writer= new DataOutputStream(Objects.requireNonNull(writer));
+    public CodeGenerator(MemoryAndFileOutput writer) {
+        this.writer= Objects.requireNonNull(writer);
+    }
+
+    @Override
+    public void setCurrentLine(int line) {
+        this.currentLine = line;
     }
 
     @Override
@@ -45,6 +49,7 @@ public class CodeGenerator implements ASTvisitor, AutoCloseable {
 
         // Instruction has 32 bits, i.e. 4 bytes
         int addressSSEM = reverseBits(address, 8) & 0xF8;
+        writer.setPosition(currentLine * 4);
 
         writer.writeByte(addressSSEM); // address + 3 empty bits
 

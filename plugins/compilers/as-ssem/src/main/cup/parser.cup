@@ -96,7 +96,7 @@ non terminal Comment;
 
 start with Program;
 
-Program ::= Statement:s Program:p                       {: if (s != null) p.statement(s); RESULT = p;  :}
+Program ::= NUMBER:c Statement:s Program:p              {: if (s != null) p.statement(c, s); RESULT = p;  :}
     | /* empty program */                               {: RESULT = new Program(); :}
     ;
 

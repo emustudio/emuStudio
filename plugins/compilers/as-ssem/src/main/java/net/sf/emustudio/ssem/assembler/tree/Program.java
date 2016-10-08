@@ -19,20 +19,21 @@
  */
 package net.sf.emustudio.ssem.assembler.tree;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Program implements ASTnode {
-    private final List<ASTnode> nodes = new ArrayList<>();
+    private final Map<Integer, ASTnode> nodes = new HashMap<>();
 
-    public void statement(ASTnode node) {
-        nodes.add(node);
+    public void statement(int line, ASTnode node) {
+        nodes.put(line, node);
     }
 
     @Override
     public void accept(ASTvisitor visitor) throws Exception {
-        for (ASTnode node : nodes) {
-            node.accept(visitor);
+        for (Map.Entry<Integer, ASTnode> node : nodes.entrySet()) {
+            visitor.setCurrentLine(node.getKey());
+            node.getValue().accept(visitor);
         }
     }
 }

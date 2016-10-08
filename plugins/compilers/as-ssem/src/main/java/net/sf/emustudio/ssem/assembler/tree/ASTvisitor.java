@@ -21,6 +21,8 @@ package net.sf.emustudio.ssem.assembler.tree;
 
 public interface ASTvisitor {
 
+    void setCurrentLine(int line);
+
     void visit(Instruction instruction) throws Exception;
 
     void visit(Constant constant) throws Exception;

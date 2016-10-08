@@ -62,9 +62,9 @@ public class CompilerImpl extends AbstractCompiler {
 
         int errorCode = 0;
         try (Reader reader = new FileReader(inputFileName)) {
-            MemoryContext<Short> memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
+            MemoryContext<Integer> memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
 
-            try (CodeGenerator codeGenerator = new CodeGenerator(new MemoryAndFileOutputStream(outputFileName, memory))) {
+            try (CodeGenerator codeGenerator = new CodeGenerator(new MemoryAndFileOutput(outputFileName, memory))) {
                 LexerImpl lexer = new LexerImpl(reader);
                 ParserImpl parser = new ParserImpl(lexer, new ComplexSymbolFactory(), this);
 
