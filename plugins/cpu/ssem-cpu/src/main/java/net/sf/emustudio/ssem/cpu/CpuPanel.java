@@ -21,6 +21,7 @@
 package net.sf.emustudio.ssem.cpu;
 
 import emulib.plugins.cpu.CPU;
+
 import java.util.Objects;
 
 public class CpuPanel extends javax.swing.JPanel {
@@ -59,11 +60,16 @@ public class CpuPanel extends javax.swing.JPanel {
             String binNumber = Integer.toBinaryString(number);
             binNumber = String.format("%32s", binNumber).replace(" ", "0");
 
-            String[] splitted = binNumber.split("\\d\\d\\d\\d");
-            return splitted[0] + ' ' + splitted[1] + "  "
-                    + splitted[2] + ' ' + splitted[3] + "  "
-                    + splitted[4] + ' ' + splitted[5] + "  "
-                    + splitted[6] + ' ' + splitted[7];            
+            StringBuilder builder = new StringBuilder();
+            int i = 0;
+            for (char c : binNumber.toCharArray()) {
+                builder.append(c);
+                if (i == 3) {
+                    builder.append(' ');
+                    i = 0;
+                }
+            }
+            return builder.toString();
         }
         
     }
