@@ -23,16 +23,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Program implements ASTnode {
-    private final List<Instruction> instructions = new ArrayList<>();
+    private final List<ASTnode> nodes = new ArrayList<>();
 
-    public void statement(Instruction instruction) {
-        instructions.add(instruction);
+    public void statement(ASTnode node) {
+        nodes.add(node);
     }
 
     @Override
     public void accept(ASTvisitor visitor) throws Exception {
-        for (Instruction instruction : instructions) {
-            instruction.accept(visitor);
+        for (ASTnode node : nodes) {
+            node.accept(visitor);
         }
     }
 }

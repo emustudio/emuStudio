@@ -76,6 +76,7 @@ comment = "//"[^\r\n]*
 eol = \r|\n|\r\n
 space = [ \t\f]+
 number = \-?[0-9]+
+hexnumber = \-?0x[0-9a-fA-F]+
 
 %%
 
@@ -101,6 +102,9 @@ number = \-?[0-9]+
 "stp" {
     return token(STP, Token.RESERVED);
 }
+"num" {
+    return token(NUM, Token.RESERVED);
+}
 
 /* separators */
 {eol} {
@@ -116,6 +120,11 @@ number = \-?[0-9]+
 /* literals */
 {number} {
     int num = Integer.parseInt(yytext(), 10);
+    return token(NUMBER, Token.LITERAL, (byte)(num & 0xFF));
+}
+
+{hexnumber} {
+    int num = Integer.decode(yytext());
     return token(NUMBER, Token.LITERAL, (byte)(num & 0xFF));
 }
 

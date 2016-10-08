@@ -73,11 +73,12 @@ speak English on the other hand.
 The computer programming languages must be specified in very formal way. The SSEM assembler specification can be
 started with informal expressing, what it will know:
 
-1. New-line character (LF, CR, or CRLF) will be required as a delimiter of instructions. Several successibe empty new-line
-   characters will be ignored.
+1. New-line character (LF, CR, or CRLF) will be required as a delimiter of instructions. Several successible empty
+   new-line characters will be ignored.
 2. Only modern representation of instructions will be supported by the assembler.
-3. Only decimal literals (numbers) will be supported as instruction operands. Negative or floating-point numbers will
-   not be supported.
+4. Raw number constants can be defined in separate lines (with `NUM xxx`).
+5. Number constants (or instruction operands) can be defined in decimal or hexadecimal format (starting with `0x`).
+6. Floating-point numbers will not be supported.
 4. One-line comments will be supported, which start with double-slash (`//`). Everything after the `//` will be ignored.
 
 For example, simple `5+3` addition can be implemented as follows:
@@ -89,14 +90,19 @@ For example, simple `5+3` addition can be implemented as follows:
 
 The accumulator should now contain value `8`.
 
+Numerical constants can look as follows:
+
+    NUM 0x20
+    NUM 1207943145
+
 === Lexical symbols (terminals)
 
 The following table shows which categories of lexical symbols will exist:
 
 [horizontal]
-Reserved words:: `JMP`, `JRP`, `LDN`, `STO`, `SUB`, `CMP`, `STP`
+Reserved words:: `JMP`, `JRP`, `LDN`, `STO`, `SUB`, `CMP`, `STP`, `NUM`
 Literals::
- - `number = (\-)?[0-9]+`, range: `<0, 31)` (max. 2^5)
+ - `number = (\-)?[0-9]+` or `(\-)?[0-9a-fA-F]`, range: `<0, 31)` (max. 2^5)
 Comment::
  - `comment = //[^\r\n]*`
 Separator::
@@ -123,9 +129,12 @@ The complete grammar of presented SSEM assembler looks as follows:
 [source,bison]
 ----
 Program     : Statement Program | &Epsilon;
-Statement   : Instruction Comment eol | eol
+Statement   : Instruction Comment eol
+  | Constant Comment eol
+  | eol
 
 Instruction : JMP number | JRP number | LDN number | STO number | SUB number | CMP | STP
+Constant    : NUM number
 Comment     : comment | &Epsilon;
 ----
 
@@ -346,12 +355,13 @@ I suggest to read Java Cup documentation for more information, especially about 
 
 === Abstract Syntax Tree
 
-Classes which non-terminals use are in fact parts of abstract syntax tree of the compiler, namely only these two:
+Classes which non-terminals use are in fact parts of abstract syntax tree of the compiler, namely only the following:
 
 - `Program`
 - `Instruction`
+- `Constant`
 
-Both classes are part of AST. We already know that, but it is not useful information and we do not program this
+All the classes are part of AST. We already know that, but it is not useful information and we do not program this
 explicitly if we don't need something which all AST nodes have in common. For now, it's not important to do it.
 For now, these will be just normal classes, which will be put into package `net.sf.emustudio.ssem.assembler.tree`.
 
@@ -439,13 +449,46 @@ public class Instruction {
     public static Instruction stp() {
         return new Instruction(STP);
     }
-
 }
 ----
 
 Pay attention to the `Instruction` class. The constructor is private, so there's just impossible to create some
 invalid `Instruction` object. The only possible way how to define it is using static factory methods, which represents
 the machine instructions. These are called from the parser, please check the parser specfile in the section above.
+
+And finally the `Constant.java` class:
+
+[source,java]
+----
+public class Constant {
+    private final int number;
+
+    public Constant(int number) {
+        this.number = number;
+    }
+
+    public int getNumber() {
+        return number;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Constant constant = (Constant) o;
+
+        return number == constant.number;
+    }
+
+    @Override
+    public int hashCode() {
+        return number;
+    }
+}
+----
+
+Comparing `Constant` instances is based on comparing the numbers they represent.
 
 === Test it!
 
@@ -457,6 +500,65 @@ implemented right away for testing the parser:
 ----
 include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java[]
 ----
+
+If you noticed, the tests are based on comparing `Instruction` and `Constant` instances with JUnit's `assertEquals()`
+method. This is possible only if we override `equals()` and `hashCode()` methods in the classes, since they are used
+directly by Java when it is comparing the instances:
+
+[source,java]
+----
+public class Instruction {
+
+    ...
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Instruction that = (Instruction) o;
+        return opcode == that.opcode && operand.equals(that.operand);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = opcode;
+        result = 31 * result + operand.hashCode();
+        return result;
+    }
+
+    ...
+}
+----
+
+The comparison is based on comparing the opcode and operand of the instruction. The same thing must be done for
+`Constant` class:
+
+
+----
+public class Constant {
+
+    ...
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Constant constant = (Constant) o;
+
+        return number == constant.number;
+    }
+
+    @Override
+    public int hashCode() {
+        return number;
+    }
+
+    ...
+}
+----
+
 
 == Generating code
 
@@ -520,6 +622,24 @@ public class Instruction implements ASTnode {
     }
 }
 ----
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/assembler/tree/Constant.java`
+----
+public class Constant implements ASTnode {
+
+    ....
+
+    @Override
+    public void accept(ASTvisitor visitor) throws Exception {
+         visitor.visit(this);
+    }
+}
+----
+
+Simple enough, right? You can notice the "reverse" behavior of the visitor pattern, as we are traversing the tree
+of the parsed program and how Java calls the correct method on the `ASTVisitor` for the specific type without need to
+explicit retype or using weird `switch` clause.
 
 Now back to the code generation. It is better if I/O classes work with I/O abstractions (streams, channels, etc.) rather
 than specific objects, e.g. files. This code generator will be implemented in a similar fashion. The code is as follows:

@@ -20,6 +20,7 @@
 package net.sf.emustudio.ssem.assembler;
 
 import net.sf.emustudio.ssem.assembler.tree.ASTvisitor;
+import net.sf.emustudio.ssem.assembler.tree.Constant;
 import net.sf.emustudio.ssem.assembler.tree.Instruction;
 
 import java.io.DataOutputStream;
@@ -43,12 +44,7 @@ public class CodeGenerator implements ASTvisitor, AutoCloseable {
         }
 
         // Instruction has 32 bits, i.e. 4 bytes
-
-        int addressSSEM = (((address >> 4) & 1)
-            | (((address >> 3) & 1) << 1)
-            | (((address >> 2) & 1) << 2)
-            | (((address >> 1) & 1) << 3)
-            | ((address & 1) << 4)) << 3;
+        int addressSSEM = reverseBits(address, 8) & 0xF8;
 
         writer.writeByte(addressSSEM); // address + 3 empty bits
 
@@ -58,6 +54,20 @@ public class CodeGenerator implements ASTvisitor, AutoCloseable {
 
         // 16 empty bits
         writer.write(new byte[2]);
+    }
+
+    @Override
+    public void visit(Constant constant) throws Exception {
+        int number = constant.getNumber();
+        writer.writeInt(number);
+    }
+
+    private static int reverseBits(int value, int numberOfBits) {
+        int result = 0;
+        for (int i = 0; i < numberOfBits; i++) {
+            result |= ((value >>> i) & 0x1) << (numberOfBits - i - 1);
+        }
+        return result;
     }
 
     @Override

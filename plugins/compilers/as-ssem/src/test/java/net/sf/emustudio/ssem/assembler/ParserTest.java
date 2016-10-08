@@ -20,6 +20,8 @@
 package net.sf.emustudio.ssem.assembler;
 
 import java_cup.runtime.ComplexSymbolFactory;
+import net.sf.emustudio.ssem.assembler.tree.ASTvisitor;
+import net.sf.emustudio.ssem.assembler.tree.Constant;
 import net.sf.emustudio.ssem.assembler.tree.Instruction;
 import net.sf.emustudio.ssem.assembler.tree.Program;
 import org.junit.Test;
@@ -32,6 +34,7 @@ import java.util.LinkedList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class ParserTest {
 
@@ -63,7 +66,17 @@ public class ParserTest {
             Instruction.sto((byte)10),
             Instruction.sub((byte)15)
         ));
-        program.accept(instruction -> assertEquals(expectedInstructions.removeLast(), instruction));
+        program.accept(new ASTvisitor() {
+            @Override
+            public void visit(Instruction instruction) throws Exception {
+                assertEquals(expectedInstructions.removeLast(), instruction);
+            }
+
+            @Override
+            public void visit(Constant constant) throws Exception {
+                fail("Didn't expect a constant");
+            }
+        });
     }
 
 
@@ -80,5 +93,43 @@ public class ParserTest {
 
         parser.parse();
         assertTrue(parser.hasSyntaxErrors());
+    }
+
+    @Test
+    public void testConstantIsTranslatedCorrectly() throws Exception {
+        ParserImpl parser = program(
+            "NUM 5\n"
+        );
+
+        Program program = (Program) parser.parse().value;
+
+        assertFalse(parser.hasSyntaxErrors());
+        assertConstant(program, 5);
+    }
+
+    @Test
+    public void testHexadecimalConstant() throws Exception {
+        ParserImpl parser = program(
+            "NUM -0x20\n"
+        );
+
+        Program program = (Program) parser.parse().value;
+        assertFalse(parser.hasSyntaxErrors());
+
+        assertConstant(program, -32);
+    }
+
+    private void assertConstant(Program program, int value) throws Exception {
+        program.accept(new ASTvisitor() {
+            @Override
+            public void visit(Instruction instruction) throws Exception {
+                fail("Didn't expect an instruction");
+            }
+
+            @Override
+            public void visit(Constant constant) throws Exception {
+                assertEquals(new Constant(value), constant);
+            }
+        });
     }
 }

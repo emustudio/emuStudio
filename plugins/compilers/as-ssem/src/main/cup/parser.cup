@@ -23,6 +23,8 @@ import emulib.plugins.compiler.Message;
 import emulib.plugins.compiler.Token;
 import java_cup.runtime.ComplexSymbolFactory;
 import java_cup.runtime.Symbol;
+import net.sf.emustudio.ssem.assembler.tree.ASTnode;
+import net.sf.emustudio.ssem.assembler.tree.Constant;
 import net.sf.emustudio.ssem.assembler.tree.Instruction;
 import net.sf.emustudio.ssem.assembler.tree.Program;
 
@@ -82,12 +84,14 @@ parser code {:
 
 :};
 
-terminal JMP, JRP, LDN, STO, SUB, CMP, STP, SEPARATOR_EOL, TCOMMENT, ERROR_UNKNOWN_TOKEN;
+terminal JMP, JRP, LDN, STO, SUB, CMP, STP, NUM;
+terminal SEPARATOR_EOL, TCOMMENT, ERROR_UNKNOWN_TOKEN;
 terminal Byte NUMBER;
 
 non terminal Program Program;
-non terminal Instruction Statement;
+non terminal ASTnode Statement;
 non terminal Instruction Instruction;
+non terminal Constant Constant;
 non terminal Comment;
 
 start with Program;
@@ -97,17 +101,21 @@ Program ::= Statement:s Program:p                       {: if (s != null) p.stat
     ;
 
 Statement ::= Instruction:i Comment SEPARATOR_EOL       {: RESULT = i; :}
+    | Constant:c Comment SEPARATOR_EOL                  {: RESULT = c; :}
     | SEPARATOR_EOL
     ;
 
-Instruction ::= JMP NUMBER:address                      {: RESULT = Instruction.jmp(address); :}
-    | JRP NUMBER:address                                {: RESULT = Instruction.jrp(address); :}
-    | LDN NUMBER:address                                {: RESULT = Instruction.ldn(address); :}
-    | STO NUMBER:address                                {: RESULT = Instruction.sto(address); :}
-    | SUB NUMBER:address                                {: RESULT = Instruction.sub(address); :}
-    | CMP                                               {: RESULT = Instruction.cmp(); :}
-    | STP                                               {: RESULT = Instruction.stp(); :}
+Instruction ::= JMP NUMBER:line             {: RESULT = Instruction.jmp(line); :}
+    | JRP NUMBER:line                       {: RESULT = Instruction.jrp(line); :}
+    | LDN NUMBER:line                       {: RESULT = Instruction.ldn(line); :}
+    | STO NUMBER:line                       {: RESULT = Instruction.sto(line); :}
+    | SUB NUMBER:line                       {: RESULT = Instruction.sub(line); :}
+    | CMP                                   {: RESULT = Instruction.cmp(); :}
+    | STP                                   {: RESULT = Instruction.stp(); :}
     | error
+    ;
+
+Constant ::= NUM NUMBER:raw                 {: RESULT = new Constant(raw); :}
     ;
 
 Comment ::= TCOMMENT

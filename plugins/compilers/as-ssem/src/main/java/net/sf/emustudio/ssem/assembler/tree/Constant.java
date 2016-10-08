@@ -19,10 +19,34 @@
  */
 package net.sf.emustudio.ssem.assembler.tree;
 
-public interface ASTvisitor {
+public class Constant implements ASTnode {
+    private final int number;
 
-    void visit(Instruction instruction) throws Exception;
+    public Constant(int number) {
+        this.number = number;
+    }
 
-    void visit(Constant constant) throws Exception;
+    @Override
+    public void accept(ASTvisitor visitor) throws Exception {
+        visitor.visit(this);
+    }
 
+    public int getNumber() {
+        return number;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Constant constant = (Constant) o;
+
+        return number == constant.number;
+    }
+
+    @Override
+    public int hashCode() {
+        return number;
+    }
 }

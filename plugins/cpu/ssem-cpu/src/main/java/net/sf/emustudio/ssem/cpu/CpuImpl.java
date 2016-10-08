@@ -41,7 +41,7 @@ import java.util.ResourceBundle;
 @PluginType(
     type = PLUGIN_TYPE.CPU,
     title = "SSEM CPU",
-    copyright = "\u00A9 Copyright 2016, Peter Jakubčo",
+    copyright = "\u00A9 Copyright 2006-2016, Peter Jakubčo",
     description = "Emulator of SSEM CPU"
 )
 @SuppressWarnings("unused")
