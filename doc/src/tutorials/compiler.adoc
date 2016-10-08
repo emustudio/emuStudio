@@ -128,13 +128,18 @@ The complete grammar of presented SSEM assembler looks as follows:
 
 [source,bison]
 ----
-Program     : number Statement Program | &Epsilon;
+Program     : number Statement Program
+  | number eol Program
+  | eol Program
+  | &Epsilon
+  ;
+
 Statement   : Instruction Comment eol
   | Constant Comment eol
-  | eol
+  ;
 
-Instruction : JMP number | JRP number | LDN number | STO number | SUB number | CMP | STP
-Constant    : NUM number
+Instruction : JMP number | JRP number | LDN number | STO number | SUB number | CMP | STP;
+Constant    : NUM number;
 Comment     : comment | &Epsilon;
 ----
 

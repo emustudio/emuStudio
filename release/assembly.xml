@@ -147,7 +147,7 @@
         <fileSet>
             <directory>../plugins/compilers/as-ssem/examples</directory>
             <includes>
-                <include>**/*.asm</include>
+                <include>**/*.ssem</include>
             </includes>
             <outputDirectory>/examples/as-ssem</outputDirectory>
         </fileSet>

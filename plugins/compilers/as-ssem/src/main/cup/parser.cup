@@ -97,12 +97,13 @@ non terminal Comment;
 start with Program;
 
 Program ::= NUMBER:c Statement:s Program:p              {: if (s != null) p.statement(c, s); RESULT = p;  :}
+    | NUMBER:c SEPARATOR_EOL Program:p                  {: RESULT = p; :}
+    | SEPARATOR_EOL Program:p                           {: RESULT = p; :}
     | /* empty program */                               {: RESULT = new Program(); :}
     ;
 
 Statement ::= Instruction:i Comment SEPARATOR_EOL       {: RESULT = i; :}
     | Constant:c Comment SEPARATOR_EOL                  {: RESULT = c; :}
-    | SEPARATOR_EOL
     ;
 
 Instruction ::= JMP NUMBER:line             {: RESULT = Instruction.jmp(line); :}
