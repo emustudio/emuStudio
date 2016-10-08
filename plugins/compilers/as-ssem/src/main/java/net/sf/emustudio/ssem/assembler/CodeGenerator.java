@@ -27,10 +27,10 @@ import java.io.IOException;
 import java.util.Objects;
 
 public class CodeGenerator implements ASTvisitor, AutoCloseable {
-    private final MemoryAndFileOutput writer;
+    private final SeekableOutputStream writer;
     private int currentLine;
 
-    public CodeGenerator(MemoryAndFileOutput writer) {
+    public CodeGenerator(SeekableOutputStream writer) {
         this.writer= Objects.requireNonNull(writer);
     }
 
@@ -49,13 +49,13 @@ public class CodeGenerator implements ASTvisitor, AutoCloseable {
 
         // Instruction has 32 bits, i.e. 4 bytes
         int addressSSEM = reverseBits(address, 8) & 0xF8;
-        writer.setPosition(currentLine * 4);
+        writer.seek(currentLine * 4);
 
-        writer.writeByte(addressSSEM); // address + 3 empty bits
+        writer.write(addressSSEM); // address + 3 empty bits
 
         // next: 5 empty bits + 3 bit instruction
         int opcode = instruction.getOpcode() & 7;
-        writer.writeByte(opcode);
+        writer.write(opcode);
 
         // 16 empty bits
         writer.write(new byte[2]);
@@ -64,7 +64,14 @@ public class CodeGenerator implements ASTvisitor, AutoCloseable {
     @Override
     public void visit(Constant constant) throws Exception {
         int number = constant.getNumber();
-        writer.writeInt(number);
+        writeInt(number);
+    }
+
+    private void writeInt(int v) throws IOException {
+        writer.write((v >>> 24) & 0xFF);
+        writer.write((v >>> 16) & 0xFF);
+        writer.write((v >>>  8) & 0xFF);
+        writer.write((v >>>  0) & 0xFF);
     }
 
     private static int reverseBits(int value, int numberOfBits) {

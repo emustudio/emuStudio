@@ -22,55 +22,40 @@ package net.sf.emustudio.ssem.assembler;
 import emulib.plugins.memory.MemoryContext;
 import net.jcip.annotations.NotThreadSafe;
 
-import java.io.DataOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.util.Objects;
 
 @NotThreadSafe
-public class MemoryAndFileOutput extends DataOutputStream {
-    private final PositionedOutputStream stream;
+public class MemoryAndFileOutput extends SeekableOutputStream {
+    private final RandomAccessFile file;
+    private final MemoryContext<Integer> memoryContext;
+    private int position = 0;
 
     public MemoryAndFileOutput(String filename, MemoryContext<Integer> memoryContext) throws IOException {
-        super(new PositionedOutputStream(filename, memoryContext));
-        this.stream = (PositionedOutputStream) out;
+        this.file = new RandomAccessFile(filename, "rw");
+        this.memoryContext = Objects.requireNonNull(memoryContext);
     }
 
-    public void setPosition(int position) throws IOException {
-        stream.setPosition(position);
+    @Override
+    public void write(int b) throws IOException {
+        memoryContext.write(position, b);
+        file.write(b);
+        position++;
     }
 
-    private static class PositionedOutputStream extends OutputStream {
-        private final RandomAccessFile file;
-        private final MemoryContext<Integer> memoryContext;
-        private int position = 0;
+    @Override
+    public void seek(int position) throws IOException {
+        this.position = position;
+        file.seek(position);
+    }
 
-        public PositionedOutputStream(String filename, MemoryContext<Integer> memoryContext) throws FileNotFoundException {
-            this.file = new RandomAccessFile(filename, "rw");
-            this.memoryContext = Objects.requireNonNull(memoryContext);
+    @Override
+    public void close() throws IOException {
+        try {
+            file.close();
+        } finally {
+            super.close();
         }
-
-        @Override
-        public void write(int b) throws IOException {
-            memoryContext.write(position, b);
-            file.write(b);
-        }
-
-        public void setPosition(int position) throws IOException {
-            this.position = position;
-            file.seek(position);
-        }
-
-        @Override
-        public void close() throws IOException {
-            try {
-                file.close();
-            } finally {
-                super.close();
-            }
-        }
-
     }
 }

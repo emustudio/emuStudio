@@ -21,32 +21,32 @@ package net.sf.emustudio.ssem.assembler;
 
 import emulib.plugins.memory.AbstractMemoryContext;
 
-public class MemoryStub extends AbstractMemoryContext<Short> {
-    private final short[] memory = new short[1000];
+public class MemoryStub extends AbstractMemoryContext<Integer> {
+    private final int[] memory = new int[1000];
 
     @Override
-    public Short read(int memoryPosition) {
+    public Integer read(int memoryPosition) {
         return memory[memoryPosition];
     }
 
     @Override
-    public Short[] readWord(int memoryPosition) {
+    public Integer[] readWord(int memoryPosition) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void write(int memoryPosition, Short value) {
+    public void write(int memoryPosition, Integer value) {
         memory[memoryPosition] = value;
     }
 
     @Override
-    public void writeWord(int memoryPosition, Short[] value) {
+    public void writeWord(int memoryPosition, Integer[] value) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public Class<?> getDataType() {
-        return Short.class;
+        return Integer.class;
     }
 
     @Override
