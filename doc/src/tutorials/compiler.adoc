@@ -83,17 +83,17 @@ started with informal expressing, what it will know:
 
 For example, simple `5+3` addition can be implemented as follows:
 
-    LDN 5 // load negative X into the accumulator
-    SUB 3 // subtract Y from the value in the accumulator
-    STO S // store the result at address S
-    LDN S // load negative value at address S into the accumulator
+    0 LDN 5 // load negative X into the accumulator
+    1 SUB 3 // subtract Y from the value in the accumulator
+    2 STO S // store the result at address S
+    3 LDN S // load negative value at address S into the accumulator
 
 The accumulator should now contain value `8`.
 
 Numerical constants can look as follows:
 
-    NUM 0x20
-    NUM 1207943145
+    0 NUM 0x20
+    1 NUM 1207943145
 
 === Lexical symbols (terminals)
 
@@ -102,7 +102,7 @@ The following table shows which categories of lexical symbols will exist:
 [horizontal]
 Reserved words:: `JMP`, `JRP`, `LDN`, `STO`, `SUB`, `CMP`, `STP`, `NUM`
 Literals::
- - `number = (\-)?[0-9]+` or `(\-)?[0-9a-fA-F]`, range: `<0, 31)` (max. 2^5)
+ - `number = (\-)?[0-9]+` or `(\-)?[0-9a-fA-F]` (hexadecimal variant), range: `<0, 31)` (max. 2^5)
 Comment::
  - `comment = //[^\r\n]*`
 Separator::
@@ -128,7 +128,7 @@ The complete grammar of presented SSEM assembler looks as follows:
 
 [source,bison]
 ----
-Program     : Statement Program | &Epsilon;
+Program     : number Statement Program | &Epsilon;
 Statement   : Instruction Comment eol
   | Constant Comment eol
   | eol
@@ -656,6 +656,19 @@ What it does is basically creating a 4-byte SSEM instruction, its binary format.
 however necessary to check the address boundary, which is 2^5 (maximum). The rest should be clear, we're making
 instruction with format specified in section <<GETTING_STARTED,Getting started>>.
 
+Code generator uses a "seekable" output stream, which allows to seek in the output. It is a separate class, which
+looks as follows:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java`
+----
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java[]
+----
+
+We require the "seeking" because each instruction line begins with the "line" itself, which actually represents the
+address in memory, when multiplied by 4 bytes per row.
+
+
 === Test it!
 
 As being our practice, we must test it.
@@ -704,6 +717,8 @@ public class CompilerImpl extends AbstractCompiler {
             }
         } catch (Exception e) {
             errorCode = 1;
+            notifyError("Compilation error.");
+
             return false;
         } finally {
             notifyCompileFinish(errorCode);
