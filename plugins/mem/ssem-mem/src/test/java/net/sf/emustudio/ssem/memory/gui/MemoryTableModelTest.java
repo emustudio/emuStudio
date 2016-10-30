@@ -20,9 +20,13 @@
 package net.sf.emustudio.ssem.memory.gui;
 
 import emulib.plugins.memory.MemoryContext;
+import emulib.runtime.NumberUtils;
+import emulib.runtime.NumberUtils.Strategy;
 import org.junit.Test;
 
+import static org.easymock.EasyMock.aryEq;
 import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.replay;
@@ -42,17 +46,18 @@ public class MemoryTableModelTest {
     public void testEditableAreOnlyValueColumns() throws Exception {
         MemoryTableModel model = new MemoryTableModel(createMock(MemoryContext.class));
 
-        assertTrue(model.isCellEditable(0, MemoryTableModel.COLUMN_BINARY_VALUE));
         assertTrue(model.isCellEditable(0, MemoryTableModel.COLUMN_HEX_VALUE));
+        assertTrue(model.isCellEditable(0, MemoryTableModel.COLUMN_CHAR_VALUE));
+        assertFalse(model.isCellEditable(0, 34));
 
-        assertFalse(model.isCellEditable(
-            0, MemoryTableModel.COLUMN_BINARY_VALUE + MemoryTableModel.COLUMN_HEX_VALUE
-        ));
+        for (int i = 0; i < 32; i++) {
+            assertTrue(model.isCellEditable(0, i));
+        }
     }
 
     @Test
     public void testClearCallsClearOnMemoryMock() throws Exception {
-        MemoryContext<Integer> memoryContext = createMock(MemoryContext.class);
+        MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
 
         memoryContext.clear();
         expectLastCall().once();
@@ -65,27 +70,35 @@ public class MemoryTableModelTest {
     }
 
     @Test
-    public void testSetBinaryValueCallsMemoryWrite() throws Exception {
-        MemoryContext<Integer> memoryContext = createMock(MemoryContext.class);
+    public void testSetBinaryValueCellsMemoryWrite() throws Exception {
+        MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
 
-        memoryContext.write(10, 3);
+        Byte[] row = new Byte[] { 1,2,3,4 };
+        Byte[] modified = new Byte[] { 1,2,(byte)0x83,4 }; // 16th bit set to 1, but original 3 wasnt'modified
+        
+        expect(memoryContext.readWord(10 * 4)).andReturn(row);
+        memoryContext.writeWord(eq(10 * 4), aryEq(modified));
         expectLastCall().once();
         replay(memoryContext);
 
         MemoryTableModel model = new MemoryTableModel(memoryContext);
-        model.setValueAt("11", 10, MemoryTableModel.COLUMN_BINARY_VALUE);
+        model.setValueAt("1", 10, 16);
 
         verify(memoryContext);
     }
 
     @Test
-    public void testSetHexValueCallsMemoryWrite() throws Exception {
-        MemoryContext<Integer> memoryContext = createMock(MemoryContext.class);
+    public void testSetHexValueCellsMemoryWrite() throws Exception {
+        MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
 
-        memoryContext.write(10, 0xFF);
+        Byte[] row = new Byte[] { 1,2,3,4 };
+        Byte[] modified = new Byte[] { (byte)0xFF,0,0,0 };
+        
+        expect(memoryContext.readWord(10 * 4)).andReturn(row);
+        memoryContext.writeWord(eq(10 * 4), aryEq(modified));
         expectLastCall().once();
         replay(memoryContext);
-
+        
         MemoryTableModel model = new MemoryTableModel(memoryContext);
         model.setValueAt("FF", 10, MemoryTableModel.COLUMN_HEX_VALUE);
 
@@ -93,42 +106,64 @@ public class MemoryTableModelTest {
     }
 
     @Test
+    public void testSetCharValueCellsMemoryWrite() throws Exception {
+        MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
+
+        Byte[] row = new Byte[] { 1,2,3,4 };
+        Byte[] modified = new Byte[] { 0x56, (byte)0xf6, 0x16, (byte)0x86 };
+        
+        expect(memoryContext.readWord(10 * 4)).andReturn(row);
+        memoryContext.writeWord(eq(10*4), aryEq(modified));
+        expectLastCall().once();
+        replay(memoryContext);
+        
+        MemoryTableModel model = new MemoryTableModel(memoryContext);
+        model.setValueAt("ahoj", 10, MemoryTableModel.COLUMN_CHAR_VALUE);
+
+        verify(memoryContext);
+    }
+
+    
+    @Test
     public void testSetValueAtInvalidIndexDoesNotThrow() throws Exception {
         MemoryTableModel model = new MemoryTableModel(createMock(MemoryContext.class));
 
-        model.setValueAt("10", -1, MemoryTableModel.COLUMN_BINARY_VALUE);
+        model.setValueAt("10", -1, MemoryTableModel.COLUMN_CHAR_VALUE);
     }
 
     @Test
     public void testSetNullValueDoesNotThrow() throws Exception {
         MemoryTableModel model = new MemoryTableModel(createMock(MemoryContext.class));
 
-        model.setValueAt(null, 0, MemoryTableModel.COLUMN_BINARY_VALUE);
+        model.setValueAt(null, 0, MemoryTableModel.COLUMN_CHAR_VALUE);
     }
 
     @Test
     public void testGetValueCallsMemoryRead() throws Exception {
-        MemoryContext<Integer> memoryContext = createMock(MemoryContext.class);
+        MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
 
-        expect(memoryContext.read(10)).andReturn(1).anyTimes();
+        Byte[] row = new Byte[] { 'a','h','o','j' };
+
+        expect(memoryContext.readWord(10 * 4)).andReturn(row).anyTimes();
         replay(memoryContext);
 
         MemoryTableModel model = new MemoryTableModel(memoryContext);
 
-        assertEquals("0001", model.getValueAt(10, MemoryTableModel.COLUMN_HEX_VALUE));
-        assertEquals("00000000000000000000000000000001", model.getValueAt(10, MemoryTableModel.COLUMN_BINARY_VALUE));
+        int value = NumberUtils.readInt(row, Strategy.REVERSE_BITS);
+        assertEquals(Integer.toHexString(value).toUpperCase(), model.getValueAt(10, MemoryTableModel.COLUMN_HEX_VALUE));
+        assertEquals("ahoj", model.getValueAt(10, MemoryTableModel.COLUMN_CHAR_VALUE));
     }
 
     @Test
     public void testGetValueAtInvalidIndexDoesNotThrow() throws Exception {
-        MemoryContext<Integer> memoryContext = createMock(MemoryContext.class);
+        MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
 
-        expect(memoryContext.read(-1)).andThrow(new IndexOutOfBoundsException()).times(2);
+        expect(memoryContext.readWord(-4)).andThrow(new IndexOutOfBoundsException()).times(2);
         replay(memoryContext);
 
         MemoryTableModel model = new MemoryTableModel(memoryContext);
 
         model.getValueAt(-1, MemoryTableModel.COLUMN_HEX_VALUE);
-        model.getValueAt(-1, MemoryTableModel.COLUMN_BINARY_VALUE);
+        model.getValueAt(-1, MemoryTableModel.COLUMN_CHAR_VALUE);
     }
 }

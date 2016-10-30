@@ -21,6 +21,8 @@ package net.sf.emustudio.ssem.cpu;
 
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
+import emulib.runtime.NumberUtils;
+import emulib.runtime.NumberUtils.Strategy;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -29,7 +31,7 @@ public class EmulatorEngine {
     public final static int INSTRUCTIONS_PER_SECOND = 700;
     
     private final CPU cpu;
-    private final MemoryContext<Integer> memory;
+    private final MemoryContext<Byte> memory;
     private volatile CPU.RunState currentRunState;
     
     public volatile int Acc;
@@ -37,7 +39,7 @@ public class EmulatorEngine {
 
     private volatile long averageInstructionNanos;
     
-    public EmulatorEngine(MemoryContext<Integer> memory, CPU cpu) {
+    public EmulatorEngine(MemoryContext<Byte> memory, CPU cpu) {
         this.memory = Objects.requireNonNull(memory);
         this.cpu = Objects.requireNonNull(cpu);
     }
@@ -48,27 +50,25 @@ public class EmulatorEngine {
     }
     
     public CPU.RunState step() {
-        int instruction = memory.read(CI);
+        int line = parseLine(memory.read(CI * 4));
+        int opcode = memory.read((CI * 4) + 1) & 3;
         CI++;
 
-        int line = parseLine(instruction);
-        int opcode = parseOpcode(instruction);
-        
         switch (opcode) {
             case 0: // JMP
-                CI = memory.read(line);
+                CI = readInt(line);
                 break;
             case 4: // JPR
-                CI = CI + memory.read(line);
+                CI = CI + readInt(line);
                 break;
             case 2: // LDN
-                Acc = -memory.read(line);
+                Acc = -readInt(line);
                 break;
             case 6: // STO
-                memory.write(line, Acc);
+                writeInt(line, Acc);
                 break;
             case 1: // SUB
-                Acc = Acc - memory.read(line);
+                Acc = Acc - readInt(line);
                 break;
             case 3: // CMP / SKN
                 if (Acc < 0) {
@@ -81,19 +81,26 @@ public class EmulatorEngine {
         return CPU.RunState.STATE_STOPPED_BAD_INSTR;
     }
     
-    private int parseLine(int instruction) {
-        int line = instruction >> 27;
+    private int parseLine(int rawLine) {
+        int line = rawLine >> 3;
         return ((line & 1) << 4)
                 | ((line & 2) << 2)
                 | (line & 4)
                 | ((line & 8) >> 2)
                 | ((line & 16) >> 4);
     }
-    
-    private int parseOpcode(int instruction) {
-        return (instruction >> 16) & 3;
+
+    private int readInt(int line) {
+        Byte[] word = memory.readWord(line);
+        return NumberUtils.readInt(word, Strategy.REVERSE_BITS);
     }
     
+    private void writeInt(int line, int value) {
+        Byte[] word = new Byte[4];
+        NumberUtils.writeInt(value, word, Strategy.REVERSE_BITS);
+        memory.writeWord(line, word);
+    }
+
     public CPU.RunState run() {
         if (averageInstructionNanos == 0) {
             measureAverageInstructionNanos();
@@ -121,12 +128,10 @@ public class EmulatorEngine {
     }
     
     private void fakeStep() {
-        int instruction = memory.read(CI);
+        int line = parseLine(memory.read(CI * 4));
+        int opcode = memory.read((CI * 4) + 1) & 3;
         CI++;
 
-        int line = parseLine(instruction);
-        int opcode = parseOpcode(instruction);
-        
         switch (opcode) {
             case 0: break;
             case 1: break;

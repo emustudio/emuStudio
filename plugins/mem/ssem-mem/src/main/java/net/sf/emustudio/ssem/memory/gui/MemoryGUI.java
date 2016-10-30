@@ -39,7 +39,7 @@ public class MemoryGUI extends JDialog {
         }
     }
 
-    public MemoryGUI(MemoryContext<Integer> memory) {
+    public MemoryGUI(MemoryContext<Byte> memory) {
         initComponents();
         setLocationRelativeTo(null);
         
@@ -62,7 +62,7 @@ public class MemoryGUI extends JDialog {
         javax.swing.JButton btnClear = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("SSEM Memory");
+        setTitle("SSEM Memory (Williams-Killburn Tube)");
 
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
@@ -86,7 +86,7 @@ public class MemoryGUI extends JDialog {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE))
+                .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE))
         );
 
         pack();

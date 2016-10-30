@@ -27,6 +27,7 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 public class MemoryContextImplTest {
@@ -83,7 +84,7 @@ public class MemoryContextImplTest {
         replay(listener);
 
         context.addMemoryListener(listener);
-        context.write(10, 1234);
+        context.write(10, (byte)134);
 
         verify(listener);
     }
@@ -92,15 +93,15 @@ public class MemoryContextImplTest {
     public void testWriteReallyWritesCorrectValueAtCorrectLocation() throws Exception {
         MemoryContextImpl context = new MemoryContextImpl();
 
-        context.write(10, 1234);
-        assertEquals(1234L, (int)context.read(10));
+        context.write(10, (byte)134);
+        assertEquals((byte)134, (byte)context.read(10));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testWriteAtInvalidLocationThrows() throws Exception {
         MemoryContextImpl context = new MemoryContextImpl();
 
-        context.write(-1, 1234);
+        context.write(-1, (byte)134);
     }
 
     @Test
@@ -112,16 +113,21 @@ public class MemoryContextImplTest {
 
     @Test
     public void testClassTypeIsInteger() throws Exception {
-        assertEquals(Integer.class, new MemoryContextImpl().getDataType());
+        assertEquals(Byte.class, new MemoryContextImpl().getDataType());
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testReadWordIsNotSupported() throws Exception {
-        new MemoryContextImpl().readWord(0);
+        assertArrayEquals(new Byte[] {0,0,0,0}, new MemoryContextImpl().readWord(0));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testWriteWordIsNotSupported() throws Exception {
-        new MemoryContextImpl().writeWord(0, new Integer[] {0});
+        MemoryContextImpl mem = new MemoryContextImpl();
+        
+        Byte[] row = new Byte[] {1,2,3,4};
+        mem.writeWord(0, row);
+        
+        assertArrayEquals(row, mem.readWord(0));
     }
 }

@@ -29,17 +29,19 @@ import java.util.Objects;
 @NotThreadSafe
 public class MemoryAndFileOutput extends SeekableOutputStream {
     private final RandomAccessFile file;
-    private final MemoryContext<Integer> memoryContext;
+    private final MemoryContext<Byte> memoryContext;
     private int position = 0;
 
-    public MemoryAndFileOutput(String filename, MemoryContext<Integer> memoryContext) throws IOException {
+    public MemoryAndFileOutput(String filename, MemoryContext<Byte> memoryContext) throws IOException {
         this.file = new RandomAccessFile(filename, "rw");
         this.memoryContext = Objects.requireNonNull(memoryContext);
     }
 
     @Override
     public void write(int b) throws IOException {
-        memoryContext.write(position, b);
+        System.out.println("writing at " + position + " = " + Integer.toBinaryString(b));
+
+        memoryContext.write(position, (byte)(b & 0xFF));
         file.write(b);
         position++;
     }

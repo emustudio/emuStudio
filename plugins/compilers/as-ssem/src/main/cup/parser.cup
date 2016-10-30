@@ -86,7 +86,7 @@ parser code {:
 
 terminal JMP, JRP, LDN, STO, SUB, CMP, STP, NUM;
 terminal SEPARATOR_EOL, TCOMMENT, ERROR_UNKNOWN_TOKEN;
-terminal Byte NUMBER;
+terminal Integer NUMBER;
 
 non terminal Program Program;
 non terminal ASTnode Statement;

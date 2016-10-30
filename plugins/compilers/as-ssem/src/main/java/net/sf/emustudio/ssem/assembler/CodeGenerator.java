@@ -19,6 +19,8 @@
  */
 package net.sf.emustudio.ssem.assembler;
 
+import emulib.runtime.NumberUtils;
+import emulib.runtime.NumberUtils.Strategy;
 import net.sf.emustudio.ssem.assembler.tree.ASTvisitor;
 import net.sf.emustudio.ssem.assembler.tree.Constant;
 import net.sf.emustudio.ssem.assembler.tree.Instruction;
@@ -36,6 +38,7 @@ public class CodeGenerator implements ASTvisitor, AutoCloseable {
 
     @Override
     public void setCurrentLine(int line) {
+        System.out.println("CR : " + line);
         this.currentLine = line;
     }
 
@@ -48,8 +51,8 @@ public class CodeGenerator implements ASTvisitor, AutoCloseable {
         }
 
         // Instruction has 32 bits, i.e. 4 bytes
-        int addressSSEM = reverseBits(address, 8) & 0xF8;
-        writer.seek(currentLine * 4);
+        int addressSSEM = NumberUtils.reverseBits(address, 8) & 0xF8;
+        writer.seek(4 * currentLine);
 
         writer.write(addressSSEM); // address + 3 empty bits
 
@@ -67,19 +70,14 @@ public class CodeGenerator implements ASTvisitor, AutoCloseable {
         writeInt(number);
     }
 
-    private void writeInt(int v) throws IOException {
-        writer.write((v >>> 24) & 0xFF);
-        writer.write((v >>> 16) & 0xFF);
-        writer.write((v >>>  8) & 0xFF);
-        writer.write((v >>>  0) & 0xFF);
-    }
-
-    private static int reverseBits(int value, int numberOfBits) {
-        int result = 0;
-        for (int i = 0; i < numberOfBits; i++) {
-            result |= ((value >>> i) & 0x1) << (numberOfBits - i - 1);
-        }
-        return result;
+    private void writeInt(int value) throws IOException {
+        Byte[] word = new Byte[4];
+        NumberUtils.writeInt(value, word, Strategy.REVERSE_BITS);
+        
+        writer.write(word[0]);
+        writer.write(word[1]);
+        writer.write(word[2]);
+        writer.write(word[3]);
     }
 
     @Override

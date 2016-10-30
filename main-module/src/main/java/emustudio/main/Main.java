@@ -157,7 +157,6 @@ public class Main {
             if (odi.getOK()) {
                 return Optional.ofNullable(odi.getArchName());
             }
-            tryShowErrorMessage(ERR_CONFIG_WAS_NOT_SPECIFIED);
         }
         return Optional.empty();
     }
@@ -188,6 +187,7 @@ public class Main {
         UIManager.put("TabbedPane.contentAreaColor", UIManager.get("Panel.background"));
         UIManager.put("TextPane.font", Constants.MONOSPACED_PLAIN_12);
         UIManager.put("TextArea.font", Constants.MONOSPACED_PLAIN_12);
+        UIManager.put("List.font", Constants.MONOSPACED_PLAIN_12);
     }
 
     public static void tryShowMessage(String message) {

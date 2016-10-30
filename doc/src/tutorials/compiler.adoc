@@ -661,14 +661,23 @@ What it does is basically creating a 4-byte SSEM instruction, its binary format.
 however necessary to check the address boundary, which is 2^5 (maximum). The rest should be clear, we're making
 instruction with format specified in section <<GETTING_STARTED,Getting started>>.
 
-Code generator uses a "seekable" output stream, which allows to seek in the output. It is a separate class, which
-looks as follows:
+Code generator uses a "seekable" output stream, which allows to seek in the output. It is a separate class, which is
+split actially an interface (because of easier testing):
 
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java`
 ----
 include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java[]
 ----
+
+and here's the implementation:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/assembler/MemoryAndFileOutput.java`
+----
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/MemoryAndFileOutput.java[]
+----
+
 
 We require the "seeking" because each instruction line begins with the "line" itself, which actually represents the
 address in memory, when multiplied by 4 bytes per row.

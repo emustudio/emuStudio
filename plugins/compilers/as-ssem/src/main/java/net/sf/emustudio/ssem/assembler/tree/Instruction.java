@@ -19,6 +19,8 @@
  */
 package net.sf.emustudio.ssem.assembler.tree;
 
+import net.sf.emustudio.ssem.assembler.CompileException;
+
 import java.util.Optional;
 
 public class Instruction implements ASTnode {
@@ -36,8 +38,11 @@ public class Instruction implements ASTnode {
     private final int opcode;
     private final Optional<Byte> operand;
 
-    private Instruction(int opcode, byte operand) {
-        this.operand = Optional.of(operand);
+    private Instruction(int opcode, int operand) throws CompileException {
+        if (operand > 31 || operand < 0) {
+            throw new CompileException("Instruction operand must be in range <0,31>!");
+        }
+        this.operand = Optional.of((byte)(operand & 0xFF));
         this.opcode = opcode;
     }
 
@@ -54,23 +59,23 @@ public class Instruction implements ASTnode {
         return operand;
     }
 
-    public static Instruction jmp(byte address) {
+    public static Instruction jmp(int address) throws CompileException {
         return new Instruction(JMP, address);
     }
 
-    public static Instruction jrp(byte address) {
+    public static Instruction jrp(int address) throws CompileException {
         return new Instruction(JRP, address);
     }
 
-    public static Instruction ldn(byte address) {
+    public static Instruction ldn(int address) throws CompileException {
         return new Instruction(LDN, address);
     }
 
-    public static Instruction sto(byte address) {
+    public static Instruction sto(int address) throws CompileException {
         return new Instruction(STO, address);
     }
 
-    public static Instruction sub(byte address) {
+    public static Instruction sub(int address) throws CompileException {
         return new Instruction(SUB, address);
     }
 

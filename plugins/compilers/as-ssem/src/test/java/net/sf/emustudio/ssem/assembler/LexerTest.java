@@ -40,7 +40,7 @@ public class LexerTest {
         TokenImpl token = lexer.next_token();
         assertEquals(Token.LITERAL, token.getType());
         assertEquals(TokenImpl.NUMBER, token.getID());
-        assertEquals((byte)31, token.value);
+        assertEquals(31, token.value);
     }
 
     @Test
@@ -50,7 +50,7 @@ public class LexerTest {
         TokenImpl token = lexer.next_token();
         assertEquals(Token.LITERAL, token.getType());
         assertEquals(TokenImpl.NUMBER, token.getID());
-        assertEquals((byte)0, token.value);
+        assertEquals(0, token.value);
     }
 
     @Test
@@ -60,7 +60,7 @@ public class LexerTest {
         TokenImpl token = lexer.next_token();
         assertEquals(Token.LITERAL, token.getType());
         assertEquals(TokenImpl.NUMBER, token.getID());
-        assertEquals((byte)22, token.value);
+        assertEquals(22, token.value);
     }
 
     private void checkInstruction(int id, LexerImpl lexer) throws IOException {

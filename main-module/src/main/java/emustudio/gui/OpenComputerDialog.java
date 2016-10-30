@@ -20,6 +20,7 @@
 package emustudio.gui;
 
 import emulib.runtime.StaticDialogs;
+import emustudio.Constants;
 import emustudio.architecture.ComputerConfig;
 import emustudio.architecture.Configuration;
 import emustudio.architecture.ReadConfigurationException;
@@ -156,7 +157,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
 
         panelConfig.setPreferredSize(new java.awt.Dimension(200, 297));
 
-        lstConfig.setFont(lstConfig.getFont().deriveFont(lstConfig.getFont().getStyle() & ~java.awt.Font.BOLD));
+        lstConfig.setFont(Constants.MONOSPACED_PLAIN_12);
         lstConfig.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lstConfigMouseClicked(evt);

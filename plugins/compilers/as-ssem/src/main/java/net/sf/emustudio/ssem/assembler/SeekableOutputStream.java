@@ -6,5 +6,5 @@ import java.io.OutputStream;
 public abstract class SeekableOutputStream extends OutputStream {
 
     public abstract void seek(int position) throws IOException;
-
+    
 }

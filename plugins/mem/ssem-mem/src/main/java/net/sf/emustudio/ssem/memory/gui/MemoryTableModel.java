@@ -20,6 +20,9 @@
 package net.sf.emustudio.ssem.memory.gui;
 
 import emulib.plugins.memory.MemoryContext;
+import emulib.runtime.NumberUtils;
+import emulib.runtime.NumberUtils.Strategy;
+import emulib.runtime.RadixUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,15 +32,15 @@ import java.util.Objects;
 public class MemoryTableModel extends AbstractTableModel {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryTableModel.class);
 
-    final static int COLUMN_BINARY_VALUE = 1;
-    final static int COLUMN_HEX_VALUE = 2;
+    final static int COLUMN_HEX_VALUE = 32;
+    final static int COLUMN_CHAR_VALUE = 33;
 
     private final static int ROW_COUNT = 32;
-    private final static int COLUMN_COUNT = 3;
+    private final static int COLUMN_COUNT = 2 + 32;
 
-    private final MemoryContext<Integer> memory;
+    private final MemoryContext<Byte> memory;
 
-    MemoryTableModel(MemoryContext<Integer> memory) {
+    MemoryTableModel(MemoryContext<Byte> memory) {
         this.memory = Objects.requireNonNull(memory);
     }
 
@@ -54,31 +57,45 @@ public class MemoryTableModel extends AbstractTableModel {
     @Override
     public String getColumnName(int columnIndex) {
         switch (columnIndex) {
-            case 0:
-                return "No.";
-            case COLUMN_BINARY_VALUE:
-                return "Value (binary)";
             case COLUMN_HEX_VALUE:
                 return "Value (hex)";
+            case COLUMN_CHAR_VALUE:
+                return "Raw";
         }
         return "";
     }
-
+    
+    private byte[] readLineBits(Byte[] line) {
+        byte[] lineBits = new byte[32];
+        
+        int j = 0;
+        for (Byte v : line) {
+            for (int i = 7; i >= 0; i--) {
+                lineBits[j + i--] = (byte)(v & 1);
+                v = (byte)(v >>> 1);
+            }
+            j += 8;
+        }
+        return lineBits;
+    }
+    
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         try {
-            int value = memory.read(rowIndex);
-
+            Byte[] row = memory.readWord(rowIndex * 4);
+            int value = NumberUtils.readInt(row, Strategy.REVERSE_BITS);
+                    
             switch (columnIndex) {
-                case 0:
-                    return String.format("%02X", rowIndex);
-                case COLUMN_BINARY_VALUE:
-                    return String.format("%32s", Integer.toBinaryString(value)).replace(' ', '0');
                 case COLUMN_HEX_VALUE:
-                    return String.format("%04X", value);
+                    return RadixUtils.getDwordHexString(value);
+                case COLUMN_CHAR_VALUE:
+                    return "" + (char)(byte)row[0] + (char)(byte)row[1] + (char)(byte)row[2] + (char)(byte)row[3];
+                default:
+                    byte[] lineBits = readLineBits(row);
+                    return lineBits[columnIndex];
             }
         } catch (Exception e) {
-            LOGGER.debug("[location={}] Could not reead value from memory", rowIndex, e);
+            LOGGER.debug("[location={}] Could not read value from memory", rowIndex, e);
         }
         return "";
     }
@@ -87,29 +104,65 @@ public class MemoryTableModel extends AbstractTableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (isCellEditable(rowIndex, columnIndex)) {
             try {
-                int value;
-                if (columnIndex == COLUMN_BINARY_VALUE) {
-                    value = Integer.parseInt(String.valueOf(aValue), 2);
-                } else {
-                    value = Integer.parseInt(String.valueOf(aValue), 16);
+                Byte[] row = memory.readWord(rowIndex * 4);
+                
+                if (columnIndex == COLUMN_HEX_VALUE) {
+                    writeHex(aValue, row);
+                } else if (columnIndex == COLUMN_CHAR_VALUE) {
+                    writeChar(aValue, row);
+                } else if (columnIndex >= 0 && columnIndex < 33) {
+                    writeBit(aValue, columnIndex, row);
                 }
-                memory.write(rowIndex, value);
-                fireTableCellUpdated(rowIndex, COLUMN_BINARY_VALUE);
-                fireTableCellUpdated(rowIndex, COLUMN_HEX_VALUE);
+                memory.writeWord(rowIndex * 4, row);
+
+                fireTableCellUpdated(rowIndex, columnIndex);
             } catch (Exception e) {
                 LOGGER.debug("[location={}, value={}] Could not set value to memory", rowIndex, aValue, e);
             }
         }
     }
 
+    private void writeHex(Object aValue, Byte[] row) {
+        int value = Integer.parseInt(String.valueOf(aValue), 16);
+        NumberUtils.writeInt(value, row, Strategy.REVERSE_BITS);
+    }
+
+    private void writeChar(Object aValue, Byte[] row) {
+        int i = 3;
+        int value = 0;
+        for (char c : String.valueOf(aValue).toCharArray()) {
+            value |= ((c & 0xFF) << (i*8));
+            i -= 1;
+            if (i < 0) {
+                break;
+            }
+        }
+        NumberUtils.writeInt(value, row, Strategy.REVERSE_BITS);
+    }
+
+    private void writeBit(Object aValue, int columnIndex, Byte[] row) {
+        int value;
+        value = Integer.parseInt(String.valueOf(aValue), 2);
+
+        int byteIndex = columnIndex / 8;
+        int bitIndex = 7 - columnIndex % 8;
+
+        int bitMask = ~(1 << bitIndex);
+        int bitValue = (value << bitIndex);
+
+        row[byteIndex] = (byte)(row[byteIndex] & bitMask | bitValue);
+    }
+
+
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return columnIndex == COLUMN_BINARY_VALUE || columnIndex == COLUMN_HEX_VALUE;
+        return columnIndex >= 0 && columnIndex <= 33;
     }
     
     public void dataChangedAt(int address) {
-        fireTableCellUpdated(address, COLUMN_BINARY_VALUE);
-        fireTableCellUpdated(address, COLUMN_HEX_VALUE);
+        for (int i = 0; i < COLUMN_COUNT; i++) {
+            fireTableCellUpdated(address, i);
+        }
     }
     
     public void clear() {

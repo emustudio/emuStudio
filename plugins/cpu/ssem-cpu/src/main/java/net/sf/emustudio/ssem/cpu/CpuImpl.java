@@ -28,15 +28,14 @@ import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.exceptions.PluginInitializationException;
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
+import javax.swing.JPanel;
 import net.sf.emustudio.ssem.DecoderImpl;
 import net.sf.emustudio.ssem.DisassemblerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.swing.*;
-import java.util.MissingResourceException;
-import java.util.Objects;
-import java.util.ResourceBundle;
 
 @PluginType(
     type = PLUGIN_TYPE.CPU,
@@ -49,7 +48,7 @@ public class CpuImpl extends AbstractCPU {
     private final static Logger LOGGER = LoggerFactory.getLogger(CpuImpl.class);
 
     private final ContextPool contextPool;
-    private MemoryContext<Integer> memory;
+    private MemoryContext<Byte> memory;
     private Disassembler disasm;
     private EmulatorEngine engine;
 

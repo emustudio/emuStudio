@@ -40,8 +40,13 @@ import java.awt.FontMetrics;
 
 class MemoryTable extends JTable {
     private final static int CHAR_WIDTH = 17;
+    private final static int NO_COLUMN_WIDTH = CHAR_WIDTH * 2;
     private final static int[] COLUMN_WIDTH = new int[] {
-        3 * CHAR_WIDTH, 17 * CHAR_WIDTH, 5 * CHAR_WIDTH
+        CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH,
+        CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH,
+        CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH,
+        CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH,
+        10 * CHAR_WIDTH, 5 * CHAR_WIDTH
     };
     private final static Font DEFAULT_FONT = new Font("Monospaced", Font.PLAIN, 12);
     
@@ -85,7 +90,7 @@ class MemoryTable extends JTable {
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
                 boolean cellHasFocus) {
-            setPreferredSize(new Dimension(COLUMN_WIDTH[index], height));
+            setPreferredSize(new Dimension(NO_COLUMN_WIDTH, height));
             setText((value == null) ? "" : value.toString());
             return this;
         }
@@ -93,15 +98,15 @@ class MemoryTable extends JTable {
 
     private class MemoryCellRenderer extends JLabel implements TableCellRenderer {
         private final JList rowHeader;
-        private final String columnNames[];
+        private final String rowNames[];
 
         MemoryCellRenderer() {
-            columnNames = new String[model.getColumnCount()];
-            for (int i = 0; i < columnNames.length; i++) {
-                columnNames[i] = model.getColumnName(0);
+            rowNames = new String[model.getColumnCount()];
+            for (int i = 0; i < rowNames.length; i++) {
+                rowNames[i] = String.format("%02x", i * 4);
             }
             this.setOpaque(true);
-            rowHeader = new JList(columnNames);
+            rowHeader = new JList(rowNames);
             this.setFont(DEFAULT_FONT);
 
             rowHeader.setFixedCellHeight(getRowHeight());
@@ -143,7 +148,7 @@ class MemoryTable extends JTable {
                 return null;
             }
             setComponentSize(columnIndex);
-            component.setText((String) value);
+            component.setText(String.valueOf(value));
             return component;
         }
 

@@ -20,47 +20,51 @@
 package net.sf.emustudio.ssem.memory.impl;
 
 import emulib.plugins.memory.AbstractMemoryContext;
-
 import java.util.Arrays;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
-public class MemoryContextImpl extends AbstractMemoryContext<Integer> {
-    static final int NUMBER_OF_CELLS = 32;
+public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
+    static final int NUMBER_OF_CELLS = 32 * 32;
 
-    // int type is atomic in JVM memory model
-    private final int[] memory = new int[NUMBER_OF_CELLS];
+    // byte type is atomic in JVM memory model
+    private final byte[]memory = new byte[NUMBER_OF_CELLS];
 
     @Override
     public void clear() {
-        Arrays.fill(memory, 0);
+        Arrays.fill(memory, (byte)0);
         notifyMemoryChanged(-1); // notify that all memory has changed
     }
 
     @Override
     public Class<?> getDataType() {
-        return Integer.class;
+        return Byte.class;
     }
 
     @Override
-    public Integer read(int from) {
+    public Byte read(int from) {
         return memory[from];
     }
 
     @Override
-    public Integer[] readWord(int from) {
-        throw new UnsupportedOperationException();
+    public Byte[] readWord(int from) {
+        return new Byte[] { memory[from], memory[from+1], memory[from+2], memory[from+3] };
     }
 
     @Override
-    public void write(int to, Integer val) {
+    public void write(int to, Byte val) {
         memory[to] = val;
         notifyMemoryChanged(to);
     }
 
     @Override
-    public void writeWord(int to, Integer[] cells) {
-        throw new UnsupportedOperationException();
+    public void writeWord(int to, Byte[] cells) {
+        int i = 0;
+        for (byte cell : cells) {
+            memory[to + i] = cell;
+            i++;
+            notifyMemoryChanged(to+i);
+        }
     }
 
     @Override

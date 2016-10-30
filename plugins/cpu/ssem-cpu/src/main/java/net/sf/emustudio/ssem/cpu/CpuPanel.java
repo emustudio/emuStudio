@@ -67,6 +67,8 @@ public class CpuPanel extends javax.swing.JPanel {
                 if (i == 3) {
                     builder.append(' ');
                     i = 0;
+                } else {
+                    i++;
                 }
             }
             return builder.toString();

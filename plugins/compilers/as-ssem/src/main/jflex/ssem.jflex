@@ -120,12 +120,12 @@ hexnumber = \-?0x[0-9a-fA-F]+
 /* literals */
 {number} {
     int num = Integer.parseInt(yytext(), 10);
-    return token(NUMBER, Token.LITERAL, (byte)(num & 0xFF));
+    return token(NUMBER, Token.LITERAL, num);
 }
 
 {hexnumber} {
     int num = Integer.decode(yytext());
-    return token(NUMBER, Token.LITERAL, (byte)(num & 0xFF));
+    return token(NUMBER, Token.LITERAL, num);
 }
 
 /* error fallback */

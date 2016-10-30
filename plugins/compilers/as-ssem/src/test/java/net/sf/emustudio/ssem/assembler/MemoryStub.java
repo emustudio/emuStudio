@@ -21,32 +21,32 @@ package net.sf.emustudio.ssem.assembler;
 
 import emulib.plugins.memory.AbstractMemoryContext;
 
-public class MemoryStub extends AbstractMemoryContext<Integer> {
-    private final int[] memory = new int[1000];
+public class MemoryStub extends AbstractMemoryContext<Byte> {
+    private final byte[] memory = new byte[1000];
 
     @Override
-    public Integer read(int memoryPosition) {
+    public Byte read(int memoryPosition) {
         return memory[memoryPosition];
     }
 
     @Override
-    public Integer[] readWord(int memoryPosition) {
+    public Byte[] readWord(int memoryPosition) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void write(int memoryPosition, Integer value) {
+    public void write(int memoryPosition, Byte value) {
         memory[memoryPosition] = value;
     }
 
     @Override
-    public void writeWord(int memoryPosition, Integer[] value) {
+    public void writeWord(int memoryPosition, Byte[] value) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public Class<?> getDataType() {
-        return Integer.class;
+        return Byte.class;
     }
 
     @Override
