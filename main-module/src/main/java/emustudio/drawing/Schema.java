@@ -361,27 +361,17 @@ public class Schema {
                 elem.setSelected(false);
             }
         }
-        for (ConnectionLine line : lines) {
-            line.setSelected(line.isAreaCrossing(p1, p2));
-        }
+        lines.stream().forEach(line -> line.setSelected(line.isAreaCrossing(p1, p2)));
     }
 
     void selectAll() {
-        for (Element elem : getAllElements()) {
-            elem.setSelected(true);
-        }
-        for (ConnectionLine line : lines) {
-            line.setSelected(true);
-        }
+        getAllElements().stream().forEach(elem -> elem.setSelected(true));
+        lines.stream().forEach(line -> line.setSelected(true));
     }
 
     void deselectAll() {
-        for (Element elem : getAllElements()) {
-            elem.setSelected(false);
-        }
-        for (ConnectionLine line : lines) {
-            line.setSelected(false);
-        }
+        getAllElements().stream().forEach(elem -> elem.setSelected(false));
+        lines.stream().forEach(line -> line.setSelected(false));
     }
 
     /**
@@ -405,18 +395,14 @@ public class Schema {
                 return false;
             }
         }
-        for (ConnectionLine line : lines) {
-            if (line.isSelected() && !line.canMoveAllPoints(diffX, diffY)) {
-                return false;
-            }
+        if (!lines.stream().noneMatch(line -> (line.isSelected() && !line.canMoveAllPoints(diffX, diffY)))) {
+            return false;
         }
 
         // actual movement
         for (Element elem : allElements) {
-            int x = elem.getX() + diffX;
-            int y = elem.getY() + diffY;
             if (elem.isSelected()) {
-                elem.move(x, y);
+                elem.move(diffX, diffY);
             }
         }
         lines.stream().filter(ConnectionLine::isSelected).forEach(line -> line.moveAllPoints(diffX, diffY));

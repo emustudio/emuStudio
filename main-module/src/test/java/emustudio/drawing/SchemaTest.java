@@ -19,19 +19,19 @@
  */
 package emustudio.drawing;
 
-import org.easymock.EasyMock;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import org.easymock.EasyMock;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class SchemaTest {
 
@@ -56,73 +56,67 @@ public class SchemaTest {
 
     @Test
     public void testGetConfigName() {
-        Schema instance = new Schema("test", new Properties());
-        String expResult = "test";
-        String result = instance.getConfigName();
-        Assert.assertEquals(expResult, result);
+        Schema schema = new Schema("test", new Properties());
+        Assert.assertEquals("test", schema.getConfigName());
     }
 
     @Test
     public void testSetConfigName() {
-        String cName = "test";
-        Schema instance = new Schema();
-        instance.setConfigName(cName);
-        Assert.assertEquals(cName, instance.getConfigName());
+        Schema schema = new Schema();
+        schema.setConfigName("test");
+        Assert.assertEquals("test", schema.getConfigName());
     }
 
     @Test
     public void testGetCompilerElement() {
-        Schema instance = new Schema();
-        CompilerElement expResult = new CompilerElement("compiler", new Properties(), instance);
-        instance.setCompilerElement(expResult);
-        CompilerElement result = instance.getCompilerElement();
-        Assert.assertSame(expResult, result);
+        Schema schema = new Schema();
+        CompilerElement compiler = new CompilerElement("compiler", new Properties(), schema);
+        schema.setCompilerElement(compiler);
+        Assert.assertSame(compiler, schema.getCompilerElement());
     }
 
     @Test
     public void testGetCpuElement() {
-        Schema instance = new Schema();
-        CpuElement expResult = new CpuElement("cpu", new Properties(), instance);
-        instance.setCpuElement(expResult);
-        CpuElement result = instance.getCpuElement();
-        Assert.assertSame(expResult, result);
+        Schema schema = new Schema();
+        CpuElement cpu = new CpuElement("cpu", new Properties(), schema);
+        schema.setCpuElement(cpu);
+        Assert.assertSame(cpu, schema.getCpuElement());
     }
 
     @Test
     public void testGetMemoryElement() {
-        Schema instance = new Schema();
-        MemoryElement expResult = new MemoryElement("mem", new Properties(), instance);
-        instance.setMemoryElement(expResult);
-        MemoryElement result = instance.getMemoryElement();
-        Assert.assertSame(expResult, result);
+        Schema schema = new Schema();
+        MemoryElement memory = new MemoryElement("mem", new Properties(), schema);
+        schema.setMemoryElement(memory);
+        Assert.assertSame(memory, schema.getMemoryElement());
     }
 
     @Test
     public void testAddDeviceElement() {
         DeviceElement deviceElement;
-        Schema instance = new Schema();
-        instance.addDeviceElement(null);
-        Assert.assertEquals(0, instance.getDeviceElements().size());
+        Schema schema = new Schema();
+        schema.addDeviceElement(null);
+        Assert.assertEquals(0, schema.getDeviceElements().size());
 
         for (int i = 0; i < 10; i++) {
-            deviceElement = new DeviceElement("dev-" + i, new Properties(), instance);
-            instance.addDeviceElement(deviceElement);
-            Assert.assertEquals(i + 1, instance.getDeviceElements().size());
+            deviceElement = new DeviceElement("dev-" + i, new Properties(), schema);
+            schema.addDeviceElement(deviceElement);
+            Assert.assertEquals(i + 1, schema.getDeviceElements().size());
         }
     }
 
     @Test
     public void testGetDeviceElements() {
-        Schema instance = new Schema();
-        DeviceElement deviceElement = new DeviceElement("dev-0", new Properties(), instance);
+        Schema schema = new Schema();
+        DeviceElement deviceElement = new DeviceElement("dev-0", new Properties(), schema);
 
-        instance.addDeviceElement(deviceElement);
-        deviceElement = new DeviceElement("dev-1", new Properties(), instance);
-        instance.addDeviceElement(deviceElement);
-        deviceElement = new DeviceElement("dev-2", new Properties(), instance);
-        instance.addDeviceElement(deviceElement);
+        schema.addDeviceElement(deviceElement);
+        deviceElement = new DeviceElement("dev-1", new Properties(), schema);
+        schema.addDeviceElement(deviceElement);
+        deviceElement = new DeviceElement("dev-2", new Properties(), schema);
+        schema.addDeviceElement(deviceElement);
 
-        List<DeviceElement> result = instance.getDeviceElements();
+        List<DeviceElement> result = schema.getDeviceElements();
         Assert.assertEquals(3, result.size());
         Assert.assertEquals("dev-0", result.get(0).getPluginName());
         Assert.assertEquals("dev-1", result.get(1).getPluginName());
@@ -131,71 +125,74 @@ public class SchemaTest {
 
     @Test
     public void testRemoveDeviceElement() {
-        Schema instance = new Schema();
-        DeviceElement device = new DeviceElement("dev-0", new Properties(), instance);
-        instance.addDeviceElement(device);
-        Assert.assertEquals(1, instance.getDeviceElements().size());
-        instance.removeDeviceElement(device);
-        Assert.assertEquals(0, instance.getDeviceElements().size());
+        Schema schema = new Schema();
+        DeviceElement device = new DeviceElement("dev-0", new Properties(), schema);
+        schema.addDeviceElement(device);
+        Assert.assertEquals(1, schema.getDeviceElements().size());
+        schema.removeDeviceElement(device);
+        Assert.assertEquals(0, schema.getDeviceElements().size());
     }
 
     @Test
     public void testRemoveElement() {
-        Schema instance = new Schema();
-        CompilerElement elem = new CompilerElement("compiler", new Properties(), instance);
-        DeviceElement elem2 = new DeviceElement("dev-0", new Properties(), instance);
-        instance.setCompilerElement(elem);
-        Assert.assertSame(elem, instance.getCompilerElement());
-        instance.addDeviceElement(elem2);
-        Assert.assertEquals(1, instance.getDeviceElements().size());
-        Assert.assertSame(elem2, instance.getDeviceElements().get(0));
-        instance.removeElement(elem);
-        Assert.assertNull(instance.getCompilerElement());
-        Assert.assertEquals(1, instance.getDeviceElements().size());
-        instance.removeElement(elem2);
-        Assert.assertEquals(0, instance.getDeviceElements().size());
+        Schema schema = new Schema();
+        CompilerElement elem = new CompilerElement("compiler", new Properties(), schema);
+        DeviceElement elem2 = new DeviceElement("dev-0", new Properties(), schema);
+        schema.setCompilerElement(elem);
+        Assert.assertSame(elem, schema.getCompilerElement());
+        schema.addDeviceElement(elem2);
+        Assert.assertEquals(1, schema.getDeviceElements().size());
+        Assert.assertSame(elem2, schema.getDeviceElements().get(0));
+        schema.removeElement(elem);
+        Assert.assertNull(schema.getCompilerElement());
+        Assert.assertEquals(1, schema.getDeviceElements().size());
+        schema.removeElement(elem2);
+        Assert.assertEquals(0, schema.getDeviceElements().size());
     }
 
     @Test
     public void testGetAllElements() {
-        Schema instance = new Schema();
-        CompilerElement elem = new CompilerElement("compiler", new Properties(), instance);
-        DeviceElement elem2 = new DeviceElement("dev-0", new Properties(), instance);
-        instance.setCompilerElement(elem);
-        instance.addDeviceElement(elem2);
+        Schema schema = new Schema();
+        CompilerElement compiler = new CompilerElement("compiler", new Properties(), schema);
+        DeviceElement device = new DeviceElement("dev-0", new Properties(), schema);
+        schema.setCompilerElement(compiler);
+        schema.addDeviceElement(device);
 
-        List<Element> result = instance.getAllElements();
+        List<Element> result = schema.getAllElements();
         Assert.assertEquals(2, result.size());
-        Assert.assertTrue(result.contains(elem));
-        Assert.assertTrue(result.contains(elem2));
+        Assert.assertTrue(result.contains(compiler));
+        Assert.assertTrue(result.contains(device));
     }
 
     @Test
     public void testAddGetRemoveConnectionLines() {
-        Schema instance = new Schema();
-        CompilerElement elem = new CompilerElement("compiler", new Properties(), instance);
-        DeviceElement elem2 = new DeviceElement("dev-0", new Properties(), instance);
-        MemoryElement elem3 = new MemoryElement("memory", new Properties(), instance);
-        instance.setCompilerElement(elem);
-        instance.addDeviceElement(elem2);
-        instance.setMemoryElement(elem3);
-        ConnectionLine lin0 = new ConnectionLine(elem, elem2, new ArrayList<>(), instance);
-        ConnectionLine lin1 = new ConnectionLine(elem, elem3, new ArrayList<>(), instance);
-        instance.addConnectionLine(lin0);
-        instance.addConnectionLine(lin1);
-        List<ConnectionLine> result = instance.getConnectionLines();
+        Schema schema = new Schema();
+        CompilerElement compiler = new CompilerElement("compiler", new Properties(), schema);
+        DeviceElement device = new DeviceElement("dev-0", new Properties(), schema);
+        MemoryElement memory = new MemoryElement("memory", new Properties(), schema);
+
+        schema.setCompilerElement(compiler);
+        schema.addDeviceElement(device);
+        schema.setMemoryElement(memory);
+
+        ConnectionLine lin0 = new ConnectionLine(compiler, device, new ArrayList<>(), schema);
+        ConnectionLine lin1 = new ConnectionLine(compiler, memory, new ArrayList<>(), schema);
+        schema.addConnectionLine(lin0);
+        schema.addConnectionLine(lin1);
+
+        List<ConnectionLine> result = schema.getConnectionLines();
         Assert.assertEquals(2, result.size());
         Assert.assertTrue(result.contains(lin0));
         Assert.assertTrue(result.contains(lin1));
 
-        instance.removeConnectionLine(lin1);
-        Assert.assertTrue(instance.getConnectionLines().contains(lin0));
-        Assert.assertFalse(instance.getConnectionLines().contains(lin1));
+        schema.removeConnectionLine(lin1);
+        Assert.assertTrue(schema.getConnectionLines().contains(lin0));
+        Assert.assertFalse(schema.getConnectionLines().contains(lin1));
 
-        instance.removeConnectionLine(0);
-        Assert.assertFalse(instance.getConnectionLines().contains(lin0));
+        schema.removeConnectionLine(0);
+        Assert.assertFalse(schema.getConnectionLines().contains(lin0));
 
-        Assert.assertEquals(0, instance.getConnectionLines().size());
+        Assert.assertEquals(0, schema.getConnectionLines().size());
     }
 
     @Test
@@ -245,105 +242,86 @@ public class SchemaTest {
 
     @Test
     public void testGetResizeElement() {
-        Schema instance = new Schema();
-        Properties props = new Properties();
-        props.setProperty("compiler", "compiler");
-        props.setProperty("point.x", "100");
-        props.setProperty("point.y", "100");
-        props.setProperty("width", "100");
-        props.setProperty("height", "30");
-
-        CompilerElement elem = new CompilerElement("compiler", props, instance);
-        elem.measure(graphicsMock);
-        instance.setCompilerElement(elem);
-        Assert.assertSame(elem, instance.getCompilerElement());
+        Schema schema = new Schema();
+        CompilerElement elem = mockCompiler(schema, 100, 100, 100, 30);
+        Assert.assertSame(elem, schema.getCompilerElement());
 
         Point p;
-        Element result = instance.getElementByBorderPoint(null);
+        Element result = schema.getElementByBorderPoint(null);
         Assert.assertNull(result);
 
-        p = new Point(50, 100); // left border
-        Element expResult = elem;
-        result = instance.getElementByBorderPoint(p);
-        Assert.assertSame(expResult, result);
+        p = new Point(60, 100); // left border
+        result = schema.getElementByBorderPoint(p);
+        Assert.assertSame(elem, result);
 
-        p = new Point(50 - Element.MOUSE_TOLERANCE, 100); // left border with tolerance
-        expResult = elem;
-        result = instance.getElementByBorderPoint(p);
-        Assert.assertSame(expResult, result);
+        p = new Point(60 - Element.MOUSE_TOLERANCE, 100); // left border with tolerance
+        result = schema.getElementByBorderPoint(p);
+        Assert.assertSame(elem, result);
 
-        p = new Point(50 + Element.MOUSE_TOLERANCE, 100); // left border with tolerance
-        expResult = elem;
-        result = instance.getElementByBorderPoint(p);
-        Assert.assertSame(expResult, result);
+        p = new Point(60 + Element.MOUSE_TOLERANCE, 100); // left border with tolerance
+        result = schema.getElementByBorderPoint(p);
+        Assert.assertSame(elem, result);
 
-        p = new Point(50 + Element.MOUSE_TOLERANCE + 1, 100); // left border with tolerance
-        result = instance.getElementByBorderPoint(p);
+        p = new Point(60 + Element.MOUSE_TOLERANCE + 1, 100); // left border with tolerance
+        result = schema.getElementByBorderPoint(p);
         Assert.assertNull(result);
 
-        p = new Point(150 + Element.MOUSE_TOLERANCE, 100); // right border with tolerance
-        expResult = elem;
-        result = instance.getElementByBorderPoint(p);
-        Assert.assertSame(expResult, result);
+        p = new Point(140 + Element.MOUSE_TOLERANCE, 100); // right border with tolerance
+        result = schema.getElementByBorderPoint(p);
+        Assert.assertSame(elem, result);
 
-        p = new Point(150 - Element.MOUSE_TOLERANCE, 100); // right border with tolerance
-        expResult = elem;
-        result = instance.getElementByBorderPoint(p);
-        Assert.assertSame(expResult, result);
+        p = new Point(140 - Element.MOUSE_TOLERANCE, 100); // right border with tolerance
+        result = schema.getElementByBorderPoint(p);
+        Assert.assertSame(elem, result);
 
-        p = new Point(150 + Element.MOUSE_TOLERANCE + 1, 100); // right border with tolerance
-        result = instance.getElementByBorderPoint(p);
+        p = new Point(140 + Element.MOUSE_TOLERANCE + 1, 100); // right border with tolerance
+        result = schema.getElementByBorderPoint(p);
         Assert.assertNull(result);
 
-        p = new Point(150 - Element.MOUSE_TOLERANCE - 1, 100); // right border with tolerance
-        result = instance.getElementByBorderPoint(p);
+        p = new Point(140 - Element.MOUSE_TOLERANCE - 1, 100); // right border with tolerance
+        result = schema.getElementByBorderPoint(p);
         Assert.assertNull(result);
 
-        p = new Point(100, 85 - Element.MOUSE_TOLERANCE); // upper border with tolerance
-        expResult = elem;
-        result = instance.getElementByBorderPoint(p);
-        Assert.assertSame(expResult, result);
+        p = new Point(100, 75 - Element.MOUSE_TOLERANCE); // upper border with tolerance
+        result = schema.getElementByBorderPoint(p);
+        Assert.assertSame(elem, result);
 
-        p = new Point(100, 85 + Element.MOUSE_TOLERANCE); // upper border with tolerance
-        expResult = elem;
-        result = instance.getElementByBorderPoint(p);
-        Assert.assertSame(expResult, result);
+        p = new Point(100, 75 + Element.MOUSE_TOLERANCE); // upper border with tolerance
+        result = schema.getElementByBorderPoint(p);
+        Assert.assertSame(elem, result);
 
-        p = new Point(100, 85 - Element.MOUSE_TOLERANCE - 1); // upper border with tolerance
-        result = instance.getElementByBorderPoint(p);
+        p = new Point(100, 75 - Element.MOUSE_TOLERANCE - 1); // upper border with tolerance
+        result = schema.getElementByBorderPoint(p);
         Assert.assertNull(result);
 
-        p = new Point(100, 85 + Element.MOUSE_TOLERANCE + 1); // upper border with tolerance
-        result = instance.getElementByBorderPoint(p);
+        p = new Point(100, 75 + Element.MOUSE_TOLERANCE + 1); // upper border with tolerance
+        result = schema.getElementByBorderPoint(p);
         Assert.assertNull(result);
 
-        p = new Point(100, 115 - Element.MOUSE_TOLERANCE); // bottom border with tolerance
-        expResult = elem;
-        result = instance.getElementByBorderPoint(p);
-        Assert.assertSame(expResult, result);
+        p = new Point(100, 125 - Element.MOUSE_TOLERANCE); // bottom border with tolerance
+        result = schema.getElementByBorderPoint(p);
+        Assert.assertSame(elem, result);
 
-        p = new Point(100, 115 + Element.MOUSE_TOLERANCE); // bottom border with tolerance
-        expResult = elem;
-        result = instance.getElementByBorderPoint(p);
-        Assert.assertSame(expResult, result);
+        p = new Point(100, 125 + Element.MOUSE_TOLERANCE); // bottom border with tolerance
+        result = schema.getElementByBorderPoint(p);
+        Assert.assertSame(elem, result);
 
-        p = new Point(100, 115 - Element.MOUSE_TOLERANCE - 1); // bottom border with tolerance
-        result = instance.getElementByBorderPoint(p);
+        p = new Point(100, 125 - Element.MOUSE_TOLERANCE - 1); // bottom border with tolerance
+        result = schema.getElementByBorderPoint(p);
         Assert.assertNull(result);
 
-        p = new Point(100, 115 + Element.MOUSE_TOLERANCE + 1); // bottom border with tolerance
-        result = instance.getElementByBorderPoint(p);
+        p = new Point(100, 125 + Element.MOUSE_TOLERANCE + 1); // bottom border with tolerance
+        result = schema.getElementByBorderPoint(p);
         Assert.assertNull(result);
     }
 
     @Test
     public void testGetSetUseGrid() {
-        Schema instance = new Schema();
-        boolean result = instance.isGridUsed();
-        Assert.assertEquals(true, result);
+        Schema schema = new Schema();
+        Assert.assertEquals(true, schema.isGridUsed());
 
-        instance.setUsingGrid(false);
-        Assert.assertEquals(false, instance.isGridUsed());
+        schema.setUsingGrid(false);
+        Assert.assertEquals(false, schema.isGridUsed());
     }
 
     @Test
@@ -362,50 +340,17 @@ public class SchemaTest {
 
     @Test
     public void testGetCrossingLine() {
-        Schema instance = new Schema();
-        Properties compilerProps = new Properties();
-        compilerProps.setProperty("compiler", "compiler");
-        compilerProps.setProperty("point.x", "100");
-        compilerProps.setProperty("point.y", "100");
-        compilerProps.setProperty("width", "100");
-        compilerProps.setProperty("height", "30");
-        CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
-        elem.measure(graphicsMock);
-        instance.setCompilerElement(elem);
+        Schema schema = new Schema();
+        CompilerElement compiler = mockCompiler(schema, 100, 100, 100, 30);
+        DeviceElement device = mockDevice(schema, 250, 100, 100, 30);
+        MemoryElement memory = mockMemory(schema, 150, 200, 100, 30);
 
-        Properties deviceProps = new Properties();
-        deviceProps.setProperty("dev-0", "dev-0");
-        deviceProps.setProperty("point.x", "250");
-        deviceProps.setProperty("point.y", "100");
-        deviceProps.setProperty("width", "100");
-        deviceProps.setProperty("height", "30");
-
-        DeviceElement elem2 = new DeviceElement("dev-0", deviceProps, instance);
-        elem2.measure(graphicsMock);
-        instance.addDeviceElement(elem2);
-
-        Properties memProps = new Properties();
-        memProps.setProperty("memory", "memory");
-        memProps.setProperty("point.x", "150");
-        memProps.setProperty("point.y", "200");
-        memProps.setProperty("width", "100");
-        memProps.setProperty("height", "30");
-        MemoryElement elem3 = new MemoryElement("memory", memProps, instance);
-        elem3.measure(graphicsMock);
-        instance.setMemoryElement(elem3);
-
-        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList<>(), instance);
-        instance.addConnectionLine(line0);
-        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList<>(), instance);
-        instance.addConnectionLine(line1);
-
-        List<Point> points = new ArrayList<>();
-        points.add(new Point(250,200));
-        ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
-        instance.addConnectionLine(line2);
+        ConnectionLine line0 = mockConnectionLine(compiler, memory, schema);
+        ConnectionLine line1 = mockConnectionLine(compiler, device, schema);
+        ConnectionLine line2 = mockConnectionLine(device, memory, schema, new Point(250,200));
 
         Point p;
-        ConnectionLine result = instance.getCrossingLine(null);
+        ConnectionLine result = schema.getCrossingLine(null);
         Assert.assertSame(null, result);
 
 
@@ -425,11 +370,11 @@ public class SchemaTest {
         *      +---------+
         */
         p = new Point(125, 150);
-        result = instance.getCrossingLine(p);
+        result = schema.getCrossingLine(p);
         Assert.assertSame(line0, result);
 
         p = new Point(123, 151);
-        result = instance.getCrossingLine(p);
+        result = schema.getCrossingLine(p);
         Assert.assertSame(line0, result);
 
         /*
@@ -450,95 +395,62 @@ public class SchemaTest {
             } else {
                 expResult = null;
             }
-            result = instance.getCrossingLine(p);
+            result = schema.getCrossingLine(p);
             Assert.assertEquals(expResult, result);
         }
 
         p = new Point(175, 100);
-        result = instance.getCrossingLine(p);
+        result = schema.getCrossingLine(p);
         Assert.assertSame(line1, result);
 
         p = new Point(175, 100 + ConnectionLine.TOLERANCE);
-        result = instance.getCrossingLine(p);
+        result = schema.getCrossingLine(p);
         Assert.assertSame(line1, result);
 
         p = new Point(175, 100 - ConnectionLine.TOLERANCE);
-        result = instance.getCrossingLine(p);
+        result = schema.getCrossingLine(p);
         Assert.assertSame(line1, result);
 
         p = new Point(250 + ConnectionLine.TOLERANCE, 200);
-        result = instance.getCrossingLine(p);
+        result = schema.getCrossingLine(p);
         Assert.assertSame(line2, result);
 
         p = new Point(250 + ConnectionLine.TOLERANCE + 1, 200);
-        result = instance.getCrossingLine(p);
+        result = schema.getCrossingLine(p);
         Assert.assertNull(result);
 
         p = new Point(250 + ConnectionLine.TOLERANCE + 20, 200);
-        result = instance.getCrossingLine(p);
+        result = schema.getCrossingLine(p);
         Assert.assertNull(result);
 
-        instance.destroy();
-        Assert.assertEquals(0, instance.getAllElements().size());
-        Assert.assertNull(instance.getCompilerElement());
-        Assert.assertNull(instance.getMemoryElement());
-        Assert.assertNull(instance.getCpuElement());
-        Assert.assertEquals(0, instance.getConnectionLines().size());
+        schema.destroy();
+        Assert.assertEquals(0, schema.getAllElements().size());
+        Assert.assertNull(schema.getCompilerElement());
+        Assert.assertNull(schema.getMemoryElement());
+        Assert.assertNull(schema.getCpuElement());
+        Assert.assertEquals(0, schema.getConnectionLines().size());
 
     }
 
     @Test
     public void testSelectElements() {
         Schema instance = new Schema();
-        Properties compilerProps = new Properties();
-        compilerProps.setProperty("compiler", "compiler");
-        compilerProps.setProperty("point.x", "100");
-        compilerProps.setProperty("point.y", "100");
-        compilerProps.setProperty("width", "100");
-        compilerProps.setProperty("height", "30");
-        CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
-        elem.measure(graphicsMock);
-        instance.setCompilerElement(elem);
+        CompilerElement compiler = mockCompiler(instance, 100, 100, 100, 30);
+        DeviceElement device = mockDevice(instance, 250, 100, 100, 30);
+        MemoryElement memory = mockMemory(instance, 150, 200, 100, 30);
 
-        Properties deviceProps = new Properties();
-        deviceProps.setProperty("dev-0", "dev-0");
-        deviceProps.setProperty("point.x", "250");
-        deviceProps.setProperty("point.y", "100");
-        deviceProps.setProperty("width", "100");
-        deviceProps.setProperty("height", "30");
-
-        DeviceElement elem2 = new DeviceElement("dev-0", deviceProps, instance);
-        elem2.measure(graphicsMock);
-        instance.addDeviceElement(elem2);
-
-        Properties memProps = new Properties();
-        memProps.setProperty("memory", "memory");
-        memProps.setProperty("point.x", "150");
-        memProps.setProperty("point.y", "200");
-        memProps.setProperty("width", "100");
-        memProps.setProperty("height", "30");
-        MemoryElement elem3 = new MemoryElement("memory", memProps, instance);
-        elem3.measure(graphicsMock);
-        instance.setMemoryElement(elem3);
-
-        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList<>(), instance);
-        instance.addConnectionLine(line0);
-        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList<>(), instance);
-        instance.addConnectionLine(line1);
-
-        List<Point> points = new ArrayList<>();
-        points.add(new Point(250,200));
-        ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
-        instance.addConnectionLine(line2);
+        ConnectionLine line0 = mockConnectionLine(compiler, memory, instance);
+        ConnectionLine line1 = mockConnectionLine(compiler, device, instance);
+        ConnectionLine line2 = mockConnectionLine(device, memory, instance, new Point(250,200));
 
         int x = 50;
         int y = 20;
         int width = 300;
-        int height = 60;
+        int height = 40;
         instance.selectElements(x, y, width, height);
-        Assert.assertFalse(elem.isSelected());
-        Assert.assertFalse(elem2.isSelected());
-        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(compiler.isSelected());
+        Assert.assertFalse(device.isSelected());
+        Assert.assertFalse(memory.isSelected());
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
@@ -548,9 +460,9 @@ public class SchemaTest {
         width = 300;
         height = 65;
         instance.selectElements(x, y, width, height);
-        Assert.assertTrue(elem.isSelected());
-        Assert.assertTrue(elem2.isSelected());
-        Assert.assertFalse(elem3.isSelected());
+        Assert.assertTrue(compiler.isSelected());
+        Assert.assertTrue(device.isSelected());
+        Assert.assertFalse(memory.isSelected());
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
@@ -560,21 +472,21 @@ public class SchemaTest {
         width = 49;
         height = 100;
         instance.selectElements(x, y, width, height);
-        Assert.assertFalse(elem.isSelected());
-        Assert.assertFalse(elem2.isSelected());
-        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(compiler.isSelected());
+        Assert.assertFalse(device.isSelected());
+        Assert.assertFalse(memory.isSelected());
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
 
         x = 0;
         y = 100;
-        width = 50;
+        width = 60;
         height = 100;
         instance.selectElements(x, y, width, height);
-        Assert.assertTrue(elem.isSelected());
-        Assert.assertFalse(elem2.isSelected());
-        Assert.assertFalse(elem3.isSelected());
+        Assert.assertTrue(compiler.isSelected());
+        Assert.assertFalse(device.isSelected());
+        Assert.assertFalse(memory.isSelected());
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
@@ -584,35 +496,23 @@ public class SchemaTest {
         width = 99;
         height = 100;
         instance.selectElements(x, y, width, height);
-        Assert.assertTrue(elem.isSelected());
-        Assert.assertFalse(elem2.isSelected());
-        Assert.assertFalse(elem3.isSelected());
+        Assert.assertTrue(compiler.isSelected());
+        Assert.assertFalse(device.isSelected());
+        Assert.assertFalse(memory.isSelected());
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
 
         x = 0;
         y = 100;
-        width = 100;
+        width = 140;
         height = 100;
         instance.selectElements(x, y, width, height);
-        Assert.assertTrue(elem.isSelected());
-        Assert.assertFalse(elem2.isSelected());
-        Assert.assertTrue(elem3.isSelected());
-        Assert.assertFalse(line0.isSelected());
-        Assert.assertFalse(line1.isSelected());
-        Assert.assertFalse(line2.isSelected());
-
-        x = 0;
-        y = 100;
-        width = 100;
-        height = 100;
-        instance.selectElements(x, y, width, height);
-        Assert.assertTrue(elem.isSelected());
-        Assert.assertFalse(elem2.isSelected());
-        Assert.assertTrue(elem3.isSelected());
-        Assert.assertFalse(line0.isSelected());
-        Assert.assertFalse(line1.isSelected());
+        Assert.assertTrue(compiler.isSelected());
+        Assert.assertFalse(device.isSelected());
+        Assert.assertTrue(memory.isSelected());
+        Assert.assertTrue(line0.isSelected());
+        Assert.assertTrue(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
 
         x = 230;
@@ -620,9 +520,9 @@ public class SchemaTest {
         width = 25;
         height = 20;
         instance.selectElements(x, y, width, height);
-        Assert.assertFalse(elem.isSelected());
-        Assert.assertFalse(elem2.isSelected());
-        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(compiler.isSelected());
+        Assert.assertFalse(device.isSelected());
+        Assert.assertFalse(memory.isSelected());
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertTrue(line2.isSelected());
@@ -632,9 +532,9 @@ public class SchemaTest {
         width = 19;
         height = 20;
         instance.selectElements(x, y, width, height);
-        Assert.assertFalse(elem.isSelected());
-        Assert.assertFalse(elem2.isSelected());
-        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(compiler.isSelected());
+        Assert.assertFalse(device.isSelected());
+        Assert.assertFalse(memory.isSelected());
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertTrue(line2.isSelected());
@@ -644,9 +544,9 @@ public class SchemaTest {
         width = 20;
         height = 20;
         instance.selectElements(x, y, width, height);
-        Assert.assertFalse(elem.isSelected());
-        Assert.assertFalse(elem2.isSelected());
-        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(compiler.isSelected());
+        Assert.assertFalse(device.isSelected());
+        Assert.assertFalse(memory.isSelected());
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertTrue(line2.isSelected());
@@ -656,9 +556,9 @@ public class SchemaTest {
         width = 300;
         height = 200;
         instance.selectElements(x, y, width, height);
-        Assert.assertTrue(elem.isSelected());
-        Assert.assertTrue(elem2.isSelected());
-        Assert.assertTrue(elem3.isSelected());
+        Assert.assertTrue(compiler.isSelected());
+        Assert.assertTrue(device.isSelected());
+        Assert.assertTrue(memory.isSelected());
         Assert.assertTrue(line0.isSelected());
         Assert.assertTrue(line1.isSelected());
         Assert.assertTrue(line2.isSelected());
@@ -668,9 +568,9 @@ public class SchemaTest {
         width = 10;
         height = 11;
         instance.selectElements(x, y, width, height);
-        Assert.assertFalse(elem.isSelected());
-        Assert.assertFalse(elem2.isSelected());
-        Assert.assertFalse(elem3.isSelected());
+        Assert.assertFalse(compiler.isSelected());
+        Assert.assertFalse(device.isSelected());
+        Assert.assertFalse(memory.isSelected());
         Assert.assertFalse(line0.isSelected());
         Assert.assertTrue(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
@@ -678,111 +578,78 @@ public class SchemaTest {
 
     @Test
     public void testMoveSelection() {
-        Schema instance = new Schema();
-        Properties compilerProps = new Properties();
-        compilerProps.setProperty("compiler", "compiler");
-        compilerProps.setProperty("point.x", "100");
-        compilerProps.setProperty("point.y", "100");
-        compilerProps.setProperty("width", "100");
-        compilerProps.setProperty("height", "30");
-        CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
-        elem.measure(graphicsMock);
-        instance.setCompilerElement(elem);
+        Schema schema = new Schema();
+        CompilerElement compiler = mockCompiler(schema, 100, 100, 100, 30);
+        DeviceElement device = mockDevice(schema, 250, 100, 100, 30);
+        MemoryElement memory = mockMemory(schema, 150, 200, 100, 30);
 
-        Properties deviceProps = new Properties();
-        deviceProps.setProperty("dev-0", "dev-0");
-        deviceProps.setProperty("point.x", "250");
-        deviceProps.setProperty("point.y", "100");
-        deviceProps.setProperty("width", "100");
-        deviceProps.setProperty("height", "30");
-
-        DeviceElement elem2 = new DeviceElement("dev-0", deviceProps, instance);
-        elem2.measure(graphicsMock);
-        instance.addDeviceElement(elem2);
-
-        Properties memProps = new Properties();
-        memProps.setProperty("memory", "memory");
-        memProps.setProperty("point.x", "150");
-        memProps.setProperty("point.y", "200");
-        memProps.setProperty("width", "100");
-        memProps.setProperty("height", "30");
-        MemoryElement elem3 = new MemoryElement("memory", memProps, instance);
-        elem3.measure(graphicsMock);
-        instance.setMemoryElement(elem3);
-
-        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList<>(), instance);
-        instance.addConnectionLine(line0);
-        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList<>(), instance);
-        instance.addConnectionLine(line1);
-
-        List<Point> points = new ArrayList<>();
-        points.add(new Point(250,200));
-        ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
-        instance.addConnectionLine(line2);
+        ConnectionLine line0 = mockConnectionLine(compiler, memory, schema);
+        ConnectionLine line1 = mockConnectionLine(compiler, device, schema);
+        ConnectionLine line2 = mockConnectionLine(device, memory, schema, new Point(250,200));
 
         int x = 0;
         int y = 90;
         int width = 100;
         int height = 30;
-        instance.selectElements(x, y, width, height);
-        Assert.assertTrue(elem.isSelected());
-        Assert.assertFalse(elem2.isSelected());
-        Assert.assertFalse(elem3.isSelected());
+        schema.selectElements(x, y, width, height);
+        Assert.assertTrue(compiler.isSelected());
+        Assert.assertFalse(device.isSelected());
+        Assert.assertFalse(memory.isSelected());
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
 
         // left
-        instance.moveSelection(-10, 0);
-        Assert.assertEquals(90, elem.getX());
+        schema.moveSelection(-10, 0);
+        Assert.assertEquals(90, compiler.getX());
 
         // right
-        Assert.assertTrue(instance.moveSelection(10, 0));
-        Assert.assertEquals(100, elem.getX());
-        Assert.assertFalse(instance.moveSelection(51, 0));
-        Assert.assertEquals(100, elem.getX()); // move fails
-        Assert.assertFalse(instance.moveSelection(50, 0));
-        Assert.assertEquals(100, elem.getX()); // move fails
-        Assert.assertTrue(instance.moveSelection(49, 0));
-        Assert.assertEquals(149, elem.getX()); // move succeeds
+        Assert.assertTrue(schema.moveSelection(10, 0));
+        Assert.assertEquals(100, compiler.getX());
+        Assert.assertFalse(schema.moveSelection(71, 0));
+        Assert.assertEquals(100, compiler.getX()); // move fails
+        Assert.assertFalse(schema.moveSelection(70, 0));
+        Assert.assertEquals(100, compiler.getX()); // move fails
+        Assert.assertTrue(schema.moveSelection(69, 0));
+        Assert.assertEquals(169, compiler.getX()); // move succeeds
 
         // down
-        Assert.assertFalse(instance.moveSelection(0, 70));
-        Assert.assertEquals(100, elem.getY());
-        Assert.assertTrue(instance.moveSelection(0, 69));
-        Assert.assertEquals(169, elem.getY());
+        Assert.assertFalse(schema.moveSelection(0, 70));
+        Assert.assertEquals(100, compiler.getY());
+        Assert.assertTrue(schema.moveSelection(0, 39));
+        Assert.assertEquals(139, compiler.getY());
 
         // up
-        Assert.assertTrue(instance.moveSelection(0, -69));
-        Assert.assertEquals(100, elem.getY());
+        Assert.assertTrue(schema.moveSelection(0, -39));
+        Assert.assertEquals(100, compiler.getY());
 
         // back left
-        Assert.assertTrue(instance.moveSelection(-49, 0));
-        Assert.assertEquals(100, elem.getX());
+        Assert.assertTrue(schema.moveSelection(-69, 0));
+        Assert.assertEquals(100, compiler.getX());
 
         // test left boundary
-        Assert.assertTrue(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN + 1, 0));
-        Assert.assertEquals(50 + Schema.MIN_LEFT_MARGIN + 1, elem.getX());
-        Assert.assertTrue(instance.moveSelection(50 - Schema.MIN_LEFT_MARGIN - 1, 0));
-        Assert.assertEquals(100, elem.getX());
-        Assert.assertTrue(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN, 0));
-        Assert.assertEquals(50 + Schema.MIN_LEFT_MARGIN, elem.getX());
-        Assert.assertTrue(instance.moveSelection(50 - Schema.MIN_LEFT_MARGIN, 0));
-        Assert.assertEquals(100, elem.getX());
-        Assert.assertFalse(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN - 1, 0));
-        Assert.assertEquals(100, elem.getX());
+        Assert.assertTrue(schema.moveSelection(-60 + Schema.MIN_LEFT_MARGIN + 1, 0));
+        Assert.assertEquals(40 + Schema.MIN_LEFT_MARGIN + 1, compiler.getX());
+        Assert.assertTrue(schema.moveSelection(60 - Schema.MIN_LEFT_MARGIN - 1, 0));
+        Assert.assertEquals(100, compiler.getX());
+        Assert.assertTrue(schema.moveSelection(-60 + Schema.MIN_LEFT_MARGIN, 0));
+        Assert.assertEquals(40 + Schema.MIN_LEFT_MARGIN, compiler.getX());
+        Assert.assertTrue(schema.moveSelection(60 - Schema.MIN_LEFT_MARGIN, 0));
+        Assert.assertEquals(100, compiler.getX());
+        Assert.assertFalse(schema.moveSelection(-60 + Schema.MIN_LEFT_MARGIN - 1, 0));
+        Assert.assertEquals(100, compiler.getX());
 
         // test top boundary
-        Assert.assertTrue(instance.moveSelection(0, -85 + Schema.MIN_TOP_MARGIN + 1));
-        Assert.assertEquals(15 + Schema.MIN_TOP_MARGIN + 1, elem.getY());
-        Assert.assertTrue(instance.moveSelection(0, 85 - Schema.MIN_TOP_MARGIN - 1));
-        Assert.assertEquals(100, elem.getY());
-        Assert.assertTrue(instance.moveSelection(0, -85 + Schema.MIN_TOP_MARGIN));
-        Assert.assertEquals(15 + Schema.MIN_TOP_MARGIN, elem.getY());
-        Assert.assertTrue(instance.moveSelection(0, 85 - Schema.MIN_TOP_MARGIN));
-        Assert.assertEquals(100, elem.getY());
-        Assert.assertFalse(instance.moveSelection(0, -85 + Schema.MIN_TOP_MARGIN - 1));
-        Assert.assertEquals(100, elem.getY());
+        Assert.assertTrue(schema.moveSelection(0, -75 + Schema.MIN_TOP_MARGIN + 1));
+        Assert.assertEquals(25 + Schema.MIN_TOP_MARGIN + 1, compiler.getY());
+        Assert.assertTrue(schema.moveSelection(0, 75 - Schema.MIN_TOP_MARGIN - 1));
+        Assert.assertEquals(100, compiler.getY());
+        Assert.assertTrue(schema.moveSelection(0, -75 + Schema.MIN_TOP_MARGIN));
+        Assert.assertEquals(25 + Schema.MIN_TOP_MARGIN, compiler.getY());
+        Assert.assertTrue(schema.moveSelection(0, 75 - Schema.MIN_TOP_MARGIN));
+        Assert.assertEquals(100, compiler.getY());
+        Assert.assertFalse(schema.moveSelection(0, -75 + Schema.MIN_TOP_MARGIN - 1));
+        Assert.assertEquals(100, compiler.getY());
 
        /*             l
         *             i                 width  = 100
@@ -807,146 +674,114 @@ public class SchemaTest {
         y = 180;
         width = 100;
         height = 50;
-        instance.selectElements(x, y, width, height);
-        Assert.assertFalse(elem.isSelected());
-        Assert.assertFalse(elem2.isSelected());
-        Assert.assertTrue(elem3.isSelected());
-        Assert.assertTrue(line0.isSelected());
+        
+        schema.selectElements(x, y, width, height);
+        Assert.assertFalse(compiler.isSelected());
+        Assert.assertFalse(device.isSelected());
+        Assert.assertTrue(memory.isSelected());
+        Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
 
         // down
-        Assert.assertTrue(instance.moveSelection(0, 100));
-        Assert.assertEquals(300, elem3.getY());
+        Assert.assertTrue(schema.moveSelection(0, 100));
+        Assert.assertEquals(300, memory.getY());
 
         // up
-        Assert.assertTrue(instance.moveSelection(0, -100));
-        Assert.assertEquals(200, elem3.getY());
+        Assert.assertTrue(schema.moveSelection(0, -100));
+        Assert.assertEquals(200, memory.getY());
 
         // right
-        Assert.assertTrue(instance.moveSelection(49, 0));
-        Assert.assertEquals(199, elem3.getX());
-        Assert.assertFalse(instance.moveSelection(1, 0));
-        Assert.assertEquals(199, elem3.getX()); // move failed
-        Assert.assertFalse(instance.moveSelection(20, 0));
-        Assert.assertEquals(199, elem3.getX()); // move failed
-        Assert.assertTrue(instance.moveSelection(-1, 0));
-        Assert.assertEquals(198, elem3.getX());
-        Assert.assertTrue(instance.moveSelection(-48, 0));
-        Assert.assertEquals(150, elem3.getX());
+        Assert.assertTrue(schema.moveSelection(59, 0));
+        Assert.assertEquals(209, memory.getX());
+        
+        Assert.assertFalse(schema.moveSelection(1, 0));
+        Assert.assertEquals(209, memory.getX()); // move failed
+        Assert.assertFalse(schema.moveSelection(20, 0));
+        Assert.assertEquals(209, memory.getX()); // move failed
+        Assert.assertTrue(schema.moveSelection(-1, 0));
+        Assert.assertEquals(208, memory.getX());
+        Assert.assertTrue(schema.moveSelection(-48, 0));
+        Assert.assertEquals(160, memory.getX());
 
         // up
-        Assert.assertFalse(instance.moveSelection(0, -100));
-        Assert.assertEquals(200, elem3.getY()); // move failed
-        Assert.assertFalse(instance.moveSelection(0, -80));
-        Assert.assertEquals(200, elem3.getY()); // move failed
-        Assert.assertFalse(instance.moveSelection(100, 0));
-        Assert.assertEquals(150, elem3.getX()); // move failed
-        Assert.assertTrue(instance.moveSelection(1, 0));
-        Assert.assertEquals(151, elem3.getX());
-        Assert.assertTrue(instance.moveSelection(-1, 0));
-        Assert.assertEquals(150, elem3.getX());
+        Assert.assertFalse(schema.moveSelection(0, -100));
+        Assert.assertEquals(200, memory.getY()); // move failed
+        Assert.assertFalse(schema.moveSelection(0, -80));
+        Assert.assertEquals(200, memory.getY()); // move failed
+        Assert.assertFalse(schema.moveSelection(100, 0));
+        Assert.assertEquals(160, memory.getX()); // move failed
+        Assert.assertTrue(schema.moveSelection(1, 0));
+        Assert.assertEquals(161, memory.getX());
+        Assert.assertTrue(schema.moveSelection(-1, 0));
+        Assert.assertEquals(160, memory.getX());
 
         // test multiple selection
         x = 0;
         y = 0;
         width = 149;
         height = 200;
-        instance.selectElements(x, y, width, height);
-        Assert.assertTrue(elem.isSelected());
-        Assert.assertFalse(elem2.isSelected());
-        Assert.assertTrue(elem3.isSelected());
+        schema.selectElements(x, y, width, height);
+        Assert.assertTrue(compiler.isSelected());
+        Assert.assertFalse(device.isSelected());
+        Assert.assertTrue(memory.isSelected());
         Assert.assertTrue(line0.isSelected());
-        Assert.assertFalse(line1.isSelected());
+        Assert.assertTrue(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
 
-        Assert.assertTrue(instance.moveSelection(10, 0));
-        Assert.assertEquals(110, elem.getX());
-        Assert.assertEquals(160, elem3.getX());
+        Assert.assertTrue(schema.moveSelection(10, 0));
+        Assert.assertEquals(110, compiler.getX());
+        Assert.assertEquals(170, memory.getX());
 
-        Assert.assertTrue(instance.moveSelection(-10, 0));
-        Assert.assertEquals(100, elem.getX());
-        Assert.assertEquals(150, elem3.getX());
+        Assert.assertTrue(schema.moveSelection(-10, 0));
+        Assert.assertEquals(100, compiler.getX());
+        Assert.assertEquals(160, memory.getX());
 
-        Assert.assertTrue(instance.moveSelection(-50 + Schema.MIN_LEFT_MARGIN, 0));
-        Assert.assertEquals(50 + Schema.MIN_LEFT_MARGIN, elem.getX());
-        Assert.assertEquals(100 + Schema.MIN_LEFT_MARGIN, elem3.getX());
+        Assert.assertTrue(schema.moveSelection(-50 + Schema.MIN_LEFT_MARGIN, 0));
+        Assert.assertEquals(50 + Schema.MIN_LEFT_MARGIN, compiler.getX());
+        Assert.assertEquals(110 + Schema.MIN_LEFT_MARGIN, memory.getX());
 
-        Assert.assertFalse(instance.moveSelection(-1, 0));
-        Assert.assertEquals(50 + Schema.MIN_LEFT_MARGIN, elem.getX());
-        Assert.assertEquals(100 + Schema.MIN_LEFT_MARGIN, elem3.getX());
-
+        Assert.assertFalse(schema.moveSelection(-11, 0));
+        Assert.assertEquals(50 + Schema.MIN_LEFT_MARGIN, compiler.getX());
+        Assert.assertEquals(110 + Schema.MIN_LEFT_MARGIN, memory.getX());
     }
 
     @Test
     public void testDeleteSelected() {
-        Schema instance = new Schema();
-        Properties compilerProps = new Properties();
-        compilerProps.setProperty("compiler", "compiler");
-        compilerProps.setProperty("point.x", "100");
-        compilerProps.setProperty("point.y", "100");
-        compilerProps.setProperty("width", "100");
-        compilerProps.setProperty("height", "30");
-        CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
-        elem.measure(graphicsMock);
-        instance.setCompilerElement(elem);
+        Schema schema = new Schema();
+        CompilerElement compiler = mockCompiler(schema, 100, 100, 100, 30);
+        DeviceElement device = mockDevice(schema, 250, 100, 100, 30);
+        MemoryElement memory = mockMemory(schema, 150, 200, 100, 30);
 
-        Properties deviceProps = new Properties();
-        deviceProps.setProperty("dev-0", "dev-0");
-        deviceProps.setProperty("point.x", "250");
-        deviceProps.setProperty("point.y", "100");
-        deviceProps.setProperty("width", "100");
-        deviceProps.setProperty("height", "30");
-
-        DeviceElement elem2 = new DeviceElement("dev-0", deviceProps, instance);
-        elem2.measure(graphicsMock);
-        instance.addDeviceElement(elem2);
-
-        Properties memProps = new Properties();
-        memProps.setProperty("memory", "memory");
-        memProps.setProperty("point.x", "150");
-        memProps.setProperty("point.y", "200");
-        memProps.setProperty("width", "100");
-        memProps.setProperty("height", "30");
-        MemoryElement elem3 = new MemoryElement("memory", memProps, instance);
-        elem3.measure(graphicsMock);
-        instance.setMemoryElement(elem3);
-
-        ConnectionLine line0 = new ConnectionLine(elem, elem3, new ArrayList<>(), instance);
-        instance.addConnectionLine(line0);
-        ConnectionLine line1 = new ConnectionLine(elem, elem2, new ArrayList<>(), instance);
-        instance.addConnectionLine(line1);
-
-        List<Point> points = new ArrayList<>();
-        points.add(new Point(250, 200));
-        ConnectionLine line2 = new ConnectionLine(elem2, elem3, points, instance);
-        instance.addConnectionLine(line2);
+        ConnectionLine line0 = mockConnectionLine(compiler, memory, schema);
+        ConnectionLine line1 = mockConnectionLine(compiler, device, schema);
+        ConnectionLine line2 = mockConnectionLine(device, memory, schema, new Point(250, 200));
 
         int x = 150;
         int y = 200;
         int width = 10;
         int height = 10;
-        instance.selectElements(x, y, width, height);
-        Assert.assertFalse(elem.isSelected());
-        Assert.assertFalse(elem2.isSelected());
-        Assert.assertTrue(elem3.isSelected());
+        schema.selectElements(x, y, width, height);
+        Assert.assertFalse(compiler.isSelected());
+        Assert.assertFalse(device.isSelected());
+        Assert.assertTrue(memory.isSelected());
         Assert.assertFalse(line0.isSelected());
         Assert.assertFalse(line1.isSelected());
         Assert.assertFalse(line2.isSelected());
 
-        instance.deleteSelected();
-        Assert.assertEquals(1, instance.getConnectionLines().size());
-        Assert.assertEquals(2, instance.getAllElements().size());
-        Assert.assertSame(line1, instance.getConnectionLines().get(0));
-        Assert.assertSame(elem, instance.getCompilerElement());
-        Assert.assertNull(instance.getMemoryElement());
-        Assert.assertSame(elem2, instance.getDeviceElements().get(0));
+        schema.deleteSelected();
+        Assert.assertEquals(1, schema.getConnectionLines().size());
+        Assert.assertEquals(2, schema.getAllElements().size());
+        Assert.assertSame(line1, schema.getConnectionLines().get(0));
+        Assert.assertSame(compiler, schema.getCompilerElement());
+        Assert.assertNull(schema.getMemoryElement());
+        Assert.assertSame(device, schema.getDeviceElements().get(0));
     }
 
     @Test
     public void testSaveAndGetSettings() {
-        Schema instance = new Schema();
-        Properties result = instance.getSettings();
+        Schema schema = new Schema();
+        Properties result = schema.getSettings();
         Assert.assertNotNull(result);
 
         Properties compilerProps = new Properties();
@@ -955,15 +790,60 @@ public class SchemaTest {
         compilerProps.setProperty("point.y", "100");
         compilerProps.setProperty("width", "100");
         compilerProps.setProperty("height", "30");
-        CompilerElement elem = new CompilerElement("compiler", compilerProps, instance);
-        instance.setCompilerElement(elem);
+        CompilerElement elem = new CompilerElement("compiler", compilerProps, schema);
+        schema.setCompilerElement(elem);
 
-        Assert.assertNull(instance.getSettings().getProperty("compiler"));
-        instance.save();
-        Assert.assertEquals("compiler", instance.getSettings().getProperty("compiler"));
-        Assert.assertEquals("100", instance.getSettings().getProperty("compiler.point.x"));
-        Assert.assertEquals("100", instance.getSettings().getProperty("compiler.point.y"));
-        Assert.assertEquals("100", instance.getSettings().getProperty("compiler.width"));
-        Assert.assertEquals("30", instance.getSettings().getProperty("compiler.height"));
+        Assert.assertNull(schema.getSettings().getProperty("compiler"));
+        schema.save();
+        
+        Properties settings = schema.getSettings();
+        Assert.assertEquals("compiler", settings.getProperty("compiler"));
+        Assert.assertEquals("100", settings.getProperty("compiler.point.x"));
+        Assert.assertEquals("100", settings.getProperty("compiler.point.y"));
+        Assert.assertEquals("100", settings.getProperty("compiler.width"));
+        Assert.assertEquals("30", settings.getProperty("compiler.height"));
     }
+
+    private CompilerElement mockCompiler(Schema instance, int x, int y, int width, int height) throws NumberFormatException {
+        Properties props = mockProperties("compiler",x,y,width,height);
+        CompilerElement compiler = new CompilerElement("compiler", props, instance);
+        compiler.measure(graphicsMock);
+        instance.setCompilerElement(compiler);
+
+        return compiler;
+    }
+
+    
+    private MemoryElement mockMemory(Schema instance, int x, int y, int width, int height) throws NumberFormatException {
+        Properties props = mockProperties("memory", x, y, width, height);
+        MemoryElement memory = new MemoryElement("memory", props, instance);
+        memory.measure(graphicsMock);
+        instance.setMemoryElement(memory);
+        return memory;
+    }
+
+    private ConnectionLine mockConnectionLine(Element elem2, Element elem3, Schema instance, Point... points) {
+        ConnectionLine line = new ConnectionLine(elem2, elem3, Arrays.asList(points), instance);
+        instance.addConnectionLine(line);
+        return line;
+    }
+
+    private DeviceElement mockDevice(Schema instance, int x, int y, int width, int height) throws NumberFormatException {
+        Properties props = mockProperties("dev-0",x, y, width, height);
+        DeviceElement device = new DeviceElement("dev-0", props, instance);
+        device.measure(graphicsMock);
+        instance.addDeviceElement(device);
+        return device;
+    }
+    
+    private Properties mockProperties(String name, int x, int y, int width, int height) {
+        Properties props = new Properties();
+        props.setProperty(name, name);
+        props.setProperty("point.x", String.valueOf(x));
+        props.setProperty("point.y", String.valueOf(y));
+        props.setProperty("width", String.valueOf(width));
+        props.setProperty("height", String.valueOf(height));
+        return props;
+    }
+
 }

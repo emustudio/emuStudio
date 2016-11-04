@@ -188,6 +188,7 @@ public class Main {
         UIManager.put("TextPane.font", Constants.MONOSPACED_PLAIN_12);
         UIManager.put("TextArea.font", Constants.MONOSPACED_PLAIN_12);
         UIManager.put("List.font", Constants.MONOSPACED_PLAIN_12);
+        UIManager.put("Button.background", UIManager.get("Panel.background"));
     }
 
     public static void tryShowMessage(String message) {

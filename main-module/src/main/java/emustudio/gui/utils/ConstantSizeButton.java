@@ -19,8 +19,9 @@
  */
 package emustudio.gui.utils;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import javax.swing.JButton;
 
 /**
  * A button with the constant size.
@@ -36,7 +37,6 @@ public class ConstantSizeButton extends JButton {
     }
 
     public ConstantSizeButton() {
-        super();
         setHeight();
         Dimension d = getPreferredSize();
         d.setSize(NB_WIDTH, NB_HEIGHT);

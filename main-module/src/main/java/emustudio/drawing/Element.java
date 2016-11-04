@@ -187,21 +187,19 @@ public abstract class Element {
     }
 
     public boolean move(Point p) {
-        return move(p.x, p.y);
+        return move(p.x - x, p.y - y);
     }
 
-    boolean move(int x, int y) {
+    boolean move(int diffX, int diffY) {
         if (!wasMeasured) {
             return false;
         }
-        if (!schema.canMoveElement(x, y, this)) {
+        if (!schema.canMoveElement(x + diffX, y + diffY, this)) {
             return false;
         }
-        int diffX = this.x - x;
-        int diffY = this.y - y;
 
-        this.x = x;
-        this.y = y;
+        this.x += diffX;
+        this.y += diffY;
 
         // do not break internal state of the element
         leftX += diffX;
@@ -212,7 +210,7 @@ public abstract class Element {
 
         detailsX += diffX;
         detailsY += diffY;
-        gradient = new GradientPaint(leftX, topY, Color.WHITE, leftX, topY + getHeight(), backColor, true);
+        gradient = new GradientPaint(leftX, topY, Color.WHITE, leftX, getBottomY(), backColor, true);
 
         return true;
     }
@@ -243,41 +241,31 @@ public abstract class Element {
         // First measure width and height of text
         FontMetrics fm = g.getFontMetrics(boldFont);
         Rectangle2D r = fm.getStringBounds(getPluginType(), g);
-        int tW1 = (int) r.getWidth();
-        int tH1 = (int) r.getHeight();
-        int tA1 = fm.getAscent();
-
         FontMetrics fm1 = g.getFontMetrics(italicFont);
         Rectangle2D r1 = fm1.getStringBounds(pluginName, g);
-        int tW2 = (int) r1.getWidth();
-        int tH2 = (int) r1.getHeight();
-        int tA2 = fm1.getAscent();
 
-        // text width, text height, text ascent
-        int tW = (tW1 > tW2) ? tW1 : tW2;
-        int tH = (tH1 > tH2) ? tH1 : tH2;
+        int tW = (int)Math.max(r.getWidth(), r1.getWidth());
+        int tH = (int)Math.max(r.getHeight(), r1.getHeight());
 
         // compute width and height
-        if (width == 0) {
-            width = tW + 20;
-        }
+        Rectangle2D wrect = fm.getStringBounds("w", g);
+                
+        width = tW + 2 * (int)wrect.getWidth();
+        height = 2 * tH + 2 * (int)wrect.getHeight();
 
-        if (height == 0) {
-            height = 2 * tH + 20;
-        }
-
-        textY = height / 2 + 10 - tA1;
+        textY = height / 2 + 10 - fm.getAscent();
         // set starting x and y
+        
         leftX = x - getWidth() / 2;
         topY = y - getHeight() / 2;
 
-        gradient = new GradientPaint(leftX, topY, Color.WHITE, leftX, topY + getHeight(), backColor, true);
+        gradient = new GradientPaint(leftX, topY, Color.WHITE, leftX, getBottomY(), backColor, true);
 
         textX = leftX + (getWidth() - tW) / 2;
         textY += topY;
 
         detailsX = leftX + (getWidth() - tW) / 2;
-        detailsY = topY + (getHeight() - tA2);
+        detailsY = topY + (getHeight() - fm1.getAscent());
         wasMeasured = true;
     }
 
@@ -294,7 +282,7 @@ public abstract class Element {
     }
 
     Rectangle getRectangle() {
-        return new Rectangle(x, y, getWidth(), getHeight());
+        return new Rectangle(leftX, topY, getWidth(), getHeight());
     }
 
     public int getX() {
@@ -305,6 +293,15 @@ public abstract class Element {
         return y;
     }
 
+    private int getBottomY() {
+        return topY + getHeight();
+    }
+
+    private int getRightX() {
+        return leftX + getWidth();
+    }
+
+    
     public void setSelected(boolean selected) {
         this.selected = selected;
     }
@@ -328,8 +325,9 @@ public abstract class Element {
         if (!wasMeasured) {
             return false;
         }
-        int xR = leftX + getWidth();
-        int yB = topY + getHeight();
+        int xR = getRightX();
+        int yB = getBottomY();
+        
         return (selectionStart.x <= xR) && (selectionEnd.x >= leftX)
                 && (selectionStart.y <= yB) && (selectionEnd.y >= topY);
     }
@@ -346,7 +344,7 @@ public abstract class Element {
         if ((!wasMeasured) || (borderPoint == null)) {
             return false;
         }
-        int xR = leftX + getWidth();
+        int xR = getRightX();
         int yB = topY + MOUSE_TOLERANCE;
         return ((borderPoint.x >= leftX) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= topY - MOUSE_TOLERANCE));
     }
@@ -363,9 +361,9 @@ public abstract class Element {
         if (!wasMeasured || (borderPoint == null)) {
             return false;
         }
-        int xR = leftX + getWidth();
-        int yT = topY + getHeight() - MOUSE_TOLERANCE;
-        int yB = topY + getHeight() + MOUSE_TOLERANCE;
+        int xR = getRightX();
+        int yT = getBottomY() - MOUSE_TOLERANCE;
+        int yB = getBottomY() + MOUSE_TOLERANCE;
         return ((borderPoint.x >= leftX) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= yT));
     }
 
@@ -382,7 +380,7 @@ public abstract class Element {
             return false;
         }
         int xR = leftX + MOUSE_TOLERANCE;
-        int yB = topY + getHeight();
+        int yB = getBottomY();
         return ((borderPoint.x >= leftX - MOUSE_TOLERANCE) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= topY));
     }
 
@@ -398,10 +396,15 @@ public abstract class Element {
         if ((!wasMeasured) || (borderPoint == null)) {
             return false;
         }
-        int xL = leftX + getWidth() - MOUSE_TOLERANCE;
-        int xR = leftX + getWidth() + MOUSE_TOLERANCE;
-        int yB = topY + getHeight();
+        int xL = getRightX() - MOUSE_TOLERANCE;
+        int xR = getRightX() + MOUSE_TOLERANCE;
+        int yB = getBottomY();
         return ((borderPoint.x >= xL) && (borderPoint.x <= xR) && (borderPoint.y <= yB) && (borderPoint.y >= topY));
     }
 
+    @Override
+    public String toString() {
+        return pluginName + "[x=" + x + ", y=" + y + ", rect=" + getRectangle() + ']';
+    }
+    
 }
