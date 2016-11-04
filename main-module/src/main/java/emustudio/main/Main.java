@@ -25,6 +25,8 @@ import emulib.plugins.memory.Memory;
 import emulib.runtime.ContextPool;
 import emulib.runtime.PluginLoader;
 import emulib.runtime.StaticDialogs;
+import emulib.runtime.exceptions.ContextNotFoundException;
+import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.InvalidPasswordException;
 import emustudio.Constants;
 import emustudio.architecture.Computer;
@@ -34,16 +36,15 @@ import emustudio.gui.OpenComputerDialog;
 import emustudio.gui.StudioFrame;
 import emustudio.gui.debugTable.DebugTableImpl;
 import emustudio.gui.debugTable.DebugTableModel;
-import org.kohsuke.args4j.CmdLineException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.swing.UIManager;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.Optional;
+import javax.swing.UIManager;
+import org.kohsuke.args4j.CmdLineException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
@@ -128,7 +129,7 @@ public class Main {
             }
         } catch (InvalidPasswordException e) {
             LOGGER.error("Could not register debug table", e);
-        } catch (Exception e) {
+        } catch (ContextNotFoundException | InvalidContextException e) {
             LOGGER.error("Could not start main window.", e);
             tryShowErrorMessage("Could not start main window.");
             System.exit(1);
