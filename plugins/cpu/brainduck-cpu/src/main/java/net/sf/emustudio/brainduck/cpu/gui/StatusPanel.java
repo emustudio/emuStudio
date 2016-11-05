@@ -21,7 +21,8 @@ package net.sf.emustudio.brainduck.cpu.gui;
 
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
-import net.sf.emustudio.brainduck.cpu.impl.EmulatorImpl;
+import net.sf.emustudio.brainduck.cpu.impl.CpuImpl;
+import net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine;
 
 import javax.swing.*;
 
@@ -29,7 +30,7 @@ public class StatusPanel extends JPanel {
     private final ColumnsRepainter columnsRepainter = new ColumnsRepainter();
     private final MemoryTableModel tableModel;
     private final MemoryContext<Short> memory;
-    private final EmulatorImpl cpu;
+    private final EmulatorEngine cpu;
 
     private class CPUStatusListener implements CPU.CPUListener {
         private volatile long nanoStartTime;
@@ -68,7 +69,7 @@ public class StatusPanel extends JPanel {
                 int P = cpu.getP();
                 
                 txtP.setText(String.format("%04X", P));
-                txtIP.setText(String.format("%04X", cpu.getInstructionPosition()));
+                txtIP.setText(String.format("%04X", cpu.IP));
                 lblLoopLevel.setText(String.valueOf(cpu.getLoopLevel()));
                 try {
                     short value = memory.read(P);
@@ -85,9 +86,9 @@ public class StatusPanel extends JPanel {
         
     }
     
-    public StatusPanel(MemoryContext<Short> memory, EmulatorImpl cpu) {
+    public StatusPanel(MemoryContext<Short> memory, CpuImpl cpu) {
         this.memory = memory;
-        this.cpu = cpu;
+        this.cpu = cpu.getEngine();
         this.tableModel = new MemoryTableModel(memory);
         
         initComponents();

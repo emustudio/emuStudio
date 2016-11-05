@@ -43,8 +43,8 @@ import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class EmulatorImplTest {
-    private EmulatorImpl emulator;
+public class CpuImplTest {
+    private CpuImpl emulator;
     private MemoryStub memory;
     private DeviceStub ioDevice;
     private SettingsManager settingsManager;
@@ -56,7 +56,6 @@ public class EmulatorImplTest {
         ioDevice = new DeviceStub();
 
         Capture<BrainCPUContextImpl> cpuContextCapture = new Capture<>();
-        Capture<Class<BrainCPUContext>> classCapture = new Capture<Class<BrainCPUContext>>();
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
         expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
@@ -64,7 +63,7 @@ public class EmulatorImplTest {
         expectLastCall().once();
         replay(contextPool);
 
-        emulator = new EmulatorImpl(0L, contextPool);
+        emulator = new CpuImpl(0L, contextPool);
 
         settingsManager = createNiceMock(SettingsManager.class);
         emulator.initialize(settingsManager);
@@ -111,7 +110,7 @@ public class EmulatorImplTest {
         memory.setProgram(new byte[]{7, 4, 8});
 
         emulator.reset();
-        assertEquals(4, emulator.getP());
+        assertEquals(4, emulator.getEngine().P);
     }
 
     @Test(timeout = 3000)
@@ -160,7 +159,7 @@ public class EmulatorImplTest {
 
         emulate(program, data, null);
 
-        assertEquals(memory.getDataStart(), emulator.getP());
+        assertEquals(memory.getDataStart(), emulator.getEngine().P);
         assertEquals(0, memory.read(memory.getDataStart()).byteValue());
         assertEquals(4, memory.read(memory.getDataStart() + 1).byteValue());
     }
@@ -173,7 +172,7 @@ public class EmulatorImplTest {
 
         emulate(program, data, null);
 
-        assertEquals(memory.getDataStart(), emulator.getP());
+        assertEquals(memory.getDataStart(), emulator.getEngine().P);
         assertEquals(0, memory.read(memory.getDataStart()).byteValue());
         assertEquals(4, memory.read(memory.getDataStart() + 1).byteValue());
         assertEquals(4, memory.read(memory.getDataStart() + 2).byteValue());
@@ -190,7 +189,7 @@ public class EmulatorImplTest {
 
         emulate(program, data, null);
 
-        assertEquals(memory.getDataStart() + 2, emulator.getP());
+        assertEquals(memory.getDataStart() + 2, emulator.getEngine().P);
         assertEquals(4, memory.read(memory.getDataStart()).byteValue());
         assertEquals(4, memory.read(memory.getDataStart() + 1).byteValue());
         assertEquals(0, memory.read(memory.getDataStart() + 2).byteValue());
@@ -208,7 +207,7 @@ public class EmulatorImplTest {
 
         emulate(program, null, input);
 
-        assertEquals(memory.getDataStart() + 1, emulator.getP());
+        assertEquals(memory.getDataStart() + 1, emulator.getEngine().P);
         assertEquals('8', memory.read(memory.getDataStart()).byteValue());
         assertEquals('\n', memory.read(memory.getDataStart() + 1).byteValue());
 
@@ -231,7 +230,7 @@ public class EmulatorImplTest {
 
         emulate(program, null, input);
 
-        assertEquals(memory.getDataStart() + 1, emulator.getP());
+        assertEquals(memory.getDataStart() + 1, emulator.getEngine().P);
         assertEquals(64, memory.read(memory.getDataStart()).byteValue()); // 64 is ASCII for '0' + 16
         assertEquals('a', memory.read(memory.getDataStart() + 1).byteValue());
 
@@ -250,7 +249,7 @@ public class EmulatorImplTest {
 
         emulate(program, null, null);
 
-        assertEquals(memory.getDataStart(), emulator.getP());
+        assertEquals(memory.getDataStart(), emulator.getEngine().P);
         assertEquals(0, memory.read(memory.getDataStart()).byteValue());
         assertEquals(3 * 5, memory.read(memory.getDataStart() + 1).byteValue());
     }
@@ -270,7 +269,7 @@ public class EmulatorImplTest {
 
         emulate(program, data, null);
 
-        assertEquals(memory.getDataStart() + 3, emulator.getP());
+        assertEquals(memory.getDataStart() + 3, emulator.getEngine().P);
         assertEquals(20, memory.read(memory.getDataStart()).byteValue());
         assertEquals(5, memory.read(memory.getDataStart() + 1).byteValue());
         assertEquals(20 * 5, memory.read(memory.getDataStart() + 2).byteValue());
@@ -283,7 +282,7 @@ public class EmulatorImplTest {
 
         emulate(program, null, null);
 
-        assertEquals(memory.getDataStart(), emulator.getP());
+        assertEquals(memory.getDataStart(), emulator.getEngine().P);
         assertEquals(255, memory.read(memory.getDataStart()).shortValue());
     }
 
@@ -302,7 +301,7 @@ public class EmulatorImplTest {
         byte[] program = new byte[] { 4, 3 };
 
         emulate(program, null, null);
-        assertEquals(0, memory.read(emulator.getP()).byteValue());
+        assertEquals(0, memory.read(emulator.getEngine().P).byteValue());
     }
 
     @Test(timeout = 3000)
@@ -319,36 +318,36 @@ public class EmulatorImplTest {
         emulateWithBreakpoint(program, null, input, 19);
 
         assertEquals(19, emulator.getInstructionPosition());
-        assertEquals(45, memory.read(emulator.getP() + 1).shortValue());
+        assertEquals(45, memory.read(emulator.getEngine().P + 1).shortValue());
 
         emulator.step(); // ,
-        assertEquals(1, memory.read(emulator.getP()).shortValue());
+        assertEquals(1, memory.read(emulator.getEngine().P).shortValue());
 
         emulator.step(); // [
         emulator.step(); // [
         emulator.step(); // >
-        assertEquals(memory.getDataStart() + 1, emulator.getP());
-        assertEquals(45, memory.read(emulator.getP()).shortValue());
+        assertEquals(memory.getDataStart() + 1, emulator.getEngine().P);
+        assertEquals(45, memory.read(emulator.getEngine().P).shortValue());
 
         emulator.step(); // -
         emulator.step(); // -
-        assertEquals(43, memory.read(emulator.getP()).shortValue());
+        assertEquals(43, memory.read(emulator.getEngine().P).shortValue());
 
         emulator.step(); // .
 
         emulator.step(); // +
         emulator.step(); // +
-        assertEquals(45, memory.read(emulator.getP()).shortValue());
+        assertEquals(45, memory.read(emulator.getEngine().P).shortValue());
 
         emulator.step(); // >
-        assertEquals(memory.getDataStart() + 2, emulator.getP());
-        assertEquals(0, memory.read(emulator.getP()).shortValue());
+        assertEquals(memory.getDataStart() + 2, emulator.getEngine().P);
+        assertEquals(0, memory.read(emulator.getEngine().P).shortValue());
         assertEquals(29, emulator.getInstructionPosition());
         assertEquals(3, memory.read(emulator.getInstructionPosition()).shortValue());
 
 
         emulator.step(); // +
-        assertEquals(1, memory.read(emulator.getP()).shortValue());
+        assertEquals(1, memory.read(emulator.getEngine().P).shortValue());
 
         emulator.call();
 
