@@ -18,11 +18,7 @@ public class EmulatorEngine {
     public final static short I_READ = 6; // ,
     public final static short I_LOOP_START = 7; // [
     public final static short I_LOOP_END = 8; // ]
-    public final static short I_CLEAR = 0xA1; // [-]
-    public final static short I_COPY_INC_FORWARD_AND_CLEAR = 0xA2; // [(-)... >+ ...  <(-)]
-    public final static short I_COPY_DEC_FORWARD_AND_CLEAR = 0xA3; // [(-)... >- ...  <(-)]
-    public final static short I_COPY_INC_BACKWARD_AND_CLEAR = 0xA4; // [(-)... <+ ... >(-)]
-    public final static short I_COPY_DEC_BACKWARD_AND_CLEAR = 0xA5; // [(-)... <- ... >(-)]
+    public final static short I_COPY_AND_CLEAR = 0xA1; // any copyloop, including clear
 
     private final MemoryContext<Short> memory;
     private final int memorySize;
@@ -56,9 +52,9 @@ public class EmulatorEngine {
     }
 
     private void profileAndOptimize(int programSize) {
-        profiler.optimizeRepeatingOperations(programSize);
-        profiler.optimizeCopyLoops(programSize);
         profiler.optimizeLoops(programSize);
+        profiler.optimizeCopyLoops(programSize);
+        profiler.optimizeRepeatingOperations(programSize);
     }
 
     public int getP() {
@@ -129,30 +125,12 @@ public class EmulatorEngine {
                     IP = tmpIP;
                 }
                 break;
-            case I_CLEAR: /* [-] */
-                memory.write(P, (short)0);
-                break;
-            case I_COPY_INC_FORWARD_AND_CLEAR: /* [>+<-] */
-                for (int i = 0; i < argument; i++) {
-                    memory.write(P + 1 + i, (short)(memory.read(P) + memory.read(P + 1 + i)));
-                }
-                memory.write(P, (short)0);
-                break;
-            case I_COPY_INC_BACKWARD_AND_CLEAR: /* [<+>-] */
-                for (int i = 0; i < argument; i++) {
-                    memory.write(P - 1 - i, (short)(memory.read(P) + memory.read(P - 1 - i)));
-                }
-                memory.write(P, (short)0);
-                break;
-            case I_COPY_DEC_FORWARD_AND_CLEAR: /* [>-<-] */
-                for (int i = 0; i < argument; i++) {
-                    memory.write(P + 1 + i, (short)(memory.read(P + 1 + i) - memory.read(P)));
-                }
-                memory.write(P, (short)0);
-                break;
-            case I_COPY_DEC_BACKWARD_AND_CLEAR: /* [<->-] */
-                for (int i = 0; i < argument; i++) {
-                    memory.write(P - 1 - i, (short)(memory.read(P - 1 - i) - memory.read(P)));
+            case I_COPY_AND_CLEAR: // [>+<-] or [>-<-] or [<+>-] or [<->-] or [-] or combinations
+                for (Profiler.CopyLoop copyLoop : operation.copyLoops) {
+                    memory.write(
+                        P + copyLoop.relativePosition,
+                        (short)(memory.read(P) * copyLoop.factor + memory.read(P + copyLoop.relativePosition))
+                    );
                 }
                 memory.write(P, (short)0);
                 break;

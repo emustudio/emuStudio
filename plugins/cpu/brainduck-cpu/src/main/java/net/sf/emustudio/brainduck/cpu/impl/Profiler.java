@@ -2,14 +2,13 @@ package net.sf.emustudio.brainduck.cpu.impl;
 
 import emulib.plugins.memory.MemoryContext;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_COPY_DEC_BACKWARD_AND_CLEAR;
-import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_COPY_DEC_FORWARD_AND_CLEAR;
-import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_COPY_INC_BACKWARD_AND_CLEAR;
-import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_COPY_INC_FORWARD_AND_CLEAR;
+import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_COPY_AND_CLEAR;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_DEC;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_DECV;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_INC;
@@ -23,19 +22,45 @@ public class Profiler {
     private final Map<Integer, CachedOperation> operationsCache = new HashMap<>();
     private final Map<Integer, Integer> loopEndsCache = new HashMap<>();
 
-
     public static final class CachedOperation {
-        public int argument;
+        enum TYPE { COPYLOOP, REPEAT };
+
+        public final TYPE type;
         public int nextIP;
+
+        public CachedOperation(TYPE type) {
+            this.type = type;
+        }
+
+        // for repeats
+        public int argument;
         public short operation;
+
+        // for copyloops
+        public List<CopyLoop> copyLoops;
 
         @Override
         public String toString() {
-            return "CachedOperation{" +
-                "argument=" + argument +
-                ", nextIP=" + nextIP +
-                ", operation=" + operation +
-                '}';
+            switch (type) {
+                case COPYLOOP: return type + copyLoops.toString();
+                case REPEAT: return type + "[op=" + operation + ", arg=" + argument + "]";
+            }
+            return "UNKNOWN";
+        }
+    }
+
+    public final static class CopyLoop {
+        int factor;
+        int relativePosition;
+
+        public CopyLoop(int factor, int relativePosition) {
+            this.factor = factor;
+            this.relativePosition = relativePosition;
+        }
+
+        @Override
+        public String toString() {
+            return "[f=" + factor + ",pos=" + relativePosition + "]";
         }
     }
 
@@ -54,7 +79,7 @@ public class Profiler {
             OP = memory.read(tmpIP);
             if (OP != I_LOOP_START && OP != I_LOOP_END && (lastOperation == OP)) {
                 int previousIP = tmpIP - 1;
-                CachedOperation operation = new CachedOperation();
+                CachedOperation operation = new CachedOperation(CachedOperation.TYPE.REPEAT);
 
                 operation.operation = OP;
                 operation.argument = 2;
@@ -64,7 +89,9 @@ public class Profiler {
                     tmpIP++;
                 }
                 operation.nextIP = tmpIP + 1;
-                operationsCache.put(previousIP, operation);
+                if (!operationsCache.containsKey(previousIP)) {
+                    operationsCache.put(previousIP, operation);
+                }
             }
             lastOperation = OP;
         }
@@ -105,29 +132,7 @@ public class Profiler {
             if (OP == I_LOOP_START && tmpIP+2 < programSize) {
                 tmpIP++;
                 OP = memory.read(tmpIP);
-                if (OP == I_DECV && (memory.read(tmpIP + 1) == I_LOOP_END)) {
-                    // got [-]
-                    operationsCache.put(tmpIP - 1, makeOP_CLEAR(tmpIP));
-                    continue;
-                }
-                CachedOperation copyLoop = findCopyLoop(
-                    tmpIP, OP, programSize, I_INC, I_INCV, I_DEC, I_COPY_INC_FORWARD_AND_CLEAR
-                );
-                if (copyLoop == null) {
-                    copyLoop = findCopyLoop(
-                        tmpIP, OP, programSize, I_INC, I_DECV, I_DEC, I_COPY_DEC_FORWARD_AND_CLEAR
-                    );
-                    if (copyLoop == null) {
-                        copyLoop = findCopyLoop(
-                            tmpIP, OP, programSize, I_DEC, I_INCV, I_INC, I_COPY_INC_BACKWARD_AND_CLEAR
-                        );
-                        if (copyLoop == null) {
-                            copyLoop = findCopyLoop(
-                                tmpIP, OP, programSize, I_DEC, I_DECV, I_INC, I_COPY_DEC_BACKWARD_AND_CLEAR
-                            );
-                        }
-                    }
-                }
+                CachedOperation copyLoop = findCopyLoop(tmpIP, OP);
 
                 if (copyLoop != null) {
                     operationsCache.put(tmpIP - 1, copyLoop);
@@ -138,60 +143,73 @@ public class Profiler {
         }
     }
 
-    private CachedOperation makeOP_CLEAR(int tmpIP) {
-        CachedOperation operation = new CachedOperation();
-
-        operation.operation = 0xA1;
-        operation.nextIP = tmpIP + 2;
-        return operation;
+    private int[] repeatRead(short incOp, short decOp, int pos, int stopPos, int var) {
+        if (pos >= stopPos) {
+            return new int[] { pos, var};
+        }
+        do {
+            short op = memory.read(pos);
+            if (op == incOp) {
+                var++;
+            } else if (op == decOp) {
+                var--;
+            } else break;
+            pos++;
+        } while (true);
+        return new int[] { pos, var };
     }
 
-    private CachedOperation findCopyLoop(int tmpIP, int OP, int programSize, int pointerForwardOP,
-                                         int valueOP, int pointerBackwardOP, short resultOP) {
-        int expectedOP = pointerForwardOP;
-        int anotherIP = tmpIP;
-        int anotherOP = OP;
-        boolean wasDECV = false;
-
-        if (anotherOP == I_DECV) {
-            wasDECV = true;
-            anotherIP++;
-            if (anotherIP < programSize) {
-                anotherOP = memory.read(anotherIP);
-            } else {
-                return null;
-            }
+    private CachedOperation findCopyLoop(int tmpIP, short OP) {
+        if (!loopEndsCache.containsKey(tmpIP - 1)) {
+            return null; // we don't have optimized loops
         }
 
-        CachedOperation operation = new CachedOperation();
-        while (anotherOP == expectedOP && (anotherIP + 1 < programSize)) {
-            if (expectedOP == pointerForwardOP) {
-                expectedOP = valueOP;
-            } else {
-                operation.argument++; // how many pointers beyond should be incremented
-                expectedOP = pointerForwardOP;
-            }
-            anotherIP++;
-            anotherOP = memory.read(anotherIP);
+        int startIP = tmpIP;
+        int stopIP = loopEndsCache.get(tmpIP - 1) - 1;
+        int nextIP = stopIP + 1;
+
+        // first find [-  ...] or [... -]
+        if (OP == I_DECV) {
+            startIP++;
+        } else if (memory.read(stopIP - 1) == I_DECV) {
+            stopIP--;
         }
 
-        int pointerReturnsLeft = operation.argument;
-        while (pointerReturnsLeft > 0 && (anotherOP == pointerBackwardOP) && (anotherIP + 1 < programSize)) {
-            pointerReturnsLeft--;
-            anotherIP++;
-            anotherOP = memory.read(anotherIP);
-        }
-        if (pointerReturnsLeft == 0 && (wasDECV || anotherOP == I_DECV)) {
-            if (!wasDECV && (anotherIP+1) < programSize) {
-                anotherIP++;
-                anotherOP = memory.read(anotherIP);
-            }
-            if (anotherOP == I_LOOP_END) {
-                operation.operation = resultOP;
-                operation.nextIP = anotherIP + 1;
+        // now identify the copyloops. General scheme:
+        // 1. pointer increments / decrements
+        //   2. value updates
+        // 3. pointer decrements / increments in reverse order
+        // 4. repeat - basically on the end the pointer should be on the same position
 
-                return operation;
+        int pointerInvEntrophy = 0;
+        List<CopyLoop> copyLoops = new ArrayList<>();
+
+        while (startIP < stopIP) {
+            int[] posVar = repeatRead(I_INC, I_DEC, startIP, stopIP, pointerInvEntrophy);
+            if (posVar[0] == startIP) {
+                break; // weird stuff
             }
+            startIP = posVar[0];
+            pointerInvEntrophy = posVar[1];
+
+            if (pointerInvEntrophy == 0) {
+                break;
+            }
+
+            int[] posFactor = repeatRead(I_INCV, I_DECV, startIP, stopIP, 0);
+            if (posFactor[0] == startIP) {
+                break; // weird stuff
+            }
+            startIP = posFactor[0];
+
+            copyLoops.add(new CopyLoop(posFactor[1],pointerInvEntrophy));
+        }
+        if (pointerInvEntrophy == 0 && startIP == stopIP) {
+            CachedOperation operation = new CachedOperation(CachedOperation.TYPE.COPYLOOP);
+            operation.copyLoops = copyLoops;
+            operation.nextIP = nextIP;
+            operation.operation = I_COPY_AND_CLEAR;
+            return operation;
         }
         return null;
     }
@@ -202,5 +220,10 @@ public class Profiler {
 
     public Integer findLoopEnd(int address) {
         return loopEndsCache.get(address);
+    }
+
+    @Override
+    public String toString() {
+        return "Profiler{optimizations=" + operationsCache.size() + "}";
     }
 }
