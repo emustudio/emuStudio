@@ -9,6 +9,7 @@ import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_INCV;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_LOOP_END;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_LOOP_START;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_PRINT;
+import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_SCANLOOP;
 import static org.easymock.EasyMock.anyShort;
 import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.expect;
@@ -48,7 +49,7 @@ public class EmulatorEngineTest {
     @Test
     public void testCellClear() throws Exception {
         resetProgram(I_LOOP_START, I_DECV, I_LOOP_END); // [-]
-        checkProfiler(3, new int[0], new int[0]);
+        checkProfilerCopyLoop(3, new int[0], new int[0]);
 
         runAndCheckCopyLoop(5, 5, new int[0], new int[0]);
     }
@@ -64,7 +65,7 @@ public class EmulatorEngineTest {
             I_DECV,
             I_LOOP_END
         ); // [>++>+->>++<<<<-]
-        checkProfiler(17, new int[] {2,0,-2}, new int[] {1,2,4});
+        checkProfilerCopyLoop(17, new int[] {2,0,-2}, new int[] {1,2,4});
 
         runAndCheckCopyLoop(18, 5, new int[] { 10, 0, -10 & 0xFF}, new int[] {1,2,4});
     }
@@ -95,12 +96,39 @@ public class EmulatorEngineTest {
             I_LOOP_END
         ); // [->+.>++.<<]
 
-        checkProfiler(12, new int[] {1,0,2,0}, new int[] {1,0,2,0});
+        checkProfilerCopyLoop(12, new int[] {1,0,2,0}, new int[] {1,0,2,0});
 
         runAndCheckCopyLoop(12, 5, new int[] { 5, 0, 10 }, new int[] {1,0,2,0});
     }
+    
+    @Test
+    public void testScanloop() throws Exception {
+        resetProgram(
+            I_LOOP_START,
+            I_DEC,
+            I_INC,
+            I_INC,
+            I_LOOP_END
+        ); // [<>>]
 
-    private void checkProfiler(int nextIP, int[] factors, int[] relPositions) {
+        engine.reset(0);
+
+        Profiler.CachedOperation operation = profiler.findCachedOperation(0);
+        assertNotNull(operation);
+        assertEquals(I_SCANLOOP, operation.operation);
+        
+        memory.write(6, (short)5);
+        memory.write(7, (short)5);
+        memory.write(8, (short)5);
+        memory.write(9, (short)5);
+        engine.P = 6;
+        
+        engine.step(true);
+        
+        assertEquals(10, engine.P);
+    }
+
+    private void checkProfilerCopyLoop(int nextIP, int[] factors, int[] relPositions) {
         engine.reset(0);
 
         Profiler.CachedOperation operation = profiler.findCachedOperation(0);

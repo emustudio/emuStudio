@@ -15,6 +15,7 @@ import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_LOOP_END;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_LOOP_START;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_PRINT;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_READ;
+import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_SCANLOOP;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_STOP;
 
 public class Profiler {
@@ -24,9 +25,10 @@ public class Profiler {
     
     private int repeatedOptsCount = 0;
     private int copyLoopsCount = 0;
+    private int scanLoopsCount = 0;
 
     public static final class CachedOperation {
-        public enum TYPE { COPYLOOP, REPEAT };
+        public enum TYPE { COPYLOOP, REPEAT, SCANLOOP };
 
         public final TYPE type;
         public int nextIP;
@@ -77,11 +79,13 @@ public class Profiler {
         operationsCache.clear();
         repeatedOptsCount = 0;
         copyLoopsCount = 0;
+        scanLoopsCount = 0;
     }
 
     public void profileAndOptimize(int programSize) {
         optimizeLoops(programSize);
         optimizeCopyLoops(programSize);
+        optimizeScanLoops(programSize);
         optimizeRepeatingOperations(programSize);
         
         System.out.println(this);
@@ -247,6 +251,33 @@ public class Profiler {
         }
         return null;
     }
+    
+    private void optimizeScanLoops(int programSize) {
+        short OP;
+        for (int tmpIP = 0; tmpIP < programSize; tmpIP++) {
+            OP = memory.read(tmpIP);
+            if (OP == I_LOOP_START) {
+                if (!loopEndsCache.containsKey(tmpIP)) {
+                    // loop optimization is needed
+                    break;
+                }
+                int loopEnd = loopEndsCache.get(tmpIP) - 1;
+                int posVar[] = repeatRead(I_INC, I_DEC, tmpIP+1, loopEnd, 0);
+                
+                if (posVar[0] == loopEnd) {
+                    // we have scanloop
+                    CachedOperation scanLoop = new CachedOperation(CachedOperation.TYPE.SCANLOOP);
+                    scanLoop.nextIP = posVar[0] + 1;
+                    scanLoop.argument = posVar[1];
+                    scanLoop.operation = I_SCANLOOP;
+                    
+                    operationsCache.put(tmpIP, scanLoop);
+                    tmpIP = scanLoop.nextIP;
+                    scanLoopsCount++;
+                }
+            }
+        }
+    }
 
     public CachedOperation findCachedOperation(int address) {
         return operationsCache.get(address);
@@ -260,6 +291,7 @@ public class Profiler {
     public String toString() {
         return "Profiler{optimizations=" + operationsCache.size() 
                 + ", repeatedOps=" + repeatedOptsCount + ", copyLoops=" + copyLoopsCount
+                + ", scanLoops=" + scanLoopsCount
                 + "}";
     }
 }

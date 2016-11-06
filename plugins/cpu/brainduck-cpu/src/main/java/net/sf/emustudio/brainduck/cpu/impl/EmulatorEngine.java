@@ -18,6 +18,7 @@ public class EmulatorEngine {
     public final static short I_LOOP_START = 7; // [
     public final static short I_LOOP_END = 8; // ]
     public final static short I_COPY_AND_CLEAR = 0xA1; // any copyloop, including clear
+    public final static short I_SCANLOOP = 0xA2; // [<] or [>]
 
     private final MemoryContext<Short> memory;
     private final int memorySize;
@@ -54,7 +55,7 @@ public class EmulatorEngine {
         return P;
     }
 
-
+    @SuppressWarnings("empty-statement")
     public CPU.RunState step(boolean optimize) throws IOException {
         short OP;
 
@@ -132,6 +133,9 @@ public class EmulatorEngine {
                     }
                 }
                 memory.write(P, (short)0);
+                break;
+            case I_SCANLOOP: // [<] or [>] or combinations
+                for (; memory.read(P) != 0; P += operation.argument);
                 break;
             default: /* invalid instruction */
                 return CPU.RunState.STATE_STOPPED_BAD_INSTR;
