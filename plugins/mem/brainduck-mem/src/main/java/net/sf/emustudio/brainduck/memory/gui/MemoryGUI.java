@@ -21,10 +21,12 @@ package net.sf.emustudio.brainduck.memory.gui;
 
 import emulib.plugins.memory.Memory;
 import emulib.plugins.memory.MemoryContext;
+import java.util.Objects;
 import javax.swing.JDialog;
 
 public class MemoryGUI extends JDialog {
     private final MemoryTableModel tableModel;
+    private final MemoryContext memory;
 
     private class MemoryListenerImpl implements Memory.MemoryListener {
 
@@ -43,6 +45,7 @@ public class MemoryGUI extends JDialog {
         setLocationRelativeTo(null);
         initComponents();
         
+        this.memory = Objects.requireNonNull(memory);
         this.tableModel = new MemoryTableModel(memory);
         MemoryTable table = new MemoryTable(tableModel, scrollPane);
         scrollPane.setViewportView(table);
@@ -68,16 +71,25 @@ public class MemoryGUI extends JDialog {
         javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
         lblPageCount = new javax.swing.JLabel();
         txtPage = new javax.swing.JTextField();
+        btnClear = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("BrainDuck Memory");
 
         btnPageDown.setText("Page Down");
-        btnPageDown.addActionListener(this::btnPageDownActionPerformed);
+        btnPageDown.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnPageDownActionPerformed(evt);
+            }
+        });
 
         btnPageUp.setText("Page Up");
         btnPageUp.setToolTipText("");
-        btnPageUp.addActionListener(this::btnPageUpActionPerformed);
+        btnPageUp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnPageUpActionPerformed(evt);
+            }
+        });
 
         jLabel1.setFont(jLabel1.getFont());
         jLabel1.setText("Page:");
@@ -87,7 +99,18 @@ public class MemoryGUI extends JDialog {
         lblPageCount.setText("0");
 
         txtPage.setText("0");
-        txtPage.addActionListener(this::txtPageActionPerformed);
+        txtPage.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtPageActionPerformed(evt);
+            }
+        });
+
+        btnClear.setText("Clear");
+        btnClear.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnClearActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -102,7 +125,9 @@ public class MemoryGUI extends JDialog {
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblPageCount)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 409, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 332, Short.MAX_VALUE)
+                .addComponent(btnClear)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnPageUp)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnPageDown))
@@ -117,7 +142,8 @@ public class MemoryGUI extends JDialog {
                     .addComponent(jLabel1)
                     .addComponent(jLabel2)
                     .addComponent(lblPageCount)
-                    .addComponent(txtPage, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(txtPage, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnClear)))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -165,7 +191,13 @@ public class MemoryGUI extends JDialog {
         txtPage.setText(String.valueOf(tableModel.getPage()));
     }//GEN-LAST:event_txtPageActionPerformed
 
+    private void btnClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearActionPerformed
+        memory.clear();
+        tableModel.fireTableDataChanged();
+    }//GEN-LAST:event_btnClearActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnClear;
     private javax.swing.JLabel lblPageCount;
     private javax.swing.JScrollPane scrollPane;
     private javax.swing.JTextField txtPage;

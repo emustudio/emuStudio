@@ -1,10 +1,6 @@
 package net.sf.emustudio.brainduck.cpu.impl;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
-
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_COPY_AND_CLEAR;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_DEC;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_DECV;
@@ -12,6 +8,7 @@ import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_INC;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_INCV;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_LOOP_END;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_LOOP_START;
+import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_PRINT;
 import static org.easymock.EasyMock.anyShort;
 import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.expect;
@@ -19,6 +16,8 @@ import static org.easymock.EasyMock.expectLastCall;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import org.junit.Before;
+import org.junit.Test;
 
 public class EmulatorEngineTest {
     private Profiler profiler;
@@ -81,6 +80,24 @@ public class EmulatorEngineTest {
 
         engine.reset(0);
         assertNull(profiler.findCachedOperation(0));
+    }
+    
+    @Test
+    public void testCopyLoopWithPrints() throws Exception {
+        resetProgram(
+            I_LOOP_START,
+            I_DECV,
+            I_INC, I_INCV,
+            I_PRINT,
+            I_INC, I_INCV, I_INCV,
+            I_PRINT,
+            I_DEC, I_DEC,
+            I_LOOP_END
+        ); // [->+.>++.<<]
+
+        checkProfiler(12, new int[] {1,0,2,0}, new int[] {1,0,2,0});
+
+        runAndCheckCopyLoop(12, 5, new int[] { 5, 0, 10 }, new int[] {1,0,2,0});
     }
 
     private void checkProfiler(int nextIP, int[] factors, int[] relPositions) {

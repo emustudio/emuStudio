@@ -2,7 +2,6 @@ package net.sf.emustudio.brainduck.cpu.impl;
 
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
-
 import java.io.IOException;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -28,7 +27,7 @@ public class EmulatorEngine {
 
     public volatile int IP, P; // registers of the CPU
 
-    public EmulatorEngine(MemoryContext<Short> memory, BrainCPUContextImpl context, Profiler profiler) {
+    EmulatorEngine(MemoryContext<Short> memory, BrainCPUContextImpl context, Profiler profiler) {
         this.memory = Objects.requireNonNull(memory);
         this.memorySize = memory.getSize();
         this.context = Objects.requireNonNull(context);
@@ -48,13 +47,7 @@ public class EmulatorEngine {
             adr = 0;
         }
         P = adr; // assign to the P register the address we have found
-        profileAndOptimize(adr);
-    }
-
-    private void profileAndOptimize(int programSize) {
-        profiler.optimizeLoops(programSize);
-        profiler.optimizeCopyLoops(programSize);
-        profiler.optimizeRepeatingOperations(programSize);
+        profiler.profileAndOptimize(adr);
     }
 
     public int getP() {
@@ -127,10 +120,16 @@ public class EmulatorEngine {
                 break;
             case I_COPY_AND_CLEAR: // [>+<-] or [>-<-] or [<+>-] or [<->-] or [-] or combinations
                 for (Profiler.CopyLoop copyLoop : operation.copyLoops) {
-                    memory.write(
-                        P + copyLoop.relativePosition,
-                        (short)(memory.read(P) * copyLoop.factor + memory.read(P + copyLoop.relativePosition))
-                    );
+                    if (copyLoop.specialOP == I_PRINT) {
+                        context.writeToDevice(memory.read(P));
+                    } else if (copyLoop.specialOP == I_READ) {
+                        memory.write(P, context.readFromDevice());
+                    } else {
+                        memory.write(
+                                P + copyLoop.relativePosition,
+                                (short) (memory.read(P) * copyLoop.factor + memory.read(P + copyLoop.relativePosition))
+                        );
+                    }
                 }
                 memory.write(P, (short)0);
                 break;
