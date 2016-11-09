@@ -209,6 +209,8 @@ public class Profiler {
             startIP++;
         } else if (memory.read(stopIP - 1) == I_DECV) {
             stopIP--;
+        } else {
+            return null; // not a copy-loop
         }
 
         // now identify the copyloops. General scheme:

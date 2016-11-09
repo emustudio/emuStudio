@@ -127,6 +127,7 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public RunState call() {
         optimize = true;
+        memory.setMemoryNotificationsEnabled(false);
         try {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
@@ -146,6 +147,7 @@ public class CpuImpl extends AbstractCPU {
             }
         } finally {
             optimize = false;
+            memory.setMemoryNotificationsEnabled(true);
         }
         return RunState.STATE_STOPPED_NORMAL; // cannot be in finally block! it can rewrite breakpoint
     }

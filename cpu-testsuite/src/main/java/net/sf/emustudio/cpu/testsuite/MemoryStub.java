@@ -75,4 +75,14 @@ public class MemoryStub implements MemoryContext<Short> {
     public int getSize() {
         return memory.length;
     }
+
+    @Override
+    public boolean areMemoryNotificationsEnabled() {
+        return false;
+    }
+
+    @Override
+    public void setMemoryNotificationsEnabled(boolean enabled) {
+
+    }
 }
