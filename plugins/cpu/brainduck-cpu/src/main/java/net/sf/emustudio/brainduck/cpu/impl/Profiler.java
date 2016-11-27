@@ -1,11 +1,12 @@
 package net.sf.emustudio.brainduck.cpu.impl;
 
 import emulib.plugins.memory.MemoryContext;
+
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_COPY_AND_CLEAR;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_DEC;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_DECV;
@@ -20,29 +21,29 @@ import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_STOP;
 
 public class Profiler {
     private final MemoryContext<Short> memory;
-    private final Map<Integer, CachedOperation> operationsCache = new HashMap<>();
-    private final Map<Integer, Integer> loopEndsCache = new HashMap<>();
+    private final CachedOperation[] operationsCache;
+    private final Integer[] loopEndsCache;
     
     private int repeatedOptsCount = 0;
     private int copyLoopsCount = 0;
     private int scanLoopsCount = 0;
 
     public static final class CachedOperation {
-        public enum TYPE { COPYLOOP, REPEAT, SCANLOOP };
+        public enum TYPE { COPYLOOP, REPEAT, SCANLOOP }
 
-        public final TYPE type;
-        public int nextIP;
+        final TYPE type;
+        int nextIP;
 
         CachedOperation(TYPE type) {
             this.type = type;
         }
 
         // for repeats
-        public int argument;
-        public short operation;
+        int argument;
+        short operation;
 
         // for copyloops
-        public List<CopyLoop> copyLoops;
+        List<CopyLoop> copyLoops;
 
         @Override
         public String toString() {
@@ -60,7 +61,7 @@ public class Profiler {
         
         short specialOP;
 
-        public CopyLoop(int factor, int relativePosition) {
+        CopyLoop(int factor, int relativePosition) {
             this.factor = factor;
             this.relativePosition = relativePosition;
         }
@@ -71,18 +72,26 @@ public class Profiler {
         }
     }
 
-    public Profiler(MemoryContext<Short> memory) {
+    Profiler(MemoryContext<Short> memory) {
         this.memory = Objects.requireNonNull(memory);
+
+        int size = memory.getSize();
+
+        loopEndsCache = new Integer[size];
+        operationsCache = new CachedOperation[size];
+
+        reset();
     }
 
     public void reset() {
-        operationsCache.clear();
+        Arrays.fill(loopEndsCache, -1);
+        Arrays.fill(operationsCache, null);
         repeatedOptsCount = 0;
         copyLoopsCount = 0;
         scanLoopsCount = 0;
     }
 
-    public void profileAndOptimize(int programSize) {
+    void profileAndOptimize(int programSize) {
         optimizeLoops(programSize);
         optimizeCopyLoops(programSize);
         optimizeScanLoops(programSize);
@@ -108,8 +117,8 @@ public class Profiler {
                     tmpIP++;
                 }
                 operation.nextIP = tmpIP + 1;
-                if (!operationsCache.containsKey(previousIP)) {
-                    operationsCache.put(previousIP, operation);
+                if (operationsCache[previousIP] == null) {
+                    operationsCache[previousIP] = operation;
                     repeatedOptsCount++;
                 }
             }
@@ -135,7 +144,7 @@ public class Profiler {
                 }
                 if (OP == I_LOOP_END) {
                     if (loop_count == 0) {
-                        loopEndsCache.put(tmpIP, tmpIP2);
+                        loopEndsCache[tmpIP] = tmpIP2;
                         break;
                     } else {
                         loop_count--;
@@ -155,7 +164,7 @@ public class Profiler {
                 CachedOperation copyLoop = findCopyLoop(tmpIP, OP);
 
                 if (copyLoop != null) {
-                    operationsCache.put(tmpIP - 1, copyLoop);
+                    operationsCache[tmpIP - 1] = copyLoop;
                     tmpIP = copyLoop.nextIP;
                     copyLoopsCount++;
                 }
@@ -196,12 +205,12 @@ public class Profiler {
     }
     
     private CachedOperation findCopyLoop(int tmpIP, short OP) {
-        if (!loopEndsCache.containsKey(tmpIP - 1)) {
+        if (loopEndsCache[tmpIP - 1] == -1) {
             return null; // we don't have optimized loops
         }
 
         int startIP = tmpIP;
-        int stopIP = loopEndsCache.get(tmpIP - 1) - 1;
+        int stopIP = loopEndsCache[tmpIP - 1] - 1;
         int nextIP = stopIP + 1;
 
         // first find [-  ...] or [... -]
@@ -259,11 +268,11 @@ public class Profiler {
         for (int tmpIP = 0; tmpIP < programSize; tmpIP++) {
             OP = memory.read(tmpIP);
             if (OP == I_LOOP_START) {
-                if (!loopEndsCache.containsKey(tmpIP)) {
+                if (loopEndsCache[tmpIP] == -1) {
                     // loop optimization is needed
                     break;
                 }
-                int loopEnd = loopEndsCache.get(tmpIP) - 1;
+                int loopEnd = loopEndsCache[tmpIP]- 1;
                 int posVar[] = repeatRead(I_INC, I_DEC, tmpIP+1, loopEnd, 0);
                 
                 if (posVar[0] == loopEnd) {
@@ -273,7 +282,7 @@ public class Profiler {
                     scanLoop.argument = posVar[1];
                     scanLoop.operation = I_SCANLOOP;
                     
-                    operationsCache.put(tmpIP, scanLoop);
+                    operationsCache[tmpIP] = scanLoop;
                     tmpIP = scanLoop.nextIP;
                     scanLoopsCount++;
                 }
@@ -281,17 +290,18 @@ public class Profiler {
         }
     }
 
-    public CachedOperation findCachedOperation(int address) {
-        return operationsCache.get(address);
+    CachedOperation findCachedOperation(int address) {
+        return operationsCache[address];
     }
 
-    public Integer findLoopEnd(int address) {
-        return loopEndsCache.get(address);
+    Integer findLoopEnd(int address) {
+        return loopEndsCache[address];
     }
 
     @Override
     public String toString() {
-        return "Profiler{optimizations=" + operationsCache.size() 
+        int total = repeatedOptsCount + copyLoopsCount + scanLoopsCount;
+        return "Profiler{optimizations=" + total
                 + ", repeatedOps=" + repeatedOptsCount + ", copyLoops=" + copyLoopsCount
                 + ", scanLoops=" + scanLoopsCount
                 + "}";

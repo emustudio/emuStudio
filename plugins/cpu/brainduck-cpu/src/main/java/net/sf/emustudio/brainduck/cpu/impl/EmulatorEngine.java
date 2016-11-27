@@ -2,9 +2,10 @@ package net.sf.emustudio.brainduck.cpu.impl;
 
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
+
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.LinkedList;
 import java.util.Objects;
 
 public class EmulatorEngine {
@@ -23,7 +24,7 @@ public class EmulatorEngine {
     private final MemoryContext<Short> memory;
     private final int memorySize;
     private final BrainCPUContextImpl context;
-    private final Deque<Integer> loopPointers = new LinkedList<>();
+    private final Deque<Integer> loopPointers = new ArrayDeque<>();
     private final Profiler profiler;
 
     public volatile int IP, P; // registers of the CPU
