@@ -24,6 +24,7 @@ import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
+import net.sf.emustudio.brainduck.memory.RawMemoryContext;
 import org.easymock.Capture;
 import org.junit.After;
 import org.junit.Before;
@@ -47,8 +48,6 @@ public class CpuImplTest {
     private CpuImpl emulator;
     private MemoryStub memory;
     private DeviceStub ioDevice;
-    private SettingsManager settingsManager;
-    private BrainCPUContext cpuContext;
 
     @Before
     public void setUp() throws Exception {
@@ -58,6 +57,7 @@ public class CpuImplTest {
         Capture<BrainCPUContextImpl> cpuContextCapture = new Capture<>();
 
         ContextPool contextPool = createNiceMock(ContextPool.class);
+        expect(contextPool.getMemoryContext(0, RawMemoryContext.class)).andReturn(memory).anyTimes();
         expect(contextPool.getMemoryContext(0, MemoryContext.class)).andReturn(memory).anyTimes();
         contextPool.register(eq(0L), capture(cpuContextCapture), same(BrainCPUContext.class));
         expectLastCall().once();
@@ -65,12 +65,12 @@ public class CpuImplTest {
 
         emulator = new CpuImpl(0L, contextPool);
 
-        settingsManager = createNiceMock(SettingsManager.class);
+        SettingsManager settingsManager = createNiceMock(SettingsManager.class);
         emulator.initialize(settingsManager);
 
         verify(contextPool);
 
-        cpuContext = cpuContextCapture.getValue();
+        BrainCPUContext cpuContext = cpuContextCapture.getValue();
         cpuContext.attachDevice(ioDevice);
     }
 

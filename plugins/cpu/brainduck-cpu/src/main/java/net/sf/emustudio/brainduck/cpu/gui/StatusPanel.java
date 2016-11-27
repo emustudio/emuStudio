@@ -20,16 +20,16 @@
 package net.sf.emustudio.brainduck.cpu.gui;
 
 import emulib.plugins.cpu.CPU;
-import emulib.plugins.memory.MemoryContext;
 import net.sf.emustudio.brainduck.cpu.impl.CpuImpl;
 import net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine;
+import net.sf.emustudio.brainduck.memory.RawMemoryContext;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 public class StatusPanel extends JPanel {
     private final ColumnsRepainter columnsRepainter = new ColumnsRepainter();
     private final MemoryTableModel tableModel;
-    private final MemoryContext<Short> memory;
+    private final short[] memory;
     private final EmulatorEngine cpu;
 
     private class CPUStatusListener implements CPU.CPUListener {
@@ -72,8 +72,7 @@ public class StatusPanel extends JPanel {
                 txtIP.setText(String.format("%04X", cpu.IP));
                 lblLoopLevel.setText(String.valueOf(cpu.getLoopLevel()));
                 try {
-                    short value = memory.read(P);
-                    txtMemP.setText(String.format("%02X", value));
+                    txtMemP.setText(String.format("%02X", memory[P] & 0xFF));
                 } catch (ArrayIndexOutOfBoundsException e) {
                     txtMemP.setText("[unreachable]");
                 } finally {
@@ -86,8 +85,8 @@ public class StatusPanel extends JPanel {
         
     }
     
-    public StatusPanel(MemoryContext<Short> memory, CpuImpl cpu) {
-        this.memory = memory;
+    public StatusPanel(RawMemoryContext memory, CpuImpl cpu) {
+        this.memory = memory.getRawMemory();
         this.cpu = cpu.getEngine();
         this.tableModel = new MemoryTableModel(memory);
         

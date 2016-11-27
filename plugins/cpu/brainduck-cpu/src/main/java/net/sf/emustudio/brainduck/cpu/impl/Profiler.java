@@ -1,6 +1,6 @@
 package net.sf.emustudio.brainduck.cpu.impl;
 
-import emulib.plugins.memory.MemoryContext;
+import net.sf.emustudio.brainduck.memory.RawMemoryContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,7 +20,7 @@ import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_SCANLOOP;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_STOP;
 
 public class Profiler {
-    private final MemoryContext<Short> memory;
+    private final short[] memory;
     private final CachedOperation[] operationsCache;
     private final Integer[] loopEndsCache;
     
@@ -72,13 +72,11 @@ public class Profiler {
         }
     }
 
-    Profiler(MemoryContext<Short> memory) {
-        this.memory = Objects.requireNonNull(memory);
+    Profiler(RawMemoryContext memory) {
+        this.memory = Objects.requireNonNull(memory.getRawMemory());
 
-        int size = memory.getSize();
-
-        loopEndsCache = new Integer[size];
-        operationsCache = new CachedOperation[size];
+        loopEndsCache = new Integer[this.memory.length];
+        operationsCache = new CachedOperation[this.memory.length];
 
         reset();
     }
@@ -104,7 +102,7 @@ public class Profiler {
         int lastOperation = -1;
         short OP;
         for (int tmpIP = 0; tmpIP < programSize; tmpIP++) {
-            OP = memory.read(tmpIP);
+            OP = memory[tmpIP];
             if (OP != I_LOOP_START && OP != I_LOOP_END && (lastOperation == OP)) {
                 int previousIP = tmpIP - 1;
                 CachedOperation operation = new CachedOperation(CachedOperation.TYPE.REPEAT);
@@ -112,7 +110,7 @@ public class Profiler {
                 operation.operation = OP;
                 operation.argument = 2;
 
-                while ((tmpIP+1) < programSize && (memory.read(tmpIP+1) == lastOperation)) {
+                while ((tmpIP+1) < programSize && (memory[tmpIP+1] == lastOperation)) {
                     operation.argument++;
                     tmpIP++;
                 }
@@ -129,7 +127,7 @@ public class Profiler {
     private void optimizeLoops(int programSize) {
         short OP;
         for (int tmpIP = 0; tmpIP < programSize; tmpIP++) {
-            if (memory.read(tmpIP) != I_LOOP_START) {
+            if (memory[tmpIP] != I_LOOP_START) {
                 continue;
             }
             int loop_count = 0; // loop nesting level counter
@@ -138,7 +136,7 @@ public class Profiler {
             // on the same nesting level (according to loop_count value)
             // IP is pointing at following instruction
             int tmpIP2 = tmpIP + 1;
-            while ((tmpIP2 < programSize) && (OP = memory.read(tmpIP2++)) != I_STOP) {
+            while ((tmpIP2 < programSize) && (OP = memory[tmpIP2++]) != I_STOP) {
                 if (OP == I_LOOP_START) {
                     loop_count++;
                 }
@@ -157,10 +155,10 @@ public class Profiler {
     private void optimizeCopyLoops(int programSize) {
         short OP;
         for (int tmpIP = 0; tmpIP < programSize; tmpIP++) {
-            OP = memory.read(tmpIP);
+            OP = memory[tmpIP];
             if (OP == I_LOOP_START && tmpIP+2 < programSize) {
                 tmpIP++;
-                OP = memory.read(tmpIP);
+                OP = memory[tmpIP];
                 CachedOperation copyLoop = findCopyLoop(tmpIP, OP);
 
                 if (copyLoop != null) {
@@ -177,7 +175,7 @@ public class Profiler {
             return new int[] { pos, var};
         }
         do {
-            short op = memory.read(pos);
+            short op = memory[pos];
             if (op == incOp) {
                 var++;
             } else if (op == decOp) {
@@ -193,7 +191,7 @@ public class Profiler {
             return startIP;
         }
         do {
-            short specialOP = memory.read(startIP);
+            short specialOP = memory[startIP];
             if (specialOP == I_PRINT || specialOP == I_READ) {
                 CopyLoop c = new CopyLoop(0, 0);
                 c.specialOP = specialOP;
@@ -216,7 +214,7 @@ public class Profiler {
         // first find [-  ...] or [... -]
         if (OP == I_DECV) {
             startIP++;
-        } else if (memory.read(stopIP - 1) == I_DECV) {
+        } else if (memory[stopIP - 1] == I_DECV) {
             stopIP--;
         } else {
             return null; // not a copy-loop
@@ -266,7 +264,7 @@ public class Profiler {
     private void optimizeScanLoops(int programSize) {
         short OP;
         for (int tmpIP = 0; tmpIP < programSize; tmpIP++) {
-            OP = memory.read(tmpIP);
+            OP = memory[tmpIP];
             if (OP == I_LOOP_START) {
                 if (loopEndsCache[tmpIP] == -1) {
                     // loop optimization is needed

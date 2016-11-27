@@ -19,15 +19,16 @@
  */
 package net.sf.emustudio.brainduck.cpu.gui;
 
-import emulib.plugins.memory.MemoryContext;
+import net.sf.emustudio.brainduck.memory.RawMemoryContext;
+
 import javax.swing.table.AbstractTableModel;
 
 public class MemoryTableModel extends AbstractTableModel {
-    private final MemoryContext<Short> memory;
+    private final short[] memory;
     private volatile int P;
 
-    public MemoryTableModel(MemoryContext<Short> memory) {
-        this.memory = memory;
+    MemoryTableModel(RawMemoryContext memory) {
+        this.memory = memory.getRawMemory();
     }
     
     @Override
@@ -53,12 +54,12 @@ public class MemoryTableModel extends AbstractTableModel {
     public Object getValueAt(int rowIndex, int columnIndex) {
         int index = P + (columnIndex - 2);
         if (index >= 0) {
-            return String.format("%02Xh", memory.read(index));
+            return String.format("%02Xh", memory[index]);
         }
         return "";
     }
 
-    public void setP(int P) {
+    void setP(int P) {
         this.P = P;
         fireTableDataChanged();
     }

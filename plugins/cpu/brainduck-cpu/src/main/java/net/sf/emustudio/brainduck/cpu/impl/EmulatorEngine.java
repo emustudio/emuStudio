@@ -1,7 +1,7 @@
 package net.sf.emustudio.brainduck.cpu.impl;
 
 import emulib.plugins.cpu.CPU;
-import emulib.plugins.memory.MemoryContext;
+import net.sf.emustudio.brainduck.memory.RawMemoryContext;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -9,29 +9,29 @@ import java.util.Deque;
 import java.util.Objects;
 
 public class EmulatorEngine {
-    public final static short I_STOP = 0; // ;
-    public final static short I_INC = 1; // >
-    public final static short I_DEC = 2; // <
-    public final static short I_INCV = 3; // +
-    public final static short I_DECV = 4; // -
-    public final static short I_PRINT = 5; // .
-    public final static short I_READ = 6; // ,
-    public final static short I_LOOP_START = 7; // [
-    public final static short I_LOOP_END = 8; // ]
-    public final static short I_COPY_AND_CLEAR = 0xA1; // any copyloop, including clear
-    public final static short I_SCANLOOP = 0xA2; // [<] or [>]
+    final static short I_STOP = 0; // ;
+    final static short I_INC = 1; // >
+    final static short I_DEC = 2; // <
+    final static short I_INCV = 3; // +
+    final static short I_DECV = 4; // -
+    final static short I_PRINT = 5; // .
+    final static short I_READ = 6; // ,
+    final static short I_LOOP_START = 7; // [
+    final static short I_LOOP_END = 8; // ]
+    final static short I_COPY_AND_CLEAR = 0xA1; // any copyloop, including clear
+    final static short I_SCANLOOP = 0xA2; // [<] or [>]
 
-    private final MemoryContext<Short> memory;
-    private final int memorySize;
+    private final RawMemoryContext memory;
+    private final short[] rawMemory;
     private final BrainCPUContextImpl context;
     private final Deque<Integer> loopPointers = new ArrayDeque<>();
     private final Profiler profiler;
 
     public volatile int IP, P; // registers of the CPU
 
-    EmulatorEngine(MemoryContext<Short> memory, BrainCPUContextImpl context, Profiler profiler) {
+    EmulatorEngine(RawMemoryContext memory, BrainCPUContextImpl context, Profiler profiler) {
         this.memory = Objects.requireNonNull(memory);
-        this.memorySize = memory.getSize();
+        this.rawMemory = memory.getRawMemory();
         this.context = Objects.requireNonNull(context);
         this.profiler = Objects.requireNonNull(profiler);
     }
@@ -41,7 +41,7 @@ public class EmulatorEngine {
 
         // find closest "free" address which does not contain a program
         try {
-            while (memory.read(adr++) != 0) {
+            while (rawMemory[adr++] != 0) {
             }
         } catch (IndexOutOfBoundsException e) {
             // we get here if "adr" would point to nonexistant memory location,
@@ -57,7 +57,7 @@ public class EmulatorEngine {
     }
 
     @SuppressWarnings("empty-statement")
-    public CPU.RunState step(boolean optimize) throws IOException {
+    CPU.RunState step(boolean optimize) throws IOException {
         short OP;
 
         // FETCH
@@ -69,7 +69,7 @@ public class EmulatorEngine {
             IP = operation.nextIP;
             argument = operation.argument;
         } else {
-            OP = memory.read(IP++);
+            OP = rawMemory[IP++];
         }
 
         // DECODE
@@ -78,7 +78,7 @@ public class EmulatorEngine {
                 return CPU.RunState.STATE_STOPPED_NORMAL;
             case I_INC: /* >  */
                 P += argument;
-                if (P > memorySize) {
+                if (P > rawMemory.length) {
                     return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
                 }
                 break;
@@ -89,26 +89,26 @@ public class EmulatorEngine {
                 }
                 break;
             case I_INCV: /* + */
-                memory.write(P, (short) (memory.read(P) + argument));
+                rawMemory[P] = (short)((rawMemory[P] + argument) & 0xFF);
                 break;
             case I_DECV: /* - */
-                memory.write(P, (short) (memory.read(P) - argument));
+                rawMemory[P] = (short) ((rawMemory[P] - argument) & 0xFF);
                 break;
             case I_PRINT: /* . */
                 while (argument > 0) {
-                    context.writeToDevice(memory.read(P));
+                    context.writeToDevice(rawMemory[P]);
                     argument--;
                 }
                 break;
             case I_READ: /* , */
                 while (argument > 0) {
-                    memory.write(P, context.readFromDevice());
+                    rawMemory[P] = context.readFromDevice();
                     argument--;
                 }
                 break;
             case I_LOOP_START: /* [ */
                 int startingBrace = IP - 1;
-                if (memory.read(P) != 0) {
+                if (rawMemory[P] != 0) {
                     loopPointers.push(startingBrace);
                     break;
                 }
@@ -116,27 +116,25 @@ public class EmulatorEngine {
                 break;
             case I_LOOP_END: /* ] */
                 int tmpIP = loopPointers.pop();
-                if (memory.read(P) != 0) {
+                if (rawMemory[P] != 0) {
                     IP = tmpIP;
                 }
                 break;
             case I_COPY_AND_CLEAR: // [>+<-] or [>-<-] or [<+>-] or [<->-] or [-] or combinations
                 for (Profiler.CopyLoop copyLoop : operation.copyLoops) {
                     if (copyLoop.specialOP == I_PRINT) {
-                        context.writeToDevice(memory.read(P));
+                        context.writeToDevice(rawMemory[P]);
                     } else if (copyLoop.specialOP == I_READ) {
-                        memory.write(P, context.readFromDevice());
+                        rawMemory[P] = context.readFromDevice();
                     } else {
-                        memory.write(
-                                P + copyLoop.relativePosition,
-                                (short) (memory.read(P) * copyLoop.factor + memory.read(P + copyLoop.relativePosition))
-                        );
+                        rawMemory[P + copyLoop.relativePosition] = (short)
+                            ((rawMemory[P] * copyLoop.factor + rawMemory[P + copyLoop.relativePosition]) & 0xFF);
                     }
                 }
-                memory.write(P, (short)0);
+                rawMemory[P] = 0;
                 break;
             case I_SCANLOOP: // [<] or [>] or combinations
-                for (; memory.read(P) != 0; P += operation.argument);
+                for (; rawMemory[P] != 0; P += operation.argument);
                 break;
             default: /* invalid instruction */
                 return CPU.RunState.STATE_STOPPED_BAD_INSTR;

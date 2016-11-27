@@ -21,29 +21,29 @@ package net.sf.emustudio.brainduck.cpu.impl;
 
 import emulib.annotations.ContextType;
 import emulib.plugins.memory.Memory;
-import emulib.plugins.memory.MemoryContext;
+import net.sf.emustudio.brainduck.memory.RawMemoryContext;
 
 @ContextType
-public class MemoryStub implements MemoryContext<Short> {
+public class MemoryStub implements RawMemoryContext {
     private final short[] memory;
     private int afterProgram;
 
-    public MemoryStub(int size) {
+    MemoryStub(int size) {
         this.memory = new short[size];
     }
 
-    public void setProgram(byte[] program) {
+    void setProgram(byte[] program) {
         clear();
         for (afterProgram = 0; afterProgram < program.length; afterProgram++) {
             memory[afterProgram] = program[afterProgram];
         }
     }
 
-    public int getDataStart() {
+    int getDataStart() {
         return afterProgram + 1;
     }
 
-    public void setData(byte[] data) {
+    void setData(byte[] data) {
         for (int i = 0; i < data.length; i++) {
             memory[afterProgram + 1 + i] = data[i];
         }
@@ -54,6 +54,11 @@ public class MemoryStub implements MemoryContext<Short> {
         for (int i = 0; i < memory.length; i++) {
             memory[i] = 0;
         }
+    }
+
+    @Override
+    public short[] getRawMemory() {
+        return memory;
     }
 
     @Override

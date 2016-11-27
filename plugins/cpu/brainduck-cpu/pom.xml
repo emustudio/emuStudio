@@ -74,5 +74,9 @@
       <groupId>org.easymock</groupId>
       <artifactId>easymock</artifactId>
     </dependency>
+    <dependency>
+      <groupId>net.sf.emustudio</groupId>
+      <artifactId>brainduck-mem</artifactId>
+    </dependency>
   </dependencies>
 </project>

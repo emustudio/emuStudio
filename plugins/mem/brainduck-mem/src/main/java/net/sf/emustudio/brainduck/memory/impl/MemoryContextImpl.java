@@ -20,8 +20,9 @@
 package net.sf.emustudio.brainduck.memory.impl;
 
 import emulib.plugins.memory.AbstractMemoryContext;
+import net.sf.emustudio.brainduck.memory.RawMemoryContext;
 
-public class MemoryContextImpl extends AbstractMemoryContext<Short> {
+public class MemoryContextImpl extends AbstractMemoryContext<Short> implements RawMemoryContext {
 
     private short[] memory; // this array is the operating memory
 
@@ -56,7 +57,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> {
     }
 
     @Override
-    public Class<?> getDataType() {
+    public Class<Short> getDataType() {
         return Short.class;
     }
 
@@ -75,7 +76,7 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> {
 
     @Override
     public void write(int to, Short val) {
-        memory[to] = (short) (val & 0xFF);
+        memory[to] = val;
         notifyMemoryChanged(to);
     }
 
@@ -92,5 +93,10 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> {
     @Override
     public int getSize() {
         return memory.length;
+    }
+
+    @Override
+    public short[] getRawMemory() {
+        return memory;
     }
 }

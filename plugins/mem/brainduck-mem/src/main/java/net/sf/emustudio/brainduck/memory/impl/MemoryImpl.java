@@ -29,6 +29,7 @@ import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
+import net.sf.emustudio.brainduck.memory.RawMemoryContext;
 import net.sf.emustudio.brainduck.memory.gui.MemoryGUI;
 
 import java.util.MissingResourceException;
@@ -52,6 +53,7 @@ public class MemoryImpl extends AbstractMemory {
         ContextPool contextPool1 = Objects.requireNonNull(contextPool);
         memContext = new MemoryContextImpl();
         try {
+            contextPool.register(pluginID, memContext, RawMemoryContext.class);
             contextPool.register(pluginID, memContext, MemoryContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {
             StaticDialogs.showErrorMessage("Could not register Brainduck memory", getTitle());

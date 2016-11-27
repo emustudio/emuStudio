@@ -24,7 +24,6 @@ import emulib.annotations.PluginType;
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.Disassembler;
-import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
@@ -34,10 +33,11 @@ import net.sf.emustudio.braincpu.gui.DecoderImpl;
 import net.sf.emustudio.braincpu.gui.DisassemblerImpl;
 import net.sf.emustudio.brainduck.cpu.BrainCPUContext;
 import net.sf.emustudio.brainduck.cpu.gui.StatusPanel;
+import net.sf.emustudio.brainduck.memory.RawMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 import java.io.IOException;
 import java.util.MissingResourceException;
 import java.util.Objects;
@@ -57,7 +57,7 @@ public class CpuImpl extends AbstractCPU {
     private final BrainCPUContextImpl context = new BrainCPUContextImpl();
 
     private Disassembler disassembler;
-    private MemoryContext<Short> memory;
+    private RawMemoryContext memory;
     private EmulatorEngine engine;
     private volatile boolean optimize;
 
@@ -83,7 +83,7 @@ public class CpuImpl extends AbstractCPU {
     
     @Override
     public void initialize(SettingsManager settings) throws PluginInitializationException {
-        memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
+        memory = contextPool.getMemoryContext(getPluginID(), RawMemoryContext.class);
 
         if (memory.getDataType() != Short.class) {
             throw new PluginInitializationException(
