@@ -142,7 +142,8 @@ public class MemoryTableModelTest {
     public void testGetValueCallsMemoryRead() throws Exception {
         MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
 
-        Byte[] row = new Byte[] { 'a','h','o','j' };
+        Byte[] row = new Byte[4];
+        NumberUtils.writeInt(0x61686F6A, row, Strategy.REVERSE_BITS); // joha in little endian
 
         expect(memoryContext.readWord(10 * 4)).andReturn(row).anyTimes();
         replay(memoryContext);

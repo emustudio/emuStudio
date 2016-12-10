@@ -39,8 +39,6 @@ public class MemoryAndFileOutput extends SeekableOutputStream {
 
     @Override
     public void write(int b) throws IOException {
-        System.out.println("writing at " + position + " = " + Integer.toBinaryString(b));
-
         memoryContext.write(position, (byte)(b & 0xFF));
         file.write(b);
         position++;

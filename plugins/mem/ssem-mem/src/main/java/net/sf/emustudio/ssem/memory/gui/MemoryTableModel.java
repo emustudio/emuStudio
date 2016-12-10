@@ -67,14 +67,12 @@ public class MemoryTableModel extends AbstractTableModel {
     
     private byte[] readLineBits(Byte[] line) {
         byte[] lineBits = new byte[32];
-        
+
         int j = 0;
-        for (Byte v : line) {
+        for (byte b : line) {
             for (int i = 7; i >= 0; i--) {
-                lineBits[j + i--] = (byte)(v & 1);
-                v = (byte)(v >>> 1);
+                lineBits[j++] = (byte)((b >>> i) & 1);
             }
-            j += 8;
         }
         return lineBits;
     }
@@ -84,12 +82,13 @@ public class MemoryTableModel extends AbstractTableModel {
         try {
             Byte[] row = memory.readWord(rowIndex * 4);
             int value = NumberUtils.readInt(row, Strategy.REVERSE_BITS);
-                    
+
             switch (columnIndex) {
                 case COLUMN_HEX_VALUE:
-                    return RadixUtils.getDwordHexString(value);
+                    return RadixUtils.getDwordHexString(value).toUpperCase();
                 case COLUMN_CHAR_VALUE:
-                    return "" + (char)(byte)row[0] + (char)(byte)row[1] + (char)(byte)row[2] + (char)(byte)row[3];
+                    return "" + (char)(value & 0xFF) + (char)((value >>> 8) & 0xFF) +
+                        (char)((value >>> 16) & 0xFF) + (char)((value >>> 24) & 0xFF);
                 default:
                     byte[] lineBits = readLineBits(row);
                     return lineBits[columnIndex];

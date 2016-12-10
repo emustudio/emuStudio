@@ -38,7 +38,6 @@ public class CodeGenerator implements ASTvisitor, AutoCloseable {
 
     @Override
     public void setCurrentLine(int line) {
-        System.out.println("CR : " + line);
         this.currentLine = line;
     }
 
@@ -67,6 +66,8 @@ public class CodeGenerator implements ASTvisitor, AutoCloseable {
     @Override
     public void visit(Constant constant) throws Exception {
         int number = constant.getNumber();
+
+        writer.seek(4 * currentLine);
         writeInt(number);
     }
 
