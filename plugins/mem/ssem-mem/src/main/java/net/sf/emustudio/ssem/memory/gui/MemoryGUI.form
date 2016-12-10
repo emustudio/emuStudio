@@ -24,7 +24,7 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="scrollPane" pref="765" max="32767" attributes="0"/>
+          <Component id="scrollPane" pref="965" max="32767" attributes="0"/>
           <Component id="jToolBar1" alignment="0" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
@@ -33,7 +33,7 @@
           <Group type="102" alignment="1" attributes="0">
               <Component id="jToolBar1" min="-2" pref="32" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="scrollPane" pref="338" max="32767" attributes="0"/>
+              <Component id="scrollPane" pref="455" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>

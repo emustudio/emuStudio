@@ -23,17 +23,16 @@ import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.NumberUtils;
 import emulib.runtime.NumberUtils.Strategy;
 import emulib.runtime.RadixUtils;
+import java.util.Objects;
+import javax.swing.table.AbstractTableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.swing.table.AbstractTableModel;
-import java.util.Objects;
 
 public class MemoryTableModel extends AbstractTableModel {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryTableModel.class);
 
-    final static int COLUMN_HEX_VALUE = 32;
-    final static int COLUMN_CHAR_VALUE = 33;
+    public final static int COLUMN_HEX_VALUE = 32;
+    public final static int COLUMN_RAW_VALUE = 33;
 
     private final static int ROW_COUNT = 32;
     private final static int COLUMN_COUNT = 2 + 32;
@@ -53,14 +52,28 @@ public class MemoryTableModel extends AbstractTableModel {
     public int getColumnCount() {
         return COLUMN_COUNT;
     }
+    
+    public static boolean isBitInstruction(int column) {
+        return column >= 13 && column <= 15;
+    }
+    
+    public static boolean isBitLine(int column) {
+        return column >= 0 && column < 5;
+    }
 
     @Override
     public String getColumnName(int columnIndex) {
         switch (columnIndex) {
             case COLUMN_HEX_VALUE:
                 return "Value (hex)";
-            case COLUMN_CHAR_VALUE:
+            case COLUMN_RAW_VALUE:
                 return "Raw";
+        }
+        if (isBitLine(columnIndex)) {
+            return "L";
+        }
+        if (isBitInstruction(columnIndex)) {
+            return "I";
         }
         return "";
     }
@@ -82,19 +95,19 @@ public class MemoryTableModel extends AbstractTableModel {
         try {
             Byte[] row = memory.readWord(rowIndex * 4);
             int value = NumberUtils.readInt(row, Strategy.REVERSE_BITS);
-
+            
             switch (columnIndex) {
                 case COLUMN_HEX_VALUE:
                     return RadixUtils.getDwordHexString(value).toUpperCase();
-                case COLUMN_CHAR_VALUE:
-                    return "" + (char)(value & 0xFF) + (char)((value >>> 8) & 0xFF) +
-                        (char)((value >>> 16) & 0xFF) + (char)((value >>> 24) & 0xFF);
+                case COLUMN_RAW_VALUE:
+                    return "" + (char)((value >>> 24) & 0xFF) + (char)((value >>> 16) & 0xFF)
+                            + (char)((value >>> 8) & 0xFF) + (char)(value & 0xFF);
                 default:
                     byte[] lineBits = readLineBits(row);
                     return lineBits[columnIndex];
             }
         } catch (Exception e) {
-            LOGGER.debug("[location={}] Could not read value from memory", rowIndex, e);
+            LOGGER.debug("[line={}] Could not read value from memory", rowIndex, e);
         }
         return "";
     }
@@ -104,32 +117,34 @@ public class MemoryTableModel extends AbstractTableModel {
         if (isCellEditable(rowIndex, columnIndex)) {
             try {
                 Byte[] row = memory.readWord(rowIndex * 4);
+                String str = String.valueOf(aValue);
                 
                 if (columnIndex == COLUMN_HEX_VALUE) {
-                    writeHex(aValue, row);
-                } else if (columnIndex == COLUMN_CHAR_VALUE) {
-                    writeChar(aValue, row);
+                    writeHex(str, row);
+                } else if (columnIndex == COLUMN_RAW_VALUE) {
+                    writeChar((String)aValue, row);
                 } else if (columnIndex >= 0 && columnIndex < 33) {
-                    writeBit(aValue, columnIndex, row);
+                    writeBit(str, columnIndex, row);
                 }
                 memory.writeWord(rowIndex * 4, row);
 
                 fireTableCellUpdated(rowIndex, columnIndex);
             } catch (Exception e) {
-                LOGGER.debug("[location={}, value={}] Could not set value to memory", rowIndex, aValue, e);
+                LOGGER.debug("[line={}, value={}] Could not set value to memory", rowIndex, aValue, e);
             }
         }
     }
 
-    private void writeHex(Object aValue, Byte[] row) {
-        int value = Integer.parseInt(String.valueOf(aValue), 16);
+    private void writeHex(String aValue, Byte[] row) {
+        int value = Integer.decode(aValue);
         NumberUtils.writeInt(value, row, Strategy.REVERSE_BITS);
     }
 
-    private void writeChar(Object aValue, Byte[] row) {
+    private void writeChar(String aValue, Byte[] row) {
         int i = 3;
         int value = 0;
-        for (char c : String.valueOf(aValue).toCharArray()) {
+        
+        for (char c : aValue.toCharArray()) {
             value |= ((c & 0xFF) << (i*8));
             i -= 1;
             if (i < 0) {
@@ -139,9 +154,9 @@ public class MemoryTableModel extends AbstractTableModel {
         NumberUtils.writeInt(value, row, Strategy.REVERSE_BITS);
     }
 
-    private void writeBit(Object aValue, int columnIndex, Byte[] row) {
+    private void writeBit(String aValue, int columnIndex, Byte[] row) {
         int value;
-        value = Integer.parseInt(String.valueOf(aValue), 2);
+        value = Integer.parseInt("0" + aValue, 2);
 
         int byteIndex = columnIndex / 8;
         int bitIndex = 7 - columnIndex % 8;
@@ -149,7 +164,11 @@ public class MemoryTableModel extends AbstractTableModel {
         int bitMask = ~(1 << bitIndex);
         int bitValue = (value << bitIndex);
 
-        row[byteIndex] = (byte)(row[byteIndex] & bitMask | bitValue);
+        if ((value & 1) != value) {
+            LOGGER.error("[line={}, bit={}, value={}] Could not set bit value. Expected 0 or 1", byteIndex, bitIndex, value);
+        } else {
+            row[byteIndex] = (byte)(row[byteIndex] & bitMask | bitValue);
+        }
     }
 
 

@@ -41,10 +41,12 @@ public class MemoryGUI extends JDialog {
 
     public MemoryGUI(MemoryContext<Byte> memory) {
         initComponents();
-        setLocationRelativeTo(null);
+        super.setLocationRelativeTo(null);
         
         this.tableModel = new MemoryTableModel(memory);
-        scrollPane.setViewportView(new MemoryTable(tableModel, scrollPane));
+        MemoryTable memoryTable = new MemoryTable(tableModel, scrollPane);
+        memoryTable.setup();
+        scrollPane.setViewportView(memoryTable);
 
         memory.addMemoryListener(new MemoryListenerImpl());
     }
@@ -71,14 +73,18 @@ public class MemoryGUI extends JDialog {
         btnClear.setFocusable(false);
         btnClear.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnClear.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnClear.addActionListener(evt -> btnClearActionPerformed());
+        btnClear.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnClearActionPerformed(evt);
+            }
+        });
         jToolBar1.add(btnClear);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 765, Short.MAX_VALUE)
+            .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 965, Short.MAX_VALUE)
             .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
@@ -86,13 +92,13 @@ public class MemoryGUI extends JDialog {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE))
+                .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 455, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnClearActionPerformed() {//GEN-FIRST:event_btnClearActionPerformed
+    private void btnClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearActionPerformed
         tableModel.clear();
     }//GEN-LAST:event_btnClearActionPerformed
 

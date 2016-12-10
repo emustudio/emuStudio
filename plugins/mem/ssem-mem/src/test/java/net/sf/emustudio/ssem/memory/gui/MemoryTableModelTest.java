@@ -22,8 +22,6 @@ package net.sf.emustudio.ssem.memory.gui;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.NumberUtils;
 import emulib.runtime.NumberUtils.Strategy;
-import org.junit.Test;
-
 import static org.easymock.EasyMock.aryEq;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.eq;
@@ -34,6 +32,7 @@ import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 public class MemoryTableModelTest {
 
@@ -47,7 +46,7 @@ public class MemoryTableModelTest {
         MemoryTableModel model = new MemoryTableModel(createMock(MemoryContext.class));
 
         assertTrue(model.isCellEditable(0, MemoryTableModel.COLUMN_HEX_VALUE));
-        assertTrue(model.isCellEditable(0, MemoryTableModel.COLUMN_CHAR_VALUE));
+        assertTrue(model.isCellEditable(0, MemoryTableModel.COLUMN_RAW_VALUE));
         assertFalse(model.isCellEditable(0, 34));
 
         for (int i = 0; i < 32; i++) {
@@ -100,7 +99,7 @@ public class MemoryTableModelTest {
         replay(memoryContext);
         
         MemoryTableModel model = new MemoryTableModel(memoryContext);
-        model.setValueAt("FF", 10, MemoryTableModel.COLUMN_HEX_VALUE);
+        model.setValueAt("0xFF", 10, MemoryTableModel.COLUMN_HEX_VALUE);
 
         verify(memoryContext);
     }
@@ -118,7 +117,7 @@ public class MemoryTableModelTest {
         replay(memoryContext);
         
         MemoryTableModel model = new MemoryTableModel(memoryContext);
-        model.setValueAt("ahoj", 10, MemoryTableModel.COLUMN_CHAR_VALUE);
+        model.setValueAt("ahoj", 10, MemoryTableModel.COLUMN_RAW_VALUE);
 
         verify(memoryContext);
     }
@@ -128,14 +127,14 @@ public class MemoryTableModelTest {
     public void testSetValueAtInvalidIndexDoesNotThrow() throws Exception {
         MemoryTableModel model = new MemoryTableModel(createMock(MemoryContext.class));
 
-        model.setValueAt("10", -1, MemoryTableModel.COLUMN_CHAR_VALUE);
+        model.setValueAt("10", -1, MemoryTableModel.COLUMN_RAW_VALUE);
     }
 
     @Test
     public void testSetNullValueDoesNotThrow() throws Exception {
         MemoryTableModel model = new MemoryTableModel(createMock(MemoryContext.class));
 
-        model.setValueAt(null, 0, MemoryTableModel.COLUMN_CHAR_VALUE);
+        model.setValueAt(null, 0, MemoryTableModel.COLUMN_RAW_VALUE);
     }
 
     @Test
@@ -143,7 +142,7 @@ public class MemoryTableModelTest {
         MemoryContext<Byte> memoryContext = createMock(MemoryContext.class);
 
         Byte[] row = new Byte[4];
-        NumberUtils.writeInt(0x61686F6A, row, Strategy.REVERSE_BITS); // joha in little endian
+        NumberUtils.writeInt(0x61686F6A, row, Strategy.REVERSE_BITS);
 
         expect(memoryContext.readWord(10 * 4)).andReturn(row).anyTimes();
         replay(memoryContext);
@@ -152,7 +151,7 @@ public class MemoryTableModelTest {
 
         int value = NumberUtils.readInt(row, Strategy.REVERSE_BITS);
         assertEquals(Integer.toHexString(value).toUpperCase(), model.getValueAt(10, MemoryTableModel.COLUMN_HEX_VALUE));
-        assertEquals("ahoj", model.getValueAt(10, MemoryTableModel.COLUMN_CHAR_VALUE));
+        assertEquals("ahoj", model.getValueAt(10, MemoryTableModel.COLUMN_RAW_VALUE));
     }
 
     @Test
@@ -165,6 +164,6 @@ public class MemoryTableModelTest {
         MemoryTableModel model = new MemoryTableModel(memoryContext);
 
         model.getValueAt(-1, MemoryTableModel.COLUMN_HEX_VALUE);
-        model.getValueAt(-1, MemoryTableModel.COLUMN_CHAR_VALUE);
+        model.getValueAt(-1, MemoryTableModel.COLUMN_RAW_VALUE);
     }
 }

@@ -19,142 +19,69 @@
  */
 package net.sf.emustudio.ssem.memory.gui;
 
-import javax.swing.AbstractCellEditor;
-import javax.swing.JLabel;
-import javax.swing.JList;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.util.Objects;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.ListCellRenderer;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
-import javax.swing.UIManager;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
+import static net.sf.emustudio.ssem.memory.gui.Constants.CHAR_HEIGHT;
+import static net.sf.emustudio.ssem.memory.gui.Constants.COLUMN_WIDTH;
+import static net.sf.emustudio.ssem.memory.gui.Constants.DEFAULT_FONT;
 
 class MemoryTable extends JTable {
-    private final static int CHAR_WIDTH = 17;
-    private final static int NO_COLUMN_WIDTH = CHAR_WIDTH * 2;
-    private final static int[] COLUMN_WIDTH = new int[] {
-        CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH,
-        CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH,
-        CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH,
-        CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH,
-        10 * CHAR_WIDTH, 5 * CHAR_WIDTH
-    };
-    private final static Font DEFAULT_FONT = new Font("Monospaced", Font.PLAIN, 12);
-    
     private final MemoryTableModel model;
+    private final CellRenderer cellRenderer;
     private final JScrollPane scrollPane;
 
     MemoryTable(MemoryTableModel model, JScrollPane scrollPane) {
-        this.scrollPane = scrollPane;
-        this.model = model;
-        this.setModel(this.model);
-        this.setFont(DEFAULT_FONT);
-        this.setCellSelectionEnabled(true);
-        this.setFocusCycleRoot(true);
-        this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        this.getTableHeader().setFont(DEFAULT_FONT);
-        this.setDefaultRenderer(Object.class, new MemoryCellRenderer());
+        this.scrollPane = Objects.requireNonNull(scrollPane);
+        this.model = Objects.requireNonNull(model);
+        this.cellRenderer = new CellRenderer(model);
+        
+        super.setModel(this.model);
+        super.setFont(DEFAULT_FONT);
+        super.setCellSelectionEnabled(true);
+        super.setFocusCycleRoot(true);
+        super.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        super.getTableHeader().setFont(DEFAULT_FONT);
+    }
+    
+    public void setup() {
+        cellRenderer.setup(this);
+        setDefaultRenderer(Object.class, cellRenderer);
+        scrollPane.setRowHeaderView(cellRenderer.getRowHeader());
 
-        MemoryCellEditor ed = new MemoryCellEditor();
-
-        for (int i = 0; i < model.getColumnCount(); i++) {
-            TableColumn col = getColumnModel().getColumn(i);
+        CellEditor editor = new CellEditor();
+        editor.setup(this);
+        
+        for (int i = 0; i < columnModel.getColumnCount(); i++) {
+            TableColumn col = columnModel.getColumn(i);
             col.setPreferredWidth(COLUMN_WIDTH[i]);
-            col.setCellEditor(ed);
+            col.setCellEditor(editor);
         }
+        setRowHeight(getRowHeight() + CHAR_HEIGHT);
+        
+        InputMap im = getInputMap(JTable.WHEN_FOCUSED);
+        ActionMap am = getActionMap();
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "delete");
+        am.put("delete", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent listener) {
+                int row = getSelectedRow();
+                int col = getSelectedColumn();
+                
+                if (row != -1 && col != -1) {
+                    model.setValueAt("0", row, col);
+                }
+            }
+        });
+        
     }
 
-    private class MemoryRowHeaderRenderer extends JLabel implements ListCellRenderer {
-        private final int height;
-
-        MemoryRowHeaderRenderer(JTable table) {
-            JTableHeader header = table.getTableHeader();
-            this.height = header.getPreferredSize().height;
-            setOpaque(true);
-            setBorder(UIManager.getBorder("TableHeader.cellBorder"));
-            setHorizontalAlignment(CENTER);
-            setForeground(header.getForeground());
-            setBackground(header.getBackground());
-            setFont(DEFAULT_FONT);
-        }
-
-        @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
-                boolean cellHasFocus) {
-            setPreferredSize(new Dimension(NO_COLUMN_WIDTH, height));
-            setText((value == null) ? "" : value.toString());
-            return this;
-        }
-    }
-
-    private class MemoryCellRenderer extends JLabel implements TableCellRenderer {
-        private final JList rowHeader;
-        private final String rowNames[];
-
-        MemoryCellRenderer() {
-            rowNames = new String[model.getColumnCount()];
-            for (int i = 0; i < rowNames.length; i++) {
-                rowNames[i] = String.format("%02x", i * 4);
-            }
-            this.setOpaque(true);
-            rowHeader = new JList(rowNames);
-            this.setFont(DEFAULT_FONT);
-
-            rowHeader.setFixedCellHeight(getRowHeight());
-            rowHeader.setCellRenderer(new MemoryRowHeaderRenderer(MemoryTable.this));
-            setHorizontalAlignment(CENTER);
-            scrollPane.setRowHeaderView(rowHeader);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value,
-                boolean isSelected, boolean hasFocus, int row, int column) {
-            if (isSelected) {
-                setBackground(MemoryTable.this.getSelectionBackground());
-                setForeground(MemoryTable.this.getSelectionForeground());
-            } else {
-                setBackground(Color.WHITE);
-                setForeground(Color.BLACK);
-            }
-            setText(value.toString());
-            return this;
-        }
-    }
-
-    private class MemoryCellEditor extends AbstractCellEditor implements TableCellEditor {
-        private final JTextField component = new JTextField();
-
-        private void setComponentSize(int columnIndex) {
-            FontMetrics fm = getFontMetrics(getFont());
-            if (fm != null) {
-                component.setSize(COLUMN_WIDTH[columnIndex], fm.getHeight() + 10);
-                component.setBorder(null);
-            }
-        }
-
-        @Override
-        public Component getTableCellEditorComponent(JTable table, Object value,
-                boolean isSelected, int rowIndex, int columnIndex) {
-            if (!isSelected) {
-                return null;
-            }
-            setComponentSize(columnIndex);
-            component.setText(String.valueOf(value));
-            return component;
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-            return component.getText();
-        }
-    }    
 }
