@@ -10,5 +10,5 @@ line = arg: arg(8);
 
 %%
 
-"%s %d" = instruction line(bit_reverse);
+"%s %X" = instruction line(bit_reverse);
 "%s" = instruction;
