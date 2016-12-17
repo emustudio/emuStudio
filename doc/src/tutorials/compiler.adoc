@@ -4,28 +4,39 @@ Version 0.39
 :toc:
 :numbered:
 
-This tutorial will describe some basic knowledge about how to create a compiler to be used in emuStudio. The tutorial
-does not aim to explain all the compiler theory, nor it is exhaustive. Fortunately, we have many tools which can
-generate the hardest parts for us. All compilers in emuStudio use http://jflex.de/[JFlex] for generating the lexical
-analyzer, and http://www2.cs.tum.edu/projects/cup/[Java cup] for generating parsers.
+This tutorial will guide you to how to create a compiler for emuStudio. It focuses on things around
+emuStudio, emuLib and some common practices. It will not dig into the compiler theory much, just what will be required
+on the way.
 
-The tutorial focuses on how to use emuLib API in a compiler project so it can be used in emuStudio.
+In present days, much tedious and error-prone "mechanical" work of parsing can be generated automatically with
+parser generators. All emuStudio compilers use these tools; this tutorial won't be an exception. Here they are:
+
+- http://jflex.de/[JFlex] for generating the lexical analyzer, or lexer for short,
+- http://www2.cs.tum.edu/projects/cup/[Java cup] for generating LR(k) parsers.
+
+Before reading on, please read the "Introduction for writing virtual computers" document. It provides the information
+needed for setting up the development environment and explains how emuStudio plug-ins' lifecycle work.
 
 [[GETTING_STARTED]]
 == Getting started
 
-Before reading on, please read the "Introduction for writing virtual computers" document. It gives the information
-needed for setting up the development environment and for basic understanding how the emuStudio/plug-ins lifecycle
-work.
+In the context of the whole emulator, the compiler is usually an assembler which produces binary instructions for
+the emulated CPU. It does not have to be assembler, it really can be any language compiler. The output of
+the compiler is often loaded directly into emulated operating memory, so the program can be run in emuStudio in a
+single click. This is one of the great features of emuStudio.
 
-A compiler is just another plug-in, which means that it is enough to implement some API and that's it. The compiler
-API can be found in `emulib.plugins.compiler` project package.
+A compiler is a plug-in, which means that it requires to implement an API. The API for compilers is defined in the form
+of Java interfaces and some useful classes in emuLib, in package `emulib.plugins.compiler`. This tutorial will guide
+you with implementing the API.
 
-When implementing whole virtual computer, the compiler is usually an implementation of an assembler of the instruction
-set used by CPU of the computer. In this tutorial, a simple assembler will be implemented for the world's very first
-stored-program computer, https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine[SSEM], nicknamed
-"Baby". It was a predecessor of Manchester Mark 1 which led to Ferranti Mark 1, the world's first commercially available
-general-purpose computer.
+[[SSEM_ASM]]
+== Assembler for SSEM
+
+In this tutorial, we will implement an assembler for the world's very first stored-program computer,
+https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine[SSEM], nicknamed "Baby". It was a predecessor
+of Manchester Mark 1 which led to Ferranti Mark 1, the world's first commercially available general-purpose computer.
+
+It it very simple computer, which can run 6 instructions.
 
 In this tutorial, there won't be any deep description of the computer, rather the focus will be on the instruction set
 itself, because it is very simple. The processor had only 7 instructions, each is 3-bit long. The instructions table

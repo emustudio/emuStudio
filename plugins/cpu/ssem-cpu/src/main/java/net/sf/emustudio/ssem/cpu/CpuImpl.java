@@ -21,13 +21,19 @@ package net.sf.emustudio.ssem.cpu;
 
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
+import emulib.emustudio.API;
 import emulib.emustudio.SettingsManager;
+import emulib.emustudio.debugtable.BreakpointColumn;
+import emulib.emustudio.debugtable.DebugTable;
+import emulib.emustudio.debugtable.MnemoColumn;
+import emulib.emustudio.debugtable.OpcodeColumn;
 import emulib.plugins.cpu.AbstractCPU;
 import emulib.plugins.cpu.Decoder;
 import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.exceptions.PluginInitializationException;
+import java.util.Arrays;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
@@ -69,6 +75,14 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     public JPanel getStatusPanel() {
+        DebugTable debugTable = API.getInstance().getDebugTable();
+        if (debugTable != null) {
+            debugTable.setCustomColumns(Arrays.asList(
+                    new BreakpointColumn(this), new AddressColumnSSEM(), new MnemoColumn(disasm),
+                    new OpcodeColumn(disasm)
+            ));
+        }
+       
         return new CpuPanel(this, engine);
     }
 

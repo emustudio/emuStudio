@@ -50,8 +50,15 @@ public class EmulatorEngine {
     }
     
     public CPU.RunState step() {
-        int line = parseLine(memory.read(CI * 4));
-        int opcode = memory.read((CI * 4) + 1) & 3;
+        Byte[] instruction = memory.readWord(CI * 4);
+        
+        int line = NumberUtils.reverseBits(instruction[0], 8);
+        int opcode = instruction[1] & 3;
+        
+        System.out.println(String.format("CI=%x, line=%X at %d, ins = %s %s %s %s", CI, line, (CI * 4 + 1),
+                Integer.toBinaryString(instruction[0]), Integer.toBinaryString(instruction[1]), Integer.toBinaryString(instruction[2]),
+                Integer.toBinaryString(instruction[3])));
+
         CI++;
 
         switch (opcode) {

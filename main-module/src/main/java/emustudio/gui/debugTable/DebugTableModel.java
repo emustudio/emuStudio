@@ -26,11 +26,10 @@ import emulib.emustudio.debugtable.OpcodeColumn;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.DebugColumn;
 import emulib.plugins.cpu.Disassembler;
-
-import javax.swing.table.AbstractTableModel;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import javax.swing.table.AbstractTableModel;
 
 public class DebugTableModel extends AbstractTableModel {
     private DebugColumn[] columns;
@@ -148,7 +147,7 @@ public class DebugTableModel extends AbstractTableModel {
         fireTableStructureChanged();
     }
 
-    void setDefaultColumns() {
+    final void setDefaultColumns() {
         Disassembler dis = cpu.getDisassembler();
         if (cpu.isBreakpointSupported()) {
             setColumns(Arrays.asList(
