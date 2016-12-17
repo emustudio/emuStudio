@@ -52,21 +52,15 @@ public class EmulatorEngine {
         Byte[] instruction = memory.readWord(CI);
         CI += 4;
         
-        int line = NumberUtils.reverseBits(instruction[0], 8);
-        int opcode = instruction[1] & 3;
+        int line = NumberUtils.reverseBits(instruction[0], 8) * 4;
+        int opcode = instruction[1] & 7;
 
         switch (opcode) {
             case 0: // JMP
-                CI = readInt(line);
-                if (CI % 4 != 0) {
-                    return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
-                }
+                CI = 4 * readInt(line);
                 break;
             case 4: // JPR
-                CI = CI + readInt(line);
-                if (CI % 4 != 0) {
-                    return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
-                }
+                CI = CI + 4 * readInt(line);
                 break;
             case 2: // LDN
                 Acc = -readInt(line);
