@@ -73,6 +73,8 @@ import java.io.Reader;
 %eofval}
 
 comment = "//"[^\r\n]*
+comment2 = "--"[^\r\n]*
+comment3 = ";"[^\r\n]*
 eol = \r|\n|\r\n
 space = [ \t\f]+
 number = \-?[0-9]+
@@ -102,6 +104,9 @@ hexnumber = \-?0x[0-9a-fA-F]+
 "stp" {
     return token(STP, Token.RESERVED);
 }
+"hlt" {
+    return token(STP, Token.RESERVED);
+}
 "num" {
     return token(NUM, Token.RESERVED);
 }
@@ -119,6 +124,12 @@ hexnumber = \-?0x[0-9a-fA-F]+
 
 /* comment */
 {comment} {
+    return token(TCOMMENT, Token.COMMENT);
+}
+{comment2} {
+    return token(TCOMMENT, Token.COMMENT);
+}
+{comment3} {
     return token(TCOMMENT, Token.COMMENT);
 }
 

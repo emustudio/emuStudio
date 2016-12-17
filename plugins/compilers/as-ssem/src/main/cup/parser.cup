@@ -98,7 +98,7 @@ non terminal Comment;
 start with Program;
 
 Program ::= NUMBER:c Statement:s Program:p              {: if (s != null) p.statement(c, s); RESULT = p;  :}
-    | NUMBER:c SEPARATOR_EOL Program:p                  {: RESULT = p; :}
+    | NUMBER:c Comment SEPARATOR_EOL Program:p          {: RESULT = p; :}
     | Comment SEPARATOR_EOL Program:p                   {: RESULT = p; :}
     | START SEPARATOR_EOL Program:p                     {: p.nextLineStarts(); RESULT = p; :}
     | /* empty program */                               {: RESULT = new Program(); :}

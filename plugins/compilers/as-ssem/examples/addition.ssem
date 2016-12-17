@@ -1,0 +1,18 @@
+// A simple program to add two numbers together.
+//
+-- Description:      Sum = X + Y
+-- Parameter Lines:  29: X 
+--                   30: Y
+-- Result Lines:     31: Sum
+
+start:
+01 LDN 29  -- A = -X
+02 SUB 30  -- A = -X - Y
+03 STO 31  -- store -Sum
+04 LDN 31  -- A = -(-Sum)
+05 STO 31  -- store Sum
+06 STP
+
+29 NUM 5   -- X Parameter
+30 NUM 3   -- Y Parameter
+31         -- Sum Result will appear here
