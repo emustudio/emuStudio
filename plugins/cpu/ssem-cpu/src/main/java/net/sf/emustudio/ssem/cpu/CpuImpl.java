@@ -94,10 +94,11 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public boolean setInstructionPosition(int i) {
         int memSize = memory.getSize();
-        if (i < 0 || i >= memSize) {
-            throw new IllegalArgumentException("Instruction position can be in <0," + memSize +">, but was: " + i);
+        int adjustedPosition = i * 4;
+        if (adjustedPosition < 0 || adjustedPosition >= memSize) {
+            throw new IllegalArgumentException("Instruction position can be in <0," + memSize/4 +">, but was: " + i);
         }
-        engine.CI = i;
+        engine.CI = adjustedPosition;
         return true;
     }
 
