@@ -20,8 +20,6 @@
 package emustudio.gui.debugTable;
 
 import emulib.plugins.cpu.Disassembler;
-import net.jcip.annotations.ThreadSafe;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,6 +29,7 @@ import java.util.Objects;
 import java.util.SortedMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
+import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 class InteractiveDisassembler {

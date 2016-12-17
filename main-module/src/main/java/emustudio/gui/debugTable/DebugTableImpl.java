@@ -22,14 +22,13 @@ package emustudio.gui.debugTable;
 import emulib.emustudio.debugtable.DebugTable;
 import emulib.plugins.cpu.DebugColumn;
 import emustudio.Constants;
-
+import java.awt.Dimension;
+import java.util.List;
+import java.util.Objects;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableColumn;
-import java.awt.Dimension;
-import java.util.List;
-import java.util.Objects;
 
 public class DebugTableImpl extends JTable implements DebugTable {
 
@@ -42,21 +41,21 @@ public class DebugTableImpl extends JTable implements DebugTable {
         TextCellRenderer textRenderer = new TextCellRenderer(debugModel);
         BooleanCellRenderer boolRenderer = new BooleanCellRenderer();
 
-        setModel(debugModel);
+        super.setModel(debugModel);
 
-        setDefaultRenderer(Boolean.class, boolRenderer);
-        setDefaultRenderer(Object.class, textRenderer);
-        setDefaultRenderer(String.class, textRenderer);
+        super.setDefaultRenderer(Boolean.class, boolRenderer);
+        super.setDefaultRenderer(Object.class, textRenderer);
+        super.setDefaultRenderer(String.class, textRenderer);
 
         setupBooleanCellEditorAndDefaultWidth();
 
-        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        setOpaque(false);
-        setGridColor(Constants.DEBUGTABLE_COLOR_TABLE_GRID);
-        setIntercellSpacing(new Dimension(0, 0));
+        super.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        super.setOpaque(false);
+        super.setGridColor(Constants.DEBUGTABLE_COLOR_TABLE_GRID);
+        super.setIntercellSpacing(new Dimension(0, 0));
         // turn off grid painting as we'll handle this manually in order to paint
         // grid lines over the entire viewport.
-        setShowGrid(false);
+        super.setShowGrid(false);
     }
 
     @Override
@@ -89,11 +88,12 @@ public class DebugTableImpl extends JTable implements DebugTable {
     @Override
     public void setCustomColumns(List<DebugColumn> customColumns) {
         debugModel.setColumns(customColumns);
-
+        setupBooleanCellEditorAndDefaultWidth();
     }
 
     @Override
     public void setDefaultColumns() {
         debugModel.setDefaultColumns();
+        setupBooleanCellEditorAndDefaultWidth();
     }
 }

@@ -21,11 +21,11 @@ package net.sf.emustudio.ssem.cpu;
 
 import emulib.plugins.cpu.AbstractDebugColumn;
 
-public class AddressColumnSSEM  extends AbstractDebugColumn {
-    private final static String ADDRESS_FORMAT = "%04X";
+public class LineColumn  extends AbstractDebugColumn {
+    private final static String LINE_FORMAT = "%04X";
 
-    public AddressColumnSSEM() {
-        super("address", String.class, false);
+    public LineColumn() {
+        super("line", String.class, false);
     }
 
     @Override
@@ -34,7 +34,7 @@ public class AddressColumnSSEM  extends AbstractDebugColumn {
 
     @Override
     public Object getDebugValue(int location) {
-        return String.format(ADDRESS_FORMAT, location / 4);
+        return String.format(LINE_FORMAT, location / 4);
     }
 
     @Override

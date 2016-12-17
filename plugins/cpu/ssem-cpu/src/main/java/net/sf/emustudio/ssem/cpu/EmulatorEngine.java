@@ -50,16 +50,11 @@ public class EmulatorEngine {
     }
     
     public CPU.RunState step() {
-        Byte[] instruction = memory.readWord(CI * 4);
+        Byte[] instruction = memory.readWord(CI);
+        CI += 4;
         
         int line = NumberUtils.reverseBits(instruction[0], 8);
         int opcode = instruction[1] & 3;
-        
-        System.out.println(String.format("CI=%x, line=%X at %d, ins = %s %s %s %s", CI, line, (CI * 4 + 1),
-                Integer.toBinaryString(instruction[0]), Integer.toBinaryString(instruction[1]), Integer.toBinaryString(instruction[2]),
-                Integer.toBinaryString(instruction[3])));
-
-        CI++;
 
         switch (opcode) {
             case 0: // JMP
@@ -79,24 +74,17 @@ public class EmulatorEngine {
                 break;
             case 3: // CMP / SKN
                 if (Acc < 0) {
-                    CI++;
+                    CI += 4;
                 }
                 break;
             case 7: // STP / HLT
                 return CPU.RunState.STATE_STOPPED_NORMAL;
+            default:
+                return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
-        return CPU.RunState.STATE_STOPPED_BAD_INSTR;
+        return CPU.RunState.STATE_STOPPED_BREAK;
     }
     
-    private int parseLine(int rawLine) {
-        int line = rawLine >> 3;
-        return ((line & 1) << 4)
-                | ((line & 2) << 2)
-                | (line & 4)
-                | ((line & 8) >> 2)
-                | ((line & 16) >> 4);
-    }
-
     private int readInt(int line) {
         Byte[] word = memory.readWord(line);
         return NumberUtils.readInt(word, Strategy.REVERSE_BITS);
@@ -135,8 +123,10 @@ public class EmulatorEngine {
     }
     
     private void fakeStep() {
-        int line = parseLine(memory.read(CI * 4));
-        int opcode = memory.read((CI * 4) + 1) & 3;
+        Byte[] instruction = memory.readWord(CI);
+        
+        int line = NumberUtils.reverseBits(instruction[0], 8);
+        int opcode = instruction[1] & 3;
         CI++;
 
         switch (opcode) {

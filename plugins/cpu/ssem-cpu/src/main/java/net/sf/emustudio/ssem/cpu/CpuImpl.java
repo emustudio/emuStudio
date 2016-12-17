@@ -78,7 +78,7 @@ public class CpuImpl extends AbstractCPU {
         DebugTable debugTable = API.getInstance().getDebugTable();
         if (debugTable != null) {
             debugTable.setCustomColumns(Arrays.asList(
-                    new BreakpointColumn(this), new AddressColumnSSEM(), new MnemoColumn(disasm),
+                    new BreakpointColumn(this), new LineColumn(), new MnemoColumn(disasm),
                     new OpcodeColumn(disasm)
             ));
         }
@@ -94,11 +94,10 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public boolean setInstructionPosition(int i) {
         int memSize = memory.getSize();
-        int adjustedPosition = i * 4;
-        if (adjustedPosition < 0 || adjustedPosition >= memSize) {
+        if (i < 0 || i >= memSize) {
             throw new IllegalArgumentException("Instruction position can be in <0," + memSize/4 +">, but was: " + i);
         }
-        engine.CI = adjustedPosition;
+        engine.CI = i;
         return true;
     }
 

@@ -49,7 +49,7 @@ public class CpuPanel extends javax.swing.JPanel {
             int ci = engine.CI;
             
             txtA.setText(String.format("%8x", acc));
-            txtCI.setText(String.format("%8x", ci));
+            txtCI.setText(String.format("%8x", ci / 4));
             
             txtBinA.setText(formatBinary(acc));
             txtBinCI.setText(formatBinary(ci));
