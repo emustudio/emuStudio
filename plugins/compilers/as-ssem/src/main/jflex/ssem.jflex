@@ -87,7 +87,13 @@ hexnumber = \-?0x[0-9a-fA-F]+
     return token(JMP, Token.RESERVED);
 }
 "jrp" {
-    return token(JRP, Token.RESERVED);
+    return token(JPR, Token.RESERVED);
+}
+"jpr" {
+    return token(JPR, Token.RESERVED);
+}
+"jmr" {
+    return token(JPR, Token.RESERVED);
 }
 "ldn" {
     return token(LDN, Token.RESERVED);
@@ -99,6 +105,9 @@ hexnumber = \-?0x[0-9a-fA-F]+
     return token(SUB, Token.RESERVED);
 }
 "cmp" {
+    return token(CMP, Token.RESERVED);
+}
+"skn" {
     return token(CMP, Token.RESERVED);
 }
 "stp" {

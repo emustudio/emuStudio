@@ -20,12 +20,10 @@
 package net.sf.emustudio.ssem.assembler;
 
 import emulib.plugins.compiler.Token;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.io.StringReader;
-
 import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public class LexerTest {
 
@@ -80,7 +78,9 @@ public class LexerTest {
     @Test
     public void testInstructionsWithOperand() throws Exception {
         checkInstructionWithOperand(TokenImpl.JMP, lexer("jmp 12"));
-        checkInstructionWithOperand(TokenImpl.JRP, lexer("jrp 12"));
+        checkInstructionWithOperand(TokenImpl.JPR, lexer("jrp 12"));
+        checkInstructionWithOperand(TokenImpl.JPR, lexer("jpr 12"));
+        checkInstructionWithOperand(TokenImpl.JPR, lexer("jmr 12"));
         checkInstructionWithOperand(TokenImpl.LDN, lexer("ldn 12"));
         checkInstructionWithOperand(TokenImpl.STO, lexer("sto 12"));
         checkInstructionWithOperand(TokenImpl.SUB, lexer("sub 12"));
@@ -89,6 +89,7 @@ public class LexerTest {
     @Test
     public void testInstructionsWithoutOperand() throws Exception {
         checkInstruction(TokenImpl.CMP, lexer("cmp"));
+        checkInstruction(TokenImpl.CMP, lexer("skn"));
         checkInstruction(TokenImpl.STP, lexer("stp"));
     }
 

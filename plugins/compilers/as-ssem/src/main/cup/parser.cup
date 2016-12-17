@@ -84,7 +84,7 @@ parser code {:
 
 :};
 
-terminal JMP, JRP, LDN, STO, SUB, CMP, STP, NUM;
+terminal JMP, JPR, LDN, STO, SUB, CMP, STP, NUM;
 terminal SEPARATOR_EOL, TCOMMENT, ERROR_UNKNOWN_TOKEN;
 terminal Integer NUMBER;
 terminal START;
@@ -109,7 +109,7 @@ Statement ::= Instruction:i Comment SEPARATOR_EOL       {: RESULT = i; :}
     ;
 
 Instruction ::= JMP NUMBER:line             {: RESULT = Instruction.jmp(line); :}
-    | JRP NUMBER:line                       {: RESULT = Instruction.jrp(line); :}
+    | JPR NUMBER:line                       {: RESULT = Instruction.jrp(line); :}
     | LDN NUMBER:line                       {: RESULT = Instruction.ldn(line); :}
     | STO NUMBER:line                       {: RESULT = Instruction.sto(line); :}
     | SUB NUMBER:line                       {: RESULT = Instruction.sub(line); :}

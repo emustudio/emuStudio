@@ -21,14 +21,18 @@
 package net.sf.emustudio.ssem.cpu;
 
 import emulib.plugins.cpu.CPU;
+import emulib.plugins.memory.MemoryContext;
+import emulib.runtime.NumberUtils;
 import java.util.Objects;
 
 public class CpuPanel extends javax.swing.JPanel {
     private final EmulatorEngine engine;
     private final Updater updater;
+    private final MemoryContext<Byte> memory;
 
-    public CpuPanel(CPU cpu, EmulatorEngine engine) {
+    public CpuPanel(CPU cpu, EmulatorEngine engine, MemoryContext<Byte> memory) {
         this.engine = Objects.requireNonNull(engine);
+        this.memory = Objects.requireNonNull(memory);
         this.updater = new Updater();
         
         initComponents();
@@ -48,16 +52,30 @@ public class CpuPanel extends javax.swing.JPanel {
             int acc = engine.Acc;
             int ci = engine.CI;
             
-            txtA.setText(String.format("%8x", acc));
-            txtCI.setText(String.format("%8x", ci / 4));
+            Byte[] mCI = memory.readWord(ci);
+            int line = NumberUtils.reverseBits(mCI[0], 8);
+            Byte[] mLine = memory.readWord(line * 4);
+            
+            txtA.setText(String.format("%08x", acc));
+            txtCI.setText(String.format("%08x", ci / 4));
+            txtMCI.setText(String.format("%08x", NumberUtils.readInt(mCI, NumberUtils.Strategy.REVERSE_BITS)));
+            txtLine.setText(String.format("%02x", line));
+            txtMLine.setText(String.format("%08x", NumberUtils.readInt(mLine, NumberUtils.Strategy.REVERSE_BITS)));
             
             txtBinA.setText(formatBinary(acc));
             txtBinCI.setText(formatBinary(ci));
+            txtBinMCI.setText(formatBinary(NumberUtils.readInt(mCI, NumberUtils.Strategy.BIG_ENDIAN)));
+            txtBinLine.setText(formatBinary(line, 8));
+            txtBinMLine.setText(formatBinary(NumberUtils.readInt(mLine, NumberUtils.Strategy.BIG_ENDIAN)));
         }
         
         private String formatBinary(int number) {
+            return formatBinary(number, 32);
+        }
+
+        private String formatBinary(int number, int width) {
             String binNumber = Integer.toBinaryString(number);
-            binNumber = String.format("%32s", binNumber).replace(" ", "0");
+            binNumber = String.format("%" + width + "s", binNumber).replace(" ", "0");
 
             StringBuilder builder = new StringBuilder();
             int i = 0;
@@ -95,6 +113,16 @@ public class CpuPanel extends javax.swing.JPanel {
         txtA = new javax.swing.JTextField();
         txtBinA = new javax.swing.JTextField();
         txtBinCI = new javax.swing.JTextField();
+        jPanel3 = new javax.swing.JPanel();
+        javax.swing.JLabel jLabel4 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel5 = new javax.swing.JLabel();
+        txtMLine = new javax.swing.JTextField();
+        txtMCI = new javax.swing.JTextField();
+        txtBinMCI = new javax.swing.JTextField();
+        txtBinMLine = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel6 = new javax.swing.JLabel();
+        txtLine = new javax.swing.JTextField();
+        txtBinLine = new javax.swing.JTextField();
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Run control"));
 
@@ -145,18 +173,22 @@ public class CpuPanel extends javax.swing.JPanel {
 
         txtCI.setEditable(false);
         txtCI.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtCI.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtCI.setText("0");
 
         txtA.setEditable(false);
         txtA.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtA.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtA.setText("0");
 
         txtBinA.setEditable(false);
         txtBinA.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtBinA.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtBinA.setText("0000 0000  0000 0000  0000 0000  0000 0000");
 
         txtBinCI.setEditable(false);
         txtBinCI.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtBinCI.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtBinCI.setText("0000 0000  0000 0000  0000 0000  0000 0000");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
@@ -164,20 +196,18 @@ public class CpuPanel extends javax.swing.JPanel {
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addGap(11, 11, 11)
-                        .addComponent(txtA, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtCI, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(47, 47, 47)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(txtA, javax.swing.GroupLayout.DEFAULT_SIZE, 81, Short.MAX_VALUE)
+                    .addComponent(txtCI))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(txtBinA)
-                    .addComponent(txtBinCI))
+                    .addComponent(txtBinCI)
+                    .addComponent(txtBinA))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -196,6 +226,101 @@ public class CpuPanel extends javax.swing.JPanel {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Memory snippet"));
+
+        jLabel4.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel4.setText("M[CI]");
+        jLabel4.setToolTipText("Control Instruction");
+
+        jLabel5.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel5.setText("M[line]");
+        jLabel5.setToolTipText("Control Instruction");
+
+        txtMLine.setEditable(false);
+        txtMLine.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtMLine.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtMLine.setText("0");
+
+        txtMCI.setEditable(false);
+        txtMCI.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtMCI.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtMCI.setText("0");
+
+        txtBinMCI.setEditable(false);
+        txtBinMCI.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtBinMCI.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtBinMCI.setText("0000 0000  0000 0000  0000 0000  0000 0000");
+
+        txtBinMLine.setEditable(false);
+        txtBinMLine.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtBinMLine.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtBinMLine.setText("0000 0000  0000 0000  0000 0000  0000 0000");
+
+        jLabel6.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel6.setText("line");
+        jLabel6.setToolTipText("Control Instruction");
+
+        txtLine.setEditable(false);
+        txtLine.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtLine.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtLine.setText("0");
+
+        txtBinLine.setEditable(false);
+        txtBinLine.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
+        txtBinLine.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtBinLine.setText("0000 0000");
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtMLine, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtBinMLine))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGap(14, 14, 14)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel6)
+                            .addComponent(jLabel4))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addComponent(txtMCI, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtBinMCI))
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addComponent(txtLine, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtBinLine)))))
+                .addContainerGap())
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel4)
+                    .addComponent(txtMCI, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtBinMCI, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel6)
+                    .addComponent(txtLine, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtBinLine, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel5)
+                    .addComponent(txtMLine, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtBinMLine, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -204,7 +329,8 @@ public class CpuPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -213,6 +339,8 @@ public class CpuPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -220,11 +348,18 @@ public class CpuPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JLabel lblRunState;
     private javax.swing.JLabel lblSpeed;
     private javax.swing.JTextField txtA;
     private javax.swing.JTextField txtBinA;
     private javax.swing.JTextField txtBinCI;
+    private javax.swing.JTextField txtBinLine;
+    private javax.swing.JTextField txtBinMCI;
+    private javax.swing.JTextField txtBinMLine;
     private javax.swing.JTextField txtCI;
+    private javax.swing.JTextField txtLine;
+    private javax.swing.JTextField txtMCI;
+    private javax.swing.JTextField txtMLine;
     // End of variables declaration//GEN-END:variables
 }

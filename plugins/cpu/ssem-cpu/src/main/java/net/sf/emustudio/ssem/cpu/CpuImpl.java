@@ -83,7 +83,7 @@ public class CpuImpl extends AbstractCPU {
             ));
         }
        
-        return new CpuPanel(this, engine);
+        return new CpuPanel(this, engine, memory);
     }
 
     @Override
