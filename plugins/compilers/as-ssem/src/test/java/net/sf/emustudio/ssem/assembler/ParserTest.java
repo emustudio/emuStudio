@@ -19,22 +19,20 @@
  */
 package net.sf.emustudio.ssem.assembler;
 
+import java.io.StringReader;
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.LinkedList;
 import java_cup.runtime.ComplexSymbolFactory;
 import net.sf.emustudio.ssem.assembler.tree.ASTvisitor;
 import net.sf.emustudio.ssem.assembler.tree.Constant;
 import net.sf.emustudio.ssem.assembler.tree.Instruction;
 import net.sf.emustudio.ssem.assembler.tree.Program;
-import org.junit.Test;
-
-import java.io.StringReader;
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.LinkedList;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import org.junit.Test;
 
 public class ParserTest {
 
@@ -123,6 +121,15 @@ public class ParserTest {
         assertFalse(parser.hasSyntaxErrors());
 
         assertConstant(program, -32);
+    }
+    
+    @Test
+    public void testStartingPointIsAccepted() throws Exception {
+        ParserImpl parser = program("0 jmp 1\nstart:\n3 cmp\n");
+        
+        Program program = (Program) parser.parse().value;
+        assertFalse(parser.hasSyntaxErrors());
+        assertEquals(3, program.getStartLine());
     }
 
     private void assertConstant(Program program, int value) throws Exception {

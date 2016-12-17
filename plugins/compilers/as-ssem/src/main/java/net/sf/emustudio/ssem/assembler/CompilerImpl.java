@@ -26,15 +26,14 @@ import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
-import java_cup.runtime.ComplexSymbolFactory;
-import net.sf.emustudio.ssem.assembler.tree.Program;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Objects;
+import java_cup.runtime.ComplexSymbolFactory;
+import net.sf.emustudio.ssem.assembler.tree.Program;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @PluginType(
     type = PLUGIN_TYPE.COMPILER,
@@ -77,6 +76,7 @@ public class CompilerImpl extends AbstractCompiler {
                 }
 
                 program.accept(codeGenerator);
+                programStart = program.getStartLine() * 4;
                 notifyInfo("Compile was successful. Output: " + outputFileName);
             }
         } catch (Exception e) {

@@ -24,9 +24,20 @@ import java.util.Map;
 
 public class Program implements ASTnode {
     private final Map<Integer, ASTnode> nodes = new HashMap<>();
+    private int startLine = 0;
+    private int previousLine = 0;
 
     public void statement(int line, ASTnode node) {
+        previousLine = line;
         nodes.put(line, node);
+    }
+    
+    public void nextLineStarts() {
+        this.startLine = previousLine;
+    }
+    
+    public int getStartLine() {
+        return startLine;
     }
 
     @Override

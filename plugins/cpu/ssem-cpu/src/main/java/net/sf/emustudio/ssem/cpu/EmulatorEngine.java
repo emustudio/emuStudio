@@ -32,7 +32,6 @@ public class EmulatorEngine {
     
     private final CPU cpu;
     private final MemoryContext<Byte> memory;
-    private volatile CPU.RunState currentRunState;
     
     public volatile int Acc;
     public volatile int CI;
@@ -59,9 +58,15 @@ public class EmulatorEngine {
         switch (opcode) {
             case 0: // JMP
                 CI = readInt(line);
+                if (CI % 4 != 0) {
+                    return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+                }
                 break;
             case 4: // JPR
                 CI = CI + readInt(line);
+                if (CI % 4 != 0) {
+                    return CPU.RunState.STATE_STOPPED_ADDR_FALLOUT;
+                }
                 break;
             case 2: // LDN
                 Acc = -readInt(line);
@@ -100,8 +105,10 @@ public class EmulatorEngine {
         if (averageInstructionNanos == 0) {
             measureAverageInstructionNanos();
         }
+        CPU.RunState currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
+        
         long waitNanos = TimeUnit.SECONDS.toNanos(1) / averageInstructionNanos;
-        while (!Thread.currentThread().isInterrupted() && currentRunState == CPU.RunState.STATE_RUNNING) {
+        while (!Thread.currentThread().isInterrupted() && currentRunState == CPU.RunState.STATE_STOPPED_BREAK) {
             try {
                 if (cpu.isBreakpointSet(CI)) {
                     return CPU.RunState.STATE_STOPPED_BREAK;

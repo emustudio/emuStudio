@@ -106,6 +106,11 @@ hexnumber = \-?0x[0-9a-fA-F]+
     return token(NUM, Token.RESERVED);
 }
 
+/* special */
+"start:" {
+    return token(START, Token.PREPROCESSOR);
+}
+
 /* separators */
 {eol} {
     return token(SEPARATOR_EOL, Token.SEPARATOR);

@@ -21,12 +21,11 @@ package net.sf.emustudio.ssem.assembler;
 
 import emulib.runtime.NumberUtils;
 import emulib.runtime.NumberUtils.Strategy;
+import java.io.IOException;
+import java.util.Objects;
 import net.sf.emustudio.ssem.assembler.tree.ASTvisitor;
 import net.sf.emustudio.ssem.assembler.tree.Constant;
 import net.sf.emustudio.ssem.assembler.tree.Instruction;
-
-import java.io.IOException;
-import java.util.Objects;
 
 public class CodeGenerator implements ASTvisitor, AutoCloseable {
     private final SeekableOutputStream writer;
@@ -80,7 +79,7 @@ public class CodeGenerator implements ASTvisitor, AutoCloseable {
         writer.write(word[2]);
         writer.write(word[3]);
     }
-
+    
     @Override
     public void close() throws Exception {
         writer.close();

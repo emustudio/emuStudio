@@ -87,6 +87,7 @@ parser code {:
 terminal JMP, JRP, LDN, STO, SUB, CMP, STP, NUM;
 terminal SEPARATOR_EOL, TCOMMENT, ERROR_UNKNOWN_TOKEN;
 terminal Integer NUMBER;
+terminal START;
 
 non terminal Program Program;
 non terminal ASTnode Statement;
@@ -99,6 +100,7 @@ start with Program;
 Program ::= NUMBER:c Statement:s Program:p              {: if (s != null) p.statement(c, s); RESULT = p;  :}
     | NUMBER:c SEPARATOR_EOL Program:p                  {: RESULT = p; :}
     | Comment SEPARATOR_EOL Program:p                   {: RESULT = p; :}
+    | START SEPARATOR_EOL Program:p                     {: p.nextLineStarts(); RESULT = p; :}
     | /* empty program */                               {: RESULT = new Program(); :}
     ;
 
