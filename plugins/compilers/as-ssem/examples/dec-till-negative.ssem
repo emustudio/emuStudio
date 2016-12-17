@@ -1,0 +1,19 @@
+-- A simple program to show use of the SKN and JMP instructions.
+
+-- Description:      Load X into the Accumulator and decrement the accumulator until it goes negative.
+-- Parameter Lines:  31: X
+-- Result Lines:     -
+
+start:
+01 LDN 31  -- A = -X
+02 STO 29  -- store -X
+03 LDN 29  -- A = -(-X) = X
+04 SUB 30  -- A = A-1
+05 SKN     -- skip if A < 0
+06 JMP 28  -- otherwise go to line 4
+07 HLT     -- done, A has gone negative
+
+28 NUM 4   -- jump address
+29         -- -X
+30 NUM 1   -- decrement
+31 NUM 7   -- X Parameter
