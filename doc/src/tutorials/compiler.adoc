@@ -5,11 +5,12 @@ Version 0.39
 :numbered:
 
 This tutorial will guide you to how to create a compiler for emuStudio. It focuses on things around
-emuStudio, emuLib and some common practices. It will not dig into the compiler theory much, just what will be required
+emuStudio, emuLib and some common practices. It will not dig deep into the compiler theory, only what will be required
 on the way.
 
-In present days, much tedious and error-prone "mechanical" work of parsing can be generated automatically with
-parser generators. All emuStudio compilers use these tools; this tutorial won't be an exception. Here they are:
+In present days, general scheme of compiler's work is parsing, semantic analysis, optimalization and code generation.
+Quite tedious and error-prone work of parsing can be generated automatically with parser generators. All emuStudio
+compilers use such tools; and they will be also used in this tutorial:
 
 - http://jflex.de/[JFlex] for generating the lexical analyzer, or lexer for short,
 - http://www2.cs.tum.edu/projects/cup/[Java cup] for generating LR(k) parsers.
@@ -21,13 +22,13 @@ needed for setting up the development environment and explains how emuStudio plu
 == Getting started
 
 In the context of the whole emulator, the compiler is usually an assembler which produces binary instructions for
-the emulated CPU. It does not have to be assembler, it really can be any language compiler. The output of
+the emulated CPU. However, it does not have to be assembler; it really can be any language compiler. The output of
 the compiler is often loaded directly into emulated operating memory, so the program can be run in emuStudio in a
 single click. This is one of the great features of emuStudio.
 
 A compiler is a plug-in, which means that it requires to implement an API. The API for compilers is defined in the form
-of Java interfaces and some useful classes in emuLib, in package `emulib.plugins.compiler`. This tutorial will guide
-you with implementing the API.
+of Java interfaces and some classes in emuLib, in package `emulib.plugins.compiler`. This tutorial will guide
+you with implementing the API and the whole compiler.
 
 [[SSEM_ASM]]
 == Assembler for SSEM
@@ -36,19 +37,15 @@ In this tutorial, we will implement an assembler for the world's very first stor
 https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine[SSEM], nicknamed "Baby". It was a predecessor
 of Manchester Mark 1 which led to Ferranti Mark 1, the world's first commercially available general-purpose computer.
 
-It it very simple computer, which can run 6 instructions.
-
-In this tutorial, there won't be any deep description of the computer, rather the focus will be on the instruction set
-itself, because it is very simple. The processor had only 7 instructions, each is 3-bit long. The instructions table
+It it very simple computer, which can run only 7 instructions. The instructions table
 follows (modified from https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine#Programming[Wikipedia]):
-
 
 [cols=">2m,<m,<5%m,<20%",frame="topbot",options="header,footer"]
 |===================================================================
-|Binary code |Modern mnemonic |Action            |Operation
-|000         |JMP S           | S(L) -> CI      |Jump to the instruction at the address obtained from the specified memory
+|Binary code |Mnemonic        |Action            |Operation
+|000         |JMP S           | S(L) -> CI       |Jump to the instruction at the address obtained from the specified memory
                                                   address `S(L)` (absolute unconditional jump)
-|100         |JRP S           | CI + S(L) -> CI |Jump to the instruction at the program counter (`CI`) plus the
+|100         |JRP / JPR / JMR S | CI + S(L) -> CI |Jump to the instruction at the program counter (`CI`) plus the
                                                   relative value obtained from the specified memory address `S(L)`
                                                   (relative unconditional jump)
 |010         |LDN S           |-S(L) -> A       |Take the number from the specified memory address `S(L)`, negate it,
@@ -56,11 +53,14 @@ follows (modified from https://en.wikipedia.org/wiki/Manchester_Small-Scale_Expe
 |110         |STO S           |A -> S(L)        |Store the number in the accumulator to the specified memory address `S(L)`
 |001 or 101  |SUB S           |A - S(L) -> A    |Subtract the number at the specified memory address `S(L)` from the
                                                   value in accumulator, and store the result in the accumulator
-|011         |CMP             |if A<0 then CI+1->CI |Skip next instruction if the accumulator contains a negative value
-|111         |STP             |Stop              |
+|011         |CMP / SKN       |if A<0 then CI+1->CI |Skip next instruction if the accumulator contains a negative value
+|111         |STP  / HLT      |Stop              |
 |===================================================================
 
-NOTE: The bit-representation was kind of reversed. E.g., value `3` was represented by binary `110`, rather than `011`.
+The instructions are stored in a memory, which had 32 cells. Each cell was 32 bits long, and each instruction fit into
+exactly one cell. So each instruction has 32 bits. The bit representation was reversed, so the most and the least
+significant bits were put on opposite sides. For example, value `3`, in common personal computers represented as `011`,
+was in SSEM represented as `110`.
 
 The instruction format is as follows:
 
@@ -68,99 +68,97 @@ The instruction format is as follows:
 .SSEM Instruction Format
 |===================================================================
 | Bit:  | 00  | 01 | 02 | 03 | 04 | ... | 13 | 14 | 15 | ... | 31
-| Use:  | L   | L  | L  | L  | L  |  0  | F  | F  | F  | 0   | 0
+| Use:  | L   | L  | L  | L  | L  |  0  | I  | I  | I  | 0   | 0
 | Value:| 2^0 |    |    |    |    |     |    |    |    |     | 2^31
 |===================================================================
 
-where bits `LLLLL` denote address (instruction operand), and bits `FFF` specify the instruction opcode.
-
+where bits `LLLLL` denote a "line", which is basically the memory address - index of a memory cell. It can be understood
+as instruction operand. Bits `III` specify the instruction opcode (3 bits are enough for 7 instructions).
 
 == Language specification
 
-Each compiler is just a program which translates a language into another. Language itself can have many translators
-(compiler implementations). It is similar to when there is English language on the one hand, and there are people which
-speak English on the other hand.
+Each compiler is just a program which translates an input source code into output code. Usually, the input language is
+more high level than the output language, and often offers some features, which are not supported by the output language.
+For example, assembler source codes often support comments, various formats of number literals, labels, or macros. These
+are features, which are not supported by the instruction set itself, and they must be translated to it by compiler.
 
-The computer programming languages must be specified in very formal way. The SSEM assembler specification can be
-started with informal expressing, what it will know:
+SSEM assembler specification can be started with informal expressing, what it will know:
 
-1. New-line character (LF, CR, or CRLF) will be required as a delimiter of instructions. Several successible empty
-   new-line characters will be ignored.
-2. Only modern representation of instructions will be supported by the assembler.
-4. Raw number constants can be defined in separate lines (with `NUM xxx`).
-5. Number constants (or instruction operands) can be defined in decimal or hexadecimal format (starting with `0x`).
-6. Floating-point numbers will not be supported.
-4. One-line comments will be supported, which start with double-slash (`//`). Everything after the `//` will be ignored.
+[[TOKEN_CATEGORIES]]
+=== Token categories
 
-For example, simple `5+3` addition can be implemented as follows:
+Tokens, parsed by lexical analyzer have assigned a so-called category. The category is useful mainly for syntax
+highlighter in emuStudio editor. For example, reserved words are colored differently than e.g. numeric constants, or
+comments.
 
-    0 LDN 5 // load negative X into the accumulator
-    1 SUB 3 // subtract Y from the value in the accumulator
-    2 STO S // store the result at address S
-    3 LDN S // load negative value at address S into the accumulator
+The list of all categories can be seen in the following class:
+https://github.com/vbmacher/emuLib/blob/branch-9_0/src/main/java/emulib/plugins/compiler/Token.java[Token.java].
 
-The accumulator should now contain value `8`.
 
-Numerical constants can look as follows:
+=== New-lines
+
+New-line character (LF, CR, or CRLF) will be required as a delimiter of instructions, and as the last character.
+Successive empty new-line characters will be ignored.
+
+=== Instructions
+
+Assembler will support all forms of instructions shown in the table in section <<SSEM_ASM>>. All instructions must
+start with a line number. For example:
+
+    01 LDN 20
+
+Instructions belong to token category called "reserved words".
+
+=== Literals / constants
+
+Raw number constants can be defined in separate lines (with `NUM xxx`). The numbers themselves can be defined in decimal
+or hexadecimal form. Hexadecimal format must start with prefix `0x`. For example:
 
     0 NUM 0x20
     1 NUM 1207943145
 
-=== Lexical symbols (terminals)
+Only integral constants are supported, and the allowed range is from 0 - 31 (maximum is 2^5).
 
-The following table shows which categories of lexical symbols will exist:
+Word `NUM` belongs to "reserved words", but number constants to the category called "literals".
 
-[horizontal]
-Reserved words:: `JMP`, `JRP`, `LDN`, `STO`, `SUB`, `CMP`, `STP`, `NUM`
-Literals::
- - `number = (\-)?[0-9]+` or `(\-)?[0-9a-fA-F]` (hexadecimal variant), range: `<0, 31)` (max. 2^5)
-Comment::
- - `comment = //[^\r\n]*`
-Separator::
- - `eol = \r|\n|\r\n`
- - `space = [\ \t]*` (will be ignored)
+=== Comments
 
-NOTE: Literals, comments and separator are described using regular expressions used in http://jflex.de/[JFlex], which
-      is recommended for generating lexical analyzer.
+Only one-line comments will be supported, but of various forms. Generally, comment will be everything starting with
+some prefix until the end of the line. Comment prefixes are:
 
-These categories correspond to which compiler API supports. For all possible categories see class
-https://github.com/vbmacher/emuLib/blob/branch-9_0/src/main/java/emulib/plugins/compiler/Token.java[Token.java].
+- double-slash (`//`)
+- semi-colon (`;`)
+- double-dash (`--`)
 
-[[GRAMMAR]]
-=== Grammar for parser
+The token category of comments is "comments".
 
-The grammar presented here will be a deterministic context-free grammar, specifically LALR for bottom-up
-parsing. It is because http://www2.cs.tum.edu/projects/cup/[Java cup] is used as parser generator, which produces only
-LALR parsers. It has some implications to grammar design, when compared with LL grammars. The easiest way how to design
-a LALR grammar is to put recursive non-terminals close to the end (right side), and terminals close to the beginning
-(left side) of a grammar rule.
+=== Full example
 
-The complete grammar of presented SSEM assembler looks as follows:
+For example, simple `5+3` addition can be implemented as follows:
 
-[source,bison]
-----
-Program     : number Statement Program
-  | number eol Program
-  | eol Program
-  | &Epsilon
-  ;
+    0 LDN 7 // load negative X into the accumulator
+    1 SUB 8 // subtract Y from the value in the accumulator
+    2 STO 9 // store the sum at address 7
+    3 LDN 9 // A = -(-Sum)
+    4 STO 9 // store sum
+    5 HLT
 
-Statement   : Instruction Comment eol
-  | Constant Comment eol
-  ;
+    7 NUM 3 // X
+    8 NUM 5 // Y
+    9       // here will be the result
 
-Instruction : JMP number | JRP number | LDN number | STO number | SUB number | CMP | STP;
-Constant    : NUM number;
-Comment     : comment | &Epsilon;
-----
+The accumulator should now contain value `8`, as well as memory cell at index 9.
 
 == Preparing the environment
 
-In order to start developing the compiler, create new Java project. Here, Maven will be used for dependencies management.
-The plug-in will be implemented as another standard emuStudio plug-in, so it will inherit Maven plug-in dependencies
-from the main POM file.
+In order to start developing the compiler, create new Java project in your favorite IDE. In emuStudio, Maven is used for
+dependencies management. If you're not familiar with Maven, you can start
+https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html[here].
 
-The project should be located at `emuStudio/plugins/compilers/as-ssem`, and should contain the following structure:
+The compiler will be implemented as another standard emuStudio plug-in in standard path
+`plugins/compilers/as-ssem`. It will inherit all Maven plug-in dependencies from the main POM file.
+
+The directory structure is "dictated" by Maven, so it should look as follows:
 
     src/
       main/
@@ -170,10 +168,10 @@ The project should be located at `emuStudio/plugins/compilers/as-ssem`, and shou
       java/
     pom.xml
 
-NOTE: Note the naming of the plug-in. It follows the naming convention as described in the
+NOTE: Note the naming of the plug-in. We are following the naming convention as described in the
       "Introduction for writing virtual computers" guide.
 
-The POM file of the project might look as follows:
+The POM file of the project looks as follows:
 
 [source,xml]
 .`pom.xml`
@@ -181,16 +179,269 @@ The POM file of the project might look as follows:
 include::../../../plugins/compilers/as-ssem/pom.xml[]
 ----
 
-And let's start with the first Java class, the main plug-in class. Let's put it to package
-`net.sf.emustudio.ssem.assembler`, and call it `CompilerImpl`.
+== Implement lexical analyzer
 
-== Implementing basic stuff
+We will start with definition of the lexer specfile. It is a special file, which will be given to http://jflex.de/[JFlex]
+during project compilation. Jflex will generate a Java class - the lexer - which will be used by the parser later, and
+by emuStudio editor, too. The specification file has special place in the directory structure:
 
-Go to the `CompilerImpl` class source. Extend the class from `emulib.plugins.compiler.AbstractCompiler` class.
-The class extends from `Compiler` interface and implements the most common methods, usable by all compilers.
+    src/
+      main/
+        jflex/
+          lexer.jflex
 
-It is also necessary to annotate the class with `emulib.annotations.PluginType` annotation, and pass the
-one argument of the constructor to the super class. The code snippet looks as follows:
+NOTE: Note that the specfile is not put into resources directory. If it was so, then it would be included in the final
+      JAR file.
+
+
+JFlex will be called during compilation of the assembler by the
+http://jflex.sourceforge.net/maven-jflex-plugin/generate-mojo.html[JFlex Maven plugin] (see the POM file above).
+The content of the specfile is as follows:
+
+[source,flex]
+.`src/main/jflex/ssem.jflex`
+----
+include::../../../plugins/compilers/as-ssem/src/main/jflex/lexer.jflex[]
+----
+
+As you can notice, the specfile uses special class named `TokenImpl`. We must implement this class by ourselves. It
+holds the basic information about the parsed token, like offset, length, type, etc. There are several requirements
+when implementing the class:
+
+- It must extend `java_cup.runtime.Symbol` class, for JFlex - cup interoperability.
+- It must implement `emulib.plugins.compiler.Token` interface, for being able to use this class in emuStudio syntax
+  highlighter
+- It's now a secret, but it would have to implement also special `Symbols` interface, which will be generated by
+  parser, described in section below.
+
+Syntax highlighter in emuStudio represents the source code in a dynamic "lexical tree". It scans regularly required text
+blocks in the editor and translates them into the symbolic representation - into tokens, which are arranged in a tree
+structure. Tokens are parsed by the lexer, provided by us. And `Token` interface is the shared API known by our specific
+lexer and general syntax highlighter in emuStudio.
+
+Tokens are assigned into categories, as was already mentioned in section <<TOKEN_CATEGORIES>>. Token categories have
+assigned their specific editor style, like color or font.
+
+The content of the `net.sf.emustudio.ssem.assembler.TokenImpl` class is as follows:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java`
+----
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java[]
+----
+
+[[GRAMMAR]]
+== Implementing parser
+
+Next, we define the grammar file. It is also a special file, which will be given to cup during project
+compilation. Cup will generate Java classes - the parser - which we will use in our code. The specfile
+has special place in the directory structure:
+
+    src/
+      main/
+        cup/
+          parser.cup
+
+Grammar type and form we use depends on the parsing algorithm we choose. In emuStudio, all compilers use
+http://www2.cs.tum.edu/projects/cup/[Java cup] parser generator, which does bottom-up parsing, and supported grammars
+are of type LALR.
+
+The main difference between LL and LALR grammars is that in LALR you can freely use left-recursion, but not right
+recursion. Otherwise you would get shift/reduce conflicts. For more information, see for example
+https://lambda.uta.edu/cse5317/notes/node21.html[this site].
+
+The grammar specfile of SSEM assembler parser follows:
+
+[source]
+.`src/main/cup/parser.cup`
+----
+include::../../../plugins/compilers/as-ssem/src/main/cup/parser.cup[]
+----
+
+The right sides - code snippets wrapped between `{:` and `:}` - is Java code which will be executed when particular rule
+of the grammar is applied. Remember, that they will be applied in reverse - first will be applied the right-most rules.
+
+There exist a special variable `RESULT`, which should return some Java object of type which the
+non-terminal defines for it footnote:[For example, `non terminal Instruction Statement;` in the gramamr above defines a
+non-terminal `Statement`, which should return an instance of `Instruction` class. The class `Instruction` must be
+implemented manually - it is part of AST; there are no special requirements for the implementation.].
+
+For more information, especially about the `error` symbol, please read http://www2.cs.tum.edu/projects/cup/[cup]
+documentation.
+
+[[AST]]
+== Implementing Abstract Syntax Tree
+
+The code won't compile so far. The reason is that the parser strangely uses some undefined classes, such as `Program`,
+`ASTnode`, `Instruction` and `Constant`. They are defined in the grammar file as follows (see above):
+
+    non terminal Program Program;
+    non terminal ASTnode Statement;
+    non terminal Instruction Instruction;
+    non terminal Constant Constant;
+
+These classes are part of so-called abstract syntax tree, and they wait for our implementation. Abstract Syntax Tree
+(or AST) is a "symbolic" representation of the parsed program source code. The parser creates one as a side-effect of
+parsing. It is different from Parse Syntax Tree (PST), which represents a tree of true grammar derivations which were
+"detected" by the parser for given source code of a program.
+
+AST is something more artificial, ie. not all grammar rules need to be taken into account when representing the program.
+For this reason, we define only some "nodes" of the derivation tree. In our case, it is `Program`, representing the
+"root" of the tree, which has children - `Statement`s. Statements have `Instruction`s or `Constant`s as its children.
+
+Do you remember those code snippets in the grammar specfile wrapped in `{: ... :}` ? This code snippets create the
+AST, just follow them.
+
+It's now time to implement them. Since we know all nodes are just nodes of our AST, we should define common `ASTnode`
+interface first:
+
+[source, java]
+.`src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java`
+----
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java[]
+----
+
+This interface will be useful when we will traverse the tree. For tree traversal it is very well-suited the
+https://sourcemaking.com/design_patterns/visitor[Visitor pattern]. The idea of traversing a tree using visitor pattern
+is to have the "visitor" object - which represents an object which wants to go through all nodes of the tree and do
+something. The algorithm of visiting is based on a premise that each node of the AST implements the `accept()` method.
+That way, each node is responsible for calling the visitor for each its children and itself.
+So the effect is that the "visitor" will "get" the all tree node objects, when the `accept()` method is called on the
+root of the tree.
+
+We can now define the visitor interface as follows:
+
+[source, java]
+.`src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java`
+----
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java[]
+----
+
+The methods of the visitor will be implemented by some visitor, for example a code generator. However, we need to
+finish implementation of the AST first.
+
+=== 'Program' node
+
+The root node of the AST is the `Program` class. According to the grammar, it contains all the statements, which are
+either `Instruction` or `Constant`. Notice how we implemented traversing of the node:
+
+[source, java]
+.`src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java`
+----
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java[]
+----
+
+The important note is that how the statements are stored. They are in fact the children of the program node. For this
+purpose a key-value map is used. Key has type `Integer` and it represents the line - or memory cell index, or address -
+on which the statement will be located. That way we can write several instructions which lie on the same line, e.g.:
+
+    01 LDN 15
+    01 STO 06
+
+which will be translated into two statements, but the program node will contain just the last one. The reason is that
+they share the line - `01` - which is the key in the map of statements, so the first statement will be "overwritten"
+by the second one.
+
+It is for a debate if we want this behavior to happen. For simplicity, we allow it. Otherwise we would throw some
+compiler exception.
+
+=== 'Instruction' node
+
+Instruction node represents the instruction. If you remember, each instruction except `STP` and `CMP` has a parameter,
+or better - operand - which is a "line" - index of a memory cell. It would be possible to represent specific
+instructions by separate classes, but since the required operations would be shared, it would be much easier to have
+just one class for all the instructions. Generally, instructions with same number and type of parameters are usually
+implemented in one AST node.
+
+Here's the source code:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java`
+----
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java[]
+----
+
+Note that the constructor is private. The implication is that it is just impossible to create some invalid `Instruction`
+object. The only possible way how to define it is using static factory methods, which represent the instructions
+themselves. These are called from the parser - check the grammar specfile in the section <<GRAMMAR>>.
+
+Also, note that we can compare instructions based on opcode and operand. This is allowed by custom implementations of
+methods `hashCode()` and `equals()`.
+
+=== 'Constant' node
+
+Another kind of statement is a constant. The constant is just a number, and the node class is very simple:
+
+[source,java]
+----
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Constant.java[]
+----
+
+Comparing `Constant` instances is based on comparing the numbers they represent.
+
+== How to test lexer and parser
+
+It is very good practice to write automated tests. These will give us some level of confidence that what we did so far
+is actually working. It is the earliest feedback we can get on our work, which consequently improves the speed of
+creating sofware which actually works.
+
+A unit test is just a normal class which contains test methods. A test method generally creates the testing object, does
+the testing operation and finally check if the operation did what it should. Each test method should test just one thing
+and should be short and clear. It is good practice to name test method according to the test case, possibly resulting
+in a whole sentence, in camel case.
+
+Java projects use some unit testing framework for that, e.g. JUnit or TestNG, which recognizes those classes
+automatically and runs the test methods during the compilation of the project. If a test fails, the whole compilation
+is stopped as failed.
+
+For lexer and parser we create unit test classes, which will be placed here (following to Maven directory structure):
+
+    src/
+      test/
+        java/
+          net/
+            sf/
+              emustudio/
+                ssem/
+                  assembler/
+                    LexerTest.java
+                    ParserTest.java
+
+The content of the test classes are as follows:
+
+[source,java]
+.`src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java`
+----
+include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java[]
+----
+
+[source,java]
+.`src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java`
+----
+include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java[]
+----
+
+=== A Note to parser test
+
+The tests are based on comparing `Instruction` and `Constant` instances with JUnit's `assertEquals()`
+method. This is possible only because of overriden `equals()` and `hashCode()` methods in the classes, since they are used
+directly by Java when it is comparing the instances.
+
+== Implementing the main class
+
+The time has come for implementing the main plug-in class. It will be placed in a package
+`net.sf.emustudio.ssem.assembler`, and the class will be named `CompilerImpl`.
+
+There are several requirements (behavioral contracts) put on the compiler main class:
+
+- It must implement `emulib.plugins.compiler.Compiler` interface. There already exists helper abstract class called
+  `emulib.plugins.compiler.AbstractCompiler`, which implements some fundamental and general methods. We will use that
+  class.
+- It must be annotated with `emulib.annotations.PluginType` annotation.
+- The constructor gets two arguments: unique plugin ID (`Long`) and `emulib.runtime.ContextPool` object. Both values
+  are created by emuStudio, and we will talk about them later.
+
+Now, the "skeleton" of the class follows:
 
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/CompilerImpl.java`
@@ -200,466 +451,117 @@ package net.sf.emustudio.ssem.assembler;
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.plugins.compiler.AbstractCompiler;
+import emulib.plugins.compiler.LexicalAnalyzer;
+import emulib.plugins.compiler.SourceFileExtension;
 import emulib.runtime.ContextPool;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.util.Objects;
+
 @PluginType(
-        type = PLUGIN_TYPE.COMPILER,
-        title = "SSEM Assembler",
-        copyright = "\u00A9 Copyright 2016, YourName",
-        description = "Assembler of SSEM processor language"
+    type = PLUGIN_TYPE.COMPILER,
+    title = "SSEM Assembler",
+    copyright = "\u00A9 Copyright 2016, YourName",
+    description = "Assembler of SSEM processor language"
 )
 public class CompilerImpl extends AbstractCompiler {
+    private static final SourceFileExtension[] SOURCE_FILE_EXTENSIONS = new SourceFileExtension[]{
+        new SourceFileExtension("ssem", "SSEM source file")
+    };
+    private final ContextPool contextPool;
 
     public CompilerImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
-    }
-
-    // ... other methods ...
-}
-----
-
-NOTE: The constructor presented here is mandatory. This is one of the behavioral contracts, emuStudio expects
-      that a plug-in will have a constructor with two arguments: pluginID (assigned by emuStudio), and a context
-      pool, which will be described later, in another type of plug-ins.
-
-== Implement lexical analyzer
-
-Now the time become to write the lexical analyzer. As it was mentioned before, http://jflex.de/[JFlex] will be
-used for generating the Java code from `jflex` specification file. See the link of the JFlex for more information.
-
-The usual place to put the specfile is at `src/main/jflex`. The file will be named `ssem.jflex` The file will be
-automatically parsed, and the lexer generated using
-http://jflex.sourceforge.net/maven-jflex-plugin/generate-mojo.html[JFlex Maven plugin] (see the POM file above).
-
-Before the implementation of the specfile, we need to implement `TokenImpl` class. This class holds the basic
-information about the parsed token, and it extends `java_cup.runtime.Symbol` class, and implements
-`emulib.plugins.compiler.Token` and `Symbols` interface. We will talk about `Symbols` in parser section.
-
-The content of the `net.sf.emustudio.ssem.assembler.TokenImpl` class is:
-
-[source,java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java`
-----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java[]
-----
-
-Now, we can define the lexical analyzer:
-
-[source,flex]
-.`src/main/jflex/ssem.jflex`
-----
-include::../../../plugins/compilers/as-ssem/src/main/jflex/ssem.jflex[]
-----
-
-Token in emuStudio is very important also for syntax highlighting in the editor. For parsing, each token must have
-its unique identification number (token ID), such as `JMP`, `SEPARATOR_EOL`, `NUMBER`, etc. from the above file.
-However, for doing syntax highlighting, it wouldn't be that beneficial if the color of a token was based on its
-ID, because for example each instruction would have different color. Rather, in emuLib there exist token categories,
-which are used when considering token color. Token categories are defined in the class `emulib.plugins.compiler.Token`.
-
-=== Test it!
-
-It is now very required practice to write unit tests, this is especially useful when very concrete specification
-is available. Here are some code snippets, which can be implemented right away for testing the lexer:
-
-[source,java]
-.`src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java`
-----
-include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java[]
-----
-
-Lexer and parser are very interconnected in this case, because Java Cup defines symbol table, which is used by
-`TokenImpl` class. It does not yet exist when we have only lexer, so I guess the best way is to continue with parser
-and then make it work together.
-
-== Implement parser
-
-The code won't compile so far. The reason is that there are not defined symbols used in the lexer (e.g. `JMP`,
-`SEPARATOR_EOL`, etc.). However, the symbols will be generated when the parser (more formally, syntactic analyzer)
-will be implemented. Let's do it.
-
-As was mentioned before, the parser generator will be used, called http://www2.cs.tum.edu/projects/cup/[Java cup].
-I have prepared Maven plug-in in order to be usable from Maven. This is called `cup-maven-plugin`, and you can see
-the definition in the POM file.
-
-There are more options of how to create the parser. The provided URL of Java cup contains lots of documentation. In
-this tutorial, an abstract syntax tree will be implemented and created by the parser. Abstract Syntax Tree (or AST) is
-a representation of the parsed program source code in a form plausible for further compilation process. It is different
-from Parse Syntax Tree, which represents the tree of grammar derivations for the program.
-
-For example, expression "2+2" can be represented using the following AST:
-
-[graphviz]
----------------------------------------------------------------------
-digraph ast {
-  one [label="2"];
-  two [label="2"];
-
-  "+" -> one;
-  "+" -> two;
-}
----------------------------------------------------------------------
-
-where each node of that tree, regardless if it is leaf or not, is an class in Java, like this example:
-
-[source,java]
-----
-interface AST {
-  int evaluate();
-}
-
-class PlusOperator implements AST {
-  private final AST left;
-  private final AST right;
-
-  public PlusOperator(AST left, AST right) {
-    this.left = left;
-    this.right = right;
-  }
-
-  @Override
-  int evaluate() {
-    return left.evaluate() + right.evaluate();
-  }
-}
-
-class Value implements AST {
-  private final int value;
-
-  public Value(int value) {
-    this.value = value;
-  }
-
-  @Override
-  public int evaluate() {
-    return value;
-  }
-}
-----
-
-And these classes are assembled by the parser, like this imaginary example:
-
-[source,java]
-----
-AST program = parser.parse("2+2"); // The parser returns: new PlusOperator(new Value(2), new Value(2))
-System.out.println(program.evaluate()); // prints "4"
-----
-
-This is the basic idea of how parsing works. Now, it is needed to create:
-
-1. Abstract syntax tree classes for our SSEM assembler program
-2. Write parser definition file itself, which will contain the grammar and will build the AST for the program
-
-=== Grammar file
-
-Let's start with the parser definition file (or parser specfile). It will be put to `src/main/cup/parser.cup`.
-The content is as follows:
-
-[source]
-.`src/main/cup/parser.cup`
-----
-include::../../../plugins/compilers/as-ssem/src/main/cup/parser.cup[]
-----
-
-More-less it is possible to recognize grammar which was defined in section <<GRAMMAR, Grammar for parser>>. The right
-side, code snippets wrapped between `{:` and `:}` is Java code which will be executed when particular rule of the
-grammar applies. There exist a special variable `RESULT`, which should return some Java object of type which the
-non-terminal defines footnote:[For example, `non terminal Instruction Statement;` in the gramamr above defines a
-non-terminal `Statement`, which should return an instance of `Instruction` class. The class `Instruction` must be
-implemented manually - it is part of AST; there are no special requirements for the implementation.].
-I suggest to read Java Cup documentation for more information, especially about the `error` symbol.
-
-=== Abstract Syntax Tree
-
-Classes which non-terminals use are in fact parts of abstract syntax tree of the compiler, namely only the following:
-
-- `Program`
-- `Instruction`
-- `Constant`
-
-All the classes are part of AST. We already know that, but it is not useful information and we do not program this
-explicitly if we don't need something which all AST nodes have in common. For now, it's not important to do it.
-For now, these will be just normal classes, which will be put into package `net.sf.emustudio.ssem.assembler.tree`.
-
-The initial implementation of the classes follows:
-
-[source, java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java`
-----
-package net.sf.emustudio.ssem.assembler.tree;
-
-import java.util.ArrayList;
-import java.util.List;
-
-public class Program {
-    private final List<Instruction> instructions = new ArrayList<>();
-
-    public void statement(Instruction instruction) {
-        instructions.add(instruction);
-    }
-
-}
-----
-
-[source,java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java`
-----
-package net.sf.emustudio.ssem.assembler.tree;
-
-import java.util.Optional;
-
-public class Instruction {
-    private final static byte JMP = 0; // 000
-    private final static byte JRP = 4; // 100
-    private final static byte LDN = 2; // 010
-    private final static byte STO = 6; // 110
-    private final static byte SUB = 1; // 001
-    private final static byte CMP = 3; // 011
-    private final static byte STP = 7; // 111
-
-    private final int opcode;
-    private final Optional<Byte> operand;
-
-    private Instruction(int opcode, byte operand) {
-        this.operand = Optional.of(operand);
-        this.opcode = opcode;
-    }
-
-    private Instruction(int opcode) {
-        this.operand = Optional.empty();
-        this.opcode = opcode;
-    }
-
-    public int getOpcode() {
-        return opcode;
-    }
-
-    public Optional<Byte> getOperand() {
-        return operand;
-    }
-
-    public static Instruction jmp(byte address) {
-        return new Instruction(JMP, address);
-    }
-
-    public static Instruction jrp(byte address) {
-        return new Instruction(JRP, address);
-    }
-
-    public static Instruction ldn(byte address) {
-        return new Instruction(LDN, address);
-    }
-
-    public static Instruction sto(byte address) {
-        return new Instruction(STO, address);
-    }
-
-    public static Instruction sub(byte address) {
-        return new Instruction(SUB, address);
-    }
-
-    public static Instruction cmp() {
-        return new Instruction(CMP);
-    }
-
-    public static Instruction stp() {
-        return new Instruction(STP);
-    }
-}
-----
-
-Pay attention to the `Instruction` class. The constructor is private, so there's just impossible to create some
-invalid `Instruction` object. The only possible way how to define it is using static factory methods, which represents
-the machine instructions. These are called from the parser, please check the parser specfile in the section above.
-
-And finally the `Constant.java` class:
-
-[source,java]
-----
-public class Constant {
-    private final int number;
-
-    public Constant(int number) {
-        this.number = number;
-    }
-
-    public int getNumber() {
-        return number;
+        this.contextPool = Objects.requireNonNull(contextPool);
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Constant constant = (Constant) o;
-
-        return number == constant.number;
+    public boolean compile(String inputFileName, String outputFileName) {
+        // TODO !!
+        return false;
     }
 
     @Override
-    public int hashCode() {
-        return number;
+    public boolean compile(String inputFileName) {
+        String outputFileName = Objects.requireNonNull(inputFileName);
+        SourceFileExtension srcExtension = SOURCE_FILE_EXTENSIONS[0];
+
+        int i = inputFileName.lastIndexOf("." + srcExtension.getExtension());
+        if (i >= 0) {
+            outputFileName = outputFileName.substring(0, i);
+        }
+        return compile(inputFileName, outputFileName + ".bin");
+    }
+
+    @Override
+    public LexicalAnalyzer getLexer(Reader reader) {
+        return new LexerImpl(reader);
+    }
+
+    @Override
+    public SourceFileExtension[] getSourceSuffixList() {
+        return SOURCE_FILE_EXTENSIONS;
+    }
+
+    @Override
+    public void destroy() {
+
+    }
+
+    @Override
+    public void showSettings() {
+
+    }
+
+    @Override
+    public boolean isShowSettingsSupported() {
+        return false;
+    }
+
+    @Override
+    public String getVersion() {
+        return "1.0";
     }
 }
 ----
 
-Comparing `Constant` instances is based on comparing the numbers they represent.
+Some things are obvious, some maybe not. For example, method `getLexer()` is called by emuStudio for the syntax
+highlighter. It is very straightforward - just return new `LexerImpl()` which was generated by JFlex from our
+specfile.
 
-=== Test it!
+Method `compile(String)` might seem complex at first look. It is "ugly" Java code which tries to check if the given
+file name ends with our supported file suffix, which is ".ssem". We chose it as the suffix of SSEM source code file.
+We could chose ".asm" or other extension as well. Then, the "real" `compile()` method is called with the input file
+and the output file name, which has suffix ".bin".
 
-Again, it is now very required practice to write unit tests for parser. Here are some code snippets, which can be
-implemented right away for testing the parser:
+Method `getSourceSuffixList()` returns all supported extensions, and will be used in the file filter in the open file
+dialog shown in emuStudio.
 
-[source,java]
-.`src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java`
-----
-include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java[]
-----
+Compiler can have it's own settings dialog (GUI window) which can be shown. This is reflected by the methods
+`isShowSettingsSupported()` and `showSettings()`. Our assembler will not support the dialog.
 
-If you noticed, the tests are based on comparing `Instruction` and `Constant` instances with JUnit's `assertEquals()`
-method. This is possible only if we override `equals()` and `hashCode()` methods in the classes, since they are used
-directly by Java when it is comparing the instances:
-
-[source,java]
-----
-public class Instruction {
-
-    ...
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Instruction that = (Instruction) o;
-        return opcode == that.opcode && operand.equals(that.operand);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = opcode;
-        result = 31 * result + operand.hashCode();
-        return result;
-    }
-
-    ...
-}
-----
-
-The comparison is based on comparing the opcode and operand of the instruction. The same thing must be done for
-`Constant` class:
-
-
-----
-public class Constant {
-
-    ...
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Constant constant = (Constant) o;
-
-        return number == constant.number;
-    }
-
-    @Override
-    public int hashCode() {
-        return number;
-    }
-
-    ...
-}
-----
-
+The "real" `compile()` method is left to be done in the last section.
 
 == Generating code
 
-It is sometimes very useful to separate algorithm and data representation class. In Java, data representation objects
-are often called POJOs, or in database environment DAOs (data access objects). We can use this pattern also in our tree
-of parsed program. The tree should contain just information about *what* the program contains. But we can treat the
-program in many ways. For example, we can print it, we can check it for semantic errors, we can use it for generating
-binary code from it, etc.
+So far, we have implemented a parser which creates our AST. Next operations which compilers do are semantic analysis,
+optimization and code generation. These three phases are performed on the AST. The algorithms traverse the tree and
+update some own internal state, or state of the AST based on visited nodes. Code generator at the end take the results,
+and again - by traversing AST - generates the code.
 
-Specification of *how* to treat the program should be therefore put separately from the AST itself, in different classes.
-There is a very useful design pattern from OOP called https://en.wikipedia.org/wiki/Visitor_pattern[Visitor pattern],
-which is exactly what we need here. Within this pattern, our program-treating-algorithm (e.g. a code generator) we will
-call a visitor, because of the way how it will work. The basic principle is that the visitor will traverse the program
-in a bit tricky way, and when it encounters (visits) a node from AST, it will do something with it (e.g. generate a
-code).
+In our case, we don't need any semantic analysis, like type-checks or so, because we have simple machine instructions,
+which do not require it. We could optimize them, but for the simplicity we will omit this step as well. We will rather
+focus on the final step - code generation.
 
-So, at first, it is necessary to define the vistor itself. Which AST nodes are useful for traversing? I think that
-only `Instruction` node is worth of something. So the visitor interface will look as follows:
+You might remember the section <<AST>>, which talked about AST traversal. We already have `ASTnode` and `ASTvisitor`
+interfaces. The traversal is already implemented, according to the Visitor pattern, by the nodes themselves. One thing
+which is left to do is to implement the visitor itself - the code generator class.
 
-[source, java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java`
-----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java[]
-----
-
-Now, we can implement a code generator, which will be a visitor. For each encountered instruction it will generate
-the binary code. But wait - we need the code for traversing the AST. And here's the trick. The AST itself will know
-how to traverse it. This is probably the most tricky part about the Visitor pattern.
-
-In order to define traversal of AST generally, we now need a common interface - `ASTnode` interface, which will define
-method for traversing:
-
-[source, java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java`
-----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java[]
-----
-
-This interface will be implemented by AST nodes. The weird `accept()` method implements the traversing. So it in fact
-"accepts" a visitor and lets him "visit" current node in a way the visitor defines, taking into account also possible
-children nodes. So, let's modify our AST nodes:
-
-
-[source, java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java`
-----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java[]
-----
-
-
-[source,java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java`
-----
-public class Instruction implements ASTnode {
-
-    ....
-
-    @Override
-    public void accept(ASTvisitor visitor) throws Exception {
-         visitor.visit(this);
-    }
-}
-----
-
-[source,java]
-.`src/main/java/net/sf/emustudio/ssem/assembler/tree/Constant.java`
-----
-public class Constant implements ASTnode {
-
-    ....
-
-    @Override
-    public void accept(ASTvisitor visitor) throws Exception {
-         visitor.visit(this);
-    }
-}
-----
-
-Simple enough, right? You can notice the "reverse" behavior of the visitor pattern, as we are traversing the tree
-of the parsed program and how Java calls the correct method on the `ASTVisitor` for the specific type without need to
-explicit retype or using weird `switch` clause.
-
-Now back to the code generation. It is better if I/O classes work with I/O abstractions (streams, channels, etc.) rather
-than specific objects, e.g. files. This code generator will be implemented in a similar fashion. The code is as follows:
-
+For each encountered instruction, the code generator will generate a binary code. Our code generator will write the
+binary representation into a file. However, it is generally better if I/O classes work with I/O abstractions
+(streams, channels, etc.) rather than specific objects, e.g. files. Out code generator will be implemented in a
+similar fashion. The code is as follows:
 
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java`
@@ -667,13 +569,27 @@ than specific objects, e.g. files. This code generator will be implemented in a 
 include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java[]
 ----
 
-What it does is basically creating a 4-byte SSEM instruction, its binary format. As was mentioned before, SSEM uses
-"reversed" bits for number representations. This is the reason why the address number is twisted. Before that, it is
-however necessary to check the address boundary, which is 2^5 (maximum). The rest should be clear, we're making
-instruction with format specified in section <<GETTING_STARTED,Getting started>>.
+There are several things to notice:
+
+- Output code is written into class `SeekableOutputStream`. Wi will define this class later.
+- `CodeGenerator` is a visitor, which has separate methods for code generation of `Constant` and `Instruction`.
+- `CodeGenerator` can be "closed" - so it handles closing of the writer (our `SeekableOutputStream`).
+- generated code is binary
+
+The code generation is not that complex. There is some complexity caused by a fact, that the binary representations
+are reversed, when comparing to our present-time PCs/laptops.
+
+The idea of generating code for instruction is to prepare 4 bytes, 32 bits, which are then written into the "writer"
+as one `Integer`, which has also 32 bits. The instruction format is explained in section <<SSEM_ASM>>. First 5 bits from
+the left represent the "line" - instruction operand. It must be reversed.
+Then, bits 13,14,15 represent the instruction opcode. It does not have to be reversed here, since the instructions are
+already encoded properly in the `Instruction` class. Last two bytes are just empty.
+
+Code generation for constant is much easier - it's just retrieving the value and writing it in the reversed fashion as
+`Integer`.
 
 Code generator uses a "seekable" output stream, which allows to seek in the output. It is a separate class, which is
-split actially an interface (because of easier testing):
+actually an abstract class, extending `OutputStream`. The reason is easier testing:
 
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java`
@@ -689,12 +605,16 @@ and here's the implementation:
 include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/MemoryAndFileOutput.java[]
 ----
 
+The "seeking" capability is required, because, as you remember, it's possible to write something like this:
 
-We require the "seeking" because each instruction line begins with the "line" itself, which actually represents the
-address in memory, when multiplied by 4 bytes per row.
+    06 STO 05
+    05 LDN 06
+    07 STP
+
+It's not quite common, but it's possible.
 
 
-=== Test it!
+=== Testing the code generator
 
 As being our practice, we must test it.
 
@@ -706,10 +626,8 @@ include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/
 
 == Finalizing, implementing the rest
 
-We're almost done now! What is missing so far is to finish implementation of the main `CompilerImpl` class.
-Let's do it.
-
-The most interesting is the `compile()` method. So let's begin with it first.
+We're almost done now! What is missing so far is to finish implementation of the main `CompilerImpl.compile()`  method.
+Let's begin with it first.
 
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/CompilerImpl.java`
@@ -720,12 +638,13 @@ public class CompilerImpl extends AbstractCompiler {
 
     @Override
     public boolean compile(String inputFileName, String outputFileName) {
-
         notifyCompileStart();
 
         int errorCode = 0;
         try (Reader reader = new FileReader(inputFileName)) {
-            try (CodeGenerator codeGenerator = new CodeGenerator(new FileOutputStream(outputFileName))) {
+            MemoryContext<Byte> memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
+
+            try (CodeGenerator codeGenerator = new CodeGenerator(new MemoryAndFileOutput(outputFileName, memory))) {
                 LexerImpl lexer = new LexerImpl(reader);
                 ParserImpl parser = new ParserImpl(lexer, new ComplexSymbolFactory(), this);
 
@@ -738,10 +657,12 @@ public class CompilerImpl extends AbstractCompiler {
                 }
 
                 program.accept(codeGenerator);
+                programStart = program.getStartLine() * 4;
                 notifyInfo("Compile was successful. Output: " + outputFileName);
             }
         } catch (Exception e) {
             errorCode = 1;
+            LOGGER.error("Compilation error.", e);
             notifyError("Compilation error.");
 
             return false;
@@ -771,8 +692,3 @@ parsing errors. For this purpose, `emulib.plugins.compiler.AbstractCompiler` cla
 - `notifyWarning()` - compiler warning
 - `notifyError()` - compilation error
 - `notifyInfo()` - informational message
-
-=== Loading compiler program into memory
-
-The very last part I leave as an excercise. In provided source codes this functionality is ofcourse implemented,
-but at the end - it is up to you if you'll use my solution or not.

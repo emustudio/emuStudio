@@ -26,14 +26,14 @@ import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.util.Objects;
 import java_cup.runtime.ComplexSymbolFactory;
 import net.sf.emustudio.ssem.assembler.tree.Program;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.FileReader;
+import java.io.Reader;
+import java.util.Objects;
 
 @PluginType(
     type = PLUGIN_TYPE.COMPILER,
@@ -43,7 +43,6 @@ import org.slf4j.LoggerFactory;
 )
 @SuppressWarnings("unused")
 public class CompilerImpl extends AbstractCompiler {
-    private static final String OUTPUT_FILE_EXTENSION = ".bin";
     private static final Logger LOGGER = LoggerFactory.getLogger(CompilerImpl.class);
     private static final SourceFileExtension[] SOURCE_FILE_EXTENSIONS = new SourceFileExtension[]{
         new SourceFileExtension("ssem", "SSEM source file")
@@ -95,31 +94,18 @@ public class CompilerImpl extends AbstractCompiler {
     @Override
     public boolean compile(String inputFileName) {
         String outputFileName = Objects.requireNonNull(inputFileName);
+        SourceFileExtension srcExtension = SOURCE_FILE_EXTENSIONS[0];
 
-        for (SourceFileExtension srcExtension : SOURCE_FILE_EXTENSIONS) {
-            int i = inputFileName.lastIndexOf("." + srcExtension.getExtension());
-            if (i >= 0) {
-                outputFileName = outputFileName.substring(0, i);
-                break;
-            }
+        int i = inputFileName.lastIndexOf("." + srcExtension.getExtension());
+        if (i >= 0) {
+            outputFileName = outputFileName.substring(0, i);
         }
-        return compile(inputFileName, outputFileName + OUTPUT_FILE_EXTENSION);
+        return compile(inputFileName, outputFileName + ".bin");
     }
 
     @Override
     public LexicalAnalyzer getLexer(Reader reader) {
-        return new LexerImpl(new Reader() {
-            @Override
-            public int read(char[] cbuf, int off, int len) throws IOException {
-                int result = reader.read(cbuf, off, len);
-                return result;
-            }
-
-            @Override
-            public void close() throws IOException {
-                reader.close();
-            }
-        });
+        return new LexerImpl(reader);
     }
 
     @Override

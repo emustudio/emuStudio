@@ -73,7 +73,6 @@ public class EmulatorEngineTest {
 
         engine.reset(4);
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.run());
-
         assertEquals(8, NumberUtils.readInt(memoryStub.readWord(31 * 4), memoryStub.getWordReadingStrategy()));
     }
 }
