@@ -21,6 +21,7 @@ package net.sf.emustudio.cpu.testsuite;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
 import net.sf.emustudio.cpu.testsuite.internal.RunStateListenerStub;
+import net.sf.emustudio.cpu.testsuite.memory.MemoryStub;
 
 import java.util.Arrays;
 import java.util.List;

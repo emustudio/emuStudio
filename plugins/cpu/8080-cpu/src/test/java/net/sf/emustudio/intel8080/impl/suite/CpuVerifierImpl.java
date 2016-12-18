@@ -20,7 +20,7 @@
 package net.sf.emustudio.intel8080.impl.suite;
 
 import net.sf.emustudio.cpu.testsuite.CpuVerifier;
-import net.sf.emustudio.cpu.testsuite.MemoryStub;
+import net.sf.emustudio.cpu.testsuite.memory.ShortMemoryStub;
 import net.sf.emustudio.intel8080.impl.CpuImpl;
 
 import java.util.Objects;
@@ -44,7 +44,7 @@ import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_C;
 public class CpuVerifierImpl extends CpuVerifier {
     private final CpuImpl cpu;
 
-    public CpuVerifierImpl(CpuImpl cpu, MemoryStub memoryStub) {
+    public CpuVerifierImpl(CpuImpl cpu, ShortMemoryStub memoryStub) {
         super(memoryStub);
         this.cpu = Objects.requireNonNull(cpu);
     }

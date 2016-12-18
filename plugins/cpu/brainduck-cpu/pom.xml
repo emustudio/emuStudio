@@ -78,5 +78,10 @@
       <groupId>net.sf.emustudio</groupId>
       <artifactId>brainduck-mem</artifactId>
     </dependency>
+    <dependency>
+      <groupId>net.sf.emustudio</groupId>
+      <artifactId>cpu-testsuite</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

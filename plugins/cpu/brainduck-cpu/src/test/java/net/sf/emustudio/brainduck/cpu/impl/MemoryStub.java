@@ -20,16 +20,16 @@
 package net.sf.emustudio.brainduck.cpu.impl;
 
 import emulib.annotations.ContextType;
-import emulib.plugins.memory.Memory;
+import emulib.runtime.NumberUtils;
 import net.sf.emustudio.brainduck.memory.RawMemoryContext;
+import net.sf.emustudio.cpu.testsuite.memory.ShortMemoryStub;
 
 @ContextType
-public class MemoryStub implements RawMemoryContext {
-    private final short[] memory;
+public class MemoryStub extends ShortMemoryStub implements RawMemoryContext {
     private int afterProgram;
 
-    MemoryStub(int size) {
-        this.memory = new short[size];
+    MemoryStub() {
+        super(NumberUtils.Strategy.LITTLE_ENDIAN);
     }
 
     void setProgram(byte[] program) {
@@ -50,70 +50,8 @@ public class MemoryStub implements RawMemoryContext {
     }
 
     @Override
-    public void clear() {
-        for (int i = 0; i < memory.length; i++) {
-            memory[i] = 0;
-        }
-    }
-
-    @Override
     public short[] getRawMemory() {
         return memory;
     }
 
-    @Override
-    public void addMemoryListener(Memory.MemoryListener listener) {
-
-    }
-
-    @Override
-    public void removeMemoryListener(Memory.MemoryListener listener) {
-
-    }
-
-    @Override
-    public Class<?> getDataType() {
-        return Short.class;
-    }
-
-    @Override
-    public Short read(int from) {
-        return memory[from];
-    }
-
-    @Override
-    public Short[] readWord(int from) {
-        if (from == memory.length - 1) {
-            return new Short[] { memory[from] };
-        }
-        return new Short[] { memory[from], memory[from + 1] };
-    }
-
-    @Override
-    public void write(int to, Short val) {
-        memory[to] = (short)(val & 0xFF);
-    }
-
-    @Override
-    public void writeWord(int to, Short[] cells) {
-        memory[to] = cells[0];
-        if (to < memory.length - 1) {
-            memory[to + 1] = cells[1];
-        }
-    }
-
-    @Override
-    public int getSize() {
-        return memory.length;
-    }
-
-    @Override
-    public boolean areMemoryNotificationsEnabled() {
-        return false;
-    }
-
-    @Override
-    public void setMemoryNotificationsEnabled(boolean enabled) {
-
-    }
 }

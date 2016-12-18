@@ -23,6 +23,9 @@ import emulib.plugins.compiler.Compiler;
 import emulib.plugins.compiler.Message;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
+import emulib.runtime.NumberUtils;
+import net.sf.emustudio.cpu.testsuite.memory.ByteMemoryStub;
+import net.sf.emustudio.cpu.testsuite.memory.MemoryStub;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,7 +43,7 @@ import static org.junit.Assert.assertTrue;
 
 public class CompilerImplTest {
     private CompilerImpl compiler;
-    private MemoryStub memoryStub;
+    private MemoryStub<Byte> memoryStub;
     private int errorCode;
 
     @Rule
@@ -48,7 +51,7 @@ public class CompilerImplTest {
 
     @Before
     public void setUp() throws Exception {
-        memoryStub = new MemoryStub();
+        memoryStub = new ByteMemoryStub(NumberUtils.Strategy.REVERSE_BITS);
 
         ContextPool pool = createNiceMock(ContextPool.class);
         expect(pool.getMemoryContext(0, MemoryContext.class))

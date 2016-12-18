@@ -20,7 +20,7 @@
 package net.sf.emustudio.zilogZ80.impl.suite;
 
 import net.sf.emustudio.cpu.testsuite.CpuVerifier;
-import net.sf.emustudio.cpu.testsuite.MemoryStub;
+import net.sf.emustudio.cpu.testsuite.memory.ShortMemoryStub;
 import net.sf.emustudio.zilogZ80.impl.CpuImpl;
 import net.sf.emustudio.zilogZ80.impl.FakeDevice;
 
@@ -50,7 +50,7 @@ public class CpuVerifierImpl extends CpuVerifier {
     private final CpuImpl cpu;
     private final List<FakeDevice> devices;
 
-    public CpuVerifierImpl(CpuImpl cpu, MemoryStub memoryStub, List<FakeDevice> devices) {
+    public CpuVerifierImpl(CpuImpl cpu, ShortMemoryStub memoryStub, List<FakeDevice> devices) {
         super(memoryStub);
         this.cpu = Objects.requireNonNull(cpu);
         this.devices = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(devices)));

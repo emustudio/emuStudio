@@ -22,8 +22,9 @@ package net.sf.emustudio.zilogZ80.impl;
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
+import emulib.runtime.NumberUtils;
 import net.sf.emustudio.cpu.testsuite.Generator;
-import net.sf.emustudio.cpu.testsuite.MemoryStub;
+import net.sf.emustudio.cpu.testsuite.memory.ShortMemoryStub;
 import net.sf.emustudio.intel8080.api.ExtendedContext;
 import net.sf.emustudio.zilogZ80.impl.suite.CpuRunnerImpl;
 import net.sf.emustudio.zilogZ80.impl.suite.CpuVerifierImpl;
@@ -61,7 +62,7 @@ public class InstructionsTest {
 
     @Before
     public void setUp() throws Exception {
-        MemoryStub memoryStub = new MemoryStub();
+        ShortMemoryStub memoryStub = new ShortMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
 
         Capture<ExtendedContext> cpuContext = new Capture<>();
         ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);

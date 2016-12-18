@@ -20,7 +20,7 @@
 package net.sf.emustudio.intel8080.impl.suite;
 
 import net.sf.emustudio.cpu.testsuite.CpuRunner;
-import net.sf.emustudio.cpu.testsuite.MemoryStub;
+import net.sf.emustudio.cpu.testsuite.memory.ShortMemoryStub;
 import net.sf.emustudio.intel8080.impl.CpuImpl;
 
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ import static net.sf.emustudio.intel8080.impl.EmulatorEngine.REG_L;
 
 public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
 
-    public CpuRunnerImpl(CpuImpl cpu, MemoryStub memoryStub) {
+    public CpuRunnerImpl(CpuImpl cpu, ShortMemoryStub memoryStub) {
         super(cpu, memoryStub);
     }
 

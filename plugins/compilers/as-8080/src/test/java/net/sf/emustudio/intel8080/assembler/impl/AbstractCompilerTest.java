@@ -24,6 +24,9 @@ import emulib.plugins.compiler.Compiler;
 import emulib.plugins.compiler.Message;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
+import emulib.runtime.NumberUtils;
+import net.sf.emustudio.cpu.testsuite.memory.MemoryStub;
+import net.sf.emustudio.cpu.testsuite.memory.ShortMemoryStub;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
@@ -42,7 +45,7 @@ import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractCompilerTest {
     protected CompilerImpl compiler;
-    protected MemoryStub memoryStub;
+    protected MemoryStub<Short> memoryStub;
     protected int errorCode;
 
     @Rule
@@ -50,7 +53,7 @@ public abstract class AbstractCompilerTest {
 
     @Before
     public void setUp() throws Exception {
-        memoryStub = new MemoryStub();
+        memoryStub = new ShortMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
 
         ContextPool pool = createNiceMock(ContextPool.class);
         expect(pool.getMemoryContext(0, MemoryContext.class))

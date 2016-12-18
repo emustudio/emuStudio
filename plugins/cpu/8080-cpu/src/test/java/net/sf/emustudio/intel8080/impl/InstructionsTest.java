@@ -22,9 +22,10 @@ package net.sf.emustudio.intel8080.impl;
 import emulib.emustudio.SettingsManager;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
+import emulib.runtime.NumberUtils;
 import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.cpu.testsuite.Generator;
-import net.sf.emustudio.cpu.testsuite.MemoryStub;
+import net.sf.emustudio.cpu.testsuite.memory.ShortMemoryStub;
 import net.sf.emustudio.intel8080.impl.suite.CpuRunnerImpl;
 import net.sf.emustudio.intel8080.impl.suite.CpuVerifierImpl;
 import org.easymock.EasyMock;
@@ -50,7 +51,7 @@ public class InstructionsTest {
 
     @Before
     public void setUp() throws PluginInitializationException {
-        MemoryStub memoryStub = new MemoryStub();
+        ShortMemoryStub memoryStub = new ShortMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
 
         ContextPool contextPool = EasyMock.createNiceMock(ContextPool.class);
         expect(contextPool.getMemoryContext(0, MemoryContext.class))

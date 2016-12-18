@@ -18,12 +18,15 @@
  */
 package net.sf.emustudio.cpu.testsuite;
 
+import emulib.runtime.NumberUtils;
+import net.sf.emustudio.cpu.testsuite.memory.MemoryStub;
+
 import java.util.Objects;
 
 import static org.junit.Assert.assertEquals;
 
 public abstract class CpuVerifier {
-    protected final MemoryStub memoryStub;
+    protected final MemoryStub<? extends Number> memoryStub;
 
     public CpuVerifier(MemoryStub memoryStub) {
         this.memoryStub = Objects.requireNonNull(memoryStub);
@@ -38,8 +41,13 @@ public abstract class CpuVerifier {
     }
 
     public void checkMemoryWord(int address, int value) {
-        Short[] read = memoryStub.readWord(address);
-        int memoryWord = (read[1] << 8) | read[0];
+        Number[] read = memoryStub.readWord(address);
+        Byte[] word = new Byte[] {0,0,0,0};
+        for (int i = 0; i < read.length; i++) {
+            word[i] = read[i].byteValue();
+        }
+
+        int memoryWord = NumberUtils.readInt(word, memoryStub.getWordReadingStrategy());
 
         assertEquals(
                 String.format("Expected word mem[%04x]=%04x, but was %04x", address, value, memoryWord),

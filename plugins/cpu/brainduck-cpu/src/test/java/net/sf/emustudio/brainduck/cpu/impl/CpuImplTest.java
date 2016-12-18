@@ -51,7 +51,7 @@ public class CpuImplTest {
 
     @Before
     public void setUp() throws Exception {
-        memory = new MemoryStub(65536);
+        memory = new MemoryStub();
         ioDevice = new DeviceStub();
 
         Capture<BrainCPUContextImpl> cpuContextCapture = new Capture<>();

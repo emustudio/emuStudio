@@ -1,6 +1,10 @@
 package net.sf.emustudio.brainduck.cpu.impl;
 
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.IOException;
+
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_COPY_AND_CLEAR;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_DEC;
 import static net.sf.emustudio.brainduck.cpu.impl.EmulatorEngine.I_DECV;
@@ -17,8 +21,6 @@ import static org.easymock.EasyMock.expectLastCall;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import org.junit.Before;
-import org.junit.Test;
 
 public class EmulatorEngineTest {
     private Profiler profiler;
@@ -29,7 +31,7 @@ public class EmulatorEngineTest {
 
     @Before
     public void setUp() throws Exception {
-        memory = new MemoryStub(65536);
+        memory = new MemoryStub();
         profiler = new Profiler(memory);
 
         context = createNiceMock(BrainCPUContextImpl.class);

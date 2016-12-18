@@ -20,7 +20,7 @@
 package net.sf.emustudio.zilogZ80.impl.suite;
 
 import net.sf.emustudio.cpu.testsuite.CpuRunner;
-import net.sf.emustudio.cpu.testsuite.MemoryStub;
+import net.sf.emustudio.cpu.testsuite.memory.ShortMemoryStub;
 import net.sf.emustudio.zilogZ80.impl.CpuImpl;
 import net.sf.emustudio.zilogZ80.impl.FakeDevice;
 
@@ -40,7 +40,7 @@ import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_L;
 public class CpuRunnerImpl extends CpuRunner<CpuImpl> {
     private final List<FakeDevice> devices;
 
-    public CpuRunnerImpl(CpuImpl cpu, MemoryStub memoryStub, List<FakeDevice> devices) {
+    public CpuRunnerImpl(CpuImpl cpu, ShortMemoryStub memoryStub, List<FakeDevice> devices) {
         super(cpu, memoryStub);
         this.devices = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(devices)));
     }

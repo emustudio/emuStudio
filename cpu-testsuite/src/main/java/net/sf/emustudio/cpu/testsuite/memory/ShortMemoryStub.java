@@ -16,14 +16,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package net.sf.emustudio.cpu.testsuite;
+package net.sf.emustudio.cpu.testsuite.memory;
 
 import emulib.plugins.memory.Memory;
-import emulib.plugins.memory.MemoryContext;
 
-public class MemoryStub implements MemoryContext<Short> {
-    private short[] memory;
+public class ShortMemoryStub implements MemoryStub<Short> {
+    private final int wordReadingStrategy;
 
+    protected short[] memory = new short[1000];
+    private int wordCellsCount = 2;
+
+    public ShortMemoryStub(int wordReadingStrategy) {
+        this.wordReadingStrategy = wordReadingStrategy;
+    }
+
+    @Override
     public void setMemory(short[] memory) {
         this.memory = memory;
     }
@@ -35,7 +42,12 @@ public class MemoryStub implements MemoryContext<Short> {
 
     @Override
     public Short[] readWord(int memoryPosition) {
-        return new Short[] { memory[memoryPosition], memory[memoryPosition + 1] };
+        Short[] word = new Short[wordCellsCount];
+        for (int i = 0; i < wordCellsCount; i++) {
+            word[i] = memory[memoryPosition + i];
+        }
+
+        return word;
     }
 
     @Override
@@ -45,8 +57,9 @@ public class MemoryStub implements MemoryContext<Short> {
 
     @Override
     public void writeWord(int memoryPosition, Short[] cells) {
-        memory[memoryPosition] = cells[0];
-        memory[memoryPosition + 1] = cells[1];
+        for (int i = 0; i < wordCellsCount; i++) {
+            memory[memoryPosition + i] = cells[i];
+        }
     }
 
     @Override
@@ -84,5 +97,15 @@ public class MemoryStub implements MemoryContext<Short> {
     @Override
     public void setMemoryNotificationsEnabled(boolean enabled) {
 
+    }
+
+    @Override
+    public void setWordCellsCount(int count) {
+        this.wordCellsCount = count;
+    }
+
+    @Override
+    public int getWordReadingStrategy() {
+        return wordReadingStrategy;
     }
 }

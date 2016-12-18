@@ -81,3 +81,4 @@ com_crashlytics_export_strings.xml
 # asciidoc
 diag-*.png
 diag-*.png.cache
+/plugins/cpu/ssem-cpu/nbproject/

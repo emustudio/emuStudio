@@ -23,6 +23,7 @@ import emulib.plugins.cpu.CPU;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.NumberUtils;
 import emulib.runtime.NumberUtils.Strategy;
+
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -128,7 +129,8 @@ public class EmulatorEngine {
         
         int line = NumberUtils.reverseBits(instruction[0], 8);
         int opcode = instruction[1] & 3;
-        CI++;
+        CI = (CI + 4) % (32 *4);
+
 
         switch (opcode) {
             case 0: break;
