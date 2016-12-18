@@ -34,13 +34,12 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 class InteractiveDisassembler {
     final static int INSTRUCTIONS_PER_PAGE = 2 * 15 + 1;
-    final static int CURRENT_INSTRUCTION = 4;
-    private final static int AVG_INSTRUCTION_SIZE = 2;
-    final static int BYTES_PER_PAGE = INSTRUCTIONS_PER_PAGE * AVG_INSTRUCTION_SIZE;
+    final static int CURRENT_INSTRUCTION = 6;
 
     private final Disassembler disassembler;
     private volatile int memorySize;
     private final NavigableMap<Integer, List<Integer>> flowGraph = new ConcurrentSkipListMap<>();
+    private int longestInstructionSize = 2;
 
     private volatile int addressOffset;
 
@@ -52,13 +51,18 @@ class InteractiveDisassembler {
         this.disassembler = Objects.requireNonNull(disassembler);
         this.memorySize = memorySize;
     }
+    
+    int bytesPerPage() {
+        return INSTRUCTIONS_PER_PAGE * longestInstructionSize;
+    }
 
     void pagePrevious() {
         int tmpMemorySize = memorySize;
 
         // do not go over "backwards maximum"
-        if (addressOffset - BYTES_PER_PAGE < tmpMemorySize) {
-            addressOffset -= BYTES_PER_PAGE;
+        int bytesPP = bytesPerPage();
+        if (addressOffset - bytesPP < tmpMemorySize) {
+            addressOffset -= bytesPP;
         } else {
             addressOffset = -tmpMemorySize;
         }
@@ -68,8 +72,9 @@ class InteractiveDisassembler {
         int tmpMemorySize = memorySize;
 
         // do not go over "forwards maximum"
-        if (addressOffset + BYTES_PER_PAGE < tmpMemorySize) {
-            addressOffset += BYTES_PER_PAGE;
+        int bytesPP = bytesPerPage();
+        if (addressOffset + bytesPP < tmpMemorySize) {
+            addressOffset += bytesPP;
         } else {
             addressOffset = tmpMemorySize;
         }
@@ -92,8 +97,12 @@ class InteractiveDisassembler {
 
         // determine if currentLocation is already present in the cache
         if (!tail.containsKey(currentLocation)) {
+            int nextLocation = disassembler.getNextInstructionPosition(currentLocation);
+            if (nextLocation - currentLocation > longestInstructionSize) {
+                longestInstructionSize = nextLocation - currentLocation;
+            }
             flowGraph.put(
-                    currentLocation, Collections.singletonList(disassembler.getNextInstructionPosition(currentLocation))
+                    currentLocation, Collections.singletonList(nextLocation)
             );
         } else {
             List<Integer> oldList = tail.get(currentLocation);
@@ -108,6 +117,10 @@ class InteractiveDisassembler {
 
                 for (; lowerBound < higherBound; lowerBound += singleBytesCount) {
                     int nextPosition = disassembler.getNextInstructionPosition(lowerBound);
+                    if (nextPosition - lowerBound > longestInstructionSize) {
+                        longestInstructionSize = nextPosition - lowerBound;
+                    }
+                    
                     instructionsInTheInterval.add(nextPosition);
 
                     singleBytesCount = (nextPosition - lowerBound);
@@ -140,7 +153,12 @@ class InteractiveDisassembler {
 
             if (lastDecodedLocation != -1) {
                 while (lastDecodedLocation < currentDecodedLocation.getKey()) {
-                    lastDecodedLocation = disassembler.getNextInstructionPosition(lastDecodedLocation);
+                    int nextLocation = disassembler.getNextInstructionPosition(lastDecodedLocation);
+                    if (nextLocation - lastDecodedLocation > longestInstructionSize) {
+                        longestInstructionSize = nextLocation - lastDecodedLocation;
+                    }
+                    lastDecodedLocation = nextLocation;
+                    
                     locations.add(lastDecodedLocation);
                 }
             }
@@ -159,7 +177,13 @@ class InteractiveDisassembler {
         int instructionsToLoad = INSTRUCTIONS_PER_PAGE / 2;
         while (locations.size() < (indexOfCurrentLocation + instructionsToLoad)) {
             try {
-                locations.add(disassembler.getNextInstructionPosition(locations.get(locations.size() - 1)));
+                int location = locations.get(locations.size() - 1);
+                int nextLocation = disassembler.getNextInstructionPosition(location);
+                if (nextLocation - location > longestInstructionSize) {
+                    longestInstructionSize = nextLocation - location;
+                }
+
+                locations.add(nextLocation);
             } catch (IndexOutOfBoundsException e) {
                 break;
             }
@@ -186,8 +210,8 @@ class InteractiveDisassembler {
         updateCache(currentLocation);
 
         int currentLocationInPage = Math.min(tmpMemorySize - 1, Math.max(currentLocation, currentLocation + addressOffset));
-        int instructionGapBefore = CURRENT_INSTRUCTION * AVG_INSTRUCTION_SIZE;
-        int instructionGapAfter = (INSTRUCTIONS_PER_PAGE - CURRENT_INSTRUCTION) * AVG_INSTRUCTION_SIZE;
+        int instructionGapBefore = CURRENT_INSTRUCTION * longestInstructionSize;
+        int instructionGapAfter = (INSTRUCTIONS_PER_PAGE - CURRENT_INSTRUCTION) * longestInstructionSize;
 
         // recompute current page
         int from = Math.max(0, currentLocationInPage - instructionGapBefore);

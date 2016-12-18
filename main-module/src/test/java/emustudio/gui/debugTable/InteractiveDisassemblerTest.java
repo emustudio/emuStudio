@@ -19,10 +19,9 @@
 package emustudio.gui.debugTable;
 
 import emulib.plugins.cpu.Disassembler;
-import org.junit.Test;
-
 import static org.easymock.EasyMock.createMock;
 import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public class InteractiveDisassemblerTest {
     private final static int MEMORY_SIZE = 0x10000;
@@ -215,10 +214,10 @@ public class InteractiveDisassemblerTest {
         // advance for updating cache
         ida.rowToLocation(0, InteractiveDisassembler.CURRENT_INSTRUCTION);
         ida.pageNext();
-        ida.rowToLocation(InteractiveDisassembler.BYTES_PER_PAGE, InteractiveDisassembler.CURRENT_INSTRUCTION);
+        ida.rowToLocation(ida.bytesPerPage(), InteractiveDisassembler.CURRENT_INSTRUCTION);
         ida.rowToLocation(0, InteractiveDisassembler.CURRENT_INSTRUCTION); // jump back
 
-        assertEquals(InteractiveDisassembler.BYTES_PER_PAGE, ida.rowToLocation(0, InteractiveDisassembler.CURRENT_INSTRUCTION));
+        assertEquals(ida.bytesPerPage(), ida.rowToLocation(0, InteractiveDisassembler.CURRENT_INSTRUCTION));
     }
 
     @Test
@@ -320,7 +319,7 @@ public class InteractiveDisassemblerTest {
 
         ida.pageNext();
 
-        assertEquals(InteractiveDisassembler.BYTES_PER_PAGE, ida.rowToLocation(0, InteractiveDisassembler.CURRENT_INSTRUCTION));
+        assertEquals(ida.bytesPerPage(), ida.rowToLocation(0, InteractiveDisassembler.CURRENT_INSTRUCTION));
     }
 
     @Test
