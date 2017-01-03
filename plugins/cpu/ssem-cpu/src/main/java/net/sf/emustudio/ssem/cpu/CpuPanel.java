@@ -163,11 +163,11 @@ public class CpuPanel extends javax.swing.JPanel {
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Registers"));
 
-        jLabel2.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel2.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         jLabel2.setText("A");
         jLabel2.setToolTipText("Accumulator");
 
-        jLabel3.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel3.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         jLabel3.setText("CI");
         jLabel3.setToolTipText("Control Instruction");
 
@@ -228,11 +228,11 @@ public class CpuPanel extends javax.swing.JPanel {
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Memory snippet"));
 
-        jLabel4.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel4.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         jLabel4.setText("M[CI]");
         jLabel4.setToolTipText("Control Instruction");
 
-        jLabel5.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel5.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         jLabel5.setText("M[line]");
         jLabel5.setToolTipText("Control Instruction");
 
@@ -256,7 +256,7 @@ public class CpuPanel extends javax.swing.JPanel {
         txtBinMLine.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtBinMLine.setText("0000 0000  0000 0000  0000 0000  0000 0000");
 
-        jLabel6.setFont(new java.awt.Font("Monospaced", 1, 12)); // NOI18N
+        jLabel6.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         jLabel6.setText("line");
         jLabel6.setToolTipText("Control Instruction");
 

@@ -82,3 +82,14 @@ com_crashlytics_export_strings.xml
 diag-*.png
 diag-*.png.cache
 /plugins/cpu/ssem-cpu/nbproject/
+
+# vargant
+.vagrant/
+
+# emustudio
+compilers/
+config/
+cpu/
+devices/
+mem/
+

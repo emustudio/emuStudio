@@ -15,7 +15,7 @@ Before reading on, please read the "Introduction for writing virtual computers" 
 needed for setting up the development environment and for basic understanding how the emuStudio/plug-ins lifecycle
 work.
 
-A CPU is just another plug-in, which means that it is enough to implement some API. The CPU
+A CPU is just another plug-in, which means that it is "enough" to implement some API. The CPU
 API can be found in `emulib.plugins.cpu` project package.
 
 CPU is supposed to be the core of the emulator in the similar way as the real CPU is core to the computer.
@@ -50,8 +50,11 @@ Both the disassembler and GUI panel should be instantiated only once. emuStudio 
 the process of loading of the virtual computer.
 
 For developing disassembler, there is good news. There exist a tool which can generate emuStudio disassembler from
-a specification file. We will use this tool also in this tutorial. For more information, see
-https://github.com/sulir/edigen
+a specification file. It is called Edigen, a short for "emulator disassembler generator". We will use this tool also
+in this tutorial. For more information, see the projects at:
+
+- https://github.com/sulir/edigen
+- and https://github.com/sulir/edigen-maven-plugin
 
 
 == Preparing the environment
@@ -60,7 +63,6 @@ We will use Maven for managing the source code and dependencies.
 
 NOTE: If you are new to Maven, please read
       https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html[Maven in 5 minutes] tutorial.
-
 
 The project should be located in `emuStudio/plugins/cpu/ssem-cpu`.
 In order to create the initial project structure, run `mvn archetype:generate` in that directory.
@@ -86,10 +88,12 @@ include::../../../plugins/cpu/ssem-cpu/pom.xml[]
 
 == The main class
 
-So, right to the code. We will start implementing the main class of the CPU. The purpose of the main class is to provide
-information about the plug-in and enable let to control the plug-in running states by emuStudio main module.
+We will start with implementing the main class of the CPU. It provides the main communication point - the API - used by
+emuStudio main module. The main module can pass requests for starting or stopping the emulation, or it can request
+for the disassembler or the GUI panel.
 
-The first snippet looks as follows:
+We will start with small snippet of code which will be extended throughout the tutorial. The first snippet looks
+as follows:
 
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java`
@@ -97,7 +101,7 @@ The first snippet looks as follows:
 @PluginType(
     type = PLUGIN_TYPE.CPU,
     title = "SSEM CPU",
-    copyright = "\u00A9 Copyright 2016, Your Name",
+    copyright = "\u00A9 Copyright 2017, Your Name",
     description = "Emulator of SSEM CPU"
 )
 public class CpuImpl extends AbstractCPU {
@@ -154,7 +158,7 @@ public class CpuImpl extends AbstractCPU {
 ----
 
 As you can see, there is a lot of methods which needs attention. Note two methods especially - `getStatusPanel()`
-and `getDisassembler()`. Those two methods should return the components mentioned in section <<WHAT_CPU_DOES>>.
+and `getDisassembler()`. Those two methods will return the components, mentioned first in section <<WHAT_CPU_DOES>>.
 
 Also note that the class extends from `AbstractCPU`. The `AbstractCPU` class lies in emuLib library. It implements
 some fundamental methods required by `CPU` interface. For example, managing breakpoints and controlling the
@@ -167,7 +171,8 @@ boiler-plate code needed to be done in every CPU plug-in.
 === Load and initialization
 
 Loading the virtual computer starts with creating separate class loader derived from the one emuStudio is using,
-so each plug-in can see everything what emuStudio can see. There can be loaded only one computer in emuStudio.
+so each plug-in can see everything what emuStudio can see, roughly speaking. There can be loaded only one computer
+in emuStudio.
 
 The CPU plug-in JAR file is loaded using the class loader as a second in order.
 
@@ -205,12 +210,14 @@ In case of automatic emulation, the emulation control is performed only in the m
 === Emulation lifecycle
 
 As it was described in section "Emulation lifecycle" in the user manual of the main module, the emulation "life"
-is a state machine. This state machine can react on events from outside world which cause changes, so-called transitions
-to another state.
+is a state machine. This state machine manages a state, called "current state". It then reacts on events from the
+outside world and transitions the current state to another state, following the rules. The state transition can, and
+in this case does - cause side-effects. It means that except the simple changing the state, it performs some actions.
 
-For example, you know that there is a button above debug window, green-filled arrow, by which
+For example, you know that there is a button above the debug window, a green-filled arrow, when clicked on it
 the emulation will be executed. Besides, there are more buttons, for example "step emulation", which will do execute
-just one CPU instruction.
+just one CPU instruction. The clicks on the buttons are the "outside world" events, which will be propagated to
+the state machine of emuStudio.
 
 The state machine can be seen in the following diagram:
 
@@ -232,7 +239,7 @@ digraph emulation_states {
 }
 ---------------------------------------------------------------------
 
-The states of the state machine are coded into a enum in emuLib:
+The states of the state machine are encoded into an enum in emuLib:
 
 [source,java]
 .`emulib.plugins.cpu.CPU.RunState`
@@ -271,7 +278,8 @@ public interface CPU extends Plugin {
 }
 ----
 
-The CPU plug-in developer using `AbstractCPU` must implement only the following methods:
+The CPU plug-in developer can benefit from using `AbstractCPU` which implements most of the methods in a thread-safe
+way. It is the required to implement only the following methods, which do not have to be synchronized:
 
 [source,java]
 .`emulib.plugins.cpu.AbstractCPU`
@@ -291,9 +299,8 @@ public abstract class AbstractCPU implements CPU, Callable<RunState> {
 ==== CPU emulation modes
 
 
-The CPU can work in two modes while performing the emulation: "step" and "run" mode. The modes are disjunct - only one
-of them can be active in time. In addition, these modes are not "real" in terms of implementation requirements, but they
-serve as a good abstraction.
+The CPU can work in two modes while performing the emulation: "step" mode or "run" mode. The modes are disjunct - only one
+of them can be active in time.
 
 ===== "Step" mode
 
@@ -313,22 +320,27 @@ or user stops the emulation by external GUI event. Within this mode the develope
 emulation technique, which can focus on performance. The code paths which will be run by JVM in this mode should be
 optimized for performance.
 
-Furthermore, emuStudio will stop disassembling instructions and also other performance-consuming tasks to let the CPU
-and other virtual computer components provide the best emulation experience.
+Furthermore, emuStudio will stop disassembling instructions and also other performance-consuming tasks to unburden the
+CPU and other virtual components from various requests causing slow down of the general emulation performance.
 
-When the emulation is finished, the run state should be set accordingly.
+When the emulation is finished, either by the external event (clicking on the "stop" button) or by some instruction,
+the run state should be set accordingly:
+
+- if the stop is "normal" or "expected", the run state should be `STATE_STOPPED_NORMAL`
+- if the stop is caused by trying to read/write from nonexistant location in memory, the run state should be `STOPPED_ADDR_FALLOUT`
+- if the stop is caused by trying to execute unknown instruction, the run state should be `STOPPED_BAD_INSTR`
 
 ===== Final notes
 
-Those modes are reflected in methods of `AbstractCPU` class. The `call()` method representing the "run" mode, and
-`stepInternal()` method, representing the `step` mode.
+The described modes are reflected in methods of `AbstractCPU` class. The `call()` method represents the "run" mode, and
+`stepInternal()` method, represents the "step" mode.
 
 The contract which needs attention is threading. Execution of mentioned methods is done always by emuStudio.
-It has dedicated one thread for this purpose. The methods are never executed from UI thread, but from the dedicated
+It has dedicated one thread for this purpose. The methods are never executed from the UI thread, but from the dedicated
 thread, using a work-queue for the upcoming events.
 
 This means that CPU emulation control will not block UI, even if the execution takes longer time.
-However, all the other methods from the CPU interface are (possibly) executed from UI thread, so they should be
+However, all the other methods from the CPU interface are (possibly) executed from the UI thread, so they should be
 implemented in a responsive manner; they can block.
 
 [[SSEM_ARCHITECTURE]]
@@ -339,7 +351,7 @@ arithmetic-logic unit and I/O subsystem (CRT display). More information about th
 at http://www.cs.ubc.ca/~hilpert/e/SSEM/[this link].
 
 The architecture of our SSEM CPU emulator will look as follows (below is Display and Memory just to show how it
-is connected overall):
+is connected overally):
 
 [graphviz]
 ---------------------------------------------------------------------
@@ -410,8 +422,8 @@ public class CpuImpl extends AbstractCPU {
     }
 
     @Override
-    public String getVersion() {
-        return "1.0.0";
+    public void initialize(SettingsManager settingsManager) throws PluginInitializationException {
+        // TODO
     }
 
     ...
@@ -422,10 +434,9 @@ We will leave the other methods unimplemented for now.
 
 While getting to the initialization part, what the CPU needs in order to operate? Especially, our SSEM "CPU". It
 requires memory. The I/O subsystem, as can be seen at the picture under <<SSEM_ARCHITECTURE>> section, will not be
-implemented here. As we will do in another tutorial, our "display" device will show only the memory content and will
-not have any connection to CPU.
+implemented in this tutorial. There is dedicated separate tutorial for the CRT display.
 
-So let's initialize the CPU by getting the memory.
+The first step of the initialization is getting the memory from the context pool:
 
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java`
@@ -442,25 +453,33 @@ public class CpuImpl extends AbstractCPU {
 
 Now we see what the context pool is used for. It is a "storage" of communication objects which plug-ins provide
 (contexts). Other plug-ins, which are connected with the one they want to communicate with, ask for the context.
-There exist many specific contexts - for CPU, for Compiler, Memory or Device. Also, the context can be extended
-with another non-standard methods. In that case, the context class should be passed as the second argument when
-calling `get...Context()`. In our case, we expect the standard one, so we pass `MemoryContext.class` as the second
-argument.
+There exist many specific contexts - for CPU, for compilers, memories or devices.
 
-What now? We need to implement three fundamental things - GUI panel, Disassembler and the emulator engine itself.
+What's more, the context can be extended with another, custom methods. In this case, the context class should be
+passed as the second argument when calling `get...Context()`. In our case, we expect the standard `MemoryContext`
+interface, so we pass `MemoryContext.class` as the second argument.
+
+NOTE: The question you might have is why not to get the memory in the constructor? To answer this question, please
+      read the document "Introduction for writing virtual computers", section "Loading and initialization".
+
+What now? We need to implement three fundamental components - GUI panel, disassembler and the emulator engine itself.
 We can start with the interesting stuff right away.
 
 == Emulator engine
 
-Emulator engine is the core of the emulator. As we all probably know, the CPU interprets some binary-encoded commands,
-which are stored in memory. Basic von-Neumann CPUs work sequentially. Performing one instruction consists of four
-steps: fetch, decode and execute, store. When we would like to program these steps in a programming language like Java,
-the phases will be probably overlap and they can be quite hard to distinguish. It is not our intent to preserve the
-exact phases in the emulator. This is the main difference from a simulator. Emulator "looks" like real computer,
-"behaves" like the real one, but inside it is normal program which was written by any programming style, uses various
-variables, methods and other language features.
+Emulator engine is the core of the emulator. As we all probably know, the CPU interprets some binary-encoded "commands"
+- instructions - which are stored in memory. Basic von-Neumann CPUs work sequentially. Execution of one instruction
+involves four basic steps: fetch, decode and execute, and store, executed in order.
 
-The pseudo-algorithm for performing one instruction can look as follows:
+Implementation of these steps in a programming language like Java does not have to be so explicit. It is often true
+that the steps will overlap and mix up in the emulation algorithm; they really don't have to be explicitly distinguished.
+The aim of the emulator is to preserve external behavior (output or the effect), not the internal behavior. This is
+different for the case of a simulator, which tries to mimic both internal and external behavior.
+
+Emulator "looks" like real computer, "behaves" like the real one, but inside it is normal program which was written
+using any programming style; it can use various variables, methods and other language features.
+
+The pseudo-algorithm for executing one instruction can look as follows:
 
 ----
 step() {
@@ -483,8 +502,9 @@ step() {
 }
 ----
 
-And what CPU does when it runs? It does these steps in a infinite loop. So the main CPU emulation algorithm, also
-called "interpretation" can look as follows:
+And what CPU does when it runs? It executes these steps in the infinite loop, until it is stopped either internally or
+by the external event. The main CPU emulation algorithm just described is called "interpretation", and it can look as
+follows:
 
 ----
 run() {
@@ -494,11 +514,12 @@ run() {
 }
 ----
 
-NOTE: In Java, besides interpretation it is possible to write threaded dispatch algorithm, with usage of Reflection or
-      lambdas feature. Threaded dispatch stores the execution implementation of each instruction in separate method.
-      Then, there is a dispatch table (array of method references), which maps the methods by opcode. Then, after the
-      decoding the opcode, the instruction is executed just by indexing that table and executing the method it
-      references to. This algorithm is faster than interpretation.
+NOTE: In Java, besides interpretation it is possible to write also a threaded dispatch algorithm, which requires Java
+      relection or lambdas. Threaded dispatch stores the execution implementation of each instruction in a separate
+      method. Then, there is a dispatch table (array of method references), which maps the methods by opcode. Then,
+      after the decoding of the opcode, the instruction is executed just by indexing that table and executing the method it
+      references to. This algorithm is generally faster than interpretation, and it is still simple enough to be
+      implemented.
 
 Our emulator engine will be constructed as a separate class. Besides the emulation methods it will contain the
 variables representing CPU registers - `CI` (current instruction) and `Acc` (accumulator). In SSEM, both are 32-bit
@@ -511,13 +532,13 @@ The class looks as follows:
 ----
 public class EmulatorEngine {
 
-    private final MemoryContext<Integer> memory;
+    private final MemoryContext<Byte> memory;
     private volatile CPU.RunState currentRunState;
 
     public volatile int Acc;
     public volatile int CI;
 
-    public EmulatorEngine(MemoryContext<Integer> memory) {
+    public EmulatorEngine(MemoryContext<Byte> memory) {
         this.memory = Objects.requireNonNull(memory);
     }
 
@@ -527,54 +548,56 @@ public class EmulatorEngine {
     }
 
     public CPU.RunState step() {
-        int instruction = memory.read(CI);
-        CI++;
+        Byte[] instruction = memory.readWord(CI);
+        CI += 4;
 
-        int line = parseLine(instruction);
-        int opcode = parseOpcode(instruction);
+        int line = NumberUtils.reverseBits(instruction[0], 8) * 4;
+        int opcode = instruction[1] & 7;
 
         switch (opcode) {
             case 0: // JMP
-                CI = memory.read(line);
+                CI = 4 * readInt(line);
                 break;
             case 4: // JPR
-                CI = CI + memory.read(line);
+                CI = CI + 4 * readInt(line);
                 break;
             case 2: // LDN
-                Acc = -memory.read(line);
+                Acc = -readInt(line);
                 break;
             case 6: // STO
-                memory.write(line, Acc);
+                writeInt(line, Acc);
                 break;
             case 1: // SUB
-                Acc = Acc - memory.read(line);
+                Acc = Acc - readInt(line);
                 break;
             case 3: // CMP / SKN
                 if (Acc < 0) {
-                    CI++;
+                    CI += 4;
                 }
                 break;
             case 7: // STP / HLT
                 return CPU.RunState.STATE_STOPPED_NORMAL;
+            default:
+                return CPU.RunState.STATE_STOPPED_BAD_INSTR;
         }
-        return CPU.RunState.STATE_STOPPED_BAD_INSTR;
+        return CPU.RunState.STATE_STOPPED_BREAK;
     }
 
-    private int parseLine(int instruction) {
-        int line = instruction >> 27;
-        return ((line & 1) << 4)
-                | ((line & 2) << 2)
-                | (line & 4)
-                | ((line & 8) >> 2)
-                | ((line & 16) >> 4);
+    private int readInt(int line) {
+        Byte[] word = memory.readWord(line);
+        return NumberUtils.readInt(word, Strategy.REVERSE_BITS);
     }
 
-    private int parseOpcode(int instruction) {
-        return (instruction >> 16) & 3;
+    private void writeInt(int line, int value) {
+        Byte[] word = new Byte[4];
+        NumberUtils.writeInt(value, word, Strategy.REVERSE_BITS);
+        memory.writeWord(line, word);
     }
 
     public CPU.RunState run() {
-        while (!Thread.currentThread().isInterrupted() && currentRunState == CPU.RunState.STATE_RUNNING) {
+        CPU.RunState currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
+
+        while (!Thread.currentThread().isInterrupted() && currentRunState == CPU.RunState.STATE_STOPPED_BREAK) {
             try {
                 currentRunState = step();
             } catch (IllegalArgumentException e) {
@@ -614,14 +637,16 @@ That's pretty it. We will now extend the engine to support breakpoints and contr
 === Breakpoints support
 
 Since emuStudio is mainly intended for students, as they should get in touch with emulated computers and how they work,
-it should allow sometimes to pause the emulation at a point where student wants. This capability is also useful when
+it should allow sometimes to pause the emulation at a point she wants. This capability is also useful when
 our program written for the emulated computer does not work and we want to know what happens after executing specific
-instruction. We can then set a "breakpoint" to that instruction, and emuStudio will stop just before its execution.
+instruction. We can set a "breakpoint" to that instruction, a flag saying that CPU should pause itself when it
+encounters the instruction.
 
 Breakpoint is in fact an address - memory location, at which the CPU should pause its execution. It is used only when
 CPU is running. Breakpoints are usually stored in a set. The class `emulib.plugins.cpu.AbstractCPU` has already this
-set and implements all the breakpoints setting/unsetting. What is still left to do for us is to check if at specific
-address (current instruction position) the breakpoint is set, and if yes, somehow "pause" the CPU.
+set as a protected member (called `breakpoints`) and implements all the breakpoints enabling/disabling. What is still
+left to do for us is to check if at specific address (current instruction position) the breakpoint is set, and if yes,
+somehow "pause" the CPU.
 
 We implement this in the `run()` method, right before instruction execution:
 
@@ -632,7 +657,7 @@ public class EmulatorEngine {
     ...
     private final CPU cpu;
 
-    public EmulatorEngine(Memorytry {Context<Integer> memory, CPU cpu) {
+    public EmulatorEngine(MemoryContext<Byte> memory, CPU cpu) {
         this.memory = Objects.requireNonNull(memory);
         this.cpu = Objects.requireNonNull(cpu);
     }
@@ -655,13 +680,13 @@ public class EmulatorEngine {
 }
 ----
 
-Now the engine besides memory requires also the CPU instance, needed for checking if the breakpoint is set at current
-instruction, denoted by `CI` register. If the breakpoint is set, the resulting state is `STATE_STOPPED_BREAK`, and
-emuStudio will take care about the pausing and updating GUI.
+Now the engine requires also the CPU main object, needed for checking if the breakpoint is set at current
+instruction location, denoted by the `CI` register. If the breakpoint is set, the resulting state is `STATE_STOPPED_BREAK`, and
+emuStudio will take care about the pausing and updating the GUI.
 
 === Preserving the speed
 
-Every real computer runs at some speed, usually referring only CPU speed. Baby "CPU" could perform about 700
+Every real computer runs at some speed, usually talking just about only CPU speed. Baby "CPU" could perform about 700
 instructions per second. How we should achieve that? The simplest method would be something like that:
 
 ----
@@ -683,20 +708,35 @@ So perform 700 instructions, then wait until one second elapses, and go again. W
 That the algorithm is not "smooth". 700 instructions will be performed at full blast, and then there will be something
 like a "break", and the situation will repeat. Real CPU certainly didn't work like that and we can do better.
 
+If we know how long it takes to execute each instruction, if our host CPU is faster than CPU of SSEM (which is I
+suppose :), we can "wait" after each instruction the time difference, so we will artificially slow down to SSEM speed.
+
 In reality, every instruction is performed in some number of machine "cycles". We can imagine the machine cycle
-as a time of elementary phase when performing the instruction. For example, instruction phases are fetch, decode,
-execute and store. Each of these phases can take various time for particular instruction. Instructions which operate
-with memory can have shorter execute phase, but longer fetch/store phases. On the other hand, arithmetic instructions
-can have shorter fetch/store phases but a bit longer execute phase. And so on. Based on this information which is
+as a time of elementary phase when performing the instruction. Based on this information which is
 usually available, can be build a technique for preserving speed even better.
 
 NOTE: Description of the speed-preservation technique can be seen e.g. at
       http://emustudio.sourceforge.net/downloads/2010-cse.pdf[this link].
 
-However, for purposes of this tutorial we will implement different algorithm, but also quite interesting. The idea
-is based on measuring average time which takes the execution of one instruction. The measurement will not be very
-accurate, since perfect or almost perfect measuring of method execution in Java has some rules, like warming up JVM
-before measurement, etc.
+I don't quite know the speed of particular SSEM instructions, and besides the algorithm is quite complex. More achievable
+is a bit different approach, but still quite interesting.
+
+Waiting after each instruction requires computing the time difference, checking it and if it is > 0, wait the amount
+of time, by calling some Java method. However, we don't know how long each instruction will take, but we can estimate
+it by measuring.
+
+We will execute as many instructions as we can in a second, and by simple math we can then compute how long we should
+"wait", in average, so at the end we will execute 700 instructions in a second, in average. Once again, the steps are
+as follows:
+
+1. measure how many instructions will be executed in 1 second, we will label the number as N.
+2. the goal is to achieve 700 instructions per second. It is assumed N > 700. In the first step, we need 1 / N * 700
+   seconds to pass and we know that 700 instructions will be then executed. We will label this as M = 1 / N * 700. It
+   will be a constant, after the measurement.
+3. Then, we need to wait 1 / M seconds after each instruction, and 700 instructions per second is achieved.
+
+The measurement will not be very accurate, since perfect or almost perfect measuring of method execution in Java has
+some rules, like warming up JVM before measurement, etc.
 
 NOTE: For time measurement it is necessary to use `System.nanoTime()` method instead of `System.currentTimeMillis()`.
       The reason is that the latter is corrected time-to-time by operating system because of errors caused by not
@@ -753,14 +793,16 @@ algorithm can look as follows (there's lot to improve ofcourse):
 .`src/main/java/net/sf/emustudio/ssem/cpu/EmulatorEngine.java`
 ----
 public class EmulatorEngine {
+    public final static int INSTRUCTIONS_PER_SECOND = 700;
     ...
 
     private void fakeStep() {
-        int instruction = memory.read(CI);
-        CI++;
+        Byte[] instruction = memory.readWord(CI);
 
-        int line = parseLine(instruction);
-        int opcode = parseOpcode(instruction);
+        int line = NumberUtils.reverseBits(instruction[0], 8);
+        int opcode = instruction[1] & 3;
+        CI = (CI + 4) % (32 *4);
+
 
         switch (opcode) {
             case 0: break;
@@ -801,13 +843,13 @@ compute the average time. At the end we restore the state, and that's it. As you
 real things in this "fake" step method like real memory (but just for reading), and emulator registers, which we backed
 up and then restored.
 
-That's about it! If we had disassembler and GUI, the emulator is now ready - we just implemented the core of the CPU.
+That's about it! If we had disassembler and GUI, the emulator is now ready - we have just implemented the core of the CPU.
 
 == Disassembler
 
 Disassembler is not needed for the emulation itself. It is needed for emuStudio to be able to visually show the
-instructions. Instructions are encoded in binary form and reside in memory. Disassembler "disassembles" - decodes the
-instructions and transforms them into string representation which can be easily shown on screen.
+instructions. Instructions are encoded in a binary form and reside in memory. Disassembler "disassembles" - decodes the
+instructions and transforms them into a string representation which can be easily shown on screen.
 
 Decoding binary instructions for disassembler can be a bit different from decoding used in the emulator. For example,
 instructions binary code can use constants which can be used directly in the emulator, but which must be translated
@@ -815,10 +857,10 @@ in the disassembler. Also, decoding code is usually mixed up with emulator code 
 hard to reuse it. For these reasons, the programmer often need to implement the decoding part again and duplicate the
 work a bit. But not in emuStudio.
 
-Fortunatelly, there exist a project called `edigen` ( ... .. ... .), a disassembler generator. It works similarly as
-a parser generator: developer writes a specification file with all the instructions of the CPU. Then, edigen (either
-from the command line or from Maven) generates disassembler and decoder source code from predefined templates. These
-generally do not need any further attention from the developer and can be used right away.
+Fortunately, there exist a project called Edigen (https://github.com/sulir/edigen), a disassembler generator. It works
+similarly as a parser generator: developer writes a specification file with all the instructions of the CPU. Then, Edigen
+(either from the command line or from Maven) generates disassembler and decoder source code, using predefined templates.
+These generally do not need any further attention from the developer and can be used right away.
 
 SSEM CPU specification file should be put in `ssem-cpu/src/main/edigen/cpu.eds`, and it looks as follows:
 
@@ -881,7 +923,8 @@ public class CpuImpl extends AbstractCPU {
     @Override
     public void initialize(SettingsManager settingsManager) throws PluginInitializationException {
         memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
-        disasm = new DisassemblerImpl(memory, new DecoderImpl(memory));
+        Decoder decoder = new DecoderImpl(memory);
+        disasm = new DisassemblerImpl(memory, decoder);
         engine = new EmulatorEngine(memory, this);
     }
 
@@ -914,7 +957,7 @@ public class CpuImpl extends AbstractCPU {
     public boolean setInstructionPosition(int i) {
         int memSize = memory.getSize();
         if (i < 0 || i >= memSize) {
-            throw new IllegalArgumentException("Instruction position can be in <0," + memSize +">, but was: " + i);
+            throw new IllegalArgumentException("Instruction position can be in <0," + memSize/4 +">, but was: " + i);
         }
         engine.CI = i;
         return true;
@@ -935,7 +978,7 @@ IDE, like NetBeans or IntelliJ IDEA. The status panel should show the following:
 - Optionally, speed (running frequency)
 
 The status panel is the interaction point between CPU and the user. With it, the user can be allowed to modify or
-view the internal status of the CPU emulator which is very handy when learning or checking how it works, what the
+view the internal status of the CPU emulator. This is very handy when learning or checking how it works, what the
 registers' values really are (and compare them with those shown on a display), etc.
 
 SSEM CPU status panel will look as follows:
@@ -947,203 +990,7 @@ The class code is:
 [source,java]
 .`ssem-cpu/src/main/java/net/sf/emustudio/ssem/cpu/CpuPanel.java`
 ----
-public class CpuPanel extends javax.swing.JPanel {
-    private final EmulatorEngine engine;
-    private final Updater updater;
-
-    public CpuPanel(CPU cpu, EmulatorEngine engine) {
-        this.engine = Objects.requireNonNull(engine);
-        this.updater = new Updater();
-
-        initComponents();
-        cpu.addCPUListener(updater);
-        lblSpeed.setText(String.valueOf(EmulatorEngine.INSTRUCTIONS_PER_SECOND));
-    }
-
-    private final class Updater implements CPU.CPUListener {
-
-        @Override
-        public void runStateChanged(CPU.RunState rs) {
-            lblRunState.setText(rs.toString().toUpperCase());
-        }
-
-        @Override
-        public void internalStateChanged() {
-            int acc = engine.Acc;
-            int ci = engine.CI;
-
-            txtA.setText(String.format("%8x", acc));
-            txtCI.setText(String.format("%8x", ci));
-
-            txtBinA.setText(formatBinary(acc));
-            txtBinCI.setText(formatBinary(ci));
-        }
-
-        private String formatBinary(int number) {
-            String binNumber = Integer.toBinaryString(number);
-            binNumber = String.format("%32s", binNumber).replace(" ", "0");
-
-            String[] splitted = binNumber.split("\\d\\d\\d\\d");
-            return splitted[0] + ' ' + splitted[1] + "  "
-                    + splitted[2] + ' ' + splitted[3] + "  "
-                    + splitted[4] + ' ' + splitted[5] + "  "
-                    + splitted[6] + ' ' + splitted[7];
-        }
-
-    }
-
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
-
-        javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
-        lblRunState = new javax.swing.JLabel();
-        javax.swing.JLabel jLabel7 = new javax.swing.JLabel();
-        lblSpeed = new javax.swing.JLabel();
-        javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
-        javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
-        javax.swing.JLabel jLabel3 = new javax.swing.JLabel();
-        txtCI = new javax.swing.JTextField();
-        txtA = new javax.swing.JTextField();
-        txtBinA = new javax.swing.JTextField();
-        txtBinCI = new javax.swing.JTextField();
-
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Run control", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
-
-        lblRunState.setFont(new java.awt.Font("Monospaced", 0, 18)); // NOI18N
-        lblRunState.setForeground(java.awt.Color.blue);
-        lblRunState.setText("BREAKPOINT");
-
-        jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel7.setText("ins/s");
-
-        lblSpeed.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
-        lblSpeed.setText("0");
-        lblSpeed.setToolTipText("Speed");
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblRunState)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(lblSpeed)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel7)
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblRunState)
-                    .addComponent(jLabel7)
-                    .addComponent(lblSpeed))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Registers", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11))); // NOI18N
-
-        jLabel2.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
-        jLabel2.setText("A");
-        jLabel2.setToolTipText("Accumulator");
-
-        jLabel3.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
-        jLabel3.setText("CI");
-        jLabel3.setToolTipText("Control Instruction");
-
-        txtCI.setEditable(false);
-        txtCI.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
-        txtCI.setText("0");
-
-        txtA.setEditable(false);
-        txtA.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
-        txtA.setText("0");
-
-        txtBinA.setEditable(false);
-        txtBinA.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
-        txtBinA.setText("0000 0000  0000 0000  0000 0000  0000 0000");
-
-        txtBinCI.setEditable(false);
-        txtBinCI.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
-        txtBinCI.setText("0000 0000  0000 0000  0000 0000  0000 0000");
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addGap(11, 11, 11)
-                        .addComponent(txtA, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtCI, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(txtBinA)
-                    .addComponent(txtBinCI))
-                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(txtA, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtBinA, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(txtCI, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtBinCI, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-    }// </editor-fold>//GEN-END:initComponents
-
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel lblRunState;
-    private javax.swing.JLabel lblSpeed;
-    private javax.swing.JTextField txtA;
-    private javax.swing.JTextField txtBinA;
-    private javax.swing.JTextField txtBinCI;
-    private javax.swing.JTextField txtCI;
-    // End of variables declaration//GEN-END:variables
-}
+include::../../../plugins/cpu/ssem-cpu/main/java/net/sf/emustudio/ssem/cpu/CpuPanel.java[]
 ----
 
 We don't have to care about method `initComponents()` and the fields at the end of the class. Those are generated by
@@ -1190,4 +1037,4 @@ and which tests a single "unit" - the smallest entity - are called unit tests.
 In object oriented languages, unit tests should test production classes and their behavior in the isolated
 environment. Each unit test is also a class. Maven uses standard path where the unit tests should be put.
 
-Testing of SSEM CPU is left as an excercise for the plug-in developer.
+Testing of SSEM CPU is left as an exercise for the plug-in developer.

@@ -180,7 +180,7 @@
         <Component class="javax.swing.JLabel" name="jLabel2">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Monospaced" size="12" style="1"/>
+              <Font name="Monospaced" size="12" style="0"/>
             </Property>
             <Property name="text" type="java.lang.String" value="A"/>
             <Property name="toolTipText" type="java.lang.String" value="Accumulator"/>
@@ -193,7 +193,7 @@
         <Component class="javax.swing.JLabel" name="jLabel3">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Monospaced" size="12" style="1"/>
+              <Font name="Monospaced" size="12" style="0"/>
             </Property>
             <Property name="text" type="java.lang.String" value="CI"/>
             <Property name="toolTipText" type="java.lang.String" value="Control Instruction"/>
@@ -322,7 +322,7 @@
         <Component class="javax.swing.JLabel" name="jLabel4">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Monospaced" size="12" style="1"/>
+              <Font name="Monospaced" size="12" style="0"/>
             </Property>
             <Property name="text" type="java.lang.String" value="M[CI]"/>
             <Property name="toolTipText" type="java.lang.String" value="Control Instruction"/>
@@ -335,7 +335,7 @@
         <Component class="javax.swing.JLabel" name="jLabel5">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Monospaced" size="12" style="1"/>
+              <Font name="Monospaced" size="12" style="0"/>
             </Property>
             <Property name="text" type="java.lang.String" value="M[line]"/>
             <Property name="toolTipText" type="java.lang.String" value="Control Instruction"/>
@@ -388,7 +388,7 @@
         <Component class="javax.swing.JLabel" name="jLabel6">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Monospaced" size="12" style="1"/>
+              <Font name="Monospaced" size="12" style="0"/>
             </Property>
             <Property name="text" type="java.lang.String" value="line"/>
             <Property name="toolTipText" type="java.lang.String" value="Control Instruction"/>
