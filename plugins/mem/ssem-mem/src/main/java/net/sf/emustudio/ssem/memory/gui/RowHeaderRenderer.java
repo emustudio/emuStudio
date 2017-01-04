@@ -19,17 +19,18 @@
  */
 package net.sf.emustudio.ssem.memory.gui;
 
-import java.awt.Component;
-import java.awt.Dimension;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JTable;
 import javax.swing.ListCellRenderer;
 import javax.swing.UIManager;
 import javax.swing.table.JTableHeader;
-import static net.sf.emustudio.ssem.memory.gui.Constants.BOLD_FONT;
+import java.awt.Component;
+import java.awt.Dimension;
+
 import static net.sf.emustudio.ssem.memory.gui.Constants.CHAR_HEIGHT;
 import static net.sf.emustudio.ssem.memory.gui.Constants.CHAR_WIDTH;
+import static net.sf.emustudio.ssem.memory.gui.Constants.DEFAULT_FONT;
 
 class RowHeaderRenderer extends JLabel implements ListCellRenderer {
     private final static int NO_COLUMN_WIDTH = CHAR_WIDTH * 4;
@@ -40,7 +41,7 @@ class RowHeaderRenderer extends JLabel implements ListCellRenderer {
         super.setOpaque(true);
         super.setBorder(UIManager.getBorder("TableHeader.cellBorder"));
         super.setHorizontalAlignment(CENTER);
-        super.setFont(BOLD_FONT);
+        super.setFont(DEFAULT_FONT);
     }
     
     public void setup(JTable table) {

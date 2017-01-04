@@ -112,17 +112,17 @@ public class MemoryContextImplTest {
     }
 
     @Test
-    public void testClassTypeIsInteger() throws Exception {
+    public void testClassTypeIsByte() throws Exception {
         assertEquals(Byte.class, new MemoryContextImpl().getDataType());
     }
 
     @Test
-    public void testReadWordIsNotSupported() throws Exception {
+    public void testReadWordIsSupported() throws Exception {
         assertArrayEquals(new Byte[] {0,0,0,0}, new MemoryContextImpl().readWord(0));
     }
 
     @Test
-    public void testWriteWordIsNotSupported() throws Exception {
+    public void testWriteWordIsSupported() throws Exception {
         MemoryContextImpl mem = new MemoryContextImpl();
         
         Byte[] row = new Byte[] {1,2,3,4};

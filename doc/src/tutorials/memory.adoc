@@ -5,8 +5,8 @@ Version 0.39
 :numbered:
 
 This tutorial will describe some basic knowledge about how to create an operating memory to be used in emuStudio.
-In emuStudio computers have usually conform to von-Neumann architecture, which includes a memory as a separate
-component. The tutorial focuses on how to use emuLib API in a Memory project so it can be used in emuStudio.
+In emuStudio, virtual computers usually conform to von-Neumann architecture. In this architecture, the memory is a
+separate component. The tutorial focuses on how to use emuLib API in a memory for SSEM computer.
 
 [[GETTING_STARTED]]
 == Getting started
@@ -14,11 +14,14 @@ component. The tutorial focuses on how to use emuLib API in a Memory project so 
 Within this tutorial, we will implement a main store of SSEM "Baby" machine, to conform with other tutorials for other
 plug-ins. Before we start, here's a few words about what purpose and capabilities memories in emuStudio can have.
 
-In first computers, operating memory was connected only with CPU. It means that all data transfer between the memory
-and devices was done only through CPU. When data from memory was required, CPU "paused" executing instructions and
-accessed the memory in the meantime. Later, DMA (direct memory access) capability was introduced, which allowed devices
-to directly access the memory. In emuStudio, you can connect the memory with devices, or even with a compiler which
-is the source of the emuStudio versatility and power.
+In first stored-program computers, operating memory was accessible only by CPU. It means that all
+data between the memory and other devices had to be transferred through CPU. When data from memory was required,
+CPU "paused" the execution of instructions and accessed the memory in the meantime. This slowed down CPU and consequently
+the whole program. Later, DMA (direct memory access) capability was introduced, which allowed devices
+to directly access the memory, or be notified when the memory changes.
+
+In emuStudio, you can connect the memory with devices, or even with a compiler. This is one example of the versatility
+and power of emuStudio.
 
 There are three main behavioral contracts which need to be taken into account, when creating memory plug-in:
 
@@ -40,9 +43,10 @@ von Neumann architecture) did not have random-access memory.
 The memory had 32 memory cells (called words), each had size of 32 bits. The memory could contain instructions and
 data. So, one SSEM instruction perfectly fits in the single memory word.
 
-Within this tutorial, we will hardcode the word size and memory size. But we'll also implement a GUI for the memory.
-The code might seem complicated and bloated with a boiler-plate. For this simple computer, it definitely is. However,
-much of which must be done will be really handy when implementing more complex computers.
+Within this tutorial, we will hardcode the word size and memory size. But we'll also implement a GUI for the memory,
+which is often far more complicated than the emulated memory itself footnote:[The code might seem generally complicated
+and bloated with a boiler-plate. I personally blame Java Swing or Java itself for it, since it is a "corporate"
+language, usually used for different purposes than writing an emulator :)]
 
 == Preparing the environment
 
@@ -66,82 +70,22 @@ NOTE: Note the naming of the plug-in. It follows the naming convention as descri
 The POM file of the project might look as follows:
 
 [source,xml]
+.`ssem-mem/pom.xml`
 ----
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-
-  <parent>
-    <groupId>net.sf.emustudio</groupId>
-    <artifactId>emustudio-parent</artifactId>
-    <version>0.39-SNAPSHOT</version>
-    <relativePath>../../..</relativePath>
-  </parent>
-
-  <artifactId>ssem-mem</artifactId>
-  <packaging>jar</packaging>
-
-  <name>SSEM Memory</name>
-  <description>Operating memory (main store) for the SSEM computer</description>
-
-  <build>
-    <finalName>ssem-mem</finalName>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifest>
-              <addClasspath>false</addClasspath>
-              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-            </manifest>
-          </archive>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
-
-  <dependencies>
-    <dependency>
-      <groupId>net.sf.emustudio</groupId>
-      <artifactId>emuLib</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.easymock</groupId>
-      <artifactId>easymock</artifactId>
-    </dependency>
-  </dependencies>
-</project>
+include::../../../plugins/mem/ssem-mem/pom.xml[]
 ----
 
 And let's start with the first Java class, the main plug-in class. Let's put it to package
 `net.sf.emustudio.ssem.memory`, and call it `MemoryImpl`.
 
+[[BASIC_STUFF]]
 == Implementing basic stuff
 
 Go to the `MemoryImpl` class source. Extend the class from `emulib.plugins.compiler.AbstractMemory` class.
 The class extends from `Memory` interface and implements the most common methods, usable by all memories.
 
-It is also necessary to annotate the class with `emulib.annotations.PluginType` annotation, and pass the
-one argument of the constructor to the super class. The code snippet looks as follows:
+It is also necessary to annotate the class with `emulib.annotations.PluginType` annotation, which is required for every
+main class of any emuStudio plug-in. The code snippet looks as follows:
 
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/memory/MemoryImpl.java`
@@ -172,6 +116,292 @@ public class MemoryImpl extends AbstractMemory {
 
 NOTE: The constructor presented here is mandatory. This is one of the behavioral contracts, emuStudio expects
       that a plug-in will have a constructor with two arguments: `pluginID` (assigned by emuStudio), and a context
-      pool, which will be described later, in another type of plug-ins.
+      pool, which is a storage or registrar of all plug-ins contexts.
 
+== Few notes on SSEM memory
+
+When thinking about computer memory - what is it? During time, memory abstraction has evolved to an idea of memory
+as a collection of cells, equally-sized, which are ordered sequentially. This is the simplest description, and I
+would say that more-less all memories look like this. When emulating a computer memory in a programming language like
+Java, it would be then just a plain array.
+
+SSEM had 32 so-called "lines", which represented cells in memory. Each line, or a cell, was 4 bytes long. It is therefore
+tempting to implement SSEM memory as array of integers, because `int` type has 4 bytes.
+
+It is indeed possible, but we will face to an unsolvable problem when implementing CPU, if we want to use Edigen
+footnote:[See "How to write a CPU for emuStudio" tutorial for more information about Edigen].
+Unfortunately, Edigen is so-far designed in a way that it expects the memory having cell size of a byte, not more.
+Therefore, we will keep that also for SSEM memory emulation, but visually try to present it as having 4-byte cells. It
+would require additional mathematics when working with memory (in the CPU tutorial you would find it as well), but
+not having impact on performance.
+
+== Memory context
+
+Abstracts are helping us to understand ideas and see how they can be composed into a whole. In this fashion, memory
+main interface, presented in section <<BASIC_STUFF>>, is the communication point with emuStudio. The main module is
+using methods in this interface. The communication with CPU and devices is done through another concept, which is called
+a context. The contexts differ for various plug-ins; and they can be customized.
+
+Plug-ins which provide a context, must register it to the `ContextPool`, given in a constructor in the main plugin class.
+This registration should be performed as early as possible - in the constructor itself. After all plug-ins are
+instantiated, emuStudio expects that all contexts are already registered.
+
+The next step, generally true for all plug-ins, is calling of `Plugin.initialize()` method, in this case -
+`Memory.initialize()`. The initialization can now use the context pool for different purpose - for obtaining contexts,
+if it requires some. More on this topic can be found in the "Introduction for writing virtual computers" guide.
+
+So, in our case - we must create a memory context, which will be used by SSEM CPU and SSEM CRT display. We don't need
+special customized context, so we can comfortably extend from class `AbstractMemoryContext`, which will implement some
+methods of the `MemoryContext` interface for us. We will call the class `MemoryContextImpl`:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/memory/impl/MemoryContextImpl.java`
+----
+include::../../../plugins/mem/ssem-mem/src/main/java/net/sf/emustudio/ssem/memory/impl/MemoryContextImpl.java[]
+----
+
+As you can see, SSEM memory is indeed an array of bytes. This is the "core" idea of a memory. Ofcourse, it is possible
+to use a `java.util.List` or another collection, but we should keep eye on performance. Array is the simplest structure
+with access time O(1). Therefore, we chose array.
+
+Also notice that the class `AbstractMemoryContext`, and also interface `MemoryContext` take a generic parameter
+`T extends Number`. This parameter is saying of what type cell is. In our case, `T` is a `Byte`. Due unhappy Java
+limitation, primitive types cannot be used in generics, so we can't have something like `MemoryContext<byte>`.
+
+== GUI
+
+Since emuStudio is interactive application, GUIs are a natural thing. Each memory plug-in should have its own GUI.
+The supported features can be any, but keep in mind, that GUI control in Swing is done in separate thread, often
+called "UI Thread". On the other hand, emulation itself is running in different, dedicated, thread, created in emuLib.
+
+This means that the access to memory context should be synchronized. However, synchronization is very slow.
+Much better approach is to use a non-blocking algorithm for locking, if we really require absolutely reliable
+manipulation of memory cells in between threads. However, non-blocking algorithms are harder to implement good.
+In our tutorial we will do a trade-off, which we can afford - since we have final array of bytes, we have the following
+guarantees:
+
+1. the array itself will be always valid and visible to all accessing threads. Meaning - reading is always safe.
+2. we expect our host CPU can write a byte at once; therefore it is atomic. This does not have to hold for all CPUs - don't
+   worry, all x86 CPUs have it.
+3. According to https://docs.oracle.com/javase/specs/jls/se7/html/jls-17.html#jls-17.6[Java Language Specification, Chapter 17.6]:
+
+    two threads that update adjacent elements of a byte array separately must not interfere or interact and do not need
+    synchronization to ensure sequential consistency.
+
+I consider these guarantees as good enough to leave the synchronization be. I guess the probability of modifying
+the same memory cells from both running emulation and by the user in GUI, is very small. What's more, you shouldn't
+modify memory cells at all when the emulation is running.
+
+Now back to our GUI. It would be good if the GUI is looking good, so it's up to you how you'll draw the main form. It
+can be a class extending from a `javax.swing.JFrame` or `javax.swing.JDialog`. The look might be as follows:
+
+image::images/ssem-memory.png[SSEM Memory GUI sample look]
+
+So, we will need a custom memory model, a custom memory table - which will have a row header (the very first, gray-colored
+column) and column header (the very first, gray-colored row).
+
+As you can see in the picture, a row represents single SSEM memory cell - 32 scattered bits, and the last few columns
+show both the number the bits represent, and a raw ASCII value of the 4-byte sequence of data.
+
+Also, we would like to let user edit the cells manually - just by pointing to a bit, and pressing either 1 or 0 - possibly
+a DELETE key, committing the change immediately. We want to allow editing also for the value itself, and for the data column
+as well.
+
+In addition, movement around cells should be possible with arrow keys.
+
+For those "specifications", we will need to customize standard `javax.swing.JTable`, create custom memory model, cell
+editor, cell renderer and introduce row header renderer.
+
+The source code of the main GUI class is here:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryGUI.java`
+----
+include::../../../plugins/mem/ssem-mem/src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryGUI.java[]
+----
+
+Note that in the constructor we create a memory listener, which implements `Memory.MemoryListener` interface. The
+listener will receive events about external memory changes - in our case, from CPU emulator. Our reaction is - as
+supposed to be - reflect the change in the memory GUI.
+
+NOTE: The caller thread of listener methods is the one who calls `Memory.write()` on the other end. In our case, it
+      can be either the emulator dedicated thread, as described above, or the user itself, doing changes in the UI
+      thread.
+
+Also, we use custom memory table, which extends from `javax.swing.table.JTable`. We will describe it now.
+
+
+=== Memory table
+
+Since we want "special" behavior, like custom cell renderer, custom row header, custom cell editor and custom widths
+of some columns, it will be good to wrap it up in a custom `JTable`. The code looks as follows:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryTable.java`
+----
+include::../../../plugins/mem/ssem-mem/src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryTable.java[]
+----
+
+Now, particular sub-components of the table will be implemented and described in more detail.
+
+=== Memory table model
+
+Memory model is the "back-end" of the memory GUI. It means, the model provide data which should be shown in the GUI.
+You can think of any Swing component as a combination of a "view" and "model" subcomponents. The "view" subcomponent
+"asks" the model about which data should be shown. By default, almost all Swing components use some default models,
+accessible directly from the Swing component. Consequently, the components allow to set custom models as well, which
+is our case.
+
+For a table, the model must implement `javax.swing.table.TableModel` interface. As it is often a custom, Java implements
+some general methods in an abstract class called `javax.swing.table.AbstractTableModel` we can extend from.
+
+NOTE: The description of the table model can be found http://docs.oracle.com/javase/tutorial/uiswing/components/table.html#data[at this link].
+
+The model must provide data for every row and column. So here, we must do some math to compute bits and also transform
+the data to hex value, and raw ASCII value. The class is called `MemoryTableModel` and it's source code is here:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryTableModel.java`
+----
+include::../../../plugins/mem/ssem-mem/src/main/java/net/sf/emustudio/ssem/memory/gui/MemoryTableModel.java[]
+----
+
+=== Row header renderer
+
+Programming a GUI in Java Swing can be tricky. If we want something non-standard, the way of customization can be
+very non-obvious = painful. This is the case when we want to do a "header"-like column in a `JTable`. Long story
+short - this trick lies in a use of `JScrollPane`. This component implements a viewport, something as a virtual screen,
+allowing to put there some other components, and make visible only a part of this screen. Besides, it has a feature
+which is called a "row header". It has a https://docs.oracle.com/javase/8/docs/api/javax/swing/JScrollPane.html#setRowHeaderView-java.awt.Component-[dedicated method]
+for setting up a custom row header:
+
+    JScrollPane.setRowHeaderView(Component view)
+
+The trick is to set a `javax.swing.JList` as a component for the row header. So we end up with the following class:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/memory/gui/RowHeaderRenderer.java`
+----
+include::../../../plugins/mem/ssem-mem/src/main/java/net/sf/emustudio/ssem/memory/gui/RowHeaderRenderer.java[]
+----
+
+=== Cell renderer + editor
+
+The last two things we need is to display text using different fonts on certain cells. For example, we want that line
+and instruction bits have bold font, and others plain one. But - it is generally more readable if the data are shown
+in some monospaced font variant. These customizations are "big enough" to require custom class - a cell renderer.
+
+NOTE: Official tutorial and description of custom renderers can be found
+      http://docs.oracle.com/javase/tutorial/uiswing/components/table.html#renderer[at this link].
+
+The cell renderer code looks as follows:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/memory/gui/CellRenderer.java`
+----
+include::../../../plugins/mem/ssem-mem/src/main/java/net/sf/emustudio/ssem/memory/gui/CellRenderer.java[]
+----
+
+Similarly, if we want to let user edit a value in a table, we must provide the editor as a Swing component. The
+"cell editor" is in fact plain `javax.swing.JTextField` with some customizations. However if we want to use it,
+we must wrap it in a separate class, which needs to extend `AbstractCellEditor` and implement `TableCellEditor`.
+
+Our customizations involve accommodating the width of the text field, and preparing the initial value when the
+editor shows up. User can activate the editor by double-clicking on a cell. The source code of the cell editor is
+as follows:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/memory/gui/CellEditor.java`
+----
+include::../../../plugins/mem/ssem-mem/src/main/java/net/sf/emustudio/ssem/memory/gui/CellEditor.java[]
+----
+
+== Wrapping it up
+
+The final step is to finish the class `MemoryImpl`. We need to enable the use our GUI in emuStudio. The
+`emulib.plugins.Memory` interface has a method named `showSettings` which is called when user clicks on the memory
+icon in the debug tool bar in emuStudio emulation panel. This method is responsible for showing the GUI of memory,
+and will be called repeatedly, always when a user clicks on the mentioned icon.
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/memory/MemoryImpl.java`
+----
+...
+
+public class MemoryImpl extends AbstractMemory {
+    private final static Logger LOGGER = LoggerFactory.getLogger(MemoryImpl.class);
+
+    private final MemoryContextImpl memContext = new MemoryContextImpl();
+    private MemoryGUI memoryGUI;
+
+    public MemoryImpl(Long pluginID, ContextPool contextPool) {
+        super(pluginID);
+        try {
+            contextPool.register(pluginID, memContext, MemoryContext.class);
+        } catch (AlreadyRegisteredException | InvalidContextException e) {
+            StaticDialogs.showErrorMessage("Could not register SSEM memory", getTitle());
+        }
+    }
+
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public void initialize(SettingsManager settings) throws PluginInitializationException {
+        if (!Boolean.parseBoolean(settings.readSetting(pluginID, SettingsManager.NO_GUI))) {
+            memoryGUI = new MemoryGUI(memContext);
+        }
+    }
+
+    @Override
+    public void destroy() {
+    }
+
+    @Override
+    public int getSize() {
+        return MemoryContextImpl.NUMBER_OF_CELLS;
+    }
+
+    @Override
+    public boolean isShowSettingsSupported() {
+        return true;
+    }
+
+    public void showSettings() {
+        if (memoryGUI != null) {
+            memoryGUI.setVisible(true);
+        }
+    }
+}
+----
+
+As you can see from the code, there are several things to notice:
+
+- In constructor, we will register new instance of our memory context. Since we do not have custom context, the
+  interface, passed as the second argument to call `contextPool.register()` will be plain `MemoryContext.class`.
+  If we had custom context, it would require to be defined in separate interface which will extend the standard
+  `MemoryContext`, and annotated with `@emulib.annotations.ContextType` annotation.
+- In the `initialize()` method, we determine if we run in a "non-GUI" mode. We use a `SettingsManager` object for
+  this purpose, which is an API for reading/writing plugin settings - key/value pairs from the computer configuration
+  file. The "non-GUI", also called "headless" mode, means that the user who run emuStudio did not want GUI to be
+  available. This is often useful when performing automatic emulation. See the user manual for more details. For us,
+  developers, it means that we need to *ignore* all requests for showing GUI. Therefore, we create the GUI only if
+  we are NOT in the "non-GUI" mode.
+
+== Testing
+
+It is not only a good practice, but often a safety net to perform automatic tests. They can save a lot of debugging time
+when something just does not work. Usually, tests should test the most important things - we usually don't test setters
+or getters. In case of GUI, it also does not matter much for our case.
+
+What should be tested is the context itself - since it's the core part of the memory, and also some interaction with
+the main plugin class. For example, the automated unit test of the memory context can look as follows:
+
+[source,java]
+.`src/test/java/net/sf/emustudio/ssem/memory/impl/MemoryContextImplTest.java`
+----
+include::../../../plugins/mem/ssem-mem/src/test/java/net/sf/emustudio/ssem/memory/impl/MemoryContextImplTest.java[]
+----
 

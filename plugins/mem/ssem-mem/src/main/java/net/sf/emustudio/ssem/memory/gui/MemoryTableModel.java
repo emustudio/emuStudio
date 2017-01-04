@@ -23,10 +23,11 @@ import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.NumberUtils;
 import emulib.runtime.NumberUtils.Strategy;
 import emulib.runtime.RadixUtils;
-import java.util.Objects;
-import javax.swing.table.AbstractTableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.swing.table.AbstractTableModel;
+import java.util.Objects;
 
 public class MemoryTableModel extends AbstractTableModel {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryTableModel.class);
@@ -52,11 +53,25 @@ public class MemoryTableModel extends AbstractTableModel {
     public int getColumnCount() {
         return COLUMN_COUNT;
     }
-    
+
+    /**
+     * Determine if a column index points at a bit which is part of the 3 bits in a memory cell representing a SSEM
+     * instruction.
+     *
+     * @param column column in the memory table
+     * @return true if the column represents a SSEM instruction bit
+     */
     public static boolean isBitInstruction(int column) {
         return column >= 13 && column <= 15;
     }
-    
+
+    /**
+     * Determine if a column index points at a bit which is part of the 5 bits in a memory cell representing a "line",
+     * or address part of the memory cell.
+     *
+     * @param column column in the memory table
+     * @return true if the column represents a line bit
+     */
     public static boolean isBitLine(int column) {
         return column >= 0 && column < 5;
     }
