@@ -101,6 +101,10 @@
           <groupId>net.sf.emustudio</groupId>
           <artifactId>brainduck-terminal</artifactId>
         </dependency>
+        <dependency>
+          <groupId>net.sf.emustudio</groupId>
+          <artifactId>ssem-display</artifactId>
+        </dependency>
 
         <!-- memories -->
         <dependency>

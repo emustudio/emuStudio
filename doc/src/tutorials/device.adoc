@@ -1,2 +1,14 @@
 [[DEVICE_HOWTO]]
 == Writing a Device
+
+This tutorial will describe how to implement a virtual device to be used in emuStudio. The tutorial
+will focus on implementing simple CRT display for SSEM computer.
+The main focus is put on how to use emuLib API in a virtual device project so it can be used in emuStudio.
+
+[[DEVICE_GETTING_STARTED]]
+=== Getting started
+
+Before reading on, please read the <<INTRODUCTION_PLUGINS>> chapter. It gives the information
+needed for setting up the development environment and for basic understanding how the emuStudio/plug-ins lifecycle
+work.
+
