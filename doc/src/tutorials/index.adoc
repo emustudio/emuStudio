@@ -1,0 +1,16 @@
+[[plugins-vademecum]]
+= Developing emuStudio Plugins
+
+:toc:
+:sectnums:
+
+
+include::introduction.adoc[]
+
+include::compiler.adoc[]
+
+include::cpu.adoc[]
+
+include::memory.adoc[]
+
+include::device.adoc[]

@@ -1,17 +1,14 @@
-= How to write a CPU for emuStudio
-(c) Copyright 2006-2016, Peter Jakubčo
-Version 0.39
-:toc:
-:numbered:
+[[CPU_HOWTO]]
+== Writing a CPU
 
 This tutorial will describe some basic knowledge about how to create a CPU to be used in emuStudio. The tutorial
 does not aim to explain emulation techniques in much detail, nor it is exhaustive. This is left for the programmer.
 The tutorial focuses on how to use emuLib API in a CPU project so it can be used in emuStudio.
 
-[[GETTING_STARTED]]
-== Getting started
+[[CPU_GETTING_STARTED]]
+=== Getting started
 
-Before reading on, please read the "Introduction for writing virtual computers" document. It gives the information
+Before reading on, please read the <<INTRODUCTION_PLUGINS>> chapter. It gives the information
 needed for setting up the development environment and for basic understanding how the emuStudio/plug-ins lifecycle
 work.
 
@@ -31,8 +28,8 @@ https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine[SSEM],
 "Baby". It was a predecessor of Manchester Mark 1 which led to Ferranti Mark 1, the world's first commercially available
 general-purpose computer.
 
-[[WHAT_CPU_DOES]]
-== What emuStudio's CPU can do
+[[CPU_WHAT_CPU_DOES]]
+=== What emuStudio's CPU can do
 
 CPU emulators in emuStudio are not just plain emulators. Besides, they must cooperate with emuStudio and provide
 capabilities allowing debugging and some visualization.
@@ -57,7 +54,7 @@ in this tutorial. For more information, see the projects at:
 - and https://github.com/sulir/edigen-maven-plugin
 
 
-== Preparing the environment
+=== Preparing the environment
 
 We will use Maven for managing the source code and dependencies.
 
@@ -86,7 +83,7 @@ We will start with the `pom.xml` file, which follows.
 include::../../../plugins/cpu/ssem-cpu/pom.xml[]
 ----
 
-== The main class
+=== The main class
 
 We will start with implementing the main class of the CPU. It provides the main communication point - the API - used by
 emuStudio main module. The main module can pass requests for starting or stopping the emulation, or it can request
@@ -158,17 +155,17 @@ public class CpuImpl extends AbstractCPU {
 ----
 
 As you can see, there is a lot of methods which needs attention. Note two methods especially - `getStatusPanel()`
-and `getDisassembler()`. Those two methods will return the components, mentioned first in section <<WHAT_CPU_DOES>>.
+and `getDisassembler()`. Those two methods will return the components, mentioned first in section <<CPU_WHAT_CPU_DOES>>.
 
 Also note that the class extends from `AbstractCPU`. The `AbstractCPU` class lies in emuLib library. It implements
 some fundamental methods required by `CPU` interface. For example, managing breakpoints and controlling the
 high-level emulation lifecycle in a thread-safe way. Generally speaking, the class eliminates lots of repeated
 boiler-plate code needed to be done in every CPU plug-in.
 
-[[BEHAVIORAL_CONTRACTS]]
-== Behavioral contracts
+[[CPU_BEHAVIORAL_CONTRACTS]]
+=== Behavioral contracts
 
-=== Load and initialization
+==== Load and initialization
 
 Loading the virtual computer starts with creating separate class loader derived from the one emuStudio is using,
 so each plug-in can see everything what emuStudio can see, roughly speaking. There can be loaded only one computer
@@ -202,7 +199,7 @@ different thread than UI thread, so all method calls come from the same "control
 
 In case of automatic emulation, the emulation control is performed only in the main thread.
 
-=== Emulation lifecycle
+==== Emulation lifecycle
 
 As it was described in section "Emulation lifecycle" in the user manual of the main module, the emulation "life"
 is a state machine. This state machine manages a state, called "current state". It then reacts on events from the
@@ -291,13 +288,13 @@ public abstract class AbstractCPU implements CPU, Callable<RunState> {
 }
 ----
 
-==== CPU emulation modes
+===== CPU emulation modes
 
 
 The CPU can work in two modes while performing the emulation: "step" mode or "run" mode. The modes are disjunct - only one
 of them can be active in time.
 
-===== "Step" mode
+====== "Step" mode
 
 In the "step" mode, the CPU emulates instructions in "steps", one-by-one. One instruction should be emulated by calling
 `step()` method. After the emulation of the instruction is finished, the CPU run state should be returned back to
@@ -308,7 +305,7 @@ error (e.g. `BAD_INSTR` or `ADDR_FALLOUT`).
 
 In this mode, it is not required to emulate the instruction in a performance-optimized manner.
 
-===== "Run" mode
+====== "Run" mode
 
 In the "run" mode, the CPU should emulate instructions infinitely until either some CPU-halt instruction is encountered
 or user stops the emulation by external GUI event. Within this mode the developer is encouraged to use some good
@@ -325,7 +322,7 @@ the run state should be set accordingly:
 - if the stop is caused by trying to read/write from nonexistant location in memory, the run state should be `STOPPED_ADDR_FALLOUT`
 - if the stop is caused by trying to execute unknown instruction, the run state should be `STOPPED_BAD_INSTR`
 
-===== Final notes
+====== Final notes
 
 The described modes are reflected in methods of `AbstractCPU` class. The `call()` method represents the "run" mode, and
 `stepInternal()` method, represents the "step" mode.
@@ -338,8 +335,8 @@ This means that CPU emulation control will not block UI, even if the execution t
 However, all the other methods from the CPU interface are (possibly) executed from the UI thread, so they should be
 implemented in a responsive manner; they can block.
 
-[[SSEM_ARCHITECTURE]]
-== Architecture of SSEM CPU emulator
+[[CPU_SSEM_ARCHITECTURE]]
+=== Architecture
 
 SSEM is one of the first implementations of the von-Neumann design of a computer. It contained control unit,
 arithmetic-logic unit and I/O subsystem (CRT display). More information about the real architecture can be found
@@ -397,10 +394,10 @@ digraph ssem_cpu_architecture {
 
 
 
-== Implementing CPU fundamentals
+=== The main class
 
 The fundamental steps when building a CPU involves the initialization and destruction code. After reading the
-<<BEHAVIORAL_CONTRACTS>>, you should be aware of how the code should look like.
+<<CPU_BEHAVIORAL_CONTRACTS>>, you should be aware of how the code should look like.
 
 The initialization code is represented by the constructor and the `initialize()` method.
 
@@ -428,7 +425,7 @@ public class CpuImpl extends AbstractCPU {
 We will leave the other methods unimplemented for now.
 
 While getting to the initialization part, what the CPU needs in order to operate? Especially, our SSEM "CPU". It
-requires memory. The I/O subsystem, as can be seen at the picture under <<SSEM_ARCHITECTURE>> section, will not be
+requires memory. The I/O subsystem, as can be seen at the picture under <<CPU_SSEM_ARCHITECTURE>> section, will not be
 implemented in this tutorial. There is dedicated separate tutorial for the CRT display.
 
 The first step of the initialization is getting the memory from the context pool:
@@ -460,7 +457,7 @@ NOTE: The question you might have is why not to get the memory in the constructo
 What now? We need to implement three fundamental components - GUI panel, disassembler and the emulator engine itself.
 We can start with the interesting stuff right away.
 
-== Emulator engine
+=== Emulator engine
 
 Emulator engine is the core of the emulator. As we all probably know, the CPU interprets some binary-encoded "commands"
 - instructions - which are stored in memory. Basic von-Neumann CPUs work sequentially. Execution of one instruction
@@ -629,7 +626,7 @@ data, not recognized by CPU. For this situation, we have `STATE_STOPPED_BAD_INST
 
 That's pretty it. We will now extend the engine to support breakpoints and controlling the speed.
 
-=== Breakpoints support
+==== Breakpoints support
 
 Since emuStudio is mainly intended for students, as they should get in touch with emulated computers and how they work,
 it should allow sometimes to pause the emulation at a point she wants. This capability is also useful when
@@ -679,7 +676,7 @@ Now the engine requires also the CPU main object, needed for checking if the bre
 instruction location, denoted by the `CI` register. If the breakpoint is set, the resulting state is `STATE_STOPPED_BREAK`, and
 emuStudio will take care about the pausing and updating the GUI.
 
-=== Preserving the speed
+==== Preserving the speed
 
 Every real computer runs at some speed, usually talking just about only CPU speed. Baby "CPU" could perform about 700
 instructions per second. How we should achieve that? The simplest method would be something like that:
@@ -840,7 +837,7 @@ up and then restored.
 
 That's about it! If we had disassembler and GUI, the emulator is now ready - we have just implemented the core of the CPU.
 
-== Disassembler
+=== Disassembler
 
 Disassembler is not needed for the emulation itself. It is needed for emuStudio to be able to visually show the
 instructions. Instructions are encoded in a binary form and reside in memory. Disassembler "disassembles" - decodes the
@@ -874,7 +871,7 @@ There can exist multiple rules, and rules can include another rules. If the rule
 it means it's a constant. In that case, in the parenthesis after the rule inclusion must be a number of bits
 which the constant takes.
 
-=== Using generated disassembler
+==== Using generated disassembler
 
 When you look into our `pom.xml` file, you can find a section:
 
@@ -963,7 +960,7 @@ public class CpuImpl extends AbstractCPU {
 
 We are approaching the end of our road. The last thing to do is to implement a status panel GUI of the CPU.
 
-== Status panel
+=== Status panel
 
 The status panel is a Java Swing panel (class extending `java.swing.JPanel`). The GUI can be "drawn" in any favorite
 IDE, like NetBeans or IntelliJ IDEA. The status panel should show the following:
@@ -1017,7 +1014,7 @@ public class CpuImpl extends AbstractCPU {
 }
 ----
 
-== Testing the CPU
+=== Testing
 
 Now you have implemented complete CPU emulator. It should work. Should. But how do we now until we try? Every program
 can have bugs. And most likely it does. It is crucial for CPU emulator to work literally exactly as the real CPU. With

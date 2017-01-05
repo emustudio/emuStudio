@@ -56,7 +56,13 @@
                 <imagesdir>.</imagesdir>
                 <!-- Display anchors on html document-->
                 <sectanchors>true</sectanchors>
+                <toc>left</toc>
+                <icons>font</icons>
+                <docinfo1>true</docinfo1>
                 <toclevels>3</toclevels>
+                <imagesdir>images</imagesdir>
+                <tabsize>4</tabsize>
+                <revnumber>${project.version}</revnumber>
                 <!-- Parse link attributes such as window="_blank"   -->
                 <linkattrs>true</linkattrs>
               </attributes>
