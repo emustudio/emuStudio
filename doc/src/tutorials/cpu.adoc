@@ -975,7 +975,7 @@ registers' values really are (and compare them with those shown on a display), e
 
 SSEM CPU status panel will look as follows:
 
-image::images/cpu-status-panel.png[SSEM CPU Status panel GUI]
+image::cpu-status-panel.png[SSEM CPU Status panel GUI]
 
 The class code is:
 
