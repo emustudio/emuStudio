@@ -1,3 +1,4 @@
+[[MEMORY_HOWTO]]
 == Writing a memory
 
 This tutorial will describe some basic knowledge about how to create an operating memory to be used in emuStudio.
@@ -81,7 +82,7 @@ And let's start with the first Java class, the main plug-in class. Let's put it 
 [[MEMORY_BASIC_STUFF]]
 === The main class
 
-Go to the `MemoryImpl` class source. Extend the class from `emulib.plugins.compiler.AbstractMemory` class.
+Go to the `MemoryImpl` class source. Extend the class from `emulib.plugins.memory.AbstractMemory` class.
 The class extends from `Memory` interface and implements the most common methods, usable by all memories.
 
 It is also necessary to annotate the class with `emulib.annotations.PluginType` annotation, which is required for every
@@ -90,7 +91,7 @@ main class of any emuStudio plug-in. The code snippet looks as follows:
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/memory/MemoryImpl.java`
 ----
-package net.sf.emustudio.ssem.assembler;
+package net.sf.emustudio.ssem.memory;
 
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;

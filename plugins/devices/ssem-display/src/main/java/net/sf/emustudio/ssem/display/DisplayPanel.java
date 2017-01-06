@@ -20,12 +20,13 @@
 package net.sf.emustudio.ssem.display;
 
 import emulib.runtime.NumberUtils;
+import net.jcip.annotations.ThreadSafe;
+
+import javax.swing.JPanel;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.util.stream.Collectors;
-import javax.swing.JPanel;
-import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class DisplayPanel extends JPanel {
@@ -47,7 +48,7 @@ public class DisplayPanel extends JPanel {
                 .mapToObj(c -> c == '1')
                 .collect(Collectors.toList())
                 .toArray(new Boolean[0]);
-        
+
         for (int i = 0; i < ROWS; i++) {
             memory[row][i] = bits[i];
         }
@@ -83,8 +84,8 @@ public class DisplayPanel extends JPanel {
                           PIXEL_SIZE
                   );
                 } else {
-                  g.setColor(Color.WHITE);
-                  g.drawRect(
+                  g.setColor(Color.DARK_GRAY);
+                  g.fillRect(
                           startX + (CELL_SIZE - j) * PIXEL_SIZE_PLUS_GAP,
                           startY + i * PIXEL_SIZE_PLUS_GAP,
                           PIXEL_SIZE,

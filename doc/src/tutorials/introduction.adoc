@@ -343,7 +343,7 @@ SamplePlugin(Long pluginId, ContextPool contextPool) {
 The `ContextPool` can be used (in this phase) only for *registering* custom plug-in contexts, but not for their
 obtaining. More information can be found in emuLib's Javadoc.
 
-
+[[INTRODUCTION_INITIALIZATION]]
 ===== Phase 2 - Initialization
 
 The initialization of plug-ins follows as the second phase. In this phase, plug-ins should ask from given `ContextPool`
