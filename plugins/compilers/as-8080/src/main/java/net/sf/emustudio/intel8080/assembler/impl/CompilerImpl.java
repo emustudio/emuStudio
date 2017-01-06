@@ -39,7 +39,7 @@ import java.util.ResourceBundle;
 @PluginType(
         type = PLUGIN_TYPE.COMPILER,
         title = "Intel 8080 Assembler",
-        copyright = "\u00A9 Copyright 2006-2016, Peter Jakubčo",
+        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
         description = "Light modified clone of original Intel's assembler. For syntax look at users manual."
 )
 @SuppressWarnings("unused")

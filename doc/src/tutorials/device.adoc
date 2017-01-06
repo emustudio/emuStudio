@@ -88,7 +88,7 @@ import emulib.runtime.ContextPool;
 @PluginType(
         type = PLUGIN_TYPE.DEVICE,
         title = "SSEM CRT display",
-        copyright = "\u00A9 Copyright 2006-2016, Peter Jakubčo",
+        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
         description = "CRT display for SSEM computer."
 )
 public class DisplaySSEM extends AbstractDevice {

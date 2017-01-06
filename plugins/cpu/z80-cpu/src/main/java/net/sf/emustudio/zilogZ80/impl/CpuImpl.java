@@ -1,7 +1,7 @@
 /*
  * KISS, YAGNI, DRY
  *
- * (c) Copyright 2006-2016, Peter Jakubčo
+ * (c) Copyright 2006-2017, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @PluginType(
         type = PLUGIN_TYPE.CPU,
         title = "Zilog Z80 CPU",
-        copyright = "\u00A9 Copyright 2006-2016, Peter Jakubčo",
+        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
         description = "Emulator of Zilog Z80 CPU"
 )
 @SuppressWarnings("unused")

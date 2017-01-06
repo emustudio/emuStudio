@@ -1,7 +1,7 @@
 /*
  * KISS, YAGNI, DRY
  *
- * (c) Copyright 2006-2016, Peter Jakubčo
+ * (c) Copyright 2006-2017, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ import static net.sf.emustudio.devices.mits88disk.impl.SettingsConstants.SECTOR_
 @PluginType(
         type = PLUGIN_TYPE.DEVICE,
         title = "MITS 88-DISK device",
-        copyright = "\u00A9 Copyright 2006-2016, Peter Jakubčo",
+        copyright = "\u00A9 Copyright 2006-2017, Peter Jakubčo",
         description = "Implementation of popular floppy disk controller."
 )
 @SuppressWarnings("unused")

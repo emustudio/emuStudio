@@ -2,7 +2,7 @@
  * KISS, YAGNI, DRY
  *
  * Copyright (C) 2001, Stephen Ostermiller
- * (c) Copyright 2006-2016, Peter Jakubčo
+ * (c) Copyright 2006-2017, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

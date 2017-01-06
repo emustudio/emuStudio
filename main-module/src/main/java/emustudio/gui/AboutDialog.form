@@ -146,7 +146,7 @@
                 <Font bold="false" component="lblCopyright" property="font" relativeSize="true" size="0"/>
               </FontInfo>
             </Property>
-            <Property name="text" type="java.lang.String" value="&#xa9; Copyright 2006-2016 Peter Jakub&#x10d;o"/>
+            <Property name="text" type="java.lang.String" value="&#xa9; Copyright 2006-2017 Peter Jakub&#x10d;o"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="lblVersion">

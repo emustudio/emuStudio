@@ -1,7 +1,7 @@
 /*
  * KISS, YAGNI, DRY
  *
- * (c) Copyright 2006-2016, Peter Jakubčo
+ * (c) Copyright 2006-2017, Peter Jakubčo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ import java.util.ResourceBundle;
 @PluginType(
         type=PLUGIN_TYPE.DEVICE,
         title="SIMH pseudo device",
-        copyright="Copyright (c) 2002-2007, Peter Schorn\n\u00A9 Copyright 2006-2016, Peter Jakubčo",
+        copyright="Copyright (c) 2002-2007, Peter Schorn\n\u00A9 Copyright 2006-2017, Peter Jakubčo",
         description="Re-implementation of simh pseudo device, used in simh emulator. Version is SIMH003."
 )
 @SuppressWarnings("unused")

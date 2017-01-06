@@ -1,5 +1,5 @@
 = BrainDuck: A virtual computer based on `brainfuck`
-(c) Copyright 2006-2016, Peter Jakubčo
+(c) Copyright 2006-2017, Peter Jakubčo
 Version 0.39
 :toc:
 :numbered:
