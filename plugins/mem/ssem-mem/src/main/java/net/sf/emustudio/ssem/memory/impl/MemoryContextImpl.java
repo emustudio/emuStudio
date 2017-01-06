@@ -20,8 +20,9 @@
 package net.sf.emustudio.ssem.memory.impl;
 
 import emulib.plugins.memory.AbstractMemoryContext;
-import java.util.Arrays;
 import net.jcip.annotations.ThreadSafe;
+
+import java.util.Arrays;
 
 @ThreadSafe
 public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
@@ -62,8 +63,8 @@ public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
         int i = 0;
         for (byte cell : cells) {
             memory[to + i] = cell;
-            i++;
             notifyMemoryChanged(to+i);
+            i++;
         }
     }
 

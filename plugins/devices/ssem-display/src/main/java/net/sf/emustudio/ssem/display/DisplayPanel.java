@@ -30,27 +30,25 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class DisplayPanel extends JPanel {
     private final static int PIXEL_SIZE = 10;
-    private final static int GAP = 2;
+    private final static int PIXEL_SIZE_PLUS_GAP = PIXEL_SIZE + 2;
+    private final static int CELL_SIZE = 32;
+    private final static int ROWS = 32;
 
-    private final boolean[][] memory = new boolean[32][32];
+    private final boolean[][] memory = new boolean[CELL_SIZE][CELL_SIZE];
 
     public DisplayPanel() {
         super.setBackground(Color.BLACK);
         super.setDoubleBuffered(true);
     }
 
-    public void stop() {
-        clear();
-    }
-    
     public void writeRow(Byte[] value, int row) {
         int number = NumberUtils.readInt(value, NumberUtils.Strategy.REVERSE_BITS);
-        Boolean[] bits = String.format("%32s", Integer.toBinaryString(number)).chars()
+        Boolean[] bits = String.format("%" + CELL_SIZE + "s", Integer.toBinaryString(number)).chars()
                 .mapToObj(c -> c == '1')
                 .collect(Collectors.toList())
                 .toArray(new Boolean[0]);
         
-        for (int i = 0; i < 32; i++) {
+        for (int i = 0; i < ROWS; i++) {
             memory[row][i] = bits[i];
         }
         repaint();
@@ -68,8 +66,8 @@ public class DisplayPanel extends JPanel {
      @Override
     public void paintComponent(Graphics g) {
         Dimension size = getSize();
-        int startX = size.width / 2 - 16 * (PIXEL_SIZE + GAP);
-        int startY = size.height / 2 - 16 * (PIXEL_SIZE + GAP);
+        int startX = size.width / 2 - (CELL_SIZE / 2) * PIXEL_SIZE_PLUS_GAP - PIXEL_SIZE;
+        int startY = size.height / 2 - (ROWS / 2) * PIXEL_SIZE_PLUS_GAP;
 
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, size.width, size.height);
@@ -79,16 +77,16 @@ public class DisplayPanel extends JPanel {
                 if (memory[i][j]) {
                   g.setColor(Color.GREEN);
                   g.fillRect(
-                          startX + i * (PIXEL_SIZE + GAP),
-                          startY + j * (PIXEL_SIZE + GAP),
+                          startX + (CELL_SIZE - j) * PIXEL_SIZE_PLUS_GAP,
+                          startY + i * PIXEL_SIZE_PLUS_GAP,
                           PIXEL_SIZE,
                           PIXEL_SIZE
                   );
                 } else {
                   g.setColor(Color.WHITE);
                   g.drawRect(
-                          startX + i * (PIXEL_SIZE + GAP),
-                          startY + j * (PIXEL_SIZE + GAP),
+                          startX + (CELL_SIZE - j) * PIXEL_SIZE_PLUS_GAP,
+                          startY + i * PIXEL_SIZE_PLUS_GAP,
                           PIXEL_SIZE,
                           PIXEL_SIZE
                   );

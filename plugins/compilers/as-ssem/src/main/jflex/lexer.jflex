@@ -21,6 +21,8 @@ package net.sf.emustudio.ssem.assembler;
 
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.Token;
+import emulib.runtime.NumberUtils;
+
 import java.io.IOException;
 import java.io.Reader;
 
@@ -79,78 +81,106 @@ eol = \r|\n|\r\n
 space = [ \t\f]+
 number = \-?[0-9]+
 hexnumber = \-?0x[0-9a-fA-F]+
+binnumber = [01]+
+
+%state BIN
 
 %%
 
-/* reserved words */
-"jmp" {
-    return token(JMP, Token.RESERVED);
-}
-"jrp" {
-    return token(JPR, Token.RESERVED);
-}
-"jpr" {
-    return token(JPR, Token.RESERVED);
-}
-"jmr" {
-    return token(JPR, Token.RESERVED);
-}
-"ldn" {
-    return token(LDN, Token.RESERVED);
-}
-"sto" {
-    return token(STO, Token.RESERVED);
-}
-"sub" {
-    return token(SUB, Token.RESERVED);
-}
-"cmp" {
-    return token(CMP, Token.RESERVED);
-}
-"skn" {
-    return token(CMP, Token.RESERVED);
-}
-"stp" {
-    return token(STP, Token.RESERVED);
-}
-"hlt" {
-    return token(STP, Token.RESERVED);
-}
-"num" {
-    return token(NUM, Token.RESERVED);
+<YYINITIAL> {
+    /* reserved words */
+    "jmp" {
+        return token(JMP, Token.RESERVED);
+    }
+    "jrp" {
+        return token(JPR, Token.RESERVED);
+    }
+    "jpr" {
+        return token(JPR, Token.RESERVED);
+    }
+    "jmr" {
+        return token(JPR, Token.RESERVED);
+    }
+    "ldn" {
+        return token(LDN, Token.RESERVED);
+    }
+    "sto" {
+        return token(STO, Token.RESERVED);
+    }
+    "sub" {
+        return token(SUB, Token.RESERVED);
+    }
+    "cmp" {
+        return token(CMP, Token.RESERVED);
+    }
+    "skn" {
+        return token(CMP, Token.RESERVED);
+    }
+    "stp" {
+        return token(STP, Token.RESERVED);
+    }
+    "hlt" {
+        return token(STP, Token.RESERVED);
+    }
+
+    /* special */
+    "start:" {
+        return token(START, Token.PREPROCESSOR);
+    }
+    "num" {
+        return token(NUM, Token.PREPROCESSOR);
+    }
+    "bnum" {
+        yybegin(BIN);
+        return token(BNUM, Token.PREPROCESSOR);
+    }
+    "bins" {
+        yybegin(BIN);
+        return token(BNUM, Token.PREPROCESSOR);
+    }
+
+    /* separators */
+    {eol} {
+        return token(SEPARATOR_EOL, Token.SEPARATOR);
+    }
+    {space} { /* ignore white spaces */ }
+
+    /* comment */
+    {comment} {
+        return token(TCOMMENT, Token.COMMENT);
+    }
+    {comment2} {
+        return token(TCOMMENT, Token.COMMENT);
+    }
+    {comment3} {
+        return token(TCOMMENT, Token.COMMENT);
+    }
+
+    /* literals */
+    {number} {
+        int num = Integer.parseInt(yytext(), 10);
+        return token(NUMBER, Token.LITERAL, num);
+    }
+
+    {hexnumber} {
+        int num = Integer.decode(yytext());
+        return token(NUMBER, Token.LITERAL, num);
+    }
 }
 
-/* special */
-"start:" {
-    return token(START, Token.PREPROCESSOR);
-}
+<BIN> {
 
-/* separators */
-{eol} {
-    return token(SEPARATOR_EOL, Token.SEPARATOR);
-}
-{space} { /* ignore white spaces */ }
+    {binnumber} {
+        yybegin(YYINITIAL);
 
-/* comment */
-{comment} {
-    return token(TCOMMENT, Token.COMMENT);
-}
-{comment2} {
-    return token(TCOMMENT, Token.COMMENT);
-}
-{comment3} {
-    return token(TCOMMENT, Token.COMMENT);
-}
+        int num = NumberUtils.reverseBits(Integer.parseInt(yytext(), 2), 32);
+        return token(NUMBER, Token.LITERAL, num);
+    }
 
-/* literals */
-{number} {
-    int num = Integer.parseInt(yytext(), 10);
-    return token(NUMBER, Token.LITERAL, num);
-}
+    [^] {
+        yybegin(YYINITIAL);
+    }
 
-{hexnumber} {
-    int num = Integer.decode(yytext());
-    return token(NUMBER, Token.LITERAL, num);
 }
 
 /* error fallback */

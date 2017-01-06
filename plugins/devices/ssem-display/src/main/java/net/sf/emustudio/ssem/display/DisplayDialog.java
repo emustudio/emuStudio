@@ -41,8 +41,13 @@ public class DisplayDialog extends JDialog {
     private void initListener() {
         memory.addMemoryListener(new Memory.MemoryListener() {
             @Override
-            public void memoryChanged(int memoryPosition) {
-                displayPanel.writeRow(memory.readWord(memoryPosition), memoryPosition / 4);
+            public void memoryChanged(int bytePosition) {
+                if (bytePosition == -1) {
+                    reset();
+                } else {
+                    int row = bytePosition / 4;
+                    displayPanel.writeRow(memory.readWord(row * 4), row);
+                }
             }
 
             @Override
@@ -54,11 +59,10 @@ public class DisplayDialog extends JDialog {
 
     public void reset() {
         displayPanel.clear();
-        for (int i = 0; i < 4 * 32; i++) {
+        for (int i = 0; i < 4 * 32; i += 4) {
             displayPanel.writeRow(memory.readWord(i), i / 4);
         }
     }
-    
 
     /**
      * This method is called from within the constructor to initialize the form. WARNING: Do NOT modify this code. The

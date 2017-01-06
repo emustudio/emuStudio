@@ -84,7 +84,7 @@ parser code {:
 
 :};
 
-terminal JMP, JPR, LDN, STO, SUB, CMP, STP, NUM;
+terminal JMP, JPR, LDN, STO, SUB, CMP, STP, NUM, BNUM;
 terminal SEPARATOR_EOL, TCOMMENT, ERROR_UNKNOWN_TOKEN;
 terminal Integer NUMBER;
 terminal START;
@@ -119,6 +119,7 @@ Instruction ::= JMP NUMBER:line             {: RESULT = Instruction.jmp(line); :
     ;
 
 Constant ::= NUM NUMBER:raw                 {: RESULT = new Constant(raw); :}
+    | BNUM NUMBER:raw                       {: RESULT = new Constant(raw); :}
     ;
 
 Comment ::= TCOMMENT
