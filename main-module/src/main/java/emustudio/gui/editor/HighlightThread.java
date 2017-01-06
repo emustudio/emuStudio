@@ -22,11 +22,6 @@ package emustudio.gui.editor;
 
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.Token;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.swing.text.SimpleAttributeSet;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -35,6 +30,9 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import javax.swing.text.SimpleAttributeSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The syntax highlighting thread.
@@ -333,7 +331,7 @@ class HighlightThread extends Thread {
                     // and put the new initial positions that we have found on the list.
                     initPositions.addAll(newPositions);
                     newPositions.clear();
-                } catch (IOException x) {
+                } catch (Exception x) { // catch all runtime exceptions as well, such as NumberFormatException
                     logger.error("There was an exception while performing syntax highlighting", x);
                 }
                 synchronized (lock) {

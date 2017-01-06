@@ -107,15 +107,26 @@ Instructions belong to token category called "reserved words".
 
 ==== Literals / constants
 
-Raw number constants can be defined in separate lines (with `NUM xxx`). The numbers themselves can be defined in decimal
-or hexadecimal form. Hexadecimal format must start with prefix `0x`. For example:
+Raw number constants can be defined in separate lines using special preprocessor keywords. The first one is `NUM xxx`,
+where `xxx` is a number in either decimal or hexadecimal form. Hexadecimal format must start with prefix `0x`. For example:
 
-    0 NUM 0x20
-    1 NUM 1207943145
+    00 NUM 0x20
+    01 NUM 1207943145
 
-Only integral constants are supported, and the allowed range is from 0 - 31 (maximum is 2^5).
+Another keyword is `BNUM xxx`, where `xxx` can be only a binary number. For example:
 
-Word `NUM` belongs to "reserved words", but number constants to the category called "literals".
+    01 BNUM 10011011111000101111110000111111
+
+It means that the number will be stored untouched to the memory in the format as it appears in the binary form.
+
+There exists also a third keyword, `BINS xxx`, with the exact meaning as `BNUM`. The reason for its presence is to
+be compatible with most of the programs http://www.cs.ubc.ca/~hilpert/e/SSEM/programs/noodle.html[found on internet].
+
+For all constants, the following rules hold. Only integral constants are supported, and the allowed range is from 0 - 31
+(maximum is 2^5).
+
+Word `NUM`, `BNUM` and `BINS` keywords belong to "preprocessor" category, but number constants to the category called
+"literals".
 
 ==== Comments
 

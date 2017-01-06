@@ -1,14 +1,20 @@
-instruction = "JMP": line(8)     00000000 00000000 00000000 |
-              "JPR": line(8)     00000100 00000000 00000000 |
-              "LDN": line(8)     00000010 00000000 00000000 |
-              "STO": line(8)     00000110 00000000 00000000 |
-              "SUB": line(8)     00000001 00000000 00000000 |
-              "CMP": 00000   000 00000011 00000000 00000000 |
-              "STP": 00000   000 00000111 00000000 00000000;
+instruction = "JMP": line(5)     ignore8(8) 000 ignore16(16) |
+              "JPR": line(5)     ignore8(8) 100 ignore16(16) |
+              "LDN": line(5)     ignore8(8) 010 ignore16(16) |
+              "STO": line(5)     ignore8(8) 110 ignore16(16) |
+              "SUB": line(5)     ignore8(8) 001 ignore16(16) |
+              "CMP": 00000       ignore8(8) 011 ignore16(16) |
+              "STP": 00000       ignore8(8) 111 ignore16(16);
 
 line = arg: arg(8);
 
+ignore5 = arg: arg(5);
+
+ignore8 = arg: arg(8);
+
+ignore16 = arg: arg(16);
+
 %%
 
-"%s %X" = instruction line(bit_reverse);
-"%s" = instruction;
+"%s %X" = instruction line(bit_reverse) ignore8 ignore16;
+"%s" = instruction ignore8 ignore16;

@@ -20,10 +20,13 @@
 package net.sf.emustudio.ssem.assembler;
 
 import emulib.plugins.compiler.Token;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.io.StringReader;
+
 import static org.junit.Assert.assertEquals;
-import org.junit.Test;
+import static org.junit.Assert.assertFalse;
 
 public class LexerTest {
 
@@ -104,5 +107,19 @@ public class LexerTest {
         token = lexer.next_token();
         assertEquals(Token.TEOF, token.getType());
         assertEquals(TokenImpl.EOF, token.getID());
+    }
+
+    @Test
+    public void testBinaryNumber() throws Exception {
+        LexerImpl lexer = lexer("BNUM 10011011111000101111110000111111\n");
+
+        TokenImpl token = lexer.next_token();
+        assertEquals(Token.PREPROCESSOR, token.getType());
+        assertEquals(TokenImpl.BNUM, token.getID());
+        assertFalse(token.isInitialLexicalState());
+
+        token = lexer.next_token();
+        assertEquals(Token.LITERAL, token.getType());
+        assertEquals(TokenImpl.NUMBER, token.getID());
     }
 }

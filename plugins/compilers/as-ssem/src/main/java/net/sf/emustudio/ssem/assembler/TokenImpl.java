@@ -84,6 +84,6 @@ public class TokenImpl extends ComplexSymbolFactory.ComplexSymbol implements Tok
 
     @Override
     public boolean isInitialLexicalState() {
-        return true;
+        return super.sym != BNUM;
     }
 }

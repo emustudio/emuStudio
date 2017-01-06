@@ -22,9 +22,11 @@ package net.sf.emustudio.ssem.assembler;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.Token;
 import emulib.runtime.NumberUtils;
+import emulib.runtime.RadixUtils;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Arrays;
 
 %%
 
@@ -83,7 +85,7 @@ number = \-?[0-9]+
 hexnumber = \-?0x[0-9a-fA-F]+
 binnumber = [01]+
 
-%state BIN
+%xstate BIN
 
 %%
 
@@ -139,12 +141,6 @@ binnumber = [01]+
         return token(BNUM, Token.PREPROCESSOR);
     }
 
-    /* separators */
-    {eol} {
-        return token(SEPARATOR_EOL, Token.SEPARATOR);
-    }
-    {space} { /* ignore white spaces */ }
-
     /* comment */
     {comment} {
         return token(TCOMMENT, Token.COMMENT);
@@ -168,12 +164,24 @@ binnumber = [01]+
     }
 }
 
+/* separators */
+<YYINITIAL, BIN> {eol} {
+    return token(SEPARATOR_EOL, Token.SEPARATOR);
+}
+<YYINITIAL, BIN> {space} { /* ignore white spaces */ }
+
 <BIN> {
 
     {binnumber} {
         yybegin(YYINITIAL);
 
-        int num = NumberUtils.reverseBits(Integer.parseInt(yytext(), 2), 32);
+        byte[] numberArray = RadixUtils.convertToNumber(yytext(), 2, 4);
+        int num = NumberUtils.reverseBits(
+            NumberUtils.readInt(
+                NumberUtils.toObjectArray(numberArray), NumberUtils.Strategy.LITTLE_ENDIAN
+            ), 32
+        );
+
         return token(NUMBER, Token.LITERAL, num);
     }
 
