@@ -27,8 +27,10 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
 
@@ -38,14 +40,14 @@ class KeyboardFromFile implements InputProvider {
     private List<DeviceContext<Short>> inputObservers = new CopyOnWriteArrayList<>();
     private final File inputFile;
 
-    KeyboardFromFile(File inputFile) {
-        this.inputFile = inputFile;
+    KeyboardFromFile(File inputFile) throws FileNotFoundException {
+        this.inputFile = Objects.requireNonNull(inputFile);
+        if (!inputFile.canRead()) {
+            throw new FileNotFoundException("Input file: '" + inputFile + "' cannot be found or cannot be read");
+        }
     }
 
     void processInputFile(int delayInMilliseconds) {
-        if (inputFile == null) {
-            return;
-        }
         try(BufferedInputStream input = new BufferedInputStream(new FileInputStream(inputFile))) {
             int key;
             while ((key = input.read()) != -1) {

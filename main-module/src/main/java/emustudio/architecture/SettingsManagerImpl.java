@@ -56,10 +56,10 @@ public class SettingsManagerImpl implements SettingsManager {
     private void initialize()  {
         if (Main.commandLine.isAuto()) {
            // Set "auto" setting to "true" to all plugins
-           writeSetting(SettingsManager.AUTO, "true");
+           setSettingWithoutWrite(SettingsManager.AUTO, "true");
         }
         if (Main.commandLine.isNoGUI()) {
-           writeSetting(SettingsManager.NO_GUI, "true");
+           setSettingWithoutWrite(SettingsManager.NO_GUI, "true");
            try {
                StaticDialogs.setGUISupported(false, Main.emulibToken);
            } catch (InvalidPasswordException e) {
@@ -112,6 +112,11 @@ public class SettingsManagerImpl implements SettingsManager {
 
     @Override
     public boolean writeSetting(long pluginID, String settingName, String val) {
+        if (isReadOnly(settingName)) {
+            LOGGER.warn("[pluginID={}, settingName={}] Plugin tried to set a read-only setting. Request ignored.",
+                pluginID, settingName);
+        }
+
         String prop = pluginConfigNames.get(pluginID);
 
         if ((prop == null) || prop.isEmpty()) {
@@ -134,6 +139,11 @@ public class SettingsManagerImpl implements SettingsManager {
 
     @Override
     public boolean removeSetting(long pluginID, String settingName) {
+        if (isReadOnly(settingName)) {
+            LOGGER.warn("[pluginID={}, settingName={}] Plugin tried to remove a read-only setting. Request ignored.",
+                pluginID, settingName);
+        }
+
         String prop = pluginConfigNames.get(pluginID);
 
         if ((prop == null) || prop.isEmpty()) {
@@ -154,12 +164,14 @@ public class SettingsManagerImpl implements SettingsManager {
         return true;
     }
 
-    boolean writeSetting(String settingName, String value) {
-        boolean result = true;
-        for (Long pluginID : pluginConfigNames.keySet()) {
-            result = result && writeSetting(pluginID, settingName, value);
+    boolean isReadOnly(String settingName) {
+        return (settingName.equals(NO_GUI) || settingName.equals(AUTO));
+    }
+
+    void setSettingWithoutWrite(String settingName, String value) {
+        for (String pluginName: pluginConfigNames.values()) {
+            configuration.set(pluginName + "." + settingName, value);
         }
-        return result;
     }
 
 }

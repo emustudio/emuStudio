@@ -221,6 +221,7 @@ public class Display extends JPanel implements DeviceContext<Short>, TerminalSet
     @Override
     public void settingsChanged() {
         if (settings.isNoGUI()) {
+            closeOutputWriter();
             openOutputWriter();
         } else {
             closeOutputWriter();

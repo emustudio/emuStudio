@@ -37,6 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
@@ -93,7 +95,11 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
         }
         terminalGUI = new TerminalWindow(display);
         display.start();
-        terminalSettings.read();
+        try {
+            terminalSettings.read();
+        } catch (IOException e) {
+            throw new PluginInitializationException(this, e);
+        }
     }
 
     @Override
@@ -159,7 +165,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
         }
     }
 
-    private void createKeyboardFromFile() {
+    private void createKeyboardFromFile() throws FileNotFoundException {
         destroyKeyboard();
         KeyboardFromFile tmp = new KeyboardFromFile(new File(terminalSettings.getInputFileName()));
         keyboard = tmp;
@@ -176,7 +182,7 @@ public class TerminalImpl extends AbstractDevice implements TerminalSettings.Cha
     }
 
     @Override
-    public void settingsChanged() {
+    public void settingsChanged() throws FileNotFoundException {
         if (isGUIAllowed() && !(keyboard instanceof Keyboard)) {
             createKeyboard();
         } else if (!(keyboard instanceof KeyboardFromFile)) {

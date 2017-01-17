@@ -19,11 +19,13 @@
  */
 package net.sf.emustudio.devices.adm3a.gui;
 
+import emulib.runtime.StaticDialogs;
 import net.sf.emustudio.devices.adm3a.impl.Display;
 import net.sf.emustudio.devices.adm3a.impl.TerminalSettings;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 
 public class ConfigDialog extends javax.swing.JDialog {
     private final TerminalSettings settings;
@@ -51,7 +53,7 @@ public class ConfigDialog extends javax.swing.JDialog {
         spnInputDelay.setValue(settings.getInputReadDelay());
     }
 
-    private void updateSettings(boolean save) {
+    private void updateSettings(boolean save) throws IOException {
         settings.setHalfDuplex(chkHalfDuplex.isSelected());
         settings.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
         settings.setAntiAliasing(chkAntiAliasing.isSelected());
@@ -291,8 +293,12 @@ public class ConfigDialog extends javax.swing.JDialog {
 
     private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOKActionPerformed
         window.setAlwaysOnTop(chkAlwaysOnTop.isSelected());
-        updateSettings(chkSaveSettings.isSelected());
-        dispose();
+        try {
+            updateSettings(chkSaveSettings.isSelected());
+            dispose();
+        } catch (IOException e) {
+            StaticDialogs.showErrorMessage("Input or output file names (or both) do not exist. Please make sure they do.");
+        }
     }//GEN-LAST:event_btnOKActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -163,12 +163,10 @@ public class SettingsManagerImplTest {
         expectLastCall().once();
         configuration.set("compiler.test", "true");
         expectLastCall().once();
-        configuration.write();
-        expectLastCall().times(2);
         replay(configuration);
 
         SettingsManagerImpl instance = new SettingsManagerImpl(pluginNames, configuration);
-        assertTrue(instance.writeSetting("test", "true"));
+        instance.setSettingWithoutWrite("test", "true");
 
         verify(configuration);
     }

@@ -23,16 +23,15 @@ import emulib.emustudio.SettingsManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class TerminalSettings {
     private final static Logger LOGGER = LoggerFactory.getLogger(TerminalSettings.class);
 
-    private final static String DEFAULT_INPUT_FILE_NAME = "terminalADM-3A.in";
-    private final static String DEFAULT_OUTPUT_FILE_NAME = "terminalADM-3A.out";
+    private final static String DEFAULT_INPUT_FILE_NAME = "adm3A-terminal.in";
+    private final static String DEFAULT_OUTPUT_FILE_NAME = "adm3A-terminal.out";
     private final static String ANTI_ALIASING = "antiAliasing";
     private final static String HALF_DUPLEX = "halfDuplex";
     private final static String ALWAYS_ON_TOP = "alwaysOnTop";
@@ -41,22 +40,21 @@ public class TerminalSettings {
     private final static String INPUT_READ_DELAY = "inputReadDelay";
 
     private final long pluginID;
-    private SettingsManager settingsManager;
 
-    private boolean emuStudioNoGUI = false;
-    private boolean emuStudioAuto = false;
-    private boolean halfDuplex = false;
-    private boolean antiAliasing = true;
-    private boolean alwaysOnTop = false;
-    private String inputFileName = DEFAULT_INPUT_FILE_NAME;
-    private String outputFileName = DEFAULT_OUTPUT_FILE_NAME;
-    private int inputReadDelay = 0;
+    private volatile SettingsManager settingsManager;
+    private volatile boolean emuStudioNoGUI = false;
+    private volatile boolean emuStudioAuto = false;
+    private volatile boolean halfDuplex = false;
+    private volatile boolean antiAliasing = true;
+    private volatile boolean alwaysOnTop = false;
+    private volatile String inputFileName = DEFAULT_INPUT_FILE_NAME;
+    private volatile String outputFileName = DEFAULT_OUTPUT_FILE_NAME;
+    private volatile int inputReadDelay = 0;
 
     private final List<ChangedObserver> observers = new ArrayList<>();
-    private final ReadWriteLock settingsLock = new ReentrantReadWriteLock();
 
     interface ChangedObserver {
-        void settingsChanged();
+        void settingsChanged() throws IOException;
     }
 
     TerminalSettings(long pluginID) {
@@ -72,192 +70,123 @@ public class TerminalSettings {
     }
 
     void setSettingsManager(SettingsManager settingsManager) {
-        settingsLock.writeLock().lock();
-        try {
-            this.settingsManager = settingsManager;
-        } finally {
-            settingsLock.writeLock().unlock();
+        this.settingsManager = settingsManager;
+    }
+
+    private void notifyObservers() throws IOException {
+        for (ChangedObserver observer : observers) {
+            observer.settingsChanged();
         }
     }
 
-    private void notifyObservers() {
-        observers.forEach(ChangedObserver::settingsChanged);
+    private void notifyObserversAndIgnoreError() {
+        for (ChangedObserver observer : observers) {
+            try {
+                observer.settingsChanged();
+            } catch (IOException e) {
+                LOGGER.error("Observer is not happy about the new settings", e);
+            }
+        }
     }
+
 
     boolean isNoGUI() {
-        settingsLock.readLock().lock();
-        try {
-            return emuStudioNoGUI;
-        } finally {
-            settingsLock.readLock().unlock();
-        }
+        return emuStudioNoGUI;
     }
 
     public int getInputReadDelay() {
-        settingsLock.readLock().lock();
-        try {
-            return inputReadDelay;
-        } finally {
-            settingsLock.readLock().unlock();
-        }
+        return inputReadDelay;
     }
 
     public void setInputReadDelay(int inputReadDelay) {
-        settingsLock.writeLock().lock();
-        try {
-            this.inputReadDelay = inputReadDelay;
-        } finally {
-            settingsLock.writeLock().unlock();
-        }
-        notifyObservers();
+        this.inputReadDelay = inputReadDelay;
+        notifyObserversAndIgnoreError();
     }
 
     public boolean isHalfDuplex() {
-        settingsLock.readLock().lock();
-        try {
-            return halfDuplex;
-        } finally {
-            settingsLock.readLock().unlock();
-        }
+        return halfDuplex;
     }
 
     public void setHalfDuplex(boolean halfDuplex) {
-        settingsLock.writeLock().lock();
-        try {
-            this.halfDuplex = halfDuplex;
-        } finally {
-            settingsLock.writeLock().unlock();
-        }
-        notifyObservers();
+        this.halfDuplex = halfDuplex;
+        notifyObserversAndIgnoreError();
     }
 
     public String getInputFileName() {
-        settingsLock.readLock().lock();
-        try {
-            return inputFileName;
-        } finally {
-            settingsLock.readLock().unlock();
-        }
+        return inputFileName;
     }
 
-    public void setInputFileName(String inputFileName) {
-        settingsLock.writeLock().lock();
-        try {
-            this.inputFileName = inputFileName;
-        } finally {
-            settingsLock.writeLock().unlock();
-        }
+    public void setInputFileName(String inputFileName) throws IOException {
+        this.inputFileName = inputFileName;
         notifyObservers();
     }
 
     public String getOutputFileName() {
-        settingsLock.readLock().lock();
-        try {
-            return outputFileName;
-        } finally {
-            settingsLock.readLock().unlock();
-        }
+        return outputFileName;
     }
 
-    public void setOutputFileName(String outputFileName) {
-        settingsLock.writeLock().lock();
-        try {
-            this.outputFileName = outputFileName;
-        } finally {
-            settingsLock.writeLock().unlock();
-        }
+    public void setOutputFileName(String outputFileName) throws IOException {
+        this.outputFileName = outputFileName;
         notifyObservers();
     }
 
     public boolean isAntiAliasing() {
-        settingsLock.readLock().lock();
-        try {
-            return antiAliasing;
-        } finally {
-            settingsLock.readLock().unlock();
-        }
+        return antiAliasing;
     }
 
     public void setAntiAliasing(boolean antiAliasing) {
-        settingsLock.writeLock().lock();
-        try {
-            this.antiAliasing = antiAliasing;
-        } finally {
-            settingsLock.writeLock().unlock();
-        }
-        notifyObservers();
+        this.antiAliasing = antiAliasing;
+        notifyObserversAndIgnoreError();
     }
 
     public boolean isAlwaysOnTop() {
-        settingsLock.readLock().lock();
-        try {
-            return alwaysOnTop;
-        } finally {
-            settingsLock.readLock().unlock();
-        }
+        return alwaysOnTop;
     }
 
     public void setAlwaysOnTop(boolean alwaysOnTop) {
-        settingsLock.writeLock().lock();
-        try {
-            this.alwaysOnTop = alwaysOnTop;
-        } finally {
-            settingsLock.writeLock().unlock();
-        }
-        notifyObservers();
+        this.alwaysOnTop = alwaysOnTop;
+        notifyObserversAndIgnoreError();
     }
 
     public void write() {
-        settingsLock.readLock().lock();
-        try {
-            if (settingsManager == null) {
-                return;
-            }
-            settingsManager.writeSetting(pluginID, SettingsManager.NO_GUI, String.valueOf(emuStudioNoGUI));
-            settingsManager.writeSetting(pluginID, SettingsManager.AUTO, String.valueOf(emuStudioAuto));
-            settingsManager.writeSetting(pluginID, HALF_DUPLEX, String.valueOf(halfDuplex));
-            settingsManager.writeSetting(pluginID, ALWAYS_ON_TOP, String.valueOf(alwaysOnTop));
-            settingsManager.writeSetting(pluginID, ANTI_ALIASING, String.valueOf(antiAliasing));
-            settingsManager.writeSetting(pluginID, INPUT_FILE_NAME, inputFileName);
-            settingsManager.writeSetting(pluginID, OUTPUT_FILE_NAME, outputFileName);
-            settingsManager.writeSetting(pluginID, INPUT_READ_DELAY, String.valueOf(inputReadDelay));
-        } finally {
-            settingsLock.readLock().unlock();
+        if (settingsManager == null) {
+            return;
         }
+        settingsManager.writeSetting(pluginID, HALF_DUPLEX, String.valueOf(halfDuplex));
+        settingsManager.writeSetting(pluginID, ALWAYS_ON_TOP, String.valueOf(alwaysOnTop));
+        settingsManager.writeSetting(pluginID, ANTI_ALIASING, String.valueOf(antiAliasing));
+        settingsManager.writeSetting(pluginID, INPUT_FILE_NAME, inputFileName);
+        settingsManager.writeSetting(pluginID, OUTPUT_FILE_NAME, outputFileName);
+        settingsManager.writeSetting(pluginID, INPUT_READ_DELAY, String.valueOf(inputReadDelay));
     }
 
-    void read() {
-        settingsLock.writeLock().lock();
-        try {
-            if (settingsManager == null) {
-                return;
+    void read() throws IOException {
+        if (settingsManager == null) {
+            return;
+        }
+        emuStudioNoGUI = Boolean.parseBoolean(settingsManager.readSetting(pluginID, SettingsManager.NO_GUI));
+        emuStudioAuto = Boolean.parseBoolean(settingsManager.readSetting(pluginID, SettingsManager.AUTO));
+        halfDuplex = Boolean.parseBoolean(settingsManager.readSetting(pluginID, HALF_DUPLEX));
+        alwaysOnTop = Boolean.parseBoolean(settingsManager.readSetting(pluginID, ALWAYS_ON_TOP));
+        antiAliasing = Boolean.parseBoolean(settingsManager.readSetting(pluginID, ANTI_ALIASING));
+        inputFileName = settingsManager.readSetting(pluginID, INPUT_FILE_NAME);
+        if (inputFileName == null) {
+            inputFileName = DEFAULT_INPUT_FILE_NAME;
+        }
+        outputFileName = settingsManager.readSetting(pluginID, OUTPUT_FILE_NAME);
+        if (outputFileName == null) {
+            outputFileName = DEFAULT_OUTPUT_FILE_NAME;
+        }
+        String tmp = settingsManager.readSetting(pluginID, INPUT_READ_DELAY);
+        if (tmp != null) {
+            try {
+                inputReadDelay = Integer.decode(tmp);
+            } catch (NumberFormatException e) {
+                LOGGER.error("Could not read setting: input read delay for terminal. Using default value ({})",
+                    inputReadDelay, e);
             }
-            emuStudioNoGUI = Boolean.parseBoolean(settingsManager.readSetting(pluginID, SettingsManager.NO_GUI));
-            emuStudioAuto = Boolean.parseBoolean(settingsManager.readSetting(pluginID, SettingsManager.AUTO));
-            halfDuplex = Boolean.parseBoolean(settingsManager.readSetting(pluginID, HALF_DUPLEX));
-            alwaysOnTop = Boolean.parseBoolean(settingsManager.readSetting(pluginID, ALWAYS_ON_TOP));
-            antiAliasing = Boolean.parseBoolean(settingsManager.readSetting(pluginID, ANTI_ALIASING));
-            inputFileName = settingsManager.readSetting(pluginID, INPUT_FILE_NAME);
-            if (inputFileName == null) {
-                inputFileName = DEFAULT_INPUT_FILE_NAME;
-            }
-            outputFileName = settingsManager.readSetting(pluginID, OUTPUT_FILE_NAME);
-            if (outputFileName == null) {
-                outputFileName = DEFAULT_OUTPUT_FILE_NAME;
-            }
-            String tmp = settingsManager.readSetting(pluginID, INPUT_READ_DELAY);
-            if (tmp != null) {
-                try {
-                    inputReadDelay = Integer.decode(tmp);
-                } catch (NumberFormatException e) {
-                    LOGGER.error("Could not read setting: input read delay for terminal", e);
-                }
-            }
-        } finally {
-            settingsLock.writeLock().unlock();
         }
         notifyObservers();
     }
-
 
 }
