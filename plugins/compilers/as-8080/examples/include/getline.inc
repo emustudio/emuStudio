@@ -11,7 +11,9 @@ next_char:
     in 11h ; read char
 
     ; interpret some special keys
-    cpi 13 ; ENTER
+    cpi 13 ; CR
+    jz getline_ret
+    cpi 10 ; LF
     jz getline_ret
     cpi 8  ; backspace
     jnz save_char
