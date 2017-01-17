@@ -1,10 +1,11 @@
-= BrainDuck: A virtual computer based on `brainfuck`
-(c) Copyright 2006-2017, Peter Jakubčo
-Version 0.39
-:toc:
-:numbered:
+[[brainduck]]
+= BrainDuck: Emulator of brainfuck
 
-BrainDuck is an abstract computer for emuStudio, which mimics http://en.wikipedia.org/wiki/Brainfuck[brainfuck] programming language. Originally, brainfuck was developped by
+:toc:
+:sectnums:
+
+BrainDuck is an abstract computer for emuStudio, which mimics http://en.wikipedia.org/wiki/Brainfuck[brainfuck]
+programming language. Originally, brainfuck was developed by
 http://esolangs.org/wiki/Urban_M%C3%BCller[Urban Miller] and it is well-known fact that the language
 has minimalistic compiler and it's eight instructions don't prevent it to be Turing complete. Also,
 there exist many extensions of the language and there are organized programming contests in
@@ -21,7 +22,7 @@ plug-ins:
 All these plug-ins are free software, released under GNU GPL v2 license. The source code is freely
 available online.
 
-Implementation language is Java SE 7. The implementation technology of visual components is Java
+Implementation language is Java SE 8. The implementation technology of visual components is Java
 Swing. All plug-ins use library `emuLib` version `9.0.0`.
 
 [[XIB]]
@@ -220,7 +221,7 @@ The BrainDuck CPU can be run only as a part of emuStudio. It is installed in loc
 
 In the following image, you can see the status panel of `brainduck-cpu`.
 
-image::brainduck/images/status-panel.png[BrainDuck CPU status panel]
+image::images/status-panel.png[BrainDuck CPU status panel]
 
 It is split into three parts. Within 'Internal status' part, there is shown content of registers `IP` and `P`. Register
 `IP` does not have counterpart in brainfuck. IP stands for "instruction pointer". The content is pointing at the next
@@ -266,7 +267,7 @@ The BrainDuck memory can be run only as a part of emuStudio. It is installed in 
 
 In the following screenshot, it is possible to see GUI of `brainduck-mem`.
 
-image::brainduck/images/brainduck-mem.png[BrainDuck memory window]
+image::images/brainduck-mem.png[BrainDuck memory window]
 
 - *A*: Shows actually displayed page. Can be edited manually by entering a number and pressing ENTER key
 - *B*: By double-clicking on a memory cell, the cell editor is enabled and user can overwrite the content of the cell.
@@ -297,7 +298,7 @@ The BrainDuck terminal can be run only as a part of emuStudio. It is installed i
 
 In the following image, BrainDuck terminal window is shown:
 
-image::brainduck/images/brainduck-terminal.png[BrainDuck terminal window]
+image::images/brainduck-terminal.png[BrainDuck terminal window]
 
 It's easy and simple. BrainDuck CPU as it interprets `.` (dot) instructions, it sends the output to this terminal and it is
 displayed on screen.
@@ -305,7 +306,7 @@ displayed on screen.
 Input cannot be entered anytime. In brainfuck, input is requested through `,` instruction. Only when CPU encounters
 `,` (comma) instruction, user is asked to enter input. This situation is marked with geen icon in the bottom-left corner:
 
-image::brainduck/images/brainduck-terminal-input.png[Input is enabled in BrainDuck terminal window]
+image::images/brainduck-terminal-input.png[Input is enabled in BrainDuck terminal window]
 
 Next to the icon, there is a blue "ASC" button. This button can be used for entering binary values as input.
 Special little dialog will appear asking user to enter space-separated numbers, representing ASCII codes of the input.
@@ -323,9 +324,10 @@ Suppose the BrainDuck computer is represented by abstract schema shown in `brain
 case, BrainDuck terminal is the only device dealing with I/O. If the emulation was executed in automatic non-interactive
 mode, it will recognize it and the input/output will be redirected from/to files.
 
-Input file is called `BrainTerminal.in` and must be placed in the directory from which emuStudio was executed.
+Input file is called `brainduck-terminal.in` and must be placed in the directory from which emuStudio was executed.
+If the file does not exist, emuStudio will not run.
 
-Output file is called `BrainTerminal.out` and it will be created automatically, or appended when it exists in the location
+Output file is called `brainduck-terminal.out` and it will be created automatically, or appended when it exists in the location
 from which emuStudio was executed.
 
 NOTE: Take care about end-of-line characters. Most of brainfuck programs count with Unix-like EOLs,

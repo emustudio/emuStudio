@@ -207,8 +207,8 @@ The following table shows all the possible settings of ADM-3A plug-in:
 [width="60%",frame="topbot",options="header,footer"]
 |=====================================================================================================
 |Name              | Default value        | Valid values          | Description
-|`inputFileName`   | `terminalADM-3A.in`  | Path to existing file | File for reading input (when redirected)
-|`outputFileName`  | `terminalADM-3A.out` | Path to existing file | File for writing output (when redirected)
+|`inputFileName`   | `adm3A-terminal.in`  | Path to existing file | File for reading input (when redirected)
+|`outputFileName`  | `adm3A-terminal.out` | Path to existing file | File for writing output (when redirected)
 |`inputReadDelay`  | 0                    | > 0                   | How long the terminal should wait
                                                                     until it reads next input character from the file
                                                                     (in milliseconds)
