@@ -36,15 +36,16 @@ import emustudio.gui.OpenComputerDialog;
 import emustudio.gui.StudioFrame;
 import emustudio.gui.debugTable.DebugTableImpl;
 import emustudio.gui.debugTable.DebugTableModel;
+import org.kohsuke.args4j.CmdLineException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.UIManager;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.Optional;
-import javax.swing.UIManager;
-import org.kohsuke.args4j.CmdLineException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
@@ -89,15 +90,15 @@ public class Main {
         if (!commandLine.isAuto()) {
             showMainWindow(contextPool, settingsManager, computer);
         } else {
-            runAutomation(settingsManager, computer);
+            runAutomation(computer);
             System.exit(0);
         }
     }
 
-    private static void runAutomation(SettingsManagerImpl settingsManager, Computer computer) {
+    private static void runAutomation(Computer computer) {
         try {
           new Automatization(
-                  settingsManager, computer, commandLine.getInputFileName(), commandLine.isNoGUI()
+                  computer, commandLine.getInputFileName(), commandLine.isNoGUI()
           ).run();
         } catch (AutomationException e) {
             LOGGER.error("Unexpected error during automation.", e);

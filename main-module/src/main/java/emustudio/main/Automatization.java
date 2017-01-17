@@ -29,7 +29,6 @@ import emulib.plugins.cpu.CPU.RunState;
 import emulib.plugins.device.Device;
 import emulib.plugins.memory.Memory;
 import emustudio.architecture.Computer;
-import emustudio.architecture.SettingsManagerImpl;
 import emustudio.gui.AutoDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,12 +38,11 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * This class manages the emuStudio automatization process. In the process
+ * This class manages the emuStudio automation process. In the process
  * the emulation is started automatically and results are collected.
  */
 class Automatization implements Runnable {
     private final static Logger LOGGER = LoggerFactory.getLogger("automatization");
-    private final SettingsManagerImpl settings;
 
     private AutoDialog progressGUI;
     private File inputFile;
@@ -54,8 +52,7 @@ class Automatization implements Runnable {
     private RunState resultState;
     private final boolean nogui;
 
-    Automatization(SettingsManagerImpl settings, Computer computer, String inputFileName, boolean nogui) throws AutomationException {
-        this.settings = Objects.requireNonNull(settings);
+    Automatization(Computer computer, String inputFileName, boolean nogui) throws AutomationException {
         this.computer = Objects.requireNonNull(computer);
         this.nogui = nogui;
         this.inputFile = new File(Objects.requireNonNull(inputFileName));
@@ -243,7 +240,6 @@ class Automatization implements Runnable {
             LOGGER.error("Error during automatization", e);
             Main.tryShowErrorMessage("Error: " + e.getMessage());
         } finally {
-            settings.destroy();
             if (progressGUI != null) {
                 progressGUI.dispose();
                 progressGUI = null;

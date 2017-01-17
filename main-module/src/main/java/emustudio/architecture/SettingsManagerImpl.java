@@ -68,10 +68,6 @@ public class SettingsManagerImpl implements SettingsManager {
         }
     }
 
-    public void destroy() {
-        pluginConfigNames.clear();
-    }
-
     public Schema getSchema() {
         return schema;
     }
