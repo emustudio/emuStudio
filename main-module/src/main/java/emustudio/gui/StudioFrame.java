@@ -72,6 +72,8 @@ import javax.swing.WindowConstants;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -84,6 +86,8 @@ import java.util.concurrent.TimeUnit;
 
 public class StudioFrame extends JFrame {
     private final static Logger LOGGER = LoggerFactory.getLogger(StudioFrame.class);
+    private final static int MIN_COMPILER_OUTPUT_HEIGHT = 200;
+    private final static double GOLDEN_RATIO = 1.6180339887;
 
     private final Computer computer;
     private final SettingsManagerImpl settings;
@@ -182,6 +186,39 @@ public class StudioFrame extends JFrame {
         setupCompiler();
         setupCPU();
         setStateNotRunning(runState);
+
+        setupWindowResized();
+    }
+
+    private void setupWindowResized() {
+        splitSource.addComponentListener(new ComponentListener() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                int height = getHeight();
+                int newHeight = (int)(((double)height) / GOLDEN_RATIO);
+
+                if (height - newHeight < MIN_COMPILER_OUTPUT_HEIGHT) {
+                    splitSource.setDividerLocation(height - MIN_COMPILER_OUTPUT_HEIGHT);
+                } else {
+                    splitSource.setDividerLocation(newHeight);
+                }
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent e) {
+
+            }
+
+            @Override
+            public void componentShown(ComponentEvent e) {
+
+            }
+
+            @Override
+            public void componentHidden(ComponentEvent e) {
+
+            }
+        });
     }
 
     private void setupCPU() {
@@ -341,7 +378,7 @@ public class StudioFrame extends JFrame {
         btnRedo = new JButton();
         JSeparator jSeparator2 = new JSeparator();
         btnCompile = new JButton();
-        JSplitPane splitSource = new JSplitPane();
+        splitSource = new JSplitPane();
         editorScrollPane = new JScrollPane();
         JScrollPane compilerPane = new JScrollPane();
         txtOutput = new JTextArea();
@@ -495,7 +532,6 @@ public class StudioFrame extends JFrame {
         toolStandard.add(btnCompile);
 
         splitSource.setBorder(null);
-        splitSource.setDividerLocation(260);
         splitSource.setOrientation(JSplitPane.VERTICAL_SPLIT);
         splitSource.setOneTouchExpandable(true);
         splitSource.setLeftComponent(editorScrollPane);
@@ -1176,4 +1212,5 @@ public class StudioFrame extends JFrame {
     private JButton btnMemory;
     private JButton btnCompile;
     private JMenuItem mnuProjectCompile;
+    private JSplitPane splitSource;
 }

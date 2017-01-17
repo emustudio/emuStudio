@@ -15,7 +15,7 @@
   <name>Main Module</name>
 
   <build>
-    <finalName>emustudio</finalName>
+    <finalName>emuStudio</finalName>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
