@@ -155,6 +155,11 @@ public class StatusPanel extends JPanel {
         setBorder(null);
         paneRegisters.setBorder(null); // NOI18N
 
+        lblCPUFreq.setFont(lblCPUFreq.getFont().deriveFont(lblCPUFreq.getFont().getStyle() & ~Font.BOLD));
+        lblTestPeriode.setFont(lblTestPeriode.getFont().deriveFont(lblTestPeriode.getFont().getStyle() & ~Font.BOLD));
+        lblRuntimeFreq.setFont(lblRuntimeFreq.getFont().deriveFont(lblRuntimeFreq.getFont().getStyle() & ~Font.BOLD));
+        lblFlags.setFont(lblFlags.getFont().deriveFont(lblFlags.getFont().getStyle() & ~Font.BOLD));
+
 
         lblRegB.setFont(lblRegB.getFont().deriveFont(lblRegB.getFont().getStyle() | java.awt.Font.BOLD));
         txtRegB.setEditable(false);

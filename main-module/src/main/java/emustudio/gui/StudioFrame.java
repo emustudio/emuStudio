@@ -69,6 +69,8 @@ import javax.swing.LayoutStyle;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
+import javax.swing.border.TitledBorder;
+import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.event.ActionEvent;
@@ -450,22 +452,26 @@ public class StudioFrame extends JFrame {
         panelSource.setOpaque(true);
 
         toolStandard.setFloatable(false);
+        toolStandard.setBorderPainted(false);
         toolStandard.setRollover(true);
 
         btnNew.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/document-new.png"))); // NOI18N
         btnNew.setToolTipText("New file");
         btnNew.setFocusable(false);
         btnNew.addActionListener(this::btnNewActionPerformed);
+        btnNew.setBorderPainted(false);
 
         btnOpen.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/document-open.png"))); // NOI18N
         btnOpen.setToolTipText("Open file");
         btnOpen.setFocusable(false);
         btnOpen.addActionListener(this::btnOpenActionPerformed);
+        btnOpen.setBorderPainted(false);
 
         btnSave.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/document-save.png"))); // NOI18N
         btnSave.setToolTipText("Save file");
         btnSave.setFocusable(false);
         btnSave.addActionListener(this::btnSaveActionPerformed);
+        btnSave.setBorderPainted(false);
 
         jSeparator1.setOrientation(SwingConstants.VERTICAL);
         jSeparator1.setMaximumSize(new java.awt.Dimension(10, 32768));
@@ -476,35 +482,41 @@ public class StudioFrame extends JFrame {
         btnCut.setEnabled(false);
         btnCut.setFocusable(false);
         btnCut.addActionListener(this::btnCutActionPerformed);
+        btnCut.setBorderPainted(false);
 
         btnCopy.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/edit-copy.png"))); // NOI18N
         btnCopy.setToolTipText("Copy selection");
         btnCopy.setEnabled(false);
         btnCopy.setFocusable(false);
         btnCopy.addActionListener(this::btnCopyActionPerformed);
+        btnCopy.setBorderPainted(false);
 
         btnPaste.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/edit-paste.png"))); // NOI18N
         btnPaste.setToolTipText("Paste selection");
         btnPaste.setEnabled(false);
         btnPaste.setFocusable(false);
         btnPaste.addActionListener(this::btnPasteActionPerformed);
+        btnPaste.setBorderPainted(false);
 
         btnFindReplace.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/edit-find-replace.png"))); // NOI18N
         btnFindReplace.setToolTipText("Find/replace text...");
         btnFindReplace.setFocusable(false);
         btnFindReplace.addActionListener(this::btnFindReplaceActionPerformed);
+        btnFindReplace.setBorderPainted(false);
 
         btnUndo.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/edit-undo.png"))); // NOI18N
         btnUndo.setToolTipText("Undo");
         btnUndo.setEnabled(false);
         btnUndo.setFocusable(false);
         btnUndo.addActionListener(this::btnUndoActionPerformed);
+        btnUndo.setBorderPainted(false);
 
         btnRedo.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/edit-redo.png"))); // NOI18N
         btnRedo.setToolTipText("Redo");
         btnRedo.setEnabled(false);
         btnRedo.setFocusable(false);
         btnRedo.addActionListener(this::btnRedoActionPerformed);
+        btnRedo.setBorderPainted(false);
 
         jSeparator2.setOrientation(SwingConstants.VERTICAL);
         jSeparator2.setMaximumSize(new java.awt.Dimension(10, 32767));
@@ -516,6 +528,7 @@ public class StudioFrame extends JFrame {
         btnCompile.setToolTipText("Compile source");
         btnCompile.setFocusable(false);
         btnCompile.addActionListener(this::btnCompileActionPerformed);
+        btnCompile.setBorderPainted(false);
 
         toolStandard.add(btnNew);
         toolStandard.add(btnOpen);
@@ -575,7 +588,9 @@ public class StudioFrame extends JFrame {
         splitLeftRight.setContinuousLayout(true);
         splitLeftRight.setFocusable(false);
 
-        statusWindow.setBorder(BorderFactory.createTitledBorder("Status"));
+        TitledBorder statusBorder = BorderFactory.createTitledBorder("Status");
+        statusBorder.setTitleFont(statusBorder.getTitleFont().deriveFont(statusBorder.getTitleFont().getStyle() & ~Font.BOLD));
+        statusWindow.setBorder(statusBorder);
 
         splitLeftRight.setRightComponent(statusWindow);
 
@@ -585,7 +600,9 @@ public class StudioFrame extends JFrame {
         splitPerDebug.setAutoscrolls(true);
         splitPerDebug.setContinuousLayout(true);
 
-        debuggerPanel.setBorder(BorderFactory.createTitledBorder("Debugger"));
+        TitledBorder debuggerBorder = BorderFactory.createTitledBorder("Debugger");
+        debuggerBorder.setTitleFont(debuggerBorder.getTitleFont().deriveFont(debuggerBorder.getTitleFont().getStyle() & ~Font.BOLD));
+        debuggerPanel.setBorder(debuggerBorder);
 
         toolDebug.setFloatable(false);
         toolDebug.setRollover(true);
@@ -596,46 +613,55 @@ public class StudioFrame extends JFrame {
         btnReset.setToolTipText("Reset emulation");
         btnReset.setFocusable(false);
         btnReset.addActionListener(this::btnResetActionPerformed);
+        btnReset.setBorderPainted(false);
 
         btnBeginning.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-first.png"))); // NOI18N
         btnBeginning.setToolTipText("Jump to beginning");
         btnBeginning.setFocusable(false);
         btnBeginning.addActionListener(this::btnBeginningActionPerformed);
+        btnBeginning.setBorderPainted(false);
 
         btnBack.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-previous.png"))); // NOI18N
         btnBack.setToolTipText("Step back");
         btnBack.setFocusable(false);
         btnBack.addActionListener(this::btnBackActionPerformed);
+        btnBack.setBorderPainted(false);
 
         btnStop.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-stop.png"))); // NOI18N
         btnStop.setToolTipText("Stop emulation");
         btnStop.setFocusable(false);
         btnStop.addActionListener(this::btnStopActionPerformed);
+        btnStop.setBorderPainted(false);
 
         btnPause.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-pause.png"))); // NOI18N
         btnPause.setToolTipText("Pause emulation");
         btnPause.setFocusable(false);
         btnPause.addActionListener(this::btnPauseActionPerformed);
+        btnPause.setBorderPainted(false);
 
         btnRun.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-play.png"))); // NOI18N
         btnRun.setToolTipText("Run emulation");
         btnRun.setFocusable(false);
         btnRun.addActionListener(this::btnRunActionPerformed);
+        btnRun.setBorderPainted(false);
 
         btnRunTime.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-play-time.png"))); // NOI18N
         btnRunTime.setToolTipText("Run emulation in time slices");
         btnRunTime.setFocusable(false);
         btnRunTime.addActionListener(this::btnRunTimeActionPerformed);
+        btnRunTime.setBorderPainted(false);
 
         btnStep.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-next.png"))); // NOI18N
         btnStep.setToolTipText("Step forward");
         btnStep.setFocusable(false);
         btnStep.addActionListener(this::btnStepActionPerformed);
+        btnStep.setBorderPainted(false);
 
         btnJump.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/go-jump.png"))); // NOI18N
         btnJump.setToolTipText("Jump to address");
         btnJump.setFocusable(false);
         btnJump.addActionListener(this::btnJumpActionPerformed);
+        btnJump.setBorderPainted(false);
 
         btnBreakpoint.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/breakpoints.png"))); // NOI18N
         btnBreakpoint.setToolTipText("Set/unset breakpoint to address...");
@@ -643,11 +669,14 @@ public class StudioFrame extends JFrame {
         btnBreakpoint.setHorizontalTextPosition(SwingConstants.CENTER);
         btnBreakpoint.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnBreakpoint.addActionListener(this::btnBreakpointActionPerformed);
+        btnBreakpoint.setBorderPainted(false);
 
         btnMemory.setIcon(new ImageIcon(getClass().getResource("/emustudio/gui/grid_memory.gif"))); // NOI18N
         btnMemory.setToolTipText("Show operating memory");
         btnMemory.setFocusable(false);
         btnMemory.addActionListener(this::btnMemoryActionPerformed);
+        btnMemory.setBorderPainted(false);
+
         toolDebug.add(btnReset);
         toolDebug.add(btnBeginning);
         toolDebug.add(btnBack);

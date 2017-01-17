@@ -175,6 +175,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         btnAdd.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnAdd.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnAdd.addActionListener(this::btnAddActionPerformed);
+        btnAdd.setBorderPainted(false);
         toolConfig.add(btnAdd);
 
         btnDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/list-remove.png"))); // NOI18N
@@ -183,6 +184,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         btnDelete.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnDelete.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnDelete.addActionListener(this::btnDeleteActionPerformed);
+        btnDelete.setBorderPainted(false);
         toolConfig.add(btnDelete);
 
         btnEdit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/computer.png"))); // NOI18N
@@ -191,6 +193,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         btnEdit.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnEdit.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnEdit.addActionListener(this::btnEditActionPerformed);
+        btnEdit.setBorderPainted(false);
         toolConfig.add(btnEdit);
 
         btnSaveSchemaImage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/emustudio/gui/document-save.png"))); // NOI18N
@@ -199,6 +202,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         btnSaveSchemaImage.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnSaveSchemaImage.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnSaveSchemaImage.addActionListener(this::btnSaveSchemaImageActionPerformed);
+        btnSaveSchemaImage.setBorderPainted(false);
         toolConfig.add(btnSaveSchemaImage);
 
         javax.swing.GroupLayout panelConfigLayout = new javax.swing.GroupLayout(panelConfig);
