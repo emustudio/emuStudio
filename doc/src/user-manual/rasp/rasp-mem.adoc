@@ -1,8 +1,4 @@
-= RASP: Memory `rasp-mem`
-(C) Copyright 2016, Michal Šipoš
-Version 0.39
-:toc:
-:numbered:
+== Memory `rasp-mem`
 
 RASP memory plug-in serves as the main store (operating memory) for the RASP virtual computer. As already mentioned in the introduction
 of this manual, RASP is an example of von-Neumann architecture, which implies that both program and data reside in the same memory module.
@@ -10,26 +6,26 @@ of this manual, RASP is an example of von-Neumann architecture, which implies th
 After compilation of a RASP source code file the compiled program is loaded into here. During the process of the emulation, the CPU plug-in
 reads instructions an their operands and writes results of the operations from/to the memory. 
 
-== Installation and run
+=== Installation and run
 
 RASP memory plugin is already included in emuStudio distribution, in location `mem/rasp-mem.jar`.
 
-== Graphical user interface (GUI)
+=== Graphical user interface (GUI)
 
 During the emulation, user can view current content of the operating memory in a simple GUI window:
 
-image::rasp/images/memory_window.png[Memory GUI window]
+image::images/memory_window.png[Memory GUI window]
 
 It is also possible to load a compiled memory image 
 from a file by clicking on the OPEN icon:
 
-image::rasp/images/document-open.png[OPEN icon]
+image::images/document-open.png[OPEN icon]
 
 After that, you can choose the binary file you want to load.
 
 By clicking on the CLEAN icon, you can clean the entire memory content:
 
-image::rasp/images/edit-delete.png[CLEAN icon]
+image::images/edit-delete.png[CLEAN icon]
 
 The table with memory cells content is editable. By double-clicking on a row you can simply edit the value. You confirm your changes by 
 the ENTER key. 

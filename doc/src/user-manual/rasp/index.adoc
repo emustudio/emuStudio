@@ -1,0 +1,15 @@
+= RASP: Random Access Stored Program abstract machine emulator
+(c) Copyright 2016, Michal Šipoš
+
+:toc:
+:numbered:
+
+
+include::rasp-intro.adoc[]
+
+include::raspc-rasp.adoc[]
+
+include::rasp-cpu.adoc[]
+
+include::rasp-mem.adoc[]
+

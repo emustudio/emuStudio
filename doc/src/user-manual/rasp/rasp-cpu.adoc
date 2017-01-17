@@ -1,8 +1,4 @@
-= RASP: CPU `rasp-cpu`
-(C) Copyright 2016, Michal Šipoš
-Version 0.39
-:toc:
-:numbered:
+== CPU `rasp-cpu`
 
 RASP CPU is the core of the RASP virtual computer. Its purpose is to execute RASP program composed of RASP instructions
 which is stored in the RASP memory. The CPU is therefore connected with the memory. 
@@ -10,11 +6,11 @@ which is stored in the RASP memory. The CPU is therefore connected with the memo
 To run 'interactive' RASP programs (programs reading user input and writing something to the output), input and output 
 tapes are needed. They are included there in default RASP configuration.
 
-== Installation and run
+=== Installation and run
 
 RASP CPU plugin is already included in emuStudio distribution, in location `cpu/rasp-cpu.jar`.
 
-== Supported instructions
+=== Supported instructions
 
 RASP CPU emulator supports the following instructions:
 
@@ -97,7 +93,7 @@ RASP CPU emulator supports the following instructions:
 
 |===
 
-== CPU Status panel
+=== CPU Status panel
 There is a simple GUI window provided for the RASP CPU. It displays the two most important values: 
 
 - current value of the accumulator (`R0` register)
@@ -107,4 +103,4 @@ Also, information about the current RUNNING STATUS is displayed.
 
 Following figure shows a screenshot:
 
-image::rasp/images/statusPanel.png[RASP CPU status panel]
+image::images/statusPanel.png[RASP CPU status panel]
