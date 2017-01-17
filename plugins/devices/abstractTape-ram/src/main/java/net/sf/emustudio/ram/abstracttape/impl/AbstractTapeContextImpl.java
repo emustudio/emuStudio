@@ -289,11 +289,15 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         }
     }
 
+    private String createValidFileName(String str) {
+        return str.trim().toLowerCase().replaceAll("[\\*\\.#\\%&\\s\\+!~/\\?<>,\\|\\{\\}\\[\\]\\\\\"'`=]","_");
+    }
+
     /**
      * Set verbose mode. If verbose mode is set, the output
      * is redirected also to a file.
      *
-     * @param verbose set/unset verbose mode
+     * @param verbose set/reset/unset verbose mode
      */
     public void setVerbose(boolean verbose) {
         if (outw != null) {
@@ -305,9 +309,9 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
             outw = null;
         }
         if (verbose) {
-            String title = abst.getTitle().trim();
-            LOGGER.info("Being verbose. Writing to file:" + title + ".out");
-            File f = new File(title + ".out");
+            String fileName = createValidFileName(abst.getTitle().trim());
+            LOGGER.info("Being verbose. Writing to file:" + fileName + ".out");
+            File f = new File(fileName + ".out");
             try {
                 outw = new FileWriter(f);
             } catch (IOException e) {

@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.UIManager;
+import java.awt.Window;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.security.NoSuchAlgorithmException;
@@ -83,9 +84,7 @@ public class Main {
         SettingsManagerImpl settingsManager = emulator.get().getSettingsManager();
         Computer computer = emulator.get().getComputer();
 
-        if (splash.isPresent()) {
-            splash.get().dispose();
-        }
+        splash.ifPresent(Window::dispose);
 
         if (!commandLine.isAuto()) {
             showMainWindow(contextPool, settingsManager, computer);
