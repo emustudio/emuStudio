@@ -1,8 +1,4 @@
-= 8-bit computers: Operating memory `standard-mem`
-(c) Copyright 2006-2016, Peter Jakubčo
-Version 0.39
-:toc:
-:numbered:
+== Operating memory `standard-mem`
 
 This plug-in fulfills requirements as RAM and ROM for real 8-bit computers emulation. Features:
 
@@ -15,13 +11,22 @@ This plug-in fulfills requirements as RAM and ROM for real 8-bit computers emula
 - intuitive and useful GUI
 
 [[XASMEML]]
-== Loading image files
+=== Loading image files
+
+TODO
 
 [[XASMEMM]]
-== Manipulation with cells
+=== Manipulation with cells
+
+TODO
 
 [[XASMEMR]]
-== ROM areas
+=== ROM areas
+
+TODO
 
 [[XASMEMB]]
-== Bank switching
+=== Bank switching
+
+TODO
+

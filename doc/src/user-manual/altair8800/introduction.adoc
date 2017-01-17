@@ -1,10 +1,4 @@
-= MITS Altair8800 - emulator of famous personal computer
-(c) Copyright 2006-2016, Peter Jakubčo
-Version 0.39
-:toc:
-:numbered:
-
-[[XI]]
+[[MITS_8800_INTRODUCTION]]
 == Introduction
 
 Computer MITS Altair 8800 was named after a planet in one of the first episodes of Star Trek series. Having Intel 8080
@@ -42,7 +36,7 @@ Basic configuration of MITS Altair 8800 was:
 |OS capabilities | MITS DOS, CP/M, Altair Disk BASIC
 |======================================================================================================================
 
-[[XA]]
+[[ALTAIR_FOR_EMUSTUDIO]]
 == Altair8800 for emuStudio
 
 In emuStudio, there exist two variants of the computer. These variants varies only with the used CPU. There is available
@@ -57,7 +51,7 @@ Abstract schema for emuStudio (Zilog Z80):
 
 image::images/altairz80.png[Abstract schema of MITS Altair8800 (with Zilog Z80)]
 
-The following plug-ins are used in the schemas. Each plug-in is described in much more detail in its own document.
+The following plug-ins are used in the schemas. Each plug-in is described in further sections.
 
 - Compiler: https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/compilers/as-8080[as-8080]
 - Compiler: https://github.com/vbmacher/emuStudio/tree/branch-0_39/plugins/compilers/as-z80[as-z80]

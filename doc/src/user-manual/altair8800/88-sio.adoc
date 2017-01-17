@@ -1,8 +1,5 @@
-= Altair8800: Serial board `88-sio`
-(c) Copyright 2006-2016, Peter Jakubčo
-Version 0.39
-:toc:
-:numbered:
+[[SIO-88]]
+== Serial board `88-sio`
 
 Altair 8800 computer was equipped with serial board called 88-SIO. It was a device which allowed connecting other
 devices using RS-232 interface. From one side it was attached to CPU on two ports (0x10 and 0x11). The other side
@@ -11,12 +8,12 @@ and software interrupts.
 
 The following image shows MITS 88-SIO-2 board.
 
-image::altair8800/images/88-sio-2.png[Serial board MITS 88-SIO-2]
+image::images/88-sio-2.png[Serial board MITS 88-SIO-2]
 
 NOTE: Original manual of MITS 88-SIO serial board can be downloaded at
       http://maben.homeip.net/static/s100/altair/cards/Altair%2088-SIO%20serial%20IO.pdf[this link].
 
-== Features
+=== Features
 
 The plug-in emulates only basic functionality of the board. It has the following features:
 
@@ -26,7 +23,7 @@ The plug-in emulates only basic functionality of the board. It has the following
 - setting of transfer speed, parity, number of stop bits is not supported
 - GUI
 
-== CPU Ports settings
+=== CPU Ports settings
 
 MITS 88-SIO board is attached to CPU using two ports. By allowing settings of the port numbers the board can be used
 in other computers, too. By default, the ports used by 88-SIO are:
@@ -36,9 +33,9 @@ in other computers, too. By default, the ports used by 88-SIO are:
 
 These numbers can be changed in the Settings window, tab "CPU Ports":
 
-image::altair8800/images/88-sio-ports.png[Setting CPU ports]
+image::images/88-sio-ports.png[Setting CPU ports]
 
-== Connecting devices
+=== Connecting devices
 
 MITS 88-SIO board as emuStudio plug-in is a device which does nothing really useful. It just listens (and understands)
 commands coming from CPU through the I/O ports. The command is either a request for reading or request for writing to
@@ -56,7 +53,7 @@ Usually, attached devices were:
 In current implementation of Altair 8800 emulator, the only suitable device which can be attached to the board is
 terminal ADM-3A from Lear Siegler, Inc and which is described in its own section.
 
-== Advanced: Settings in configuration file
+=== Configuration file
 
 Configuration file of virtual computers contain also settings of all the used plug-ins, including devices. Please
 read the section "Accessing settings of plug-ins" in the user documentation of Main module to see how the settings can
@@ -72,13 +69,13 @@ The following table shows all the possible settings of MITS 88-SIO plug-in:
 |`dataPortNumber`   | 0x11          | > 0 and < 256        | Number of Data Port
 |==========================================================================================
 
-[[XSP]]
-== Advanced: Programming
+[[SIO-88_PROGRAMMING]]
+=== Programming
 
 In order to show something useful, let's assume that a terminal LSI ADM-3A is attached to the board.
 Remember, the board only mediates the communication, it does not interpret any of the sent/received characters.
 
-=== CPU Ports
+==== CPU Ports
 
 The whole communication between the board (and attached device) and CPU is controlled by programming the two ports:
 Status port and Data port. The following table shows the ports and how they are used.
@@ -136,11 +133,11 @@ Write data to the attached device.
 
 Read data from the attached device.
 
-=== Program example
+==== Program example
 
 In this section it will be shown a small "How to" program terminal using 88-SIO ports.
 
-==== Print a character on screen
+===== Print a character on screen
 
 In emuStudio, it is enough to write data to Port 2, e.g.:
 
@@ -152,7 +149,7 @@ mvi a, 'i'
 out 11h
 --------------------------------------------------
 
-==== Print a string on screen
+===== Print a string on screen
 
 For writing strings, it is more practical to have a procedure.
 
@@ -175,10 +172,10 @@ print:
     jmp print ; and repeat from the beginning
 ---------------------------------------------
 
-==== Reading character from keyboard
+===== Reading character from keyboard
 
-For reading a character, it is required to read the Port 1 until the character is not ready. Then we can read it from
-Port 2.
+For reading a character, it is required to read the Port 1 until the character is not ready.
+Then we can read it from Port 2.
 
 .Example procedure for reading a character from terminal
 --------------------------------------------------------
@@ -193,7 +190,7 @@ getchar:
     ret
 --------------------------------------------------------
 
-==== Reading text from keyboard
+===== Reading text from keyboard
 
 Now follows an example, which will read a whole line of characters into memory starting at address in `DE` pair. The
 procedure will interpret some control keys, like: backspace and ENTER keys.

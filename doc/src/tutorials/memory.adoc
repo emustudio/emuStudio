@@ -196,7 +196,7 @@ modify memory cells at all when the emulation is running.
 Now back to our GUI. It would be good if the GUI is looking good, so it's up to you how you'll draw the main form. It
 can be a class extending from a `javax.swing.JFrame` or `javax.swing.JDialog`. The look might be as follows:
 
-image::ssem-memory.png[SSEM Memory GUI sample look]
+image::images/ssem-memory.png[SSEM Memory GUI sample look]
 
 So, we will need a custom memory model, a custom memory table - which will have a row header (the very first, gray-colored
 column) and column header (the very first, gray-colored row).

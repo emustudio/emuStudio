@@ -178,7 +178,7 @@ NOTE: For better description about how painting of Swing components works, pleas
 
 Before that, let's show how we want the result to look like:
 
-image::ssem-display.png[SSEM Display GUI sample look]
+image::images/ssem-display.png[SSEM Display GUI sample look]
 
 ==== Display panel
 

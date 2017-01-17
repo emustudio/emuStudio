@@ -1,8 +1,5 @@
-= Altair8800: Disk controller `88-disk`
-(c) Copyright 2006-2016, Peter Jakubčo
-Version 0.39
-:toc:
-:numbered:
+[[DISK-88]]
+== Disk controller `88-disk`
 
 Altair Disk offered the advantage of fixed memory including relatively fast access to data. Data were transferred with
 speed 250 Kb/s (The plug-in does not emulate this). Disk was connected with disk controller (or board), and the data
@@ -16,7 +13,7 @@ MITS 88-DISK offered to connect up to 16 disk devices (one can be seen in the fr
 NOTE: Original manual can be downloaded at
       http://www.virtualaltair.com/virtualaltair.com/PDF/88dsk%20manual%20v2.pdf[this link].
 
-== Features
+=== Features
 
 The plug-in emulates basic functionality of the whole disk system for Altair 8800 computer. It is not only disk
 controller, but also the disk drive.
@@ -29,13 +26,13 @@ The features include:
 - images can be saved for automatic mount at startup
 - GUI
 
-[[XDM]]
-== Mounting disk images
+[[DISK-88_MOUNTING_IMAGES]]
+=== Mounting disk images
 
 In order to mount DISK images to the device, please go to the Settings window footnoteref:[peripheral,"peripheral devices"
 window in the Emulator panel in emuStudio]:
 
-image::altair8800/images/88-disk-01.png[Settings window of 88-DISK]
+image::images/88-disk-01.png[Settings window of 88-DISK]
 
 - *A*: Select drive (A - P)
 - *B*: Choosing the image file
@@ -49,10 +46,11 @@ image::altair8800/images/88-disk-01.png[Settings window of 88-DISK]
 - *F*: Check box for saving the settings into the computer configuration file. If checked, the settings will be
        loaded after start.
 
-== CPU Ports settings
+
+=== CPU Ports settings
 
 MITS 88-DISK board communicates with CPU using its ports. There are three ports overall, each for different function.
-For more information, see section <<XDP,Programming>>. By default, the ports used by 88-DISK are:
+For more information, see section <<DISK-88_PROGRAMMING>>. By default, the ports used by 88-DISK are:
 
 - port 1: 0x08
 - port 2: 0x09
@@ -60,9 +58,9 @@ For more information, see section <<XDP,Programming>>. By default, the ports use
 
 These numbers can be changed in the Settings window, tab "CPU Ports":
 
-image::altair8800/images/88-disk-02.png[Setting CPU ports]
+image::images/88-disk-02.png[Setting CPU ports]
 
-== Advanced: Settings in configuration file
+=== Configuration file
 
 Configuration file of virtual computers contain also settings of all the used plug-ins, including devices. Please
 read the section "Accessing settings of plug-ins" in the user documentation of Main module to see how the settings can
@@ -84,8 +82,8 @@ The following table shows all the possible settings of MITS 88-DISK plug-in:
 |`image15`      | N/A           | Path to existing file| File name to mount on disk P (15)
 |==========================================================================================
 
-[[XDP]]
-== Advanced: Programming
+[[DISK-88_PROGRAMMING]]
+=== Programming
 
 Data are written onto or read from disk in a serial fashion. The position in the floppy disk is uniquely set by the
 track number, sector number and the offset in the sector. It is rudimentary to know how many tracks are available,
@@ -95,7 +93,7 @@ In Altair8800, drive `Pertec FD400` used 8" diskettes. Each had 77 tracks. The t
 The capacity was therefore `77 * 32 * 137 = 337568 B = 330 kB`. Software used less capacity, because 9 bytes from
 each sector were used for the integrity checksum.
 
-=== Setting the position
+==== Setting the position
 
 Track number and sector number can be set only incrementally, not directly. Setting the offset within the sector is
 more challenging.
@@ -104,7 +102,7 @@ After track and sector were set, programmer must "poll" the status port which te
 disk position is set to the beginning of the sector. Then, programmer must read data until he gets to the position
 where he wanted.
 
-=== CPU Ports
+==== CPU Ports
 
 The controller communicates with CPU using three I/O ports at addresses (by default) 0x08, 0x09 and 0x0A. The following
 table shows the CPU ports and how they are used.
@@ -124,7 +122,7 @@ Now, detailed description of the ports follow. Bits are ordered in a byte as fol
 
 where `D7` is the most significant bit, and `D0` the least significant bit.
 
-==== Port 1 (default address: 0x08)
+===== Port 1 (default address: 0x08)
 
 *WRITE*:
 
@@ -156,7 +154,7 @@ Read disk status of the selected drive.
 
 Initial values of the bits are: `11100111`.
 
-==== Port 2 (default address: 0x09)
+===== Port 2 (default address: 0x09)
 
 *WRITE*:
 
@@ -193,7 +191,7 @@ at the disk surface (by setting the bit `D2`).
          came back again. It could be made in time easily, because CPU was much faster than disk itself.
          Plug-in does not limit the period. The value is 0 practically all the time, until first byte is written.].
 
-==== Port 3 (default address: 0x0A)
+===== Port 3 (default address: 0x0A)
 
 *WRITE*:
 
@@ -205,7 +203,8 @@ are written to disk, it is required to check bit `D0` from Port 1 (_Enter new wr
 Read a byte from disk. In order to perform valid read, the _Head load_ `D2` bit of Port 2 must be set to 1. Only if bit
 `D7` from Port 1 (_New read data available_) is set to 0, the read data are valid.
 
-=== Program example
+
+==== Program example
 
 In this section, an example is presented showing how to read/write data from/to the floppy disk. At first, it writes
 one byte (letter `A` with ASCII value 65) to track 1, sector 18 and offset 20. Then, it reads the byte to operating

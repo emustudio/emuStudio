@@ -1,8 +1,4 @@
-= Altair8800: Terminal `adm3a-terminal`
-(c) Copyright 2006-2016, Peter Jakubčo
-Version 0.39
-:toc:
-:numbered:
+== Terminal `adm3a-terminal`
 
 Emulation of famous terminal from Lear Siegler, Inc. - ADM-3A. It had a nick name 'Dumb Terminal'. In the time (1974),
 due to its cheapness and speed capabilities required in that time, it became de facto standard in the industry.
@@ -12,7 +8,7 @@ NOTE: The maintenance manual can be downloaded at
       http://www.mirrorservice.org/sites/www.bitsavers.org/pdf/learSiegler/ADM3A_Maint.pdf[this link], operator's manual
       http://maben.homeip.net/static/s100/learSiegler/terminal/Lear%20Siegler%20ADM3A%20operators%20manual.pdf[here].
 
-== Display
+=== Display
 
 The terminal could display 128 ASCII characters (upper-case and lower-case letters, punctuation and numbers). The
 original ADM-3 could display only 64 (only capital-letters and some other). For saving very expensive RAM the terminal
@@ -21,7 +17,7 @@ hardcoded to 80 columns x 24 rows.
 
 Besides, the emulator uses custom font colored green, with anti-aliasing support and double-buffering.
 
-== Keyboard
+=== Keyboard
 
 The terminal could generate always 128 ASCII characters (upper-case, lower-case, punctuation and numbers). Besides,
 it could generate special control characters which had effect on the current cursor position and were not sent to
@@ -33,8 +29,8 @@ it can display. The font cannot display any special non-US characters used in va
 Besides, the terminal can capture control codes (holding `CTRL` plus some key), and special control codes (`ESC + '='`
 plus some key). The following subsection lists all possible control and special control key combinations.
 
-[[XCC]]
-=== Control codes
+[[ADM3A-CONTROL_CODES]]
+==== Control codes
 
 The following table shows control codes (`CTRL` plus some key combinations). The table can be found in original manuals.
 The emulator is following it.
@@ -77,11 +73,11 @@ The emulator is following it.
 |`CTRL+^`  | `RS`    | Home cursor
 |==========================================================================================
 
-=== Absolute cursor position from the keyboard
+==== Absolute cursor position from the keyboard
 
 The terminal also allowed to set the absolute cursor position, when in "Cursor control Mode". The ADM-3A emulator
 does not have such mode, but `ESC+'=' X Y` combinations allows to set the cursor position. As you could see in
-the <<XCC>> section, pressing the `ESC` "Initiates load cursor" operation. If the user then presses `=` key, then
+the <<ADM3A-CONTROL_CODES>> section, pressing the `ESC` "Initiates load cursor" operation. If the user then presses `=` key, then
 the terminal takes next 2 keystrokes, and translates them into `X` and `Y` coordinates for the new position of the
 cursor. The following table shows the key-to-coordinate translation table.
 
@@ -171,15 +167,15 @@ cursor. The following table shows the key-to-coordinate translation table.
 |`o`   | `79`
 |===============
 
-== ADM-3A Settings
+=== ADM-3A Settings
 
 It is possible to configure the terminal either from GUI or manually modifying configuration settings. In the case
-of manual file modification, emuStudio must be restarted (for more information, see section <<XADSITCDF>>).
+of manual file modification, emuStudio must be restarted (for more information, see section <<ADM3A-CONFIG_FILE>>).
 
-The "settings" window footnoteref:[peripheral,"peripheral devices" window in the Emulator panel in emuStudio] is
+The "settings" window footnoteref:[peripheral] is
 shown in the following image:
 
-image::altair8800/images/adm3a-settings.png[Settings window of ADM-3A terminal]
+image::images/adm3a-settings.png[Settings window of ADM-3A terminal]
 
 - *A*: File for reading input (when redirected)
 - *B*: File for writing output (when redirected)
@@ -198,8 +194,8 @@ NOTE: The terminal behaves differently when emuStudio is run in automatic (no GU
       redirected to be read from a file, and also output is redirected to be written to another file. The file names are
       configurable in the computer config file. Using redirection in GUI mode is currently not possible.
 
-[[XADSITCDF]]
-=== Advanced: Settings in the configuration file
+[[ADM3A-CONFIG_FILE]]
+=== Configuration file
 
 Configuration file of virtual computers contain also settings of all the used plug-ins, including devices. Please
 read the section "Accessing settings of plug-ins" in the user documentation of Main module to see how the settings can
@@ -222,5 +218,3 @@ The following table shows all the possible settings of ADM-3A plug-in:
 |`halfDuplex`      | false                | true / false          | Whether every keystroke will also cause to display
                                                                     it.
 |=====================================================================================================
-
-

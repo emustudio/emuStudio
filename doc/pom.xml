@@ -60,7 +60,6 @@
                 <icons>font</icons>
                 <docinfo1>true</docinfo1>
                 <toclevels>3</toclevels>
-                <imagesdir>images</imagesdir>
                 <tabsize>4</tabsize>
                 <revnumber>${project.version}</revnumber>
                 <!-- Parse link attributes such as window="_blank"   -->
@@ -71,14 +70,47 @@
 
             <executions>
               <execution>
-                <id>user-manual</id>
+                <id>altair-8800</id>
                 <phase>generate-resources</phase>
                 <goals>
                   <goal>process-asciidoc</goal>
                 </goals>
                 <configuration>
-                  <sourceDirectory>src/user-manual</sourceDirectory>
-                  <outputDirectory>${project.build.directory}/user-manual</outputDirectory>
+                  <sourceDirectory>src/user-manual/altair8800</sourceDirectory>
+                  <outputDirectory>${project.build.directory}/user-manual/altair8800</outputDirectory>
+                </configuration>
+              </execution>
+              <execution>
+                <id>brainduck</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>process-asciidoc</goal>
+                </goals>
+                <configuration>
+                  <sourceDirectory>src/user-manual/brainduck</sourceDirectory>
+                  <outputDirectory>${project.build.directory}/user-manual/brainduck</outputDirectory>
+                </configuration>
+              </execution>
+              <execution>
+                <id>rasp</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>process-asciidoc</goal>
+                </goals>
+                <configuration>
+                  <sourceDirectory>src/user-manual/rasp</sourceDirectory>
+                  <outputDirectory>${project.build.directory}/user-manual/rasp</outputDirectory>
+                </configuration>
+              </execution>
+              <execution>
+                <id>main-module</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>process-asciidoc</goal>
+                </goals>
+                <configuration>
+                  <sourceDirectory>src/user-manual/main_module</sourceDirectory>
+                  <outputDirectory>${project.build.directory}/user-manual/main_module</outputDirectory>
                 </configuration>
               </execution>
               <execution>
