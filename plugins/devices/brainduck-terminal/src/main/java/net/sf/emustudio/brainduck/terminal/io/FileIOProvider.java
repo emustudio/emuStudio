@@ -30,28 +30,14 @@ import java.io.Reader;
 
 public class FileIOProvider implements InputProvider, OutputProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileIOProvider.class);
-    private static final File OUTPUT_FILE_NAME = new File("BrainTerminal.out");
-    private static final File INPUT_FILE_NAME = new File("BrainTerminal.in");
+    private static final File OUTPUT_FILE_NAME = new File("brainduck-terminal.out");
+    private static final File INPUT_FILE_NAME = new File("brainduck-terminal.in");
 
     private final Reader reader;
     private final FileWriter writer;
 
     public FileIOProvider() throws IOException {
-        if (INPUT_FILE_NAME.exists()) {
-            this.reader = new FileReader(INPUT_FILE_NAME);
-        } else {
-            this.reader = new Reader() {
-                @Override
-                public int read(char[] cbuf, int off, int len) throws IOException {
-                    return -1;
-                }
-
-                @Override
-                public void close() throws IOException {
-
-                }
-            };
-        }
+        this.reader = new FileReader(INPUT_FILE_NAME);
         try {
             this.writer = new FileWriter(OUTPUT_FILE_NAME);
         } catch (IOException e) {

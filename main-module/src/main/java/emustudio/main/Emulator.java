@@ -81,7 +81,7 @@ class Emulator {
             Main.tryShowErrorMessage("Error: Could not read configuration. Please see log file for details.");
         } catch (PluginInitializationException e) {
             LOGGER.error("Could not initialize plugins.", e);
-            Main.tryShowErrorMessage("Error: Could not initialize plugins. Please see log file for details.");
+            Main.tryShowErrorMessage("Could not initialize plugins. Please see log file for details.");
         } catch (InvalidPasswordException e) {
             LOGGER.error("Could not initialize emuLib.", e);
             Main.tryShowErrorMessage(ERROR_EMULIB_PROBLEMS);
