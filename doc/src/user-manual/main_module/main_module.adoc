@@ -438,7 +438,7 @@ as expected, either it does not start (with weird message on screen), or it fail
 For that purpose, everything important is being logged (by default) in a console. If you encounter some problem
 and either want to fix it or report it, the logs, except steps to reproduce are the most important thing.
 
-By default, logging is written to the standard output, however in case of a problem it is a good practice to enable
+By default, logging is written to the standard output. However, in case of a problem it is a good practice to enable
 file logging. To enable file logging, open `logback.xml` file located in the root directory of emuStudio. Find a
 section named `<root ..>`, and change `appender-ref` from `STDOUT` to `FILE` as follows:
 

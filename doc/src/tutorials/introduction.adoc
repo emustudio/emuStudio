@@ -417,6 +417,36 @@ Terms to Your New Programs" at link http://www.gnu.org/licenses/gpl.html.
 I consider this section as very important, so as there is lots of time consuming debates about the "indentation problem".
 Therefore I "codify" this to 4 spaces.
 
+==== Logging
+
+emuStudio is bundled with https://www.slf4j.org/[SLF4J logger API] which is bound with
+http://logback.qos.ch/[logback logger]. In code, it is possible to use the logger, like in this example:
+
+[source,java]
+.Example of using logger
+----
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class SomeClass {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SomeClass.class);
+
+
+    public void someMethod() {
+        LOGGER.info("Information message...");
+    }
+
+    ...
+}
+----
+
+Logging can be very important for analysis of a problem some other user had. emuStudio is supposed for many users
+so it's reasonable to include logging.
+
+NOTE: It is not recommended to log information during running emulation. Logging significantly lowers the performance
+      down.
+
+
 === Use Maven if you can
 
 Maven is a standard for Java projects today. It helps with the build process and manages dependencies in satisfying

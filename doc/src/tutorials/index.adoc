@@ -9,8 +9,8 @@ include::introduction.adoc[]
 
 include::compiler.adoc[]
 
-include::cpu.adoc[]
-
 include::memory.adoc[]
+
+include::cpu.adoc[]
 
 include::device.adoc[]

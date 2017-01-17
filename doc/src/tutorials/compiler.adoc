@@ -210,7 +210,7 @@ The content of the specfile is as follows:
 [source,flex]
 .`src/main/jflex/ssem.jflex`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/jflex/lexer.jflex[]
+include::../../../plugins/compilers/as-ssem/src/main/jflex/lexer.jflex[lines=20..-1]
 ----
 
 As you can notice, the specfile uses special class named `TokenImpl`. We must implement this class by ourselves. It
@@ -236,7 +236,7 @@ The content of the `net.sf.emustudio.ssem.assembler.TokenImpl` class is as follo
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java[]
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java[lines=20..-1]
 ----
 
 [[COMPILER_GRAMMAR]]
@@ -264,7 +264,7 @@ The grammar specfile of SSEM assembler parser follows:
 [source]
 .`src/main/cup/parser.cup`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/cup/parser.cup[]
+include::../../../plugins/compilers/as-ssem/src/main/cup/parser.cup[lines=20..-1]
 ----
 
 The right sides - code snippets wrapped between `{:` and `:}` - is Java code which will be executed when particular rule
@@ -307,7 +307,7 @@ interface first:
 [source, java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java[]
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java[lines=20..-1]
 ----
 
 This interface will be useful when we will traverse the tree. For tree traversal it is very well-suited the
@@ -323,7 +323,7 @@ We can now define the visitor interface as follows:
 [source, java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java[]
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java[lines=20..-1]
 ----
 
 The methods of the visitor will be implemented by some visitor, for example a code generator. However, we need to
@@ -337,7 +337,7 @@ either `Instruction` or `Constant`. Notice how we implemented traversing of the 
 [source, java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java[]
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java[lines=20..-1]
 ----
 
 The important note is that how the statements are stored. They are in fact the children of the program node. For this
@@ -367,7 +367,7 @@ Here's the source code:
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java[]
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java[lines=20..-1]
 ----
 
 Note that the constructor is private. The implication is that it is just impossible to create some invalid `Instruction`
@@ -383,7 +383,7 @@ Another kind of statement is a constant. The constant is just a number, and the 
 
 [source,java]
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Constant.java[]
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Constant.java[lines=20..-1]
 ----
 
 Comparing `Constant` instances is based on comparing the numbers they represent.
@@ -421,13 +421,13 @@ The content of the test classes are as follows:
 [source,java]
 .`src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java[]
+include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java[lines=20..-1]
 ----
 
 [source,java]
 .`src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java[]
+include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java[lines=20..-1]
 ----
 
 NOTE: The tests of parser are based on comparing `Instruction` and `Constant` instances with JUnit's `assertEquals()`
@@ -573,7 +573,7 @@ similar fashion. The code is as follows:
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java[]
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java[lines=20..-1]
 ----
 
 There are several things to notice:
@@ -601,7 +601,7 @@ actually an abstract class, extending `OutputStream`. The reason is easier testi
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java[]
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java[lines=20..-1]
 ----
 
 and here's the implementation:
@@ -609,7 +609,7 @@ and here's the implementation:
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/MemoryAndFileOutput.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/MemoryAndFileOutput.java[]
+include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/MemoryAndFileOutput.java[lines=20..-1]
 ----
 
 The "seeking" capability is required, because, as you remember, it's possible to write something like this:
@@ -628,7 +628,7 @@ As being our practice, we must test it.
 [source,java]
 .`src/test/java/net/sf/emustudio/ssem/assembler/CodeGeneratorTest.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/CodeGeneratorTest.java[]
+include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/CodeGeneratorTest.java[lines=20..-1]
 ----
 
 === Finalizing
@@ -641,7 +641,7 @@ Let's begin with it first.
 ----
 public class CompilerImpl extends AbstractCompiler {
 
-    ....
+    ...
 
     @Override
     public boolean compile(String inputFileName, String outputFileName) {
@@ -680,7 +680,7 @@ public class CompilerImpl extends AbstractCompiler {
         return true;
     }
 
-    ....
+    ...
 }
 ----
 

@@ -187,7 +187,7 @@ And now we are ready for the source code of the `DisplayPanel`:
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/display/DisplayPanel.java`
 ----
-include::../../../plugins/devices/ssem-display/src/main/java/net/sf/emustudio/ssem/display/DisplayPanel.java[]
+include::../../../plugins/devices/ssem-display/src/main/java/net/sf/emustudio/ssem/display/DisplayPanel.java[lines=20..-1]
 ----
 
 At first, notice that the display panel has its own memory - we can call it "video memory". It is absolutely not
@@ -215,7 +215,7 @@ for the dialog is as follows:
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/display/DisplayDialog.java`
 ----
-include::../../../plugins/devices/ssem-display/src/main/java/net/sf/emustudio/ssem/display/DisplayDialog.java[]
+include::../../../plugins/devices/ssem-display/src/main/java/net/sf/emustudio/ssem/display/DisplayDialog.java[lines=20..-1]
 ----
 
 In the constructor you can notice that we add the memory listener to the memory which is responsible for updating
@@ -232,7 +232,7 @@ The last step is to finish the main class. We need to include and show the displ
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java`
 ----
-include::../../../plugins/devices/ssem-display/src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java[]
+include::../../../plugins/devices/ssem-display/src/main/java/net/sf/emustudio/ssem/display/DisplaySSEM.java[lines=20..-1]
 ----
 
 Notice the method `initialize()` - we added a check whether we are in a no-GUI mode. If yes, we should ignore
