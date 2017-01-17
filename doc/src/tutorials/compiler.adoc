@@ -684,7 +684,8 @@ public class CompilerImpl extends AbstractCompiler {
 }
 ----
 
-As input, we have full path to the input file, and to the output file. It is good to use some Java 7 try-with-resources
+As input, we have full path to the input file, and to the output file. It is good to use Java
+https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html[try-with-resources]
 statement for opening the files. The same approach can be used for the code generator, because the class implements
 `AutoCloseable` interface.
 

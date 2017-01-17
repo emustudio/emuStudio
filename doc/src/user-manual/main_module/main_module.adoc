@@ -1,15 +1,14 @@
-= emuStudio: Main module
-(c) Copyright 2006-2017, Peter Jakubčo
-Version 0.39
+= Welcome to emuStudio!
+
 :toc:
-:numbered:
+:sectnums:
 
 emuStudio is a toy-computer emulation platform and framework. A platform, because it supports full emulation
 "life-cycle". From writing and compiling programs for emulated machine, to running and debugging. A framework, because
 it provides Java API and documentation which encourages to implement any custom toy-computer, either real or abstract.
 
 It's free software, released under GNU GPL v2 license. The source code is freely available online.
-Implementation language is Java 8, which makes emuStudio a naturally cross-platform application.
+Implementation language is Java SE 8, which makes emuStudio a naturally cross-platform application.
 The implementation technology of visual components (GUI) is Java Swing.
 
 [[XIB]]
@@ -41,7 +40,7 @@ or pass it to the issue for analysis by developers of emuStudio.
 At first, please download emuStudio distribution. It is a ZIP file in the form `emuStudio-[VERSION].zip`.
 Unpack the file where you want to have emuStudio installed.
 
-NOTE: please don't forget to install Java Runtime Environment (JRE) of version 7 and later.
+NOTE: please don't forget to install Java Runtime Environment (JRE) of version 8 and later.
 
 After unzipping, go to the directory where `emuStudio.jar` is located, and run it with command from command
 line:
@@ -148,7 +147,7 @@ described in abstract schemas, which are stored in configuration files (see <<XI
 Computers can be loaded either from <<XC,command line>> or manually in GUI (by default). The
 open dialog is the first thing which appears to a user.
 
-image::main_module/images/open-dialog.png["Open a computer" dialog]
+image::images/open-dialog.png["Open a computer" dialog]
 
 Left part contains a control panel and a list of all available virtual computers. When a user
 clicks at a computer, it's abstract schema is displayed on the right. Double-clicking or clicking
@@ -157,7 +156,7 @@ on the `Open` button loads selected computer.
 [[XOM]]
 === Managing virtual computers
 
-image::main_module/images/open-dialog-panel.png[Managing virtual computers]
+image::images/open-dialog-panel.png[Managing virtual computers]
 
 - *A*: Adds new computer. The abstract schema editor will be opened.
 - *B*: Deletes selected computer. Be aware of what you are doing - the action cannot be undone.
@@ -175,11 +174,11 @@ can "see" each other).
 When the abstract schema is completed, user must save it and then it will appear in the
 <<XOM>> dialog.
 
-image::main_module/images/schema-editor.png[Abstract schema editor]
+image::images/schema-editor.png[Abstract schema editor]
 
 Description of the control panel follows.
 
-image::main_module/images/schema-editor-panel.png[Control panel in the abstract schema editor]
+image::images/schema-editor-panel.png[Control panel in the abstract schema editor]
 
 - *A*: Save the virtual computer.
 - *B*: Select a compiler.
@@ -209,7 +208,7 @@ Connection line represents virtual "connection" between computer components. For
 it's not important how the connection is realized. It's safe to say that the connection is similar
 as if we say that a component "sees" the other component, in the direction of the arrow:
 
-image::main_module/images/connection.png[CPU "sees" operating memory, but not vice-versa]
+image::images/connection.png[CPU "sees" operating memory, but not vice-versa]
 
 In the previous image, a CPU "sees" the memory, but not vice-versa. It means, CPU can read/write
 from/to memory, but memory is not seeing it, it can just answer to CPU requests. This connection makes
@@ -241,7 +240,7 @@ the right mouse button.
 
 For example, the following image shows the settings of the plug-in `standard-mem`:
 
-image::main_module/images/schema-editor-settings.png["Hidden" settings of Standard operating memory plug-in]
+image::images/schema-editor-settings.png["Hidden" settings of Standard operating memory plug-in]
 
 It is possible to Add, Remove or Save the settings. Please refer for particular plug-ins which settings they support.
 
@@ -262,7 +261,7 @@ emulation.
 [[XMS]]
 === Source code editor
 
-image::main_module/images/source-code.png[Source code tab]
+image::images/source-code.png[Source code tab]
 
 In the source code editor, users can write programs for emulated computer. However, the most
 important tool which allows translation of the source code into binary program readable by emulated
@@ -294,7 +293,7 @@ content is left unchanged.
 *Emulator tab* is shown in the following image. It is currently open with MITS Altair8800 computer
 with Intel 8080 CPU, and several devices:
 
-image::main_module/images/emulator.png[Emulator tab]
+image::images/emulator.png[Emulator tab]
 
 The tab contains three main parts. The first one is very useful - listing of operating memory,
 disassembled into instructions. This part is called a debugger window, or "debugger". The other part,
@@ -367,7 +366,7 @@ Debugger toolbar contains buttons (icons) for controlling the emulation
 and accessing memory content. Most of these buttons are self-explanatory. If you hover
 over those icons, a help text is displayed of how to use the icon.
 
-image::main_module/images/debugger-toolbar.png[Debugger toolbar]
+image::images/debugger-toolbar.png[Debugger toolbar]
 
 - *A*: Reset emulation.
 - *B*: Set next instruction position to 0. CPU will perform the next instruction from there.
@@ -418,7 +417,7 @@ It's possible to change the current instructions view. The window can be moved i
 per-page fashion. The amount of instructions displayed in the window is always preserved.
 With the toolbar below the list it's possible to change "pages" of the displayed instructions.
 
-image::main_module/images/instructions-panel.png[Controlling instructions window]
+image::images/instructions-panel.png[Controlling instructions window]
 
 - *A*: Go to the first page. The very first row corresponds to instruction position 0.
 - *B*: Go backwards. User will specify the number of pages for going back.
