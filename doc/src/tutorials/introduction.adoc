@@ -475,8 +475,52 @@ There are two types of documentation:
 - user documentation
 - developer's documentation (not javadoc)
 
-For now, the way how it is done is to place all the documentation in the `doc/` submodule of emuStudio. Please see
-the `README.md` file of that submodule for more information how to do it.
+==== User documentation
+
+User documentation is located at `doc/src/user-manual`.
+
+Description of a plug-in usually should not be standalone, but put in a bigger document describing the
+whole computer. Description of each computer should be put in a separate directory, e.g. `altair8800/`, `brainduck/`, etc.
+The description should focus on the interactive part of the emulation, and do not describe what's going under the hood
+in much detail.
+
+The description should start with some introduction:
+
+- How the computer is related to the computer history?
+- Is it abstract or real?
+- The purpose of the computer
+- Comparison of features which it has as the emulator for emuStudio with the features of real computer
+
+Then, every plug-in should be described, starting from compiler - in the form of the "programming language" tutorial.
+
+It is important - keep the information useful. Do not try hard to put any information if you think it is too small.
+Some plug-ins are quite clear and don't seem to interact much with user, which is OK. For example usually it's the
+CPU plug-in.
+
+Programming examples should follow, if the plug-in allows programming. For example, both MITS 88-DISK and MITS 88-SIO
+are programmable devices.
+
+Then a very important section should be devoted to automatic emulation. More specifically:
+
+- How the plug-in will behave if emuStudio will run in automatic emulation mode?
+- Where can user find output files if the output is redirected to a file?
+- What is the behavior if the automatic emulation is run more times in a row? Will the files be overridden or appended?
+- Can be output file names changed?
+
+The last section should talk about debugging of the plug-in. For example:
+
+- List of known bugs
+- How to report a bug
+- How to do some analysis when something does not work
+
+==== Developer's documentation
+
+Developer documentation is optional, but suggested. It should be written in the form of Maven sites. The preferred
+formatter is Markdown.
+
+In this type of documentation, only technical details should be explained. Majority of them should be the "why"s instead
+of "how"s.
+
 
 === Incorporating a plug-in to emuStudio
 
