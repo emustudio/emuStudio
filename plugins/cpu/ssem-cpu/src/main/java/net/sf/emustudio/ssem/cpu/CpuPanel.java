@@ -25,12 +25,14 @@ import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.NumberUtils;
 import java.util.Objects;
 
+import static emulib.runtime.RadixUtils.formatBinaryString;
+
 public class CpuPanel extends javax.swing.JPanel {
     private final EmulatorEngine engine;
     private final Updater updater;
     private final MemoryContext<Byte> memory;
 
-    public CpuPanel(CPU cpu, EmulatorEngine engine, MemoryContext<Byte> memory) {
+    CpuPanel(CPU cpu, EmulatorEngine engine, MemoryContext<Byte> memory) {
         this.engine = Objects.requireNonNull(engine);
         this.memory = Objects.requireNonNull(memory);
         this.updater = new Updater();
@@ -73,24 +75,10 @@ public class CpuPanel extends javax.swing.JPanel {
             return formatBinary(number, 32);
         }
 
-        private String formatBinary(int number, int width) {
-            String binNumber = Integer.toBinaryString(number);
-            binNumber = String.format("%" + width + "s", binNumber).replace(" ", "0");
-
-            StringBuilder builder = new StringBuilder();
-            int i = 0;
-            for (char c : binNumber.toCharArray()) {
-                builder.append(c);
-                if (i == 3) {
-                    builder.append(' ');
-                    i = 0;
-                } else {
-                    i++;
-                }
-            }
-            return builder.toString();
+        private String formatBinary(int number, int length) {
+            return formatBinaryString(number, length, 4, true);
         }
-        
+
     }
     
     /**
@@ -113,7 +101,7 @@ public class CpuPanel extends javax.swing.JPanel {
         txtA = new javax.swing.JTextField();
         txtBinA = new javax.swing.JTextField();
         txtBinCI = new javax.swing.JTextField();
-        jPanel3 = new javax.swing.JPanel();
+        javax.swing.JPanel jPanel3 = new javax.swing.JPanel();
         javax.swing.JLabel jLabel4 = new javax.swing.JLabel();
         javax.swing.JLabel jLabel5 = new javax.swing.JLabel();
         txtMLine = new javax.swing.JTextField();
@@ -347,8 +335,6 @@ public class CpuPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel jPanel3;
     private javax.swing.JLabel lblRunState;
     private javax.swing.JLabel lblSpeed;
     private javax.swing.JTextField txtA;

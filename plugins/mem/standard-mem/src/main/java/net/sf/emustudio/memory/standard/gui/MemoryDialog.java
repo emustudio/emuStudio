@@ -41,6 +41,8 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import static emulib.runtime.RadixUtils.formatBinaryString;
+
 public class MemoryDialog extends JDialog {
     private final MemoryContextImpl memContext;
     private final MemoryImpl mem;
@@ -237,7 +239,7 @@ public class MemoryDialog extends JDialog {
         txtValDec.setText(String.format("%02d", data));
         txtValHex.setText(String.format("%02X", data));
         txtValOct.setText(String.format("%02o", data));
-        txtValBin.setText(Integer.toBinaryString(data));
+        txtValBin.setText(formatBinaryString(data, 8));
     }
 
     public void updateBank(short bank) {

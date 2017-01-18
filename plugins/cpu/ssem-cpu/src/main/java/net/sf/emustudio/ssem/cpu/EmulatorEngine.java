@@ -29,27 +29,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 public class EmulatorEngine {
-    public final static int INSTRUCTIONS_PER_SECOND = 700;
+    final static int INSTRUCTIONS_PER_SECOND = 700;
+    private final static int MEMORY_CELLS = 32 * 4;
     
     private final CPU cpu;
     private final MemoryContext<Byte> memory;
     
-    public volatile int Acc;
-    public volatile int CI;
+    volatile int Acc;
+    volatile int CI;
 
     private volatile long averageInstructionNanos;
     
-    public EmulatorEngine(MemoryContext<Byte> memory, CPU cpu) {
+    EmulatorEngine(MemoryContext<Byte> memory, CPU cpu) {
         this.memory = Objects.requireNonNull(memory);
         this.cpu = Objects.requireNonNull(cpu);
     }
     
-    public void reset(int startingPos) {
+    void reset(int startingPos) {
         Acc = 0;
         CI = startingPos;
     }
     
-    public CPU.RunState step() {
+    CPU.RunState step() {
         Byte[] instruction = memory.readWord(CI);
         CI += 4;
         
@@ -58,7 +59,12 @@ public class EmulatorEngine {
 
         switch (opcode) {
             case 0: // JMP
+                int oldCi = CI - 4;
                 CI = 4 * readInt(line);
+                if (CI == oldCi) {
+                    // endless loop detected;
+                    return CPU.RunState.STATE_STOPPED_NORMAL;
+                }
                 break;
             case 4: // JPR
                 CI = CI + 4 * readInt(line);
@@ -96,7 +102,7 @@ public class EmulatorEngine {
         memory.writeWord(line, word);
     }
 
-    public CPU.RunState run() {
+    CPU.RunState run() {
         if (averageInstructionNanos == 0) {
             measureAverageInstructionNanos();
         }
@@ -129,7 +135,7 @@ public class EmulatorEngine {
         
         int line = NumberUtils.reverseBits(instruction[0], 8);
         int opcode = instruction[1] & 3;
-        CI = (CI + 4) % (32 *4);
+        CI = (CI + 4) % MEMORY_CELLS;
 
 
         switch (opcode) {
@@ -142,7 +148,7 @@ public class EmulatorEngine {
             case 7: break;
         }
         
-        Acc -= memory.read(line);
+        Acc -= memory.read(line % MEMORY_CELLS);
     }
     
     

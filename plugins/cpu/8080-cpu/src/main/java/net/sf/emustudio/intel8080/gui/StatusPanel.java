@@ -25,12 +25,21 @@ import net.sf.emustudio.intel8080.api.ExtendedContext;
 import net.sf.emustudio.intel8080.impl.CpuImpl;
 import net.sf.emustudio.intel8080.impl.EmulatorEngine;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.GroupLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.LayoutStyle;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.table.AbstractTableModel;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 
-import static emulib.runtime.RadixUtils.getByteHexString;
-import static emulib.runtime.RadixUtils.getWordHexString;
+import static emulib.runtime.RadixUtils.formatByteHexString;
+import static emulib.runtime.RadixUtils.formatWordHexString;
 
 public class StatusPanel extends JPanel {
     private final CpuImpl cpu;
@@ -85,20 +94,20 @@ public class StatusPanel extends JPanel {
     }
 
     public void updateGUI() {
-        txtRegA.setText(getByteHexString(engine.regs[EmulatorEngine.REG_A]));
-        txtRegB.setText(getByteHexString(engine.regs[EmulatorEngine.REG_B]));
-        txtRegC.setText(getByteHexString(engine.regs[EmulatorEngine.REG_C]));
-        txtRegBC.setText(getWordHexString((short)engine.regs[EmulatorEngine.REG_B], (short)engine.regs[EmulatorEngine.REG_C]));
-        txtRegD.setText(getByteHexString(engine.regs[EmulatorEngine.REG_D]));
-        txtRegE.setText(getByteHexString(engine.regs[EmulatorEngine.REG_E]));
-        txtRegDE.setText(getWordHexString((short)engine.regs[EmulatorEngine.REG_D], (short)engine.regs[EmulatorEngine.REG_E]));
-        txtRegH.setText(getByteHexString(engine.regs[EmulatorEngine.REG_H]));
-        txtRegL.setText(getByteHexString(engine.regs[EmulatorEngine.REG_L]));
-        txtRegHL.setText(getWordHexString((short)engine.regs[EmulatorEngine.REG_H], (short)engine.regs[EmulatorEngine.REG_L]));
-        txtRegSP.setText(getWordHexString(engine.SP));
-        txtRegPC.setText(getWordHexString(engine.PC));
+        txtRegA.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_A]));
+        txtRegB.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_B]));
+        txtRegC.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_C]));
+        txtRegBC.setText(formatWordHexString((short)engine.regs[EmulatorEngine.REG_B], (short)engine.regs[EmulatorEngine.REG_C]));
+        txtRegD.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_D]));
+        txtRegE.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_E]));
+        txtRegDE.setText(formatWordHexString((short)engine.regs[EmulatorEngine.REG_D], (short)engine.regs[EmulatorEngine.REG_E]));
+        txtRegH.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_H]));
+        txtRegL.setText(formatByteHexString(engine.regs[EmulatorEngine.REG_L]));
+        txtRegHL.setText(formatWordHexString((short)engine.regs[EmulatorEngine.REG_H], (short)engine.regs[EmulatorEngine.REG_L]));
+        txtRegSP.setText(formatWordHexString(engine.SP));
+        txtRegPC.setText(formatWordHexString(engine.PC));
 
-        txtFlags.setText(getByteHexString(engine.flags));
+        txtFlags.setText(formatByteHexString(engine.flags));
         flagModel.fireTableDataChanged();
 
         lblRun.setText(runState.toString());

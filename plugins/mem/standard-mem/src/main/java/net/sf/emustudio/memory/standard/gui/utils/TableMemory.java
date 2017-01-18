@@ -97,7 +97,7 @@ public class TableMemory extends JTable {
             currentPage = memModel.getPage();
             adresses = new String[memModel.getRowCount()];
             for (int i = 0; i < adresses.length; i++) {
-                adresses[i] = emulib.runtime.RadixUtils.getWordHexString(memModel.getColumnCount() * i
+                adresses[i] = emulib.runtime.RadixUtils.formatWordHexString(memModel.getColumnCount() * i
                         + memModel.getColumnCount() * memModel.getRowCount() * currentPage) + "h";
             }
             this.setOpaque(true);

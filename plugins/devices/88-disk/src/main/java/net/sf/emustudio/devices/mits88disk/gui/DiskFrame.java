@@ -29,6 +29,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 
+import static emulib.runtime.RadixUtils.formatBinaryString;
+
 public class DiskFrame extends JFrame {
     private final static String GUI_PATH = "/net/sf/emustudio/devices/mits88disk/gui/";
 
@@ -73,22 +75,13 @@ public class DiskFrame extends JFrame {
         }        
     }
 
-    private String toBinaryByte(int number) {
-        String binaryString = Integer.toBinaryString(number);
-        int length = binaryString.length();
-        for (int i = 0; i < 8 - length; i++) {
-            binaryString = "0" + binaryString;
-        }
-        return binaryString;
-    }
-
     private void updateDriveInfo(Drive drive) {
         updateDriveInfo(drive.getDriveParameters());
     }
 
     private void updateDriveInfo(Drive.DriveParameters parameters) {
-        lblPort1Status.setText(toBinaryByte(parameters.port1status));
-        lblPort2Status.setText(toBinaryByte(parameters.port2status));
+        lblPort1Status.setText(formatBinaryString(parameters.port1status, 8));
+        lblPort2Status.setText(formatBinaryString(parameters.port2status, 8));
         
         lblSector.setText(String.valueOf(parameters.sector));
         lblTrack.setText(String.valueOf(parameters.track));

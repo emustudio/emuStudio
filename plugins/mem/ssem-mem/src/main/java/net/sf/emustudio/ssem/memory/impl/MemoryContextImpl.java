@@ -26,7 +26,7 @@ import java.util.Arrays;
 
 @ThreadSafe
 public class MemoryContextImpl extends AbstractMemoryContext<Byte> {
-    static final int NUMBER_OF_CELLS = 32 * 32;
+    static final int NUMBER_OF_CELLS = 32 * 4;
 
     // byte type is atomic in JVM memory model
     private final byte[]memory = new byte[NUMBER_OF_CELLS];

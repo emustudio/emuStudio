@@ -33,7 +33,7 @@ public abstract class ExprNode {
 
     public static String getEncValue(int val, boolean oneByte) {
         if (oneByte) {
-            return RadixUtils.getByteHexString(val & 0xFF);
+            return RadixUtils.formatByteHexString(val & 0xFF);
         } else {
             return String.format("%02X%02X", (val & 0xFF), ((val >> 8) & 0xFF));
         }
@@ -41,7 +41,7 @@ public abstract class ExprNode {
 
     public String getEncValue(boolean oneByte) {
         if (oneByte) {
-            return RadixUtils.getByteHexString(value & 0xFF);
+            return RadixUtils.formatByteHexString(value & 0xFF);
         } else {
             return String.format("%02X%02X", (value & 0xFF), ((value >> 8) & 0xFF));
         }

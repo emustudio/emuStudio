@@ -32,8 +32,8 @@ import java.util.Objects;
 public class MemoryTableModel extends AbstractTableModel {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryTableModel.class);
 
-    public final static int COLUMN_HEX_VALUE = 32;
-    public final static int COLUMN_RAW_VALUE = 33;
+    final static int COLUMN_HEX_VALUE = 32;
+    final static int COLUMN_RAW_VALUE = 33;
 
     private final static int ROW_COUNT = 32;
     private final static int COLUMN_COUNT = 2 + 32;
@@ -61,7 +61,7 @@ public class MemoryTableModel extends AbstractTableModel {
      * @param column column in the memory table
      * @return true if the column represents a SSEM instruction bit
      */
-    public static boolean isBitInstruction(int column) {
+    static boolean isBitInstruction(int column) {
         return column >= 13 && column <= 15;
     }
 
@@ -72,7 +72,7 @@ public class MemoryTableModel extends AbstractTableModel {
      * @param column column in the memory table
      * @return true if the column represents a line bit
      */
-    public static boolean isBitLine(int column) {
+    static boolean isBitLine(int column) {
         return column >= 0 && column < 5;
     }
 
@@ -113,7 +113,7 @@ public class MemoryTableModel extends AbstractTableModel {
             
             switch (columnIndex) {
                 case COLUMN_HEX_VALUE:
-                    return RadixUtils.getDwordHexString(value).toUpperCase();
+                    return RadixUtils.formatDwordHexString(value).toUpperCase();
                 case COLUMN_RAW_VALUE:
                     return "" + (char)((value >>> 24) & 0xFF) + (char)((value >>> 16) & 0xFF)
                             + (char)((value >>> 8) & 0xFF) + (char)(value & 0xFF);
@@ -192,13 +192,13 @@ public class MemoryTableModel extends AbstractTableModel {
         return columnIndex >= 0 && columnIndex <= 33;
     }
     
-    public void dataChangedAt(int address) {
+    void dataChangedAt(int address) {
         for (int i = 0; i < COLUMN_COUNT; i++) {
             fireTableCellUpdated(address, i);
         }
     }
     
-    public void clear() {
+    void clear() {
         memory.clear();
         fireTableDataChanged();
     }

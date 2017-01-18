@@ -41,8 +41,8 @@ import java.util.Optional;
  * This class manages the emuStudio automation process. In the process
  * the emulation is started automatically and results are collected.
  */
-class Automatization implements Runnable {
-    private final static Logger LOGGER = LoggerFactory.getLogger("automatization");
+class Automation implements Runnable {
+    private final static Logger LOGGER = LoggerFactory.getLogger("automation");
 
     private AutoDialog progressGUI;
     private File inputFile;
@@ -52,7 +52,7 @@ class Automatization implements Runnable {
     private RunState resultState;
     private final boolean nogui;
 
-    Automatization(Computer computer, String inputFileName, boolean nogui) throws AutomationException {
+    Automation(Computer computer, String inputFileName, boolean nogui) throws AutomationException {
         this.computer = Objects.requireNonNull(computer);
         this.nogui = nogui;
         this.inputFile = new File(Objects.requireNonNull(inputFileName));
@@ -220,6 +220,8 @@ class Automatization implements Runnable {
             LOGGER.info("Compiler: " + ((compilerType == null) ? "none" : compilerType.title()));
             LOGGER.info("CPU: " + ((cpuType == null) ? "none" : cpuType.title()));
             LOGGER.info("Memory: " + ((memoryType == null) ? "none" : memoryType.title()));
+
+            memory.ifPresent(m -> LOGGER.info("Memory size: {}", m.getSize()));
 
             int i = 0;
             for (Device device : computer.getDevices()) {

@@ -77,12 +77,12 @@ argument:
 	--config name : load configuration with file name
 	--input name  : use the source code given by the file name
 	--output name : output compiler messages into this file name
-	--auto        : run the emulation automatization
-	--nogui       : try to not show GUI in automatization
+	--auto        : run the emulation automation
+	--nogui       : try to not show GUI in automation
 	--help        : output this message
 
 Most of these arguments are self-explanatory. Some of them have meaning only when emulation
-automatization is turned on (`--nogui`). For more information, please refer to section
+automation is turned on (`--nogui`). For more information, please refer to section
 <<XA>>.
 
 [[XA]]
@@ -118,7 +118,7 @@ for the plug-ins you use.
 
 An important part of the analysis of result of the automatic emulation is the log saying what
 happened. By default, each run of automatic emulation creates (overwrites) a log file called
-`automatization.html`, located in the root where `emuStudio.jar` file is.
+`automation.html`, located in the root where `emuStudio.jar` file is.
 
 The log file is in HTML format as you might suggest and contains common messages organized in
 a table. By default, each row of the table contains:

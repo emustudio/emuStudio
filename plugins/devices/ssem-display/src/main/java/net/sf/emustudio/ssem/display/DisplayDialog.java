@@ -25,11 +25,11 @@ import emulib.plugins.memory.MemoryContext;
 import javax.swing.JDialog;
 import java.util.Objects;
 
-public class DisplayDialog extends JDialog {
+class DisplayDialog extends JDialog {
     private final MemoryContext<Byte> memory;
     private final DisplayPanel displayPanel;
 
-    public DisplayDialog(MemoryContext<Byte> memory) {
+    DisplayDialog(MemoryContext<Byte> memory) {
         this.memory = Objects.requireNonNull(memory);
         this.displayPanel = new DisplayPanel();
         
@@ -60,7 +60,7 @@ public class DisplayDialog extends JDialog {
         });
     }
 
-    public void reset() {
+    void reset() {
         displayPanel.clear();
         for (int i = 0; i < 4 * 32; i += 4) {
             displayPanel.writeRow(memory.readWord(i), i / 4);

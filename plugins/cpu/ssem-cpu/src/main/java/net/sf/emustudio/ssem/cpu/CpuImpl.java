@@ -33,15 +33,17 @@ import emulib.plugins.cpu.Disassembler;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.exceptions.PluginInitializationException;
-import java.util.Arrays;
-import java.util.MissingResourceException;
-import java.util.Objects;
-import java.util.ResourceBundle;
-import javax.swing.JPanel;
 import net.sf.emustudio.ssem.DecoderImpl;
 import net.sf.emustudio.ssem.DisassemblerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.swing.JPanel;
+import java.util.Arrays;
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.ResourceBundle;
 
 @PluginType(
     type = PLUGIN_TYPE.CPU,
@@ -58,6 +60,8 @@ public class CpuImpl extends AbstractCPU {
     private Disassembler disasm;
     private EmulatorEngine engine;
 
+    private Optional<AutomaticEmulation> automaticEmulation = Optional.empty();
+
     public CpuImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
         this.contextPool = Objects.requireNonNull(contextPool);
@@ -65,7 +69,7 @@ public class CpuImpl extends AbstractCPU {
 
     @Override
     protected void destroyInternal() {
-
+        automaticEmulation.ifPresent(AutomaticEmulation::destroy);
     }
 
     @Override
@@ -106,12 +110,18 @@ public class CpuImpl extends AbstractCPU {
         return disasm;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize(SettingsManager settingsManager) throws PluginInitializationException {
         memory = contextPool.getMemoryContext(getPluginID(), MemoryContext.class);
         Decoder decoder = new DecoderImpl(memory);
         disasm = new DisassemblerImpl(memory, decoder);
         engine = new EmulatorEngine(memory, this);
+
+        boolean auto = Boolean.parseBoolean(settingsManager.readSetting(getPluginID(), SettingsManager.AUTO));
+        if (auto) {
+            automaticEmulation = Optional.of(new AutomaticEmulation(this, engine, memory));
+        }
     }
 
     @Override

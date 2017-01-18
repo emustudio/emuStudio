@@ -19,14 +19,26 @@
  */
 package net.sf.emustudio.brainduck.memory.gui;
 
-import javax.swing.*;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
+import javax.swing.UIManager;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
 
-import static emulib.runtime.RadixUtils.getWordHexString;
+import static emulib.runtime.RadixUtils.formatWordHexString;
 
 class MemoryTable extends JTable {
     private final static int CHAR_WIDTH = 17;
@@ -83,7 +95,7 @@ class MemoryTable extends JTable {
             currentPage = model.getPage();
             adresses = new String[model.getRowCount()];
             for (int i = 0; i < adresses.length; i++) {
-                adresses[i] = getWordHexString(
+                adresses[i] = formatWordHexString(
                         model.getColumnCount() * i + model.getColumnCount() * model.getRowCount() * currentPage
                 ) + "h";
             }

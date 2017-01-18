@@ -96,7 +96,7 @@ public class Main {
 
     private static void runAutomation(Computer computer) {
         try {
-          new Automatization(
+          new Automation(
                   computer, commandLine.getInputFileName(), commandLine.isNoGUI()
           ).run();
         } catch (AutomationException e) {

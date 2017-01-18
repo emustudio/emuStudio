@@ -37,13 +37,13 @@ public class DisplayPanel extends JPanel {
 
     private final boolean[][] memory = new boolean[CELL_SIZE][CELL_SIZE];
 
-    public DisplayPanel() {
+    DisplayPanel() {
         super.setBackground(Color.BLACK);
         super.setDoubleBuffered(true);
     }
 
-    public void writeRow(Byte[] value, int row) {
-        int number = NumberUtils.readInt(value, NumberUtils.Strategy.REVERSE_BITS);
+    void writeRow(Byte[] value, int row) {
+        int number = NumberUtils.readInt(value, NumberUtils.Strategy.BIG_ENDIAN);
         Boolean[] bits = String.format("%" + CELL_SIZE + "s", Integer.toBinaryString(number)).chars()
                 .mapToObj(c -> c == '1')
                 .collect(Collectors.toList())
@@ -55,7 +55,7 @@ public class DisplayPanel extends JPanel {
         repaint();
     }
 
-    public void clear() {
+    void clear() {
         for (boolean[] memoryRow : memory) {
             for (int j = 0; j < memoryRow.length; j++) {
                 memoryRow[j] = false;
@@ -78,7 +78,7 @@ public class DisplayPanel extends JPanel {
                 if (memory[i][j]) {
                   g.setColor(Color.GREEN);
                   g.fillRect(
-                          startX + (CELL_SIZE - j) * PIXEL_SIZE_PLUS_GAP,
+                          startX + j * PIXEL_SIZE_PLUS_GAP,
                           startY + i * PIXEL_SIZE_PLUS_GAP,
                           PIXEL_SIZE,
                           PIXEL_SIZE
@@ -86,7 +86,7 @@ public class DisplayPanel extends JPanel {
                 } else {
                   g.setColor(Color.DARK_GRAY);
                   g.fillRect(
-                          startX + (CELL_SIZE - j) * PIXEL_SIZE_PLUS_GAP,
+                          startX + j * PIXEL_SIZE_PLUS_GAP,
                           startY + i * PIXEL_SIZE_PLUS_GAP,
                           PIXEL_SIZE,
                           PIXEL_SIZE

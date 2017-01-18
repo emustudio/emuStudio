@@ -527,19 +527,19 @@ public class EmulatorEngine {
     private final MemoryContext<Byte> memory;
     private volatile CPU.RunState currentRunState;
 
-    public volatile int Acc;
-    public volatile int CI;
+    volatile int Acc;
+    volatile int CI;
 
-    public EmulatorEngine(MemoryContext<Byte> memory) {
+    EmulatorEngine(MemoryContext<Byte> memory) {
         this.memory = Objects.requireNonNull(memory);
     }
 
-    public void reset(int startingPos) {
+    void reset(int startingPos) {
         Acc = 0;
         CI = startingPos;
     }
 
-    public CPU.RunState step() {
+    CPU.RunState step() {
         Byte[] instruction = memory.readWord(CI);
         CI += 4;
 
@@ -548,7 +548,12 @@ public class EmulatorEngine {
 
         switch (opcode) {
             case 0: // JMP
+                int oldCi = CI - 4;
                 CI = 4 * readInt(line);
+                if (CI == oldCi) {
+                    // endless loop detected;
+                    return CPU.RunState.STATE_STOPPED_NORMAL;
+                }
                 break;
             case 4: // JPR
                 CI = CI + 4 * readInt(line);
@@ -586,7 +591,7 @@ public class EmulatorEngine {
         memory.writeWord(line, word);
     }
 
-    public CPU.RunState run() {
+    CPU.RunState run() {
         CPU.RunState currentRunState = CPU.RunState.STATE_STOPPED_BREAK;
 
         while (!Thread.currentThread().isInterrupted() && currentRunState == CPU.RunState.STATE_STOPPED_BREAK) {
@@ -649,12 +654,12 @@ public class EmulatorEngine {
     ...
     private final CPU cpu;
 
-    public EmulatorEngine(MemoryContext<Byte> memory, CPU cpu) {
+    EmulatorEngine(MemoryContext<Byte> memory, CPU cpu) {
         this.memory = Objects.requireNonNull(memory);
         this.cpu = Objects.requireNonNull(cpu);
     }
 
-    public CPU.RunState run() {
+    CPU.RunState run() {
         while (...) {
             try {
                 if (cpu.isBreakpointSet(CI)) {
@@ -754,7 +759,7 @@ public class EmulatorEngine {
     ...
     private volatile long averageInstructionNanos;
 
-    public CPU.RunState run() {
+    CPU.RunState run() {
         if (averageInstructionNanos == 0) {
             measureAverageInstructionNanos();
         }
@@ -785,7 +790,8 @@ algorithm can look as follows (there's lot to improve ofcourse):
 .`src/main/java/net/sf/emustudio/ssem/cpu/EmulatorEngine.java`
 ----
 public class EmulatorEngine {
-    public final static int INSTRUCTIONS_PER_SECOND = 700;
+    final static int INSTRUCTIONS_PER_SECOND = 700;
+    private final static int MEMORY_CELLS = 32 * 4;
     ...
 
     private void fakeStep() {
@@ -793,7 +799,7 @@ public class EmulatorEngine {
 
         int line = NumberUtils.reverseBits(instruction[0], 8);
         int opcode = instruction[1] & 3;
-        CI = (CI + 4) % (32 *4);
+        CI = (CI + 4) % MEMORY_CELLS;
 
 
         switch (opcode) {
@@ -806,7 +812,7 @@ public class EmulatorEngine {
             case 7: break;
         }
 
-        Acc -= memory.read(line);
+        Acc -= memory.read(line % MEMORY_CELLS);
     }
 
 
@@ -1012,6 +1018,106 @@ public class CpuImpl extends AbstractCPU {
     }
 
 }
+----
+
+=== Automatic emulation
+
+The optional step is to change a behavior slightly when user runs the automatic emulation. Why here? Why not in
+e.g. CRT display or other plug-in? To answer this question, let's think a bit.
+
+Automatic emulation exists to suppress interaction with user and perform the whole emulation - from compilation to
+running the program - automatically. The important output is usually redirected to a file; so as the required input
+is read from file, instead asking the user for it. User then can check the output separately.
+
+Usually some terminal input/output is redirected in case of automatic emulation. For example, LSI ADM-3A emulator
+redirects input from file `adm3a-terminal.in` and output to `adm3a-terminal.out`.
+
+But for SSEM - what output is important enough to be put in a file in case of automatic
+emulation? Well, the answer is clear - content of the memory, which is not big - just 32 rows. In addition, it will
+be useful to see the content of the accumulator and CI register after the emulation finishes. Plug-in which has
+easy access to the memory, to the registers and knows the emulation state is CPU. Therefore, we implement the automation
+support here.
+
+After each emulation "stop" - no matter the reason of stopping, if before the emulation was running, we want to perform
+a "snapshot" of the emulator state - registers `Acc`, `CI` and memory content. This snapshot will be then written to a
+file called `ssem.out`.
+
+At first, let's implement the class:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/cpu/AutomaticEmulation.java`
+----
+include::../../../plugins/cpu/ssem-cpu/src/main/java/net/sf/emustudio/ssem/cpu/AutomaticEmulation.java[lines=20..-1]
+----
+
+Then, the class should be incorporated to the main class:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/cpu/CpuImpl.java`
+----
+public class CpuImpl extends AbstractCPU {
+    ...
+
+    private Optional<AutomaticEmulation> automaticEmulation = Optional.empty();
+
+    ...
+
+    public void initialize(SettingsManager settingsManager) throws PluginInitializationException {
+        ...
+
+        boolean auto = Boolean.parseBoolean(settingsManager.readSetting(getPluginID(), SettingsManager.AUTO));
+        if (auto) {
+            automaticEmulation = Optional.of(new AutomaticEmulation(this, engine, memory));
+        }
+    }
+
+    ...
+}
+----
+
+And that's it. If we run the emulator with the command line:
+
+
+        java -jar emuStudio.jar --config SSEM --nogui --auto --input examples/as-ssem/the-fraj.ssem
+
+the emulation will run without user interaction, and file `ssem.out` will be created with the following content:
+
+----
+ACC=0x0
+CI=0x8
+
+00    ____ ____ ____ ____ ____ ____ ____ ____
+01    +++_ +___ ____ __+_ ____ ____ ___+ ++_+
+02    _+__ ____ ____ ____ ____ ____ ____ ____
+03    _++_ +___ ____ ___+ ____ ____ ____ ____
+04    _+__ +___ ____ _++_ ____ ____ ____ ____
+05    _+__ +___ ____ __+_ ____ ____ ____ ____
+06    _+__ +___ ____ ___+ ____ ____ ____ ____
+07    +++_ +___ ____ _++_ ____ ____ ____ ____
+08    +___ ____ ____ __+_ ____ ____ ____ ____
+09    _+__ +___ ____ _++_ ____ ____ ____ ____
+10    _+__ +___ ____ __+_ ____ ____ ____ ____
+11    __+_ +___ ____ ___+ ____ ____ ____ ____
+12    ____ ____ ____ __++ ____ ____ ____ ____
+13    ++__ +___ ____ __+_ ____ ____ ____ ____
+14    +___ ____ ____ _++_ ____ ____ ____ ____
+15    +_+_ +___ ____ ___+ ____ ____ ____ ____
+16    +++_ ____ ____ _++_ ____ ____ ____ ____
+17    ____ ____ ____ ____ ____ ____ ____ ____
+18    ____ ____ ____ ____ ____ ____ ____ ____
+19    +__+ _+++ ++++ ++_+ ++++ ++++ +++_ __+_
+20    ++++ ++++ ++++ ++++ ++++ ++++ +++_ ++++
+21    ____ ____ ____ _+++ ++++ ++++ ++++ ++++
+22    +___ ____ ____ ____ ____ ____ ____ ____
+23    _+++ _+_+ _+++ _+++ _+++ ___+ +__+ +++_
+24    __+_ _+_+ _+__ _+__ _+__ +_+_ _+__ _+__
+25    __+_ _+_+ _+__ _+__ _+__ +_+_ _+__ _+__
+26    __+_ _+++ _++_ _++_ _+++ __++ ++__ _+__
+27    __+_ _+++ _++_ _++_ _+++ __++ ++__ _+__
+28    __+_ _+_+ _+__ _+__ _+_+ __+_ _+__ _+__
+29    __+_ _+_+ _+__ _+__ _+__ +_+_ _+_+ _+__
+30    __+_ _+_+ _+++ _+__ _+__ +_+_ _+__ +___
+31    ____ ____ ____ ____ ____ ____ ____ ____
 ----
 
 === Testing

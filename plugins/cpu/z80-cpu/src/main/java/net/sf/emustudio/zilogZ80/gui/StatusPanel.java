@@ -20,11 +20,12 @@
 package net.sf.emustudio.zilogZ80.gui;
 
 import emulib.plugins.cpu.CPU;
-import static emulib.runtime.RadixUtils.getByteHexString;
-import static emulib.runtime.RadixUtils.getWordHexString;
 import net.sf.emustudio.intel8080.api.ExtendedContext;
 import net.sf.emustudio.zilogZ80.impl.CpuImpl;
 import net.sf.emustudio.zilogZ80.impl.EmulatorEngine;
+
+import static emulib.runtime.RadixUtils.formatByteHexString;
+import static emulib.runtime.RadixUtils.formatWordHexString;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_A;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_B;
 import static net.sf.emustudio.zilogZ80.impl.EmulatorEngine.REG_C;
@@ -88,11 +89,11 @@ public class StatusPanel extends javax.swing.JPanel {
     }
 
     private String wordHex(int upper, int lower) {
-        return getWordHexString(((upper << 8) | lower) & 0xFFFF);
+        return formatWordHexString(((upper << 8) | lower) & 0xFFFF);
     }
 
     private String byteHex(int what) {
-        return getByteHexString(what);
+        return formatByteHexString(what);
     }
 
     public void updateGUI() {
@@ -122,12 +123,12 @@ public class StatusPanel extends javax.swing.JPanel {
         txtHL2.setText(wordHex(engine.regs2[REG_H], engine.regs2[REG_L]));
         flagModel2.fireTableDataChanged();
 
-        txtSP.setText(getWordHexString(engine.SP));
-        txtPC.setText(getWordHexString(engine.PC));
-        txtIX.setText(getWordHexString(engine.IX));
-        txtIY.setText(getWordHexString(engine.IY));
-        txtI.setText(getByteHexString(engine.I));
-        txtR.setText(getByteHexString(engine.R));
+        txtSP.setText(formatWordHexString(engine.SP));
+        txtPC.setText(formatWordHexString(engine.PC));
+        txtIX.setText(formatWordHexString(engine.IX));
+        txtIY.setText(formatWordHexString(engine.IY));
+        txtI.setText(formatByteHexString(engine.I));
+        txtR.setText(formatByteHexString(engine.R));
 
         lblRunState.setText(runState.toString());
         if (runState == CPU.RunState.STATE_RUNNING) {

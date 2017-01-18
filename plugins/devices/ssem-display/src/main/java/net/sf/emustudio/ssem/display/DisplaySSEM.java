@@ -29,6 +29,7 @@ import emulib.runtime.exceptions.PluginInitializationException;
 
 import java.util.MissingResourceException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 @PluginType(
@@ -41,7 +42,7 @@ import java.util.ResourceBundle;
 public class DisplaySSEM extends AbstractDevice {
     private boolean nogui;
     private final ContextPool contextPool;
-    private DisplayDialog display;
+    private Optional<DisplayDialog> display = Optional.empty();
 
     public DisplaySSEM(Long pluginID, ContextPool contextPool) {
         super(pluginID);
@@ -71,25 +72,23 @@ public class DisplaySSEM extends AbstractDevice {
         nogui = (s != null) && s.toUpperCase().equals("TRUE");
 
         if (!nogui) {
-            display = new DisplayDialog(memory);
+            display = Optional.of(new DisplayDialog(memory));
         }
     }
 
     @Override
     public void reset() {
-        display.reset();
+        display.ifPresent(DisplayDialog::reset);
     }
 
     @Override
     public void destroy() {
-        display.dispose();
+        display.ifPresent(DisplayDialog::dispose);
     }
 
     @Override
     public void showGUI() {
-        if (display != null) {
-            display.setVisible(true);
-        }
+        display.ifPresent(displayDialog -> displayDialog.setVisible(true));
     }
 
     @Override

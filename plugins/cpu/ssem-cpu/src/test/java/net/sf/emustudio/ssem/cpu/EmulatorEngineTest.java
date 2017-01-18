@@ -75,4 +75,11 @@ public class EmulatorEngineTest {
         assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.run());
         assertEquals(8, NumberUtils.readInt(memoryStub.readWord(31 * 4), memoryStub.getWordReadingStrategy()));
     }
+
+    @Test(timeout = 500)
+    public void testEndlessLoopPrevention() throws Exception {
+        memoryStub.setMemory(new short[32 * 4]);
+        engine.reset(0);
+        assertEquals(CPU.RunState.STATE_STOPPED_NORMAL, engine.run());
+    }
 }
