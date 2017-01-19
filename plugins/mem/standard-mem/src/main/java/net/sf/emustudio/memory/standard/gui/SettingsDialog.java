@@ -107,6 +107,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         btnOK = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Memory Settings");
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("ROM areas"));
 
