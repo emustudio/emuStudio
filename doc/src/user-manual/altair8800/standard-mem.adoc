@@ -51,9 +51,23 @@ Generally, it is possible to move around the cells using keystrokes (arrows). If
 other letter/number key, a small text field appears allowing to edit the current value. When editing
 is finished, user can press ENTER key to confirm it, or ESC key to discard the editing.
 
+[[STANDARD-MEM_SETTINGS]]
+=== Memory settings
 
-[[XASMEMR]]
-=== ROM areas
+Settings window can be opened by clicking on "settings" icon in the main GUI window:
+
+image::images/standard-mem-settings.png[Memory settings]
+
+- *A*: Settings for memory bank-switching
+- *B*: Settings for ROM areas
+- *C*: If checked, settings for ROM areas will be saved to the configuration file
+- *D*: List of memory images which will be loaded at startup
+- *E*: The button will apply the settings
+
+ROM areas and memory bank-switching is explained in the following sections.
+
+[[STANDARD-MEM_ROM]]
+==== ROM areas
 
 Some "controllers" - used as embedded devices - usually logically organize memory into areas, some of
 which are read only, which usually contains the firmware, and some are rewritable. Physically, these memories
@@ -66,14 +80,36 @@ ROM area cannot be changed from software running on the emulator. All writes to 
 Manually, as a user it is possible to change the values, but only by loading new memory image. Editing the value
 will not work.
 
-ROM ranges can be set up in the settings window:
+If a ROM range is defined, it is possible to remove only a part of it, effectively splitting the range and correcting their
+boundaries. For example, if there is defined a ROM range from 0x0A - 0x64 (see the image above), then it is possible
+to remove a range e.g. 0x32 - 0x46, which is the part of defined ROM area. Then, the original ROM area is split into
+two parts - first will be a range from 0x0A - 0x31, and the second from 0x47 - 0x64.
 
+[[STANDARD-MEM_ROM]]
+==== Memory bank-switching
 
+This technique was invented as a workaround for a problem when the address space of a processor was smaller than memory
+size. In order to overcome this issue, memory was logically split into many regions of size equal to the processor address
+space. These regions are called "banks".
 
+Physically, banks could refer to the same memory, but they could be also different memories (e.g. external cartridges),
+and the bank-switching involved switching the active memory.
 
+Selecting a bank from a programming perspective was usually done by writing some code to some I/O port using some I/O
+instruction of a CPU. But it can be implemented in various ways, e.g. some memory addresses can be used for selecting
+a bank.
 
-[[XASMEMB]]
-=== Bank switching
+Also, it was very common that some part of the address space still kept some common memory part which was never switched
+out. This part is called a "common" part. In emuStudio, common part starts with the `Common` address (as it can be seen
+in the Settings dialog image above) and ends till the rest of the CPU address space (or memory end).
 
-TODO
+To summarize, let's consider an example. If a CPU is 8-bit, it means it has address space of size 2^8 - i.e. it can
+access memory from address 0 to (2^8 - 1). If the memory was larger, CPU just doesn't allow to access higher memory
+cells. So memory bank-switching is coming for the rescue. If the memory has 2 MB, we require `2^log2(2MB) = 2^21` addresses.
+So, if we won't have any common address space, we require `ceil(21 / 8) = 3` banks:
+
+- bank 0: maps from 0 - (2^8 - 1)
+- bank 1: maps from 2^8 - (2^16 - 1)
+- bank 2: maps from 2^16 - (2^21 - 1)
+
 
