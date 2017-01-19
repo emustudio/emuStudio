@@ -24,7 +24,6 @@ import emulib.plugins.memory.AbstractMemoryContext;
 import emulib.runtime.HEXFileManager;
 import emulib.runtime.StaticDialogs;
 import net.sf.emustudio.memory.standard.StandardMemoryContext;
-import net.sf.emustudio.memory.standard.gui.MemoryDialog;
 
 import java.io.EOFException;
 import java.io.File;
@@ -46,14 +45,12 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
     private short bankSelect = 0;
     private int bankCommon = 0;
     private int activeBank;
-    private MemoryDialog gui;
 
-    public void init(int size, int banks, int bankCommon, MemoryDialog gui) {
+    public void init(int size, int banks, int bankCommon) {
         if (banks <= 0) {
             throw new IllegalArgumentException("Number of banks must be >= 1!");
         }
 
-        this.gui = gui; // can be null
         this.bankCommon = bankCommon;
         this.banksCount = banks;
         mem = new short[banks][size];
@@ -61,9 +58,9 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
 
     @Override
     public void clear() {
-        for (int i = 0; i < mem.length; i++) {
-            for (int j = 0; j < mem[i].length; j++) {
-                mem[i][j] = 0;
+        for (short[] mem1 : mem) {
+            for (int j = 0; j < mem1.length; j++) {
+                mem1[j] = 0;
             }
         }
         lastImageStart = 0;
@@ -91,9 +88,6 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
     public void selectBank(short bankSelect) {
         if (bankSelect < banksCount) {
             this.bankSelect = bankSelect;
-            if (gui != null) {
-                gui.updateBank(bankSelect);
-            }
         }
     }
 
@@ -236,30 +230,31 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         int removeStartAddr = rangeToRemove.getStartAddress();
         int removeStopAddr = rangeToRemove.getStopAddress();
 
-        for (AddressRange range : romList) {
+        List<AddressRange> toRemove = new ArrayList<>();
+        List<AddressRange> toAdd = new ArrayList<>();
+        
+        romList.forEach(range -> {
             int startAddr = range.getStartAddress();
             int stopAddr = range.getStopAddress();
 
             if ((startAddr >= removeStartAddr) && (stopAddr <= removeStopAddr)) {
-                romList.remove(range);
-                continue;
+                toRemove.add(range);
+            } else if ((startAddr < removeStartAddr) && (stopAddr >= removeStartAddr) && (stopAddr <= removeStopAddr)) {
+                toRemove.add(range);
+                toAdd.add(new AddressRangeImpl(startAddr, removeStartAddr - 1));
+            } else if ((startAddr >= removeStartAddr) && (startAddr <= removeStopAddr) && (stopAddr > removeStopAddr)) {
+                toRemove.add(range);
+                toAdd.add(new AddressRangeImpl(removeStopAddr + 1, stopAddr));
+            } else if ((startAddr < removeStartAddr) && (stopAddr > removeStopAddr)) {
+                toRemove.add(range);
+                toAdd.add(new AddressRangeImpl(startAddr, removeStartAddr - 1));
+                toAdd.add(new AddressRangeImpl(removeStopAddr + 1, stopAddr));
             }
-            if ((startAddr < removeStartAddr) && (stopAddr >= removeStartAddr) && (stopAddr <= removeStopAddr)) {
-                romList.remove(range);
-                romList.add(new AddressRangeImpl(startAddr, removeStartAddr - 1));
-                continue;
-            }
-            if ((startAddr >= removeStartAddr) && (startAddr <= removeStopAddr) && (stopAddr > removeStopAddr)) {
-                romList.remove(range);
-                romList.add(new AddressRangeImpl(removeStopAddr + 1, stopAddr));
-                continue;
-            }
-            if ((startAddr < removeStartAddr) && (stopAddr > removeStopAddr)) {
-                romList.remove(range);
-                romList.add(new AddressRangeImpl(startAddr, removeStartAddr - 1));
-                romList.add(new AddressRangeImpl(removeStopAddr + 1, stopAddr));
-            }
-        }
+        });
+        
+        toRemove.forEach(romList::remove);
+        toAdd.forEach(romList::add);
+                
         mergeRanges();
     }
 

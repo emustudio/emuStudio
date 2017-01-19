@@ -21,37 +21,37 @@ package net.sf.emustudio.memory.standard.gui;
 
 import emulib.emustudio.SettingsManager;
 import emulib.runtime.StaticDialogs;
-import emulib.runtime.UniversalFileFilter;
-import net.sf.emustudio.memory.standard.StandardMemoryContext.AddressRange;
-import net.sf.emustudio.memory.standard.gui.utils.NiceButton;
-import net.sf.emustudio.memory.standard.gui.utils.TableMemory;
+import java.io.File;
+import java.util.Objects;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import static net.sf.emustudio.memory.standard.gui.FileChooser.selectFile;
+import net.sf.emustudio.memory.standard.gui.model.FileImagesModel;
+import net.sf.emustudio.memory.standard.gui.model.ROMmodel;
+import net.sf.emustudio.memory.standard.gui.model.TableMemory;
 import net.sf.emustudio.memory.standard.impl.AddressRangeImpl;
 import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
 import net.sf.emustudio.memory.standard.impl.MemoryImpl;
 
-import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-class SettingsDialog extends JDialog {
-
-    private MemoryContextImpl memContext;
-    private MemoryImpl memory;
-    private TableMemory tblMem;
-    private List<String> imageNames = new ArrayList<>();
-    private List<String> imageFullNames = new ArrayList<>();
-    private List<Integer> imageAddresses = new ArrayList<>();
-
-    SettingsDialog(JDialog parent, long pluginID,
-                   MemoryImpl mem, MemoryContextImpl memContext, TableMemory tblMem,
+public class SettingsDialog extends javax.swing.JDialog {
+    private final MemoryContextImpl memContext;
+    private final MemoryImpl memory;
+    private final TableMemory tblMem;
+    private final FileImagesModel imagesModel;
+    private final ROMmodel romModel;
+    
+    public SettingsDialog(JDialog parent, long pluginID,
+                   MemoryImpl memory, MemoryContextImpl memContext, TableMemory tblMem,
                    SettingsManager settings) {
         super(parent, true);
-        this.memory = mem;
-        this.memContext = memContext;
-        this.tblMem = tblMem;
+
+        this.memory = Objects.requireNonNull(memory);
+        this.memContext = Objects.requireNonNull(memContext);
+        this.tblMem = Objects.requireNonNull(tblMem);
+
         initComponents();
+        super.setLocationRelativeTo(parent);
 
         // first tab (after start)
         String s = settings.readSetting(pluginID, "banksCount");
@@ -68,383 +68,428 @@ class SettingsDialog extends JDialog {
             txtCommonBoundary.setText("0");
         }
 
-        int i = 0;
-        String r;
-        while (true) {
-            s = settings.readSetting(pluginID, "imageName" + i);
-            r = settings.readSetting(pluginID, "imageAddress" + i);
-            if (s == null) {
-                break;
-            }
-            imageFullNames.add(s);
-            imageNames.add(new File(s).getName());
-            if (r != null) {
-                try {
-                    imageAddresses.add(Integer.decode(r));
-                } catch (Exception e) {
-                    imageAddresses.add(0);
-                }
-            } else {
-                imageAddresses.add(0);
-            }
-            i++;
-        }
-        tblImages.setModel(new ImagesModel());
+        imagesModel = new FileImagesModel(settings, pluginID);
+        tblImages.setModel(imagesModel);
 
-        // second tab (ROM ranges)
-        ROMmodel romModel = new ROMmodel();
+        this.romModel = new ROMmodel(this.memContext);
         tblROM.setModel(romModel);
-        this.setLocationRelativeTo(null);
-        InputVerifier vf = new InputVerifier() {
-            @Override
-            public boolean verify(JComponent input) {
-                JTextField tf = (JTextField) input;
-                try {
-                    Integer.decode(tf.getText());
-                } catch (NumberFormatException e) {
-                    return false;
-                }
-                return true;
-            }
-        };
-        txtFrom.setInputVerifier(vf);
-        txtTo.setInputVerifier(vf);
-        tblROM.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tblROM.getSelectionModel().addListSelectionListener(e -> {
-            int i1 = tblROM.getSelectedRow();
-            txtFrom.setText("0x" + tblROM.getValueAt(i1, 0).toString());
-            txtTo.setText("0x" + tblROM.getValueAt(i1, 1).toString());
-        });
     }
 
-    private class ImagesModel extends AbstractTableModel {
-
-        @Override
-        public int getRowCount() {
-            return imageNames.size();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 2;
-        }
-
-        @Override
-        public String getColumnName(int columnIndex) {
-            if (columnIndex == 0) {
-                return "File name";
-            } else {
-                return "Load address (hex)";
-            }
-        }
-
-        @Override
-        public Class<?> getColumnClass(int col) {
-            return String.class;
-        }
-
-        @Override
-        public boolean isCellEditable(int r, int c) {
-            return false;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            if (columnIndex == 0) {
-                return imageNames.get(rowIndex);
-            } else {
-                return String.format("%04X", imageAddresses.get(rowIndex));
-            }
-        }
-
-        public void setValueAt(int r, int c) {
-            fireTableCellUpdated(r, c);
-        }
-    }
-
-    private class ROMmodel extends AbstractTableModel {
-
-        @Override
-        public int getRowCount() {
-            return memContext.getROMRanges().size();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 2;
-        }
-
-        @Override
-        public String getColumnName(int columnIndex) {
-            if (columnIndex == 0) {
-                return "From (hex)";
-            } else {
-                return "To (hex)";
-            }
-        }
-
-        @Override
-        public Class<?> getColumnClass(int col) {
-            return String.class;
-        }
-
-        @Override
-        public boolean isCellEditable(int r, int c) {
-            return false;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            for (AddressRange range : memContext.getROMRanges()) {
-                if (columnIndex == 0) {
-                    return String.format("%04X", range.getStartAddress());
-                } else {
-                    return String.format("%04X", range.getStopAddress());
-                }
-            }
-            return "";
-        }
-
-        public void setValueAt(int r, int c) {
-            fireTableCellUpdated(r, c);
-        }
-    }
-
+    /**
+     * This method is called from within the constructor to initialize the form. WARNING: Do NOT modify this code. The
+     * content of this method is always regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        paneTabs = new JTabbedPane();
-        JPanel panelAfterStart = new JPanel();
-        JLabel lblDesc1 = new JLabel("These settings will be loaded after a start of the emulator");
-        JPanel panelBanking = new JPanel();
-        JLabel lblBanksCount = new JLabel("Bank count:");
-        JLabel lblCommonBoundary = new JLabel("Common boundary:");
-        txtCommonBoundary = new JTextField("0");
-        txtBanksCount = new JTextField("0");
-        JLabel lblDesc2 = new JLabel("<html>Banks are at ranges <strong>0..Common</strong>,<br/>common area is from <strong>Common..0FFFFh</strong> which is common to all banks");
-        JPanel panelImages = new JPanel();
-        JScrollPane scrollImages = new JScrollPane();
-        tblImages = new JTable();
-        NiceButton btnAddImage = new NiceButton("Add image");
-        NiceButton btnRemoveImage = new NiceButton("Remove image");
-        JPanel panelROMRanges = new JPanel();
-        JLabel lblDesc3 = new JLabel("<html>You can set RO (Read Only) parts in operating memory by defining their ranges.");
-        JLabel lblCurrentROM = new JLabel("Current ROM:");
-        JScrollPane scrollROM = new JScrollPane();
-        tblROM = new JTable();
-        JPanel panelROM = new JPanel();
-        JLabel lblFrom = new JLabel("From:");
-        txtFrom = new JTextField("0");
-        JLabel lblTo = new JLabel("To:");
-        txtTo = new JTextField("0");
-        NiceButton btnAddRange = new NiceButton("Add range");
-        NiceButton btnRemoveRange = new NiceButton("Remove range");
-        chkSave = new JCheckBox("Save this ROM into the configuration");
-        NiceButton btnOK = new NiceButton("OK");
 
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Settings");
+        javax.swing.JPanel jPanel1 = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblROM = new javax.swing.JTable();
+        btnAddRange = new javax.swing.JButton();
+        btnRemoveRange = new javax.swing.JButton();
+        chkApplyROMatStartup = new javax.swing.JCheckBox();
+        javax.swing.JPanel jPanel3 = new javax.swing.JPanel();
+        jLabel6 = new javax.swing.JLabel();
+        txtBanksCount = new javax.swing.JTextField();
+        jLabel7 = new javax.swing.JLabel();
+        txtCommonBoundary = new javax.swing.JTextField();
+        javax.swing.JSeparator jSeparator2 = new javax.swing.JSeparator();
+        javax.swing.JLabel jLabel8 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel9 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel10 = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
+        javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        tblImages = new javax.swing.JTable();
+        btnAddImage = new javax.swing.JButton();
+        btnRemoveImage = new javax.swing.JButton();
+        btnOK = new javax.swing.JButton();
 
-        panelBanking.setBorder(BorderFactory.createTitledBorder("Memory banking"));
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        GroupLayout panelBankingLayout = new GroupLayout(panelBanking);
-        panelBanking.setLayout(panelBankingLayout);
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("ROM areas"));
 
-        panelBankingLayout.setHorizontalGroup(
-                panelBankingLayout.createSequentialGroup().addContainerGap().addGroup(panelBankingLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(panelBankingLayout.createSequentialGroup().addGroup(panelBankingLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblBanksCount).addComponent(lblCommonBoundary)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelBankingLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtBanksCount).addComponent(txtCommonBoundary)).addContainerGap(70, Short.MAX_VALUE)).addComponent(lblDesc2, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE)).addContainerGap());
-        panelBankingLayout.setVerticalGroup(
-                panelBankingLayout.createSequentialGroup().addContainerGap().addGroup(panelBankingLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblBanksCount).addComponent(txtBanksCount)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelBankingLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblCommonBoundary).addComponent(txtCommonBoundary)).addComponent(lblDesc2).addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE));
+        tblROM.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
 
-        panelImages.setBorder(BorderFactory.createTitledBorder("File images to load"));
-        scrollImages.setViewportView(tblImages);
+            },
+            new String [] {
+                "From (hex)", "To (hex)"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false
+            };
 
-        btnAddImage.addActionListener(this::btnAddImageActionPerformed);
-        btnRemoveImage.addActionListener(this::btnRemoveImageActionPerformed);
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
 
-        GroupLayout panelImagesLayout = new GroupLayout(panelImages);
-        panelImages.setLayout(panelImagesLayout);
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        tblROM.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane1.setViewportView(tblROM);
 
-        panelImagesLayout.setHorizontalGroup(
-                panelImagesLayout.createSequentialGroup().addContainerGap().addGroup(panelImagesLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(scrollImages, GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE).addGroup(GroupLayout.Alignment.TRAILING, panelImagesLayout.createSequentialGroup().addComponent(btnRemoveImage).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnAddImage))).addContainerGap());
-        panelImagesLayout.setVerticalGroup(
-                panelImagesLayout.createSequentialGroup().addContainerGap().addComponent(scrollImages, GroupLayout.PREFERRED_SIZE, 131, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelImagesLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(btnRemoveImage).addComponent(btnAddImage)).addContainerGap());
+        btnAddRange.setFont(btnAddRange.getFont().deriveFont(btnAddRange.getFont().getStyle() & ~java.awt.Font.BOLD));
+        btnAddRange.setText("Add");
+        btnAddRange.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAddRangeActionPerformed(evt);
+            }
+        });
 
-        GroupLayout panelAfterLayout = new GroupLayout(panelAfterStart);
-        panelAfterStart.setLayout(panelAfterLayout);
+        btnRemoveRange.setFont(btnRemoveRange.getFont().deriveFont(btnRemoveRange.getFont().getStyle() & ~java.awt.Font.BOLD));
+        btnRemoveRange.setText("Remove");
+        btnRemoveRange.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRemoveRangeActionPerformed(evt);
+            }
+        });
 
-        panelAfterLayout.setHorizontalGroup(
-                panelAfterLayout.createSequentialGroup().addContainerGap().addGroup(panelAfterLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblDesc1).addComponent(panelBanking).addComponent(panelImages)).addContainerGap());
-        panelAfterLayout.setVerticalGroup(
-                panelAfterLayout.createSequentialGroup().addContainerGap().addComponent(lblDesc1).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(panelBanking).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(panelImages).addContainerGap());
+        chkApplyROMatStartup.setFont(chkApplyROMatStartup.getFont().deriveFont(chkApplyROMatStartup.getFont().getStyle() & ~java.awt.Font.BOLD));
+        chkApplyROMatStartup.setText("Apply at startup");
 
-        paneTabs.addTab("After start", panelAfterStart);
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(chkApplyROMatStartup)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(btnRemoveRange)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnAddRange))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnAddRange)
+                    .addComponent(btnRemoveRange))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(chkApplyROMatStartup)
+                .addContainerGap())
+        );
 
-        lblCurrentROM.setFont(lblCurrentROM.getFont().deriveFont(lblCurrentROM.getFont().getStyle() | java.awt.Font.BOLD));
-        scrollROM.setViewportView(tblROM);
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Bank-switching"));
 
-        panelROM.setBorder(BorderFactory.createTitledBorder("Edit ROM ranges"));
+        jLabel6.setFont(jLabel6.getFont().deriveFont(jLabel6.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel6.setText("Banks count:");
 
-        btnAddRange.addActionListener(this::btnAddRangeActionPerformed);
-        btnRemoveRange.addActionListener(this::btnRemoveRangeActionPerformed);
+        txtBanksCount.setText("0");
 
-        GroupLayout panelROMLayout = new GroupLayout(panelROM);
-        panelROM.setLayout(panelROMLayout);
+        jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel7.setText("Common boundary:");
 
-        panelROMLayout.setHorizontalGroup(
-                panelROMLayout.createSequentialGroup().addContainerGap().addGroup(panelROMLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblFrom).addComponent(lblTo)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelROMLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtFrom).addComponent(txtTo)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(panelROMLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false).addComponent(btnAddRange, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(btnRemoveRange, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)).addContainerGap());
-        panelROMLayout.setVerticalGroup(
-                panelROMLayout.createSequentialGroup().addContainerGap().addGroup(panelROMLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblFrom).addComponent(txtFrom).addComponent(btnAddRange)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelROMLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblTo).addComponent(txtTo).addComponent(btnRemoveRange)).addContainerGap());
+        txtCommonBoundary.setText("0x0000");
 
-        GroupLayout panelROMRangesLayout = new GroupLayout(panelROMRanges);
-        panelROMRanges.setLayout(panelROMRangesLayout);
+        jLabel8.setFont(jLabel8.getFont().deriveFont(jLabel8.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel8.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        jLabel8.setText("<html>Memory banks are different locations of memory wired in a way they share the addresses. Common area is shared across all banks. ");
+        jLabel8.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
-        panelROMRangesLayout.setHorizontalGroup(
-                panelROMRangesLayout.createSequentialGroup().addContainerGap().addGroup(panelROMRangesLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblDesc3, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE, Short.MAX_VALUE).addComponent(lblCurrentROM).addComponent(scrollROM, GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE).addComponent(panelROM).addComponent(chkSave)).addContainerGap());
-        panelROMRangesLayout.setVerticalGroup(
-                panelROMRangesLayout.createSequentialGroup().addContainerGap().addComponent(lblDesc3).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(lblCurrentROM).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(scrollROM, GroupLayout.PREFERRED_SIZE, 143, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(panelROM).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(chkSave).addContainerGap());
+        jLabel9.setFont(jLabel9.getFont().deriveFont(jLabel9.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel9.setText("<html>Banks are accessible from <strong>[0..Common]</strong>.");
 
-        paneTabs.addTab("ROM ranges", panelROMRanges);
+        jLabel10.setFont(jLabel10.getFont().deriveFont(jLabel10.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel10.setText("<html>Common area starts from <strong>[Common..memory end]</strong>.");
 
-        btnOK.addActionListener(this::btnOKActionPerformed);
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel1.setText("<html><strong>NOTE:</strong> Changes will be visible after restart.");
 
-        GroupLayout layout = new GroupLayout(getContentPane());
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel8, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                            .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel3Layout.createSequentialGroup()
+                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel6)
+                                    .addComponent(jLabel7))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtBanksCount)
+                                    .addComponent(txtCommonBoundary))))
+                        .addContainerGap())
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE))))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel6)
+                    .addComponent(txtBanksCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel7)
+                    .addComponent(txtCommonBoundary, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Files to load at startup"));
+
+        tblImages.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "File name", "Load address (hex)"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        tblImages.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane2.setViewportView(tblImages);
+
+        btnAddImage.setFont(btnAddImage.getFont().deriveFont(btnAddImage.getFont().getStyle() & ~java.awt.Font.BOLD));
+        btnAddImage.setText("Add");
+        btnAddImage.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAddImageActionPerformed(evt);
+            }
+        });
+
+        btnRemoveImage.setFont(btnRemoveImage.getFont().deriveFont(btnRemoveImage.getFont().getStyle() & ~java.awt.Font.BOLD));
+        btnRemoveImage.setText("Remove");
+        btnRemoveImage.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRemoveImageActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 498, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(btnRemoveImage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnAddImage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(btnAddImage)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnRemoveImage))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        btnOK.setText("OK");
+        btnOK.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnOKActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(paneTabs)
-                .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(btnOK)
-                .addContainerGap()));
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(btnOK, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
+        );
         layout.setVerticalGroup(
-                layout.createSequentialGroup().addComponent(paneTabs)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(btnOK).addContainerGap());
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(btnOK)
+                .addContainerGap())
+        );
+
         pack();
-    }
+    }// </editor-fold>//GEN-END:initComponents
 
-    private void btnAddRangeActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnAddRangeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddRangeActionPerformed
+        String from = JOptionPane.showInputDialog("Please enter FROM address", "0");
+        String to = JOptionPane.showInputDialog("Please enter TO address", "0");
+        
         try {
-            memContext.setROM(new AddressRangeImpl(Integer.decode(txtFrom.getText()),
-                    Integer.decode(txtTo.getText())));
-        } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Range (from,to) has to be positive integer ArrayList!");
-            return;
-        }
-        tblROM.revalidate();
-        tblROM.repaint();
-        tblMem.revalidate();
-        tblMem.repaint();
-    }
+            memContext.setROM(new AddressRangeImpl(Integer.decode(from), Integer.decode(to)));
 
-    private void btnRemoveRangeActionPerformed(java.awt.event.ActionEvent evt) {
+            tblROM.revalidate();
+            tblROM.repaint();
+            tblMem.revalidate();
+            tblMem.repaint();
+        } catch (NumberFormatException e) {
+            StaticDialogs.showErrorMessage("Range (from,to) has to be positive integer ArrayList!");
+        }
+    }//GEN-LAST:event_btnAddRangeActionPerformed
+
+    private void btnRemoveRangeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveRangeActionPerformed
+        int i = tblROM.getSelectedRow();
+
+        String from;
+        String to;
+        if (i >= 0) {
+            from = (String)romModel.getValueAt(i, 0);
+            to = (String)romModel.getValueAt(i, 1);
+        } else {
+            from = JOptionPane.showInputDialog("Please enter FROM address", "0");
+            to = JOptionPane.showInputDialog("Please enter TO address", "0");
+        }
+        
         try {
-            memContext.setRAM(new AddressRangeImpl(Integer.decode(txtFrom.getText()),
-                    Integer.decode(txtTo.getText())));
-        } catch (Exception e) {
-            StaticDialogs.showErrorMessage("Range (from,to) has to be positive integer ArrayList!");
-            return;
-        }
-        tblROM.revalidate();
-        tblROM.repaint();
-        tblMem.revalidate();
-        tblMem.repaint();
-    }
+            memContext.setRAM(new AddressRangeImpl(Integer.decode(from), Integer.decode(to)));
 
-    private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {
-        if (paneTabs.getSelectedIndex() == 0) { // tab0
-            int bCount, bCommon;
-            try {
-                bCount = Integer.parseInt(txtBanksCount.getText());
-            } catch (Exception e) {
-                StaticDialogs.showErrorMessage("Banks count has to be positive integer !");
-                return;
+            tblROM.revalidate();
+            tblROM.repaint();
+            tblMem.revalidate();
+            tblMem.repaint();
+        } catch (NumberFormatException e) {
+            StaticDialogs.showErrorMessage("Range (from,to) has to be positive integer!");
+        }
+    }//GEN-LAST:event_btnRemoveRangeActionPerformed
+
+    private int getIntegerOrThrow(String name, JTextField textField) {
+        try {
+            int number = Integer.decode(textField.getText());
+            if (number < 0) {
+                throw new NumberFormatException();
             }
-            if (bCount < 0) {
-                StaticDialogs.showErrorMessage("Banks count has to be positive integer !");
-                return;
-            }
-            try {
-                bCommon = Integer.decode(txtCommonBoundary.getText());
-            } catch (Exception e) {
-                StaticDialogs.showErrorMessage("Common boundary has to be positive integer !");
-                return;
-            }
-            if (bCommon < 0) {
-                StaticDialogs.showErrorMessage("Common boundary has to be positive integer !");
-                return;
-            }
-            memory.saveCoreSettings(bCount, bCommon, imageFullNames, imageAddresses);
-        } else { // tab1
-            if (chkSave.isSelected()) {
+            return number;
+        } catch (NumberFormatException e) {
+            StaticDialogs.showErrorMessage(name + " has to be positive integer !");
+            throw e;
+        }
+    }
+    
+    private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOKActionPerformed
+        try {
+            int bCount = getIntegerOrThrow("Banks count", txtBanksCount);
+            int bCommon = getIntegerOrThrow("Common boundary", txtCommonBoundary);
+            memory.saveCoreSettings(bCount, bCommon, imagesModel.getImageFullNames(), imagesModel.getImageAddresses());
+            if (chkApplyROMatStartup.isSelected()) {
                 memory.saveROMRanges();
             }
+            dispose();
+        } catch (NumberFormatException e) {
+            // ignore
         }
-        dispose();
-    }
+    }//GEN-LAST:event_btnOKActionPerformed
 
-    private void btnAddImageActionPerformed(java.awt.event.ActionEvent evt) {
-        JFileChooser f = new JFileChooser();
-        UniversalFileFilter f1 = new UniversalFileFilter();
-        UniversalFileFilter f2 = new UniversalFileFilter();
-
-        f1.addExtension("hex");
-        f1.addExtension("bin");
-        f1.setDescription("Image file (*.hex, *.bin)");
-        f2.addExtension("*");
-        f2.setDescription("All files (*.*)");
-
-        f.setDialogTitle("Add an image");
-        f.setAcceptAllFileFilterUsed(false);
-        f.addChoosableFileFilter(f1);
-        f.addChoosableFileFilter(f2);
-        f.setFileFilter(f1);
-        f.setApproveButtonText("Add");
-        f.setCurrentDirectory(new File(System.getProperty("user.dir")));
-
-        int returnVal = f.showOpenDialog(this);
-        f.setVisible(true);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File fileSource = f.getSelectedFile();
-            if (fileSource.canRead() == true) {
-                imageNames.add(fileSource.getName());
-                imageFullNames.add(fileSource.getAbsolutePath());
-                int adr = 0;
-                if (!fileSource.getName().toLowerCase().endsWith(".hex")) {
-                    // ask for address where to load image
-                    String sadr = JOptionPane.showInputDialog("Enter starting address:", 0);
-                    try {
-                        adr = Integer.decode(sadr);
-                    } catch (NumberFormatException e) {
-                    }
+    private void btnAddImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddImageActionPerformed
+        File fileSource = selectFile(this, "Add an image");
+        if (fileSource != null) {
+            int address = 0;
+            String suffix = fileSource.getName().toLowerCase();
+            
+            if (!suffix.endsWith(".hex")) {
+                String addressString = JOptionPane.showInputDialog("Enter the load address:", 0);
+                try {
+                    address = Integer.decode(addressString);
+                } catch (NumberFormatException e) {
+                    StaticDialogs.showErrorMessage("Could not parse address: " + addressString);
+                    return;
                 }
-                imageAddresses.add(adr);
-                tblImages.revalidate();
-                tblImages.repaint();
-            } else {
-                StaticDialogs.showErrorMessage("File " + fileSource.getPath()
-                        + " can't be read.");
             }
-        }
-    }
 
-    private void btnRemoveImageActionPerformed(java.awt.event.ActionEvent evt) {
+            imagesModel.addImage(fileSource, address);
+        }
+    }//GEN-LAST:event_btnAddImageActionPerformed
+
+    private void btnRemoveImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveImageActionPerformed
         int i = tblImages.getSelectedRow();
         if (i == -1) {
-            StaticDialogs.showErrorMessage("Image has to be selected!");
-            return;
-        }
-        if (JOptionPane.showConfirmDialog(
-            this, "Are you sure to remove image from the list?", "Remove image",
+            StaticDialogs.showErrorMessage("Memory image has to be selected!");
+        } else if (JOptionPane.showConfirmDialog(
+            this, "Are you sure to remove selected image from the list?", "Remove image",
             JOptionPane.YES_NO_CANCEL_OPTION) == JOptionPane.YES_OPTION) {
-            imageNames.remove(i);
-            imageFullNames.remove(i);
-            imageAddresses.remove(i);
-            tblImages.revalidate();
-            tblImages.repaint();
+            
+            imagesModel.removeImageAt(i);
         }
-    }
-    JCheckBox chkSave;
-    JTabbedPane paneTabs;
-    JTable tblImages;
-    JTable tblROM;
-    JTextField txtBanksCount;
-    JTextField txtCommonBoundary;
-    JTextField txtFrom;
-    JTextField txtTo;
+    }//GEN-LAST:event_btnRemoveImageActionPerformed
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnAddImage;
+    private javax.swing.JButton btnAddRange;
+    private javax.swing.JButton btnOK;
+    private javax.swing.JButton btnRemoveImage;
+    private javax.swing.JButton btnRemoveRange;
+    private javax.swing.JCheckBox chkApplyROMatStartup;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JTable tblImages;
+    private javax.swing.JTable tblROM;
+    private javax.swing.JTextField txtBanksCount;
+    private javax.swing.JTextField txtCommonBoundary;
+    // End of variables declaration//GEN-END:variables
 }

@@ -1,29 +1,76 @@
 == Operating memory `standard-mem`
 
-This plug-in fulfills requirements as RAM and ROM for real 8-bit computers emulation. Features:
+This plug-in emulates an operating memory, in a quite broad meaning. It can be used for any virtual
+computer which can benefit from the following basic properties:
 
-- single cell is 1 byte wide
-- memory size can be set up manually, by fefault it is 64KB
-- managing ROM ranges
-- loading binary memory images
-- loading files in Intel HEX format
-- possibility to save images for automatic loading at startup
-- intuitive and useful GUI
+- A memory cell has size of 1 byte (8 bits)
+- Memory cells are linearly ordered (sequential)
+- Each memory cell is accessible by unique address, representing
+  the index of the memory cell, if the memory is imagined as an array of cells
 
-[[XASMEML]]
-=== Loading image files
+Besides, the memory supports these additional features:
 
-TODO
+- Setting up ROM (read only memory) ranges
+- Changing memory size; by default it is 64kB
+- Support of bank switching
 
-[[XASMEMM]]
-=== Manipulation with cells
+There are also some "interactive" features:
 
-TODO
+- Manual loading/saving memory images in either binary or Intel HEX format
+- Ability to automatically load a memory image at startup
+- Intuitive control using keystrokes, and nice visual presentation of the data
+
+This operating memory is (for now) used only in 8-bit emulator of MITS Altair8800. However it
+is possible to develop an emulator which can benefit from it.
+
+[[STANDARD-MEM_GUI]]
+=== GUI overview
+
+To open the memory GUI (graphical user interface), click at the right-most icon in the debug toolbar, on the Emulator panel.
+The window is shown at the following image:
+
+image::images/standard-mem.png[Standard operating memory]
+
+- *A*: Deletes all memory content.
+- *B*: Refreshes memory view, if you have a feeling that the shown content is not updated
+- *C*: Open a memory image. Current memory content, if it does not interfere with the loaded data
+       will be kept.
+- *D*: Save memory content into a file.
+- *E*: Show memory settings
+- *F*: Find address / goto address. The address can be either in decimal, hexadecimal (prefix `0x`)
+       or octal (prefix `0`) format.
+- *G*: By double-clicking on the memory cell it is possible to edit it and change its value.
+       The value format is the same as when finding address (see *F*).
+- *H*: Page of the memory view. The whole memory cannot be shown in single window, because it can
+       be quite large (64 kB by default), so it was divided into pages.
+- *I*: If the memory has set up memory banks, it is possible to change the view to different bank.
+       Switching in here has no effect on the emulator and on the active bank.
+- *J*: Displays the data of a selected cell in various forms.
+
+Generally, it is possible to move around the cells using keystrokes (arrows). If user presses some
+other letter/number key, a small text field appears allowing to edit the current value. When editing
+is finished, user can press ENTER key to confirm it, or ESC key to discard the editing.
+
 
 [[XASMEMR]]
 === ROM areas
 
-TODO
+Some "controllers" - used as embedded devices - usually logically organize memory into areas, some of
+which are read only, which usually contains the firmware, and some are rewritable. Physically, these memories
+are wired to specific addresses, so the programmer can access them.
+
+Standard operating memory plug-in emulates this behavior. It allows to define ROM areas which represent read only
+memory. There can be set up multiple ROM areas, and they can overlap. Effectively it means that memory cells in
+ROM area cannot be changed from software running on the emulator. All writes to the memory will be ignored.
+
+Manually, as a user it is possible to change the values, but only by loading new memory image. Editing the value
+will not work.
+
+ROM ranges can be set up in the settings window:
+
+
+
+
 
 [[XASMEMB]]
 === Bank switching

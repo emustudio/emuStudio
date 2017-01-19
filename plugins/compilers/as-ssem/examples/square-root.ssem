@@ -1,0 +1,52 @@
+-- SQUARE ROOT
+-- Uses a simple algorithm of subtracting the sequence of odd numbers from X until X goes negative.
+-- The square root is the count of the number of subtractions which took place.
+--
+-- Written by:    Brent Hilpert (12 Dec 2000)
+-- Description:   Calculate the square root of X. The result is rounded up to an integral value.
+--
+-- Parameter Lines:	30: X
+-- Result Lines:	31: square root of X
+
+start:
+-- initialisation
+01 LDN 28
+02 STO 29  -- start odds at -1
+03 LDN 29
+04 STO 31  -- start root at 1
+
+-- loop begin
+-- subtract odds from X
+05 LDN 30  -- get -X
+06 SUB 29  -- -X = -X - (-odds)
+07 SKN 
+08 HLT     -- finished
+09 STO 30  -- flip
+10 LDN 30  --   sign
+11 STO 30  -- save X
+
+-- increment root
+12 LDN 31  -- get -root
+13 SUB 28  -- -root = -root - 1
+14 STO 31  -- flip
+15 LDN 31  --   sign
+16 STO 31  -- save root
+
+-- next odd number
+17 LDN 29  -- get odds
+18 SUB 27  -- odds = odds - (-2)
+19 STO 29  -- flip
+20 LDN 29  --   sign
+21 STO 29  -- save -odds
+
+-- next iteration
+22 JMP 26
+-- loop end
+
+-- numbers
+26 NUM 5    -- jump address
+27 NUM -2   -- odds increment constant
+28 NUM 1    -- multi-use constant
+29          -- (-odds)
+30 NUM 1000 -- Parameter: X
+31          -- Result: square root of X

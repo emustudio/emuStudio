@@ -38,7 +38,7 @@ import java.util.Objects;
 @PluginType(
     type = PLUGIN_TYPE.COMPILER,
     title = "SSEM Assembler",
-    copyright = "\u00A9 Copyright 2016, Peter Jakubčo",
+    copyright = "\u00A9 Copyright 2016-2017, Peter Jakubčo",
     description = "Assembler of SSEM processor language"
 )
 @SuppressWarnings("unused")

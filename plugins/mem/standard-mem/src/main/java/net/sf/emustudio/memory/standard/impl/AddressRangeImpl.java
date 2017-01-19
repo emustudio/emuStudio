@@ -26,6 +26,13 @@ public class AddressRangeImpl implements StandardMemoryContext.AddressRange {
     private final int stopAddress;
 
     public AddressRangeImpl(int startAddress, int stopAddress) {
+        if (startAddress < 0 || stopAddress < 0) {
+            throw new IllegalArgumentException("Start address and stop address must be >= 0!");
+        }
+        if (stopAddress < startAddress) {
+            throw new IllegalArgumentException("Start address must be <= stop address!");
+        }
+
         this.startAddress = startAddress;
         this.stopAddress = stopAddress;
     }

@@ -117,7 +117,7 @@ class Automation implements Runnable {
 
         String fileName = inputFile.getAbsolutePath();
         if (!compiler.compile(fileName)) {
-            throw new AutomationException("Error: compile failed. Automatization cannot continue.");
+            throw new AutomationException("Compile failed. Automation cannot continue.");
         }
     }
 
@@ -240,7 +240,7 @@ class Automation implements Runnable {
             autoEmulate(cpu);
         } catch (AutomationException e) {
             LOGGER.error("Error during automatization", e);
-            Main.tryShowErrorMessage("Error: " + e.getMessage());
+            Main.tryShowErrorMessage(e.getMessage());
         } finally {
             if (progressGUI != null) {
                 progressGUI.dispose();

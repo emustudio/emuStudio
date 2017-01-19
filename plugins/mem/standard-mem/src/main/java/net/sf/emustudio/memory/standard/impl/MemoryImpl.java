@@ -29,16 +29,15 @@ import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
 import net.sf.emustudio.memory.standard.StandardMemoryContext;
 import net.sf.emustudio.memory.standard.StandardMemoryContext.AddressRange;
 import net.sf.emustudio.memory.standard.gui.MemoryDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.MissingResourceException;
-import java.util.Objects;
-import java.util.ResourceBundle;
 
 @PluginType(
         type=PLUGIN_TYPE.MEMORY,
@@ -92,7 +91,7 @@ public class MemoryImpl extends AbstractMemory {
         return context.getSize();
     }
 
-    /**
+    /*
      * Initialize memory:
      *     1. load settings as: banks count, common boundary
      *     2. create memory context (create memory with loaded settings)
@@ -124,15 +123,15 @@ public class MemoryImpl extends AbstractMemory {
             throw new PluginInitializationException(this, "Could not parse common boundary", e);
         }
 
+        if (banksCount == 0) {
+            banksCount = 1;
+        }
+        context.init(MemoryContextImpl.DEFAULT_MEM_SIZE, banksCount, bankCommon);
+
         emuStudioNoGUI = Boolean.parseBoolean(settings.readSetting(pluginID, SettingsManager.NO_GUI));
         if (!emuStudioNoGUI) {
             gui = new MemoryDialog(pluginID, this, context, settings);
         }
-
-        if (banksCount == 0) {
-            banksCount = 1;
-        }
-        context.init(MemoryContextImpl.DEFAULT_MEM_SIZE, banksCount, bankCommon, gui);
 
         loadImages(settings);
         loadRomRanges(settings);
@@ -183,7 +182,7 @@ public class MemoryImpl extends AbstractMemory {
         }
     }
 
-    /**
+    /*
      * Save only banks (count, common) and images to load
      * after start of the emulator. These settings correspond to tab0 in frmSettings.
      */
@@ -203,16 +202,21 @@ public class MemoryImpl extends AbstractMemory {
         }
     }
 
-    /**
+    /*
      * Save only ROM ranges to load after start of the emulator. These
      * settings correspond to tab1 in frmSettings. ROM ranges are taken
      * directly from memory context.
      */
     public void saveROMRanges() {
         int i = 0;
-        for (AddressRange range : context.getROMRanges()) {
+        while (settings.readSetting(pluginID, "ROMfrom" + i) != null) {
             settings.removeSetting(pluginID, "ROMfrom" + i);
             settings.removeSetting(pluginID, "ROMto" + i);
+            i++;
+        }
+        
+        i = 0;
+        for (AddressRange range : context.getROMRanges()) {
             settings.writeSetting(pluginID, "ROMfrom" + i, String.valueOf(range.getStartAddress()));
             settings.writeSetting(pluginID, "ROMto" + i, String.valueOf(range.getStopAddress()));
             i++;

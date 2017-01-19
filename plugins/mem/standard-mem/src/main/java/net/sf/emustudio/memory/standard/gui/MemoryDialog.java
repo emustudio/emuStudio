@@ -20,14 +20,9 @@
 package net.sf.emustudio.memory.standard.gui;
 
 import emulib.emustudio.SettingsManager;
+import static emulib.runtime.RadixUtils.formatBinaryString;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.UniversalFileFilter;
-import net.sf.emustudio.memory.standard.gui.utils.MemoryTableModel;
-import net.sf.emustudio.memory.standard.gui.utils.TableMemory;
-import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
-import net.sf.emustudio.memory.standard.impl.MemoryImpl;
-
-import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -40,8 +35,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-
-import static emulib.runtime.RadixUtils.formatBinaryString;
+import javax.swing.*;
+import static net.sf.emustudio.memory.standard.gui.FileChooser.selectFile;
+import net.sf.emustudio.memory.standard.gui.model.MemoryTableModel;
+import net.sf.emustudio.memory.standard.gui.model.TableMemory;
+import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
+import net.sf.emustudio.memory.standard.impl.MemoryImpl;
 
 public class MemoryDialog extends JDialog {
     private final MemoryContextImpl memContext;
@@ -59,6 +58,8 @@ public class MemoryDialog extends JDialog {
         this.memModel = new MemoryTableModel(memContext);
 
         initComponents();
+        super.setLocationRelativeTo(null);
+        
         tblMemory = new TableMemory(memModel, paneMemory);
         paneMemory.setViewportView(tblMemory);
         tblMemory.setVisible(true);
@@ -78,12 +79,15 @@ public class MemoryDialog extends JDialog {
             int i = (Integer) spnBank.getModel().getValue();
             try {
                 memModel.setCurrentBank(i);
+                lblSelectedBank.setText(String.valueOf(i));
             } catch (IndexOutOfBoundsException ex) {
-                spnBank.getModel().setValue(memModel.getCurrentBank());
+                int currentBank = memModel.getCurrentBank();
+                spnBank.getModel().setValue(currentBank);
+                lblSelectedBank.setText(String.valueOf(currentBank));
             }
         });
 
-        this.addWindowListener(new WindowAdapter() {
+        super.addWindowListener(new WindowAdapter() {
 
             @Override
             public void windowClosing(WindowEvent e) {
@@ -223,7 +227,6 @@ public class MemoryDialog extends JDialog {
                 updateMemVal(row, col);
             }
         });
-        this.setLocationRelativeTo(null);
     }
 
     private void updateMemVal(int row, int column) {
@@ -401,28 +404,9 @@ public class MemoryDialog extends JDialog {
     }
 
     private void btnOpenImageActionPerformed(java.awt.event.ActionEvent evt) {
-        JFileChooser f = new JFileChooser();
-        UniversalFileFilter f1 = new UniversalFileFilter();
-        UniversalFileFilter f2 = new UniversalFileFilter();
-
-        f1.addExtension("hex");
-        f1.addExtension("bin");
-        f1.setDescription("Image file (*.hex, *.bin)");
-        f2.addExtension("*");
-        f2.setDescription("All files (*.*)");
-
-        f.setDialogTitle("Load an image");
-        f.setAcceptAllFileFilterUsed(false);
-        f.addChoosableFileFilter(f1);
-        f.addChoosableFileFilter(f2);
-        f.setFileFilter(f1);
-        f.setApproveButtonText("Load");
-        f.setCurrentDirectory(new File(System.getProperty("user.dir")));
-
-        int returnVal = f.showOpenDialog(this);
-        f.setVisible(true);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File fileSource = f.getSelectedFile();
+        File fileSource = selectFile(this, "Load an image");
+        
+        if (fileSource != null) {
             if (fileSource.canRead()) {
                 if (fileSource.getName().toLowerCase().endsWith(".hex")) {
                     memContext.loadHex(fileSource.getAbsolutePath(), 0);
@@ -436,8 +420,8 @@ public class MemoryDialog extends JDialog {
                     }
                     memContext.loadBin(fileSource.getAbsolutePath(), adr, 0);
                 }
-                this.tblMemory.revalidate();
-                this.tblMemory.repaint();
+                tblMemory.revalidate();
+                tblMemory.repaint();
             } else {
                 StaticDialogs.showErrorMessage("File " + fileSource.getPath() + " can't be read.");
             }
