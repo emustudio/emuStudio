@@ -29,15 +29,16 @@ import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
-import java.util.List;
-import java.util.MissingResourceException;
-import java.util.Objects;
-import java.util.ResourceBundle;
 import net.sf.emustudio.memory.standard.StandardMemoryContext;
 import net.sf.emustudio.memory.standard.StandardMemoryContext.AddressRange;
 import net.sf.emustudio.memory.standard.gui.MemoryDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
 @PluginType(
         type=PLUGIN_TYPE.MEMORY,
@@ -104,11 +105,14 @@ public class MemoryImpl extends AbstractMemory {
     public void initialize(SettingsManager settings) throws PluginInitializationException {
         this.settings = Objects.requireNonNull(settings);
 
-        int banksCount = 0, bankCommon = 0;
+        int banksCount = 0, bankCommon = 0, memorySize = MemoryContextImpl.DEFAULT_MEM_SIZE;
         String tmpSetting = settings.readSetting(pluginID, "banksCount");
         try {
             if (tmpSetting != null) {
-                banksCount = Integer.parseInt(tmpSetting);
+                banksCount = Integer.decode(tmpSetting);
+                if (banksCount < 0) {
+                    throw new PluginInitializationException("Banks count must be >= 0");
+                }
             }
         } catch (NumberFormatException e) {
             throw new PluginInitializationException(this, "Could not parse banks count", e);
@@ -117,7 +121,10 @@ public class MemoryImpl extends AbstractMemory {
         tmpSetting = settings.readSetting(pluginID, "commonBoundary");
         try {
             if (tmpSetting != null) {
-                bankCommon = Integer.parseInt(tmpSetting);
+                bankCommon = Integer.decode(tmpSetting);
+                if (bankCommon < 0) {
+                    throw new PluginInitializationException("Common boundary must be >= 0");
+                }
             }
         } catch (NumberFormatException e) {
             throw new PluginInitializationException(this, "Could not parse common boundary", e);
@@ -126,7 +133,20 @@ public class MemoryImpl extends AbstractMemory {
         if (banksCount == 0) {
             banksCount = 1;
         }
-        context.init(MemoryContextImpl.DEFAULT_MEM_SIZE, banksCount, bankCommon);
+
+        tmpSetting = settings.readSetting(pluginID, "memorySize");
+        if (tmpSetting != null) {
+            try {
+                memorySize = Integer.decode(tmpSetting);
+                if (memorySize <= 0) {
+                    throw new PluginInitializationException(this, "Memory size must be > 0");
+                }
+            } catch (NumberFormatException e) {
+                throw new PluginInitializationException(this, "Could not parse memory size", e);
+            }
+        }
+
+        context.init(memorySize, banksCount, bankCommon);
 
         emuStudioNoGUI = Boolean.parseBoolean(settings.readSetting(pluginID, SettingsManager.NO_GUI));
         if (!emuStudioNoGUI) {

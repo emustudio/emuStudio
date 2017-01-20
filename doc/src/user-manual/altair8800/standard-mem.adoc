@@ -112,4 +112,61 @@ So, if we won't have any common address space, we require `ceil(21 / 8) = 3` ban
 - bank 1: maps from 2^8 - (2^16 - 1)
 - bank 2: maps from 2^16 - (2^21 - 1)
 
+[[STANDARD-MEM_CONFIG_FILE]]
+=== Configuration file
+
+Configuration file of virtual computers contain also settings of all the used plug-ins, including devices. Please
+read the section "Accessing settings of plug-ins" in the user documentation of Main module to see how the settings can
+be accessed.
+
+The following table shows all the possible settings of Standard operating memory plug-in:
+
+.Settings of Standard operating memory
+[width="60%",frame="topbot",options="header,footer"]
+|=====================================================================================================
+|Name              | Default value        | Valid values          | Description
+|`banksCount`      | 0                    | >= 0                  | Number of memory banks
+|`commonBoundary`  | 0                    | >= 0 and < mem size   | Address from which the banks are shared
+|`memorySize`      | 65536                | > 0                   | Memory size
+|`ROMfrom`(i)      | N/A                  | >= 0 and < mem size   | Start of the i-th ROM area
+|`ROMto`(i)        | N/A                  | >= `ROMfrom`(i) and < mem size   | End of the i-th ROM area
+|`imageName`(i)    | N/A                  | file path             | The i-th memory image file name.
+                                                                    footnote:[If it
+                                                                    ends with `.hex` suffix, it will be loaded
+                                                                    as Intel HEX format, otherwise as binary]
+|`imageAddress`(i) | N/A                  | >= 0 and < mem size   | The i-th memory image load address
+|=====================================================================================================
+
+=== Using memory in custom computers
+
+NOTE: This section is for developers of emulators. If you do not plan to create custom virtual computers,
+      you can safely skip this section. In order to get started with developing plug-ins for emuStudio,
+      please read tutorial "Developing emuStudio Plugins".
+
+As it was mentioned in the earlier sections, the Standard operating memory plug-in can be used in other
+computers, too. Besides standard operations which are provided by `emulib.plugins.memory.MemoryContext` interface,
+it provides custom context API, enabling to use more features - e.g. bank-switching.
+
+You can obtain the context during the `initialize()` method of plug-in main class. The context is named
+`net.sf.emustudio.memory.standard.StandardMemoryContext`:
+
+[source,java]
+----
+...
+
+public void initialize(SettingsManager settings) {
+    ...
+
+    StandardMemoryContext mem = contextPool.getMemoryContext(pluginID, StandardMemoryContext.class);
+    ...
+}
+----
+
+
+The memory context has the following content:
+
+[source,java]
+----
+include::../../../../plugins/mem/standard-mem/src/main/java/net/sf/emustudio/memory/standard/StandardMemoryContext.java[lines=20..-1]
+----
 
