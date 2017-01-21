@@ -21,6 +21,7 @@ package net.sf.emustudio.devices.mits88disk.gui;
 
 import emulib.emustudio.SettingsManager;
 import emulib.runtime.StaticDialogs;
+import emulib.runtime.UniversalFileFilter;
 import net.sf.emustudio.devices.mits88disk.impl.DiskImpl;
 import net.sf.emustudio.devices.mits88disk.impl.Drive;
 
@@ -477,8 +478,8 @@ public class SettingsDialog extends javax.swing.JDialog {
 
     private void btnBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBrowseActionPerformed
         JFileChooser f = new JFileChooser();
-        ImageFilter f1 = new ImageFilter();
-        ImageFilter f2 = new ImageFilter();
+        UniversalFileFilter f1 = new UniversalFileFilter();
+        UniversalFileFilter f2 = new UniversalFileFilter();
 
         f1.addExtension("dsk");
         f1.addExtension("bin");

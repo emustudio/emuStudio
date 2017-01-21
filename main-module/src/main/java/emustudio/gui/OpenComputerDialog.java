@@ -30,7 +30,8 @@ import emustudio.main.Main;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.JButton;
 
 /**
  * This dialog manages the virtual computers. It offers a list of all
@@ -52,8 +53,8 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         initComponents();
         amodel = new ConfigurationsListModel();
         lstConfig.setModel(amodel);
-        this.setModal(true);
-        this.setLocationRelativeTo(null);
+        super.setModal(true);
+        super.setLocationRelativeTo(null);
 
         preview = new PreviewPanel();
         scrollPreview.setViewportView(preview);
@@ -94,7 +95,7 @@ public class OpenComputerDialog extends javax.swing.JDialog {
         lstConfigValueChanged(null);
     }
     /**
-     * Determine whethe the user pressed "OK" button.
+     * Determine whether the user pressed "OK" button.
      *
      * @return true if user has pressed OK, false otherwise
      */
@@ -395,6 +396,6 @@ public class OpenComputerDialog extends javax.swing.JDialog {
     private javax.swing.JLabel lblPreview;
     private javax.swing.JList<String> lstConfig;
     private javax.swing.JScrollPane scrollPreview;
-    // End of variables declaration//GEN-END:variables
+    // End of variables declaration                   
 
 }

@@ -19,18 +19,17 @@
  */
 package emustudio.drawing;
 
+import emulib.runtime.UniversalFileFilter;
 import emustudio.main.Main;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PreviewPanel extends JPanel {
     private final static Logger logger = LoggerFactory.getLogger(PreviewPanel.class);
@@ -52,9 +51,6 @@ public class PreviewPanel extends JPanel {
     /* double buffering */
     private Image dbImage;   // second buffer
     private Graphics2D dbg;  // graphics for double buffering
-    /**
-     * Holds true when this PreviewPanel was resized, false otherwise
-     */
     private boolean panelResized;
 
     public PreviewPanel() {
@@ -62,11 +58,12 @@ public class PreviewPanel extends JPanel {
     }
 
     public PreviewPanel(Schema schema) {
+        super.setBackground(Color.WHITE);
+        super.setDoubleBuffered(true);
+
         this.schema = schema;
-        this.setBackground(Color.WHITE);
         leftFactor = topFactor = 0;
         panelResized = false;
-        this.setDoubleBuffered(true);
     }
 
     @Override
@@ -98,9 +95,9 @@ public class PreviewPanel extends JPanel {
         // nemoze byt dalej ako bod)
         int width = 0, height = 0, minLeft = -1, minTop = -1;
 
-        for (Element elem : schema.getAllElements()) {
+        schema.getAllElements().forEach((elem) -> {
             elem.measure(g);
-        }
+        });
 
         for (Element elem : schema.getAllElements()) {
             int eX = elem.getX() - elem.getWidth() / 2;
@@ -189,16 +186,16 @@ public class PreviewPanel extends JPanel {
             schema.selectAll();
             schema.moveSelection(-leftFactor, -topFactor);
             schema.deselectAll();
-            for (Element elem : schema.getAllElements()) {
+            schema.getAllElements().forEach((elem) -> {
                 elem.measure(g);
-            }
+            });
         }
-        for (ConnectionLine line : schema.getConnectionLines()) {
+        schema.getConnectionLines().forEach((line) -> {
             line.draw(graphics, true);
-        }
-        for (Element element : schema.getAllElements()) {
+        });
+        schema.getAllElements().forEach((element) -> {
             element.draw(graphics);
-        }
+        });
     }
 
     public void setSchema(Schema s) {
@@ -216,57 +213,43 @@ public class PreviewPanel extends JPanel {
     }
 
     public void saveSchemaImage() {
-        JFileChooser f = new JFileChooser();
+        JFileChooser fileChooser = new JFileChooser();
 
-        f.setDialogTitle("Save schema image");
-        f.setAcceptAllFileFilterUsed(false);
+        fileChooser.setDialogTitle("Save schema image");
+        fileChooser.setAcceptAllFileFilterUsed(false);
 
         ImageIO.scanForPlugins();
-        FileFilter defaultFilter = null;
-        String suffixes[] = ImageIO.getWriterFileSuffixes();
-        String formatNames[] = ImageIO.getWriterFormatNames();
-
-        for (int i = 0; i < suffixes.length; i++) {
-            FileFilter filter = new ImageFileFilter(suffixes[i], formatNames[i]);
-            f.addChoosableFileFilter(filter);
-            if (defaultFilter == null) {
-                defaultFilter = filter;
-            }
-        }
-        if (defaultFilter == null) {
-            String msg = "Could not save schema image - no image writers are available.";
-            logger.error(msg);
-            Main.tryShowErrorMessage(msg);
-        }
-        f.setFileFilter(defaultFilter);
-        f.setApproveButtonText("Save");
+        UniversalFileFilter filter = new UniversalFileFilter();
+        filter.addExtension(".png");
+        filter.setDescription("PNG file");
+        
+        fileChooser.addChoosableFileFilter(filter);
+        fileChooser.setFileFilter(filter);
+        
+        fileChooser.setApproveButtonText("Save");
+        
         if (lastImageFile != null) {
-            f.setCurrentDirectory(lastImageFile.getParentFile());
+            fileChooser.setCurrentDirectory(lastImageFile.getParentFile());
         } else {
-            f.setCurrentDirectory(new File(System.getProperty("user.dir")));
+            fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
         }
-        f.setSelectedFile(null);
+        fileChooser.setSelectedFile(null);
 
-        int returnVal = f.showSaveDialog(this);
+        int returnVal = fileChooser.showSaveDialog(this);
         if (returnVal != JFileChooser.APPROVE_OPTION) {
             return;
         }
-        File selectedFile = f.getSelectedFile();
-        ImageFileFilter selectedFileFilter = (ImageFileFilter) f.getFileFilter();
-
-        String suffix = selectedFileFilter.getSuffix();
-        if (selectedFile.getName().toLowerCase().endsWith("." + suffix.toLowerCase())) {
-            lastImageFile = selectedFile;
-        } else {
-            lastImageFile = new File(selectedFile.getAbsolutePath() + "." + suffix.toLowerCase());
+        File selectedFile = fileChooser.getSelectedFile();
+        if (!selectedFile.getName().toLowerCase().endsWith(".png")) {
+            selectedFile = new File(selectedFile.getAbsolutePath() + ".png");
         }
+        lastImageFile = selectedFile;
 
         // Save the image
-        BufferedImage bi = new BufferedImage(getSchemaWidth(), getSchemaHeight(),
-                BufferedImage.TYPE_INT_RGB);
+        BufferedImage bi = new BufferedImage(getSchemaWidth(), getSchemaHeight(), BufferedImage.TYPE_INT_RGB);
         paint(bi.createGraphics());
         try {
-            ImageIO.write(bi, selectedFileFilter.getFormatName(), lastImageFile);
+            ImageIO.write(bi, "png", lastImageFile);
         } catch (IOException e) {
             logger.error("Could not save schema image.", e);
             Main.tryShowErrorMessage("Could not save schema image. See log file for details.");
