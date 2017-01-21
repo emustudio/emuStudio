@@ -43,6 +43,7 @@ class Port1 implements DeviceContext<Short> {
 
     @Override
     public void write(Short value) {
+        System.out.println("VALUE = " + value);
         // select device
         disk.setCurrentDrive(value & 0x0F);
         Drive drive = disk.getCurrentDrive();

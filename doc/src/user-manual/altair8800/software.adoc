@@ -14,7 +14,14 @@ Tested and fully-functional images were:
 - Altair DOS v1.0
 - BASIC programming language in various versions
 
-The following subsections describe in short how to boot those systems, along with screen-shots how it looks.
+Disk / memory images for software for Altair8800 are available on many online sites, such as:
+
+- http://schorn.ch/altair.html
+- http://www.classiccmp.org/cpmarchives/cpm/mirrors/www.schorn.ch/cpm/intro.php
+
+Some manuals can be found at e.g. http://altairclone.com/altair_manuals.htm.
+
+The following subsections describe in short how to boot some of those systems, along with screen-shots how it looks.
 
 [[A8800-SOFTWARE-BOOT_ROM]]
 === Boot ROM
@@ -112,7 +119,24 @@ image::images/cpm3.png[Operating system CP/M 3 (banked version)]
 
 === Altair DOS v1.0
 
-TODO
+Steps for booting Altair DOS v1.0 follow:
+
+1. <<DISK-88_MOUNTING_IMAGES>> `altdos.dsk` to drive `A:` in MITS 88-DISK.
+2. In emuStudio jump to location `0xFF00` footnoteref:[debugger]
+3. Optionally, you can set CPU frequency to 2000 kHz, which was Intel 8080 original frequency.
+4. Before starting emulation, show ADM-3A terminal footnoteref:[peripheral]
+5. Run the emulation footnoteref:[debugger]
+
+The system will start asking some questions. According to the
+ http://altairclone.com/downloads/manuals/Altair%20DOS%20User's%20Manual.pdf[manual], the answers for emuStudio are:
+
+- `MEMORY SIZE?` -> 0 or just ENTER
+- `INTERRUPTS` -> N or just ENTER
+- `HIGHEST DISK NUMBER?` -> 0 (if only 1 disk is mounted)
+- `HOW MANY DISK FILES?` -> 3
+- `HOW MANY RANDOM FILES?` -> 2
+
+The basic commands you can use are e.g. `MNT 0` - to mount the drive, and then `FILES` to list the files.
 
 === BASIC
 

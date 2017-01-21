@@ -156,7 +156,7 @@ public class EmulatorEngine implements CpuEngine {
 
 
     public void interrupt(short b1, short b2, short b3) {
-        if (INTE == false) {
+        if (!INTE) {
             return;
         }
         isINT = true;
@@ -182,7 +182,7 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
-    void putpair(int reg, int val) {
+    private void putpair(int reg, int val) {
         if (reg == 3) {
             SP = val;
         } else {
@@ -192,7 +192,7 @@ public class EmulatorEngine implements CpuEngine {
         }
     }
 
-    int getpair(int reg) {
+    private int getpair(int reg) {
         if (reg == 3) {
             return SP;
         }

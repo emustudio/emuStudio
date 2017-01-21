@@ -56,6 +56,8 @@ public class Drive {
     private volatile DriveListener listener;
     private final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(1);
 
+    private final int index;
+
     /*
      7   6   5   4   3   2   1   0
      +---+---+---+---+---+---+---+---+
@@ -102,7 +104,8 @@ public class Drive {
         void driveParamsChanged(DriveParameters parameters);
     }
 
-    public Drive() {
+    public Drive(int index) {
+        this.index = index;
         init();
     }
     
@@ -116,7 +119,7 @@ public class Drive {
 
     public void setSectorsCount(short sectorsCount) {
         if (sectorsCount <= 0) {
-            throw new IllegalArgumentException("Sectors count must be > 0");
+            throw new IllegalArgumentException("[drive=" + index + "] Sectors count must be > 0");
         }
         this.sectorsCount = sectorsCount;
         init();
@@ -124,7 +127,7 @@ public class Drive {
 
     public void setSectorLength(short sectorLength) {
         if (sectorLength <= 0) {
-            throw new IllegalArgumentException("Sector length must be > 0");
+            throw new IllegalArgumentException("[drive=" + index + "] Sector length must be > 0");
         }
         this.sectorLength = sectorLength;
         init();
@@ -164,7 +167,7 @@ public class Drive {
 
     public void select() {
         if (mountedFloppy == null) {
-            throw new IllegalStateException("Image is not mounted");
+            throw new IllegalStateException("[drive=" + index + "] Image is not mounted");
         }
         selected = true;
         port1status = 0xE5; // 11100101b
@@ -188,7 +191,7 @@ public class Drive {
 
     public void mount(File file) throws IOException {
         if (!file.isFile() || !file.exists()) {
-            throw new IllegalArgumentException("Specified file name doesn't point to a file");
+            throw new IllegalArgumentException("[drive=" + index + "] Specified file name doesn't point to a file");
         }
         umount();
         this.mountedFloppy = file;
@@ -201,7 +204,7 @@ public class Drive {
 
     public void umount() {
         if (selected) {
-            throw new IllegalStateException("Drive cannot be unmounted when it is selected");
+            throw new IllegalStateException("[drive=" + index + "] Drive cannot be unmounted when it is selected");
         }
         mountedFloppy = null;
         try {
@@ -209,7 +212,7 @@ public class Drive {
                 imageChannel.close();
             }
         } catch (IOException e) {
-            LOGGER.error("Could not umount disk image", e);
+            LOGGER.error("[drive=" + index + "] Could not umount disk image", e);
         }
     }
 
@@ -303,7 +306,7 @@ public class Drive {
             byteBuffer.clear();
             int bytesRead = imageChannel.read(byteBuffer);
             if (bytesRead != byteBuffer.capacity()) {
-                throw new IOException("Could not read data from disk image");
+                throw new IOException("[drive=" + index + "] Could not read data from disk image");
             }
             byteBuffer.flip();
             return (short) (byteBuffer.get() & 0xFF);

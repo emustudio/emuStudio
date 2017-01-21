@@ -67,7 +67,7 @@ public class DriveTest {
 
     @Test
     public void testInitialDriveParameters() throws Exception {
-        Drive drive = new Drive();
+        Drive drive = new Drive(0);
         
         Drive.DriveParameters params = drive.getDriveParameters();
         assertEquals(0, params.sector);
@@ -80,32 +80,32 @@ public class DriveTest {
     
     @Test
     public void testMountValidImage() throws IOException {
-        new Drive().mount(testImageFile);
+        new Drive(0).mount(testImageFile);
     }
     
     @Test(expected = NullPointerException.class)
     public void testMountImageNullArgument() throws IOException {
-        new Drive().mount(null);
+        new Drive(0).mount(null);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void testMountImageNonExistantFile() throws IOException {
-         new Drive().mount(new File("nonexistant"));
+         new Drive(0).mount(new File("nonexistant"));
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void testMountImageFolder() throws IOException {
-         new Drive().mount(folder.getRoot());
+         new Drive(0).mount(folder.getRoot());
     }
     
     @Test
     public void testUnmountWithoutMountHasNoEffect() {
-        new Drive().umount();
+        new Drive(0).umount();
     }
     
     @Test(expected = IllegalStateException.class)
     public void testUnmountSelectedDriveThrows() throws IOException {
-        Drive drive = new Drive();
+        Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.select();
         
@@ -114,7 +114,7 @@ public class DriveTest {
     
     @Test
     public void testUmountClearsMountImageInDriveParams() throws IOException {
-        Drive drive = new Drive();
+        Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.umount();
         
@@ -124,7 +124,7 @@ public class DriveTest {
 
     @Test
     public void testDriveParametersAfterSelect() throws Exception {
-        Drive drive = new Drive();
+        Drive drive = new Drive(0);
         drive.setSectorsCount(SECTORS_COUNT);
         drive.setSectorLength(SECTOR_SIZE);
 
@@ -142,7 +142,7 @@ public class DriveTest {
     
     @Test
     public void testDriveParametersAfterSelectThenDeselect() throws Exception {
-        Drive drive = new Drive();
+        Drive drive = new Drive(0);
         drive.setSectorsCount(SECTORS_COUNT);
         drive.setSectorLength(SECTOR_SIZE);
 
@@ -161,18 +161,18 @@ public class DriveTest {
 
     @Test(expected = IllegalStateException.class)
     public void testSelectWithoutMount() {
-        Drive drive = new Drive();
+        Drive drive = new Drive(0);
         drive.select();
     }
     
     @Test
     public void testDeselectWithoutSelectHasNoEffect() {
-        new Drive().deselect();
+        new Drive(0).deselect();
     }
     
     @Test
     public void testReadAllData() throws Exception {
-        Drive drive = new Drive();
+        Drive drive = new Drive(0);
         drive.setSectorsCount(SECTORS_COUNT);
         drive.setSectorLength(SECTOR_SIZE);
 
@@ -206,8 +206,8 @@ public class DriveTest {
     }
     
     @Test
-    public void testWriteAllData() throws IOException, Exception {
-        Drive drive = new Drive();
+    public void testWriteAllData() throws Exception {
+        Drive drive = new Drive(0);
         drive.setSectorsCount(SECTORS_COUNT);
         drive.setSectorLength(SECTOR_SIZE);
 
@@ -258,7 +258,7 @@ public class DriveTest {
         expectLastCall().once();
         replay(listener);
         
-        Drive drive = new Drive();
+        Drive drive = new Drive(0);
         drive.setDriveListener(listener);
         drive.mount(testImageFile);
         drive.select();
@@ -275,7 +275,7 @@ public class DriveTest {
         expectLastCall().once();
         replay(listener);
         
-        Drive drive = new Drive();
+        Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.select();
         drive.setDriveListener(listener);
@@ -291,7 +291,7 @@ public class DriveTest {
         expectLastCall().once();
         replay(listener);
         
-        Drive drive = new Drive();
+        Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.select();
         drive.setDriveListener(listener);
@@ -307,7 +307,7 @@ public class DriveTest {
         expectLastCall().once();
         replay(listener);
 
-        Drive drive = new Drive();
+        Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.select();        
         drive.writeToPort2((short)0x04);
@@ -324,7 +324,7 @@ public class DriveTest {
         expectLastCall().once();
         replay(listener);
 
-        Drive drive = new Drive();
+        Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.select();
         drive.writeToPort2((short)0x04);
@@ -342,7 +342,7 @@ public class DriveTest {
         expectLastCall().once();
         replay(listener);
 
-        Drive drive = new Drive();
+        Drive drive = new Drive(0);
         drive.mount(testImageFile);
         drive.select();
         drive.setDriveListener(listener);

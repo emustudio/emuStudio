@@ -127,7 +127,7 @@ The following table shows all the possible settings of Standard operating memory
 |Name              | Default value        | Valid values          | Description
 |`banksCount`      | 0                    | >= 0                  | Number of memory banks
 |`commonBoundary`  | 0                    | >= 0 and < mem size   | Address from which the banks are shared
-|`memorySize`      | 65536                | > 0                   | Memory size
+|`memorySize`      | 65536                | > 0                   | Memory size in bytes
 |`ROMfrom`(i)      | N/A                  | >= 0 and < mem size   | Start of the i-th ROM area
 |`ROMto`(i)        | N/A                  | >= `ROMfrom`(i) and < mem size   | End of the i-th ROM area
 |`imageName`(i)    | N/A                  | file path             | The i-th memory image file name.

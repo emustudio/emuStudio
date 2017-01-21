@@ -90,7 +90,7 @@ public class DiskImpl extends AbstractDevice {
         this.contextPool = Objects.requireNonNull(contextPool);
 
         for (int i = 0; i < DRIVES_COUNT; i++) {
-            drives.add(new Drive());
+            drives.add(new Drive(i));
         }
 
         this.currentDrive = 0xFF;
