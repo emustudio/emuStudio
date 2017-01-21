@@ -17,12 +17,14 @@ import static net.sf.emustudio.intel8080.impl.CpuImpl.PRINT_CODE;
 import static net.sf.emustudio.intel8080.impl.CpuImpl.PRINT_CODE_USE_CACHE;
 
 public abstract class DefaultInitializer<Engine extends CpuEngine> {
+    private final Plugin plugin;
+    private final long pluginId;
+    private final ContextPool contextPool;
+    private final SettingsManager settings;
+
     private Disassembler disassembler;
     private Engine engine;
-    private Plugin plugin;
-    private long pluginId;
-    private ContextPool contextPool;
-    private SettingsManager settings;
+    private boolean dumpInstructions;
 
     public DefaultInitializer(Plugin plugin, long pluginId, ContextPool contextPool, SettingsManager settings)
         throws PluginInitializationException {
@@ -49,7 +51,10 @@ public abstract class DefaultInitializer<Engine extends CpuEngine> {
 
             String setting = settings.readSetting(pluginId, PRINT_CODE);
             String printCodeUseCache = settings.readSetting(pluginId, PRINT_CODE_USE_CACHE);
+            
+            this.dumpInstructions = false;
             if (setting != null && setting.toLowerCase().equals("true")) {
+                this.dumpInstructions = true;
                 if (printCodeUseCache == null || printCodeUseCache.toLowerCase().equals("true")) {
                     engine.setDispatchListener(createInstructionPrinter(disassembler, engine, true));
                 } else {
@@ -72,4 +77,9 @@ public abstract class DefaultInitializer<Engine extends CpuEngine> {
     public Engine getEngine() {
         return engine;
     }
+
+    public boolean shouldDumpInstructions() {
+        return dumpInstructions;
+    }
+    
 }

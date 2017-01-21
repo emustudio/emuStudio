@@ -22,14 +22,12 @@ package net.sf.emustudio.intel8080.impl;
 import emulib.plugins.cpu.DisassembledInstruction;
 import emulib.plugins.cpu.Disassembler;
 import emulib.runtime.exceptions.InvalidInstructionException;
-import net.jcip.annotations.ThreadSafe;
-import net.sf.emustudio.intel8080.api.DispatchListener;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
-
+import net.jcip.annotations.ThreadSafe;
+import net.sf.emustudio.intel8080.api.DispatchListener;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_AC;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_C;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_P;
@@ -37,7 +35,7 @@ import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_S;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_Z;
 
 @ThreadSafe
-class InstructionPrinter implements DispatchListener {
+public class InstructionPrinter implements DispatchListener {
     private final Disassembler disassembler;
     private final EmulatorEngine emulatorEngine;
 
@@ -48,7 +46,7 @@ class InstructionPrinter implements DispatchListener {
 
     private volatile long creationTimeStamp;
 
-    InstructionPrinter(Disassembler disassembler, EmulatorEngine emulatorEngine, boolean useCache) {
+    public InstructionPrinter(Disassembler disassembler, EmulatorEngine emulatorEngine, boolean useCache) {
         this.disassembler = Objects.requireNonNull(disassembler);
         this.emulatorEngine = Objects.requireNonNull(emulatorEngine);
         this.useCache = useCache;

@@ -21,12 +21,14 @@ package net.sf.emustudio.intel8080.gui;
 
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.CPU.RunState;
-import net.sf.emustudio.intel8080.api.ExtendedContext;
-import net.sf.emustudio.intel8080.impl.CpuImpl;
-import net.sf.emustudio.intel8080.impl.EmulatorEngine;
-
+import static emulib.runtime.RadixUtils.formatByteHexString;
+import static emulib.runtime.RadixUtils.formatWordHexString;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -35,11 +37,10 @@ import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.table.AbstractTableModel;
-import java.awt.Color;
-import java.awt.Font;
-
-import static emulib.runtime.RadixUtils.formatByteHexString;
-import static emulib.runtime.RadixUtils.formatWordHexString;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
+import net.sf.emustudio.intel8080.impl.CpuImpl;
+import net.sf.emustudio.intel8080.impl.EmulatorEngine;
+import net.sf.emustudio.intel8080.impl.InstructionPrinter;
 
 public class StatusPanel extends JPanel {
     private final CpuImpl cpu;
@@ -48,13 +49,14 @@ public class StatusPanel extends JPanel {
     private final AbstractTableModel flagModel;
     private volatile RunState runState = RunState.STATE_STOPPED_NORMAL;
 
-    public StatusPanel(CpuImpl cpu, ExtendedContext context) {
+    public StatusPanel(CpuImpl cpu, ExtendedContext context, boolean dumpInstructions) {
         this.cpu = cpu;
         this.context = context;
         this.engine = cpu.getEngine();
         flagModel = new FlagsModel(engine);
 
         initComponents();
+        chkPrintInstructions.setSelected(dumpInstructions);
         tblFlags.setModel(flagModel);
 
         setupListeners();
@@ -119,7 +121,16 @@ public class StatusPanel extends JPanel {
             spnTestPeriode.setEnabled(true);
         }
     }
-
+    
+    private void onDumpInstructionsSelect(ActionEvent e) {
+        if (chkPrintInstructions.isSelected()) {
+            engine.setDispatchListener(new InstructionPrinter(cpu.getDisassembler(), engine, true));
+        } else {
+            engine.setDispatchListener(null);
+        }
+    }
+    
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">
     private void initComponents() {
         JPanel paneRegisters = new JPanel();
         JLabel lblRegB = new JLabel("B");
@@ -160,6 +171,7 @@ public class StatusPanel extends JPanel {
         JLabel lblMS = new JLabel("ms");
         JLabel lblFlags = new JLabel("Flags (F): ");
         tblFlags = new JTable();
+        chkPrintInstructions = new JCheckBox("Dump running instructions");
 
         setBorder(null);
         paneRegisters.setBorder(null); // NOI18N
@@ -168,7 +180,9 @@ public class StatusPanel extends JPanel {
         lblTestPeriode.setFont(lblTestPeriode.getFont().deriveFont(lblTestPeriode.getFont().getStyle() & ~Font.BOLD));
         lblRuntimeFreq.setFont(lblRuntimeFreq.getFont().deriveFont(lblRuntimeFreq.getFont().getStyle() & ~Font.BOLD));
         lblFlags.setFont(lblFlags.getFont().deriveFont(lblFlags.getFont().getStyle() & ~Font.BOLD));
-
+        chkPrintInstructions.setFont(chkPrintInstructions.getFont().deriveFont(chkPrintInstructions.getFont().getStyle() & ~Font.BOLD));
+        
+        chkPrintInstructions.addActionListener(this::onDumpInstructionsSelect);
 
         lblRegB.setFont(lblRegB.getFont().deriveFont(lblRegB.getFont().getStyle() | java.awt.Font.BOLD));
         txtRegB.setEditable(false);
@@ -261,9 +275,55 @@ public class StatusPanel extends JPanel {
         GroupLayout panelRunLayout = new GroupLayout(panelRun);
         panelRun.setLayout(panelRunLayout);
         panelRunLayout.setHorizontalGroup(
-                panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(panelRunLayout.createSequentialGroup().addContainerGap().addComponent(lblRun).addContainerGap()).addGroup(panelRunLayout.createSequentialGroup().addContainerGap().addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblCPUFreq).addComponent(lblTestPeriode)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(spnFrequency).addComponent(spnTestPeriode)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblKHZ).addComponent(lblMS)).addContainerGap()).addGroup(panelRunLayout.createSequentialGroup().addContainerGap().addComponent(lblRuntimeFreq).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(lblFrequency).addContainerGap()));
+                panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(panelRunLayout.createSequentialGroup()
+                                .addContainerGap().addComponent(lblRun).addContainerGap()
+                        ).addGroup(panelRunLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(lblCPUFreq)
+                                        .addComponent(lblTestPeriode)
+                                ).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(spnFrequency)
+                                        .addComponent(spnTestPeriode)
+                                ).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(lblKHZ)
+                                        .addComponent(lblMS)
+                                ).addContainerGap()
+                        ).addGroup(panelRunLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(lblRuntimeFreq)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblFrequency).addContainerGap()
+                        ).addGroup(panelRunLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(chkPrintInstructions)
+                                .addContainerGap()                                
+                        )
+        );
         panelRunLayout.setVerticalGroup(
-                panelRunLayout.createSequentialGroup().addContainerGap().addComponent(lblRun).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE, false).addComponent(lblCPUFreq).addComponent(spnFrequency, GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE).addComponent(lblKHZ)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE, false).addComponent(lblTestPeriode).addComponent(spnTestPeriode, GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE).addComponent(lblMS)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblRuntimeFreq).addComponent(lblFrequency)).addContainerGap());
+                panelRunLayout.createSequentialGroup().addContainerGap().addComponent(lblRun)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE, false)
+                                .addComponent(lblCPUFreq)
+                                .addComponent(spnFrequency, GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE)
+                                .addComponent(lblKHZ)
+                        ).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE, false)
+                                .addComponent(lblTestPeriode)
+                                .addComponent(spnTestPeriode, GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE)
+                                .addComponent(lblMS)
+                        ).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                .addComponent(lblRuntimeFreq)
+                                .addComponent(lblFrequency)
+                        ).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(panelRunLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                .addComponent(chkPrintInstructions)
+                        ).addContainerGap()
+        );
 
         GroupLayout layout = new GroupLayout(this);
         this.setLayout(layout);
@@ -271,7 +331,8 @@ public class StatusPanel extends JPanel {
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(paneRegisters, 10, 290, Short.MAX_VALUE).addComponent(panelRun, 10, 290, Short.MAX_VALUE));
         layout.setVerticalGroup(
                 layout.createSequentialGroup().addComponent(paneRegisters, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(panelRun, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addContainerGap());
-    }
+    }// </editor-fold>                        
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     JLabel lblFrequency;
     JLabel lblRun;
@@ -291,5 +352,6 @@ public class StatusPanel extends JPanel {
     JTextField txtRegL;
     JTextField txtRegPC;
     JTextField txtRegSP;
+    JCheckBox chkPrintInstructions;
     // End of variables declaration//GEN-END:variables
 }
