@@ -67,16 +67,17 @@ class InstructionPrinter implements DispatchListener {
         try {
             DisassembledInstruction instr = disassembler.disassemble(PC);
 
-            if (!useCache || !cache.contains(PC)) {
+            if (useCache && !cache.contains(PC)) {
                 if (numberOfMatch.get() != 0) {
                     System.out.println(String.format("%04d | Block from %04X to %04X; count=%d",
                             timeStamp, matchPC, PC, numberOfMatch.get())
                     );
+                } else {
+                    matchPC = PC;
                 }
                 numberOfMatch.set(0);
-                matchPC = PC;
                 cache.add(PC);
-            } else {
+            } else if (useCache) {
                 numberOfMatch.incrementAndGet();
             }
 

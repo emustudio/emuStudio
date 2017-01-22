@@ -22,12 +22,14 @@ package net.sf.emustudio.intel8080.impl;
 import emulib.plugins.cpu.DisassembledInstruction;
 import emulib.plugins.cpu.Disassembler;
 import emulib.runtime.exceptions.InvalidInstructionException;
+import net.jcip.annotations.ThreadSafe;
+import net.sf.emustudio.intel8080.api.DispatchListener;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
-import net.jcip.annotations.ThreadSafe;
-import net.sf.emustudio.intel8080.api.DispatchListener;
+
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_AC;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_C;
 import static net.sf.emustudio.intel8080.impl.EmulatorEngine.FLAG_P;
@@ -63,16 +65,17 @@ public class InstructionPrinter implements DispatchListener {
         try {
             DisassembledInstruction instr = disassembler.disassemble(emulatorEngine.PC);
 
-            if (!useCache || !cache.contains(emulatorEngine.PC)) {
+            if (useCache && !cache.contains(emulatorEngine.PC)) {
                 if (numberOfMatch.get() != 0) {
                     System.out.println(String.format("%04d | Block from %04X to %04X; count=%d",
                             timeStamp, matchPC, emulatorEngine.PC, numberOfMatch.get())
                     );
+                } else {
+                    matchPC = emulatorEngine.PC;
                 }
                 numberOfMatch.set(0);
-                matchPC = emulatorEngine.PC;
                 cache.add(emulatorEngine.PC);
-            } else {
+            } else if (useCache) {
                 numberOfMatch.incrementAndGet();
             }
 

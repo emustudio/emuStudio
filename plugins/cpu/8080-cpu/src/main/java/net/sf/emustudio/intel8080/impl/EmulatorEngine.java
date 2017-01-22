@@ -896,8 +896,8 @@ public class EmulatorEngine implements CpuEngine {
          * but from one or all of 3 bytes (b1,b2,b3) which represents either
          * rst or call instruction incomed from external peripheral device
          */
-        if (isINT == true) {
-            if (INTE == true) {
+        if (isINT) {
+            if (INTE) {
                 if ((b1 & 0xC7) == 0xC7) {                      /* RST */
                     SP = (SP - 2) & 0xFFFF;
                     writeWord(SP, PC);
