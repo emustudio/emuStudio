@@ -171,11 +171,11 @@ public class Drive {
         }
         selected = true;
         port1status = 0xE5; // 11100101b
-        port2status = 0xC1;
+        port2status = 0xC1; // 11000001b
         sector = 0;
         sectorOffset = 0;
         if (track == 0) {
-            port1status &= 0xBF;
+            port1status &= 0xBF; // 10111111b
         } // head is on track 0
         notifyDiskSelected();
         notifyParamsChanged();
@@ -327,5 +327,31 @@ public class Drive {
     public int getOffset() {
         return sectorOffset;
     }
+
+//    public String portStatusToString(short status) {
+//        StringBuilder sb = new StringBuilder();
+//        sb.append("DRIVE[" + index + "] ");
+//
+//        if ((status & 1) == 0) {
+//            sb.append("W ");
+//        }
+//        if ((status & 2) == 0) {
+//            sb.append("M ");
+//        }
+//        if ((status & 4) == 0) {
+//            sb.append("H ");
+//        }
+//        if ((status & 32) == 0) {
+//            sb.append("I ");
+//        }
+//        if ((status & 64) == 0) {
+//            sb.append("Z ");
+//        }
+//        if ((status & 128) == 0) {
+//            sb.append("R");
+//        }
+//
+//        return sb.toString();
+//    }
 
 }

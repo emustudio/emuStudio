@@ -40,7 +40,13 @@ class Port2 implements DeviceContext<Short> {
     public Short read() {
         Drive currentDrive = disk.getCurrentDrive();
         currentDrive.nextSectorIfHeadIsLoaded();
-        return disk.getCurrentDrive().getPort2status();
+
+        short status = currentDrive.getPort2status();
+
+//        System.out.println("port2 = " + status);
+//        System.out.flush();
+//
+        return status;
     }
 
     @Override

@@ -130,13 +130,13 @@ Steps for booting Altair DOS v1.0 follow:
 The system will start asking some questions. According to the
  http://altairclone.com/downloads/manuals/Altair%20DOS%20User's%20Manual.pdf[manual], the answers for emuStudio are:
 
-- `MEMORY SIZE?` -> 0 or just ENTER
+- `MEMORY SIZE?` -> 64
 - `INTERRUPTS` -> N or just ENTER
 - `HIGHEST DISK NUMBER?` -> 0 (if only 1 disk is mounted)
 - `HOW MANY DISK FILES?` -> 3
 - `HOW MANY RANDOM FILES?` -> 2
 
-The basic commands you can use are e.g. `MNT 0` - to mount the drive, and then `FILES` to list the files.
+The basic commands you can use are e.g. `MNT 0` - to mount the drive, and then `DIR 0` to list the files.
 
 === BASIC
 
