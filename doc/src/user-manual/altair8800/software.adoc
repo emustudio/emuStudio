@@ -138,6 +138,11 @@ The system will start asking some questions. According to the
 
 The basic commands you can use are e.g. `MNT 0` - to mount the drive, and then `DIR 0` to list the files.
 
+The following image shows how it looks like:
+
+image::images/altairdos.png[Operating system Altair DOS 1.0]
+
+
 === BASIC
 
 In this section will be presented how to boot MITS BASIC version 4.1. There is possible to boot also other versions,
