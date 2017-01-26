@@ -3,10 +3,20 @@
 Since Altair8800 virtual computer emulates a real machine, it's possible to use real software written for the computer.
 As was mentioned in <<ALTAIR_FOR_EMUSTUDIO>> section, several operating systems and programs can be run on Altair.
 There are many disk and memory images of those systems available online, but only some were tested and proved to work.
+Some of the available online sites are:
+
+- http://schorn.ch/altair_4.php[Peter Schorn]
+- http://altairclone.com/support.htm[Altair clone]
+- http://www.classiccmp.org/cpmarchives/cpm/mirrors/www.schorn.ch/cpm/intro.php[SIMH]
+
+In order to build custom disk images, please follow this link:
+
+- http://www.autometer.de/unix4fun/z80pack/
+
 
 Most of the disk images were borrowed from great http://simh.trailing-edge.com/[simh] emulator.
-It's obvious that some images were modified for simh. It's not really obvious if original images would actually work
-at all.
+It's obvious that some images were modified for simh. On the other hand, it's not that obvious if the original images
+would actually work at all.
 
 Tested and fully-functional images were:
 

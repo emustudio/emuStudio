@@ -39,14 +39,7 @@ class Port1 implements DeviceContext<Short> {
     @Override
     public Short read() {
         // interpret port1 status
-        Drive currentDrive = disk.getCurrentDrive();
-
-        short status = currentDrive.getPort1status();
-
-//        System.out.println("port1 = " + currentDrive.portStatusToString(status));
-//        System.out.flush();
-//
-        return status;
+        return disk.getCurrentDrive().getPort1status();
     }
 
     @Override
@@ -55,16 +48,10 @@ class Port1 implements DeviceContext<Short> {
         disk.setCurrentDrive(value & 0x0F);
         Drive drive = disk.getCurrentDrive();
         if ((value & 0x80) != 0) {
-//            System.out.println("DISK UNSELECT " + value);
-//            System.out.flush();
-//
             // disable device
             drive.deselect();
             disk.setCurrentDrive(0xFF);
         } else {
-//            System.out.println("DISK SELECT = " + value);
-//            System.out.flush();
-//
             drive.select();
         }
     }
@@ -72,5 +59,10 @@ class Port1 implements DeviceContext<Short> {
     @Override
     public Class<Short> getDataType() {
         return Short.class;
+    }
+
+    @Override
+    public String toString() {
+        return "88-DISK Status Port";
     }
 }

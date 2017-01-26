@@ -9,7 +9,7 @@ As Wikipedia states:
 [quote, Wikipedia, Altair 8800]
 The Altair is widely recognized as the spark that ignited the microcomputer revolution.
 
-image::images/altair8800.png[MITS Altair8800 with LSI ADM-3A terminal and floppy drive]
+image::images/altair8800.png[MITS Altair8800 with LSI ADM-3A terminal and floppy drive, 100%]
 
 Altair 8800 is one of the oldest commercially available computers overall. Ed Roberts (founder and CEO of MITS
 corporation) was selling these machines by mail directly from the factory.
@@ -22,7 +22,7 @@ Altair BASIC, which pushed them directly to foundation of Microsoft corporation.
 
 Basic configuration of MITS Altair 8800 was:
 
-[width="50%"]
+[role="table table-striped table-condensed"]
 |======================================================================================================================
 |Processor       | Intel 8080 or 8080a
 |Speed           | 2 MHz

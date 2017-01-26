@@ -50,4 +50,8 @@ class Port1 implements DeviceContext<Short> {
         return Short.class;
     }
 
+    @Override
+    public String toString() {
+        return "88-SIO Status Port";
+    }
 }

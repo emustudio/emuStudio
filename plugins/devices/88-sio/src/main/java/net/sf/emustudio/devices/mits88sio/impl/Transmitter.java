@@ -43,7 +43,7 @@ class Transmitter {
 
     void setDevice(DeviceContext<Short> device) {
         this.device = device;
-        LOGGER.info("Attaching device: " + getDeviceId());
+        LOGGER.info("[device={}] Device was attached to 88-SIO", getDeviceId());
     }
 
     String getDeviceId() {

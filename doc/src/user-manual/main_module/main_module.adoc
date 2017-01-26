@@ -65,6 +65,10 @@ list:
 - `mem/`: location of memory plug-ins.
 - `lib/`: location of shared libraries.
 
+If you want to use a custom virtual computer in emuStudio, it’s plug-ins and shared libraries must be put into
+appropriate subdirectories. Then, the abstract schema editor will find new plug-ins right after fresh start of
+emuStudio, and they can be used immediately.
+
 [[XC]]
 == Command line arguments
 
