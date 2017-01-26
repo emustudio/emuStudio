@@ -53,4 +53,9 @@ class Port2 implements DeviceContext<Short> {
     public Class<Short> getDataType() {
         return Short.class;
     }
+
+    @Override
+    public String toString() {
+        return "88-SIO Data Port";
+    }
 }

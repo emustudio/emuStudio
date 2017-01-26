@@ -122,7 +122,7 @@ be accessed.
 The following table shows all the possible settings of Standard operating memory plug-in:
 
 .Settings of Standard operating memory
-[width="60%",frame="topbot",options="header,footer"]
+[frame="topbot",options="header,footer",role="table table-striped table-condensed"]
 |=====================================================================================================
 |Name              | Default value        | Valid values          | Description
 |`banksCount`      | 0                    | >= 0                  | Number of memory banks

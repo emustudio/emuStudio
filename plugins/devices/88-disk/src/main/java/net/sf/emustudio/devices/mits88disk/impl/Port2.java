@@ -41,12 +41,7 @@ class Port2 implements DeviceContext<Short> {
         Drive currentDrive = disk.getCurrentDrive();
         currentDrive.nextSectorIfHeadIsLoaded();
 
-        short status = currentDrive.getPort2status();
-
-//        System.out.println("port2 = " + status);
-//        System.out.flush();
-//
-        return status;
+        return currentDrive.getPort2status();
     }
 
     @Override
@@ -58,4 +53,10 @@ class Port2 implements DeviceContext<Short> {
     public Class<Short> getDataType() {
         return Short.class;
     }
+
+    @Override
+    public String toString() {
+        return "88-DISK Control Port";
+    }
+
 }

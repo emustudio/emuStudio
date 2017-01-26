@@ -119,7 +119,7 @@ public class CompilerImpl extends AbstractCompiler {
             HEXFileManager hex = compileToHex(inputFileName);
 
             hex.generateFile(outputFileName);
-            notifyInfo("Compile was sucessfull. Output: " + outputFileName);
+            notifyInfo("Compile was successful.\nOutput: " + outputFileName);
 
             MemoryContext memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
             if (memory != null) {
