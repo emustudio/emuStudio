@@ -1,6 +1,6 @@
 ; Print reversed text
 
-org 1000
+; org 1000
 
 dcx sp       ; stack initialization (0FFFFh)
 

@@ -21,11 +21,11 @@ package net.sf.emustudio.intel8080.gui;
 
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.CPU.RunState;
-import static emulib.runtime.RadixUtils.formatByteHexString;
-import static emulib.runtime.RadixUtils.formatWordHexString;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.event.ActionEvent;
+import net.sf.emustudio.intel8080.api.ExtendedContext;
+import net.sf.emustudio.intel8080.impl.CpuImpl;
+import net.sf.emustudio.intel8080.impl.EmulatorEngine;
+import net.sf.emustudio.intel8080.impl.InstructionPrinter;
+
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.JCheckBox;
@@ -37,10 +37,12 @@ import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.table.AbstractTableModel;
-import net.sf.emustudio.intel8080.api.ExtendedContext;
-import net.sf.emustudio.intel8080.impl.CpuImpl;
-import net.sf.emustudio.intel8080.impl.EmulatorEngine;
-import net.sf.emustudio.intel8080.impl.InstructionPrinter;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+
+import static emulib.runtime.RadixUtils.formatByteHexString;
+import static emulib.runtime.RadixUtils.formatWordHexString;
 
 public class StatusPanel extends JPanel {
     private final CpuImpl cpu;
@@ -171,7 +173,7 @@ public class StatusPanel extends JPanel {
         JLabel lblMS = new JLabel("ms");
         JLabel lblFlags = new JLabel("Flags (F): ");
         tblFlags = new JTable();
-        chkPrintInstructions = new JCheckBox("Dump running instructions");
+        chkPrintInstructions = new JCheckBox("Dump instructions history");
 
         setBorder(null);
         paneRegisters.setBorder(null); // NOI18N

@@ -26,27 +26,28 @@ import emulib.emustudio.debugtable.OpcodeColumn;
 import emulib.plugins.cpu.CPU;
 import emulib.plugins.cpu.DebugColumn;
 import emulib.plugins.cpu.Disassembler;
+
+import javax.swing.table.AbstractTableModel;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import javax.swing.table.AbstractTableModel;
 
 public class DebugTableModel extends AbstractTableModel {
     private DebugColumn[] columns;
     private final CPU cpu;
-    private final InteractiveDisassembler ida;
+    private final PaginatingDisassembler ida;
 
     public DebugTableModel(CPU cpu, int memorySize) {
         this.cpu = Objects.requireNonNull(cpu);
 
-        Disassembler dis = cpu.getDisassembler();
-        this.ida = new InteractiveDisassembler(dis, memorySize);
+        CallFlow callFlow = new CallFlow(cpu.getDisassembler());
+        this.ida = new PaginatingDisassembler(callFlow, memorySize);
         setDefaultColumns();
     }
 
     @Override
     public int getRowCount() {
-        return InteractiveDisassembler.INSTRUCTIONS_PER_PAGE;
+        return PaginatingDisassembler.INSTRUCTIONS_PER_PAGE;
     }
 
     DebugColumn getColumnAt(int index) {
@@ -130,7 +131,7 @@ public class DebugTableModel extends AbstractTableModel {
     }
 
     boolean isRowAtCurrentInstruction(int rowIndex) {
-        return InteractiveDisassembler.CURRENT_INSTRUCTION == rowIndex;
+        return ida.isRowAtCurrentInstruction(rowIndex, cpu.getInstructionPosition());
     }
 
     public void memoryChanged(int from, int to) {
@@ -161,7 +162,7 @@ public class DebugTableModel extends AbstractTableModel {
     }
 
     public int guessPreviousInstructionPosition() {
-        int location = ida.rowToLocation(cpu.getInstructionPosition(), InteractiveDisassembler.CURRENT_INSTRUCTION - 1);
+        int location = ida.rowToLocation(cpu.getInstructionPosition(), PaginatingDisassembler.CURRENT_INSTRUCTION - 1);
         if (location < 0) {
             return Math.max(0, cpu.getInstructionPosition() - 1);
         }
