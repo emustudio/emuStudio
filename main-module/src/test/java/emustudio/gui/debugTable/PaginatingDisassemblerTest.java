@@ -91,9 +91,7 @@ public class PaginatingDisassemblerTest {
         callFlow.updateCache(0);
         expectLastCall().anyTimes();
         expect(callFlow.getLongestInstructionSize()).andReturn(2).anyTimes();
-        expect(callFlow.getLocationsInPage(
-            0, 50, 0, PaginatingDisassembler.INSTRUCTIONS_PER_PAGE / 2)
-        ).andReturn(Collections.emptyList()).anyTimes();
+        expect(callFlow.getLocationsInterval(0, 50)).andReturn(Collections.emptyList()).anyTimes();
         replay(callFlow);
 
 

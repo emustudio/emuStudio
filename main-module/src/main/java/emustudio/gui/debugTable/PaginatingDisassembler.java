@@ -29,7 +29,7 @@ public class PaginatingDisassembler {
     private final CallFlow callFlow;
 
     private int memorySize;
-    private volatile int addressOffset;
+    private volatile int page;
 
     public PaginatingDisassembler(CallFlow callFlow, int memorySize) {
         if (memorySize < 0) {
@@ -49,10 +49,10 @@ public class PaginatingDisassembler {
 
         // do not go over "backwards maximum"
         int bytesPP = bytesPerPage();
-        if (addressOffset - bytesPP < tmpMemorySize) {
-            addressOffset -= bytesPP;
+        if (page - bytesPP < tmpMemorySize) {
+            page -= bytesPP;
         } else {
-            addressOffset = -tmpMemorySize;
+            page = -tmpMemorySize;
         }
     }
 
@@ -61,36 +61,36 @@ public class PaginatingDisassembler {
 
         // do not go over "forwards maximum"
         int bytesPP = bytesPerPage();
-        if (addressOffset + bytesPP < tmpMemorySize) {
-            addressOffset += bytesPP;
+        if (page + bytesPP < tmpMemorySize) {
+            page += bytesPP;
         } else {
-            addressOffset = tmpMemorySize;
+            page = tmpMemorySize;
         }
     }
 
     void pageCurrent() {
-        addressOffset = 0;
+        page = 0;
     }
 
     void pageFirst() {
-        addressOffset = -memorySize;
+        page = -memorySize;
     }
 
     void pageLast() {
-        addressOffset = memorySize;
+        page = memorySize;
     }
 
     public boolean isRowAtCurrentInstruction(int row, int currentLocation) {
         boolean isAtExpectedRow = CURRENT_INSTRUCTION == row;
 
-        if (addressOffset < 0 && currentLocation < bytesPerPage()) {
+        if (page < 0 && currentLocation < bytesPerPage()) {
             return isAtExpectedRow;
         }
-        if (addressOffset == 0) {
+        if (page == 0) {
             return isAtExpectedRow;
         }
 
-        return addressOffset > 0 && memorySize <= addressOffset + currentLocation && isAtExpectedRow;
+        return page > 0 && memorySize <= page + currentLocation && isAtExpectedRow;
     }
 
     void setMemorySize(int memorySize) {
@@ -107,7 +107,7 @@ public class PaginatingDisassembler {
         callFlow.updateCache(currentLocation);
 
         int longestInstructionSize = callFlow.getLongestInstructionSize();
-        int currentLocationInPage = Math.min(tmpMemorySize - 1, Math.max(currentLocation, currentLocation + addressOffset));
+        int currentLocationInPage = Math.min(tmpMemorySize - 1, Math.max(currentLocation, currentLocation + page));
         int instructionGapBefore = CURRENT_INSTRUCTION * longestInstructionSize;
         int instructionGapAfter = (INSTRUCTIONS_PER_PAGE - CURRENT_INSTRUCTION) * longestInstructionSize;
 
@@ -116,9 +116,7 @@ public class PaginatingDisassembler {
         int to = Math.min(tmpMemorySize - 1, currentLocationInPage + instructionGapAfter);
 
 
-        List<Integer> locationsInPage = callFlow.getLocationsInPage(
-            from, to, currentLocationInPage, INSTRUCTIONS_PER_PAGE / 2
-        );
+        List<Integer> locationsInPage = callFlow.getLocationsInterval(from, to);
         int indexOfCurrentLocation = locationsInPage.indexOf(currentLocationInPage);
 
         if (indexOfCurrentLocation == -1) {

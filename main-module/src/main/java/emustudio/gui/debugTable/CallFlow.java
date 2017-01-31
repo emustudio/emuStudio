@@ -23,129 +23,114 @@ import emulib.plugins.cpu.Disassembler;
 import net.jcip.annotations.ThreadSafe;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 @ThreadSafe
 class CallFlow {
 
     private final Disassembler disassembler;
-    private final NavigableMap<Integer, List<Integer>> flowGraph = new ConcurrentSkipListMap<>();
+    private final NavigableMap<Integer, Integer> flowGraph = new ConcurrentSkipListMap<>();
     private int longestInstructionSize = 2;
-
 
     CallFlow(Disassembler disassembler) {
         this.disassembler = Objects.requireNonNull(disassembler);
     }
     
     void updateCache(int currentLocation) {
-        SortedMap<Integer, List<Integer>> tail = flowGraph.tailMap(currentLocation);
-
-        // determine if currentLocation is already present in the cache
-        if (!tail.containsKey(currentLocation)) {
-            insertNewLocation(currentLocation);
-        } else {
-            checkAndFixTail(currentLocation, tail);
-        }
+        flowGraph.put(currentLocation, disassembler.getNextInstructionPosition(currentLocation));
     }
 
-    private void checkAndFixTail(int currentLocation, SortedMap<Integer, List<Integer>> tail) {
-        List<Integer> oldList = tail.get(currentLocation);
-
-        int checkTo = oldList.get(oldList.size() - 1);
+    private int traverseTo(int knownFrom, int to, Consumer<Integer> consumer) {
+        int lastKnownFrom;
         do {
-            // merge adjacent positions
-            List<Integer> instructionsInTheInterval = new ArrayList<>();
+            lastKnownFrom = knownFrom;
 
-            int singleBytesCount;
-            int checkFrom = currentLocation;
+            consumer.accept(lastKnownFrom);
 
-            for (; checkFrom < checkTo; checkFrom += singleBytesCount) {
-                int nextPosition = disassembler.getNextInstructionPosition(checkFrom);
-                if (nextPosition - checkFrom > longestInstructionSize) {
-                    longestInstructionSize = nextPosition - checkFrom;
-                }
-
-                instructionsInTheInterval.add(nextPosition);
-
-                singleBytesCount = (nextPosition - checkFrom);
+            knownFrom = disassembler.getNextInstructionPosition(knownFrom);
+            if (knownFrom - lastKnownFrom > longestInstructionSize) {
+                longestInstructionSize = knownFrom - lastKnownFrom;
             }
-
-            // solves two cases:
-            //  1. checkFrom != checkTo
-            //  2. checkFrom = checkTo and lists do not equal
-            if (checkFrom != checkTo || !flowGraph.get(currentLocation).equals(instructionsInTheInterval)) {
-                flowGraph.subMap(
-                        currentLocation, false, Math.max(checkFrom, checkTo), true
-                ).clear();
-                flowGraph.put(currentLocation, instructionsInTheInterval);
-            } else {
-                break;
-            }
-
-            checkTo = instructionsInTheInterval.get(instructionsInTheInterval.size() - 1);
-        } while (tail.containsKey(checkTo));
+        } while (knownFrom < to);
+        return (knownFrom == to) ? knownFrom : lastKnownFrom;
     }
 
-    private void insertNewLocation(int currentLocation) {
-        int nextLocation = disassembler.getNextInstructionPosition(currentLocation);
-        if (nextLocation - currentLocation > longestInstructionSize) {
-            longestInstructionSize = nextLocation - currentLocation;
+    private int findGreatestPreviousLocation(int unknownLocation, SortedMap<Integer, Integer> knownLocations) {
+        if (knownLocations.isEmpty() || knownLocations.firstKey() > unknownLocation) {
+            Integer previousKnownLocation = flowGraph.lowerKey(unknownLocation);
+            if (previousKnownLocation != null) {
+                return traverseTo(previousKnownLocation, unknownLocation, i -> {});
+            }
         }
-        flowGraph.put(
-                currentLocation, Collections.singletonList(nextLocation)
-        );
+        return knownLocations.isEmpty() ? unknownLocation : knownLocations.firstKey();
     }
 
-    List<Integer> getLocationsInPage(int from, int to, int currentLocationInPage, int instructionsToLoad) {
-        SortedMap<Integer, List<Integer>> page = flowGraph.subMap(from, true, to, true);
+    List<Integer> getLocationsInterval(int from, int to) {
+        SortedMap<Integer, Integer> knownInterval = flowGraph.subMap(from, true, to, true);
         List<Integer> locations = new ArrayList<>();
 
-        int lastDecodedLocation = -1;
-        for (Map.Entry<Integer, List<Integer>> currentDecodedLocation : page.entrySet()) {
-            locations.add(currentDecodedLocation.getKey());
-            locations.addAll(currentDecodedLocation.getValue());
+        int lastLocation = -1;
+        if (!knownInterval.containsKey(from)) {
+            from = findGreatestPreviousLocation(from, knownInterval);
+            if (!knownInterval.isEmpty() && from < knownInterval.firstKey()) {
+                lastLocation = traverseTo(from, knownInterval.firstKey(), locations::add);
+                if (lastLocation != knownInterval.firstKey()) {
+                    lastLocation = disassembler.getNextInstructionPosition(lastLocation);
+                }
+            }
+        }
 
-            if (lastDecodedLocation != -1) {
-                while (lastDecodedLocation < currentDecodedLocation.getKey()) {
-                    int nextLocation = disassembler.getNextInstructionPosition(lastDecodedLocation);
-                    if (nextLocation - lastDecodedLocation > longestInstructionSize) {
-                        longestInstructionSize = nextLocation - lastDecodedLocation;
-                    }
-                    lastDecodedLocation = nextLocation;
-                    
-                    locations.add(lastDecodedLocation);
+        // keep locations sorted!
+        boolean skipNext = false;
+        List<Integer> invalidLocations = new ArrayList<>();
+        for (Map.Entry<Integer, Integer> currentLocation : knownInterval.entrySet()) {
+            int currentDecodedLocation = currentLocation.getKey();
+            if (skipNext) {
+                skipNext = false;
+                if (lastLocation > currentDecodedLocation) {
+                    invalidLocations.add(currentDecodedLocation);
+                    continue;
                 }
             }
 
-            int decodedSize = currentDecodedLocation.getValue().size();
-            lastDecodedLocation = currentDecodedLocation.getValue().get(decodedSize - 1);
-        }
+            if (lastLocation != -1 && lastLocation < currentDecodedLocation) {
+                lastLocation = traverseTo(lastLocation, currentDecodedLocation, locations::add);
 
-        locations = locations.stream().sorted().distinct().collect(Collectors.toList());
-
-        if (locations.isEmpty()) {
-            locations.add(currentLocationInPage);
-        }
-        int indexOfCurrentLocation = locations.indexOf(currentLocationInPage);
-
-        while (locations.size() < (indexOfCurrentLocation + instructionsToLoad)) {
-            try {
-                int location = locations.get(locations.size() - 1);
-                int nextLocation = disassembler.getNextInstructionPosition(location);
-                if (nextLocation - location > longestInstructionSize) {
-                    longestInstructionSize = nextLocation - location;
+                if (lastLocation < currentDecodedLocation) {
+                    invalidLocations.add(currentDecodedLocation);
+                    // move ahead because we will try to traverse to the end from the lastLocation
+                    // after the loop
+                    lastLocation = disassembler.getNextInstructionPosition(lastLocation);
+                    break;
+                } else if (lastLocation == to) {
+                    // we fit
+                    locations.add(currentDecodedLocation);
                 }
+            } else {
+                if (lastLocation > currentDecodedLocation) {
+                    skipNext = true;
+                } else {
+                    locations.add(currentDecodedLocation);
+                    lastLocation = currentLocation.getValue();
+                }
+            }
+        }
+        invalidLocations.forEach(flowGraph::remove);
 
-                locations.add(nextLocation);
-            } catch (IndexOutOfBoundsException e) {
-                break;
+        if (lastLocation == -1) {
+            lastLocation = from;
+        }
+
+        if (lastLocation < to) {
+            int newTo = traverseTo(lastLocation, to, locations::add);
+            if (newTo == to) {
+                locations.add(newTo);
             }
         }
 

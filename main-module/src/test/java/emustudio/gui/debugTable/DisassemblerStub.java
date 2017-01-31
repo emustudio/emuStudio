@@ -46,6 +46,9 @@ class DisassemblerStub implements Disassembler {
 
     @Override
     public int getNextInstructionPosition(int position) throws IndexOutOfBoundsException {
+        if (nextPositions[position] == -1) {
+            throw new IndexOutOfBoundsException();
+        }
         return nextPositions[position];
     }
 }
