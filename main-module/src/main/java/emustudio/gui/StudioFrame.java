@@ -39,6 +39,7 @@ import emustudio.emulation.EmulationController;
 import emustudio.gui.debugTable.DebugTableImpl;
 import emustudio.gui.debugTable.DebugTableModel;
 import emustudio.gui.debugTable.PagesPanel;
+import emustudio.gui.debugTable.PaginatingDisassembler;
 import emustudio.gui.editor.EmuTextPane;
 import emustudio.gui.editor.EmuTextPane.UndoActionListener;
 import emustudio.gui.utils.ConstantSizeButton;
@@ -89,6 +90,7 @@ import java.util.concurrent.TimeUnit;
 public class StudioFrame extends JFrame {
     private final static Logger LOGGER = LoggerFactory.getLogger(StudioFrame.class);
     private final static int MIN_COMPILER_OUTPUT_HEIGHT = 200;
+    private final static int MIN_PERIPHERAL_PANEL_HEIGHT = 100;
     private final static double GOLDEN_RATIO = 1.6180339887;
 
     private final Computer computer;
@@ -204,6 +206,17 @@ public class StudioFrame extends JFrame {
                 } else {
                     splitSource.setDividerLocation(newHeight);
                 }
+
+                double rowHeight = debugTable.getRowHeight();
+                double additionalHeight = toolDebug.getHeight() + panelPages.getHeight() + 140;
+                double heightTogether = additionalHeight + rowHeight * PaginatingDisassembler.INSTRUCTIONS_PER_PAGE;
+
+                if (heightTogether + peripheralPanel.getHeight() > height) {
+                    heightTogether = Math.max(0, height - MIN_PERIPHERAL_PANEL_HEIGHT);
+                }
+
+                double dividerLocation = Math.min(1.0, heightTogether / (double)height);
+                splitPerDebug.setDividerLocation(dividerLocation);
             }
 
             @Override
@@ -387,9 +400,9 @@ public class StudioFrame extends JFrame {
         JPanel panelEmulator = new JPanel();
         JSplitPane splitLeftRight = new JSplitPane();
         statusWindow = new JPanel();
-        JSplitPane splitPerDebug = new JSplitPane();
+        splitPerDebug = new JSplitPane();
         JPanel debuggerPanel = new JPanel();
-        JToolBar toolDebug = new JToolBar();
+        toolDebug = new JToolBar();
         JButton btnReset = new JButton();
         btnBeginning = new JButton();
         btnBack = new JButton();
@@ -403,7 +416,7 @@ public class StudioFrame extends JFrame {
         btnMemory = new JButton();
         paneDebug = new JScrollPane();
 
-        JPanel peripheralPanel = new JPanel();
+        peripheralPanel = new JPanel();
         JScrollPane paneDevices = new JScrollPane();
         lstDevices = new JList<>();
         JButton btnShowGUI = new ConstantSizeButton();
@@ -435,7 +448,7 @@ public class StudioFrame extends JFrame {
         JMenu mnuHelp = new JMenu();
         JMenuItem mnuHelpAbout = new JMenuItem();
         JSeparator jSeparator7 = new JSeparator();
-        JPanel panelPages = PagesPanel.create(debugTable);
+        panelPages = PagesPanel.create(debugTable);
 
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("emuStudio");
@@ -595,7 +608,7 @@ public class StudioFrame extends JFrame {
         splitLeftRight.setRightComponent(statusWindow);
 
         splitPerDebug.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-        splitPerDebug.setDividerLocation(365);
+        splitPerDebug.setDividerLocation(500);
         splitPerDebug.setOrientation(JSplitPane.VERTICAL_SPLIT);
         splitPerDebug.setAutoscrolls(true);
         splitPerDebug.setContinuousLayout(true);
@@ -1242,4 +1255,8 @@ public class StudioFrame extends JFrame {
     private JButton btnCompile;
     private JMenuItem mnuProjectCompile;
     private JSplitPane splitSource;
+    private JSplitPane splitPerDebug;
+    private JToolBar toolDebug;
+    private JPanel panelPages;
+    private JPanel peripheralPanel;
 }

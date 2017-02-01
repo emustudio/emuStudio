@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class PaginatingDisassembler {
-    final static int INSTRUCTIONS_PER_PAGE = 2 * 15 + 1;
+    public final static int INSTRUCTIONS_PER_PAGE = 2 * 15 + 1;
     final static int CURRENT_INSTRUCTION = 6;
 
     private final CallFlow callFlow;
