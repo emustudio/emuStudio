@@ -168,6 +168,8 @@ public class StudioFrame extends JFrame {
         this.setLocationRelativeTo(null);
         this.setTitle("emuStudio [" + computer.getName() + "]");
         txtSource.grabFocus();
+
+        resizeComponents();
     }
 
     private void setStatusGUI() {
@@ -198,25 +200,7 @@ public class StudioFrame extends JFrame {
         splitSource.addComponentListener(new ComponentListener() {
             @Override
             public void componentResized(ComponentEvent e) {
-                int height = getHeight();
-                int newHeight = (int)(((double)height) / GOLDEN_RATIO);
-
-                if (height - newHeight < MIN_COMPILER_OUTPUT_HEIGHT) {
-                    splitSource.setDividerLocation(height - MIN_COMPILER_OUTPUT_HEIGHT);
-                } else {
-                    splitSource.setDividerLocation(newHeight);
-                }
-
-                double rowHeight = debugTable.getRowHeight();
-                double additionalHeight = toolDebug.getHeight() + panelPages.getHeight() + 140;
-                double heightTogether = additionalHeight + rowHeight * PaginatingDisassembler.INSTRUCTIONS_PER_PAGE;
-
-                if (heightTogether + peripheralPanel.getHeight() > height) {
-                    heightTogether = Math.max(0, height - MIN_PERIPHERAL_PANEL_HEIGHT);
-                }
-
-                double dividerLocation = Math.min(1.0, heightTogether / (double)height);
-                splitPerDebug.setDividerLocation(dividerLocation);
+                resizeComponents();
             }
 
             @Override
@@ -234,6 +218,29 @@ public class StudioFrame extends JFrame {
 
             }
         });
+    }
+
+    private void resizeComponents() {
+        int height = getHeight();
+        int newHeight = (int)(((double)height) / GOLDEN_RATIO);
+
+        if (height - newHeight < MIN_COMPILER_OUTPUT_HEIGHT) {
+            splitSource.setDividerLocation(height - MIN_COMPILER_OUTPUT_HEIGHT);
+        } else {
+            splitSource.setDividerLocation(newHeight);
+        }
+
+        double rowHeight = debugTable.getRowHeight();
+        double additionalHeight = toolDebug.getHeight() + panelPages.getHeight() + 140;
+        double heightTogether = additionalHeight + rowHeight * PaginatingDisassembler.INSTRUCTIONS_PER_PAGE;
+
+        if (heightTogether + MIN_PERIPHERAL_PANEL_HEIGHT > height) {
+            heightTogether = Math.max(0, height - MIN_PERIPHERAL_PANEL_HEIGHT);
+        }
+
+        double dividerLocation = Math.min(1.0, heightTogether / (double)height);
+
+        splitPerDebug.setDividerLocation(dividerLocation);
     }
 
     private void setupCPU() {
