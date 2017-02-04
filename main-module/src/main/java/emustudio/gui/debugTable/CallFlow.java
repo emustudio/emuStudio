@@ -23,6 +23,7 @@ import emulib.plugins.cpu.Disassembler;
 import net.jcip.annotations.ThreadSafe;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -36,24 +37,46 @@ class CallFlow {
 
     private final Disassembler disassembler;
     private final NavigableMap<Integer, Integer> flowGraph = new ConcurrentSkipListMap<>();
-    private int longestInstructionSize = 2;
+    private int longestInstructionSize = 1;
 
     CallFlow(Disassembler disassembler) {
         this.disassembler = Objects.requireNonNull(disassembler);
     }
     
     void updateCache(int currentLocation) {
-        flowGraph.put(currentLocation, disassembler.getNextInstructionPosition(currentLocation));
+        int nextPosition = disassembler.getNextInstructionPosition(currentLocation);
+        if (nextPosition - currentLocation > longestInstructionSize) {
+            longestInstructionSize = nextPosition - currentLocation;
+        }
+        flowGraph.put(currentLocation, nextPosition);
     }
 
-    private int traverseTo(int knownFrom, int to, Consumer<Integer> consumer) {
+    /**
+     * Will traverse instructions "knownFrom" (inclusive) up to "to" (exclusive).
+     *
+     * The "knownFrom" has to be <= "to".
+     *
+     * @param knownFrom start location, inclusive.
+     * @param to stop location, exclusive.
+     * @param consumer action which will be taken for each found instruction, including start location.
+     * @return the greatest instruction location (lastKnownFrom) satisfying lastKnownFrom < to
+     */
+    int traverseUpTo(int knownFrom, int to, Consumer<Integer> consumer) {
+        if (knownFrom > to) {
+            throw new IllegalArgumentException("from > to!");
+        }
+
         int lastKnownFrom;
         do {
             lastKnownFrom = knownFrom;
 
             consumer.accept(lastKnownFrom);
 
-            knownFrom = disassembler.getNextInstructionPosition(knownFrom);
+            try {
+                knownFrom = disassembler.getNextInstructionPosition(knownFrom);
+            } catch (IndexOutOfBoundsException e) {
+                break;
+            }
             if (knownFrom - lastKnownFrom > longestInstructionSize) {
                 longestInstructionSize = knownFrom - lastKnownFrom;
             }
@@ -61,17 +84,69 @@ class CallFlow {
         return (knownFrom == to) ? knownFrom : lastKnownFrom;
     }
 
+    void traverseForInstructionCount(int knownFrom, int count, Consumer<Integer> consumer) {
+        for (int i = 0; i <  count; i++) {
+            int lastKnownFrom = knownFrom;
+
+            try {
+                knownFrom = disassembler.getNextInstructionPosition(knownFrom);
+            } catch (IndexOutOfBoundsException e) {
+                break;
+            }
+            if (knownFrom - lastKnownFrom > longestInstructionSize) {
+                longestInstructionSize = knownFrom - lastKnownFrom;
+            }
+            if (lastKnownFrom == knownFrom) {
+                break;
+            }
+
+            consumer.accept(knownFrom);
+        }
+    }
+
+    void traverseBackForInstructionCount(int knownFrom, int count, Consumer<Integer> consumer) {
+        for (int i = 0; i < count; i++) {
+            Integer previousLocation = flowGraph.lowerKey(knownFrom);
+            if (previousLocation == null) {
+                break;
+            }
+
+            int lastKnownFrom = knownFrom;
+            try {
+                knownFrom = disassembler.getNextInstructionPosition(previousLocation);
+            } catch (IndexOutOfBoundsException e) {
+                break;
+            }
+            if (knownFrom - lastKnownFrom > longestInstructionSize) {
+                longestInstructionSize = knownFrom - lastKnownFrom;
+            }
+
+            consumer.accept(knownFrom);
+            knownFrom = previousLocation;
+        }
+    }
+
     private int findGreatestPreviousLocation(int unknownLocation, SortedMap<Integer, Integer> knownLocations) {
         if (knownLocations.isEmpty() || knownLocations.firstKey() > unknownLocation) {
             Integer previousKnownLocation = flowGraph.lowerKey(unknownLocation);
             if (previousKnownLocation != null) {
-                return traverseTo(previousKnownLocation, unknownLocation, i -> {});
+                return traverseUpTo(previousKnownLocation, unknownLocation, i -> {});
             }
         }
         return knownLocations.isEmpty() ? unknownLocation : knownLocations.firstKey();
     }
 
-    List<Integer> getLocationsInterval(int from, int to) {
+    List<Integer> getLocations(int from, int to) {
+        if (from > to) {
+            throw new IllegalArgumentException("From > to !");
+        }
+        if (from < 0) {
+            from = 0;
+        }
+        if (to < 0) {
+            return Collections.emptyList();
+        }
+
         SortedMap<Integer, Integer> knownInterval = flowGraph.subMap(from, true, to, true);
         List<Integer> locations = new ArrayList<>();
 
@@ -79,7 +154,7 @@ class CallFlow {
         if (!knownInterval.containsKey(from)) {
             from = findGreatestPreviousLocation(from, knownInterval);
             if (!knownInterval.isEmpty() && from < knownInterval.firstKey()) {
-                lastLocation = traverseTo(from, knownInterval.firstKey(), locations::add);
+                lastLocation = traverseUpTo(from, knownInterval.firstKey(), locations::add);
                 if (lastLocation != knownInterval.firstKey()) {
                     lastLocation = disassembler.getNextInstructionPosition(lastLocation);
                 }
@@ -100,7 +175,7 @@ class CallFlow {
             }
 
             if (lastLocation != -1 && lastLocation < currentDecodedLocation) {
-                lastLocation = traverseTo(lastLocation, currentDecodedLocation, locations::add);
+                lastLocation = traverseUpTo(lastLocation, currentDecodedLocation, locations::add);
 
                 if (lastLocation < currentDecodedLocation) {
                     invalidLocations.add(currentDecodedLocation);
@@ -128,7 +203,7 @@ class CallFlow {
         }
 
         if (lastLocation < to) {
-            int newTo = traverseTo(lastLocation, to, locations::add);
+            int newTo = traverseUpTo(lastLocation, to, locations::add);
             if (newTo == to) {
                 locations.add(newTo);
             }

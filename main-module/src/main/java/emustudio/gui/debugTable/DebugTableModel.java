@@ -47,7 +47,7 @@ public class DebugTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return PaginatingDisassembler.INSTRUCTIONS_PER_PAGE;
+        return PaginatingDisassembler.INSTR_PER_PAGE;
     }
 
     DebugColumn getColumnAt(int index) {
@@ -79,6 +79,7 @@ public class DebugTableModel extends AbstractTableModel {
             ida.pagePrevious();
             value--;
         }
+        fireTableDataChanged();
     }
 
     void firstPage() {
@@ -96,6 +97,7 @@ public class DebugTableModel extends AbstractTableModel {
             ida.pageNext();
             value--;
         }
+        fireTableDataChanged();
     }
 
     void lastPage() {
@@ -131,7 +133,7 @@ public class DebugTableModel extends AbstractTableModel {
     }
 
     boolean isRowAtCurrentInstruction(int rowIndex) {
-        return ida.isRowAtCurrentInstruction(rowIndex, cpu.getInstructionPosition());
+        return ida.isRowAtCurrentInstruction(rowIndex);
     }
 
     public void memoryChanged(int from, int to) {
@@ -162,7 +164,7 @@ public class DebugTableModel extends AbstractTableModel {
     }
 
     public int guessPreviousInstructionPosition() {
-        int location = ida.rowToLocation(cpu.getInstructionPosition(), PaginatingDisassembler.CURRENT_INSTRUCTION - 1);
+        int location = ida.rowToLocation(cpu.getInstructionPosition(), PaginatingDisassembler.CURRENT_INSTR_ROW - 1);
         if (location < 0) {
             return Math.max(0, cpu.getInstructionPosition() - 1);
         }

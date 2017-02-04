@@ -1,11 +1,15 @@
 package emustudio.gui.debugTable;
 
-import emulib.plugins.cpu.Disassembler;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static emustudio.gui.debugTable.MockHelper.makeCallFlow;
+import static emustudio.gui.debugTable.MockHelper.makeCallFlowStep;
+import static emustudio.gui.debugTable.MockHelper.makeDisassembler;
+import static emustudio.gui.debugTable.MockHelper.modify;
 import static org.junit.Assert.assertEquals;
 
 public class CallFlowTest {
@@ -15,10 +19,46 @@ public class CallFlowTest {
         new CallFlow(null);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testTraverseWithFromHigherThanUntilToThrows() throws Exception {
+        CallFlow callFlow = makeCallFlow(0, 6);
+        callFlow.traverseUpTo(6, 0, i -> {});
+    }
+
+    @Test
+    public void testTraverseToHigherLocationThanMemorySizeDoesNotThrow() throws Exception {
+        List<Integer> locations = new ArrayList<>();
+
+        CallFlow callFlow = makeCallFlow(0);
+        callFlow.traverseUpTo(0, 1000, locations::add);
+
+        for (int i = 0; i < 10; i++) {
+            assertEquals(i, locations.get(i).intValue());
+        }
+    }
+
+    @Test
+    public void testFlushCache() throws Exception {
+        CallFlow callFlow = makeCallFlow(0,1,2,3,4,5);
+
+        List<Integer> locations = callFlow.getLocations(0, 5);
+        assertEquals(Arrays.asList(0,1,2,3,4,5), locations);
+
+        callFlow.flushCache(0, 5);
+
+        locations = callFlow.getLocations(0, 5);
+        assertEquals(Arrays.asList(5), locations);
+    }
+
+    @Test
+    public void getDefaultLongestInstructionSizeIsOne() throws Exception {
+        assertEquals(1, makeCallFlow().getLongestInstructionSize());
+    }
+
     @Test
     public void testKnownFromButEmptyUntilTo() throws Exception {
         CallFlow callFlow = makeCallFlow(0);
-        List<Integer> locations = callFlow.getLocationsInterval(0, 9);
+        List<Integer> locations = callFlow.getLocations(0, 9);
 
         assertEquals(Arrays.asList(0,1,2,3,4,5,6,7,8,9), locations);
     }
@@ -26,7 +66,7 @@ public class CallFlowTest {
     @Test
     public void testEmptyFromButKnownTo() throws Exception {
         CallFlow callFlow = makeCallFlow(9);
-        List<Integer> locations = callFlow.getLocationsInterval(0, 9);
+        List<Integer> locations = callFlow.getLocations(0, 9);
 
         assertEquals(Arrays.asList(9), locations);
     }
@@ -34,7 +74,7 @@ public class CallFlowTest {
     @Test
     public void testPreviousFromEmptyUntilTo() throws Exception {
         CallFlow callFlow = makeCallFlow(0);
-        List<Integer> locations = callFlow.getLocationsInterval(5,9);
+        List<Integer> locations = callFlow.getLocations(5,9);
 
         assertEquals(Arrays.asList(5,6,7,8,9), locations);
     }
@@ -42,7 +82,7 @@ public class CallFlowTest {
     @Test
     public void testHigherFromEmptyUntilTo() throws Exception {
         CallFlow callFlow = makeCallFlow(3);
-        List<Integer> locations = callFlow.getLocationsInterval(0, 5);
+        List<Integer> locations = callFlow.getLocations(0, 5);
 
         assertEquals(Arrays.asList(3,4,5), locations);
     }
@@ -50,7 +90,7 @@ public class CallFlowTest {
     @Test
     public void testKnownFromPreviousUntilTo() throws Exception {
         CallFlow callFlow = makeCallFlow(3, 5);
-        List<Integer> locations = callFlow.getLocationsInterval(3, 9);
+        List<Integer> locations = callFlow.getLocations(3, 9);
 
         assertEquals(Arrays.asList(3,4,5,6,7,8,9), locations);
     }
@@ -58,7 +98,7 @@ public class CallFlowTest {
     @Test
     public void testEmptyFromPreviousUntilTo() throws Exception {
         CallFlow callFlow = makeCallFlow(5);
-        List<Integer> locations = callFlow.getLocationsInterval(3, 9);
+        List<Integer> locations = callFlow.getLocations(3, 9);
 
         assertEquals(Arrays.asList(5,6,7,8,9), locations);
     }
@@ -66,7 +106,7 @@ public class CallFlowTest {
     @Test
     public void testKnownFromUnfitTo() throws Exception {
         CallFlow callFlow = makeCallFlowStep(0, 2);
-        List<Integer> locations = callFlow.getLocationsInterval(0, 3);
+        List<Integer> locations = callFlow.getLocations(0, 3);
 
         assertEquals(Arrays.asList(0,2), locations);
     }
@@ -74,7 +114,7 @@ public class CallFlowTest {
     @Test
     public void testUnfitBeforeKnownFromKnownTo() throws Exception {
         CallFlow callFlow = makeCallFlowStep(2, 6);
-        List<Integer> locations = callFlow.getLocationsInterval(1, 6);
+        List<Integer> locations = callFlow.getLocations(1, 6);
 
         assertEquals(Arrays.asList(2,4,6), locations);
     }
@@ -82,7 +122,7 @@ public class CallFlowTest {
     @Test
     public void testUnfitAfterKnownFromKnownTo() throws Exception {
         CallFlow callFlow = makeCallFlowStep(2, 6);
-        List<Integer> locations = callFlow.getLocationsInterval(3, 6);
+        List<Integer> locations = callFlow.getLocations(3, 6);
 
         assertEquals(Arrays.asList(2,4,6), locations);
     }
@@ -90,7 +130,7 @@ public class CallFlowTest {
     @Test
     public void testUnfitPreviousKnownFromUnfitPreviousKnownTo() throws Exception {
         CallFlow callFlow = makeCallFlowStep(2, 6);
-        List<Integer> locations = callFlow.getLocationsInterval(1, 5);
+        List<Integer> locations = callFlow.getLocations(1, 5);
 
         assertEquals(Arrays.asList(2, 4), locations);
     }
@@ -98,7 +138,7 @@ public class CallFlowTest {
     @Test
     public void testUnfitAfterKnownFromUnfitPreviousKnownTo() throws Exception {
         CallFlow callFlow = makeCallFlowStep(0, 6);
-        List<Integer> locations = callFlow.getLocationsInterval(1, 5);
+        List<Integer> locations = callFlow.getLocations(1, 5);
 
         assertEquals(Arrays.asList(0, 2, 4), locations);
     }
@@ -106,7 +146,7 @@ public class CallFlowTest {
     @Test
     public void testUnfitPreviousKnownFromUnfitAfterKnownTo() throws Exception {
         CallFlow callFlow = makeCallFlowStep(2, 6);
-        List<Integer> locations = callFlow.getLocationsInterval(1, 7);
+        List<Integer> locations = callFlow.getLocations(1, 7);
 
         assertEquals(Arrays.asList(2,4,6), locations);
     }
@@ -114,7 +154,7 @@ public class CallFlowTest {
     @Test
     public void testUnfitAfterKnownFromUnfitAfterKnownTo() throws Exception {
         CallFlow callFlow = makeCallFlowStep(0, 6);
-        List<Integer> locations = callFlow.getLocationsInterval(1, 7);
+        List<Integer> locations = callFlow.getLocations(1, 7);
 
         assertEquals(Arrays.asList(0,2,4,6), locations);
     }
@@ -122,7 +162,7 @@ public class CallFlowTest {
     @Test
     public void testUnfitEmptyKnownUnfitEmptyTo() throws Exception {
         CallFlow callFlow = makeCallFlowStep();
-        List<Integer> locations = callFlow.getLocationsInterval(0, 5);
+        List<Integer> locations = callFlow.getLocations(0, 5);
 
         assertEquals(Arrays.asList(0,2,4), locations);
     }
@@ -133,7 +173,7 @@ public class CallFlowTest {
         CallFlow callFlow = makeCallFlow(disasm, 2, 4);
         modify(callFlow, disasm, 2, 6);
 
-        List<Integer> locations = callFlow.getLocationsInterval(2, 8);
+        List<Integer> locations = callFlow.getLocations(2, 8);
 
         assertEquals(Arrays.asList(2,6,7,8), locations);
     }
@@ -144,7 +184,7 @@ public class CallFlowTest {
         CallFlow callFlow = makeCallFlow(disasm, 2, 4);
         modify(callFlow, disasm, 2, 6);
 
-        List<Integer> locations = callFlow.getLocationsInterval(3, 8);
+        List<Integer> locations = callFlow.getLocations(3, 8);
 
         assertEquals(Arrays.asList(2,6,7,8), locations);
     }
@@ -155,7 +195,7 @@ public class CallFlowTest {
         CallFlow callFlow = makeCallFlow(disasm, 2, 4);
         modify(callFlow, disasm, 2, 6);
 
-        List<Integer> locations = callFlow.getLocationsInterval(1, 8);
+        List<Integer> locations = callFlow.getLocations(1, 8);
 
         assertEquals(Arrays.asList(2,6,7,8), locations);
     }
@@ -166,7 +206,7 @@ public class CallFlowTest {
         CallFlow callFlow = makeCallFlow(disasm, 2);
         modify(callFlow, disasm, 2, 6 );
 
-        List<Integer> locations = callFlow.getLocationsInterval(2, 8);
+        List<Integer> locations = callFlow.getLocations(2, 8);
 
         assertEquals(Arrays.asList(2,6,7,8), locations);
     }
@@ -177,7 +217,7 @@ public class CallFlowTest {
         CallFlow callFlow = makeCallFlow(disasm, 2, 4, 5, 8);
         modify(callFlow, disasm, 2, 6);
 
-        List<Integer> locations = callFlow.getLocationsInterval(2, 8);
+        List<Integer> locations = callFlow.getLocations(2, 8);
 
         assertEquals(Arrays.asList(2,6,7,8), locations);
     }
@@ -188,37 +228,41 @@ public class CallFlowTest {
         disasm.set(1,10);
         CallFlow callFlow = makeCallFlow(disasm, 0, 6);
 
-        List<Integer> locations = callFlow.getLocationsInterval(0, 8);
+        List<Integer> locations = callFlow.getLocations(0, 8);
 
         assertEquals(Arrays.asList(0,1), locations);
     }
 
-    private CallFlow makeCallFlow(Disassembler disassembler, int... updateLocations) {
-        CallFlow callFlow = new CallFlow(disassembler);
-        for (int knownLocation : updateLocations) {
-            callFlow.updateCache(knownLocation);
-        }
-        return callFlow;
+    @Test
+    public void testNegativeFrom() throws Exception {
+        CallFlow callFlow = makeCallFlow(0);
+
+        List<Integer> locations = callFlow.getLocations(-10,0);
+
+        assertEquals(Arrays.asList(0), locations);
     }
 
-    private CallFlow makeCallFlow(int... updateLocations) {
-        return makeCallFlow(makeDisassembler(), updateLocations);
+    @Test
+    public void testNegativeFromAndNegativeTo() throws Exception {
+        CallFlow callFlow = makeCallFlow(0);
+
+        List<Integer> locations = callFlow.getLocations(-10,-5);
+
+        assertEquals(Arrays.asList(), locations);
     }
 
-    private CallFlow makeCallFlowStep(int... updateLocations) {
-        return makeCallFlow(makeDisassemblerStep(), updateLocations);
+    @Test(expected = IllegalArgumentException.class)
+    public void testFromIsHigherThanToBothNegative() throws Exception {
+        CallFlow callFlow = makeCallFlow(0);
+
+        callFlow.getLocations(-5,-10);
     }
 
-    private DisassemblerStub makeDisassembler() {
-        return new DisassemblerStub(10,1,2,3,4,5,6,7,8,9,10);
+    @Test(expected = IllegalArgumentException.class)
+    public void testFromIsHigherThanTo() throws Exception {
+        CallFlow callFlow = makeCallFlow(0);
+
+        callFlow.getLocations(10, 5);
     }
 
-    private DisassemblerStub makeDisassemblerStep() {
-        return new DisassemblerStub(10, 2, -1, 4, -1, 6, -1, 8, -1, 10, -1);
-    }
-
-    private void modify(CallFlow callFlow, DisassemblerStub disasm, int location, int value) {
-        disasm.set(location, value);
-        callFlow.updateCache(location);
-    }
 }

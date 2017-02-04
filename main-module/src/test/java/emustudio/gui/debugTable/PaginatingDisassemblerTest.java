@@ -20,60 +20,23 @@ package emustudio.gui.debugTable;
 
 import org.junit.Test;
 
-import java.util.Collections;
-
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.replay;
+import static emustudio.gui.debugTable.MockHelper.CURRENT_INSTR;
+import static emustudio.gui.debugTable.MockHelper.HALF_PAGE_MAX_BYTES;
+import static emustudio.gui.debugTable.MockHelper.LONGEST_INSTR;
+import static emustudio.gui.debugTable.MockHelper.MEMORY_SIZE;
+import static emustudio.gui.debugTable.MockHelper.makeDisassembler;
+import static emustudio.gui.debugTable.MockHelper.makeDisassemblerWithFixedSizedInstructions;
+import static emustudio.gui.debugTable.MockHelper.mockCallFlow;
+import static emustudio.gui.debugTable.PaginatingDisassembler.CURRENT_INSTR_ROW;
+import static emustudio.gui.debugTable.PaginatingDisassembler.INSTR_PER_HALF_PAGE;
+import static emustudio.gui.debugTable.PaginatingDisassembler.INSTR_PER_PAGE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 public class PaginatingDisassemblerTest {
-    private final static int MEMORY_SIZE = 0x10000;
-    public static final int[] LONG_PROGRAM = new int[]{
-            1,
-            3, 3,
-            5, 5,
-            6,
-            9, 9, 9,
-            10,
-            11,
-            12,
-            13,
-            14,
-            15,
-            16,
-            17,
-            18,
-            19,
-            20,
-            21,
-            22,
-            23,
-            24,
-            25,
-            26,
-            27,
-            28,
-            29,
-            30,
-            31,
-            32,
-            33,
-            34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66
-    };
-    public static final int[] SHORT_PROGRAM = new int[]{
-            1,
-            3, 3,
-            5, 5,
-            6,
-            9, 9, 9,
-            10
-    };
-
-    private DisassemblerStub makeDisassembler(int... instructions) {
-        return new DisassemblerStub(MEMORY_SIZE, instructions);
-    }
+    private CallFlow callFlow;
 
     @Test(expected = NullPointerException.class)
     public void testCreateInstanceNullDisassemblerThrows() throws Exception {
@@ -82,312 +45,347 @@ public class PaginatingDisassemblerTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateInstanceNegativeMemorySizeThrows() throws Exception {
-        new PaginatingDisassembler(createMock(CallFlow.class), -1);
+        new PaginatingDisassembler(mock(CallFlow.class), -1);
     }
 
     @Test
-    public void testCurrentPageInstructionsAboveCurrentLocationAreNotDecoded() throws Exception {
-        CallFlow callFlow = createMock(CallFlow.class);
-        callFlow.updateCache(0);
-        expectLastCall().anyTimes();
-        expect(callFlow.getLongestInstructionSize()).andReturn(2).anyTimes();
-        expect(callFlow.getLocationsInterval(0, 50)).andReturn(Collections.emptyList()).anyTimes();
-        replay(callFlow);
+    public void testPageZeroCurrentInstruction() throws Exception {
+        callFlow = mock(CallFlow.class);
 
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
 
-        PaginatingDisassembler ida = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
-
-        for (int i = 0; i < PaginatingDisassembler.CURRENT_INSTRUCTION; i++) {
-            assertEquals(-1, ida. rowToLocation(0, i));
-        }
+        assertEquals(50, asm.rowToLocation(50, CURRENT_INSTR_ROW));
+        verify(callFlow).updateCache(50);
     }
 
-//    @Test
-//    public void testCurrentPageForCurrentLocationRowToLocationReturnsCurrentLocation() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(SHORT_PROGRAM), MEMORY_SIZE);
-//
-//        assertEquals(0, ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION));
-//    }
-//
-//    @Test
-//    public void testCurrentPageInstructionsBelowAreDecodedCorrectly() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(SHORT_PROGRAM), MEMORY_SIZE);
-//
-//        assertEquals(1, ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION + 1));
-//        assertEquals(3, ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION + 2));
-//        assertEquals(5, ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION + 3));
-//        assertEquals(6, ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION + 4));
-//        assertEquals(9, ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION + 5));
-//        assertEquals(10, ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION + 6));
-//    }
-//
-//    @Test
-//    public void testCurrentPageInstructionsBelowAreDecodedCorrectlyAfterAdvance() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(SHORT_PROGRAM), MEMORY_SIZE);
-//
-//        // advance for updating cache
-//        ida.rowToLocation(0, 0);
-//        ida.rowToLocation(1, 0);
-//        ida.rowToLocation(3, 0);
-//        ida.rowToLocation(5, 0);
-//        ida.rowToLocation(6, 0);
-//        ida.rowToLocation(9, 0);
-//
-//        assertEquals(3, ida.rowToLocation(1, CallFlow.CURRENT_INSTRUCTION + 1));
-//        assertEquals(5, ida.rowToLocation(1, CallFlow.CURRENT_INSTRUCTION + 2));
-//        assertEquals(6, ida.rowToLocation(1, CallFlow.CURRENT_INSTRUCTION + 3));
-//        assertEquals(9, ida.rowToLocation(1, CallFlow.CURRENT_INSTRUCTION + 4));
-//
-//        assertEquals(5, ida.rowToLocation(3, CallFlow.CURRENT_INSTRUCTION + 1));
-//        assertEquals(6, ida.rowToLocation(3, CallFlow.CURRENT_INSTRUCTION + 2));
-//        assertEquals(9, ida.rowToLocation(3, CallFlow.CURRENT_INSTRUCTION + 3));
-//
-//        assertEquals(6, ida.rowToLocation(5, CallFlow.CURRENT_INSTRUCTION + 1));
-//        assertEquals(9, ida.rowToLocation(5, CallFlow.CURRENT_INSTRUCTION + 2));
-//
-//        assertEquals(9, ida.rowToLocation(6, CallFlow.CURRENT_INSTRUCTION + 1));
-//    }
-//
-//
-//    @Test
-//    public void testCurrentPageInstructionsAboveAreDecodedCorrectlyAfterAdvance() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(SHORT_PROGRAM), MEMORY_SIZE);
-//
-//        // advance for updating cache
-//        ida.rowToLocation(0, 0);
-//        ida.rowToLocation(1, 0);
-//        ida.rowToLocation(3, 0);
-//        ida.rowToLocation(5, 0);
-//        ida.rowToLocation(6, 0);
-//        ida.rowToLocation(9, 0);
-//
-//        assertEquals(0, ida.rowToLocation(1, CallFlow.CURRENT_INSTRUCTION - 1));
-//        assertEquals(-1, ida.rowToLocation(1, CallFlow.CURRENT_INSTRUCTION - 2));
-//
-//        assertEquals(1, ida.rowToLocation(3, CallFlow.CURRENT_INSTRUCTION - 1));
-//        assertEquals(0, ida.rowToLocation(3, CallFlow.CURRENT_INSTRUCTION - 2));
-//
-//        assertEquals(3, ida.rowToLocation(5, CallFlow.CURRENT_INSTRUCTION - 1));
-//        assertEquals(1, ida.rowToLocation(5, CallFlow.CURRENT_INSTRUCTION - 2));
-//        assertEquals(0, ida.rowToLocation(5, CallFlow.CURRENT_INSTRUCTION - 3));
-//
-//        assertEquals(5, ida.rowToLocation(6, CallFlow.CURRENT_INSTRUCTION - 1));
-//        assertEquals(3, ida.rowToLocation(6, CallFlow.CURRENT_INSTRUCTION - 2));
-//        assertEquals(1, ida.rowToLocation(6, CallFlow.CURRENT_INSTRUCTION - 3));
-//        assertEquals(0, ida.rowToLocation(6, CallFlow.CURRENT_INSTRUCTION - 4));
-//
-//        assertEquals(6, ida.rowToLocation(9, CallFlow.CURRENT_INSTRUCTION - 1));
-//        assertEquals(5, ida.rowToLocation(9, CallFlow.CURRENT_INSTRUCTION - 2));
-//        assertEquals(3, ida.rowToLocation(9, CallFlow.CURRENT_INSTRUCTION - 3));
-//        assertEquals(1, ida.rowToLocation(9, CallFlow.CURRENT_INSTRUCTION - 4));
-//    }
-//
-//    @Test
-//    public void testCurrentPageAfterJumpThenStepThenJumpBackInstructionsBelowAreDecodedCorrectly() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(SHORT_PROGRAM), MEMORY_SIZE);
-//
-//        // advance for updating cache
-//        ida.rowToLocation(0, 0);
-//        ida.rowToLocation(9, 0); // jump
-//        ida.rowToLocation(0, 0); // jump back
-//
-//        assertEquals(3, ida.rowToLocation(1, CallFlow.CURRENT_INSTRUCTION + 1));
-//        assertEquals(5, ida.rowToLocation(1, CallFlow.CURRENT_INSTRUCTION + 2));
-//        assertEquals(6, ida.rowToLocation(1, CallFlow.CURRENT_INSTRUCTION + 3));
-//        assertEquals(9, ida.rowToLocation(1, CallFlow.CURRENT_INSTRUCTION + 4));
-//
-//        assertEquals(5, ida.rowToLocation(3, CallFlow.CURRENT_INSTRUCTION + 1));
-//        assertEquals(6, ida.rowToLocation(3, CallFlow.CURRENT_INSTRUCTION + 2));
-//        assertEquals(9, ida.rowToLocation(3, CallFlow.CURRENT_INSTRUCTION + 3));
-//
-//        assertEquals(6, ida.rowToLocation(5, CallFlow.CURRENT_INSTRUCTION + 1));
-//        assertEquals(9, ida.rowToLocation(5, CallFlow.CURRENT_INSTRUCTION + 2));
-//
-//        assertEquals(9, ida.rowToLocation(6, CallFlow.CURRENT_INSTRUCTION + 1));
-//    }
-//
-//    @Test
-//    public void testCurrentPageAfterJumpThenStepThenJumpBackInstructionsAboveAreDecodedCorrectly() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(SHORT_PROGRAM), MEMORY_SIZE);
-//
-//        // advance for updating cache
-//        ida.rowToLocation(0, 0);
-//        ida.rowToLocation(1, 0);
-//        ida.rowToLocation(9, 0); // jump
-//        ida.rowToLocation(1, 0); // jump back
-//
-//        assertEquals(0, ida.rowToLocation(1, CallFlow.CURRENT_INSTRUCTION - 1));
-//        assertEquals(-1, ida.rowToLocation(1, CallFlow.CURRENT_INSTRUCTION - 2));
-//    }
-//
-//    @Test
-//    public void testNextPageThenJumpToTheFirstInstructionUpdatesPage() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(LONG_PROGRAM), MEMORY_SIZE);
-//
-//        // advance for updating cache
-//        ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION);
-//        ida.pageNext();
-//        ida.rowToLocation(ida.bytesPerPage(), CallFlow.CURRENT_INSTRUCTION);
-//        ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION); // jump back
-//
-//        assertEquals(ida.bytesPerPage(), ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION));
-//    }
-//
-//    @Test
-//    public void testPreviousPageThenJumpToTheFirstInstructionUpdatesPage() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(LONG_PROGRAM), MEMORY_SIZE);
-//
-//        // advance for updating cache
-//        ida.rowToLocation(24, CallFlow.CURRENT_INSTRUCTION);
-//        ida.pagePrevious();
-//        int location = ida.rowToLocation(25, CallFlow.CURRENT_INSTRUCTION); // jump back
-//
-//        assertEquals(location, ida.rowToLocation(25, CallFlow.CURRENT_INSTRUCTION));
-//    }
-//
-//    @Test
-//    public void testCurrentPageStepThenChangeFirstInstructionInMemoryAreDecodedCorrectly() throws Exception {
-//        DisassemblerStub dis = makeDisassembler(SHORT_PROGRAM);
-//        CallFlow ida = new CallFlow(dis, MEMORY_SIZE);
-//
-//        ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION);
-//        ida.rowToLocation(1, CallFlow.CURRENT_INSTRUCTION + 1);
-//
-//        dis.set(0, 4);
-//        dis.set(1, 4);
-//        dis.set(2, 4);
-//
-//        ida.flushCache(0,3);
-//
-//        assertEquals(3, ida.rowToLocation(3, CallFlow.CURRENT_INSTRUCTION));
-//        assertEquals(-1, ida.rowToLocation(3, CallFlow.CURRENT_INSTRUCTION - 1));
-//        assertEquals(-1, ida.rowToLocation(3, CallFlow.CURRENT_INSTRUCTION - 2));
-//    }
-//
-//    @Test
-//    public void testCurrentPageStepThenChangeFirstInstructionInMemoryDoesNotChangeCurrentLocation() throws Exception {
-//        DisassemblerStub dis = makeDisassembler(SHORT_PROGRAM);
-//        CallFlow ida = new CallFlow(dis, MEMORY_SIZE);
-//
-//        ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION);
-//        ida.rowToLocation(1, CallFlow.CURRENT_INSTRUCTION + 1);
-//
-//        dis.set(0, 4);
-//        dis.set(1, 4);
-//        dis.set(2, 4);
-//
-//        ida.flushCache(0,3);
-//        ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION); // jump to updated instruction
-//
-//        assertEquals(3, ida.rowToLocation(3, CallFlow.CURRENT_INSTRUCTION));
-//        assertEquals(0, ida.rowToLocation(3, CallFlow.CURRENT_INSTRUCTION - 1));
-//        assertEquals(-1, ida.rowToLocation(3, CallFlow.CURRENT_INSTRUCTION - 2));
-//    }
-//
-//    @Test
-//    public void testFirstPageReturnsZeroAsTheFirstRowLocation() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(SHORT_PROGRAM), MEMORY_SIZE);
-//
-//        ida.pageFirst();
-//        assertEquals(0, ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION));
-//    }
-//
-//    @Test
-//    public void testFirstPageThenStepThenJumpThenJumpBackReturnsZeroAsTheFirstRowLocation() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(LONG_PROGRAM), MEMORY_SIZE);
-//
-//        ida.rowToLocation(0, 0); // step
-//        ida.pageFirst();
-//
-//        ida.rowToLocation(32, 0); // jump
-//        ida.rowToLocation(0, 0); // jump back
-//
-//        assertEquals(0, ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION));
-//    }
-//
-//    @Test
-//    public void testLastPageReturnsMemSizeMinusOneAsTheFirstRowLocationAndItIsAlsoTheLastInstruction() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(LONG_PROGRAM), MEMORY_SIZE);
-//
-//        ida.pageLast();
-//
-//        assertEquals(MEMORY_SIZE - 1, ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION));
-//    }
-//
-//    @Test
-//    public void testLastPageThenJumpThenJumpBackReturnsMemSizeMinusOneAsTheFirstRowLocationAndItIsAlsoTheLastInstruction() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(LONG_PROGRAM), MEMORY_SIZE);
-//
-//        ida.pageLast();
-//
-//        ida.rowToLocation(33, CallFlow.CURRENT_INSTRUCTION); // jump somewhere
-//        ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION); // jump back
-//
-//        assertEquals(MEMORY_SIZE - 1, ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION));
-//    }
-//
-//    @Test
-//    public void testNextPageBeforeCallsToRowToLocationWorks() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(LONG_PROGRAM), MEMORY_SIZE);
-//
-//        ida.pageNext();
-//
-//        assertEquals(ida.bytesPerPage(), ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION));
-//    }
-//
-//    @Test
-//    public void testAfterFewStepsFirstPagePointsAtTheSameThingsAsCurrentPage() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(LONG_PROGRAM), MEMORY_SIZE);
-//
-//        ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION);
-//        ida.rowToLocation(1, CallFlow.CURRENT_INSTRUCTION);
-//        ida.rowToLocation(3, CallFlow.CURRENT_INSTRUCTION);
-//        ida.rowToLocation(5, CallFlow.CURRENT_INSTRUCTION);
-//        ida.rowToLocation(6, CallFlow.CURRENT_INSTRUCTION);
-//        int location = ida.rowToLocation(9, CallFlow.CURRENT_INSTRUCTION);
-//
-//        ida.pageFirst();
-//
-//        assertEquals(location, ida.rowToLocation(9, CallFlow.CURRENT_INSTRUCTION));
-//    }
-//
-//    @Test
-//    public void testCurrentInstructionIsStillShownWhenCurrentLocationIsBelowBytesPerPageAndPreviousPageIsInvoked() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(SHORT_PROGRAM), MEMORY_SIZE);
-//
-//        ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION);
-//        ida.pagePrevious();
-//
-//        assertTrue(ida.isRowAtCurrentInstruction(CallFlow.CURRENT_INSTRUCTION, 0));
-//    }
-//
-//    @Test
-//    public void testCurrentInstructionIsNotShownWhenCurrentLocationIsBelowBytesPerPageAndPreviousPageIsInvoked() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(LONG_PROGRAM), MEMORY_SIZE);
-//
-//        ida.rowToLocation(ida.bytesPerPage() + 1, CallFlow.CURRENT_INSTRUCTION);
-//        ida.pagePrevious();
-//
-//        assertFalse(ida.isRowAtCurrentInstruction(CallFlow.CURRENT_INSTRUCTION, ida.bytesPerPage() + 1));
-//    }
-//
-//    @Test
-//    public void testCurrentInstructionIsShownWhenMemorySizeIsLessThanPageAheadAndNextPageIsInvoked() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(SHORT_PROGRAM), SHORT_PROGRAM.length);
-//
-//        ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION);
-//        ida.pageNext();
-//
-//        assertTrue(ida.isRowAtCurrentInstruction(CallFlow.CURRENT_INSTRUCTION, 0));
-//    }
-//
-//    @Test
-//    public void testCurrentInstructionIsNotShownWhenMemorySizeIsMoreThanPageAheadAndNextPageIsInvoked() throws Exception {
-//        CallFlow ida = new CallFlow(makeDisassembler(LONG_PROGRAM), MEMORY_SIZE);
-//
-//        ida.rowToLocation(0, CallFlow.CURRENT_INSTRUCTION);
-//        ida.pageNext();
-//
-//        assertFalse(ida.isRowAtCurrentInstruction(CallFlow.CURRENT_INSTRUCTION, 0));
-//    }
+    @Test
+    public void testPageZeroOneBelowCurrentInstructionIsUnknown() throws Exception {
+        int page0curr = CURRENT_INSTR;
+        int page0min = page0curr - HALF_PAGE_MAX_BYTES;
+
+        callFlow = mockCallFlow(
+            page0min,
+            page0curr,
+            CURRENT_INSTR
+        );
+
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
+
+        assertEquals(
+            -1,
+            asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW - 1)
+        );
+    }
+
+    @Test
+    public void testPageZeroOneAboveCurrentInstructionIsUnknown() throws Exception {
+        int page0curr = CURRENT_INSTR;
+        int page0max = page0curr + HALF_PAGE_MAX_BYTES;
+
+        callFlow = mockCallFlow(
+            page0curr,
+            page0max,
+            CURRENT_INSTR
+        );
+
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
+
+        assertEquals(
+            -1,
+            asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW + 1)
+        );
+    }
+
+    @Test
+    public void testPageZeroOneBelowCurrentInstructionIsKnown() throws Exception {
+        PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
+            CURRENT_INSTR, 0, 1, true
+        );
+
+        assertEquals(
+            CURRENT_INSTR - 1,
+            asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW - 1)
+        );
+    }
+
+    @Test
+    public void testPageZeroFirstRow() throws Exception {
+        PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
+            CURRENT_INSTR, 0, LONGEST_INSTR, true
+        );
+
+        int page0min = CURRENT_INSTR - HALF_PAGE_MAX_BYTES;
+        assertEquals(
+            page0min,
+            asm.rowToLocation(CURRENT_INSTR, 0)
+        );
+    }
+
+    @Test
+    public void testPageZeroLastRow() throws Exception {
+        PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
+            CURRENT_INSTR, 0, LONGEST_INSTR, true
+        );
+
+        int page0max = CURRENT_INSTR + HALF_PAGE_MAX_BYTES;
+        assertEquals(
+            page0max,
+            asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1)
+        );
+    }
+
+    @Test
+    public void testPageOneFirstRow() throws Exception {
+        PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
+            CURRENT_INSTR, 1, LONGEST_INSTR, true
+        );
+
+        int page1min = CURRENT_INSTR + HALF_PAGE_MAX_BYTES;
+        assertEquals(
+            page1min, // last instruction from previous page is present here
+            asm.rowToLocation(CURRENT_INSTR,0)
+        );
+    }
+
+    @Test
+    public void testPageOneLastRow() throws Exception {
+        PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
+            CURRENT_INSTR, 1, LONGEST_INSTR, true
+        );
+
+        int page1max = CURRENT_INSTR + LONGEST_INSTR * (INSTR_PER_PAGE - 1) + HALF_PAGE_MAX_BYTES;
+        assertEquals(
+            page1max, // last instruction from previous page is present here
+            asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1)
+        );
+    }
+
+    @Test
+    public void testPageTwoFirstRow() throws Exception {
+        PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
+            CURRENT_INSTR, 2, LONGEST_INSTR, true
+        );
+
+        int page2min = CURRENT_INSTR + LONGEST_INSTR * (INSTR_PER_PAGE - 1) + HALF_PAGE_MAX_BYTES;
+        assertEquals(
+            page2min,
+            asm.rowToLocation(CURRENT_INSTR,0)
+        );
+    }
+
+    @Test
+    public void testPageTwoLastRow() throws Exception {
+        PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
+            CURRENT_INSTR, 2, LONGEST_INSTR, true
+        );
+
+        int page2max = CURRENT_INSTR + 2 * LONGEST_INSTR * (INSTR_PER_PAGE - 1) + HALF_PAGE_MAX_BYTES;
+        assertEquals(
+            page2max,
+            asm.rowToLocation(CURRENT_INSTR,INSTR_PER_PAGE - 1)
+        );
+    }
+
+    @Test
+    public void testPageOneFirstRowWhenCurrentInstructionIs0AndInstructionSizeIs4() throws Exception {
+        PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
+            0, 1, 4, true
+        );
+
+        int page1min = INSTR_PER_HALF_PAGE * 4;
+        assertEquals(
+            page1min,
+            asm.rowToLocation(0, 0)
+        );
+    }
+
+    @Test
+    public void testCurrentLocationDifferenceBetweenPagesIsCorrect() throws Exception {
+        // pages do overlap by 1 instruction:
+        //   pagePrevMax = pageNextMin
+
+        PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
+            CURRENT_INSTR, 2, LONGEST_INSTR, true
+        );
+
+        int page2curr = asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW);
+        asm.pagePrevious();
+        int page1curr = asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW);
+        asm.pagePrevious();
+        int page0curr = asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW);
+
+        assertEquals((INSTR_PER_PAGE - 1) * LONGEST_INSTR, page2curr - page1curr);
+        assertEquals((INSTR_PER_PAGE - 1) * LONGEST_INSTR, page1curr - page0curr);
+    }
+
+    @Test
+    public void testPageMinusOneLastRowNotEnoughInstructions() throws Exception {
+        PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
+            50, -1, LONGEST_INSTR, false
+        );
+
+        int pageM1max = 50 - LONGEST_INSTR * INSTR_PER_HALF_PAGE;
+        int missingInstructions = 50 - LONGEST_INSTR * (INSTR_PER_PAGE - 1);
+
+        assertTrue(missingInstructions < 0);
+        assertEquals(
+            pageM1max - missingInstructions, // prefer number of instructions shown must fit
+            asm.rowToLocation(50, INSTR_PER_PAGE - 1)
+        );
+    }
+
+    @Test
+    public void testPageMinusOneFirstRowNotEnoughInstructions() throws Exception {
+        CallFlow callFlow = new CallFlow(makeDisassembler(MEMORY_SIZE, LONGEST_INSTR));
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
+
+        asm.rowToLocation(CURRENT_INSTR, 0);
+        asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW);
+        asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1);
+
+        assertEquals(
+            -1, // prefer number of instructions shown must fit
+            asm.rowToLocation(50, 0)
+        );
+    }
+
+    @Test
+    public void testPageMinusOneCurrentRowNotEnoughInstructions() throws Exception {
+        PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
+            50, -1, LONGEST_INSTR, false
+        );
+
+        assertEquals(
+            0,
+            asm.rowToLocation(50, CURRENT_INSTR_ROW)
+        );
+    }
+
+    @Test
+    public void testPageZeroInstructionStepped() throws Exception {
+        CallFlow callFlow = new CallFlow(makeDisassembler(MEMORY_SIZE, 1));
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
+
+        assertEquals(-1, asm.rowToLocation(CURRENT_INSTR, 0));
+        assertEquals(CURRENT_INSTR, asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW));
+        assertEquals(
+            CURRENT_INSTR + INSTR_PER_HALF_PAGE, asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1)
+        );
+
+        assertEquals(CURRENT_INSTR, asm.rowToLocation(CURRENT_INSTR + 1, CURRENT_INSTR_ROW - 1));
+        assertEquals(CURRENT_INSTR + 1, asm.rowToLocation(CURRENT_INSTR + 1, CURRENT_INSTR_ROW));
+        assertEquals(
+            CURRENT_INSTR + INSTR_PER_HALF_PAGE + 1,
+            asm.rowToLocation(CURRENT_INSTR + 1, INSTR_PER_PAGE - 1)
+        );
+    }
+
+    @Test
+    public void testPageOneInstructionStepped() throws Exception {
+        CallFlow callFlow = new CallFlow(makeDisassembler(MEMORY_SIZE, 1));
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
+
+        asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1);
+        asm.pageNext();
+
+        assertEquals(CURRENT_INSTR + INSTR_PER_HALF_PAGE, asm.rowToLocation(CURRENT_INSTR, 0));
+        assertEquals(CURRENT_INSTR + INSTR_PER_PAGE - 1, asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW));
+        assertEquals(
+            CURRENT_INSTR + INSTR_PER_PAGE - 1 + INSTR_PER_HALF_PAGE,
+            asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1)
+        );
+
+        // instruction step
+
+        assertEquals(
+            CURRENT_INSTR + INSTR_PER_HALF_PAGE + 1,
+            asm.rowToLocation(CURRENT_INSTR + 1, 0)
+        );
+        assertEquals(
+            CURRENT_INSTR + INSTR_PER_PAGE,
+            asm.rowToLocation(CURRENT_INSTR + 1, CURRENT_INSTR_ROW)
+        );
+        assertEquals(
+            CURRENT_INSTR + INSTR_PER_PAGE + INSTR_PER_HALF_PAGE,
+            asm.rowToLocation(CURRENT_INSTR + 1, INSTR_PER_PAGE - 1)
+        );
+    }
+
+    @Test
+    public void testPageMinusOneInstructionStepped() throws Exception {
+        CallFlow callFlow = new CallFlow(makeDisassembler(MEMORY_SIZE, 1));
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
+
+        callFlow.updateCache(0);
+
+        asm.rowToLocation(CURRENT_INSTR, 0);
+        asm.pagePrevious();
+
+        assertEquals(CURRENT_INSTR - INSTR_PER_PAGE + 1 - INSTR_PER_HALF_PAGE, asm.rowToLocation(CURRENT_INSTR, 0));
+        assertEquals(CURRENT_INSTR - INSTR_PER_PAGE + 1, asm.rowToLocation(CURRENT_INSTR, CURRENT_INSTR_ROW));
+        assertEquals(
+            CURRENT_INSTR - INSTR_PER_HALF_PAGE,
+            asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1)
+        );
+
+        // instruction step
+        assertEquals(
+            CURRENT_INSTR - INSTR_PER_PAGE + 2 - INSTR_PER_HALF_PAGE,
+            asm.rowToLocation(CURRENT_INSTR + 1, 0)
+        );
+        assertEquals(
+            CURRENT_INSTR - INSTR_PER_PAGE + 2,
+            asm.rowToLocation(CURRENT_INSTR + 1, CURRENT_INSTR_ROW)
+        );
+        assertEquals(
+            CURRENT_INSTR - INSTR_PER_HALF_PAGE + 1,
+            asm.rowToLocation(CURRENT_INSTR + 1, INSTR_PER_PAGE - 1)
+        );
+    }
+
+    @Test
+    public void testPageMinusOneMinLocationIsNotKnownThenAnotherPreviousPageIsIgnored() throws Exception {
+        CallFlow callFlow = new CallFlow(makeDisassembler(MEMORY_SIZE, 1));
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, MEMORY_SIZE);
+
+        callFlow.updateCache(0);
+
+        asm.rowToLocation(CURRENT_INSTR, 0);
+
+        asm.pagePrevious();
+        asm.pagePrevious();
+
+        assertEquals(-1, asm.getPageIndex());
+    }
+
+    @Test(timeout = 1000)
+    public void testLastPageThenAnotherPageNextIsIgnored() throws Exception {
+        CallFlow callFlow = new CallFlow(makeDisassembler(5 * CURRENT_INSTR, 1));
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, 5 * CURRENT_INSTR);
+
+        asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1);
+        asm.pageLast();
+        int pageIndex = asm.getPageIndex();
+
+        assertTrue(pageIndex > 0);
+
+        asm.pageNext();
+
+        assertEquals(pageIndex, asm.getPageIndex());
+    }
+
+    @Test(timeout = 1000)
+    public void testLastPageThenFirstPageReturnsBack() throws Exception {
+        CallFlow callFlow = new CallFlow(makeDisassembler(5 * CURRENT_INSTR, 1));
+        PaginatingDisassembler asm = new PaginatingDisassembler(callFlow, 5 * CURRENT_INSTR);
+
+        asm.rowToLocation(CURRENT_INSTR, INSTR_PER_PAGE - 1);
+        asm.pageLast();
+
+        assertTrue(asm.getPageIndex() > 0);
+
+        asm.pageFirst();
+
+        assertEquals(0, asm.getPageIndex());
+    }
 }

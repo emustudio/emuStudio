@@ -71,5 +71,9 @@
       <groupId>args4j</groupId>
       <artifactId>args4j</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+    </dependency>
   </dependencies>
 </project>

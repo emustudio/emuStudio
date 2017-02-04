@@ -232,7 +232,7 @@ public class StudioFrame extends JFrame {
 
         double rowHeight = debugTable.getRowHeight();
         double additionalHeight = toolDebug.getHeight() + panelPages.getHeight() + 140;
-        double heightTogether = additionalHeight + rowHeight * PaginatingDisassembler.INSTRUCTIONS_PER_PAGE;
+        double heightTogether = additionalHeight + rowHeight * PaginatingDisassembler.INSTR_PER_PAGE;
 
         if (heightTogether + MIN_PERIPHERAL_PANEL_HEIGHT > height) {
             heightTogether = Math.max(0, height - MIN_PERIPHERAL_PANEL_HEIGHT);
@@ -277,13 +277,13 @@ public class StudioFrame extends JFrame {
             btnRunTime.setEnabled(false);
             btnRun.setEnabled(false);
             btnStep.setEnabled(false);
+            debugTableModel.currentPage();
         }
         btnBack.setEnabled(true);
         btnBeginning.setEnabled(true);
         paneDebug.setEnabled(true);
         debugTable.setEnabled(true);
         debugTable.setVisible(true);
-        debugTableModel.currentPage();
         debugTable.refresh();
 
         memoryContext.addMemoryListener(memoryListener);
