@@ -8,8 +8,6 @@ import emulib.runtime.ContextPool;
 import emulib.runtime.exceptions.ContextNotFoundException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
-import net.sf.emustudio.intel8080.gui.DecoderImpl;
-import net.sf.emustudio.intel8080.gui.DisassemblerImpl;
 
 import java.util.Objects;
 
@@ -46,7 +44,7 @@ public abstract class DefaultInitializer<Engine extends CpuEngine> {
             }
 
             // create disassembler and debug columns
-            this.disassembler = new DisassemblerImpl(memory, new DecoderImpl(memory));
+            this.disassembler = createDisassembler(memory);
             this.engine = createEmulatorEngine(memory);
 
             String setting = settings.readSetting(pluginId, PRINT_CODE);
@@ -66,10 +64,6 @@ public abstract class DefaultInitializer<Engine extends CpuEngine> {
         }
     }
 
-    protected abstract Engine createEmulatorEngine(MemoryContext memory);
-
-    protected abstract DispatchListener createInstructionPrinter(Disassembler disassembler, Engine engine, boolean useCache);
-
     public Disassembler getDisassembler() {
         return disassembler;
     }
@@ -81,5 +75,11 @@ public abstract class DefaultInitializer<Engine extends CpuEngine> {
     public boolean shouldDumpInstructions() {
         return dumpInstructions;
     }
-    
+
+    protected abstract Engine createEmulatorEngine(MemoryContext memory);
+
+    protected abstract DispatchListener createInstructionPrinter(Disassembler disassembler, Engine engine, boolean useCache);
+
+    protected abstract Disassembler createDisassembler(MemoryContext<Short> memory);
+
 }

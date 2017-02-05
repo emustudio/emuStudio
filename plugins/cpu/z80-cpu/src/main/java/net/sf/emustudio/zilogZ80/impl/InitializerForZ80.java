@@ -8,6 +8,8 @@ import emulib.runtime.ContextPool;
 import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.intel8080.api.DefaultInitializer;
 import net.sf.emustudio.intel8080.api.DispatchListener;
+import net.sf.emustudio.zilogZ80.gui.DecoderImpl;
+import net.sf.emustudio.zilogZ80.gui.DisassemblerImpl;
 
 import java.util.Objects;
 
@@ -28,5 +30,10 @@ public class InitializerForZ80 extends DefaultInitializer<EmulatorEngine> {
     @Override
     protected DispatchListener createInstructionPrinter(Disassembler disassembler, EmulatorEngine engine, boolean useCache) {
         return new InstructionPrinter(disassembler, engine, useCache);
+    }
+
+    @Override
+    protected Disassembler createDisassembler(MemoryContext<Short> memory) {
+        return new DisassemblerImpl(memory, new DecoderImpl(memory));
     }
 }
