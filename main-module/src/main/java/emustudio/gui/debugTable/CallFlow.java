@@ -138,7 +138,7 @@ class CallFlow {
 
     List<Integer> getLocations(int from, int to) {
         if (from > to) {
-            throw new IllegalArgumentException("From > to !");
+            throw new IllegalArgumentException("From (" + from + ") > to (" + to + ") !");
         }
         if (from < 0) {
             from = 0;

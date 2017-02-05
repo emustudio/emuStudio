@@ -346,6 +346,10 @@ public class PaginatingDisassembler {
         }
 
         int realUpTo = Math.min(lastMemoryIndex, currentLocation + half);
+        if (currentLocation > realUpTo) {
+            return -1;
+        }
+
         List<Integer> halfPage = callFlow.getLocations(currentLocation, realUpTo);
         int loadedHalfSize = halfPage.size();
 

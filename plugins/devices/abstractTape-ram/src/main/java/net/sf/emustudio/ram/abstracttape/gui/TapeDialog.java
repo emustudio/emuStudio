@@ -42,7 +42,7 @@ public class TapeDialog extends JDialog {
         lstTape.setCellRenderer(new TapeCellRenderer());
         this.tapeContext.setListener(() -> {
             listModel.fireChange();
-            lstTape.ensureIndexIsVisible(tapeContext.getPos());
+            lstTape.ensureIndexIsVisible(tapeContext.getTapePosition());
         });
         String s = settings.readSetting(pluginID, "alwaysOnTop");
         if (s == null || !s.toLowerCase().equals("true")) {
@@ -74,11 +74,11 @@ public class TapeDialog extends JDialog {
 
         @Override
         public int getSize() {
-            return tapeContext.getSize();
+            return tapeContext.getTapeSize();
         }
 
         public void fireChange() {
-            this.fireContentsChanged(this, 0, tapeContext.getSize() - 1);
+            this.fireContentsChanged(this, 0, tapeContext.getTapeSize() - 1);
         }
     }
 
@@ -98,7 +98,7 @@ public class TapeDialog extends JDialog {
         public Component getListCellRendererComponent(JList list,
                 Object value, int index, boolean isSelected,
                 boolean cellHasFocus) {
-            if (tapeContext.getPosVisible() && (tapeContext.getPos() == index)) {
+            if (tapeContext.getPosVisible() && (tapeContext.getTapePosition() == index)) {
                 this.setBackground(Color.BLUE);
                 this.setForeground(Color.WHITE);
             } else {

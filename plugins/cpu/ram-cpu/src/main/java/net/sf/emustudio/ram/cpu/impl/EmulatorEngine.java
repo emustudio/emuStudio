@@ -73,6 +73,8 @@ public class EmulatorEngine {
     public void reset(int pos) {
         IP = pos;
         loadInput(context.getInput());
+        context.getStorage().clear();
+        context.getOutput().clear();
     }
 
     // called from RAMContext after Input tape attachement

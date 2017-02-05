@@ -84,6 +84,12 @@ public interface AbstractTapeContext extends DeviceContext<String> {
     boolean getDisplayRowNumbers();
 
     void setDisplayRowNumbers(boolean displayRowNumbers);
+    
+    int getTapePosition();
+    
+    int getTapeSize();
+    
+    boolean isEmpty();
 
     @Override
     default Class<String> getDataType() {

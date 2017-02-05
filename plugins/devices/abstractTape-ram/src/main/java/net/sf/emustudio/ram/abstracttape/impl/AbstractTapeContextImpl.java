@@ -19,10 +19,6 @@
  */
 package net.sf.emustudio.ram.abstracttape.impl;
 
-import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -30,6 +26,9 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
+import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tape used by abstract machines.
@@ -199,10 +198,6 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         return editable;
     }
 
-    public int getPos() {
-        return currentPosition;
-    }
-
     /**
      * Used by GUI, too - TapeDialog.
      * @param pos
@@ -254,10 +249,21 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         return showPos;
     }
 
-    public int getSize() {
+    @Override
+    public int getTapeSize() {
         return tape.size();
     }
 
+    @Override
+    public int getTapePosition() {
+        return currentPosition;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return tape.isEmpty();
+    }
+    
     @Override
     public String read() {
         if (currentPosition >= tape.size() || (currentPosition < 0)) {

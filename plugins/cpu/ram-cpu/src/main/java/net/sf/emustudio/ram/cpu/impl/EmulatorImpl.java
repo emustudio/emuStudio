@@ -34,6 +34,12 @@ import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.MissingResourceException;
+import java.util.Objects;
+import java.util.ResourceBundle;
+import javax.swing.*;
 import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
 import net.sf.emustudio.ram.cpu.gui.LabelDebugColumn;
 import net.sf.emustudio.ram.cpu.gui.RAMDisassembler;
@@ -42,13 +48,6 @@ import net.sf.emustudio.ram.memory.RAMInstruction;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.swing.*;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.MissingResourceException;
-import java.util.Objects;
-import java.util.ResourceBundle;
 
 @PluginType(
         type = PLUGIN_TYPE.CPU,
@@ -117,7 +116,7 @@ public class EmulatorImpl extends AbstractCPU {
             }
             debugTableInitialized = true;
         }
-        return new RAMStatusPanel(this, memory);
+        return new RAMStatusPanel(this, context.getInput(), context.getOutput());
     }
 
     @Override
