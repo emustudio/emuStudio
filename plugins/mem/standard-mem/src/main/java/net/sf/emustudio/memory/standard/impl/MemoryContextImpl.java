@@ -54,6 +54,10 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
         this.bankCommon = bankCommon;
         this.banksCount = banks;
         mem = new short[banks][size];
+
+        for (int i = 0; i < size; i++) {
+            mem[0][i] = 0xFF;
+        }
     }
 
     @Override

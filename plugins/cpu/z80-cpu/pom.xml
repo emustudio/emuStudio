@@ -19,7 +19,7 @@
     <finalName>z80-cpu</finalName>
     <plugins>
       <plugin>
-        <groupId>edigen</groupId>
+        <groupId>com.github.sulir</groupId>
         <artifactId>edigen-maven-plugin</artifactId>
         <configuration>
           <decoderName>net.sf.emustudio.zilogZ80.gui.DecoderImpl</decoderName>

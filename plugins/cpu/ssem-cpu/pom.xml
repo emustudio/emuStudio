@@ -40,7 +40,7 @@
         <artifactId>maven-dependency-plugin</artifactId>
       </plugin>
       <plugin>
-        <groupId>edigen</groupId>
+        <groupId>com.github.sulir</groupId>
         <artifactId>edigen-maven-plugin</artifactId>
         <configuration>
           <decoderName>net.sf.emustudio.ssem.DecoderImpl</decoderName>
