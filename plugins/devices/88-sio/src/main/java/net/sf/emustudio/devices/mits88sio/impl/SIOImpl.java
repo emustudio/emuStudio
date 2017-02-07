@@ -145,14 +145,16 @@ public class SIOImpl extends AbstractDevice implements SIOSettings.ChangedObserv
     }
 
     private int getAnotherPortNumber(String portName, int defaultPortNumber) {
-        String newPort = (String) JOptionPane.showInputDialog(null, portName
-                + " cannot be attached to CPU, please enter another one: ",
+        if (!sioSettings.isNoGUI()) {
+            String newPort = (String) JOptionPane.showInputDialog(null, portName
+                    + " cannot be attached to CPU, please enter another one: ",
                 getTitle(), JOptionPane.ERROR_MESSAGE, null, null, defaultPortNumber);
-        try {
-            return Integer.decode(newPort);
-        } catch (NumberFormatException e) {
-            LOGGER.error("Could not convert " + portName + " number to integer", e);
-            StaticDialogs.showErrorMessage("Invalid port number", getTitle());
+            try {
+                return Integer.decode(newPort);
+            } catch (NumberFormatException e) {
+                LOGGER.error("Could not convert " + portName + " number to integer", e);
+                StaticDialogs.showErrorMessage("Invalid port number", getTitle());
+            }
         }
         return defaultPortNumber;
     }
