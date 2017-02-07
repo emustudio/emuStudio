@@ -32,7 +32,7 @@ The features include:
 In order to mount DISK images to the device, please go to the Settings window footnoteref:[peripheral,"peripheral devices"
 window in the Emulator panel in emuStudio]:
 
-image::images/88-disk-01.png[Settings window of 88-DISK]
+image::{imagepath}/88-disk-01.png[Settings window of 88-DISK]
 
 - *A*: Select drive (A - P)
 - *B*: Choosing the image file
@@ -58,7 +58,7 @@ For more information, see section <<DISK-88_PROGRAMMING>>. By default, the ports
 
 These numbers can be changed in the Settings window, tab "CPU Ports":
 
-image::images/88-disk-02.png[Setting CPU ports]
+image::{imagepath}/88-disk-02.png[Setting CPU ports]
 
 === Configuration file
 
@@ -69,7 +69,7 @@ be accessed.
 The following table shows all the possible settings of MITS 88-DISK plug-in:
 
 .Settings of MITS 88-DISK
-[width="60%",frame="topbot",options="header,footer"]
+[frame="topbot",options="header,footer",role="table table-striped table-condensed"]
 |==========================================================================================
 |Name           | Default value | Valid values         | Description
 |`port1CPU`     | 0x08          | > 0 and < 256        | Number of Port 1
@@ -108,7 +108,7 @@ The controller communicates with CPU using three I/O ports at addresses (by defa
 table shows the CPU ports and how they are used.
 
 .Summary of CPU ports usage
-[width="60%",frame="topbot",options="header,footer"]
+[frame="topbot",options="header,footer",role="table table-condensed"]
 |================================================================
 |Port     | Address | Input                      | Output
 |1        | 0x08    | Disk and controller status | Select disk

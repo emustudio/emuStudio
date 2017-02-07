@@ -167,7 +167,6 @@ cursor. The following table shows the key-to-coordinate translation table.
 |`o`   | 79
 |===================================================================================
 
-
 === ADM-3A Settings
 
 It is possible to configure the terminal either from GUI or manually modifying configuration settings. In the case
@@ -176,7 +175,7 @@ of manual file modification, emuStudio must be restarted (for more information, 
 The "settings" window footnoteref:[peripheral] is
 shown in the following image:
 
-image::images/adm3a-settings.png[Settings window of ADM-3A terminal]
+image::{imagepath}/adm3a-settings.png[Settings window of ADM-3A terminal]
 
 - *A*: File for reading input (when redirected)
 - *B*: File for writing output (when redirected)

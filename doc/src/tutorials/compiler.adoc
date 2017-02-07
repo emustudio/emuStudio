@@ -36,7 +36,7 @@ of Manchester Mark 1 which led to Ferranti Mark 1, the world's first commerciall
 It it very simple computer, which can run only 7 instructions. The instructions table
 follows (modified from https://en.wikipedia.org/wiki/Manchester_Small-Scale_Experimental_Machine#Programming[Wikipedia]):
 
-[cols=">2m,<m,<5%m,<20%",frame="topbot",options="header,footer"]
+[frame="topbot",options="header,footer",role="table table-striped table-condensed"]
 |===================================================================
 |Binary code |Mnemonic        |Action            |Operation
 |000         |JMP S           | S(L) -> CI       |Jump to the instruction at the address obtained from the specified memory
@@ -60,12 +60,12 @@ was in SSEM represented as `110`.
 
 The instruction format is as follows:
 
-[width="50%",cols=">2s,<m,<m,<m,<m,<m,<m,<m,<m,<m,<m,<m",frame="topbot",options="footer"]
 .SSEM Instruction Format
+[frame="topbot",options="footer",role="table table-striped table-condensed"]
 |===================================================================
-| Bit:  | 00  | 01 | 02 | 03 | 04 | ... | 13 | 14 | 15 | ... | 31
-| Use:  | L   | L  | L  | L  | L  |  0  | I  | I  | I  | 0   | 0
-| Value:| 2^0 |    |    |    |    |     |    |    |    |     | 2^31
+| *Bit:*  | 00  | 01 | 02 | 03 | 04 | ... | 13 | 14 | 15 | ... | 31
+| *Use:*  | L   | L  | L  | L  | L  |  0  | I  | I  | I  | 0   | 0
+| *Value:*| 2^0 |    |    |    |    |     |    |    |    |     | 2^31
 |===================================================================
 
 where bits `LLLLL` denote a "line", which is basically the memory address - index of a memory cell. It can be understood
@@ -133,9 +133,9 @@ Word `NUM`, `BNUM` and `BINS` keywords belong to "preprocessor" category, but nu
 Only one-line comments will be supported, but of various forms. Generally, comment will be everything starting with
 some prefix until the end of the line. Comment prefixes are:
 
-- double-slash (`//`)
-- semi-colon (`;`)
-- double-dash (`--`)
+- Double-slash (`//`)
+- Semi-colon (`;`)
+- Double-dash (`--`)
 
 The token category of comments is "comments".
 
@@ -183,7 +183,7 @@ The POM file of the project looks as follows:
 [source,xml]
 .`pom.xml`
 ----
-include::../../../plugins/compilers/as-ssem/pom.xml[]
+include::{sourcedir}/plugins/compilers/as-ssem/pom.xml[]
 ----
 
 === Lexer and parser
@@ -210,7 +210,7 @@ The content of the specfile is as follows:
 [source,flex]
 .`src/main/jflex/ssem.jflex`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/jflex/lexer.jflex[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/jflex/lexer.jflex[lines=20..-1]
 ----
 
 As you can notice, the specfile uses special class named `TokenImpl`. We must implement this class by ourselves. It
@@ -236,7 +236,7 @@ The content of the `net.sf.emustudio.ssem.assembler.TokenImpl` class is as follo
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/TokenImpl.java[lines=20..-1]
 ----
 
 [[COMPILER_GRAMMAR]]
@@ -264,7 +264,7 @@ The grammar specfile of SSEM assembler parser follows:
 [source]
 .`src/main/cup/parser.cup`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/cup/parser.cup[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/cup/parser.cup[lines=20..-1]
 ----
 
 The right sides - code snippets wrapped between `{:` and `:}` - is Java code which will be executed when particular rule
@@ -307,7 +307,7 @@ interface first:
 [source, java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTnode.java[lines=20..-1]
 ----
 
 This interface will be useful when we will traverse the tree. For tree traversal it is very well-suited the
@@ -323,7 +323,7 @@ We can now define the visitor interface as follows:
 [source, java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/ASTvisitor.java[lines=20..-1]
 ----
 
 The methods of the visitor will be implemented by some visitor, for example a code generator. However, we need to
@@ -337,7 +337,7 @@ either `Instruction` or `Constant`. Notice how we implemented traversing of the 
 [source, java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Program.java[lines=20..-1]
 ----
 
 The important note is that how the statements are stored. They are in fact the children of the program node. For this
@@ -367,7 +367,7 @@ Here's the source code:
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Instruction.java[lines=20..-1]
 ----
 
 Note that the constructor is private. The implication is that it is just impossible to create some invalid `Instruction`
@@ -383,7 +383,7 @@ Another kind of statement is a constant. The constant is just a number, and the 
 
 [source,java]
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Constant.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/tree/Constant.java[lines=20..-1]
 ----
 
 Comparing `Constant` instances is based on comparing the numbers they represent.
@@ -421,13 +421,13 @@ The content of the test classes are as follows:
 [source,java]
 .`src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/LexerTest.java[lines=20..-1]
 ----
 
 [source,java]
 .`src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/ParserTest.java[lines=20..-1]
 ----
 
 NOTE: The tests of parser are based on comparing `Instruction` and `Constant` instances with JUnit's `assertEquals()`
@@ -573,7 +573,7 @@ similar fashion. The code is as follows:
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/CodeGenerator.java[lines=20..-1]
 ----
 
 There are several things to notice:
@@ -581,7 +581,7 @@ There are several things to notice:
 - Output code is written into class `SeekableOutputStream`. Wi will define this class later.
 - `CodeGenerator` is a visitor, which has separate methods for code generation of `Constant` and `Instruction`.
 - `CodeGenerator` can be "closed" - so it handles closing of the writer (our `SeekableOutputStream`).
-- generated code is binary
+- Generated code is binary
 
 The code generation is not that complex. There is some complexity caused by a fact, that the binary representations
 are reversed, when comparing to our present-time PCs/laptops.
@@ -601,7 +601,7 @@ actually an abstract class, extending `OutputStream`. The reason is easier testi
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/SeekableOutputStream.java[lines=20..-1]
 ----
 
 and here's the implementation:
@@ -609,7 +609,7 @@ and here's the implementation:
 [source,java]
 .`src/main/java/net/sf/emustudio/ssem/assembler/MemoryAndFileOutput.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/MemoryAndFileOutput.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/MemoryAndFileOutput.java[lines=20..-1]
 ----
 
 The "seeking" capability is required, because, as you remember, it's possible to write something like this:
@@ -628,7 +628,7 @@ As being our practice, we must test it.
 [source,java]
 .`src/test/java/net/sf/emustudio/ssem/assembler/CodeGeneratorTest.java`
 ----
-include::../../../plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/CodeGeneratorTest.java[lines=20..-1]
+include::{sourcedir}/plugins/compilers/as-ssem/src/test/java/net/sf/emustudio/ssem/assembler/CodeGeneratorTest.java[lines=20..-1]
 ----
 
 === Finalizing

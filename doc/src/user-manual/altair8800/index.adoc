@@ -1,8 +1,14 @@
+---
+layout: null
+---
+
 [[emulator_mits_8800]]
 = Emulator of MITS Altair8800
 
-:toc:
 :sectnums:
+:toc:
+:sourcedir: /home/vbmacher/projects/emuStudio/
+:imagepath: /docuser/mits_altair_8800/images/
 
 include::introduction.adoc[]
 

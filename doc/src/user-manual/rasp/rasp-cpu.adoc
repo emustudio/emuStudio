@@ -15,9 +15,9 @@ RASP CPU plugin is already included in emuStudio distribution, in location `cpu/
 RASP CPU emulator supports the following instructions:
 
 .RASP instructions
-[width="70%"]
+[frame="topbot",options="header,footer",role="table table-striped table-condensed"]
 |===
-|Operation code|Instruction mnemonic code|Semantics 
+|Operation code|Instruction mnemonic code|Semantics
 
 |`1`
 |`READ i`
@@ -88,7 +88,7 @@ RASP CPU emulator supports the following instructions:
 |set instruction pointer (`IP`) to the address pointed to by the label `l` if value of the accumulator (register R0) is greater than zero (`R0 > 0`)
 
 |`18`
-|HALT
+|`HALT`
 |finish program execution
 
 |===
@@ -103,4 +103,4 @@ Also, information about the current RUNNING STATUS is displayed.
 
 Following figure shows a screenshot:
 
-image::images/statusPanel.png[RASP CPU status panel]
+image::{imagepath}/statusPanel.png[RASP CPU status panel]

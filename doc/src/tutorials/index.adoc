@@ -1,9 +1,14 @@
+---
+layout: null
+---
+
 [[plugins-vademecum]]
 = Developing emuStudio Plugins
 
-:toc:
 :sectnums:
-
+:toc:
+:sourcedir: /home/vbmacher/projects/emuStudio/
+:imagepath: /docdevel/emulator_tutorial/images/
 
 include::introduction.adoc[]
 

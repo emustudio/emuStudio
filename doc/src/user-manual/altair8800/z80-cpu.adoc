@@ -176,6 +176,7 @@ output:
 8687 | PC=041b |            halt |        76  || regs=04 b1 00 b8 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=34 | flags= ZH N  | SP=ffff | PC=041c
 ----
 
+
 The dump format consists of lines, each line represents one instruction execution. The line is separated by `|` chars,
 splitting it into so-called sections. Sections before the sequence `||` represent state *before* instruction execution,
 and sections after it represent the state *after* instruction execution. Particular sections are described in the

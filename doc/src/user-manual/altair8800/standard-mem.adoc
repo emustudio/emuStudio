@@ -29,7 +29,7 @@ is possible to develop an emulator which can benefit from it.
 To open the memory GUI (graphical user interface), click at the right-most icon in the debug toolbar, on the Emulator panel.
 The window is shown at the following image:
 
-image::images/standard-mem.png[Standard operating memory]
+image::{imagepath}/standard-mem.png[Standard operating memory]
 
 - *A*: Deletes all memory content.
 - *B*: Refreshes memory view, if you have a feeling that the shown content is not updated
@@ -56,7 +56,7 @@ is finished, user can press ENTER key to confirm it, or ESC key to discard the e
 
 Settings window can be opened by clicking on "settings" icon in the main GUI window:
 
-image::images/standard-mem-settings.png[Memory settings]
+image::{imagepath}/standard-mem-settings.png[Memory settings]
 
 - *A*: Settings for memory bank-switching
 - *B*: Settings for ROM areas
@@ -167,6 +167,6 @@ The memory context has the following content:
 
 [source,java]
 ----
-include::../../../../plugins/mem/standard-mem/src/main/java/net/sf/emustudio/memory/standard/StandardMemoryContext.java[lines=20..-1]
+include::{sourcedir}/plugins/mem/standard-mem/src/main/java/net/sf/emustudio/memory/standard/StandardMemoryContext.java[lines=20..-1]
 ----
 

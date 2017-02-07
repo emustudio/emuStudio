@@ -8,7 +8,7 @@ and software interrupts.
 
 The following image shows MITS 88-SIO-2 board.
 
-image::images/88-sio-2.png[Serial board MITS 88-SIO-2]
+image::{imagepath}/88-sio-2.png[Serial board MITS 88-SIO-2]
 
 NOTE: Original manual of MITS 88-SIO serial board can be downloaded at
       http://maben.homeip.net/static/s100/altair/cards/Altair%2088-SIO%20serial%20IO.pdf[this link].
@@ -33,7 +33,7 @@ in other computers, too. By default, the ports used by 88-SIO are:
 
 These numbers can be changed in the Settings window, tab "CPU Ports":
 
-image::images/88-sio-ports.png[Setting CPU ports]
+image::{imagepath}/88-sio-ports.png[Setting CPU ports]
 
 === Connecting devices
 
@@ -62,7 +62,7 @@ be accessed.
 The following table shows all the possible settings of MITS 88-SIO plug-in:
 
 .Settings of MITS 88-SIO
-[width="60%",frame="topbot",options="header,footer"]
+[frame="topbot",options="header,footer",role="table table-condensed"]
 |==========================================================================================
 |Name               | Default value | Valid values         | Description
 |`statusPortNumber` | 0x10          | > 0 and < 256        | Number of Status Port
@@ -81,7 +81,7 @@ The whole communication between the board (and attached device) and CPU is contr
 Status port and Data port. The following table shows the ports and how they are used.
 
 .Summary of CPU ports usage
-[width="60%",frame="topbot",options="header,footer"]
+[frame="topbot",options="header,footer",role="table table-condensed"]
 |===========================================================================
 |Port     | Address | Input                      | Output
 |1        | 0x10    | Read board status          | Only 'empties' buffer

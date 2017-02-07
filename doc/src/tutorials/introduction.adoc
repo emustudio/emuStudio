@@ -22,6 +22,7 @@ During programming, there are some commonly used technologies, which are mandato
 technologies", which are listed in the following table:
 
 .Core technologies used in emuStudio
+[frame="topbot",options="header,footer",role="table table-striped table-condensed"]
 |===
 |Technology | Description | Relevance | Link
 
@@ -294,11 +295,11 @@ the emuStudio behavior is undefined; it can possibly corrupt the emulation proce
 
 The list of some categories of behavioral contracts include:
 
-- order of operations being called by emuStudio (e.g. order of loading / initialization of plug-ins)
-- rules of allowed / not allowed method calls in particular contexts
-- specification of signature of constructors
-- threading concerns
-- other
+- Order of operations being called by emuStudio (e.g. order of loading / initialization of plug-ins)
+- Rules of allowed / not allowed method calls in particular contexts
+- Specification of signature of constructors
+- Threading concerns
+- Other
 
 The behavioral contracts are described in particular Javadoc for emuLib and all modules to which it may concern.
 The Javadoc contains special note which starts with capital `CONTRACT:`. The contract is mainly in the form of
@@ -309,10 +310,10 @@ explanation which other methods should not be called, or how particular thing sh
 Each plug-in must have exactly one "main class" in Java, which will be annotated with `emulib.annotations.PluginType`
 annotation. This annotation provides several information, like:
 
-- title of the plug-in
-- copyright notice and description of the plug-in
-- what type of the plug-in is (compiler, CPU, memory, device),
-- what version of emuLib it supports
+- Title of the plug-in
+- Copyright notice and description of the plug-in
+- What type of the plug-in is (compiler, CPU, memory, device),
+- What version of emuLib it supports
 
 The class must also inherit from `emulib.plugins.Plugin` interface (not necessarily directly).
 
@@ -367,6 +368,7 @@ abbreviation of the real world "model" optionally preceded with the manufacturer
 Then plug-in type follows, as it is shown in the following table:
 
 .Naming conventions for plug-in jar files
+[frame="topbot",options="header,footer",role="table table-striped table-condensed"]
 |===
 |Plug-in type |Naming convention |Example
 
@@ -391,8 +393,8 @@ Then plug-in type follows, as it is shown in the following table:
 Plug-in names can contain digits, small and capital letters (regex: `[a-zA-Z0-9]+`). Capital letters shall be used only
 for the following reasons:
 
-- word separation (e.g. zilogZ80),
-- acronyms (e.g. RAM, standing for "Random Access Machine")
+- Word separation (e.g. zilogZ80),
+- Acronyms (e.g. RAM, standing for "Random Access Machine")
 
 NOTE: Using naming conventions for development of official plug-ins is a must; for custom projects it is highly
       recommended. emuStudio does not use the naming convention for searching for plugins.

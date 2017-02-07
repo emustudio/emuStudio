@@ -9,7 +9,7 @@ As Wikipedia states:
 [quote, Wikipedia, Altair 8800]
 The Altair is widely recognized as the spark that ignited the microcomputer revolution.
 
-image::images/altair8800.png[MITS Altair8800 with LSI ADM-3A terminal and floppy drive, 100%]
+image::{imagepath}/altair8800.png[MITS Altair8800 with LSI ADM-3A terminal and floppy drive, 100%]
 
 Altair 8800 is one of the oldest commercially available computers overall. Ed Roberts (founder and CEO of MITS
 corporation) was selling these machines by mail directly from the factory.
@@ -24,16 +24,18 @@ Basic configuration of MITS Altair 8800 was:
 
 [role="table table-striped table-condensed"]
 |======================================================================================================================
-|Processor       | Intel 8080 or 8080a
-|Speed           | 2 MHz
-|RAM             | from 256 bytes to 64 kB
-|ROM             | optional; usually EPROM Intel 1702 with 256 bytes. footnote:[They were used for various bootloaders]
-|Storage         | optional; paper tapes, cassette tapes or 5.25" or 8" floppy disks (MITS 88-DISK)
-|Extensions      | at first 16 slots, later 18 slots
-|Bus             | famous S-100
-|Video           | none
-|I/O             | optional; parallel or serial board (MITS 88-SIO)
-|OS capabilities | MITS DOS, CP/M, Altair Disk BASIC
+|Processor        | Intel 8080 or 8080a
+|Speed            | 2 MHz
+|RAM              | from 256 bytes to 64 kB
+|ROM              | optional; usually EPROM Intel 1702 with 256 bytes. footnote:[They were used for various bootloaders]
+|Storage          | optional; paper tapes, cassette tapes or 5.25" or 8" floppy disks (MITS 88-DISK)
+|Extensions       | at first 16 slots, later 18 slots
+|Bus              | famous https://en.wikipedia.org/wiki/S-100_bus[S-100]
+|Video            | none
+|I/O              | optional; parallel or serial board (MITS 88-SIO)
+|Original software| http://altairclone.com/downloads/manuals/Altair%20DOS%20User's%20Manual.pdf[Altair DOS],
+                   http://www.classiccmp.org/dunfield/r/cpm22.pdf[CP/M],
+                   https://en.wikipedia.org/wiki/Altair_BASIC[Altair BASIC]
 |======================================================================================================================
 
 [[ALTAIR_FOR_EMUSTUDIO]]
@@ -45,11 +47,12 @@ http://simh.trailing-edge.com/[simh] emulator.
 
 Abstract schema for emuStudio (Intel 8080):
 
-image::images/altairscheme.png[Abstract schema of MITS Altair8800 (with Intel 8080)]
+[role="img-responsive"]
+image::{imagepath}/altairscheme.png[Abstract schema of MITS Altair8800 (with Intel 8080)]
 
 Abstract schema for emuStudio (Zilog Z80):
 
-image::images/altairz80.png[Abstract schema of MITS Altair8800 (with Zilog Z80)]
+image::{imagepath}/altairz80.png[Abstract schema of MITS Altair8800 (with Zilog Z80)]
 
 The following plug-ins are used in the schemas. Each plug-in is described in further sections.
 

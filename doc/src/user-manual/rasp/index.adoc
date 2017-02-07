@@ -1,9 +1,13 @@
+---
+layout: null
+---
+
 = RASP: Random Access Stored Program abstract machine emulator
 (c) Copyright 2016, Michal Šipoš
 
 :toc:
 :numbered:
-
+:imagepath: /docuser/rasp/images/
 
 include::rasp-intro.adoc[]
 
