@@ -28,15 +28,16 @@ import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Expression;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.Pseudo;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class PseudoMACROCall extends Pseudo {
 
-    private ArrayList<Expression> params; // ArrayList of expressions
+    private List<Expression> params; // ArrayList of expressions
     private PseudoMACRO macro; // only pointer...
     private HEXFileManager statHex; // hex file for concrete macro
     private String mnemo;
 
-    public PseudoMACROCall(String name, ArrayList<Expression> params, int line, int column) {
+    public PseudoMACROCall(String name, List<Expression> params, int line, int column) {
         super(line, column);
         this.mnemo = name;
         if (params == null) {

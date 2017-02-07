@@ -27,6 +27,7 @@ import emulib.plugins.compiler.SourceFileExtension;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.HEXFileManager;
+import java_cup.runtime.ComplexSymbolFactory;
 import net.sf.emustudio.zilogZ80.assembler.tree.Program;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +58,7 @@ public class CompilerImpl extends AbstractCompiler {
         this.contextPool = Objects.requireNonNull(contextPool);
 
         lexer = new LexerImpl((Reader) null);
-        parser = new ParserImpl(lexer);
+        parser = new ParserImpl(lexer, new ComplexSymbolFactory());
         suffixes = new SourceFileExtension[1];
         suffixes[0] = new SourceFileExtension("asm", "Z80 assembler source");
     }

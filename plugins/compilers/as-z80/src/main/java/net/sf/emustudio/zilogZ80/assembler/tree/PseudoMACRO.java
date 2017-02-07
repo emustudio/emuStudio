@@ -37,7 +37,7 @@ public class PseudoMACRO extends Pseudo {
     // for generateCode
     private Namespace newEnv;
 
-    public PseudoMACRO(String name, ArrayList<String> params, Program s, int line,
+    public PseudoMACRO(String name, List<String> params, Program s, int line,
             int column) {
         super(line, column);
         this.mnemo = name;
@@ -53,7 +53,7 @@ public class PseudoMACRO extends Pseudo {
         return mnemo;
     }
 
-    public void setCallParams(ArrayList<Expression> params) {
+    public void setCallParams(List<Expression> params) {
         this.call_params = params;
     }
 

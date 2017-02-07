@@ -20,9 +20,9 @@
 package net.sf.emustudio.zilogZ80.assembler.impl;
 
 import emulib.plugins.compiler.Token;
-import java_cup.runtime.Symbol;
+import java_cup.runtime.ComplexSymbolFactory;
 
-public class Tokens extends Symbol implements Token, Symbols {
+public class Tokens extends ComplexSymbolFactory.ComplexSymbol implements Token, Symbols {
     public final static int ERROR_DECIMAL_SIZE = 0xA01;
     public final static int ERROR_UNCLOSED_CHAR = 0xA02;
     public final static int ERROR_UNCLOSED_STRING = 0xA03;
@@ -37,9 +37,13 @@ public class Tokens extends Symbol implements Token, Symbols {
     private final int type;
     private final boolean initial;
 
-    public Tokens(int ID, int type, String text, Object value, int lineNumber,
+    public Tokens(int id, int type, String text, Object value, int lineNumber,
             int columnNumber, int charBegin, int charEnd, boolean initial) {
-        super(ID, value);
+        super(
+            text, id, new ComplexSymbolFactory.Location(lineNumber, columnNumber),
+            new ComplexSymbolFactory.Location(lineNumber, columnNumber), value
+        );
+
         this.text = text;
         this.lineNumber = lineNumber;
         this.columnNumber = columnNumber;

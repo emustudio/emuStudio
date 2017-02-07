@@ -19,13 +19,17 @@
  */
 package net.sf.emustudio.zilogZ80.assembler.impl;
 
-import java.util.ArrayList;
 import java_cup.runtime.Symbol;
 import emulib.plugins.compiler.Token;
 import net.sf.emustudio.zilogZ80.assembler.tree.*;
 import net.sf.emustudio.zilogZ80.assembler.treeAbstract.*;
 import emulib.plugins.compiler.Message;
 import emulib.plugins.compiler.Message.MessageType;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 init with {: errorCount = 0; lastLine = 0; lastColumn = 0; :}
 scan with {:
@@ -61,9 +65,18 @@ parser code {:
     public void report_error(String messageText, Symbol current) {
         Token token = (Token)current;
 
-        messageText = messageText + token.getErrorString() + " ('"+token.getText()+"')";
+        messageText += ":" + token.getErrorString() + " ('" + token.getText() + "')";
         if (reportPrefixString != null) {
             messageText = reportPrefixString + messageText;
+        }
+
+        List expectedTokenIds = expected_token_ids()
+            .stream()
+            .map(id -> symbl_name_from_id(id.intValue()))
+            .collect(Collectors.toList());
+
+        if (!expectedTokenIds.isEmpty()) {
+            messageText += "\nExpected tokens: " + expectedTokenIds;
         }
 
         Message message = new Message(MessageType.TYPE_ERROR, messageText, token.getLine()+1, token.getColumn(),
@@ -127,7 +140,7 @@ non terminal Comment;
 non terminal InstrData Instruction;
 non terminal Expression Expression,Primarny;
 non terminal Integer BinaryOperator,UnaryOperator;
-non terminal ArrayList MacroOperands,MacroParameters,MacroParamsList,MacroOperList;
+non terminal List MacroOperands,MacroParameters,MacroParamsList,MacroOperList;
 non terminal Integer Reg,RegWA,RegRR,RegRY,RegRX,CondCC,CondCond,RegQQ;
 non terminal Integer RegRR_WSP;
 
@@ -294,7 +307,7 @@ MacroOperands ::= MacroOperList:operands
 
 MacroOperList ::= TIDENTIFIER:name
                   {:
-                      ArrayList vec = new ArrayList();
+                      List vec = new ArrayList();
                       vec.add(name);
                       RESULT = vec;
                   :}|
@@ -307,7 +320,7 @@ MacroParameters ::= MacroParamsList:parameters
 
 MacroParamsList ::= Expression:e
                     {:
-                        ArrayList vec = new ArrayList();
+                        List vec = new ArrayList();
                         vec.add(e);
                         RESULT = vec;
                     :}|

@@ -20,6 +20,7 @@
 package net.sf.emustudio.zilogZ80.assembler.tree;
 
 import emulib.runtime.HEXFileManager;
+import java_cup.runtime.ComplexSymbolFactory;
 import net.sf.emustudio.zilogZ80.assembler.exceptions.CompilerException;
 import net.sf.emustudio.zilogZ80.assembler.exceptions.UnexpectedEOFException;
 import net.sf.emustudio.zilogZ80.assembler.impl.CompilerImpl;
@@ -82,7 +83,7 @@ public class PseudoINCLUDE extends Pseudo {
             
             FileReader f = new FileReader(file);
             LexerImpl lexer = new LexerImpl(f);
-            ParserImpl parser = new ParserImpl(lexer);
+            ParserImpl parser = new ParserImpl(lexer, new ComplexSymbolFactory());
             parser.setCompiler(compiler);
 
             parser.setReportPrefixString(file.getName() + ": ");
