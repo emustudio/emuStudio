@@ -1,3 +1,41 @@
+[[CPU-8080]]
 == CPU: Intel 8080 emulator
 
-TODO
+Altair 8800 originally came with processor https://en.wikipedia.org/wiki/Intel_8080[Intel 8080]. It is 8-bit
+microprocessor, from 1974. Initial clock frequency was 2 MHZ. This processor was one of the first general-purpose and
+widespread processors, used not only in calculators but also in first personal computers. One of the key roles why
+this CPU become so popular is that Gary Killdall targeted his CP/M to this CPU; and CP/M was de facto a "standard"
+in personal computers those days.
+
+Main features of the emulator include:
+
+* Threaded-dispatch combined with interpretation as emulation technique,
+* Correct real timing of instructions,
+* Ability to set clock frequency manually at run-time,
+* Emulation of all instructions including interrupts,
+* Disassembler implementation,
+* Ability to "dump" instruction history to console at run-time,
+* Support of breakpoints,
+* Ability of communication with up to 256 I/O devices,
+* Status window shows all registers, flags, and run-time frequency.
+
+[[CPU-8080-CONFIG_FILE]]
+=== Configuration file
+
+Configuration file of virtual computers contain also settings of all the used plug-ins, including CPUs. Please
+read the section "Accessing settings of plug-ins" in the user documentation of Main module to see how the settings can
+be accessed.
+
+The following table shows all the possible settings of Intel 8080 CPU plug-in:
+
+.Settings of Intel 8080 CPU emulator plug-in
+[frame="topbot",options="header,footer",role="table table-striped table-condensed"]
+|=====================================================================================================
+|Name              | Default value        | Valid values          | Description
+|`printCode`       | false                | true / false          | Whether the emulator should print executed instructions,
+                                                                    and its internal state to console (dump)
+|`printCodeUseCache`| false               | true / false          | If `printCode` is set to `true`, then a cache will
+                                                                    be used which remembers already visited blocks of code
+                                                                    so the instruction dump will not be bloated with
+                                                                    infinite loops
+|=====================================================================================================

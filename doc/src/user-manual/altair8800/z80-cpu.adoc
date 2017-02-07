@@ -1,3 +1,41 @@
+[[CPU-Z80]]
 == CPU: Zilog Z80 emulator
 
-TODO
+It was possible to upgrade your Altair 8800 computer with a "better" 8-bit processor
+https://en.wikipedia.org/wiki/Zilog_Z80[Zilog Z80]. The processor was probably the most used 8-bit processor in
+80's. It was backward compatible with 8080, and brought many enhancements. It was originally targeted for embedded
+systems, but very soon it become very popular and used for all kinds of computers - including desktop computers,
+arcade games, etc. Today the CPU is still used in some MP3 players, see e.g. https://en.wikipedia.org/wiki/S1_MP3_player.
+
+Main features of the emulator include:
+
+* Interpretation as emulation technique,
+* Correct real timing of instructions,
+* Ability to set clock frequency manually at run-time,
+* Emulation of all instructions including interrupts,
+* Disassembler implementation,
+* Ability to "dump" instruction history to console at run-time,
+* Support of breakpoints,
+* Ability of communication with up to 256 I/O devices,
+* Status window shows all registers, flags, and run-time frequency.
+
+[[CPU-Z80-CONFIG_FILE]]
+=== Configuration file
+
+Configuration file of virtual computers contain also settings of all the used plug-ins, including CPUs. Please
+read the section "Accessing settings of plug-ins" in the user documentation of Main module to see how the settings can
+be accessed.
+
+The following table shows all the possible settings of Zilog Z80 CPU plug-in:
+
+.Settings of Zilog Z80 CPU emulator plug-in
+[frame="topbot",options="header,footer",role="table table-striped table-condensed"]
+|=====================================================================================================
+|Name              | Default value        | Valid values          | Description
+|`printCode`       | false                | true / false          | Whether the emulator should print executed instructions,
+                                                                    and its internal state to console (dump)
+|`printCodeUseCache`| false               | true / false          | If `printCode` is set to `true`, then a cache will
+                                                                    be used which remembers already visited blocks of code
+                                                                    so the instruction dump will not be bloated with
+                                                                    infinite loops
+|=====================================================================================================
