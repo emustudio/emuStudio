@@ -22,6 +22,12 @@ package net.sf.emustudio.ram.memory.gui;
 import emulib.plugins.memory.Memory;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.UniversalFileFilter;
+import net.sf.emustudio.ram.memory.RAMInstruction;
+import net.sf.emustudio.ram.memory.impl.RAMMemoryContextImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.JFileChooser;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,17 +36,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import javax.swing.JFileChooser;
-import net.sf.emustudio.ram.memory.RAMInstruction;
-import net.sf.emustudio.ram.memory.impl.RAMMemoryContextImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MemoryDialog extends javax.swing.JDialog {
     private final static Logger LOGGER = LoggerFactory.getLogger(MemoryDialog.class);
     
     private final RAMMemoryContextImpl memory;
     private final RAMTableModel tableModel;
+    private File lastOpenedFile;
 
     public MemoryDialog(RAMMemoryContextImpl memory) {
         this.memory = Objects.requireNonNull(memory);
@@ -85,19 +87,23 @@ public class MemoryDialog extends javax.swing.JDialog {
         f.addChoosableFileFilter(f2);
         f.setFileFilter(f1);
         f.setApproveButtonText("Load");
-        f.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        if (lastOpenedFile != null) {
+            f.setCurrentDirectory(lastOpenedFile);
+        } else {
+            f.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        }
 
         int returnVal = f.showOpenDialog(this);
         f.setVisible(true);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File fileSource = f.getSelectedFile();
+            lastOpenedFile = f.getSelectedFile();
             try {
-                memory.deserialize(fileSource.getAbsolutePath());
+                memory.deserialize(lastOpenedFile.getAbsolutePath());
                 tableModel.fireTableDataChanged();
                 refillTable();
             } catch (IOException | ClassNotFoundException e) {
-                StaticDialogs.showErrorMessage("File " + fileSource.getPath() + " can't be read: " + e.getMessage());
-                LOGGER.error("Could not open file {}", fileSource, e);
+                StaticDialogs.showErrorMessage("File " + lastOpenedFile.getPath() + " can't be read: " + e.getMessage());
+                LOGGER.error("Could not open file {}", lastOpenedFile, e);
             }
         }
     }
@@ -341,7 +347,9 @@ public class MemoryDialog extends javax.swing.JDialog {
 
         tableProgram.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-
+                {null, null, null},
+                {null, null, null},
+                {null, null, null}
             },
             new String [] {
                 "Address", "Label", "Instruction"
@@ -362,6 +370,7 @@ public class MemoryDialog extends javax.swing.JDialog {
                 return canEdit [columnIndex];
             }
         });
+        tableProgram.setGridColor(java.awt.SystemColor.control);
         jScrollPane1.setViewportView(tableProgram);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);

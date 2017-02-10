@@ -1,1 +1,26 @@
 == Abstract tapes
+
+Abstract tapes are used in various abstract machines. Probably the best known are Turing machine, RAM machine and RASP
+machine. Plug-in of the abstract tape for emuStudio is called `abstractTape-ram`.
+
+There are several properties which an abstract tape might have:
+
+- Bounded, one-side bounded or unbounded
+- Random access (allowing to move head in both directions) or linear access (allowing to move head only in one direction)
+- Specific or any cell content type (e.g. cells are integers, or strings, or can be any value?)
+- Read only, or read-write cells
+- Purpose of the tape (title)
+
+This plug-in allows to set up such properties, but those are set up by the virtual computer which uses it, not by
+the user. Currently, there are just two virtual computers utilizing this plug-in:
+
+- RAM machine
+- RASP machine
+
+After emuStudio is run, RAM CPU (or RASP CPU) sets up properties for all used tapes. So the tape "purpose" and behavior
+is set in run time.
+
+=== Installation and run
+
+The abstract tape can be run only as a part of emuStudio. It is installed in location `devices/abstractTape-ram.jar`.
+
