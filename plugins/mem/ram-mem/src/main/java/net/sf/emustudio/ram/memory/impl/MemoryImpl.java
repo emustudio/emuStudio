@@ -27,12 +27,11 @@ import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.InvalidContextException;
-import net.sf.emustudio.ram.memory.RAMMemoryContext;
-import net.sf.emustudio.ram.memory.gui.MemoryWindow;
-
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
+import net.sf.emustudio.ram.memory.RAMMemoryContext;
+import net.sf.emustudio.ram.memory.gui.MemoryDialog;
 
 @PluginType(
         type=PLUGIN_TYPE.MEMORY,
@@ -43,7 +42,7 @@ import java.util.ResourceBundle;
 @SuppressWarnings("unused")
 public class MemoryImpl extends AbstractMemory {
     private final RAMMemoryContextImpl context;
-    private MemoryWindow gui;
+    private MemoryDialog gui;
 
     public MemoryImpl(Long pluginID, ContextPool contextPool) {
         super(pluginID);
@@ -87,7 +86,7 @@ public class MemoryImpl extends AbstractMemory {
     @Override
     public void showSettings() {
         if (gui == null) {
-            gui = new MemoryWindow(context);
+            gui = new MemoryDialog(context);
         }
         gui.setVisible(true);
     }

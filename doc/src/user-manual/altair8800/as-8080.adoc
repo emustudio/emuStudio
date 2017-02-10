@@ -15,6 +15,19 @@ differences. Features include:
 
 The features are very similar to those in <<AS-Z80,`as-z80` assembler>>.
 
+=== Installation and run
+
+The assembler is provided as part of emuStudio. It is not deployed as individual package. It can be found
+in `compilers/` directory with name `as-8080.jar`.
+
+The assembler can be run from command line, with command:
+
+    java -jar as-8080.jar [--output output_file.hex] [source_file.asm]
+
+To query for more information, run it with command:
+
+    java -jar as-8080.jar --help
+
 === Lexical symbols
 
 The assembler does not differentiate between upper and lower case (it is case-insensitive). The token/symbol types

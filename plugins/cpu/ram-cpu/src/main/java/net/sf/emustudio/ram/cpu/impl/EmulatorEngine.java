@@ -21,6 +21,7 @@ package net.sf.emustudio.ram.cpu.impl;
 
 import emulib.plugins.cpu.CPU;
 import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
+import net.sf.emustudio.ram.cpu.RAMContext;
 import net.sf.emustudio.ram.memory.RAMInstruction;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;
 import org.slf4j.Logger;
@@ -126,7 +127,18 @@ public class EmulatorEngine {
         }
     }
 
-    public CPU.RunState step() throws IOException {
+    private Number decode(String num) {
+        if (num == null || num.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.decode(num);
+        } catch (NumberFormatException e) {
+            return Double.parseDouble(num);
+        }
+    }
+
+    CPU.RunState step() throws IOException {
         AbstractTapeContext storage = context.getStorage();
 
         RAMInstruction in = memory.read(IP++);
@@ -210,34 +222,24 @@ public class EmulatorEngine {
                 break;
             case RAMInstruction.JZ: {
                 String r0 = storage.getSymbolAt(0);
-                if (r0 == null || r0.equals("")) {
-                    IP = (Integer) in.getOperand();
-                    break;
-                }
                 try {
-                    int rr0 = Integer.decode(r0);
-                    if (rr0 == 0) {
+                    if (decode(r0).intValue() == 0) {
                         IP = (Integer) in.getOperand();
                     }
                 } catch (NumberFormatException e) {
-                    LOGGER.error("Cannot parse JZ operand (expected integer)", e);
+                    LOGGER.error("[pos={}, JZ {}] Cannot parse operand (expected integer)", IP, r0);
                     return CPU.RunState.STATE_STOPPED_BAD_INSTR;
                 }
                 break;
             }
             case RAMInstruction.JGTZ:
                 String r0 = storage.getSymbolAt(0);
-                if (r0 == null || r0.equals("")) {
-                    IP = (Integer) in.getOperand();
-                    break;
-                }
                 try {
-                    int rr0 = Integer.decode(r0);
-                    if (rr0 > 0) {
+                    if (decode(r0).intValue() > 0) {
                         IP = (Integer) in.getOperand();
                     }
                 } catch (NumberFormatException e) {
-                    LOGGER.error("Cannot parse JZ operand (expected integer)", e);
+                    LOGGER.error("[pos={}, JGTZ {}] Cannot parse operand (expected integer)", IP, r0);
                     return CPU.RunState.STATE_STOPPED_BAD_INSTR;
                 }
                 break;

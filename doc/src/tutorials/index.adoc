@@ -1,5 +1,6 @@
 ---
-layout: null
+layout: docdev
+pagetitle: emulator
 ---
 
 [[plugins-vademecum]]

@@ -1,5 +1,6 @@
 ---
-layout: null
+layout: doc
+pagetitle: rasp
 ---
 
 = RASP: Random Access Stored Program abstract machine emulator

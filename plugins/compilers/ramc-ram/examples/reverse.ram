@@ -1,7 +1,7 @@
 ; input : X0 - string X zero-ended, X in {1,2,3,....}*, on the input tape
 ; output: XR - reverse of X
 
-<input> 1 2 3 3 2 1 2 3  5 3 4 5 53 34 2  34
+<input> 1 2 3 3 2 1 2 3  5.5 3 4 5 53 34 2  34
 
 load=10
 store2

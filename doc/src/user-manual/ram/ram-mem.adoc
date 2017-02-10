@@ -1,0 +1,23 @@
+== Program Memory
+
+RAM memory is used as a part of RAM simulator, which acts as the "program memory", holding just the program.
+
+RAM CPU reads instructions from this memory. The instructions can be written here only by compiling
+the source code, or loading already compiled binary image.
+
+The memory plug-in contains simple graphical window, a GUI, which provides a set of the following features:
+
+- It computes time and space complexity of the program
+- It shows the memory content (the "program") as the list of disassembled instructions
+
+[[XMI]]
+=== Installation and run
+
+The RAM memory can be run only as a part of emuStudio. It is installed in location `mem/ram-mem.jar`.
+
+[[XMG]]
+=== Graphical user interface (GUI)
+
+The memory GUI can be seen in the following picture.
+
+

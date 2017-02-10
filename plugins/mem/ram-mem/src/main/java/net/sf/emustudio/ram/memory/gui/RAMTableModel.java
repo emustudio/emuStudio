@@ -19,21 +19,21 @@
  */
 package net.sf.emustudio.ram.memory.gui;
 
+import java.util.Objects;
+import javax.swing.table.AbstractTableModel;
 import net.sf.emustudio.ram.memory.RAMInstruction;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;
-
-import javax.swing.table.AbstractTableModel;
 
 class RAMTableModel extends AbstractTableModel {
     private final RAMMemoryContext memory;
 
-    RAMTableModel(final RAMMemoryContext memory) {
-        this.memory = memory;
+    RAMTableModel(RAMMemoryContext memory) {
+        this.memory = Objects.requireNonNull(memory);
     }
 
     @Override
     public int getColumnCount() {
-        return 2;
+        return 3;
     }
 
     @Override
@@ -43,17 +43,20 @@ class RAMTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        if (columnIndex == 0) {
-            String label = memory.getLabel(rowIndex);
-            if (label != null) {
-                return String.valueOf(rowIndex) + " (" + label + ")";
-            } else {
+        switch (columnIndex) {
+            case 0:
                 return String.valueOf(rowIndex);
-            }
-        } else {
-            RAMInstruction i = memory.read(rowIndex);
-            return i.getCodeStr() + " " + i.getOperandStr();
+            case 1:
+                String label = memory.getLabel(rowIndex);
+                if (label != null) {
+                    return label;
+                }
+                break;
+            case 2:
+                RAMInstruction i = memory.read(rowIndex);
+                return i.getCodeStr() + " " + i.getOperandStr();
         }
+        return "";
     }
 
     @Override
@@ -63,7 +66,12 @@ class RAMTableModel extends AbstractTableModel {
 
     @Override
     public String getColumnName(int col) {
-        return (col == 0) ? "Addr" : "Instruction";
+        switch (col) {
+            case 0: return "Address";
+            case 1: return "Label";
+            case 2: return "Instruction";
+        }
+        return "";
     }
     
 }

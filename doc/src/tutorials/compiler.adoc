@@ -186,9 +186,7 @@ The POM file of the project looks as follows:
 include::{sourcedir}/plugins/compilers/as-ssem/pom.xml[]
 ----
 
-=== Lexer and parser
-
-==== Lexical analyzer (lexer)
+=== Lexical analyzer (lexer)
 
 We will start with definition of the lexer specfile. It is a special file, which will be given to http://jflex.de/[JFlex]
 during project compilation. Jflex will generate a Java class - the lexer - which will be used by the parser later, and
@@ -240,7 +238,7 @@ include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ss
 ----
 
 [[COMPILER_GRAMMAR]]
-==== Syntax analyzer (parser)
+=== Syntax analyzer (parser)
 
 Next, we define the grammar file. It is also a special file, which will be given to cup during project
 compilation. Cup will generate Java classes - the parser - which we will use in our code. The specfile
@@ -279,7 +277,7 @@ For more information, especially about the `error` symbol, please read http://ww
 documentation.
 
 [[COMPILER_AST]]
-==== Introducing AST
+=== Introducing AST
 
 The code won't compile so far. The reason is that the parser strangely uses some undefined classes, such as `Program`,
 `ASTnode`, `Instruction` and `Constant`. They are defined in the grammar file as follows (see above):
@@ -329,7 +327,7 @@ include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ss
 The methods of the visitor will be implemented by some visitor, for example a code generator. However, we need to
 finish implementation of the AST first.
 
-===== 'Program' node
+==== 'Program' node
 
 The root node of the AST is the `Program` class. According to the grammar, it contains all the statements, which are
 either `Instruction` or `Constant`. Notice how we implemented traversing of the node:
@@ -354,7 +352,7 @@ by the second one.
 It is for a debate if we want this behavior to happen. For simplicity, we allow it. Otherwise we would throw some
 compiler exception.
 
-===== 'Instruction' node
+==== 'Instruction' node
 
 Instruction node represents the instruction. If you remember, each instruction except `STP` and `CMP` has a parameter,
 or better - operand - which is a "line" - index of a memory cell. It would be possible to represent specific
@@ -377,7 +375,7 @@ themselves. These are called from the parser - check the grammar specfile in the
 Also, note that we can compare instructions based on opcode and operand. This is allowed by custom implementations of
 methods `hashCode()` and `equals()`.
 
-===== 'Constant' node
+==== 'Constant' node
 
 Another kind of statement is a constant. The constant is just a number, and the node class is very simple:
 
@@ -388,7 +386,7 @@ include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ss
 
 Comparing `Constant` instances is based on comparing the numbers they represent.
 
-==== Testing
+=== Testing
 
 It is very good practice to write automated tests. These will give us some level of confidence that what we did so far
 is actually working. It is the earliest feedback we can get on our work, which consequently improves the speed of

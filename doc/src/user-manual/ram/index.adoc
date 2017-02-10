@@ -1,0 +1,22 @@
+---
+layout: doc
+pagetitle: ram
+---
+
+= RAM: Random Access Machine
+
+:toc:
+:numbered:
+:imagepath: /docuser/ram/images/
+
+include::ram-intro.adoc[]
+
+include::ramc-ram.adoc[]
+
+include::ram-cpu.adoc[]
+
+include::ram-mem.adoc[]
+
+include::abstractTape-ram.adoc[]
+
+

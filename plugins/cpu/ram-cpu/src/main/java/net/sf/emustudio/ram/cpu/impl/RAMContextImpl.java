@@ -19,19 +19,19 @@
  */
 package net.sf.emustudio.ram.cpu.impl;
 
-import emulib.plugins.cpu.CPUContext;
 import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
+import net.sf.emustudio.ram.cpu.RAMContext;
 
 import java.util.Objects;
 
-public class RAMContext implements CPUContext {
+public class RAMContextImpl implements RAMContext {
     private final AbstractTapeContext[] tapes;
     private final ContextPool contextPool;
 
-    public RAMContext(ContextPool contextPool) {
+    public RAMContextImpl(ContextPool contextPool) {
         this.contextPool = Objects.requireNonNull(contextPool);
         tapes = new AbstractTapeContext[3];
     }

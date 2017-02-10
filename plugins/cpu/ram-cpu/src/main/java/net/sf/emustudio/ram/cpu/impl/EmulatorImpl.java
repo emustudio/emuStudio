@@ -59,7 +59,7 @@ import org.slf4j.LoggerFactory;
 public class EmulatorImpl extends AbstractCPU {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmulatorImpl.class);
 
-    private final RAMContext context;
+    private final RAMContextImpl context;
     private final ContextPool contextPool;
 
     private EmulatorEngine engine;
@@ -71,7 +71,7 @@ public class EmulatorImpl extends AbstractCPU {
         super(pluginID);
         this.contextPool = Objects.requireNonNull(contextPool);
 
-        context = new RAMContext(contextPool);
+        context = new RAMContextImpl(contextPool);
         try {
             contextPool.register(pluginID, context, CPUContext.class);
         } catch (AlreadyRegisteredException | InvalidContextException e) {

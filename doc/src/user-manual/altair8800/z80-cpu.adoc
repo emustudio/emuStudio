@@ -19,7 +19,7 @@ Main features of the emulator include:
 * Ability of communication with up to 256 I/O devices,
 * Status window shows all registers, flags, and run-time frequency.
 
-== Dumping executed instructions
+=== Dumping executed instructions
 
 The CPU offers a quite unique feature, which is the ability to dump executed instructions as a sequence to the console.
 When enabled, then each executed instruction - together with content of flags and registers values after the execution
