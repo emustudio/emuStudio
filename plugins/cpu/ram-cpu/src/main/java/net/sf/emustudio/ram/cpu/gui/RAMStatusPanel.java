@@ -20,7 +20,7 @@
 package net.sf.emustudio.ram.cpu.gui;
 
 import emulib.plugins.cpu.CPU;
-import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
+import net.sf.emustudio.devices.abstracttape.api.AbstractTapeContext;
 import net.sf.emustudio.ram.cpu.impl.EmulatorImpl;
 
 public class RAMStatusPanel extends javax.swing.JPanel {
@@ -44,7 +44,7 @@ public class RAMStatusPanel extends javax.swing.JPanel {
                 txtR0.setText(s);
                 txtIP.setText(String.format("%04d", cpu.getInstructionPosition()));
                 
-                txtInput.setText(input.getSymbolAt(input.getTapePosition()));
+                txtInput.setText(input.getSymbolAt(input.getHeadPosition()));
                 txtOutput.setText(output.getSymbolAt(0));
             }
         });        

@@ -29,7 +29,7 @@ import emulib.runtime.exceptions.InvalidContextException;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
+import net.sf.emustudio.devices.abstracttape.api.AbstractTapeContext;
 
 /**
  * Context of the RASP CPU emulator.
@@ -72,7 +72,7 @@ public class RASPCpuContext implements CPUContext {
             //user will be able to change the values on the output tape
             tapes[0].setEditable(true);
             //the position will be highlighted by blue in the GUI
-            tapes[0].setPosVisible(true);
+            tapes[0].setHighlightHeadPosition(true);
             //we don't the input tape to be cleared when emulator is reset, so we do not have to provide inputs again after reset
             tapes[0].setClearAtReset(false);
             tapes[0].setTitle("Input tape");
@@ -86,7 +86,7 @@ public class RASPCpuContext implements CPUContext {
             tapes[1].setBounded(true);
             //we don't want the user to be able to change the values at the output tape
             tapes[1].setEditable(false);
-            tapes[1].setPosVisible(true);
+            tapes[1].setHighlightHeadPosition(true);
             //outputs should be cleared at reset
             tapes[1].setClearAtReset(true);
             tapes[1].setTitle("Output tape");

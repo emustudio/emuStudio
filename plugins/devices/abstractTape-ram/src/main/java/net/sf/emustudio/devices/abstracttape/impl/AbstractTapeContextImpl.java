@@ -17,7 +17,11 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.ram.abstracttape.impl;
+package net.sf.emustudio.devices.abstracttape.impl;
+
+import net.sf.emustudio.devices.abstracttape.api.AbstractTapeContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -26,9 +30,6 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
-import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Tape used by abstract machines.
@@ -53,7 +54,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     private boolean bounded; // tape is bounded form the left?
     private boolean editable; // if tape is editable by user
     private TapeListener listener;
-    private boolean showPos;
+    private boolean highlightCurrentPosition;
     private boolean clearAtReset = true;
     private final AbstractTape abst;
     private Writer outw;
@@ -71,7 +72,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         currentPosition = 0;
         bounded = false;
         editable = true;
-        showPos = true;
+        highlightCurrentPosition = true;
     }
 
     @Override
@@ -80,13 +81,13 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     }
 
     @Override
-    public boolean getDisplayRowNumbers() {
+    public boolean showPositions() {
         return displayRowNumbers;
     }
 
     @Override
-    public void setDisplayRowNumbers(boolean displayRowNumbers) {
-        this.displayRowNumbers = displayRowNumbers;
+    public void setShowPositions(boolean showPositions) {
+        this.displayRowNumbers = showPositions;
         fireChange();
     }
 
@@ -100,7 +101,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         fireChange();
     }
 
-    public void reset() {
+    void reset() {
         currentPosition = 0;
         if (clearAtReset) {
             clear();
@@ -124,7 +125,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
             currentPosition--;
             fireChange();
             return true;
-        } else if (bounded == false) {
+        } else if (!bounded) {
             currentPosition = 0;
             tape.add(0, "");
             fireChange();
@@ -198,11 +199,6 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         return editable;
     }
 
-    /**
-     * Used by GUI, too - TapeDialog.
-     * @param pos
-     * @return
-     */
     @Override
     public String getSymbolAt(int pos) {
         if (pos >= tape.size() || (pos < 0)) {
@@ -211,11 +207,6 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         return tape.get(pos);
     }
 
-    /**
-     *
-     * @param pos HAS TO BE > 0
-     * @param symbol
-     */
     @Override
     public void setSymbolAt(int pos, String symbol) {
         if (pos >= tape.size()) {
@@ -232,8 +223,8 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
     }
 
     @Override
-    public void setPosVisible(boolean visible) {
-        showPos = visible;
+    public void setHighlightHeadPosition(boolean visible) {
+        highlightCurrentPosition = visible;
     }
 
     @Override
@@ -241,21 +232,17 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
         this.clearAtReset = clear;
     }
 
-    /**
-     * Used by GUI.
-     * @return
-     */
-    public boolean getPosVisible() {
-        return showPos;
+    public boolean highlightCurrentPosition() {
+        return highlightCurrentPosition;
     }
 
     @Override
-    public int getTapeSize() {
+    public int getSize() {
         return tape.size();
     }
 
     @Override
-    public int getTapePosition() {
+    public int getHeadPosition() {
         return currentPosition;
     }
 
@@ -305,7 +292,7 @@ public class AbstractTapeContextImpl implements AbstractTapeContext {
      *
      * @param verbose set/reset/unset verbose mode
      */
-    public void setVerbose(boolean verbose) {
+    void setVerbose(boolean verbose) {
         if (outw != null) {
             try {
                 outw.close();

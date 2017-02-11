@@ -27,6 +27,12 @@ plug-ins:
 - `brainduck-mem`: Virtual operating memory which holds both compiled brainfuck program and data
 - `brainduck-terminal`: Virtual terminal for displaying the output and requesting for input.
 
+All these plug-ins are free software, released under GNU GPL v2 license. The source code is freely
+available online.
+
+Implementation language is Java SE 8. The implementation technology of visual components is Java
+Swing. All plug-ins use library `emuLib` version `9.0.0`.
+
 [[XIB]]
 == Brief description
 
@@ -68,7 +74,7 @@ which is located at `lib/java-cup-runtime-0.11a.jar`.
 === Abstract schema
 
 In order to use BrainDuck, there must be drawn the abstract schema, saved in the configuration
-file. Abstract schemas are drawn in the schema editor in emuStudio (please see emuStudio main module
+file. Abstract schemas are drawn in the schema editor in emuStudio (please see emuStudio User
 documentation for more details). The following image shows the schema of BrainDuck computer:
 
 [graphviz,brainduck-scheme,svg]

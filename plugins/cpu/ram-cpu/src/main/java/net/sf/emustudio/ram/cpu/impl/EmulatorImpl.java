@@ -40,7 +40,7 @@ import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
 import javax.swing.*;
-import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
+import net.sf.emustudio.devices.abstracttape.api.AbstractTapeContext;
 import net.sf.emustudio.ram.cpu.gui.LabelDebugColumn;
 import net.sf.emustudio.ram.cpu.gui.RAMDisassembler;
 import net.sf.emustudio.ram.cpu.gui.RAMStatusPanel;

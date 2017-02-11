@@ -17,7 +17,7 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.ram.abstracttape.impl;
+package net.sf.emustudio.devices.abstracttape.impl;
 
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
@@ -27,9 +27,9 @@ import emulib.runtime.ContextPool;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
 import emulib.runtime.exceptions.InvalidContextException;
 import emulib.runtime.exceptions.PluginInitializationException;
-import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
-import net.sf.emustudio.ram.abstracttape.gui.SettingsDialog;
-import net.sf.emustudio.ram.abstracttape.gui.TapeDialog;
+import net.sf.emustudio.devices.abstracttape.api.AbstractTapeContext;
+import net.sf.emustudio.devices.abstracttape.gui.SettingsDialog;
+import net.sf.emustudio.devices.abstracttape.gui.TapeDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

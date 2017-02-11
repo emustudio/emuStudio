@@ -7,6 +7,7 @@ pagetitle: ram
 
 :toc:
 :numbered:
+:sourcedir: /home/vbmacher/projects/emuStudio/
 :imagepath: /docuser/ram/images/
 
 include::ram-intro.adoc[]

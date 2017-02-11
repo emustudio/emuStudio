@@ -20,7 +20,7 @@
 package net.sf.emustudio.ram.cpu.impl;
 
 import emulib.plugins.cpu.CPU;
-import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
+import net.sf.emustudio.devices.abstracttape.api.AbstractTapeContext;
 import net.sf.emustudio.ram.cpu.RAMContext;
 import net.sf.emustudio.ram.memory.RAMInstruction;
 import net.sf.emustudio.ram.memory.RAMMemoryContext;

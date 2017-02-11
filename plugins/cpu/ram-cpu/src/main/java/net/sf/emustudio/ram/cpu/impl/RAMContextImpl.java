@@ -22,7 +22,7 @@ package net.sf.emustudio.ram.cpu.impl;
 import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.exceptions.PluginInitializationException;
-import net.sf.emustudio.ram.abstracttape.AbstractTapeContext;
+import net.sf.emustudio.devices.abstracttape.api.AbstractTapeContext;
 import net.sf.emustudio.ram.cpu.RAMContext;
 
 import java.util.Objects;
@@ -54,10 +54,10 @@ public class RAMContextImpl implements RAMContext {
         }
         tape.setBounded(true);
         tape.setEditable(editable);
-        tape.setPosVisible(posVisible);
+        tape.setHighlightHeadPosition(posVisible);
         tape.setClearAtReset(clearAfterReset);
         tape.setTitle(title);
-        tape.setDisplayRowNumbers(true);
+        tape.setShowPositions(true);
 
         return tape;
     }

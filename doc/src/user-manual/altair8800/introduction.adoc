@@ -47,7 +47,7 @@ http://simh.trailing-edge.com/[simh] emulator.
 
 Abstract schema for emuStudio (Intel 8080):
 
-[.img-responsive]
+[role="img-responsive"]
 image::{imagepath}/altairscheme.png[Abstract schema of MITS Altair8800 (with Intel 8080)]
 
 Abstract schema for emuStudio (Zilog Z80):

@@ -22,7 +22,7 @@
 
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>%date [%level][%logger{10}] %msg%n</pattern>
+      <pattern>[%level] %msg%n</pattern>
     </encoder>
   </appender>
 
@@ -36,11 +36,11 @@
     <file>automation.html</file>
   </appender>
 
-  <root level="debug">
+  <root level="info">
     <appender-ref ref="STDOUT" />
   </root>
 
-  <logger name="automation" level="debug">
+  <logger name="automation" level="info">
     <appender-ref ref="AUTOMATION" />
   </logger>
 

@@ -27,7 +27,7 @@ is possible to develop an emulator which can benefit from it.
 === GUI overview
 
 To open the memory GUI (graphical user interface), click at the right-most icon in the debug toolbar, on the Emulator panel.
-The window is shown at the following image:
+The window is shown, as in the following image:
 
 image::{imagepath}/standard-mem.png[Standard operating memory]
 

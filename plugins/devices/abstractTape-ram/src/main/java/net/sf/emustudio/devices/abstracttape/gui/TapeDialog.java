@@ -17,12 +17,12 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.ram.abstracttape.gui;
+package net.sf.emustudio.devices.abstracttape.gui;
 
 import emulib.emustudio.SettingsManager;
 import emulib.runtime.StaticDialogs;
-import net.sf.emustudio.ram.abstracttape.impl.AbstractTape;
-import net.sf.emustudio.ram.abstracttape.impl.AbstractTapeContextImpl;
+import net.sf.emustudio.devices.abstracttape.impl.AbstractTape;
+import net.sf.emustudio.devices.abstracttape.impl.AbstractTapeContextImpl;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +32,7 @@ public class TapeDialog extends JDialog {
     private TapeListModel listModel;
 
     public TapeDialog(AbstractTape tape, final AbstractTapeContextImpl tapeContext,
-            SettingsManager settings, long pluginID) {
+                      SettingsManager settings, long pluginID) {
         super();
         this.tapeContext = tapeContext;
         this.listModel = new TapeListModel();
@@ -42,7 +42,7 @@ public class TapeDialog extends JDialog {
         lstTape.setCellRenderer(new TapeCellRenderer());
         this.tapeContext.setListener(() -> {
             listModel.fireChange();
-            lstTape.ensureIndexIsVisible(tapeContext.getTapePosition());
+            lstTape.ensureIndexIsVisible(tapeContext.getHeadPosition());
         });
         String s = settings.readSetting(pluginID, "alwaysOnTop");
         if (s == null || !s.toLowerCase().equals("true")) {
@@ -59,7 +59,7 @@ public class TapeDialog extends JDialog {
         public Object getElementAt(int index) {
             String element = "";
             
-            if (tapeContext.getDisplayRowNumbers()) {
+            if (tapeContext.showPositions()) {
                 element += String.format("%02d: ", index);
             }
             String symbolAtIndex = tapeContext.getSymbolAt(index);
@@ -74,11 +74,11 @@ public class TapeDialog extends JDialog {
 
         @Override
         public int getSize() {
-            return tapeContext.getTapeSize();
+            return tapeContext.getSize();
         }
 
         public void fireChange() {
-            this.fireContentsChanged(this, 0, tapeContext.getTapeSize() - 1);
+            this.fireContentsChanged(this, 0, tapeContext.getSize() - 1);
         }
     }
 
@@ -98,7 +98,7 @@ public class TapeDialog extends JDialog {
         public Component getListCellRendererComponent(JList list,
                 Object value, int index, boolean isSelected,
                 boolean cellHasFocus) {
-            if (tapeContext.getPosVisible() && (tapeContext.getTapePosition() == index)) {
+            if (tapeContext.highlightCurrentPosition() && (tapeContext.getHeadPosition() == index)) {
                 this.setBackground(Color.BLUE);
                 this.setForeground(Color.WHITE);
             } else {
@@ -148,13 +148,13 @@ public class TapeDialog extends JDialog {
         //setLocationRelativeTo(null);
         scrollTape.setViewportView(lstTape);
 
-        btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/ram/abstracttape/gui/go-up.png"))); // NOI18N
+        btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/devices/abstracttape/gui/go-up.png"))); // NOI18N
         btnAddFirst.addActionListener(e -> {
             String s = JOptionPane.showInputDialog("Enter symbol value:");
             tapeContext.addSymbolFirst(s);
         });
 
-        btnAddLast.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/ram/abstracttape/gui/go-down.png"))); // NOI18N
+        btnAddLast.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/devices/abstracttape/gui/go-down.png"))); // NOI18N
         btnAddLast.addActionListener(e -> {
             String s = JOptionPane.showInputDialog("Enter symbol value:");
             tapeContext.addSymbolLast(s);
