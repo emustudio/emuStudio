@@ -150,14 +150,18 @@ public class TapeDialog extends JDialog {
 
         btnAddFirst.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/devices/abstracttape/gui/go-up.png"))); // NOI18N
         btnAddFirst.addActionListener(e -> {
-            String s = JOptionPane.showInputDialog("Enter symbol value:");
-            tapeContext.addSymbolFirst(s);
+            String s = JOptionPane.showInputDialog(this, "Enter symbol value:");
+            if (s != null) {
+                tapeContext.addSymbolFirst(s);
+            }
         });
 
         btnAddLast.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/devices/abstracttape/gui/go-down.png"))); // NOI18N
         btnAddLast.addActionListener(e -> {
-            String s = JOptionPane.showInputDialog("Enter symbol value:");
-            tapeContext.addSymbolLast(s);
+            String s = JOptionPane.showInputDialog(this, "Enter symbol value:");
+            if (s != null) {
+                tapeContext.addSymbolLast(s);
+            }
         });
 
         btnEdit.addActionListener(e -> {
@@ -166,8 +170,12 @@ public class TapeDialog extends JDialog {
                 StaticDialogs.showErrorMessage("A symbol must be selected !");
                 return;
             }
-            String s = JOptionPane.showInputDialog("Enter symbol value:");
-            tapeContext.editSymbol(i, s);
+            String s = JOptionPane.showInputDialog(
+                this, "Enter symbol value:", tapeContext.getSymbolAt(i)
+            );
+            if (s != null) {
+                tapeContext.editSymbol(i, s);
+            }
         });
         btnRemove.addActionListener(e -> {
             int i = lstTape.getSelectedIndex();
