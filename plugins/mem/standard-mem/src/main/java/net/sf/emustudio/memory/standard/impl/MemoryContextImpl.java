@@ -188,8 +188,8 @@ public class MemoryContextImpl extends AbstractMemoryContext<Short> implements S
             return;
         }
         activeBank = (to < bankCommon) ? bankSelect : 0;
-        mem[activeBank][to] = cells[0];
-        mem[activeBank][to + 1] = cells[1];
+        mem[activeBank][to] = (short)(cells[0] & 0xFF);
+        mem[activeBank][to + 1] = (short)(cells[1] & 0xFF);
         notifyMemoryChanged(to);
         notifyMemoryChanged(to + 1);
     }

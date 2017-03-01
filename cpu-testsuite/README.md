@@ -30,7 +30,7 @@ If you are using Maven, the best would be to include this as test dependency in 
 This project can be used for testing CPU emulators for emuStudio, which fulfill the following requirements:
 
 - operating memory is a collection of linearly ordered cells
-- operating memory cell type is `Short`
+- operating memory cell type is `Short` or `Byte`
 - CPU is using little endian
 - CPU has a program counter register (or "instruction pointer") or similar
 - Instruction operands are either `Byte` (8-bit) or `Integer` (16-bit)
@@ -46,6 +46,10 @@ NOTE: Realize that instructions in CPU always operate either on a state or with 
 Imagine we have 8080 CPU, and we want to test instruction `SUB`. The test might look as follows:
 
 ```Java
+import static net.sf.emustudio.cpu.testsuite.Generator.*;
+
+public class CpuTest {
+    
     @Test
     public void testSUB() throws Exception {
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
@@ -53,10 +57,11 @@ Imagine we have 8080 CPU, and we want to test instruction `SUB`. The test might 
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF))
                 .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity())
                 .keepCurrentInjectorsAfterRun();
-        Generator.forSome8bitBinaryWhichEqual(
+        
+        forSome8bitBinaryWhichEqual(
                 test.run(0x97)
         );
-        Generator.forSome8bitBinary(
+        forSome8bitBinary(
                 test.secondIsRegister(REG_B).run(0x90),
                 test.secondIsRegister(REG_C).run(0x91),
                 test.secondIsRegister(REG_D).run(0x92),
@@ -66,6 +71,7 @@ Imagine we have 8080 CPU, and we want to test instruction `SUB`. The test might 
                 test.setPair(REG_PAIR_HL, 1).secondIsMemoryByteAt(1).run(0x96)
         );
     }
+}
 ```
 
 At first, we need to know, if we will operate with bytes or integers (words). Therefore we create new `ByteTestBuilder`
