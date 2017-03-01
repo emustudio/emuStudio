@@ -524,16 +524,12 @@ public class EmuTextPane extends JTextPane {
         return fileSaved  && (fileSource != null);
     }
 
-    public String getFileName() {
-        if (fileSource == null) {
-            return null;
-        } else {
-            return fileSource.getAbsolutePath();
-        }
+    public Optional<File> getCurrentFile() {
+        return Optional.ofNullable(fileSource);
     }
 
     public boolean newFile() {
-        if (confirmSave() == true) {
+        if (confirmSave()) {
             return false;
         }
         fileSource = null;

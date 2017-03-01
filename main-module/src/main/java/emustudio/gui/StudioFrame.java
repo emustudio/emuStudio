@@ -19,6 +19,7 @@
  */
 package emustudio.gui;
 
+import emulib.plugins.Plugin;
 import emulib.plugins.compiler.Compiler;
 import emulib.plugins.compiler.Compiler.CompilerListener;
 import emulib.plugins.compiler.Message;
@@ -83,6 +84,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -92,6 +94,7 @@ public class StudioFrame extends JFrame {
     private final static int MIN_COMPILER_OUTPUT_HEIGHT = 200;
     private final static int MIN_PERIPHERAL_PANEL_HEIGHT = 100;
     private final static double GOLDEN_RATIO = 1.6180339887;
+    private final static String SOURCE_CODE_EDITOR = "Source code editor";
 
     private final Computer computer;
     private final SettingsManagerImpl settings;
@@ -385,7 +388,7 @@ public class StudioFrame extends JFrame {
     }
 
     private void initComponents() {
-        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane = new JTabbedPane();
         JPanel panelSource = new JPanel();
         JToolBar toolStandard = new JToolBar();
         JButton btnNew = new JButton();
@@ -600,7 +603,7 @@ public class StudioFrame extends JFrame {
                         .addContainerGap()
         );
 
-        tabbedPane.addTab("Source code editor", panelSource);
+        tabbedPane.addTab(SOURCE_CODE_EDITOR, panelSource);
 
         panelEmulator.setOpaque(true);
 
@@ -1067,20 +1070,17 @@ public class StudioFrame extends JFrame {
             if (!txtSource.saveFile(true)) {
                 return;
             }
+            updateTitleOfSourceCodePanel();
 
-            String fn = txtSource.getFileName();
+            String fn = txtSource.getCurrentFile().get().getAbsolutePath();
             txtOutput.setText("");
 
             Optional<Memory> memory = computer.getMemory();
 
-            if (memory.isPresent()) {
-                memory.get().reset();
-            }
+            memory.ifPresent(Plugin::reset);
             compiler.get().compile(fn);
             int programStart = compiler.get().getProgramStartAddress();
-            if (memory.isPresent()) {
-                memory.get().setProgramStart(programStart);
-            }
+            memory.ifPresent(memory1 -> memory1.setProgramStart(programStart));
             computer.getCPU().get().reset(programStart);
         } catch (Exception e) {
             LOGGER.error("Could not compile file.", e);
@@ -1121,6 +1121,7 @@ public class StudioFrame extends JFrame {
 
     private void mnuFileSaveAsActionPerformed(ActionEvent evt) {
         txtSource.saveFileDialog();
+        updateTitleOfSourceCodePanel();
     }
 
     private void mnuFileSaveActionPerformed(ActionEvent evt) {
@@ -1129,6 +1130,7 @@ public class StudioFrame extends JFrame {
 
     private void btnSaveActionPerformed(ActionEvent evt) {
         txtSource.saveFile(true);
+        updateTitleOfSourceCodePanel();
     }
 
     private void mnuFileOpenActionPerformed(ActionEvent evt) {
@@ -1155,11 +1157,13 @@ public class StudioFrame extends JFrame {
         if (txtSource.openFileDialog()) {
             txtOutput.setText("");
         }
+        updateTitleOfSourceCodePanel();
     }
 
     private void btnNewActionPerformed(ActionEvent evt) {
         txtSource.newFile();
         txtOutput.setText("");
+        updateTitleOfSourceCodePanel();
     }
 
     private void btnFindReplaceActionPerformed(ActionEvent evt) {
@@ -1234,6 +1238,16 @@ public class StudioFrame extends JFrame {
         }
     }
 
+    private void updateTitleOfSourceCodePanel() {
+        Optional<File> file = txtSource.getCurrentFile();
+
+        if (file.isPresent()) {
+            tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR + " (" + file.get().getName() + ")");
+        } else {
+            tabbedPane.setTitleAt(0, SOURCE_CODE_EDITOR);
+        }
+    }
+
     private JButton btnBack;
     private JButton btnBeginning;
     private JButton btnBreakpoint;
@@ -1266,4 +1280,6 @@ public class StudioFrame extends JFrame {
     private JToolBar toolDebug;
     private JPanel panelPages;
     private JPanel peripheralPanel;
+    private JTabbedPane tabbedPane;
+
 }
