@@ -103,6 +103,25 @@ public class MemoryTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
+    public int findSequence(byte[] sequence, int from) {
+        final int size = mem.getSize();
+        int offset = 0;
+        int foundAddress = -1;
+        for (int currentAddr = from; currentAddr < size && offset < sequence.length; currentAddr++) {
+            if (((Number)mem.read(currentAddr, currentBank)).byteValue() == sequence[offset]) {
+                if (offset == 0) {
+                    foundAddress = currentAddr;
+                }
+                offset++;
+            } else {
+                offset = 0;
+                foundAddress = -1;
+            }
+        }
+
+        return foundAddress;
+    }
+
     public int getPage() {
         return currentPage;
     }

@@ -20,9 +20,30 @@
 package net.sf.emustudio.memory.standard.gui;
 
 import emulib.emustudio.SettingsManager;
-import static emulib.runtime.RadixUtils.formatBinaryString;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.UniversalFileFilter;
+import net.sf.emustudio.memory.standard.gui.model.MemoryTableModel;
+import net.sf.emustudio.memory.standard.gui.model.TableMemory;
+import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
+import net.sf.emustudio.memory.standard.impl.MemoryImpl;
+
+import javax.swing.BorderFactory;
+import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.JToolBar;
+import javax.swing.LayoutStyle;
+import javax.swing.SpinnerModel;
+import javax.swing.SwingConstants;
+import javax.swing.WindowConstants;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -35,12 +56,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import javax.swing.*;
+
+import static emulib.runtime.RadixUtils.formatBinaryString;
 import static net.sf.emustudio.memory.standard.gui.FileChooser.selectFile;
-import net.sf.emustudio.memory.standard.gui.model.MemoryTableModel;
-import net.sf.emustudio.memory.standard.gui.model.TableMemory;
-import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
-import net.sf.emustudio.memory.standard.impl.MemoryImpl;
 
 public class MemoryDialog extends JDialog {
     private final MemoryContextImpl memContext;
@@ -238,7 +256,7 @@ public class MemoryDialog extends JDialog {
 
         int data = Integer.parseInt(memModel.getValueAt(row, column).toString(), 16);
         txtAddress.setText(String.format("%04X", address));
-        txtChar.setText(String.format("%c", data & 0xFF));
+        txtChar.setText(String.format("%c", (char)(data & 0xFF)));
         txtValDec.setText(String.format("%02d", data));
         txtValHex.setText(String.format("%02X", data));
         txtValOct.setText(String.format("%02o", data));
@@ -265,7 +283,8 @@ public class MemoryDialog extends JDialog {
         spnPage = new JSpinner();
         JLabel lblPageCountLBL = new JLabel("Page count:");
         lblPageCount = new JLabel("0");
-        JButton btnFindAddress = new JButton();
+        JButton btnGotoAddress = new JButton();
+        JButton btnFindText = new JButton();
         paneMemory = new JScrollPane();
         JPanel panelValue = new JPanel();
         JLabel lblAddress = new JLabel("Address:");
@@ -345,11 +364,17 @@ public class MemoryDialog extends JDialog {
         toolBar.add(btnSettings);
         toolBar.add(jSeparator2);
 
-        btnFindAddress.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/edit-find.png"))); // NOI18N
-        btnFindAddress.setToolTipText("Find address");
-        btnFindAddress.setFocusable(false);
-        btnFindAddress.addActionListener(this::btnFindAddressActionPerformed);
-        toolBar.add(btnFindAddress);
+        btnGotoAddress.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/edit-find.png"))); // NOI18N
+        btnGotoAddress.setToolTipText("Go to address");
+        btnGotoAddress.setFocusable(false);
+        btnGotoAddress.addActionListener(this::btnGotoAddressActionPerformed);
+        toolBar.add(btnGotoAddress);
+
+        btnFindText.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/find-text.png"))); // NOI18N
+        btnFindText.setToolTipText("Find text...");
+        btnFindText.setFocusable(false);
+        btnFindText.addActionListener(this::btnFindTextActionPerformed);
+        toolBar.add(btnFindText);
 
         panelMemory.setBorder(BorderFactory.createTitledBorder("Memory control"));
 
@@ -439,29 +464,32 @@ public class MemoryDialog extends JDialog {
         tblMemory.repaint();
     }
 
-    private void btnFindAddressActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnGotoAddressActionPerformed(java.awt.event.ActionEvent evt) {
         int address;
         try {
             address = Integer.decode(JOptionPane.showInputDialog(this,
-                    "Find address:", "Find Address",
+                    "Go to address:", "Go to address",
                     JOptionPane.QUESTION_MESSAGE, null, null, 0).toString());
         } catch (NumberFormatException | NullPointerException e) {
             return;
         }
         if (address < 0 || address >= memContext.getSize()) {
             JOptionPane.showMessageDialog(this, "Error: Address out of bounds",
-                    "Find Address", JOptionPane.ERROR_MESSAGE);
+                    "Go to address", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        memModel.setPage(address / (memModel.getRowCount() * memModel.getColumnCount()));
-        int c = (address & 0xF);
-        int r = (address & 0xF0) >> 4;
-        try {
-            tblMemory.setColumnSelectionInterval(c, c);
-            tblMemory.setRowSelectionInterval(r, r);
-            tblMemory.scrollRectToVisible(tblMemory.getCellRect(r, c, false));
-            updateMemVal(r, c);
-        } catch (Exception e) {
+
+        setPageFromAddress(address);
+    }
+
+    private void btnFindTextActionPerformed(java.awt.event.ActionEvent evt) {
+        FindTextDialog dialog = new FindTextDialog(this, memModel, getCurrentAddress());
+        
+        dialog.setVisible(true);
+        
+        int address = dialog.getFoundAddress();
+        if (address != -1) {
+            setPageFromAddress(address);
         }
     }
 
@@ -514,6 +542,23 @@ public class MemoryDialog extends JDialog {
             } catch (IOException e) {
                 StaticDialogs.showErrorMessage("Error: Dumpfile couldn't be created.");
             }
+        }
+    }
+    
+    private int getCurrentAddress() {
+        return memModel.getPage() * (memModel.getRowCount() * memModel.getColumnCount());
+    } 
+
+    private void setPageFromAddress(int address) {
+        memModel.setPage(address / (memModel.getRowCount() * memModel.getColumnCount()));
+        int c = (address & 0xF);
+        int r = (address & 0xF0) >> 4;
+        try {
+            tblMemory.setColumnSelectionInterval(c, c);
+            tblMemory.setRowSelectionInterval(r, r);
+            tblMemory.scrollRectToVisible(tblMemory.getCellRect(r, c, false));
+            updateMemVal(r, c);
+        } catch (RuntimeException ignored) {
         }
     }
 
