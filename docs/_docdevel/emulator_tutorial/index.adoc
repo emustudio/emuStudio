@@ -1,0 +1,22 @@
+---
+layout: docdev
+pagetitle: emulator
+---
+
+[[plugins-vademecum]]
+= Developing emuStudio Plugins
+
+:sectnums:
+:toc:
+:sourcedir: ../../../
+:imagepath: /docdevel/emulator_tutorial/images/
+
+include::introduction.adoc[]
+
+include::compiler.adoc[]
+
+include::memory.adoc[]
+
+include::cpu.adoc[]
+
+include::device.adoc[]

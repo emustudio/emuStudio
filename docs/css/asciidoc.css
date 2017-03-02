@@ -1,0 +1,147 @@
+.title {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+
+    text-transform: capitalize;
+    font-weight: bold;
+
+}
+.title h4 {
+    margin-top: 0;
+    color: inherit;
+}
+.title .title-link {
+    font-weight: bold;
+}
+.title > p,
+.title > ul {
+    margin-bottom: 0;
+}
+.title > p + p {
+    margin-top: 5px;
+}
+.title-dismissable,
+.title-dismissible {
+    padding-right: 35px;
+}
+.title-dismissable .close,
+.title-dismissible .close {
+    position: relative;
+    top: -2px;
+    right: -21px;
+    color: inherit;
+}
+
+.sect1 h2, .sect2 h3, .sect3 h4, .sect4 h5 {
+    /*padding-top: 250px;*/
+    /*margin-top: -230px;*/
+}
+
+.footnote {
+    font-size: smaller;
+}
+
+.subheader, .admonitionblock td.content > .title, .audioblock > .title, .exampleblock > .title,
+.imageblock > .title, .literalblock > .title, .stemblock > .title, .openblock > .title,
+.paragraph > .title, .quoteblock > .title, .verseblock > .title, .videoblock > .title, .dlist > .title,
+.olist > .title, .ulist > .title, .qlist > .title, .hdlist > .title {
+    line-height: 1.45;
+    color: #7a2518;
+    font-weight: 400;
+    margin-top: 0;
+    margin-bottom: .25em
+}
+
+.admonitionblock td.content > .title, .audioblock > .title, .exampleblock > .title, .imageblock > .title,
+.literalblock > .title, .stemblock > .title, .openblock > .title, .paragraph > .title,
+.quoteblock > .title, .verseblock > .title, .videoblock > .title, .dlist > .title, .olist > .title, .ulist > .title,
+.qlist > .title, .hdlist > .title {
+    text-rendering: optimizeLegibility;
+    text-align: left;
+    font-family: "Noto Serif", "DejaVu Serif", serif;
+    font-size: 1rem;
+    font-style: italic
+}
+
+.admonitionblock > table {
+    border-collapse: separate;
+    border: 0;
+    background: none;
+    width: 100%
+}
+
+.admonitionblock > table td.icon {
+    text-align: center;
+    width: 80px
+}
+
+.admonitionblock > table td.icon img {
+    max-width: none
+}
+
+.admonitionblock > table td.icon .title {
+    font-weight: bold;
+    font-family: "Open Sans", "DejaVu Sans", sans-serif;
+    text-transform: uppercase
+}
+
+.admonitionblock > table td.content {
+    padding-left: 1.125em;
+    padding-right: 1.25em;
+    border-left: 1px solid #ddddd8;
+    color: rgba(0, 0, 0, .6)
+}
+
+.admonitionblock > table td.content > :last-child > :last-child {
+    margin-bottom: 0
+}
+
+span.icon>.fa {
+    cursor: default;
+}
+.admonitionblock td.icon {
+    text-align: center;
+    width: 80px;
+}
+.admonitionblock td.icon [class^="fa icon-"] {
+    font-size: 2.5em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,.5);
+    cursor: default;
+}
+.admonitionblock td.icon .icon-note:before {
+    content: "\f05a";
+    color: #19407c;
+}
+.admonitionblock td.icon .icon-tip:before {
+    content: "\f0eb";
+    text-shadow: 1px 1px 2px rgba(155,155,0,.8);
+    color: #111;
+}
+.admonitionblock td.icon .icon-warning:before {
+    content: "\f071";
+    color: #bf6900;
+}
+.admonitionblock td.icon .icon-caution:before {
+    content: "\f06d";
+    color: #bf3400;
+}
+.admonitionblock td.icon .icon-important:before {
+    content: "\f06a";
+    color: #bf0000;
+}
+
+.admonitionblock {
+    margin: 20px;
+}
+
+td.hdlist1, td.hdlist2 {
+    vertical-align: top;
+    padding: 0 .625em;
+}
+
+td.hdlist1 {
+    font-weight: bold;
+    padding-bottom: 1.25em;
+}

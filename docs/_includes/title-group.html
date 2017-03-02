@@ -1,0 +1,38 @@
+<div class="title-group">
+    <h1 class="special" data-toc-skip>
+      <span>
+          {% if doctitle %}
+            {{ doctitle }}
+          {% elsif page.title %}
+            {{page.title}}
+          {% endif %}
+      </span>
+    </h1>
+    {% if collection %}
+    <aside>
+        {% for doc in collection %}
+        {% if doc.path contains 'index.adoc' %}
+        <span>
+            {% assign buttontitle = doc.relative_path | remove_first:'_docuser/' | remove_first:'_docdevel/' | remove:'/index.adoc' | replace:'_',' ' %}
+            {% if doc.path contains page.pagetitle %}
+                {% assign toshow = doc %}
+                <a href="{{ doc.url }}" role="button" class="btn btn-default active">
+                    {{ buttontitle }}
+                </a>
+            {% else %}
+                <a href="{{ doc.url }}" role="button" class="btn btn-default">
+                    {{ buttontitle }}
+                </a>
+            {% endif %}
+        </span>
+        {% endif %}
+        {% endfor %}
+    </aside>
+
+    <script>
+        $('#toc').on('affixed.bs.affix', function(){
+            $(this).removeAttr('style');
+        });
+    </script>
+    {% endif %}
+</div>

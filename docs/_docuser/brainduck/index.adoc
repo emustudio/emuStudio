@@ -1,0 +1,354 @@
+---
+layout: doc
+pagetitle: brainduck
+---
+
+[[brainduck]]
+= BrainDuck: Emulator of brainfuck
+
+:toc:
+:sectnums:
+:imagepath: /docuser/brainduck/images/
+
+== Introduction
+
+BrainDuck is an abstract computer for emuStudio, which mimics http://en.wikipedia.org/wiki/Brainfuck[brainfuck]
+programming language. Originally, brainfuck was developed by
+http://esolangs.org/wiki/Urban_M%C3%BCller[Urban Miller] and it is well-known fact that the language
+has minimalistic compiler and it's eight instructions don't prevent it to be Turing complete. Also,
+there exist many extensions of the language and there are organized programming contests in
+brainfuck worldwide. But all of that can be read at Wikipedia or at other sources.
+
+BrainDuck architecture is just a name for virtual computer in emuStudio, and consists of these
+plug-ins:
+
+- `brainc-brainduck`: Compiler of brainfuck language (original, without extensions)
+- `brainduck-cpu`: Brainfuck emulator acting like CPU with two registers
+- `brainduck-mem`: Virtual operating memory which holds both compiled brainfuck program and data
+- `brainduck-terminal`: Virtual terminal for displaying the output and requesting for input.
+
+All these plug-ins are free software, released under GNU GPL v2 license. The source code is freely
+available online.
+
+Implementation language is Java SE 8. The implementation technology of visual components is Java
+Swing. All plug-ins use library `emuLib` version `9.0.0`.
+
+[[XIB]]
+== Brief description
+
+BrainDuck is implemented as http://en.wikipedia.org/wiki/Von_Neumann_architecture[von Neumann architecture]. It implies that the program and data are shared in the single memory. This is not
+a common approach of implementing brainfuck interpreters, and it might be changed in the future.
+
+As implementing a brainfuck interpreter, one must deal with several http://en.wikipedia.org/wiki/Brainfuck#Portability_issues[portability issues], which include:
+
+- Memory cell size (solved in `brainduck-memory` and `brainduck-cpu`)
+- Memory size (number of memory cells) (solved in `brainduck-memory`)
+- End-of-line code (solved in `brainduck-terminal`)
+- End-of-file behavior (solved in `brainduck-cpu` and `brainduck-terminal`)
+
+The solution is spread across the plug-ins, as you can see in the parentheses. Chapters devoted
+to plug-ins' description contain specific information.
+
+[[XII]]
+== Installation and run
+
+At first, please download and install emuStudio distribution. BrainDuck is already included and
+ready for use.
+
+[[XIID]]
+=== Directory structure
+
+For further manipulation with BrainDuck-specific files, here's the file organization in directories:
+
+- `config/BrainDuck.conf`: configuration file of BrainDuck architecture. Can be edited in schema
+                           editor of emuStudio
+- `compilers/brainc-brainduck.jar`: BrainDuck compiler plug-in.
+- `cpu/brainduck-cpu.jar`: BrainDuck emulator (CPU plug-in).
+- `devices/brainduck-terminal.jar`: BrainDuck terminal device.
+- `mem/brainduck-mem.jar`: BrainDuck operating memory plug-in.
+
+BrainDuck compiler (as many other compilers in emuStudio) depends on Java CUP parser runtime library,
+which is located at `lib/java-cup-runtime-0.11a.jar`.
+
+[[XIIS]]
+=== Abstract schema
+
+In order to use BrainDuck, there must be drawn the abstract schema, saved in the configuration
+file. Abstract schemas are drawn in the schema editor in emuStudio (please see emuStudio Main module
+documentation for more details). The following image shows the schema of BrainDuck computer:
+
+[graphviz,brainduck-scheme,svg]
+---------------------------------------------------------------------
+digraph brainduck_schema {
+  node [shape = rect];
+
+  "brainc-brainduck" -> "brainduck-mem";
+  "brainduck-cpu" -> "brainduck-mem";
+  "brainduck-cpu" -> "brainduck-terminal";
+  "brainduck-terminal" -> "brainduck-cpu";
+}
+---------------------------------------------------------------------
+
+The "->" arrows are in direction of dependency. So for example `brainc-brainduck` depends on
+`brainduck-mem`, because compiled programs are directly loaded into memory.
+
+Between `brainduck-cpu` and `brainduck-terminal` exists bidirectional dependency, because input
+gained from terminal is passed to the CPU, and output is pushed from CPU to the terminal.
+
+Plug-in `brainduck-cpu` also depends on `brainduck-mem`, because memory is a place where program
+and data are stored.
+
+== Compiler `brainc-brainduck`
+
+BrainDuck compiler is used as a part of BrainDuck computer, which acts as a translator of *brainfuck* "human-readable"
+language into binary form, used by BrainDuck CPU. Those instructions and their binary codes have no relation
+with brainfuck itself, therefore the computer is not called *brainfuck computer*, because it is **not** brainfuck.
+But it does not mean you cannot write and run brainfuck programs in it :)
+
+At first, each compiler, including BrainDuck compiler, provides lexical analyzer for help with tokenize of the source
+code, used in syntax highlighting. Secondly, the compile *compiles* the source code into other (usually binary) form
+which is then understood by CPU.
+
+Compilation takes part by user request (clicking on 'compile' icon in the main window). After compilation is successful,
+the compiler usually loads the translated program into operating memory, and saves the translation into a file. So it
+is with BrainDuck compiler. Files have `.hex` extension.footnote:[Intel HEX format, for more info see
+http://en.wikipedia.org/wiki/Intel_HEX]
+
+[[XCI]]
+=== Installation and run
+
+The compiler is provided as part of emuStudio. It is not deployed as individual package. The compiler can be found
+in `compilers/` directory with name `brainc-brainduck.jar`.
+
+The compiler can be run from command line, with command:
+
+    java -jar brainc-brainduck.jar [--output output_file.hex] [source_file.b]
+
+To query for more information, run the compiler with command:
+
+    java -jar brainc-brainduck.jar --help
+
+Using compiler in command line might be useful for emulation automation.
+
+[[XCS]]
+=== Language Syntax
+
+The language of BrainDuck compiler is almost identical with the original brainfuck. However, brainfuck interpreter is
+not specified well-enough, so there are open questions how to treat with some special situations, which are described
+below.
+
+Generally, the language knows eight instructions. They are best described when they are compared with C language
+equivalent. Brainfuck uses only single data pointer called `P`, pointing to bounded memory.footnote:[The boundary is
+specified in `brainduck-mem` plug-in]
+
+NOTE: BrainDuck architecture conforms to true von-Neumann model, instead of classic Harvard-style interpreters.
+      It means that program memory and data memory are not separated. The data pointer is therefore not initialized
+      to 0 as programmers might expect and potentially there can be written brainfuck programs with self-modifications.
+
+.Brainfuck instructions
+[frame="top",options="header",role="table table-striped table-condensed"]
+|================================================
+|Brainfuck  instruction  | C language equivalent
+| `>`                    | `P++`
+| `<`                    | `P--`
+| `+`                    | `++*P`
+| `-`                    | `--*P`
+| `,`                    | `*P = getchar()`
+| `.`                    | `putchar(*P);`
+| `[`                    | `while (*P) {`
+| `]`                    | `}`
+|================================================
+
+
+The compiler is supplied with many example programms written in brainfuck.
+
+
+[[XCD]]
+=== Additional details
+
+As was said before, specification of brainfuck language or interpreter implementation is not complete. There are left
+some details which might be solved differently in different implementations. In this version of BrainDuck implementation
+in emuStudio, the details are solved in the fixed way, as described below.
+
+[[XCDC]]
+==== Comments
+
+The compiler takes as a comment everything which is not the brainfuck instruction. From the first occurence of
+unknown character, everything to the end of the line is treated as comment. Exceptions are whitespaces, tabulators, and
+newlines.footnote:[This practically means that it is impossible to write brainfuck program with syntax errors.]
+
+In the following example, everything starting with `#` is treated as comment, up to end of the line.
+
+    ++++[-] # Useless program in brainfuck. [-] clears the content of the memory cell.
+
+[[XCDS]]
+==== Cell size
+
+The memory cells are of 8-bit size (cells are bytes).
+
+[[XCDS]]
+==== Memory size
+
+The memory size is defined in `brainduck-mem` plug-in. In this version of emuStudio, it is 65536 cells.
+
+[[XCDE]]
+==== End-of-line code
+
+EOL is defined in `brainduck-terminal` plug-in. In the current version of emuStudio, it is a Newline character with
+ASCII code 10.
+
+
+[[XCDF]]
+==== End-of-file behavior
+
+EOF is defined in `brainduck-cpu` and `brainduck-terminal` plug-ins. In the current version of emuStudio, current
+cell (where `P` is pointing at) is changed to value 0.footnote:[This is not how original brainfuck behaves, which
+is doing no change to the cell on EOF]
+
+== CPU `brainduck-cpu`
+
+BrainDuck CPU is used as a part of BrainDuck computer, which acts as the interpreter of BrainDuck
+instructions. Those instructions correspond with brainfuck language.
+
+Program which is going to be executed is read from the operating memory, so the CPU must be
+connected with memory (`brainduck-mem`), in order to work properly.
+
+Also, optionally (but commonly) it is should be connected with I/O device (`brainduck-terminal`),
+so input/output can be received/send from/to the device. Only one device can be used.
+
+The CPU provides basic user interface in the form of status panel, which is visible in the emulator
+panel in the main window.
+
+Breakpoints are supported, so as "jump" to specific location, which might be actually dangerous to use.
+
+=== Installation and run
+
+The BrainDuck CPU can be run only as a part of emuStudio. It is installed in location `cpu/brainduck-cpu.jar`.
+
+=== Status panel
+
+In the following image, you can see the status panel of `brainduck-cpu`.
+
+image::{imagepath}/status-panel.png[BrainDuck CPU status panel]
+
+It is split into three parts. Within 'Internal status' part, there is shown content of registers `IP` and `P`. Register
+`IP` does not have counterpart in brainfuck. IP stands for "instruction pointer". The content is pointing at the next
+instruction being executed. Register `P` is commonly known from brainfuck. It is pointer to data.
+
+There is measured execution time, which is reset when user starts the program and stopped when either the program stops
+or the user stops it.
+
+Loop level shows the depth level of brainfuck loop the program is in. For example, if instruction pointer points
+into middle of the program `[[-]]`, to the `-` instruction, loop level is 2.
+
+=== Running brainfuck programs
+
+It is very important to reset CPU after each source code compilation. The reason is that after compilation register
+`P` is not changed. It therefore might point somewhere into compiled code in the memory. If the program was executed,
+changes in data would corrupt the program itself.
+
+Resetting CPU would move the `P` register after first occurrence of memory cell with value `0`. The value `0` in
+BrainDuck CPU represents halt instruction, which corresponds to EOF in brainfuck.
+
+== Memory `brainduck-mem`
+
+BrainDuck memory is used as a part of BrainDuck computer, which acts as the operating memory, holding both of brainfuck
+program and data.
+
+BrainDuck CPU reads/writes instructions from/to the memory. Memory updates its cells and notifies debugger in emuStudio
+about the update.
+
+The memory plug-in contains simple graphical window, a GUI, which provides a set of the following features:
+
+- paginated view of memory cells, arranged into 16x16 table per page.
+- cells are displayed in hexadecimal form and can be changed directly by user.
+- there are hard-coded 256 pages, so the memory size is 256 * (16x16) = 64 kB
+
+[[XMI]]
+=== Installation and run
+
+The BrainDuck memory can be run only as a part of emuStudio. It is installed in location
+`mem/brainduck-mem.jar`.
+
+[[XMG]]
+=== Graphical user interface (GUI)
+
+In the following screenshot, it is possible to see GUI of `brainduck-mem`.
+
+image::{imagepath}/brainduck-mem.png[BrainDuck memory window]
+
+- *A*: Shows actually displayed page. Can be edited manually by entering a number and pressing ENTER key
+- *B*: By double-clicking on a memory cell, the cell editor is enabled and user can overwrite the content of the cell.
+       Supported number formats are decimal or hexadecimal. Hexadecimal number must begin with `0x` prefix.
+- *C*: By clicking on button `Page down`, the page number is increased; button `Page up` decreases the page number.
+
+== Terminal `brainduck-terminal`
+
+BrainDuck terminal is used as a part of BrainDuck computer, which acts as an interactive console, or generally
+interactive input/output provider. It was written with support of GUI, but can be used also in emulation automation,
+in which case it loads input from the file and output to another file.
+
+Supported features are:
+
+- monospace font, unlimited width and height, white background
+- blinking cursor simulation
+- keyboard input; binary codes can be entered with special dialog
+- terminal interprets some special characters like 0x8 (backspace), 0x9 (tab), 0xA (LF), and 0x10 (CR)
+
+[[XTI]]
+=== Installation and run
+
+The BrainDuck terminal can be run only as a part of emuStudio. It is installed in location
+`devices/brainduck-terminal.jar`.
+
+[[XTG]]
+=== Graphical User Interface (GUI)
+
+In the following image, BrainDuck terminal window is shown:
+
+image::{imagepath}/brainduck-terminal.png[BrainDuck terminal window]
+
+It's easy and simple. BrainDuck CPU as it interprets `.` (dot) instructions, it sends the output to this terminal and it is
+displayed on screen.
+
+Input cannot be entered anytime. In brainfuck, input is requested through `,` instruction. Only when CPU encounters
+`,` (comma) instruction, user is asked to enter input. This situation is marked with geen icon in the bottom-left corner:
+
+image::{imagepath}/brainduck-terminal-input.png[Input is enabled in BrainDuck terminal window]
+
+Next to the icon, there is a blue "ASC" button. This button can be used for entering binary values as input.
+Special little dialog will appear asking user to enter space-separated numbers, representing ASCII codes of the input.
+
+NOTE: The terminal do not display characters with ASCII codes less than 32. Only some special characters are interpreted:
+      0x8 (backspace), 0x9 (tab), 0xA (LF), and 0x10 (CR)
+
+== Emulation automation
+
+BrainDuck is one of computers which allows automatic emulation. It means that it is possible to run the emulation from
+command line, while all necessary input and output is redirected from/to files. If user interaction is necessary, it is
+possible to run an interactive automation.
+
+Suppose the BrainDuck computer is represented by abstract schema shown in `brainduck-intro` document. In that
+case, BrainDuck terminal is the only device dealing with I/O. If the emulation was executed in automatic non-interactive
+mode, it will recognize it and the input/output will be redirected from/to files.
+
+Input file is called `brainduck-terminal.in` and must be placed in the directory from which emuStudio was executed.
+If the file does not exist, emuStudio will not run.
+
+Output file is called `brainduck-terminal.out` and it will be created automatically, or appended when it exists in the location
+from which emuStudio was executed.
+
+NOTE: Take care about end-of-line characters. Most of brainfuck programs count with Unix-like EOLs,
+      i.e. characters with ASCII code 10. Plug-in `brainduck-terminal` interprets ENTER key in
+      the interactive mode as Unix-like EOL. In the non-interactive mode, EOL may be of any-like type.
+
+Command line for starting non-interactive automatic emulation:
+
+    java -jar emuStudio.jar --config BrainDuck --input examples/brainc-brainduck/mandelbrot.b --output compiler.out --auto --nogui
+
+- configuration `config/BrainDuck.conf` will be loaded
+- input file for compiler is one of the examples
+- compiler messages will be redirected to file `compiler.out`
+- (`--auto`) automatic emulation mode will be performed
+- (`--nogui`) non-interactive version will be set
+

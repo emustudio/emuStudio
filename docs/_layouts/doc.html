@@ -1,0 +1,30 @@
+{% include base.html %}
+
+{% assign documentation = true %}
+
+{% include header.html %}
+
+{% assign doctitle = 'User documentation' %}
+{% assign collection = site.docuser %}
+
+{% include title-group.html %}
+
+<div class="container">
+    <div class="row">
+        <div id="sidebar" class="col-md-3 col-sm-3 col-lg-3">
+            <nav id="toc" class="navbar" data-spy="affix" data-offset-top="230" data-toggle="toc"></nav>
+        </div>
+        <div class="col-md-9 col-sm-9 col-lg-9">
+            {% if toshow %}
+                {{ toshow.content }}
+            {% else %}
+                <p>Please click on specific section.</p>
+            {% endif%}
+        </div>
+    </div>
+</div>
+
+{% include footer.html %}
+
+</body>
+</html>
