@@ -89,7 +89,7 @@
             <ul class="nav navbar-nav navbar-right">
                 {% for item in site.data.nav.main %}
                 <li>
-                    <a href="{{ base }}{{ item.url }}">{{ item.text }}</a>
+                    <a href="{{ site.github.url }}{{ item.url }}">{{ item.text }}</a>
                 </li>
                 {% endfor %}
             </ul>
