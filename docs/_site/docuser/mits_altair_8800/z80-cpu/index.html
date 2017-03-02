@@ -1,0 +1,468 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Z80 Cpu &diams; emuStudio</title>
+
+    <!-- RSS -->
+    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; " href="../../../feed.xml">
+    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; " href="../../../atom.xml">
+
+    <!-- Favicons -->
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico?">
+    <meta name="application-name" content="emuStudio &diams; ">
+    <meta name="msapplication-TileColor" content="#ffffff">
+
+    <!-- Fonts -->
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../../css/style.css">
+
+
+    <!-- Scripts -->
+
+    <!--[if lt IE 9]>
+        <script src="../../../js/html5shiv.min.js"></script>
+        <script src="../../../js/respond.min.js"></script>
+    <![endif]-->
+
+
+
+    <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-3492956-5', 'auto');
+        ga('send', 'pageview');
+
+    </script>
+</head>
+
+
+<body>
+
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://github.com/pages/vbmacher/emuStudio"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <p class="navbar-text"></p>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <!--<form class="navbar-form navbar-left" role="search">-->
+            <!--<div class="form-group">-->
+            <!--<input type="text" class="form-control" placeholder="Search website">-->
+            <!--</div>-->
+            <!--<button type="submit" class="btn btn-default">Submit</button>-->
+            <!--</form>-->
+            <ul class="nav navbar-nav navbar-right">
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/download">Download</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/docs">Docs</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/devel">Developer</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/roadmap">Roadmap</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/about">About</a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+<div class="title-group">
+    <h1 class="special" data-toc-skip>
+      <span>
+          
+            Z80 Cpu
+          
+      </span>
+    </h1>
+    
+</div>
+
+
+<div class="container">
+    <div class="sect1">
+<h2 id="CPU-Z80">CPU: Zilog Z80 emulator</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>It was possible to upgrade your Altair 8800 computer with a "better" 8-bit processor
+<a href="https://en.wikipedia.org/wiki/Zilog_Z80">Zilog Z80</a>. The processor was probably the most used 8-bit processor in
+80&#8217;s. It was backward compatible with 8080, and brought many enhancements. It was originally targeted for embedded
+systems, but very soon it become very popular and used for all kinds of computers - including desktop computers,
+arcade games, etc. Today the CPU is still used in some MP3 players, see e.g. <a href="https://en.wikipedia.org/wiki/S1_MP3_player" class="bare">https://en.wikipedia.org/wiki/S1_MP3_player</a>.</p>
+</div>
+<div class="paragraph">
+<p>Main features of the emulator include:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Interpretation as emulation technique,</p>
+</li>
+<li>
+<p>Correct real timing of instructions,</p>
+</li>
+<li>
+<p>Ability to set clock frequency manually at run-time,</p>
+</li>
+<li>
+<p>Emulation of all instructions including interrupts,</p>
+</li>
+<li>
+<p>Disassembler implementation,</p>
+</li>
+<li>
+<p>Ability to "dump" instruction history to console at run-time,</p>
+</li>
+<li>
+<p>Support of breakpoints,</p>
+</li>
+<li>
+<p>Ability of communication with up to 256 I/O devices,</p>
+</li>
+<li>
+<p>Status window shows all registers, flags, and run-time frequency.</p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="dumping-executed-instructions">Dumping executed instructions</h3>
+<div class="paragraph">
+<p>The CPU offers a quite unique feature, which is the ability to dump executed instructions as a sequence to the console.
+When enabled, then each executed instruction - together with content of flags and registers values after the execution
+are printed. This feature might be extremely useful in two cases:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Reverse engineering of some unknown software</p>
+</li>
+<li>
+<p>It allows to build tools for automatic checking of register values during the emulation,
+when performing automatic emulation.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>In order to enable this feature, please see the section <a href="#CPU-Z80-CONFIG_FILE">Configuration file</a>.</p>
+</div>
+<div class="paragraph">
+<p>For example, let&#8217;s take one of the examples which computes a reverse text:</p>
+</div>
+<div class="listingblock">
+<div class="title">Example program for reversing text in Z80 assembly</div>
+<div class="content">
+<pre class="pygments highlight"><code>; Print reversed text
+
+org 1000
+
+dec sp       ; stack initialization (0FFFFh)
+
+ld hl,text1
+call putstr  ; print text1
+ld de,input  ; address for string input
+call getline ; read from keyboard
+
+ld bc,input
+
+ld d,0      ; chars counter
+
+char_loop:
+ld a, (bc)
+inc bc        ; bc = bc+1
+cp 10       ; end of input?
+jp z, char_end
+cp 13
+jp z, char_end
+
+inc d        ; d =d+1
+jp char_loop
+char_end:
+
+dec bc        ;  bc = bc-1
+dec bc
+
+call newline
+
+char2_loop:
+ld a, (bc)
+call putchar
+
+dec bc
+
+dec d
+jp z, char2_end
+
+jp char2_loop
+char2_end:
+
+halt
+
+include "include\getchar.inc"
+include "include\getline.inc"
+include "include\putstr.inc"
+include "include\putchar.inc"
+include "include\newline.inc"
+
+text1: db "Reversed text ...",10,13,"Enter text: ",0
+text2: db 10,13,"Reversed: ",0
+input: ds 30</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When the program is being run, and the dump instructions feature is turned on, on console you can see the following
+output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>0000 | PC=03e8 |          dec SP |        3B  || regs=00 00 00 00 00 00 00 00  IX=0000 IY=0000 IFF=0 I=00 R=01 | flags=       | SP=ffff | PC=03e9
+0001 | PC=03e9 |      ld HL, 485 |  21 85 04  || regs=00 00 00 00 04 85 00 00  IX=0000 IY=0000 IFF=0 I=00 R=02 | flags=       | SP=ffff | PC=03ec
+0002 | PC=03ec |        call 46D |  CD 6D 04  || regs=00 00 00 00 04 85 00 00  IX=0000 IY=0000 IFF=0 I=00 R=03 | flags=       | SP=fffd | PC=046d
+0002 | PC=046d |      ld A, (HL) |        7E  || regs=00 00 00 00 04 85 00 52  IX=0000 IY=0000 IFF=0 I=00 R=04 | flags=       | SP=fffd | PC=046e
+0003 | PC=046e |          inc HL |        23  || regs=00 00 00 00 04 86 00 52  IX=0000 IY=0000 IFF=0 I=00 R=05 | flags=       | SP=fffd | PC=046f
+0003 | PC=046f |            cp 0 |     FE 00  || regs=00 00 00 00 04 86 00 52  IX=0000 IY=0000 IFF=0 I=00 R=06 | flags=    N  | SP=fffd | PC=0471
+0007 | PC=0471 |           ret Z |        C8  || regs=00 00 00 00 04 86 00 52  IX=0000 IY=0000 IFF=0 I=00 R=07 | flags=    N  | SP=fffd | PC=0472
+0008 | PC=0472 |      out (11),A |     D3 11  || regs=00 00 00 00 04 86 00 52  IX=0000 IY=0000 IFF=0 I=00 R=08 | flags=    N  | SP=fffd | PC=0474
+0008 | PC=0474 |          jp 46D |  C3 6D 04  || regs=00 00 00 00 04 86 00 52  IX=0000 IY=0000 IFF=0 I=00 R=09 | flags=    N  | SP=fffd | PC=046d
+0009 | PC=046d |      ld A, (HL) |        7E  || regs=00 00 00 00 04 86 00 65  IX=0000 IY=0000 IFF=0 I=00 R=0a | flags=    N  | SP=fffd | PC=046e
+0025 | Block from 0474 to 03EF; count=184
+0025 | PC=03ef |      ld DE, 4B2 |  11 B2 04  || regs=00 00 04 b2 04 a5 00 00  IX=0000 IY=0000 IFF=0 I=00 R=42 | flags= Z  N  | SP=ffff | PC=03f2
+0025 | PC=03f2 |        call 428 |  CD 28 04  || regs=00 00 04 b2 04 a5 00 00  IX=0000 IY=0000 IFF=0 I=00 R=43 | flags= Z  N  | SP=fffd | PC=0428
+0025 | PC=0428 |         ld C, 0 |     0E 00  || regs=00 00 04 b2 04 a5 00 00  IX=0000 IY=0000 IFF=0 I=00 R=44 | flags= Z  N  | SP=fffd | PC=042a
+0026 | PC=042a |        in A, 10 |     DB 10  || regs=00 00 04 b2 04 a5 00 02  IX=0000 IY=0000 IFF=0 I=00 R=45 | flags= Z  N  | SP=fffd | PC=042c
+0026 | PC=042c |           and 1 |     E6 01  || regs=00 00 04 b2 04 a5 00 00  IX=0000 IY=0000 IFF=0 I=00 R=46 | flags= ZHP   | SP=fffd | PC=042e
+0026 | PC=042e |       jp Z, 42A |  CA 2A 04  || regs=00 00 04 b2 04 a5 00 00  IX=0000 IY=0000 IFF=0 I=00 R=47 | flags= ZHP   | SP=fffd | PC=042a
+0027 | PC=042a |        in A, 10 |     DB 10  || regs=00 00 04 b2 04 a5 00 02  IX=0000 IY=0000 IFF=0 I=00 R=48 | flags= ZHP   | SP=fffd | PC=042c
+6323 | Block from 042E to 0431; count=1048716
+6323 | PC=0431 |        in A, 11 |     DB 11  || regs=00 00 04 b2 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=54 | flags=  H    | SP=fffd | PC=0433
+6323 | PC=0433 |            cp D |     FE 0D  || regs=00 00 04 b2 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=55 | flags=    N  | SP=fffd | PC=0435
+6324 | PC=0435 |       jp Z, 461 |  CA 61 04  || regs=00 00 04 b2 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=56 | flags=    N  | SP=fffd | PC=0438
+6324 | PC=0438 |            cp A |     FE 0A  || regs=00 00 04 b2 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=57 | flags=    N  | SP=fffd | PC=043a
+6324 | PC=043a |       jp Z, 461 |  CA 61 04  || regs=00 00 04 b2 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=58 | flags=    N  | SP=fffd | PC=043d
+6324 | PC=043d |            cp 8 |     FE 08  || regs=00 00 04 b2 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=59 | flags=    N  | SP=fffd | PC=043f
+6324 | PC=043f |      jp NZ, 459 |  C2 59 04  || regs=00 00 04 b2 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=5a | flags=    N  | SP=fffd | PC=0459
+6324 | PC=0459 |      out (11),A |     D3 11  || regs=00 00 04 b2 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=5b | flags=    N  | SP=fffd | PC=045b
+6324 | PC=045b |      ld (DE), A |        12  || regs=00 00 04 b2 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=5c | flags=    N  | SP=fffd | PC=045c
+6324 | PC=045c |          inc DE |        13  || regs=00 00 04 b3 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=5d | flags=    N  | SP=fffd | PC=045d
+6325 | PC=045d |           inc C |        0C  || regs=00 01 04 b3 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=5e | flags=       | SP=fffd | PC=045e
+6325 | PC=045e |          jp 42A |  C3 2A 04  || regs=00 01 04 b3 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=5f | flags=       | SP=fffd | PC=042a
+6325 | PC=042a |        in A, 10 |     DB 10  || regs=00 01 04 b3 04 a5 00 02  IX=0000 IY=0000 IFF=0 I=00 R=60 | flags=       | SP=fffd | PC=042c
+8683 | Block from 045E to 0461; count=440826
+8683 | PC=0461 |         ld A, A |     3E 0A  || regs=00 04 04 b6 04 a5 00 0a  IX=0000 IY=0000 IFF=0 I=00 R=5a | flags= ZH N  | SP=fffd | PC=0463
+8683 | PC=0463 |      ld (DE), A |        12  || regs=00 04 04 b6 04 a5 00 0a  IX=0000 IY=0000 IFF=0 I=00 R=5b | flags= ZH N  | SP=fffd | PC=0464
+8683 | PC=0464 |          inc DE |        13  || regs=00 04 04 b7 04 a5 00 0a  IX=0000 IY=0000 IFF=0 I=00 R=5c | flags= ZH N  | SP=fffd | PC=0465
+8683 | PC=0465 |         ld A, D |     3E 0D  || regs=00 04 04 b7 04 a5 00 0d  IX=0000 IY=0000 IFF=0 I=00 R=5d | flags= ZH N  | SP=fffd | PC=0467
+8683 | PC=0467 |      ld (DE), A |        12  || regs=00 04 04 b7 04 a5 00 0d  IX=0000 IY=0000 IFF=0 I=00 R=5e | flags= ZH N  | SP=fffd | PC=0468
+8684 | PC=0468 |          inc DE |        13  || regs=00 04 04 b8 04 a5 00 0d  IX=0000 IY=0000 IFF=0 I=00 R=5f | flags= ZH N  | SP=fffd | PC=0469
+8684 | PC=0469 |         ld A, 0 |     3E 00  || regs=00 04 04 b8 04 a5 00 00  IX=0000 IY=0000 IFF=0 I=00 R=60 | flags= ZH N  | SP=fffd | PC=046b
+8684 | PC=046b |      ld (DE), A |        12  || regs=00 04 04 b8 04 a5 00 00  IX=0000 IY=0000 IFF=0 I=00 R=61 | flags= ZH N  | SP=fffd | PC=046c
+8684 | PC=046c |             ret |        C9  || regs=00 04 04 b8 04 a5 00 00  IX=0000 IY=0000 IFF=0 I=00 R=62 | flags= ZH N  | SP=ffff | PC=03f5
+8684 | PC=03f5 |      ld BC, 4B2 |  01 B2 04  || regs=04 b2 04 b8 04 a5 00 00  IX=0000 IY=0000 IFF=0 I=00 R=63 | flags= ZH N  | SP=ffff | PC=03f8
+8684 | PC=03f8 |         ld D, 0 |     16 00  || regs=04 b2 00 b8 04 a5 00 00  IX=0000 IY=0000 IFF=0 I=00 R=64 | flags= ZH N  | SP=ffff | PC=03fa
+8684 | PC=03fa |      ld A, (BC) |        0A  || regs=04 b2 00 b8 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=65 | flags= ZH N  | SP=ffff | PC=03fb
+8684 | PC=03fb |          inc BC |        03  || regs=04 b3 00 b8 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=66 | flags= ZH N  | SP=ffff | PC=03fc
+8684 | PC=03fc |            cp A |     FE 0A  || regs=04 b3 00 b8 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=67 | flags=    N  | SP=ffff | PC=03fe
+8684 | PC=03fe |       jp Z, 40A |  CA 0A 04  || regs=04 b3 00 b8 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=68 | flags=    N  | SP=ffff | PC=0401
+8684 | PC=0401 |            cp D |     FE 0D  || regs=04 b3 00 b8 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=69 | flags=    N  | SP=ffff | PC=0403
+8685 | PC=0403 |       jp Z, 40A |  CA 0A 04  || regs=04 b3 00 b8 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=6a | flags=    N  | SP=ffff | PC=0406
+8685 | PC=0406 |           inc D |        14  || regs=04 b3 01 b8 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=6b | flags=       | SP=ffff | PC=0407
+8685 | PC=0407 |          jp 3FA |  C3 FA 03  || regs=04 b3 01 b8 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=6c | flags=       | SP=ffff | PC=03fa
+8685 | PC=03fa |      ld A, (BC) |        0A  || regs=04 b3 01 b8 04 a5 00 68  IX=0000 IY=0000 IFF=0 I=00 R=6d | flags=       | SP=ffff | PC=03fb
+8685 | Block from 0407 to 040A; count=28
+8685 | PC=040a |          dec BC |        0B  || regs=04 b6 04 b8 04 a5 00 0a  IX=0000 IY=0000 IFF=0 I=00 R=09 | flags= ZH N  | SP=ffff | PC=040b
+8685 | PC=040b |          dec BC |        0B  || regs=04 b5 04 b8 04 a5 00 0a  IX=0000 IY=0000 IFF=0 I=00 R=0a | flags= ZH N  | SP=ffff | PC=040c
+8685 | PC=040c |        call 47A |  CD 7A 04  || regs=04 b5 04 b8 04 a5 00 0a  IX=0000 IY=0000 IFF=0 I=00 R=0b | flags= ZH N  | SP=fffd | PC=047a
+8685 | PC=047a |         ld A, A |     3E 0A  || regs=04 b5 04 b8 04 a5 00 0a  IX=0000 IY=0000 IFF=0 I=00 R=0c | flags= ZH N  | SP=fffd | PC=047c
+8686 | PC=047c |        call 477 |  CD 77 04  || regs=04 b5 04 b8 04 a5 00 0a  IX=0000 IY=0000 IFF=0 I=00 R=0d | flags= ZH N  | SP=fffb | PC=0477
+8686 | PC=0477 |      out (11),A |     D3 11  || regs=04 b5 04 b8 04 a5 00 0a  IX=0000 IY=0000 IFF=0 I=00 R=0e | flags= ZH N  | SP=fffb | PC=0479
+8686 | PC=0479 |             ret |        C9  || regs=04 b5 04 b8 04 a5 00 0a  IX=0000 IY=0000 IFF=0 I=00 R=0f | flags= ZH N  | SP=fffd | PC=047f
+8686 | PC=047f |         ld A, D |     3E 0D  || regs=04 b5 04 b8 04 a5 00 0d  IX=0000 IY=0000 IFF=0 I=00 R=10 | flags= ZH N  | SP=fffd | PC=0481
+8686 | PC=0481 |        call 477 |  CD 77 04  || regs=04 b5 04 b8 04 a5 00 0d  IX=0000 IY=0000 IFF=0 I=00 R=11 | flags= ZH N  | SP=fffb | PC=0477
+8686 | PC=0477 |      out (11),A |     D3 11  || regs=04 b5 04 b8 04 a5 00 0d  IX=0000 IY=0000 IFF=0 I=00 R=12 | flags= ZH N  | SP=fffb | PC=0479
+8686 | Block from 0481 to 0484; count=2
+8686 | PC=0484 |             ret |        C9  || regs=04 b5 04 b8 04 a5 00 0d  IX=0000 IY=0000 IFF=0 I=00 R=14 | flags= ZH N  | SP=ffff | PC=040f
+8686 | PC=040f |      ld A, (BC) |        0A  || regs=04 b5 04 b8 04 a5 00 6a  IX=0000 IY=0000 IFF=0 I=00 R=15 | flags= ZH N  | SP=ffff | PC=0410
+8686 | PC=0410 |        call 477 |  CD 77 04  || regs=04 b5 04 b8 04 a5 00 6a  IX=0000 IY=0000 IFF=0 I=00 R=16 | flags= ZH N  | SP=fffd | PC=0477
+8686 | PC=0477 |      out (11),A |     D3 11  || regs=04 b5 04 b8 04 a5 00 6a  IX=0000 IY=0000 IFF=0 I=00 R=17 | flags= ZH N  | SP=fffd | PC=0479
+8686 | Block from 0410 to 0413; count=2
+8686 | PC=0413 |          dec BC |        0B  || regs=04 b4 04 b8 04 a5 00 6a  IX=0000 IY=0000 IFF=0 I=00 R=19 | flags= ZH N  | SP=ffff | PC=0414
+8687 | PC=0414 |           dec D |        15  || regs=04 b4 03 b8 04 a5 00 6a  IX=0000 IY=0000 IFF=0 I=00 R=1a | flags=  H N  | SP=ffff | PC=0415
+8687 | PC=0415 |       jp Z, 41B |  CA 1B 04  || regs=04 b4 03 b8 04 a5 00 6a  IX=0000 IY=0000 IFF=0 I=00 R=1b | flags=  H N  | SP=ffff | PC=0418
+8687 | PC=0418 |          jp 40F |  C3 0F 04  || regs=04 b4 03 b8 04 a5 00 6a  IX=0000 IY=0000 IFF=0 I=00 R=1c | flags=  H N  | SP=ffff | PC=040f
+8687 | PC=040f |      ld A, (BC) |        0A  || regs=04 b4 03 b8 04 a5 00 6f  IX=0000 IY=0000 IFF=0 I=00 R=1d | flags=  H N  | SP=ffff | PC=0410
+8687 | Block from 0418 to 041B; count=23
+8687 | PC=041b |            halt |        76  || regs=04 b1 00 b8 04 a5 00 61  IX=0000 IY=0000 IFF=0 I=00 R=34 | flags= ZH N  | SP=ffff | PC=041c</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The dump format consists of lines, each line represents one instruction execution. The line is separated by <code>|</code> chars,
+splitting it into so-called sections. Sections before the sequence <code>||</code> represent state <strong>before</strong> instruction execution,
+and sections after it represent the state <strong>after</strong> instruction execution. Particular sections are described in the
+following table.</p>
+</div>
+<table class="tableblock frame-topbot grid-all spread table table-striped table-condensed">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Column</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tfoot>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">8</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Program counter after instruction execution</p></td>
+</tr>
+</tfoot>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Timestamp from program start (seconds)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Program counter before instruction execution</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Disassembled instruction</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Instruction opcodes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Now follows the state <strong>after</strong> instruction execution</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Register values (<code>B</code>, <code>C</code>, <code>D</code>, <code>E</code>, <code>H</code>, <code>L</code>, reserved (always 0), <code>A</code>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Flags</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Stack pointer register (<code>SP</code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="CPU-Z80-CONFIG_FILE">Configuration file</h3>
+<div class="paragraph">
+<p>Configuration file of virtual computers contain also settings of all the used plug-ins, including CPUs. Please
+read the section "Accessing settings of plug-ins" in the user documentation of Main module to see how the settings can
+be accessed.</p>
+</div>
+<div class="paragraph">
+<p>The following table shows all the possible settings of Zilog Z80 CPU plug-in:</p>
+</div>
+<table class="tableblock frame-topbot grid-all spread table table-striped table-condensed">
+<caption class="title">Table 1. Settings of Zilog Z80 CPU emulator plug-in</caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+<th class="tableblock halign-left valign-top">Valid values</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tfoot>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>printCodeUseCache</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true / false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>printCode</code> is set to <code>true</code>, then a cache will
+                                                                    be used which remembers already visited blocks of code
+                                                                    so the instruction dump will not be bloated with
+                                                                    infinite loops</p></td>
+</tr>
+</tfoot>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>printCode</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true / false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether the emulator should print executed instructions,
+                                                                    and its internal state to console (dump)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+
+    <footer class="site-footer">
+        <div class="container">
+            <nav class="navbar">
+                <div class="container">
+                    <ul class="nav navbar-nav">
+                        <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
+                        <li><a href="http://sourceforge.net/projects/emustudio"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=340604&amp;type=8" width="80" height="15" alt="Get emuStudio at SourceForge.net. Fast, secure and Free Open Source software downloads" /></a></li>
+                        <li class="navbar-text">&copy; Copyright 2006-2017, Peter Jakubčo</li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </footer>
+
+    </body>
+</html>
+
+
+</body>
+</html>

@@ -1,0 +1,305 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Rasp Cpu &diams; emuStudio</title>
+
+    <!-- RSS -->
+    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; " href="../../../feed.xml">
+    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; " href="../../../atom.xml">
+
+    <!-- Favicons -->
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico?">
+    <meta name="application-name" content="emuStudio &diams; ">
+    <meta name="msapplication-TileColor" content="#ffffff">
+
+    <!-- Fonts -->
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../../css/style.css">
+
+
+    <!-- Scripts -->
+
+    <!--[if lt IE 9]>
+        <script src="../../../js/html5shiv.min.js"></script>
+        <script src="../../../js/respond.min.js"></script>
+    <![endif]-->
+
+
+
+    <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-3492956-5', 'auto');
+        ga('send', 'pageview');
+
+    </script>
+</head>
+
+
+<body>
+
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://github.com/pages/vbmacher/emuStudio"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <p class="navbar-text"></p>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <!--<form class="navbar-form navbar-left" role="search">-->
+            <!--<div class="form-group">-->
+            <!--<input type="text" class="form-control" placeholder="Search website">-->
+            <!--</div>-->
+            <!--<button type="submit" class="btn btn-default">Submit</button>-->
+            <!--</form>-->
+            <ul class="nav navbar-nav navbar-right">
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/download">Download</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/docs">Docs</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/devel">Developer</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/roadmap">Roadmap</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/about">About</a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+<div class="title-group">
+    <h1 class="special" data-toc-skip>
+      <span>
+          
+            Rasp Cpu
+          
+      </span>
+    </h1>
+    
+</div>
+
+
+<div class="container">
+    <div class="sect1">
+<h2 id="cpu-code-rasp-cpu-code">CPU <code>rasp-cpu</code></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>RASP CPU is the core of the RASP virtual computer. Its purpose is to execute RASP program composed of RASP instructions
+which is stored in the RASP memory. The CPU is therefore connected with the memory.</p>
+</div>
+<div class="paragraph">
+<p>To run 'interactive' RASP programs (programs reading user input and writing something to the output), input and output
+tapes are needed. They are included there in default RASP configuration.</p>
+</div>
+<div class="sect2">
+<h3 id="installation-and-run">Installation and run</h3>
+<div class="paragraph">
+<p>RASP CPU plugin is already included in emuStudio distribution, in location <code>cpu/rasp-cpu.jar</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="supported-instructions">Supported instructions</h3>
+<div class="paragraph">
+<p>RASP CPU emulator supports the following instructions:</p>
+</div>
+<table class="tableblock frame-topbot grid-all spread table table-striped table-condensed">
+<caption class="title">Table 1. RASP instructions</caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Operation code</th>
+<th class="tableblock halign-left valign-top">Instruction mnemonic code</th>
+<th class="tableblock halign-left valign-top">Semantics</th>
+</tr>
+</thead>
+<tfoot>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>18</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>HALT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">finish program execution</p></td>
+</tr>
+</tfoot>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>READ i</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">read from input tape into register <code>Ri</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>2</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>WRITE =i</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">write constant <code>i</code> onto the output tape</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>3</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>WRITE i</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">write the content of the register <code>Ri</code> onto the output tape</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>4</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>LOAD =i</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">load the accumulator (register <code>R0</code>) with the <code>i</code> constant</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>5</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>LOAD i</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">load the accumulator (register <code>R0</code>) with the content of <code>Ri</code> register</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>6</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>STORE i</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">store the accumulator (register <code>R0</code>) content into register <code>Ri</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>7</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ADD =i</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">increase accumulator (register <code>R0</code>) value by constant <code>i</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>8</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ADD i</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">increase accumulator (register <code>R0</code>) value by the value of register <code>Ri</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>9</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SUB =i</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">decrease accumulator (register <code>R0</code>) value by constant <code>i</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>10</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SUB i</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">decrease accumlator (register R0) by the value of register <code>Ri</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>11</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>MUL =i</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">multiply accumulator (register R0) by constant <code>i</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>12</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>MUL i</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">multiply accumulator (register R0) by the value of register <code>Ri</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>13</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DIV =i</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">divide accumulator (register R0) by constant <code>i</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>14</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DIV i</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">divide accumulator (register R0) by the value of register <code>Ri</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>15</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>JMP l</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set instruction pointer (<code>IP</code>) to the address pointed to by the label <code>l</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>16</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>JZ l</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set instruction pointer (<code>IP</code>) to the address pointed to by the label <code>l</code> if value of the accumulator (register R0) is zero (<code>R0 = 0</code>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>17</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>JGTZ l</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set instruction pointer (<code>IP</code>) to the address pointed to by the label <code>l</code> if value of the accumulator (register R0) is greater than zero (<code>R0 &gt; 0</code>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="cpu-status-panel">CPU Status panel</h3>
+<div class="paragraph">
+<p>There is a simple GUI window provided for the RASP CPU. It displays the two most important values:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>current value of the accumulator (<code>R0</code> register)</p>
+</li>
+<li>
+<p>current value of the instruction pointer (<code>IP</code>) which points to current position within the executed program</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Also, information about the current RUNNING STATUS is displayed.</p>
+</div>
+<div class="paragraph">
+<p>Following figure shows a screenshot:</p>
+</div>
+<div class="paragraph">
+<p>image::{imagepath}/statusPanel.png[RASP CPU status panel]</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+    <footer class="site-footer">
+        <div class="container">
+            <nav class="navbar">
+                <div class="container">
+                    <ul class="nav navbar-nav">
+                        <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
+                        <li><a href="http://sourceforge.net/projects/emustudio"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=340604&amp;type=8" width="80" height="15" alt="Get emuStudio at SourceForge.net. Fast, secure and Free Open Source software downloads" /></a></li>
+                        <li class="navbar-text">&copy; Copyright 2006-2017, Peter Jakubčo</li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </footer>
+
+    </body>
+</html>
+
+
+</body>
+</html>

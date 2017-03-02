@@ -1,0 +1,471 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>8080 Cpu &diams; emuStudio</title>
+
+    <!-- RSS -->
+    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; " href="../../../feed.xml">
+    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; " href="../../../atom.xml">
+
+    <!-- Favicons -->
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico?">
+    <meta name="application-name" content="emuStudio &diams; ">
+    <meta name="msapplication-TileColor" content="#ffffff">
+
+    <!-- Fonts -->
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../../css/style.css">
+
+
+    <!-- Scripts -->
+
+    <!--[if lt IE 9]>
+        <script src="../../../js/html5shiv.min.js"></script>
+        <script src="../../../js/respond.min.js"></script>
+    <![endif]-->
+
+
+
+    <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-3492956-5', 'auto');
+        ga('send', 'pageview');
+
+    </script>
+</head>
+
+
+<body>
+
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://github.com/pages/vbmacher/emuStudio"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <p class="navbar-text"></p>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <!--<form class="navbar-form navbar-left" role="search">-->
+            <!--<div class="form-group">-->
+            <!--<input type="text" class="form-control" placeholder="Search website">-->
+            <!--</div>-->
+            <!--<button type="submit" class="btn btn-default">Submit</button>-->
+            <!--</form>-->
+            <ul class="nav navbar-nav navbar-right">
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/download">Download</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/docs">Docs</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/devel">Developer</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/roadmap">Roadmap</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/about">About</a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+<div class="title-group">
+    <h1 class="special" data-toc-skip>
+      <span>
+          
+            8080 Cpu
+          
+      </span>
+    </h1>
+    
+</div>
+
+
+<div class="container">
+    <div class="sect1">
+<h2 id="CPU-8080">CPU: Intel 8080 emulator</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Altair 8800 originally came with processor <a href="https://en.wikipedia.org/wiki/Intel_8080">Intel 8080</a>. It is 8-bit
+microprocessor, from 1974. Initial clock frequency was 2 MHZ. This processor was one of the first general-purpose and
+widespread processors, used not only in calculators but also in first personal computers. One of the key roles why
+this CPU become so popular is that Gary Killdall targeted his CP/M to this CPU; and CP/M was de facto a "standard"
+in personal computers those days.</p>
+</div>
+<div class="paragraph">
+<p>Main features of the emulator include:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Threaded-dispatch combined with interpretation as emulation technique,</p>
+</li>
+<li>
+<p>Correct real timing of instructions,</p>
+</li>
+<li>
+<p>Ability to set clock frequency manually at run-time,</p>
+</li>
+<li>
+<p>Emulation of all instructions including interrupts,</p>
+</li>
+<li>
+<p>Disassembler implementation,</p>
+</li>
+<li>
+<p>Ability to "dump" instruction history to console at run-time,</p>
+</li>
+<li>
+<p>Support of breakpoints,</p>
+</li>
+<li>
+<p>Ability of communication with up to 256 I/O devices,</p>
+</li>
+<li>
+<p>Status window shows all registers, flags, and run-time frequency.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="dumping-executed-instructions">Dumping executed instructions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The CPU offers a quite unique feature, which is the ability to dump executed instructions as a sequence to the console.
+When enabled, then each executed instruction - together with content of flags and registers values after the execution
+are printed. This feature might be extremely useful in two cases:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Reverse engineering of some unknown software</p>
+</li>
+<li>
+<p>It allows to build tools for automatic checking of register values during the emulation,
+when performing automatic emulation.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>In order to enable this feature, please see the section <a href="#CPU-8080-CONFIG_FILE">Configuration file</a>.</p>
+</div>
+<div class="paragraph">
+<p>For example, let&#8217;s take one of the examples which computes a reverse text:</p>
+</div>
+<div class="listingblock">
+<div class="title">Example program for reversing text in 8080 assembly</div>
+<div class="content">
+<pre class="pygments highlight"><code>; Print reversed text
+
+org 1000
+
+dcx sp       ; stack initialization (0FFFFh)
+
+lxi h,text1
+call putstr  ; print text1
+lxi d,input  ; address for string input
+call getline ; read from keyboard
+
+lxi b,input
+
+mvi d,0      ; chars counter
+
+char_loop:
+ldax b
+inx b        ; bc = bc+1
+cpi 10       ; end of input?
+jz char_end
+cpi 13
+jz char_end
+
+inr d        ; d =d+1
+jmp char_loop
+char_end:
+
+dcx b        ;  bc = bc-1
+dcx b
+
+call newline
+
+char2_loop:
+ldax b
+call putchar
+
+dcx b
+
+dcr d
+jz char2_end
+
+jmp char2_loop
+char2_end:
+
+
+hlt
+
+include 'include\getchar.inc'
+include 'include\getline.inc'
+include 'include\putstr.inc'
+include 'include\putchar.inc'
+include 'include\newline.inc'
+
+text1: db 'Reversed text ...',10,13,'Enter text: ',0
+text2: db 10,13,'Reversed: ',0
+input: ds 30</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When the program is being run, and the dump instructions feature is turned on, on console you can see the following
+output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>0000 | PC=03e8 |       dcx SP |        3B  || regs=00 00 00 00 00 00 00 00  | flags=      | SP=ffff | PC=03e9
+0001 | PC=03e9 |  lxi HL, 485 |  21 85 04  || regs=00 00 00 00 04 85 00 00  | flags=      | SP=ffff | PC=03ec
+0001 | PC=03ec |     call 46D |  CD 6D 04  || regs=00 00 00 00 04 85 00 00  | flags=      | SP=fffd | PC=046d
+0002 | PC=046d |     mov A, M |        7E  || regs=00 00 00 00 04 85 00 52  | flags=      | SP=fffd | PC=046e
+0002 | PC=046e |       inx HL |        23  || regs=00 00 00 00 04 86 00 52  | flags=      | SP=fffd | PC=046f
+0003 | PC=046f |        cpi 0 |     FE 00  || regs=00 00 00 00 04 86 00 52  | flags=      | SP=fffd | PC=0471
+0004 | PC=0471 |           rz |        C8  || regs=00 00 00 00 04 86 00 52  | flags=      | SP=fffd | PC=0472
+0005 | PC=0472 |       out 11 |     D3 11  || regs=00 00 00 00 04 86 00 52  | flags=      | SP=fffd | PC=0474
+0006 | PC=0474 |      jmp 46D |  C3 6D 04  || regs=00 00 00 00 04 86 00 52  | flags=      | SP=fffd | PC=046d
+0006 | PC=046d |     mov A, M |        7E  || regs=00 00 00 00 04 86 00 65  | flags=      | SP=fffd | PC=046e
+0024 | Block from 0474 to 03EF; count=184
+0024 | PC=03ef |  lxi DE, 4B2 |  11 B2 04  || regs=00 00 04 b2 04 a5 00 00  | flags= Z P  | SP=ffff | PC=03f2
+0025 | PC=03f2 |     call 428 |  CD 28 04  || regs=00 00 04 b2 04 a5 00 00  | flags= Z P  | SP=fffd | PC=0428
+0025 | PC=0428 |     mvi C, 0 |     0E 00  || regs=00 00 04 b2 04 a5 00 00  | flags= Z P  | SP=fffd | PC=042a
+0025 | PC=042a |        in 10 |     DB 10  || regs=00 00 04 b2 04 a5 00 00  | flags= Z P  | SP=fffd | PC=042c
+0026 | PC=042c |        ani 1 |     E6 01  || regs=00 00 04 b2 04 a5 00 00  | flags= Z P  | SP=fffd | PC=042e
+0026 | PC=042e |       jz 42A |  CA 2A 04  || regs=00 00 04 b2 04 a5 00 00  | flags= Z P  | SP=fffd | PC=042a
+0027 | PC=042a |        in 10 |     DB 10  || regs=00 00 04 b2 04 a5 00 00  | flags= Z P  | SP=fffd | PC=042c
+1548 | Block from 042E to 0431; count=181125
+1548 | PC=0431 |        in 11 |     DB 11  || regs=00 00 04 b2 04 a5 00 68  | flags=      | SP=fffd | PC=0433
+1548 | PC=0433 |        cpi D |     FE 0D  || regs=00 00 04 b2 04 a5 00 68  | flags=      | SP=fffd | PC=0435
+1548 | PC=0435 |       jz 461 |  CA 61 04  || regs=00 00 04 b2 04 a5 00 68  | flags=      | SP=fffd | PC=0438
+1548 | PC=0438 |        cpi A |     FE 0A  || regs=00 00 04 b2 04 a5 00 68  | flags=      | SP=fffd | PC=043a
+1549 | PC=043a |       jz 461 |  CA 61 04  || regs=00 00 04 b2 04 a5 00 68  | flags=      | SP=fffd | PC=043d
+1549 | PC=043d |        cpi 8 |     FE 08  || regs=00 00 04 b2 04 a5 00 68  | flags=  AP  | SP=fffd | PC=043f
+1549 | PC=043f |      jnz 459 |  C2 59 04  || regs=00 00 04 b2 04 a5 00 68  | flags=  AP  | SP=fffd | PC=0459
+1549 | PC=0459 |       out 11 |     D3 11  || regs=00 00 04 b2 04 a5 00 68  | flags=  AP  | SP=fffd | PC=045b
+1549 | PC=045b |      stax DE |        12  || regs=00 00 04 b2 04 a5 00 68  | flags=  AP  | SP=fffd | PC=045c
+1549 | PC=045c |       inx DE |        13  || regs=00 00 04 b3 04 a5 00 68  | flags=  AP  | SP=fffd | PC=045d
+1549 | PC=045d |        inr C |        0C  || regs=00 01 04 b3 04 a5 00 68  | flags=      | SP=fffd | PC=045e
+1549 | PC=045e |      jmp 42A |  C3 2A 04  || regs=00 01 04 b3 04 a5 00 68  | flags=      | SP=fffd | PC=042a
+1550 | PC=042a |        in 10 |     DB 10  || regs=00 01 04 b3 04 a5 00 00  | flags=      | SP=fffd | PC=042c
+2940 | Block from 045E to 0461; count=267777
+2940 | PC=0461 |     mvi A, A |     3E 0A  || regs=00 05 04 b7 04 a5 00 0a  | flags= ZAP  | SP=fffd | PC=0463
+2940 | PC=0463 |      stax DE |        12  || regs=00 05 04 b7 04 a5 00 0a  | flags= ZAP  | SP=fffd | PC=0464
+2940 | PC=0464 |       inx DE |        13  || regs=00 05 04 b8 04 a5 00 0a  | flags= ZAP  | SP=fffd | PC=0465
+2940 | PC=0465 |     mvi A, D |     3E 0D  || regs=00 05 04 b8 04 a5 00 0d  | flags= ZAP  | SP=fffd | PC=0467
+2940 | PC=0467 |      stax DE |        12  || regs=00 05 04 b8 04 a5 00 0d  | flags= ZAP  | SP=fffd | PC=0468
+2940 | PC=0468 |       inx DE |        13  || regs=00 05 04 b9 04 a5 00 0d  | flags= ZAP  | SP=fffd | PC=0469
+2940 | PC=0469 |     mvi A, 0 |     3E 00  || regs=00 05 04 b9 04 a5 00 00  | flags= ZAP  | SP=fffd | PC=046b
+2941 | PC=046b |      stax DE |        12  || regs=00 05 04 b9 04 a5 00 00  | flags= ZAP  | SP=fffd | PC=046c
+2941 | PC=046c |          ret |        C9  || regs=00 05 04 b9 04 a5 00 00  | flags= ZAP  | SP=ffff | PC=03f5
+2941 | PC=03f5 |  lxi BC, 4B2 |  01 B2 04  || regs=04 b2 04 b9 04 a5 00 00  | flags= ZAP  | SP=ffff | PC=03f8
+2941 | PC=03f8 |     mvi D, 0 |     16 00  || regs=04 b2 00 b9 04 a5 00 00  | flags= ZAP  | SP=ffff | PC=03fa
+2941 | PC=03fa |      ldax BC |        0A  || regs=04 b2 00 b9 04 a5 00 68  | flags= ZAP  | SP=ffff | PC=03fb
+2941 | PC=03fb |       inx BC |        03  || regs=04 b3 00 b9 04 a5 00 68  | flags= ZAP  | SP=ffff | PC=03fc
+2941 | PC=03fc |        cpi A |     FE 0A  || regs=04 b3 00 b9 04 a5 00 68  | flags=      | SP=ffff | PC=03fe
+2941 | PC=03fe |       jz 40A |  CA 0A 04  || regs=04 b3 00 b9 04 a5 00 68  | flags=      | SP=ffff | PC=0401
+2942 | PC=0401 |        cpi D |     FE 0D  || regs=04 b3 00 b9 04 a5 00 68  | flags=      | SP=ffff | PC=0403
+2942 | PC=0403 |       jz 40A |  CA 0A 04  || regs=04 b3 00 b9 04 a5 00 68  | flags=      | SP=ffff | PC=0406
+2942 | PC=0406 |        inr D |        14  || regs=04 b3 01 b9 04 a5 00 68  | flags=      | SP=ffff | PC=0407
+2942 | PC=0407 |      jmp 3FA |  C3 FA 03  || regs=04 b3 01 b9 04 a5 00 68  | flags=      | SP=ffff | PC=03fa
+2942 | PC=03fa |      ldax BC |        0A  || regs=04 b3 01 b9 04 a5 00 65  | flags=      | SP=ffff | PC=03fb
+2942 | Block from 0407 to 040A; count=36
+2942 | PC=040a |       dcx BC |        0B  || regs=04 b7 05 b9 04 a5 00 0a  | flags= ZAP  | SP=ffff | PC=040b
+2943 | PC=040b |       dcx BC |        0B  || regs=04 b6 05 b9 04 a5 00 0a  | flags= ZAP  | SP=ffff | PC=040c
+2943 | PC=040c |     call 47A |  CD 7A 04  || regs=04 b6 05 b9 04 a5 00 0a  | flags= ZAP  | SP=fffd | PC=047a
+2943 | PC=047a |     mvi A, A |     3E 0A  || regs=04 b6 05 b9 04 a5 00 0a  | flags= ZAP  | SP=fffd | PC=047c
+2943 | PC=047c |     call 477 |  CD 77 04  || regs=04 b6 05 b9 04 a5 00 0a  | flags= ZAP  | SP=fffb | PC=0477
+2943 | PC=0477 |       out 11 |     D3 11  || regs=04 b6 05 b9 04 a5 00 0a  | flags= ZAP  | SP=fffb | PC=0479
+2943 | PC=0479 |          ret |        C9  || regs=04 b6 05 b9 04 a5 00 0a  | flags= ZAP  | SP=fffd | PC=047f
+2943 | PC=047f |     mvi A, D |     3E 0D  || regs=04 b6 05 b9 04 a5 00 0d  | flags= ZAP  | SP=fffd | PC=0481
+2943 | PC=0481 |     call 477 |  CD 77 04  || regs=04 b6 05 b9 04 a5 00 0d  | flags= ZAP  | SP=fffb | PC=0477
+2943 | PC=0477 |       out 11 |     D3 11  || regs=04 b6 05 b9 04 a5 00 0d  | flags= ZAP  | SP=fffb | PC=0479
+2943 | Block from 0481 to 0484; count=2
+2943 | PC=0484 |          ret |        C9  || regs=04 b6 05 b9 04 a5 00 0d  | flags= ZAP  | SP=ffff | PC=040f
+2944 | PC=040f |      ldax BC |        0A  || regs=04 b6 05 b9 04 a5 00 6f  | flags= ZAP  | SP=ffff | PC=0410
+2944 | PC=0410 |     call 477 |  CD 77 04  || regs=04 b6 05 b9 04 a5 00 6f  | flags= ZAP  | SP=fffd | PC=0477
+2944 | PC=0477 |       out 11 |     D3 11  || regs=04 b6 05 b9 04 a5 00 6f  | flags= ZAP  | SP=fffd | PC=0479
+2944 | Block from 0410 to 0413; count=2
+2944 | PC=0413 |       dcx BC |        0B  || regs=04 b5 05 b9 04 a5 00 6f  | flags= ZAP  | SP=ffff | PC=0414
+2944 | PC=0414 |        dcr D |        15  || regs=04 b5 04 b9 04 a5 00 6f  | flags=  A   | SP=ffff | PC=0415
+2944 | PC=0415 |       jz 41B |  CA 1B 04  || regs=04 b5 04 b9 04 a5 00 6f  | flags=  A   | SP=ffff | PC=0418
+2944 | PC=0418 |      jmp 40F |  C3 0F 04  || regs=04 b5 04 b9 04 a5 00 6f  | flags=  A   | SP=ffff | PC=040f
+2944 | PC=040f |      ldax BC |        0A  || regs=04 b5 04 b9 04 a5 00 6c  | flags=  A   | SP=ffff | PC=0410
+2945 | Block from 0418 to 041B; count=31
+2945 | PC=041b |          hlt |        76  || regs=04 b1 00 b9 04 a5 00 68  | flags= ZAP  | SP=ffff | PC=041c</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The dump format consists of lines, each line represents one instruction execution. The line is separated by <code>|</code> chars,
+splitting it into so-called sections. Sections before the sequence <code>||</code> represent state <strong>before</strong> instruction execution,
+and sections after it represent the state <strong>after</strong> instruction execution. Particular sections are described in the
+following table.</p>
+</div>
+<table class="tableblock frame-topbot grid-all spread table table-striped table-condensed">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Column</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tfoot>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">8</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Program counter after instruction execution</p></td>
+</tr>
+</tfoot>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Timestamp from program start (seconds)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Program counter before instruction execution</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Disassembled instruction</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Instruction opcodes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Now follows the state <strong>after</strong> instruction execution</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Register values (<code>B</code>,<code>C</code>,<code>D</code>,<code>E</code>,<code>H</code>,<code>L</code>, reserved (always 0), <code>A</code>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Flags</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Stack pointer register (<code>SP</code>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sect2">
+<h3 id="CPU-8080-CONFIG_FILE">Configuration file</h3>
+<div class="paragraph">
+<p>Configuration file of virtual computers contain also settings of all the used plug-ins, including CPUs. Please
+read the section "Accessing settings of plug-ins" in the user documentation of Main module to see how the settings can
+be accessed.</p>
+</div>
+<div class="paragraph">
+<p>The following table shows all the possible settings of Intel 8080 CPU plug-in:</p>
+</div>
+<table class="tableblock frame-topbot grid-all spread table table-striped table-condensed">
+<caption class="title">Table 1. Settings of Intel 8080 CPU emulator plug-in</caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+<th class="tableblock halign-left valign-top">Valid values</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tfoot>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>printCodeUseCache</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true / false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>printCode</code> is set to <code>true</code>, then a cache will
+                                                                    be used which remembers already visited blocks of code
+                                                                    so the instruction dump will not be bloated with
+                                                                    infinite loops</p></td>
+</tr>
+</tfoot>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>printCode</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true / false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether the emulator should print executed instructions,
+                                                                    and its internal state to console (dump)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+
+    <footer class="site-footer">
+        <div class="container">
+            <nav class="navbar">
+                <div class="container">
+                    <ul class="nav navbar-nav">
+                        <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
+                        <li><a href="http://sourceforge.net/projects/emustudio"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=340604&amp;type=8" width="80" height="15" alt="Get emuStudio at SourceForge.net. Fast, secure and Free Open Source software downloads" /></a></li>
+                        <li class="navbar-text">&copy; Copyright 2006-2017, Peter Jakubčo</li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </footer>
+
+    </body>
+</html>
+
+
+</body>
+</html>

@@ -1,0 +1,588 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>88 Sio &diams; emuStudio</title>
+
+    <!-- RSS -->
+    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; " href="../../../feed.xml">
+    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; " href="../../../atom.xml">
+
+    <!-- Favicons -->
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico?">
+    <meta name="application-name" content="emuStudio &diams; ">
+    <meta name="msapplication-TileColor" content="#ffffff">
+
+    <!-- Fonts -->
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../../css/style.css">
+
+
+    <!-- Scripts -->
+
+    <!--[if lt IE 9]>
+        <script src="../../../js/html5shiv.min.js"></script>
+        <script src="../../../js/respond.min.js"></script>
+    <![endif]-->
+
+
+
+    <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-3492956-5', 'auto');
+        ga('send', 'pageview');
+
+    </script>
+</head>
+
+
+<body>
+
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://github.com/pages/vbmacher/emuStudio"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <p class="navbar-text"></p>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <!--<form class="navbar-form navbar-left" role="search">-->
+            <!--<div class="form-group">-->
+            <!--<input type="text" class="form-control" placeholder="Search website">-->
+            <!--</div>-->
+            <!--<button type="submit" class="btn btn-default">Submit</button>-->
+            <!--</form>-->
+            <ul class="nav navbar-nav navbar-right">
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/download">Download</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/docs">Docs</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/devel">Developer</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/roadmap">Roadmap</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/about">About</a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+<div class="title-group">
+    <h1 class="special" data-toc-skip>
+      <span>
+          
+            88 Sio
+          
+      </span>
+    </h1>
+    
+</div>
+
+
+<div class="container">
+    <div class="sect1">
+<h2 id="SIO-88">Serial board <code>88-sio</code></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Altair 8800 computer was equipped with serial board called 88-SIO. It was a device which allowed connecting other
+devices using RS-232 interface. From one side it was attached to CPU on two ports (0x10 and 0x11). The other side
+was ended with one or two physical ports (allowing to connect one or two devices). Real board supported both hardware
+and software interrupts.</p>
+</div>
+<div class="paragraph">
+<p>The following image shows MITS 88-SIO-2 board.</p>
+</div>
+<div class="paragraph">
+<p>image::{imagepath}/88-sio-2.png[Serial board MITS 88-SIO-2]</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Original manual of MITS 88-SIO serial board can be downloaded at
+      <a href="http://maben.homeip.net/static/s100/altair/cards/Altair%2088-SIO%20serial%20IO.pdf">this link</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect2">
+<h3 id="features">Features</h3>
+<div class="paragraph">
+<p>The plug-in emulates only basic functionality of the board. It has the following features:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>allows to connect one device only</p>
+</li>
+<li>
+<p>CPU ports can be set manually</p>
+</li>
+<li>
+<p>interrupts are not implemented</p>
+</li>
+<li>
+<p>setting of transfer speed, parity, number of stop bits is not supported</p>
+</li>
+<li>
+<p>GUI</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="cpu-ports-settings">CPU Ports settings</h3>
+<div class="paragraph">
+<p>MITS 88-SIO board is attached to CPU using two ports. By allowing settings of the port numbers the board can be used
+in other computers, too. By default, the ports used by 88-SIO are:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>port 1: 0x08</p>
+</li>
+<li>
+<p>port 2: 0x09</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>These numbers can be changed in the Settings window, tab "CPU Ports":</p>
+</div>
+<div class="paragraph">
+<p>image::{imagepath}/88-sio-ports.png[Setting CPU ports]</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="connecting-devices">Connecting devices</h3>
+<div class="paragraph">
+<p>MITS 88-SIO board as emuStudio plug-in is a device which does nothing really useful. It just listens (and understands)
+commands coming from CPU through the I/O ports. The command is either a request for reading or request for writing to
+the attached device.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Theoretically any device which supports the basic I/O (reading/writing), can be attached to the board. More about
+      plug-in internals can be found in programmer&#8217;s manual of emuStudio, which is not part of the user documentation.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Usually, attached devices were:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>serial terminal</p>
+</li>
+<li>
+<p>line printer</p>
+</li>
+<li>
+<p>paper tape reader/punch</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>In current implementation of Altair 8800 emulator, the only suitable device which can be attached to the board is
+terminal ADM-3A from Lear Siegler, Inc and which is described in its own section.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="configuration-file">Configuration file</h3>
+<div class="paragraph">
+<p>Configuration file of virtual computers contain also settings of all the used plug-ins, including devices. Please
+read the section "Accessing settings of plug-ins" in the user documentation of Main module to see how the settings can
+be accessed.</p>
+</div>
+<div class="paragraph">
+<p>The following table shows all the possible settings of MITS 88-SIO plug-in:</p>
+</div>
+<table class="tableblock frame-topbot grid-all spread table table-condensed">
+<caption class="title">Table 1. Settings of MITS 88-SIO</caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+<th class="tableblock halign-left valign-top">Valid values</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tfoot>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>dataPortNumber</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0x11</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&gt; 0 and &lt; 256</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of Data Port</p></td>
+</tr>
+</tfoot>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>statusPortNumber</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0x10</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&gt; 0 and &lt; 256</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of Status Port</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="SIO-88_PROGRAMMING">Programming</h3>
+<div class="paragraph">
+<p>In order to show something useful, let&#8217;s assume that a terminal LSI ADM-3A is attached to the board.
+Remember, the board only mediates the communication, it does not interpret any of the sent/received characters.</p>
+</div>
+<div class="sect3">
+<h4 id="cpu-ports">CPU Ports</h4>
+<div class="paragraph">
+<p>The whole communication between the board (and attached device) and CPU is controlled by programming the two ports:
+Status port and Data port. The following table shows the ports and how they are used.</p>
+</div>
+<table class="tableblock frame-topbot grid-all spread table table-condensed">
+<caption class="title">Table 2. Summary of CPU ports usage</caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Port</th>
+<th class="tableblock halign-left valign-top">Address</th>
+<th class="tableblock halign-left valign-top">Input</th>
+<th class="tableblock halign-left valign-top">Output</th>
+</tr>
+</thead>
+<tfoot>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0x11</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Read data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Write data</p></td>
+</tr>
+</tfoot>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0x10</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Read board status</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Only 'empties' buffer</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Now, detailed description of the ports follow. Bits are ordered in a byte as follows:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>D7 D6 D5 D4 D3 D2 D1 D0</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>where <code>D7</code> is the most significant bit, and <code>D0</code> the least significant bit.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="port-1-default-address-0x10">Port 1 (default address: 0x10)</h4>
+<div class="paragraph">
+<p><strong>WRITE</strong>:</p>
+</div>
+<div class="paragraph">
+<p>Controls input/output interrupts enable. If both interrupts are set to be enabled, it only empties transmitter buffer
+in the device, which was a post-step after interrupts being enabled. However, the plug-in does not implement interrupts
+support.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>D7 D6 D5 D4 D3 D2</code> : unused bits</p>
+</li>
+<li>
+<p><code>D1 D0</code>             : Value <code>03</code> will cause to empty transmitter buffer. Other values are ignored.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>READ</strong>:</p>
+</div>
+<div class="paragraph">
+<p>Read status of the device.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>D7</code> : <em>Output device ready</em>. Value 0 means that a ready pulse was sent from device. Value 1 means the device is not
+ready.</p>
+</li>
+<li>
+<p><code>D6</code> : Not used.</p>
+</li>
+<li>
+<p><code>D5</code> : <em>Data available</em>. Value 1 means that a word of data is in the buffer on the I/O board.</p>
+</li>
+<li>
+<p><code>D4</code> : <em>Data overflow</em>. Value 1 means a new word of data has been received before the previous word was inputted to
+the accumulator. In emuStudio, this never happens.</p>
+</li>
+<li>
+<p><code>D3</code> : <em>Framing error</em>. Value 1 means that data bit has no valid stop bit. In emuStudio, this never happens.</p>
+</li>
+<li>
+<p><code>D2</code> : <em>Parity error</em>. Value 1 means that received parity does not agree with selected parity. In emuStudio, this
+never happens.</p>
+</li>
+<li>
+<p><code>D1</code> : <em>Transmitter buffer empty</em>. Value 1 means that the previous data word has been transmitted and a new data
+word may be outputted. Practically it means CPU can read data from the data port.</p>
+</li>
+<li>
+<p><code>D0</code> : <em>Input device ready</em>. Value 1 means a ready pulse has been sent from the device. Practically it means that
+CPU can write data to the data port.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="port-2-default-address-0x11">Port 2 (default address: 0x11)</h4>
+<div class="paragraph">
+<p><strong>WRITE</strong>:</p>
+</div>
+<div class="paragraph">
+<p>Write data to the attached device.</p>
+</div>
+<div class="paragraph">
+<p><strong>READ</strong>:</p>
+</div>
+<div class="paragraph">
+<p>Read data from the attached device.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="program-example">Program example</h4>
+<div class="paragraph">
+<p>In this section it will be shown a small "How to" program terminal using 88-SIO ports.</p>
+</div>
+<div class="sect4">
+<h5 id="print-a-character-on-screen">Print a character on screen</h5>
+<div class="paragraph">
+<p>In emuStudio, it is enough to write data to Port 2, e.g.:</p>
+</div>
+<div class="listingblock">
+<div class="title">Example program for writing character on terminal</div>
+<div class="content">
+<pre>mvi a, 'H'
+out 11h
+mvi a, 'i'
+out 11h</pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="print-a-string-on-screen">Print a string on screen</h5>
+<div class="paragraph">
+<p>For writing strings, it is more practical to have a procedure.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example program for writing text on terminal</div>
+<div class="content">
+<pre>lxi h, text  ; load address of 'text' label to HL
+call print   ; print text
+hlt          ; halt CPU
+
+text: db 'Hello, world!',0
+
+; Procedure for printing text to terminal.
+; Input: pair HL must contain the address of the ASCIIZ string
+print:
+    mov a, m  ; load character from HL
+    inx h     ; increment HL
+    cpi 0     ; is the character = 0?
+    rz        ; yes; quit
+    out 11h   ; otherwise; show it
+    jmp print ; and repeat from the beginning</pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="reading-character-from-keyboard">Reading character from keyboard</h5>
+<div class="paragraph">
+<p>For reading a character, it is required to read the Port 1 until the character is not ready.
+Then we can read it from Port 2.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example procedure for reading a character from terminal</div>
+<div class="content">
+<pre>; Procedure will read a single character from terminal
+; Input: none
+; Output: register A will contain the character.
+getchar:
+    in 10h     ; read Port 1
+    ani 1      ; is data ready ?
+    jz getchar ; not; try again
+    in 11h     ; yes; read it (into A register)
+    ret</pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="reading-text-from-keyboard">Reading text from keyboard</h5>
+<div class="paragraph">
+<p>Now follows an example, which will read a whole line of characters into memory starting at address in <code>DE</code> pair. The
+procedure will interpret some control keys, like: backspace and ENTER keys.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example program for reading text from terminal</div>
+<div class="content">
+<pre>lxi h, text        ; load address of 'text' label to HL
+xchg               ; DE &lt;-&gt; HL
+call getline       ; read line from the keyboard into DE
+
+lxi h, text        ; load 'text' address again
+call print         ; print the text on screen
+
+hlt                ; halt CPU
+
+text: ds 30        ; here will be stored the read text
+
+;Procedure for reading a text from keyboard.
+;Input: DE = address, where the text should be put after reading
+;       C  = is used internally
+getline:
+    mvi c, 0       ; register C will be used as a counter of
+                   ; read characters
+next_char:
+    in 10h         ; read Port 1: status
+    ani 1          ; is the char ready for reading?
+    jz next_char   ; not; try again
+    in 11h         ; yes; read it to A register
+
+    ; now ENTER and Backspace will be interpreted
+    cpi 13         ; ENTER?
+    jz getline_ret ; yes; it means end of input
+    cpi 8          ; Backspace ?
+    jnz save_char  ; if not; store the character
+
+    ; Backspace interpretation
+    mov a, c       ; A &lt;- number of read characters
+    cpi 0          ; are we at the beginning?
+    jz next_char   ; yes; ignore the backspace
+
+    dcx d          ; not; decrement DE
+    dcr c          ; decrement count of read characters
+    mvi a,8        ; "show" the backspace (terminal will
+                   ; interpret this by moving the cursor
+                   ; to the left by 1 char)
+    out 11h
+    mvi a, 32      ; "clear" the current character on screen
+                   ; by a space character (ASCII code 32)
+    out 11h
+
+    mvi a,8        ; and move the cursor back again
+    out 11h
+    jmp next_char  ; jump to next char
+
+save_char:         ; stores a character into memory at DE
+    out 11h        ; show the character in A register
+    stax d         ; store it at address DE
+    inx d          ; increment DE
+    inr c          ; increment number of read characters
+    jmp next_char  ; jump to next char
+
+getline_ret:       ; end of input
+                   ; ENTER will be stored as CRLF
+    mvi a,13       ; CR (Carriage Return)
+    stax d         ; store the char
+    inx d          ; increment DE
+    mvi a, 10      ; LF (Line Feed)
+    stax d         ; store the char
+    inx d          ; increment DE
+    mvi a, 0       ; char 0 (End-Of-Input)
+    stax d         ; store the char
+    ret            ; return</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+    <footer class="site-footer">
+        <div class="container">
+            <nav class="navbar">
+                <div class="container">
+                    <ul class="nav navbar-nav">
+                        <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
+                        <li><a href="http://sourceforge.net/projects/emustudio"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=340604&amp;type=8" width="80" height="15" alt="Get emuStudio at SourceForge.net. Fast, secure and Free Open Source software downloads" /></a></li>
+                        <li class="navbar-text">&copy; Copyright 2006-2017, Peter Jakubčo</li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </footer>
+
+    </body>
+</html>
+
+
+</body>
+</html>

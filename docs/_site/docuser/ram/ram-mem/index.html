@@ -1,0 +1,206 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Ram Mem &diams; emuStudio</title>
+
+    <!-- RSS -->
+    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; " href="../../../feed.xml">
+    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; " href="../../../atom.xml">
+
+    <!-- Favicons -->
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico?">
+    <meta name="application-name" content="emuStudio &diams; ">
+    <meta name="msapplication-TileColor" content="#ffffff">
+
+    <!-- Fonts -->
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../../css/style.css">
+
+
+    <!-- Scripts -->
+
+    <!--[if lt IE 9]>
+        <script src="../../../js/html5shiv.min.js"></script>
+        <script src="../../../js/respond.min.js"></script>
+    <![endif]-->
+
+
+
+    <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-3492956-5', 'auto');
+        ga('send', 'pageview');
+
+    </script>
+</head>
+
+
+<body>
+
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://github.com/pages/vbmacher/emuStudio"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <p class="navbar-text"></p>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <!--<form class="navbar-form navbar-left" role="search">-->
+            <!--<div class="form-group">-->
+            <!--<input type="text" class="form-control" placeholder="Search website">-->
+            <!--</div>-->
+            <!--<button type="submit" class="btn btn-default">Submit</button>-->
+            <!--</form>-->
+            <ul class="nav navbar-nav navbar-right">
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/download">Download</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/docs">Docs</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/devel">Developer</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/roadmap">Roadmap</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/about">About</a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+<div class="title-group">
+    <h1 class="special" data-toc-skip>
+      <span>
+          
+            Ram Mem
+          
+      </span>
+    </h1>
+    
+</div>
+
+
+<div class="container">
+    <div class="sect1">
+<h2 id="program-memory">Program Memory</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>RAM memory is used as a part of RAM simulator, which acts as the "program memory", holding just the program.</p>
+</div>
+<div class="paragraph">
+<p>RAM CPU reads instructions from this memory. The instructions can be written here only by compiling
+the source code, or loading already compiled binary image.</p>
+</div>
+<div class="paragraph">
+<p>The memory plug-in contains simple graphical window, a GUI, which provides a set of the following features:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>It computes time and space complexity of the program</p>
+</li>
+<li>
+<p>It shows the memory content (the "program") as the list of disassembled instructions</p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="XMI">Installation and run</h3>
+<div class="paragraph">
+<p>The RAM memory can be run only as a part of emuStudio. It is installed in location <code>mem/ram-mem.jar</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="XMG">Graphical user interface (GUI)</h3>
+<div class="paragraph">
+<p>The memory GUI can be seen in the following picture.</p>
+</div>
+<div class="paragraph">
+<p>image::{imagepath}/ram-mem.png[RAM memory window]</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>A</strong>: Opens already compiled program into memory. Previous program will be dismissed.</p>
+</li>
+<li>
+<p><strong>B</strong>: Clears memory.</p>
+</li>
+<li>
+<p><strong>C</strong>: Shows uniform time complexity for the actual program.</p>
+</li>
+<li>
+<p><strong>D</strong>: Shows uniform space complexity for the actual program.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Uniform time complexity means maximum number of instructions based on the input <code>N</code>. Uniform space complexity
+means maximum number of used registers.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+    <footer class="site-footer">
+        <div class="container">
+            <nav class="navbar">
+                <div class="container">
+                    <ul class="nav navbar-nav">
+                        <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
+                        <li><a href="http://sourceforge.net/projects/emustudio"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=340604&amp;type=8" width="80" height="15" alt="Get emuStudio at SourceForge.net. Fast, secure and Free Open Source software downloads" /></a></li>
+                        <li class="navbar-text">&copy; Copyright 2006-2017, Peter Jakubčo</li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </footer>
+
+    </body>
+</html>
+
+
+</body>
+</html>

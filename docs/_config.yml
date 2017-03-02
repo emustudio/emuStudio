@@ -26,11 +26,12 @@ unpublished: false
 
 # Plugins
 whitelist: [jekyll-asciidoc]
-gems:      [asciidoctor-diagram, jekyll-asciidoc]
+gems:      [asciidoctor-diagram, jekyll-asciidoc, jekyll-github-metadata, jekyll-sitemap]
+repository: vbmacher/emuStudio
 
 # Conversion
 markdown:    kramdown
-highlighter: pygments
+highlighter: rouge
 lsi:         false
 excerpt_separator: "\n\n"
 
