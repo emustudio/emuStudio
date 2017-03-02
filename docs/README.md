@@ -38,7 +38,7 @@ please visit [official Jekyll site](https://jekyllrb.com/).
 The site has some dependencies which must be installed manually. The list of them is as follows:
 
 - [Graphviz](http://www.graphviz.org/Download.php), for the `dot` program
-- Ruby GEMs: `jekyll-paginate`, `asciidoctor-diagram`, `jekyll-asciidoc` 
+- Ruby GEMs: `asciidoctor-diagram`, `jekyll-asciidoc` 
 
 For testing the site locally, run the command:
 
