@@ -1,0 +1,48 @@
+
+OPERATION
+
+The Altair PROM Monitor has three commands:
+
+	M - Memory examine and change
+	D - Memory dump
+	J - Jump to user program
+
+a) The M command
+
+The M command allows the user to examine and change any location in the Altair 8800
+memory. The form of the M command is as follows:
+
+Mxxxxxx
+
+where xxxxxx stands for from zero to six valid octal digits. The PROM Monitor opens
+the location specified and displays the three digit octal contents of that location.
+The Monitor then waits for three valid octal digits. Three complete octal digits must be input; the space character cannot be used as a delimiter in this case. When this valid data has been received, the Monitor attempts to place the data into the opened location. Once the deposit has been made and verified, the M function closes the current location and opens the following location. If the user tries to deposit information into nonexistent memory, ROM, or protected RAM, the bad deposit causes "?" to be printed on the terminal and control is returned to the Monitor. Assuming a valid deposit, this sequence continues until a non-valid character (any character except the digits 0-7) is input. This non-valid character is flagged with a "?" and control returns to the Monitor. This is the normal way to return to the Monitor. If a space is input instead of a valid octal character, the M function closes the present location without making any changes and then opens the next consecutive location. While the M command is looking for input, the space character may be used at any time to close the current location without change, and open the following location. Therefore, even though one or two valid octal digits may have been input, when the space has been received, the location is closed without change. To deposit new data, three complete valid octal digits must be input.
+
+
+b) The D command
+
+The D command allows the user to dump the contents of the Altair 88OO's memory between any two locations. The D command has the following form:
+
+Dxxxxxx xxxxxx
+
+To use the D command, type a D in response to the Monitor's prompt character. The D function will then wait for the starting address (zero to six valid octal digits). If six digits are input, the D function prints a space and then waits for the ending address (zero to six valid octal digits). The ending address must be greater than or equal to the starting address. If less than six digits are input during the starting address, the D function echoes the de1imiting space character, but does not print one of its own. Once the D function has received valid starting and ending addresses, it displays the memory contents as octal data, 16 bytes per line. Upon completion of the dump, the D function performs a carriage return and line feed and then returns to the Monitor.
+
+
+c) The J command
+
+The J command allows the user to transfer control between the monitor and another program. The J command has the following form:
+
+Jxxxxxx
+
+where xxxxxx is the starting address of the user routine (zero to six valid octal digits). Once the J function has received a valid address, it will load the program counter with the
+address and start execution of the user program at that address.
+
+MEMORY SPACE AND STACK CONSIDERATIONS
+
+The PROM Monitor is 256 decimal or 377 octal bytes long and is assembled to operate with a starting address of 176400 octal. It must be located at this point in memory or it will not operate correctly. The PROM Monitor establishes a stack with a top address of 176000 octal when it is entered. The Monitor never has more than four levels of subroutine calls at anyone time, so only eight bytes are actually used in the stack. The stack itself usually resides in the lK of RAM that is, on an Altair 8800n Turnkey system, part of the Turnkey Module. It is the user's responsibility to see that there is RAM available at the stack location. Otherwise, the Monitor cannot operate correctly, if at all. All necessary registers and the stack pointer should be saved before jumping from a program to the Monitor, since the Monitor destroys the contents of the stack pointer and all registers upon entry. Restoration of the registers must be handled by the user's program.
+
+ERROR CONSIDERATIONS
+
+Errors in data input can be corrected easily before the last character is typed. Simply type a non-octal character (except space) and the monitor will print a question mark and a period. The command may then be typed again. When the octal input routines are requesting input, they do not check for over-range conditions on the input data. For example, when
+using the M function, three complete valid octal digits must be input in order to deposit new data into a memory location. Since the Altair 8800 is organized around an eight bit byte, the largest valid octal number that can be input is 377. In fact 777 can be input without the Monitor detecting an error. The actual value that is deposited in the memory location in that case is not equal to 777 octal, but depends upon the binary representation of the most significant digit input to the routine. For example, 477 causes the routine to deposit octal 077 into the memory location. The same possible error condition is present when addresses are input, except that the maximum value that may be typed is 1777777. Anything larger will not be flagged as an error, but the effective address will depend upon the binary representation of the highest order digit.
+
