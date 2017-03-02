@@ -9,7 +9,6 @@ collections:
     output: true
   docdevel:
     output: true
-    permalink: /docdevel/:path
 
 # Handling Reading
 safe:         true
@@ -42,7 +41,7 @@ host:    0.0.0.0
 baseurl: "" # does not include hostname
 
 # Outputting
-permalink:     /:title.html
+permalink:        pretty
 timezone:      Europe/Prague
 
 quiet:    false
