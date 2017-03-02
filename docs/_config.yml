@@ -12,7 +12,7 @@ collections:
     permalink: /docdevel/:path
 
 # Handling Reading
-safe:         false
+safe:         true
 include:      [".htaccess"]
 exclude:      []
 keep_files:   [".git", ".svn"]
