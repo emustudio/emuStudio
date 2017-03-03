@@ -6,7 +6,7 @@ pagetitle: main_module
 
 :toc:
 :sectnums:
-:imagepath: ../images/
+:imagepath: /docuser/main_module/images/
 
 == Introduction
 
