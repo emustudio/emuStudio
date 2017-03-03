@@ -87,7 +87,7 @@ kramdown:
     bold_every:        10
     css:               style
 
-include: ['_pages' ]
+include: ['_pages', 'docuser', 'docdevel' ]
 
 exclude:
   - .gitignore

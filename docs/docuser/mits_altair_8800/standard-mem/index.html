@@ -1,0 +1,481 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Standard Mem &diams; emuStudio</title>
+
+    <!-- RSS -->
+    <link rel="alternate" type="application/rss+xml" title="emuStudio &diams; " href="../../../feed.xml">
+    <link rel="alternate" type="application/atom+xml" title="emuStudio &diams; " href="../../../atom.xml">
+
+    <!-- Favicons -->
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico?">
+    <meta name="application-name" content="emuStudio &diams; ">
+    <meta name="msapplication-TileColor" content="#ffffff">
+
+    <!-- Fonts -->
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic,400,400italic,700,700italic|Oswald:300,400,700">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../../css/style.css">
+
+
+    <!-- Scripts -->
+
+    <!--[if lt IE 9]>
+        <script src="../../../js/html5shiv.min.js"></script>
+        <script src="../../../js/respond.min.js"></script>
+    <![endif]-->
+
+
+
+    <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-3492956-5', 'auto');
+        ga('send', 'pageview');
+
+    </script>
+</head>
+
+
+<body>
+
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://github.com/pages/vbmacher/emuStudio"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <p class="navbar-text"></p>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <!--<form class="navbar-form navbar-left" role="search">-->
+            <!--<div class="form-group">-->
+            <!--<input type="text" class="form-control" placeholder="Search website">-->
+            <!--</div>-->
+            <!--<button type="submit" class="btn btn-default">Submit</button>-->
+            <!--</form>-->
+            <ul class="nav navbar-nav navbar-right">
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/download">Download</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/docs">Docs</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/devel">Developer</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/roadmap">Roadmap</a>
+                </li>
+                
+                <li>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/about">About</a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+<div class="title-group">
+    <h1 class="special" data-toc-skip>
+      <span>
+          
+            Standard Mem
+          
+      </span>
+    </h1>
+    
+</div>
+
+
+<div class="container">
+    <div class="sect1">
+<h2 id="operating-memory-code-standard-mem-code">Operating memory <code>standard-mem</code></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This plug-in emulates an operating memory, in a quite broad meaning. It can be used for any virtual
+computer which can benefit from the following basic properties:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A memory cell has size of 1 byte (8 bits)</p>
+</li>
+<li>
+<p>Memory cells are linearly ordered (sequential)</p>
+</li>
+<li>
+<p>Each memory cell is accessible by unique address, representing
+the index of the memory cell, if the memory is imagined as an array of cells</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Besides, the memory supports these additional features:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Setting up ROM (read only memory) ranges</p>
+</li>
+<li>
+<p>Changing memory size; by default it is 64kB</p>
+</li>
+<li>
+<p>Support of bank switching</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>There are also some "interactive" features:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Manual loading/saving memory images in either binary or Intel HEX format</p>
+</li>
+<li>
+<p>Ability to automatically load a memory image at startup</p>
+</li>
+<li>
+<p>Intuitive control using keystrokes, and nice visual presentation of the data</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This operating memory is (for now) used only in 8-bit emulator of MITS Altair8800. However it
+is possible to develop an emulator which can benefit from it.</p>
+</div>
+<div class="sect2">
+<h3 id="STANDARD-MEM_GUI">GUI overview</h3>
+<div class="paragraph">
+<p>To open the memory GUI (graphical user interface), click at the right-most icon in the debug toolbar, on the Emulator panel.
+The window is shown, as in the following image:</p>
+</div>
+<div class="paragraph">
+<p>image::{imagepath}/standard-mem.png[Standard operating memory]</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>A</strong>: Deletes all memory content.</p>
+</li>
+<li>
+<p><strong>B</strong>: Refreshes memory view, if you have a feeling that the shown content is not updated</p>
+</li>
+<li>
+<p><strong>C</strong>: Open a memory image. Current memory content, if it does not interfere with the loaded data
+will be kept.</p>
+</li>
+<li>
+<p><strong>D</strong>: Save memory content into a file.</p>
+</li>
+<li>
+<p><strong>E</strong>: Show memory settings</p>
+</li>
+<li>
+<p><strong>F</strong>: Find address / goto address. The address can be either in decimal, hexadecimal (prefix <code>0x</code>)
+or octal (prefix <code>0</code>) format.</p>
+</li>
+<li>
+<p><strong>G</strong>: By double-clicking on the memory cell it is possible to edit it and change its value.
+The value format is the same as when finding address (see <strong>F</strong>).</p>
+</li>
+<li>
+<p><strong>H</strong>: Page of the memory view. The whole memory cannot be shown in single window, because it can
+be quite large (64 kB by default), so it was divided into pages.</p>
+</li>
+<li>
+<p><strong>I</strong>: If the memory has set up memory banks, it is possible to change the view to different bank.
+Switching in here has no effect on the emulator and on the active bank.</p>
+</li>
+<li>
+<p><strong>J</strong>: Displays the data of a selected cell in various forms.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Generally, it is possible to move around the cells using keystrokes (arrows). If user presses some
+other letter/number key, a small text field appears allowing to edit the current value. When editing
+is finished, user can press ENTER key to confirm it, or ESC key to discard the editing.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="STANDARD-MEM_SETTINGS">Memory settings</h3>
+<div class="paragraph">
+<p>Settings window can be opened by clicking on "settings" icon in the main GUI window:</p>
+</div>
+<div class="paragraph">
+<p>image::{imagepath}/standard-mem-settings.png[Memory settings]</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>A</strong>: Settings for memory bank-switching</p>
+</li>
+<li>
+<p><strong>B</strong>: Settings for ROM areas</p>
+</li>
+<li>
+<p><strong>C</strong>: If checked, settings for ROM areas will be saved to the configuration file</p>
+</li>
+<li>
+<p><strong>D</strong>: List of memory images which will be loaded at startup</p>
+</li>
+<li>
+<p><strong>E</strong>: The button will apply the settings</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>ROM areas and memory bank-switching is explained in the following sections.</p>
+</div>
+<div class="sect3">
+<h4 id="STANDARD-MEM_ROM">ROM areas</h4>
+<div class="paragraph">
+<p>Some "controllers" - used as embedded devices - usually logically organize memory into areas, some of
+which are read only, which usually contains the firmware, and some are rewritable. Physically, these memories
+are wired to specific addresses, so the programmer can access them.</p>
+</div>
+<div class="paragraph">
+<p>Standard operating memory plug-in emulates this behavior. It allows to define ROM areas which represent read only
+memory. There can be set up multiple ROM areas, and they can overlap. Effectively it means that memory cells in
+ROM area cannot be changed from software running on the emulator. All writes to the memory will be ignored.</p>
+</div>
+<div class="paragraph">
+<p>Manually, as a user it is possible to change the values, but only by loading new memory image. Editing the value
+will not work.</p>
+</div>
+<div class="paragraph">
+<p>If a ROM range is defined, it is possible to remove only a part of it, effectively splitting the range and correcting their
+boundaries. For example, if there is defined a ROM range from 0x0A - 0x64 (see the image above), then it is possible
+to remove a range e.g. 0x32 - 0x46, which is the part of defined ROM area. Then, the original ROM area is split into
+two parts - first will be a range from 0x0A - 0x31, and the second from 0x47 - 0x64.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="STANDARD-MEM_ROM">Memory bank-switching</h4>
+<div class="paragraph">
+<p>This technique was invented as a workaround for a problem when the address space of a processor was smaller than memory
+size. In order to overcome this issue, memory was logically split into many regions of size equal to the processor address
+space. These regions are called "banks".</p>
+</div>
+<div class="paragraph">
+<p>Physically, banks could refer to the same memory, but they could be also different memories (e.g. external cartridges),
+and the bank-switching involved switching the active memory.</p>
+</div>
+<div class="paragraph">
+<p>Selecting a bank from a programming perspective was usually done by writing some code to some I/O port using some I/O
+instruction of a CPU. But it can be implemented in various ways, e.g. some memory addresses can be used for selecting
+a bank.</p>
+</div>
+<div class="paragraph">
+<p>Also, it was very common that some part of the address space still kept some common memory part which was never switched
+out. This part is called a "common" part. In emuStudio, common part starts with the <code>Common</code> address (as it can be seen
+in the Settings dialog image above) and ends till the rest of the CPU address space (or memory end).</p>
+</div>
+<div class="paragraph">
+<p>To summarize, let&#8217;s consider an example. If a CPU is 8-bit, it means it has address space of size 2^8 - i.e. it can
+access memory from address 0 to (2^8 - 1). If the memory was larger, CPU just doesn&#8217;t allow to access higher memory
+cells. So memory bank-switching is coming for the rescue. If the memory has 2 MB, we require <code>2^log2(2MB) = 2^21</code> addresses.
+So, if we won&#8217;t have any common address space, we require <code>ceil(21 / 8) = 3</code> banks:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>bank 0: maps from 0 - (2^8 - 1)</p>
+</li>
+<li>
+<p>bank 1: maps from 2^8 - (2^16 - 1)</p>
+</li>
+<li>
+<p>bank 2: maps from 2^16 - (2^21 - 1)</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="STANDARD-MEM_CONFIG_FILE">Configuration file</h3>
+<div class="paragraph">
+<p>Configuration file of virtual computers contain also settings of all the used plug-ins, including devices. Please
+read the section "Accessing settings of plug-ins" in the user documentation of Main module to see how the settings can
+be accessed.</p>
+</div>
+<div class="paragraph">
+<p>The following table shows all the possible settings of Standard operating memory plug-in:</p>
+</div>
+<table class="tableblock frame-topbot grid-all spread table table-striped table-condensed">
+<caption class="title">Table 1. Settings of Standard operating memory</caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+<th class="tableblock halign-left valign-top">Valid values</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tfoot>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>imageAddress</code>(i)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">N/A</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&gt;= 0 and &lt; mem size</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The i-th memory image load address</p></td>
+</tr>
+</tfoot>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>banksCount</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&gt;= 0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of memory banks</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>commonBoundary</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&gt;= 0 and &lt; mem size</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Address from which the banks are shared</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>memorySize</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">65536</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&gt; 0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Memory size in bytes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ROMfrom</code>(i)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">N/A</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&gt;= 0 and &lt; mem size</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Start of the i-th ROM area</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ROMto</code>(i)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">N/A</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&gt;= <code>ROMfrom</code>(i) and &lt; mem size</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">End of the i-th ROM area</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>imageName</code>(i)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">N/A</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">file path</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The i-th memory image file name.
+                                                                    <sup class="footnote">[<a id="_footnoteref_1" class="footnote" href="#_footnote_1" title="View footnote.">1</a>]</sup></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="using-memory-in-custom-computers">Using memory in custom computers</h3>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+This section is for developers of emulators. If you do not plan to create custom virtual computers,
+      you can safely skip this section. In order to get started with developing plug-ins for emuStudio,
+      please read tutorial "Developing emuStudio Plugins".
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>As it was mentioned in the earlier sections, the Standard operating memory plug-in can be used in other
+computers, too. Besides standard operations which are provided by <code>emulib.plugins.memory.MemoryContext</code> interface,
+it provides custom context API, enabling to use more features - e.g. bank-switching.</p>
+</div>
+<div class="paragraph">
+<p>You can obtain the context during the <code>initialize()</code> method of plug-in main class. The context is named
+<code>net.sf.emustudio.memory.standard.StandardMemoryContext</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code data-lang="java"><span style="color: #666666">...</span>
+
+<span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span style="color: #0000FF">initialize</span><span style="color: #666666">(</span>SettingsManager settings<span style="color: #666666">)</span> <span style="color: #666666">{</span>
+    <span style="color: #666666">...</span>
+
+    StandardMemoryContext mem <span style="color: #666666">=</span> contextPool<span style="color: #666666">.</span><span style="color: #7D9029">getMemoryContext</span><span style="color: #666666">(</span>pluginID<span style="color: #666666">,</span> StandardMemoryContext<span style="color: #666666">.</span><span style="color: #7D9029">class</span><span style="color: #666666">);</span>
+    <span style="color: #666666">...</span>
+<span style="color: #666666">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The memory context has the following content:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code data-lang="java">Unresolved directive in standard<span style="color: #666666">-</span>mem<span style="color: #666666">.</span><span style="color: #7D9029">adoc</span> <span style="color: #666666">-</span> include<span style="color: #666666">::{</span>sourcedir<span style="color: #666666">}/</span>plugins<span style="color: #666666">/</span>mem<span style="color: #666666">/</span>standard<span style="color: #666666">-</span>mem<span style="color: #666666">/</span>src<span style="color: #666666">/</span>main<span style="color: #666666">/</span>java<span style="color: #666666">/</span>net<span style="color: #666666">/</span>sf<span style="color: #666666">/</span>emustudio<span style="color: #666666">/</span>memory<span style="color: #666666">/</span>standard<span style="color: #666666">/</span>StandardMemoryContext<span style="color: #666666">.</span><span style="color: #7D9029">java</span><span style="color: #666666">[</span>lines<span style="color: #666666">=20..-1]</span></code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footnotes">
+<hr>
+<div class="footnote" id="_footnote_1">
+<a href="#_footnoteref_1">1</a>. If it                                                                     ends with <code>.hex</code> suffix, it will be loaded                                                                     as Intel HEX format, otherwise as binary
+</div>
+</div>
+</div>
+
+
+    <footer class="site-footer">
+        <div class="container">
+            <nav class="navbar">
+                <div class="container">
+                    <ul class="nav navbar-nav">
+                        <li><a href="https://github.com/vbmacher/emuStudio">GitHub</a></li>
+                        <li><a href="http://sourceforge.net/projects/emustudio"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=340604&amp;type=8" width="80" height="15" alt="Get emuStudio at SourceForge.net. Fast, secure and Free Open Source software downloads" /></a></li>
+                        <li class="navbar-text">&copy; Copyright 2006-2017, Peter Jakubčo</li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </footer>
+
+    </body>
+</html>
+
+
+</body>
+</html>
