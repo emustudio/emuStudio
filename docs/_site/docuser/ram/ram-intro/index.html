@@ -66,7 +66,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="https://vbmacher.github.io/emuStudio"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
+            <a class="navbar-brand" href="http://github.com/pages/vbmacher/emuStudio"><i><img alt="&diams;" style="margin: -5px;margin-right:2px;" src="../../../img/logo-2.svg" width="30px" /></i>emuStudio</a>
             <p class="navbar-text"></p>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
@@ -79,27 +79,27 @@
             <ul class="nav navbar-nav navbar-right">
                 
                 <li>
-                    <a href="https://vbmacher.github.io/emuStudio/">Home</a>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/">Home</a>
                 </li>
                 
                 <li>
-                    <a href="https://vbmacher.github.io/emuStudio/download">Download</a>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/download">Download</a>
                 </li>
                 
                 <li>
-                    <a href="https://vbmacher.github.io/emuStudio/docs">Docs</a>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/docs">Docs</a>
                 </li>
                 
                 <li>
-                    <a href="https://vbmacher.github.io/emuStudio/devel">Developer</a>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/devel">Developer</a>
                 </li>
                 
                 <li>
-                    <a href="https://vbmacher.github.io/emuStudio/roadmap">Roadmap</a>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/roadmap">Roadmap</a>
                 </li>
                 
                 <li>
-                    <a href="https://vbmacher.github.io/emuStudio/about">About</a>
+                    <a href="http://github.com/pages/vbmacher/emuStudio/about">About</a>
                 </li>
                 
             </ul>
@@ -156,8 +156,10 @@ the RAM simulator.</p>
 <p>RAM machine consists of several parts: input tape (read-only), output tape (write-only), program memory,
 data memory or registers (read/write) and a control unit ("engine"), as can be seen in the following image:</p>
 </div>
-<div class="paragraph">
-<p>image::{imagepath}/ram-machine.svg[RAM machine,85%]</p>
+<div class="imageblock img-responsive">
+<div class="content">
+<img src="/docuser/ram/images//ram-machine.svg" alt="RAM machine" width="85%">
+</div>
 </div>
 <div class="paragraph">
 <p>Input tape acts as a water-tap; the input data can be read from it, causing the input head moving to the next unread
@@ -221,8 +223,10 @@ must define three instances of this device, representing register, input and out
 file. Abstract schemas are drawn in the schema editor in emuStudio (please see emuStudio main module
 documentation for more details). The following image shows the schema of RAM machine simulator:</p>
 </div>
-<div class="paragraph">
-<p>image::{imagepath}/ram-schema.png[RAM abstract schema]</p>
+<div class="imageblock">
+<div class="content">
+<img src="/docuser/ram/images//ram-schema.png" alt="RAM abstract schema">
+</div>
 </div>
 <div class="paragraph">
 <p>The "&#8594;" arrows are in direction of dependency. So for example <code>ramc-ram</code> depends on

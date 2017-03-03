@@ -1,3 +1,6 @@
+:imagepath: /docdevel/emulator_tutorial/images/
+
+
 [[DEVICE_HOWTO]]
 == Writing a Device
 

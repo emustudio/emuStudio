@@ -1,3 +1,5 @@
+:imagepath: /docuser/rasp/images/
+
 == Memory `rasp-mem`
 
 RASP memory plug-in serves as the main store (operating memory) for the RASP virtual computer. As already mentioned in the introduction

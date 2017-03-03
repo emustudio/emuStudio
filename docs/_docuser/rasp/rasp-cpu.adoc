@@ -1,3 +1,5 @@
+:imagepath: /docuser/rasp/images/
+
 == CPU `rasp-cpu`
 
 RASP CPU is the core of the RASP virtual computer. Its purpose is to execute RASP program composed of RASP instructions

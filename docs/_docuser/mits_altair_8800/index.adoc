@@ -9,7 +9,6 @@ pagetitle: altair
 :sectnums:
 :toc:
 :sourcedir: ../../../
-:imagepath: ../images/
 
 include::introduction.adoc[]
 

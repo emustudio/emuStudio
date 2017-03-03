@@ -1,3 +1,5 @@
+:imagepath: /docuser/mits_altair_8800/images/
+
 [[CPU-Z80]]
 == CPU: Zilog Z80 emulator
 

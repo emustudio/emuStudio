@@ -1,3 +1,5 @@
+:imagepath: /docdevel/emulator_tutorial/images/
+
 [[MEMORY_HOWTO]]
 == Writing a memory
 

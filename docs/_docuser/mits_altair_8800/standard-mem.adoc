@@ -1,3 +1,5 @@
+:imagepath: /docuser/mits_altair_8800/images/
+
 == Operating memory `standard-mem`
 
 This plug-in emulates an operating memory, in a quite broad meaning. It can be used for any virtual

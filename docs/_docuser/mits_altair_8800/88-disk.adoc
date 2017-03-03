@@ -1,3 +1,5 @@
+:imagepath: /docuser/mits_altair_8800/images/
+
 [[DISK-88]]
 == Disk controller `88-disk`
 

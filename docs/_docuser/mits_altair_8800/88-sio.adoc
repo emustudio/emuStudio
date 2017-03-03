@@ -1,3 +1,5 @@
+:imagepath: /docuser/mits_altair_8800/images/
+
 [[SIO-88]]
 == Serial board `88-sio`
 

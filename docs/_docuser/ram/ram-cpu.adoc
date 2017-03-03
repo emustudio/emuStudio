@@ -1,3 +1,5 @@
+:imagepath: /docuser/ram/images/
+
 == RAM Simulator Engine
 
 The plug-in responsible for execution of the simulation of RAM machine is called `ram-cpu`. Even if we're supposed to

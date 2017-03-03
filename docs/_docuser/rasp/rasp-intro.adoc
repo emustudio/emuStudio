@@ -1,3 +1,5 @@
+:imagepath: /docuser/rasp/images/
+
 == Brief description
 
 Random Access Stored Program machine (RASP) is an abstract von-Neumann computer. It means it does not represent a physical device,

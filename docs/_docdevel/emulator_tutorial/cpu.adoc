@@ -1,3 +1,5 @@
+:imagepath: /docdevel/emulator_tutorial/images/
+
 [[CPU_HOWTO]]
 == Writing a CPU
 

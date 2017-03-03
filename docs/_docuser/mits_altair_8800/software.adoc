@@ -1,3 +1,5 @@
+:imagepath: /docuser/mits_altair_8800/images/
+
 == Original software for Altair8800
 
 Since Altair8800 virtual computer emulates a real machine, it's possible to use real software written for the computer.

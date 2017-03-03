@@ -1,3 +1,5 @@
+:imagepath: /docuser/mits_altair_8800/images/
+
 == Terminal `adm3a-terminal`
 
 Emulation of famous terminal from Lear Siegler, Inc. - ADM-3A. It had a nick name 'Dumb Terminal'. In the time (1974),

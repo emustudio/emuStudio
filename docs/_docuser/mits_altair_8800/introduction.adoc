@@ -1,3 +1,5 @@
+:imagepath: /docuser/mits_altair_8800/images/
+
 [[MITS_8800_INTRODUCTION]]
 == Introduction
 

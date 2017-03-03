@@ -1,3 +1,5 @@
+:imagepath: /docuser/ram/images/
+
 == Program Memory
 
 RAM memory is used as a part of RAM simulator, which acts as the "program memory", holding just the program.
