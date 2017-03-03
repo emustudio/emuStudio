@@ -215,7 +215,7 @@ the state machine of emuStudio.
 
 The state machine can be seen in the following diagram:
 
-[graphviz]
+[graphviz,run-states,svg]
 ---------------------------------------------------------------------
 digraph emulation_states {
   ratio = 1;
@@ -347,7 +347,7 @@ at http://www.cs.ubc.ca/~hilpert/e/SSEM/[this link].
 The architecture of our SSEM CPU emulator will look as follows (below is Display and Memory just to show how it
 is connected overally):
 
-[graphviz]
+[graphviz,ssem-scheme,svg]
 ---------------------------------------------------------------------
 digraph ssem_cpu_architecture {
   node [shape = rect];

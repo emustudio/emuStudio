@@ -176,7 +176,7 @@ expected.
 
 The following schema defines all plug-in types and their possible interconnections, as it is currently in emuStudio.
 
-[graphviz]
+[graphviz,emustudio-plugins,svg]
 ---------------------------------------------------------------------
 graph virtual_computer {
   splines=true;

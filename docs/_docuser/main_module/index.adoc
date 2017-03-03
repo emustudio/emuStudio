@@ -334,7 +334,7 @@ Emulation can be ready to run (the same as paused), running, or stopped. Each st
 possible transitions to another states, by already mentioned actions. It's possible to show those transitions in a
 state diagram, as in the following image:
 
-[graphviz]
+[graphviz,emulation-states,svg]
 ---------------------------------------------------------------------
 digraph emulation_states {
   ratio = 1;
