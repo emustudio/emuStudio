@@ -19,7 +19,9 @@ find _docdevel/ -type f -print0 | xargs -0 sed -i 's_http://github\.com/pages/vb
 
 echo Fixing image URLs...
 find _docuser/ -type f -print0 | xargs -0 sed -i 's_<img src="/docuser/_<img src="https://vbmacher.github.io/emuStudio/docuser/_g'
+find _docuser/ -type f -print0 | xargs -0 sed -i 's_<img src="/images/_<img src="https://vbmacher.github.io/emuStudio/images/_g'
 find _docdevel/ -type f -print0 | xargs -0 sed -i 's_<img src="/docdevel/_<img src="https://vbmacher.github.io/emuStudio/docdevel/_g'
+find _docdevel/ -type f -print0 | xargs -0 sed -i 's_<img src="/images/_<img src="https://vbmacher.github.io/emuStudio/images/_g'
 
 echo Checking images...
 find _docuser/ -type f -regex ".*\.\(html\)" -print0 | xargs -0 grep "{imagepath}"
