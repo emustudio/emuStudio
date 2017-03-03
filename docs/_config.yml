@@ -63,7 +63,7 @@ asciidoctor:
   base_dir: :docdir
   safe: unsafe
   attributes:
-    imagesdir: /images
+    imagesdir: images/
     source-highlighter: pygments
     pygments-css: style
     icons: font
