@@ -8,7 +8,7 @@ pagetitle: brainduck
 
 :toc:
 :sectnums:
-:imagepath: '../images/'
+:imagepath: /docuser/brainduck/images/
 
 == Introduction
 
