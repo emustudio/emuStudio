@@ -10,9 +10,7 @@ gem 'pygments.rb', versions['1.1.1']
 gem "octokit", "~> 4.0"
 
 group :jekyll_plugins do
-  gem 'github-pages', versions['github-pages']
   gem 'jekyll-asciidoc', versions['2.0.1']
   gem 'asciidoctor-diagram', versions['1.5.4']
-  gem 'jekyll-github-metadata'
   gem 'jekyll-sitemap'
 end
