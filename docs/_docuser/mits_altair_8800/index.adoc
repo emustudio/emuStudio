@@ -9,7 +9,7 @@ pagetitle: altair
 :sectnums:
 :toc:
 :sourcedir: ../../../
-:imagepath: /docuser/mits_altair_8800/images/
+:imagepath: ../images/
 
 include::introduction.adoc[]
 

@@ -26,7 +26,7 @@ unpublished: false
 
 # Plugins
 whitelist: [jekyll-asciidoc]
-gems:      [asciidoctor-diagram, jekyll-asciidoc, jekyll-github-metadata, jekyll-sitemap]
+gems:      [asciidoctor-diagram, jekyll-asciidoc, z, jekyll-sitemap]
 repository: vbmacher/emuStudio
 
 # Conversion

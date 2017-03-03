@@ -8,7 +8,7 @@ pagetitle: rasp
 
 :toc:
 :numbered:
-:imagepath: /docuser/rasp/images/
+:imagepath: docuser/rasp/images/
 
 include::rasp-intro.adoc[]
 

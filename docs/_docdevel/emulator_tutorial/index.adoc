@@ -9,7 +9,7 @@ pagetitle: emulator
 :sectnums:
 :toc:
 :sourcedir: ../../../
-:imagepath: /docdevel/emulator_tutorial/images/
+:imagepath: ../images/
 
 include::introduction.adoc[]
 
