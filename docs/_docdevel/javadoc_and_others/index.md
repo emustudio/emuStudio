@@ -9,7 +9,6 @@ Java documentation (a.k.a. javadoc) exists for emuLib project, which is a run-ti
 the API for plug-ins. It is a documentation reference for plug-in developers.
 
 It can be downloaded from
-
 <a href="https://sourceforge.net/projects/emustudio/files/javadoc/emuLib-9.0.0-javadoc.jar/download" target="_blank">
 this link</a>. Alternatively, open it in the new window: 
 <a href="{{ site.github.url }}/docdevel/emulib_javadoc/" target="_blank">emuLib javadoc online</a>.  
