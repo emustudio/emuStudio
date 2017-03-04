@@ -59,6 +59,10 @@ permalink: /download/
   </p>
 </div>
 
+# Supported platforms
+
+Currently, supported platforms are Linux and Windows; theoretically emuStudio can work on any platform which supports
+Java SE.
 
 # Installation
 
