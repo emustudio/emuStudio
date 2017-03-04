@@ -38,10 +38,23 @@ permalink: /download/
              target="_blank">emuStudio-0.38.zip</a>
         </td>
       </tr>
+      <tr>
+        <td>0.0...001a</td>
+        <td>
+          <div>2007</div>
+        </td>
+        <td>
+          <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+          <a href="https://sourceforge.net/projects/emustudio/files/dist/emu8-very-first.zip/download" 
+             class="button btn-link btn-lg"
+             role="button"
+             target="_blank">The very first emuStudio</a>
+        </td>
+      </tr>
     </table>
   </div>
   <p>
-    Older versions of emuStudio are available at
+    Other versions of emuStudio are available at
      <a href="https://sourceforge.net/projects/emustudio/files/dist/" target="_blank">SourceForge</a>.
   </p>
 </div>

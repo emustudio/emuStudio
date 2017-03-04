@@ -28,6 +28,8 @@ echo Checking images...
 find _docuser/ -type f -regex ".*\.\(html\)" -print0 | xargs -0 grep "{imagepath}"
 find _docdevel/ -type f -regex ".*\.\(html\)"  -print0 | xargs -0 grep "{imagepath}"
 
+echo Copying lost javadoc...
+unzip -o ./emuLib-9.0.0-javadoc.jar -d _docdevel/emulib_javadoc/
 
 
 
