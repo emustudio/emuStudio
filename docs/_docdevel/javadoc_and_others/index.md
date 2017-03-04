@@ -1,7 +1,16 @@
 ---
 layout: docdev
-pagetitle: javadoc
+pagetitle: others
 ---
+
+## emuLib javadoc
+
+Java documentation (a.k.a. javadoc) exists for emuLib project, which is a run-time library of emuStudio and provides
+the API for plug-ins. It is a documentation reference for plug-in developers.
+
+It can be downloaded from
+[this link](https://sourceforge.net/projects/emustudio/files/javadoc/emuLib-9.0.0-javadoc.jar/download). Alternatively,
+open it in the new window: [emuLib javadoc online]({{ site.github.url }}/docdevel/emulib_javadoc/).  
 
 ## Other documentation
 
