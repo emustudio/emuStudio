@@ -20,32 +20,9 @@
 package net.sf.emustudio.memory.standard.gui;
 
 import emulib.emustudio.SettingsManager;
+import static emulib.runtime.RadixUtils.formatBinaryString;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.UniversalFileFilter;
-import net.sf.emustudio.memory.standard.gui.model.MemoryTableModel;
-import net.sf.emustudio.memory.standard.gui.model.TableMemory;
-import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
-import net.sf.emustudio.memory.standard.impl.MemoryImpl;
-
-import javax.swing.BorderFactory;
-import javax.swing.GroupLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.JTextField;
-import javax.swing.JToolBar;
-import javax.swing.LayoutStyle;
-import javax.swing.SpinnerModel;
-import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -56,11 +33,15 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-
-import static emulib.runtime.RadixUtils.formatBinaryString;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import static net.sf.emustudio.memory.standard.gui.FileChooser.selectFile;
+import net.sf.emustudio.memory.standard.gui.model.MemoryTableModel;
+import net.sf.emustudio.memory.standard.gui.model.TableMemory;
+import net.sf.emustudio.memory.standard.impl.MemoryContextImpl;
+import net.sf.emustudio.memory.standard.impl.MemoryImpl;
 
-public class MemoryDialog extends JDialog {
+public class MemoryDialog extends javax.swing.JDialog {
     private final MemoryContextImpl memContext;
     private final MemoryImpl mem;
     private final long pluginID;
@@ -80,8 +61,7 @@ public class MemoryDialog extends JDialog {
         
         tblMemory = new TableMemory(memModel, paneMemory);
         paneMemory.setViewportView(tblMemory);
-        tblMemory.setVisible(true);
-        paneMemory.repaint();
+
         memModel.addTableModelListener(e -> spnPage.getModel().setValue(memModel.getPage()));
         lblPageCount.setText(String.valueOf(memModel.getPageCount()));
         lblBanksCount.setText(String.valueOf(memContext.getBanksCount()));
@@ -97,11 +77,9 @@ public class MemoryDialog extends JDialog {
             int i = (Integer) spnBank.getModel().getValue();
             try {
                 memModel.setCurrentBank(i);
-                lblSelectedBank.setText(String.valueOf(i));
             } catch (IndexOutOfBoundsException ex) {
                 int currentBank = memModel.getCurrentBank();
                 spnBank.getModel().setValue(currentBank);
-                lblSelectedBank.setText(String.valueOf(currentBank));
             }
         });
 
@@ -128,126 +106,10 @@ public class MemoryDialog extends JDialog {
                 updateMemVal(row, col);
             }
         });
-        tblMemory.addKeyListener(new KeyAdapter() {
-
-            private boolean right_correct = false; // perform correction
-            private boolean left_correct = false; // perform correction
-            private boolean up_correct = false; // perform correction
-            private boolean down_correct = false; // perform correction
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                super.keyPressed(e);
-                SpinnerModel model = spnPage.getModel();
-
-                int key = e.getKeyCode();
-                if ((key == KeyEvent.VK_RIGHT) // ->
-                        && (tblMemory.getSelectedColumn() == memModel.getColumnCount() - 1)) {
-                    if (tblMemory.getSelectedRow() == memModel.getRowCount() - 1) {
-                        int i = (Integer) model.getValue();
-                        try {
-                            memModel.setPage(i + 1);
-                        } catch (IndexOutOfBoundsException ex) {
-                            model.setValue(0);
-                        }
-                        tblMemory.setRowSelectionInterval(0, 0);
-                        tblMemory.scrollRectToVisible(tblMemory.getCellRect(0, 0, true));
-                    } else {
-                        int row = tblMemory.getSelectedRow();
-                        tblMemory.setRowSelectionInterval(row + 1, row + 1);
-                        right_correct = true;
-                    }
-                } else if ((key == KeyEvent.VK_LEFT) // <-
-                        && (tblMemory.getSelectedColumn() == 0)) {
-                    if (tblMemory.getSelectedRow() == 0) {
-                        int i = (Integer) model.getValue();
-                        try {
-                            memModel.setPage(i - 1);
-                        } catch (IndexOutOfBoundsException ex) {
-                            model.setValue(memModel.getPageCount() - 1);
-                        }
-                        tblMemory.setRowSelectionInterval(memModel.getRowCount() - 1,
-                                memModel.getRowCount() - 1);
-                        left_correct = true;
-                    } else {
-                        int row = tblMemory.getSelectedRow();
-                        tblMemory.setRowSelectionInterval(row - 1, row - 1);
-                        left_correct = true;
-                    }
-                } else if ((key == KeyEvent.VK_UP) // ^
-                        && (tblMemory.getSelectedRow() == 0)) {
-                    int i = (Integer) model.getValue();
-                    int col = tblMemory.getSelectedColumn();
-                    try {
-                        memModel.setPage(i - 1);
-                    } catch (IndexOutOfBoundsException ex) {
-                        model.setValue(memModel.getPageCount() - 1);
-                    }
-                    tblMemory.setColumnSelectionInterval(col, col);
-                    up_correct = true;
-                } else if ((key == KeyEvent.VK_DOWN) // v
-                        && (tblMemory.getSelectedRow() == memModel.getRowCount() - 1)) {
-                    int i = (Integer) model.getValue();
-                    int col = tblMemory.getSelectedColumn();
-                    try {
-                        memModel.setPage(i + 1);
-                    } catch (IndexOutOfBoundsException ex) {
-                        model.setValue(0);
-                    }
-                    tblMemory.setColumnSelectionInterval(col, col);
-                    down_correct = true;
-                }
-
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-                super.keyReleased(e);
-
-                if (right_correct) {
-                    try {
-                        tblMemory.setColumnSelectionInterval(0, 0);
-                    } catch (Exception ex) {
-                    }
-                    right_correct = false;
-                }
-                if (left_correct) {
-                    try {
-                        tblMemory.setColumnSelectionInterval(memModel.getColumnCount() - 1,
-                                memModel.getColumnCount() - 1);
-                    } catch (Exception ex) {
-                    }
-                    left_correct = false;
-                }
-                if (up_correct) {
-                    try {
-                        tblMemory.setRowSelectionInterval(memModel.getRowCount() - 1,
-                                memModel.getRowCount() - 1);
-                    } catch (Exception ex) {
-                    }
-                    int row = tblMemory.getSelectedRow();
-                    int col = tblMemory.getSelectedColumn();
-                    tblMemory.scrollRectToVisible(tblMemory.getCellRect(row, col, true));
-                    up_correct = false;
-                }
-                if (down_correct) {
-                    try {
-                        tblMemory.setRowSelectionInterval(0, 0);
-                    } catch (Exception ex) {
-                    }
-                    int row = tblMemory.getSelectedRow();
-                    int col = tblMemory.getSelectedColumn();
-                    tblMemory.scrollRectToVisible(tblMemory.getCellRect(row, col, true));
-                    down_correct = false;
-                }
-                int row = tblMemory.getSelectedRow();
-                int col = tblMemory.getSelectedColumn();
-                updateMemVal(row, col);
-            }
-        });
+        tblMemory.addKeyListener(new KeyboardHandler(tblMemory, spnPage.getModel(), this));
     }
-
-    private void updateMemVal(int row, int column) {
+    
+    public void updateMemVal(int row, int column) {
         if (!tblMemory.isCellSelected(row, column)) {
             return;
         }
@@ -257,178 +119,383 @@ public class MemoryDialog extends JDialog {
         int data = Integer.parseInt(memModel.getValueAt(row, column).toString(), 16);
         txtAddress.setText(String.format("%04X", address));
         txtChar.setText(String.format("%c", (char)(data & 0xFF)));
-        txtValDec.setText(String.format("%02d", data));
-        txtValHex.setText(String.format("%02X", data));
-        txtValOct.setText(String.format("%02o", data));
-        txtValBin.setText(formatBinaryString(data, 8));
-    }
-
-    public void updateBank(short bank) {
-        lblSelectedBank.setText(String.valueOf(bank));
+        txtValueDec.setText(String.format("%02d", data));
+        txtValueHex.setText(String.format("%02X", data));
+        txtValueOct.setText(String.format("%02o", data));
+        txtValueBin.setText(formatBinaryString(data, 8));
     }
 
     private void destroyME() {
         dispose();
     }
+    
 
+    /**
+     * This method is called from within the constructor to initialize the form. WARNING: Do NOT modify this code. The
+     * content of this method is always regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        JToolBar toolBar = new JToolBar();
-        JButton btnClearMemory = new JButton();
-        JButton btnRefreshMemory = new JButton();
-        JButton btnOpenImage = new JButton();
-        JButton btnDump = new JButton();
-        JButton btnSettings = new JButton();
-        JToolBar.Separator jSeparator2 = new JToolBar.Separator();
-        JLabel lblPageNumber = new JLabel("Page number:");
-        spnPage = new JSpinner();
-        JLabel lblPageCountLBL = new JLabel("Page count:");
-        lblPageCount = new JLabel("0");
-        JButton btnGotoAddress = new JButton();
-        JButton btnFindText = new JButton();
-        paneMemory = new JScrollPane();
-        JPanel panelValue = new JPanel();
-        JLabel lblAddress = new JLabel("Address:");
-        txtAddress = new JTextField("0000");
-        JLabel lblValue = new JLabel("Value:");
-        JLabel lblChar = new JLabel("Char:");
-        txtChar = new JTextField();
-        txtValDec = new JTextField("00");
-        txtValHex = new JTextField("00");
-        JLabel lblDEC = new JLabel("(dec)");
-        JLabel lblHEX = new JLabel("(hex)");
-        txtValOct = new JTextField("000");
-        txtValBin = new JTextField("00000000");
-        JLabel lblOCT = new JLabel("(oct)");
-        JLabel lblBIN = new JLabel("(bin)");
-        JLabel lblBank = new JLabel("Bank:");
-        spnBank = new JSpinner();
-        JLabel lblBanksCountLBL = new JLabel("Banks count:");
-        lblBanksCount = new JLabel("0");
-        JLabel lblSelectedBankLBL = new JLabel("Selected bank:");
-        lblSelectedBank = new JLabel("0");
-        JToolBar.Separator jSeparator1 = new JToolBar.Separator();
-        JPanel panelMemory = new JPanel();
 
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Operating memory plugin");
+        javax.swing.JToolBar jToolBar1 = new javax.swing.JToolBar();
+        btnLoadImage = new javax.swing.JButton();
+        btnDump = new javax.swing.JButton();
+        javax.swing.JToolBar.Separator jSeparator1 = new javax.swing.JToolBar.Separator();
+        btnGotoAddress = new javax.swing.JButton();
+        btnFind = new javax.swing.JButton();
+        javax.swing.JToolBar.Separator jSeparator2 = new javax.swing.JToolBar.Separator();
+        btnClean = new javax.swing.JButton();
+        javax.swing.JToolBar.Separator jSeparator3 = new javax.swing.JToolBar.Separator();
+        btnSettings = new javax.swing.JButton();
+        splitPane = new javax.swing.JSplitPane();
+        javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
+        javax.swing.JPanel jPanel3 = new javax.swing.JPanel();
+        javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
+        spnPage = new javax.swing.JSpinner();
+        lblPageCount = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel3 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel4 = new javax.swing.JLabel();
+        spnBank = new javax.swing.JSpinner();
+        lblBanksCount = new javax.swing.JLabel();
+        javax.swing.JPanel jPanel4 = new javax.swing.JPanel();
+        javax.swing.JLabel jLabel5 = new javax.swing.JLabel();
+        txtAddress = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel6 = new javax.swing.JLabel();
+        txtChar = new javax.swing.JTextField();
+        javax.swing.JSeparator jSeparator4 = new javax.swing.JSeparator();
+        javax.swing.JLabel jLabel7 = new javax.swing.JLabel();
+        txtValueDec = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel8 = new javax.swing.JLabel();
+        txtValueHex = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel9 = new javax.swing.JLabel();
+        txtValueOct = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel10 = new javax.swing.JLabel();
+        txtValueBin = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel11 = new javax.swing.JLabel();
+        paneMemory = new javax.swing.JScrollPane();
 
-        toolBar.setFloatable(false);
-        toolBar.setRollover(true);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Standard Operating Memory");
+        setSize(new java.awt.Dimension(794, 629));
 
-        lblPageNumber.setFont(lblPageNumber.getFont().deriveFont(lblPageNumber.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblHEX.setFont(lblHEX.getFont().deriveFont(lblHEX.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblDEC.setFont(lblDEC.getFont().deriveFont(lblDEC.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblOCT.setFont(lblOCT.getFont().deriveFont(lblOCT.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblBIN.setFont(lblBIN.getFont().deriveFont(lblBIN.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblBank.setFont(lblBank.getFont().deriveFont(lblBank.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblBanksCountLBL.setFont(lblBanksCountLBL.getFont().deriveFont(lblBanksCountLBL.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblPageCountLBL.setFont(lblPageCountLBL.getFont().deriveFont(lblPageCountLBL.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblSelectedBankLBL.setFont(lblSelectedBankLBL.getFont().deriveFont(lblSelectedBankLBL.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblAddress.setFont(lblAddress.getFont().deriveFont(lblAddress.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblChar.setFont(lblChar.getFont().deriveFont(lblChar.getFont().getStyle() & ~java.awt.Font.BOLD));
-        lblValue.setFont(lblValue.getFont().deriveFont(lblValue.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jToolBar1.setFloatable(false);
+        jToolBar1.setRollover(true);
 
-        btnClearMemory.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/edit-delete.png"))); // NOI18N
-        btnClearMemory.setToolTipText("Clear memory");
-        btnClearMemory.setFocusable(false);
-        btnClearMemory.addActionListener(this::btnClearMemoryActionPerformed);
-        toolBar.add(btnClearMemory);
+        btnLoadImage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/document-open.png"))); // NOI18N
+        btnLoadImage.setToolTipText("Load image...");
+        btnLoadImage.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        btnLoadImage.setFocusable(false);
+        btnLoadImage.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnLoadImage.setOpaque(false);
+        btnLoadImage.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnLoadImage.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLoadImageActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(btnLoadImage);
 
-        btnRefreshMemory.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/view-refresh.png"))); // NOI18N
-        btnRefreshMemory.setToolTipText("Refresh memory");
-        btnRefreshMemory.setFocusable(false);
-        btnRefreshMemory.addActionListener(this::btnRefreshMemoryActionPerformed);
-        toolBar.add(btnRefreshMemory);
-        toolBar.add(jSeparator1);
-
-        btnOpenImage.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/document-open.png"))); // NOI18N
-        btnOpenImage.setToolTipText("Load image");
-        btnOpenImage.setFocusable(false);
-        btnOpenImage.addActionListener(this::btnOpenImageActionPerformed);
-        toolBar.add(btnOpenImage);
-
-        btnDump.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/document-save.png"))); // NOI18N
-        btnDump.setToolTipText("Dump memory...");
+        btnDump.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/document-save.png"))); // NOI18N
+        btnDump.setToolTipText("Dump (save) memory...");
+        btnDump.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnDump.setFocusable(false);
-        btnDump.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnDump.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnDump.addActionListener(this::btnDumpActionPerformed);
-        toolBar.add(btnDump);
+        btnDump.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnDump.setOpaque(false);
+        btnDump.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnDump.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDumpActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(btnDump);
+        jToolBar1.add(jSeparator1);
 
-        btnSettings.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/preferences-system.png"))); // NOI18N
-        btnSettings.setToolTipText("Settings...");
-        btnSettings.setFocusable(false);
-        btnSettings.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnSettings.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnSettings.addActionListener(this::btnSettingsActionPerformed);
-        toolBar.add(btnSettings);
-        toolBar.add(jSeparator2);
-
-        btnGotoAddress.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/edit-find.png"))); // NOI18N
-        btnGotoAddress.setToolTipText("Go to address");
+        btnGotoAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/format-indent-more.png"))); // NOI18N
+        btnGotoAddress.setToolTipText("Go to address...");
+        btnGotoAddress.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         btnGotoAddress.setFocusable(false);
-        btnGotoAddress.addActionListener(this::btnGotoAddressActionPerformed);
-        toolBar.add(btnGotoAddress);
+        btnGotoAddress.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnGotoAddress.setOpaque(false);
+        btnGotoAddress.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnGotoAddress.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnGotoAddressActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(btnGotoAddress);
 
-        btnFindText.setIcon(new ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/find-text.png"))); // NOI18N
-        btnFindText.setToolTipText("Find text...");
-        btnFindText.setFocusable(false);
-        btnFindText.addActionListener(this::btnFindTextActionPerformed);
-        toolBar.add(btnFindText);
+        btnFind.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/edit-find.png"))); // NOI18N
+        btnFind.setToolTipText("Find sequence...");
+        btnFind.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        btnFind.setFocusable(false);
+        btnFind.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnFind.setOpaque(false);
+        btnFind.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnFind.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnFindActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(btnFind);
+        jToolBar1.add(jSeparator2);
 
-        panelMemory.setBorder(BorderFactory.createTitledBorder("Memory control"));
+        btnClean.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/edit-clear.png"))); // NOI18N
+        btnClean.setToolTipText("Erase memory");
+        btnClean.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        btnClean.setFocusable(false);
+        btnClean.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnClean.setOpaque(false);
+        btnClean.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnClean.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCleanActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(btnClean);
+        jToolBar1.add(jSeparator3);
 
-        spnBank.setMinimumSize(new java.awt.Dimension(70, 25));
-        spnBank.setPreferredSize(new java.awt.Dimension(70, 25));
-        spnPage.setMinimumSize(new java.awt.Dimension(70, 25));
-        spnPage.setPreferredSize(new java.awt.Dimension(70, 25));
+        btnSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/sf/emustudio/memory/standard/gui/preferences-system.png"))); // NOI18N
+        btnSettings.setToolTipText("Settings...");
+        btnSettings.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        btnSettings.setFocusable(false);
+        btnSettings.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnSettings.setOpaque(false);
+        btnSettings.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnSettings.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSettingsActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(btnSettings);
+
+        splitPane.setDividerLocation(390);
+        splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        splitPane.setResizeWeight(1.0);
+
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Memory control"));
+
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel1.setText("Page number:");
+
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel2.setText("/");
+
         lblPageCount.setFont(lblPageCount.getFont().deriveFont(lblPageCount.getFont().getStyle() | java.awt.Font.BOLD));
-        lblBanksCount.setFont(lblBanksCount.getFont().deriveFont(lblBanksCount.getFont().getStyle() | java.awt.Font.BOLD));
-        lblSelectedBank.setFont(lblSelectedBank.getFont().deriveFont(lblSelectedBank.getFont().getStyle() | java.awt.Font.BOLD));
+        lblPageCount.setText("0");
 
-        GroupLayout panelMemoryLayout = new GroupLayout(panelMemory);
-        panelMemory.setLayout(panelMemoryLayout);
+        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel3.setText("Memory bank:");
 
-        panelMemoryLayout.setHorizontalGroup(
-                panelMemoryLayout.createSequentialGroup().addContainerGap().addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblPageNumber).addComponent(lblPageCountLBL)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(spnPage).addComponent(lblPageCount)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblBank).addComponent(lblBanksCountLBL).addComponent(lblSelectedBankLBL)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(spnBank).addComponent(lblBanksCount).addComponent(lblSelectedBank)).addContainerGap());
-        panelMemoryLayout.setVerticalGroup(
-                panelMemoryLayout.createSequentialGroup().addContainerGap().addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblPageNumber).addComponent(spnPage).addComponent(lblBank).addComponent(spnBank)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblPageCountLBL).addComponent(lblPageCount).addComponent(lblBanksCountLBL).addComponent(lblBanksCount)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelMemoryLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblSelectedBankLBL).addComponent(lblSelectedBank)));
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel4.setText("/");
 
-        panelValue.setBorder(BorderFactory.createTitledBorder("Selected value"));
+        lblBanksCount.setText("0");
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(spnPage, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblPageCount)
+                .addGap(54, 54, 54)
+                .addComponent(jLabel3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(spnBank, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblBanksCount)
+                .addContainerGap(283, Short.MAX_VALUE))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(spnPage, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2)
+                    .addComponent(lblPageCount)
+                    .addComponent(jLabel3)
+                    .addComponent(spnBank, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel4)
+                    .addComponent(lblBanksCount))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Selected value"));
+
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel5.setText("Address:");
 
         txtAddress.setEditable(false);
-        txtAddress.setHorizontalAlignment(JTextField.RIGHT);
+        txtAddress.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtAddress.setText("0000");
+
+        jLabel6.setFont(jLabel6.getFont().deriveFont(jLabel6.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel6.setText("Symbol:");
 
         txtChar.setEditable(false);
-        txtValDec.setEditable(false);
-        txtValDec.setHorizontalAlignment(JTextField.RIGHT);
-        txtValHex.setEditable(false);
-        txtValHex.setHorizontalAlignment(JTextField.RIGHT);
-        txtValOct.setEditable(false);
-        txtValOct.setHorizontalAlignment(JTextField.RIGHT);
-        txtValBin.setEditable(false);
-        txtValBin.setHorizontalAlignment(JTextField.RIGHT);
+        txtChar.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
 
-        GroupLayout panelValueLayout = new GroupLayout(panelValue);
-        panelValue.setLayout(panelValueLayout);
+        jSeparator4.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        panelValueLayout.setHorizontalGroup(
-                panelValueLayout.createSequentialGroup().addContainerGap().addGroup(panelValueLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblAddress).addComponent(lblChar)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelValueLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtAddress).addComponent(txtChar)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(lblValue).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelValueLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtValDec).addComponent(txtValHex)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelValueLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblDEC).addComponent(lblHEX)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelValueLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(txtValOct).addComponent(txtValBin)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelValueLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(lblOCT).addComponent(lblBIN)).addContainerGap());
-        panelValueLayout.setVerticalGroup(
-                panelValueLayout.createSequentialGroup().addContainerGap().addGroup(panelValueLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblAddress).addComponent(txtAddress).addComponent(lblValue).addComponent(txtValDec).addComponent(lblDEC).addComponent(txtValOct).addComponent(lblOCT)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(panelValueLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(lblChar).addComponent(txtChar).addComponent(txtValHex).addComponent(lblHEX).addComponent(txtValBin).addComponent(lblBIN)).addContainerGap());
+        jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel7.setText("Value:");
 
-        GroupLayout layout = new GroupLayout(getContentPane());
+        txtValueDec.setEditable(false);
+        txtValueDec.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtValueDec.setText("00");
+        txtValueDec.setToolTipText("");
+
+        jLabel8.setFont(jLabel8.getFont().deriveFont(jLabel8.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel8.setText("(dec)");
+
+        txtValueHex.setEditable(false);
+        txtValueHex.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtValueHex.setText("00");
+
+        jLabel9.setFont(jLabel9.getFont().deriveFont(jLabel9.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel9.setText("(hex)");
+
+        txtValueOct.setEditable(false);
+        txtValueOct.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtValueOct.setText("000");
+
+        jLabel10.setFont(jLabel10.getFont().deriveFont(jLabel10.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel10.setText("(oct)");
+
+        txtValueBin.setEditable(false);
+        txtValueBin.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtValueBin.setText("0000 0000");
+        txtValueBin.setToolTipText("");
+
+        jLabel11.setFont(jLabel11.getFont().deriveFont(jLabel11.getFont().getStyle() & ~java.awt.Font.BOLD));
+        jLabel11.setText("(bin)");
+
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel5)
+                    .addComponent(jLabel6))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(txtChar, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)
+                    .addComponent(txtAddress, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator4, javax.swing.GroupLayout.PREFERRED_SIZE, 13, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(2, 2, 2)
+                .addComponent(jLabel7)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(txtValueHex)
+                    .addComponent(txtValueDec, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel8)
+                    .addComponent(jLabel9))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(txtValueBin)
+                    .addComponent(txtValueOct, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE))
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel10))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+                        .addGap(7, 7, 7)
+                        .addComponent(jLabel11)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel7)
+                            .addComponent(txtValueDec, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel8)
+                            .addComponent(txtValueOct, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel10))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtValueHex, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel9)
+                            .addComponent(txtValueBin, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel11)))
+                    .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(jPanel4Layout.createSequentialGroup()
+                            .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(jLabel5)
+                                .addComponent(txtAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(jLabel6)
+                                .addComponent(txtChar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jSeparator4)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        splitPane.setBottomComponent(jPanel2);
+
+        paneMemory.setMinimumSize(new java.awt.Dimension(768, 300));
+        splitPane.setLeftComponent(paneMemory);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
-
         layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(toolBar).addComponent(paneMemory, GroupLayout.DEFAULT_SIZE, 642, Short.MAX_VALUE).addGroup(layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(panelMemory).addComponent(panelValue)).addContainerGap()));
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(splitPane)
+        );
         layout.setVerticalGroup(
-                layout.createSequentialGroup().addComponent(toolBar).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(paneMemory, GroupLayout.PREFERRED_SIZE, 186, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(panelMemory).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(panelValue).addContainerGap());
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 598, Short.MAX_VALUE))
+        );
 
         pack();
-    }
+    }// </editor-fold>//GEN-END:initComponents
 
-    private void btnOpenImageActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnLoadImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoadImageActionPerformed
         File fileSource = selectFile(this, "Load an image");
         
         if (fileSource != null) {
@@ -451,20 +518,14 @@ public class MemoryDialog extends JDialog {
                 StaticDialogs.showErrorMessage("File " + fileSource.getPath() + " can't be read.");
             }
         }
-    }
+    }//GEN-LAST:event_btnLoadImageActionPerformed
 
-    private void btnClearMemoryActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnCleanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCleanActionPerformed
         memContext.clear();
-        tblMemory.revalidate();
-        tblMemory.repaint();
-    }
+        memModel.fireTableDataChanged();
+    }//GEN-LAST:event_btnCleanActionPerformed
 
-    private void btnRefreshMemoryActionPerformed(java.awt.event.ActionEvent evt) {
-        tblMemory.revalidate();
-        tblMemory.repaint();
-    }
-
-    private void btnGotoAddressActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnGotoAddressActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGotoAddressActionPerformed
         int address;
         try {
             address = Integer.decode(JOptionPane.showInputDialog(this,
@@ -480,9 +541,9 @@ public class MemoryDialog extends JDialog {
         }
 
         setPageFromAddress(address);
-    }
+    }//GEN-LAST:event_btnGotoAddressActionPerformed
 
-    private void btnFindTextActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnFindActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFindActionPerformed
         FindTextDialog dialog = new FindTextDialog(this, memModel, getCurrentAddress());
         
         dialog.setVisible(true);
@@ -491,13 +552,13 @@ public class MemoryDialog extends JDialog {
         if (address != -1) {
             setPageFromAddress(address);
         }
-    }
+    }//GEN-LAST:event_btnFindActionPerformed
 
-    private void btnSettingsActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSettingsActionPerformed
         new SettingsDialog(this, pluginID, mem, memContext, tblMemory, settings).setVisible(true);
-    }
+    }//GEN-LAST:event_btnSettingsActionPerformed
 
-    private void btnDumpActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnDumpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDumpActionPerformed
         JFileChooser f = new JFileChooser();
         UniversalFileFilter f1 = new UniversalFileFilter();
         UniversalFileFilter f2 = new UniversalFileFilter();
@@ -543,8 +604,8 @@ public class MemoryDialog extends JDialog {
                 StaticDialogs.showErrorMessage("Error: Dumpfile couldn't be created.");
             }
         }
-    }
-    
+    }//GEN-LAST:event_btnDumpActionPerformed
+
     private int getCurrentAddress() {
         return memModel.getPage() * (memModel.getRowCount() * memModel.getColumnCount());
     } 
@@ -561,17 +622,26 @@ public class MemoryDialog extends JDialog {
         } catch (RuntimeException ignored) {
         }
     }
+    
 
-    private JLabel lblBanksCount;
-    private JLabel lblPageCount;
-    private JLabel lblSelectedBank;
-    private JScrollPane paneMemory;
-    private JSpinner spnBank;
-    private JSpinner spnPage;
-    private JTextField txtAddress;
-    private JTextField txtChar;
-    private JTextField txtValBin;
-    private JTextField txtValDec;
-    private JTextField txtValHex;
-    private JTextField txtValOct;
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnClean;
+    private javax.swing.JButton btnDump;
+    private javax.swing.JButton btnFind;
+    private javax.swing.JButton btnGotoAddress;
+    private javax.swing.JButton btnLoadImage;
+    private javax.swing.JButton btnSettings;
+    private javax.swing.JLabel lblBanksCount;
+    private javax.swing.JLabel lblPageCount;
+    private javax.swing.JScrollPane paneMemory;
+    private javax.swing.JSplitPane splitPane;
+    private javax.swing.JSpinner spnBank;
+    private javax.swing.JSpinner spnPage;
+    private javax.swing.JTextField txtAddress;
+    private javax.swing.JTextField txtChar;
+    private javax.swing.JTextField txtValueBin;
+    private javax.swing.JTextField txtValueDec;
+    private javax.swing.JTextField txtValueHex;
+    private javax.swing.JTextField txtValueOct;
+    // End of variables declaration//GEN-END:variables
 }

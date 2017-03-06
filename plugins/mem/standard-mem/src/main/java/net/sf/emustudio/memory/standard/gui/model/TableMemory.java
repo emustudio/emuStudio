@@ -19,6 +19,12 @@
  */
 package net.sf.emustudio.memory.standard.gui.model;
 
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.util.Objects;
 import javax.swing.AbstractCellEditor;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -32,31 +38,26 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
 
 public class TableMemory extends JTable {
-
-    private MemoryTableModel memModel;
-    private JScrollPane paneMemory;
+    private final MemoryTableModel memModel;
+    private final JScrollPane paneMemory;
 
     public TableMemory(MemoryTableModel memModel, JScrollPane pm) {
-        this.paneMemory = pm;
-        this.memModel = memModel;
-        this.setModel(this.memModel);
-        this.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        this.setCellSelectionEnabled(true);
-        this.setFocusCycleRoot(true);
-        this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        this.getTableHeader().setFont(new Font("Monospaced", Font.PLAIN, 12));
-        this.setDefaultRenderer(Object.class, new MemCellRenderer(this));
+        this.paneMemory = Objects.requireNonNull(pm);
+        this.memModel = Objects.requireNonNull(memModel);
+        
+        super.setModel(this.memModel);
+        super.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        super.setCellSelectionEnabled(true);
+        super.setFocusCycleRoot(true);
+        super.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        super.getTableHeader().setFont(new Font("Monospaced", Font.PLAIN, 12));
+        super.setDefaultRenderer(Object.class, new MemCellRenderer(this));
 
         MemoryCellEditor ed = new MemoryCellEditor();
         for (int i = 0; i < memModel.getColumnCount(); i++) {
-            TableColumn col = this.getColumnModel().getColumn(i);
+            TableColumn col = super.getColumnModel().getColumn(i);
             col.setPreferredWidth(3 * 17);
             col.setCellEditor(ed);
         }
@@ -183,4 +184,9 @@ public class TableMemory extends JTable {
             return component.getText();
         }
     }
+
+    public MemoryTableModel getMemModel() {
+        return memModel;
+    }
+    
 }

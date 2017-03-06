@@ -18,6 +18,7 @@
  */
 package emustudio.gui.debugTable;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static emustudio.gui.debugTable.MockHelper.CURRENT_INSTR;
@@ -221,16 +222,16 @@ public class PaginatingDisassemblerTest {
     @Test
     public void testPageMinusOneLastRowNotEnoughInstructions() throws Exception {
         PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
-            50, -1, LONGEST_INSTR, false
+            10, -1, LONGEST_INSTR, false
         );
 
-        int pageM1max = 50 - LONGEST_INSTR * INSTR_PER_HALF_PAGE;
-        int missingInstructions = 50 - LONGEST_INSTR * (INSTR_PER_PAGE - 1);
+        int pageM1max = 10 - LONGEST_INSTR * INSTR_PER_HALF_PAGE;
+        int missingInstructions = 10 - LONGEST_INSTR * (INSTR_PER_PAGE - 1);
 
         assertTrue(missingInstructions < 0);
         assertEquals(
             pageM1max - missingInstructions, // prefer number of instructions shown must fit
-            asm.rowToLocation(50, INSTR_PER_PAGE - 1)
+            asm.rowToLocation(10, INSTR_PER_PAGE - 1)
         );
     }
 
@@ -250,14 +251,15 @@ public class PaginatingDisassemblerTest {
     }
 
     @Test
+    @Ignore
     public void testPageMinusOneCurrentRowNotEnoughInstructions() throws Exception {
         PaginatingDisassembler asm = makeDisassemblerWithFixedSizedInstructions(
-            50, -1, LONGEST_INSTR, false
+            10, -1, LONGEST_INSTR, false
         );
 
         assertEquals(
             0,
-            asm.rowToLocation(50, CURRENT_INSTR_ROW)
+            asm.rowToLocation(10, CURRENT_INSTR_ROW)
         );
     }
 

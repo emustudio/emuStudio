@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 @ThreadSafe
 public class PaginatingDisassembler {
-    public final static int INSTR_PER_PAGE = 2 * 15 + 1;
+    public final static int INSTR_PER_PAGE = 2 * 10 + 1;
     final static int CURRENT_INSTR_ROW = INSTR_PER_PAGE / 2; // do not touch this; the algorithm depends on it
     final static int INSTR_PER_HALF_PAGE = INSTR_PER_PAGE / 2;
 
