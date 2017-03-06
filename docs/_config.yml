@@ -10,6 +10,10 @@ collections:
   docdevel:
     output: true
 
+# When debugging locally, run as :
+#    jekyll serve --baseurl ''
+baseurl: /emuStudio
+
 # Handling Reading
 safe:         true
 include:      [".htaccess"]
