@@ -21,15 +21,14 @@ package net.sf.emustudio.ram.compiler.impl;
 
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
-import emulib.emustudio.SettingsManager;
 import emulib.plugins.compiler.AbstractCompiler;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
 import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.AlreadyRegisteredException;
+import emulib.runtime.exceptions.ContextNotFoundException;
 import emulib.runtime.exceptions.InvalidContextException;
-import emulib.runtime.exceptions.PluginInitializationException;
 import net.sf.emustudio.ram.compiler.tree.Program;
 import net.sf.emustudio.ram.compiler.tree.RAMInstructionImpl;
 import net.sf.emustudio.ram.memory.RAMInstruction;
@@ -59,7 +58,6 @@ public class RAMCompiler extends AbstractCompiler {
     private final ContextPool contextPool;
     private final LexerImpl lexer;
     private final ParserImpl parser;
-    private RAMMemoryContext memory;
 
     public RAMCompiler(Long pluginID, ContextPool contextPool) {
         super(pluginID);
@@ -84,12 +82,6 @@ public class RAMCompiler extends AbstractCompiler {
         } catch (MissingResourceException e) {
             return "(unknown)";
         }
-    }
-
-    @Override
-    public void initialize(SettingsManager settings) throws PluginInitializationException {
-        super.initialize(settings);
-        memory = contextPool.getMemoryContext(pluginID, RAMMemoryContext.class);
     }
 
     private CompiledCode compileFrom(String inputFileName) throws Exception {
@@ -119,11 +111,14 @@ public class RAMCompiler extends AbstractCompiler {
             program.pass2(compiledProgram);
 
             notifyInfo("Compile was successful.");
-            if (memory != null) {
+            try {
+                RAMMemoryContext memory = contextPool.getMemoryContext(pluginID, RAMMemoryContext.class);
                 //clear the memory before loading new image
                 memory.clear();
                 compiledProgram.loadIntoMemory(memory);
-                notifyInfo("Compiled file was loaded into operating memory.");
+                notifyInfo("Compiled file was loaded into program memory.");
+            } catch (ContextNotFoundException e) {
+                notifyWarning("Memory is not available");
             }
         }
         return compiledProgram;
