@@ -24,7 +24,6 @@ import net.jcip.annotations.NotThreadSafe;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Objects;
 
 @NotThreadSafe
 public class MemoryAndFileOutput extends SeekableOutputStream {
@@ -34,12 +33,14 @@ public class MemoryAndFileOutput extends SeekableOutputStream {
 
     public MemoryAndFileOutput(String filename, MemoryContext<Byte> memoryContext) throws IOException {
         this.file = new RandomAccessFile(filename, "rw");
-        this.memoryContext = Objects.requireNonNull(memoryContext);
+        this.memoryContext = memoryContext;
     }
 
     @Override
     public void write(int b) throws IOException {
-        memoryContext.write(position, (byte)(b & 0xFF));
+        if (memoryContext != null) {
+            memoryContext.write(position, (byte) (b & 0xFF));
+        }
         file.write(b);
         position++;
     }

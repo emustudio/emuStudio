@@ -698,3 +698,16 @@ parsing errors. For this purpose, `emulib.plugins.compiler.AbstractCompiler` cla
 - `notifyWarning()` - compiler warning
 - `notifyError()` - compilation error
 - `notifyInfo()` - informational message
+
+=== Command-line interface (CLI)
+
+It might be sometimes useful to being able to run the compiler from the command line. We can add the implementation
+in the `Main` class, as follows:
+
+[source,java]
+.`src/main/java/net/sf/emustudio/ssem/assembler/Main.java`
+----
+include::{sourcedir}/plugins/compilers/as-ssem/src/main/java/net/sf/emustudio/ssem/assembler/Main.java[lines=20..-1]
+----
+
+And that was the very last thing, now you have SSEM compiler ready :)

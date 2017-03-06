@@ -26,6 +26,8 @@ import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
+import emulib.runtime.exceptions.ContextNotFoundException;
+import emulib.runtime.exceptions.InvalidContextException;
 import java_cup.runtime.ComplexSymbolFactory;
 import net.sf.emustudio.ssem.assembler.tree.Program;
 import org.slf4j.Logger;
@@ -57,11 +59,17 @@ public class CompilerImpl extends AbstractCompiler {
     @Override
     public boolean compile(String inputFileName, String outputFileName) {
         notifyCompileStart();
+        notifyInfo(getTitle() + ", version " + getVersion());
+
+        MemoryContext<Byte> memory = null;
+        try {
+            memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
+        } catch (InvalidContextException | ContextNotFoundException e) {
+            notifyWarning("Memory is not available");
+        }
 
         int errorCode = 0;
         try (Reader reader = new FileReader(inputFileName)) {
-            MemoryContext<Byte> memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
-
             try (CodeGenerator codeGenerator = new CodeGenerator(new MemoryAndFileOutput(outputFileName, memory))) {
                 LexerImpl lexer = new LexerImpl(reader);
                 ParserImpl parser = new ParserImpl(lexer, new ComplexSymbolFactory(), this);
@@ -81,7 +89,7 @@ public class CompilerImpl extends AbstractCompiler {
         } catch (Exception e) {
             errorCode = 1;
             LOGGER.error("Compilation error.", e);
-            notifyError("Compilation error.");
+            notifyError("Compilation error: " + e.getMessage());
 
             return false;
         } finally {

@@ -17,7 +17,7 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.intel8080.assembler.impl;
+package net.sf.emustudio.ssem.assembler;
 
 import emulib.plugins.compiler.Compiler;
 import emulib.plugins.compiler.Message;
@@ -56,7 +56,7 @@ public class Main {
             } else {
                 outputFile = inputFile;
             }
-            outputFile += ".hex";
+            outputFile += ".bin";
         }
 
         CompilerImpl compiler = new CompilerImpl(0L, new ContextPool());
@@ -84,9 +84,10 @@ public class Main {
     }
 
     private static void printHelp() {
-        System.out.println("Syntax: java -jar as-8080.jar [-o outputFile] inputFile\nOptions:");
+        System.out.println("Syntax: java -jar as-ssem.jar [-o outputFile] inputFile\nOptions:");
         System.out.println("\t--output, -o\tfile: name of the output file");
         System.out.println("\t--version, -v\t: print version");
         System.out.println("\t--help, -h\t: this help");
     }
+
 }
