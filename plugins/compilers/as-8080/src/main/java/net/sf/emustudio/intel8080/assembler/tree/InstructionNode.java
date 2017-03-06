@@ -88,7 +88,7 @@ public class InstructionNode {
     
     // code generation
     public void pass4(HEXFileManager hex) throws Exception {
-        if (codePseudo != null) { 
+        if (codePseudo != null) {
             if (!(codePseudo instanceof MacroPseudoNode)) {
                 codePseudo.pass4(hex);
             }

@@ -50,10 +50,6 @@ public class Statement {
         return size;
     }
 
-    CompileEnv getCompileEnv() {
-        return env;
-    }
-
     public void pass1(CompileEnv env) throws Exception {
         this.env = env;
         pass1();
