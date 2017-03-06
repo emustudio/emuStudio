@@ -8,7 +8,9 @@
           {% endif %}
       </span>
     </h1>
-    Version {{ site.data.global.current_version }}
+    {% if documentation %}
+      Version {{ site.data.global.current_version }}
+    {% endif %}
     {% if collection %}
     <aside>
         {% for doc in collection %}
