@@ -124,7 +124,7 @@ public class CompilerImpl extends AbstractCompiler {
             notifyInfo("Compile was successful.\nOutput: " + outputFileName);
 
             try {
-            MemoryContext memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
+                MemoryContext memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
                 if (hex.loadIntoMemory(memory)) {
                     notifyInfo("Compiled file was loaded into operating memory.");
                 } else {

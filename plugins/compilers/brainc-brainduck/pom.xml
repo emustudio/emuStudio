@@ -29,12 +29,13 @@
           <archive>
             <manifest>
               <addClasspath>false</addClasspath>
-              <mainClass>net.sf.emustudio.brainduck.brainc.impl.CompilerImpl</mainClass>
+              <mainClass>net.sf.emustudio.brainduck.brainc.impl.Main</mainClass>
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
             </manifest>
             <manifestEntries>
-              <Class-Path>lib/java-cup-runtime-11b.jar</Class-Path>
+              <!-- DO NOT REMOVE THESE DEPENDENCIES; COMMAND LINE THEN WON'T WORK -->
+              <Class-Path>lib/java-cup-runtime-11b.jar lib/emuLib-9.0.0.jar lib/slf4j-api-1.7.21.jar</Class-Path>
             </manifestEntries>
           </archive>
         </configuration>

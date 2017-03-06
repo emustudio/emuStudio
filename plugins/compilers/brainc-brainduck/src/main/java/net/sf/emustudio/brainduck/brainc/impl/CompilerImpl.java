@@ -23,11 +23,11 @@ import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
 import emulib.plugins.compiler.AbstractCompiler;
 import emulib.plugins.compiler.LexicalAnalyzer;
-import emulib.plugins.compiler.Message;
 import emulib.plugins.compiler.SourceFileExtension;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.HEXFileManager;
+import emulib.runtime.exceptions.ContextNotFoundException;
 import net.sf.emustudio.brainduck.brainc.tree.Program;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,14 +118,16 @@ public class CompilerImpl extends AbstractCompiler {
             programStart = hex.getProgramStart();
 
             // try to access the memory
-            MemoryContext memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
-            if (memory != null) {
+            try {
+                MemoryContext memory = contextPool.getMemoryContext(pluginID, MemoryContext.class);
                 if (hex.loadIntoMemory(memory)) {
                     notifyInfo("Compiled file was loaded into operating memory.");
                 } else {
                     notifyError("Compiled file couldn't be loaded into operating"
-                            + "memory due to an error.");
+                        + "memory due to an error.");
                 }
+            } catch (ContextNotFoundException e) {
+                notifyWarning("Memory is not found; only HEX file will be generated.");
             }
             notifyCompileFinish(0);
             return true;
@@ -172,71 +174,4 @@ public class CompilerImpl extends AbstractCompiler {
         return suffixes;
     }
 
-    private static void printHelp() {
-        System.out.println("Syntax: brainc-brainduck [-o outputFile] inputFile\nOptions:");
-        System.out.println("\t--output, -o\tfile: name of the output file");
-        System.out.println("\t--version, -v\t: print version");
-        System.out.println("\t--help, -h\t: this help");
-    }
-
-    public static void main(String... args) {
-        System.out.println(CompilerImpl.class.getAnnotation(PluginType.class).title());
-
-        String inputFile;
-        String outputFile = null;
-
-        int i;
-        for (i = 0; i < args.length; i++) {
-            String arg = args[i].toLowerCase();
-            if ((arg.equals("--output") || arg.equals("-o")) && ((i + 1) < args.length)) {
-                outputFile = args[++i];
-            } else if (arg.equals("--help") || arg.equals("-h")) {
-                printHelp();
-                return;
-            } else if (arg.equals("--version") || arg.equals("-v")) {
-                System.out.println(new CompilerImpl(0L, new ContextPool()).getVersion());
-                return;
-            } else {
-                break;
-            }
-        }
-        if (i >= args.length) {
-            System.out.println("Error: expected input file name");
-            return;
-        }
-        inputFile = args[i];
-        if (outputFile == null) {
-            int index = inputFile.lastIndexOf('.');
-            if (index != -1) {
-                outputFile = inputFile.substring(0, index);
-            } else {
-                outputFile = inputFile;
-            }
-            outputFile += ".hex";
-        }
-
-        CompilerImpl compiler = new CompilerImpl(0L, new ContextPool());
-        compiler.addCompilerListener(new CompilerListener() {
-
-            @Override
-            public void onStart() {
-            }
-
-            @Override
-            public void onMessage(Message message) {
-                System.out.println(message.getFormattedMessage());
-            }
-
-            @Override
-            public void onFinish(int errorCode) {
-            }
-        });
-
-        try {
-            compiler.compile(inputFile, outputFile);
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            LOGGER.error("Compilation error", e);
-        }
-    }
 }

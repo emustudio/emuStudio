@@ -17,7 +17,7 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.intel8080.assembler.impl;
+package net.sf.emustudio.ssem.assembler;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,23 +31,21 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public class MainTest {
-
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
 
     @Test
     public void testCommandLine() throws Exception {
         File sourceFile = folder.newFile();
-        Files.write(sourceFile.toPath(), "mov a,b".getBytes(), StandardOpenOption.WRITE);
+        Files.write(sourceFile.toPath(), "0 sto 22\n".getBytes(), StandardOpenOption.WRITE);
         File outputFile = folder.newFile();
 
         Main.main("--output", outputFile.getPath(), sourceFile.getPath());
 
         List<String> lines = Files.readAllLines(outputFile.toPath());
 
-        assertEquals(2, lines.size());
-        assertEquals(":010000007887", lines.get(0));
-        assertEquals(":00000001FF", lines.get(1));
+        assertEquals(1, lines.size());
+        assertEquals("\150\6\0\0", lines.get(0));
     }
 
     @Test

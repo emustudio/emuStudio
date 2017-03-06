@@ -17,14 +17,13 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package net.sf.emustudio.brainduck.brainc;
+package net.sf.emustudio.brainduck.brainc.impl;
 
 import emulib.plugins.compiler.Compiler;
 import emulib.plugins.compiler.Message;
 import emulib.plugins.memory.MemoryContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.NumberUtils;
-import net.sf.emustudio.brainduck.brainc.impl.CompilerImpl;
 import net.sf.emustudio.cpu.testsuite.memory.MemoryStub;
 import net.sf.emustudio.cpu.testsuite.memory.ShortMemoryStub;
 import org.junit.Before;
@@ -43,9 +42,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractCompilerTest {
-    protected CompilerImpl compiler;
-    protected MemoryStub<Short> memoryStub;
-    protected int errorCode;
+    private CompilerImpl compiler;
+    private int errorCode;
+
+    MemoryStub<Short> memoryStub;
 
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
@@ -86,7 +86,7 @@ public abstract class AbstractCompilerTest {
         compiler.compile(sourceFile.getAbsolutePath(), outputFile.getAbsolutePath());
     }
 
-    protected void assertProgram(int... bytes) {
+    void assertProgram(int... bytes) {
         assertTrue(errorCode == 0);
         for (int i = 0; i < bytes.length; i++) {
             assertEquals(
