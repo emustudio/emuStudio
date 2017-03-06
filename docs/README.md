@@ -35,6 +35,14 @@ The template can be found [here](https://github.com/scotch-io/scotch-io.github.i
 This site is using Jekyll static site generator. For more information about how to work with Jekyll,
 please visit [official Jekyll site](https://jekyllrb.com/).
 
+In order to build a production version of the site, enter:
+
+```bash
+./build.sh
+```
+
+Then upload the site manually to the hosting server.
+
 The site has some dependencies which must be installed manually. The list of them is as follows:
 
 - [Graphviz](http://www.graphviz.org/Download.php), for the `dot` program
@@ -42,11 +50,11 @@ The site has some dependencies which must be installed manually. The list of the
 
 For testing the site locally, run the command:
 
-```
-jekyll serve
+```bash
+jekyll serve --baseurl ''
 ```
 
-Then, navigate the browser to http://localhost:4000/. 
+Then, navigate the browser to http://localhost:4000/.
 
 ## Documentation organization
 

@@ -16,11 +16,11 @@
             {% assign buttontitle = doc.relative_path | remove_first:'_docuser/' | remove_first:'_docdevel/' | remove:'/index.adoc' | remove:'/index.md' | replace:'_',' ' %}
             {% if doc.path contains page.pagetitle %}
                 {% assign toshow = doc %}
-                <a href="{{ site.github.url }}{{ doc.url }}" role="button" class="btn btn-default active">
+                <a href="{{ site.baseurl }}{{ doc.url }}" role="button" class="btn btn-default active">
                     {{ buttontitle }}
                 </a>
             {% else %}
-                <a href="{{ site.github.url }}{{ doc.url }}" role="button" class="btn btn-default">
+                <a href="{{ site.baseurl }}{{ doc.url }}" role="button" class="btn btn-default">
                     {{ buttontitle }}
                 </a>
             {% endif %}
