@@ -133,6 +133,7 @@
           
       </span>
     </h1>
+    Version 0.39
     
     <aside>
         
@@ -1530,12 +1531,13 @@ Note the naming of the plug-in. We are following the naming convention as descri
           <span style="color: #008000; font-weight: bold">&lt;archive&gt;</span>
             <span style="color: #008000; font-weight: bold">&lt;manifest&gt;</span>
               <span style="color: #008000; font-weight: bold">&lt;addClasspath&gt;</span>false<span style="color: #008000; font-weight: bold">&lt;/addClasspath&gt;</span>
-              <span style="color: #008000; font-weight: bold">&lt;mainClass&gt;</span>net.sf.emustudio.ssem.assembler.CompilerImpl<span style="color: #008000; font-weight: bold">&lt;/mainClass&gt;</span>
+              <span style="color: #008000; font-weight: bold">&lt;mainClass&gt;</span>net.sf.emustudio.ssem.assembler.Main<span style="color: #008000; font-weight: bold">&lt;/mainClass&gt;</span>
               <span style="color: #008000; font-weight: bold">&lt;addDefaultImplementationEntries&gt;</span>true<span style="color: #008000; font-weight: bold">&lt;/addDefaultImplementationEntries&gt;</span>
               <span style="color: #008000; font-weight: bold">&lt;addDefaultSpecificationEntries&gt;</span>true<span style="color: #008000; font-weight: bold">&lt;/addDefaultSpecificationEntries&gt;</span>
             <span style="color: #008000; font-weight: bold">&lt;/manifest&gt;</span>
             <span style="color: #008000; font-weight: bold">&lt;manifestEntries&gt;</span>
-              <span style="color: #008000; font-weight: bold">&lt;Class-Path&gt;</span>lib/java-cup-runtime-11b.jar<span style="color: #008000; font-weight: bold">&lt;/Class-Path&gt;</span>
+              <span style="color: #408080; font-style: italic">&lt;!-- DO NOT REMOVE THESE DEPENDENCIES; COMMAND LINE THEN WON&#39;T WORK --&gt;</span>
+              <span style="color: #008000; font-weight: bold">&lt;Class-Path&gt;</span>lib/java-cup-runtime-11b.jar lib/emuLib-9.0.0.jar lib/slf4j-api-1.7.21.jar<span style="color: #008000; font-weight: bold">&lt;/Class-Path&gt;</span>
             <span style="color: #008000; font-weight: bold">&lt;/manifestEntries&gt;</span>
           <span style="color: #008000; font-weight: bold">&lt;/archive&gt;</span>
         <span style="color: #008000; font-weight: bold">&lt;/configuration&gt;</span>
@@ -3004,7 +3006,6 @@ actually an abstract class, extending <code>OutputStream</code>. The reason is e
 
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.io.IOException</span><span style="color: #666666">;</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.io.RandomAccessFile</span><span style="color: #666666">;</span>
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">java.util.Objects</span><span style="color: #666666">;</span>
 
 <span style="color: #AA22FF">@NotThreadSafe</span>
 <span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">MemoryAndFileOutput</span> <span style="color: #008000; font-weight: bold">extends</span> SeekableOutputStream <span style="color: #666666">{</span>
@@ -3014,12 +3015,14 @@ actually an abstract class, extending <code>OutputStream</code>. The reason is e
 
     <span style="color: #008000; font-weight: bold">public</span> <span style="color: #0000FF">MemoryAndFileOutput</span><span style="color: #666666">(</span>String filename<span style="color: #666666">,</span> MemoryContext<span style="color: #666666">&lt;</span>Byte<span style="color: #666666">&gt;</span> memoryContext<span style="color: #666666">)</span> <span style="color: #008000; font-weight: bold">throws</span> IOException <span style="color: #666666">{</span>
         <span style="color: #008000; font-weight: bold">this</span><span style="color: #666666">.</span><span style="color: #7D9029">file</span> <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">new</span> RandomAccessFile<span style="color: #666666">(</span>filename<span style="color: #666666">,</span> <span style="color: #BA2121">&quot;rw&quot;</span><span style="color: #666666">);</span>
-        <span style="color: #008000; font-weight: bold">this</span><span style="color: #666666">.</span><span style="color: #7D9029">memoryContext</span> <span style="color: #666666">=</span> Objects<span style="color: #666666">.</span><span style="color: #7D9029">requireNonNull</span><span style="color: #666666">(</span>memoryContext<span style="color: #666666">);</span>
+        <span style="color: #008000; font-weight: bold">this</span><span style="color: #666666">.</span><span style="color: #7D9029">memoryContext</span> <span style="color: #666666">=</span> memoryContext<span style="color: #666666">;</span>
     <span style="color: #666666">}</span>
 
     <span style="color: #AA22FF">@Override</span>
     <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span style="color: #0000FF">write</span><span style="color: #666666">(</span><span style="color: #B00040">int</span> b<span style="color: #666666">)</span> <span style="color: #008000; font-weight: bold">throws</span> IOException <span style="color: #666666">{</span>
-        memoryContext<span style="color: #666666">.</span><span style="color: #7D9029">write</span><span style="color: #666666">(</span>position<span style="color: #666666">,</span> <span style="color: #666666">(</span><span style="color: #B00040">byte</span><span style="color: #666666">)(</span>b <span style="color: #666666">&amp;</span> <span style="color: #666666">0xFF));</span>
+        <span style="color: #008000; font-weight: bold">if</span> <span style="color: #666666">(</span>memoryContext <span style="color: #666666">!=</span> <span style="color: #008000; font-weight: bold">null</span><span style="color: #666666">)</span> <span style="color: #666666">{</span>
+            memoryContext<span style="color: #666666">.</span><span style="color: #7D9029">write</span><span style="color: #666666">(</span>position<span style="color: #666666">,</span> <span style="color: #666666">(</span><span style="color: #B00040">byte</span><span style="color: #666666">)</span> <span style="color: #666666">(</span>b <span style="color: #666666">&amp;</span> <span style="color: #666666">0xFF));</span>
+        <span style="color: #666666">}</span>
         file<span style="color: #666666">.</span><span style="color: #7D9029">write</span><span style="color: #666666">(</span>b<span style="color: #666666">);</span>
         position<span style="color: #666666">++;</span>
     <span style="color: #666666">}</span>
@@ -3256,6 +3259,95 @@ parsing errors. For this purpose, <code>emulib.plugins.compiler.AbstractCompiler
 <p><code>notifyInfo()</code> - informational message</p>
 </li>
 </ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="command-line-interface-cli">2.12. Command-line interface (CLI)</h3>
+<div class="paragraph">
+<p>It might be sometimes useful to being able to run the compiler from the command line. We can add the implementation
+in the <code>Main</code> class, as follows:</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>src/main/java/net/sf/emustudio/ssem/assembler/Main.java</code></div>
+<div class="content">
+<pre class="pygments highlight"><code data-lang="java"><span style="color: #008000; font-weight: bold">package</span> <span style="color: #0000FF; font-weight: bold">net.sf.emustudio.ssem.assembler</span><span style="color: #666666">;</span>
+
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.compiler.Compiler</span><span style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.plugins.compiler.Message</span><span style="color: #666666">;</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">emulib.runtime.ContextPool</span><span style="color: #666666">;</span>
+
+<span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">Main</span> <span style="color: #666666">{</span>
+
+    <span style="color: #008000; font-weight: bold">public</span> <span style="color: #008000; font-weight: bold">static</span> <span style="color: #B00040">void</span> <span style="color: #0000FF">main</span><span style="color: #666666">(</span>String<span style="color: #666666">...</span> args<span style="color: #666666">)</span> <span style="color: #666666">{</span>
+        String inputFile<span style="color: #666666">;</span>
+        String outputFile <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">null</span><span style="color: #666666">;</span>
+
+        <span style="color: #B00040">int</span> i<span style="color: #666666">;</span>
+        <span style="color: #008000; font-weight: bold">for</span> <span style="color: #666666">(</span>i <span style="color: #666666">=</span> <span style="color: #666666">0;</span> i <span style="color: #666666">&lt;</span> args<span style="color: #666666">.</span><span style="color: #7D9029">length</span><span style="color: #666666">;</span> i<span style="color: #666666">++)</span> <span style="color: #666666">{</span>
+            String arg <span style="color: #666666">=</span> args<span style="color: #666666">[</span>i<span style="color: #666666">].</span><span style="color: #7D9029">toLowerCase</span><span style="color: #666666">();</span>
+            <span style="color: #008000; font-weight: bold">if</span> <span style="color: #666666">((</span>arg<span style="color: #666666">.</span><span style="color: #7D9029">equals</span><span style="color: #666666">(</span><span style="color: #BA2121">&quot;--output&quot;</span><span style="color: #666666">)</span> <span style="color: #666666">||</span> arg<span style="color: #666666">.</span><span style="color: #7D9029">equals</span><span style="color: #666666">(</span><span style="color: #BA2121">&quot;-o&quot;</span><span style="color: #666666">))</span> <span style="color: #666666">&amp;&amp;</span> <span style="color: #666666">((</span>i <span style="color: #666666">+</span> <span style="color: #666666">1)</span> <span style="color: #666666">&lt;</span> args<span style="color: #666666">.</span><span style="color: #7D9029">length</span><span style="color: #666666">))</span> <span style="color: #666666">{</span>
+                outputFile <span style="color: #666666">=</span> args<span style="color: #666666">[++</span>i<span style="color: #666666">];</span>
+            <span style="color: #666666">}</span> <span style="color: #008000; font-weight: bold">else</span> <span style="color: #008000; font-weight: bold">if</span> <span style="color: #666666">(</span>arg<span style="color: #666666">.</span><span style="color: #7D9029">equals</span><span style="color: #666666">(</span><span style="color: #BA2121">&quot;--help&quot;</span><span style="color: #666666">)</span> <span style="color: #666666">||</span> arg<span style="color: #666666">.</span><span style="color: #7D9029">equals</span><span style="color: #666666">(</span><span style="color: #BA2121">&quot;-h&quot;</span><span style="color: #666666">))</span> <span style="color: #666666">{</span>
+                printHelp<span style="color: #666666">();</span>
+                <span style="color: #008000; font-weight: bold">return</span><span style="color: #666666">;</span>
+            <span style="color: #666666">}</span> <span style="color: #008000; font-weight: bold">else</span> <span style="color: #008000; font-weight: bold">if</span> <span style="color: #666666">(</span>arg<span style="color: #666666">.</span><span style="color: #7D9029">equals</span><span style="color: #666666">(</span><span style="color: #BA2121">&quot;--version&quot;</span><span style="color: #666666">)</span> <span style="color: #666666">||</span> arg<span style="color: #666666">.</span><span style="color: #7D9029">equals</span><span style="color: #666666">(</span><span style="color: #BA2121">&quot;-v&quot;</span><span style="color: #666666">))</span> <span style="color: #666666">{</span>
+                System<span style="color: #666666">.</span><span style="color: #7D9029">out</span><span style="color: #666666">.</span><span style="color: #7D9029">println</span><span style="color: #666666">(</span><span style="color: #008000; font-weight: bold">new</span> CompilerImpl<span style="color: #666666">(0</span>L<span style="color: #666666">,</span> <span style="color: #008000; font-weight: bold">new</span> ContextPool<span style="color: #666666">()).</span><span style="color: #7D9029">getVersion</span><span style="color: #666666">());</span>
+                <span style="color: #008000; font-weight: bold">return</span><span style="color: #666666">;</span>
+            <span style="color: #666666">}</span> <span style="color: #008000; font-weight: bold">else</span> <span style="color: #666666">{</span>
+                <span style="color: #008000; font-weight: bold">break</span><span style="color: #666666">;</span>
+            <span style="color: #666666">}</span>
+        <span style="color: #666666">}</span>
+        <span style="color: #008000; font-weight: bold">if</span> <span style="color: #666666">(</span>i <span style="color: #666666">&gt;=</span> args<span style="color: #666666">.</span><span style="color: #7D9029">length</span><span style="color: #666666">)</span> <span style="color: #666666">{</span>
+            System<span style="color: #666666">.</span><span style="color: #7D9029">err</span><span style="color: #666666">.</span><span style="color: #7D9029">println</span><span style="color: #666666">(</span><span style="color: #BA2121">&quot;Error: expected input file name&quot;</span><span style="color: #666666">);</span>
+            <span style="color: #008000; font-weight: bold">return</span><span style="color: #666666">;</span>
+        <span style="color: #666666">}</span>
+        inputFile <span style="color: #666666">=</span> args<span style="color: #666666">[</span>i<span style="color: #666666">];</span>
+        <span style="color: #008000; font-weight: bold">if</span> <span style="color: #666666">(</span>outputFile <span style="color: #666666">==</span> <span style="color: #008000; font-weight: bold">null</span><span style="color: #666666">)</span> <span style="color: #666666">{</span>
+            <span style="color: #B00040">int</span> index <span style="color: #666666">=</span> inputFile<span style="color: #666666">.</span><span style="color: #7D9029">lastIndexOf</span><span style="color: #666666">(</span><span style="color: #BA2121">&#39;.&#39;</span><span style="color: #666666">);</span>
+            <span style="color: #008000; font-weight: bold">if</span> <span style="color: #666666">(</span>index <span style="color: #666666">!=</span> <span style="color: #666666">-1)</span> <span style="color: #666666">{</span>
+                outputFile <span style="color: #666666">=</span> inputFile<span style="color: #666666">.</span><span style="color: #7D9029">substring</span><span style="color: #666666">(0,</span> index<span style="color: #666666">);</span>
+            <span style="color: #666666">}</span> <span style="color: #008000; font-weight: bold">else</span> <span style="color: #666666">{</span>
+                outputFile <span style="color: #666666">=</span> inputFile<span style="color: #666666">;</span>
+            <span style="color: #666666">}</span>
+            outputFile <span style="color: #666666">+=</span> <span style="color: #BA2121">&quot;.bin&quot;</span><span style="color: #666666">;</span>
+        <span style="color: #666666">}</span>
+
+        CompilerImpl compiler <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">new</span> CompilerImpl<span style="color: #666666">(0</span>L<span style="color: #666666">,</span> <span style="color: #008000; font-weight: bold">new</span> ContextPool<span style="color: #666666">());</span>
+        compiler<span style="color: #666666">.</span><span style="color: #7D9029">addCompilerListener</span><span style="color: #666666">(</span><span style="color: #008000; font-weight: bold">new</span> Compiler<span style="color: #666666">.</span><span style="color: #7D9029">CompilerListener</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
+            <span style="color: #AA22FF">@Override</span>
+            <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span style="color: #0000FF">onStart</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
+            <span style="color: #666666">}</span>
+
+            <span style="color: #AA22FF">@Override</span>
+            <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span style="color: #0000FF">onMessage</span><span style="color: #666666">(</span>Message message<span style="color: #666666">)</span> <span style="color: #666666">{</span>
+                System<span style="color: #666666">.</span><span style="color: #7D9029">err</span><span style="color: #666666">.</span><span style="color: #7D9029">println</span><span style="color: #666666">(</span>message<span style="color: #666666">.</span><span style="color: #7D9029">toString</span><span style="color: #666666">());</span>
+            <span style="color: #666666">}</span>
+
+            <span style="color: #AA22FF">@Override</span>
+            <span style="color: #008000; font-weight: bold">public</span> <span style="color: #B00040">void</span> <span style="color: #0000FF">onFinish</span><span style="color: #666666">(</span><span style="color: #B00040">int</span> errorCode<span style="color: #666666">)</span> <span style="color: #666666">{</span>
+                System<span style="color: #666666">.</span><span style="color: #7D9029">err</span><span style="color: #666666">.</span><span style="color: #7D9029">println</span><span style="color: #666666">(</span><span style="color: #BA2121">&quot;Compilation finished (error code: &quot;</span> <span style="color: #666666">+</span> errorCode <span style="color: #666666">+</span> <span style="color: #BA2121">&quot;)&quot;</span><span style="color: #666666">);</span>
+
+            <span style="color: #666666">}</span>
+        <span style="color: #666666">});</span>
+        <span style="color: #008000; font-weight: bold">try</span> <span style="color: #666666">{</span>
+            compiler<span style="color: #666666">.</span><span style="color: #7D9029">compile</span><span style="color: #666666">(</span>inputFile<span style="color: #666666">,</span> outputFile<span style="color: #666666">);</span>
+        <span style="color: #666666">}</span> <span style="color: #008000; font-weight: bold">catch</span> <span style="color: #666666">(</span>Exception e<span style="color: #666666">)</span> <span style="color: #666666">{</span>
+            System<span style="color: #666666">.</span><span style="color: #7D9029">err</span><span style="color: #666666">.</span><span style="color: #7D9029">println</span><span style="color: #666666">(</span>e<span style="color: #666666">.</span><span style="color: #7D9029">getMessage</span><span style="color: #666666">());</span>
+        <span style="color: #666666">}</span>
+    <span style="color: #666666">}</span>
+
+    <span style="color: #008000; font-weight: bold">private</span> <span style="color: #008000; font-weight: bold">static</span> <span style="color: #B00040">void</span> <span style="color: #0000FF">printHelp</span><span style="color: #666666">()</span> <span style="color: #666666">{</span>
+        System<span style="color: #666666">.</span><span style="color: #7D9029">out</span><span style="color: #666666">.</span><span style="color: #7D9029">println</span><span style="color: #666666">(</span><span style="color: #BA2121">&quot;Syntax: java -jar as-ssem.jar [-o outputFile] inputFile\nOptions:&quot;</span><span style="color: #666666">);</span>
+        System<span style="color: #666666">.</span><span style="color: #7D9029">out</span><span style="color: #666666">.</span><span style="color: #7D9029">println</span><span style="color: #666666">(</span><span style="color: #BA2121">&quot;\t--output, -o\tfile: name of the output file&quot;</span><span style="color: #666666">);</span>
+        System<span style="color: #666666">.</span><span style="color: #7D9029">out</span><span style="color: #666666">.</span><span style="color: #7D9029">println</span><span style="color: #666666">(</span><span style="color: #BA2121">&quot;\t--version, -v\t: print version&quot;</span><span style="color: #666666">);</span>
+        System<span style="color: #666666">.</span><span style="color: #7D9029">out</span><span style="color: #666666">.</span><span style="color: #7D9029">println</span><span style="color: #666666">(</span><span style="color: #BA2121">&quot;\t--help, -h\t: this help&quot;</span><span style="color: #666666">);</span>
+    <span style="color: #666666">}</span>
+
+<span style="color: #666666">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And that was the very last thing, now you have SSEM compiler ready :)</p>
 </div>
 </div>
 </div>

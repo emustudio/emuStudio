@@ -1,0 +1,13 @@
+---
+layout: doc
+pagetitle: ssem
+---
+
+[[emulator_ssem]]
+= Emulator of SSEM
+
+Well, there is no user documentation for the SSEM computer. This computer is provided as the result of the developer's
+tutorial of how to implement a custom computer in emuStudio.
+
+I strongly suggest to look at link:/emuStudio/docdevel/emulator_tutorial/index/[this nice tutorial]!
+
