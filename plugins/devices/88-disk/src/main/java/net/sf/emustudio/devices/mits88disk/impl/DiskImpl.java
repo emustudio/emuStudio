@@ -27,8 +27,6 @@ import emulib.plugins.device.DeviceContext;
 import emulib.runtime.ContextPool;
 import emulib.runtime.StaticDialogs;
 import emulib.runtime.exceptions.PluginInitializationException;
-import net.sf.emustudio.devices.mits88disk.cpmfs.CpmDirectory;
-import net.sf.emustudio.devices.mits88disk.cpmfs.RawDisc;
 import net.sf.emustudio.devices.mits88disk.gui.DiskFrame;
 import net.sf.emustudio.devices.mits88disk.gui.SettingsDialog;
 import net.sf.emustudio.intel8080.api.ExtendedContext;
@@ -37,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -276,116 +273,4 @@ public class DiskImpl extends AbstractDevice {
         return !noGUI;
     }
 
-    private static boolean ARG_LIST = false;
-    private static String IMAGE_FILE = null;
-    private static boolean ARG_HELP = false;
-    private static boolean ARG_INFO = false;
-    private static boolean ARG_VERSION = false;
-    private static String DIR_FILE = null;
-
-    /**
-     * This method parsers the command line parameters. It sets internal class
-     * data members accordingly.
-     *
-     * @param args The command line arguments
-     */
-    private static void parseCommandLine(String[] args) {
-        // process arguments
-        int size = args.length;
-        for (int i = 0; i < size; i++) {
-            String arg = args[i].toUpperCase();
-            try {
-                switch (arg) {
-                    case "--LIST":
-                        // list files in the image
-                        ARG_LIST = true;
-                        break;
-                    case "--IMAGE":
-                        i++;
-                        // the image file
-                        if (IMAGE_FILE != null) {
-                            System.out.println("Image file already defined,"
-                                    + " ignoring this one: " + args[i]);
-                        } else {
-                            IMAGE_FILE = args[i];
-                            System.out.println("Image file name: " + IMAGE_FILE);
-                        }
-                        break;
-                    case "--DIR":
-                        i++;
-                        // the directory bitmap file
-                        if (DIR_FILE != null) {
-                          System.out.println("Directory bitmap file already defined,"
-                              + " ignoring this one: " + args[i]);
-                        } else {
-                          DIR_FILE = args[i];
-                          System.out.println("Directory bitmap file name: " + DIR_FILE);
-                        }
-                        break;
-                    case "--VERSION":
-                        ARG_VERSION = true;
-                        break;
-                    case "--HELP":
-                        ARG_HELP = true;
-                        break;
-                    case "--INFO":
-                        ARG_INFO = true;
-                        break;
-                    default:
-                        System.out.println("Error: Invalid command line argument "
-                                + "(" + arg + ")!");
-                        break;
-                }
-            } catch (ArrayIndexOutOfBoundsException e) {
-                LOGGER.error("Expected argument", e);
-            }
-        }
-    }
-
-    /**
-     * The plug-in is able to transfer files from/to CP/M images by command line
-     *
-     * @param args
-     */
-    public static void main(String[] args) throws Exception {
-        System.out.println("MITS 88-DISK emuStudio plug-in");
-        parseCommandLine(args);
-
-        if (ARG_HELP) {
-            // only show help and EXIT (ignore other arguments)
-            System.out.println("\nThe 88-DISK will accept the following command line"
-                    + " parameters:\n"
-                    + "\n--list        : list all files in the image"
-                    + "\n--info        : return some drive information"
-                    + "\n--image name  : use the image file given by the file name"
-                    + "\n--dir name    : directory bitmap file"
-                    + "\n--version     : print version"
-                    + "\n--help        : output this message");
-            return;
-        }
-
-        if (ARG_VERSION) {
-            System.out.println(new DiskImpl(0L, new ContextPool()).getVersion());
-            return;
-        }
-
-        if (IMAGE_FILE == null) {
-            System.out.println("Error: Image file cannot be null!");
-            System.exit(0);
-            return;
-        }
-
-        try (RawDisc disc = new RawDisc(new File(IMAGE_FILE).toPath(), StandardOpenOption.READ)) {
-            CpmDirectory directory = CpmDirectory.fromDisc(disc);
-
-            if (ARG_INFO) {
-                System.out.println("Disc label: " + directory.findDiscLabel());
-                System.out.println("Number of files: " + directory.filterValidFiles().size());
-            }
-
-            if (ARG_LIST) {
-                System.out.println(directory.filterValidFiles());
-            }
-        }
-    }
 }

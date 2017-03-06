@@ -29,12 +29,13 @@
           <archive>
             <manifest>
               <addClasspath>true</addClasspath>
-              <mainClass>net.sf.emustudio.devices.mits88disk.impl.DiskImpl</mainClass>
+              <mainClass>net.sf.emustudio.devices.mits88disk.impl.Main</mainClass>
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
             </manifest>
             <manifestEntries>
-                <Class-Path>cpu/8080-cpu.jar</Class-Path>
+                <!-- DO NOT REMOVE THESE DEPENDENCIES; COMMAND LINE THEN WON'T WORK -->
+                <Class-Path>lib/8080-cpu-0.39-SNAPSHOT.jar lib/java-cup-runtime-11b.jar lib/emuLib-9.0.0.jar lib/slf4j-api-1.7.21.jar</Class-Path>
             </manifestEntries>
           </archive>
         </configuration>

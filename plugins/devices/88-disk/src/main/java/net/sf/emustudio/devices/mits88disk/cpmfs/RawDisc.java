@@ -37,7 +37,16 @@ public class RawDisc implements AutoCloseable {
     private final TrackAndSector position = new TrackAndSector(0, 0);
     private final FileChannel channel;
 
-    public RawDisc(Path imageFile, OpenOption... openOptions) throws IOException {
+    private final int sectorSize;
+    private final int sectorsCount;
+    private final int sectorSkew;
+    private final int blockLength;
+
+    public RawDisc(Path imageFile, int sectorSize, int sectorsCount, int sectorSkew, int blockLength, OpenOption... openOptions) throws IOException {
+        this.sectorSize = sectorSize;
+        this.sectorsCount = sectorsCount;
+        this.sectorSkew = sectorSkew;
+        this.blockLength = blockLength;
         this.channel = FileChannel.open(Objects.requireNonNull(imageFile), openOptions);
     }
 
@@ -55,10 +64,10 @@ public class RawDisc implements AutoCloseable {
     }
 
     public ByteBuffer readSector() throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocateDirect(SECTOR_SIZE);
+        ByteBuffer buffer = ByteBuffer.allocateDirect(sectorSize);
 
-        channel.position(SECTORS_COUNT * SECTOR_SIZE * position.track + SECTOR_SIZE * position.sector);
-        if (channel.read(buffer) != SECTOR_SIZE) {
+        channel.position(sectorsCount * sectorSize * position.track + sectorSize * position.sector);
+        if (channel.read(buffer) != sectorSize) {
             throw new IOException("Could not read whole sector! (" + position + ")");
         }
 
@@ -67,7 +76,7 @@ public class RawDisc implements AutoCloseable {
     }
 
     public void writeSector(ByteBuffer buffer) throws IOException {
-        channel.position(SECTORS_COUNT * SECTOR_SIZE * position.track + SECTOR_SIZE * position.sector);
+        channel.position(sectorsCount * sectorSize * position.track + sectorSize * position.sector);
 
         int expected = buffer.remaining();
         if (channel.write(buffer) != expected) {
@@ -76,18 +85,18 @@ public class RawDisc implements AutoCloseable {
     }
 
     public List<ByteBuffer> readBlock() throws IOException {
-        int numberOfSectors = BLOCK_LENGTH / SECTOR_SIZE;
+        int numberOfSectors = blockLength / sectorSize;
 
         List<ByteBuffer> block = new ArrayList<>();
         for (int i = 0; i < numberOfSectors; i++) {
-            ByteBuffer buffer = ByteBuffer.allocateDirect(SECTOR_SIZE);
+            ByteBuffer buffer = ByteBuffer.allocateDirect(sectorSize);
 
-            channel.position(SECTORS_COUNT * SECTOR_SIZE * position.track + SECTOR_SIZE * position.sector);
+            channel.position(sectorsCount * sectorSize * position.track + sectorSize * position.sector);
             channel.read(buffer);
             buffer.flip();
             block.add(buffer.asReadOnlyBuffer());
 
-            position.sector = (position.sector + SECTOR_SKEW) % SECTORS_COUNT;
+            position.sector = (position.sector + sectorSkew) % sectorsCount;
         }
         return block;
     }
