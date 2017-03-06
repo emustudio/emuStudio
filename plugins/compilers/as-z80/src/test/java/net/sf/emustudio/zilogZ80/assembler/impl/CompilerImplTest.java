@@ -172,18 +172,4 @@ public class CompilerImplTest extends AbstractCompilerTest {
         assertFalse(errorCode == 0);
     }
 
-    @Test
-    public void testCommandLinePrintHelp() throws Exception {
-        CompilerImpl.main("--help");
-    }
-
-    @Test
-    public void testCommandLineNonexistantSourceFileDoesNotThrow() throws Exception {
-        CompilerImpl.main("slfjkdf");
-    }
-
-    @Test
-    public void testCommandLinePrintVersion() throws Exception {
-        CompilerImpl.main("--version");
-    }
 }
