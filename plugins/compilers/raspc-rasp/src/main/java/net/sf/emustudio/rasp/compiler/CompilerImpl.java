@@ -1,7 +1,7 @@
 /*
  * KISS, YAGNI, DRY
  *
- * (c) Copyright 2016, Michal Šipoš
+ * (c) Copyright 2016-2017, Michal Šipoš
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,17 +17,19 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 package net.sf.emustudio.rasp.compiler;
 
 import emulib.annotations.PLUGIN_TYPE;
 import emulib.annotations.PluginType;
-import emulib.emustudio.SettingsManager;
 import emulib.plugins.compiler.AbstractCompiler;
 import emulib.plugins.compiler.LexicalAnalyzer;
 import emulib.plugins.compiler.SourceFileExtension;
 import emulib.runtime.ContextPool;
-import emulib.runtime.exceptions.PluginInitializationException;
+import emulib.runtime.exceptions.ContextNotFoundException;
+import java_cup.runtime.ComplexSymbolFactory;
+import net.sf.emustudio.rasp.compiler.tree.SourceCode;
+import net.sf.emustudio.rasp.memory.RASPMemoryContext;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
@@ -38,9 +40,6 @@ import java.io.Reader;
 import java.util.MissingResourceException;
 import java.util.Objects;
 import java.util.ResourceBundle;
-import java_cup.runtime.ComplexSymbolFactory;
-import net.sf.emustudio.rasp.compiler.tree.SourceCode;
-import net.sf.emustudio.rasp.memory.RASPMemoryContext;
 
 /**
  * The implementation of the compiler of RASP abstract machine assembly
@@ -49,7 +48,7 @@ import net.sf.emustudio.rasp.memory.RASPMemoryContext;
 @PluginType(
         type = PLUGIN_TYPE.COMPILER,
         title = "RASP Assembler",
-        copyright = "\u00A9 Copyright 2016, Michal Šipoš",
+        copyright = "\u00A9 Copyright 2016-2017, Michal Šipoš",
         description = "Assembler of RASP machine language"
 )
 public class CompilerImpl extends AbstractCompiler {
@@ -58,7 +57,6 @@ public class CompilerImpl extends AbstractCompiler {
     private static final SourceFileExtension[] SOURCE_FILE_EXTENSIONS = new SourceFileExtension[]{new SourceFileExtension("rasp", "RASP source file")};
     private static final String OUTPUT_FILE_EXTENSION = "bin";
 
-    private RASPMemoryContext memory;
     private final ParserImpl parser;
     private final LexerImpl lexer;
 
@@ -70,12 +68,6 @@ public class CompilerImpl extends AbstractCompiler {
         //compiler will be reset before compilation
         lexer = new LexerImpl(null);
         parser = new ParserImpl(lexer, new ComplexSymbolFactory(), this);
-    }
-
-    @Override
-    public void initialize(SettingsManager settings) throws PluginInitializationException {
-        super.initialize(settings);
-        memory = (RASPMemoryContext) contextPool.getMemoryContext(pluginID, RASPMemoryContext.class);
     }
 
     private boolean fileEndsWithNewLine(String fileName) throws IOException {
@@ -122,17 +114,21 @@ public class CompilerImpl extends AbstractCompiler {
             
             sourceCode.pass();
             CompilerOutput.getInstance().saveToFile(outputFileName);
-            CompilerOutput.getInstance().loadIntoMemory(memory);
+
+            try {
+                RASPMemoryContext memory = contextPool.getMemoryContext(pluginID, RASPMemoryContext.class);
+                CompilerOutput.getInstance().loadIntoMemory(memory);
+            } catch (ContextNotFoundException e) {
+                notifyWarning("Program memory is not available");
+            }
             CompilerOutput.getInstance().clear();
 
             notifyInfo("Compile was successfull.");
         } catch (Exception ex) {
             errorCode = 1;
             if (ex.getMessage() == null) {
-                System.err.println("Compilation error.");
                 notifyError("Compilation error.");
             } else {
-                System.err.println("Compilation error: " + ex.getMessage());
                 notifyError("Compilation error: " + ex.getMessage());
             }
             return false;
